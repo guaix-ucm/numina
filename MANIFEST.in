@@ -1,1 +1,2 @@
-include README COPYING emir_wrap.cc
+include README COPYING MANIFEST.in
+include imcombine.py
