@@ -1,2 +1,3 @@
-include README COPYING MANIFEST.in
-include imcombine.py mydirs.py
+include COPYING MANIFEST.in
+include mydirs.py
+
