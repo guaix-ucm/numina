@@ -73,21 +73,31 @@ def combine(input, method, offsets=None, masks=None, output=None):
     number = input[0] * 0
     
     # Compute here
+    for (index,val) in numpy.ndenumerate(result):
+        values = [i[index] for i in input]
+        (result[index], variance[index], number[index]) = method(values)
     
     return (result,variance,number)
 
 if __name__ == "__main__":
     import numpy
     from combine_methods import *
+    import time
     
     mymean = Mean()
     number = 5
-    size = (10,10)
+    size = (2048,2048)
     array = numpy.ones(size[0]*size[1])
     array.shape = size
     
     input = [array.copy() for i in range(number)]
     offsets = [(3,2), (-5, -5), (-2,3), (5,5), (2,4)]
-    a = basecombine(input, offsets)
-    print a[2].shape
-    #print combine(input, mymean)
+    
+    #a = basecombine(input, offsets)
+    #print a[2].shape
+    print 'starting'
+    t1 = time.time()
+    a = combine(input, mymean)
+    t2 = time.time()
+    #
+    print '%s took %0.3f s' % ('combine', (t2-t1))

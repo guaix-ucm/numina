@@ -21,7 +21,9 @@
 
 class Mean:
     def __call__(self, values):
-        return ('combined value', 'variance of the combined value', 'number of items used')
+        l = len(values)
+        s = sum(values)
+        return (s / l, 0, l)
                       
-def mean(values):
-    return ('combined value', 'variance of the combined value', 'number of items used')
+def meanaa(values):
+    return 
