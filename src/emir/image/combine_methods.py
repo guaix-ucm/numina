@@ -23,7 +23,7 @@ class Mean:
     def __call__(self, values):
         l = len(values)
         s = sum(values)
-        return (s / l, 0, l)
-                      
-def meanaa(values):
-    return 
+        try:
+            return (s / l, 0, l)
+        except ZeroDivisionError:
+            return (0,0,0)
