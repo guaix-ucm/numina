@@ -22,8 +22,7 @@
 class Mean:
     def __call__(self, values):
         l = len(values)
+        if l == 0:
+            return (0,0,0)        
         s = sum(values)
-        try:
-            return (s / l, 0, l)
-        except ZeroDivisionError:
-            return (0,0,0)
+        return (s / l, 0, l)
