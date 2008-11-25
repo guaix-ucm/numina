@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
 from distutils.core import setup, Extension
+import numpy
+
+numpy_include =  numpy.get_include()
+ex1 = Extension('emir.test',['lib/test.cc'],libraries=['boost_python'])
+ex2 = Extension('emir.image._combine',['lib/combinemodule.c'],
+          include_dirs=[numpy_include])
 
 setup(name='pyemir',
       version='0.1.0',
@@ -12,8 +18,7 @@ setup(name='pyemir',
       long_description='EMIR Data Processing Pipeline',
       package_dir={'emir': 'src/emir'},
       packages=['emir', 'emir.image'],
-      ext_modules=[Extension('emir.test',['lib/test.cc'],libraries=['boost_python'])],
+      ext_modules=[ex1, ex2],
       scripts=['imcombine.py'],
       requires=['pyfits', 'scipy'],
       )
-
