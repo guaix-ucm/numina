@@ -20,21 +20,7 @@
 # $Id$
 
 from emir.exceptions import Error
-
-
-import time
-
-def print_timing(func):
-    '''Timing decorator'''
-    def wrapper(*arg):
-        t1 = time.time()
-        res = func(*arg)
-        t2 = time.time()
-        print '%s took %0.3f s' % (func.func_name, (t2 - t1))
-        return res
-    return wrapper
-
-
+from emir.decorators import print_timing
 
 class NoMasks():
     '''An iterable dummy object that always return True'''
@@ -69,7 +55,7 @@ def valid_index(shape, index):
 
     return True
 
-#@print_timing
+@print_timing
 def combine(input, method, offsets=None, masks=None, output=None):
     ''' Input is a list of arrays
         Method is a callable object that takes a list of values and returns a 3-tuple of values
@@ -107,7 +93,7 @@ def combine(input, method, offsets=None, masks=None, output=None):
     
     if masks is None:
         masks = NoMasks()
-    
+
     #return internalc_simple(method, result, variance, number, input)
     return internalc_complex(method, result, variance, number, input, shapes, masks, noffsets)
 
