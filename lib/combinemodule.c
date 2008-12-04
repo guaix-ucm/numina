@@ -54,17 +54,48 @@ static PyObject* py_test(PyObject *self, PyObject *args)
   return PyInt_FromLong((long) iterations);
 }
 
+void method_mean(double data[], int size, double* c, double* var, int* number)
+{
+  if (size == 0)
+  {
+    *c = *var = 0.0;
+    *number = 0;
+    return;
+  }
+
+  if (size == 1)
+  {
+    *c = data[0];
+    *var = 0.0;
+    *number = 1;
+    return;
+  }
+
+  double sum = 0.0;
+  double sum2 = 0.0;
+  int i;
+  for (i = 0; i < size; ++i)
+  {
+    sum += data[i];
+    sum2 += data[i] * data[i];
+  }
+
+  *c = sum / size;
+  *number = size;
+  *var = sum2 / (size - 1) - (sum * sum) / (size * (size - 1));
+}
+
 static PyObject* py_combine(PyObject *self, PyObject *args)
 {
   int ok;
   int i;
-  PyObject *method, *result = NULL, *variance, *number;
+  PyObject *method, *result = NULL, *variance = NULL, *number = NULL;
 
   PyObject *inputs, *shapes, *masks, *noffsets;
   int ninputs = 0;
 
-  PyObject *resultarr;
-  Py_ssize_t ii;
+  PyObject *resultarr, *variancearr, *numberarr;
+  //Py_ssize_t ii;
   ok = PyArg_ParseTuple(args, "OOOOOOOO", &method, &result, &variance, &number,
       &inputs, &shapes, &masks, &noffsets);
   if (!ok)
@@ -78,60 +109,118 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  /* check the rest of sequences...
+  if (!PyList_Check(masks))
+  {
+    PyErr_SetString(CombineError, "combine: masks is not a sequence");
+    return NULL;
+  }
+
+  /* checked the rest of sequences...
    * we're sure that everything is all right
    */
-  PyArrayObject **arr;
-  arr = malloc(ninputs * sizeof(PyArrayObject*));
+  PyObject **arr;
+  arr = malloc(ninputs * sizeof(PyObject*));
+  PyObject **msk;
+  msk = malloc(ninputs * sizeof(PyObject*));
 
   for (i = 0; i < ninputs; i++)
   {
     PyObject *a = PySequence_GetItem(inputs, i);
     if (!a)
+    {
+      free(arr);
       return NULL;
+    }
     arr[i] = PyArray_FROM_OTF(a, NPY_NOTYPE, NPY_IN_ARRAY);
-    if (!arr[i])
-      return NULL;
-    Py_DECREF(a);
-  }
 
-  // Using the arrays here...
-  printf("We have %d images\n", ninputs);
+    if (!arr[i])
+    {
+      free(arr);
+      return NULL;
+    }
+
+    Py_DECREF(a);
+
+    PyObject *b = PySequence_GetItem(masks, i);
+    if (!b)
+    {
+      free(msk);
+      return NULL;
+    }
+    msk[i] = PyArray_FROM_OTF(b, NPY_NOTYPE, NPY_IN_ARRAY);
+
+    if (!msk[i])
+    {
+      free(msk);
+      return NULL;
+    }
+
+    Py_DECREF(b);
+
+    int pat = PyArray_TYPE(arr[i]);
+    printf("PyArray_TYPE %d %d %d %d\n", pat, NPY_DOUBLE, NPY_FLOAT, NPY_INT);
+    pat = PyArray_TYPE(msk[i]);
+    printf("PyArray_TYPE %d %d %d %d\n", pat, NPY_DOUBLE, NPY_FLOAT, NPY_INT);
+
+  }
 
   resultarr = PyArray_FROM_OTF(result, NPY_NOTYPE, NPY_INOUT_ARRAY);
 
   if (resultarr == NULL)
   {
     PyArray_XDECREF_ERR(resultarr);
+    free(arr);
     return NULL;
   }
 
-  double** data;
-  data = malloc(ninputs * sizeof(double*));
+  variancearr = PyArray_FROM_OTF(variance, NPY_NOTYPE, NPY_INOUT_ARRAY);
 
+  if (variancearr == NULL)
+  {
+    PyArray_XDECREF_ERR(variancearr);
+    free(arr);
+    return NULL;
+  }
+
+  numberarr = PyArray_FROM_OTF(number, NPY_NOTYPE, NPY_INOUT_ARRAY);
+
+  if (numberarr == NULL)
+  {
+    PyArray_XDECREF_ERR(numberarr);
+    free(arr);
+    return NULL;
+  }
+
+  /* TODO: check that the dimensions nad sizes of the images are equal */
   npy_intp* dims = PyArray_DIMS(resultarr);
 
+  double* data;
+  data = malloc(ninputs * sizeof(double));
+
+  /* Assuming 2D arrays */
   int iindex, jindex;
   for (iindex = 0; iindex < dims[0]; ++iindex)
     for (jindex = 0; jindex < dims[1]; ++jindex)
     {
-      /* Collect the values */
+      int used = 0;
+      /* Collect the valid values */
       for (i = 0; i < ninputs; ++i)
       {
-        data[i] = (double*) PyArray_GETPTR2(arr[i], iindex, jindex);
+        void* pp = PyArray_GETPTR2(msk[i], iindex, jindex);
+        int mask = 0;
+        if (mask)
+          continue;
+
+        data[i] = *((double*) PyArray_GETPTR2(arr[i], iindex, jindex));
+        ++used;
       }
 
-      /* Operate with them */
-      double sum = 0.0;
-      for (i = 0; i < ninputs; ++i)
-      {
-        sum += *(data[i]);
-      }
-      double result = sum / ninputs;
-
-      /* Store in result */
       double* p = (double*) PyArray_GETPTR2(resultarr, iindex, jindex);
-      *p = result;
+      double* v = (double*) PyArray_GETPTR2(variancearr, iindex, jindex);
+      int* n = (int*) PyArray_GETPTR2(numberarr, iindex, jindex);
+
+      /* Compute the results*/
+      method_mean(data, used, p, v, n);
     }
 
   free(data);
@@ -140,19 +229,13 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
   for (i = 0; i < ninputs; i++)
   {
     Py_DECREF(arr[i]);
+    Py_DECREF(msk[i]);
   }
 
   free(arr);
+  free(msk);
 
-  long sum = 0;
-  Py_ssize_t len = PyList_Size(inputs);
-  for (i = 0; i < len; ++i)
-  {
-    PyObject* val = PyList_GetItem(inputs, i);
-    sum += PyInt_AS_LONG(val);
-  }
-
-  return Py_BuildValue("(i,i,i)", sum, 0, len);
+  return Py_BuildValue("(O,O,O)", resultarr, variancearr, numberarr);
 }
 
 static PyMethodDef combine_methods[] = { { "test", py_test, METH_VARARGS,
