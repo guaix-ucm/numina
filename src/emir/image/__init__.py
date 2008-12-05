@@ -87,14 +87,14 @@ def test():
     
     
     shape = (2048, 2048)
-    nimages = 100
+    nimages = 70
     
     #images = random_images(shape, nimages)
     #images = thread_random_images(shape, nimages, nthreads=8)
     
-    filename = '/home/inferis/spr/IR/apr21/apr21_0046.fits'
-    images = fits_images(filename, nimages)
-    #images = constant_images(shape, nimages, 23.4)
+    #filename = '/home/inferis/spr/IR/apr21/apr21_0046.fits'
+    #images = fits_images(filename, nimages)
+    images = constant_images(shape, nimages, 23.4)
     masks = generate_masks(shape, nimages)
     
     result = numpy.ones(shape)
