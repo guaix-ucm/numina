@@ -63,11 +63,25 @@ static PyObject* py_test(PyObject *self, PyObject *args)
   npy_intp* dims = PyArray_DIMS(inputarr);
 */
 
-  // Calling the function
-  PyObject* argl = Py_BuildValue("([ii])",3,4);
+  /* Create a PyList */
+  int len = 10;
+  PyObject* pydata = PyList_New(len);
+
+  /* Fill it */
+  int i = 0;
+  for(i = 0;i<len;++i){
+    PyObject* value = PyFloat_FromDouble(4.2);
+    PyList_SetItem(pydata, i, value);
+    //Py_DECREF(value);
+  }
+
+  // Calling the function with the pylist
+  PyObject* argl = Py_BuildValue("(O)", pydata);
+  Py_DECREF(pydata);
   PyObject* result = NULL;
 
   result = PyEval_CallObject(fun, argl);
+
   Py_DECREF(argl);
 
   if(!result) {
