@@ -1,5 +1,23 @@
 # $Id$
 
+def test_conversion():
+    import _combine
+    import numpy
+    
+    def fun(data):
+        '''Data is a sequence of values'''
+        l = len(data)
+        print data,len(data)
+        if l == 0:
+            return 0
+        
+        s = sum(data)
+        return float(s) / l
+        
+    a = numpy.zeros((2, 2))
+    mask = numpy.zeros((2, 2), dtype='bool')
+    _combine.test(fun, a, mask)
+    
 
 def test():
     
@@ -102,7 +120,7 @@ def test():
     number = numpy.ones(shape, dtype='int')
     print len(masks)
     a = ucombine(1, result, variance, number, images, masks, masks, 8)
-    print a[2][0,0]
+    print a[2][0, 0]
     
 if __name__ == "__main__":
-    test()
+    test_conversion()

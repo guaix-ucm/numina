@@ -27,9 +27,7 @@ PyDoc_STRVAR(combine__doc__, "Module doc");
 
 PyDoc_STRVAR(test__doc__, "function doc");
 
-PyDoc_STRVAR
-(
-combine_fun__doc__,
+PyDoc_STRVAR(combine_fun__doc__,
 "_combine function doc\n\
 method, result, variance, number, inputs, shapes, masks, noffsets\n\
 End of docs.");
@@ -38,20 +36,53 @@ static PyObject *CombineError;
 
 static PyObject* py_test(PyObject *self, PyObject *args)
 {
-  int i = 0;
   int ok;
-  long iterations = 0;
-  ok = PyArg_ParseTuple(args, "i", &i);
+
+  PyObject *fun = NULL;
+  PyObject *input = NULL;
+  PyObject *inputarr;
+  PyObject *mask = NULL;
+  ok = PyArg_ParseTuple(args, "OO!O!:test", &fun, &PyArray_Type, &input,&PyArray_Type, &mask);
   if (!ok)
     return NULL;
 
-  if (i < 0)
-  {
-    PyErr_SetString(CombineError, "invalid i parameter");
+  /* Check that fun is callable */
+  if(!PyCallable_Check(fun)) {
+    PyErr_Format(PyExc_TypeError, "fun is not callable");
     return NULL;
   }
 
-  return PyInt_FromLong((long) iterations);
+  // To be sure we are using doubles
+  inputarr = PyArray_FROM_OT(input, NPY_DOUBLE);
+  npy_double* ptr = (npy_double*) PyArray_GETPTR2(inputarr, 0, 0);
+  npy_bool* pmask = (npy_bool*) PyArray_GETPTR2(mask, 0, 0);
+
+/*  printf("%p %p\n", ptr, pmask);
+  printf("%"NPY_DOUBLE_FMT" %d\n", *ptr, *pmask);
+
+  npy_intp* dims = PyArray_DIMS(inputarr);
+*/
+
+  // Calling the function
+  PyObject* argl = Py_BuildValue("([ii])",3,4);
+  PyObject* result = NULL;
+
+  result = PyEval_CallObject(fun, argl);
+  Py_DECREF(argl);
+
+  if(!result) {
+    Py_DECREF(inputarr);
+    return NULL;
+  }
+
+  double valor = PyFloat_AS_DOUBLE(result);
+  printf ("%g\n", valor);
+  Py_DECREF(result);
+
+  Py_DECREF(inputarr); //??
+
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 void method_mean(double data[], int size, double* c, double* var, int* number)
@@ -147,7 +178,7 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
       free(msk);
       return NULL;
     }
-    msk[i] = PyArray_FROM_OTF(b, NPY_NOTYPE, NPY_IN_ARRAY);
+    msk[i] = PyArray_FROM_OT(b, PyArray_BOOL);//NPY_NOTYPE, NPY_IN_ARRAY);
 
     if (!msk[i])
     {
@@ -238,10 +269,10 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
   return Py_BuildValue("(O,O,O)", resultarr, variancearr, numberarr);
 }
 
-static PyMethodDef combine_methods[] = { { "test", py_test, METH_VARARGS,
-    test__doc__ },
-    { "_combine", py_combine, METH_VARARGS, combine_fun__doc__ }, { NULL, NULL,
-        0, NULL } /* sentinel */
+static PyMethodDef combine_methods[] = {
+    { "test", py_test, METH_VARARGS, test__doc__ },
+    { "_combine", py_combine, METH_VARARGS, combine_fun__doc__ },
+    { NULL, NULL, 0, NULL } /* sentinel */
 };
 
 PyMODINIT_FUNC init_combine(void)
