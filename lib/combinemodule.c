@@ -34,20 +34,21 @@ End of docs.");
 
 static PyObject *CombineError;
 
-static PyObject* py_test(PyObject *self, PyObject *args, PyObject *keywds)
+static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
 {
   int ok;
   int i;
   PyObject *fun = NULL;
   PyObject *inputs = NULL;
-  PyObject *mask = NULL;
-  PyObject *out = NULL;
+  PyObject *masks = NULL;
+  PyObject *out = Py_None;
+  Py_INCREF(out); // Is this necessary??
   PyObject *outarr = NULL;
 
   static char *kwlist[] = {"fun","inputs","mask","out", NULL};
 
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|O:test", kwlist, &fun,
-      &PyList_Type, &inputs, &PyArray_Type, &mask, &out);
+      &PyList_Type, &inputs, &PyList_Type, &masks, &out);
   if (!ok)
     return NULL;
 
@@ -90,14 +91,51 @@ static PyObject* py_test(PyObject *self, PyObject *args, PyObject *keywds)
     Py_DECREF(a);
   }
 
+  /* getting the contents */
+    PyObject **marr;
+    marr = malloc(ninputs * sizeof(PyObject*));
+
+    for (i = 0; i < ninputs; i++)
+    {
+      PyObject *a = PyList_GetItem(masks, i);
+      if (!a)
+      {
+        /* Problem here */
+        /* Clean up */
+        free(marr);
+        return NULL;
+      }
+      /* To be sure is bool */
+      marr[i] = PyArray_FROM_OT(a, NPY_BOOL);
+
+      if (!marr[i])
+      {
+        /* Can't be converted to array */
+        /* Clean up */
+        free(marr);
+        return NULL;
+      }
+
+      /* We don't need a anymore */
+      Py_DECREF(a);
+    }
+
+
   /* checks */
   /* All the images have equal size and are 2D */
 
   /* If out is none, create a new image, else
-   * check that the size and shape is equal to the rest of images
+   * check that the size and shape are equal to the rest of images
    * and use it as output
    */
-  outarr = PyArray_FROM_OT(out, NPY_DOUBLE);
+  if(out == Py_None)
+  {
+    int nd = ((PyArrayObject*)arr[0])->nd; // Must be 2
+    npy_intp* dims = PyArray_DIMS(arr[0]);
+    outarr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
+  }
+  else
+    outarr = PyArray_FROM_OT(out, NPY_DOUBLE);
 
   npy_double* data;
   data = malloc(ninputs * sizeof(npy_double));
@@ -111,6 +149,10 @@ static PyObject* py_test(PyObject *self, PyObject *args, PyObject *keywds)
       /* Collect the valid values */
       for (i = 0; i < ninputs; ++i)
       {
+        npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
+        if(*pmask == NPY_FALSE)
+          continue;
+
         npy_double *pdata = (npy_double*) PyArray_GETPTR2(arr[i], ii, jj);
         data[i] = *pdata;
         ++used;
@@ -151,8 +193,9 @@ static PyObject* py_test(PyObject *self, PyObject *args, PyObject *keywds)
 
   free(data);
   free(arr);
-  Py_INCREF(Py_None);
-  return Py_None;
+  free(marr);
+  Py_INCREF(outarr);
+  return outarr;
 }
 
 void method_mean(double data[], int size, double* c, double* var, int* number)
@@ -186,7 +229,7 @@ void method_mean(double data[], int size, double* c, double* var, int* number)
   *var = sum2 / (size - 1) - (sum * sum) / (size * (size - 1));
 }
 
-static PyObject* py_combine(PyObject *self, PyObject *args)
+static PyObject* py_test2(PyObject *self, PyObject *args)
 {
   int ok;
   int i;
@@ -340,8 +383,8 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef combine_methods[] = {
-  {"test", (PyCFunction)py_test, METH_VARARGS | METH_KEYWORDS, test__doc__},
-  {"_combine", py_combine, METH_VARARGS, combine_fun__doc__ },
+  {"test1", (PyCFunction)py_test1, METH_VARARGS | METH_KEYWORDS, test__doc__},
+  {"test2", py_test2, METH_VARARGS, combine_fun__doc__ },
   {NULL, NULL, 0, NULL } /* sentinel */
 };
 

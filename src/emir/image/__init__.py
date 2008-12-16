@@ -26,17 +26,17 @@ def test_conversion():
         return float(s) / l
     
     @print_timing
-    def ucombine(method, images, mask, out):
-        return _combine.test(method, images, mask, out)
+    def ucombine(method, images, mask, out = None):
+        return _combine.test1(method, images, mask, out)
     
-    shape = (2048, 2048)
-    num = 100
+    shape = (128, 128)
+    num = 10
     images = [numpy.zeros(shape) for i in xrange(num)]
     images[0][0, 0] = 1.0;
     out = numpy.zeros(shape)
-    mask = numpy.zeros(shape, dtype='bool')
+    mask = numpy.ones(shape, dtype='bool')
 
-    ucombine(fun, images, mask, out)
+    out = ucombine(fun, images, [mask] * num)
     print out
     
 
@@ -50,7 +50,7 @@ def test():
 
     @print_timing
     def ucombine(method, result, variance, number, images, shapes, masks, f):
-        return _combine._combine(method, result, variance, number, images, shapes, masks, f)
+        return _combine.test2(method, result, variance, number, images, shapes, masks, f)
     
     @print_timing
     def random_images(shape, nimages):    
