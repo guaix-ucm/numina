@@ -1,38 +1,47 @@
 # $Id$
 
+import time
+def print_timing(func):
+    '''Timing decorator'''
+    def wrapper(*arg, **keywords):
+        print 'starting %s' % (func.func_name,)
+        t1 = time.time()
+        res = func(*arg, **keywords)
+        t2 = time.time()
+        print '%s took %0.3f s' % (func.func_name, (t2 - t1))
+        return res
+    return wrapper
+    
 def test_conversion():
     import _combine
     import numpy
     
     def fun(data):
-        '''Data is a sequence of values'''
+        '''Data is a list of values'''
         l = len(data)
-        print data,len(data)
         if l == 0:
             return 0
         
         s = sum(data)
         return float(s) / l
-        
-    a = numpy.zeros((2, 2))
-    mask = numpy.zeros((2, 2), dtype='bool')
-    _combine.test(fun, a, mask)
+    
+    @print_timing
+    def ucombine(method, images, mask, out):
+        return _combine.test(method, images, mask, out)
+    
+    shape = (2048, 2048)
+    num = 100
+    images = [numpy.zeros(shape) for i in xrange(num)]
+    images[0][0, 0] = 1.0;
+    out = numpy.zeros(shape)
+    mask = numpy.zeros(shape, dtype='bool')
+
+    ucombine(fun, images, mask, out)
+    print out
     
 
 def test():
     
-    import time
-    
-    def print_timing(func):
-        '''Timing decorator'''
-        def wrapper(*arg, **keywords):
-            print 'starting %s' % (func.func_name,)
-            t1 = time.time()
-            res = func(*arg, **keywords)
-            t2 = time.time()
-            print '%s took %0.3f s' % (func.func_name, (t2 - t1))
-            return res
-        return wrapper
     
     import _combine
     import numpy

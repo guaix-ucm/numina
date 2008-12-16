@@ -34,67 +34,123 @@ End of docs.");
 
 static PyObject *CombineError;
 
-static PyObject* py_test(PyObject *self, PyObject *args)
+static PyObject* py_test(PyObject *self, PyObject *args, PyObject *keywds)
 {
   int ok;
-
+  int i;
   PyObject *fun = NULL;
-  PyObject *input = NULL;
-  PyObject *inputarr;
+  PyObject *inputs = NULL;
   PyObject *mask = NULL;
-  ok = PyArg_ParseTuple(args, "OO!O!:test", &fun, &PyArray_Type, &input,&PyArray_Type, &mask);
+  PyObject *out = NULL;
+  PyObject *outarr = NULL;
+
+  static char *kwlist[] = {"fun","inputs","mask","out", NULL};
+
+  ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|O:test", kwlist, &fun,
+      &PyList_Type, &inputs, &PyArray_Type, &mask, &out);
   if (!ok)
     return NULL;
 
   /* Check that fun is callable */
-  if(!PyCallable_Check(fun)) {
+  if (!PyCallable_Check(fun))
+  {
     PyErr_Format(PyExc_TypeError, "fun is not callable");
     return NULL;
   }
 
-  // To be sure we are using doubles
-  inputarr = PyArray_FROM_OT(input, NPY_DOUBLE);
-  npy_double* ptr = (npy_double*) PyArray_GETPTR2(inputarr, 0, 0);
-  npy_bool* pmask = (npy_bool*) PyArray_GETPTR2(mask, 0, 0);
+  /* inputs is forced to be a list */
+  int ninputs = PyList_GET_SIZE(inputs);
 
-/*  printf("%p %p\n", ptr, pmask);
-  printf("%"NPY_DOUBLE_FMT" %d\n", *ptr, *pmask);
+  /* getting the contents */
+  PyObject **arr;
+  arr = malloc(ninputs * sizeof(PyObject*));
 
-  npy_intp* dims = PyArray_DIMS(inputarr);
-*/
+  for (i = 0; i < ninputs; i++)
+  {
+    PyObject *a = PyList_GetItem(inputs, i);
+    if (!a)
+    {
+      /* Problem here */
+      /* Clean up */
+      free(arr);
+      return NULL;
+    }
+    /* To be sure is double */
+    arr[i] = PyArray_FROM_OT(a, NPY_DOUBLE);
 
-  /* Create a PyList */
-  int len = 10;
-  PyObject* pydata = PyList_New(len);
+    if (!arr[i])
+    {
+      /* Can't be converted to array */
+      /* Clean up */
+      free(arr);
+      return NULL;
+    }
 
-  /* Fill it */
-  int i = 0;
-  for(i = 0;i<len;++i){
-    PyObject* value = PyFloat_FromDouble(4.2);
-    PyList_SetItem(pydata, i, value);
-    //Py_DECREF(value);
+    /* We don't need a anymore */
+    Py_DECREF(a);
   }
 
-  // Calling the function with the pylist
-  PyObject* argl = Py_BuildValue("(O)", pydata);
-  Py_DECREF(pydata);
-  PyObject* result = NULL;
+  /* checks */
+  /* All the images have equal size and are 2D */
 
-  result = PyEval_CallObject(fun, argl);
+  /* If out is none, create a new image, else
+   * check that the size and shape is equal to the rest of images
+   * and use it as output
+   */
+  outarr = PyArray_FROM_OT(out, NPY_DOUBLE);
 
-  Py_DECREF(argl);
+  npy_double* data;
+  data = malloc(ninputs * sizeof(npy_double));
+  npy_intp* dims = PyArray_DIMS(arr[0]);
 
-  if(!result) {
-    Py_DECREF(inputarr);
-    return NULL;
-  }
+  int ii, jj;
+  for (ii = 0; ii < dims[0]; ++ii)
+    for (jj = 0; jj < dims[1]; ++jj)
+    {
+      int used = 0;
+      /* Collect the valid values */
+      for (i = 0; i < ninputs; ++i)
+      {
+        npy_double *pdata = (npy_double*) PyArray_GETPTR2(arr[i], ii, jj);
+        data[i] = *pdata;
+        ++used;
+      }
+      /* Create a PyList with the values */
+      PyObject* pydata = PyList_New(used);
 
-  double valor = PyFloat_AS_DOUBLE(result);
-  printf ("%g\n", valor);
-  Py_DECREF(result);
+      /* Fill it */
+      for (i = 0; i < used; ++i)
+      {
+        PyObject* value = PyFloat_FromDouble(data[i]);
+        PyList_SetItem(pydata, i, value);
+        //Py_DECREF(value);
+      }
 
-  Py_DECREF(inputarr); //??
+      // Calling the function with the pylist
+      PyObject* argl = Py_BuildValue("(O)", pydata);
+      Py_DECREF(pydata);
+      PyObject* result = NULL;
 
+      result = PyEval_CallObject(fun, argl);
+
+      Py_DECREF(argl);
+
+      if (!result)
+      {
+        /* Clean up */
+        /*Py_DECREF(inputarr);*/
+        return NULL;
+      }
+
+      npy_double *r = (npy_double*) PyArray_GETPTR2(outarr, ii, jj);
+      *r = PyFloat_AS_DOUBLE(result);
+      Py_DECREF(result);
+
+      /* store the values in the final arrays */
+    }
+
+  free(data);
+  free(arr);
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -236,7 +292,7 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  /* TODO: check that the dimensions nad sizes of the images are equal */
+  /* TODO: check that the dimensions and sizes of the images are equal */
   npy_intp* dims = PyArray_DIMS(resultarr);
 
   double* data;
@@ -284,9 +340,9 @@ static PyObject* py_combine(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef combine_methods[] = {
-    { "test", py_test, METH_VARARGS, test__doc__ },
-    { "_combine", py_combine, METH_VARARGS, combine_fun__doc__ },
-    { NULL, NULL, 0, NULL } /* sentinel */
+  {"test", (PyCFunction)py_test, METH_VARARGS | METH_KEYWORDS, test__doc__},
+  {"_combine", py_combine, METH_VARARGS, combine_fun__doc__ },
+  {NULL, NULL, 0, NULL } /* sentinel */
 };
 
 PyMODINIT_FUNC init_combine(void)
