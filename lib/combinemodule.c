@@ -106,15 +106,15 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *fun = NULL;
   PyObject *inputs = NULL;
   PyObject *masks = NULL;
-  PyObject *out = Py_None;
+  PyObject *res = Py_None;
   PyObject *resarr = NULL;
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  static char *kwlist[] = { "fun", "inputs", "mask", "out", NULL };
+  static char *kwlist[] = { "fun", "inputs", "mask", "res", NULL };
 
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|O:test1", kwlist, &fun,
-      &PyList_Type, &inputs, &PyList_Type, &masks, &out);
+      &PyList_Type, &inputs, &PyList_Type, &masks, &res);
   if (!ok)
     return NULL;
 
@@ -193,15 +193,14 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
    * check that the size and shape are equal to the rest of images
    * and use it as output
    */
-  if (out == Py_None)
+  if (res == Py_None)
   {
     int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
     npy_intp* dims = PyArray_DIMS(iarr[0]);
     resarr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
   } else
   {
-    resarr = PyArray_FROM_OT(out, NPY_DOUBLE);
-    Py_INCREF(resarr); // We're returning with N, so this has to have two references
+    resarr = PyArray_FROM_OT(res, NPY_DOUBLE);
   }
 
   {
@@ -260,7 +259,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
         free(data);
         free(iarr);
         free(marr);
-        /*Py_DECREF(inputarr);*/
+
         return NULL;
       }
 
@@ -280,24 +279,31 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   free(marr);
   /* If the arrays are created inside, we should use N instead of O
    * O adds a new reference */
-    /*return Py_BuildValue("(O,O,O)", resultarr, vararr, numarr);*/
+  /*return Py_BuildValue("(O,O,O)", resultarr, vararr, numarr);*/
+
+  if (res != Py_None)
+  {
+    Py_INCREF(resarr);
+  }
   return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
 }
 
-static PyObject* py_test2(PyObject *self, PyObject *args)
+static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
 {
   int ok;
   int i;
 
   PyObject *inputs = NULL;
   PyObject *masks = NULL;
-
+  PyObject *res = Py_None;
   PyObject *resarr = NULL;
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  ok = PyArg_ParseTuple(args, "O!O!:test2", &PyList_Type, &inputs,
-      &PyList_Type, &masks);
+  static char *kwlist[] = { "inputs", "mask", "res", NULL };
+
+  ok = PyArg_ParseTupleAndKeywords(args, keywds, "O!O!|O:test2", kwlist,
+      &PyList_Type, &inputs, &PyList_Type, &masks, &res);
   if (!ok)
     return NULL;
 
@@ -362,12 +368,24 @@ static PyObject* py_test2(PyObject *self, PyObject *args)
   }
 
   /* Creating output images */
-
-  int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
   npy_intp* dims = PyArray_DIMS(iarr[0]);
-  resarr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
-  vararr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
-  numarr = PyArray_SimpleNew(nd, dims, NPY_LONG);
+  int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
+
+  if (res == Py_None)
+  {
+    int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
+
+    resarr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
+  } else
+  {
+    resarr = PyArray_FROM_OT(res, NPY_DOUBLE);
+  }
+
+  {
+
+    vararr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
+    numarr = PyArray_SimpleNew(nd, dims, NPY_LONG);
+  }
 
   double* data = malloc(ninputs * sizeof(double));
   /* Assuming 2D arrays */
@@ -400,15 +418,21 @@ static PyObject* py_test2(PyObject *self, PyObject *args)
 
   free(iarr);
   free(marr);
-/* If the arrays are created inside, we should use N instead of O */
-  /*return Py_BuildValue("(O,O,O)", resultarr, vararr, numarr);*/
+
+  if (res != Py_None)
+  {
+    // If res comes from outside
+    Py_INCREF(resarr);
+  }
+  /* If the arrays are created inside, we should use N instead of O */
   return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
 }
 
 static PyMethodDef combine_methods[] = { { "test1", (PyCFunction) py_test1,
-    METH_VARARGS | METH_KEYWORDS, test1__doc__ }, { "test2", py_test2,
-    METH_VARARGS, test2__doc__ }, { "method1", py_method1, METH_VARARGS,
-    method1__doc__ }, { NULL, NULL, 0, NULL } /* sentinel */
+    METH_VARARGS | METH_KEYWORDS, test1__doc__ }, { "test2",
+    (PyCFunction) py_test2, METH_VARARGS | METH_KEYWORDS, test2__doc__ }, {
+    "method1", py_method1, METH_VARARGS, method1__doc__ }, { NULL, NULL, 0,
+    NULL } /* sentinel */
 };
 
 PyMODINIT_FUNC init_combine(void)

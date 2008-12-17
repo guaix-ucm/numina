@@ -30,21 +30,31 @@ def test_conversion():
         return (s / l, v, l)
     
     @print_timing
-    def ucombine1(method, images, masks, out = None):
-        return _combine.test1(method, images, masks)
+    def ucombine1(method, images, masks, res = None):
+        return _combine.test1(method, images, masks, res)
     
     @print_timing
-    def ucombine2(images, masks):
-        return _combine.test2(images, masks)
+    def ucombine2(images, masks, res = None):
+        return _combine.test2(images, masks, res)
     
-    shape = (2048, 2048)
-    num = 100
+    shape = (10, 10)
+    num = 10
     images = [numpy.ones(shape) * i  for i in xrange(num)]
-    out = numpy.zeros(shape)
+    simages = [i[0:5,0:5]  for i in images]
+    res = numpy.zeros(shape)
+    ros = numpy.zeros(shape)
     mask = numpy.ones(shape, dtype='bool')
-    out1 = ucombine1(fun, images, [mask] * num)
-    out1 = ucombine1(_combine.method1, images, [mask] * num)    
-    out2 = ucombine2(images, [mask] * num)
+    #out1 = ucombine1(fun, images, [mask] * num)
+    ucombine1(_combine.method1, simages, [mask[0:5,0:5]] * num, res=res[0:5,0:5])
+    ucombine2(simages, [mask[0:5,0:5]] * num, res=ros[0:5,0:5])
+    print res
+    print ros
+    simages = [i[5:10,5:10]  for i in images]
+    ucombine1(_combine.method1, simages, [mask[5:10,5:10]] * num, res=res[5:10,5:10])
+    ucombine2(simages, [mask[5:10,5:10]] * num, res=ros[5:10,5:10])
+    print res
+    print ros
+    
     
     
 
