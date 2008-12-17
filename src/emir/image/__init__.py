@@ -20,24 +20,30 @@ def test_conversion():
         '''Data is a list of values'''
         l = len(data)
         if l == 0:
-            return 0
+            return (0., 1., 0)
+        if l == 1:
+            return (data[0], 0., 1)
         
         s = sum(data)
-        return float(s) / l
+        return (float(s) / l, 3., l)
     
     @print_timing
-    def ucombine(method, images, mask, out = None):
-        return _combine.test1(method, images, mask, out)
+    def ucombine1(method, images, masks, out = None):
+        return _combine.test1(method, images, masks)
     
-    shape = (128, 128)
-    num = 10
-    images = [numpy.zeros(shape) for i in xrange(num)]
-    images[0][0, 0] = 1.0;
+    @print_timing
+    def ucombine2(images, masks):
+        return _combine.test2(images, masks)
+    
+    shape = (2048, 2048)
+    num = 100
+    images = [numpy.ones(shape) * i  for i in xrange(num)]
     out = numpy.zeros(shape)
     mask = numpy.ones(shape, dtype='bool')
-
-    out = ucombine(fun, images, [mask] * num)
-    print out
+    out1 = ucombine1(fun, images, [mask] * num)
+    out1 = ucombine1(_combine.method1, images, [mask] * num)    
+    out2 = ucombine2(images, [mask] * num)
+    
     
 
 def test():
