@@ -24,8 +24,10 @@ def test_conversion():
         if l == 1:
             return (data[0], 0., 1)
         
-        s = sum(data)
-        return (float(s) / l, 3., l)
+        s = float(sum(data))
+        s2 = float(sum(i * i for i in data))
+        v = s2 / (l - 1) - (s * s) / (l * (l - 1));
+        return (s / l, v, l)
     
     @print_timing
     def ucombine1(method, images, masks, out = None):
