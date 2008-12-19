@@ -101,20 +101,21 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
 
 static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
 {
-  int ok;
   int i;
   PyObject *fun = NULL;
   PyObject *inputs = NULL;
   PyObject *masks = NULL;
   PyObject *res = Py_None;
+  PyObject *var = Py_None;
+  PyObject *num = Py_None;
   PyObject *resarr = NULL;
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  static char *kwlist[] = { "fun", "inputs", "mask", "res", NULL };
+  static char *kwlist[] = { "fun", "inputs", "mask", "res", "var", "num", NULL };
 
-  ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|O:test1", kwlist, &fun,
-      &PyList_Type, &inputs, &PyList_Type, &masks, &res);
+  int ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|OOO:test1", kwlist, &fun,
+      &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
 
@@ -128,50 +129,92 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   /* inputs is forced to be a list */
   int ninputs = PyList_GET_SIZE(inputs);
 
+  /* we don't like empty lists */
+  if(ninputs == 0)
+  {
+    PyErr_Format(PyExc_TypeError, "inputs is empty"); // TODO: check this exception
+    return NULL;
+  }
+
+  /* number of masks must be equal to the number of inputs */
+  if(PyList_GET_SIZE(masks) != ninputs)
+  {
+    PyErr_Format(PyExc_TypeError, "masks and inputs are not of the same length"); // TODO: check this exception
+  }
+
   /* getting the contents */
   PyObject **iarr = malloc(ninputs * sizeof(PyObject*));
 
   for (i = 0; i < ninputs; i++)
   {
-    PyObject *a = PyList_GetItem(inputs, i);
-    if (!a)
+    PyObject *item = PyList_GetItem(inputs, i);
+    if (!item)
     {
       /* Problem here */
       /* Clean up */
       free(iarr);
+      PyErr_Format(PyExc_TypeError, "can't get object from inputs list"); // TODO: check this exception
       return NULL;
     }
     /* To be sure is double */
-    iarr[i] = PyArray_FROM_OT(a, NPY_DOUBLE);
+    iarr[i] = PyArray_FROM_OT(item, NPY_DOUBLE);
+
+    /* We don't need item anymore */
+    Py_DECREF(item);
 
     if (!iarr[i])
     {
       /* Can't be converted to array */
       /* Clean up */
       free(iarr);
+      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy float array"); // TODO: check this exception
       return NULL;
     }
 
-    /* We don't need a anymore */
-    Py_DECREF(a);
+    // checking dimensions
+    if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (atleast 2D)
+    {
+      /* Clean up */
+      free(iarr);
+      PyErr_Format(PyExc_TypeError, "input array must be (at least) bidimensional"); // TODO: check this exception
+      return NULL;
+    }
+
+    // checking sizes
+    npy_intp* refdims = PyArray_DIMS(iarr[0]);
+    npy_intp* thisdims = PyArray_DIMS(iarr[i]);
+    if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
+    {
+      /* Clean up */
+      free(iarr);
+      PyErr_Format(PyExc_TypeError, "arrays must have the same shape"); // TODO: check this exception
+      return NULL;
+    }
+
   }
+
+  npy_intp* refdims = PyArray_DIMS(iarr[0]);
 
   /* getting the contents */
   PyObject **marr = malloc(ninputs * sizeof(PyObject*));
 
   for (i = 0; i < ninputs; i++)
   {
-    PyObject *a = PyList_GetItem(masks, i);
-    if (!a)
+    PyObject *item = PyList_GetItem(masks, i);
+    if (!item)
     {
       /* Problem here */
       /* Clean up */
       free(iarr);
       free(marr);
+      PyErr_Format(PyExc_TypeError, "can't get object from masks list"); // TODO: check this exception
       return NULL;
     }
+
     /* To be sure is bool */
-    marr[i] = PyArray_FROM_OT(a, NPY_BOOL);
+    marr[i] = PyArray_FROM_OT(item, NPY_BOOL);
+    /* We don't need item anymore */
+    Py_DECREF(item);
 
     if (!marr[i])
     {
@@ -179,36 +222,75 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       /* Clean up */
       free(iarr);
       free(marr);
+      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy bool array"); // TODO: check this excepti
       return NULL;
     }
 
-    /* We don't need a anymore */
-    Py_DECREF(a);
+    // checking dimensions
+    if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
+     {
+       /* Clean up */
+       free(iarr);
+       free(marr);
+       PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
+       return NULL;
+     }
+
+     // checking sizes
+
+     npy_intp* thisdims = PyArray_DIMS(marr[i]);
+     if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
+     {
+       /* Clean up */
+       free(iarr);
+       free(marr);
+       PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
+       return NULL;
+     }
+
   }
 
   /* checks */
   /* All the images have equal size and are 2D */
 
-  /* If out is none, create a new image, else
+  /* If res is none, create a new image, else
    * check that the size and shape are equal to the rest of images
    * and use it as output
    */
+  /* I should check the return values of the functions and
+   * return if some fails
+   */
   if (res == Py_None)
   {
-    int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
-    npy_intp* dims = PyArray_DIMS(iarr[0]);
-    resarr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
+    resarr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
+    if(resarr == NULL)
+    {
+      /* Do something */
+      free(iarr);
+      free(marr);
+      return NULL;
+    }
   } else
   {
     resarr = PyArray_FROM_OT(res, NPY_DOUBLE);
   }
 
+  if (var == Py_None)
   {
-    int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
-    npy_intp* dims = PyArray_DIMS(iarr[0]);
-    vararr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
-    numarr = PyArray_SimpleNew(nd, dims, NPY_LONG);
+    vararr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
+  } else
+  {
+    vararr = PyArray_FROM_OT(var, NPY_DOUBLE);
   }
+
+  if (num == Py_None)
+  {
+    numarr = PyArray_SimpleNew(2, refdims, NPY_LONG);
+  } else
+  {
+    numarr = PyArray_FROM_OT(num, NPY_LONG);
+  }
+
 
   /*
    * This is ok if we are passing the data to a C function
