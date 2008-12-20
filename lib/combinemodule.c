@@ -325,7 +325,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       for (i = 0; i < used; ++i)
       {
         PyObject* value = PyFloat_FromDouble(data[i]);
-        PyList_SetItem(pydata, i, value);
+        PyList_SET_ITEM(pydata, i, value);
       }
 
       // Calling the function with the pylist
@@ -359,13 +359,19 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   free(data);
   free(iarr);
   free(marr);
-  /* If the arrays are created inside, we should use N instead of O
-   * O adds a new reference */
-  /*return Py_BuildValue("(O,O,O)", resultarr, vararr, numarr);*/
 
+  // Increasing the reference before returning
   if (res != Py_None)
   {
     Py_INCREF(resarr);
+  }
+  if (var != Py_None)
+  {
+      Py_INCREF(vaearr);
+  }
+  if (num != Py_None)
+  {
+      Py_INCREF(numarr);
   }
   return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
 }
