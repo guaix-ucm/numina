@@ -172,7 +172,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     }
 
     // checking dimensions
-    if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (atleast 2D)
+    if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (at least 2D)
     {
       /* Clean up */
       free(iarr);
@@ -397,32 +397,68 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
 
   int ninputs = PyList_GET_SIZE(inputs);
 
+  /* we don't like empty lists */
+  if(ninputs == 0)
+  {
+    PyErr_Format(PyExc_TypeError, "inputs is empty"); // TODO: check this exception
+    return NULL;
+  }
+
+  /* number of masks must be equal to the number of inputs */
+  if(PyList_GET_SIZE(masks) != ninputs)
+  {
+    PyErr_Format(PyExc_TypeError, "masks and inputs are not of the same length"); // TODO: check this exception
+  }
+
   /* getting the contents */
   PyObject **iarr = malloc(ninputs * sizeof(PyObject*));
 
   for (i = 0; i < ninputs; i++)
   {
-    PyObject *a = PyList_GetItem(inputs, i);
-    if (!a)
+    PyObject *item = PyList_GetItem(inputs, i);
+    if (!item)
     {
       /* Problem here */
       /* Clean up */
       free(iarr);
+      PyErr_Format(PyExc_TypeError, "can't get object from inputs list"); // TODO: check this exception
       return NULL;
     }
     /* To be sure it is double */
-    iarr[i] = PyArray_FROM_OT(a, NPY_DOUBLE);
+    iarr[i] = PyArray_FROM_OT(item, NPY_DOUBLE);
+
+    /* We don't need a anymore */
+    Py_DECREF(item);
 
     if (!iarr[i])
     {
       /* Can't be converted to array */
       /* Clean up */
       free(iarr);
+      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy float array"); // TODO: check this exception
       return NULL;
     }
 
-    /* We don't need a anymore */
-    Py_DECREF(a);
+    // checking dimensions
+    if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (at least 2D)
+    {
+      /* Clean up */
+      free(iarr);
+      PyErr_Format(PyExc_TypeError, "input array must be (at least) bidimensional"); // TODO: check this exception
+      return NULL;
+    }
+
+    // checking sizes
+    npy_intp* refdims = PyArray_DIMS(iarr[0]);
+    npy_intp* thisdims = PyArray_DIMS(iarr[i]);
+    if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
+    {
+      /* Clean up */
+      free(iarr);
+      PyErr_Format(PyExc_TypeError, "arrays must have the same shape"); // TODO: check this exception
+      return NULL;
+    }
+
   }
 
   /* getting the contents */
@@ -430,17 +466,20 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
 
   for (i = 0; i < ninputs; i++)
   {
-    PyObject *a = PyList_GetItem(masks, i);
-    if (!a)
+    PyObject *item = PyList_GetItem(masks, i);
+    if (!item)
     {
       /* Problem here */
       /* Clean up */
       free(iarr);
       free(marr);
+      PyErr_Format(PyExc_TypeError, "can't get object from masks list"); // TODO: check this exception
       return NULL;
     }
     /* To be sure is bool */
-    marr[i] = PyArray_FROM_OT(a, NPY_BOOL);
+    marr[i] = PyArray_FROM_OT(item, NPY_BOOL);
+    /* We don't need item anymore */
+    Py_DECREF(item);
 
     if (!marr[i])
     {
@@ -448,11 +487,30 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
       /* Clean up */
       free(iarr);
       free(marr);
+      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy bool array"); // TODO: check this exception
+      return NULL;
+    }
+    // checking dimensions
+    if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
+    {
+      /* Clean up */
+      free(iarr);
+      free(marr);
+      PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
       return NULL;
     }
 
-    /* We don't need a anymore */
-    Py_DECREF(a);
+    // checking sizes
+
+    npy_intp* thisdims = PyArray_DIMS(marr[i]);
+    if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
+    {
+      /* Clean up */
+      free(iarr);
+      free(marr);
+      PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
+      return NULL;
+    }
   }
 
   /* Creating output images */
