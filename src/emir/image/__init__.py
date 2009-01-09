@@ -17,7 +17,10 @@ def test_conversion():
     import numpy
     
     def fun(data):
-        '''Data is a list of values'''
+        '''This is a example function that can be used with _combine.test1
+        
+        It takes a list of values and returns a tuple with (value, variance, number of points used)
+        '''
         l = len(data)
         if l == 0:
             return (0., 1., 0)

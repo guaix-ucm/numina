@@ -278,6 +278,13 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   if (var == Py_None)
   {
     vararr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
+    if(vararr == NULL)
+    {
+      /* Do something */
+      free(iarr);
+      free(marr);
+      return NULL;
+    }
   } else
   {
     vararr = PyArray_FROM_OT(var, NPY_DOUBLE);
@@ -286,6 +293,13 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   if (num == Py_None)
   {
     numarr = PyArray_SimpleNew(2, refdims, NPY_LONG);
+    if(numarr == NULL)
+    {
+      /* Do something */
+      free(iarr);
+      free(marr);
+      return NULL;
+    }
   } else
   {
     numarr = PyArray_FROM_OT(num, NPY_LONG);
@@ -298,8 +312,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
    * to build the PyList with PyObjects and make the conversion to doubles
    * inside the final function only
    */
-  npy_double* data;
-  data = malloc(ninputs * sizeof(npy_double));
+  npy_double* data = malloc(ninputs * sizeof(npy_double));
   npy_intp* dims = PyArray_DIMS(iarr[0]);
 
   npy_intp ii, jj;
@@ -367,7 +380,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   }
   if (var != Py_None)
   {
-      Py_INCREF(vaearr);
+      Py_INCREF(vararr);
   }
   if (num != Py_None)
   {
@@ -384,14 +397,16 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *inputs = NULL;
   PyObject *masks = NULL;
   PyObject *res = Py_None;
+  PyObject *var = Py_None;
+  PyObject *num = Py_None;
   PyObject *resarr = NULL;
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  static char *kwlist[] = { "inputs", "mask", "res", NULL };
+  static char *kwlist[] = { "inputs", "mask", "res", "var", "num", NULL };
 
-  ok = PyArg_ParseTupleAndKeywords(args, keywds, "O!O!|O:test2", kwlist,
-      &PyList_Type, &inputs, &PyList_Type, &masks, &res);
+  ok = PyArg_ParseTupleAndKeywords(args, keywds, "O!O!|OOO:test2", kwlist,
+      &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
 
@@ -458,8 +473,9 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
       PyErr_Format(PyExc_TypeError, "arrays must have the same shape"); // TODO: check this exception
       return NULL;
     }
-
   }
+
+  npy_intp* refdims = PyArray_DIMS(iarr[0]);
 
   /* getting the contents */
   PyObject **marr = malloc(ninputs * sizeof(PyObject*));
@@ -500,8 +516,17 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
       return NULL;
     }
 
-    // checking sizes
+    // checking dimensions
+    if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
+     {
+       /* Clean up */
+       free(iarr);
+       free(marr);
+       PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
+       return NULL;
+     }
 
+    // checking sizes
     npy_intp* thisdims = PyArray_DIMS(marr[i]);
     if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
     {
@@ -513,27 +538,63 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     }
   }
 
-  /* Creating output images */
-  npy_intp* dims = PyArray_DIMS(iarr[0]);
-  int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
+  /* checks */
+  /* All the images have equal size and are 2D */
 
+  /* If res is none, create a new image, else
+   * check that the size and shape are equal to the rest of images
+   * and use it as output
+   */
+  /* I should check the return values of the functions and
+   * return if some fails
+   */
   if (res == Py_None)
   {
-    int nd = ((PyArrayObject*) iarr[0])->nd; // Must be 2
-
-    resarr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
+    resarr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
+    if(resarr == NULL)
+    {
+      /* Do something */
+      free(iarr);
+      free(marr);
+      return NULL;
+    }
   } else
   {
     resarr = PyArray_FROM_OT(res, NPY_DOUBLE);
   }
 
+  if (var == Py_None)
   {
-
-    vararr = PyArray_SimpleNew(nd, dims, NPY_DOUBLE);
-    numarr = PyArray_SimpleNew(nd, dims, NPY_LONG);
+    vararr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
+    if(vararr == NULL)
+    {
+      /* Do something */
+      free(iarr);
+      free(marr);
+      return NULL;
+    }
+  } else
+  {
+    vararr = PyArray_FROM_OT(var, NPY_DOUBLE);
   }
 
-  double* data = malloc(ninputs * sizeof(double));
+  if (num == Py_None)
+  {
+    numarr = PyArray_SimpleNew(2, refdims, NPY_LONG);
+    if(numarr == NULL)
+    {
+      /* Do something */
+      free(iarr);
+      free(marr);
+      return NULL;
+    }
+  } else
+  {
+    numarr = PyArray_FROM_OT(num, NPY_LONG);
+  }
+
+  npy_double* data = malloc(ninputs * sizeof(npy_double));
+  npy_intp* dims = PyArray_DIMS(iarr[0]);
   /* Assuming 2D arrays */
   npy_intp ii, jj;
   for (ii = 0; ii < dims[0]; ++ii)
@@ -552,8 +613,8 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
         ++used;
       }
 
-      double* p = (double*) PyArray_GETPTR2(resarr, ii, jj);
-      double* v = (double*) PyArray_GETPTR2(vararr, ii, jj);
+      npy_double* p = (npy_double*) PyArray_GETPTR2(resarr, ii, jj);
+      npy_double* v = (npy_double*) PyArray_GETPTR2(vararr, ii, jj);
       long* n = (long*) PyArray_GETPTR2(numarr, ii, jj);
 
       /* Compute the results*/
@@ -561,15 +622,23 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     }
 
   free(data);
-
   free(iarr);
   free(marr);
 
+  // Increasing the reference before returning
   if (res != Py_None)
   {
-    // If res comes from outside
     Py_INCREF(resarr);
   }
+  if (var != Py_None)
+  {
+      Py_INCREF(vararr);
+  }
+  if (num != Py_None)
+  {
+      Py_INCREF(numarr);
+  }
+
   /* If the arrays are created inside, we should use N instead of O */
   return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
 }
