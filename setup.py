@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 import numpy
 
 numpy_include =  numpy.get_include()
-ex1 = Extension('emir.image._combine',['lib/combinemodule.c'],
+ex1 = Extension('emir.image._combine',['src/combinemodule.c'],
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
@@ -15,7 +15,7 @@ setup(name='pyemir',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       long_description='EMIR Data Processing Pipeline',
-      package_dir={'emir': 'src/emir'},
+      package_dir={'emir': 'lib/emir'},
       packages=['emir', 'emir.image'],
       ext_modules=[ex1],
       scripts=['imcombine.py'],
