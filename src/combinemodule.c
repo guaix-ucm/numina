@@ -28,7 +28,14 @@ PyDoc_STRVAR(test1__doc__, "test1 doc");
 PyDoc_STRVAR(test2__doc__, "test2 doc");
 PyDoc_STRVAR(method1__doc__, "method1 doc");
 
-void method_mean(double data[], int size, double* c, double* var, long* number)
+typedef void (*GenericMethodPtr)(double data[], int size, double* c, double* var, long* number, void* params);
+
+typedef struct {
+  const char* name;
+  GenericMethodPtr function;
+} MethodStruct;
+
+void method_mean(double data[], int size, double* c, double* var, long* number, void* params)
 {
   if (size == 0)
   {
@@ -58,6 +65,11 @@ void method_mean(double data[], int size, double* c, double* var, long* number)
   *number = size;
   *var = sum2 / (size - 1) - (sum * sum) / (size * (size - 1));
 }
+
+static MethodStruct methods[] = {
+    {"mean",method_mean},
+    {NULL, NULL}
+};
 
 static PyObject *CombineError;
 
@@ -94,7 +106,8 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
 
   double val, var;
   long number;
-  method_mean(data, ndata, &val, &var, &number);
+  void * params = NULL;
+  method_mean(data, ndata, &val, &var, &number, params);
   free(data);
   return Py_BuildValue("(d,d,i)", val, var, number);
 }
@@ -112,12 +125,14 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  static char *kwlist[] = { "fun", "inputs", "mask", "res", "var", "num", NULL };
+
+  static char *kwlist[] = { "method", "inputs", "mask", "res", "var", "num", NULL };
 
   int ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|OOO:test1", kwlist, &fun,
       &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
+
 
   /* Check that fun is callable */
   if (!PyCallable_Check(fun))
@@ -394,6 +409,7 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   int ok;
   int i;
 
+  const char* method_name = NULL;
   PyObject *inputs = NULL;
   PyObject *masks = NULL;
   PyObject *res = Py_None;
@@ -403,12 +419,31 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  static char *kwlist[] = { "inputs", "mask", "res", "var", "num", NULL };
+  static char *kwlist[] = { "method", "inputs", "mask", "res", "var", "num", NULL };
 
-  ok = PyArg_ParseTupleAndKeywords(args, keywds, "O!O!|OOO:test2", kwlist,
-      &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
+  ok = PyArg_ParseTupleAndKeywords(args, keywds, "sO!O!|OOO:test2", kwlist,
+      &method_name, &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
+
+  /* Check if method is registered in our table */
+  MethodStruct* fiter = methods;
+  GenericMethodPtr method_ptr = NULL;
+  while(fiter->name) {
+    if (!strcmp(method_name, fiter->name)) {
+      method_ptr = fiter->function;
+      break;
+    }
+    ++fiter;
+  }
+
+  if (!method_ptr) {
+    PyErr_Format(PyExc_TypeError, "invalid combination method %s", method_name);
+    return NULL;
+  }
+
+
+
 
   int ninputs = PyList_GET_SIZE(inputs);
 
@@ -597,6 +632,7 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   npy_intp* dims = PyArray_DIMS(iarr[0]);
   /* Assuming 2D arrays */
   npy_intp ii, jj;
+  void *params = NULL;
   for (ii = 0; ii < dims[0]; ++ii)
     for (jj = 0; jj < dims[1]; ++jj)
     {
@@ -618,7 +654,7 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
       long* n = (long*) PyArray_GETPTR2(numarr, ii, jj);
 
       /* Compute the results*/
-      method_mean(data, used, p, v, n);
+      method_ptr(data, used, p, v, n, params);
     }
 
   free(data);

@@ -34,8 +34,8 @@ def ucombine1(method, images, masks, res=None, var=None, num=None):
     return _combine.test1(method, images, masks, res, var, num)
     
 @print_timing
-def ucombine2(images, masks, res, var, num):
-    return _combine.test2(images, masks, res, var, num)
+def ucombine2(method,images, masks, res=None, var=None, num=None):
+    return _combine.test2(method, images, masks, res, var, num)
     
 def test1():
     
@@ -72,7 +72,7 @@ def test2(shape, num):
     images = [numpy.ones(shape) * i  for i in xrange(num)]
     #numdisplay.display(images[0])
     
-    row_interval = 100
+    row_interval = 128
     resf = images[0].copy()
     varf = images[0].copy()
     numf = images[0].copy().astype('int')
@@ -87,8 +87,8 @@ def test2(shape, num):
           slice2 = slice(trow, min(trow + row_interval, shape[0]))
           subimages = [i[(slice2,slice1)] for i in images]
           submasks = [mask[(slice2, slice1)] for i in images]
-          ucombine2(subimages, submasks, resf[(slice2,slice1)], varf[(slice2,slice1)], numf[(slice2,slice1)])
-          #sup.set_data(resf)
+          ucombine2("mean",subimages, submasks, resf[(slice2,slice1)], varf[(slice2,slice1)], numf[(slice2,slice1)])
+          sup.set_data(resf)
           sup = ax.imshow(resf)
           fig.canvas.draw()
           
@@ -189,4 +189,4 @@ def test3():
     print a[2][0, 0]
     
 if __name__ == "__main__":
-    test2((2048,2048), 10)
+    test2((256,128), 100)
