@@ -26,7 +26,8 @@
 PyDoc_STRVAR(combine__doc__, "Module doc");
 PyDoc_STRVAR(test1__doc__, "test1 doc");
 PyDoc_STRVAR(test2__doc__, "test2 doc");
-PyDoc_STRVAR(method1__doc__, "method1 doc");
+PyDoc_STRVAR(method1__doc__, "method_mean doc");
+PyDoc_STRVAR(method2__doc__, "method_median doc");
 
 typedef void (*GenericMethodPtr)(double data[], int size, double* c, double* var, long* number, void* params);
 
@@ -66,8 +67,48 @@ void method_mean(double data[], int size, double* c, double* var, long* number, 
   *var = sum2 / (size - 1) - (sum * sum) / (size * (size - 1));
 }
 
+/*
+ * Algorithm from N. Wirth's book, implementation by N. Devillard.
+ * This code in public domain.
+ * http://ndevilla.free.fr/median/median/index.html
+ */
+typedef double elem_type ;
+
+#define WIRTH_ELEM_SWAP(a,b) { register elem_type t=(a);(a)=(b);(b)=t; }
+
+elem_type kth_smallest(elem_type a[], int n, int k)
+{
+    register int i,j,l,m ;
+    register elem_type x ;
+
+    l=0 ; m=n-1 ;
+    while (l<m) {
+        x=a[k] ;
+        i=l ;
+        j=m ;
+        do {
+            while (a[i]<x) i++ ;
+            while (x<a[j]) j-- ;
+            if (i<=j) {
+                WIRTH_ELEM_SWAP(a[i],a[j]) ;
+                i++ ; j-- ;
+            }
+        } while (i<=j) ;
+        if (j<k) l=i ;
+        if (k<i) m=j ;
+    }
+    return a[k] ;
+}
+
+void method_median_wirth(double data[], int size, double* c, double* var, long* number, void* params) {
+  *c = kth_smallest(data, size, ((size & 1) ? (size / 2) : ((size / 2) - 1)));
+  *var = 0.0;
+  *number = size;
+}
+
 static MethodStruct methods[] = {
     {"mean",method_mean},
+    {"median",method_median_wirth},
     {NULL, NULL}
 };
 
@@ -78,7 +119,7 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
   int ok;
   PyObject *pydata = NULL;
   PyObject *item = NULL;
-  ok = PyArg_ParseTuple(args, "O!:method1", &PyList_Type, &pydata);
+  ok = PyArg_ParseTuple(args, "O!:method_mean", &PyList_Type, &pydata);
   if (!ok)
     return NULL;
 
@@ -86,8 +127,6 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
   int ndata = PyList_GET_SIZE(pydata);
   if (ndata == 0)
     return Py_BuildValue("(d,d,i)", 0., 0., 0);
-  if (ndata == 1)
-    return Py_BuildValue("(d,d,i)", 1.0, 0., 1);
 
   /* Computing when n >= 2 */
   double* data = malloc(ndata * sizeof(double));
@@ -108,6 +147,43 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
   long number;
   void * params = NULL;
   method_mean(data, ndata, &val, &var, &number, params);
+  free(data);
+  return Py_BuildValue("(d,d,i)", val, var, number);
+}
+
+static PyObject* py_method2(PyObject *self, PyObject *args)
+{
+  int ok;
+  PyObject *pydata = NULL;
+  PyObject *item = NULL;
+  ok = PyArg_ParseTuple(args, "O!:method_median", &PyList_Type, &pydata);
+  if (!ok)
+    return NULL;
+
+  /* data is forced to be a list */
+  int ndata = PyList_GET_SIZE(pydata);
+  if (ndata == 0)
+    return Py_BuildValue("(d,d,i)", 0., 0., 0);
+
+  /* Computing when n >= 2 */
+  double* data = malloc(ndata * sizeof(double));
+  int i;
+  for (i = 0; i < ndata; ++i)
+  {
+    item = PyList_GetItem(pydata, i);
+    /*  if (!PyFloat_Check(item))
+     {
+     free(data);
+     PyErr_SetString(PyExc_TypeError, "expected sequence of floats");
+     return NULL;
+     }*/
+    data[i] = PyFloat_AsDouble(item);
+  }
+
+  double val, var;
+  long number;
+  void * params = NULL;
+  method_median_wirth(data, ndata, &val, &var, &number, params);
   free(data);
   return Py_BuildValue("(d,d,i)", val, var, number);
 }
@@ -137,7 +213,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   /* Check that fun is callable */
   if (!PyCallable_Check(fun))
   {
-    PyErr_Format(PyExc_TypeError, "fun is not callable");
+    PyErr_Format(PyExc_TypeError, "method is not callable");
     return NULL;
   }
 
@@ -442,9 +518,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     return NULL;
   }
 
-
-
-
   int ninputs = PyList_GET_SIZE(inputs);
 
   /* we don't like empty lists */
@@ -682,7 +755,8 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
 static PyMethodDef combine_methods[] = { { "test1", (PyCFunction) py_test1,
     METH_VARARGS | METH_KEYWORDS, test1__doc__ }, { "test2",
     (PyCFunction) py_test2, METH_VARARGS | METH_KEYWORDS, test2__doc__ }, {
-    "method1", py_method1, METH_VARARGS, method1__doc__ }, { NULL, NULL, 0,
+    "method_mean", py_method1, METH_VARARGS, method1__doc__ },
+    {"method_median", py_method2, METH_VARARGS, method2__doc__ },{ NULL, NULL, 0,
     NULL } /* sentinel */
 };
 
@@ -701,9 +775,9 @@ PyMODINIT_FUNC init_combine(void)
      * A different base class can be used as base of the exception
      * passing something instead of NULL
      */
-    CombineError = PyErr_NewException("_combine.error", NULL, NULL);
+    CombineError = PyErr_NewException("_combine.CombineError", NULL, NULL);
   }
   Py_INCREF(CombineError);
-  PyModule_AddObject(m, "error", CombineError);
+  PyModule_AddObject(m, "CombineError", CombineError);
 }
 
