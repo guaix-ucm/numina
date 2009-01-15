@@ -27,6 +27,7 @@ import unittest
 
 def print_info():
     '''Info about the system and emir version'''
+    print ''
     print 'python version', sys.version
     print 'my pid', os.getpid()
     print 'emir version', emir.EMIR_VERSION_STRING

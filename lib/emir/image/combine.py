@@ -55,6 +55,12 @@ def valid_index(shape, index):
 
     return True
 
+def new_combine(inputs, masks, method, args, res=None, var=None, num=None):
+    '''Inputs and masks are a list of array objects. method can be a string or a callable object
+    args are the arguments passed to method and (res,var,num) the result'''
+    pass
+
+
 @print_timing
 def combine(input, method, offsets=None, masks=None, output=None):
     ''' Input is a list of arrays

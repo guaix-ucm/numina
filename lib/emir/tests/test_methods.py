@@ -22,7 +22,7 @@
 import unittest
 import emir.image._combine as c
 
-class CombineMethodTestCase(unittest.TestCase):
+class CombineMethodTestCase:
     function = None
     multiValues = None
     def setUp(self):
@@ -47,7 +47,7 @@ class CombineMethodTestCase(unittest.TestCase):
             self.assertAlmostEqual(result[1], i[1][1])
             self.assertEqual(result[2], i[1][2])
 
-class MeanTestCase(CombineMethodTestCase):
+class MeanTestCase(CombineMethodTestCase,unittest.TestCase):
     function = c.method_mean
     multiValues = [
                    ([0.1, 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1], 
@@ -56,7 +56,7 @@ class MeanTestCase(CombineMethodTestCase):
                     (4.5999999999999996, 9.1666666666666661, 10))
                    ]
 
-class MedianTestCase(CombineMethodTestCase):
+class MedianTestCase(CombineMethodTestCase,unittest.TestCase):
     function = c.method_median
     multiValues = [
                    ([0.1, 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1], 

@@ -43,6 +43,9 @@ class CombineFilter1TestCase(unittest.TestCase):
     def test03Exception(self):
         '''Test that an exception is raised if masks list is empty'''
         self.assertRaises(TypeError, c.test1, self.fun, self.validInput, [])
+    def test031Exception(self):
+        '''Test that an exception is raised if inputs and masks lists have different length'''
+        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, self.validMask * 2)
     def test04Exception(self):
         '''Test that an exception is raised if inputs aren't convertible to numpy.array float'''
         self.assertRaises(TypeError, c.test1, self.fun, ["a",["a"]], self.validMask)
@@ -50,11 +53,15 @@ class CombineFilter1TestCase(unittest.TestCase):
         '''Test that an exception is raised if inputs aren't 2D'''
         self.assertRaises(TypeError, c.test1, self.fun, [1, 1], self.validMask)
     def test06Exception(self):
-        '''Test that an exception is raised if masks aren't convertible to numpy.array bool'''
-        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, ["a",["a"]])
-    def test07Exception(self):
-        '''Test that an exception is raised if masks aren't 2D'''
-        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, [[True,False]])
+        '''Test that an exception is raised if inputs aren't the same size'''
+        self.assertRaises(TypeError, c.test1, self.fun, 
+                          [numpy.array([[1,1,1],[1,1,1]]),numpy.array([[1,1],[1,1]])], self.validMask)
+#    def test06Exception(self):
+#        '''Test that an exception is raised if masks aren't convertible to numpy.array bool'''
+#        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, ["a",["a"]])
+#    def test07Exception(self):
+#        '''Test that an exception is raised if masks aren't 2D'''
+#        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, [[True,False]])
 
 def test_suite():
     suite = unittest.TestSuite()
@@ -62,7 +69,5 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    #o = CombineFilter1TestCase()
-    #o.setUp()
-    c.test1(sum, [[[1,1],[1,1]]], [[True,False,True,False]])
+    #c.test1(sum, [numpy.array([[1,1,1],[1,1,1]]),numpy.array([[1,1],[1,1]])], [numpy.array([[True,False],[True,False]])] * 2)
     unittest.main(defaultTest='test_suite')

@@ -1,4 +1,8 @@
-This is pyemir, a set of bindings for emirdfp
+This is PyEmir, the data reduction pipeline for EMIR 
 
+PyEmir is licensed under the GNU GPL. See COPYING for details
 
-pyemir is licensed under the GNU GPL. See COPYING for details
+PyEmir requires the following packages:
+
+ * setuptools
+ * numpy

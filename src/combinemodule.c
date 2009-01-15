@@ -218,17 +218,23 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   }
 
   /* inputs is forced to be a list */
-  int ninputs = PyList_GET_SIZE(inputs);
+  const int ninputs = PyList_GET_SIZE(inputs);
+  /* masks is forced to be a list */
+  const int nmasks = PyList_GET_SIZE(masks);
 
-  /* we don't like empty lists */
   if(ninputs == 0)
   {
     PyErr_Format(PyExc_TypeError, "inputs is empty"); // TODO: check this exception
     return NULL;
   }
+  if(nmasks == 0)
+  {
+    PyErr_Format(PyExc_TypeError, "masks is empty"); // TODO: check this exception
+    return NULL;
+  }
 
   /* number of masks must be equal to the number of inputs */
-  if(PyList_GET_SIZE(masks) != ninputs)
+  if(nmasks != ninputs)
   {
     PyErr_Format(PyExc_TypeError, "masks and inputs are not of the same length"); // TODO: check this exception
   }
@@ -275,10 +281,11 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     npy_intp* refdims = PyArray_DIMS(iarr[0]);
     npy_intp* thisdims = PyArray_DIMS(iarr[i]);
     if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
+    /*if( 1 == 1)*/
     {
       /* Clean up */
       free(iarr);
-      PyErr_Format(PyExc_TypeError, "arrays must have the same shape"); // TODO: check this exception
+      PyErr_Format(PyExc_TypeError, "input arrays must have the same shape"); // TODO: check this exception
       return NULL;
     }
 
@@ -307,6 +314,10 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     /* We don't need item anymore */
     Py_DECREF(item);
 
+    /* It seems that everything can be converted to bool:
+     * None -> False
+     * The rest -> True
+     */
     if (!marr[i])
     {
       /* Can't be converted to array */
@@ -320,7 +331,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     // checking dimensions
     if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
      {
-       /* Clean up */
+       /* throw exception */
        free(iarr);
        free(marr);
        PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
@@ -332,7 +343,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
      npy_intp* thisdims = PyArray_DIMS(marr[i]);
      if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
      {
-       /* Clean up */
+       /* throw exception */
        free(iarr);
        free(marr);
        PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
@@ -356,7 +367,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     resarr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
     if(resarr == NULL)
     {
-      /* Do something */
+      /* throw exception */
       free(iarr);
       free(marr);
       return NULL;
@@ -371,7 +382,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     vararr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
     if(vararr == NULL)
     {
-      /* Do something */
+      /* throw exception */
       free(iarr);
       free(marr);
       return NULL;
@@ -386,7 +397,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     numarr = PyArray_SimpleNew(2, refdims, NPY_LONG);
     if(numarr == NULL)
     {
-      /* Do something */
+      /* throw exception */
       free(iarr);
       free(marr);
       return NULL;
@@ -445,7 +456,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
         free(data);
         free(iarr);
         free(marr);
-
+        /* throw exception */
         return NULL;
       }
 
