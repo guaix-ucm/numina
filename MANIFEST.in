@@ -1,3 +1,4 @@
 include COPYING MANIFEST.in
 include mydirs.py
+include src/methods.h
 

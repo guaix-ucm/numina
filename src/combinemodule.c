@@ -22,6 +22,7 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
+#include "methods.h"
 
 PyDoc_STRVAR(combine__doc__, "Module doc");
 PyDoc_STRVAR(test1__doc__, "test1 doc");
@@ -29,88 +30,6 @@ PyDoc_STRVAR(test2__doc__, "test2 doc");
 PyDoc_STRVAR(method1__doc__, "method_mean doc");
 PyDoc_STRVAR(method2__doc__, "method_median doc");
 
-typedef void (*GenericMethodPtr)(double data[], int size, double* c, double* var, long* number, void* params);
-
-typedef struct {
-  const char* name;
-  GenericMethodPtr function;
-} MethodStruct;
-
-void method_mean(double data[], int size, double* c, double* var, long* number, void* params)
-{
-  if (size == 0)
-  {
-    *c = *var = 0.0;
-    *number = 0;
-    return;
-  }
-
-  if (size == 1)
-  {
-    *c = data[0];
-    *var = 0.0;
-    *number = 1;
-    return;
-  }
-
-  double sum = 0.0;
-  double sum2 = 0.0;
-  int i;
-  for (i = 0; i < size; ++i)
-  {
-    sum += data[i];
-    sum2 += data[i] * data[i];
-  }
-
-  *c = sum / size;
-  *number = size;
-  *var = sum2 / (size - 1) - (sum * sum) / (size * (size - 1));
-}
-
-/*
- * Algorithm from N. Wirth's book, implementation by N. Devillard.
- * This code in public domain.
- * http://ndevilla.free.fr/median/median/index.html
- */
-typedef double elem_type ;
-
-#define WIRTH_ELEM_SWAP(a,b) { register elem_type t=(a);(a)=(b);(b)=t; }
-
-elem_type kth_smallest(elem_type a[], int n, int k)
-{
-    register int i,j,l,m ;
-    register elem_type x ;
-
-    l=0 ; m=n-1 ;
-    while (l<m) {
-        x=a[k] ;
-        i=l ;
-        j=m ;
-        do {
-            while (a[i]<x) i++ ;
-            while (x<a[j]) j-- ;
-            if (i<=j) {
-                WIRTH_ELEM_SWAP(a[i],a[j]) ;
-                i++ ; j-- ;
-            }
-        } while (i<=j) ;
-        if (j<k) l=i ;
-        if (k<i) m=j ;
-    }
-    return a[k] ;
-}
-
-void method_median_wirth(double data[], int size, double* c, double* var, long* number, void* params) {
-  *c = kth_smallest(data, size, ((size & 1) ? (size / 2) : ((size / 2) - 1)));
-  *var = 0.0;
-  *number = size;
-}
-
-static MethodStruct methods[] = {
-    {"mean",method_mean},
-    {"median",method_median_wirth},
-    {NULL, NULL}
-};
 
 static PyObject *CombineError;
 
@@ -763,12 +682,12 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
 }
 
-static PyMethodDef combine_methods[] = { { "test1", (PyCFunction) py_test1,
-    METH_VARARGS | METH_KEYWORDS, test1__doc__ }, { "test2",
-    (PyCFunction) py_test2, METH_VARARGS | METH_KEYWORDS, test2__doc__ }, {
-    "method_mean", py_method1, METH_VARARGS, method1__doc__ },
-    {"method_median", py_method2, METH_VARARGS, method2__doc__ },{ NULL, NULL, 0,
-    NULL } /* sentinel */
+static PyMethodDef combine_methods[] = {
+    {"test1", (PyCFunction) py_test1, METH_VARARGS | METH_KEYWORDS, test1__doc__ },
+    {"test2", (PyCFunction) py_test2, METH_VARARGS | METH_KEYWORDS, test2__doc__ },
+    {"method_mean", py_method1, METH_VARARGS, method1__doc__ },
+    {"method_median", py_method2, METH_VARARGS, method2__doc__ },
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 PyMODINIT_FUNC init_combine(void)
