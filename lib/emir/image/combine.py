@@ -21,6 +21,7 @@
 
 from emir.exceptions import Error
 from _combine import test1
+from _combine import method_mean
 
 def new_combine(inputs, masks, method, args, res=None, var=None, num=None):
     '''Inputs and masks are a list of array objects. method can be a string or a callable object
@@ -28,9 +29,13 @@ def new_combine(inputs, masks, method, args, res=None, var=None, num=None):
     
     # Check inputs
     
-    if length(inputs) == 0:
+    if len(inputs) == 0:
       raise Error
     
-    if length(inputs) != length(masks):
+    if len(inputs) != len(masks):
       raise Error
+    # Check sizes of the images
+    # Check sizes of the masks
+  
+    return test1(method, inputs, masks, res, var, num)
     

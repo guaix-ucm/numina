@@ -345,7 +345,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       for (i = 0; i < ninputs; ++i)
       {
         npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
-        if (*pmask == NPY_FALSE) // <- This decides how the mask is used
+        if (*pmask == NPY_TRUE) // <- This decides how the mask is used
           continue;
 
         npy_double *pdata = PyArray_GETPTR2(iarr[i], ii, jj);
@@ -644,7 +644,7 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
       for (i = 0; i < ninputs; ++i)
       {
         npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
-        if (*pmask == NPY_FALSE) // <- This decides how the mask is used
+        if (*pmask == NPY_TRUE) // <- This decides how the mask is used
           continue;
 
         npy_double *pdata = PyArray_GETPTR2(iarr[i], ii, jj);
