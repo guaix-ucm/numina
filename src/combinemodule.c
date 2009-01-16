@@ -102,7 +102,7 @@ static PyObject* py_method2(PyObject *self, PyObject *args)
   double val, var;
   long number;
   void * params = NULL;
-  method_median_wirth(data, ndata, &val, &var, &number, params);
+  method_median(data, ndata, &val, &var, &number, params);
   free(data);
   return Py_BuildValue("(d,d,i)", val, var, number);
 }

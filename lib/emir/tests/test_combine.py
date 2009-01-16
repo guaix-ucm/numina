@@ -21,6 +21,7 @@
 
 import unittest
 import emir.image._combine as c
+from emir.image.combine import new_combine as n
 import numpy
 
 class CombineFilter1TestCase(unittest.TestCase):
@@ -39,13 +40,13 @@ class CombineFilter1TestCase(unittest.TestCase):
         self.assertRaises(TypeError, c.test1, 1, self.validInput, self.validMask)
     def test02Exception(self):
         '''Test that an exception is raised if inputs list is empty'''
-        self.assertRaises(TypeError, c.test1, self.fun, [], self.validMask)
+        self.assertRaises(TypeError, n, [], self.validMask, self.fun)
     def test03Exception(self):
         '''Test that an exception is raised if masks list is empty'''
-        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, [])
+        self.assertRaises(TypeError, n, self.validInput, [], self.fun)
     def test031Exception(self):
         '''Test that an exception is raised if inputs and masks lists have different length'''
-        self.assertRaises(TypeError, c.test1, self.fun, self.validInput, self.validMask * 2)
+        self.assertRaises(TypeError, n, self.validInput, self.validMask * 2, self.fun)
     def test04Exception(self):
         '''Test that an exception is raised if inputs aren't convertible to numpy.array float'''
         self.assertRaises(TypeError, c.test1, self.fun, ["a",["a"]], self.validMask)
@@ -69,5 +70,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    #c.test1(sum, [numpy.array([[1,1,1],[1,1,1]]),numpy.array([[1,1],[1,1]])], [numpy.array([[True,False],[True,False]])] * 2)
     unittest.main(defaultTest='test_suite')
