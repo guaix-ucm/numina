@@ -30,10 +30,10 @@ def new_combine(inputs, masks, method, args, res=None, var=None, num=None):
     # Check inputs
     
     if len(inputs) == 0:
-      raise Error
+      raise Error("len(inputs) == 0")
     
     if len(inputs) != len(masks):
-      raise Error
+      raise Error("len(inputs) != len(masks)")
     # Check sizes of the images
     # Check sizes of the masks
   
