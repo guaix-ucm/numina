@@ -19,6 +19,5 @@ setup(name='pyemir',
       packages=['emir', 'emir.image', 'emir.devel',
                  'emir.simulation', 'emir.tests'],
       ext_modules=[ex1],
-      scripts=['imcombine.py'],
       requires=['pyfits', 'scipy'],
       )
