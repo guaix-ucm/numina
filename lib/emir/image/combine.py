@@ -21,21 +21,38 @@
 
 from emir.exceptions import Error
 from _combine import test1
+from _combine import test2
 from _combine import method_mean
 
-def new_combine(inputs, masks, method, args, res=None, var=None, num=None):
+def new_combine2(images, masks, method="mean", args=(), res=None, var=None, num=None):
     '''Inputs and masks are a list of array objects. method can be a string or a callable object
     args are the arguments passed to method and (res,var,num) the result'''
     
-    # Check inputs
+    # method should be a string
+    if not isinstance(method, basestring) and not callable(method):
+        raise TypeError('method is neither string nor callable')
     
-    if len(inputs) == 0:
+    # Check inputs    
+    if len(images) == 0:
       raise Error("len(inputs) == 0")
     
-    if len(inputs) != len(masks):
+    if len(images) != len(masks):
       raise Error("len(inputs) != len(masks)")
-    # Check sizes of the images
-    # Check sizes of the masks
-  
-    return test1(method, inputs, masks, res, var, num)
+    
+#    def all_equal(a):
+#        return all(map(lambda x: x[0] == x[1], zip(shapes,shapes[1:])))
+#    # Check sizes of the images
+#    shapes = [i.shape for i in images]
+#    if not all_equal(shapes):
+#        raise Error("shapes of inputs are different")
+#
+#    # Check sizes of the masks
+#    shapes = [i.shape for i in masks]
+#    if not all_equal(shapes):
+#        raise Error("shapes of masks are different")
+    
+    return test2(method, images, masks, res, var, num)
+
+# Temporary workaround
+new_combine1 = new_combine2
     

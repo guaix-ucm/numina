@@ -23,11 +23,11 @@ import numpy
 import numpy.random
 import emir.exceptions as exception
 
-def numberarray(x, size = (5,5)):
+def numberarray(x, shape = (5,5)):
     try:
         iter(x)
     except TypeError:
-        return numpy.ones(size) * x
+        return numpy.ones(shape) * x
     else:
         return x
 
@@ -42,15 +42,15 @@ class DetectorReadoutError(exception.Error):
         exception.Error.__init__(self, txt)
 
 class Detector:
-    def __init__(self, size=(5,5), gain=1.0, ron=0.0, dark=1.0, well=65535, pedestal=200.,flat=1.0, resetval=0,resetnoise=0.0):
-        self.__size = size
-        self.__detector = numpy.zeros(self.__size)
-        self.__gain = numberarray(gain, self.__size)
-        self.__ron = numberarray(ron, self.__size)
-        self.__dark = numberarray(dark, self.__size)
-        self.__pedestal = numberarray(pedestal, self.__size)
-        self.__well = numberarray(well, self.__size)
-        self.__flat = numberarray(flat, self.__size)
+    def __init__(self, shape=(5,5), gain=1.0, ron=0.0, dark=1.0, well=65535, pedestal=200.,flat=1.0, resetval=0,resetnoise=0.0):
+        self.__shape = shape
+        self.__detector = numpy.zeros(self.__shape)
+        self.__gain = numberarray(gain, self.__shape)
+        self.__ron = numberarray(ron, self.__shape)
+        self.__dark = numberarray(dark, self.__shape)
+        self.__pedestal = numberarray(pedestal, self.__shape)
+        self.__well = numberarray(well, self.__shape)
+        self.__flat = numberarray(flat, self.__shape)
         self.__reset_noise = resetnoise
         self.__reset_value = resetval
         self.__time = 0
@@ -72,7 +72,7 @@ class Detector:
         self.__time = 0
         self.__detector[:] = self.__reset_value
         # Considering normal reset noise
-        self.__detector += numpy.random.standard_normal(self.__size) * self.__reset_noise
+        self.__detector += numpy.random.standard_normal(self.__shape) * self.__reset_noise
         self.__time += self.reset_time
         
     def read(self, time = None, source = None):
@@ -84,7 +84,7 @@ class Detector:
         # Gain per channel
         result /= self.__gain
         # Readout noise
-        result += numpy.random.standard_normal(self.__size) * self.__ron
+        result += numpy.random.standard_normal(self.__shape) * self.__ron
         result += self.__pedestal
        # result[result > self.__well] = self.__well
         return result.astype(self.type)
@@ -93,15 +93,15 @@ class Detector:
         return self.__detector
     
     def size(self):
-        return self.__size
+        return self.__shape
     
     def time_since_last_reset(self):
         return self.__time
     
     
 class EmirDetector(Detector):
-    def __init__(self, size=(5,5), gain=1.0, ron=0.0, dark=1.0, well=65535, pedestal=200.,flat=1.0, resetval=0,resetnoise=0.0):
-        Detector.__init__(self, size, gain, ron, dark, well, pedestal, flat, resetval,resetnoise)
+    def __init__(self, shape=(5,5), gain=1.0, ron=0.0, dark=1.0, well=65535, pedestal=200.,flat=1.0, resetval=0,resetnoise=0.0):
+        Detector.__init__(self, shape, gain, ron, dark, well, pedestal, flat, resetval,resetnoise)
         
     def configure(self, options):
         self.options = options

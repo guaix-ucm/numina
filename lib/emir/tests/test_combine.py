@@ -20,47 +20,49 @@
 # $Id$ 
 
 import unittest
-from emir.image.combine import new_combine as n
-from emir.image.combine import method_mean as fun
 import numpy
+from emir.image.combine import new_combine2 as combine
+from emir.image.combine import method_mean as fun
+from emir.exceptions import Error
+
 
 class CombineFilter1TestCase(unittest.TestCase):
     def setUp(self):
         data = numpy.array([[1,2],[1,2]])
         mask = numpy.array([[True,False],[True,False]])
-        self.validInput = [data]
-        self.validMask = [mask]
+        self.validImages = [data]
+        self.validMasks = [mask]
     def tearDown(self):
         pass
     def test01Exception(self):
-        '''Test that an exception is raised if method is not callable'''
+        '''An exception is raised if method is not callable'''
         nonfun = 1
-        self.assertRaises(TypeError, n, self.validInput, self.validMask, nonfun)
+        self.assertRaises(TypeError, combine, self.validImages, self.validMasks, nonfun)
     def test02Exception(self):
-        '''Test that an exception is raised if inputs list is empty'''
-        self.assertRaises(TypeError, n, [], self.validMask, fun)
+        '''An exception is raised if images list is empty'''
+        self.assertRaises(Error, combine, [], self.validMasks, fun)
     def test03Exception(self):
-        '''Test that an exception is raised if masks list is empty'''
-        self.assertRaises(TypeError, n, self.validInput, [], fun)
+        '''An exception is raised if masks list is empty'''
+        self.assertRaises(Error, combine, self.validImages, [], fun)
     def test031Exception(self):
-        '''Test that an exception is raised if inputs and masks lists have different length'''
-        self.assertRaises(TypeError, n, self.validInput, self.validMask * 2, fun)
+        '''An exception is raised if images and masks lists have different length'''
+        self.assertRaises(Error, combine, self.validImages, self.validMasks * 2, fun)
     def test04Exception(self):
-        '''Test that an exception is raised if inputs aren't convertible to numpy.array float'''
-        self.assertRaises(TypeError, n, ["a",["a"]], self.validMask, fun)
+        '''An exception is raised if inputs aren't convertible to numpy.array float'''
+        self.assertRaises(TypeError, combine, ["a"], self.validMasks, fun)
     def test05Exception(self):
-        '''Test that an exception is raised if inputs aren't 2D'''
-        self.assertRaises(TypeError, n, [1, 1], self.validMask, fun)
+        '''An exception is raised if inputs aren't 2D'''
+        self.assertRaises(TypeError, combine, [1], self.validMasks, fun)
     def test06Exception(self):
-        '''Test that an exception is raised if inputs aren't the same size'''
-        self.assertRaises(TypeError,n, [numpy.array([[1,1,1],[1,1,1]]),numpy.array([[1,1],[1,1]])], 
-                          self.validMask, fun)
+        '''An exception is raised if inputs aren't the same size'''
+        self.assertRaises(TypeError, combine, [numpy.array([[1,1,1],[1,1,1]]),numpy.array([[1,1],[1,1]])], 
+                          self.validMasks * 2, fun)
     def test07Exception(self):
-        '''Test that an exception is raised if masks aren't convertible to numpy.array bool'''
-        self.assertRaises(TypeError, n, self.validInput, ["a",["a"]], fun)
+        '''An exception is raised if masks aren't convertible to numpy.array bool'''
+        self.assertRaises(TypeError, combine, self.validImages, [["a"]], fun)
     def test08Exception(self):
-        '''Test that an exception is raised if masks aren't 2D'''
-        self.assertRaises(TypeError, n, self.validInput, [[True,False]], fun)
+        '''An exception is raised if masks aren't 2D'''
+        self.assertRaises(TypeError, combine, self.validImages, [[True,False]], fun)
     def testCombineMean(self):
         '''Combination of float arrays and masks, mean method'''
         input1 = numpy.array([[1,2,3,4],[1,2,3,4],[9,2,0,4]])
@@ -78,7 +80,7 @@ class CombineFilter1TestCase(unittest.TestCase):
                             [1.00833333e+01 , 0., 3., 0.],
                             [5.23e+02 ,  0., 4.5, 5.33333333]])
         rnum = numpy.array([[3, 3, 3, 2],[3, 0, 3, 3],[3, 1, 2, 3]])
-        (res,var,num) = n(inputs, masks, fun, ())
+        (res,var,num) = combine(inputs, masks, "mean", ())
         for i in zip(res.flat, rres.flat):
             self.assertAlmostEqual(i[0], i[1])
         for i in zip(var.flat, rvar.flat):
