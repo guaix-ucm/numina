@@ -24,6 +24,8 @@
 #include <numpy/arrayobject.h>
 #include "methods.h"
 
+#include <vector>
+
 PyDoc_STRVAR(combine__doc__, "Module doc");
 PyDoc_STRVAR(test1__doc__, "test1 doc");
 PyDoc_STRVAR(test2__doc__, "test2 doc");
@@ -48,14 +50,13 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
     return Py_BuildValue("(d,d,i)", 0., 0., 0);
 
   /* Computing when n >= 2 */
-  double* data = malloc(ndata * sizeof(double));
+  std::vector<double> data(ndata);
   int i;
   for (i = 0; i < ndata; ++i)
   {
     item = PyList_GetItem(pydata, i);
     /*  if (!PyFloat_Check(item))
      {
-     free(data);
      PyErr_SetString(PyExc_TypeError, "expected sequence of floats");
      return NULL;
      }*/
@@ -65,8 +66,7 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
   double val, var;
   long number;
   void * params = NULL;
-  method_mean(data, ndata, &val, &var, &number, params);
-  free(data);
+  method_mean(&data[0], ndata, &val, &var, &number, params);
   return Py_BuildValue("(d,d,i)", val, var, number);
 }
 
@@ -85,14 +85,13 @@ static PyObject* py_method2(PyObject *self, PyObject *args)
     return Py_BuildValue("(d,d,i)", 0., 0., 0);
 
   /* Computing when n >= 2 */
-  double* data = malloc(ndata * sizeof(double));
+  std::vector<double> data(ndata);
   int i;
   for (i = 0; i < ndata; ++i)
   {
     item = PyList_GetItem(pydata, i);
     /*  if (!PyFloat_Check(item))
      {
-     free(data);
      PyErr_SetString(PyExc_TypeError, "expected sequence of floats");
      return NULL;
      }*/
@@ -102,8 +101,7 @@ static PyObject* py_method2(PyObject *self, PyObject *args)
   double val, var;
   long number;
   void * params = NULL;
-  method_median(data, ndata, &val, &var, &number, params);
-  free(data);
+  method_median(&data[0], ndata, &val, &var, &number, params);
   return Py_BuildValue("(d,d,i)", val, var, number);
 }
 
@@ -111,7 +109,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
 {
   int i;
   PyObject *fun = NULL;
-  PyObject *inputs = NULL;
+  PyObject *images = NULL;
   PyObject *masks = NULL;
   PyObject *res = Py_None;
   PyObject *var = Py_None;
@@ -121,10 +119,10 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *numarr = NULL;
 
 
-  static char *kwlist[] = { "method", "inputs", "mask", "res", "var", "num", NULL };
+  static char *kwlist[] = { "method", "images", "mask", "res", "var", "num", NULL };
 
   int ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|OOO:test1", kwlist, &fun,
-      &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
+      &PyList_Type, &images, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
 
@@ -136,14 +134,14 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     return NULL;
   }
 
-  /* inputs is forced to be a list */
-  const int ninputs = PyList_GET_SIZE(inputs);
-  /* masks is forced to be a list */
+  /* images are forced to be a list */
+  const int nimages = PyList_GET_SIZE(images);
+  /* masks are forced to be a list */
   const int nmasks = PyList_GET_SIZE(masks);
 
-  if(ninputs == 0)
+  if(nimages == 0)
   {
-    PyErr_Format(PyExc_TypeError, "inputs is empty"); // TODO: check this exception
+    PyErr_Format(PyExc_TypeError, "images is empty"); // TODO: check this exception
     return NULL;
   }
   if(nmasks == 0)
@@ -152,24 +150,23 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     return NULL;
   }
 
-  /* number of masks must be equal to the number of inputs */
-  if(nmasks != ninputs)
+  /* number of masks must be equal to the number of images */
+  if(nmasks != nimages)
   {
-    PyErr_Format(PyExc_TypeError, "masks and inputs are not of the same length"); // TODO: check this exception
+    PyErr_Format(PyExc_TypeError, "masks and images are not of the same length"); // TODO: check this exception
   }
 
   /* getting the contents */
-  PyObject **iarr = malloc(ninputs * sizeof(PyObject*));
+  std::vector<PyObject*> iarr(nimages);
 
-  for (i = 0; i < ninputs; i++)
+  for (i = 0; i < nimages; i++)
   {
-    PyObject *item = PyList_GetItem(inputs, i);
+    PyObject *item = PyList_GetItem(images, i);
     if (!item)
     {
       /* Problem here */
       /* Clean up */
-      free(iarr);
-      PyErr_Format(PyExc_TypeError, "can't get object from inputs list"); // TODO: check this exception
+      PyErr_Format(PyExc_TypeError, "can't get object from images list"); // TODO: check this exception
       return NULL;
     }
     /* To be sure is double */
@@ -182,7 +179,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     {
       /* Can't be converted to array */
       /* Clean up */
-      free(iarr);
       PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy float array"); // TODO: check this exception
       return NULL;
     }
@@ -191,7 +187,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (at least 2D)
     {
       /* Clean up */
-      free(iarr);
       PyErr_Format(PyExc_TypeError, "input array must be (at least) bidimensional"); // TODO: check this exception
       return NULL;
     }
@@ -203,7 +198,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     /*if( 1 == 1)*/
     {
       /* Clean up */
-      free(iarr);
       PyErr_Format(PyExc_TypeError, "input arrays must have the same shape"); // TODO: check this exception
       return NULL;
     }
@@ -213,17 +207,15 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   npy_intp* refdims = PyArray_DIMS(iarr[0]);
 
   /* getting the contents */
-  PyObject **marr = malloc(ninputs * sizeof(PyObject*));
+  std::vector<PyObject*> marr(nimages);
 
-  for (i = 0; i < ninputs; i++)
+  for (i = 0; i < nimages; i++)
   {
     PyObject *item = PyList_GetItem(masks, i);
     if (!item)
     {
       /* Problem here */
       /* Clean up */
-      free(iarr);
-      free(marr);
       PyErr_Format(PyExc_TypeError, "can't get object from masks list"); // TODO: check this exception
       return NULL;
     }
@@ -241,8 +233,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     {
       /* Can't be converted to array */
       /* Clean up */
-      free(iarr);
-      free(marr);
       PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy bool array"); // TODO: check this excepti
       return NULL;
     }
@@ -251,8 +241,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
      {
        /* throw exception */
-       free(iarr);
-       free(marr);
        PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
        return NULL;
      }
@@ -263,8 +251,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
      if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
      {
        /* throw exception */
-       free(iarr);
-       free(marr);
        PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
        return NULL;
      }
@@ -287,8 +273,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     if(resarr == NULL)
     {
       /* throw exception */
-      free(iarr);
-      free(marr);
       return NULL;
     }
   } else
@@ -302,8 +286,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     if(vararr == NULL)
     {
       /* throw exception */
-      free(iarr);
-      free(marr);
       return NULL;
     }
   } else
@@ -317,8 +299,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     if(numarr == NULL)
     {
       /* throw exception */
-      free(iarr);
-      free(marr);
       return NULL;
     }
   } else
@@ -333,7 +313,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
    * to build the PyList with PyObjects and make the conversion to doubles
    * inside the final function only
    */
-  npy_double* data = malloc(ninputs * sizeof(npy_double));
+  std::vector<npy_double> data(nimages);
   npy_intp* dims = PyArray_DIMS(iarr[0]);
 
   npy_intp ii, jj;
@@ -342,13 +322,13 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
     {
       int used = 0;
       /* Collect the valid values */
-      for (i = 0; i < ninputs; ++i)
+      for (i = 0; i < nimages; ++i)
       {
         npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
         if (*pmask == NPY_TRUE) // <- This decides how the mask is used
           continue;
 
-        npy_double *pdata = PyArray_GETPTR2(iarr[i], ii, jj);
+        npy_double *pdata = static_cast<double*>PyArray_GETPTR2(iarr[i], ii, jj);
         data[i] = *pdata;
         ++used;
       }
@@ -372,9 +352,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       if (!result)
       {
         /* Clean up */
-        free(data);
-        free(iarr);
-        free(marr);
         /* throw exception */
         return NULL;
       }
@@ -390,9 +367,6 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       Py_DECREF(result);
     }
 
-  free(data);
-  free(iarr);
-  free(marr);
 
   // Increasing the reference before returning
   if (res != Py_None)
@@ -416,7 +390,7 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   int i;
 
   const char* method_name = NULL;
-  PyObject *inputs = NULL;
+  PyObject *images = NULL;
   PyObject *masks = NULL;
   PyObject *res = Py_None;
   PyObject *var = Py_None;
@@ -425,10 +399,10 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *vararr = NULL;
   PyObject *numarr = NULL;
 
-  static char *kwlist[] = { "method", "inputs", "mask", "res", "var", "num", NULL };
+  static char *kwlist[] = { "method", "images", "mask", "res", "var", "num", NULL };
 
   ok = PyArg_ParseTupleAndKeywords(args, keywds, "sO!O!|OOO:test2", kwlist,
-      &method_name, &PyList_Type, &inputs, &PyList_Type, &masks, &res, &var, &num);
+      &method_name, &PyList_Type, &images, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
 
@@ -448,33 +422,32 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     return NULL;
   }
 
-  int ninputs = PyList_GET_SIZE(inputs);
+  int nimages = PyList_GET_SIZE(images);
 
   /* we don't like empty lists */
-  if(ninputs == 0)
+  if(nimages == 0)
   {
-    PyErr_Format(PyExc_TypeError, "inputs is empty"); // TODO: check this exception
+    PyErr_Format(PyExc_TypeError, "images is empty"); // TODO: check this exception
     return NULL;
   }
 
-  /* number of masks must be equal to the number of inputs */
-  if(PyList_GET_SIZE(masks) != ninputs)
+  /* number of masks must be equal to the number of images */
+  if(PyList_GET_SIZE(masks) != nimages)
   {
-    PyErr_Format(PyExc_TypeError, "masks and inputs are not of the same length"); // TODO: check this exception
+    PyErr_Format(PyExc_TypeError, "masks and images are not of the same length"); // TODO: check this exception
   }
 
   /* getting the contents */
-  PyObject **iarr = malloc(ninputs * sizeof(PyObject*));
+  std::vector<PyObject*> iarr(nimages);
 
-  for (i = 0; i < ninputs; i++)
+  for (i = 0; i < nimages; i++)
   {
-    PyObject *item = PyList_GetItem(inputs, i);
+    PyObject *item = PyList_GetItem(images, i);
     if (!item)
     {
       /* Problem here */
       /* Clean up */
-      free(iarr);
-      PyErr_Format(PyExc_TypeError, "can't get object from inputs list"); // TODO: check this exception
+      PyErr_Format(PyExc_TypeError, "can't get object from images list"); // TODO: check this exception
       return NULL;
     }
     /* To be sure it is double */
@@ -487,7 +460,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     {
       /* Can't be converted to array */
       /* Clean up */
-      free(iarr);
       PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy float array"); // TODO: check this exception
       return NULL;
     }
@@ -496,7 +468,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (at least 2D)
     {
       /* Clean up */
-      free(iarr);
       PyErr_Format(PyExc_TypeError, "input array must be (at least) bidimensional"); // TODO: check this exception
       return NULL;
     }
@@ -507,7 +478,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
     {
       /* Clean up */
-      free(iarr);
       PyErr_Format(PyExc_TypeError, "arrays must have the same shape"); // TODO: check this exception
       return NULL;
     }
@@ -516,17 +486,15 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
   npy_intp* refdims = PyArray_DIMS(iarr[0]);
 
   /* getting the contents */
-  PyObject **marr = malloc(ninputs * sizeof(PyObject*));
+  std::vector<PyObject*> marr(nimages);
 
-  for (i = 0; i < ninputs; i++)
+  for (i = 0; i < nimages; i++)
   {
     PyObject *item = PyList_GetItem(masks, i);
     if (!item)
     {
       /* Problem here */
       /* Clean up */
-      free(iarr);
-      free(marr);
       PyErr_Format(PyExc_TypeError, "can't get object from masks list"); // TODO: check this exception
       return NULL;
     }
@@ -539,8 +507,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     {
       /* Can't be converted to array */
       /* Clean up */
-      free(iarr);
-      free(marr);
       PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy bool array"); // TODO: check this exception
       return NULL;
     }
@@ -548,8 +514,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
     {
       /* Clean up */
-      free(iarr);
-      free(marr);
       PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
       return NULL;
     }
@@ -558,8 +522,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
      {
        /* Clean up */
-       free(iarr);
-       free(marr);
        PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
        return NULL;
      }
@@ -569,8 +531,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
     {
       /* Clean up */
-      free(iarr);
-      free(marr);
       PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
       return NULL;
     }
@@ -592,8 +552,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if(resarr == NULL)
     {
       /* Do something */
-      free(iarr);
-      free(marr);
       return NULL;
     }
   } else
@@ -607,8 +565,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if(vararr == NULL)
     {
       /* Do something */
-      free(iarr);
-      free(marr);
       return NULL;
     }
   } else
@@ -622,8 +578,6 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     if(numarr == NULL)
     {
       /* Do something */
-      free(iarr);
-      free(marr);
       return NULL;
     }
   } else
@@ -631,7 +585,7 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     numarr = PyArray_FROM_OT(num, NPY_LONG);
   }
 
-  npy_double* data = malloc(ninputs * sizeof(npy_double));
+  std::vector<npy_double> data(nimages);
   npy_intp* dims = PyArray_DIMS(iarr[0]);
   /* Assuming 2D arrays */
   npy_intp ii, jj;
@@ -641,13 +595,13 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
     {
       int used = 0;
       /* Collect the valid values */
-      for (i = 0; i < ninputs; ++i)
+      for (i = 0; i < nimages; ++i)
       {
         npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
         if (*pmask == NPY_TRUE) // <- This decides how the mask is used
           continue;
 
-        npy_double *pdata = PyArray_GETPTR2(iarr[i], ii, jj);
+        npy_double *pdata = static_cast<double*>(PyArray_GETPTR2(iarr[i], ii, jj));
         data[i] = *pdata;
         ++used;
       }
@@ -657,12 +611,9 @@ static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
       long* n = (long*) PyArray_GETPTR2(numarr, ii, jj);
 
       /* Compute the results*/
-      method_ptr(data, used, p, v, n, params);
+      method_ptr(&data[0], used, p, v, n, params);
     }
 
-  free(data);
-  free(iarr);
-  free(marr);
 
   // Increasing the reference before returning
   if (res != Py_None)
