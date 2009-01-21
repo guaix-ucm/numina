@@ -20,13 +20,26 @@
 # $Id$
 
 import time
+import logging
+
+logger = logging.getLogger("emir")
 
 def print_timing(func):
-    '''Timing decorator'''
+    '''Print timing decorator'''
     def wrapper(*arg,**keywords):
         t1 = time.time()
         res = func(*arg,**keywords)
         t2 = time.time()
         print '%s took %0.3f s' % (func.func_name, (t2 - t1))
+        return res
+    return wrapper
+
+def log_timing(func):
+    '''Log timing decorator'''
+    def wrapper(*arg,**keywords):
+        t1 = time.time()
+        res = func(*arg,**keywords)
+        t2 = time.time()
+        logger.debug('%s took %0.3f s' % (func.func_name, (t2 - t1)))
         return res
     return wrapper

@@ -1,6 +1,6 @@
 # $Id$
 
-EMIR_VERSION_STRING = '0.1.0'
+EMIR_VERSION_STRING = '0.1.0dev'
 
 import logging
 
