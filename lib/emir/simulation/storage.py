@@ -109,4 +109,4 @@ class FitsStorage:
             logger.info('Done %s', (self.filename % self.last))
             self.last += 1
         except IOError, strrerror:
-            self.lg.error(strrerror)
+            logger.error(strrerror)
