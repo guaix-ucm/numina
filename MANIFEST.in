@@ -1,4 +1,4 @@
 include COPYING MANIFEST.in
-include mydirs.py
 include src/methods.h
+include lib/emir/simulation/*.dat
 

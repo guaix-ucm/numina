@@ -38,13 +38,12 @@ class Lamp:
 class Lamps:
     def __init__(self, lamplist):
         self.lamplist = lamplist
-        
-    def get_source(self):
+    
+    @property
+    def source(self):
         for i in self.lamplist:
             if i.power:
                 return i.source
-            
-    source = property(get_source)
     
     def switch(status):
         for i in self.lamplist:

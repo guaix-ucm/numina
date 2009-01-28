@@ -17,10 +17,11 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id: storage.py 382 2009-01-19 10:19:54Z spr $
+# $Id$
 
 import logging
 
 class NullHandler(logging.Handler):
+    '''NullHandler is the default log handler of the package'''
     def emit(self, record):
         pass

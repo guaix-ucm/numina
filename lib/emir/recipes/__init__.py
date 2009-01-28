@@ -19,7 +19,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id: rime-s.py 386 2009-01-20 18:10:57Z spr $
+# $Id$
 
 import logging
 
