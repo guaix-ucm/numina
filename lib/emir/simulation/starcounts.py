@@ -26,6 +26,21 @@ from math import pow, sin, cos, tan
 from scipy import array
 import scipy.interpolate as sil
 from scipy.io import read_array
+from emir.exceptions import Error
+import sys, os
+
+def _find(pathname, matchfunc=os.path.isfile):
+    for dirname in sys.path:
+        candidate = os.path.join(dirname, pathname)
+        if matchfunc(candidate):
+            return candidate
+    raise Error("Can't find file %s" % pathname)
+
+def findFile(pathname):
+    return _find(pathname)
+
+def findDir(pathname):
+    return _find(pathname,matchfunc=os.path.isdir)
 
 class Counts:
     INTEGRAL_COUNTS = 0,
@@ -94,8 +109,8 @@ class SpagnaModel:
     Number of stars per square arc minute
     '''
     
-    _J_counts_filename = "spagna-J.dat"
-    _K_counts_filename = "spagna-K.dat"
+    _J_counts_filename = findFile("emir/simulation/spagna-J.dat")
+    _K_counts_filename = findFile("emir/simulation/spagna-K.dat")
     with open(_J_counts_filename) as f:
         _J_counts_data = read_array(f)
         # Data in file is for square degree
@@ -210,5 +225,41 @@ if __name__ == '__main__':
     print sgmodel.integral_counts(18)
     print bsmodel.differential_counts(18)
     
+    import numpy.random
+    
+    class GeneralRandom:
+        ''' Recipe from http://code.activestate.com/recipes/576556/'''
+        def __init__(self, x, p, Nrl = 1000):
+            self.x = x
+            self.pdf = p / p.sum()
+            self.cdf = self.pdf.cumsum()
+            self.inversecdfbins = Nrl
+            self.Nrl = Nrl
+            y = numpy.arange(Nrl) / float(Nrl)
+            delta = 1.0 / Nrl
+            self.inversecdf = numpy.zeros(Nrl)
+            self.inversecdf[0] = self.x[0]
+            cdf_idx = 0
+            for n in xrange(1, self.inversecdfbins):
+                while self.cdf[cdf_idx] < y [n] and cdf_idx < Nrl:
+                    cdf_idx += 1
+                # Seems a linear interpolation    
+                self.inversecdf[n] = self.x[cdf_idx-1] + (self.x[cdf_idx] - self.x[cdf_idx-1]) * (y[n] - self.cdf[cdf_idx-1])/(self.cdf[cdf_idx] - self.cdf[cdf_idx-1])
+                if cdf_idx >= Nrl:
+                    break
+            self.delta_inversecdf = numpy.concatenate((numpy.diff(self.inversecdf), [0]))
+        
+        def random(self, N = 1000):
+            idx_f = numpy.random.uniform(size = N, high = self.Nrl-1)
+            idx = numpy.array([idx_f],'i')
+            y = self.inversecdf[idx] + (idx_f - idx)*self.delta_inversecdf[idx]
+            return y
+    
+    N = 100
+    x = 12. + 0.1 * numpy.arange(N)
+    p = numpy.array([bsmodel.differential_counts(i) for i in x])
+    g = GeneralRandom(x, p)
+    print g.random()
     
     
+
