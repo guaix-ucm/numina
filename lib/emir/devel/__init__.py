@@ -33,5 +33,5 @@ def somegauss(shape, level, gaussians = None):
           sigma0 = i[2]
           intensity = i[3]
           im +=  intensity * numpy.exp(-((x - x0)**2+(y - y0)**2)/(sigma0)**2)
-  nim = numpy.random.poisson(im)
-  return nim
+  
+  return im

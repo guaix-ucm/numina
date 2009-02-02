@@ -216,14 +216,14 @@ class BSModel:
 
 if __name__ == '__main__':
     rbmodel = RBModel()
-    print rbmodel.integral_counts(18)
-    print rbmodel.differential_counts(18)    
+    #print rbmodel.integral_counts(18)
+    #print rbmodel.differential_counts(18)    
     sgmodel = SpagnaModel()
-    print sgmodel.integral_counts(18)
-    print sgmodel.differential_counts(18)
+    #print sgmodel.integral_counts(18)
+    #print sgmodel.differential_counts(18)
     bsmodel = BSModel()
-    print sgmodel.integral_counts(18)
-    print bsmodel.differential_counts(18)
+    #print sgmodel.integral_counts(18)
+    #print bsmodel.differential_counts(18)
     
     import numpy.random
     
@@ -255,11 +255,38 @@ if __name__ == '__main__':
             y = self.inversecdf[idx] + (idx_f - idx)*self.delta_inversecdf[idx]
             return y
     
-    N = 100
-    x = 12. + 0.1 * numpy.arange(N)
-    p = numpy.array([bsmodel.differential_counts(i) for i in x])
+    scmodel = sgmodel
+    magmin = 12.0
+    magmax = 18.0
+    
+    plate_scale = 0.2
+    detector_shape = (2048, 2048)
+    detector_area = (plate_scale ** 2 *  detector_shape[0] * detector_shape[1]) / 3600
+    
+    nstars = int(round(detector_area * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))))  
+    print nstars
+    
+    seeing = 1.0
+    from math import sqrt, log
+    scale = 2 * sqrt(2 * log(2))
+    
+    delta = 0.1
+    steps = int(round((magmax - magmin) / delta))
+    x = magmin + delta * numpy.arange(steps)
+    p = numpy.array([scmodel.differential_counts(i) for i in x])
     g = GeneralRandom(x, p)
-    print g.random()
     
     
-
+    numpy.random.seed(100)
+    x = numpy.random.uniform(high=2048,size=nstars)
+    y = numpy.random.uniform(high=2048,size=nstars)
+    sigmas = [seeing / scale / plate_scale] * nstars
+    ints = [100] * nstars 
+    mag = g.random(N=nstars)
+    
+    from emir.devel import somegauss
+    print sigmas[0]
+    result = somegauss((2048,2048), 1000, zip(x,y,sigmas,ints))
+    from numdisplay import display
+    display(result)
+    
