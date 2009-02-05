@@ -22,9 +22,12 @@
 # $Id$
 
 import logging
+from optparse import OptionParser
 
 logger = logging.getLogger("emir.recipes")
 
 class Recipe:
-  def run(self):
-    logger.info("Hello, I\'m Recipe")
+    parser =  OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
+    parser.add_option('-e',action="store_true", dest="test", default=False, help="test documentation")
+    def run(self):
+        logger.info("Hello, I\'m Recipe")
