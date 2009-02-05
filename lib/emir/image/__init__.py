@@ -22,7 +22,7 @@
 import numpy
 from scipy import maximum, minimum
 
-def subarray_match(shape, ref, sshape, sref = None):
+def subarray_match(shape, ref, sshape, sref = (0,0)):
   '''Matches two arrays, given the different shapes given by shape and sshape, and a reference point ref
   It returnes a tuple of slices, that can be passed to the two images as indexes
   
@@ -36,8 +36,8 @@ def subarray_match(shape, ref, sshape, sref = None):
   # Reference point in im
   ref1 = numpy.array(ref, dtype='int')  
   # Ref2 is the reference point in sim  
-  # The center of the array by default
-  ref2 = numpy.array(sshape) / 2 if sref is None else numpy.array(sref)   
+  # The pixel [0,0] of the array by default
+  ref2 = numpy.array(sref)   
   offset = ref1 - ref2    
   urc1 = minimum(offset + numpy.array(sshape) - 1, numpy.array(shape) - 1)
   blc1 = maximum(offset, 0)
