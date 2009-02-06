@@ -26,8 +26,41 @@ from optparse import OptionParser
 
 logger = logging.getLogger("emir.recipes")
 
-class Recipe:
+class RecipeBase:
+    '''Base class for Recipes of all kinds'''
+    def run(self):
+        pass
+
+
+class Recipe(RecipeBase):
+    '''Short description of the recipe.
+    
+    Long description of the recipe.
+    Its spans several lines'''
+    
     parser =  OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
     parser.add_option('-e',action="store_true", dest="test", default=False, help="test documentation")
+    
     def run(self):
         logger.info("Hello, I\'m Recipe")
+        
+        
+        
+class DirectImagingRecipe(RecipeBase):
+    '''Recipe to process data taken in Direct Imaging Mode.
+    
+    Inputs of the recipe:
+        Science frames
+        Offsets between them
+        Master Dark
+        Bad pixel mask (BPM)
+        Non-linearity correction polynomials
+        Master flat
+        Master background
+        Exposure Time (must be the same in all the frames)
+        Airmass for each frame
+        Detector model (gain, RN)
+        Average extinction in the filter
+    '''
+    pass  
+

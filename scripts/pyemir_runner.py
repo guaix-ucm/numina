@@ -21,13 +21,19 @@
 
 # $Id$
 
+'''This is a very long and convenient description of the program and its usage.
+
+This is the long description.
+It will span several lines'''
+
+
 import logging
 
 logger = logging.getLogger("emir")
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(levelname)s %(message)s")
+formatter = logging.Formatter("%(name)s %(levelname)s %(message)s")
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
@@ -43,19 +49,17 @@ import sys
 from optparse import OptionParser
 
 version_number = "0.1"
+version_line = '%prog ' + version_number
+description = __doc__
 
 def main():
     usage = "usage: %prog [options] recipe [recipe-options]"
-    description='''this is a very long and convenient description of the programa and its usage
-    it will span several lines'''
-    parser = OptionParser(usage=usage, version="%prog 0.1", description=description)
+    parser = OptionParser(usage=usage, version=version_line, description=description)
     parser.add_option('-d', '--debug',action="store_true", dest="debug", default=False, help="make lots of noise [default]")
     parser.add_option('-o', '--output',action="store", dest="filename", metavar="FILE", help="write output to FILE")
     # Stop when you find the first argument
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args()
-    
-      
     
     if not options.debug:
         l = logging.getLogger("emir")
@@ -80,17 +84,19 @@ def main():
         for part in modulen.split('.')[1:]:
             module = getattr(module, part)
             try:
-                cons = getattr(module,recipe)
+                cons = getattr(module, recipe)
             except AttributeError:
                 logger.error("% s doesn't exist", recipe)
                 sys.exit(2)
     
+        logger.debug('Created recipe instance')
         recipe = cons()
         # Parse the rest of the options
+        logger.debug('Parsing the options provided by recipe instance')
         (options, noargs) = recipe.parser.parse_args(args=args[1:])
-        recipe.run()
-        
-
+        logger.debug('Running the recipe instance')
+        result = recipe.run()
+        logger.debug('The result of the instance is %s', str(result))
 
 if __name__ == '__main__':
-  main()
+    main()
