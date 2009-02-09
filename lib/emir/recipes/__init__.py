@@ -28,25 +28,49 @@ logger = logging.getLogger("emir.recipes")
 
 class RecipeBase:
     '''Base class for Recipes of all kinds'''
+    def __init__(self):
+        self.parser = OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
     def run(self):
         pass
+        
+        
+class BiasImaging(RecipeBase):
+    pass
 
+class DarkImaging(RecipeBase):
+    pass
 
-class Recipe(RecipeBase):
-    '''Short description of the recipe.
-    
-    Long description of the recipe.
-    Its spans several lines'''
-    
-    parser =  OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
-    parser.add_option('-e',action="store_true", dest="test", default=False, help="test documentation")
-    
-    def run(self):
-        logger.info("Hello, I\'m Recipe")
+class IntensityFlatField(RecipeBase):
+    pass
+
+class SpectralFlatField(RecipeBase):
+    pass
+
+class SlitTransmissionCalibration(RecipeBase):
+    pass 
+
+class WavelengthCalibration(RecipeBase):
+    pass 
+
+class TsRoughFocs(RecipeBase):
+    pass
         
+class TsFineFocs(RecipeBase):
+    pass
+
+class EmirFocusControl(RecipeBase):
+    pass
+
+class TargetAcquisition(RecipeBase):
+    pass
+
+class MaskImage(RecipeBase):
+    pass
+
+class SlitCheck(Recipebase):
+    pass
         
-        
-class DirectImagingRecipe(RecipeBase):
+class StareImage(RecipeBase):
     '''Recipe to process data taken in Direct Imaging Mode.
     
     Inputs of the recipe:
@@ -62,5 +86,34 @@ class DirectImagingRecipe(RecipeBase):
         Detector model (gain, RN)
         Average extinction in the filter
     '''
-    pass  
+    pass
+
+class NBImage(RecipeBase):
+    pass
+
+class DitheredImage(RecipeBase):
+    pass
+        
+class MicroDitheredImage(RecipeBase):
+    pass
+
+class MosaicedImage(RecipeBase):
+    pass
+
+class StareSpectra(RecipeBase):
+    pass
+
+class DNSpectra(RecipeBase):
+    pass
+
+class OffsetSpectra(Recipebase):
+    pass
+        
+class DirectImagingRecipe(RecipeBase):
+    pass
+
+if __name__ == "__main__":
+    a = DirectImagingRecipe()
+    print a.parser
+
 
