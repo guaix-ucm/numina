@@ -26,36 +26,15 @@ import os
 import pickle
 import logging
 
-logger = logging.getLogger("emir.fits_storage")
+logger = logging.getLogger("emir.storage")
 
-class FitsStorage:
-    longname = 'fits storage'
-    def __init__(self, default_fits_headers, filename, directory, index):
-        self.filename = filename
+# Classes are new style
+__metaclass__ = type
+
+class Storage:
+    def __init__(self, default_fits_headers):
         self.default_fits_headers = default_fits_headers
-        self.dir = directory
-        self.pstore = index
-        self.last = 0
-        self.complete = os.path.realpath(os.path.join(self.dir,self.filename))
-        logger.debug('Accessing image dir: %s' % self.dir)
-        if not os.access(self.dir, os.F_OK):
-            logger.debug('Creating image dir %s' % self.dir)
-            os.mkdir(self.dir)
-        try:
-            with open(self.pstore,'rb') as pkl_file:
-                logger.debug('Loading status in %s' % self.pstore)
-                self.last = pickle.load(pkl_file)
-        except IOError, strrerror:            
-            logger.error(strrerror)
-                
-    def __del__(self):
-    	try:
-    		with open(self.pstore, 'wb') as pkl_file:                
-    		    pickle.dump(self.last, pkl_file)
-                logger.debug('Storing status in %s' % self.pstore)
-        except IOError, strrerror:            
-            logger.error(strrerror)
-
+        
     def add_fits_primary(self, template_headers, data = None, updateheaders = None):
         hdu = pyfits.PrimaryHDU(data, template_headers)
         header = hdu.header        
@@ -69,13 +48,12 @@ class FitsStorage:
                     logger.warning("Keyword %s not permitted IN FITS header", key)
         return hdu
     
-    
-    
-    def store(self, data=None, variance=None, wcs=None, pipeline=None, engineering=None, headers = None):
-        if headers is None:
-            headers = {'RUN':self.last}
-        else:
-            headers.update({'RUN':self.last})
+    def store(self, data = None, variance = None, wcs = None, 
+              pipeline = None, engineering = None, headers = None):
+        #if headers is None:
+        #    headers = {'RUN':self.last}
+        #else:
+        #    headers.update({'RUN':self.last})
         # Primary    
         created_hdus = []
         created_hdus.append(self.add_fits_primary(self.default_fits_headers['primary'], data, updateheaders = headers))
@@ -100,9 +78,37 @@ class FitsStorage:
         if engineering is not None:
             hdu = add_fits_extension('ENGINEERING', wcs_headers, empty=True)
             created_hdus.append(hdu)
-    
-            
+                
         hdulist = pyfits.HDUList(created_hdus)
+        return hdulist
+
+class FitsStorage:
+    def __init__(self, filename, directory, index):
+        self.filename = filename
+        self.dir = directory
+        self.pstore = index
+        self.last = 0
+        self.complete = os.path.realpath(os.path.join(self.dir,self.filename))
+        logger.debug('Accessing image dir: %s' % self.dir)
+        if not os.access(self.dir, os.F_OK):
+            logger.debug('Creating image dir %s' % self.dir)
+            os.mkdir(self.dir)
+        try:
+            with open(self.pstore,'rb') as pkl_file:
+                logger.debug('Loading status in %s' % self.pstore)
+                self.last = pickle.load(pkl_file)
+        except IOError, strrerror:            
+            logger.error(strrerror)
+                
+    def __del__(self):
+    	try:
+    		with open(self.pstore, 'wb') as pkl_file:                
+    		    pickle.dump(self.last, pkl_file)
+                logger.debug('Clean up, storing internal status in %s and exiting' % self.pstore)
+        except IOError, strrerror:            
+            logger.error(strrerror)
+            
+    def store(self, hdulist):
         logger.info('Writing to disk')
         try:
             hdulist.writeto(self.complete % self.last)
@@ -110,3 +116,4 @@ class FitsStorage:
             self.last += 1
         except IOError, strrerror:
             logger.error(strrerror)
+        

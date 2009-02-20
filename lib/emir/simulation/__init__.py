@@ -25,6 +25,9 @@ from scipy.special import erf
 from scipy import maximum, minimum
 from emir.image import subarray_match
 
+# Classes are new style
+__metaclass__ = type
+
 class Profile:
     '''Base class for 2D profiles'''
     def __init__(self, shape, offset):

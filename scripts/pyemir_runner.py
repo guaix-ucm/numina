@@ -48,6 +48,10 @@ logger.addHandler(ch)
 import sys
 from optparse import OptionParser
 
+import pyfits
+
+from emir.simulation.storage import FitsStorage
+
 version_number = "0.1"
 version_line = '%prog ' + version_number
 description = __doc__
@@ -57,6 +61,7 @@ def main():
     parser = OptionParser(usage=usage, version=version_line, description=description)
     parser.add_option('-d', '--debug',action="store_true", dest="debug", default=False, help="make lots of noise [default]")
     parser.add_option('-o', '--output',action="store", dest="filename", metavar="FILE", help="write output to FILE")
+    parser.add_option('-l', action="store", dest="logging", metavar="FILE", help="FILE with logging configuration")
     # Stop when you find the first argument
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args()
@@ -67,14 +72,30 @@ def main():
         l = logging.getLogger("runner")
         l.setLevel(logging.INFO)
         
-    logger.debug('Emir recipe runner %s', version_number) 
+    logger.debug('Emir recipe runner %s', version_number)
+    
+    
+    
+    filename='r%05d.fits'
+    fits_conf = {'directory': 'images',
+                 'index': 'images/index.pkl',
+                 'filename': filename}
+    
+    
+    logger.info('Creating FITS storage')
+    storage = FitsStorage(**fits_conf)
+    
+    # Registered actions:
+    actions = {pyfits.HDUList: ('FITS file', storage.store)}
+    
+    default_module = 'emir.recipes'
         
     for i in args[0:1]:
         comps = i.split('.')
         recipe = comps[-1]
         logger.debug('recipe is %s',recipe)
         if len(comps) == 1:
-            modulen = 'emir.recipes'
+            modulen = default_module
         else:
             modulen = '.'.join(comps[0:-1])
         logger.debug('module is %s', modulen)
@@ -94,9 +115,20 @@ def main():
         # Parse the rest of the options
         logger.debug('Parsing the options provided by recipe instance')
         (options, noargs) = recipe.parser.parse_args(args=args[1:])
+        
+        logger.debug('Setting-up the recipe')
+        recipe.setup()
+        
         logger.debug('Running the recipe instance')
         result = recipe.run()
-        logger.debug('The result of the instance is %s', str(result))
+        
+        logger.debug('Getting action for result')
+        try:
+            desc, action = actions[type(result)]
+            logger.debug('Action for result is %s', desc)
+            action(result)
+        except KeyError:
+            logger.warning('No action defined for type %s', type(result))
 
 if __name__ == '__main__':
     main()
