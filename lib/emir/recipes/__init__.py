@@ -34,8 +34,14 @@ class RecipeBase:
     def __init__(self):
         self.parser = OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
     def setup(self):
+        '''Initialize structures only once before recipe execution'''
         pass
     def run(self):
+        '''Run the recipe, don't override'''
+        result = self.process()
+        return result
+    def process(self):
+        ''' Override this method with custom code'''
         pass
         
         
@@ -120,7 +126,10 @@ from emir.simulation.progconfig import Config
 import numpy
 
 class SimulateImage(RecipeBase):
-    
+    def __init__(self):
+        super(SimulateImage, self).__init__()
+        self.parser = OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
+        
     def setup(self):
         shape = (2048, 2048)    
         detector_conf = {'shape': shape, 'ron' : 2.16,
@@ -143,7 +152,7 @@ class SimulateImage(RecipeBase):
         self.storage = Storage(Config.default_fits_headers)
         
         
-    def run(self):
+    def process(self):
         logger.info('Creating simulated array')    
         output = self.detector.path(self.input)
         

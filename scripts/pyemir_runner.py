@@ -28,25 +28,12 @@ It will span several lines'''
 
 
 import logging
-
-logger = logging.getLogger("emir")
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(name)s %(levelname)s %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
-
-logger = logging.getLogger("runner")
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(levelname)s %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+import logging.config
 
 import sys
 from optparse import OptionParser
+import ConfigParser
+import os
 
 import pyfits
 
@@ -66,11 +53,35 @@ def main():
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args()
     
-    if not options.debug:
-        l = logging.getLogger("emir")
-        l.setLevel(logging.INFO)
-        l = logging.getLogger("runner")
-        l.setLevel(logging.INFO)
+    
+        
+    # Configuration options from a text file    
+    config = ConfigParser.ConfigParser()
+    # Default values, it must exist
+    config.readfp(open('defaults.cfg'))
+    # Custom values, site wide and local
+    config.read(['site.cfg', os.path.expanduser('~/.myapp.cfg')])
+
+    loggini = config.get('ohoh', 'logging')
+
+    #logging.config.fileConfig(loggini)
+    
+    logger = logging.getLogger("emir")
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(name)s %(levelname)s %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    
+    logger = logging.getLogger("runner")
+    
+#    if not options.debug:
+#        l = logging.getLogger("emir")
+#        l.setLevel(logging.INFO)
+#        l = logging.getLogger("runner")
+#        l.setLevel(logging.INFO)
+
         
     logger.debug('Emir recipe runner %s', version_number)
     
