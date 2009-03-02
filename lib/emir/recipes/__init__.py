@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 #
 # Copyright 2008-2009 Sergio Pascual
@@ -22,28 +21,9 @@
 # $Id$
 
 import logging
-from optparse import OptionParser
+from emir.numina import RecipeBase
 
 logger = logging.getLogger("emir.recipes")
-
-# Classes are new style
-__metaclass__ = type
-
-class RecipeBase:
-    '''Base class for Recipes of all kinds'''
-    def __init__(self):
-        self.parser = OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
-    def setup(self):
-        '''Initialize structures only once before recipe execution'''
-        pass
-    def run(self):
-        '''Run the recipe, don't override'''
-        result = self.process()
-        return result
-    def process(self):
-        ''' Override this method with custom code'''
-        pass
-        
         
 class BiasImaging(RecipeBase):
     pass
@@ -127,24 +107,43 @@ import numpy
 
 class SimulateImage(RecipeBase):
     def __init__(self):
-        super(SimulateImage, self).__init__()
-        self.parser = OptionParser(usage = "usage: %prog [options] recipe [recipe-options]")
+        super(SimulateImage, self).__init__(optusage = "usage: %prog [options] recipe [recipe-options]")
+        # Default values. This can be read from a file
+        self.iniconfig.add_section('readout')
+        self.iniconfig.set('readout','mode','cds')
+        self.iniconfig.set('readout','reads','3')
+        self.iniconfig.set('readout','repeat','1')
+        self.iniconfig.set('readout','scheme','perline')
+        self.iniconfig.add_section('detector')
+        self.iniconfig.set('detector','shape','(2048,2048)')
+        self.iniconfig.set('detector','ron','2.16')
+        self.iniconfig.set('detector','dark','0.37')
+        self.iniconfig.set('detector','gain','3.028')
+        self.iniconfig.set('detector','flat','1')
+        self.iniconfig.set('detector','well','65536')
         
     def setup(self):
-        shape = (2048, 2048)    
-        detector_conf = {'shape': shape, 'ron' : 2.16,
-              'dark':0.37, 'gain': 3.028,
-              'flat': 1, 'well': 2 ** 16 }
+        detector_conf = {}
+        detector_conf['shape'] = eval(self.iniconfig.get('detector', 'shape'))
+        for i in ['ron','dark','gain','flat', 'well']:
+            detector_conf[i] = self.iniconfig.getfloat('detector', i)
 
         self.detector = EmirDetector(**detector_conf)
         logger.info('Created detector')
     
-        readout_opt = {'mode': 'cds' , 'reads': 3, 'repeat': 1, 'scheme': 'perline'}
+        readout_opt = {}
+        
+        for i in ['reads', 'repeat']:
+            readout_opt[i] = self.iniconfig.getint('readout', i)
+        for i in ['mode', 'scheme']:
+            readout_opt[i] = self.iniconfig.get('readout', i)
+        
+        self._repeat = readout_opt['repeat']
         
         logger.info('Detector configured')
         self.detector.configure(readout_opt)
         
-        self.input = numpy.zeros(shape)
+        self.input = numpy.zeros(detector_conf['shape'])
         exposure = 10
         self.detector.exposure(exposure)
         

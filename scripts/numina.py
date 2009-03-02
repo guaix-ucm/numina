@@ -37,7 +37,7 @@ import os
 
 import pyfits
 
-from emir.simulation.storage import FitsStorage
+
 
 version_number = "0.1"
 version_line = '%prog ' + version_number
@@ -53,10 +53,8 @@ def main():
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args()
     
-    
-        
     # Configuration options from a text file    
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser.SafeConfigParser()
     # Default values, it must exist
     config.readfp(open('defaults.cfg'))
     # Custom values, site wide and local
@@ -64,17 +62,9 @@ def main():
 
     loggini = config.get('ohoh', 'logging')
 
-    #logging.config.fileConfig(loggini)
-    
-    logger = logging.getLogger("emir")
-    logger.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(name)s %(levelname)s %(message)s")
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-    
-    logger = logging.getLogger("runner")
+    logging.config.fileConfig(loggini)
+        
+    logger = logging.getLogger("numina")
     
 #    if not options.debug:
 #        l = logging.getLogger("emir")
@@ -83,15 +73,14 @@ def main():
 #        l.setLevel(logging.INFO)
 
         
-    logger.debug('Emir recipe runner %s', version_number)
-    
-    
-    
+    logger.debug('Numina EMIR recipe runner %s', version_number)
+        
     filename='r%05d.fits'
     fits_conf = {'directory': 'images',
                  'index': 'images/index.pkl',
                  'filename': filename}
     
+    from emir.simulation.storage import FitsStorage
     
     logger.info('Creating FITS storage')
     storage = FitsStorage(**fits_conf)
@@ -99,7 +88,7 @@ def main():
     # Registered actions:
     actions = {pyfits.HDUList: ('FITS file', storage.store)}
     
-    default_module = 'emir.recipes'
+    default_module = config.get('ohoh', 'module')
         
     for i in args[0:1]:
         comps = i.split('.')
@@ -125,21 +114,28 @@ def main():
         recipe = cons()
         # Parse the rest of the options
         logger.debug('Parsing the options provided by recipe instance')
-        (options, noargs) = recipe.parser.parse_args(args=args[1:])
+        (options, noargs) = recipe.cmdoptions.parse_args(args=args[1:])
         
+        for i in noargs:        
+            logger.debug('Option file %s' % i)            
+            recipe.iniconfig.read(i)
+                    
         logger.debug('Setting-up the recipe')
         recipe.setup()
         
-        logger.debug('Running the recipe instance')
-        result = recipe.run()
+        runs = recipe.repeat
+        while not recipe.complete():
+            logger.debug('Running the recipe instance %d of %d ' % (recipe.repeat, runs))
+            result = recipe.run()
+            logger.debug('Getting action for result')
+            try:
+                desc, action = actions[type(result)]
+                logger.debug('Action for result is %s', desc)
+                action(result)
+            except KeyError:
+                logger.warning('No action defined for type %s', type(result))
         
-        logger.debug('Getting action for result')
-        try:
-            desc, action = actions[type(result)]
-            logger.debug('Action for result is %s', desc)
-            action(result)
-        except KeyError:
-            logger.warning('No action defined for type %s', type(result))
+        logger.info('Completed execution')
 
 if __name__ == '__main__':
     main()
