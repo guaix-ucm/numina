@@ -1,4 +1,3 @@
-
 #
 # Copyright 2008-2009 Sergio Pascual
 # 
@@ -106,6 +105,7 @@ from emir.simulation.progconfig import Config
 import numpy
 
 class SimulateImage(RecipeBase):
+    '''Simulates EMIR images'''
     def __init__(self):
         super(SimulateImage, self).__init__(optusage = "usage: %prog [options] recipe [recipe-options]")
         # Default values. This can be read from a file
@@ -114,6 +114,7 @@ class SimulateImage(RecipeBase):
         self.iniconfig.set('readout','reads','3')
         self.iniconfig.set('readout','repeat','1')
         self.iniconfig.set('readout','scheme','perline')
+        self.iniconfig.set('readout','exposure','0')
         self.iniconfig.add_section('detector')
         self.iniconfig.set('detector','shape','(2048,2048)')
         self.iniconfig.set('detector','ron','2.16')
@@ -132,7 +133,9 @@ class SimulateImage(RecipeBase):
         logger.info('Created detector')
     
         readout_opt = {}
-        
+                
+        for i in ['exposure']:
+            readout_opt[i] = self.iniconfig.getfloat('readout', i)
         for i in ['reads', 'repeat']:
             readout_opt[i] = self.iniconfig.getint('readout', i)
         for i in ['mode', 'scheme']:
@@ -144,8 +147,7 @@ class SimulateImage(RecipeBase):
         self.detector.configure(readout_opt)
         
         self.input = numpy.zeros(detector_conf['shape'])
-        exposure = 10
-        self.detector.exposure(exposure)
+        self.detector.exposure(readout_opt['exposure'])
         
         logger.info('FITS builder created')
         self.storage = Storage(Config.default_fits_headers)

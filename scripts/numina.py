@@ -73,7 +73,7 @@ def main():
 #        l.setLevel(logging.INFO)
 
         
-    logger.debug('Numina EMIR recipe runner %s', version_number)
+    logger.info('Numina: EMIR recipe runner version %s', version_number)
         
     filename='r%05d.fits'
     fits_conf = {'directory': 'images',
