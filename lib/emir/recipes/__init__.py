@@ -105,7 +105,10 @@ from emir.simulation.progconfig import Config
 import numpy
 
 class SimulateImage(RecipeBase):
-    '''Simulates EMIR images'''
+    '''Simulates EMIR images
+    
+    Here starts the long description...
+    It continues several lines'''
     def __init__(self):
         super(SimulateImage, self).__init__(optusage = "usage: %prog [options] recipe [recipe-options]")
         # Default values. This can be read from a file

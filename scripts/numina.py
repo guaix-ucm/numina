@@ -29,15 +29,17 @@ It will span several lines'''
 
 import logging
 import logging.config
-
 import sys
 from optparse import OptionParser
-import ConfigParser
+from ConfigParser import SafeConfigParser
 import os
+import inspect
 
 import pyfits
 
-
+from emir.numina import Null
+from emir.numina import class_loader
+from emir.numina import list_recipes
 
 version_number = "0.1"
 version_line = '%prog ' + version_number
@@ -45,80 +47,81 @@ description = __doc__
 
 def main():
     usage = "usage: %prog [options] recipe [recipe-options]"
+    
     parser = OptionParser(usage=usage, version=version_line, description=description)
+    # Command line options
     parser.add_option('-d', '--debug',action="store_true", dest="debug", default=False, help="make lots of noise [default]")
     parser.add_option('-o', '--output',action="store", dest="filename", metavar="FILE", help="write output to FILE")
     parser.add_option('-l', action="store", dest="logging", metavar="FILE", help="FILE with logging configuration")
+    parser.add_option('--list', action="store_true", dest="listing", default=False)
+        
+    # Configuration options from a text file    
+    config = SafeConfigParser()
+    # Default values, it must exist
+    config.readfp(open('defaults.cfg'))
+    
     # Stop when you find the first argument
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args()
-    
-    # Configuration options from a text file    
-    config = ConfigParser.SafeConfigParser()
-    # Default values, it must exist
-    config.readfp(open('defaults.cfg'))
+        
     # Custom values, site wide and local
-    config.read(['site.cfg', os.path.expanduser('~/.myapp.cfg')])
+    config.read(['site.cfg', os.path.expanduser('~/.numina.cfg')])
 
+    # After processing both the command line and the files
+    # we get the values of everything
+
+    # logger file
     loggini = config.get('ohoh', 'logging')
 
     logging.config.fileConfig(loggini)
         
     logger = logging.getLogger("numina")
     
-#    if not options.debug:
-#        l = logging.getLogger("emir")
-#        l.setLevel(logging.INFO)
-#        l = logging.getLogger("runner")
-#        l.setLevel(logging.INFO)
-
-        
     logger.info('Numina: EMIR recipe runner version %s', version_number)
         
-    filename='r%05d.fits'
-    fits_conf = {'directory': 'images',
+    default_module = config.get('ohoh', 'module')
+    
+    if options.listing:
+        list_recipes(default_module)
+        sys.exit()
+    
+    for rename in args[0:1]:
+        try:
+            RecipeClass = class_loader(rename, default_module,  logger = logger)
+        except AttributeError:
+            sys.exit(2)
+        
+        if RecipeClass is None:
+            logger.error('%s is not a subclass of RecipeBase', rename)
+            sts.exit(2)
+        
+        # running the recipe
+        logger.info('Created recipe instance of class %s', rename)
+        recipe = RecipeClass()
+        # Parse the rest of the options
+        logger.debug('Parsing the options provided by recipe instance')
+        (reoptions, reargs) = recipe.cmdoptions.parse_args(args=args[1:])
+        
+        if reoptions.docs:
+            print rename, recipe.__doc__
+            sys.exit(0)
+                    
+        for i in reargs:        
+            logger.debug('Option file %s' % i)            
+            recipe.iniconfig.read(i)
+
+        filename='r%05d.fits'
+        fits_conf = {'directory': 'images',
                  'index': 'images/index.pkl',
                  'filename': filename}
     
-    from emir.simulation.storage import FitsStorage
+        from emir.simulation.storage import FitsStorage
     
-    logger.info('Creating FITS storage')
-    storage = FitsStorage(**fits_conf)
-    
-    # Registered actions:
-    actions = {pyfits.HDUList: ('FITS file', storage.store)}
-    
-    default_module = config.get('ohoh', 'module')
-        
-    for i in args[0:1]:
-        comps = i.split('.')
-        recipe = comps[-1]
-        logger.debug('recipe is %s',recipe)
-        if len(comps) == 1:
-            modulen = default_module
-        else:
-            modulen = '.'.join(comps[0:-1])
-        logger.debug('module is %s', modulen)
-    
-        module = __import__(modulen)
-        
-        for part in modulen.split('.')[1:]:
-            module = getattr(module, part)
-            try:
-                cons = getattr(module, recipe)
-            except AttributeError:
-                logger.error("% s doesn't exist", recipe)
-                sys.exit(2)
-    
-        logger.debug('Created recipe instance')
-        recipe = cons()
-        # Parse the rest of the options
-        logger.debug('Parsing the options provided by recipe instance')
-        (options, noargs) = recipe.cmdoptions.parse_args(args=args[1:])
-        
-        for i in noargs:        
-            logger.debug('Option file %s' % i)            
-            recipe.iniconfig.read(i)
+        logger.info('Creating FITS storage')
+        storage = FitsStorage(**fits_conf)
+        # Registered actions:
+        actions = {pyfits.HDUList: ('FITS file', storage.store)}
+
                     
         logger.debug('Setting-up the recipe')
         recipe.setup()
