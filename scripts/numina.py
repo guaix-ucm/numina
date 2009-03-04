@@ -37,9 +37,7 @@ import inspect
 
 import pyfits
 
-from emir.numina import Null
-from emir.numina import class_loader
-from emir.numina import list_recipes
+from emir.numina import class_loader, list_recipes
 
 version_number = "0.1"
 version_line = '%prog ' + version_number

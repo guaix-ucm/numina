@@ -20,7 +20,12 @@
 # $Id$
 
 import logging
+
+import pyfits
+import scipy.stsci.image as im
+
 from emir.numina import RecipeBase
+import emir.image.combine as com
 
 logger = logging.getLogger("emir.recipes")
         
@@ -28,8 +33,49 @@ class BiasImaging(RecipeBase):
     pass
 
 class DarkImaging(RecipeBase):
-    pass
-
+    '''Recipe for processing dark current images
+    
+    Here starts the long description...
+    It continues several lines'''
+    def __init__(self):
+        super(DarkImaging, self).__init__(optusage = "usage: %prog [options] recipe [recipe-options]")
+        # Default values. This can be read from a file
+        self.iniconfig.add_section('inputs')
+        self.iniconfig.set('inputs','files','')
+                
+    def process(self):
+        pfiles = self.iniconfig.get('inputs','files')
+        pfiles = ' '.join(pfiles.splitlines()).replace(',',' ').split()
+        if len(pfiles) == 0:
+            logger.warning('No files to process')
+            return
+        
+        images = []
+        try:
+            for i in pfiles:
+                logger.debug('Loading %s',i)
+                images.append(pyfits.open(i))
+        except IOError, err:
+            logger.error(err)
+            logger.debug('Cleaning up hdus')
+            for i in images:
+                i.close()
+        
+        logger.debug('We have %d images',len(images))
+        # Data from the primary extension
+        data = [i['primary'].data for i in images]
+        #
+        result = im.average(data)
+        # Creating the result pyfits structure
+        # Creating the primary HDU
+        dhdu = pyfits.PrimaryHDU(result)
+        # Variance and exposure extensions
+        vhdu = pyfits.ImageHDU(name='VARIANCE')
+        nhdu = pyfits.ImageHDU(name='NUMBER')
+        # Final structure
+        hdulist = pyfits.HDUList([dhdu, vhdu, nhdu])
+        return hdulist
+        
 class IntensityFlatField(RecipeBase):
     pass
 
