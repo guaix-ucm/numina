@@ -21,7 +21,7 @@
 
 import pyfits
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 default_fits_headers = {
 # FITS headers of the WCS HDU

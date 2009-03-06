@@ -119,10 +119,10 @@ def main():
                  'index': 'images/index.pkl',
                  'filename': filename}
     
-        from emir.simulation.storage import FitsStorage
+        from emir.simulation.storage import FITSStorage
     
         logger.info('Creating FITS storage')
-        storage = FitsStorage(**fits_conf)
+        storage = FITSStorage(**fits_conf)
         # Registered actions:
         actions = {pyfits.HDUList: ('FITS file', storage.store)}
 

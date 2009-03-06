@@ -21,7 +21,7 @@
 
 '''Exceptions for the emir package'''
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 
 class Error(Exception):

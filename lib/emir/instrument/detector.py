@@ -24,7 +24,7 @@ import numpy.random
 
 from emir.exceptions import DetectorElapseError, DetectorReadoutError
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -104,6 +104,7 @@ class EmirDetector(Detector):
                  pedestal=200.,flat=1.0, resetval=0, resetnoise=0.0):
         super(EmirDetector, self).__init__(shape, gain, ron, dark, well, 
                                            pedestal, flat, resetval, resetnoise)
+        self.events = None
         
     def configure(self, options):
         self.options = options

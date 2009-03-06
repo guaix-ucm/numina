@@ -24,7 +24,7 @@ from _combine import test1
 from _combine import test2
 from _combine import method_mean
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 def new_combine2(images, masks, method="mean", args=(), res=None, var=None, num=None):
     '''Inputs and masks are a list of array objects. method can be a string or a callable object
@@ -36,10 +36,10 @@ def new_combine2(images, masks, method="mean", args=(), res=None, var=None, num=
     
     # Check inputs    
     if len(images) == 0:
-      raise Error("len(inputs) == 0")
+        raise Error("len(inputs) == 0")
     
     if len(images) != len(masks):
-      raise Error("len(inputs) != len(masks)")
+        raise Error("len(inputs) != len(masks)")
     
 #    def all_equal(a):
 #        return all(map(lambda x: x[0] == x[1], zip(shapes,shapes[1:])))

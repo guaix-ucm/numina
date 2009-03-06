@@ -19,7 +19,7 @@
 
 # $Id$
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -38,7 +38,7 @@ class Shutter:
             pass
         
     def close(self):
-        if not self._sclosed:
+        if not self._closed:
             self._closed = True
         else:
             pass

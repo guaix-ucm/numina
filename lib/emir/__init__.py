@@ -28,7 +28,7 @@ try:
 except ImportError:
     from logger import NullHandler
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 EMIR_VERSION_STRING = '0.1.0dev'
 

@@ -19,13 +19,13 @@
 
 # $Id$ 
 
+'''A module used to run all the emir unit tests'''
+
 import sys, os
 import emir
 import unittest
 
-'''A module used to run all the emir unit tests'''
-
-__version__ = '$Id$'
+__version__ = '$Revision$'
 
 def print_info():
     '''Info about the system and emir version'''
@@ -49,9 +49,9 @@ def suite():
     return alltests
 
 def test_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(PrintInfoFakeTest))
-    return suite
+    msuite = unittest.TestSuite()
+    msuite.addTest(unittest.makeSuite(PrintInfoFakeTest))
+    return msuite
 
 if __name__ == '__main__':
     print_info()

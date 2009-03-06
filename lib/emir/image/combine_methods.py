@@ -19,12 +19,14 @@
 
 # $Id$
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
 
 class Mean:
+    def __init__(self):
+        pass
     def __call__(self, values):
         l = len(values)
         if l == 0:

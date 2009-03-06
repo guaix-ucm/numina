@@ -23,7 +23,7 @@
 
 import logging
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 class NullHandler(logging.Handler):
     '''NullHandler is the default log handler of the package'''

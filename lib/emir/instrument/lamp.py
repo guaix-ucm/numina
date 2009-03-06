@@ -21,7 +21,7 @@
 
 '''Recipes for Emir Observing Modes'''
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -51,6 +51,6 @@ class Lamps:
             if i.power:
                 return i.source
     
-    def switch(status):
+    def switch(self, status):
         for i in self.lamplist:
             i.power = status

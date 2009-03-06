@@ -29,7 +29,7 @@ from scipy import maximum, minimum
 
 from emir.image import subarray_match
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -49,7 +49,7 @@ class Profile:
 class GaussProfile(Profile):
     '''Simetrical gaussian profile'''
     M_SQRT1_2 = math.sqrt(1. / 2.) 
-    def __init__(self, sigma, center, scale = 5):       
+    def __init__(self, sigma, center, scale=5):       
         self.center = numpy.array(center)
         self.sigma = sigma
         l = int(round(scale * sigma))
@@ -62,7 +62,7 @@ class GaussProfile(Profile):
     @staticmethod
     def _compute2(v, center, sigma):
         tipV1 = GaussProfile._compute1(v, center, sigma)
-        tipV2 = GaussProfile._compute1(v + 1, center, sigma)
+        tipV2 = GaussProfile._compute1(v + 1, center, sigma) 
         return 0.5 * (erf(tipV2) - erf(tipV1))
     def area(self, x, y):      
         v = GaussProfile._compute2(x, self.center[1] - self.offset[1], self.sigma)

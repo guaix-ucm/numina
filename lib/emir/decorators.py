@@ -24,7 +24,7 @@
 import time
 import logging
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir")
 

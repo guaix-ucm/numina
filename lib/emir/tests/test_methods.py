@@ -23,7 +23,7 @@ import unittest
 
 import emir.image._combine as c
 
-__version__ = '$Id$'
+__version__ = '$Revision$'
 
 # Classes are new style
 __metaclass__ = type

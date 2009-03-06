@@ -21,7 +21,7 @@
 
 import unittest
 
-__version__ = '$Id$'
+__version__ = '$Revision$'
 
 class SimpleTestCase(unittest.TestCase):
     def setUp(self):

@@ -24,12 +24,14 @@
 
 import logging
 
+import numpy
+
 from emir.numina import RecipeBase
 from emir.instrument.detector import EmirDetector
 from emir.simulation.storage import FITSCreator
 from emir.simulation.headers import default_fits_headers
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -54,6 +56,10 @@ class SimulateImage(RecipeBase):
         self.iniconfig.set('detector','gain','3.028')
         self.iniconfig.set('detector','flat','1')
         self.iniconfig.set('detector','well','65536')
+        #
+        self.detector = None
+        self.input = None
+        self.storage = None
         
     def setup(self):
         detector_conf = {}
@@ -92,7 +98,7 @@ class SimulateImage(RecipeBase):
         header = {'RUN': '00001'}
         _logger.info('Collecting metadata')
         header.update(self.detector.metadata())
-        logger.info('Building FITS structure')
+        _logger.info('Building FITS structure')
         hdulist = self.storage.create(output, headers=header)
         return hdulist
         

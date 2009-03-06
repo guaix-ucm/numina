@@ -27,12 +27,12 @@ import scipy.stsci.image as im
 from emir.numina import RecipeBase
 import emir.image.combine as com
 
+__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
         
 _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
-__version__ = "$Revision$"
 
 class DarkImaging(RecipeBase):
     '''Recipe for processing dark current images

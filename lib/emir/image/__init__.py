@@ -22,27 +22,27 @@
 import numpy
 from scipy import maximum, minimum
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 def subarray_match(shape, ref, sshape, sref = (0,0)):
-  '''Matches two arrays, given the different shapes given by shape and sshape, and a reference point ref
-  It returnes a tuple of slices, that can be passed to the two images as indexes
-  
-  Example: 
-  im = numpy.zeros((1000,1000))
-  sim = numpy.ones((40, 40))
-  i,j = subarray_match(im.shape, [20, 23], sim.shape)
-  im[i] = 2 * sim[j]
-  
-  '''
-  # Reference point in im
-  ref1 = numpy.array(ref, dtype='int')  
-  # Ref2 is the reference point in sim  
-  # The pixel [0,0] of the array by default
-  ref2 = numpy.array(sref)   
-  offset = ref1 - ref2    
-  urc1 = minimum(offset + numpy.array(sshape) - 1, numpy.array(shape) - 1)
-  blc1 = maximum(offset, 0)
-  urc2 = urc1 - offset
-  blc2 = blc1 - offset
-  return (slice(blc1[0],urc1[0] + 1), slice(blc1[1],urc1[1] + 1)), (slice(blc2[0],urc2[0] + 1),slice(blc2[1],urc2[1] + 1))
+    '''Matches two arrays, given the different shapes given by shape and shape, and a reference point ref
+    It returns a tuple of slices, that can be passed to the two images as indexes
+      
+    Example: 
+    im = numpy.zeros((1000,1000))
+    sim = numpy.ones((40, 40))
+    i,j = subarray_match(im.shape, [20, 23], sim.shape)
+    im[i] = 2 * sim[j]
+    
+    '''
+    # Reference point in im
+    ref1 = numpy.array(ref, dtype='int')  
+    # Ref2 is the reference point in sim  
+    # The pixel [0,0] of the array by default
+    ref2 = numpy.array(sref)   
+    offset = ref1 - ref2    
+    urc1 = minimum(offset + numpy.array(sshape) - 1, numpy.array(shape) - 1)
+    blc1 = maximum(offset, 0)
+    urc2 = urc1 - offset
+    blc2 = blc1 - offset
+    return (slice(blc1[0],urc1[0] + 1), slice(blc1[1],urc1[1] + 1)), (slice(blc2[0],urc2[0] + 1),slice(blc2[1],urc2[1] + 1))

@@ -33,7 +33,7 @@ from emir.recipes.simulateimage import SimulateImage
 from emir.numina import RecipeBase
 
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
         

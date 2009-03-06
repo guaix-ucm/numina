@@ -31,7 +31,7 @@ from scipy.io import read_array
 
 from emir.exceptions import Error
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -191,11 +191,11 @@ class BSModel:
     def mu(magnitude):
         '''Parameter \mu of Appendix B'''
         if magnitude <= 12.:
-            return 0.03;
+            return 0.03
         if magnitude <= 20:
-            return 0.0075 * (magnitude - 12.) + 0.03;
+            return 0.0075 * (magnitude - 12.) + 0.03
         #if magnitude > 20:
-        return 0.09;
+        return 0.09
     
     @staticmethod
     def gamma(magnitude):
@@ -204,7 +204,7 @@ class BSModel:
         if magnitude <= 20:
             return 0.04 * (12. - magnitude) + 0.36
         #if magnitude > 20:
-        return 0.04;
+        return 0.04
     
     @staticmethod
     def sigma(galacticLongitude, galacticLatitude):
@@ -221,87 +221,78 @@ class BSModel:
         return (firstTerm + secondTerm) / 3600.0
 
 if __name__ == '__main__':
-  rbmodel = RBModel()
-  #print rbmodel.integral_counts(18)
-  #print rbmodel.differential_counts(18)    
-  sgmodel = SpagnaModel()
-  #print sgmodel.integral_counts(18)
-  #print sgmodel.differential_counts(18)
-  bsmodel = BSModel()
-  #print sgmodel.integral_counts(18)
-  #print bsmodel.differential_counts(18)
+    rbmodel = RBModel()
+    #print rbmodel.integral_counts(18)
+    #print rbmodel.differential_counts(18)    
+    sgmodel = SpagnaModel()
+    #print sgmodel.integral_counts(18)
+    #print sgmodel.differential_counts(18)
+    bsmodel = BSModel()
+    #print sgmodel.integral_counts(18)
+    #print bsmodel.differential_counts(18)
   
-  import numpy.random
+    import numpy.random
   
-  class GeneralRandom:
-    ''' Recipe from http://code.activestate.com/recipes/576556/'''
-    def __init__(self, x, p, Nrl=1000):
-      self.x = x
-      self.pdf = p / p.sum()
-      self.cdf = self.pdf.cumsum()
-      self.inversecdfbins = Nrl
-      self.Nrl = Nrl
-      y = numpy.arange(Nrl) / float(Nrl)
-      delta = 1.0 / Nrl
-      self.inversecdf = numpy.zeros(Nrl)
-      self.inversecdf[0] = self.x[0]
-      cdf_idx = 0
-      for n in xrange(1, self.inversecdfbins):
-          while self.cdf[cdf_idx] < y [n] and cdf_idx < Nrl:
-              cdf_idx += 1
-          # Seems a linear interpolation    
-          self.inversecdf[n] = self.x[cdf_idx - 1] + (self.x[cdf_idx] - self.x[cdf_idx - 1]) * (y[n] - self.cdf[cdf_idx - 1]) / (self.cdf[cdf_idx] - self.cdf[cdf_idx - 1])
-          if cdf_idx >= Nrl:
-              break
-      self.delta_inversecdf = numpy.concatenate((numpy.diff(self.inversecdf), [0]))
-    
-    def random(self, N=1000):
-      idx_f = numpy.random.uniform(size=N, high=self.Nrl - 1)
-      idx = numpy.array(idx_f, 'i')
-      y = self.inversecdf[idx] + (idx_f - idx) * self.delta_inversecdf[idx]
-      return y
+    class GeneralRandom:
+        ''' Recipe from http://code.activestate.com/recipes/576556/'''
+        def __init__(self, x, p, Nrl=1000):
+            self.x = x
+            self.pdf = p / p.sum()
+            self.cdf = self.pdf.cumsum()
+            self.inversecdfbins = Nrl
+            self.Nrl = Nrl
+            y = numpy.arange(Nrl) / float(Nrl)
+            delta = 1.0 / Nrl
+            self.inversecdf = numpy.zeros(Nrl)
+            self.inversecdf[0] = self.x[0]
+            cdf_idx = 0
+            for n in xrange(1, self.inversecdfbins):
+                while self.cdf[cdf_idx] < y [n] and cdf_idx < Nrl:
+                    cdf_idx += 1
+                # Seems a linear interpolation    
+                self.inversecdf[n] = self.x[cdf_idx - 1] + (self.x[cdf_idx] - self.x[cdf_idx - 1]) * (y[n] - self.cdf[cdf_idx - 1]) / (self.cdf[cdf_idx] - self.cdf[cdf_idx - 1])
+                if cdf_idx >= Nrl:
+                    break
+            self.delta_inversecdf = numpy.concatenate((numpy.diff(self.inversecdf), [0]))
+
+        def random(self, N=1000):
+            idx_f = numpy.random.uniform(size=N, high=self.Nrl - 1)
+            idx = numpy.array(idx_f, 'i')
+            y = self.inversecdf[idx] + (idx_f - idx) * self.delta_inversecdf[idx]
+            return y
 
 
-  scmodel = sgmodel
-  magmin = 12.0
-  magmax = 25.0
+        scmodel = sgmodel
+        magmin = 12.0
+        magmax = 25.0
   
-  plate_scale = 0.2
-  detector_shape = (2048, 2048)
-  pixel_area = detector_shape
-  detector_area = (plate_scale ** 2 * detector_shape[0] * detector_shape[1]) / 3600.
+        plate_scale = 0.2
+        detector_shape = (2048, 2048)
+        pixel_area = detector_shape
+        detector_area = (plate_scale ** 2 * detector_shape[0] * detector_shape[1]) / 3600.
   
-  nstars = int(round(detector_area * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))))  
-  print nstars
+        nstars = int(round(detector_area * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))))  
+        print nstars
   
-  seeing = 1.0
-  from math import sqrt, log
-  scale = 2 * sqrt(2 * log(2))
+        seeing = 1.0
+        from math import sqrt, log
+        scale = 2 * sqrt(2 * log(2))
   
-  delta = 0.1
-  steps = int(round((magmax - magmin) / delta))
-  x = magmin + delta * numpy.arange(steps)
-  p = numpy.array([scmodel.differential_counts(i) for i in x])
-
-  g = GeneralRandom(x, p)
+        delta = 0.1
+        steps = int(round((magmax - magmin) / delta))
+        x = magmin + delta * numpy.arange(steps)
+        p = numpy.array([scmodel.differential_counts(i) for i in x])
+        
+        g = GeneralRandom(x, p)
   
-  mags = g.random(nstars)
-  y = numpy.random.uniform(high=pixel_area[0], size=nstars)
-  x = numpy.random.uniform(high=pixel_area[1], size=nstars)
+        mags = g.random(nstars)
+        y = numpy.random.uniform(high=pixel_area[0], size=nstars)
+        x = numpy.random.uniform(high=pixel_area[1], size=nstars)
   
-  numpy.random.seed(100)
-  x = numpy.random.uniform(high=2048, size=nstars)
-  y = numpy.random.uniform(high=2048, size=nstars)
-  sigmas = [seeing / scale / plate_scale] * nstars
-  ints = [100] * nstars 
-  mag = g.random(N=nstars)
-  
-  def fun(scale, limit=5.):
-    pass
-  
-  
-  #from emir.devel import somegauss
-  #print sigmas[0]
-  #result = somegauss((2048, 2048), 1000, zip(x, y, sigmas, ints))
-  #from numdisplay import display
-  #display(result)
+        numpy.random.seed(100)
+        x = numpy.random.uniform(high=2048, size=nstars)
+        y = numpy.random.uniform(high=2048, size=nstars)
+        sigmas = [seeing / scale / plate_scale] * nstars
+        ints = [100] * nstars 
+        mag = g.random(N=nstars)
+        

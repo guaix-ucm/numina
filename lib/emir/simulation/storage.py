@@ -27,7 +27,7 @@ import logging
 
 import pyfits
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -63,12 +63,12 @@ class FITSCreator:
             header.update(key, val, comment)
         header["EXTNAME"] = extname
         
-        lg.info('Updating keywords in %s header', extname)
+        _logger.info('Updating keywords in %s header', extname)
         
         if updateheaders is not None:
             for key in updateheaders:
                 try:
-                    _loggerg.debug('Updating keyword %s with value %s', key, updateheaders[key])
+                    _logger.debug('Updating keyword %s with value %s', key, updateheaders[key])
                     header[key] = updateheaders[key]
                 except KeyError:
                     _logger.warning("Keyword %s not permitted IN FITS header", key)    
@@ -88,21 +88,21 @@ class FITSCreator:
         created_hdus[0].header["DATE-OBS"] = nowstr
         if variance is not None:
             updateheaders={'DATE':nowstr, 'DATE-OBS':nowstr}
-            hdu = init_extension_HDU('ERROR DATA', self.defaults['variance'], 
+            hdu = self.init_extension_HDU('ERROR DATA', self.defaults['variance'], 
                                      data=variance, 
                                      updateheaders=updateheaders)
             created_hdus.append(hdu)
                    
         if wcs is not None:
-            hdu = init_extension_HDU('WCSDVARR', self.defaults['wcs'], empty=True)
+            hdu = self.init_extension_HDU('WCSDVARR', self.defaults['wcs'], empty=True)
             created_hdus.append(hdu)
     
         if pipeline is not None:
-            hdu = init_extension_HDU('PIPELINE', self.defaults['pipeline'], empty=True)
+            hdu = self.init_extension_HDU('PIPELINE', self.defaults['pipeline'], empty=True)
             created_hdus.append(hdu)
 
         if engineering is not None:
-            hdu = init_extension_HDU('ENGINEERING', self.defaults['engineering'], empty=True)
+            hdu = self.init_extension_HDU('ENGINEERING', self.defaults['engineering'], empty=True)
             created_hdus.append(hdu)
                 
         hdulist = pyfits.HDUList(created_hdus)
@@ -124,15 +124,15 @@ class FITSStorage:
                 _logger.debug('Loading status in %s' % self.pstore)
                 self.last = pickle.load(pkl_file)
         except IOError, strrerror:            
-            logger.error(strrerror)
+            _logger.error(strrerror)
                 
     def __del__(self):
-    	try:
-    		with open(self.pstore, 'wb') as pkl_file:                
-    		    pickle.dump(self.last, pkl_file)
+        try:
+            with open(self.pstore, 'wb') as pkl_file:                
+                pickle.dump(self.last, pkl_file)
                 _logger.debug('Clean up, storing internal status in %s and exiting' % self.pstore)
         except IOError, strrerror:            
-            logger.error(strrerror)
+            _logger.error(strrerror)
             
     def store(self, hdulist):
         _logger.info('Writing to disk')
@@ -141,5 +141,5 @@ class FITSStorage:
             _logger.info('Done %s', (self.filename % self.last))
             self.last += 1
         except IOError, strrerror:
-            logger.error(strrerror)
+            _logger.error(strrerror)
         

@@ -20,7 +20,7 @@
 # $Id$
 
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
@@ -28,8 +28,8 @@ __metaclass__ = type
 class Empty:
     name = 'Empty'
     code = 'Empty'
-    def path(input):
-        return input
+    def path(self, input_):
+        return input_
 
 class Filter:
     def __init__(self, name, code, trans, **kwrd):
@@ -37,8 +37,8 @@ class Filter:
         self.code = code
         self.trans = trans
         
-    def path(self,input):
-        return input
+    def path(self, input_):
+        return input_
 
 class FilterWheel:
     def __init__(self, filterlist):
@@ -46,14 +46,14 @@ class FilterWheel:
         self._pos = 0
         self._size = len(filterlist)
         
-    def set_position(self,pos):
+    def set_position(self, pos):
         self._pos = pos % self._size
         
     def get_current_filter(self):
         return self._filterlist[self._pos]
     
-    def path(self,input):
-        return self._filterlist[self._pos].path(input)
+    def path(self, input_):
+        return self._filterlist[self._pos].path(input_)
     
     def get_size(self):
         return self._size
