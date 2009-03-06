@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id: __init__.py 401 2009-02-27 19:02:07Z spr $
+# $Id$
 
 '''Utilities used by Numina'''
 
