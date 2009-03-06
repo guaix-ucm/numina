@@ -26,7 +26,7 @@ from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import inspect
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

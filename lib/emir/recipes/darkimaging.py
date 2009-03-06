@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id: __init__.py 405 2009-03-04 18:49:14Z spr $
+# $Id$
 
 import logging
 
