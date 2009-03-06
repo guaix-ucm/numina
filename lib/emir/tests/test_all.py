@@ -25,6 +25,8 @@ import unittest
 
 '''A module used to run all the emir unit tests'''
 
+__version__ = '$Id$'
+
 def print_info():
     '''Info about the system and emir version'''
     print ''

@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -15,7 +15,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 # $Id$
 
@@ -23,6 +23,8 @@ from emir.exceptions import Error
 from _combine import test1
 from _combine import test2
 from _combine import method_mean
+
+__version__ = "$Id$"
 
 def new_combine2(images, masks, method="mean", args=(), res=None, var=None, num=None):
     '''Inputs and masks are a list of array objects. method can be a string or a callable object

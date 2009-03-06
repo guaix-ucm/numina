@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -15,9 +15,14 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
-# $Id$    
+# $Id$
+
+__version__ = "$Id$"
+
+# Classes are new style
+__metaclass__ = type
 
 class Mean:
     def __call__(self, values):

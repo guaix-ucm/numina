@@ -19,22 +19,38 @@
 
 # $Id$
 
-'''Exceptions for the emir package'''
+'''Recipes for Emir Observing Modes'''
 
 __version__ = "$Id$"
 
+# Classes are new style
+__metaclass__ = type
 
-class Error(Exception):
-    """Base class for exceptions in the emir package."""
-    def __init__(self, txt):
-        Exception.__init__(self, txt)
-        
-        
-class DetectorElapseError(Error):
-    def __init__(self, txt):
-        Error.__init__(self, txt)
+class Lamp:
+    def __init__(self, name, code, source):
+        self.name = name
+        self.code = code
+        self._source = source
+        self.power = False
+    
+    @property
+    def source(self):
+        if self.power:
+            return self._source
+        else:
+            return None
+    
 
-
-class DetectorReadoutError(Error):
-    def __init__(self, txt):
-        Error.__init__(self, txt)
+class Lamps:
+    def __init__(self, lamplist):
+        self.lamplist = lamplist
+    
+    @property
+    def source(self):
+        for i in self.lamplist:
+            if i.power:
+                return i.source
+    
+    def switch(status):
+        for i in self.lamplist:
+            i.power = status

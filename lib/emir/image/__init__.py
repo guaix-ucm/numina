@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -21,6 +21,8 @@
 
 import numpy
 from scipy import maximum, minimum
+
+__version__ = "$Id$"
 
 def subarray_match(shape, ref, sshape, sref = (0,0)):
   '''Matches two arrays, given the different shapes given by shape and sshape, and a reference point ref

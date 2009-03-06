@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -18,20 +18,3 @@
 # 
 
 # $Id$
-
-import numpy
-
-def somegauss(shape, level, gaussians = None):
-  '''Some gaussians in an image'''
-  intensity = 10.0
-  im = level * numpy.ones(shape)
-  if gaussians is not None:
-      y, x = numpy.indices(shape)
-      for i in gaussians:
-          x0 = i[0]
-          y0 = i[1]
-          sigma0 = i[2]
-          intensity = i[3]
-          im +=  intensity * numpy.exp(-((x - x0)**2+(y - y0)**2)/(sigma0)**2)
-  
-  return im

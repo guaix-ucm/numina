@@ -20,7 +20,13 @@
 # $Id$ 
 
 import unittest
+
 import emir.image._combine as c
+
+__version__ = '$Id$'
+
+# Classes are new style
+__metaclass__ = type
 
 class CombineMethodTestCase:
     function = None

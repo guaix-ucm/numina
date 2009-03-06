@@ -19,6 +19,12 @@
 
 # $Id$
 
+
+__version__ = "$Id$"
+
+# Classes are new style
+__metaclass__ = type
+
 class Empty:
     name = 'Empty'
     code = 'Empty'
@@ -36,21 +42,21 @@ class Filter:
 
 class FilterWheel:
     def __init__(self, filterlist):
-        self.__filterlist = filterlist
-        self.__pos = 0
-        self.__size = len(filterlist)
+        self._filterlist = filterlist
+        self._pos = 0
+        self._size = len(filterlist)
         
     def set_position(self,pos):
-        self.__pos = pos % self.__size
+        self._pos = pos % self._size
         
     def get_current_filter(self):
-        return self.__filterlist[self.__pos]
+        return self._filterlist[self._pos]
     
     def path(self,input):
-        return self.__filterlist[self.__pos].path(input)
+        return self._filterlist[self._pos].path(input)
     
     def get_size(self):
-        return self.__size
+        return self._size
     
     def metadata(self):
-        return {'FILTER': self.__filterlist[self.__pos].code}
+        return {'FILTER': self._filterlist[self._pos].code}

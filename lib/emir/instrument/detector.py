@@ -21,7 +21,13 @@
 
 import numpy
 import numpy.random
-import emir.exceptions as exception
+
+from emir.exceptions import DetectorElapseError, DetectorReadoutError
+
+__version__ = "$Id$"
+
+# Classes are new style
+__metaclass__ = type
 
 def numberarray(x, shape = (5,5)):
     try:
@@ -32,76 +38,72 @@ def numberarray(x, shape = (5,5)):
         return x
 
 
-class DetectorElapseError(exception.Error):
-    def __init__(self, txt):
-        exception.Error.__init__(self, txt)
-
-
-class DetectorReadoutError(exception.Error):
-    def __init__(self, txt):
-        exception.Error.__init__(self, txt)
-
 class Detector:
-    def __init__(self, shape=(5,5), gain=1.0, ron=0.0, dark=1.0, well=65535, pedestal=200.,flat=1.0, resetval=0,resetnoise=0.0):
-        self.__shape = shape
-        self.__detector = numpy.zeros(self.__shape)
-        self.__gain = numberarray(gain, self.__shape)
-        self.__ron = numberarray(ron, self.__shape)
-        self.__dark = numberarray(dark, self.__shape)
-        self.__pedestal = numberarray(pedestal, self.__shape)
-        self.__well = numberarray(well, self.__shape)
-        self.__flat = numberarray(flat, self.__shape)
-        self.__reset_noise = resetnoise
-        self.__reset_value = resetval
-        self.__time = 0
+    def __init__(self, shape=(5,5), gain=1.0, ron=0.0, dark=1.0, 
+                 well=65535, pedestal=200.,flat=1.0, resetval=0, resetnoise=0.0):
+        self._shape = shape
+        self._detector = numpy.zeros(self._shape)
+        self._gain = numberarray(gain, self._shape)
+        self._ron = numberarray(ron, self._shape)
+        self._dark = numberarray(dark, self._shape)
+        self._pedestal = numberarray(pedestal, self._shape)
+        self._well = numberarray(well, self._shape)
+        self._flat = numberarray(flat, self._shape)
+        self._reset_noise = resetnoise
+        self._reset_value = resetval
+        self._time = 0
+        
         self.readout_time = 0
         self.reset_time = 0
         self.type = 'int16'
         self.outtype = 'int16'
         
-    def elapse(self, time, source = None):
-        etime = time - self.__time
+    def elapse(self, time, source=None):
+        etime = time - self._time
         if etime < 0:
-            raise DetectorElapseError(("Elapsed time is %ss, it's larger than %ss" % (self.__time, time)))
-        self.__detector += numpy.random.poisson(self.__dark * etime).astype('float')
+            msg = "Elapsed time is %ss, it's larger than %ss" % (self._time, time)
+            raise DetectorElapseError(msg)
+        self._detector += numpy.random.poisson(self._dark * etime).astype('float')
         if source is not None:
-            self.__detector += numpy.random.poisson(self.__flat * source * etime).astype('float')
-        self.__time = time
+            self._detector += numpy.random.poisson(self._flat * source * etime).astype('float')
+        self._time = time
         
     def reset(self):
-        self.__time = 0
-        self.__detector[:] = self.__reset_value
+        self._time = 0
+        self._detector[:] = self._reset_value
         # Considering normal reset noise
-        self.__detector += numpy.random.standard_normal(self.__shape) * self.__reset_noise
-        self.__time += self.reset_time
+        self._detector += numpy.random.standard_normal(self._shape) * self._reset_noise
+        self._time += self.reset_time
         
-    def read(self, time = None, source = None):
+    def read(self, time=None, source=None):
         if time is not None:
             self.elapse(time, source)
-        self.__time += self.readout_time
-        result = self.__detector.copy()
+        self._time += self.readout_time
+        result = self._detector.copy()
         result[result < 0] = 0
         # Gain per channel
-        result /= self.__gain
+        result /= self._gain
         # Readout noise
-        result += numpy.random.standard_normal(self.__shape) * self.__ron
-        result += self.__pedestal
-       # result[result > self.__well] = self.__well
+        result += numpy.random.standard_normal(self._shape) * self._ron
+        result += self._pedestal
+       # result[result > self._well] = self._well
         return result.astype(self.type)
     
     def data(self):
-        return self.__detector
+        return self._detector
     
     def size(self):
-        return self.__shape
+        return self._shape
     
     def time_since_last_reset(self):
-        return self.__time
+        return self._time
     
     
 class EmirDetector(Detector):
-    def __init__(self, shape=(5,5), gain=1.0, ron=0.0, dark=1.0, well=65535, pedestal=200.,flat=1.0, resetval=0,resetnoise=0.0):
-        Detector.__init__(self, shape, gain, ron, dark, well, pedestal, flat, resetval,resetnoise)
+    def __init__(self, shape=(5, 5), gain=1.0, ron=0.0, dark=1.0, well=65535, 
+                 pedestal=200.,flat=1.0, resetval=0, resetnoise=0.0):
+        super(EmirDetector, self).__init__(shape, gain, ron, dark, well, 
+                                           pedestal, flat, resetval, resetnoise)
         
     def configure(self, options):
         self.options = options
@@ -110,27 +112,27 @@ class EmirDetector(Detector):
         self.exposure = exposure
         self.events = self.generate_events(exposure)
     
-    def path(self, input = None):
+    def path(self, input=None):
         self.reset()
         images = [self.read(t, input) for t in self.events]
         # Process the images according to the mode
         final = self.process(images, self.events)
         return final.astype(self.outtype)
 
-    
     def generate_events(self, exposure):
         # generate read events according to the mode        
         events_function = getattr(self, "events_%s" % self.options['mode'], self.events_wrong)
         return events_function(exposure)    
     
     def events_wrong(self, exposure):
-        raise DetectorReadoutError('Readout mode %s doesn\'t exist' % self.options['mode'])
+        msg = 'Readout mode %s doesn\'t exist' % self.options['mode']
+        raise DetectorReadoutError(msg)
     
     def events_single(self, exposure):
         return [exposure]
     
     def events_cds(self, exposure):
-        return [0,exposure]
+        return [0, exposure]
     
     def events_fowler(self, exposure):
         dt = self.readout_time
@@ -145,11 +147,13 @@ class EmirDetector(Detector):
         return [dt * i for i in range(nsamples)]
     
     def process(self, images, events):
-        process_function = getattr(self, "process_%s" % self.options['mode'], self.process_wrong)
+        process_function = getattr(self, "process_%s" % self.options['mode'], 
+                                   self.process_wrong)
         return process_function(images, events)
     
-    def process_wrong(self,images, events):
-        raise DetectorReadoutError('Readout mode %s doesn\'t exist' % self.options['mode'])
+    def process_wrong(self, images, events):
+        msg = "Readout mode %s doesn't exist" % self.options['mode']
+        raise DetectorReadoutError(msg)
         
     def process_ramp(self, images, events):
         def slope(y, xcenter, varx, time):
@@ -178,9 +182,13 @@ class EmirDetector(Detector):
          return reduced.mean(axis=0)     
     
     def metadata(self):
-        mtdt = {'EXPOSED':self.exposure, 'EXPTIME':self.exposure, 'ELAPSED':self.time_since_last_reset(), 'DARKTIME':self.time_since_last_reset(),
-        'READMODE':self.options['mode'].upper(), 'READSCHM':self.options['scheme'].upper(),
-        'READNUM':self.options['reads'], 'READREPT':self.options['repeat']}
+        mtdt = {'EXPOSED':self.exposure, 'EXPTIME':self.exposure, 
+                'ELAPSED':self.time_since_last_reset(), 
+                'DARKTIME':self.time_since_last_reset(),
+                'READMODE':self.options['mode'].upper(), 
+                'READSCHM':self.options['scheme'].upper(),
+                'READNUM':self.options['reads'], 
+                'READREPT':self.options['repeat']}
         return mtdt
     
     

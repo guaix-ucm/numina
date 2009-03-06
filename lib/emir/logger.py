@@ -19,7 +19,11 @@
 
 # $Id$
 
+'''Extra Null Handler for the logging system'''
+
 import logging
+
+__version__ = "$Id$"
 
 class NullHandler(logging.Handler):
     '''NullHandler is the default log handler of the package'''

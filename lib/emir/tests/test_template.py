@@ -21,6 +21,8 @@
 
 import unittest
 
+__version__ = '$Id$'
+
 class SimpleTestCase(unittest.TestCase):
     def setUp(self):
         pass

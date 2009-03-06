@@ -46,12 +46,18 @@ description = __doc__
 def main():
     usage = "usage: %prog [options] recipe [recipe-options]"
     
-    parser = OptionParser(usage=usage, version=version_line, description=description)
+    parser = OptionParser(usage=usage, version=version_line, 
+                          description=description)
     # Command line options
-    parser.add_option('-d', '--debug',action="store_true", dest="debug", default=False, help="make lots of noise [default]")
-    parser.add_option('-o', '--output',action="store", dest="filename", metavar="FILE", help="write output to FILE")
-    parser.add_option('-l', action="store", dest="logging", metavar="FILE", help="FILE with logging configuration")
-    parser.add_option('--list', action="store_true", dest="listing", default=False)
+    parser.add_option('-d', '--debug',action="store_true", 
+                      dest="debug", default=False, 
+                      help="make lots of noise [default]")
+    parser.add_option('-o', '--output',action="store", dest="filename", 
+                      metavar="FILE", help="write output to FILE")
+    parser.add_option('-l', action="store", dest="logging", metavar="FILE", 
+                      help="FILE with logging configuration")
+    parser.add_option('--list', action="store_true", dest="listing", 
+                      default=False)
         
     # Configuration options from a text file    
     config = SafeConfigParser()
@@ -85,7 +91,7 @@ def main():
     
     for rename in args[0:1]:
         try:
-            RecipeClass = class_loader(rename, default_module,  logger = logger)
+            RecipeClass = class_loader(rename, default_module, logger = logger)
         except AttributeError:
             sys.exit(2)
         

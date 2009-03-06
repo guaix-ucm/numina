@@ -19,11 +19,17 @@
 
 # $Id$
 
-import numpy
+'''Simulation package'''
+
 import math
+
+import numpy
 from scipy.special import erf
 from scipy import maximum, minimum
+
 from emir.image import subarray_match
+
+__version__ = "$Id$"
 
 # Classes are new style
 __metaclass__ = type
@@ -51,16 +57,16 @@ class GaussProfile(Profile):
         offset = self.center.astype('int') - numpy.array([l,l]) 
         Profile.__init__(self, shape=(2 * l + 1, 2 * l + 1), offset=offset)
     @staticmethod
-    def __compute1(v, center, sigma):
+    def _compute1(v, center, sigma):
         return GaussProfile.M_SQRT1_2 * (v - center) / sigma
     @staticmethod
-    def __compute2(v, center, sigma):
-        tipV1 = GaussProfile.__compute1(v, center, sigma)
-        tipV2 = GaussProfile.__compute1(v + 1, center, sigma)
+    def _compute2(v, center, sigma):
+        tipV1 = GaussProfile._compute1(v, center, sigma)
+        tipV2 = GaussProfile._compute1(v + 1, center, sigma)
         return 0.5 * (erf(tipV2) - erf(tipV1))
     def area(self, x, y):      
-        v = GaussProfile.__compute2(x, self.center[1] - self.offset[1], self.sigma)
-        w = GaussProfile.__compute2(y, self.center[0] - self.offset[0], self.sigma)
+        v = GaussProfile._compute2(x, self.center[1] - self.offset[1], self.sigma)
+        w = GaussProfile._compute2(y, self.center[0] - self.offset[0], self.sigma)
         return  v * w
 
 class SlitProfile(Profile):

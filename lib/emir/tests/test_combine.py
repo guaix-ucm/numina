@@ -20,11 +20,14 @@
 # $Id$ 
 
 import unittest
+
 import numpy
+
 from emir.image.combine import new_combine2 as combine
 from emir.image.combine import method_mean as fun
 from emir.exceptions import Error
 
+__version__ = '$Id$'
 
 class CombineFilter1TestCase(unittest.TestCase):
     def setUp(self):

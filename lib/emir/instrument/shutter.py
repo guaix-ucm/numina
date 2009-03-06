@@ -19,36 +19,41 @@
 
 # $Id$
 
+__version__ = "$Id$"
+
+# Classes are new style
+__metaclass__ = type
+
 class Shutter:
     def __init__(self):
-        self.__closed = True 
+        self._closed = True 
     
     def status(self,closed = True):
-        self.__closed = closed
+        self._closed = closed
     
     def open(self):
-        if self.__closed:
-            self.__closed = False
+        if self._closed:
+            self._closed = False
         else:
             pass
         
     def close(self):
-        if not self.__closed:
-            self.__closed = True
+        if not self._sclosed:
+            self._closed = True
         else:
             pass
         
     def path(self, input):
-        if self.__closed:
+        if self._closed:
             return None
         else:
             return input
         
     def configure(self, open):
         if open:
-            self.__closed = False
+            self._closed = False
         else:
-            self.__closed = True
+            self._closed = True
     
     def metadata(self):
         return {}

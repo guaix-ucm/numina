@@ -18,33 +18,3 @@
 # 
 
 # $Id$
-
-class Lamp:
-    def __init__(self, name, code, source):
-        self.name = name
-        self.code = code
-        self.__source = source
-        self.power = False
-        
-    def __getS(self):
-        if self.power:
-            return self.__source
-        else:
-            return None
-    
-    source = property(__getS)
-    
-
-class Lamps:
-    def __init__(self, lamplist):
-        self.lamplist = lamplist
-    
-    @property
-    def source(self):
-        for i in self.lamplist:
-            if i.power:
-                return i.source
-    
-    def switch(status):
-        for i in self.lamplist:
-            i.power = status

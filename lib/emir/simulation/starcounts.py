@@ -20,14 +20,21 @@
 # $Id$
 
 from __future__ import with_statement 
-
 import math
 from math import pow, sin, cos, tan
+import sys
+import os
+
 from scipy import array
 import scipy.interpolate as sil
 from scipy.io import read_array
+
 from emir.exceptions import Error
-import sys, os
+
+__version__ = "$Id$"
+
+# Classes are new style
+__metaclass__ = type
 
 def _find(pathname, matchfunc=os.path.isfile):
     for dirname in sys.path:

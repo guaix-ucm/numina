@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -19,10 +19,14 @@
 
 # $Id$
 
+'''Decorators for the emir package'''
+
 import time
 import logging
 
-logger = logging.getLogger("emir")
+__version__ = "$Id$"
+
+_logger = logging.getLogger("emir")
 
 def print_timing(func):
     '''Print timing decorator'''
@@ -40,6 +44,6 @@ def log_timing(func):
         t1 = time.time()
         res = func(*arg,**keywords)
         t2 = time.time()
-        logger.debug('%s took %0.3f s' % (func.func_name, (t2 - t1)))
+        _logger.debug('%s took %0.3f s' % (func.func_name, (t2 - t1)))
         return res
     return wrapper

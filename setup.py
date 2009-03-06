@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from distutils.core import setup, Extension
+
 import numpy
 
 numpy_include =  numpy.get_include()
@@ -16,7 +17,7 @@ setup(name='pyemir',
       description='EMIR Data Processing Pipeline',
       long_description='EMIR Data Processing Pipeline',
       package_dir={'emir': 'lib/emir'},
-      packages=['emir', 'emir.image', 'emir.devel',
+      packages=['emir', 'emir.image', 'emir.devel','emir.instrument',
                  'emir.simulation', 'emir.tests',
                  'emir.recipes', 'emir.numina'],
       package_data = {'emir.simulation': ['*.dat']},
