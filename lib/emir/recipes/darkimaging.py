@@ -32,7 +32,7 @@ _logger = logging.getLogger("emir.recipes")
         
 _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
-__version__ = "$Id$"
+__version__ = "$Revision$"
 
 class DarkImaging(RecipeBase):
     '''Recipe for processing dark current images
