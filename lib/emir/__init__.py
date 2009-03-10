@@ -30,7 +30,7 @@ except ImportError:
 
 __version__ = "$Revision$"
 
-EMIR_VERSION_STRING = '0.1.0dev'
+EMIR_VERSION_STRING = '0.0.1'
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(NullHandler())

@@ -84,12 +84,12 @@ class CombineFilter1TestCase(unittest.TestCase):
                             [5.23e+02 ,  0., 4.5, 5.33333333]])
         rnum = numpy.array([[3, 3, 3, 2],[3, 0, 3, 3],[3, 1, 2, 3]])
         (res,var,num) = combine(inputs, masks, "mean", ())
-        for i in zip(res.flat, rres.flat):
-            self.assertAlmostEqual(i[0], i[1])
-        for i in zip(var.flat, rvar.flat):
-            self.assertAlmostEqual(i[0], i[1])
-        for i in zip(num.flat, rnum.flat):
-            self.assertEqual(i[0], i[1])
+        for cal, precal in zip(res.flat, rres.flat):
+            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(var.flat, rvar.flat):
+            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(num.flat, rnum.flat):
+            self.assertEqual(cal, precal)
         
 def test_suite():
     suite = unittest.TestSuite()

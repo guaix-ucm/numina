@@ -28,7 +28,7 @@ import unittest
 __version__ = '$Revision$'
 
 def print_info():
-    '''Info about the system and emir version'''
+    '''Print information about the system and emir version.'''
     print ''
     print 'python version', sys.version
     print 'my pid', os.getpid()
@@ -36,7 +36,7 @@ def print_info():
     sys.stdout.flush()
     
 class PrintInfoFakeTest(unittest.TestCase):
-    '''Test case that calls print_info the module is called as an unittest'''
+    '''Test case that calls print_info if the module is called as an unittest.'''
     def testPrintVersions(self):
         print_info()
 

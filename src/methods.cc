@@ -56,7 +56,7 @@ void method_mean(double data[], int size, double* c, double* var, long* number, 
  * This code in public domain.
  * http://ndevilla.free.fr/median/median/index.html
  */
-typedef double elem_type ;
+typedef double elem_type;
 
 #define WIRTH_ELEM_SWAP(a,b) { register elem_type t=(a);(a)=(b);(b)=t; }
 

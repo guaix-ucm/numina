@@ -36,7 +36,7 @@ __version__ = "$Revision$"
 _logger = logging.getLogger("emir.recipes")
 
 class SimulateImage(RecipeBase):
-    '''Simulates EMIR images
+    '''Recipe to simulate EMIR images.
     
     Here starts the long description...
     It continues several lines'''

@@ -9,7 +9,7 @@ ex1 = Extension('emir.image._combine',['src/combinemodule.cc', 'src/methods.cc']
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
-      version='0.1.0',
+      version='0.0.1',
       author='Sergio Pascual',
       author_email='spr@astrax.fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
@@ -22,6 +22,6 @@ setup(name='pyemir',
                  'emir.recipes', 'emir.numina'],
       package_data = {'emir.simulation': ['*.dat']},
       ext_modules=[ex1],
-      scripts =  ['scripts/pyemir_runner.py'],
+      scripts =  ['scripts/numina.py'],
       requires=['pyfits', 'scipy'],
       )

@@ -1,8 +1,31 @@
-This is PyEmir, the data reduction pipeline for EMIR 
+-*- outline -*-
+
+This is PyEmir, the data reduction pipeline for EMIR. 
 
 PyEmir is licensed under the GNU GPL. See COPYING for details
 
-PyEmir requires the following packages:
+PyEmir requires the following packages installed:
 
- * setuptools
- * numpy
+ - pyfits
+
+
+* Compilation
+
+Run the following command:
+
+   python setup.py build
+
+
+For additional options:
+
+   python setup.py build --help
+
+
+* Installation
+
+   python setup.py install
+
+
+For additional options:
+
+   python setup.py install --help

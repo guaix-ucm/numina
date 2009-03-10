@@ -35,10 +35,12 @@ _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
 
 class DarkImaging(RecipeBase):
-    '''Recipe for processing dark current images
+    '''Recipe to process data taken in Dark current image Mode.
     
     Here starts the long description...
-    It continues several lines'''
+    It continues several lines
+    
+    '''
     def __init__(self):
         super(DarkImaging, self).__init__(optusage=_usage_string)
         # Default values. This can be read from a file

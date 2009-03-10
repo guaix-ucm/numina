@@ -26,9 +26,14 @@ from _combine import method_mean
 
 __version__ = "$Revision$"
 
-def new_combine2(images, masks, method="mean", args=(), res=None, var=None, num=None):
-    '''Inputs and masks are a list of array objects. method can be a string or a callable object
-    args are the arguments passed to method and (res,var,num) the result'''
+def new_combine2(images, masks, method="mean", args=(), 
+                 res=None, var=None, num=None):
+    '''Combine a sequence of images using boolean masks and a combination method.
+    
+    Inputs and masks are a list of array objects. method can be a string or a callable object.
+    args are the arguments passed to method and (res,var,num) the result
+    
+    '''
     
     # method should be a string
     if not isinstance(method, basestring) and not callable(method):
