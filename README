@@ -7,6 +7,7 @@ PyEmir is licensed under the GNU GPL. See COPYING for details
 PyEmir requires the following packages installed:
 
  - pyfits
+ - setuptools
 
 
 * Compilation

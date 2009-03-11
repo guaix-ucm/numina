@@ -30,7 +30,7 @@ import scipy.stsci.image as im
 import emir.image.combine as com
 from emir.recipes.darkimaging import DarkImaging
 from emir.recipes.simulateimage import SimulateImage
-from emir.numina import RecipeBase
+from numina import RecipeBase
 
 
 __version__ = "$Revision$"

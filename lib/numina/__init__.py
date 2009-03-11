@@ -19,17 +19,26 @@
 
 # $Id$
 
-'''Utilities used by Numina'''
+'''The Numen GTC recipe runner'''
 
 
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import inspect
+import logging
+
+try:
+    from logging import NullHandler
+except ImportError:
+    from logger import NullHandler
 
 __version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type
+
+# Top level NullHandler
+logging.getLogger("numina").addHandler(NullHandler())
 
 class RecipeBase:
     '''Base class for Recipes of all kinds'''
@@ -78,7 +87,7 @@ class Null:
         return self
 
     # attribute handling
-    def __getattr__(self, mname):
+    def __getattr__(self, mame):
         "Ignore attribute requests."
         return self
 
@@ -104,7 +113,7 @@ def class_loader(path, default_module, logger=Null()):
     '''Loads a class from path'''
     comps = path.split('.')
     recipe = comps[-1]
-    logger.debug('recipe is %s',recipe)
+    logger.debug('recipe is %s', recipe)
     if len(comps) == 1:
         modulen = default_module
     else:
@@ -131,7 +140,6 @@ def class_loader(path, default_module, logger=Null()):
 
 def list_recipes(path, docs=True):
     '''Lists all the recipes in a module'''
-    comps = path.split('.')
     module = __import__(path)
     # Import submodules
     for part in path.split('.')[1:]:
@@ -147,3 +155,4 @@ def list_recipes(path, docs=True):
             else:
                 mydoc = ''
             print name, mydoc
+

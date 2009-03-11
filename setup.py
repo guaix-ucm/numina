@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup, Extension
+from setuptools import setup, find_packages, Extension
 
 import numpy
 
@@ -15,13 +15,17 @@ setup(name='pyemir',
       url='http://guaix.fis.ucm.es/projects/emir',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
-      long_description='EMIR Data Processing Pipeline',
-      package_dir={'emir': 'lib/emir'},
-      packages=['emir', 'emir.image', 'emir.devel','emir.instrument',
-                 'emir.simulation', 'emir.tests',
-                 'emir.recipes', 'emir.numina'],
-      package_data = {'emir.simulation': ['*.dat']},
+      long_description='EMIR Data Processing Pipeline',      
+      packages=find_packages('lib'),
+      package_dir={'': 'lib'},
+      package_data = {'emir.simulation': ['*.dat'],
+                      'numina': ['*.cfg']},
       ext_modules=[ex1],
-      scripts =  ['scripts/numina.py'],
       requires=['pyfits', 'scipy'],
+      entry_points = {'console_scripts': ['numina = numina.user:main',]},
+      # how to use nose
+      #http://www.plope.com/Members/chrism/nose_setup_py_test
+      #test_suite = "nose.collector",
+      test_suite = "emir.tests",
+      data_files = [('/etc/numina', ['numina/logging.ini'])]
       )

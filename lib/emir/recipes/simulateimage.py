@@ -26,7 +26,7 @@ import logging
 
 import numpy
 
-from emir.numina import RecipeBase
+from numina import RecipeBase
 from emir.instrument.detector import EmirDetector
 from emir.simulation.storage import FITSCreator
 from emir.simulation.headers import default_fits_headers

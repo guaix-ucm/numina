@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # Copyright 2008-2009 Sergio Pascual
 # 
@@ -29,53 +27,73 @@ It will span several lines'''
 
 import logging
 import logging.config
-import sys
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import os
-import inspect
 
 import pyfits
 
-from emir.numina import class_loader, list_recipes
+from numina import class_loader, list_recipes
+import numina.config as nconfig
 
-version_number = "0.1"
+__version__ = "$Revision$"
+
+version_number = "0.0.1"
 version_line = '%prog ' + version_number
 description = __doc__
 
-def main():
+def parse_cmdline(args=None):
+    '''Parse the command line.'''
     usage = "usage: %prog [options] recipe [recipe-options]"
     
     parser = OptionParser(usage=usage, version=version_line, 
-                          description=description)
+                          description=__doc__)
     # Command line options
-    parser.add_option('-d', '--debug',action="store_true", 
+    parser.add_option('-d', '--debug', action="store_true", 
                       dest="debug", default=False, 
                       help="make lots of noise [default]")
-    parser.add_option('-o', '--output',action="store", dest="filename", 
+    parser.add_option('-o', '--output', action="store", dest="filename", 
                       metavar="FILE", help="write output to FILE")
     parser.add_option('-l', action="store", dest="logging", metavar="FILE", 
                       help="FILE with logging configuration")
-    parser.add_option('--list', action="store_true", dest="listing", 
-                      default=False)
-        
-    # Configuration options from a text file    
-    config = SafeConfigParser()
-    # Default values, it must exist
-    config.readfp(open('defaults.cfg'))
+    parser.add_option('--list', action="store_const", const='list', 
+                      dest="mode", default='none')
+    parser.add_option('--run', action="store_const", const='run', 
+                      dest="mode", default='none')
     
     # Stop when you find the first argument
     parser.disable_interspersed_args()
-    (options, args) = parser.parse_args()
-        
+    (options, args) = parser.parse_args(args)
+    return (options, args)
+
+def mode_list(module):
+    '''Run the list mode of Numina.'''
+    list_recipes(module)
+    
+def mode_none():
+    '''Do nothing in Numina.'''
+    pass
+
+def main(args=None):
+    '''Entry point for the Numina CLI. '''        
+    # Configuration options from a text file    
+    config = SafeConfigParser()
+    # Default values, it must exist
+    config.readfp(open(os.path.join(os.path.dirname(__file__), 
+                                    'defaults.cfg')))
+
     # Custom values, site wide and local
-    config.read(['site.cfg', os.path.expanduser('~/.numina.cfg')])
+    config.read([os.path.join(nconfig.myconfigdir, 'site.cfg'), 
+                 os.path.expanduser('~/.numina.cfg')])
+
+    # The cmd line is parsed
+    options, args = parse_cmdline(args)
 
     # After processing both the command line and the files
     # we get the values of everything
 
     # logger file
-    loggini = config.get('ohoh', 'logging')
+    loggini = os.path.join(nconfig.myconfigdir, 'logging.ini')
 
     logging.config.fileConfig(loggini)
         
@@ -85,19 +103,22 @@ def main():
         
     default_module = config.get('ohoh', 'module')
     
-    if options.listing:
-        list_recipes(default_module)
-        sys.exit()
+    if options.mode == 'list':
+        mode_list(default_module)
+        return 0
+    elif options.mode == 'none':
+        mode_none()
     
+    # Here we are in mode run
     for rename in args[0:1]:
         try:
             RecipeClass = class_loader(rename, default_module, logger = logger)
         except AttributeError:
-            sys.exit(2)
+            return 2
         
         if RecipeClass is None:
             logger.error('%s is not a subclass of RecipeBase', rename)
-            sts.exit(2)
+            return 2
         
         # running the recipe
         logger.info('Created recipe instance of class %s', rename)
@@ -108,13 +129,13 @@ def main():
         
         if reoptions.docs:
             print rename, recipe.__doc__
-            sys.exit(0)
+            return 0
                     
         for i in reargs:        
             logger.debug('Option file %s' % i)            
             recipe.iniconfig.read(i)
 
-        filename='r%05d.fits'
+        filename = 'r%05d.fits'
         fits_conf = {'directory': 'images',
                  'index': 'images/index.pkl',
                  'filename': filename}
@@ -143,6 +164,7 @@ def main():
                 logger.warning('No action defined for type %s', type(result))
         
         logger.info('Completed execution')
+        return 0
 
 if __name__ == '__main__':
     main()

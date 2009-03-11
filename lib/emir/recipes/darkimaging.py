@@ -24,7 +24,7 @@ import logging
 import pyfits
 import scipy.stsci.image as im
 
-from emir.numina import RecipeBase
+from numina import RecipeBase
 import emir.image.combine as com
 
 __version__ = "$Revision$"
