@@ -100,17 +100,19 @@ class Null:
         return self
 
     # misc.
-    def __repr__(self):
+    @staticmethod
+    def __repr__():
         "Return a string representation."
         return "<Null>"
-
-    def __str__(self):
+    
+    @staticmethod
+    def __str__():
         "Convert to a string and return it."
         return "Null"
     
     
 def class_loader(path, default_module, logger=Null()):
-    '''Loads a class from path'''
+    '''Load a class from path'''
     comps = path.split('.')
     recipe = comps[-1]
     logger.debug('recipe is %s', recipe)
@@ -139,7 +141,7 @@ def class_loader(path, default_module, logger=Null()):
 
 
 def list_recipes(path, docs=True):
-    '''Lists all the recipes in a module'''
+    '''List all the recipes in a module'''
     module = __import__(path)
     # Import submodules
     for part in path.split('.')[1:]:

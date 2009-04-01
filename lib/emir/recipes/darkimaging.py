@@ -25,7 +25,7 @@ import pyfits
 import scipy.stsci.image as im
 
 from numina import RecipeBase
-import emir.image.combine as com
+#import emir.image.combine as com
 
 __version__ = "$Revision$"
 
@@ -45,7 +45,7 @@ class DarkImaging(RecipeBase):
         super(DarkImaging, self).__init__(optusage=_usage_string)
         # Default values. This can be read from a file
         self.iniconfig.add_section('inputs')
-        self.iniconfig.set('inputs','files','')
+        self.iniconfig.set('inputs', 'files', '')
                 
     def process(self):
         pfiles = self.iniconfig.get('inputs','files')
@@ -57,7 +57,7 @@ class DarkImaging(RecipeBase):
         images = []
         try:
             for i in pfiles:
-                _logger.debug('Loading %s',i)
+                _logger.debug('Loading %s', i)
                 images.append(pyfits.open(i))
         except IOError, err:
             _logger.error(err)
@@ -65,7 +65,7 @@ class DarkImaging(RecipeBase):
             for i in images:
                 i.close()
         
-        _logger.debug('We have %d images',len(images))
+        _logger.debug('We have %d images', len(images))
         # Data from the primary extension
         data = [i['primary'].data for i in images]
         #

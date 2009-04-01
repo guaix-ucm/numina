@@ -19,7 +19,7 @@
 
 # $Id$
 
-'''This is a very long and convenient description of the program and its usage.
+'''User command line interface of Numina.
 
 This is the long description.
 It will span several lines'''
@@ -40,7 +40,6 @@ __version__ = "$Revision$"
 
 version_number = "0.0.1"
 version_line = '%prog ' + version_number
-description = __doc__
 
 def parse_cmdline(args=None):
     '''Parse the command line.'''
@@ -153,7 +152,8 @@ def main(args=None):
         
         runs = recipe.repeat
         while not recipe.complete():
-            logger.debug('Running the recipe instance %d of %d ' % (recipe.repeat, runs))
+            logger.debug('Running the recipe instance %d of %d ', 
+                         recipe.repeat, runs)
             result = recipe.run()
             logger.debug('Getting action for result')
             try:

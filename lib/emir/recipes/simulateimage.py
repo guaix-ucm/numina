@@ -44,18 +44,18 @@ class SimulateImage(RecipeBase):
         super(SimulateImage, self).__init__(optusage="usage: %prog [options] recipe [recipe-options]")
         # Default values. This can be read from a file
         self.iniconfig.add_section('readout')
-        self.iniconfig.set('readout','mode','cds')
-        self.iniconfig.set('readout','reads','3')
-        self.iniconfig.set('readout','repeat','1')
-        self.iniconfig.set('readout','scheme','perline')
-        self.iniconfig.set('readout','exposure','0')
+        self.iniconfig.set('readout', 'mode', 'cds')
+        self.iniconfig.set('readout', 'reads', '3')
+        self.iniconfig.set('readout', 'repeat', '1')
+        self.iniconfig.set('readout', 'scheme', 'perline')
+        self.iniconfig.set('readout', 'exposure', '0')
         self.iniconfig.add_section('detector')
-        self.iniconfig.set('detector','shape','(2048,2048)')
-        self.iniconfig.set('detector','ron','2.16')
-        self.iniconfig.set('detector','dark','0.37')
-        self.iniconfig.set('detector','gain','3.028')
-        self.iniconfig.set('detector','flat','1')
-        self.iniconfig.set('detector','well','65536')
+        self.iniconfig.set('detector', 'shape', '(2048,2048)')
+        self.iniconfig.set('detector', 'ron',' 2.16')
+        self.iniconfig.set('detector', 'dark', '0.37')
+        self.iniconfig.set('detector', 'gain', '3.028')
+        self.iniconfig.set('detector', 'flat', '1')
+        self.iniconfig.set('detector', 'well', '65536')
         #
         self.detector = None
         self.input = None
@@ -64,7 +64,7 @@ class SimulateImage(RecipeBase):
     def setup(self):
         detector_conf = {}
         detector_conf['shape'] = eval(self.iniconfig.get('detector', 'shape'))
-        for i in ['ron','dark','gain','flat', 'well']:
+        for i in ['ron', 'dark', 'gain', 'flat', 'well']:
             detector_conf[i] = self.iniconfig.getfloat('detector', i)
 
         self.detector = EmirDetector(**detector_conf)

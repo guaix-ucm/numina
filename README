@@ -2,12 +2,17 @@
 
 This is PyEmir, the data reduction pipeline for EMIR. 
 
-PyEmir is licensed under the GNU GPL. See COPYING for details
+PyEmir is distributed under GNU GPL, either version 3 of the License, 
+or (at your option) any later version. See the file COPYING for details.
 
-PyEmir requires the following packages installed:
+PyEmir requires the following packages installed in order to
+be able to be installed and work properly:
 
- - pyfits
- - setuptools
+ - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
+ - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
+
+Webpage: https://guaix.fis.ucm.es/projects/emir
+Maintainer: spr@astrax.fis.ucm.es
 
 
 * Compilation

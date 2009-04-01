@@ -25,7 +25,7 @@
 import logging
 
 import pyfits
-import scipy.stsci.image as im
+#import scipy.stsci.image as im
 
 import emir.image.combine as com
 from emir.recipes.darkimaging import DarkImaging
