@@ -25,12 +25,11 @@
 import logging
 
 import pyfits
-#import scipy.stsci.image as im
 
-import emir.image.combine as com
-from emir.recipes.darkimaging import DarkImaging
-from emir.recipes.simulateimage import SimulateImage
 from numina import RecipeBase
+import emir.image.combine as com
+from darkimaging import DarkImaging
+from simulateimage import SimulateImage
 
 
 __version__ = "$Revision$"
@@ -43,7 +42,7 @@ class BiasImaging(RecipeBase):
 
         
 class IntensityFlatField(RecipeBase):
-    '''Recipe to process data taken in Intensity Flat Field Mode.'''    
+    '''Recipe to process data taken in Intensity Flat Field Mode.'''
     pass
 
 
@@ -144,6 +143,4 @@ class DNSpectra(RecipeBase):
 class OffsetSpectra(RecipeBase):
     '''Recipe to process data taken in Offset spectra Mode.'''
     pass
-
-
 

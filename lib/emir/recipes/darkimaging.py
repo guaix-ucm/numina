@@ -19,6 +19,8 @@
 
 # $Id$
 
+'''Dark image recipe and associates'''
+
 import logging
 
 import pyfits
