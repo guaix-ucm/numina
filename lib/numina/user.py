@@ -55,6 +55,8 @@ def parse_cmdline(args=None):
                       metavar="FILE", help="write output to FILE")
     parser.add_option('-l', action="store", dest="logging", metavar="FILE", 
                       help="FILE with logging configuration")
+    parser.add_option('--module', action="store", dest="module", 
+                      metavar="FILE", help="FILE")
     parser.add_option('--list', action="store_const", const='list', 
                       dest="mode", default='none')
     parser.add_option('--run', action="store_const", const='run', 
@@ -92,36 +94,41 @@ def main(args=None):
     # we get the values of everything
 
     # logger file
-    loggini = os.path.join(nconfig.myconfigdir, 'logging.ini')
+    if options.logging is None:
+        options.logging = os.path.join(nconfig.myconfigdir, 'logging.ini')
 
-    logging.config.fileConfig(loggini)
+    logging.config.fileConfig(options.logging)
         
     logger = logging.getLogger("numina")
     
     logger.info('Numina: EMIR recipe runner version %s', version_number)
-        
-    default_module = config.get('ohoh', 'module')
+    
+    if options.module is None:
+        options.module = config.get('ohoh', 'module')
     
     if options.mode == 'list':
-        mode_list(default_module)
+        mode_list(options.module)
         return 0
     elif options.mode == 'none':
         mode_none()
-    
+        return 0
+    elif options.mode == 'run':
+        pass
     # Here we are in mode run
     for rename in args[0:1]:
         try:
-            RecipeClass = class_loader(rename, default_module, logger = logger)
+            recipeClass = class_loader(rename, options.module, 
+                                       logger = logger)
         except AttributeError:
             return 2
         
-        if RecipeClass is None:
+        if recipeClass is None:
             logger.error('%s is not a subclass of RecipeBase', rename)
             return 2
         
         # running the recipe
         logger.info('Created recipe instance of class %s', rename)
-        recipe = RecipeClass()
+        recipe = recipeClass()
         # Parse the rest of the options
         logger.debug('Parsing the options provided by recipe instance')
         (reoptions, reargs) = recipe.cmdoptions.parse_args(args=args[1:])
