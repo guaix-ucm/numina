@@ -117,8 +117,7 @@ def main(args=None):
     # Here we are in mode run
     for rename in args[0:1]:
         try:
-            recipeClass = class_loader(rename, options.module, 
-                                       logger = logger)
+            recipeClass = class_loader(rename, options.module, logger = logger)
         except AttributeError:
             return 2
         
@@ -141,18 +140,6 @@ def main(args=None):
             logger.debug('Option file %s' % i)            
             recipe.iniconfig.read(i)
 
-        filename = 'r%05d.fits'
-        fits_conf = {'directory': 'images',
-                 'index': 'images/index.pkl',
-                 'filename': filename}
-    
-        from emir.simulation.storage import FITSStorage
-    
-        logger.info('Creating FITS storage')
-        storage = FITSStorage(**fits_conf)
-        # Registered actions:
-        actions = {pyfits.HDUList: ('FITS file', storage.store)}
-
                     
         logger.debug('Setting-up the recipe')
         recipe.setup()
@@ -162,13 +149,7 @@ def main(args=None):
             logger.debug('Running the recipe instance %d of %d ', 
                          recipe.repeat, runs)
             result = recipe.run()
-            logger.debug('Getting action for result')
-            try:
-                desc, action = actions[type(result)]
-                logger.debug('Action for result is %s', desc)
-                action(result)
-            except KeyError:
-                logger.warning('No action defined for type %s', type(result))
+            result.store()
         
         logger.info('Completed execution')
         return 0

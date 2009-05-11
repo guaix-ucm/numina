@@ -35,6 +35,12 @@ _logger = logging.getLogger("emir.recipes")
         
 _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
+class DarkImagingResult:
+    def __init__(self, image, filename):
+        self.hdulist = image
+        self.filename = filename
+    def store(self):
+        self.hdulist.writeto(self.filename)
 
 class DarkImaging(RecipeBase):
     '''Recipe to process data taken in Dark current image Mode.
@@ -48,6 +54,8 @@ class DarkImaging(RecipeBase):
         # Default values. This can be read from a file
         self.iniconfig.add_section('inputs')
         self.iniconfig.set('inputs', 'files', '')
+        self.iniconfig.add_section('output')
+        self.iniconfig.set('output', 'filename', 'output.fits')
                 
     def process(self):
         pfiles = self.iniconfig.get('inputs','files')
@@ -80,5 +88,7 @@ class DarkImaging(RecipeBase):
         nhdu = pyfits.ImageHDU(name='NUMBER')
         # Final structure
         hdulist = pyfits.HDUList([dhdu, vhdu, nhdu])
-        return hdulist
+        
+        filename = self.iniconfig.get('output','filename')
+        return DarkImagingResult(hdulist, filename)
         
