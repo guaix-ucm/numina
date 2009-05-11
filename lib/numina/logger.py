@@ -28,4 +28,5 @@ __version__ = "$Revision$"
 class NullHandler(logging.Handler):
     '''NullHandler is the default log handler of the package'''
     def emit(self, record):
+        '''Do-nothing method'''
         pass
