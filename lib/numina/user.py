@@ -148,8 +148,11 @@ def main(args=None):
         while not recipe.complete():
             logger.debug('Running the recipe instance %d of %d ', 
                          recipe.repeat, runs)
-            result = recipe.run()
-            result.store()
+            try:
+                result = recipe.run()
+                result.store()
+            except (IOError, OSError), e:
+                logger.error("%s", e)
         
         logger.info('Completed execution')
         return 0
