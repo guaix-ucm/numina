@@ -31,7 +31,6 @@ from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import os
 
-import pyfits
 
 from numina import class_loader, list_recipes
 import numina.config as nconfig
@@ -75,6 +74,51 @@ def mode_none():
     '''Do nothing in Numina.'''
     pass
 
+def mode_run(args, options, logger):
+    '''Run the execution mode of Numina'''
+    rename = args[0]      
+    try:
+        recipeClass = class_loader(rename, options.module, logger=logger)
+    except AttributeError:
+        return 2
+    
+    if recipeClass is None:
+        logger.error('%s is not a subclass of RecipeBase', rename)
+        return 2
+    
+    # running the recipe
+    logger.info('Created recipe instance of class %s', rename)
+    recipe = recipeClass()
+    # Parse the rest of the options
+    logger.debug('Parsing the options provided by recipe instance')
+    (reoptions, reargs) = recipe.cmdoptions.parse_args(args=args[1:])
+    
+    if reoptions.docs:
+        print rename, recipe.__doc__
+        return 0
+                
+    for i in reargs:        
+        logger.debug('Option file %s' % i)            
+        recipe.iniconfig.read(i)
+
+                
+    logger.debug('Setting-up the recipe')
+    recipe.setup()
+    
+    runs = recipe.repeat
+    while not recipe.complete():
+        logger.debug('Running the recipe instance %d of %d ', 
+                     recipe.repeat, runs)
+        try:
+            result = recipe.run()
+            result.store()
+        except (IOError, OSError), e:
+            logger.error("%s", e)
+    
+    logger.info('Completed execution')
+
+
+
 def main(args=None):
     '''Entry point for the Numina CLI. '''        
     # Configuration options from a text file    
@@ -113,49 +157,7 @@ def main(args=None):
         mode_none()
         return 0
     elif options.mode == 'run':
-        pass
-    # Here we are in mode run
-    for rename in args[0:1]:
-        try:
-            recipeClass = class_loader(rename, options.module, logger = logger)
-        except AttributeError:
-            return 2
-        
-        if recipeClass is None:
-            logger.error('%s is not a subclass of RecipeBase', rename)
-            return 2
-        
-        # running the recipe
-        logger.info('Created recipe instance of class %s', rename)
-        recipe = recipeClass()
-        # Parse the rest of the options
-        logger.debug('Parsing the options provided by recipe instance')
-        (reoptions, reargs) = recipe.cmdoptions.parse_args(args=args[1:])
-        
-        if reoptions.docs:
-            print rename, recipe.__doc__
-            return 0
-                    
-        for i in reargs:        
-            logger.debug('Option file %s' % i)            
-            recipe.iniconfig.read(i)
-
-                    
-        logger.debug('Setting-up the recipe')
-        recipe.setup()
-        
-        runs = recipe.repeat
-        while not recipe.complete():
-            logger.debug('Running the recipe instance %d of %d ', 
-                         recipe.repeat, runs)
-            try:
-                result = recipe.run()
-                result.store()
-            except (IOError, OSError), e:
-                logger.error("%s", e)
-        
-        logger.info('Completed execution')
-        return 0
-
+        return mode_run(args, options, logger)
+    
 if __name__ == '__main__':
     main()
