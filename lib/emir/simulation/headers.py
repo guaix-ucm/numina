@@ -25,12 +25,12 @@ __version__ = "$Revision$"
 
 default_fits_headers = {
 # FITS headers of the WCS HDU
-'wcs': pyfits.Header([
+'WCS': pyfits.Header([
   pyfits.Card('EXTNAME','WCSDVARR', ''),
   pyfits.Card("EXTVER", 1, "Variance array version number"),
 ]),
 # FITS headers of the Variance HDU
-'variance': pyfits.Header([
+'VARIANCE': pyfits.Header([
   pyfits.Card('EXTNAME','ERROR DATA',''),
   pyfits.Card("EXTVER", 1, "Variance array version number"),
   pyfits.Card("DATE", "", "Date FITS file was generated"),
@@ -51,7 +51,7 @@ default_fits_headers = {
   #      pyfits.Card("CDELT2", 1, "Spatial interval in pixels"),
 ]),
 # FITS headers of the Primary HDU
-'primary': pyfits.Header([
+'PRIMARY': pyfits.Header([
 #      pyfits.Card("WCSDIM", 2, "Number of dimensions for WCS"),
 #      pyfits.Card("WCSAXES", 2, "Two coordinate axes"),
 #      pyfits.Card("WCSNAME  ", "Bidimensionnal Spatial representation", "Name of this system"),
