@@ -78,10 +78,11 @@ class FITSCreator:
         created_hdus[0].header["DATE-OBS"] = nowstr
         dateheaders={'DATE':nowstr, 'DATE-OBS':nowstr}
 
-        for (name, data, headers) in extensions:
-            headers.update(dateheaders)
-            hdu = self.init_extension_HDU(data, headers, name)
-            created_hdus.append(hdu)
+        if extensions is not None:
+            for (name, data, headers) in extensions:
+                headers.update(dateheaders)
+                hdu = self.init_extension_HDU(data, headers, name)
+                created_hdus.append(hdu)
                         
         hdulist = pyfits.HDUList(created_hdus)
         return hdulist
