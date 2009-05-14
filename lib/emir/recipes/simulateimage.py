@@ -27,10 +27,11 @@ import logging
 import numpy
 
 from numina import RecipeBase
-from numina.image.storage import FITSCreator
+from numina.simulation import RunCounter
+from numina.simulation.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
 from emir.simulation.headers import default_fits_headers
-from emir.simulation.storage import RunCounter
+
 from darkimaging import DarkImagingResult as SimulateImageResult
 
 __version__ = "$Revision$"
