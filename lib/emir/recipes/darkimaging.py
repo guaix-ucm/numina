@@ -39,7 +39,9 @@ class DarkImagingResult:
     def __init__(self, image, filename):
         self.hdulist = image
         self.filename = filename
+        
     def store(self):
+        _logger.debug('Saving %s' % self.filename)
         self.hdulist.writeto(self.filename)
 
 class DarkImaging(RecipeBase):
