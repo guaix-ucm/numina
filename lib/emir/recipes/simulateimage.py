@@ -27,9 +27,11 @@ import logging
 import numpy
 
 from numina import RecipeBase
+from numina.image.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
-from emir.simulation.storage import FITSCreator
 from emir.simulation.headers import default_fits_headers
+from emir.simulation.storage import RunCounter
+from darkimaging import DarkImagingResult as SimulateImageResult
 
 __version__ = "$Revision$"
 
@@ -41,7 +43,9 @@ class SimulateImage(RecipeBase):
     Here starts the long description...
     It continues several lines'''
     def __init__(self):
-        super(SimulateImage, self).__init__(optusage="usage: %prog [options] recipe [recipe-options]")
+        optusage = "usage: %prog [options] recipe [recipe-options]"
+        super(SimulateImage, self).__init__(optusage=optusage)
+        
         # Default values. This can be read from a file
         self.iniconfig.add_section('readout')
         self.iniconfig.set('readout', 'mode', 'cds')
@@ -59,7 +63,8 @@ class SimulateImage(RecipeBase):
         #
         self.detector = None
         self.input = None
-        self.storage = None
+        self.creator = None
+        self.runcounter = None
         
     def setup(self):
         detector_conf = {}
@@ -88,19 +93,23 @@ class SimulateImage(RecipeBase):
         self.detector.exposure(readout_opt['exposure'])
         
         _logger.info('FITS builder created')
-        self.storage = FITSCreator(default_fits_headers)
+        self.creator = FITSCreator(default_fits_headers)
+        _logger.info('Run counter created')
+        self.runcounter = RunCounter("r%05d")
         
         
     def process(self):
         _logger.info('Creating simulated array')    
         output = self.detector.path(self.input)
+        run, cfile = self.runcounter.runstring()
+        headers = {'RUN': run}
         
-        header = {'RUN': '00001'}
-        _logger.info('Collecting metadata')
-        header.update(self.detector.metadata())
+        _logger.info('Collecting detector metadata')
+        headers.update(self.detector.metadata())
+        
         _logger.info('Building FITS structure')
-        hdulist = self.storage.create(output, headers=header)
-        return hdulist
+        hdulist = self.creator.create(output, headers)
+        return SimulateImageResult(hdulist, cfile)
         
 
 
