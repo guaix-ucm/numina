@@ -21,10 +21,10 @@
 
 from __future__ import with_statement
 import os
+from os.path import join as pjoin
 import pickle
 import logging
 
-import pyfits
 
 __version__ = "$Revision$"
 
@@ -33,17 +33,20 @@ __metaclass__ = type
 
 _logger = logging.getLogger("emir.storage")
 
-class FITSStorage:
-    def __init__(self, filename, directory, index):
-        self.filename = filename
-        self.dir = directory
-        self.pstore = index
-        self.last = 0
-        self.complete = os.path.realpath(os.path.join(self.dir,self.filename))
-        _logger.debug('Accessing image dir: %s' % self.dir)
-        if not os.access(self.dir, os.F_OK):
-            _logger.debug('Creating image dir %s' % self.dir)
-            os.mkdir(self.dir)
+class RunCounter:
+    '''Persistent run number counter'''
+    def __init__(self, template, ext='.fits', 
+                 directory=".", pstore='index.pkl', last=1):
+        self.template = template
+        self.ext = ext
+        self.directory = directory
+        self.pstore = pstore
+        self.last = last
+        self.complete = pjoin(self.directory, self.template + self.ext)
+        _logger.debug('Accessing image directory: %s' % self.directory)
+        if not os.access(self.directory, os.F_OK):
+            _logger.debug('Creating image directory %s' % self.directory)
+            os.mkdir(self.directory)
         try:
             with open(self.pstore,'rb') as pkl_file:
                 _logger.debug('Loading status in %s' % self.pstore)
@@ -55,16 +58,14 @@ class FITSStorage:
         try:
             with open(self.pstore, 'wb') as pkl_file:                
                 pickle.dump(self.last, pkl_file)
-                _logger.debug('Clean up, storing internal status in %s and exiting' % self.pstore)
+                _logger.debug('Storing internal status in %s' % self.pstore)
         except IOError, strrerror:            
             _logger.error(strrerror)
             
-    def store(self, hdulist):
-        _logger.info('Writing to disk')
-        try:
-            hdulist.writeto(self.complete % self.last)
-            _logger.info('Done %s', (self.filename % self.last))
-            self.last += 1
-        except IOError, strrerror:
-            _logger.error(strrerror)
+    def runstring(self):
+        '''Return the run number and the file name.'''
+        run = self.template % self.last
+        cfile = self.complete % self.last
+        self.last += 1
+        return (run, cfile)
         
