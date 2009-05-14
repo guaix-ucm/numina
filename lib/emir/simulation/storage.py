@@ -20,7 +20,6 @@
 # $Id$
 
 from __future__ import with_statement
-import datetime
 import os
 import pickle
 import logging
@@ -33,80 +32,6 @@ __version__ = "$Revision$"
 __metaclass__ = type
 
 _logger = logging.getLogger("emir.storage")
-
-class FITSCreator:
-    def __init__(self, default_fits_headers):
-        self.defaults = default_fits_headers
-        
-    def init_primary_HDU(self, data=None, updateheaders=None):
-        hdu = pyfits.PrimaryHDU(data, self.defaults['primary'])
-        header = hdu.header        
-        if updateheaders is not None:
-            _logger.info('Updating keywords in %s header', 'PRIMARY')      
-            for key in updateheaders:
-                try:
-                    _logger.debug('Updating keyword %s with value %s', key, updateheaders[key])
-                    header[key] = updateheaders[key]
-                except KeyError:
-                    _logger.warning("Keyword %s not permitted in FITS header", key)
-        return hdu
-    
-    def init_extension_HDU(self, extname, empty=False, data=None, updateheaders=None):
-        if data is None or empty:
-            hdu = pyfits.ImageHDU()
-        else:
-            hdu = pyfits.ImageHDU(data)
-        
-        header = hdu.header
-        _logger.info('Creating %s header', extname)
-        for key,val,comment in self.defaults[extname.tolower()]:
-            header.update(key, val, comment)
-        header["EXTNAME"] = extname
-        
-        _logger.info('Updating keywords in %s header', extname)
-        
-        if updateheaders is not None:
-            for key in updateheaders:
-                try:
-                    _logger.debug('Updating keyword %s with value %s', key, updateheaders[key])
-                    header[key] = updateheaders[key]
-                except KeyError:
-                    _logger.warning("Keyword %s not permitted IN FITS header", key)    
-    
-        return hdu
-    def create(self, data=None, variance=None, wcs=None, 
-              pipeline=None, engineering=None, headers=None):
-        
-        created_hdus = []
-        hdu = self.init_primary_HDU(data, updateheaders=headers)
-        created_hdus.append(hdu)
-        
-        # Updating time in PRIMARY header
-        now = datetime.datetime.now()
-        nowstr = now.strftime('%FT%T')
-        created_hdus[0].header["DATE"] = nowstr
-        created_hdus[0].header["DATE-OBS"] = nowstr
-        if variance is not None:
-            updateheaders={'DATE':nowstr, 'DATE-OBS':nowstr}
-            hdu = self.init_extension_HDU('ERROR DATA', self.defaults['variance'], 
-                                     data=variance, 
-                                     updateheaders=updateheaders)
-            created_hdus.append(hdu)
-                   
-        if wcs is not None:
-            hdu = self.init_extension_HDU('WCSDVARR', self.defaults['wcs'], empty=True)
-            created_hdus.append(hdu)
-    
-        if pipeline is not None:
-            hdu = self.init_extension_HDU('PIPELINE', self.defaults['pipeline'], empty=True)
-            created_hdus.append(hdu)
-
-        if engineering is not None:
-            hdu = self.init_extension_HDU('ENGINEERING', self.defaults['engineering'], empty=True)
-            created_hdus.append(hdu)
-                
-        hdulist = pyfits.HDUList(created_hdus)
-        return hdulist
 
 class FITSStorage:
     def __init__(self, filename, directory, index):
