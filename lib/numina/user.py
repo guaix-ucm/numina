@@ -31,8 +31,8 @@ from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import os
 
-
 from numina import class_loader, list_recipes
+from numina.exceptions import RecipeError
 import numina.config as nconfig
 
 __version__ = "$Revision$"
@@ -112,6 +112,8 @@ def mode_run(args, options, logger):
         try:
             result = recipe.run()
             result.store()
+        except RecipeError, e:
+            logger.error("%s", e)
         except (IOError, OSError), e:
             logger.error("%s", e)
     

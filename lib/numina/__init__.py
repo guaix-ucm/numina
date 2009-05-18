@@ -27,6 +27,8 @@ from ConfigParser import SafeConfigParser
 import inspect
 import logging
 
+from numina.exceptions import RecipeError
+
 try:
     from logging import NullHandler
 except ImportError:
@@ -57,9 +59,12 @@ class RecipeBase:
     
     def run(self):
         '''Run the recipe, don't override'''
-        result = self.process()
-        self._repeat -= 1
-        return result
+        try:
+            self._repeat -= 1
+            result = self.process()
+            return result            
+        except RecipeError:
+            raise
     
     def process(self):
         ''' Override this method with custom code'''
