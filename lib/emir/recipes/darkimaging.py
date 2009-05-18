@@ -27,7 +27,9 @@ import pyfits
 import scipy.stsci.image as im
 
 from numina import RecipeBase
-#import emir.image.combine as com
+from numina.exceptions import RecipeError
+from numina.simulation.storage import FITSCreator
+from emir.simulation.headers import default_fits_headers
 
 __version__ = "$Revision$"
 
@@ -58,13 +60,13 @@ class DarkImaging(RecipeBase):
         self.iniconfig.set('inputs', 'files', '')
         self.iniconfig.add_section('output')
         self.iniconfig.set('output', 'filename', 'output.fits')
-                
+        self.creator = FITSCreator(default_fits_headers)
+        
     def process(self):
-        pfiles = self.iniconfig.get('inputs','files')
-        pfiles = ' '.join(pfiles.splitlines()).replace(',',' ').split()
+        pfiles = self.iniconfig.get('inputs', 'files')
+        pfiles = ' '.join(pfiles.splitlines()).replace(',', ' ').split()
         if len(pfiles) == 0:
-            _logger.warning('No files to process')
-            return
+            raise RecipeError("No files to process")
         
         images = []
         try:
@@ -75,7 +77,8 @@ class DarkImaging(RecipeBase):
             _logger.error(err)
             _logger.debug('Cleaning up hdus')
             for i in images:
-                i.close()
+                i.close()            
+            raise RecipeError(err)
         
         _logger.debug('We have %d images', len(images))
         # Data from the primary extension
@@ -84,13 +87,14 @@ class DarkImaging(RecipeBase):
         result = im.average(data)
         # Creating the result pyfits structure
         # Creating the primary HDU
-        dhdu = pyfits.PrimaryHDU(result)
-        # Variance and exposure extensions
-        vhdu = pyfits.ImageHDU(name='VARIANCE')
-        nhdu = pyfits.ImageHDU(name='NUMBER')
-        # Final structure
-        hdulist = pyfits.HDUList([dhdu, vhdu, nhdu])
         
-        filename = self.iniconfig.get('output','filename')
+        # Variance and exposure extensions
+        
+        # Final structure
+        extensions = [('VARIANCE', None, None), ('NUMBER', None, None)]
+        hdulist = self.creator.create(result, None, extensions)
+        
+        filename = self.iniconfig.get('output', 'filename')
+        
         return DarkImagingResult(hdulist, filename)
         
