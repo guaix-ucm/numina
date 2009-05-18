@@ -99,7 +99,7 @@ class SimulateImage(RecipeBase):
         self.runcounter = RunCounter("r%05d")
         
         
-    def process(self):
+    def _process(self):
         _logger.info('Creating simulated array')    
         output = self.detector.path(self.input)
         run, cfile = self.runcounter.runstring()

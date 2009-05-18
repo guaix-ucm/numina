@@ -43,7 +43,7 @@ __metaclass__ = type
 logging.getLogger("numina").addHandler(NullHandler())
 
 class RecipeBase:
-    '''Base class for Recipes of all kinds'''
+    '''Base class for Recipes of all kinds.'''
     def __init__(self, optusage=None):
         if optusage is None:
             optusage = "usage: %prog [options] recipe [recipe-options]" 
@@ -54,29 +54,29 @@ class RecipeBase:
         self._repeat = 1
         
     def setup(self):
-        '''Initialize structures only once before recipe execution'''
+        '''Initialize structures only once before recipe execution.'''
         pass
     
     def run(self):
-        '''Run the recipe, don't override'''
+        '''Run the recipe, don't override.'''
         try:
             self._repeat -= 1
-            result = self.process()
+            result = self._process()
             return result            
         except RecipeError:
             raise
     
-    def process(self):
-        ''' Override this method with custom code'''
-        pass
+    def _process(self):
+        ''' Override this method with custom code.'''
+        raise NotImplemented
     
     def complete(self):
-        '''True once the recipe is completed'''
+        '''True once the recipe is completed.'''
         return self._repeat <= 0
     
     @property
     def repeat(self):
-        '''Number of times the recipe has to be repeated yet'''
+        '''Number of times the recipe has to be repeated yet.'''
         return self._repeat
       
       

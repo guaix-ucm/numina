@@ -62,7 +62,7 @@ class DarkImaging(RecipeBase):
         self.iniconfig.set('output', 'filename', 'output.fits')
         self.creator = FITSCreator(default_fits_headers)
         
-    def process(self):
+    def _process(self):
         pfiles = self.iniconfig.get('inputs', 'files')
         pfiles = ' '.join(pfiles.splitlines()).replace(',', ' ').split()
         if len(pfiles) == 0:
