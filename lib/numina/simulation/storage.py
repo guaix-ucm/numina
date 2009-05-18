@@ -33,10 +33,12 @@ __metaclass__ = type
 _logger = logging.getLogger("numina.image")
 
 class FITSCreator:
+    '''Builder of multi-extension FITS images.'''
     def __init__(self, default_headers):
         self.defaults = default_headers
         
     def init_primary_HDU(self, data=None, headers=None):
+        '''Create the primary HDU of the FITS file.'''
         hdu = pyfits.PrimaryHDU(data, self.defaults['PRIMARY'])
                 
         if headers is not None:
@@ -51,7 +53,11 @@ class FITSCreator:
         return hdu
     
     def init_extension_HDU(self, data=None, headers=None, extname=None):
-        hdu = pyfits.ImageHDU(data, self.defaults[extname], name=extname)
+        '''Create a HDU extension of the FITS file.'''
+        try:
+            hdu = pyfits.ImageHDU(data, self.defaults[extname], name=extname)
+        except KeyError:
+            hdu = pyfits.ImageHDU(data, None, name=extname)
         
         if headers is not None:
             _logger.info('Updating keywords in %s header', extname)
@@ -61,7 +67,8 @@ class FITSCreator:
                                   key, headers[key])
                     hdu.header[key] = headers[key]
                 except KeyError:
-                    _logger.warning("Keyword %s not permitted ins FITS header", key)    
+                    _logger.warning("Keyword %s not permitted ins FITS header",
+                                    key)    
     
         return hdu
 
@@ -76,12 +83,13 @@ class FITSCreator:
         nowstr = now.strftime('%FT%T')
         created_hdus[0].header["DATE"] = nowstr
         created_hdus[0].header["DATE-OBS"] = nowstr
-        dateheaders={'DATE':nowstr, 'DATE-OBS':nowstr}
+        dateheaders = {'DATE':nowstr, 'DATE-OBS':nowstr}
 
         if extensions is not None:
-            for (name, data, headers) in extensions:
-                headers.update(dateheaders)
-                hdu = self.init_extension_HDU(data, headers, name)
+            for (ename, edata, eheaders) in extensions:
+                if eheaders is not None:
+                    eheaders.update(dateheaders)
+                hdu = self.init_extension_HDU(edata, eheaders, ename)
                 created_hdus.append(hdu)
                         
         hdulist = pyfits.HDUList(created_hdus)
