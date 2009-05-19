@@ -28,7 +28,7 @@ __metaclass__ = type
 class Empty:
     name = 'Empty'
     code = 'Empty'
-    def path(self, input_):
+    def lpath(self, input_):
         return input_
 
 class Filter:
@@ -37,7 +37,7 @@ class Filter:
         self.code = code
         self.trans = trans
         
-    def path(self, input_):
+    def lpath(self, input_):
         return input_
 
 class FilterWheel:
@@ -52,7 +52,7 @@ class FilterWheel:
     def get_current_filter(self):
         return self._filterlist[self._pos]
     
-    def path(self, input_):
+    def lpath(self, input_):
         return self._filterlist[self._pos].path(input_)
     
     def get_size(self):

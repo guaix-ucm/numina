@@ -28,7 +28,7 @@ class Shutter:
     def __init__(self):
         self._closed = True 
     
-    def status(self,closed = True):
+    def status(self, closed=True):
         self._closed = closed
     
     def open(self):
@@ -43,7 +43,7 @@ class Shutter:
         else:
             pass
         
-    def path(self, input):
+    def lpath(self, input):
         if self._closed:
             return None
         else:
