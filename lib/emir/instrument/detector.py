@@ -32,6 +32,7 @@ __metaclass__ = type
 
 
 class EmirDetector(numina.instrument.Detector):
+    '''The EMIR detector.'''
     def __init__(self, shape=(5, 5), gain=1.0, ron=0.0, dark=1.0, well=65535,
                  pedestal=200., flat=1.0, resetval=0, resetnoise=0.0):
         super(EmirDetector, self).__init__(shape, gain, ron, dark, well,
