@@ -38,6 +38,7 @@ _logger = logging.getLogger("emir.recipes")
 _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
 class DarkImagingResult:
+    '''Result of the DarkImaging recipe.'''
     def __init__(self, image, filename):
         self.hdulist = image
         self.filename = filename
@@ -85,11 +86,7 @@ class DarkImaging(RecipeBase):
         data = [i['primary'].data for i in images]
         #
         result = im.average(data)
-        # Creating the result pyfits structure
-        # Creating the primary HDU
-        
-        # Variance and exposure extensions
-        
+  
         # Final structure
         extensions = [('VARIANCE', None, None), ('NUMBER', None, None)]
         hdulist = self.creator.create(result, None, extensions)
