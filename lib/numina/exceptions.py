@@ -30,4 +30,9 @@ class Error(Exception):
         Exception.__init__(self, txt)
 
 class RecipeError(Error):
+    '''A non recoverable problem during recipe execution.'''
     pass
+
+class DetectorElapseError(Error):
+    def __init__(self, txt):
+        Error.__init__(self, txt)
