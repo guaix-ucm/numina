@@ -27,10 +27,8 @@ __version__ = '$Revision: 411 $'
 class NullTestCase(unittest.TestCase):
     '''A test of the Null class.'''
     def setUp(self):
+        '''Set up TestCase.'''
         self.null = Null()
-
-    def tearDown(self):
-        pass
     
     def testIgnoreInitArgs(self):
         '''Null ignores the arguments of __init__.'''
@@ -45,6 +43,35 @@ class NullTestCase(unittest.TestCase):
         self.assertEqual(self.null, self.null(key1="2", key2=[]))
         self.assertEqual(self.null, self.null("", [], (),
                                               nkey1="2", nkey2=[]))
+        
+        
+    def testIgnoreGetAttr(self):
+        '''Null ignores attribute getting.'''
+        self.assertEqual(self.null, self.null.prueba)
+        self.assertEqual(self.null, self.null.otro)
+        self.assertEqual(self.null, self.null.metodo)
+    
+    def testIgnoreSetAttr(self):
+        '''Null ignores attribute getting.'''        
+        for i in [[], "44f342", 1234, (4.5, [])]:
+            self.null.atributo = i
+            self.assertEqual(self.null, self.null.atributo)
+
+    def testIgnoreDelAttr(self):
+        '''Null ignores attribute deleting.'''        
+        for i in [[], "44f342", 1234, (4.5, [])]:
+            self.null.atributo = i
+            del self.null.atributo
+            self.assertEqual(self.null, self.null.atributo)
+
+    def testRepr(self):
+        '''Null repr is <Null>'''
+        self.assertEqual(repr(self.null), "<Null>")
+            
+    def testStr(self):
+        '''Null srt is Null'''
+        self.assertEqual(str(self.null), "Null")
+        
             
 def test_suite():
     suite = unittest.TestSuite()
