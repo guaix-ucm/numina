@@ -22,7 +22,6 @@
 '''A module used to run all the numina unit tests'''
 
 import sys, os
-import numina
 import unittest
 
 __version__ = '$Revision: 411 $'
@@ -40,7 +39,7 @@ class PrintInfoFakeTest(unittest.TestCase):
         print_info()
 
 def suite():
-    test_modules = ['test_null',]
+    test_modules = ['test_null', 'test_recipe']
     alltests = unittest.TestSuite()
     for name in test_modules:
         module = __import__(name)
