@@ -68,7 +68,7 @@ class RecipeBase:
     
     def _process(self):
         ''' Override this method with custom code.'''
-        raise NotImplemented
+        raise NotImplementedError
     
     def complete(self):
         '''True once the recipe is completed.'''
