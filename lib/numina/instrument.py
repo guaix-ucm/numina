@@ -20,7 +20,7 @@
 # $Id$
 
 import scipy
-import scipy.random
+import numpy.random
 
 from numina.exceptions import DetectorElapseError
 
@@ -41,7 +41,7 @@ def numberarray(x, shape=(5, 5)):
 
 class Detector:
     '''A generic optical or IR bidimensional detector.'''
-    def __init__(self, shape=(5,5), gain=1.0, ron=0.0, dark=1.0, 
+    def __init__(self, shape=(5, 5), gain=1.0, ron=0.0, dark=1.0, 
                  well=65535, pedestal=200., flat=1.0, 
                  resetval=0, resetnoise=0.0):
         self._shape = shape
@@ -66,9 +66,9 @@ class Detector:
         if etime < 0:
             msg = "Elapsed time is %ss, it's larger than %ss" % (self._time, time)
             raise DetectorElapseError(msg)
-        self._detector += scipy.random.poisson(self._dark * etime).astype('float')
+        self._detector += numpy.random.poisson(self._dark * etime).astype('float')
         if source is not None:
-            self._detector += scipy.random.poisson(self._flat * source * etime).astype('float')
+            self._detector += numpy.random.poisson(self._flat * source * etime).astype('float')
         self._time = time
         
     def reset(self):
@@ -76,7 +76,7 @@ class Detector:
         self._time = 0
         self._detector[:] = self._reset_value
         # Considering normal reset noise
-        self._detector += scipy.random.standard_normal(self._shape) * self._reset_noise
+        self._detector += numpy.random.standard_normal(self._shape) * self._reset_noise
         self._time += self.reset_time
         
     def read(self, time=None, source=None):
@@ -89,7 +89,7 @@ class Detector:
         # Gain per channel
         result /= self._gain
         # Readout noise
-        result += scipy.random.standard_normal(self._shape) * self._ron
+        result += numpy.random.standard_normal(self._shape) * self._ron
         result += self._pedestal
        # result[result > self._well] = self._well
         return result.astype(self.type)
