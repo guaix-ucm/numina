@@ -19,7 +19,7 @@
 
 # $Id$
 
-'''Decorators for the emir package'''
+'''Decorators for the numina package'''
 
 import time
 import logging
