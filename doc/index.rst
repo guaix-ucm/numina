@@ -10,7 +10,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   module.rst
+   module
+   highlevel
 
 Indices and tables
 ==================
