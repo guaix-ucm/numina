@@ -1,19 +1,26 @@
-This is a header
-================
-Some text, *italic text*, **bold text**
+.. $Id$
 
-* bulleted list.  There needs to be a space right after the "*"
-* item 2
+:mod:`numina.qa` --- Quality Assess for Numina 
+==============================================
 
-.. note::
-       This is a note.
-
-Here's some Python code:
-
->>> for i in range(10):
-...     print i
+.. automodule:: numina.qa
+   :synopsis:  Quality Assess for Numina
 
 
-.. automodule:: numina
-.. automodule:: emir
+This moudle defines functions and classes which implement
+quality asses for Numina-based applications.
 
+QA Levels
+---------
+
+The numeric values of the QA levels are given in this table.
+
++--------------+---------------+
+| Level        | Numeric value |
++==============+===============+
+| ``GOOD``     | 100           |
++--------------+---------------+
+| ``FAIR``     | 90            |
++--------------+---------------+
+| ``BAD``      | 70            |
++--------------+---------------+
