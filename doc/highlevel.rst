@@ -1,11 +1,15 @@
 .. $Id$
 
+==========================================================
+High Level description of the EMIR Data Reduction Pipeline
+==========================================================
+
 High Level description of the EMIR Data Reduction Pipeline
 ==========================================================
 
 :author: Nicolás Cardiel
 :revision: $Revision$
-:date: 2009-05-26
+:date: |today|
 
 This is an overall description of the relevant processes involved in the Data Reduction Pipeline of 
 EMIR (basically from the point of view of the astronomers). In this sense, the information 
