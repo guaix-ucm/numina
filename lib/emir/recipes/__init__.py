@@ -26,7 +26,7 @@ import logging
 
 import pyfits
 
-from numina import RecipeBase
+from numina.recipes import RecipeBase
 import emir.image.combine as com
 from darkimaging import DarkImaging
 from simulateimage import SimulateImage

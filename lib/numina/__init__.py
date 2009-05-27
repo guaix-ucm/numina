@@ -27,8 +27,9 @@ from ConfigParser import SafeConfigParser
 import inspect
 import logging
 
-from numina.exceptions import RecipeError
+from .recipes import RecipeBase
 
+# pylint: disable-msg=E0611
 try:
     from logging import NullHandler
 except ImportError:
@@ -42,43 +43,7 @@ __metaclass__ = type
 # Top level NullHandler
 logging.getLogger("numina").addHandler(NullHandler())
 
-class RecipeBase:
-    '''Base class for Recipes of all kinds.'''
-    def __init__(self, optusage=None):
-        if optusage is None:
-            optusage = "usage: %prog [options] recipe [recipe-options]" 
-        self.cmdoptions = OptionParser(usage = optusage)
-        self.cmdoptions.add_option('--docs', action="store_true", dest="docs", 
-                                   default=False, help="prints documentation")
-        self.iniconfig = SafeConfigParser()
-        self._repeat = 1
-        
-    def setup(self):
-        '''Initialize structures only once before recipe execution.'''
-        pass
-    
-    def run(self):
-        '''Run the recipe, don't override.'''
-        try:
-            self._repeat -= 1
-            result = self._process()
-            return result            
-        except RecipeError:
-            raise
-    
-    def _process(self):
-        ''' Override this method with custom code.'''
-        raise NotImplementedError
-    
-    def complete(self):
-        '''True once the recipe is completed.'''
-        return self._repeat <= 0
-    
-    @property
-    def repeat(self):
-        '''Number of times the recipe has to be repeated yet.'''
-        return self._repeat
-      
+
       
 class Null:
     '''Idempotent class'''
@@ -157,7 +122,8 @@ def list_recipes(path, docs=True):
         obj = getattr(module, name)
         if inspect.isclass(obj) and issubclass(obj, RecipeBase) and not obj is RecipeBase:
             docs = obj.__doc__
-            if docs is not None and docs:
+            # pylint: disable-msg=E1103
+            if docs:
                 mydoc = docs.splitlines()[0]
             else:
                 mydoc = ''

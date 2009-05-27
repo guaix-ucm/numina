@@ -26,7 +26,7 @@ import logging
 
 import numpy
 
-from numina import RecipeBase
+from numina.recipes import RecipeBase
 from numina.simulation import RunCounter
 from numina.simulation.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
@@ -101,7 +101,7 @@ class SimulateImage(RecipeBase):
         
     def _process(self):
         _logger.info('Creating simulated array')    
-        output = self.detector.path(self.input)
+        output = self.detector.lpath(self.input)
         run, cfile = self.runcounter.runstring()
         headers = {'RUN': run}
         

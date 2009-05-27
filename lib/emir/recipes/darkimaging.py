@@ -26,7 +26,7 @@ import logging
 import pyfits
 import scipy.stsci.image as im
 
-from numina import RecipeBase
+from numina.recipes import RecipeBase, RecipeResult
 from numina.exceptions import RecipeError
 from numina.simulation.storage import FITSCreator
 from emir.simulation.headers import default_fits_headers
@@ -37,7 +37,7 @@ _logger = logging.getLogger("emir.recipes")
         
 _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
-class DarkImagingResult:
+class DarkImagingResult(RecipeResult):
     '''Result of the DarkImaging recipe.'''
     def __init__(self, image, filename):
         self.hdulist = image
