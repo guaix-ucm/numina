@@ -1,7 +1,16 @@
 .. $Id$
 
-:mod:`numina.recipes` --- Quality Assess for x 
-==============================================
+:mod:`numina.recipes` --- Base classes for Recipes
+==================================================
 
 .. automodule:: numina.recipes
    :synopsis:  Quality Assess for Numina
+
+   
+.. autoclass:: RecipeBase
+   :members:
+   :show-inheritance:
+   
+.. autoclass:: RecipeResult
+   :members:
+   :show-inheritance:
