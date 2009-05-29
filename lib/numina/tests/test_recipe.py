@@ -26,15 +26,20 @@ from numina import RecipeBase
 
 __version__ = '$Revision: 411 $'
 
+
+class Test(RecipeBase):
+    '''Minimal class that implementes RecipeBase.'''
+    def __init__(self):
+        super(Test, self).__init__()
+        
+    def _process(self):
+        pass
+
 class RecipeTestCase(unittest.TestCase):
     '''Test of the Recipebase class.'''
     def setUp(self):
         '''Set up TestCase.'''
-        self.rc = RecipeBase()
-    
-    def testRaisesUnimplemented(self):
-        '''RecipeBase raises NotImplementedError if run method is called.'''
-        self.assertRaises(NotImplementedError, self.rc.run)
+        self.rc = Test()
             
 def test_suite():
     suite = unittest.TestSuite()
