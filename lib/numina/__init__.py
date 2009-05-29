@@ -26,6 +26,7 @@ from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import inspect
 import logging
+import sys
 
 from .recipes import RecipeBase
 
@@ -80,8 +81,37 @@ class Null:
         "Convert to a string and return it."
         return "Null"
     
+def get_module(name):
+    '''
+    Get the module object from the module name.
     
-def class_loader(path, default_module, logger=Null()):
+    :param name: name of the module
+    :rtype: module object
+    
+    This recipe has been extracted from the python
+    documentation, from the reference of the `__import__`_
+    function. 
+    
+    It should work this way:
+    
+      >>> get_module('emir.recipes.darkimaging').__name__
+      'emir.recipes.darkimaging'
+      
+    Other approach that seems to work also is:
+    
+      >>> __import__('emir.recipes.darkimaging', globals(), locals(), [""], -1).__name__
+      'emir.recipes.darkimaging'
+    
+    .. _`__import__`: http://docs.python.org/library/functions.html?highlight=import#__import__
+    
+    '''
+    __import__(name)
+    module_object = sys.modules[name]
+    return module_object
+
+  
+    
+def load_class(path, default_module, logger=Null()):
     '''Load a class from path'''
     comps = path.split('.')
     recipe = comps[-1]

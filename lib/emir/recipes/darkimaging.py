@@ -19,7 +19,14 @@
 
 # $Id$
 
-'''Dark image recipe and associates'''
+'''Dark image recipe.
+
+Recipe to process dark images. The dark images will be combined 
+weighting with the inverses of the corresponding variance extension. 
+They do not have to be of the same exposure time t, they will be 
+scaled to the same t0 ~ 60s (those with very short exposure time 
+should be avoided). The process will remove cosmic rays.
+''' 
 
 import logging
 
@@ -37,9 +44,10 @@ _logger = logging.getLogger("emir.recipes")
         
 _usage_string = "usage: %prog [options] recipe [recipe-options]"
 
-class DarkImagingResult(RecipeResult):
+class Result(RecipeResult):
     '''Result of the DarkImaging recipe.'''
     def __init__(self, image, filename):
+        super(Result, self).__init__()
         self.hdulist = image
         self.filename = filename
         
@@ -47,7 +55,7 @@ class DarkImagingResult(RecipeResult):
         _logger.debug('Saving %s' % self.filename)
         self.hdulist.writeto(self.filename)
 
-class DarkImaging(RecipeBase):
+class Recipe(RecipeBase):
     '''Recipe to process data taken in Dark current image Mode.
     
     Here starts the long description...
@@ -55,7 +63,7 @@ class DarkImaging(RecipeBase):
     
     '''
     def __init__(self):
-        super(DarkImaging, self).__init__(optusage=_usage_string)
+        super(Recipe, self).__init__(optusage=_usage_string)
         # Default values. This can be read from a file
         self.iniconfig.add_section('inputs')
         self.iniconfig.set('inputs', 'files', '')
@@ -74,7 +82,7 @@ class DarkImaging(RecipeBase):
             for i in pfiles:
                 _logger.debug('Loading %s', i)
                 images.append(pyfits.open(i))
-        except IOError, err:
+        except IOError as err:
             _logger.error(err)
             _logger.debug('Cleaning up hdus')
             for i in images:
@@ -93,5 +101,5 @@ class DarkImaging(RecipeBase):
         
         filename = self.iniconfig.get('output', 'filename')
         
-        return DarkImagingResult(hdulist, filename)
+        return Result(hdulist, filename)
         

@@ -22,20 +22,21 @@
 '''Bias image recipe and associates'''
 
 from numina.recipes import RecipeBase
-from numina.recipes import RecipeResult as RR
+from numina.recipes import RecipeResult
 #from numina.exceptions import RecipeError
 
 __version__ = "$Revision$"
 
 
-class RecipeResult(RR):
+class Result(RecipeResult):
     '''Result of the recipe.'''
-    def __init__(self, image, filename):
-        super(RecipeResult, self).__init__()
-        self.hdulist = image
-        self.filename = filename
+    def __init__(self):
+        super(Result, self).__init__()
         
     def store(self):
+        '''Description of store.
+        
+        :rtype: None'''
         pass
 
 
@@ -50,4 +51,4 @@ class Recipe(RecipeBase):
         super(Recipe, self).__init__()
         
     def _process(self):
-        pass       
+        return Result() 

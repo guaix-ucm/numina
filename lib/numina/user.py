@@ -31,7 +31,7 @@ from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import os
 
-from numina import class_loader, list_recipes
+from numina import list_recipes, get_module, RecipeBase
 from numina.exceptions import RecipeError
 import numina.config as nconfig
 
@@ -77,18 +77,18 @@ def mode_none():
 def mode_run(args, options, logger):
     '''Run the execution mode of Numina'''
     rename = args[0]      
-    try:
-        recipeClass = class_loader(rename, options.module, logger=logger)
-    except AttributeError:
-        return 2
     
-    if recipeClass is None:
-        logger.error('%s is not a subclass of RecipeBase', rename)
-        return 2
-    
+    recipemod = get_module('.'.join([options.module, args[0]]))
+       
     # running the recipe
-    logger.info('Created recipe instance of class %s', rename)
-    recipe = recipeClass()
+    logger.info('Created instance of module %s', rename)
+    
+    if not issubclass(recipemod.Recipe, RecipeBase):
+        logger.error('%s.Recipe is not a subclass of RecipeBase', rename)
+        return 2
+    
+    recipe = recipemod.Recipe()
+        
     # Parse the rest of the options
     logger.debug('Parsing the options provided by recipe instance')
     (reoptions, reargs) = recipe.cmdoptions.parse_args(args=args[1:])

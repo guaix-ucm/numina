@@ -19,7 +19,7 @@
 
 # $Id$
 
-'''Image simulation'''
+'''Recipe for image simulation'''
 
 
 import logging
@@ -32,20 +32,20 @@ from numina.simulation.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
 from emir.simulation.headers import default_fits_headers
 
-from darkimaging import DarkImagingResult as SimulateImageResult
+from darkimaging import Result
 
 __version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
 
-class SimulateImage(RecipeBase):
+class Recipe(RecipeBase):
     '''Recipe to simulate EMIR images.
     
     Here starts the long description...
     It continues several lines'''
     def __init__(self):
         optusage = "usage: %prog [options] recipe [recipe-options]"
-        super(SimulateImage, self).__init__(optusage=optusage)
+        super(Recipe, self).__init__(optusage=optusage)
         
         # Default values. This can be read from a file
         self.iniconfig.add_section('readout')
@@ -110,7 +110,7 @@ class SimulateImage(RecipeBase):
         
         _logger.info('Building FITS structure')
         hdulist = self.creator.create(output, headers)
-        return SimulateImageResult(hdulist, cfile)
+        return Result(hdulist, cfile)
         
 
 

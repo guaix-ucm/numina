@@ -28,18 +28,12 @@ import pyfits
 
 from numina.recipes import RecipeBase
 import emir.image.combine as com
-from darkimaging import DarkImaging
-from simulateimage import SimulateImage
+
 
 
 __version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
-        
-class BiasImaging(RecipeBase):
-    '''Recipe to process data taken in Bias Image Mode.'''
-    pass
-
         
 class IntensityFlatField(RecipeBase):
     '''Recipe to process data taken in Intensity Flat Field Mode.'''

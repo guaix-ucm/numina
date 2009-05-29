@@ -64,12 +64,18 @@ class RecipeBase:
         raise NotImplementedError
     
     def complete(self):
-        '''True once the recipe is completed.'''
+        '''True once the recipe is completed.
+        
+        :rtype: bool
+        '''
         return self._repeat <= 0
     
     @property
     def repeat(self):
-        '''Number of times the recipe has to be repeated yet.'''
+        '''Number of times the recipe has to be repeated yet.
+        
+        :rtype: int
+        '''
         return self._repeat
     
 class RecipeResult:
@@ -80,4 +86,5 @@ class RecipeResult:
     
     @abc.abstractmethod
     def store(self):
+        '''Store the result'''
         pass
