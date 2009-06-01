@@ -20,9 +20,9 @@
 # $Id$
 
 from emir.exceptions import Error
-from _combine import test1
-from _combine import test2
-from _combine import method_mean
+#from _combine import test1
+#from _combine import test2
+#from _combine import method_mean
 
 __version__ = "$Revision$"
 
@@ -58,7 +58,7 @@ def new_combine2(images, masks, method="mean", args=(),
 #    if not all_equal(shapes):
 #        raise Error("shapes of masks are different")
     
-    return test2(method, images, masks, res, var, num)
+#    return test2(method, images, masks, res, var, num)
 
 # Temporary workaround
 new_combine1 = new_combine2
