@@ -62,6 +62,9 @@ class Detector:
         self.outtype = 'int16'
         
     def elapse(self, time, source=None):
+        '''
+        :raises: DetectorElapseError
+        '''
         etime = time - self._time
         if etime < 0:
             msg = "Elapsed time is %ss, it's larger than %ss" % (self._time, time)
@@ -95,15 +98,12 @@ class Detector:
         return result.astype(self.type)
     
     def data(self):
+        '''Return the current content of the detector.'''
         return self._detector
     
     def shape(self):
+        '''Return the shape of the detector.'''
         return self._shape
     
     def time_since_last_reset(self):
         return self._time
-
-    
-    
-    
-    

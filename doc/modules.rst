@@ -4,9 +4,10 @@
 Numina modules
 ==============
 
-.. autofunction:: numina.get_module
-
 .. toctree::
 
+   exceptions
+   instrument
    recipes
    qa
+   user

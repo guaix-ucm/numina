@@ -4,8 +4,7 @@
 ==================================================
 
 .. automodule:: numina.recipes
-   :synopsis:  Quality Assess for Numina
-
+   :synopsis:  Base classes for Recipes
    
 .. autoclass:: RecipeBase
    :members:

@@ -19,14 +19,15 @@
 
 # $Id$
 
-'''Extra Null Handler for the logging system'''
+'''Extra logging handlers for the numina logging system'''
 
 import logging
 
 __version__ = "$Revision$"
 
 class NullHandler(logging.Handler):
-    '''NullHandler is the default log handler of the package'''
+    '''NullHandler is the default log handler of the package. It 
+    doesn't emit nothing.'''
     def emit(self, record):
         '''Do-nothing method'''
         pass

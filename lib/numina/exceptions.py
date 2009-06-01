@@ -34,5 +34,6 @@ class RecipeError(Error):
     pass
 
 class DetectorElapseError(Error):
+    '''Error in the clocking of a Detector.'''
     def __init__(self, txt):
         Error.__init__(self, txt)
