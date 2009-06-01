@@ -29,10 +29,11 @@ def subarray_match(shape, ref, sshape, sref=(0, 0)):
     It returns a tuple of slices, that can be passed to the two images as indexes
       
     Example: 
-    im = numpy.zeros((1000,1000))
-    sim = numpy.ones((40, 40))
-    i,j = subarray_match(im.shape, [20, 23], sim.shape)
-    im[i] = 2 * sim[j]
+    
+      >>> im = numpy.zeros((1000,1000))
+      >>> sim = numpy.ones((40, 40))
+      >>> i,j = subarray_match(im.shape, [20, 23], sim.shape)
+      >>> im[i] = 2 * sim[j]
     
     '''
     # Reference point in im
@@ -50,9 +51,17 @@ def subarray_match(shape, ref, sshape, sref=(0, 0)):
     
     
     
-def combine(images, method, masks=None, offsets=None, 
+def combine(method, images, masks=None, offsets=None, 
             result=None, variance=None, numbers=None):
-    '''Combine images using the given combine method, with masks and offsets'''
+    '''Combine images using the given combine method, with masks and offsets.
+    
+       >>> from methods import quantileclip
+       >>> import functools
+       >>> method = functools.partial(quantileclip, high=2.0, low=2.5)
+       >>> combine(method, [])
+       
+    
+    '''
     # method should be a string
     
     #check images is valid
@@ -64,5 +73,3 @@ def combine(images, method, masks=None, offsets=None,
     
     if masks is None:
         pass
-    
-    

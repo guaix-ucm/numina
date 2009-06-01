@@ -94,12 +94,14 @@ def get_module(name):
     
     It should work this way:
     
-      >>> get_module('emir.recipes.darkimaging').__name__
+      >>> m = get_module('emir.recipes.darkimaging')
+      >>> m.__name__
       'emir.recipes.darkimaging'
       
     Other approach that seems to work also is:
     
-      >>> __import__('emir.recipes.darkimaging', globals(), locals(), [""], -1).__name__
+      >>> m = __import__('emir.recipes.darkimaging', globals(), locals(), [""], -1)
+      >>> m.__name__
       'emir.recipes.darkimaging'
     
     .. _`__import__`: http://docs.python.org/library/functions.html?highlight=import#__import__
