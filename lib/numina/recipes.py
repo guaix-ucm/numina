@@ -53,14 +53,17 @@ class RecipeBase:
         '''Run the recipe, don't override.'''
         try:
             self._repeat -= 1
-            result = self._process()
+            result = self.process()
             return result            
         except RecipeError:
             raise
         
     @abc.abstractmethod
-    def _process(self):
-        ''' Override this method with custom code.'''
+    def process(self):
+        ''' Override this method with custom code.
+        
+        :rtype: RecipeResult
+        '''
         raise NotImplementedError
     
     def complete(self):

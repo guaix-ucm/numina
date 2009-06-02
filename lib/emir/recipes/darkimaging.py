@@ -71,7 +71,7 @@ class Recipe(RecipeBase):
         self.iniconfig.set('output', 'filename', 'output.fits')
         self.creator = FITSCreator(default_fits_headers)
         
-    def _process(self):
+    def process(self):
         pfiles = self.iniconfig.get('inputs', 'files')
         pfiles = ' '.join(pfiles.splitlines()).replace(',', ' ').split()
         if len(pfiles) == 0:

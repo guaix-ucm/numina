@@ -50,5 +50,5 @@ class Recipe(RecipeBase):
     def __init__(self):
         super(Recipe, self).__init__()
         
-    def _process(self):
+    def process(self):
         return Result() 

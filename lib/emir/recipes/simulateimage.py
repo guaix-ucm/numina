@@ -99,7 +99,7 @@ class Recipe(RecipeBase):
         self.runcounter = RunCounter("r%05d")
         
         
-    def _process(self):
+    def process(self):
         _logger.info('Creating simulated array')    
         output = self.detector.lpath(self.input)
         run, cfile = self.runcounter.runstring()
