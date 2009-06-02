@@ -30,6 +30,8 @@ import logging.config
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import os
+import pkgutil
+import StringIO
 
 from numina import list_recipes, get_module, RecipeBase
 from numina.exceptions import RecipeError
@@ -125,9 +127,11 @@ def main(args=None):
     '''Entry point for the Numina CLI. '''        
     # Configuration options from a text file    
     config = SafeConfigParser()
-    # Default values, it must exist
-    config.readfp(open(os.path.join(os.path.dirname(__file__), 
-                                    'defaults.cfg')))
+    
+    # Default values, it must exist    
+    buf = pkgutil.get_data("numina", "defaults.cfg")
+    f = StringIO.StringIO(buf)
+    config.readfp(f)
 
     # Custom values, site wide and local
     config.read([os.path.join(nconfig.myconfigdir, 'site.cfg'), 
