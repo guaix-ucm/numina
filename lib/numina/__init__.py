@@ -29,6 +29,7 @@ import logging
 import sys
 
 from .recipes import RecipeBase
+from tests import tests
 
 # pylint: disable-msg=E0611
 try:
