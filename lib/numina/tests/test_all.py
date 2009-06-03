@@ -39,11 +39,11 @@ class PrintInfoFakeTest(unittest.TestCase):
         print_info()
 
 def suite():
-    test_modules = ['test_null', 'test_recipe']
+    test_modules = ['test_null', 'test_recipe', 'test_methods']
     alltests = unittest.TestSuite()
     for name in test_modules:
-        module = __import__(name)
-        alltests.addTest(module.test_suite())
+        m = __import__("numina.tests." + name, globals(), locals(), [""], -1)
+        alltests.addTest(m.test_suite())
     return alltests
 
 def test_suite():

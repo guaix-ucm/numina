@@ -55,6 +55,9 @@ def mean(values):
       (1.0, 0.0, 11)
     
     '''
+    if len(values) == 0:
+        return (0., 0., 0)
+    
     data = scipy.asarray(values).ravel()
     l = len(values)
     return (data.mean(), scipy.var(data), l)
@@ -77,6 +80,9 @@ def sigmaclip(values, low=4., high=4.):
     
     
     '''
+    if len(values) == 1:
+        return (values[0], 0.0, 1)
+    
     c = scipy.asarray(values).ravel()
     delta = 1
     while delta:

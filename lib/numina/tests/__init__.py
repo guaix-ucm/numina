@@ -27,7 +27,7 @@ import unittest
 
 import test_all
 
-def tests(verbosity=2):
+def tests(verbosity=1):
     '''Run all unit tests.'''
     unittest.TextTestRunner(verbosity=verbosity).run(test_all.suite())
     
