@@ -19,7 +19,13 @@
 
 # $Id$
 
-'''Recipe Abstract Base class.'''
+'''Basic tools and classes used to generate recipe modules.
+
+A recipe is a python module that complies with the *reduction recipe API*:
+
+ * It must provide a `Recipe` class that derives from :class:`numina.recipes.RecipeBase`.
+
+'''
 
 
 from optparse import OptionParser
