@@ -32,7 +32,7 @@ from numina.simulation.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
 from emir.simulation.headers import default_fits_headers
 
-from darkimaging import Result
+from dark_image import Result
 
 __version__ = "$Revision$"
 

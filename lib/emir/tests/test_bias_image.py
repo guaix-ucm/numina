@@ -26,7 +26,7 @@ __version__ = '$Revision$'
 # Classes are new style
 __metaclass__ = type
 
-class BiasImagingTestCase:
+class BiasImageTestCase:
     def setUp(self):
         pass
 
@@ -35,7 +35,7 @@ class BiasImagingTestCase:
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(BiasImagingTestCase))
+    suite.addTest(unittest.makeSuite(BiasImageTestCase))
     return suite
 
 if __name__ == '__main__':
