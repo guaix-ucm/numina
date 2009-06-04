@@ -24,7 +24,7 @@
 
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
-import abc
+#import abc
 
 from numina.exceptions import RecipeError
 
@@ -35,7 +35,7 @@ __metaclass__ = type
 
 class RecipeBase:
     '''Abstract Base class for Recipes.'''
-    __metaclass__ = abc.ABCMeta
+#    __metaclass__ = abc.ABCMeta
     def __init__(self, optusage=None):
         if optusage is None:
             optusage = "usage: %prog [options] recipe [recipe-options]" 
@@ -58,7 +58,7 @@ class RecipeBase:
         except RecipeError:
             raise
         
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def process(self):
         ''' Override this method with custom code.
         
@@ -83,11 +83,11 @@ class RecipeBase:
     
 class RecipeResult:
     '''Result of the run method of the Recipe.'''
-    __metaclass__ = abc.ABCMeta
+#    __metaclass__ = abc.ABCMeta
     def __init__(self):
         pass
     
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def store(self):
         '''Store the result'''
         pass

@@ -82,7 +82,7 @@ class Recipe(RecipeBase):
             for i in pfiles:
                 _logger.debug('Loading %s', i)
                 images.append(pyfits.open(i))
-        except IOError as err:
+        except IOError, err:
             _logger.error(err)
             _logger.debug('Cleaning up hdus')
             for i in images:
