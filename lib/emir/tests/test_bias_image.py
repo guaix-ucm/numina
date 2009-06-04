@@ -21,17 +21,65 @@
 
 import unittest
 
+import scipy
+
+from numina.simulation.storage import FITSCreator
+from numina.simulation import RunCounter
+from emir.instrument.detector import EmirDetector
+from emir.simulation.headers import default_fits_headers
+
+
 __version__ = '$Revision$'
 
 # Classes are new style
 __metaclass__ = type
 
-class BiasImageTestCase:
+class BiasImageTestCase(unittest.TestCase):
+    '''Test case of the EMIR bias image recipe.'''
     def setUp(self):
-        pass
+        # Create some 'bias' images
+        detector_conf = {'ron': 1, 'dark': 1, 'gain':1, 'flat':1, 'well': 65000}
+        detector_conf['shape'] = (100, 100)
+
+        self.detector = EmirDetector(**detector_conf)
+    
+        readout_opt = {'exposure':0, 'reads':1, 'repeat':1,
+                       'mode':'fowler', 'scheme':'perline'}
+                
+        self._repeat = 1
+
+        self.detector.configure(readout_opt)
+        
+        self.input_ = scipy.zeros(detector_conf['shape'])
+        self.detector.exposure(readout_opt['exposure'])
+        
+        self.creator = FITSCreator(default_fits_headers)
+        self.runcounter = RunCounter("r%05d")
+        
+        
+        self.nimages = 100
+        
+        def image_generator(upto):
+            i = 0
+            while i < upto:
+                output = self.detector.lpath(self.input_)
+                run, cfile = self.runcounter.runstring()
+                headers = {'RUN': run}
+                headers.update(self.detector.metadata())
+                print headers
+                hdulist = self.creator.create(output, headers)
+                yield hdulist
+                i += 1
+        
+        self.images = [i for i in image_generator(self.nimages)]
+        
 
     def tearDown(self):
         pass
+    
+    def test_combine(self):
+        '''The result bias is compatible with its inputs.'''
+        
 
 def test_suite():
     suite = unittest.TestSuite()

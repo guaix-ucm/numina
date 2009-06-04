@@ -121,7 +121,7 @@ class EmirDetector(numina.instrument.Detector):
     
     def metadata(self):
         '''Metadata exported by the EMIRDetector.'''
-        mtdt = {'EXPOSED':self._exposure, 'EXPTIME':self.exposure,
+        mtdt = {'EXPOSED':self._exposure, 'EXPTIME':self._exposure,
                 'ELAPSED':self.time_since_last_reset(),
                 'DARKTIME':self.time_since_last_reset(),
                 'READMODE':self.options['mode'].upper(),

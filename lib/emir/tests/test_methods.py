@@ -22,9 +22,9 @@
 import unittest
 
 try:
-    import emir.image.ccombine as c
+    import numina.image.ccombine as c
 except ImportError:
-    import emir.image.combine as c
+    import numina.image.combine as c
 
 __version__ = '$Revision$'
 

@@ -41,8 +41,10 @@ _logger = logging.getLogger("emir.recipes")
 class Recipe(RecipeBase):
     '''Recipe to simulate EMIR images.
     
-    Here starts the long description...
-    It continues several lines'''
+    .. inheritance-diagram:: Recipe
+    
+    
+    '''
     def __init__(self):
         optusage = "usage: %prog [options] recipe [recipe-options]"
         super(Recipe, self).__init__(optusage=optusage)

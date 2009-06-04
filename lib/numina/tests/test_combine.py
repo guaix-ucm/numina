@@ -23,9 +23,9 @@ import unittest
 
 import numpy
 
-from emir.image.combine import new_combine2 as combine
+from numina.image.combine import new_combine2 as combine
 from numina.image.methods import mean as fun
-from emir.exceptions import Error
+from numina.exceptions import Error
 
 __version__ = '$Revision$'
 

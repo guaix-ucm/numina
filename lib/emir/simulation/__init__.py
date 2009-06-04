@@ -27,7 +27,7 @@ import numpy
 from scipy.special import erf
 from scipy import maximum, minimum
 
-from emir.image import subarray_match
+from numina.image import subarray_match
 
 __version__ = "$Revision$"
 
