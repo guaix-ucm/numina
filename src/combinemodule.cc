@@ -644,7 +644,7 @@ static PyMethodDef combine_methods[] = {
 PyMODINIT_FUNC init_combine(void)
 {
   PyObject *m;
-  m = Py_InitModule3("_combine", combine_methods, combine__doc__);
+  m = Py_InitModule3("ccombine", combine_methods, combine__doc__);
   import_array();
 
   if (m == NULL)

@@ -5,7 +5,7 @@ from setuptools import setup, find_packages, Extension
 import numpy
 
 numpy_include =  numpy.get_include()
-ex1 = Extension('emir.image._combine',['src/combinemodule.cc', 'src/methods.cc'],
+ex1 = Extension('emir.image.ccombine',['src/combinemodule.cc', 'src/methods.cc'],
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
