@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
 # 
 # This file is part of PyEmir
 # 
@@ -19,3 +19,22 @@
 
 # $Id$
 
+'''Recipe for the reduction of mosaiced images.
+
+Mosaiced images can be properly merged using `swarp
+<http://terapix.iap.fr/rubrique.php?id_rubrique=49>`_, either by using it
+directly or by writing our recipe following its structure.
+
+**Inputs:**
+
+ * TBD
+
+**Outputs:**
+ 
+ * TBD
+
+**Procedure:**
+
+ * TBD
+
+'''
