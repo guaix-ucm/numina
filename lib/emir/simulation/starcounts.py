@@ -21,13 +21,13 @@
 
 from __future__ import with_statement 
 import math
-from math import pow, sin, cos, tan
+from math import sin, cos, tan
 import sys
 import os
 
 from scipy import array
 import scipy.interpolate as sil
-from scipy.io import read_array
+from scipy import loadtxt
 
 from emir.exceptions import Error
 
@@ -85,14 +85,14 @@ class RBModel:
     name = 'Ratnatunga & Bahcall'
     filters = [PhotometricFilter.FILTER_K]
         
-    def differential_counts(self, mag, filter=PhotometricFilter.FILTER_K):
-        if filter == PhotometricFilter.FILTER_V:
+    def differential_counts(self, mag, filter_=PhotometricFilter.FILTER_K):
+        if filter_ == PhotometricFilter.FILTER_V:
             return self._differential_counts_color(mag, self._null)
-        elif filter == PhotometricFilter.FILTER_K:
+        elif filter_ == PhotometricFilter.FILTER_K:
             return self._differential_counts_color(mag, self._colorsVK)    
             
-    def integral_counts(self, mag, filter=PhotometricFilter.FILTER_K):
-        if filter == PhotometricFilter.FILTER_K:
+    def integral_counts(self, mag, filter_=PhotometricFilter.FILTER_K):
+        if filter_ == PhotometricFilter.FILTER_K:
             return self._integral_counts_color(mag, self._colorsVK)
         return 0.
     
@@ -119,14 +119,14 @@ class SpagnaModel:
     _J_counts_filename = findFile("emir/simulation/spagna-J.dat")
     _K_counts_filename = findFile("emir/simulation/spagna-K.dat")
     with open(_J_counts_filename) as f:
-        _J_counts_data = read_array(f)
+        _J_counts_data = loadtxt(f)
         # Data in file is for square degree
         _J_counts_data[:, 1:3] /= 3600.0
         _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
         _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
         del _J_counts_data
     with open(_K_counts_filename) as f: 
-        _K_counts_data = read_array(f)
+        _K_counts_data = loadtxt(f)
         # Data in file is for square degree
         _K_counts_data[:, 1:3] /= 3600.0
         _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
