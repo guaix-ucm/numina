@@ -22,13 +22,14 @@
 '''Recipe for the reduction of imaging mode observations.
 
 Recipe to reduce observations obtained in imaging mode, considering different
-possibilities depending on the offsets between individual images. In
-particular, the following strategies are considered: stare imaging, nodded
-beamswitched imaging, and dithered imaging. A critical piece of information
-here is a table that clearly specifies which images can be labelled as
-*science*, and which ones as *sky*. Note that some images are used both as
-*science* and *sky* (when the size of the targets are small compared to the
-offsets).
+possibilities depending on the size of the offsets between individual images.
+In particular, the following strategies are considered: stare imaging, nodded
+beamswitched imaging, and dithered imaging. 
+
+A critical piece of information here is a table that clearly specifies which
+images can be labelled as *science*, and which ones as *sky*. Note that some
+images are used both as *science* and *sky* (when the size of the targets are
+small compared to the offsets).
 
 **Inputs:**
 
@@ -50,9 +51,9 @@ offsets).
 **Outputs:**
 
  * Image with three extensions: final image scaled to the individual exposure
- time, variance  and exposure time map OR number of images combined (TBD)
+   time, variance  and exposure time map OR number of images combined (TBD)
 
-**The procedure:**
+**Procedure:**
 
 Images are corrected from dark, non-linearity and flat. Then, an iterative
 process starts:
