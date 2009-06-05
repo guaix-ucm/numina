@@ -85,4 +85,3 @@
 .. automodule:: emir.recipes.mask_image
    :synopsis: Mask Image Reduction
 
-The very loooong and detailled description
