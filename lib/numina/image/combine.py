@@ -19,47 +19,71 @@
 
 # $Id$
 
-from emir.exceptions import Error
-#from _combine import test1
-#from _combine import test2
-#from _combine import method_mean
+import numpy.ma as ma
+
+from numina.exceptions import Error
 
 __version__ = "$Revision$"
 
-def new_combine2(images, masks, method="mean", args=(), 
-                 res=None, var=None, num=None):
-    '''Combine a sequence of images using boolean masks and a combination method.
+
+def compressed(fun):
+    '''compressed decorator'''
+    def new(*a, **k):
+        a[0] = a[0].compressed()
+        return fun(*a, **k)
+    return new
+
+def combine(method, images, masks=None, offsets=None,
+            result=None, variance=None, numbers=None):
+    '''Combine images using the given combine method, with masks and offsets.
     
-    Inputs and masks are a list of array objects. method can be a string or a callable object.
-    args are the arguments passed to method and (res,var,num) the result
+    Inputs and masks are a list of array objects.
+    
+    :param method: a callable object that accepts a sequence.
+    :param images: a list of 2D arrays
+    :param masks: a list of 2D boolean arrays, True values are masked
+    :param offsets: a list of 2-tuples
+    :param result: a image where the result is stored if is not None
+    :param variance: a image where the variance is stored if is not None
+    :param result: a image where the number is stored if is not None
+    :return: a 3-tuple with the result, the variance and the number
+    :raise TypeError: if method is not callable
+    
+    
+    Example:
+    
+       >>> from methods import quantileclip
+       >>> import functools
+       >>> method = functools.partial(quantileclip, high=2.0, low=2.5)
+       >>> combine(method, [])
+       
     
     '''
+    # method should be callable
+    # if not isinstance(method, basestring)
+    if not callable(method):
+        raise TypeError('method is not callable')
     
-    # method should be a string
-    if not isinstance(method, basestring) and not callable(method):
-        raise TypeError('method is neither string nor callable')
-    
-    # Check inputs    
+    # Check inputs
     if len(images) == 0:
         raise Error("len(inputs) == 0")
     
     if len(images) != len(masks):
-        raise Error("len(inputs) != len(masks)")
+        raise Error("len(inputs) != len(masks)") 
     
-#    def all_equal(a):
-#        return all(map(lambda x: x[0] == x[1], zip(shapes,shapes[1:])))
-#    # Check sizes of the images
-#    shapes = [i.shape for i in images]
-#    if not all_equal(shapes):
-#        raise Error("shapes of inputs are different")
-#
-#    # Check sizes of the masks
-#    shapes = [i.shape for i in masks]
-#    if not all_equal(shapes):
-#        raise Error("shapes of masks are different")
+    if masks is None:
+        return ()
+    else:
+        method = compressed(method)
+        r = [ma.array(i, mask=j) for (i,j) in zip(images, masks)]
+        r = ma.dstack(r)
+        val = ma.apply_along_axis(method, 0, r)
+        data = val.data
+        return (data[0], data[1], data[2])
+        
     
-#    return test2(method, images, masks, res, var, num)
-
-# Temporary workaround
-new_combine1 = new_combine2
     
+    
+    
+    
+        
