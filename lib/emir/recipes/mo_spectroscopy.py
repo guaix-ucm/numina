@@ -17,11 +17,11 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id $
+# $Id$
 
 '''Recipe for the reduction of multiobject spectroscopy.
 
-Recipe to reduce observations obtained in multibobject spectroscopy,
+Recipe to reduce observations obtained in multiobject spectroscopy,
 considering different possibilities depending on the size of the offsets along
 the slits between individual exposures.  In particular, the following
 strategies are considered: stare spectra, dithered/nodded spectra, and offset
