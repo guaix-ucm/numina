@@ -49,13 +49,13 @@ offsets).
  * Image with three extensions: final image scaled to the individual exposure
    time, variance  and exposure time map OR number of images combined (TBD).
 
-**The procedure:**
+**Procedure:**
 
 Images are regridded to a integer subdivision of the pixel and then they are
 corrected from dark, non-linearity and flat. It should be desirable that the
 microdithering follows a pattern that can be easily translated to a subdivision
-of the pixel size (by an integer n=2,3,4,...) that does not requires a too high
-n value. An iterative process starts:
+of the pixel size (by an integer *n* = 2, 3, 4,...) that does not requires a
+too high *n* value. An iterative process starts:
 
  * Sky is computed from each frame, using the list of sky images of each
    science frame. The objects are avoided using a mask (from the second
