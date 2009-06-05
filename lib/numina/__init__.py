@@ -28,6 +28,8 @@ import inspect
 import logging
 import sys
 
+import pkg_resources
+
 from .recipes import RecipeBase
 from tests import tests as all_tests
 
@@ -162,3 +164,19 @@ def list_recipes(path, docs=True):
                 mydoc = ''
             print name, mydoc
 
+def load_pkg_recipes():
+    '''Return a dictionary of capabilities and recipes, using setuptools mechanism.
+    ''' 
+    ENTRY_POINT = 'numina.recipes'
+    env = pkg_resources.Environment()
+    recipes = {}
+    for name in env:
+        egg = env[name][0]
+        for tname in egg.get_entry_map(ENTRY_POINT):
+            ep = egg.get_entry_info(ENTRY_POINT, tname)
+            mod = ep.load()
+            if not hasattr(mod, 'capabilities'):
+                mod.capabilities = ['recipe']
+            for c in mod.capabilities:
+                recipes.setdefault(c, []).append(mod)
+    return recipes
