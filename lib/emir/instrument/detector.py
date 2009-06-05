@@ -48,9 +48,9 @@ class EmirDetector(numina.instrument.Detector):
         self._exposure = exposure
         self.events = self.generate_events(exposure)
     
-    def lpath(self, input=None):
+    def lpath(self, input_=None):
         self.reset()
-        images = [self.read(t, input) for t in self.events]
+        images = [self.read(t, input_) for t in self.events]
         # Process the images according to the mode
         final = self.process(images, self.events)
         return final.astype(self.outtype)
