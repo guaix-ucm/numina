@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
 # 
 # This file is part of PyEmir
 # 
@@ -19,7 +19,26 @@
 
 # $Id$
 
-'''Bias image recipe and associates'''
+'''Bias image recipe and associates.
+
+Recipe to process bias images. Bias images only appear in Simple Readout mode
+(check this).
+
+**Inputs:**
+
+ * A list of bias images
+ * A model of the detector (gain, RN)
+
+**Outputs:**
+
+ * A combined bias frame, with variance extension and quality flag. 
+
+**Procedure:**
+
+The list of images can be readly processed by combining them with a typical
+sigma-clipping algoritm.
+
+'''
 
 from numina.recipes import RecipeBase
 from numina.recipes import RecipeResult

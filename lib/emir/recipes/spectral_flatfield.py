@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
 # 
 # This file is part of PyEmir
 # 
@@ -17,5 +17,25 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
+# $Id $
+
+'''Spectral Flatfield Recipe.
+
+Recipe to process spectral flat-fields. The flat-on and flat-off images are
+combined (method?) separately and the subtracted to obtain a thermal subtracted
+flat-field.
+
+**Inputs:**
+
+ * TBD
+
+**Outputs:**
+
+ * TBD
+
+**Procedure:**
+
+ * TBD
+
+'''
 

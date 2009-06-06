@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
+# $Id $
 
 '''Recipe for the reduction of imaging mode observations.
 
@@ -34,6 +34,8 @@ small compared to the offsets).
 **Inputs:**
 
  * Science frames + [Sky Frames]
+ * An indication of the observing strategy: **stare image**, **nodded
+   beamswitched image**, or **dithered imaging**
  * A table relating each science image with its sky image(s) (TBD if it's in 
    the FITS header and/or in other format)
  * Offsets between them (Offsets must be integer)

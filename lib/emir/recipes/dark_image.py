@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
 # 
 # This file is part of PyEmir
 # 
@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
+# $Id $
 
 '''Dark image recipe.
 
@@ -25,7 +25,21 @@ Recipe to process dark images. The dark images will be combined
 weighting with the inverses of the corresponding variance extension. 
 They do not have to be of the same exposure time t, they will be 
 scaled to the same t0 ~ 60s (those with very short exposure time 
-should be avoided). The process will remove cosmic rays.
+should be avoided). 
+
+**Inputs:**
+
+ * A list of dark images 
+ * A model of the detector (gain, RN)
+
+**Outputs:**
+
+ * A combined dark frame, with variance extension and quality flag. 
+
+**Procedure:**
+
+The process will remove cosmic rays (using a typical sigma-clipping algorithm).
+
 ''' 
 
 import logging

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
 # 
 # This file is part of PyEmir
 # 
@@ -17,5 +17,22 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
+# $Id $
 
+'''Arc Image Recipe.
+
+Recipe to process the arc images.
+
+**Inputs:**
+
+ * TBD
+
+**Outputs:**
+
+ * TBD
+
+**Procedure:**
+
+ * TBD
+
+'''
