@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id $
+# $Id$
 
 '''Recipe for the reduction of imaging mode observations.
 

@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id $
+# $Id$
 
 '''Spectral Flatfield Recipe.
 
