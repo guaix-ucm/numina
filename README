@@ -9,6 +9,7 @@ be able to be installed and work properly:
 
  - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
+ - scipy (http://www.scipy.org)
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
 Maintainer: sergiopr@astrax.fis.ucm.es

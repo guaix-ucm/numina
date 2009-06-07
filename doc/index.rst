@@ -1,49 +1,55 @@
-.. numina documentation master file, created by sphinx-quickstart on Mon May 25 16:54:57 2009.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. raw:: html
 
-======
-Numina
-======
-Numina provides a Python framework to build GTC_ pipelines.
+  <style type="text/css">
+    li.toctree-l1 {
+        padding: 0.5em 0 1em 0 ;
+        list-style-type: none;
+        font-size: 150% ;
+        }
 
-Documentation
-=============
+    li.toctree-l2 {
+        font-size: 70% ;
+        list-style-type: square;
+        }
 
-Contents:
+    li.toctree-l3 {
+        font-size: 85% ;
+        list-style-type: circle;
+        }
 
-.. toctree::
-   :maxdepth: 1
+    div.bodywrapper h1 {
+        text-align: center;
+        font-size: 300% ;
+    }
+  
+  </style>
 
-   modules
+PyEmir User Guide
+==================
 
+Welcome. This is the User Guide for PyEmir (version |version|), 
 
-EMIR
-====
 EMIR is a **wide-field, near-infrared, multi-object spectrograph** proposed 
-for the Nasmyth focus of GTC_. 
-
-It will allow observers to obtain from **tens to hundreds of 
+for the Nasmyth focus of GTC_. It will allow observers to obtain from **tens to hundreds of 
 intermediate resolution spectra simultaneously**, in the nIR bands *Z, J, H* and  *K*. 
 A multi-slit mask unit will be used for target acquisition. EMIR is designed 
 to address the science goals of the proposing team and of the Spanish community at large.
 
-EMIR Documentation
-==================
+.. raw:: html
 
-Contents:
+  <table class="contentstable" align="center">
+    <tbody>
+      <tr>
+       <td width="50%">
+       <p class="biglink"><a href="highlevel.html">High level description of the pipeline</a></p>
+       <p class="biglink"><a href="contents.html">Complete table of contents</a></p>
+       </td>
+       <td width="50%">
+       <p class="biglink"><a href="modindex.html">Module index</a></p>
+       <p class="biglink"><a href="search.html">Search</a></p>
+       </td>
+      </tr>
+     </tbody>
+   </table>
 
-.. toctree::
-   :maxdepth: 1
-
-   emir/modules
-   highlevel
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. _GTC: http://www.gtc.iac.es/ GTC
+.. _GTC: http://www.gtc.iac.es

@@ -32,52 +32,27 @@
 -------------------------------------------------------
    
 .. automodule:: emir.recipes.bias_image
-
-
-.. autoclass:: Result
-   :members:
-   :show-inheritance:
-
-.. autoclass:: Recipe
-   :members:
-   :show-inheritance:
-
+   :synopsis: Reduction of bias images obtained in imaging mode
    
  
 :mod:`emir.recipes.dark_image` --- Dark Image Reduction
 -------------------------------------------------------
    
 .. automodule:: emir.recipes.dark_image
-
-.. autoclass:: Result
-   :members:
-   :show-inheritance:
-   
-.. autoclass:: Recipe
-   :members:
-   :show-inheritance:
-   
-   
+   :synopsis: Reduction of dark images obtained in imaging mode
    
    
 :mod:`emir.recipes.simulate_image` --- Image Simulation
 -------------------------------------------------------
    
 .. automodule:: emir.recipes.simulate_image
-   :members:
-
-.. autoclass:: Result
-   :show-inheritance:
-   
-.. autoclass:: Recipe
-   :members:
-   :show-inheritance:
+   :synopsis: Creation of dark images
 
 :mod:`emir.recipes.arc_image` --- Arc Image Reduction
 -----------------------------------------------------
 
 .. automodule:: emir.recipes.arc_image
-   :members:
+   :synopsis: Arc Image Reduction
 
 :mod:`emir.recipes.mask_image` --- Mask Image Reduction
 -------------------------------------------------------

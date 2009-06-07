@@ -4,12 +4,12 @@
 High Level description of the EMIR Data Reduction Pipeline
 ==========================================================
 
-High Level description of the EMIR Data Reduction Pipeline
-==========================================================
-
 :author: Nicolás Cardiel
 :revision: $Revision$
 :date: |today|
+
+Introduction
+============
 
 This is an overall description of the relevant processes involved in the Data Reduction Pipeline of 
 EMIR (basically from the point of view of the astronomers). In this sense, the information 
@@ -394,21 +394,19 @@ in `EMIR Observing Strategies`_, several situations are considered:
 Imaging Mode
 ============
 
-**Inputs**
+.. topic:: Inputs
 
-::
-
- Science frames
- Offsets between them
- Master Dark
- Bad pixel mask (BPM)
- Non-linearity correction polynomials
- Master flat
- Master background
- Exposure Time (must be the same in all the frames)
- Airmass for each frame
- Detector model (gain, RN)
- Average extinction in the filter
+  * Science frames
+  * Offsets between them
+  * Master Dark
+  * Bad pixel mask (BPM)
+  * Non-linearity correction polynomials
+  * Master flat
+  * Master background
+  * Exposure Time (must be the same in all the frames)
+  * Airmass for each frame
+  * Detector model (gain, RN)
+  * Average extinction in the filter
 
 
 In near-infrared imaging it is important to take into account 
@@ -584,23 +582,21 @@ A typical reduction scheme for imaging can be the following:
 Multi-Object Spectroscopy Mode
 ==============================
 
-**Inputs:**
+.. topic:: Inputs
 
-::
-
- Science frames
- Offsets between them
- Master Dark
- Bad pixel mask (BPM)
- Non-linearity correction polynomials
- Master spectroscopic flat
- Master spectroscopic background
- Master wavelength calibration
- Master spectrophotometric calibration
- Exposure Time (must be the same in all the frames)
- Airmass for each frame
- Extinction correction as a function of wavelength
- Detector model (gain, RN)
+ * Science frames
+ * Offsets between them
+ * Master Dark
+ * Bad pixel mask (BPM)
+ * Non-linearity correction polynomials
+ * Master spectroscopic flat
+ * Master spectroscopic background
+ * Master wavelength calibration
+ * Master spectrophotometric calibration
+ * Exposure Time (must be the same in all the frames)
+ * Airmass for each frame
+ * Extinction correction as a function of wavelength
+ * Detector model (gain, RN)
 
 
 In the case of EMIR, the reduction of the Multi-Object Spectroscopy observations 

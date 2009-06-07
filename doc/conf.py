@@ -39,10 +39,10 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'contents'
 
 # General information about the project.
-project = u'Numina'
+project = u'PyEmir'
 copyright = u'2009, Sergio Pascual, Nicolás Cardiel'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -148,7 +148,7 @@ html_use_smartypants = True
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-html_use_opensearch = ''
+#html_use_opensearch = ''
 
 # If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
 #html_file_suffix = ''
@@ -161,7 +161,7 @@ htmlhelp_basename = 'numinadoc'
 # ------------------------
 
 # The paper size ('letter' or 'a4').
-#latex_paper_size = 'letter'
+latex_paper_size = 'a4'
 
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'
@@ -169,7 +169,7 @@ htmlhelp_basename = 'numinadoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'numina.tex', ur'PyEmir Documentation',
+  ('contents', 'numina.tex', ur'PyEmir Documentation',
    ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
 ]
 

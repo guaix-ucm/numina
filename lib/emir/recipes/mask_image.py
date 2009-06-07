@@ -22,5 +22,4 @@
 '''
 EMIR recipe to process mask images.
 
-This is the long documentation...
 '''
