@@ -171,6 +171,8 @@ latex_paper_size = 'a4'
 latex_documents = [
   ('contents', 'numina.tex', ur'PyEmir Documentation',
    ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
+  ('emir/recipes', 'recipes.tex', ur'EMIR recipes',
+   ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
