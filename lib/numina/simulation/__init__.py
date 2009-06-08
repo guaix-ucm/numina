@@ -22,7 +22,8 @@
 from __future__ import with_statement
 import os
 from os.path import join as pjoin
-import pickle
+import cPickle
+from cPickle import dump
 import logging
 
 
@@ -35,7 +36,7 @@ _logger = logging.getLogger("emir.storage")
 
 class RunCounter:
     '''Persistent run number counter'''
-    def __init__(self, template, ext='.fits', 
+    def __init__(self, template, ext='.fits',
                  directory=".", pstore='index.pkl', last=1):
         self.template = template
         self.ext = ext
@@ -48,16 +49,16 @@ class RunCounter:
             _logger.debug('Creating image directory %s' % self.directory)
             os.mkdir(self.directory)
         try:
-            with open(self.pstore,'rb') as pkl_file:
+            with open(self.pstore, 'rb') as pkl_file:
                 _logger.debug('Loading status in %s' % self.pstore)
-                self.last = pickle.load(pkl_file)
+                self.last = cPickle.load(pkl_file)
         except IOError, strrerror:            
             _logger.error(strrerror)
                 
-    def __del__(self):
+    def store(self):
         try:
             with open(self.pstore, 'wb') as pkl_file:                
-                pickle.dump(self.last, pkl_file)
+                cPickle.dump(self.last, pkl_file)
                 _logger.debug('Storing internal status in %s' % self.pstore)
         except IOError, strrerror:            
             _logger.error(strrerror)
