@@ -109,6 +109,11 @@ class Recipe(RecipeBase):
         _logger.info('Building FITS structure')
         hdulist = self.creator.create(output, headers)
         return Result(hdulist, cfile)
+
+    def cleanup(self):
+        self.runcounter.store()
+
+
         
 
 

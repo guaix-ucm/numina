@@ -21,8 +21,7 @@
 
 '''User command line interface of Numina.
 
-This is the long description.
-It will span several lines'''
+'''
 
 
 import logging
@@ -102,13 +101,13 @@ def mode_run(args, options, logger):
         recipe.iniconfig.read(i)
 
                 
-    logger.debug('Setting-up the recipe')
+    logger.debug('Setting up the recipe')
     recipe.setup()
     
     runs = recipe.repeat
     while not recipe.complete():
         logger.debug('Running the recipe instance %d of %d ', 
-                     recipe.repeat, runs)
+                     runs - recipe.repeat + 1, runs)
         try:
             result = recipe.run()
             result.store()
@@ -116,6 +115,9 @@ def mode_run(args, options, logger):
             logger.error("%s", e)
         except (IOError, OSError), e:
             logger.error("%s", e)
+    
+    logger.debug('Cleaning up the recipe')
+    recipe.cleanup()
     
     logger.info('Completed execution')
 

@@ -54,6 +54,10 @@ class RecipeBase:
     def setup(self):
         '''Initialize structures only once before recipe execution.'''
         pass
+      
+    def cleanup(self):
+        '''Cleanup structures after recipe execution.'''
+        pass
     
     def run(self):
         '''Run the recipe, don't override.'''
