@@ -82,7 +82,7 @@ class SigmaClippingTestCase(CombineMethodTestMixin, unittest.TestCase):
         return mt.sigmaclip(values)
 
 #class QuantileClippingTestCase(CombineMethodTestMixin, unittest.TestCase):
-# TODO: Write this tests
+# TODO: Write these tests
 class QuantileClippingTestCase(CombineMethodTestMixin):
     multiValues = [
                    ([0.1, 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1], 
