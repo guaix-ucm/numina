@@ -92,7 +92,7 @@ def combine(method, images, masks=None, offsets=None,
         if len(images) != len(offsets):
             raise Error("len(inputs) != len(offsets)")
     else:
-        offsets = [(0,0)] * len(images)
+        offsets = [(0, 0)] * len(images)
     
     if masks is None:
         masks = [False] * len(images)
@@ -108,13 +108,27 @@ def combine(method, images, masks=None, offsets=None,
                for (i,j) in zip(images, offsets)]
     [ucor0, ucor1] = zip(*ucorners)
     ref = (min(bcor0), min(bcor1))
-    finalshape = (max(ucor0) - ref[0], max(ucor1) - ref[1])
     
+    finalshape = (max(ucor0) - ref[0], max(ucor1) - ref[1])
     offsetsp = [(i - ref[0], j - ref[1]) for (i, j) in offsets]
-#    print offsets
-#    print offsetsp
-#    print ref
-#    print "Shape of the final image", finalshape
+    
+    if result is None:
+        result = numpy.zeros(finalshape)
+    else:
+        if result.shape != finalshape:
+            raise TypeError("result has wrong shape")
+    
+    if variance is None:
+        variance = numpy.zeros(finalshape)
+    else:
+        if variance.shape != finalshape:
+            raise TypeError("variance has wrong shape")
+                
+    if numbers is None:
+        numbers = numpy.zeros(finalshape)
+    else:
+        if numbers.shape != finalshape:
+            raise TypeError("numbers has wrong shape")
     
     r = []
     for (i, o, m) in zip(images, offsetsp, masks):
@@ -128,14 +142,10 @@ def combine(method, images, masks=None, offsets=None,
     method = compressed(method)
     val = ma.apply_along_axis(method, 0, cube)
     
-    if result is not None:
-        result = val.data[0]
-        
-    if variance is not None:
-        variance = val.data[1]
-        
-    if numbers is not None:
-        numbers = val.data[2]
+    
+    result = val.data[0]
+    variance = val.data[1]
+    numbers = val.data[2]
     
     return (val.data[0], val.data[1], val.data[2])
     
