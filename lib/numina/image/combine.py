@@ -19,6 +19,9 @@
 
 # $Id$
 
+from __future__ import division
+import itertools
+
 import numpy
 import numpy.ma as ma
 
@@ -36,13 +39,70 @@ def compressed(fun):
         return fun(*vv, **k)
     return new
 
-def blockgen(shape, block):
-    '''Generate 1d block intervals to be used by combine.'''
-    low = 0
-    high = block
-    while(low < shape):
-        yield (low, max(high, shape))
-        low , high = high, high + block
+def blockgen1d(block, size):
+    '''Compute 1d block intervals to be used by combine.
+    
+    blockgen1d computes the slices by recursively halving the initial
+    interval (0, size) by 2 until its size is lesser or equal than block
+    
+    :param block: an integer maximum block size
+    :param size: original size of the interval, it corresponds to a 0:size slice
+    :return: a list of slices
+    
+    Example:
+    
+        >>> blockgen1d(512, 1024)
+        [slice(0, 512, None), slice(512, 1024, None)]
+        
+        >>> blockgen1d(500, 1024)
+        [slice(0, 256, None), slice(256, 512, None), slice(512, 768, None), slice(768, 1024, None)]
+    
+    '''
+    def numblock(block, x):
+        '''Compute recursively the numeric intervals'''
+        a = x[0]
+        b = x[1]
+        if b - a <= block:
+            return [x]
+        else:
+            result = []
+            d = (b - a) // 2
+            temp = map(numblock, [block, block], [(a, a + d), (a + d, b)])
+            for i in temp:
+                result.extend(i)
+            return result
+        
+    return [slice(*l) for l in numblock(block, (0, size))]
+
+
+def blockgen(blocks, shape):
+    '''Generate a list of slice tuples to be used by combine.
+    
+    The tuples represent regions in an N-dimensional image.
+    
+    :param blocks: a tuple of block sizes
+    :param shape: the shape of the n-dimensional array
+    :return: an iterator to the list of tuples of slices
+    
+    Example:
+        
+        >>> blocks = (500, 512)
+        >>> shape = (1040, 1024)
+        >>> for i in blockgen(blocks, shape):
+        ...     print i
+        (slice(0, 260, None), slice(0, 512, None))
+        (slice(0, 260, None), slice(512, 1024, None))
+        (slice(260, 520, None), slice(0, 512, None))
+        (slice(260, 520, None), slice(512, 1024, None))
+        (slice(520, 780, None), slice(0, 512, None))
+        (slice(520, 780, None), slice(512, 1024, None))
+        (slice(780, 1040, None), slice(0, 512, None))
+        (slice(780, 1040, None), slice(512, 1024, None))
+        
+    
+    '''
+    iterables = [blockgen1d(l,s) for (l,s) in zip(blocks, shape)]
+    return itertools.product(*iterables)
 
 
 def combine(method, images, masks=None, offsets=None,
@@ -77,6 +137,10 @@ def combine(method, images, masks=None, offsets=None,
        
     
     '''
+    
+    blocksize = (512, 512)
+    
+    
     # method should be callable
     # if not isinstance(method, basestring)
     if not callable(method):
@@ -129,6 +193,10 @@ def combine(method, images, masks=None, offsets=None,
     else:
         if numbers.shape != finalshape:
             raise TypeError("numbers has wrong shape")
+    
+#    for i in blockgen(blocksize, finalshape):
+#        print i
+    
     
     r = []
     for (i, o, m) in zip(images, offsetsp, masks):
