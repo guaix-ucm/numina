@@ -19,11 +19,11 @@
 
 # $Id$
 
-from __future__ import division
+from __future__ import division, with_statement
 import itertools
 
+import scipy
 import numpy
-import numpy.ma as ma
 
 from numina.exceptions import Error
 
@@ -104,6 +104,12 @@ def blockgen(blocks, shape):
     iterables = [blockgen1d(l,s) for (l,s) in zip(blocks, shape)]
     return itertools.product(*iterables)
 
+def _internal_combine(method, nimages, nmasks, result, variance, numbers):
+    for index, val in numpy.ndenumerate(result):
+        values = [im[index] for im, mas in zip(nimages, nmasks) if not mas[index]]
+        result[index], variance[index], numbers[index] = method(values)
+                
+
 
 def combine(method, images, masks=None, offsets=None,
             result=None, variance=None, numbers=None):
@@ -139,8 +145,7 @@ def combine(method, images, masks=None, offsets=None,
     '''
     
     blocksize = (512, 512)
-    
-    
+        
     # method should be callable
     # if not isinstance(method, basestring)
     if not callable(method):
@@ -149,7 +154,6 @@ def combine(method, images, masks=None, offsets=None,
     # Check inputs
     if len(images) == 0:
         raise Error("len(inputs) == 0")
-        
         
     # Offsets
     if offsets is not None:
@@ -163,8 +167,7 @@ def combine(method, images, masks=None, offsets=None,
     else:
         if len(images) != len(masks):
             raise Error("len(inputs) != len(masks)")
-        
-        
+                
     # unzip 
     # http://paddy3118.blogspot.com/2007/02/unzip-un-needed-in-python.html
     [bcor0, bcor1] = zip(*offsets)
@@ -194,26 +197,49 @@ def combine(method, images, masks=None, offsets=None,
         if numbers.shape != finalshape:
             raise TypeError("numbers has wrong shape")
     
-#    for i in blockgen(blocksize, finalshape):
-#        print i
+    resize_images = True
     
-    
-    r = []
-    for (i, o, m) in zip(images, offsetsp, masks):
-        newimage = ma.array(numpy.zeros(finalshape), mask=True) 
-        pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
-        newimage[pos] = ma.array(i, mask=m)
-        r.append(newimage)
+    if resize_images:
+        nimages = []
+        nmasks = []
+        for (i, o, m) in zip(images, offsetsp, masks):
+            newimage1 = numpy.empty(finalshape)
+            newimage2 = numpy.ones(finalshape, dtype="bool") 
+            pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
+            newimage1[pos] = i
+            newimage2[pos] = m
+            nimages.append(newimage1)
+            nmasks.append(newimage2)
+    else:
+        nimages = images
+        nmasks = masks 
 
-    cube = ma.array(r)
-#    print "cube shape", cube.shape
-    method = compressed(method)
-    val = ma.apply_along_axis(method, 0, cube)
+
+    slices = [i for i in blockgen(blocksize, finalshape)]
     
+    for i in slices:
+        # views of the images and masks
+        vnimages = [j[i] for j in nimages]
+        vnmasks = [j[i] for j in nmasks]
+        _internal_combine(method, vnimages, vnmasks,
+                          result[i], variance[i], numbers[i])
+        
+    return (result, variance, numbers)
     
-    result = val.data[0]
-    variance = val.data[1]
-    numbers = val.data[2]
+if __name__ == "__main__":
+    from numina.image.methods import mean
+    from numina.decorators import print_timing
     
-    return (val.data[0], val.data[1], val.data[2])
+    @print_timing
+    def combine2(method, inputs):        
+        combine(method, inputs)
+    
+    # Inputs
+    input1 = scipy.ones((2000, 2000))
+    
+    inputs = [input1] * 10
+    offsets = [(1, 1), (1, 0), (0, 0), (0, 1)]
+
+    combine2(mean, inputs)
+
     
