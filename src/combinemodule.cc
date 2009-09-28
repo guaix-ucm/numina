@@ -27,8 +27,7 @@
 #include <vector>
 
 PyDoc_STRVAR(combine__doc__, "Module doc");
-PyDoc_STRVAR(test1__doc__, "test1 doc");
-PyDoc_STRVAR(test2__doc__, "test2 doc");
+PyDoc_STRVAR(test1__doc__, "Combines identically shaped images");
 PyDoc_STRVAR(method1__doc__, "method_mean doc");
 PyDoc_STRVAR(method2__doc__, "method_median doc");
 
@@ -70,7 +69,9 @@ static PyObject* py_method1(PyObject *self, PyObject *args)
   return Py_BuildValue("(d,d,i)", val, var, number);
 }
 
-static PyObject* py_method2(PyObject *self, PyObject *args)
+namespace {
+
+PyObject* py_method2(PyObject *self, PyObject *args)
 {
   int ok;
   PyObject *pydata = NULL;
@@ -105,10 +106,9 @@ static PyObject* py_method2(PyObject *self, PyObject *args)
   return Py_BuildValue("(d,d,i)", val, var, number);
 }
 
-static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
+PyObject* py_internal_combine(PyObject *self, PyObject *args, PyObject *keywds)
 {
-  int i;
-  PyObject *fun = NULL;
+  PyObject *method = NULL;
   PyObject *images = NULL;
   PyObject *masks = NULL;
   PyObject *res = Py_None;
@@ -119,89 +119,27 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   PyObject *numarr = NULL;
 
 
-  static char *kwlist[] = { "method", "images", "mask", "res", "var", "num", NULL };
+  static char *kwlist[] = { "method", "nimages", "nmasks",
+		  "result", "variance", "numbers", NULL };
 
-  int ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|OOO:test1", kwlist, &fun,
+  int ok = PyArg_ParseTupleAndKeywords(args, keywds, "OO!O!|OOO:test1", kwlist, &method,
       &PyList_Type, &images, &PyList_Type, &masks, &res, &var, &num);
   if (!ok)
     return NULL;
 
-
-  /* Check that fun is callable */
-  if (!PyCallable_Check(fun))
-  {
-    PyErr_Format(PyExc_TypeError, "method is not callable");
-    return NULL;
-  }
-
   /* images are forced to be a list */
   const int nimages = PyList_GET_SIZE(images);
-  /* masks are forced to be a list */
-  const int nmasks = PyList_GET_SIZE(masks);
-
-  if(nimages == 0)
-  {
-    PyErr_Format(PyExc_TypeError, "images is empty"); // TODO: check this exception
-    return NULL;
-  }
-  if(nmasks == 0)
-  {
-    PyErr_Format(PyExc_TypeError, "masks is empty"); // TODO: check this exception
-    return NULL;
-  }
-
-  /* number of masks must be equal to the number of images */
-  if(nmasks != nimages)
-  {
-    PyErr_Format(PyExc_TypeError, "masks and images are not of the same length"); // TODO: check this exception
-  }
 
   /* getting the contents */
   std::vector<PyObject*> iarr(nimages);
 
-  for (i = 0; i < nimages; i++)
+  for (int i = 0; i < nimages; i++)
   {
     PyObject *item = PyList_GetItem(images, i);
-    if (!item)
-    {
-      /* Problem here */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "can't get object from images list"); // TODO: check this exception
-      return NULL;
-    }
     /* To be sure is double */
     iarr[i] = PyArray_FROM_OT(item, NPY_DOUBLE);
-
     /* We don't need item anymore */
     Py_DECREF(item);
-
-    if (!iarr[i])
-    {
-      /* Can't be converted to array */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy float array"); // TODO: check this exception
-      return NULL;
-    }
-
-    // checking dimensions
-    if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (at least 2D)
-    {
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "input array must be (at least) bidimensional"); // TODO: check this exception
-      return NULL;
-    }
-
-    // checking sizes
-    npy_intp* refdims = PyArray_DIMS(iarr[0]);
-    npy_intp* thisdims = PyArray_DIMS(iarr[i]);
-    if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
-    /*if( 1 == 1)*/
-    {
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "input arrays must have the same shape"); // TODO: check this exception
-      return NULL;
-    }
-
   }
 
   npy_intp* refdims = PyArray_DIMS(iarr[0]);
@@ -209,103 +147,14 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   /* getting the contents */
   std::vector<PyObject*> marr(nimages);
 
-  for (i = 0; i < nimages; i++)
+  for (int i = 0; i < nimages; i++)
   {
     PyObject *item = PyList_GetItem(masks, i);
-    if (!item)
-    {
-      /* Problem here */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "can't get object from masks list"); // TODO: check this exception
-      return NULL;
-    }
-
     /* To be sure is bool */
     marr[i] = PyArray_FROM_OT(item, NPY_BOOL);
     /* We don't need item anymore */
     Py_DECREF(item);
-
-    /* It seems that everything can be converted to bool:
-     * None -> False
-     * The rest -> True
-     */
-    if (!marr[i])
-    {
-      /* Can't be converted to array */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy bool array"); // TODO: check this excepti
-      return NULL;
-    }
-
-    // checking dimensions
-    if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
-     {
-       /* throw exception */
-       PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
-       return NULL;
-     }
-
-     // checking sizes
-
-     npy_intp* thisdims = PyArray_DIMS(marr[i]);
-     if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
-     {
-       /* throw exception */
-       PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
-       return NULL;
-     }
-
   }
-
-  /* checks */
-  /* All the images have equal size and are 2D */
-
-  /* If res is none, create a new image, else
-   * check that the size and shape are equal to the rest of images
-   * and use it as output
-   */
-  /* I should check the return values of the functions and
-   * return if some fails
-   */
-  if (res == Py_None)
-  {
-    resarr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
-    if(resarr == NULL)
-    {
-      /* throw exception */
-      return NULL;
-    }
-  } else
-  {
-    resarr = PyArray_FROM_OT(res, NPY_DOUBLE);
-  }
-
-  if (var == Py_None)
-  {
-    vararr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
-    if(vararr == NULL)
-    {
-      /* throw exception */
-      return NULL;
-    }
-  } else
-  {
-    vararr = PyArray_FROM_OT(var, NPY_DOUBLE);
-  }
-
-  if (num == Py_None)
-  {
-    numarr = PyArray_SimpleNew(2, refdims, NPY_LONG);
-    if(numarr == NULL)
-    {
-      /* throw exception */
-      return NULL;
-    }
-  } else
-  {
-    numarr = PyArray_FROM_OT(num, NPY_LONG);
-  }
-
 
   /*
    * This is ok if we are passing the data to a C function
@@ -316,19 +165,18 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
   std::vector<npy_double> data(nimages);
   npy_intp* dims = PyArray_DIMS(iarr[0]);
 
-  npy_intp ii, jj;
-  for (ii = 0; ii < dims[0]; ++ii)
-    for (jj = 0; jj < dims[1]; ++jj)
+  for (npy_intp ii = 0; ii < dims[0]; ++ii)
+    for (npy_intp jj = 0; jj < dims[1]; ++jj)
     {
       int used = 0;
       /* Collect the valid values */
-      for (i = 0; i < nimages; ++i)
+      for (int i = 0; i < nimages; ++i)
       {
         npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
-        if (*pmask == NPY_TRUE) // <- This decides how the mask is used
-          continue;
+        if (*pmask == NPY_TRUE) // <- True values are skipped
+          break;
 
-        npy_double *pdata = static_cast<double*>PyArray_GETPTR2(iarr[i], ii, jj);
+        npy_double *pdata = static_cast<double*>(PyArray_GETPTR2(iarr[i], ii, jj));
         data[i] = *pdata;
         ++used;
       }
@@ -336,7 +184,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       PyObject* pydata = PyList_New(used);
 
       /* Fill it */
-      for (i = 0; i < used; ++i)
+      for (int i = 0; i < used; ++i)
       {
         PyObject* value = PyFloat_FromDouble(data[i]);
         PyList_SET_ITEM(pydata, i, value);
@@ -346,7 +194,7 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       PyObject* argl = Py_BuildValue("(O)", pydata);
       Py_DECREF(pydata);
       PyObject* result = NULL;
-      result = PyEval_CallObject(fun, argl);
+      result = PyEval_CallObject(method, argl);
       Py_DECREF(argl);
 
       if (!result)
@@ -367,275 +215,14 @@ static PyObject* py_test1(PyObject *self, PyObject *args, PyObject *keywds)
       Py_DECREF(result);
     }
 
-
-  // Increasing the reference before returning
-  if (res != Py_None)
-  {
-    Py_INCREF(resarr);
-  }
-  if (var != Py_None)
-  {
-      Py_INCREF(vararr);
-  }
-  if (num != Py_None)
-  {
-      Py_INCREF(numarr);
-  }
-  return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
+  return Py_None;
 }
 
-static PyObject* py_test2(PyObject *self, PyObject *args, PyObject *keywds)
-{
-  int ok;
-  int i;
+} // namesppace
 
-  const char* method_name = NULL;
-  PyObject *images = NULL;
-  PyObject *masks = NULL;
-  PyObject *res = Py_None;
-  PyObject *var = Py_None;
-  PyObject *num = Py_None;
-  PyObject *resarr = NULL;
-  PyObject *vararr = NULL;
-  PyObject *numarr = NULL;
-
-  static char *kwlist[] = { "method", "images", "mask", "res", "var", "num", NULL };
-
-  ok = PyArg_ParseTupleAndKeywords(args, keywds, "sO!O!|OOO:test2", kwlist,
-      &method_name, &PyList_Type, &images, &PyList_Type, &masks, &res, &var, &num);
-  if (!ok)
-    return NULL;
-
-  /* Check if method is registered in our table */
-  MethodStruct* fiter = methods;
-  GenericMethodPtr method_ptr = NULL;
-  while(fiter->name) {
-    if (!strcmp(method_name, fiter->name)) {
-      method_ptr = fiter->function;
-      break;
-    }
-    ++fiter;
-  }
-
-  if (!method_ptr) {
-    PyErr_Format(PyExc_TypeError, "invalid combination method %s", method_name);
-    return NULL;
-  }
-
-  int nimages = PyList_GET_SIZE(images);
-
-  /* we don't like empty lists */
-  if(nimages == 0)
-  {
-    PyErr_Format(PyExc_TypeError, "images is empty"); // TODO: check this exception
-    return NULL;
-  }
-
-  /* number of masks must be equal to the number of images */
-  if(PyList_GET_SIZE(masks) != nimages)
-  {
-    PyErr_Format(PyExc_TypeError, "masks and images are not of the same length"); // TODO: check this exception
-  }
-
-  /* getting the contents */
-  std::vector<PyObject*> iarr(nimages);
-
-  for (i = 0; i < nimages; i++)
-  {
-    PyObject *item = PyList_GetItem(images, i);
-    if (!item)
-    {
-      /* Problem here */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "can't get object from images list"); // TODO: check this exception
-      return NULL;
-    }
-    /* To be sure it is double */
-    iarr[i] = PyArray_FROM_OT(item, NPY_DOUBLE);
-
-    /* We don't need a anymore */
-    Py_DECREF(item);
-
-    if (!iarr[i])
-    {
-      /* Can't be converted to array */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy float array"); // TODO: check this exception
-      return NULL;
-    }
-
-    // checking dimensions
-    if (((PyArrayObject*) iarr[i])->nd < 2) // Array must be (at least 2D)
-    {
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "input array must be (at least) bidimensional"); // TODO: check this exception
-      return NULL;
-    }
-
-    // checking sizes
-    npy_intp* refdims = PyArray_DIMS(iarr[0]);
-    npy_intp* thisdims = PyArray_DIMS(iarr[i]);
-    if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
-    {
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "arrays must have the same shape"); // TODO: check this exception
-      return NULL;
-    }
-  }
-
-  npy_intp* refdims = PyArray_DIMS(iarr[0]);
-
-  /* getting the contents */
-  std::vector<PyObject*> marr(nimages);
-
-  for (i = 0; i < nimages; i++)
-  {
-    PyObject *item = PyList_GetItem(masks, i);
-    if (!item)
-    {
-      /* Problem here */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "can't get object from masks list"); // TODO: check this exception
-      return NULL;
-    }
-    /* To be sure is bool */
-    marr[i] = PyArray_FROM_OT(item, NPY_BOOL);
-    /* We don't need item anymore */
-    Py_DECREF(item);
-
-    if (!marr[i])
-    {
-      /* Can't be converted to array */
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "object can't be converted into a numpy bool array"); // TODO: check this exception
-      return NULL;
-    }
-    // checking dimensions
-    if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
-    {
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
-      return NULL;
-    }
-
-    // checking dimensions
-    if (((PyArrayObject*) marr[i])->nd < 2) // Array must be (atleast 2D)
-     {
-       /* Clean up */
-       PyErr_Format(PyExc_TypeError, "mask array must be (at least) bidimensional"); // TODO: check this exception
-       return NULL;
-     }
-
-    // checking sizes
-    npy_intp* thisdims = PyArray_DIMS(marr[i]);
-    if (refdims[0] != thisdims[0] || refdims[1] != thisdims[1])
-    {
-      /* Clean up */
-      PyErr_Format(PyExc_TypeError, "mask arrays must have the same shape"); // TODO: check this exception
-      return NULL;
-    }
-  }
-
-  /* checks */
-  /* All the images have equal size and are 2D */
-
-  /* If res is none, create a new image, else
-   * check that the size and shape are equal to the rest of images
-   * and use it as output
-   */
-  /* I should check the return values of the functions and
-   * return if some fails
-   */
-  if (res == Py_None)
-  {
-    resarr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
-    if(resarr == NULL)
-    {
-      /* Do something */
-      return NULL;
-    }
-  } else
-  {
-    resarr = PyArray_FROM_OT(res, NPY_DOUBLE);
-  }
-
-  if (var == Py_None)
-  {
-    vararr = PyArray_SimpleNew(2, refdims, NPY_DOUBLE);
-    if(vararr == NULL)
-    {
-      /* Do something */
-      return NULL;
-    }
-  } else
-  {
-    vararr = PyArray_FROM_OT(var, NPY_DOUBLE);
-  }
-
-  if (num == Py_None)
-  {
-    numarr = PyArray_SimpleNew(2, refdims, NPY_LONG);
-    if(numarr == NULL)
-    {
-      /* Do something */
-      return NULL;
-    }
-  } else
-  {
-    numarr = PyArray_FROM_OT(num, NPY_LONG);
-  }
-
-  std::vector<npy_double> data(nimages);
-  npy_intp* dims = PyArray_DIMS(iarr[0]);
-  /* Assuming 2D arrays */
-  npy_intp ii, jj;
-  void *params = NULL;
-  for (ii = 0; ii < dims[0]; ++ii)
-    for (jj = 0; jj < dims[1]; ++jj)
-    {
-      int used = 0;
-      /* Collect the valid values */
-      for (i = 0; i < nimages; ++i)
-      {
-        npy_bool *pmask = (npy_bool*) PyArray_GETPTR2(marr[i], ii, jj);
-        if (*pmask == NPY_TRUE) // <- This decides how the mask is used
-          continue;
-
-        npy_double *pdata = static_cast<double*>(PyArray_GETPTR2(iarr[i], ii, jj));
-        data[i] = *pdata;
-        ++used;
-      }
-
-      npy_double* p = (npy_double*) PyArray_GETPTR2(resarr, ii, jj);
-      npy_double* v = (npy_double*) PyArray_GETPTR2(vararr, ii, jj);
-      long* n = (long*) PyArray_GETPTR2(numarr, ii, jj);
-
-      /* Compute the results*/
-      method_ptr(&data[0], used, p, v, n, params);
-    }
-
-
-  // Increasing the reference before returning
-  if (res != Py_None)
-  {
-    Py_INCREF(resarr);
-  }
-  if (var != Py_None)
-  {
-      Py_INCREF(vararr);
-  }
-  if (num != Py_None)
-  {
-      Py_INCREF(numarr);
-  }
-
-  /* If the arrays are created inside, we should use N instead of O */
-  return Py_BuildValue("(N,N,N)", resarr, vararr, numarr);
-}
 
 static PyMethodDef combine_methods[] = {
-    {"test1", (PyCFunction) py_test1, METH_VARARGS | METH_KEYWORDS, test1__doc__ },
-    {"test2", (PyCFunction) py_test2, METH_VARARGS | METH_KEYWORDS, test2__doc__ },
+    {"_internal_combine", (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS, test1__doc__ },
     {"method_mean", py_method1, METH_VARARGS, method1__doc__ },
     {"method_median", py_method2, METH_VARARGS, method2__doc__ },
     {NULL, NULL, 0, NULL} /* sentinel */
