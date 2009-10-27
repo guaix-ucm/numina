@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Sergio Pascual
+ * Copyright 2008-2009 Sergio Pascual
  *
  * This file is part of PyEmir
  *
@@ -20,7 +20,10 @@
 
 /* $Id$ */
 
-void method_mean(double data[], int size, double* c, double* var, long* number, void* params)
+#include "methods.h"
+
+void method_mean(const double* data, size_t size,
+		double* c, double* var, long* number, void* params)
 {
   if (size == 0)
   {
@@ -37,10 +40,13 @@ void method_mean(double data[], int size, double* c, double* var, long* number, 
     return;
   }
 
+  // Degrees of freedom
+  const double dof = 0;
+
   double sum = 0.0;
   double sum2 = 0.0;
-  int i;
-  for (i = 0; i < size; ++i)
+
+  for (size_t i = 0; i < size; ++i)
   {
     sum += data[i];
     sum2 += data[i] * data[i];
@@ -48,45 +54,7 @@ void method_mean(double data[], int size, double* c, double* var, long* number, 
 
   *c = sum / size;
   *number = size;
-  *var = sum2 / (size - 1) - (sum * sum) / (size * (size - 1));
+  *var = sum2 / (size - dof) - (sum * sum) / (size * (size - dof));
 }
 
-/*
- * Algorithm from N. Wirth's book, implementation by N. Devillard.
- * This code in public domain.
- * http://ndevilla.free.fr/median/median/index.html
- */
-typedef double elem_type;
-
-#define WIRTH_ELEM_SWAP(a,b) { register elem_type t=(a);(a)=(b);(b)=t; }
-
-elem_type kth_smallest(elem_type a[], int n, int k)
-{
-    register int i,j,l,m ;
-    register elem_type x ;
-
-    l=0 ; m=n-1 ;
-    while (l<m) {
-        x=a[k] ;
-        i=l ;
-        j=m ;
-        do {
-            while (a[i]<x) i++ ;
-            while (x<a[j]) j-- ;
-            if (i<=j) {
-                WIRTH_ELEM_SWAP(a[i],a[j]) ;
-                i++ ; j-- ;
-            }
-        } while (i<=j) ;
-        if (j<k) l=i ;
-        if (k<i) m=j ;
-    }
-    return a[k] ;
-}
-
-void method_median(double data[], int size, double* c, double* var, long* number, void* params) {
-  *c = kth_smallest(data, size, ((size & 1) ? (size / 2) : ((size / 2) - 1)));
-  *var = 0.0;
-  *number = size;
-}
 

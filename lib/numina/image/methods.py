@@ -37,7 +37,11 @@ __version__ = "$Revision$"
 # Classes are new style
 __metaclass__ = type
 
+import warnings 
+
 import scipy
+
+warnings.warn("methods are deprecated, combine doesn't take a method", DeprecationWarning)
 
 def mean(values):
     '''Compute the mean, variance and number of points of a sequence.

@@ -21,11 +21,13 @@
 
 from __future__ import division, with_statement
 import itertools
+import functools
 
 import scipy
 import numpy
 
 from numina.exceptions import Error
+from numina.image._combine import internal_combine as c_internal_combine
 
 __version__ = "$Revision$"
 
@@ -101,10 +103,10 @@ def blockgen(blocks, shape):
         
     
     '''
-    iterables = [blockgen1d(l,s) for (l,s) in zip(blocks, shape)]
+    iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
     return itertools.product(*iterables)
 
-def _internal_combine(method, nimages, nmasks, result, variance, numbers):
+def py_internal_combine(method, nimages, nmasks, result, variance, numbers):
     for index, val in numpy.ndenumerate(result):
         values = [im[index] for im, mas in zip(nimages, nmasks) if not mas[index]]
         result[index], variance[index], numbers[index] = method(values)
@@ -117,7 +119,7 @@ def combine(method, images, masks=None, offsets=None,
     
     Inputs and masks are a list of array objects.
     
-    :param method: a callable object that accepts a sequence.
+    :param method: a string with the name of the method
     :param images: a list of 2D arrays
     :param masks: a list of 2D boolean arrays, True values are masked
     :param offsets: a list of 2-tuples
@@ -130,29 +132,25 @@ def combine(method, images, masks=None, offsets=None,
     
     Example:
     
-       >>> from methods import quantileclip
-       >>> import functools
-       >>> method = functools.partial(quantileclip, high=2.0, low=2.5)
        >>> import numpy
        >>> image = numpy.array([[1.,3.],[1., -1.4]])
        >>> inputs = [image, image + 1]
-       >>> combine(method, inputs)  #doctest: +NORMALIZE_WHITESPACE
-       (array([[ 0.,  0.], [ 0.,  0.]]), 
-        array([[ 0.,  0.], [ 0.,  0.]]), 
-        array([[ 0.,  0.], [ 0.,  0.]]))
+       >>> combine("mean", inputs)  #doctest: +NORMALIZE_WHITESPACE
+       (array([[ 1.5,  3.5],
+           [ 1.5, -0.9]]), array([[ 0.25,  0.25],
+           [ 0.25,  0.25]]), array([[2, 2],
+           [2, 2]], dtype=int32))
        
-    
     '''
     
     blocksize = (512, 512)
-        
-    # method should be callable
-    # if not isinstance(method, basestring)
-    if not callable(method):
-        raise TypeError('method is not callable')
+    blocksize = (2048, 2048)
+    # method should be a string
+    if not isinstance(method, basestring):
+        raise TypeError('method is not a string')
     
     # Check inputs
-    if len(images) == 0:
+    if not images:
         raise Error("len(inputs) == 0")
         
     # Offsets
@@ -167,12 +165,30 @@ def combine(method, images, masks=None, offsets=None,
     else:
         if len(images) != len(masks):
             raise Error("len(inputs) != len(masks)")
+        masks = map(functools.partial(numpy.asarray, dtype=numpy.bool), masks)
+        for i in masks:
+            t = i.dtype
+            if not numpy.issubdtype(t, bool):
+                raise TypeError
+            if len(i.shape) != 2:
+                raise TypeError
                 
+    aimages = map(numpy.asarray, images)
+    
+    for i in aimages:
+        t = i.dtype
+        if not (numpy.issubdtype(t, float) or numpy.issubdtype(t, int)):
+            raise TypeError
+        if len(i.shape) != 2:
+            raise TypeError
+        
+    
+    
     # unzip 
     # http://paddy3118.blogspot.com/2007/02/unzip-un-needed-in-python.html
     [bcor0, bcor1] = zip(*offsets)
     ucorners = [(j[0] + i.shape[0], j[1] + i.shape[1]) 
-               for (i,j) in zip(images, offsets)]
+               for (i, j) in zip(aimages, offsets)]
     [ucor0, ucor1] = zip(*ucorners)
     ref = (min(bcor0), min(bcor1))
     
@@ -180,19 +196,19 @@ def combine(method, images, masks=None, offsets=None,
     offsetsp = [(i - ref[0], j - ref[1]) for (i, j) in offsets]
     
     if result is None:
-        result = numpy.zeros(finalshape)
+        result = numpy.zeros(finalshape, dtype="float64")
     else:
         if result.shape != finalshape:
             raise TypeError("result has wrong shape")
     
     if variance is None:
-        variance = numpy.zeros(finalshape)
+        variance = numpy.zeros(finalshape, dtype="float64")
     else:
         if variance.shape != finalshape:
             raise TypeError("variance has wrong shape")
                 
     if numbers is None:
-        numbers = numpy.zeros(finalshape)
+        numbers = numpy.zeros(finalshape, dtype="int32")
     else:
         if numbers.shape != finalshape:
             raise TypeError("numbers has wrong shape")
@@ -202,16 +218,16 @@ def combine(method, images, masks=None, offsets=None,
     if resize_images:
         nimages = []
         nmasks = []
-        for (i, o, m) in zip(images, offsetsp, masks):
+        for (i, o, m) in zip(aimages, offsetsp, masks):
             newimage1 = numpy.empty(finalshape)
-            newimage2 = numpy.ones(finalshape, dtype="bool") 
+            newimage2 = numpy.ones(finalshape, dtype=numpy.bool) 
             pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
             newimage1[pos] = i
             newimage2[pos] = m
             nimages.append(newimage1)
             nmasks.append(newimage2)
     else:
-        nimages = images
+        nimages = aimages
         nmasks = masks 
 
 
@@ -221,25 +237,28 @@ def combine(method, images, masks=None, offsets=None,
         # views of the images and masks
         vnimages = [j[i] for j in nimages]
         vnmasks = [j[i] for j in nmasks]
-        _internal_combine(method, vnimages, vnmasks,
+        c_internal_combine(method, vnimages, vnmasks,
                           result[i], variance[i], numbers[i])
         
     return (result, variance, numbers)
     
 if __name__ == "__main__":
-    from numina.image.methods import mean
     from numina.decorators import print_timing
     
     @print_timing
-    def combine2(method, inputs):        
-        combine(method, inputs)
+    def combine2(method, inputs, offsets=None):        
+        return combine(method, inputs, offsets=offsets)
     
     # Inputs
     input1 = scipy.ones((2000, 2000))
     
-    inputs = [input1] * 10
-    offsets = [(1, 1), (1, 0), (0, 0), (0, 1)]
-
-    combine2(mean, inputs)
-
+    minputs = [input1] * 5
+    minputs += [input1 * 2] * 5
+    #moffsets = [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
+    #moffsets += [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
     
+    #(a,b,c) = combine2("mean", minputs, offsets=moffsets)
+    (a, b, c) = combine2("mean", minputs)
+    print type(a), a.dtype, a.shape, a[0, 0]
+    print type(b), b.dtype, b.shape, b[0, 0]
+    print type(c), c.dtype, c.shape, c[0, 0]

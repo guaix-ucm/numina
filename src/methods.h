@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Sergio Pascual
+ * Copyright 2008-2009 Sergio Pascual
  *
  * This file is part of PyEmir
  *
@@ -20,20 +20,15 @@
 
 /* $Id$ */
 
-typedef void (*GenericMethodPtr)(double data[], int size, double* c, double* var, long* number, void* params);
+#ifndef HHH
+#define HHH
 
-typedef struct {
-  const char* name;
-  GenericMethodPtr function;
-} MethodStruct;
-
-void method_mean(double data[], int size, double* c, double* var, long* number, void* params);
-void method_median(double data[], int size, double* c, double* var, long* number, void* params);
+#include <cstddef>
 
 
-static MethodStruct methods[] = {
-    {"mean",method_mean},
-    {"median",method_median},
-    {NULL, NULL}
-};
+void method_mean(const double* data, size_t size,
+		double* c, double* var, long* number, void* params);
 
+
+
+#endif
