@@ -32,15 +32,6 @@ from numina.image._combine import internal_combine as c_internal_combine
 __version__ = "$Revision$"
 
 
-def compressed(fun):
-    '''Compressed decorator.'''
-    def new(*vv, **k):
-        vv = list(vv)
-        vv[0] = vv[0].compressed()
-        vv = tuple(vv)
-        return fun(*vv, **k)
-    return new
-
 def blockgen1d(block, size):
     '''Compute 1d block intervals to be used by combine.
     
@@ -106,7 +97,7 @@ def blockgen(blocks, shape):
     iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
     return itertools.product(*iterables)
 
-def py_internal_combine(method, nimages, nmasks, result, variance, numbers):
+def _py_internal_combine(method, nimages, nmasks, result, variance, numbers):
     for index, val in numpy.ndenumerate(result):
         values = [im[index] for im, mas in zip(nimages, nmasks) if not mas[index]]
         result[index], variance[index], numbers[index] = method(values)
@@ -114,7 +105,8 @@ def py_internal_combine(method, nimages, nmasks, result, variance, numbers):
 
 
 def combine(method, images, masks=None, offsets=None,
-            result=None, variance=None, numbers=None):
+            result=None, variance=None, numbers=None,
+            blocksize=(512, 512)):
     '''Combine images using the given combine method, with masks and offsets.
     
     Inputs and masks are a list of array objects.
@@ -126,6 +118,7 @@ def combine(method, images, masks=None, offsets=None,
     :param result: a image where the result is stored if is not None
     :param variance: a image where the variance is stored if is not None
     :param result: a image where the number is stored if is not None
+    :param blocksize: shape of the block used to combine images
     :return: a 3-tuple with the result, the variance and the number
     :raise TypeError: if method is not callable
     
@@ -143,8 +136,6 @@ def combine(method, images, masks=None, offsets=None,
        
     '''
     
-    blocksize = (512, 512)
-    blocksize = (2048, 2048)
     # method should be a string
     if not isinstance(method, basestring):
         raise TypeError('method is not a string')
@@ -152,6 +143,13 @@ def combine(method, images, masks=None, offsets=None,
     # Check inputs
     if not images:
         raise Error("len(inputs) == 0")
+    
+    # All images have the same shape
+    aimages = map(numpy.asarray, images)
+    baseshape = aimages[0].shape
+    if any(i.shape != baseshape for i in aimages[1:]):
+        raise Error("Images don't have the same shape")
+    
         
     # Offsets
     if offsets is not None:
@@ -166,23 +164,20 @@ def combine(method, images, masks=None, offsets=None,
         if len(images) != len(masks):
             raise Error("len(inputs) != len(masks)")
         masks = map(functools.partial(numpy.asarray, dtype=numpy.bool), masks)
+        if any(i.shape != baseshape for i in masks[1:]):
+            raise Error("Masks don't have the same shape")
         for i in masks:
-            t = i.dtype
-            if not numpy.issubdtype(t, bool):
+            if not numpy.issubdtype(i.dtype, bool):
                 raise TypeError
             if len(i.shape) != 2:
                 raise TypeError
-                
-    aimages = map(numpy.asarray, images)
-    
+
     for i in aimages:
         t = i.dtype
         if not (numpy.issubdtype(t, float) or numpy.issubdtype(t, int)):
             raise TypeError
         if len(i.shape) != 2:
             raise TypeError
-        
-    
     
     # unzip 
     # http://paddy3118.blogspot.com/2007/02/unzip-un-needed-in-python.html
@@ -213,7 +208,9 @@ def combine(method, images, masks=None, offsets=None,
         if numbers.shape != finalshape:
             raise TypeError("numbers has wrong shape")
     
-    resize_images = True
+    resize_images = False
+    if baseshape != finalshape:
+        resize_images = True
     
     if resize_images:
         nimages = []
@@ -228,12 +225,9 @@ def combine(method, images, masks=None, offsets=None,
             nmasks.append(newimage2)
     else:
         nimages = aimages
-        nmasks = masks 
-
-
-    slices = [i for i in blockgen(blocksize, finalshape)]
+        nmasks = masks  
     
-    for i in slices:
+    for i in blockgen(blocksize, finalshape):
         # views of the images and masks
         vnimages = [j[i] for j in nimages]
         vnmasks = [j[i] for j in nmasks]
