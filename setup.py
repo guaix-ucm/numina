@@ -20,7 +20,7 @@ setup(name='pyemir',
       packages=find_packages('lib'),
       package_dir={'': 'lib'},
       package_data={'emir.simulation': ['*.dat'],
-                      'numina': ['*.cfg']},
+                      'numina': ['*.cfg', 'logging.ini']},
       ext_modules=[ex1],
       requires=['pyfits', 'scipy', 'sphinx', 'nose'],
       entry_points={

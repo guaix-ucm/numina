@@ -143,7 +143,7 @@ def main(args=None):
 
     # logger file
     if options.logging is None:
-        options.logging = os.path.join(nconfig.myconfigdir, 'logging.ini')
+        options.logging = os.path.join(os.path.dirname(__file__), 'logging.ini')
 
     logging.config.fileConfig(options.logging)
         
