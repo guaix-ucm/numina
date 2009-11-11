@@ -117,8 +117,8 @@ def combine(method, images, masks=None, offsets=None,
     :param offsets: a list of 2-tuples
     :param result: a image where the result is stored if is not None
     :param variance: a image where the variance is stored if is not None
-    :param result: a image where the number is stored if is not None
-    :param blocksize: shape of the block used to combine images
+    :param number: a image where the number is stored if is not None
+    :param blocksize: shape of the block used to combine images 
     :return: a 3-tuple with the result, the variance and the number
     :raise TypeError: if method is not callable
     
@@ -143,53 +143,83 @@ def combine(method, images, masks=None, offsets=None,
     # Check inputs
     if not images:
         raise Error("len(inputs) == 0")
+        
     
-    # All images have the same shape
     aimages = map(numpy.asarray, images)
+    # All images have the same shape
     baseshape = aimages[0].shape
     if any(i.shape != baseshape for i in aimages[1:]):
         raise Error("Images don't have the same shape")
     
-        
-    # Offsets
-    if offsets is not None:
-        if len(images) != len(offsets):
-            raise Error("len(inputs) != len(offsets)")
-    else:
-        offsets = [(0, 0)] * len(images)
-    
-    if masks is None:
-        masks = [False] * len(images)
-    else:
-        if len(images) != len(masks):
-            raise Error("len(inputs) != len(masks)")
-        masks = map(functools.partial(numpy.asarray, dtype=numpy.bool), masks)
-        if any(i.shape != baseshape for i in masks[1:]):
-            raise Error("Masks don't have the same shape")
-        for i in masks:
-            if not numpy.issubdtype(i.dtype, bool):
-                raise TypeError
-            if len(i.shape) != 2:
-                raise TypeError
-
+    # Additional checks
     for i in aimages:
         t = i.dtype
         if not (numpy.issubdtype(t, float) or numpy.issubdtype(t, int)):
             raise TypeError
-        if len(i.shape) != 2:
+    
+    finalshape = baseshape
+    offsetsp = [(0, 0)] * len(images)
+    resize_images = True
+    # Offsets
+    if offsets:
+        if len(images) != len(offsets):
+            raise Error("len(inputs) != len(offsets)")
+        
+        resize_images = True
+        # Compute final final shape
+        # unzip 
+        # http://paddy3118.blogspot.com/2007/02/unzip-un-needed-in-python.html
+        [bcor0, bcor1] = zip(*offsets)
+        ucorners = [(j[0] + i.shape[0], j[1] + i.shape[1]) 
+                   for (i, j) in zip(aimages, offsets)]
+        [ucor0, ucor1] = zip(*ucorners)
+        ref = (min(bcor0), min(bcor1))
+        
+        finalshape = (max(ucor0) - ref[0], max(ucor1) - ref[1])
+        offsetsp = [(i - ref[0], j - ref[1]) for (i, j) in offsets]
+        
+        
+    amasks = [False] * len(images)
+    generate_masks = False
+    if masks:
+        if len(images) != len(masks):
+            raise Error("len(inputs) != len(masks)")
+        amasks = map(functools.partial(numpy.asarray, dtype=numpy.bool), masks)
+        for i in amasks:
+            if not numpy.issubdtype(i.dtype, bool):
+                raise TypeError
+            if len(i.shape) != 2:
+                raise TypeError
+        # Error if mask and image have different shape
+        if any(im.shape != ma.shape for (im, ma) in zip(aimages, amasks)):
             raise TypeError
+    else:
+        generate_masks = True
+
+
+    nimages = aimages
+    nmasks = amasks
     
-    # unzip 
-    # http://paddy3118.blogspot.com/2007/02/unzip-un-needed-in-python.html
-    [bcor0, bcor1] = zip(*offsets)
-    ucorners = [(j[0] + i.shape[0], j[1] + i.shape[1]) 
-               for (i, j) in zip(aimages, offsets)]
-    [ucor0, ucor1] = zip(*ucorners)
-    ref = (min(bcor0), min(bcor1))
-    
-    finalshape = (max(ucor0) - ref[0], max(ucor1) - ref[1])
-    offsetsp = [(i - ref[0], j - ref[1]) for (i, j) in offsets]
-    
+    if resize_images:
+        nimages = []
+        nmasks = []
+        for (i, o, m) in zip(aimages, offsetsp, amasks):
+            newimage1 = numpy.empty(finalshape)
+            newimage2 = numpy.ones(finalshape, dtype=numpy.bool) 
+            pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
+            newimage1[pos] = i
+            newimage2[pos] = m
+            nimages.append(newimage1)
+            nmasks.append(newimage2)
+    elif generate_masks:
+        nmasks = []
+        for (o, m) in zip(offsetsp, amasks):
+            newimage2 = numpy.ones(finalshape, dtype=numpy.bool) 
+            pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
+            newimage2[pos] = m
+            nmasks.append(newimage2)
+        
+    # Initialize results        
     if result is None:
         result = numpy.zeros(finalshape, dtype="float64")
     else:
@@ -207,25 +237,6 @@ def combine(method, images, masks=None, offsets=None,
     else:
         if numbers.shape != finalshape:
             raise TypeError("numbers has wrong shape")
-    
-    resize_images = False
-    if baseshape != finalshape:
-        resize_images = True
-    
-    if resize_images:
-        nimages = []
-        nmasks = []
-        for (i, o, m) in zip(aimages, offsetsp, masks):
-            newimage1 = numpy.empty(finalshape)
-            newimage2 = numpy.ones(finalshape, dtype=numpy.bool) 
-            pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
-            newimage1[pos] = i
-            newimage2[pos] = m
-            nimages.append(newimage1)
-            nmasks.append(newimage2)
-    else:
-        nimages = aimages
-        nmasks = masks  
     
     for i in blockgen(blocksize, finalshape):
         # views of the images and masks

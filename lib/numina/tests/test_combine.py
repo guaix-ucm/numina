@@ -69,10 +69,6 @@ class CombineTestCase(unittest.TestCase):
     def test04(self):
         '''combine: TypeError is raised if inputs aren't convertible to scipy.array'''
         self.assertRaises(TypeError, combine, self.method, ["a"])
-    
-    def test05Exception(self):
-        '''combine: TypeError is raised if inputs aren't 2D'''
-        self.assertRaises(TypeError, combine, self.method, [1], self.validMasks)
           
     def test07Exception(self):
         '''combine: TypeError is raised if masks aren't convertible to scipy.array bool'''

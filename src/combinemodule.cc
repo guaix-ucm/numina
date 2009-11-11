@@ -60,6 +60,8 @@ PyObject* py_internal_combine(PyObject *self, PyObject *args, PyObject *keywds) 
 		return NULL;
 
 
+	// TODO: this is not efficient, it's construct
+	// each time the function is run
 	MethodMap methods;
 	methods["mean"] = method_mean;
 
