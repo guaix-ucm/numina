@@ -36,7 +36,7 @@ import numina.config as nconfig
 
 __version__ = "$Revision$"
 
-version_number = "0.0.1"
+version_number = "0.0.2"
 version_line = '%prog ' + version_number
 
 def parse_cmdline(args=None):
