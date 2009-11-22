@@ -246,6 +246,20 @@ def combine(method, images, masks=None, offsets=None,
                           result[i], variance[i], numbers[i])
         
     return (result, variance, numbers)
+
+def _combine(method, data, masks=None, offsets=None,
+             axis=None, dtype=None, out=None):
+    pass
+
+def mean(data, masks=None, offsets=None,
+         axis=None, dtype=None, out=None):
+    '''Compute the arithmetic mean along the specified axis.
+    
+    '''
+    return _combine('mean', data, masks, offsets, 
+                    axis, dtype, out)
+
+
     
 if __name__ == "__main__":
     from numina.decorators import print_timing
