@@ -20,10 +20,10 @@
 
 /* $Id$ */
 
-#include "methods.h"
+#include <cstddef>
 
 void method_mean(const double* data, size_t size,
-		double* c, double* var, long* number, void* params)
+		double* c, double* var, double* number, void* params)
 {
   if (size == 0)
   {

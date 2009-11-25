@@ -21,6 +21,7 @@
 
 from __future__ import division, with_statement
 import itertools
+from itertools import izip
 import functools
 
 import scipy
@@ -28,6 +29,7 @@ import numpy
 
 from numina.exceptions import Error
 from numina.image._combine import internal_combine as c_internal_combine
+from numina.image._combine import internal_combine2 as c_internal_combine2
 
 __version__ = "$Revision$"
 
@@ -101,6 +103,21 @@ def _py_internal_combine(method, nimages, nmasks, result, variance, numbers):
     for index, val in numpy.ndenumerate(result):
         values = [im[index] for im, mas in zip(nimages, nmasks) if not mas[index]]
         result[index], variance[index], numbers[index] = method(values)
+        
+def _py_internal_combine2(method, nimages, nmasks, noffsets,
+             axis=None, dtype=None, out=None):
+    return out
+   
+def combine_shape(shapes, offsets):
+    # Computing final image size and new offsets
+    sharr = numpy.asarray(shapes)
+    
+    offarr = numpy.asarray(offsets)        
+    ucorners = offarr + sharr
+    ref = offarr.min(axis=0)        
+    finalshape = ucorners.max(axis=0) - ref 
+    offsetsp = offarr - ref
+    return (finalshape, offsetsp)
                 
 
 
@@ -145,7 +162,7 @@ def combine(method, images, masks=None, offsets=None,
         raise Error("len(inputs) == 0")
         
     
-    aimages = map(numpy.asarray, images)
+    aimages = map(numpy.asanyarray, images)
     # All images have the same shape
     baseshape = aimages[0].shape
     if any(i.shape != baseshape for i in aimages[1:]):
@@ -158,7 +175,7 @@ def combine(method, images, masks=None, offsets=None,
             raise TypeError
     
     finalshape = baseshape
-    offsetsp = [(0, 0)] * len(images)
+    offsetsp = numpy.zeros((len(images), 2))
     resize_images = True
     # Offsets
     if offsets:
@@ -166,32 +183,22 @@ def combine(method, images, masks=None, offsets=None,
             raise Error("len(inputs) != len(offsets)")
         
         resize_images = True
-        # Compute final final shape
-        # unzip 
-        # http://paddy3118.blogspot.com/2007/02/unzip-un-needed-in-python.html
-        [bcor0, bcor1] = zip(*offsets)
-        ucorners = [(j[0] + i.shape[0], j[1] + i.shape[1]) 
-                   for (i, j) in zip(aimages, offsets)]
-        [ucor0, ucor1] = zip(*ucorners)
-        ref = (min(bcor0), min(bcor1))
         
-        finalshape = (max(ucor0) - ref[0], max(ucor1) - ref[1])
-        offsetsp = [(i - ref[0], j - ref[1]) for (i, j) in offsets]
-        
+        finalshape, offsetsp = combine_shape(shape, offsets)
         
     amasks = [False] * len(images)
     generate_masks = False
     if masks:
         if len(images) != len(masks):
             raise Error("len(inputs) != len(masks)")
-        amasks = map(functools.partial(numpy.asarray, dtype=numpy.bool), masks)
+        amasks = map(functools.partial(numpy.asanyarray, dtype=numpy.bool), masks)
         for i in amasks:
             if not numpy.issubdtype(i.dtype, bool):
                 raise TypeError
             if len(i.shape) != 2:
                 raise TypeError
         # Error if mask and image have different shape
-        if any(im.shape != ma.shape for (im, ma) in zip(aimages, amasks)):
+        if any(im.shape != ma.shape for (im, ma) in izip(aimages, amasks)):
             raise TypeError
     else:
         generate_masks = True
@@ -247,37 +254,80 @@ def combine(method, images, masks=None, offsets=None,
         
     return (result, variance, numbers)
 
-def _combine(method, data, masks=None, offsets=None,
-             axis=None, dtype=None, out=None):
-    pass
+def _combine(method, images, masks=None, offsets=None,
+             dtype=None, out=None):
+        # method should be a string
+    if not isinstance(method, basestring):
+        raise TypeError('method is not a string')
+    
+    # Check inputs
+    if not images:
+        raise Error("len(inputs) == 0")
+        
+    # numpy.asanyarray
+    number_of_images = len(images)
+    images = map(numpy.asanyarray, images)
+    
+    # All images have the same shape
+    allshapes = [i.shape for i in images]
+    baseshape = images[0].shape
+    if any(shape != baseshape for shape in allshapes[1:]):
+        raise Error("Images don't have the same shape")
+    
+    # Offsets
+    if offsets:
+        if len(images) != len(offsets):
+            raise Error("len(inputs) != len(offsets)")
+        
+        finalshape, offsets = combine_shape(allshapes, offsets)
+    else:
+        offsets = numpy.zeros((number_of_images, 2))
+        finalshape = baseshape
+        
+    if masks:
+        if len(images) != len(masks):
+            raise Error("len(inputs) != len(masks)")
+    
+        # Error if mask and image have different shape
+        if any(imshape != ma.shape for (imshape, ma) in izip(allshapes, masks)):
+            raise TypeError
+    else:
+        masks = [numpy.zeros(baseshape, dtype='uint8')] * number_of_images
+        
+    # Creating out if needed
+    # We need thre numbers
+    outshape = (3,) + finalshape
+    if out is None:
+        out = numpy.zeros(outshape, dtype='float64')
+    else:
+        if out.shape != outshape:
+            raise TypeError("result has wrong shape")  
+        
+    c_internal_combine2(method, images, masks, offsets, out1=out[0], out2=out[1], out3=out[2])
+    return out.astype(dtype)
 
 def mean(data, masks=None, offsets=None,
-         axis=None, dtype=None, out=None):
+         dtype=None, out=None):
     '''Compute the arithmetic mean along the specified axis.
     
     '''
-    return _combine('mean', data, masks, offsets, 
-                    axis, dtype, out)
+    return _combine('mean', data, masks, offsets, dtype, out)
 
 
     
 if __name__ == "__main__":
-    from numina.decorators import print_timing
-    
-    @print_timing
-    def combine2(method, inputs, offsets=None):        
-        return combine(method, inputs, offsets=offsets)
-    
+    # from numina.decorators import print_timing
+  
     # Inputs
-    input1 = scipy.ones((2000, 2000))
+    input1 = scipy.ones((2000, 2000), dtype='int16')
     
-    minputs = [input1] * 5
-    minputs += [input1 * 2] * 5
-    #moffsets = [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
-    #moffsets += [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
+    minputs = [input1] * 50
+    minputs += [input1 * 2] * 50
+    moffsets = [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
+    moffsets += [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
     
-    #(a,b,c) = combine2("mean", minputs, offsets=moffsets)
-    (a, b, c) = combine2("mean", minputs)
-    print type(a), a.dtype, a.shape, a[0, 0]
-    print type(b), b.dtype, b.shape, b[0, 0]
-    print type(c), c.dtype, c.shape, c[0, 0]
+    out = mean(minputs)
+    print out[0,0,0]
+
+    
+    

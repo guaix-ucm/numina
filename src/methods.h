@@ -20,15 +20,15 @@
 
 /* $Id$ */
 
-#ifndef HHH
-#define HHH
+#ifndef PYEMIR_METHODS_H
+#define PYEMIR_METHODS_H
 
 #include <cstddef>
 
 
 void method_mean(const double* data, size_t size,
-		double* c, double* var, long* number, void* params);
+		double* c, double* var, double* number, void* params);
 
 
 
-#endif
+#endif // PYEMIR_METHODS_H
