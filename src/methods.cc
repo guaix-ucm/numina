@@ -23,20 +23,20 @@
 #include <cstddef>
 
 void method_mean(const double* data, size_t size,
-		double* c, double* var, double* number, void* params)
+		double* results[3], void* params)
 {
   if (size == 0)
   {
-    *c = *var = 0.0;
-    *number = 0;
+    *results[0] = *results[1] = 0.0;
+    *results[2] = 0;
     return;
   }
 
   if (size == 1)
   {
-    *c = data[0];
-    *var = 0.0;
-    *number = 1;
+    *results[0] = data[0];
+    *results[1] = 0.0;
+    *results[2] = 1;
     return;
   }
 
@@ -52,9 +52,9 @@ void method_mean(const double* data, size_t size,
     sum2 += data[i] * data[i];
   }
 
-  *c = sum / size;
-  *number = size;
-  *var = sum2 / (size - dof) - (sum * sum) / (size * (size - dof));
+  *results[0] = sum / size;
+  *results[2] = size;
+  *results[1] = sum2 / (size - dof) - (sum * sum) / (size * (size - dof));
 }
 
 

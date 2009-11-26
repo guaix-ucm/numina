@@ -303,7 +303,7 @@ def _combine(method, images, masks=None, offsets=None,
         if out.shape != outshape:
             raise TypeError("result has wrong shape")  
         
-    c_internal_combine2(method, images, masks, offsets, out1=out[0], out2=out[1], out3=out[2])
+    c_internal_combine2(method, images, masks, offsets, out0=out[0], out1=out[1], out2=out[2])
     return out.astype(dtype)
 
 def mean(data, masks=None, offsets=None,
@@ -319,13 +319,10 @@ if __name__ == "__main__":
     # from numina.decorators import print_timing
   
     # Inputs
-    input1 = scipy.ones((2000, 2000), dtype='int16')
     
-    minputs = [input1] * 50
-    minputs += [input1 * 2] * 50
-    moffsets = [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
-    moffsets += [(1, 1), (1, 0), (0, 0), (0, 1), (-1, -1)]
     
+    minputs = [scipy.ones((2000, 2000), dtype='int16') for i in xrange(100)]
+    print 'Computing'
     out = mean(minputs)
     print out[0,0,0]
 

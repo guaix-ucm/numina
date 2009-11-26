@@ -26,8 +26,7 @@
 #include <cstddef>
 
 
-void method_mean(const double* data, size_t size,
-		double* c, double* var, double* number, void* params);
+void method_mean(const double* data, size_t size, double* results[3], void* params);
 
 
 
