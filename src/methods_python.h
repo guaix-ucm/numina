@@ -20,35 +20,12 @@
 
 /* $Id$ */
 
+#ifndef PYEMIR_METHODS_PYTHON_H
+#define PYEMIR_METHODS_PYTHON_H
+
 #include <cstddef>
 
-void method_mean(const double* data, size_t size, double* results[3],
-		void* params) {
-	if (size == 0) {
-		*results[0] = *results[1] = *results[2] = 0.0;
-		return;
-	}
+void method_python(const double* data, size_t size, double* results[3], void* callback);
 
-	if (size == 1) {
-		*results[0] = data[0];
-		*results[1] = 0.0;
-		*results[2] = 1;
-		return;
-	}
 
-	// Degrees of freedom
-	const double dof = 0;
-
-	double sum = 0.0;
-	double sum2 = 0.0;
-
-	for (size_t i = 0; i < size; ++i) {
-		sum += data[i];
-		sum2 += data[i] * data[i];
-	}
-
-	*results[0] = sum / size;
-	*results[2] = size;
-	*results[1] = sum2 / (size - dof) - (sum * sum) / (size * (size - dof));
-}
-
+#endif // PYEMIR_METHODS_PYTHON_H

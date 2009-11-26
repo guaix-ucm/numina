@@ -23,11 +23,6 @@
 #ifndef PYEMIR_METHODS_H
 #define PYEMIR_METHODS_H
 
-#include <cstddef>
-
-
-void method_mean(const double* data, size_t size, double* results[3], void* params);
-
-
+void method_mean(const double* data, size_t size, double* results[3], void*);
 
 #endif // PYEMIR_METHODS_H

@@ -6,7 +6,10 @@ import numpy
 
 numpy_include = numpy.get_include()
 ex1 = Extension('numina.image._combine',
-                ['src/combinemodule.cc', 'src/methods.cc'],
+                ['src/combinemodule.cc', 
+                 'src/methods.cc',
+                 'src/methods_python.cc',                 
+                 ],
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
