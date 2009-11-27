@@ -243,7 +243,7 @@ def combine(method, images, masks=None, offsets=None,
         # views of the images and masks
         vnimages = [j[i] for j in nimages]
         vnmasks = [j[i] for j in nmasks]
-        internal_combine(method, vnimages, vnmasks, offsets=result[i], #this value is ignored
+        internal_combine(method, vnimages, vnmasks,
                           out0=result[i], out1=variance[i], out2=numbers[i], args=(0,))
         
     return (result, variance, numbers)
@@ -298,7 +298,7 @@ def _combine(method, images, masks=None, offsets=None,
         if out.shape != outshape:
             raise TypeError("result has wrong shape")  
         
-    internal_combine(method, images, masks, offsets, out0=out[0], out1=out[1], out2=out[2], args=args)
+    internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args)
     return out.astype(dtype)
 
 def mean(data, masks=None, offsets=None,
@@ -327,8 +327,9 @@ if __name__ == "__main__":
     minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [scipy.ones(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'
-    out = tmean(minputs, mmasks)
-    print out[:,0,0]
+    if __debug__:
+        out = tmean(minputs, mmasks)
+        print out[:, 0, 0]
 
     #tcombine("mean", minputs, mmasks)
     #print out[0,0,0]

@@ -27,12 +27,12 @@
 
 #include <Python.h>
 
-
 #define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include "numpytypes.h"
-#include "methods.h"
+#include "method_factory.h"
+#include "method_exception.h"
 #include "methods_python.h"
 
 #define CASE_MASKS_FIXED(DN, MN) \
@@ -81,6 +81,8 @@
 	} \
 	break;
 
+using namespace Numina;
+
 typedef void
 (*SelectionMethodPtr)(size_t nimages,
 		const std::vector<PyArrayIterObject*>& iiter, const std::vector<
@@ -107,23 +109,25 @@ static void Array_select(size_t nimages,
 static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		PyObject *kwds) {
 
+	// Output has one dimension more than the inputs, of size
+	// OUTDIM
+	const size_t OUTDIM = 3;
 	PyObject *method;
 	PyObject *images = NULL;
 	PyObject *masks = NULL;
 
 	// Offsets are ignored
-	PyObject *offsets = NULL;
-	PyObject *out[3] = { NULL, NULL, NULL };
+	PyObject *out[OUTDIM] = { NULL, NULL, NULL };
 	PyObject* margs = NULL;
 
-	static char *kwlist[] = { "method", "data", "masks", "offsets", "out0",
-			"out1", "out2", "args", NULL };
+	static char *kwlist[] = { "method", "data", "masks", "out0", "out1",
+			"out2", "args", NULL };
 
 	int ok = PyArg_ParseTupleAndKeywords(args, kwds,
-			"OO!O!O!O!O!O!O!:internal_combine", kwlist, &method, &PyList_Type,
-			&images, &PyList_Type, &masks, &PyArray_Type, &offsets,
-			&PyArray_Type, &out[0], &PyArray_Type, &out[1], &PyArray_Type,
-			&out[2], &PyTuple_Type, &margs);
+			"OO!O!O!O!O!O!:internal_combine", kwlist, &method, &PyList_Type,
+			&images, &PyList_Type, &masks, &PyArray_Type, &out[0],
+			&PyArray_Type, &out[1], &PyArray_Type, &out[2], &PyTuple_Type,
+			&margs);
 
 	if (!ok) {
 		return NULL;
@@ -138,35 +142,26 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		// We have a string
 		const char* method_name = PyString_AS_STRING(method);
 
-		/*MethodMap methods;
-		methods["mean"] = method_mean;
-
-		MethodMap::iterator el = methods.find(method_name);
-		if (el != methods.end()) {
-			method_ptr = el->second;
-		}
-
-		if (!method_ptr) {
-			return PyErr_Format(CombineError, "invalid combination method %s",
-					method_name);
-					}
-
-*/
 		try {
-			method_ptr.reset(new Numina::MeanMethod(0, margs));
+			method_ptr.reset(NamedMethodFactory::create(method_name, margs));
+		} catch (MethodException&) {
+			return PyErr_Format(
+					CombineError,
+					"error during the construction of the combination method \"%s\"",
+					method_name);
 		}
-		catch(...) {
-			return PyErr_Format(CombineError, "error during the construction of the internal method");
+
+		if (not method_ptr.get()) {
+			return PyErr_Format(CombineError,
+					"invalid combination method \"%s\"", method_name);
 		}
 
 	} // If method is callable
-	else if (PyCallable_Check(method))
-	{
-		method_ptr.reset(new Numina::PythonMethod(method, 0));
-	}
-	else
-		return PyErr_Format(PyExc_TypeError, "method is neither a string nor callable");
-
+	else if (PyCallable_Check(method)) {
+		method_ptr.reset(new PythonMethod(method, 0));
+	} else
+		return PyErr_Format(PyExc_TypeError,
+				"method is neither a string nor callable");
 
 	/* images are forced to be a list */
 	const Py_ssize_t nimages = PyList_GET_SIZE(images);
@@ -229,7 +224,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	}
 
 	std::vector<PyArrayIterObject*> oiter(3);
-	for (size_t i = 0; i < 3; ++i)
+	for (size_t i = 0; i < OUTDIM; ++i)
 		oiter[i] = (PyArrayIterObject*) PyArray_IterNew(out[i]);
 
 	// basic iterator
@@ -237,13 +232,13 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 
 	std::vector<double> data;
 	data.reserve(nimages);
-	double* values[3];
+	double* values[OUTDIM];
 
 	while (iter->index < iter->size) {
 
 		selection_ptr(nimages, iiter, miter, data);
 
-		for (size_t i = 0; i < 3; ++i)
+		for (size_t i = 0; i < OUTDIM; ++i)
 			values[i] = (npy_double*) oiter[i]->dataptr;
 
 		method_ptr->run(&data[0], data.size(), values);
@@ -255,7 +250,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 			PyArray_ITER_NEXT(miter[i]);
 		}
 
-		for (size_t i = 0; i < 3; ++i) {
+		for (size_t i = 0; i < OUTDIM; ++i) {
 			PyArray_ITER_NEXT(oiter[i]);
 		}
 	}
