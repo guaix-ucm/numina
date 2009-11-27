@@ -20,24 +20,20 @@
 
 /* $Id$ */
 
-#ifndef PYEMIR_METHODS_H
-#define PYEMIR_METHODS_H
+#ifndef PYEMIR_METHOD_EXCEPTION_H
+#define PYEMIR_METHOD_EXCEPTION_H
 
-#include <Python.h>
-
-#include "method_base.h"
+#include <stdexcept>
 
 namespace Numina {
 
-class MeanMethod: public Method {
+class MethodException : public std::invalid_argument{
 public:
-	MeanMethod(PyObject* callback, PyObject* args);
-	virtual ~MeanMethod();
-	virtual void run(const double* data, size_t size, double* results[3]) const;
-private:
-	double m_dof;
+	MethodException(const char* what_arg) :
+		std::invalid_argument(what_arg)
+	{}
 };
 
-}
+} // namespace Numina
 
-#endif // PYEMIR_METHODS_H
+#endif // PYEMIR_METHOD_EXCEPTION_H

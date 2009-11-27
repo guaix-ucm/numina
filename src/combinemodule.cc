@@ -20,9 +20,9 @@
 
 /* $Id$ */
 
-#include <map>
 #include <string>
 #include <vector>
+#include <memory>
 #include <iostream>
 
 #include <Python.h>
@@ -81,10 +81,6 @@
 	} \
 	break;
 
-typedef void (*GenericMethodPtr)(const double* data, size_t size,
-		double* results[3], void* params);
-typedef std::map<std::string, GenericMethodPtr> MethodMap;
-
 typedef void
 (*SelectionMethodPtr)(size_t nimages,
 		const std::vector<PyArrayIterObject*>& iiter, const std::vector<
@@ -101,7 +97,7 @@ static void Array_select(size_t nimages,
 				PyArrayIterObject*>& miter, std::vector<double>& data) {
 	for (size_t i = 0; i < nimages; ++i) {
 		MaskType *pmask = (MaskType*) miter[i]->dataptr;
-		if (*pmask) // <- True values are skipped
+		if (not *pmask) // <- True values are skipped
 			continue;
 		ImageType* pdata = (ImageType*) iiter[i]->dataptr;
 		data.push_back(*pdata);
@@ -118,33 +114,31 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	// Offsets are ignored
 	PyObject *offsets = NULL;
 	PyObject *out[3] = { NULL, NULL, NULL };
+	PyObject* margs = NULL;
 
 	static char *kwlist[] = { "method", "data", "masks", "offsets", "out0",
-			"out1", "out2", NULL };
+			"out1", "out2", "args", NULL };
 
 	int ok = PyArg_ParseTupleAndKeywords(args, kwds,
-			"OO!O!O!O!O!O!:internal_combine", kwlist, &method, &PyList_Type,
+			"OO!O!O!O!O!O!O!:internal_combine", kwlist, &method, &PyList_Type,
 			&images, &PyList_Type, &masks, &PyArray_Type, &offsets,
 			&PyArray_Type, &out[0], &PyArray_Type, &out[1], &PyArray_Type,
-			&out[2]);
+			&out[2], &PyTuple_Type, &margs);
 
 	if (!ok) {
 		return NULL;
 	}
 
-	/* Combination method */
-	GenericMethodPtr method_ptr = NULL;
-	/* Parameters of the combination method */
-	void *method_params = NULL;
+	// Method class
+	std::auto_ptr<Numina::Method> method_ptr;
 
 	// If method is a string
 	if (PyString_Check(method)) {
+
 		// We have a string
 		const char* method_name = PyString_AS_STRING(method);
 
-		// TODO: this is not efficient, it's constructed
-		// each time the function is run
-		MethodMap methods;
+		/*MethodMap methods;
 		methods["mean"] = method_mean;
 
 		MethodMap::iterator el = methods.find(method_name);
@@ -155,12 +149,20 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		if (!method_ptr) {
 			return PyErr_Format(CombineError, "invalid combination method %s",
 					method_name);
+					}
+
+*/
+		try {
+			method_ptr.reset(new Numina::MeanMethod(0, margs));
 		}
+		catch(...) {
+			return PyErr_Format(CombineError, "error during the construction of the internal method");
+		}
+
 	} // If method is callable
 	else if (PyCallable_Check(method))
 	{
-		method_ptr = method_python;
-		method_params = (void*) method;
+		method_ptr.reset(new Numina::PythonMethod(method, 0));
 	}
 	else
 		return PyErr_Format(PyExc_TypeError, "method is neither a string nor callable");
@@ -209,7 +211,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	CASE_DATA_FIXED(NPY_INT16)
 	CASE_DATA_FIXED(NPY_UINT8)
 	default:
-		// Not implemented
+		// Data type not implemented
 		return PyErr_Format(CombineError, "image type %d not implemented",
 				images_type);
 		break;
@@ -235,17 +237,17 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 
 	std::vector<double> data;
 	data.reserve(nimages);
-	npy_double* values[3];
-
-
+	double* values[3];
 
 	while (iter->index < iter->size) {
+
 		selection_ptr(nimages, iiter, miter, data);
 
 		for (size_t i = 0; i < 3; ++i)
 			values[i] = (npy_double*) oiter[i]->dataptr;
 
-		method_ptr(&data[0], data.size(), values, method_params);
+		method_ptr->run(&data[0], data.size(), values);
+
 		data.clear();
 
 		for (size_t i = 0; i < nimages; ++i) {

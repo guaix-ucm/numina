@@ -20,24 +20,17 @@
 
 /* $Id$ */
 
-#ifndef PYEMIR_METHODS_H
-#define PYEMIR_METHODS_H
-
-#include <Python.h>
-
-#include "method_base.h"
+#ifndef PYEMIR_METHOD_BASE_H
+#define PYEMIR_METHOD_BASE_H
 
 namespace Numina {
 
-class MeanMethod: public Method {
+class Method {
 public:
-	MeanMethod(PyObject* callback, PyObject* args);
-	virtual ~MeanMethod();
-	virtual void run(const double* data, size_t size, double* results[3]) const;
-private:
-	double m_dof;
+	virtual ~Method() {}
+	virtual void run(const double* data, size_t size, double* results[3]) const = 0;
 };
 
-}
+} // namespace Numina
 
-#endif // PYEMIR_METHODS_H
+#endif // PYEMIR_METHOD_BASE_H

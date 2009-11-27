@@ -22,8 +22,21 @@
 
 #include <cstddef>
 
-void method_mean(const double* data, size_t size, double* results[3],
-		void* params) {
+#include "methods.h"
+#include "method_exception.h"
+
+namespace Numina {
+
+MeanMethod::MeanMethod(PyObject* callback, PyObject* args) {
+	if (not PyArg_ParseTuple(args, "d", &m_dof))
+		throw MethodException("problem creating MeanMethod");
+}
+
+MeanMethod::~MeanMethod() {
+}
+
+void MeanMethod::run(const double* data, size_t size, double* results[3]) const {
+
 	if (size == 0) {
 		*results[0] = *results[1] = *results[2] = 0.0;
 		return;
@@ -36,9 +49,6 @@ void method_mean(const double* data, size_t size, double* results[3],
 		return;
 	}
 
-	// Degrees of freedom
-	const double dof = 0;
-
 	double sum = 0.0;
 	double sum2 = 0.0;
 
@@ -49,6 +59,6 @@ void method_mean(const double* data, size_t size, double* results[3],
 
 	*results[0] = sum / size;
 	*results[2] = size;
-	*results[1] = sum2 / (size - dof) - (sum * sum) / (size * (size - dof));
+	*results[1] = sum2 / (size - m_dof) - (sum * sum) / (size * (size - m_dof));
 }
-
+}

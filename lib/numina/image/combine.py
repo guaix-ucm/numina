@@ -244,12 +244,12 @@ def combine(method, images, masks=None, offsets=None,
         vnimages = [j[i] for j in nimages]
         vnmasks = [j[i] for j in nmasks]
         internal_combine(method, vnimages, vnmasks, offsets=result[i], #this value is ignored
-                          out0=result[i], out1=variance[i], out2=numbers[i])
+                          out0=result[i], out1=variance[i], out2=numbers[i], args=(0,))
         
     return (result, variance, numbers)
 
 def _combine(method, images, masks=None, offsets=None,
-             dtype=None, out=None):
+             dtype=None, out=None, args=()):
         # method should be a string
     if not isinstance(method, basestring) and not callable(method):
         raise CombineError('method is neither a string or callable')
@@ -298,15 +298,15 @@ def _combine(method, images, masks=None, offsets=None,
         if out.shape != outshape:
             raise TypeError("result has wrong shape")  
         
-    internal_combine(method, images, masks, offsets, out0=out[0], out1=out[1], out2=out[2])
+    internal_combine(method, images, masks, offsets, out0=out[0], out1=out[1], out2=out[2], args=args)
     return out.astype(dtype)
 
 def mean(data, masks=None, offsets=None,
-         dtype=None, out=None):
-    '''Compute the arithmetic mean along the specified axis.
+         dtype=None, out=None, dof=0):
+    '''Compute the arithmetic mean.
     
     '''
-    return _combine('mean', data, masks, offsets, dtype, out)
+    return _combine('mean', data, masks, offsets, dtype, out, args=(dof,))
     
 if __name__ == "__main__":
     from numina.decorators import print_timing
@@ -321,13 +321,16 @@ if __name__ == "__main__":
             blocksize=(512, 512)):
         return combine(method, images, masks, offsets, result, variance, numbers, blocksize)
     # Inputs
-    minputs = [i * scipy.ones((2000, 2000), dtype='int16') for i in xrange(100)]
-    mmasks = [scipy.ones((2000, 2000), dtype='int16') for i in xrange(100)]
+    shape = (2000, 2000)
+    data_dtype = 'int16'
+    nimages = 100
+    minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
+    mmasks = [scipy.ones(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'
     out = tmean(minputs, mmasks)
-    print out[0,0,0]
+    print out[:,0,0]
 
-    tcombine("mean", minputs, mmasks)
-    print out[0,0,0]
+    #tcombine("mean", minputs, mmasks)
+    #print out[0,0,0]
     
     

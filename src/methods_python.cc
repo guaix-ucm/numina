@@ -26,11 +26,16 @@
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
+#include "methods_python.h"
 
-void method_python(const double* data, size_t size, double* results[3],
-		void* callback) {
+namespace Numina {
 
-	PyObject *fun = (PyObject*) callback;
+PythonMethod::PythonMethod(PyObject* callback, PyObject* arguments) :
+	Method(), m_callback(callback), m_arguments(arguments) {
+}
+
+void PythonMethod::run(const double* data, size_t size, double* results[3]) const {
+
 	npy_intp dims = size;
 	PyObject* pydata = PyArray_SimpleNewFromData(1, &dims, PyArray_DOUBLE,
 			(void*) data);
@@ -39,16 +44,18 @@ void method_python(const double* data, size_t size, double* results[3],
 	PyObject* argl = Py_BuildValue("(O)", pydata);
 	Py_DECREF(pydata);
 
-	PyObject* result = PyEval_CallObject(fun, argl);
+	PyObject* result = PyEval_CallObject(m_callback, argl);
 	Py_DECREF(argl);
 
 	if (PyTuple_Check(result) and PyTuple_Size(result) == 3) {
-		for (size_t i; i < 3; ++i) {
+		for (size_t i = 0; i < 3; ++i) {
 			PyObject* dd = PyTuple_GET_ITEM(result, i);
-			if(PyFloat_Check(dd)) {
+			if (PyFloat_Check(dd)) {
 				*results[i] = PyFloat_AsDouble(dd);
 			}
 		}
 	}
 	Py_DECREF(result);
 }
+
+} // namespace Numina

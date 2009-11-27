@@ -23,9 +23,26 @@
 #ifndef PYEMIR_METHODS_PYTHON_H
 #define PYEMIR_METHODS_PYTHON_H
 
-#include <cstddef>
+#include "method_base.h"
 
-void method_python(const double* data, size_t size, double* results[3], void* callback);
+#include <Python.h>
 
+#define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
+namespace Numina {
+
+class PythonMethod: public Method {
+public:
+	PythonMethod(PyObject* callback, PyObject* arguments);
+	~PythonMethod() {};
+	void run(const double* data, size_t size, double* results[3]) const;
+private:
+	PyObject* m_callback;
+	PyObject* m_arguments; // This argument is ignored
+};
+
+} // namespace Numina
 
 #endif // PYEMIR_METHODS_PYTHON_H
