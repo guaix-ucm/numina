@@ -133,17 +133,6 @@ def combine(method, images, masks=None, offsets=None,
     :return: a 3-tuple with the result, the variance and the number
     :raise TypeError: if method is not callable
     
-    
-    Example:
-    
-       >>> import numpy
-       >>> image = numpy.array([[1.,3.],[1., -1.4]])
-       >>> inputs = [image, image + 1]
-       >>> combine("mean", inputs)  #doctest: +NORMALIZE_WHITESPACE
-       (array([[ 1.5,  3.5],
-           [ 1.5, -0.9]]), array([[ 0.25,  0.25],
-           [ 0.25,  0.25]]), array([[2, 2],
-           [2, 2]], dtype=int32))
        
     '''
     
@@ -296,17 +285,48 @@ def _combine(method, images, masks=None, offsets=None,
         out = np.zeros(outshape, dtype='float64')
     else:
         if out.shape != outshape:
-            raise TypeError("result has wrong shape")  
+            raise CombineError("result has wrong shape")  
         
     internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args)
     return out.astype(dtype)
 
-def mean(data, masks=None, offsets=None,
-         dtype=None, out=None, dof=0):
-    '''Compute the arithmetic mean.
+def mean(images, masks=None, dtype=None, out=None, dof=0):
+    '''Combine images using the mean, with masks and offsets.
     
+    Inputs and masks are a list of array objects. All input arrays
+    have the same shape. If present, the masks have the same shape
+    also.
+    
+    The function returns an array with one more dimension than the
+    inputs and with size (3, shape). out[0] contains the mean,
+    out[1] the variance and out[2] the number of points used.
+    
+    :param images: a list of arrays
+    :param masks: a list of masked arrays, True values are masked
+    :param dtype: data type of the ouput
+    :param out: optional output, with one more axis than the input images
+    :param dof: degrees of freedom 
+    :return: mean, variance and number of points stored in
+    :raise TypeError: if method is not callable
+    :raise CombineError: if method is not callable
+    
+    
+    
+    Example:
+    
+       >>> import numpy
+       >>> image = numpy.array([[1.,3.],[1., -1.4]])
+       >>> inputs = [image, image + 1]
+       >>> mean(inputs) #doctest: +NORMALIZE_WHITESPACE
+       array([[[ 1.5 ,  3.5 ],
+               [ 1.5 , -0.9 ]],
+              [[ 0.25,  0.25],
+               [ 0.25,  0.25]],
+              [[ 2.  ,  2.  ],
+               [ 2.  ,  2.  ]]])
+       
     '''
-    return _combine('mean', data, masks, offsets, dtype, out, args=(dof,))
+    return _combine('mean', images, masks, None, dtype, out, args=(dof,))
     
 if __name__ == "__main__":
     from numina.decorators import print_timing
