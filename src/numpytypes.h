@@ -23,7 +23,12 @@
 #ifndef PYEMIR_NUMPYTYPES_H
 #define PYEMIR_NUMPYTYPES_H
 
-#include <numpy/arrayobject.h>
+#include <Python.h>
+
+#define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/ndarrayobject.h>
+#include <numpy/npy_common.h>
 
 #define PYEMIR_NUMPY_GENERIC(X, Y) \
 	template<> \
@@ -67,7 +72,6 @@ PYEMIR_NUMPY_GENERIC(NPY_FLOAT, npy_float);
 PYEMIR_NUMPY_GENERIC(NPY_DOUBLE, npy_double);
 PYEMIR_NUMPY_GENERIC(NPY_LONGDOUBLE, npy_longdouble);
 
-PYEMIR_NUMPY_FIXED(NPY_BOOL, npy_bool);
 PYEMIR_NUMPY_FIXED(NPY_UINT8, npy_uint8);
 PYEMIR_NUMPY_FIXED(NPY_INT16, npy_int16);
 PYEMIR_NUMPY_FIXED(NPY_INT32, npy_int32);

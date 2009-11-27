@@ -23,88 +23,42 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <iostream>
+#include <algorithm>
 
 #include <Python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include "numpytypes.h"
 #include "method_factory.h"
+#include "transformation_factory.h"
 #include "method_exception.h"
 #include "methods_python.h"
 
-#define CASE_MASKS_FIXED(DN, MN) \
-	case MN: \
-		selection_ptr = &Array_select<numpy::fixed_type<DN>::data_type,  \
-									  numpy::fixed_type<MN>::data_type>; \
-		break;
+using Numina::NamedMethodFactory;
+using Numina::Method;
+using Numina::MethodException;
+using Numina::PythonMethod;
 
-#define CASE_MASKS_GENERIC(DN, MN) \
-	case MN: \
-		selection_ptr = &Array_select<numpy::generic_type<DN>::data_type,  \
-									  numpy::generic_type<MN>::data_type>; \
-		break;
+typedef std::vector<PyArrayIterObject*> VectorPyArrayIter;
 
-#define CASE_DATA_FIXED(DN) \
-	case DN: \
-	switch (masks_type) { \
-		CASE_MASKS_FIXED(DN, NPY_BOOL) \
-		CASE_MASKS_FIXED(DN, NPY_UINT8) \
-		CASE_MASKS_FIXED(DN, NPY_INT16) \
-		CASE_MASKS_FIXED(DN, NPY_INT32) \
-		CASE_MASKS_FIXED(DN, NPY_FLOAT32) \
-		CASE_MASKS_FIXED(DN, NPY_FLOAT64) \
-	default: \
-		return PyErr_Format(CombineError, "mask type %d not implemented", masks_type); \
-		break; \
-	} \
-	break;
-
-#define DATA_CASE_GENERIC(DN) \
-	case DN: \
-	switch (masks_type) { \
-		CASE_MASKS_GENERIC(DN, NPY_BOOL) \
-		CASE_MASKS_GENERIC(DN, NPY_SHORT) \
-		CASE_MASKS_GENERIC(DN, NPY_USHORT) \
-		CASE_MASKS_GENERIC(DN, NPY_INT) \
-		CASE_MASKS_GENERIC(DN, NPY_UINT) \
-		CASE_MASKS_GENERIC(DN, NPY_LONG) \
-		CASE_MASKS_GENERIC(DN, NPY_ULONG) \
-		CASE_MASKS_GENERIC(DN, NPY_FLOAT) \
-		CASE_MASKS_GENERIC(DN, NPY_DOUBLE) \
-		CASE_MASKS_GENERIC(DN, NPY_LONGDOUBLE) \
-	default: \
-		return PyErr_Format(CombineError, "mask type %d not implemented", masks_type); \
-		break; \
-	} \
-	break;
-
-using namespace Numina;
-
-typedef void
-(*SelectionMethodPtr)(size_t nimages,
-		const std::vector<PyArrayIterObject*>& iiter, const std::vector<
-				PyArrayIterObject*>& miter, std::vector<double>& data);
 
 PyDoc_STRVAR(combine__doc__, "Internal combine module, not to be used directly.");
 PyDoc_STRVAR(internal_combine__doc__, "Combines identically shaped images");
 
-static PyObject* CombineError;
 
-template<typename ImageType, typename MaskType>
-static void Array_select(size_t nimages,
-		const std::vector<PyArrayIterObject*>& iiter, const std::vector<
-				PyArrayIterObject*>& miter, std::vector<double>& data) {
-	for (size_t i = 0; i < nimages; ++i) {
-		MaskType *pmask = (MaskType*) miter[i]->dataptr;
-		if (not *pmask) // <- True values are skipped
-			continue;
-		ImageType* pdata = (ImageType*) iiter[i]->dataptr;
-		data.push_back(*pdata);
-	}
+// Convenience function to avoid the PyArray_ITER_NEXT macro
+static inline void My_PyArray_Iter_Next(PyArrayIterObject* it) {
+	PyArray_ITER_NEXT(it);
 }
+
+// Convenience PyArrayIterObject* creator
+static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj) {
+	return (PyArrayIterObject*) PyArray_IterNew(obj);
+}
+
+// An exception in this module
+static PyObject* CombineError;
 
 static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		PyObject *kwds) {
@@ -116,7 +70,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	PyObject *images = NULL;
 	PyObject *masks = NULL;
 
-	// Offsets are ignored
 	PyObject *out[OUTDIM] = { NULL, NULL, NULL };
 	PyObject* margs = NULL;
 
@@ -143,14 +96,16 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		const char* method_name = PyString_AS_STRING(method);
 
 		try {
+			// A factory class for named functions
 			method_ptr.reset(NamedMethodFactory::create(method_name, margs));
 		} catch (MethodException&) {
+			// If there is aproblem during construction
 			return PyErr_Format(
 					CombineError,
 					"error during the construction of the combination method \"%s\"",
 					method_name);
 		}
-
+		// If we don't have a method by the name
 		if (not method_ptr.get()) {
 			return PyErr_Format(CombineError,
 					"invalid combination method \"%s\"", method_name);
@@ -163,96 +118,137 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		return PyErr_Format(PyExc_TypeError,
 				"method is neither a string nor callable");
 
-	/* images are forced to be a list */
+	/* images are forced to be in list */
 	const Py_ssize_t nimages = PyList_GET_SIZE(images);
 
-	/* getting the contents */
+	// getting the contents inside vectors
 	std::vector<PyObject*> iarr(nimages);
 
-	// Images
+	// the first image
+	// borrowed reference, no decref
 	iarr[0] = PyList_GetItem(images, 0);
+
+	if (not PyArray_Check(iarr[0])) {
+		return PyErr_Format(CombineError,
+				"item %i in data list is not a ndarray or subclass", 0);
+	}
+
 	const int images_type = PyArray_TYPE(iarr[0]);
 
 	for (Py_ssize_t i = 1; i < nimages; i++) {
 		// Borrowed reference, no decref
-		PyObject *item = PyList_GetItem(images, i);
-		if (PyArray_Check(item)) {
-			iarr[i] = item;
+		iarr[i] = PyList_GetItem(images, i);
+
+		// checking we have and image
+		if (not PyArray_Check(iarr[i])) {
+			return PyErr_Format(CombineError,
+					"item %zd in data list is not and ndarray or subclass", i);
 		}
+
+		// checking dtype is the same
+		if (images_type != PyArray_TYPE(iarr[i]))
+			return PyErr_Format(CombineError,
+					"item %zd in data list has inconsistent dtype", i);
 	}
 
 	// Masks
 	std::vector<PyObject*> marr(nimages);
+
+	// checking we have and image
 	marr[0] = PyList_GetItem(masks, 0);
+	if (not PyArray_Check(marr[0])) {
+		return PyErr_Format(CombineError,
+				"item %i in masks list is not a ndarray or subclass", 0);
+	}
+
 	const int masks_type = PyArray_TYPE(marr[0]);
 
 	for (Py_ssize_t i = 1; i < nimages; i++) {
 		// Borrowed reference, no decref
-		PyObject *item = PyList_GetItem(masks, i);
-		if (PyArray_Check(item)) {
-			marr[i] = item;
+		marr[i] = PyList_GetItem(masks, i);
+
+		// checking we have and image
+		if (not PyArray_Check(marr[i])) {
+			return PyErr_Format(CombineError,
+					"item %zd in masks list is not and ndarray or subclass", i);
 		}
+
+		// checking dtype is the same
+		if (masks_type != PyArray_TYPE(marr[i]))
+			return PyErr_Format(CombineError,
+					"item %zd in masks list has inconsistent dtype", i);
+
 	}
 
-	// Select the function we are going to use
+	// Select the functions we are going to use
+	// to transform the data in arrays into
+	// the doubles we're working on
 
-	SelectionMethodPtr selection_ptr;
+	// mask conversion, the only need a boolean
+	bool (*mask_converter)(void*) = transformation_factory<bool>(masks_type);
 
-	switch (images_type) {
-	CASE_DATA_FIXED(NPY_BOOL)
-	CASE_DATA_FIXED(NPY_FLOAT64)
-	CASE_DATA_FIXED(NPY_FLOAT32)
-	CASE_DATA_FIXED(NPY_INT32)
-	CASE_DATA_FIXED(NPY_INT16)
-	CASE_DATA_FIXED(NPY_UINT8)
-	default:
-		// Data type not implemented
+	if (not mask_converter) {
+		// Mask type not implemented
+		return PyErr_Format(CombineError, "mask type %d not implemented",
+				masks_type);
+	}
+
+	// image conversion, into a double
+	double (*datum_converter)(void*) = transformation_factory<double>(images_type);
+
+	if (not datum_converter) {
+		// Datum type not implemented
 		return PyErr_Format(CombineError, "image type %d not implemented",
-				images_type);
-		break;
+				masks_type);
 	}
 
 	// Iterators
-	std::vector<PyArrayIterObject*> iiter(nimages);
-	for (size_t i = 0; i < nimages; ++i) {
-		iiter[i] = (PyArrayIterObject*) PyArray_IterNew(iarr[i]);
-	}
+	VectorPyArrayIter iiter(nimages);
+	std::transform(iarr.begin(), iarr.end(), iiter.begin(), &My_PyArray_IterNew);
 
-	std::vector<PyArrayIterObject*> miter(nimages);
-	for (size_t i = 0; i < nimages; ++i) {
-		miter[i] = (PyArrayIterObject*) PyArray_IterNew(marr[i]);
-	}
+	VectorPyArrayIter miter(nimages);
+	std::transform(marr.begin(), marr.end(), miter.begin(), &My_PyArray_IterNew);
 
-	std::vector<PyArrayIterObject*> oiter(3);
-	for (size_t i = 0; i < OUTDIM; ++i)
-		oiter[i] = (PyArrayIterObject*) PyArray_IterNew(out[i]);
+	VectorPyArrayIter oiter(OUTDIM);
+	std::transform(out, out + OUTDIM, oiter.begin(), &My_PyArray_IterNew);
 
-	// basic iterator
+	// basic iterator, we move through the
+	// first result image
 	PyArrayIterObject* iter = oiter[0];
 
 	std::vector<double> data;
 	data.reserve(nimages);
+
+	// pointers to the pixels in out[0,1,2] arrays
 	double* values[OUTDIM];
 
 	while (iter->index < iter->size) {
 
-		selection_ptr(nimages, iiter, miter, data);
+		VectorPyArrayIter::const_iterator i = iiter.begin();
+		VectorPyArrayIter::const_iterator m = miter.begin();
+		for (; i != iiter.end(); ++i, ++m) {
 
+			if (mask_converter((*m)->dataptr)) // <- True values are skipped
+				continue;
+
+			// If mask == 0, we store the value of the image array
+			data.push_back(datum_converter((*i)->dataptr));
+		}
+
+		// We obtain pointers to the result arrays
 		for (size_t i = 0; i < OUTDIM; ++i)
-			values[i] = (npy_double*) oiter[i]->dataptr;
+			values[i] = (double*) oiter[i]->dataptr;
 
+		// And pass the data to the combine method
 		method_ptr->run(&data[0], data.size(), values);
 
+		// We clean up the data storage
 		data.clear();
 
-		for (size_t i = 0; i < nimages; ++i) {
-			PyArray_ITER_NEXT(iiter[i]);
-			PyArray_ITER_NEXT(miter[i]);
-		}
-
-		for (size_t i = 0; i < OUTDIM; ++i) {
-			PyArray_ITER_NEXT(oiter[i]);
-		}
+		// And move all the iterators to the next point
+		std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);
+		std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
+		std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
 	}
 
 	Py_INCREF( Py_None);

@@ -325,7 +325,7 @@ if __name__ == "__main__":
     data_dtype = 'int16'
     nimages = 100
     minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
-    mmasks = [scipy.ones(shape, dtype='int16') for i in xrange(nimages)]
+    mmasks = [scipy.zeros(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'
     if __debug__:
         out = tmean(minputs, mmasks)
