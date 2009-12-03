@@ -91,10 +91,10 @@ import logging
 import pyfits
 import numpy
 
-from numina.recipes import RecipeBase
-from numina.recipes import RecipeResult
+from numina.recipes import RecipeBase, RecipeResult
 #from numina.exceptions import RecipeError
-
+from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
+from numina.image.processing import generic_processing
 __version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
@@ -124,70 +124,16 @@ class Recipe(RecipeBase):
         options = self.options
         # dark correction
         # open the master dark
-        dark_data = pyfits.getdata(options.master_dark)
-        # get the data
-        for f in options.files:
-            # destiny
-            newf = self.get_processed(f, 'D')
-            if os.path.lexists(newf) and not options.clobber:
-                _logger.info('File %s exists, skipping', newf)
-                continue
-            (file_data, file_header) = pyfits.getdata(f, header=True)
-                        
-            # subtract the master bias data
-            file_data -= dark_data
-            
-            # save as filename - b .fits
-            
-            pyfits.writeto(newf, file_data, file_header, 
-                           output_verify=options.output_verify, 
-                           clobber=options.clobber)
-            _logger.info('Processing %s', newf)
-            
+        dark_data = pyfits.getdata(options.master_dark)    
+        flat_data = pyfits.getdata(options.master_flat)
+        
+        corrector1 = DarkCorrector(dark_data)
+        corrector2 = NonLinearityCorrector(options.linearity)
+        corrector3 = FlatFieldCorrector(flat_data)
+        
+        generic_processing(options.files, [corrector1, corrector2, corrector3], backup=True)
         
         del dark_data
-        
-        # non-linearity correction
-        for f in options.files:
-            # open file            
-            # get the data
-            newf = self.get_processed(f, 'DL')
-            if os.path.lexists(newf) and not options.clobber:
-                _logger.info('File %s exists, skipping', newf)
-                continue
-            
-            pf = self.get_processed(f, 'D')
-            (file_data, file_header) = pyfits.getdata(f, header=True)
-            
-            file_data = numpy.polyval(options.linearity, file_data)
-            
-            pyfits.writeto(newf, file_data, file_header,
-                           output_verify=options.output_verify, 
-                           clobber=options.clobber)
-            _logger.info('Processing %s', newf)
-            
-        
-        flat_data = pyfits.getdata(options.master_flat)
-        # non-linearity correction
-        for f in options.files:
-            # open file            
-            # get the data
-            newf = self.get_processed(f, 'DLF')
-            if os.path.lexists(newf) and not options.clobber:                
-                _logger.info('File %s exists, skipping', newf)
-                continue
-            
-            pf = self.get_processed(f, 'DL')
-            (file_data, file_header) = pyfits.getdata(pf, header=True)
-            
-            file_data /= flat_data
-            
-            pyfits.writeto(newf, file_data, file_header, 
-                           output_verify=options.output_verify, 
-                           clobber=options.clobber)
-            _logger.info('Processing %s', newf)
-            
-        
         del flat_data    
         
         # Data pre processed
@@ -203,7 +149,7 @@ class Recipe(RecipeBase):
         # first iteration, without segmentation mask
         
         # Compute the initial sky subtracted images
-       
+        return Result()
         current_iteration = 0
        
         for f in options.files:
@@ -230,33 +176,7 @@ class Recipe(RecipeBase):
             
         
         
-        return Result()
-    
-    def get_processed(self, filename, flag):
-        ex1 = os.path.splitext(filename)
-        oldes = os.path.extsep
-        os.path.extsep = '_'
-        ex2 = os.path.splitext(ex1[0])
-        os.path.extsep = oldes
-        prop = ex2[1] 
-        if not prop:
-            prop = '_'
-        prop += flag
-        return '%s%s%s' % (ex2[0], prop, ex1[1])
-    
-    
-    def mark_processed(self, filename, flag):
-        ex1 = os.path.splitext(filename)
-        oldes = os.path.extsep
-        os.path.extsep = '_'
-        ex2 = os.path.splitext(ex1[0])
-        os.path.extsep = oldes
-        prop = ex2[1] 
-        if not prop:
-            prop = '_'
-        prop += flag
-        return '%s%s%s' % (ex2[0], prop, ex1[1])
-    
+        return Result()   
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
