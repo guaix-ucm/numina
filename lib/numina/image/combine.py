@@ -332,8 +332,8 @@ if __name__ == "__main__":
     from numina.decorators import print_timing
   
     @print_timing
-    def tmean(data, masks=None, offsets=None, dtype=None, out=None):
-        return mean(data, masks, offsets, dtype, out)
+    def tmean(images, masks=None, dtype=None, out=None, dof=0):
+        return mean(images, masks, dtype, out, dof)
     
     @print_timing
     def tcombine(method, images, masks=None, offsets=None,
@@ -341,9 +341,9 @@ if __name__ == "__main__":
             blocksize=(512, 512)):
         return combine(method, images, masks, offsets, result, variance, numbers, blocksize)
     # Inputs
-    shape = (2000, 2000)
+    shape = (200, 200)
     data_dtype = 'int16'
-    nimages = 100
+    nimages = 10
     minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [scipy.zeros(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'
