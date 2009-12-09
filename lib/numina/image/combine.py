@@ -330,7 +330,7 @@ def _combine(method, images, masks=None, offsets=None,
         if weights.shape != (number_of_images,):
             raise CombineError('incorrect number of weights')
 
-    internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args, 
+    internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args,
                      zeros=zeros, scales=scales, weights=weights)
     return out.astype(dtype)
 
@@ -370,8 +370,36 @@ def mean(images, masks=None, dtype=None, out=None, dof=0):
                [ 2.  ,  2.  ]]])
        
     '''
-    return _combine('median', images, masks, None, dtype, out, args=(dof,))
+    return _combine('mean', images, masks, None, dtype, out, args=(dof,))
     
+    
+    
+def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, weights=None):
+    '''Combine images using the median, with masks.
+    
+    Inputs and masks are a list of array objects. All input arrays
+    have the same shape. If present, the masks have the same shape
+    also.
+    
+    The function returns an array with one more dimension than the
+    inputs and with size (3, shape). out[0] contains the mean,
+    out[1] the variance and out[2] the number of points used.
+    
+    :param images: a list of arrays
+    :param masks: a list of masked arrays, True values are masked
+    :param dtype: data type of the ouput
+    :param out: optional output, with one more axis than the input images
+ 
+    :return: mean, variance and number of points stored in
+    :raise TypeError: if method is not callable
+    :raise CombineError: if method is not callable
+       
+    '''
+    return _combine('median', images, masks, offsets=None, dtype=dtype, out=out,
+                    zeros=zeros, scales=zeros, weights=weights)    
+
+
+
 if __name__ == "__main__":
     from numina.decorators import print_timing
   
@@ -392,6 +420,7 @@ if __name__ == "__main__":
     mmasks = [scipy.zeros(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'
     
-    out = tmean(minputs, mmasks)
+    out = mean(minputs, mmasks)
     print out[:, 0, 0]
-    
+    out = median(minputs, mmasks)
+    print out[:, 0, 0]
