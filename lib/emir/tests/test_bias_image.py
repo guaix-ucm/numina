@@ -23,7 +23,7 @@ import unittest
 
 import scipy
 
-from numina.simulation.storage import FITSCreator
+from numina.image.storage import FITSCreator
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
 from emir.simulation.headers import default_fits_headers
