@@ -33,9 +33,9 @@ class MeanMethod: public Method {
 public:
 	MeanMethod(PyObject* callback, PyObject* args);
 	virtual ~MeanMethod();
-	virtual void run(const double* data, size_t size, double* results[3]) const;
+	virtual void run(const double* data, const double* weights, size_t size, double* results[3]) const;
 private:
-	double m_dof;
+	int m_dof;
 };
 
 }

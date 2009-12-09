@@ -117,7 +117,7 @@ def combine_shape(shapes, offsets):
 
 def combine(method, images, masks=None, offsets=None,
             result=None, variance=None, numbers=None,
-            blocksize=(512, 512)):
+            blocksize=(512, 512), zeros=None, scales=None, weights=None):
     '''Combine images using the given combine method, with masks and offsets.
     
     Inputs and masks are a list of array objects.
@@ -228,17 +228,39 @@ def combine(method, images, masks=None, offsets=None,
         if numbers.shape != finalshape:
             raise TypeError("numbers has wrong shape")
     
+    if zeros is None:
+        zeros = np.zeros(len(images), dtype='float64')
+    else:
+        zeros = np.asanyarray(zeros, dtype='float64')
+        if zeros.shape != (len(images),):
+            raise CombineError('incorrect number of zeros')
+        
+    if scales is None:
+        scales = np.ones(len(images), dtype='float64')
+    else:
+        scales = np.asanyarray(scales, dtype='float64')
+        if scales.shape != (len(images),):
+            raise CombineError('incorrect number of scales')
+        
+    if weights is None:
+        weights = np.ones(len(images), dtype='float64')
+    else:
+        weights = np.asanyarray(scales, dtype='float64')
+        if weights.shape != (len(images),):
+            raise CombineError('incorrect number of weights')
+    
     for i in blockgen(blocksize, finalshape):
         # views of the images and masks
         vnimages = [j[i] for j in nimages]
         vnmasks = [j[i] for j in nmasks]
         internal_combine(method, vnimages, vnmasks,
-                          out0=result[i], out1=variance[i], out2=numbers[i], args=(0,))
+                          out0=result[i], out1=variance[i], out2=numbers[i], args=(0,),
+                          zeros=zeros, scales=scales, weights=weights)
         
     return (result, variance, numbers)
 
 def _combine(method, images, masks=None, offsets=None,
-             dtype=None, out=None, args=()):
+             dtype=None, out=None, args=(), zeros=None, scales=None, weights=None):
         # method should be a string
     if not isinstance(method, basestring) and not callable(method):
         raise CombineError('method is neither a string or callable')
@@ -287,7 +309,29 @@ def _combine(method, images, masks=None, offsets=None,
         if out.shape != outshape:
             raise CombineError("result has wrong shape")  
         
-    internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args)
+    if zeros is None:
+        zeros = np.zeros(number_of_images, dtype='float64')
+    else:
+        zeros = np.asanyarray(zeros, dtype='float64')
+        if zeros.shape != (number_of_images,):
+            raise CombineError('incorrect number of zeros')
+        
+    if scales is None:
+        scales = np.ones(number_of_images, dtype='float64')
+    else:
+        scales = np.asanyarray(scales, dtype='float64')
+        if scales.shape != (number_of_images,):
+            raise CombineError('incorrect number of scales')
+        
+    if weights is None:
+        weights = np.ones(number_of_images, dtype='float64')
+    else:
+        weights = np.asanyarray(scales, dtype='float64')
+        if weights.shape != (number_of_images,):
+            raise CombineError('incorrect number of weights')
+
+    internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args, 
+                     zeros=zeros, scales=scales, weights=weights)
     return out.astype(dtype)
 
 def mean(images, masks=None, dtype=None, out=None, dof=0):
@@ -341,9 +385,9 @@ if __name__ == "__main__":
             blocksize=(512, 512)):
         return combine(method, images, masks, offsets, result, variance, numbers, blocksize)
     # Inputs
-    shape = (200, 200)
+    shape = (2000, 2000)
     data_dtype = 'int16'
-    nimages = 10
+    nimages = 100
     minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [scipy.zeros(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'

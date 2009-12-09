@@ -42,10 +42,8 @@ using Numina::PythonMethod;
 
 typedef std::vector<PyArrayIterObject*> VectorPyArrayIter;
 
-
 PyDoc_STRVAR(combine__doc__, "Internal combine module, not to be used directly.");
 PyDoc_STRVAR(internal_combine__doc__, "Combines identically shaped images");
-
 
 // Convenience function to avoid the PyArray_ITER_NEXT macro
 static inline void My_PyArray_Iter_Next(PyArrayIterObject* it) {
@@ -73,14 +71,19 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	PyObject *out[OUTDIM] = { NULL, NULL, NULL };
 	PyObject* margs = NULL;
 
+	PyArrayObject* scales = NULL;
+	PyArrayObject* zeros = NULL;
+	PyArrayObject* weights = NULL;
+
 	static char *kwlist[] = { "method", "data", "masks", "out0", "out1",
-			"out2", "args", NULL };
+			"out2", "args", "zeros", "scales", "weights", NULL };
 
 	int ok = PyArg_ParseTupleAndKeywords(args, kwds,
-			"OO!O!O!O!O!O!:internal_combine", kwlist, &method, &PyList_Type,
-			&images, &PyList_Type, &masks, &PyArray_Type, &out[0],
-			&PyArray_Type, &out[1], &PyArray_Type, &out[2], &PyTuple_Type,
-			&margs);
+			"OO!O!O!O!O!O!O!O!O!:internal_combine", kwlist, &method,
+			&PyList_Type, &images, &PyList_Type, &masks, &PyArray_Type,
+			&out[0], &PyArray_Type, &out[1], &PyArray_Type, &out[2],
+			&PyTuple_Type, &margs, &PyArray_Type, &zeros, &PyArray_Type,
+			&scales, &PyArray_Type, &weights);
 
 	if (!ok) {
 		return NULL;
@@ -98,12 +101,12 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 		try {
 			// A factory class for named functions
 			method_ptr.reset(NamedMethodFactory::create(method_name, margs));
-		} catch (MethodException&) {
-			// If there is aproblem during construction
+		} catch (MethodException& ex) {
+			// If there is a problem during construction
 			return PyErr_Format(
 					CombineError,
-					"error during the construction of the combination method \"%s\"",
-					method_name);
+					"error during the construction of the combination method \"%s\": %s",
+					method_name, ex.what());
 		}
 		// If we don't have a method by the name
 		if (not method_ptr.get()) {
@@ -180,6 +183,37 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 
 	}
 
+	// Checking zeros, scales and weights
+	if (PyArray_NDIM(zeros) != 1) {
+		return PyErr_Format(CombineError, "zeros dimension != 1");
+	}
+	if (PyArray_SIZE(zeros) != nimages) {
+		return PyErr_Format(CombineError, "zeros size != number of images");
+	}
+	if (PyArray_TYPE(zeros) != NPY_DOUBLE) {
+		return PyErr_Format(CombineError, "zeros has wrong type");
+	}
+
+	if (PyArray_NDIM(scales) != 1) {
+		return PyErr_Format(CombineError, "scales dimension != 1");
+	}
+	if (PyArray_SIZE(scales) != nimages) {
+		return PyErr_Format(CombineError, "scales size != number of images");
+	}
+	if (PyArray_TYPE(scales) != NPY_DOUBLE) {
+		return PyErr_Format(CombineError, "scale has wrong type");
+	}
+
+	if (PyArray_NDIM(weights) != 1) {
+		return PyErr_Format(CombineError, "weights dimension != 1");
+	}
+	if (PyArray_SIZE(weights) != nimages) {
+		return PyErr_Format(CombineError, "weights size != number of images");
+	}
+	if (PyArray_TYPE(weights) != NPY_DOUBLE) {
+		return PyErr_Format(CombineError, "weights has wrong type");
+	}
+
 	// Select the functions we are going to use
 	// to transform the data in arrays into
 	// the doubles we're working on
@@ -194,7 +228,8 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	}
 
 	// image conversion, into a double
-	double (*datum_converter)(void*) = transformation_factory<double>(images_type);
+	double
+	(*datum_converter)(void*) = transformation_factory<double>(images_type);
 
 	if (not datum_converter) {
 		// Datum type not implemented
@@ -216,23 +251,42 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 	// first result image
 	PyArrayIterObject* iter = oiter[0];
 
+	// Data and data weights
 	std::vector<double> data;
 	data.reserve(nimages);
+	std::vector<double> wdata;
+	wdata.reserve(nimages);
 
 	// pointers to the pixels in out[0,1,2] arrays
 	double* values[OUTDIM];
 
 	while (iter->index < iter->size) {
-
+		int ii = 0;
 		VectorPyArrayIter::const_iterator i = iiter.begin();
 		VectorPyArrayIter::const_iterator m = miter.begin();
-		for (; i != iiter.end(); ++i, ++m) {
+		for (; i != iiter.end(); ++i, ++m, ++ii) {
 
-			if (mask_converter((*m)->dataptr)) // <- True values are skipped
-				continue;
+			if (not mask_converter((*m)->dataptr)) // <- True values are skipped
+			{
+				// If mask converts to False, we store the value of the image array
 
-			// If mask == 0, we store the value of the image array
-			data.push_back(datum_converter((*i)->dataptr));
+				double* zero =
+						static_cast<double*> (PyArray_GETPTR1(zeros, ii));
+				double* scale = static_cast<double*> (PyArray_GETPTR1(scales,
+						ii));
+				double* weight = static_cast<double*> (PyArray_GETPTR1(weights,
+						ii));
+				if (zero and scale and weight) {
+					const double original = datum_converter((*i)->dataptr);
+					const double converted = (original - *zero) / (*scale);
+					data.push_back(converted);
+					wdata.push_back(*weight);
+				} else {
+					return PyErr_Format(CombineError,
+							"null pointer in zero %p scale %p weight %p", zero,
+							scale, weight);
+				}
+			}
 		}
 
 		// We obtain pointers to the result arrays
@@ -240,10 +294,11 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 			values[i] = (double*) oiter[i]->dataptr;
 
 		// And pass the data to the combine method
-		method_ptr->run(&data[0], data.size(), values);
+		method_ptr->run(&data[0], &wdata[0], data.size(), values);
 
 		// We clean up the data storage
 		data.clear();
+		wdata.clear();
 
 		// And move all the iterators to the next point
 		std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);

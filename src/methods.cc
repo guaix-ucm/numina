@@ -35,7 +35,8 @@ MeanMethod::MeanMethod(PyObject* callback, PyObject* args) {
 MeanMethod::~MeanMethod() {
 }
 
-void MeanMethod::run(const double* data, size_t size, double* results[3]) const {
+// weights are ignored for now
+void MeanMethod::run(const double* data, const double* weights, size_t size, double* results[3]) const {
 
 	if (size == 0) {
 		*results[0] = *results[1] = *results[2] = 0.0;

@@ -28,7 +28,7 @@ namespace Numina {
 class Method {
 public:
 	virtual ~Method() {}
-	virtual void run(const double* data, size_t size, double* results[3]) const = 0;
+	virtual void run(const double* data, const double* weights, size_t size, double* results[3]) const = 0;
 };
 
 } // namespace Numina

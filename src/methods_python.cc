@@ -34,7 +34,7 @@ PythonMethod::PythonMethod(PyObject* callback, PyObject* arguments) :
 	Method(), m_callback(callback), m_arguments(arguments) {
 }
 
-void PythonMethod::run(const double* data, size_t size, double* results[3]) const {
+void PythonMethod::run(const double* data,  const double* weights, size_t size, double* results[3]) const {
 
 	npy_intp dims = size;
 	PyObject* pydata = PyArray_SimpleNewFromData(1, &dims, PyArray_DOUBLE,
