@@ -40,12 +40,21 @@ sigma-clipping algoritm.
 
 '''
 
-from numina.recipes import RecipeBase
-from numina.recipes import RecipeResult
+import os.path
+import logging
+
+import pyfits
+import numpy
+
+from emir.simulation.headers import default_fits_headers
+from numina.recipes import RecipeBase, RecipeResult
+from numina.image.storage import FITSCreator
+from numina.image.combine import mean
 #from numina.exceptions import RecipeError
 
 __version__ = "$Revision$"
 
+_logger = logging.getLogger("emir.recipes")
 
 class Result(RecipeResult):
     '''Result of the recipe.'''
@@ -66,8 +75,51 @@ class Recipe(RecipeBase):
     It continues several lines
     
     '''
-    def __init__(self):
+    def __init__(self, options):
         super(Recipe, self).__init__()
+        self.options = options
+        print 'cons'
         
     def process(self):
+        
+        # Sanity check, check: all images belong to the same detector mode
+        
+        # Open all zero images
+        alldata = []
+        for n in self.options.files:
+            f = pyfits.open(n, 'readonly', memmap=True)
+            alldata.append(f[0].data)
+        
+        allmasks = []
+        
+        # Combine them
+        cube = mean(alldata, allmasks)
+        
+        creator = FITSCreator(default_fits_headers)
+        hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
+        
+        hdulist.writeto(self.options.master_bias_name, clobber=self.options.master_bias_name, 
+                        output_verify=self.options.output_verify)
         return Result() 
+    
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+    _logger.setLevel(logging.DEBUG)
+    import os
+            
+    class Options:
+        pass
+    
+    options = Options()
+    options.files = ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits', 
+                     'apr21_0049.fits', 'apr21_0050.fits']
+    
+    options.master_bias_name = 'mbias.fits'
+    
+    options.clobber = True
+    options.master_bpm = 'bpm.fits'
+    options.output_verify = 'ignore'
+    
+    os.chdir('/home/inferis/spr/IR/apr21')
+    r = Recipe(options)
+    print r.process() 
