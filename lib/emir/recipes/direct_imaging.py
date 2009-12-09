@@ -95,6 +95,7 @@ from numina.recipes import RecipeBase, RecipeResult
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
+from numina.image.combine import median
 
 __version__ = "$Revision$"
 
@@ -136,6 +137,31 @@ class Recipe(RecipeBase):
         
         del dark_data
         del flat_data    
+        
+        # Illumination seems to be necessary
+        # ----------------------------------
+        alldata = []
+        
+        for n in options.files:
+            f = pyfits.open(n, 'readonly', memmap=True)
+            alldata.append(f[0].data)
+            
+        print alldata[0].shape
+        
+        allmasks = []
+        #for n in ['apr21_0067DLFS-0.fits.mask'] * len(options.files):
+        for n in options.files:
+            #f = pyfits.open(n, 'readonly', memmap=True)
+            allmasks.append(numpy.zeros(alldata[0].shape))
+        
+        # Compute the median of all images in valid pixels
+        scales = [numpy.median(data[mask == 0]) for data, mask in zip(alldata, allmasks)]
+        
+        illum_data = median(alldata, allmasks, scales=scales)
+        print illum_data[0].shape
+        print illum_data.mean()
+        # Combining all the images
+        
         
         # Data pre processed
         number_of_iterations = 4
