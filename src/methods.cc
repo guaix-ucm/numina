@@ -80,14 +80,13 @@ void MedianMethod::run(double* data, double* weights, size_t size,
 
 	switch (size) {
 	case 0:
-		*results[0] = *results[1] = *results[2] = 0.0;
+		*results[0] = 0.0;
 		break;
 	case 1:
 		*results[0] = data[0];
 		break;
 	default: {
-
-		const int midpt = ((size) & 1)?((size) / 2):(((size) / 2) - 1);
+		const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
 		*results[0] = *kth_smallest(data, size, midpt);
 		//std::nth_element(data, data + size / 2, data + size);
 		//*results[0] = *(data + size / 2);
