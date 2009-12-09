@@ -21,12 +21,15 @@
 /* $Id$ */
 
 #include "method_factory.h"
+#include "methods.h"
 
 namespace Numina {
 
 Method* NamedMethodFactory::create(const std::string& name, PyObject* args) {
 	if (name == "mean")
-		return new MeanMethod(0, args);
+		return new MeanMethod(args);
+	if (name == "median")
+		return new MedianMethod();
 	return NULL;
 }
 

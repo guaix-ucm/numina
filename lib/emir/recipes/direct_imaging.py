@@ -95,6 +95,7 @@ from numina.recipes import RecipeBase, RecipeResult
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
+
 __version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")

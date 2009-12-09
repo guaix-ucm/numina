@@ -31,11 +31,21 @@ namespace Numina {
 
 class MeanMethod: public Method {
 public:
-	MeanMethod(PyObject* callback, PyObject* args);
+	MeanMethod(PyObject* args);
 	virtual ~MeanMethod();
-	virtual void run(const double* data, const double* weights, size_t size, double* results[3]) const;
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 private:
 	int m_dof;
+};
+
+
+class MedianMethod: public Method {
+public:
+	MedianMethod();
+	virtual ~MedianMethod();
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+private:
+	double* kth_smallest(double* data, size_t size, size_t kth) const;
 };
 
 }

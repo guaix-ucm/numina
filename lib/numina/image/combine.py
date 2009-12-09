@@ -370,7 +370,7 @@ def mean(images, masks=None, dtype=None, out=None, dof=0):
                [ 2.  ,  2.  ]]])
        
     '''
-    return _combine('mean', images, masks, None, dtype, out, args=(dof,))
+    return _combine('median', images, masks, None, dtype, out, args=(dof,))
     
 if __name__ == "__main__":
     from numina.decorators import print_timing
@@ -391,11 +391,7 @@ if __name__ == "__main__":
     minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [scipy.zeros(shape, dtype='int16') for i in xrange(nimages)]
     print 'Computing'
-    if __debug__:
-        out = tmean(minputs, mmasks)
-        print out[:, 0, 0]
-
-    #tcombine("mean", minputs, mmasks)
-    #print out[0,0,0]
     
+    out = tmean(minputs, mmasks)
+    print out[:, 0, 0]
     

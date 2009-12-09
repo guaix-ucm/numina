@@ -27,7 +27,7 @@
 
 #include <Python.h>
 
-#include "methods.h"
+#include "method_base.h"
 
 namespace Numina {
 
