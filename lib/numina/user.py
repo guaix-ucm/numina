@@ -76,7 +76,7 @@ def mode_none():
 def mode_run(args, options, logger):
     '''Run the execution mode of Numina'''
     rename = args[0]      
-    
+    print '.'.join([options.module, args[0]])
     recipemod = get_module('.'.join([options.module, args[0]]))
        
     # running the recipe
@@ -86,11 +86,13 @@ def mode_run(args, options, logger):
         logger.error('%s.Recipe is not a subclass of RecipeBase', rename)
         return 2
     
-    recipe = recipemod.Recipe()
+    cmdoptions = recipemod.Recipe.cmdoptions
+    #recipe = recipemod.Recipe()
         
     # Parse the rest of the options
     logger.debug('Parsing the options provided by recipe instance')
-    (reoptions, reargs) = recipe.cmdoptions.parse_args(args=args[1:])
+    (reoptions, reargs) = cmdoptions.parse_args(args=args[1:])
+    recipe = recipemod.Recipe(options=options)
     
     if reoptions.docs:
         print rename, recipe.__doc__

@@ -42,6 +42,7 @@ sigma-clipping algoritm.
 
 import os.path
 import logging
+from optparse import OptionParser
 
 import pyfits
 import numpy
@@ -50,6 +51,7 @@ from emir.simulation.headers import default_fits_headers
 from numina.recipes import RecipeBase, RecipeResult
 from numina.image.storage import FITSCreator
 from numina.image.combine import mean
+import numina.qa as qa
 #from numina.exceptions import RecipeError
 
 __version__ = "$Revision$"
@@ -58,14 +60,16 @@ _logger = logging.getLogger("emir.recipes")
 
 class Result(RecipeResult):
     '''Result of the recipe.'''
-    def __init__(self):
-        super(Result, self).__init__()
+    def __init__(self, file, hdulist, qa):
+        super(Result, self).__init__(qa)
+        self.file = file
+        self.hdulist = hdulist
         
     def store(self):
         '''Description of store.
         
         :rtype: None'''
-        pass
+        return self.hdulist.writeto(self.file, clobber=True, output_verify='ignore')
 
 
 class Recipe(RecipeBase):
@@ -75,10 +79,12 @@ class Recipe(RecipeBase):
     It continues several lines
     
     '''
+    usage = 'usage: %prog [options] recipe [recipe-options]'
+    cmdoptions = OptionParser(usage=usage)
+    cmdoptions.add_option('--docs', action="store_true", dest="docs", 
+                          default=False, help="prints documentation")
     def __init__(self, options):
-        super(Recipe, self).__init__()
-        self.options = options
-        print 'cons'
+        super(Recipe, self).__init__(options)
         
     def process(self):
         
@@ -98,20 +104,18 @@ class Recipe(RecipeBase):
         creator = FITSCreator(default_fits_headers)
         hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
         
-        hdulist.writeto(self.options.master_bias_name, clobber=self.options.master_bias_name, 
-                        output_verify=self.options.output_verify)
-        return Result() 
+        return Result(self.options.master_bias_name, hdulist, qa.GOOD) 
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
     import os
-            
+    from numina.user import main
     class Options:
         pass
     
     options = Options()
-    options.files = ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits', 
+    options.files = ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
                      'apr21_0049.fits', 'apr21_0050.fits']
     
     options.master_bias_name = 'mbias.fits'
@@ -119,7 +123,9 @@ if __name__ == '__main__':
     options.clobber = True
     options.master_bpm = 'bpm.fits'
     options.output_verify = 'ignore'
-    
+    options.module = 'emir.recipes'
     os.chdir('/home/inferis/spr/IR/apr21')
-    r = Recipe(options)
-    print r.process() 
+    
+    main(['--list'])
+    #mode_run(['bias_image'], options, _logger)
+

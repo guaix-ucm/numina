@@ -148,6 +148,7 @@ def load_class(path, default_module, logger=Null()):
 def list_recipes(path, docs=True):
     '''List all the recipes in a module'''
     module = __import__(path)
+    print path, module
     # Import submodules
     for part in path.split('.')[1:]:
         module = getattr(module, part)

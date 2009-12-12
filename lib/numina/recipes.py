@@ -21,7 +21,7 @@
 
 '''Basic tools and classes used to generate recipe modules.
 
-A recipe is a python module that complies with the *reduction recipe API*:
+A recipe is a module that complies with the *reduction recipe API*:
 
  * It must provide a `Recipe` class that derives from :class:`numina.recipes.RecipeBase`.
 
@@ -39,16 +39,24 @@ __version__ = "$Revision$"
 # Classes are new style
 __metaclass__ = type
 
+class RecipeType(type):
+    registry = {}
+    def __init__(cls, name, bases, dictionary):
+        """Initialise the new class-object"""
+        if name != 'RecipeBase':
+            cls.registry[cls] = name
+
 class RecipeBase:
     '''Abstract Base class for Recipes.'''
 #    __metaclass__ = abc.ABCMeta
-    def __init__(self, optusage=None):
-        if optusage is None:
-            optusage = "usage: %prog [options] recipe [recipe-options]" 
-        self.cmdoptions = OptionParser(usage = optusage)
-        self.cmdoptions.add_option('--docs', action="store_true", dest="docs", 
-                                   default=False, help="prints documentation")
-        self.iniconfig = SafeConfigParser()
+    __metaclass__ = RecipeType
+    optusage = "usage: %prog [options] recipe [recipe-options]"
+    cmdoptions = OptionParser(usage=optusage)
+    cmdoptions.add_option('--docs', action="store_true", dest="docs", 
+                          default=False, help="prints documentation")
+    def __init__(self, options):
+        #self.iniconfig = SafeConfigParser()
+        self.options = options
         self._repeat = 1
         
     def setup(self):
@@ -94,10 +102,11 @@ class RecipeBase:
 class RecipeResult:
     '''Result of the run method of the Recipe.'''
 #    __metaclass__ = abc.ABCMeta
-    def __init__(self):
-        pass
+    def __init__(self, qa):
+        self.qa = qa
     
 #    @abc.abstractmethod
     def store(self):
         '''Store the result'''
-        pass
+        raise NotImplementedError
+
