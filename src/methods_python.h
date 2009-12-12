@@ -37,7 +37,7 @@ class PythonMethod: public Method {
 public:
 	PythonMethod(PyObject* callback, PyObject* arguments);
 	~PythonMethod() {};
-	void run(const double* data, const double* weights, size_t size, double* results[3]) const;
+	void run(double* data, double* weights, size_t size, double* results[3]) const;
 private:
 	PyObject* m_callback;
 	PyObject* m_arguments; // This argument is ignored

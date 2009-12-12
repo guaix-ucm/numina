@@ -30,6 +30,8 @@ Method* NamedMethodFactory::create(const std::string& name, PyObject* args) {
 		return new MeanMethod(args);
 	if (name == "median")
 		return new MedianMethod();
+	if (name == "sigmaclip")
+	  return new SigmaClipMethod(args);
 	return NULL;
 }
 

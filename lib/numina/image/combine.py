@@ -259,8 +259,8 @@ def combine(method, images, masks=None, offsets=None,
         
     return (result, variance, numbers)
 
-def _combine(method, images, masks=None, offsets=None,
-             dtype=None, out=None, args=(), zeros=None, scales=None, weights=None):
+def _combine(method, images, masks=None, dtype=None, out=None, 
+             args=(), zeros=None, scales=None, weights=None, offsets=None,):
         # method should be a string
     if not isinstance(method, basestring) and not callable(method):
         raise CombineError('method is neither a string or callable')
@@ -334,7 +334,8 @@ def _combine(method, images, masks=None, offsets=None,
                      zeros=zeros, scales=scales, weights=weights)
     return out.astype(dtype)
 
-def mean(images, masks=None, dtype=None, out=None, dof=0):
+def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
+         weights=None, dof=0):
     '''Combine images using the mean, with masks and offsets.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -370,7 +371,8 @@ def mean(images, masks=None, dtype=None, out=None, dof=0):
                [ 2.  ,  2.  ]]])
        
     '''
-    return _combine('mean', images, masks, None, dtype, out, args=(dof,))
+    return _combine('mean', images, masks=masks, dtype=dtype, out=out, args=(dof,), 
+                    zeros=zeros, scales=scales, weights=weights)
     
     
     
@@ -395,9 +397,33 @@ def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, we
     :raise CombineError: if method is not callable
        
     '''
-    return _combine('median', images, masks, offsets=None, dtype=dtype, out=out,
+    return _combine('median', images, masks=masks, dtype=dtype, out=out,
                     zeros=zeros, scales=zeros, weights=weights)    
 
+def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
+         weights=None, low=4., high=4., dof=0):
+    '''Combine images using the sigma-clipping, with masks.
+    
+    Inputs and masks are a list of array objects. All input arrays
+    have the same shape. If present, the masks have the same shape
+    also.
+    
+    The function returns an array with one more dimension than the
+    inputs and with size (3, shape). out[0] contains the mean,
+    out[1] the variance and out[2] the number of points used.
+    
+    :param images: a list of arrays
+    :param masks: a list of masked arrays, True values are masked
+    :param dtype: data type of the ouput
+    :param out: optional output, with one more axis than the input images
+    :param low:
+    :param high:
+    :param dof: degrees of freedom 
+    :return: mean, variance and number of points stored in    
+    '''
+    myargs = (low, high, dof)
+    return _combine('sigmaclip', images, masks=masks, dtype=dtype, out=out, 
+                    args= myargs, zeros=zeros, scales=scales, weights=weights)
 
 
 if __name__ == "__main__":

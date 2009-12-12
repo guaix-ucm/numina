@@ -22,9 +22,43 @@
 
 #include <cstddef>
 #include <algorithm>
+#include <cmath>
+#include <functional>
+#include <ext/functional>
 
 #include "methods.h"
 #include "method_exception.h"
+
+namespace {
+  double mean(double* data, size_t size) {
+    double sum = 0;
+    for (size_t i = 0; i < size; ++i)
+        sum += data[i];
+    return sum / size;
+  }
+
+  double variance(double* data, size_t size, int dof, double mean) {
+    double sum = 0;
+
+    for (size_t i = 0; i < size; ++i) {
+        const double fid = data[i] - mean;
+        sum += fid * fid;
+      }
+    return sum / (size - dof);
+  }
+
+  double stdev(double* data, size_t size, int dof, double mean) {
+    double sum = 0;
+
+    for (size_t i = 0; i < size; ++i) {
+        const double fid = data[i] - mean;
+        sum += fid * fid;
+      }
+    return std::sqrt(sum / (size - dof));
+  }
+
+}
+
 
 namespace Numina {
 
@@ -123,5 +157,38 @@ double* MedianMethod::kth_smallest(double* data, size_t size, size_t kth) const 
 
 	return data + kth;
 }
+
+SigmaClipMethod::SigmaClipMethod(PyObject* args)
+{
+  if (not PyArg_ParseTuple(args, "ddd", &m_low, &m_high, &m_dof))
+    throw MethodException("problem creating MeanMethod");
+}
+
+SigmaClipMethod::~SigmaClipMethod()
+{}
+
+void SigmaClipMethod::run(double* data, double* weights, size_t size, double* results[3]) const
+{
+  int delta = 0;
+  double c_mean = 0;
+  double c_std = 0;
+  int c_size = size;
+  do {
+    c_mean = mean(data, c_size);
+    c_std = stdev(data, c_size, m_dof, c_mean);
+
+    double* end = std::partition(data, data + c_size,
+        __gnu_cxx::compose2(std::logical_and<bool>(),
+                std::bind2nd(std::greater<double>(), c_mean - c_std * m_low),
+                std::bind2nd(std::less<double>(), c_mean + c_std * m_high)));
+    delta = c_size - (end - data);
+    c_size = (end - data);
+  } while (delta);
+  *results[0] = c_mean;
+  *results[1] = c_std;
+  *results[2] = c_size;
+}
+
+
 
 } // namespace Numina

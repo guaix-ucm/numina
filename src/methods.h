@@ -48,6 +48,18 @@ private:
 	double* kth_smallest(double* data, size_t size, size_t kth) const;
 };
 
+class SigmaClipMethod: public Method {
+public:
+  SigmaClipMethod(PyObject* args);
+  virtual ~SigmaClipMethod();
+  virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+private:
+  double m_low;
+  double m_high;
+  int m_dof;
+};
+
+
 }
 
 #endif // PYEMIR_METHODS_H
