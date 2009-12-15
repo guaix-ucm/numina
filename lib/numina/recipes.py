@@ -27,12 +27,9 @@ A recipe is a module that complies with the *reduction recipe API*:
 
 '''
 
-
-from optparse import OptionParser
-from ConfigParser import SafeConfigParser
 #import abc
 
-from numina.exceptions import RecipeError
+from numina.exceptions import RecipeError, Error
 
 __version__ = "$Revision$"
 
@@ -50,13 +47,10 @@ class RecipeBase:
     '''Abstract Base class for Recipes.'''
 #    __metaclass__ = abc.ABCMeta
     __metaclass__ = RecipeType
-    optusage = "usage: %prog [options] recipe [recipe-options]"
-    cmdoptions = OptionParser(usage=optusage)
-    cmdoptions.add_option('--docs', action="store_true", dest="docs", 
-                          default=False, help="prints documentation")
-    def __init__(self, options):
+    
+    def __init__(self, parameters):
         #self.iniconfig = SafeConfigParser()
-        self.options = options
+        self.parameters = parameters
         self._repeat = 1
         
     def setup(self):
@@ -109,4 +103,44 @@ class RecipeResult:
     def store(self):
         '''Store the result'''
         raise NotImplementedError
+
+
+class ParameterError(Error):
+    def __init__(self, txt):
+        Error.__init__(self, txt)
+
+class ParametersDescription:
+    def __init__(self, inputs, outputs, optional, pipeline, systemwide):
+        self.inputs = inputs
+        self.outputs = outputs
+        self.optional = optional
+        self.pipeline = pipeline
+        self.systemwide = systemwide
+        
+    def complete(self, obj):
+        for key in self.inputs:
+            if key not in obj.inputs:
+                raise ParameterError('error in inputs')
+        for key in self.outputs:
+            if key not in obj.outputs:
+                raise ParameterError('error in outputs')
+        
+        new_optional = dict(self.optional)
+        new_optional.update(obj.optional)
+        
+        new_pipeline = dict(self.pipeline)
+        new_pipeline.update(obj.pipeline)
+
+        new_systemwide = dict(self.systemwide)
+        new_systemwide.update(obj.systemwide)
+        
+        return Parameters(obj.inputs, obj.outputs, new_optional, new_pipeline, new_systemwide)
+
+class Parameters:
+    def __init__(self, inputs, outputs, optional, pipeline, systemwide):
+        self.inputs = inputs
+        self.outputs = outputs
+        self.optional = optional
+        self.pipeline = pipeline
+        self.systemwide = systemwide
 

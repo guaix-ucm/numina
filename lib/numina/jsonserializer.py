@@ -19,18 +19,21 @@
 
 # $Id$
 
-'''Quality asses for Numina-based applications.'''
-
 __version__ = "$Revision$"
+# Source$
 
+import numina.recipes
 
-GOOD = 100
-FAIR = 90
-BAD = 70
-UNKNOWN = -1
+def to_json(obj):
+    if isinstance(obj, numina.recipes.Parameters):
+        return {'__class__': 'numina.recipes.Parameters',
+                '__value__': obj.__dict__}
+    raise TypeError(repr(obj) + ' is not JSON serializable')
 
-_level_names = {GOOD: 'GOOD',
-                FAIR: 'FAIR',
-                BAD: 'BAD',
-                UNKNOWN: 'UNKNOWN'}
-
+def from_json(obj):
+    if '__class__' in obj:
+        if obj['__class__'] == 'numina.recipes.Parameters':
+            p = numina.recipes.Parameters({}, {}, {}, {}, {})
+            p.__dict__ = obj['__value__']
+            return p
+    return obj

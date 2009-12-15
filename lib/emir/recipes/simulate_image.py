@@ -28,7 +28,7 @@ import numpy
 
 from numina.recipes import RecipeBase
 from numina.simulation import RunCounter
-from numina.simulation.storage import FITSCreator
+from numina.image.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
 from emir.simulation.headers import default_fits_headers
 

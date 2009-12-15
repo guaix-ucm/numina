@@ -42,6 +42,9 @@ The process will remove cosmic rays (using a typical sigma-clipping algorithm).
 
 ''' 
 
+__version__ = "$Revision$"
+# $Source$
+
 import logging
 
 import pyfits
@@ -49,10 +52,9 @@ import scipy.stsci.image as im
 
 from numina.recipes import RecipeBase, RecipeResult
 from numina.exceptions import RecipeError
-from numina.simulation.storage import FITSCreator
+from numina.image.storage import FITSCreator
 from emir.simulation.headers import default_fits_headers
 
-__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
         

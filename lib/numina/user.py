@@ -23,15 +23,16 @@
 
 '''
 
-
-import logging
+from __future__ import with_statement
 import logging.config
+import json
+import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
-import os
 
-from numina import list_recipes, get_module, RecipeBase
+from numina import list_recipes, get_module, check_recipe
 from numina.exceptions import RecipeError
+from numina.jsonserializer import from_json
 import numina.config as nconfig
 
 __version__ = "$Revision$"
@@ -67,7 +68,8 @@ def parse_cmdline(args=None):
 
 def mode_list(module):
     '''Run the list mode of Numina.'''
-    list_recipes(module)
+    for m, d in list_recipes(module):
+        print m, d
     
 def mode_none():
     '''Do nothing in Numina.'''
@@ -75,33 +77,29 @@ def mode_none():
 
 def mode_run(args, options, logger):
     '''Run the execution mode of Numina'''
-    rename = args[0]      
-    print '.'.join([options.module, args[0]])
+    rename = args[0]
     recipemod = get_module('.'.join([options.module, args[0]]))
        
     # running the recipe
     logger.info('Created instance of module %s', rename)
     
-    if not issubclass(recipemod.Recipe, RecipeBase):
-        logger.error('%s.Recipe is not a subclass of RecipeBase', rename)
+    if not check_recipe(recipemod):
+        logger.error('%s is not a valid Recipe', rename)
         return 2
     
-    cmdoptions = recipemod.Recipe.cmdoptions
-    #recipe = recipemod.Recipe()
-        
-    # Parse the rest of the options
-    logger.debug('Parsing the options provided by recipe instance')
-    (reoptions, reargs) = cmdoptions.parse_args(args=args[1:])
-    recipe = recipemod.Recipe(options=options)
+    # Getting the parameters of the recipe
     
-    if reoptions.docs:
-        print rename, recipe.__doc__
-        return 0
-                
-    for i in reargs:        
-        logger.debug('Option file %s' % i)            
-        recipe.iniconfig.read(i)
-
+    logger.debug('Getting the parameters required by the module')
+    param_desc = recipemod.parameter_descriptions()
+    
+    # checking if the parameters of the recipe
+    # are fullfilled by the parameters in the text file
+    with open(args[1]) as f:
+        lp = json.load(f, object_hook=from_json, encoding='utf-8')
+        
+    lp = param_desc.complete(lp)
+    
+    recipe = recipemod.Recipe(lp)
                 
     logger.debug('Setting up the recipe')
     recipe.setup()
@@ -157,7 +155,7 @@ def main(args=None):
         options.module = config.get('ohoh', 'module')
     
     if options.mode == 'list':
-        mode_list(options.module)
+        mode_list(options.module) 
         return 0
     elif options.mode == 'none':
         mode_none()

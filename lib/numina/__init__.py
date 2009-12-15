@@ -21,16 +21,17 @@
 
 '''The Numen GTC recipe runner'''
 
+__version__ = "$Revision$"
+# $Source$
 
-from optparse import OptionParser
-from ConfigParser import SafeConfigParser
 import inspect
 import logging
 import sys
+import pkgutil
 
 import pkg_resources
 
-from .recipes import RecipeBase
+from recipes import RecipeBase, RecipeResult
 from tests import tests as all_tests
 
 # pylint: disable-msg=E0611
@@ -39,50 +40,11 @@ try:
 except ImportError:
     from logger import NullHandler
 
-__version__ = "$Revision$"
-
 # Classes are new style
 __metaclass__ = type
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(NullHandler())
-
-
-      
-class Null:
-    '''Idempotent class'''
-    def __init__(self, *args, **kwargs):
-        "Ignore parameters."
-        return None
-
-    # object calling
-    def __call__(self, *args, **kwargs):
-        "Ignore method calls."
-        return self
-
-    # attribute handling
-    def __getattr__(self, mame):
-        "Ignore attribute requests."
-        return self
-
-    def __setattr__(self, name, value):
-        "Ignore attribute setting."
-        return self
-
-    def __delattr__(self, name):
-        "Ignore deleting attributes."
-        return self
-
-    # misc.
-    @staticmethod
-    def __repr__():
-        "Return a string representation."
-        return "<Null>"
-    
-    @staticmethod
-    def __str__():
-        "Convert to a string and return it."
-        return "Null"
     
 def get_module(name):
     '''
@@ -114,56 +76,40 @@ def get_module(name):
     module_object = sys.modules[name]
     return module_object
 
-  
-    
-def load_class(path, default_module, logger=Null()):
-    '''Load a class from path'''
-    comps = path.split('.')
-    recipe = comps[-1]
-    logger.debug('recipe is %s', recipe)
-    if len(comps) == 1:
-        modulen = default_module
-    else:
-        modulen = '.'.join(comps[0:-1])
-    logger.debug('module is %s', modulen)
-
-    module = __import__(modulen)
-    
-    for part in modulen.split('.')[1:]:
-        module = getattr(module, part)
-        try:
-            RecipeClass = getattr(module, recipe)
-        except AttributeError:
-            logger.error("% s doesn't exist in %s", recipe, modulen)
-            raise
-        
-    if inspect.isclass(RecipeClass) and \
-       issubclass(RecipeClass, RecipeBase) and \
-       not RecipeClass is RecipeBase:
-        return RecipeClass
-    # In other case
-    return None
-
-
-def list_recipes(path, docs=True):
+def list_recipes(path):
     '''List all the recipes in a module'''
     module = __import__(path)
-    print path, module
+    
     # Import submodules
     for part in path.split('.')[1:]:
         module = getattr(module, part)
     
     # Check members of the module
-    for name in dir(module):
-        obj = getattr(module, name)
-        if inspect.isclass(obj) and issubclass(obj, RecipeBase) and not obj is RecipeBase:
-            docs = obj.__doc__
-            # pylint: disable-msg=E1103
-            if docs:
-                mydoc = docs.splitlines()[0]
-            else:
-                mydoc = ''
-            print name, mydoc
+    result = []
+    for importer, modname, ispkg in pkgutil.iter_modules(module.__path__):
+        #print "Found submodule %s (is a package: %s)" % (modname, ispkg)
+        rmodule = __import__(modname, fromlist="dummy")
+        if check_recipe(rmodule):
+            result.append( (modname, rmodule.__doc__.splitlines()[0]) )
+    return result
+
+def check_recipe(module):
+    '''Check if a module has the Recipe API.'''
+    
+    def has_class(module, name, BaseClass):
+        if hasattr(module, name):
+            cls = getattr(module, name)
+            if inspect.isclass(cls) and issubclass(cls, BaseClass) and not cls is BaseClass:
+                return True
+        return False
+    
+    if (has_class(module, 'Recipe', RecipeBase) and 
+        has_class(module, 'Result', RecipeResult) and
+        hasattr(module, '__doc__')):
+        return True
+    
+    return False
+
 
 def load_pkg_recipes():
     '''Return a dictionary of capabilities and recipes, using setuptools mechanism.
