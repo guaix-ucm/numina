@@ -19,6 +19,8 @@
 
 # $Id$
 
+__version__ = '$Revision$'
+
 import unittest
 
 import scipy
@@ -27,9 +29,6 @@ from numina.image.storage import FITSCreator
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
 from emir.simulation.headers import default_fits_headers
-
-
-__version__ = '$Revision$'
 
 # Classes are new style
 __metaclass__ = type

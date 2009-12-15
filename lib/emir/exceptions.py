@@ -23,7 +23,6 @@
 
 __version__ = "$Revision$"
 
-
 class Error(Exception):
     """Base class for exceptions in the emir package."""
     def __init__(self, txt):

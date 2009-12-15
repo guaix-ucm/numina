@@ -19,6 +19,8 @@
 
 # $Id$
 
+__version__ = "$Revision$"
+
 from __future__ import division, with_statement
 from itertools import izip, product
 import functools
@@ -28,8 +30,6 @@ import numpy as np
 
 from numina.exceptions import Error
 from numina.image._combine import internal_combine, CombineError
-
-__version__ = "$Revision$"
 
 
 def blockgen1d(block, size):

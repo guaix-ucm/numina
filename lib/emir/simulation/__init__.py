@@ -21,6 +21,8 @@
 
 '''Simulation package'''
 
+__version__ = "$Revision$"
+
 import math
 
 import numpy
@@ -28,8 +30,6 @@ from scipy.special import erf
 from scipy import maximum, minimum
 
 from numina.image import subarray_match
-
-__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

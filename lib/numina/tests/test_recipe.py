@@ -21,11 +21,10 @@
 
 '''Unit test for RecipeBase'''
 
-import unittest
-from numina import RecipeBase
-
 __version__ = '$Revision: 411 $'
 
+import unittest
+from numina import RecipeBase
 
 class Test(RecipeBase):
     '''Minimal class that implementes RecipeBase.'''

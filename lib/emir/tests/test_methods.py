@@ -19,14 +19,14 @@
 
 # $Id$ 
 
+__version__ = '$Revision$'
+
 import unittest
 
 try:
     import numina.image.ccombine as c
 except ImportError:
     import numina.image.combine as c
-
-__version__ = '$Revision$'
 
 # Classes are new style
 __metaclass__ = type

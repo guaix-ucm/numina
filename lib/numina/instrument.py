@@ -19,12 +19,12 @@
 
 # $Id$
 
+__version__ = "$Revision: 410 $"
+
 import scipy
 import numpy.random
 
 from numina.exceptions import DetectorElapseError
-
-__version__ = "$Revision: 410 $"
 
 # Classes are new style
 __metaclass__ = type

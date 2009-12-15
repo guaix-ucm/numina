@@ -19,6 +19,8 @@
 
 # $Id$
 
+__version__ = "$Revision$"
+
 from __future__ import with_statement 
 import math
 from math import sin, cos, tan
@@ -30,8 +32,6 @@ import scipy.interpolate as sil
 from scipy import loadtxt
 
 from emir.exceptions import Error
-
-__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

@@ -19,12 +19,14 @@
 
 # $Id$
 
+__version__ = "$Revision$"
+
 import numpy
 from scipy import maximum, minimum
 
 from numina.exceptions import Error
 
-__version__ = "$Revision$"
+
 
 def subarray_match(shape, ref, sshape, sref=(0, 0)):
     '''Matches two arrays, given the different shapes given by shape and shape, and a reference point ref

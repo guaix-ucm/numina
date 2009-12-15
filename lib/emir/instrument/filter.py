@@ -19,7 +19,6 @@
 
 # $Id$
 
-
 __version__ = "$Revision$"
 
 # Classes are new style

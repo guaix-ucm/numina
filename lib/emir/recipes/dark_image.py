@@ -43,7 +43,6 @@ The process will remove cosmic rays (using a typical sigma-clipping algorithm).
 ''' 
 
 __version__ = "$Revision$"
-# $Source$
 
 import logging
 

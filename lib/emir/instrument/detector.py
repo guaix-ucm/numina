@@ -19,13 +19,10 @@
 
 # $Id$
 
-import numpy
-import numpy.random
+__version__ = "$Revision$"
 
 import numina.instrument
 from emir.exceptions import DetectorReadoutError
-
-__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

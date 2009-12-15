@@ -21,6 +21,8 @@
 
 '''The emir package'''
 
+__version__ = "$Revision$"
+
 import logging
 
 try:
@@ -28,9 +30,6 @@ try:
 except ImportError:
     from numina.logger import NullHandler
 
-__version__ = "$Revision$"
-
-EMIR_VERSION_STRING = '0.0.1'
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(NullHandler())

@@ -20,12 +20,11 @@
 # $Id$
 
 __version__ = "$Revision$"
-# $Source$
 
-import numina.recipes
+from numina.recipes import Parameters
 
 def to_json(obj):
-    if isinstance(obj, numina.recipes.Parameters):
+    if isinstance(obj, Parameters):
         return {'__class__': 'numina.recipes.Parameters',
                 '__value__': obj.__dict__}
     raise TypeError(repr(obj) + ' is not JSON serializable')
@@ -33,7 +32,7 @@ def to_json(obj):
 def from_json(obj):
     if '__class__' in obj:
         if obj['__class__'] == 'numina.recipes.Parameters':
-            p = numina.recipes.Parameters({}, {}, {}, {}, {})
+            p = Parameters({}, {}, {}, {}, {})
             p.__dict__ = obj['__value__']
             return p
     return obj

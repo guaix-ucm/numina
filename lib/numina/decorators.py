@@ -21,10 +21,10 @@
 
 '''Decorators for the numina package'''
 
+__version__ = "$Revision$"
+
 import time
 import logging
-
-__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir")
 

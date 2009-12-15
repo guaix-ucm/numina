@@ -85,6 +85,8 @@ process starts:
 
 '''
 
+__version__ = "$Revision$"
+
 import os.path
 import logging
 
@@ -97,7 +99,6 @@ from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFi
 from numina.image.processing import generic_processing
 from numina.image.combine import median
 
-__version__ = "$Revision$"
 
 _logger = logging.getLogger("emir.recipes")
 

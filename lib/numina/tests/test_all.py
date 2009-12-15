@@ -21,10 +21,11 @@
 
 '''A module used to run all the numina unit tests'''
 
+__version__ = '$Revision: 411 $'
+
 import sys, os
 import unittest
 
-__version__ = '$Revision: 411 $'
 
 def print_info():
     '''Print information about the system and emir version.'''

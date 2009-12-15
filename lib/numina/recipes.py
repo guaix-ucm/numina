@@ -27,11 +27,13 @@ A recipe is a module that complies with the *reduction recipe API*:
 
 '''
 
+__version__ = "$Revision$"
+
 #import abc
 
 from numina.exceptions import RecipeError, Error
 
-__version__ = "$Revision$"
+
 
 # Classes are new style
 __metaclass__ = type

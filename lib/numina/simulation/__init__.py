@@ -19,15 +19,14 @@
 
 # $Id$
 
+__version__ = "$Revision$"
+
 from __future__ import with_statement
 import os
 from os.path import join as pjoin
 import cPickle
 from cPickle import dump
 import logging
-
-
-__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

@@ -41,7 +41,6 @@ sigma-clipping algoritm.
 '''
 
 __version__ = "$Revision$"
-# $Source$
 
 from __future__ import with_statement
 import logging

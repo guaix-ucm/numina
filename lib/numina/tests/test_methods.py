@@ -19,13 +19,13 @@
 
 # $Id$ 
 
+__version__ = '$Revision$'
+
 import unittest
 
 import scipy
 
 import numina.image.methods as mt
-
-__version__ = '$Revision$'
 
 __metaclass__ = type
 

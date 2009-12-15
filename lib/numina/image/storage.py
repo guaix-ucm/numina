@@ -19,13 +19,14 @@
 
 # $Id$
 
+__version__ = "$Revision: 410 $"
 
 import datetime
 import logging
 
 import pyfits
 
-__version__ = "$Revision: 410 $"
+
 
 # Classes are new style
 __metaclass__ = type

@@ -21,11 +21,12 @@
 
 '''A module used to run all the emir unit tests'''
 
+__version__ = '$Revision$'
+
 import sys, os
 import emir
 import unittest
 
-__version__ = '$Revision$'
 
 def print_info():
     '''Print information about the system and emir version.'''

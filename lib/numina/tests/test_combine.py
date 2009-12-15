@@ -19,14 +19,14 @@
 
 # $Id$ 
 
+__version__ = '$Revision$'
+
 import unittest
 
 import scipy
 
 from numina.image.combine import mean
 from numina.image.combine import CombineError
-
-__version__ = '$Revision$'
 
 class CombineFilter1TestCase:
     def __init__(self):

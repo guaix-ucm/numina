@@ -21,9 +21,9 @@
 
 '''Extra logging handlers for the numina logging system'''
 
-import logging
-
 __version__ = "$Revision$"
+
+import logging
 
 class NullHandler(logging.Handler):
     '''NullHandler is the default log handler of the package. It 

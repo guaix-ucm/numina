@@ -23,13 +23,15 @@
 
 '''
 
+__version__ = "$Revision"
+
 import logging
 import time
 
 import pyfits
 from numpy import polyval
 
-__version__ = "$Revision"
+
 
 # Classes are new style
 __metaclass__ = type

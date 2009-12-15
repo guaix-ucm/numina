@@ -22,7 +22,6 @@
 '''The Numen GTC recipe runner'''
 
 __version__ = "$Revision$"
-# $Source$
 
 import inspect
 import logging

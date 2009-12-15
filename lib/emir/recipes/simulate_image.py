@@ -21,6 +21,7 @@
 
 '''Recipe for image simulation'''
 
+__version__ = "$Revision$"
 
 import logging
 
@@ -34,7 +35,7 @@ from emir.simulation.headers import default_fits_headers
 
 from dark_image import Result
 
-__version__ = "$Revision$"
+
 
 _logger = logging.getLogger("emir.recipes")
 

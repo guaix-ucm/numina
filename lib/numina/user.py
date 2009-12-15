@@ -23,6 +23,8 @@
 
 '''
 
+__version__ = "$Revision$"
+
 from __future__ import with_statement
 import logging.config
 import json
@@ -35,7 +37,7 @@ from numina.exceptions import RecipeError
 from numina.jsonserializer import from_json
 import numina.config as nconfig
 
-__version__ = "$Revision$"
+
 
 version_number = "0.0.2"
 version_line = '%prog ' + version_number
