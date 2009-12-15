@@ -40,6 +40,9 @@ sigma-clipping algoritm.
 
 '''
 
+__version__ = "$Revision$"
+# $Source$
+
 from __future__ import with_statement
 import logging
 
@@ -51,19 +54,15 @@ from numina.image.storage import FITSCreator
 from numina.image.combine import mean
 import numina.qa as qa
 
-__version__ = "$Revision$"
-
 # Classes are new style
 __metaclass__ = type
 
-
 _logger = logging.getLogger("emir.recipes")
-
 
 _param_desc = ParametersDescription(inputs={'images': []}, outputs={}, 
                                    optional={}, pipeline={}, systemwide={})
 
-def parameter_descriptions():
+def parameters_description():
     return _param_desc
 
 class Result(RecipeResult):

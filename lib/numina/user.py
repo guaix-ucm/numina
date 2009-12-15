@@ -90,7 +90,7 @@ def mode_run(args, options, logger):
     # Getting the parameters of the recipe
     
     logger.debug('Getting the parameters required by the module')
-    param_desc = recipemod.parameter_descriptions()
+    param_desc = recipemod.parameters_description()
     
     # checking if the parameters of the recipe
     # are fullfilled by the parameters in the text file

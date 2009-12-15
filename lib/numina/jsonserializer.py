@@ -20,7 +20,7 @@
 # $Id$
 
 __version__ = "$Revision$"
-# Source$
+# $Source$
 
 import numina.recipes
 
