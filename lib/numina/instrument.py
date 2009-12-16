@@ -94,7 +94,7 @@ class Detector:
         # Readout noise
         result += numpy.random.standard_normal(self._shape) * self._ron
         result += self._pedestal
-       # result[result > self._well] = self._well
+        # result[result > self._well] = self._well
         return result.astype(self.type)
     
     def data(self):

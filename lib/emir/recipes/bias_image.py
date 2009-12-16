@@ -36,19 +36,22 @@ Recipe to process bias images. Bias images only appear in Simple Readout mode
 **Procedure:**
 
 The list of images can be readly processed by combining them with a typical
-sigma-clipping algoritm.
+sigma-clipping algorithm.
 
 '''
 
+from __future__ import with_statement
+
 __version__ = "$Revision$"
 
-from __future__ import with_statement
+
 import logging
 
 import pyfits
 
+from emir.recipes import pipeline_parameters
 from emir.simulation.headers import default_fits_headers
-from numina.recipes import RecipeBase, RecipeResult, ParametersDescription
+from numina.recipes import RecipeBase, RecipeResult, ParametersDescription, systemwide_parameters
 from numina.image.storage import FITSCreator
 from numina.image.combine import mean
 import numina.qa as qa
@@ -58,8 +61,12 @@ __metaclass__ = type
 
 _logger = logging.getLogger("emir.recipes")
 
-_param_desc = ParametersDescription(inputs={'images': []}, outputs={}, 
-                                   optional={}, pipeline={}, systemwide={})
+_param_desc = ParametersDescription(inputs={'images': []}, 
+                                    outputs={'bias': 'bias.fits'}, 
+                                    optional={}, 
+                                    pipeline=pipeline_parameters(), 
+                                    systemwide=systemwide_parameters()
+                                    )
 
 def parameters_description():
     return _param_desc
@@ -68,7 +75,7 @@ class Result(RecipeResult):
     '''Result of the recipe.'''
     def __init__(self, hdulist, qa):
         super(Result, self).__init__(qa)
-        self.hdulist = hdulist
+        self.bias = hdulist
         
     def store(self):
         '''Description of store.
@@ -110,7 +117,12 @@ class Recipe(RecipeBase):
         creator = FITSCreator(default_fits_headers)
         hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
         
-        return Result(hdulist, qa.GOOD)
+        if self.parameters.systemwide['compute_qa']:
+            cqa = qa.GOOD
+        else:
+            cqa = qa.UNKNOWN
+        
+        return Result(hdulist, cqa)
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -121,10 +133,15 @@ if __name__ == '__main__':
     import json
     import os
     
-    v = {'inputs' : {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
-                     'apr21_0049.fits', 'apr21_0050.fits']}}
+    pv = {'inputs' : {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
+                     'apr21_0049.fits', 'apr21_0050.fits']},
+         'outputs' : {'bias': 'bias.fits'},
+         'optional' : {},
+         'pipeline' : {},
+         'systemwide' : {'compute_qa': True}
+    }
     
-    p = Parameters(v['inputs'], {}, {}, {}, {})
+    p = Parameters(**pv)
     
     os.chdir('/home/inferis/spr/IR/apr21')
     

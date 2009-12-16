@@ -19,11 +19,11 @@
 
 # $Id$
 
-'''Recipes for Emir Observing Modes'''
-
 __version__ = "$Revision$"
 
-_pipeline_parameters = {'instrument': 'EMIR'}
+from pyfits.NP_pyfits import HDUList
 
-def pipeline_parameters():
-    return _pipeline_parameters
+def store_to_disk(obj, where):
+    if isinstance(obj, HDUList):
+        return obj.writeto(where, clobber=True, output_verify='ignore')
+    raise TypeError(repr(obj) + ' is not storable')

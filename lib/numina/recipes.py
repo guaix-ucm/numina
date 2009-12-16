@@ -29,11 +29,7 @@ A recipe is a module that complies with the *reduction recipe API*:
 
 __version__ = "$Revision$"
 
-#import abc
-
-from numina.exceptions import RecipeError, Error
-
-
+from numina.exceptions import RecipeError, ParameterError
 
 # Classes are new style
 __metaclass__ = type
@@ -100,16 +96,6 @@ class RecipeResult:
 #    __metaclass__ = abc.ABCMeta
     def __init__(self, qa):
         self.qa = qa
-    
-#    @abc.abstractmethod
-    def store(self):
-        '''Store the result'''
-        raise NotImplementedError
-
-
-class ParameterError(Error):
-    def __init__(self, txt):
-        Error.__init__(self, txt)
 
 class ParametersDescription:
     def __init__(self, inputs, outputs, optional, pipeline, systemwide):
@@ -145,4 +131,10 @@ class Parameters:
         self.optional = optional
         self.pipeline = pipeline
         self.systemwide = systemwide
+
+
+_systemwide_parameters = {'compute_qa': True}
+
+def systemwide_parameters():
+    return _systemwide_parameters
 

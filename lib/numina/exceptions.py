@@ -37,3 +37,8 @@ class DetectorElapseError(Error):
     '''Error in the clocking of a Detector.'''
     def __init__(self, txt):
         Error.__init__(self, txt)
+
+class ParameterError(Error):
+    '''Error in the parameters of a recipe.'''
+    def __init__(self, txt):
+        Error.__init__(self, txt)

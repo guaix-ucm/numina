@@ -23,21 +23,23 @@
 
 '''
 
+from __future__ import with_statement
+
 __version__ = "$Revision$"
 
-from __future__ import with_statement
 import logging.config
 import json
 import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
+import pkgutil
+import StringIO
 
 from numina import list_recipes, get_module, check_recipe
 from numina.exceptions import RecipeError
 from numina.jsonserializer import from_json
+from numina.diskstorage import store_to_disk
 import numina.config as nconfig
-
-
 
 version_number = "0.0.2"
 version_line = '%prog ' + version_number
@@ -92,14 +94,13 @@ def mode_run(args, options, logger):
     # Getting the parameters of the recipe
     
     logger.debug('Getting the parameters required by the module')
-    param_desc = recipemod.parameters_description()
     
     # checking if the parameters of the recipe
     # are fullfilled by the parameters in the text file
     with open(args[1]) as f:
         lp = json.load(f, object_hook=from_json, encoding='utf-8')
         
-    lp = param_desc.complete(lp)
+    lp = recipemod.parameters_description().complete(lp)
     
     recipe = recipemod.Recipe(lp)
                 
@@ -112,6 +113,7 @@ def mode_run(args, options, logger):
                      runs - recipe.repeat + 1, runs)
         try:
             result = recipe.run()
+            store_result(lp.outputs, result)
             result.store()
         except RecipeError, e:
             logger.error("%s", e)
@@ -123,15 +125,17 @@ def mode_run(args, options, logger):
     
     logger.info('Completed execution')
 
-
+def store_result(outnames, result):
+    for key, value in outnames.iteritems():
+        store_to_disk(result.__dict__[key], value)
 
 def main(args=None):
     '''Entry point for the Numina CLI. '''        
     # Configuration options from a text file    
     config = SafeConfigParser()
     # Default values, it must exist
-    config.readfp(open(os.path.join(os.path.dirname(__file__), 
-                                    'defaults.cfg')))
+   
+    config.readfp(StringIO.StringIO(pkgutil.get_data('numina','defaults.cfg')))
 
     # Custom values, site wide and local
     config.read([os.path.join(nconfig.myconfigdir, 'site.cfg'), 
@@ -145,10 +149,10 @@ def main(args=None):
 
     # logger file
     if options.logging is None:
-        options.logging = os.path.join(os.path.dirname(__file__), 'logging.ini')
+        options.logging = StringIO.StringIO(pkgutil.get_data('numina','logging.ini'))
 
     logging.config.fileConfig(options.logging)
-        
+    
     logger = logging.getLogger("numina")
     
     logger.info('Numina: EMIR recipe runner version %s', version_number)

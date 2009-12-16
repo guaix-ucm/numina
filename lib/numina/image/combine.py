@@ -19,9 +19,11 @@
 
 # $Id$
 
+from __future__ import division, with_statement
+
 __version__ = "$Revision$"
 
-from __future__ import division, with_statement
+
 from itertools import izip, product
 import functools
 

@@ -31,7 +31,6 @@ import pkgutil
 import pkg_resources
 
 from recipes import RecipeBase, RecipeResult
-from tests import tests as all_tests
 
 # pylint: disable-msg=E0611
 try:
@@ -39,8 +38,6 @@ try:
 except ImportError:
     from logger import NullHandler
 
-# Classes are new style
-__metaclass__ = type
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(NullHandler())
