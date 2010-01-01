@@ -108,7 +108,7 @@ class ParametersDescription:
     def complete(self, obj):
         for key in self.inputs:
             if key not in obj.inputs:
-                raise ParameterError('error in inputs')
+                raise ParameterError('error in inputs parameter %s' % (key))
         for key in self.outputs:
             if key not in obj.outputs:
                 raise ParameterError('error in outputs')

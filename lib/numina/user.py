@@ -114,7 +114,6 @@ def mode_run(args, options, logger):
         try:
             result = recipe.run()
             store_result(lp.outputs, result)
-            result.store()
         except RecipeError, e:
             logger.error("%s", e)
         except (IOError, OSError), e:

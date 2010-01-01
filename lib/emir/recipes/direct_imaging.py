@@ -94,37 +94,46 @@ import pyfits
 import numpy
 
 from numina.recipes import RecipeBase, RecipeResult
+from numina.recipes import ParametersDescription, systemwide_parameters
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
 from numina.image.combine import median
-
+from emir.recipes import pipeline_parameters
+import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
 
+_param_desc = ParametersDescription(inputs={'images': [],
+                                            'master_bias': '',
+                                            'master_dark': '',
+                                            'master_flat': '',
+                                            'master_bpm': ''}, 
+                                    outputs={'bias': 'bias.fits'}, 
+                                    optional={'linearity': (1.0, 0.00),
+                                              }, 
+                                    pipeline=pipeline_parameters(), 
+                                    systemwide=systemwide_parameters()
+                                    )
+
+def parameters_description():
+    return _param_desc
+
 class Result(RecipeResult):
     '''Result of the imaging mode recipe.'''
-    def __init__(self):
-        super(Result, self).__init__()
-        
-    def store(self):
-        '''Description of store.
-        
-        :rtype: None'''
-        pass
+    def __init__(self, qa):
+        super(Result, self).__init__(qa)
 
 
 class Recipe(RecipeBase):
     '''Recipe to process data taken in imaging mode.
      
     '''
-    def __init__(self, options):
-        super(Recipe, self).__init__()
-        self.options = options
+    def __init__(self, parameters):
+        super(Recipe, self).__init__(parameters)
         
     def process(self):
 
-        options = self.options
         # dark correction
         # open the master dark
         dark_data = pyfits.getdata(options.master_dark)    
@@ -177,7 +186,7 @@ class Recipe(RecipeBase):
         # first iteration, without segmentation mask
         
         # Compute the initial sky subtracted images
-        return Result()
+        return Result(QA.UNKNOWN)
         current_iteration = 0
        
         for f in options.files:
@@ -196,10 +205,6 @@ class Recipe(RecipeBase):
             _logger.info('Sky value for image %s is %f', pf, m)
             file_data -= m
             
-            
-            pyfits.writeto(newf, file_data, file_header,
-                           output_verify=options.output_verify, 
-                           clobber=options.clobber)
             _logger.info('Processing %s', newf)
             
         
@@ -209,23 +214,31 @@ class Recipe(RecipeBase):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
+    from numina.user import main
+    from numina.recipes import Parameters
+    import json
+    from numina.jsonserializer import to_json
     
-            
-    class Options:
-        pass
+    inputs = {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
+                     'apr21_0049.fits', 'apr21_0050.fits'],
+                     'master_bias': 'mbias.fits',
+                     'master_dark': 'Dark50.fits',
+                     'linearity': (1e-3, 1e-2, 0.99, 0.00),
+                     'master_flat': 'DummyFlat.fits',
+                     'master_bpm': 'bpm.fits'},
     
-    options = Options()
-    options.files = ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits', 
-                     'apr21_0049.fits', 'apr21_0050.fits']
+    pv = {'inputs' : inputs,
+          'outputs' : {'bias': 'bias.fits'},
+          'optional' : {},
+          'pipeline' : {},
+          'systemwide' : {'compute_qa': True}
+    }
     
-    options.master_bias = 'mbias.fits'
-    options.master_dark = 'Dark50.fits'
-    # Higher order first!
-    options.linearity = (1e-3, 1e-2, 0.99, 0.00)
-    options.master_flat = 'DummyFlat.fits'
-    options.clobber = True
-    options.master_bpm = 'bpm.fits'
-    options.output_verify = 'ignore'
+    p = Parameters(**pv)
     
-    r = Recipe(options)
-    r.process() 
+    os.chdir('/home/inferis/spr/IR/apr21')
+    
+    with open('config-d.txt', 'w+') as f:
+        json.dump(p, f, default=to_json, encoding='utf-8',indent=2)
+    
+    main(['-d', '--run', 'direct_imaging','config-d.txt'])

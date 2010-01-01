@@ -27,18 +27,19 @@ __version__ = "$Revision: 410 $"
 class Error(Exception):
     """Base class for exceptions in the numina package."""
     def __init__(self, txt):
-        Exception.__init__(self, txt)
+        super(Error, self).__init__(txt)
 
 class RecipeError(Error):
     '''A non recoverable problem during recipe execution.'''
-    pass
+    def __init__(self, txt):
+        super(RecipeError, self).__init__(txt)
 
 class DetectorElapseError(Error):
     '''Error in the clocking of a Detector.'''
     def __init__(self, txt):
-        Error.__init__(self, txt)
+        super(DetectorElapseError, self).__init__(txt)
 
 class ParameterError(Error):
     '''Error in the parameters of a recipe.'''
     def __init__(self, txt):
-        Error.__init__(self, txt)
+        super(ParameterError, self).__init__(txt)

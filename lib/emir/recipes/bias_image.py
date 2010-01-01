@@ -51,13 +51,11 @@ import pyfits
 
 from emir.recipes import pipeline_parameters
 from emir.simulation.headers import default_fits_headers
-from numina.recipes import RecipeBase, RecipeResult, ParametersDescription, systemwide_parameters
+from numina.recipes import RecipeBase, RecipeResult
+from numina.recipes import ParametersDescription, systemwide_parameters
 from numina.image.storage import FITSCreator
 from numina.image.combine import mean
 import numina.qa as qa
-
-# Classes are new style
-__metaclass__ = type
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -76,13 +74,6 @@ class Result(RecipeResult):
     def __init__(self, hdulist, qa):
         super(Result, self).__init__(qa)
         self.bias = hdulist
-        
-    def store(self):
-        '''Description of store.
-        
-        :rtype: None'''
-        pass
-        #return self.hdulist.writeto(self.file, clobber=True, output_verify='ignore')
 
 
 class Recipe(RecipeBase):
