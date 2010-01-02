@@ -33,6 +33,32 @@ def from_json(obj):
     if '__class__' in obj:
         if obj['__class__'] == 'numina.recipes.Parameters':
             p = numina.recipes.Parameters({}, {}, {}, {}, {})
-            p.__dict__ = obj['__value__']
+            p.__dict__ = deunicode_json(obj['__value__'])
             return p
     return obj
+
+def deunicode_json(obj):
+    '''Convert unicode strings into plain strings recursively.'''
+    if isinstance(obj, dict):
+        newobj = {}
+        for key, value in obj.iteritems():
+            newobj[str(key)] = deunicode_json(value)
+        return newobj
+    elif isinstance(obj, list):
+        newobj = []
+        for i in obj:
+            newobj.append(deunicode_json(i))
+        return newobj
+    elif isinstance(obj, unicode):
+        val = str(obj)
+        if val.isdigit():
+            val = int(val)
+        else:
+            try:
+                val = float(val)
+            except ValueError:
+                val = str(val)
+        return val
+    
+    return obj
+
