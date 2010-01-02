@@ -32,9 +32,8 @@ def to_json(obj):
 def from_json(obj):
     if '__class__' in obj:
         if obj['__class__'] == 'numina.recipes.Parameters':
-            p = numina.recipes.Parameters({}, {}, {}, {}, {})
-            p.__dict__ = deunicode_json(obj['__value__'])
-            return p
+            dparam = deunicode_json(obj['__value__'])
+            return numina.recipes.Parameters(**dparam)
     return obj
 
 def deunicode_json(obj):
