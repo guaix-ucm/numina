@@ -106,23 +106,15 @@ class ParametersDescription:
         self.systemwide = systemwide
         
     def complete(self, obj):
-        for key in self.inputs:
-            if key not in obj.inputs:
-                raise ParameterError('error in inputs parameter %s' % (key))
-        for key in self.outputs:
-            if key not in obj.outputs:
-                raise ParameterError('error in outputs')
         
-        new_optional = dict(self.optional)
-        new_optional.update(obj.optional)
+        newvals = {}
         
-        new_pipeline = dict(self.pipeline)
-        new_pipeline.update(obj.pipeline)
-
-        new_systemwide = dict(self.systemwide)
-        new_systemwide.update(obj.systemwide)
-        
-        return Parameters(obj.inputs, obj.outputs, new_optional, new_pipeline, new_systemwide)
+        for key in ['inputs', 'outputs', 'optional', 'pipeline', 'systemwide']:
+            d = dict(getattr(self, key))
+            d.update(getattr(obj, key))
+            newvals[key] = d
+    
+        return Parameters(**newvals)
 
 class Parameters:
     def __init__(self, inputs, outputs, optional, pipeline, systemwide):
