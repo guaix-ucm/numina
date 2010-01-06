@@ -10,7 +10,6 @@ ex1 = Extension('numina.image._combine',
                  'src/methods.cc',
                  'src/methods_python.cc',  
                  'src/method_factory.cc',
-                 'src/transformation_factory.cc',             
                  ],
           include_dirs=[numpy_include])
 
