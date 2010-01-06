@@ -50,7 +50,7 @@ import logging
 import pyfits
 
 from emir.recipes import pipeline_parameters
-from emir.simulation.headers import default_fits_headers
+from emir.instrument.headers import default_fits_headers
 from numina.recipes import RecipeBase, RecipeResult
 from numina.recipes import ParametersDescription, systemwide_parameters
 from numina.image.storage import FITSCreator

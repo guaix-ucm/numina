@@ -93,6 +93,9 @@ class Corrector:
         if not primary.header.has_key(self.flag):
             return False
         return True
+    
+    def correct(self, hdulist):
+        raise NotImplementedError
 
 class BiasCorrector(Corrector):
     def __init__(self, biasdata):
@@ -139,7 +142,20 @@ class FlatFieldCorrector(Corrector):
     def __str__(self):
         return "FlatFieldCorrector"
 
+class NaNCorrector(Corrector):
+    def __init__(self, value, mask_extension='mask'):
+        super(NaNCorrector, self).__init__('NUM-NAN', 'NaN removed with numina')
+        self.value = value
+        self.mask_extension = mask_extension
 
+    def correct(self, hdulist):
+        primary = hdulist['PRIMARY']
+        mask = hdulist[mask_extension]
+
+        isnan_mask = numpy.isnan(primary.data)
+        mask &= isnan_mask
+        primary.data[isnan_mask] = self.value
+        return True
             
 def generic_processing(inputs, correctors, backup=False, output_verify='ignore', outputs=None):
     

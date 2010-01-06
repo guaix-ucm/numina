@@ -28,7 +28,7 @@ import scipy
 from numina.image.storage import FITSCreator
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
-from emir.simulation.headers import default_fits_headers
+from emir.instrument.headers import default_fits_headers
 
 # Classes are new style
 __metaclass__ = type

@@ -108,11 +108,11 @@ _param_desc = ParametersDescription(inputs={'images': [],
                                             'master_bias': '',
                                             'master_dark': '',
                                             'master_flat': '',
-                                            'master_bpm': ''}, 
-                                    outputs={'bias': 'bias.fits'}, 
+                                            'master_bpm': ''},
+                                    outputs={'bias': 'bias.fits'},
                                     optional={'linearity': (1.0, 0.00),
-                                              }, 
-                                    pipeline=pipeline_parameters(), 
+                                              },
+                                    pipeline=pipeline_parameters(),
                                     systemwide=systemwide_parameters()
                                     )
 
@@ -136,14 +136,15 @@ class Recipe(RecipeBase):
 
         # dark correction
         # open the master dark
-        dark_data = pyfits.getdata(options.master_dark)    
-        flat_data = pyfits.getdata(options.master_flat)
+        dark_data = pyfits.getdata(self.parameters.inputs['master_dark'])    
+        flat_data = pyfits.getdata(self.parameters.inputs['master_flat'])
         
         corrector1 = DarkCorrector(dark_data)
-        corrector2 = NonLinearityCorrector(options.linearity)
+        corrector2 = NonLinearityCorrector(self.parameters.inputs['linearity'])
         corrector3 = FlatFieldCorrector(flat_data)
         
-        generic_processing(options.files, [corrector1, corrector2, corrector3], backup=True)
+        generic_processing(self.parameters.inputs['images'], 
+                           [corrector1, corrector2, corrector3], backup=True)
         
         del dark_data
         del flat_data    
@@ -152,7 +153,7 @@ class Recipe(RecipeBase):
         # ----------------------------------
         alldata = []
         
-        for n in options.files:
+        for n in self.parameters.inputs['images']:
             f = pyfits.open(n, 'readonly', memmap=True)
             alldata.append(f[0].data)
             
@@ -160,12 +161,13 @@ class Recipe(RecipeBase):
         
         allmasks = []
         #for n in ['apr21_0067DLFS-0.fits.mask'] * len(options.files):
-        for n in options.files:
+        for n in self.parameters.inputs['images']:
             #f = pyfits.open(n, 'readonly', memmap=True)
             allmasks.append(numpy.zeros(alldata[0].shape))
         
         # Compute the median of all images in valid pixels
-        scales = [numpy.median(data[mask == 0]) for data, mask in zip(alldata, allmasks)]
+        scales = [numpy.median(data[mask == 0]) 
+                  for data, mask in zip(alldata, allmasks)]
         
         illum_data = median(alldata, allmasks, scales=scales)
         print illum_data[0].shape
@@ -189,7 +191,7 @@ class Recipe(RecipeBase):
         return Result(QA.UNKNOWN)
         current_iteration = 0
        
-        for f in options.files:
+        for f in self.parameters.inputs['images']:
             # open file            
             # get the data
             newf = self.get_processed(f, 'DLFS-%d' % current_iteration)
@@ -218,16 +220,16 @@ if __name__ == '__main__':
     from numina.recipes import Parameters
     import json
     from numina.jsonserializer import to_json
-    
-    inputs = {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
-                     'apr21_0049.fits', 'apr21_0050.fits'],
-                     'master_bias': 'mbias.fits',
-                     'master_dark': 'Dark50.fits',
-                     'linearity': (1e-3, 1e-2, 0.99, 0.00),
-                     'master_flat': 'DummyFlat.fits',
-                     'master_bpm': 'bpm.fits'},
-    
-    pv = {'inputs' : inputs,
+     
+    pv = {'inputs' :  {'images': ['apr21_0046.fits', 'apr21_0047.fits', 
+                                  'apr21_0048.fits','apr21_0049.fits', 
+                                  'apr21_0050.fits'],
+                        'master_bias': 'mbias.fits',
+                        'master_dark': 'Dark50.fits',
+                        'linearity': (1e-3, 1e-2, 0.99, 0.00),
+                        'master_flat': 'DummyFlat.fits',
+                        'master_bpm': 'bpm.fits'
+                        },
           'outputs' : {'bias': 'bias.fits'},
           'optional' : {},
           'pipeline' : {},
@@ -236,9 +238,9 @@ if __name__ == '__main__':
     
     p = Parameters(**pv)
     
-    os.chdir('/home/inferis/spr/IR/apr21')
+    os.chdir('/home/sergio/IR/apr21')
     
     with open('config-d.txt', 'w+') as f:
-        json.dump(p, f, default=to_json, encoding='utf-8',indent=2)
+        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
     
-    main(['-d', '--run', 'direct_imaging','config-d.txt'])
+    main(['-d', '--run', 'direct_imaging', 'config-d.txt'])

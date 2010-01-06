@@ -35,6 +35,8 @@ from ConfigParser import SafeConfigParser
 import pkgutil
 import StringIO
 
+import xdg.BaseDirectory as xdgbd
+
 from numina import list_recipes, get_module, check_recipe
 from numina.exceptions import RecipeError
 from numina.jsonserializer import from_json
