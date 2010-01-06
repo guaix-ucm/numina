@@ -33,7 +33,7 @@ def print_info():
     print ''
     print 'python version', sys.version
     print 'my pid', os.getpid()
-    print 'emir version', emir.EMIR_VERSION_STRING
+    print 'emir version', emir.__version__
     sys.stdout.flush()
     
 class PrintInfoFakeTest(unittest.TestCase):
