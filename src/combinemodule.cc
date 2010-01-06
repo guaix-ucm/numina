@@ -24,7 +24,6 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include <iostream>
 
 #include <Python.h>
 
