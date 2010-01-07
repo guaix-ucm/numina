@@ -153,13 +153,27 @@ _spectrum_extra_fits_headers = {
 ])
 }
 
-_image_fits_headers = _common_fits_headers.ascard.extend(_image_extra_fits_headers.ascard)
-_spectrum_fits_headers = _common_fits_headers.ascard.extend(_spectrum_extra_fits_headers.ascard)
+
+def _merge(header1, header2):
+    '''Merge the contents of header2 with header1.'''
+    result = dict(header1)
+    
+    for key in result:
+        if key in header2:
+            result[key].ascard.extend(header2[key].ascard)
+
+    return result
+
+_image_fits_headers = _merge(_common_fits_headers, _image_extra_fits_headers)
+_spectrum_fits_headers = _merge(_common_fits_headers, _spectrum_extra_fits_headers)
 
 class EmirImage(FITSCreator):
+    '''Builder of Emir direct image.'''
     def __init__(self): 
         super(EmirImage, self).__init__(_image_fits_headers)
         
 class EmirSpectrum(FITSCreator):
+    '''Builder of Emir spectrum.'''
     def __init__(self): 
         super(EmirImage, self).__init__(_spectrum_fits_headers)
+
