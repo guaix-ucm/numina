@@ -91,6 +91,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   PyArrayObject* scales = NULL;
   PyArrayObject* zeros = NULL;
   PyArrayObject* weights = NULL;
+  NPY_BEGIN_THREADS_DEF;
 
   static char *kwlist[] = { "method", "data", "masks", "out0", "out1", "out2",
       "args", "zeros", "scales", "weights", NULL };
@@ -215,7 +216,10 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   // to transform the data in arrays into
   // the doubles we're working on
 
-  PyArray_Descr* descr = PyArray_DESCR(iarr[0]);
+  PyArray_Descr* descr = 0;
+
+  // Conversion for inputs
+  descr = PyArray_DESCR(iarr[0]);
   // Convert from the array to NPY_DOUBLE
   PyArray_VectorUnaryFunc* datum_converter = PyArray_GetCastFunc(descr,
       NPY_DOUBLE);
@@ -223,6 +227,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   PyArray_CopySwapFunc* datum_swap = descr->f->copyswap;
   bool datum_need_to_swap = PyArray_ISBYTESWAPPED(iarr[0]);
 
+  // Conversion for masks
   descr = PyArray_DESCR(marr[0]);
   // Convert from the array to NPY_BOOL
   PyArray_VectorUnaryFunc* mask_converter =
@@ -231,11 +236,10 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   PyArray_CopySwapFunc* mask_swap = descr->f->copyswap;
   bool mask_need_to_swap = PyArray_ISBYTESWAPPED(marr[0]);
 
+  // TODO Conversion for outputs
+
   // A buffer used to store intermediate results during swapping
-  // Its size is arbitrary, double the size of a long double
-  // so the function could give wrong results if the data size is
-  // larger than that
-  char buffer[2 * sizeof(long double)];
+  char buffer[NPY_BUFSIZE];
 
   // Iterators
   VectorPyArrayIter iiter(nimages);
@@ -286,6 +290,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
         double* weight = static_cast<double*> (PyArray_GETPTR1(weights, ii));
         if (zero and scale and weight)
         {
+          NPY_BEGIN_THREADS;
           void* d_dtpr = (*i)->dataptr;
           // Swap the value if needed and store it in the buffer
           datum_swap(buffer, d_dtpr, datum_need_to_swap, NULL);
@@ -299,6 +304,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 
           data.push_back(converted);
           wdata.push_back(*weight);
+          NPY_END_THREADS;
         } else
         {
           return PyErr_Format(CombineError,
@@ -312,13 +318,14 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     for (size_t i = 0; i < OUTDIM; ++i)
       values[i] = (double*) oiter[i]->dataptr;
 
+    NPY_BEGIN_THREADS;
     // And pass the data to the combine method
     method_ptr->run(&data[0], &wdata[0], data.size(), values);
 
     // We clean up the data storage
     data.clear();
     wdata.clear();
-
+    NPY_END_THREADS;
     // And move all the iterators to the next point
     std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);
     std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
