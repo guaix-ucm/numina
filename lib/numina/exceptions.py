@@ -39,6 +39,11 @@ class DetectorElapseError(Error):
     def __init__(self, txt):
         super(DetectorElapseError, self).__init__(txt)
 
+class DetectorReadoutError(Error):
+    '''Error in the readout of a Detector.'''
+    def __init__(self, txt):
+        super(DetectorReadoutError, self).__init__(txt)
+
 class ParameterError(Error):
     '''Error in the parameters of a recipe.'''
     def __init__(self, txt):

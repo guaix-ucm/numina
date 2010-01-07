@@ -22,7 +22,7 @@
 __version__ = "$Revision$"
 
 import numina.instrument
-from emir.exceptions import DetectorReadoutError
+from numina.exceptions import DetectorReadoutError
 
 # Classes are new style
 __metaclass__ = type
