@@ -41,7 +41,6 @@ from numina import list_recipes, get_module, check_recipe
 from numina.exceptions import RecipeError
 from numina.jsonserializer import from_json
 from numina.diskstorage import store_to_disk
-import numina.config as nconfig
 
 version_number = "0.0.2"
 version_line = '%prog ' + version_number
@@ -139,9 +138,8 @@ def main(args=None):
     config.readfp(StringIO.StringIO(pkgutil.get_data('numina','defaults.cfg')))
 
     # Custom values, site wide and local
-    config.read([os.path.join(nconfig.myconfigdir, 'site.cfg'), 
-                 os.path.expanduser('~/.numina.cfg')])
-
+    config.read([os.path.join(xdgbd.xdg_config_home, 'numina/numina.cfg')])
+    
     # The cmd line is parsed
     options, args = parse_cmdline(args)
 
