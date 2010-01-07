@@ -50,7 +50,7 @@ import logging
 import pyfits
 
 from emir.recipes import pipeline_parameters
-from emir.instrument.headers import default_fits_headers
+from emir.instrument.headers import EmirImage
 from numina.recipes import RecipeBase, RecipeResult
 from numina.recipes import ParametersDescription, systemwide_parameters
 from numina.image.storage import FITSCreator
@@ -105,7 +105,7 @@ class Recipe(RecipeBase):
         # Combine them
         cube = mean(alldata, allmasks)
         
-        creator = FITSCreator(default_fits_headers)
+        creator = EmirImage()
         hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
         
         if self.parameters.systemwide['compute_qa']:

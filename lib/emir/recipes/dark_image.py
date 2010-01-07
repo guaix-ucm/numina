@@ -51,8 +51,7 @@ import scipy.stsci.image as im
 
 from numina.recipes import RecipeBase, RecipeResult
 from numina.exceptions import RecipeError
-from numina.image.storage import FITSCreator
-from emir.instrument.headers import default_fits_headers
+from emir.instrument.headers import EmirImage
 
 
 _logger = logging.getLogger("emir.recipes")

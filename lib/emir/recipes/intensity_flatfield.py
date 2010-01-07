@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -53,9 +53,8 @@ from numina.recipes import ParametersDescription, systemwide_parameters
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.image.processing import generic_processing
 from numina.image.combine import median, mean
-from numina.image.storage import FITSCreator
 from emir.recipes import pipeline_parameters
-from emir.instrument.headers import default_fits_headers
+from emir.instrument.headers import EmirImage
 import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
@@ -126,7 +125,7 @@ class Recipe(RecipeBase):
         illum_data = mean(alldata, masks=allmasks, scales=scales)
         _logger.info("Data combined")
         
-        fc = FITSCreator(default_fits_headers)
+        fc = EmirImage()
         
         illum = fc.create(illum_data)
         _logger.info("Final image created")
