@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -27,7 +27,6 @@ import logging
 import pyfits
 
 
-
 # Classes are new style
 __metaclass__ = type
 
@@ -38,7 +37,7 @@ class FITSCreator:
     def __init__(self, default_headers):
         self.defaults = default_headers
         
-    def init_primary_HDU(self, data=None, headers=None):
+    def _init_primary_HDU(self, data=None, headers=None):
         '''Create the primary HDU of the FITS file.'''
         hdu = pyfits.PrimaryHDU(data, self.defaults['PRIMARY'])
                 
@@ -53,7 +52,7 @@ class FITSCreator:
                     _logger.warning("Keyword %s not permitted in FITS header", key)
         return hdu
     
-    def init_extension_HDU(self, data=None, headers=None, extname=None):
+    def _init_extension_HDU(self, data=None, headers=None, extname=None):
         '''Create a HDU extension of the FITS file.'''
         try:
             hdu = pyfits.ImageHDU(data, self.defaults[extname], name=extname)
@@ -76,7 +75,7 @@ class FITSCreator:
     def create(self, data=None, headers=None, extensions=None):
         
         created_hdus = []
-        hdu = self.init_primary_HDU(data, headers=headers)
+        hdu = self._init_primary_HDU(data, headers=headers)
         created_hdus.append(hdu)
         
         # Updating time
@@ -90,7 +89,7 @@ class FITSCreator:
             for (ename, edata, eheaders) in extensions:
                 if eheaders is not None:
                     eheaders.update(dateheaders)
-                hdu = self.init_extension_HDU(edata, eheaders, ename)
+                hdu = self._init_extension_HDU(edata, eheaders, ename)
                 created_hdus.append(hdu)
                         
         hdulist = pyfits.HDUList(created_hdus)
