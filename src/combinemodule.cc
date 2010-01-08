@@ -20,7 +20,6 @@
 
 /* $Id$ */
 
-#include <string>
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -146,6 +145,9 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   /* images are forced to be in list */
   const Py_ssize_t nimages = PyList_GET_SIZE(images);
 
+  if(nimages == 0)
+    return PyErr_Format(CombineError, "data list is empty");
+
   // getting the contents inside vectors
   std::vector<PyObject*> iarr(nimages);
 
@@ -236,7 +238,19 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   PyArray_CopySwapFunc* mask_swap = descr->f->copyswap;
   bool mask_need_to_swap = PyArray_ISBYTESWAPPED(marr[0]);
 
-  // TODO Conversion for outputs
+  // Conversion for outputs
+  descr = PyArray_DESCR(out[0]);
+  // Swap bytes
+  PyArray_CopySwapFunc* out_swap = descr->f->copyswap;
+  // Inverse cast
+  PyArray_Descr* descr_to = PyArray_DescrFromType(NPY_DOUBLE);
+  // We cast from double to the type of out array
+  PyArray_VectorUnaryFunc* out_converter = PyArray_GetCastFunc(descr_to,
+      PyArray_TYPE(out[0]));
+
+  bool out_need_to_swap = PyArray_ISBYTESWAPPED(out[0]);
+  // This is probably not needed
+  Py_DECREF(descr_to);
 
   // A buffer used to store intermediate results during swapping
   char buffer[NPY_BUFSIZE];
@@ -262,7 +276,11 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   wdata.reserve(nimages);
 
   // pointers to the pixels in out[0,1,2] arrays
-  double* values[OUTDIM];
+  double* pvalues[OUTDIM];
+  double values[OUTDIM];
+
+  for (int i = 0; i < OUTDIM; ++i)
+    pvalues[i] = &values[i];
 
   while (iter->index < iter->size)
   {
@@ -280,7 +298,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
       mask_converter(buffer, &m_val, 1, NULL, NULL);
 
       if (not m_val) // <- True values are skipped
-
       {
         // If mask converts to NPY_FALSE,
         // we store the value of the image array
@@ -313,14 +330,18 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
       }
     }
 
-    // We obtain pointers to the result arrays
-    // We assume here that output is double and well behaved
-    for (size_t i = 0; i < OUTDIM; ++i)
-      values[i] = (double*) oiter[i]->dataptr;
-
     NPY_BEGIN_THREADS;
     // And pass the data to the combine method
-    method_ptr->run(&data[0], &wdata[0], data.size(), values);
+    method_ptr->run(&data[0], &wdata[0], data.size(), pvalues);
+
+    // Conversion from NPY_DOUBLE to the type of output
+    for (size_t i = 0; i < OUTDIM; ++i)
+    {
+      // Cast to out
+      out_converter(pvalues[i], buffer, 1, NULL, NULL);
+      // Swap if needed
+      out_swap(oiter[i]->dataptr, buffer, out_need_to_swap, NULL);
+    }
 
     // We clean up the data storage
     data.clear();
