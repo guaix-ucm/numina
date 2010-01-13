@@ -42,10 +42,9 @@ flat-field.
 __version__ = "$Revision$"
 
 import logging
-import warnings
 
 import pyfits
-import numpy
+import numpy as np
 
 from numina.recipes import RecipeBase, RecipeResult
 from numina.recipes import ParametersDescription, systemwide_parameters
@@ -87,7 +86,7 @@ class Recipe(RecipeBase):
     '''
     def __init__(self, parameters):
         super(Recipe, self).__init__(parameters)
-        
+
     def process(self):
 
         # dark correction
@@ -97,7 +96,7 @@ class Recipe(RecipeBase):
         corrector1 = DarkCorrector(dark_data)
         corrector2 = NonLinearityCorrector(self.parameters.inputs['linearity'])
              
-        generic_processing(self.parameters.inputs['images'], 
+        generic_processing(self.parameters.inputs['images'],
                            [corrector1, corrector2], backup=True)
           
         
@@ -106,28 +105,40 @@ class Recipe(RecipeBase):
         alldata = []
         
         for n in self.parameters.inputs['images']:
-            f = pyfits.open(n, 'readonly', memmap=False)
-            alldata.append(f['PRIMARY'].data)
+            f = pyfits.open(n, 'readonly', memmap=True)
+            _logger.debug('Loading image %s', n)
+            d = f['PRIMARY'].data
+            if np.any(np.isnan(d)):
+                _logger.warning('Image %s has NaN values', n)
+            else:
+                alldata.append(d) 
         
         allmasks = []
         
         for n in self.parameters.inputs['masks']:
-            f = pyfits.open(n, 'readonly', memmap=False)
-            allmasks.append(f['PRIMARY'].data)
-        
+            f = pyfits.open(n, 'readonly', memmap=True)
+            _logger.debug('Loading mask %s', n)
+            d = f['PRIMARY'].data
+            if np.any(np.isnan(d)):
+                _logger.warning('Mask %s has NaN values', n)
+            else:
+                allmasks.append(d)
         
         # Compute the median of all images in valid pixels
-        scales = [numpy.mean(data) 
+        scales = [np.mean(data[mask == 0]) 
                   for data, mask in zip(alldata, allmasks)]
         _logger.info("Scales computed")
         
         # Combining all the images
         illum_data = mean(alldata, masks=allmasks, scales=scales)
         _logger.info("Data combined")
-        
+
         fc = EmirImage()
         
-        illum = fc.create(illum_data)
+        substitute_value = 1
+        illum_data[illum_data == 0] = substitute_value
+        
+        illum = fc.create(illum_data[0])
         _logger.info("Final image created")
         
         return Result(QA.UNKNOWN, illum)
@@ -141,11 +152,77 @@ if __name__ == '__main__':
     import os
     from numina.jsonserializer import to_json
     import numpy as np
-     
-    pv = {'inputs' :  {'images': ['apr21_0067.fits', 'apr21_0068.fits', 
-                                  'apr21_0069.fits','apr21_0070.fits'],
-                        'masks': ['apr21_0067.fits_mask', 'apr21_0068.fits_mask', 
-                                  'apr21_0069.fits_mask','apr21_0070.fits_mask'],
+
+    pv = {'inputs' :  {'images': ['apr21_0046.fits',
+                                  'apr21_0047.fits',
+                                  'apr21_0048.fits',
+                                  'apr21_0049.fits',
+                                  'apr21_0051.fits',
+                                  'apr21_0052.fits',
+                                  'apr21_0053.fits',
+                                  'apr21_0054.fits',
+                                  'apr21_0055.fits',
+                                  'apr21_0056.fits',
+                                  'apr21_0057.fits',
+                                  'apr21_0058.fits',
+                                  'apr21_0059.fits',
+                                  'apr21_0060.fits',
+                                  'apr21_0061.fits',
+                                  'apr21_0062.fits',
+                                  'apr21_0063.fits',
+                                  'apr21_0064.fits',
+                                  'apr21_0065.fits',
+                                  'apr21_0066.fits',
+                                  'apr21_0067.fits',
+                                  'apr21_0068.fits',
+                                  'apr21_0069.fits',
+                                  'apr21_0070.fits',
+                                  'apr21_0071.fits',
+                                  'apr21_0072.fits',
+                                  'apr21_0073.fits',
+                                  'apr21_0074.fits',
+                                  'apr21_0075.fits',
+                                  'apr21_0076.fits',
+                                  'apr21_0077.fits',
+                                  'apr21_0078.fits',
+                                  'apr21_0079.fits',            
+                                  'apr21_0080.fits',
+                                  'apr21_0081.fits'],
+                        'masks': ['apr21_0046.fits_mask',
+                                  'apr21_0047.fits_mask',
+                                  'apr21_0048.fits_mask',
+                                  'apr21_0049.fits_mask',                                  
+                                  'apr21_0051.fits_mask',          
+                                  'apr21_0052.fits_mask',
+                                  'apr21_0053.fits_mask',
+                                  'apr21_0054.fits_mask',
+                                  'apr21_0055.fits_mask',
+                                  'apr21_0056.fits_mask',
+                                  'apr21_0057.fits_mask',
+                                  'apr21_0058.fits_mask',
+                                  'apr21_0059.fits_mask',
+                                  'apr21_0060.fits_mask',          
+                                  'apr21_0061.fits_mask',
+                                  'apr21_0062.fits_mask',
+                                  'apr21_0063.fits_mask',
+                                  'apr21_0064.fits_mask',
+                                  'apr21_0065.fits_mask',
+                                  'apr21_0066.fits_mask',
+                                  'apr21_0067.fits_mask',
+                                  'apr21_0068.fits_mask',
+                                  'apr21_0069.fits_mask',
+                                  'apr21_0070.fits_mask',
+                                  'apr21_0071.fits_mask',
+                                  'apr21_0072.fits_mask',
+                                  'apr21_0073.fits_mask',
+                                  'apr21_0074.fits_mask',
+                                  'apr21_0075.fits_mask',
+                                  'apr21_0076.fits_mask',
+                                  'apr21_0077.fits_mask',
+                                  'apr21_0078.fits_mask',
+                                  'apr21_0079.fits_mask',
+                                  'apr21_0080.fits_mask',
+                                  'apr21_0081.fits_mask'],
                         'master_bias': 'mbias.fits',
                         'master_dark': 'Dark50.fits',
                         'linearity': [1e-3, 1e-2, 0.99, 0.00],
@@ -159,9 +236,12 @@ if __name__ == '__main__':
     
     p = Parameters(**pv)
     
-    os.chdir('/home/sergio/IR/apr21')
+    os.chdir('/home/inferis/spr/IR/apr21')
     
-    #with open('config-iff.txt', 'w+') as f:
-    #    json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
-    
+    f = open('config-iff.txt', 'w+')
+    try:
+        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
+    finally:
+        f.close()
+        
     main(['-d', '--run', 'intensity_flatfield', 'config-iff.txt'])
