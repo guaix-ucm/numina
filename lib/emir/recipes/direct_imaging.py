@@ -73,8 +73,8 @@ process starts:
 
  * An object mask is generated.
 
- * We recompute the sky map, using the object mask as an additional imput. From
-   here we iterate (tipically 4 times).
+ * We recompute the sky map, using the object mask as an additional input. From
+   here we iterate (typically 4 times).
 
  * Finally, the images are corrected from atmospheric extinction and flux
    calibrated.
@@ -91,7 +91,7 @@ import os.path
 import logging
 
 import pyfits
-import numpy
+import numpy as np
 
 from numina.recipes import RecipeBase, RecipeResult
 from numina.recipes import ParametersDescription, systemwide_parameters
@@ -105,12 +105,14 @@ import numina.qa as QA
 _logger = logging.getLogger("emir.recipes")
 
 _param_desc = ParametersDescription(inputs={'images': [],
+                                            'masks': [],
+                                            'offsets': [],
                                             'master_bias': '',
                                             'master_dark': '',
                                             'master_flat': '',
                                             'master_bpm': ''},
-                                    outputs={'bias': 'bias.fits'},
-                                    optional={'linearity': (1.0, 0.00),
+                                    outputs={},#'result': 'result.fits'},
+                                    optional={'linearity': [1.0, 0.0],
                                               },
                                     pipeline=pipeline_parameters(),
                                     systemwide=systemwide_parameters()
@@ -119,10 +121,22 @@ _param_desc = ParametersDescription(inputs={'images': [],
 def parameters_description():
     return _param_desc
 
+def combine_shape(shapes, offsets):
+    # Computing final image size and new offsets
+    sharr = np.asarray(shapes)
+    
+    offarr = np.asarray(offsets)        
+    ucorners = offarr + sharr
+    ref = offarr.min(axis=0)        
+    finalshape = ucorners.max(axis=0) - ref 
+    offsetsp = offarr - ref
+    return (finalshape, offsetsp)
+
 class Result(RecipeResult):
     '''Result of the imaging mode recipe.'''
     def __init__(self, qa):
         super(Result, self).__init__(qa)
+        
 
 
 class Recipe(RecipeBase):
@@ -134,6 +148,9 @@ class Recipe(RecipeBase):
         
     def process(self):
 
+        images = self.parameters.inputs['images'].keys()
+        images.sort()
+
         # dark correction
         # open the master dark
         dark_data = pyfits.getdata(self.parameters.inputs['master_dark'])    
@@ -143,75 +160,58 @@ class Recipe(RecipeBase):
         corrector2 = NonLinearityCorrector(self.parameters.inputs['linearity'])
         corrector3 = FlatFieldCorrector(flat_data)
         
-        generic_processing(self.parameters.inputs['images'], 
-                           [corrector1, corrector2, corrector3], backup=True)
+        generic_processing(images, [corrector1, corrector2, corrector3], backup=True)
         
         del dark_data
         del flat_data    
         
-        # Illumination seems to be necessary
-        # ----------------------------------
-        alldata = []
+        # Preiteration
         
-        for n in self.parameters.inputs['images']:
-            f = pyfits.open(n, 'readonly', memmap=True)
-            alldata.append(f[0].data)
-            
-        print alldata[0].shape
+        # Getting the offsets
+        offsets = [self.parameters.inputs['images'][k][1] for k in images]
         
-        allmasks = []
-        #for n in ['apr21_0067DLFS-0.fits.mask'] * len(options.files):
-        for n in self.parameters.inputs['images']:
-            #f = pyfits.open(n, 'readonly', memmap=True)
-            allmasks.append(numpy.zeros(alldata[0].shape))
+        # Getting the shapes of all the images
+        allshapes = []
         
-        # Compute the median of all images in valid pixels
-        scales = [numpy.median(data[mask == 0]) 
-                  for data, mask in zip(alldata, allmasks)]
+        # All images have the same shape
+        for file in images:
+            hdulist = pyfits.open(file)
+            try:
+                allshapes.append(hdulist['primary'].data.shape)
+            finally:
+                hdulist.close()
         
-        illum_data = median(alldata, allmasks, scales=scales)
-        print illum_data[0].shape
-        print illum_data.mean()
-        # Combining all the images
+        # Computing the shape of the fional image
+        finalshape, offsetsp = combine_shape(allshapes, offsets)
+        _logger.info("Shape of the final image %s", finalshape)
         
+        # Resize images, to final size
+        for file, shape, o in zip(images, allshapes, offsetsp):
+            hdulist = pyfits.open(file)
+            try:
+                p = hdulist['primary']
+                newfile = 'r_' + file
+                newdata = np.zeros(finalshape, dtype=p.data.dtype)
+                
+                region = (slice(o[0], o[0] + shape[0]), slice(o[1], o[1] + shape[1]))
+                newdata[region] = p.data
+                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
+                _logger.info('Resized image %s into image %s, new shape %s', file, newfile, finalshape)
+            finally:
+                hdulist.close()
+                
+        # Resize masks to final size
         
-        # Data pre processed
-        number_of_iterations = 4
+        # Compute sky from the image (median)
         
-        # ** 2 iter for bright objects + sextractor tunning
-        # ** 4 iter for dim objects + sextractor tunning
+        # Combine with offsets
         
-        # ** QA after 1st iter
-        # * Flux control
-        # * Offset refinement
-
-        # first iteration, without segmentation mask
+        # Generate object mask (using sextractor?)
         
-        # Compute the initial sky subtracted images
+        # Iterate 4 times
+                
         return Result(QA.UNKNOWN)
-        current_iteration = 0
-       
-        for f in self.parameters.inputs['images']:
-            # open file            
-            # get the data
-            newf = self.get_processed(f, 'DLFS-%d' % current_iteration)
-            if os.path.lexists(newf) and not options.clobber:                
-                _logger.info('File %s exists, skipping', newf)
-                continue
-            
-            pf = self.get_processed(f, 'DLF')
-            (file_data, file_header) = pyfits.getdata(pf, header=True)
-            
-            # Initial estimate of the sky background
-            m = numpy.median(file_data)
-            _logger.info('Sky value for image %s is %f', pf, m)
-            file_data -= m
-            
-            _logger.info('Processing %s', newf)
-            
-        
-        
-        return Result()   
+
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -221,16 +221,51 @@ if __name__ == '__main__':
     import json
     from numina.jsonserializer import to_json
      
-    pv = {'inputs' :  {'images': ['apr21_0046.fits', 'apr21_0047.fits', 
-                                  'apr21_0048.fits','apr21_0049.fits', 
-                                  'apr21_0050.fits'],
+    pv = {'inputs' :  { 'images':  
+                       {'apr21_0046.fits': ('apr21_0046.fits_mask', (0, 0), ['apr21_0046.fits']),
+                        'apr21_0047.fits': ('apr21_0047.fits_mask', (0, 0), ['apr21_0047.fits']),
+                        'apr21_0048.fits': ('apr21_0048.fits_mask', (0, 0), ['apr21_0048.fits']),
+                        'apr21_0049.fits': ('apr21_0049.fits_mask', (21, -23), ['apr21_0049.fits']),
+                        'apr21_0050.fits': ('apr21_0050.fits_mask', (21, -23), ['apr21_0050.fits']),
+                        'apr21_0051.fits': ('apr21_0051.fits_mask', (21, -23), ['apr21_0051.fits']),
+                        'apr21_0052.fits': ('apr21_0052.fits_mask', (-15, -35), ['apr21_0052.fits']),
+                        'apr21_0053.fits': ('apr21_0053.fits_mask', (-15, -35), ['apr21_0053.fits']),
+                        'apr21_0054.fits': ('apr21_0054.fits_mask', (-15, -35), ['apr21_0054.fits']),
+                        'apr21_0055.fits': ('apr21_0055.fits_mask', (24, 12), ['apr21_0055.fits']),
+                        'apr21_0056.fits': ('apr21_0056.fits_mask', (24, 12), ['apr21_0056.fits']),
+                        'apr21_0057.fits': ('apr21_0057.fits_mask', (24, 12), ['apr21_0057.fits']),
+                        'apr21_0058.fits': ('apr21_0058.fits_mask', (-27, 18), ['apr21_0058.fits']),
+                        'apr21_0059.fits': ('apr21_0059.fits_mask', (-27, 18), ['apr21_0059.fits']),
+                        'apr21_0060.fits': ('apr21_0060.fits_mask', (-27, 18), ['apr21_0060.fits']),
+                        'apr21_0061.fits': ('apr21_0061.fits_mask', (-38, -16), ['apr21_0061.fits']),
+                        'apr21_0062.fits': ('apr21_0062.fits_mask', (-38, -16), ['apr21_0062.fits']),
+                        'apr21_0063.fits': ('apr21_0063.fits_mask', (-38, -17), ['apr21_0063.fits']),
+                        'apr21_0064.fits': ('apr21_0064.fits_mask', (5, 27), ['apr21_0064.fits']),
+                        'apr21_0065.fits': ('apr21_0065.fits_mask', (5, 27), ['apr21_0065.fits']),
+                        'apr21_0066.fits': ('apr21_0066.fits_mask', (5, 27), ['apr21_0066.fits']),
+                        'apr21_0067.fits': ('apr21_0067.fits_mask', (32, -13), ['apr21_0067.fits']),
+                        'apr21_0068.fits': ('apr21_0068.fits_mask', (33, -13), ['apr21_0068.fits']),
+                        'apr21_0069.fits': ('apr21_0069.fits_mask', (32, -13), ['apr21_0069.fits']),
+                        'apr21_0070.fits': ('apr21_0070.fits_mask', (-52, 7), ['apr21_0070.fits']),
+                        'apr21_0071.fits': ('apr21_0071.fits_mask', (-52, 8), ['apr21_0071.fits']),
+                        'apr21_0072.fits': ('apr21_0072.fits_mask', (-52, 8), ['apr21_0072.fits']),
+                        'apr21_0073.fits': ('apr21_0073.fits_mask', (-3, -49), ['apr21_0073.fits']),
+                        'apr21_0074.fits': ('apr21_0074.fits_mask', (-3, -49), ['apr21_0074.fits']),
+                        'apr21_0075.fits': ('apr21_0075.fits_mask', (-3, -49), ['apr21_0075.fits']),
+                        'apr21_0076.fits': ('apr21_0076.fits_mask', (-49, -33), ['apr21_0076.fits']),
+                        'apr21_0077.fits': ('apr21_0077.fits_mask', (-49, -32), ['apr21_0077.fits']),
+                        'apr21_0078.fits': ('apr21_0078.fits_mask', (-49, -32), ['apr21_0078.fits']),
+                        'apr21_0079.fits': ('apr21_0079.fits_mask', (-15, 36), ['apr21_0079.fits']),
+                        'apr21_0080.fits': ('apr21_0080.fits_mask', (-16, 36), ['apr21_0080.fits']),
+                        'apr21_0081.fits': ('apr21_0081.fits_mask', (-16, 36), ['apr21_0081.fits'])
+                        },   
                         'master_bias': 'mbias.fits',
                         'master_dark': 'Dark50.fits',
-                        'linearity': (1e-3, 1e-2, 0.99, 0.00),
-                        'master_flat': 'DummyFlat.fits',
+                        'linearity': [1e-3, 1e-2, 0.99, 0.00],
+                        'master_flat': 'flat.fits',
                         'master_bpm': 'bpm.fits'
                         },
-          'outputs' : {'bias': 'bias.fits'},
+          'outputs' : {},#'result': 'result.fits'},
           'optional' : {},
           'pipeline' : {},
           'systemwide' : {'compute_qa': True}
@@ -238,9 +273,12 @@ if __name__ == '__main__':
     
     p = Parameters(**pv)
     
-    os.chdir('/home/sergio/IR/apr21')
+    os.chdir('/home/inferis/spr/IR/apr21')
     
-    with open('config-d.txt', 'w+') as f:
+    f = open('config-d.txt', 'w+')
+    try:
         json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
+    finally:
+        f.close()
     
     main(['-d', '--run', 'direct_imaging', 'config-d.txt'])
