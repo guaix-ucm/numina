@@ -100,6 +100,7 @@ from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFi
 from numina.image.processing import generic_processing
 from numina.image.combine import median
 from emir.recipes import pipeline_parameters
+from emir.instrument.headers import EmirImage
 import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
@@ -111,7 +112,7 @@ _param_desc = ParametersDescription(inputs={'images': [],
                                             'master_dark': '',
                                             'master_flat': '',
                                             'master_bpm': ''},
-                                    outputs={},#'result': 'result.fits'},
+                                    outputs={'result': 'result.fits'},
                                     optional={'linearity': [1.0, 0.0],
                                               },
                                     pipeline=pipeline_parameters(),
@@ -134,7 +135,8 @@ def combine_shape(shapes, offsets):
 
 class Result(RecipeResult):
     '''Result of the imaging mode recipe.'''
-    def __init__(self, qa):
+    def __init__(self, qa, result):
+        self.result = result
         super(Result, self).__init__(qa)
         
 
@@ -169,6 +171,7 @@ class Recipe(RecipeBase):
         
         # Getting the offsets
         offsets = [self.parameters.inputs['images'][k][1] for k in images]
+        masks = [self.parameters.inputs['images'][k][0] for k in images]
         
         # Getting the shapes of all the images
         allshapes = []
@@ -180,6 +183,19 @@ class Recipe(RecipeBase):
                 allshapes.append(hdulist['primary'].data.shape)
             finally:
                 hdulist.close()
+                
+        # Getting the shapes of all the masks
+        maskshapes = []
+        
+        # All images have the same shape
+        for file in masks:
+            hdulist = pyfits.open(file)
+            try:
+                maskshapes.append(hdulist['primary'].data.shape)
+            finally:
+                hdulist.close()
+                
+        # masksshapes and allshapes must be equal
         
         # Computing the shape of the fional image
         finalshape, offsetsp = combine_shape(allshapes, offsets)
@@ -190,7 +206,7 @@ class Recipe(RecipeBase):
             hdulist = pyfits.open(file)
             try:
                 p = hdulist['primary']
-                newfile = 'r_' + file
+                newfile = self.rescaled_image(file)
                 newdata = np.zeros(finalshape, dtype=p.data.dtype)
                 
                 region = (slice(o[0], o[0] + shape[0]), slice(o[1], o[1] + shape[1]))
@@ -201,16 +217,58 @@ class Recipe(RecipeBase):
                 hdulist.close()
                 
         # Resize masks to final size
-        
+        for file, shape, o in zip(masks, allshapes, offsetsp):
+            hdulist = pyfits.open(file)
+            try:
+                p = hdulist['primary']
+                newfile = self.rescaled_image(file)
+                newdata = np.zeros(finalshape, dtype=p.data.dtype)
+                
+                region = (slice(o[0], o[0] + shape[0]), slice(o[1], o[1] + shape[1]))
+                newdata[region] = p.data
+                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
+                _logger.info('Resized mask %s into mask %s, new shape %s', file, newfile, finalshape)
+            finally:
+                hdulist.close()
+                
         # Compute sky from the image (median)
+        # Only for images that are Science images
         
-        # Combine with offsets
+        sky_backgrounds = []
         
+        for file in images:
+            # The sky images corresponding to file
+            sky_images = self.parameters.inputs['images'][file][2]
+            r_sky_images = [self.rescaled_image(i) for i in sky_images]
+            r_sky_masks = [self.rescaled_image(self.parameters.inputs['images'][i][0]) 
+                         for i in sky_images]
+            _logger.info('Sky images for %s are %s', file, self.parameters.inputs['images'][file][2])
+            
+            # Combine the sky images with masks
+            
+            skyback = median(r_sky_images, r_sky_masks)
+            median_sky = np.median(skyback[0][skyback[2] != 0])
+            _logger.info('Median sky value is %d', median_sky)
+            sky_backgrounds.append(median_sky)
+        
+        # Combine
+        r_images = [self.rescaled_image(i) for i in images]
+        r_masks = [self.rescaled_image(i) for i in masks]
+        final_data = median(r_images, r_masks, zeros=sky_backgrounds)
+        _logger.info('Combined images')
         # Generate object mask (using sextractor?)
         
         # Iterate 4 times
-                
-        return Result(QA.UNKNOWN)
+        
+        fc = EmirImage()
+        
+        final = fc.create(final_data[0])
+        _logger.info("Final image created")
+        
+        return Result(QA.UNKNOWN, final)
+    
+    def rescaled_image(self, name):
+        return 'r_%s' % name
 
     
 if __name__ == '__main__':
@@ -226,7 +284,6 @@ if __name__ == '__main__':
                         'apr21_0047.fits': ('apr21_0047.fits_mask', (0, 0), ['apr21_0047.fits']),
                         'apr21_0048.fits': ('apr21_0048.fits_mask', (0, 0), ['apr21_0048.fits']),
                         'apr21_0049.fits': ('apr21_0049.fits_mask', (21, -23), ['apr21_0049.fits']),
-                        'apr21_0050.fits': ('apr21_0050.fits_mask', (21, -23), ['apr21_0050.fits']),
                         'apr21_0051.fits': ('apr21_0051.fits_mask', (21, -23), ['apr21_0051.fits']),
                         'apr21_0052.fits': ('apr21_0052.fits_mask', (-15, -35), ['apr21_0052.fits']),
                         'apr21_0053.fits': ('apr21_0053.fits_mask', (-15, -35), ['apr21_0053.fits']),
