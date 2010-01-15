@@ -256,9 +256,22 @@ class Recipe(RecipeBase):
         r_masks = [self.rescaled_image(i) for i in masks]
         final_data = median(r_images, r_masks, zeros=sky_backgrounds)
         _logger.info('Combined images')
-        # Generate object mask (using sextractor?)
+        
+        # Generate object mask (using sextractor)
+        _logger.info('Generated objects mask')
+        obj_mask = sextractor_object_mask(final_data[0])
+        
+        _logger.info('Object mask merged with masks')
+        
         
         # Iterate 4 times
+        iterations = 4
+        
+        while iterations != 0:
+            _logger.info('Starting iteration, %s iteraions remain', iterations)
+            iterations -= 1
+        
+        _logger.info('Finished iterations')
         
         fc = EmirImage()
         
@@ -270,6 +283,48 @@ class Recipe(RecipeBase):
     def rescaled_image(self, name):
         return 'r_%s' % name
 
+    
+def sextractor_object_mask(array):
+        import tempfile
+        import subprocess
+        import shutil
+        
+        # Creating a temporary directory
+        tmpdir = tempfile.mkdtemp()
+        
+        # A temporary file used to store the array in fits format
+        tf = tempfile.NamedTemporaryFile(dir=tmpdir)
+        pyfits.writeto(tf, array)
+        
+        # Copying a default.param file
+        sub = subprocess.Popen(["cp", "/home/spr/devel/workspace/sextractor/config/default.param", 
+                                tmpdir], stdout=subprocess.PIPE)
+        sub.communicate()
+        
+        # Copying a default.conv
+        sub = subprocess.Popen(["cp", "/usr/share/sextractor/default.conv",  tmpdir], 
+                               stdout=subprocess.PIPE)
+        sub.communicate()
+        
+        # Run sextractor, it will create a image called check.fits
+        # With the segmentation mask inside
+        sub = subprocess.Popen(["sex", "-CHECKIMAGE_TYPE", "SEGMENTATION", tf.name],
+                               stdout=subprocess.PIPE, cwd=tmpdir)
+        result = sub.communicate()
+        
+        segfile = os.path.join(tmpdir, 'check.fits')
+        
+        # Read the segmentation image
+        result = pyfits.getdata(segfile)
+        
+        # Close the tempfile
+        tf.close()
+        # Remove everything
+        # Inside the temporary directory
+        shutil.rmtree(tmpdir)
+        
+        return result
+        
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -339,3 +394,10 @@ if __name__ == '__main__':
         f.close()
     
     main(['-d', '--run', 'direct_imaging', 'config-d.txt'])
+    
+    
+    
+    
+    
+    
+    
