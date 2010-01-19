@@ -89,6 +89,7 @@ __version__ = "$Revision$"
 
 import os.path
 import logging
+import uuid
 
 import pyfits
 import numpy as np
@@ -148,6 +149,9 @@ class Recipe(RecipeBase):
     def __init__(self, parameters):
         super(Recipe, self).__init__(parameters)
         
+    def input_checks(self):
+        return True
+        
     def process(self):
 
         images = self.parameters.inputs['images'].keys()
@@ -197,7 +201,7 @@ class Recipe(RecipeBase):
                 
         # masksshapes and allshapes must be equal
         
-        # Computing the shape of the fional image
+        # Computing the shape of the final image
         finalshape, offsetsp = combine_shape(allshapes, offsets)
         _logger.info("Shape of the final image %s", finalshape)
         
@@ -261,14 +265,77 @@ class Recipe(RecipeBase):
         _logger.info('Generated objects mask')
         obj_mask = sextractor_object_mask(final_data[0])
         
-        _logger.info('Object mask merged with masks')
+        book_keeping = {}
         
+        for i in images:
+            book_keeping[i] = dict(masks=[
+                                          self.rescaled_image(self.parameters.inputs['images'][i][0]),], 
+                                          versions=[])
+        
+        
+        _logger.info('Object mask merged with masks')
+        for file in images:
+            hdulist = pyfits.open(book_keeping[file]['masks'][-1])
+            try:
+                p = hdulist['primary']
+                newdata = (p.data != 0) | (obj_mask != 0)
+                newdata = newdata.astype('int')
+                newfile = str(uuid.uuid1())
+                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
+                book_keeping[file]['masks'].append(newfile)
+                _logger.info('Mask %s merged with object mask into %s', file, newfile)
+            finally:
+                hdulist.close() 
         
         # Iterate 4 times
         iterations = 4
         
         while iterations != 0:
-            _logger.info('Starting iteration, %s iteraions remain', iterations)
+            _logger.info('Starting iteration, %s iterations remain', iterations)
+            
+            # Compute sky from the image (median)
+            # Only for images that are Science images
+        
+            sky_backgrounds = []
+        
+            for file in images:
+                # The sky images corresponding to file
+                sky_images = self.parameters.inputs['images'][file][2]
+                r_sky_images = [self.rescaled_image(i) for i in sky_images]
+                r_sky_masks = [book_keeping[i]['masks'][-1] for i in sky_images]
+                _logger.info('Sky images for %s are %s', file, self.parameters.inputs['images'][file][2])
+            
+                # Combine the sky images with masks
+            
+                skyback = median(r_sky_images, r_sky_masks)
+                median_sky = np.median(skyback[0][skyback[2] != 0])
+                _logger.info('Median sky value is %d', median_sky)
+                sky_backgrounds.append(median_sky)
+        
+            # Combine
+            r_images = [self.rescaled_image(i) for i in images]
+            r_masks = [book_keeping[i]['masks'][-1] for i in images]
+            final_data = median(r_images, r_masks, zeros=sky_backgrounds)
+            _logger.info('Combined images')
+        
+            # Generate object mask (using sextractor)
+            _logger.info('Generated objects mask')
+            obj_mask = sextractor_object_mask(final_data[0])
+        
+            _logger.info('Object mask merged with masks')
+            for file in images:
+                hdulist = pyfits.open(book_keeping[file]['masks'][-1])
+                try:
+                    p = hdulist['primary']
+                    newdata = (p.data != 0) | (obj_mask != 0)
+                    newdata = newdata.astype('int')
+                    newfile = str(uuid.uuid1())
+                    pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
+                    book_keeping[file]['masks'].append(newfile)
+                    _logger.info('Mask %s merged with object mask into %s', file, newfile)
+                finally:
+                    hdulist.close()
+                
             iterations -= 1
         
         _logger.info('Finished iterations')
@@ -385,7 +452,7 @@ if __name__ == '__main__':
     
     p = Parameters(**pv)
     
-    os.chdir('/home/inferis/spr/IR/apr21')
+    os.chdir('/home/spr/Datos/IR/apr21')
     
     f = open('config-d.txt', 'w+')
     try:
