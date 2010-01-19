@@ -90,6 +90,7 @@ __version__ = "$Revision$"
 import os.path
 import logging
 import uuid
+import itertools
 
 import pyfits
 import numpy as np
@@ -148,15 +149,163 @@ class Recipe(RecipeBase):
     '''
     def __init__(self, parameters):
         super(Recipe, self).__init__(parameters)
+        self.images = self.parameters.inputs['images'].keys()
+        self.images.sort()
+        self.masks = [self.parameters.inputs['images'][k][0] for k in self.images]
+        self.baseshape = ()
+        self.ndim = len(self.baseshape)
+        self.input_checks()
+
+        self.book_keeping = {}
+        
+        for i,m in zip(self.images, self.masks):
+            self.book_keeping[i] = dict(masks=[m], versions=[i])
+        
         
     def input_checks(self):
+        
+        _logger.info("Checking shapes of inputs")
+        # Getting the shapes of all the images
+        
+        image_shapes = []
+        
+        for file in self.images:
+            hdulist = pyfits.open(file)
+            try:
+                _logger.debug("Opening image %s", file)
+                image_shapes.append(hdulist['primary'].data.shape)
+                _logger.info("Shape of image %s is %s", file, image_shapes.append[-1])
+            finally:
+                hdulist.close()
+        
+        mask_shapes = []
+        
+        for file in self.masks:
+            hdulist = pyfits.open(file)
+            try:
+                _logger.debug("Opening mask %s", file)
+                mask_shapes.append(hdulist['primary'].data.shape)
+                _logger.info("Shape of mask %s is %s", file, mask_shapes.append[-1])
+            finally:
+                hdulist.close()
+
+        # All images have the same shape
+        self.baseshape = image_shapes[0]
+        self.ndim = len(self.baseshape)
+        if any(i != self.baseshape for i in image_shapes[1:]):
+            _logger.error('Image has shape %s, different to the base shape %s', i, self.baseshape)
+            return False
+        
+        # All masks have the same shape
+        if any(i != self.baseshape for i in mask_shapes[1:]):
+            _logger.error('Mask has shape %s, different to the base shape %s', i, self.baseshape)
+            return False
+        
+        _logger.info("Shapes of inputs are %s", self.baseshape)
+        
         return True
         
     def process(self):
 
-        images = self.parameters.inputs['images'].keys()
-        images.sort()
+        def resize_image(file, offsetsp, store):
+            # Resize images, to final size
+            hdulist = pyfits.open(file, memmap=True)
+            try:
+                p = hdulist['primary']
+                newfile = str(uuid.uuid1())
+                newdata = np.zeros(finalshape, dtype=p.data.dtype)
+                region = tuple(slice(offset[i], offset[i] 
+                                     + self.baseshape[i]) for i in xrange(self.ndim))
+                newdata[region] = p.data
+                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
+                _logger.info('Resized image %s into image %s, new shape %s', file, newfile, finalshape)
+                self.book_keeping[i][store].append(newfile)
+            finally:
+                hdulist.close()
 
+        def compute_sky_simple(file):            
+            # The sky images corresponding to file
+            sky_images = self.parameters.inputs['images'][file][2]
+            r_sky_images = [self.book_keeping[i]['versions'][-1] for i in sky_images]
+            r_sky_masks = [self.book_keeping[i]['masks'][-1] for i in sky_images]
+            _logger.info('Sky images for %s are %s', file, sky_images)
+                
+            try:       
+                fd = []
+                data = []
+                masks = []
+                for file in r_sky_images:
+                    hdulist = pyfits.open(file, memmap=True)
+                    data.append(hdulist['primary'].data)
+                    fd.append(hdulist)
+                
+                for file in r_sky_masks:
+                    hdulist = pyfits.open(file, memmap=True)
+                    masks.append(hdulist['primary'].data)
+                    fd.append(hdulist)
+                
+                # Combine the sky images with masks            
+                skyback = median(data, masks)
+            
+                # Close all the memapped files
+                # Dont wait for the GC
+            finally:
+                for f in fd:
+                    fd.close()
+                
+            skyval = skyback[0]
+            skymask = skyback[2] != 0
+            
+            median_sky = np.median(skyval[skymask])
+            _logger.info('Median sky value is %d', median_sky)
+            return median_sky
+
+        def mask_merging(file, obj_mask):
+            
+            hdulist = pyfits.open(self.book_keeping[file]['masks'][-1])
+            try:
+                p = hdulist['primary']
+                newdata = (p.data != 0) | (obj_mask != 0)
+                newdata = newdata.astype('int')
+                newfile = str(uuid.uuid1())
+                pyfits.writeto(newfile, newdata, p.header, 
+                               output_verify='silentfix', clobber=True)
+                self.book_keeping[file]['masks'].append(newfile)
+                _logger.info('Mask %s merged with object mask into %s', file, newfile)
+            finally:
+                hdulist.close() 
+        
+        def combine_images(backgrounds):
+            
+            # Combine
+            r_images = [self.book_keeping[i]['versions'][-1] for i in self.images]
+            r_masks = [self.book_keeping[i]['masks'][-1] for i in self.masks]
+            
+            try:
+                fd = []
+                data = []
+                masks = []
+            
+                for file in r_sky_images:
+                    hdulist = pyfits.open(file, memmap=True)
+                    data.append(hdulist['primary'].data)
+                    fd.append(hdulist)
+                
+                for file in r_sky_masks:
+                    hdulist = pyfits.open(file, memmap=True)
+                    masks.append(hdulist['primary'].data)
+                    fd.append(hdulist)
+            
+                    final_data = median(r_images, r_masks, zeros=backgrounds)
+            finally:
+                for f in fd:
+                    fd.close()
+                # One liner
+                map(pyfits.HDUList.close, fd)
+            
+            _logger.info('Combined images')
+            return final_data            
+        
         # dark correction
         # open the master dark
         dark_data = pyfits.getdata(self.parameters.inputs['master_dark'])    
@@ -166,177 +315,55 @@ class Recipe(RecipeBase):
         corrector2 = NonLinearityCorrector(self.parameters.inputs['linearity'])
         corrector3 = FlatFieldCorrector(flat_data)
         
-        generic_processing(images, [corrector1, corrector2, corrector3], backup=True)
+        generic_processing(self.images, [corrector1, corrector2, corrector3], backup=True)
         
         del dark_data
         del flat_data    
         
-        # Preiteration
-        
         # Getting the offsets
-        offsets = [self.parameters.inputs['images'][k][1] for k in images]
-        masks = [self.parameters.inputs['images'][k][0] for k in images]
-        
-        # Getting the shapes of all the images
-        allshapes = []
-        
-        # All images have the same shape
-        for file in images:
-            hdulist = pyfits.open(file)
-            try:
-                allshapes.append(hdulist['primary'].data.shape)
-            finally:
-                hdulist.close()
+        offsets = [self.parameters.inputs['images'][k][1] for k in self.images]
                 
-        # Getting the shapes of all the masks
-        maskshapes = []
-        
-        # All images have the same shape
-        for file in masks:
-            hdulist = pyfits.open(file)
-            try:
-                maskshapes.append(hdulist['primary'].data.shape)
-            finally:
-                hdulist.close()
-                
-        # masksshapes and allshapes must be equal
-        
         # Computing the shape of the final image
-        finalshape, offsetsp = combine_shape(allshapes, offsets)
+        finalshape, offsetsp = combine_shape(self.baseshape, offsets)
         _logger.info("Shape of the final image %s", finalshape)
         
-        # Resize images, to final size
-        for file, shape, o in zip(images, allshapes, offsetsp):
-            hdulist = pyfits.open(file)
-            try:
-                p = hdulist['primary']
-                newfile = self.rescaled_image(file)
-                newdata = np.zeros(finalshape, dtype=p.data.dtype)
-                
-                region = (slice(o[0], o[0] + shape[0]), slice(o[1], o[1] + shape[1]))
-                newdata[region] = p.data
-                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
-                _logger.info('Resized image %s into image %s, new shape %s', file, newfile, finalshape)
-            finally:
-                hdulist.close()
-                
-        # Resize masks to final size
-        for file, shape, o in zip(masks, allshapes, offsetsp):
-            hdulist = pyfits.open(file)
-            try:
-                p = hdulist['primary']
-                newfile = self.rescaled_image(file)
-                newdata = np.zeros(finalshape, dtype=p.data.dtype)
-                
-                region = (slice(o[0], o[0] + shape[0]), slice(o[1], o[1] + shape[1]))
-                newdata[region] = p.data
-                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
-                _logger.info('Resized mask %s into mask %s, new shape %s', file, newfile, finalshape)
-            finally:
-                hdulist.close()
+        # Iteration 0        
+        map(lambda f, o: resize(f, o, store='versions'), self.images, offsetsp)
+        map(lambda f, o: resize(f, o, store='masks'), self.masks, offsetsp)
                 
         # Compute sky from the image (median)
-        # Only for images that are Science images
-        
-        sky_backgrounds = []
-        
-        for file in images:
-            # The sky images corresponding to file
-            sky_images = self.parameters.inputs['images'][file][2]
-            r_sky_images = [self.rescaled_image(i) for i in sky_images]
-            r_sky_masks = [self.rescaled_image(self.parameters.inputs['images'][i][0]) 
-                         for i in sky_images]
-            _logger.info('Sky images for %s are %s', file, self.parameters.inputs['images'][file][2])
-            
-            # Combine the sky images with masks
-            
-            skyback = median(r_sky_images, r_sky_masks)
-            median_sky = np.median(skyback[0][skyback[2] != 0])
-            _logger.info('Median sky value is %d', median_sky)
-            sky_backgrounds.append(median_sky)
+        # TODO: Only for images that are Science images        
+        sky_backgrounds = map(compute_sky_simple, self.images)
         
         # Combine
-        r_images = [self.rescaled_image(i) for i in images]
-        r_masks = [self.rescaled_image(i) for i in masks]
-        final_data = median(r_images, r_masks, zeros=sky_backgrounds)
-        _logger.info('Combined images')
+        final_data = combine_images(backgrounds)
         
         # Generate object mask (using sextractor)
         _logger.info('Generated objects mask')
         obj_mask = sextractor_object_mask(final_data[0])
         
-        book_keeping = {}
-        
-        for i in images:
-            book_keeping[i] = dict(masks=[
-                                          self.rescaled_image(self.parameters.inputs['images'][i][0]),], 
-                                          versions=[])
-        
-        
         _logger.info('Object mask merged with masks')
-        for file in images:
-            hdulist = pyfits.open(book_keeping[file]['masks'][-1])
-            try:
-                p = hdulist['primary']
-                newdata = (p.data != 0) | (obj_mask != 0)
-                newdata = newdata.astype('int')
-                newfile = str(uuid.uuid1())
-                pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
-                book_keeping[file]['masks'].append(newfile)
-                _logger.info('Mask %s merged with object mask into %s', file, newfile)
-            finally:
-                hdulist.close() 
+        map(mask_merging, self.files)
         
         # Iterate 4 times
         iterations = 4
         
-        while iterations != 0:
-            _logger.info('Starting iteration, %s iterations remain', iterations)
+        for iter in xrange(1, iterations + 1):
+            _logger.info('Starting iteration %s', iter)
             
             # Compute sky from the image (median)
-            # Only for images that are Science images
-        
-            sky_backgrounds = []
-        
-            for file in images:
-                # The sky images corresponding to file
-                sky_images = self.parameters.inputs['images'][file][2]
-                r_sky_images = [self.rescaled_image(i) for i in sky_images]
-                r_sky_masks = [book_keeping[i]['masks'][-1] for i in sky_images]
-                _logger.info('Sky images for %s are %s', file, self.parameters.inputs['images'][file][2])
-            
-                # Combine the sky images with masks
-            
-                skyback = median(r_sky_images, r_sky_masks)
-                median_sky = np.median(skyback[0][skyback[2] != 0])
-                _logger.info('Median sky value is %d', median_sky)
-                sky_backgrounds.append(median_sky)
+            # TODO Only for images that are Science images        
+            sky_backgrounds = compute_sky_simple(self.images)
         
             # Combine
-            r_images = [self.rescaled_image(i) for i in images]
-            r_masks = [book_keeping[i]['masks'][-1] for i in images]
-            final_data = median(r_images, r_masks, zeros=sky_backgrounds)
-            _logger.info('Combined images')
+            final_data = combine_images(backgrounds)
         
             # Generate object mask (using sextractor)
             _logger.info('Generated objects mask')
             obj_mask = sextractor_object_mask(final_data[0])
         
             _logger.info('Object mask merged with masks')
-            for file in images:
-                hdulist = pyfits.open(book_keeping[file]['masks'][-1])
-                try:
-                    p = hdulist['primary']
-                    newdata = (p.data != 0) | (obj_mask != 0)
-                    newdata = newdata.astype('int')
-                    newfile = str(uuid.uuid1())
-                    pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
-                    book_keeping[file]['masks'].append(newfile)
-                    _logger.info('Mask %s merged with object mask into %s', file, newfile)
-                finally:
-                    hdulist.close()
-                
-            iterations -= 1
+            mask_merging(self.images, obj_mask)
         
         _logger.info('Finished iterations')
         
@@ -346,9 +373,6 @@ class Recipe(RecipeBase):
         _logger.info("Final image created")
         
         return Result(QA.UNKNOWN, final)
-    
-    def rescaled_image(self, name):
-        return 'r_%s' % name
 
     
 def sextractor_object_mask(array):
