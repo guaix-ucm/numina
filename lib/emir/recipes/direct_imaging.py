@@ -87,9 +87,7 @@ process starts:
 
 __version__ = "$Revision$"
 
-import os.path
 import logging
-import uuid
 import itertools
 
 import pyfits
@@ -174,7 +172,7 @@ class Recipe(RecipeBase):
             try:
                 _logger.debug("Opening image %s", file)
                 image_shapes.append(hdulist['primary'].data.shape)
-                _logger.info("Shape of image %s is %s", file, image_shapes.append[-1])
+                _logger.info("Shape of image %s is %s", file, image_shapes[-1])
             finally:
                 hdulist.close()
         
@@ -185,7 +183,7 @@ class Recipe(RecipeBase):
             try:
                 _logger.debug("Opening mask %s", file)
                 mask_shapes.append(hdulist['primary'].data.shape)
-                _logger.info("Shape of mask %s is %s", file, mask_shapes.append[-1])
+                _logger.info("Shape of mask %s is %s", file, mask_shapes[-1])
             finally:
                 hdulist.close()
 
@@ -207,19 +205,18 @@ class Recipe(RecipeBase):
         
     def process(self):
 
-        def resize_image(file, offset, store):
-            # Resize images, to final size
-            hdulist = pyfits.open(file, memmap=True, mode='readonly')
+        def resize_image(file, basefile, offset, store):
+            hdulist = pyfits.open(file, mode='readonly')
             try:
                 p = hdulist['primary']
-                newfile = str(uuid.uuid1())
+                newfile = 's_%s' % file
                 newdata = np.zeros(finalshape, dtype=p.data.dtype)
                 region = tuple(slice(offset[i], offset[i] 
                                      + self.baseshape[i]) for i in xrange(self.ndim))
                 newdata[region] = p.data
                 pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
                 _logger.info('Resized image %s into image %s, new shape %s', file, newfile, finalshape)
-                self.book_keeping[i][store].append(newfile)
+                self.book_keeping[basefile][store].append(newfile)
             finally:
                 hdulist.close()
 
@@ -234,22 +231,29 @@ class Recipe(RecipeBase):
                 fd = []
                 data = []
                 masks = []
+                
                 for file in r_sky_images:
+                    _logger.debug('Opening %s', file)
                     hdulist = pyfits.open(file, memmap=True, mode='readonly')
+                    _logger.debug('Append %s', file)
                     data.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
                 for file in r_sky_masks:
+                    _logger.debug('Opening %s', file)
                     hdulist = pyfits.open(file, memmap=True, mode='readonly')
+                    _logger.debug('Append %s', file)
                     masks.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
-                # Combine the sky images with masks            
+                # Combine the sky images with masks
+                _logger.debug("Combine the sky images with masks")         
                 skyback = median(data, masks)
             
-                # Close all the mem mapped files
-                # Don't wait for the GC
+            # Close all the memmapped files
+            # Don't wait for the GC
             finally:
+                _logger.debug("Closing the sky files")
                 map(pyfits.HDUList.close, fd)
                 
             skyval = skyback[0]
@@ -259,15 +263,14 @@ class Recipe(RecipeBase):
             _logger.info('Median sky value is %d', median_sky)
             return median_sky
 
-        def mask_merging(file, obj_mask):
-            
-            hdulist = pyfits.open(self.book_keeping[file]['masks'][-1], 
-                                  memmap=True, mode='readonly')
+        def mask_merging(file, obj_mask, iter):
+            mask = self.book_keeping[file]['masks'][-1]
+            hdulist = pyfits.open(mask, mode='readonly')
             try:
                 p = hdulist['primary']
                 newdata = (p.data != 0) | (obj_mask != 0)
                 newdata = newdata.astype('int')
-                newfile = str(uuid.uuid1())
+                newfile = '%s_mask.iter.%02d' % (file, iter)
                 pyfits.writeto(newfile, newdata, p.header, 
                                output_verify='silentfix', clobber=True)
                 self.book_keeping[file]['masks'].append(newfile)
@@ -279,7 +282,7 @@ class Recipe(RecipeBase):
             
             # Combine
             r_images = [self.book_keeping[i]['versions'][-1] for i in self.images]
-            r_masks = [self.book_keeping[i]['masks'][-1] for i in self.masks]
+            r_masks = [self.book_keeping[i]['masks'][-1] for i in self.images]
             
             try:
                 fd = []
@@ -287,22 +290,32 @@ class Recipe(RecipeBase):
                 masks = []
             
                 for file in r_images:
+                    _logger.debug('Opening %s', file)
                     hdulist = pyfits.open(file, memmap=True, mode='readonly')
+                    _logger.debug('Append %s', file)
                     data.append(hdulist['primary'].data)
+                    _logger.debug('Append fits handle %s', hdulist)
                     fd.append(hdulist)
                 
                 for file in r_masks:
+                    _logger.debug('Opening %s', file)
                     hdulist = pyfits.open(file, memmap=True, mode='readonly')
+                    _logger.debug('Append %s', file)
                     masks.append(hdulist['primary'].data)
+                    _logger.debug('Append fits handle %s', hdulist)
                     fd.append(hdulist)
-            
-                    final_data = median(r_images, r_masks, zeros=backgrounds)
+
+                _logger.info('Combining images')
+                final_data = median(data, masks, zeros=backgrounds)
             finally:
                 # One liner
+                _logger.debug("Closing the data files")
                 map(pyfits.HDUList.close, fd)
             
-            _logger.info('Combined images')
+            
             return final_data            
+        
+        save_intermediate = True
         
         # dark correction
         # open the master dark
@@ -326,8 +339,8 @@ class Recipe(RecipeBase):
         _logger.info("Shape of the final image %s", finalshape)
         
         # Iteration 0        
-        map(lambda f, o: resize_image(f, o, store='versions'), self.images, offsetsp)
-        map(lambda f, o: resize_image(f, o, store='masks'), self.masks, offsetsp)
+        map(lambda f, o: resize_image(f, f, o, store='versions'), self.images, offsetsp)
+        map(lambda f, i, o: resize_image(f, i, o, store='masks'), self.masks, self.images, offsetsp)
                 
         # Compute sky from the image (median)
         # TODO: Only for images that are Science images        
@@ -335,13 +348,21 @@ class Recipe(RecipeBase):
         
         # Combine
         final_data = combine_images(sky_backgrounds)
+
+        fc = EmirImage()
         
+        if save_intermediate:
+            newfile = 'intermediate.%02d' % 0
+            final = fc.create(final_data[0])
+            final.writeto(newfile, output_verify='silentfix', clobber=True)
+                
         # Generate object mask (using sextractor)
         _logger.info('Generated objects mask')
         obj_mask = sextractor_object_mask(final_data[0])
         
         _logger.info('Object mask merged with masks')
-        map(mask_merging, self.files)
+        
+        map(lambda f: mask_merging(f, obj_mask, 0), self.images)
         
         # Iterate 4 times
         iterations = 4
@@ -351,21 +372,24 @@ class Recipe(RecipeBase):
             
             # Compute sky from the image (median)
             # TODO Only for images that are Science images        
-            sky_backgrounds = compute_sky_simple(self.images)
+            sky_backgrounds = map(compute_sky_simple, self.images)
         
             # Combine
             final_data = combine_images(sky_backgrounds)
+        
+            if save_intermediate:
+                newfile = 'intermediate.%02d' % iter
+                final = fc.create(final_data[0])
+                final.writeto(newfile, output_verify='silentfix', clobber=True)
         
             # Generate object mask (using sextractor)
             _logger.info('Generated objects mask')
             obj_mask = sextractor_object_mask(final_data[0])
         
             _logger.info('Object mask merged with masks')
-            mask_merging(self.images, obj_mask)
+            map(lambda f: mask_merging(f, obj_mask, iter), self.images)
         
         _logger.info('Finished iterations')
-        
-        fc = EmirImage()
         
         final = fc.create(final_data[0])
         _logger.info("Final image created")
@@ -377,6 +401,7 @@ def sextractor_object_mask(array):
         import tempfile
         import subprocess
         import shutil
+        import os.path
         
         # Creating a temporary directory
         tmpdir = tempfile.mkdtemp()
@@ -418,11 +443,13 @@ def sextractor_object_mask(array):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
+    import os.path
+    import json
     from numina.user import main
     from numina.recipes import Parameters
-    import json
+    
     from numina.jsonserializer import to_json
-     
+    
     pv = {'inputs' :  { 'images':  
                        {'apr21_0046.fits': ('apr21_0046.fits_mask', (0, 0), ['apr21_0046.fits']),
                         'apr21_0047.fits': ('apr21_0047.fits_mask', (0, 0), ['apr21_0047.fits']),
