@@ -207,9 +207,9 @@ class Recipe(RecipeBase):
         
     def process(self):
 
-        def resize_image(file, offsetsp, store):
+        def resize_image(file, offset, store):
             # Resize images, to final size
-            hdulist = pyfits.open(file, memmap=True)
+            hdulist = pyfits.open(file, memmap=True, mode='readonly')
             try:
                 p = hdulist['primary']
                 newfile = str(uuid.uuid1())
@@ -235,23 +235,22 @@ class Recipe(RecipeBase):
                 data = []
                 masks = []
                 for file in r_sky_images:
-                    hdulist = pyfits.open(file, memmap=True)
+                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
                     data.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
                 for file in r_sky_masks:
-                    hdulist = pyfits.open(file, memmap=True)
+                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
                     masks.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
                 # Combine the sky images with masks            
                 skyback = median(data, masks)
             
-                # Close all the memapped files
-                # Dont wait for the GC
+                # Close all the mem mapped files
+                # Don't wait for the GC
             finally:
-                for f in fd:
-                    fd.close()
+                map(pyfits.HDUList.close, fd)
                 
             skyval = skyback[0]
             skymask = skyback[2] != 0
@@ -262,7 +261,8 @@ class Recipe(RecipeBase):
 
         def mask_merging(file, obj_mask):
             
-            hdulist = pyfits.open(self.book_keeping[file]['masks'][-1])
+            hdulist = pyfits.open(self.book_keeping[file]['masks'][-1], 
+                                  memmap=True, mode='readonly')
             try:
                 p = hdulist['primary']
                 newdata = (p.data != 0) | (obj_mask != 0)
@@ -286,20 +286,18 @@ class Recipe(RecipeBase):
                 data = []
                 masks = []
             
-                for file in r_sky_images:
-                    hdulist = pyfits.open(file, memmap=True)
+                for file in r_images:
+                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
                     data.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
-                for file in r_sky_masks:
-                    hdulist = pyfits.open(file, memmap=True)
+                for file in r_masks:
+                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
                     masks.append(hdulist['primary'].data)
                     fd.append(hdulist)
             
                     final_data = median(r_images, r_masks, zeros=backgrounds)
             finally:
-                for f in fd:
-                    fd.close()
                 # One liner
                 map(pyfits.HDUList.close, fd)
             
@@ -328,15 +326,15 @@ class Recipe(RecipeBase):
         _logger.info("Shape of the final image %s", finalshape)
         
         # Iteration 0        
-        map(lambda f, o: resize(f, o, store='versions'), self.images, offsetsp)
-        map(lambda f, o: resize(f, o, store='masks'), self.masks, offsetsp)
+        map(lambda f, o: resize_image(f, o, store='versions'), self.images, offsetsp)
+        map(lambda f, o: resize_image(f, o, store='masks'), self.masks, offsetsp)
                 
         # Compute sky from the image (median)
         # TODO: Only for images that are Science images        
         sky_backgrounds = map(compute_sky_simple, self.images)
         
         # Combine
-        final_data = combine_images(backgrounds)
+        final_data = combine_images(sky_backgrounds)
         
         # Generate object mask (using sextractor)
         _logger.info('Generated objects mask')
@@ -356,7 +354,7 @@ class Recipe(RecipeBase):
             sky_backgrounds = compute_sky_simple(self.images)
         
             # Combine
-            final_data = combine_images(backgrounds)
+            final_data = combine_images(sky_backgrounds)
         
             # Generate object mask (using sextractor)
             _logger.info('Generated objects mask')
