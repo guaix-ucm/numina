@@ -353,8 +353,8 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
   }
 
-  Py_INCREF( Py_None);
-  return Py_None;
+  return Py_BuildValue("(N,N,N)", out[0], out[1], out[2]);
+
 }
 
 static PyMethodDef combine_methods[] = { { "internal_combine",
