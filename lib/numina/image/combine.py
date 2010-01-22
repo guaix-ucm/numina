@@ -262,10 +262,8 @@ def combine(method, images, masks=None, offsets=None,
     return (result, variance, numbers)
 
 def _combine(method, images, masks=None, dtype=None, out=None, 
-             args=(), zeros=None, scales=None, weights=None, conversion_array_hook=None,
-             offsets=None,):
-    
-    # method should be a string
+             args=(), zeros=None, scales=None, weights=None, offsets=None,):
+        # method should be a string
     if not isinstance(method, basestring) and not callable(method):
         raise CombineError('method is neither a string or callable')
     
@@ -274,25 +272,7 @@ def _combine(method, images, masks=None, dtype=None, out=None,
         raise CombineError("len(inputs) == 0")
 
     number_of_images = len(images)
-    
-    def default_conversion_array(obj):
-        '''Convert the input into an array.'''
-        
-        # If we have a string, we assume
-        # its a FITS file filename
-        if isinstance(obj, basestring):
-            import pyfits
-            hdulist = pyfits.open(obj, 'readonly', memmap=True)
-            return hdulist['primary'].data
-        else:
-            return np.asanyarray(obj)
-    
-    IDTYPE = 'float'
-    
-    if conversion_array_hook is None:
-        conversion_array_hook = default_conversion_array
-    
-    images = map(conversion_array_hook, images)
+    images = map(np.asanyarray, images)
     
     # All images have the same shape
     allshapes = [i.shape for i in images]
@@ -316,8 +296,6 @@ def _combine(method, images, masks=None, dtype=None, out=None,
         if len(images) != len(masks):
             raise CombineError("len(inputs) != len(masks)")
     
-        masks = map(conversion_array_hook, masks)
-    
         # Error if mask and image have different shape
         if any(imshape != ma.shape for (imshape, ma) in izip(allshapes, masks)):
             raise CombineError("mask and image have different shape")
@@ -334,23 +312,23 @@ def _combine(method, images, masks=None, dtype=None, out=None,
             raise CombineError("result has wrong shape")  
         
     if zeros is None:
-        zeros = np.zeros(number_of_images, dtype=IDTYPE)
+        zeros = np.zeros(number_of_images, dtype='float64')
     else:
-        zeros = np.asanyarray(zeros, dtype=IDTYPE)
+        zeros = np.asanyarray(zeros, dtype='float64')
         if zeros.shape != (number_of_images,):
             raise CombineError('incorrect number of zeros')
         
     if scales is None:
-        scales = np.ones(number_of_images, dtype=IDTYPE)
+        scales = np.ones(number_of_images, dtype='float64')
     else:
-        scales = np.asanyarray(scales, dtype=IDTYPE)
+        scales = np.asanyarray(scales, dtype='float64')
         if scales.shape != (number_of_images,):
             raise CombineError('incorrect number of scales')
         
     if weights is None:
-        weights = np.ones(number_of_images, dtype=IDTYPE)
+        weights = np.ones(number_of_images, dtype='float64')
     else:
-        weights = np.asanyarray(scales, dtype=IDTYPE)
+        weights = np.asanyarray(scales, dtype='float64')
         if weights.shape != (number_of_images,):
             raise CombineError('incorrect number of weights')
 
@@ -359,7 +337,7 @@ def _combine(method, images, masks=None, dtype=None, out=None,
     return out.astype(dtype)
 
 def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
-         weights=None, conversion_array_hook=None, dof=0):
+         weights=None, dof=0):
     '''Combine images using the mean, with masks and offsets.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -396,13 +374,11 @@ def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
        
     '''
     return _combine('mean', images, masks=masks, dtype=dtype, out=out, args=(dof,), 
-                    zeros=zeros, scales=scales, weights=weights,
-                    conversion_array_hook=conversion_array_hook)
+                    zeros=zeros, scales=scales, weights=weights)
     
     
     
-def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, weights=None,
-           conversion_array_hook=None):
+def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, weights=None):
     '''Combine images using the median, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -424,11 +400,10 @@ def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, we
        
     '''
     return _combine('median', images, masks=masks, dtype=dtype, out=out,
-                    zeros=zeros, scales=zeros, weights=weights,
-                    conversion_array_hook=conversion_array_hook)    
+                    zeros=zeros, scales=zeros, weights=weights)    
 
 def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
-         weights=None, conversion_array_hook=None, low=4., high=4., dof=0):
+         weights=None, low=4., high=4., dof=0):
     '''Combine images using the sigma-clipping, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -450,8 +425,7 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     '''
     myargs = (low, high, dof)
     return _combine('sigmaclip', images, masks=masks, dtype=dtype, out=out, 
-                    args= myargs, zeros=zeros, scales=scales, weights=weights,
-                    conversion_array_hook=conversion_array_hook)
+                    args= myargs, zeros=zeros, scales=scales, weights=weights)
 
 
 if __name__ == "__main__":
