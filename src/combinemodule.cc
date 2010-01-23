@@ -43,6 +43,12 @@ typedef std::vector<PyArrayIterObject*> VectorPyArrayIter;
 PyDoc_STRVAR(combine__doc__, "Internal combine module, not to be used directly.");
 PyDoc_STRVAR(internal_combine__doc__, "Combines identically shaped images");
 
+// Convenience function to avoid the Py_DECREF macro
+static inline void My_PyArray_Iter_Decref(PyArrayIterObject* it)
+{
+  Py_DECREF(it);
+}
+
 // Convenience function to avoid the PyArray_ITER_NEXT macro
 static inline void My_PyArray_Iter_Next(PyArrayIterObject* it)
 {
@@ -324,6 +330,9 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
           NPY_END_THREADS;
         } else
         {
+          std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Decref);
+          std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Decref);
+          std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Decref);
           return PyErr_Format(CombineError,
               "null pointer in zero %p scale %p weight %p", zero, scale, weight);
         }
@@ -352,8 +361,11 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
     std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
   }
-
-  return Py_BuildValue("(N,N,N)", out[0], out[1], out[2]);
+  // Clean up memory
+  std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Decref);
+  std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Decref);
+  std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Decref);
+  return Py_BuildValue("(O,O,O)", out[0], out[1], out[2]);
 
 }
 
