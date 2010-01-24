@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -19,19 +19,17 @@
 
 # $Id$
 
-from __future__ import division, with_statement
+from __future__ import division
 
 __version__ = "$Revision$"
 
 
 from itertools import izip, product
-import functools
 
-import scipy
 import numpy as np
 
 from numina.exceptions import Error
-from numina.image._combine import internal_combine, CombineError
+from numina.image._combine import internal_combine, internal_combine_with_offsets, CombineError
 
 
 def blockgen1d(block, size):
@@ -98,11 +96,6 @@ def blockgen(blocks, shape):
     '''
     iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
     return product(*iterables)
-
-def _py_internal_combine(method, nimages, nmasks, result, variance, numbers):
-    for index, val in np.ndenumerate(result):
-        values = [im[index] for im, mas in zip(nimages, nmasks) if not mas[index]]
-        result[index], variance[index], numbers[index] = method(values)
    
 def combine_shape(shapes, offsets):
     # Computing final image size and new offsets
@@ -114,154 +107,8 @@ def combine_shape(shapes, offsets):
     finalshape = ucorners.max(axis=0) - ref 
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
-                
 
-
-def combine(method, images, masks=None, offsets=None,
-            result=None, variance=None, numbers=None,
-            blocksize=(512, 512), zeros=None, scales=None, weights=None):
-    '''Combine images using the given combine method, with masks and offsets.
-    
-    Inputs and masks are a list of array objects.
-    
-    :param method: a string with the name of the method
-    :param images: a list of 2D arrays
-    :param masks: a list of 2D boolean arrays, True values are masked
-    :param offsets: a list of 2-tuples
-    :param result: a image where the result is stored if is not None
-    :param variance: a image where the variance is stored if is not None
-    :param number: a image where the number is stored if is not None
-    :param blocksize: shape of the block used to combine images 
-    :return: a 3-tuple with the result, the variance and the number
-    :raise TypeError: if method is not callable
-    
-       
-    '''
-    
-    # method should be a string
-    if not isinstance(method, basestring) and not callable(method):
-        raise TypeError('method is not a string')
-    
-    # Check inputs
-    if not images:
-        raise Error("len(inputs) == 0")
-        
-    
-    aimages = map(np.asanyarray, images)
-    # All images have the same shape
-    baseshape = aimages[0].shape
-    if any(i.shape != baseshape for i in aimages[1:]):
-        raise Error("Images don't have the same shape")
-    
-    # Additional checks
-    for i in aimages:
-        t = i.dtype
-        if not (np.issubdtype(t, float) or np.issubdtype(t, int)):
-            raise TypeError
-    
-    finalshape = baseshape
-    offsetsp = np.zeros((len(images), 2))
-    resize_images = True
-    # Offsets
-    if offsets:
-        if len(images) != len(offsets):
-            raise Error("len(inputs) != len(offsets)")
-        
-        resize_images = True
-        
-        finalshape, offsetsp = combine_shape(baseshape, offsets)
-        
-    amasks = [False] * len(images)
-    generate_masks = False
-    if masks:
-        if len(images) != len(masks):
-            raise Error("len(inputs) != len(masks)")
-        amasks = map(functools.partial(np.asanyarray, dtype=np.bool), masks)
-        for i in amasks:
-            if not np.issubdtype(i.dtype, bool):
-                raise TypeError
-            if len(i.shape) != 2:
-                raise TypeError
-        # Error if mask and image have different shape
-        if any(im.shape != ma.shape for (im, ma) in izip(aimages, amasks)):
-            raise TypeError
-    else:
-        generate_masks = True
-
-
-    nimages = aimages
-    nmasks = amasks
-    
-    if resize_images:
-        nimages = []
-        nmasks = []
-        for (i, o, m) in zip(aimages, offsetsp, amasks):
-            newimage1 = np.empty(finalshape)
-            newimage2 = np.ones(finalshape, dtype=np.bool) 
-            pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
-            newimage1[pos] = i
-            newimage2[pos] = m
-            nimages.append(newimage1)
-            nmasks.append(newimage2)
-    elif generate_masks:
-        nmasks = []
-        for (o, m) in zip(offsetsp, amasks):
-            newimage2 = np.ones(finalshape, dtype=np.bool) 
-            pos = (slice(o[0], o[0] + i.shape[0]), slice(o[1], o[1] + i.shape[1]))
-            newimage2[pos] = m
-            nmasks.append(newimage2)
-        
-    # Initialize results        
-    if result is None:
-        result = np.zeros(finalshape)
-    else:
-        if result.shape != finalshape:
-            raise TypeError("result has wrong shape")
-    
-    if variance is None:
-        variance = np.zeros(finalshape)
-    else:
-        if variance.shape != finalshape:
-            raise TypeError("variance has wrong shape")
-                
-    if numbers is None:
-        numbers = np.zeros(finalshape)
-    else:
-        if numbers.shape != finalshape:
-            raise TypeError("numbers has wrong shape")
-    
-    if zeros is None:
-        zeros = np.zeros(len(images), dtype='float64')
-    else:
-        zeros = np.asanyarray(zeros, dtype='float64')
-        if zeros.shape != (len(images),):
-            raise CombineError('incorrect number of zeros')
-        
-    if scales is None:
-        scales = np.ones(len(images), dtype='float64')
-    else:
-        scales = np.asanyarray(scales, dtype='float64')
-        if scales.shape != (len(images),):
-            raise CombineError('incorrect number of scales')
-        
-    if weights is None:
-        weights = np.ones(len(images), dtype='float64')
-    else:
-        weights = np.asanyarray(scales, dtype='float64')
-        if weights.shape != (len(images),):
-            raise CombineError('incorrect number of weights')
-    
-    for i in blockgen(blocksize, finalshape):
-        # views of the images and masks
-        vnimages = [j[i] for j in nimages]
-        vnmasks = [j[i] for j in nmasks]
-        internal_combine(method, vnimages, vnmasks,
-                          out0=result[i], out1=variance[i], out2=numbers[i], args=(0,),
-                          zeros=zeros, scales=scales, weights=weights)
-        
-    return (result, variance, numbers)
-
-def _combine(method, images, masks=None, dtype=None, out=None, 
+def _combine(method, images, masks=None, dtype=None, out=None,
              args=(), zeros=None, scales=None, weights=None, offsets=None,):
         # method should be a string
     if not isinstance(method, basestring) and not callable(method):
@@ -279,18 +126,16 @@ def _combine(method, images, masks=None, dtype=None, out=None,
     baseshape = images[0].shape
     if any(shape != baseshape for shape in allshapes[1:]):
         raise CombineError("Images don't have the same shape")
-
-    dimension_of_images = len(baseshape)
     
     # Offsets
-    if offsets:
+    if offsets is None:
+        finalshape = baseshape
+    else:
         if len(images) != len(offsets):
             raise CombineError("len(inputs) != len(offsets)")
         
         finalshape, offsets = combine_shape(allshapes, offsets)
-    else:
-        offsets = np.zeros((number_of_images, dimension_of_images))
-        finalshape = baseshape
+        offsets = offsets.astype('int')
         
     if masks:
         if len(images) != len(masks):
@@ -303,41 +148,48 @@ def _combine(method, images, masks=None, dtype=None, out=None,
         masks = [np.zeros(baseshape, dtype=np.bool)] * number_of_images
         
     # Creating out if needed
-    # We need thre numbers
-    outshape = (3,) + finalshape
+    # We need three numbers
+    outshape = (3,) + tuple(finalshape)
+    
     if out is None:
-        out = np.zeros(outshape, dtype='float64')
+        out = np.zeros(outshape, dtype='float')
     else:
         if out.shape != outshape:
             raise CombineError("result has wrong shape")  
-        
+    
     if zeros is None:
-        zeros = np.zeros(number_of_images, dtype='float64')
+        zeros = np.zeros(number_of_images, dtype='float')
     else:
-        zeros = np.asanyarray(zeros, dtype='float64')
+        zeros = np.asanyarray(zeros, dtype='float')
         if zeros.shape != (number_of_images,):
             raise CombineError('incorrect number of zeros')
         
     if scales is None:
-        scales = np.ones(number_of_images, dtype='float64')
+        scales = np.ones(number_of_images, dtype='float')
     else:
-        scales = np.asanyarray(scales, dtype='float64')
+        scales = np.asanyarray(scales, dtype='float')
         if scales.shape != (number_of_images,):
             raise CombineError('incorrect number of scales')
         
     if weights is None:
-        weights = np.ones(number_of_images, dtype='float64')
+        weights = np.ones(number_of_images, dtype='float')
     else:
-        weights = np.asanyarray(scales, dtype='float64')
+        weights = np.asanyarray(scales, dtype='float')
         if weights.shape != (number_of_images,):
             raise CombineError('incorrect number of weights')
 
-    internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args,
-                     zeros=zeros, scales=scales, weights=weights)
+    if offsets is None:
+        internal_combine(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args, 
+                         zeros=zeros, scales=scales, weights=weights)
+    else:
+        internal_combine_with_offsets(method, images, masks, out0=out[0], out1=out[1], out2=out[2], 
+                                      args=args, zeros=zeros, scales=scales, weights=weights, 
+                                      offsets=offsets)
+    
     return out.astype(dtype)
 
-def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
-         weights=None, dof=0):
+def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
+         weights=None, dof=0, offsets=None):
     '''Combine images using the mean, with masks and offsets.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -373,12 +225,13 @@ def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
                [ 2.  ,  2.  ]]])
        
     '''
-    return _combine('mean', images, masks=masks, dtype=dtype, out=out, args=(dof,), 
-                    zeros=zeros, scales=scales, weights=weights)
+    return _combine('mean', images, masks=masks, dtype=dtype, out=out, args=(dof,),
+                    zeros=zeros, scales=scales, weights=weights, offsets=offsets)
     
     
     
-def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, weights=None):
+def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
+           weights=None, offsets=None):
     '''Combine images using the median, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -400,10 +253,10 @@ def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, we
        
     '''
     return _combine('median', images, masks=masks, dtype=dtype, out=out,
-                    zeros=zeros, scales=zeros, weights=weights)    
+                    zeros=zeros, scales=scales, weights=weights, offsets=offsets)    
 
-def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
-         weights=None, low=4., high=4., dof=0):
+def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
+         weights=None, offsets=None, low=4., high=4., dof=0):
     '''Combine images using the sigma-clipping, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -423,32 +276,29 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :param dof: degrees of freedom 
     :return: mean, variance and number of points stored in    
     '''
-    myargs = (low, high, dof)
-    return _combine('sigmaclip', images, masks=masks, dtype=dtype, out=out, 
-                    args= myargs, zeros=zeros, scales=scales, weights=weights)
+    
+    return _combine('sigmaclip', images, masks=masks, dtype=dtype, out=out,
+                    args=(low, high, dof), zeros=zeros, scales=scales, 
+                    weights=weights, offsets=offsets)
 
 
 if __name__ == "__main__":
     from numina.decorators import print_timing
   
     @print_timing
-    def tmean(images, masks=None, dtype=None, out=None, dof=0):
-        return mean(images, masks, dtype, out, dof)
+    def tmean(images, masks=None, dtype=None, out=None, dof=0, offsets=None):
+        return mean(images, masks=masks, dtype=dtype, out=out, dof=dof, offsets=offsets)
     
-    @print_timing
-    def tcombine(method, images, masks=None, offsets=None,
-            result=None, variance=None, numbers=None,
-            blocksize=(512, 512)):
-        return combine(method, images, masks, offsets, result, variance, numbers, blocksize)
     # Inputs
-    shape = (2000, 2000)
+    shape = (4, 4)
     data_dtype = 'int16'
-    nimages = 100
-    minputs = [i * scipy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
-    mmasks = [scipy.zeros(shape, dtype='int16') for i in xrange(nimages)]
-    print 'Computing'
+    nimages = 30
+    minputs = [i * np.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
+    mmasks = [np.zeros(shape, dtype='int16') for i in xrange(nimages)]
+    offsets = np.array([[0, 0], [1, 1]] * 15, dtype='int16') 
     
-    out = mean(minputs, mmasks)
-    print out[:, 0, 0]
-    out = median(minputs, mmasks)
-    print out[:, 0, 0]
+    print 'Computing'
+    for i in range(1):
+        outrr = tmean(minputs, mmasks, offsets=offsets)
+        print outrr[0]
+        print outrr[2]
