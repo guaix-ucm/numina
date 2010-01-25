@@ -2,4 +2,4 @@ include COPYING MANIFEST.in
 include src/methods.h
 include lib/emir/simulation/*.dat
 recursive-include doc *
-
+prune demos
