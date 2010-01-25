@@ -19,17 +19,15 @@
 
 # $Id$
 
-from __future__ import division
-
 __version__ = "$Revision$"
 
 
-from itertools import izip, product
+from itertools import izip, imap, product
 
 import numpy as np
 
-from numina.exceptions import Error
-from numina.image._combine import internal_combine, internal_combine_with_offsets, CombineError
+from numina.image._combine import internal_combine, internal_combine_with_offsets
+from numina.image._combine import CombineError
 
 
 def blockgen1d(block, size):
@@ -52,16 +50,15 @@ def blockgen1d(block, size):
     
     '''
     def numblock(block, x):
-        '''Compute recursively the numeric intervals'''
-        a = x[0]
-        b = x[1]
+        '''Compute recursively the numeric intervals
+        '''
+        a, b = x
         if b - a <= block:
             return [x]
         else:
             result = []
-            d = (b - a) // 2
-            temp = map(numblock, [block, block], [(a, a + d), (a + d, b)])
-            for i in temp:
+            d = int(b - a) / 2
+            for i in imap(numblock, [block, block], [(a, a + d), (a + d, b)]):
                 result.extend(i)
             return result
         
@@ -290,15 +287,16 @@ if __name__ == "__main__":
         return mean(images, masks=masks, dtype=dtype, out=out, dof=dof, offsets=offsets)
     
     # Inputs
-    shape = (4, 4)
+    shape = (2048, 2048)
     data_dtype = 'int16'
-    nimages = 30
+    nimages = 100
     minputs = [i * np.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [np.zeros(shape, dtype='int16') for i in xrange(nimages)]
-    offsets = np.array([[0, 0], [1, 1]] * 15, dtype='int16') 
+    offsets = np.array([[0, 0], [1, 1]] * 50, dtype='int16') 
     
     print 'Computing'
     for i in range(1):
         outrr = tmean(minputs, mmasks, offsets=offsets)
-        print outrr[0]
+        print outrr[2]
+        outrr = tmean(minputs, mmasks)
         print outrr[2]
