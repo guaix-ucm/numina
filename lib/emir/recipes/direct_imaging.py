@@ -157,7 +157,7 @@ class Recipe(RecipeBase):
         self.book_keeping = {}
         
         for i,m in zip(self.images, self.masks):
-            self.book_keeping[i] = dict(masks=[m], versions=[i])
+            self.book_keeping[i] = dict(masks=[m], versions=[i], omasks=[])
         
         
     def input_checks(self):
@@ -205,17 +205,19 @@ class Recipe(RecipeBase):
         
     def process(self):
 
-        def resize_image(file, basefile, newfile, offset, store):
+        def resize_image(file, basefile, newfile, finalshape, offset, store, val=0):
             hdulist = pyfits.open(file, mode='readonly')
             try:
                 p = hdulist['primary']
-                newdata = np.zeros(finalshape, dtype=p.data.dtype)
+                newdata = np.empty(finalshape, dtype=p.data.dtype)
+                newdata.fill(val)
                 region = tuple(slice(offset[i], offset[i] 
                                      + self.baseshape[i]) for i in xrange(self.ndim))
                 newdata[region] = p.data
                 pyfits.writeto(newfile, newdata, p.header, output_verify='silentfix', clobber=True)
                 _logger.info('Resized image %s into image %s, new shape %s', file, newfile, finalshape)
-                self.book_keeping[basefile][store].append(newfile)
+                for s in store:
+                    self.book_keeping[basefile][s].append(newfile)
             finally:
                 hdulist.close()
 
@@ -223,7 +225,7 @@ class Recipe(RecipeBase):
             # The sky images corresponding to file
             sky_images = self.parameters.inputs['images'][file][2]
             r_sky_images = [self.book_keeping[i]['versions'][-1] for i in sky_images]
-            r_sky_masks = [self.book_keeping[i]['masks'][-1] for i in sky_images]
+            r_sky_masks = [self.book_keeping[i]['omasks'][-1] for i in sky_images]
             _logger.info('Sky images for %s are %s', file, sky_images)
                 
             try:       
@@ -233,15 +235,13 @@ class Recipe(RecipeBase):
                 
                 for file in r_sky_images:
                     _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
-                    _logger.debug('Append %s', file)
+                    hdulist = pyfits.open(file, memmap=True, mode='readonly')                    
                     data.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
                 for file in r_sky_masks:
                     _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
-                    _logger.debug('Append %s', file)
+                    hdulist = pyfits.open(file, memmap=True, mode='readonly')                    
                     masks.append(hdulist['primary'].data)
                     fd.append(hdulist)
                 
@@ -257,10 +257,9 @@ class Recipe(RecipeBase):
                 
             skyval = skyback[0]
             skymask = skyback[2] != 0
-            _logger.debug('Sky image shape is %s', skyback.shape)
             median_sky = np.median(skyval[skymask])
             if np.isnan(median_sky):
-                _logger.info('Median sky value is Nan')
+                _logger.warning('Median sky value is Nan')
                 return 0
             _logger.info('Median sky value is %d', median_sky)
             return median_sky
@@ -272,10 +271,10 @@ class Recipe(RecipeBase):
                 p = hdulist['primary']
                 newdata = (p.data != 0) | (obj_mask != 0)
                 newdata = newdata.astype('int')
-                newfile = '%s_mask.iter.%02d' % (file, iter)
+                newfile = 's_%s.omask.iter.%02d' % (file, iter)
                 pyfits.writeto(newfile, newdata, p.header, 
                                output_verify='silentfix', clobber=True)
-                self.book_keeping[file]['masks'].append(newfile)
+                self.book_keeping[file]['omasks'].append(newfile)
                 _logger.info('Mask %s merged with object mask into %s', file, newfile)
             finally:
                 hdulist.close() 
@@ -294,7 +293,6 @@ class Recipe(RecipeBase):
                 for file in r_images:
                     _logger.debug('Opening %s', file)
                     hdulist = pyfits.open(file, memmap=True, mode='readonly')
-                    _logger.debug('Append %s', file)
                     data.append(hdulist['primary'].data)
                     _logger.debug('Append fits handle %s', hdulist)
                     fd.append(hdulist)
@@ -302,19 +300,17 @@ class Recipe(RecipeBase):
                 for file in r_masks:
                     _logger.debug('Opening %s', file)
                     hdulist = pyfits.open(file, memmap=True, mode='readonly')
-                    _logger.debug('Append %s', file)
                     masks.append(hdulist['primary'].data)
                     _logger.debug('Append fits handle %s', hdulist)
                     fd.append(hdulist)
 
                 _logger.info('Combining images')
-                final_data = median(data, masks, zeros=backgrounds)
+                final_data = median(data, masks, zeros=backgrounds, dtype='float32')
             finally:
                 # One liner
                 _logger.debug("Closing the data files")
                 map(pyfits.HDUList.close, fd)
-            
-            
+                        
             return final_data            
         
         save_intermediate = True
@@ -335,14 +331,21 @@ class Recipe(RecipeBase):
         
         # Getting the offsets
         offsets = [self.parameters.inputs['images'][k][1] for k in self.images]
+        #offsets = [(0,0) for k in self.images]
                 
         # Computing the shape of the final image
         finalshape, offsetsp = combine_shape(self.baseshape, offsets)
         _logger.info("Shape of the final image %s", finalshape)
         
-        # Iteration 0        
-        map(lambda f, o: resize_image(f, f, 's_%s' % f, o, store='versions'), self.images, offsetsp)
-        map(lambda f, i, o: resize_image(f, i, ('s_%s.mask' % i), o, store='masks'), self.masks, self.images, offsetsp)
+        # Iteration 0
+        
+        for f, o in zip(self.images, offsetsp):
+            resize_image(f, f, 's_%s' % f, finalshape, o, store=('versions',))
+        
+        
+        for f, i, o in zip(self.masks, self.images, offsetsp):
+            resize_image(f, i, ('s_%s.mask' % i), finalshape, o, 
+                         store=('masks', 'omasks'), val=1)
                 
         # Compute sky from the image (median)
         # TODO: Only for images that are Science images        
@@ -350,6 +353,7 @@ class Recipe(RecipeBase):
         
         # Combine
         final_data = combine_images(sky_backgrounds)
+        #final_data = combine_images(None)
 
         fc = EmirImage()
         
@@ -426,7 +430,7 @@ def sextractor_object_mask(array):
     # With the segmentation mask inside
     sub = subprocess.Popen(["sex", "-CHECKIMAGE_TYPE", "SEGMENTATION", tf.name],
                            stdout=subprocess.PIPE, cwd=tmpdir)
-    result = sub.communicate()
+    sub.communicate()
     
     segfile = os.path.join(tmpdir, 'check.fits')
     
@@ -443,54 +447,54 @@ def sextractor_object_mask(array):
         
     
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    _logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
+    _logger.setLevel(logging.INFO)
     import os.path
     import json
     import cProfile
 
-    
+    from numina.image.combine import mean
     from numina.user import main
     from numina.recipes import Parameters
     
     from numina.jsonserializer import to_json
     
     pv = {'inputs' :  { 'images':  
-                       {'apr21_0046.fits': ('apr21_0046.fits_mask', (0, 0), ['apr21_0046.fits']),
-                        'apr21_0047.fits': ('apr21_0047.fits_mask', (0, 0), ['apr21_0047.fits']),
-                        'apr21_0048.fits': ('apr21_0048.fits_mask', (0, 0), ['apr21_0048.fits']),
-                        'apr21_0049.fits': ('apr21_0049.fits_mask', (21, -23), ['apr21_0049.fits']),
-                        'apr21_0051.fits': ('apr21_0051.fits_mask', (21, -23), ['apr21_0051.fits']),
-                        'apr21_0052.fits': ('apr21_0052.fits_mask', (-15, -35), ['apr21_0052.fits']),
-                        'apr21_0053.fits': ('apr21_0053.fits_mask', (-15, -35), ['apr21_0053.fits']),
-                        'apr21_0054.fits': ('apr21_0054.fits_mask', (-15, -35), ['apr21_0054.fits']),
-                        'apr21_0055.fits': ('apr21_0055.fits_mask', (24, 12), ['apr21_0055.fits']),
-                        'apr21_0056.fits': ('apr21_0056.fits_mask', (24, 12), ['apr21_0056.fits']),
-                        'apr21_0057.fits': ('apr21_0057.fits_mask', (24, 12), ['apr21_0057.fits']),
-                        'apr21_0058.fits': ('apr21_0058.fits_mask', (-27, 18), ['apr21_0058.fits']),
-                        'apr21_0059.fits': ('apr21_0059.fits_mask', (-27, 18), ['apr21_0059.fits']),
-                        'apr21_0060.fits': ('apr21_0060.fits_mask', (-27, 18), ['apr21_0060.fits']),
-                        'apr21_0061.fits': ('apr21_0061.fits_mask', (-38, -16), ['apr21_0061.fits']),
-                        'apr21_0062.fits': ('apr21_0062.fits_mask', (-38, -16), ['apr21_0062.fits']),
-                        'apr21_0063.fits': ('apr21_0063.fits_mask', (-38, -17), ['apr21_0063.fits']),
-                        'apr21_0064.fits': ('apr21_0064.fits_mask', (5, 27), ['apr21_0064.fits']),
-                        'apr21_0065.fits': ('apr21_0065.fits_mask', (5, 27), ['apr21_0065.fits']),
-                        'apr21_0066.fits': ('apr21_0066.fits_mask', (5, 27), ['apr21_0066.fits']),
-                        'apr21_0067.fits': ('apr21_0067.fits_mask', (32, -13), ['apr21_0067.fits']),
-                        'apr21_0068.fits': ('apr21_0068.fits_mask', (33, -13), ['apr21_0068.fits']),
-                        'apr21_0069.fits': ('apr21_0069.fits_mask', (32, -13), ['apr21_0069.fits']),
-                        'apr21_0070.fits': ('apr21_0070.fits_mask', (-52, 7), ['apr21_0070.fits']),
-                        'apr21_0071.fits': ('apr21_0071.fits_mask', (-52, 8), ['apr21_0071.fits']),
-                        'apr21_0072.fits': ('apr21_0072.fits_mask', (-52, 8), ['apr21_0072.fits']),
-                        'apr21_0073.fits': ('apr21_0073.fits_mask', (-3, -49), ['apr21_0073.fits']),
-                        'apr21_0074.fits': ('apr21_0074.fits_mask', (-3, -49), ['apr21_0074.fits']),
-                        'apr21_0075.fits': ('apr21_0075.fits_mask', (-3, -49), ['apr21_0075.fits']),
-                        'apr21_0076.fits': ('apr21_0076.fits_mask', (-49, -33), ['apr21_0076.fits']),
-                        'apr21_0077.fits': ('apr21_0077.fits_mask', (-49, -32), ['apr21_0077.fits']),
-                        'apr21_0078.fits': ('apr21_0078.fits_mask', (-49, -32), ['apr21_0078.fits']),
-                        'apr21_0079.fits': ('apr21_0079.fits_mask', (-15, 36), ['apr21_0079.fits']),
-                        'apr21_0080.fits': ('apr21_0080.fits_mask', (-16, 36), ['apr21_0080.fits']),
-                        'apr21_0081.fits': ('apr21_0081.fits_mask', (-16, 36), ['apr21_0081.fits'])
+                       {'apr21_0046.fits': ('bpm.fits', (0, 0), ['apr21_0046.fits']),
+                        'apr21_0047.fits': ('bpm.fits', (0, 0), ['apr21_0047.fits']),
+                        'apr21_0048.fits': ('bpm.fits', (0, 0), ['apr21_0048.fits']),
+                        'apr21_0049.fits': ('bpm.fits', (21, -23), ['apr21_0049.fits']),
+                        'apr21_0051.fits': ('bpm.fits', (21, -23), ['apr21_0051.fits']),
+                        'apr21_0052.fits': ('bpm.fits', (-15, -35), ['apr21_0052.fits']),
+                        'apr21_0053.fits': ('bpm.fits', (-15, -35), ['apr21_0053.fits']),
+                        'apr21_0054.fits': ('bpm.fits', (-15, -35), ['apr21_0054.fits']),
+                        'apr21_0055.fits': ('bpm.fits', (24, 12), ['apr21_0055.fits']),
+                        'apr21_0056.fits': ('bpm.fits', (24, 12), ['apr21_0056.fits']),
+                        'apr21_0057.fits': ('bpm.fits', (24, 12), ['apr21_0057.fits']),
+                        'apr21_0058.fits': ('bpm.fits', (-27, 18), ['apr21_0058.fits']),
+                        'apr21_0059.fits': ('bpm.fits', (-27, 18), ['apr21_0059.fits']),
+                        'apr21_0060.fits': ('bpm.fits', (-27, 18), ['apr21_0060.fits']),
+                        'apr21_0061.fits': ('bpm.fits', (-38, -16), ['apr21_0061.fits']),
+                        'apr21_0062.fits': ('bpm.fits', (-38, -16), ['apr21_0062.fits']),
+                        'apr21_0063.fits': ('bpm.fits', (-38, -17), ['apr21_0063.fits']),
+                        'apr21_0064.fits': ('bpm.fits', (5, 27), ['apr21_0064.fits']),
+                        'apr21_0065.fits': ('bpm.fits', (5, 27), ['apr21_0065.fits']),
+                        'apr21_0066.fits': ('bpm.fits', (5, 27), ['apr21_0066.fits']),
+                        'apr21_0067.fits': ('bpm.fits', (32, -13), ['apr21_0067.fits']),
+                        'apr21_0068.fits': ('bpm.fits', (33, -13), ['apr21_0068.fits']),
+                        'apr21_0069.fits': ('bpm.fits', (32, -13), ['apr21_0069.fits']),
+                        'apr21_0070.fits': ('bpm.fits', (-52, 7), ['apr21_0070.fits']),
+                        'apr21_0071.fits': ('bpm.fits', (-52, 8), ['apr21_0071.fits']),
+                        'apr21_0072.fits': ('bpm.fits', (-52, 8), ['apr21_0072.fits']),
+                        'apr21_0073.fits': ('bpm.fits', (-3, -49), ['apr21_0073.fits']),
+                        'apr21_0074.fits': ('bpm.fits', (-3, -49), ['apr21_0074.fits']),
+                        'apr21_0075.fits': ('bpm.fits', (-3, -49), ['apr21_0075.fits']),
+                        'apr21_0076.fits': ('bpm.fits', (-49, -33), ['apr21_0076.fits']),
+                        'apr21_0077.fits': ('bpm.fits', (-49, -32), ['apr21_0077.fits']),
+                        'apr21_0078.fits': ('bpm.fits', (-49, -32), ['apr21_0078.fits']),
+                        'apr21_0079.fits': ('bpm.fits', (-15, 36), ['apr21_0079.fits']),
+                        'apr21_0080.fits': ('bpm.fits', (-16, 36), ['apr21_0080.fits']),
+                        'apr21_0081.fits': ('bpm.fits', (-16, 36), ['apr21_0081.fits'])
                         },   
                         'master_dark': 'Dark50.fits',
                         'linearity': [1e-12, 1e-7, 0.99, 0.00],
@@ -505,19 +509,12 @@ if __name__ == '__main__':
     
     p = Parameters(**pv)
     
-    os.chdir('/home/spr/Datos/IR/apr21')
+    os.chdir('/home/spr/Datos/emir/apr21')
     
-    f = open('config-d.txt', 'w+')
+    f = open('config-d.json', 'w+')
     try:
         json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
             
-    main(['-d', '--run', 'direct_imaging', 'config-d-short.txt'])
-    
-    
-    
-    
-    
-    
-    
+    main(['-d', '--run', 'direct_imaging', 'config-d.json'])
