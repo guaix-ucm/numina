@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -19,11 +19,7 @@
 
 # $Id$
 
-'''
-
-'''
-
-__version__ = "$Revision"
+__version__ = "$Revision$"
 
 import logging
 import time
@@ -79,10 +75,11 @@ def version_filename(file_spec):
     return ""
 
 class Corrector:
-    def __init__(self, flag, comment):
+    def __init__(self, flag, comment, dtype='float32'):
         self.flag = flag
         self.comment = comment
         self.name = ''
+        self.dtype = dtype 
 
     def mark_as_processed(self, hdulist):
         hdulist[0].header.update(self.flag, time.asctime(), self.comment)
@@ -98,63 +95,49 @@ class Corrector:
         raise NotImplementedError
 
 class BiasCorrector(Corrector):
-    def __init__(self, biasdata):
-        super(BiasCorrector, self).__init__('NUM-BS', 'Bias removed with numina')
+    def __init__(self, biasdata, dtype='float32'):
+        super(BiasCorrector, self).__init__('NUM-BS', 'Bias removed with numina', dtype)
         self.biasdata = biasdata
 
     def correct(self, hdulist):
         primary = hdulist['PRIMARY']
         primary.data -= self.biasdata
+        primary.data = primary.data.astype(self.dtype)
         return True
 
 
 class DarkCorrector(Corrector):
-    def __init__(self, darkdata):
-        super(DarkCorrector, self).__init__('NUM-DK', 'Dark removed with numina')
+    def __init__(self, darkdata, dtype='float32'):
+        super(DarkCorrector, self).__init__('NUM-DK', 'Dark removed with numina', dtype)
         self.darkdata = darkdata
 
     def correct(self, hdulist):
         primary = hdulist['PRIMARY']
         primary.data -= self.darkdata
+        primary.data = primary.data.astype(self.dtype)
         return True
 
 class NonLinearityCorrector(Corrector):
-    def __init__(self, polynomial):
-        super(NonLinearityCorrector, self).__init__('NUM-LIN', 'Non-linearity removed with numina')
+    def __init__(self, polynomial, dtype='float32'):
+        super(NonLinearityCorrector, self).__init__('NUM-LIN', 'Non-linearity removed with numina', dtype)
         self.polynomial = polynomial
                 
     def correct(self, hdulist):
         primary = hdulist['PRIMARY']
         primary.data = polyval(self.polynomial, primary.data)
+        primary.data = primary.data.astype(self.dtype)
         return True
         
         
 class FlatFieldCorrector(Corrector):
-    def __init__(self, flatdata):
-        super(FlatFieldCorrector, self).__init__('NUM-FF', 'Flat field removed with numina')
+    def __init__(self, flatdata, dtype='float32'):
+        super(FlatFieldCorrector, self).__init__('NUM-FF', 'Flat field removed with numina', dtype)
         self.flatdata = flatdata
 
     def correct(self, hdulist):
         primary = hdulist['PRIMARY']
         primary.data /= self.flatdata
-        return True
-    
-    def __str__(self):
-        return "FlatFieldCorrector"
-
-class NaNCorrector(Corrector):
-    def __init__(self, value, mask_extension='mask'):
-        super(NaNCorrector, self).__init__('NUM-NAN', 'NaN removed with numina')
-        self.value = value
-        self.mask_extension = mask_extension
-
-    def correct(self, hdulist):
-        primary = hdulist['PRIMARY']
-        mask = hdulist[mask_extension]
-
-        isnan_mask = numpy.isnan(primary.data)
-        mask &= isnan_mask
-        primary.data[isnan_mask] = self.value
+        primary.data = primary.data.astype(self.dtype)
         return True
             
 def generic_processing(inputs, correctors, backup=False, output_verify='ignore', outputs=None):
@@ -169,7 +152,7 @@ def generic_processing(inputs, correctors, backup=False, output_verify='ignore',
         try:
             for corrector in correctors:
                 if not corrector.check_if_processed(hdulist):
-                    _logger.debug("Going to process %s with %s", input, corrector)
+                    _logger.info("Processing %s with %s", input, corrector)
                     
                     if corrector.correct(hdulist):
                         if backup and do_backup:
