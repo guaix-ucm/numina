@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -205,11 +205,10 @@ class Recipe(RecipeBase):
         
     def process(self):
 
-        def resize_image(file, basefile, offset, store):
+        def resize_image(file, basefile, newfile, offset, store):
             hdulist = pyfits.open(file, mode='readonly')
             try:
                 p = hdulist['primary']
-                newfile = 's_%s' % file
                 newdata = np.zeros(finalshape, dtype=p.data.dtype)
                 region = tuple(slice(offset[i], offset[i] 
                                      + self.baseshape[i]) for i in xrange(self.ndim))
@@ -258,8 +257,11 @@ class Recipe(RecipeBase):
                 
             skyval = skyback[0]
             skymask = skyback[2] != 0
-            
+            _logger.debug('Sky image shape is %s', skyback.shape)
             median_sky = np.median(skyval[skymask])
+            if np.isnan(median_sky):
+                _logger.info('Median sky value is Nan')
+                return 0
             _logger.info('Median sky value is %d', median_sky)
             return median_sky
 
@@ -339,8 +341,8 @@ class Recipe(RecipeBase):
         _logger.info("Shape of the final image %s", finalshape)
         
         # Iteration 0        
-        map(lambda f, o: resize_image(f, f, o, store='versions'), self.images, offsetsp)
-        map(lambda f, i, o: resize_image(f, i, o, store='masks'), self.masks, self.images, offsetsp)
+        map(lambda f, o: resize_image(f, f, 's_%s' % f, o, store='versions'), self.images, offsetsp)
+        map(lambda f, i, o: resize_image(f, i, ('s_%s.mask' % i), o, store='masks'), self.masks, self.images, offsetsp)
                 
         # Compute sky from the image (median)
         # TODO: Only for images that are Science images        
@@ -352,7 +354,7 @@ class Recipe(RecipeBase):
         fc = EmirImage()
         
         if save_intermediate:
-            newfile = 'intermediate.%02d' % 0
+            newfile = 'intermediate.%02d.fits' % 0
             final = fc.create(final_data[0])
             final.writeto(newfile, output_verify='silentfix', clobber=True)
                 
@@ -378,7 +380,7 @@ class Recipe(RecipeBase):
             final_data = combine_images(sky_backgrounds)
         
             if save_intermediate:
-                newfile = 'intermediate.%02d' % iter
+                newfile = 'intermediate.%02d.fits' % iter
                 final = fc.create(final_data[0])
                 final.writeto(newfile, output_verify='silentfix', clobber=True)
         
@@ -398,46 +400,46 @@ class Recipe(RecipeBase):
 
     
 def sextractor_object_mask(array):
-        import tempfile
-        import subprocess
-        import shutil
-        import os.path
-        
-        # Creating a temporary directory
-        tmpdir = tempfile.mkdtemp()
-        
-        # A temporary file used to store the array in fits format
-        tf = tempfile.NamedTemporaryFile(dir=tmpdir)
-        pyfits.writeto(tf, array)
-        
-        # Copying a default.param file
-        sub = subprocess.Popen(["cp", "/home/spr/devel/workspace/sextractor/config/default.param", 
-                                tmpdir], stdout=subprocess.PIPE)
-        sub.communicate()
-        
-        # Copying a default.conv
-        sub = subprocess.Popen(["cp", "/usr/share/sextractor/default.conv",  tmpdir], 
-                               stdout=subprocess.PIPE)
-        sub.communicate()
-        
-        # Run sextractor, it will create a image called check.fits
-        # With the segmentation mask inside
-        sub = subprocess.Popen(["sex", "-CHECKIMAGE_TYPE", "SEGMENTATION", tf.name],
-                               stdout=subprocess.PIPE, cwd=tmpdir)
-        result = sub.communicate()
-        
-        segfile = os.path.join(tmpdir, 'check.fits')
-        
-        # Read the segmentation image
-        result = pyfits.getdata(segfile)
-        
-        # Close the tempfile
-        tf.close()
-        # Remove everything
-        # Inside the temporary directory
-        shutil.rmtree(tmpdir)
-        
-        return result
+    import tempfile
+    import subprocess
+    import shutil
+    import os.path
+    
+    # Creating a temporary directory
+    tmpdir = tempfile.mkdtemp()
+    
+    # A temporary file used to store the array in fits format
+    tf = tempfile.NamedTemporaryFile(dir=tmpdir)
+    pyfits.writeto(tf, array)
+    
+    # Copying a default.param file
+    sub = subprocess.Popen(["cp", "/home/spr/devel/workspace/sextractor/config/default.param", 
+                            tmpdir], stdout=subprocess.PIPE)
+    sub.communicate()
+    
+    # Copying a default.conv
+    sub = subprocess.Popen(["cp", "/usr/share/sextractor/default.conv",  tmpdir], 
+                           stdout=subprocess.PIPE)
+    sub.communicate()
+    
+    # Run sextractor, it will create a image called check.fits
+    # With the segmentation mask inside
+    sub = subprocess.Popen(["sex", "-CHECKIMAGE_TYPE", "SEGMENTATION", tf.name],
+                           stdout=subprocess.PIPE, cwd=tmpdir)
+    result = sub.communicate()
+    
+    segfile = os.path.join(tmpdir, 'check.fits')
+    
+    # Read the segmentation image
+    result = pyfits.getdata(segfile)
+    
+    # Close the tempfile
+    tf.close()
+    # Remove everything
+    # Inside the temporary directory
+    shutil.rmtree(tmpdir)
+    
+    return result
         
     
 if __name__ == '__main__':
@@ -445,6 +447,9 @@ if __name__ == '__main__':
     _logger.setLevel(logging.DEBUG)
     import os.path
     import json
+    import cProfile
+
+    
     from numina.user import main
     from numina.recipes import Parameters
     
@@ -487,9 +492,8 @@ if __name__ == '__main__':
                         'apr21_0080.fits': ('apr21_0080.fits_mask', (-16, 36), ['apr21_0080.fits']),
                         'apr21_0081.fits': ('apr21_0081.fits_mask', (-16, 36), ['apr21_0081.fits'])
                         },   
-                        'master_bias': 'mbias.fits',
                         'master_dark': 'Dark50.fits',
-                        'linearity': [1e-3, 1e-2, 0.99, 0.00],
+                        'linearity': [1e-12, 1e-7, 0.99, 0.00],
                         'master_flat': 'flat.fits',
                         'master_bpm': 'bpm.fits'
                         },
@@ -508,8 +512,8 @@ if __name__ == '__main__':
         json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
-    
-    main(['-d', '--run', 'direct_imaging', 'config-d.txt'])
+            
+    main(['-d', '--run', 'direct_imaging', 'config-d-short.txt'])
     
     
     
