@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -36,10 +36,10 @@ __metaclass__ = type
 
 class RecipeType(type):
     registry = {}
-    def __init__(cls, name, bases, dictionary):
+    def __init__(mcs, name, bases, dictionary):
         """Initialise the new class-object"""
         if name != 'RecipeBase':
-            cls.registry[cls] = name
+            mcs.registry[mcs] = name
 
 class RecipeBase:
     '''Abstract Base class for Recipes.'''
