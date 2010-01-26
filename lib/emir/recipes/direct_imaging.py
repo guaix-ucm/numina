@@ -98,7 +98,7 @@ from numina.recipes import ParametersDescription, systemwide_parameters
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
-from numina.image.combine import median, mean
+from numina.image.combine import median
 from emir.recipes import pipeline_parameters
 from emir.instrument.headers import EmirImage
 import numina.qa as QA
@@ -153,12 +153,12 @@ class Recipe(RecipeBase):
         self.input_checks()
 
         self.book_keeping = {}
-        self.base = 's_%s.base'
-        self.basemask = 's_%s.mask'
-        self.iter = 's_%s.iter.%02d'
-        self.itermask = 's_%s.mask.iter.%02d'
-        self.iteromask = 's_%s.omask.iter.%02d'
-        self.inter = 'intermediate.%02d.fits'
+        self.base = 'emir_%s.base'
+        self.basemask = 'emir_%s.mask'
+        self.iter = 'emir_%s.iter.%02d'
+        self.itermask = 'emir_%s.mask.iter.%02d'
+        self.iteromask = 'emir_%s.omask.iter.%02d'
+        self.inter = 'emir_intermediate.%02d.fits'
         for i,m in zip(self.images, self.masks):
             self.book_keeping[i] = dict(mask=m, version=i, omask=m, region=None)
         
@@ -175,7 +175,7 @@ class Recipe(RecipeBase):
             try:
                 _logger.debug("Opening image %s", file)
                 image_shapes.append(hdulist['primary'].data.shape)
-                _logger.info("Shape of image %s is %s", file, image_shapes[-1])
+                _logger.debug("Shape of image %s is %s", file, image_shapes[-1])
             finally:
                 hdulist.close()
         
@@ -186,7 +186,7 @@ class Recipe(RecipeBase):
             try:
                 _logger.debug("Opening mask %s", file)
                 mask_shapes.append(hdulist['primary'].data.shape)
-                _logger.info("Shape of mask %s is %s", file, mask_shapes[-1])
+                _logger.debug("Shape of mask %s is %s", file, mask_shapes[-1])
             finally:
                 hdulist.close()
 
@@ -294,13 +294,14 @@ class Recipe(RecipeBase):
             finally:
                 _logger.debug("Closing the sky files")
                 map(pyfits.HDUList.close, fd)
-
+            
+            _logger.info('Iter %d, median sky background %f', iter, median_sky)
             return median_sky
         
         def compute_superflat(iter):
             # TODO: handle masks
             # The sky images corresponding to file
-            _logger.info('Iteration %d, computing superflat', iter)
+            _logger.info('Iter %d, computing superflat', iter)
             fimages = [self.book_keeping[i]['version'] for i in self.images]
             fmasks = [self.book_keeping[i]['mask'] for i in self.images]
             regions =  [self.book_keeping[i]['region'] for i in self.images]
@@ -453,7 +454,8 @@ class Recipe(RecipeBase):
             
             superflat_processing(superflat, iter)
             
-            # TODO Only for images that are Science images        
+            # TODO Only for images that are Science images
+            _logger.info('Iter %d, sky subtraction', iter)     
             sky_backgrounds = map(lambda f : compute_sky_simple(f, iter), self.images)
         
             # Combine
@@ -465,18 +467,18 @@ class Recipe(RecipeBase):
                 final.writeto(newfile, output_verify='silentfix', clobber=True)
         
             # Generate object mask (using sextractor)
-            _logger.info('Generated objects mask')
-            obj_mask = sextractor_object_mask(final_data[0])
+            _logger.info('Iter % d, generating objects mask')
+            obj_mask = sextractor_object_mask(final_data[0], iter)
         
-            _logger.info('Object mask merged with masks')
+            _logger.info('Iter %d, merging object mask with masks')
             map(lambda f: mask_merging(f, obj_mask, iter), self.images)
-            
             
         for iter in xrange(iterations, iterations + 1):
             _logger.info('Starting iteration %s', iter)
             
             # Compute sky from the image (median)
-            # TODO Only for images that are Science images        
+            # TODO Only for images that are Science images
+            _logger.info('Iter %d, sky subtraction', iter)
             sky_backgrounds = map(lambda f : compute_sky_simple(f, iter), self.images)
         
             # Combine
@@ -492,18 +494,24 @@ class Recipe(RecipeBase):
         return Result(QA.UNKNOWN, final)
 
     
-def sextractor_object_mask(array):
+def sextractor_object_mask(array, iter):
     import tempfile
     import subprocess
     import os.path
     
+    checkimage = "emir_check%02d.fits" % iter
+    
     # A temporary file used to store the array in fits format
-    tf = tempfile.NamedTemporaryFile(prefix='emir', dir='.')
+    tf = tempfile.NamedTemporaryFile(prefix='emir_', dir='.')
     pyfits.writeto(tf, array)
         
     # Run sextractor, it will create a image called check.fits
     # With the segmentation mask inside
-    sub = subprocess.Popen(["sex", "-CHECKIMAGE_TYPE", "SEGMENTATION", tf.name],
+    sub = subprocess.Popen(["sex", 
+                            "-CHECKIMAGE_TYPE", "SEGMENTATION",
+                            "-CHECKIMAGE_NAME", checkimage,
+                            '-VERBOSE_TYPE', 'NORMAL',
+                             tf.name],
                            stdout=subprocess.PIPE)
     sub.communicate()
     
