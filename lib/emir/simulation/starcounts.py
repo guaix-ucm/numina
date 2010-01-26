@@ -25,6 +25,8 @@ import math
 from math import sin, cos, tan
 import sys
 import os
+import pkgutil
+from StringIO import StringIO
 
 from scipy import array
 import scipy.interpolate as sil
@@ -34,19 +36,6 @@ from emir.exceptions import Error
 
 # Classes are new style
 __metaclass__ = type
-
-def _find(pathname, matchfunc=os.path.isfile):
-    for dirname in sys.path:
-        candidate = os.path.join(dirname, pathname)
-        if matchfunc(candidate):
-            return candidate
-    raise Error("Can't find file %s" % pathname)
-
-def findFile(pathname):
-    return _find(pathname)
-
-def findDir(pathname):
-    return _find(pathname, matchfunc=os.path.isdir)
 
 class Counts:
     INTEGRAL_COUNTS = 0,
@@ -115,28 +104,19 @@ class SpagnaModel:
     Number of stars per square arc minute
     '''
     
-    _J_counts_filename = findFile("emir/simulation/spagna-J.dat")
-    _K_counts_filename = findFile("emir/simulation/spagna-K.dat")
-    f = open(_J_counts_filename)
-    try:
-        _J_counts_data = loadtxt(f)
-        # Data in file is for square degree
-        _J_counts_data[:, 1:3] /= 3600.0
-        _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
-        _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
-        del _J_counts_data
-    finally:
-        f.close()
-    f = open(_K_counts_filename)
-    try: 
-        _K_counts_data = loadtxt(f)
-        # Data in file is for square degree
-        _K_counts_data[:, 1:3] /= 3600.0
-        _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
-        _spl_K_2 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 2])
-        del _K_counts_data
-    finally:
-        f.close()
+    _J_counts_data = loadtxt(StringIO(pkgutil.get_data('emir.simulation','spagna-J.dat')))
+    # Data in file is for square degree
+    _J_counts_data[:, 1:3] /= 3600.0
+    _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
+    _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
+    del _J_counts_data
+    
+    _K_counts_data = loadtxt(StringIO(pkgutil.get_data('emir.simulation','spagna-K.dat')))    
+    # Data in file is for square degree
+    _K_counts_data[:, 1:3] /= 3600.0
+    _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
+    _spl_K_2 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 2])
+    del _K_counts_data
         
     name = 'Spagna 1999'    
     filters = [PhotometricFilter.FILTER_K, PhotometricFilter.FILTER_J]
