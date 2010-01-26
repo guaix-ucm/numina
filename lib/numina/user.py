@@ -40,7 +40,7 @@ from numina.exceptions import RecipeError
 from numina.jsonserializer import from_json
 from numina.diskstorage import store_to_disk
 
-version_number = "0.0.2"
+version_number = "0.0.3"
 version_line = '%prog ' + version_number
 
 def parse_cmdline(args=None):

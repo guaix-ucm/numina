@@ -14,7 +14,7 @@ ex1 = Extension('numina.image._combine',
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
-      version='0.0.2',
+      version='0.0.3',
       author='Sergio Pascual',
       author_email='sergiopr@astrax.fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
