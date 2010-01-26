@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -26,7 +26,7 @@ __version__ = "$Revision$"
 import time
 import logging
 
-_logger = logging.getLogger("emir")
+_logger = logging.getLogger("numina")
 
 def print_timing(func):
     '''Print timing decorator'''
