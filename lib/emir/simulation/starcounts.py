@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -20,8 +20,7 @@
 # $Id$
 
 __version__ = "$Revision$"
-
-from __future__ import with_statement 
+ 
 import math
 from math import sin, cos, tan
 import sys
@@ -118,20 +117,26 @@ class SpagnaModel:
     
     _J_counts_filename = findFile("emir/simulation/spagna-J.dat")
     _K_counts_filename = findFile("emir/simulation/spagna-K.dat")
-    with open(_J_counts_filename) as f:
+    f = open(_J_counts_filename)
+    try:
         _J_counts_data = loadtxt(f)
         # Data in file is for square degree
         _J_counts_data[:, 1:3] /= 3600.0
         _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
         _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
         del _J_counts_data
-    with open(_K_counts_filename) as f: 
+    finally:
+        f.close()
+    f = open(_K_counts_filename)
+    try: 
         _K_counts_data = loadtxt(f)
         # Data in file is for square degree
         _K_counts_data[:, 1:3] /= 3600.0
         _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
         _spl_K_2 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 2])
         del _K_counts_data
+    finally:
+        f.close()
         
     name = 'Spagna 1999'    
     filters = [PhotometricFilter.FILTER_K, PhotometricFilter.FILTER_J]
