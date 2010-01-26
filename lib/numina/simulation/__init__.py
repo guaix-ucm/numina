@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -21,7 +21,6 @@
 
 __version__ = "$Revision$"
 
-from __future__ import with_statement
 import os
 from os.path import join as pjoin
 import cPickle
@@ -48,17 +47,23 @@ class RunCounter:
             _logger.debug('Creating image directory %s' % self.directory)
             os.mkdir(self.directory)
         try:
-            with open(self.pstore, 'rb') as pkl_file:
+            pkl_file = open(self.pstore, 'rb')
+            try:
                 _logger.debug('Loading status in %s' % self.pstore)
                 self.last = cPickle.load(pkl_file)
+            finally:
+                pkl_file.close() 
         except IOError, strrerror:            
             _logger.error(strrerror)
                 
     def store(self):
         try:
-            with open(self.pstore, 'wb') as pkl_file:                
+            pkl_file = open(self.pstore, 'wb')
+            try:                
                 cPickle.dump(self.last, pkl_file)
                 _logger.debug('Storing internal status in %s' % self.pstore)
+            finally:
+                pkl_file.close()
         except IOError, strrerror:            
             _logger.error(strrerror)
             
