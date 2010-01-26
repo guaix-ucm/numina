@@ -1,5 +1,5 @@
 
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -40,9 +40,11 @@ class Profile:
         self.shape = shape
         # Offset corresponds to the point [0,0] of array
         self.offset = offset
+
     def array(self):
         y, x = numpy.indices(self.shape)
         return self.area(x, y)
+
     def area(self, x ,y):
         return numpy.ones(self.shape)
 
@@ -56,14 +58,17 @@ class GaussProfile(Profile):
         # Offset corresponds to the point [0,0] of array
         offset = self.center.astype('int') - numpy.array([l,l]) 
         Profile.__init__(self, shape=(2 * l + 1, 2 * l + 1), offset=offset)
+    
     @staticmethod
     def _compute1(v, center, sigma):
         return GaussProfile.M_SQRT1_2 * (v - center) / sigma
+    
     @staticmethod
     def _compute2(v, center, sigma):
         tipV1 = GaussProfile._compute1(v, center, sigma)
         tipV2 = GaussProfile._compute1(v + 1, center, sigma) 
         return 0.5 * (erf(tipV2) - erf(tipV1))
+    
     def area(self, x, y):      
         v = GaussProfile._compute2(x, self.center[1] - self.offset[1], self.sigma)
         w = GaussProfile._compute2(y, self.center[0] - self.offset[0], self.sigma)
