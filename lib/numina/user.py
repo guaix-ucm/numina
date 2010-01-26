@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -22,8 +22,6 @@
 '''User command line interface of Numina.
 
 '''
-
-from __future__ import with_statement
 
 __version__ = "$Revision$"
 
@@ -98,8 +96,11 @@ def mode_run(args, options, logger):
     
     # checking if the parameters of the recipe
     # are fullfilled by the parameters in the text file
-    with open(args[1]) as f:
+    f = open(args[1])
+    try:
         lp = json.load(f, object_hook=from_json, encoding='utf-8')
+    finally:
+        f.close()
         
     lp = recipemod.parameters_description().complete(lp)
     
