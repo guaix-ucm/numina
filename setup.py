@@ -14,11 +14,11 @@ ex1 = Extension('numina.image._combine',
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
-      version='0.0.3',
+      version='0.0.4',
       author='Sergio Pascual',
       author_email='sergiopr@astrax.fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.0.3.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.0.4.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       long_description='EMIR Data Processing Pipeline',
