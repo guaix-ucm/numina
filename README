@@ -7,9 +7,10 @@ or (at your option) any later version. See the file COPYING for details.
 PyEmir requires the following packages installed in order to
 be able to be installed and work properly:
 
- - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
+ - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
+ - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
  - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
