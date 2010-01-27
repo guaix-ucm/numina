@@ -1,3 +1,9 @@
+Version 0.0.5
+(27 January 2010, from /pyemir/trunk revision 596)
+https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.5/
+
+Bugfixes: #53, false result in direct_image
+
 Version 0.0.4
 (27 January 2010, from /pyemir/trunk revision 595)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.4/
