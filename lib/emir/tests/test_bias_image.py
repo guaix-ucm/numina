@@ -28,7 +28,7 @@ import scipy
 from numina.image.storage import FITSCreator
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
-from emir.instrument.headers import default_fits_headers
+from emir.instrument.headers import EmirImage
 
 # Classes are new style
 __metaclass__ = type
@@ -52,7 +52,7 @@ class BiasImageTestCase(unittest.TestCase):
         self.input_ = scipy.zeros(detector_conf['shape'])
         self.detector.exposure(readout_opt['exposure'])
         
-        self.creator = FITSCreator(default_fits_headers)
+        self.creator = EmirImage()
         self.runcounter = RunCounter("r%05d")
         
         

@@ -21,14 +21,16 @@
 
 __version__ = "$Revision$"
 
-import numina.instrument
+import numpy
+
+import numina.instrument.detector
 from numina.exceptions import DetectorReadoutError
 
 # Classes are new style
 __metaclass__ = type
 
 
-class EmirDetector(numina.instrument.Detector):
+class EmirDetector(numina.instrument.detector.Detector):
     '''The EMIR detector.'''
     def __init__(self, shape=(5, 5), gain=1.0, ron=0.0, dark=1.0, well=65535,
                  pedestal=200., flat=1.0, resetval=0, resetnoise=0.0):
