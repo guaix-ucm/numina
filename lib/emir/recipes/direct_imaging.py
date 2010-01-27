@@ -299,10 +299,9 @@ class Recipe(RecipeBase):
             return median_sky
         
         def compute_superflat(iter):
-            # TODO: handle masks
             # The sky images corresponding to file
             _logger.info('Iter %d, computing superflat', iter)
-            fimages = [self.book_keeping[i]['version'] for i in self.images]
+            fimages = [self.base % i for i in self.images]
             fmasks = [self.book_keeping[i]['mask'] for i in self.images]
             regions =  [self.book_keeping[i]['region'] for i in self.images]
             
@@ -343,8 +342,7 @@ class Recipe(RecipeBase):
             flat = superflat[0]
             mask = (flat == 0)
             flat[mask] = 1
-            
-            
+
             regions =  [self.book_keeping[i]['region'] for i in self.images]
             
             for file, region in zip(self.images, regions):
