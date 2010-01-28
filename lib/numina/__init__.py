@@ -74,19 +74,12 @@ def get_module(name):
 
 def list_recipes(path):
     '''List all the recipes in a module'''
-    module = __import__(path)
-    
-    # Import submodules
-    for part in path.split('.')[1:]:
-        module = getattr(module, part)
-    
-    # Check members of the module
+    module = __import__(path, fromlist="dummy")
     result = []
     for importer, modname, ispkg in pkgutil.iter_modules(module.__path__):
-        #print "Found submodule %s (is a package: %s)" % (modname, ispkg)
-        rmodule = __import__(modname, fromlist="dummy")
+        rmodule = __import__('.'.join([path, modname]), fromlist="dummy")
         if check_recipe(rmodule):
-            result.append( (modname, rmodule.__doc__.splitlines()[0]) )
+            result.append((modname, rmodule.__doc__.splitlines()[0]))
     return result
 
 def check_recipe(module):
