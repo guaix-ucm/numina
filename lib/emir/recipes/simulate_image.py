@@ -29,9 +29,8 @@ import numpy
 
 from numina.recipes import RecipeBase
 from numina.simulation import RunCounter
-from numina.image.storage import FITSCreator
 from emir.instrument.detector import EmirDetector
-from emir.instrument.headers import default_fits_headers
+from emir.instrument.headers import EmirImage
 
 from dark_image import Result
 
@@ -93,7 +92,7 @@ class Recipe(RecipeBase):
         self.detector.exposure(readout_opt['exposure'])
         
         _logger.info('FITS builder created')
-        self.creator = FITSCreator(default_fits_headers)
+        self.creator = EmirImage()
         _logger.info('Run counter created')
         self.runcounter = RunCounter("r%05d")
         

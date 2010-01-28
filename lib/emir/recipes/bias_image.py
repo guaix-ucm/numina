@@ -40,8 +40,6 @@ sigma-clipping algorithm.
 
 '''
 
-from __future__ import with_statement
-
 __version__ = "$Revision$"
 
 
@@ -53,7 +51,6 @@ from emir.recipes import pipeline_parameters
 from emir.instrument.headers import EmirImage
 from numina.recipes import RecipeBase, RecipeResult
 from numina.recipes import ParametersDescription, systemwide_parameters
-from numina.image.storage import FITSCreator
 from numina.image.combine import mean
 import numina.qa as qa
 
@@ -136,8 +133,11 @@ if __name__ == '__main__':
     
     os.chdir('/home/inferis/spr/IR/apr21')
     
-    with open('config.txt', 'w+') as f:
+    f = open('config.txt', 'w+')
+    try:
         json.dump(p, f, default=to_json, encoding='utf-8',indent=2)
+    finally:
+        f.close()
     
     # main(['--list'])
     main(['-d', '--run', 'bias_image','config.txt'])
