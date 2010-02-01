@@ -46,57 +46,53 @@ import logging
 import pyfits
 import numpy as np
 
-from numina.recipes import RecipeBase, RecipeResult
-from numina.recipes import ParametersDescription, systemwide_parameters
-#from numina.exceptions import RecipeError
+import numina.recipes as nr
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.image.processing import generic_processing
-from numina.image.combine import median, mean
-from emir.recipes import pipeline_parameters
+from numina.image.combine import mean
 from emir.instrument.headers import EmirImage
 import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
 
-_param_desc = ParametersDescription(inputs={'images': [],
-                                            'masks': [],
-                                            'master_bias': '',
-                                            'master_dark': '',
-                                            'master_bpm': ''},
-                                    outputs={'flat': 'flat.fits'},
-                                    optional={'linearity': (1.0, 0.00),
-                                              },
-                                    pipeline=pipeline_parameters(),
-                                    systemwide=systemwide_parameters()
-                                    )
+class ParameterDescription(nr.ParameterDescription):
+    def __init__(self):
+        inputs={'images': [],
+                'masks': [],
+                'master_bias': '',
+                'master_dark': '',
+                'master_bpm': ''}
+        optional={'linearity': (1.0, 0.00),}
+        super(ParameterDescription, self).__init__(inputs, optional)
 
-def parameters_description():
-    return _param_desc
 
-class Result(RecipeResult):
+class Result(nr.RecipeResult):
     '''Result of the intensity flat-field mode recipe.'''
     def __init__(self, qa, flat):
         super(Result, self).__init__(qa)
-        self.flat = flat
+        self.products['flat'] = flat
 
 
-class Recipe(RecipeBase):
+class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in intensity flat-field mode.
      
     '''
-    def __init__(self, parameters):
-        super(Recipe, self).__init__(parameters)
+    def __init__(self):
+        super(Recipe, self).__init__()
+
+    def initialize(self, param):
+        super(Recipe, self).initialize(param)
 
     def process(self):
 
         # dark correction
         # open the master dark    
-        dark_data = pyfits.getdata(self.parameters.inputs['master_dark'])    
+        dark_data = pyfits.getdata(self.inputs['master_dark'])    
         
         corrector1 = DarkCorrector(dark_data)
-        corrector2 = NonLinearityCorrector(self.parameters.inputs['linearity'])
+        corrector2 = NonLinearityCorrector(self.inputs['linearity'])
              
-        generic_processing(self.parameters.inputs['images'],
+        generic_processing(self.inputs['images'],
                            [corrector1, corrector2], backup=True)
           
         
@@ -104,7 +100,7 @@ class Recipe(RecipeBase):
         # ----------------------------------
         alldata = []
         
-        for n in self.parameters.inputs['images']:
+        for n in self.inputs['images']:
             f = pyfits.open(n, 'readonly', memmap=True)
             _logger.debug('Loading image %s', n)
             d = f['PRIMARY'].data
@@ -115,7 +111,7 @@ class Recipe(RecipeBase):
         
         allmasks = []
         
-        for n in self.parameters.inputs['masks']:
+        for n in self.inputs['masks']:
             f = pyfits.open(n, 'readonly', memmap=True)
             _logger.debug('Loading mask %s', n)
             d = f['PRIMARY'].data
@@ -151,7 +147,6 @@ if __name__ == '__main__':
     import json
     import os
     from numina.jsonserializer import to_json
-    import numpy as np
 
     pv = {'inputs' :  {'images': ['apr21_0046.fits',
                                   'apr21_0047.fits',
@@ -228,15 +223,12 @@ if __name__ == '__main__':
                         'linearity': [1e-3, 1e-2, 0.99, 0.00],
                         'master_bpm': 'bpm.fits'
                         },
-          'outputs' : {},
-          'optional' : {},
-          'pipeline' : {},
-          'systemwide' : {'compute_qa': True}
+                'optional' : {}
     }
     
     p = Parameters(**pv)
     
-    os.chdir('/home/inferis/spr/IR/apr21')
+    os.chdir('/home/spr/Datos/emir/apr21')
     
     f = open('config-iff.txt', 'w+')
     try:

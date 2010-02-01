@@ -34,22 +34,16 @@ from numina.exceptions import RecipeError, ParameterError
 # Classes are new style
 __metaclass__ = type
 
-class RecipeType(type):
-    registry = {}
-    def __init__(mcs, name, bases, dictionary):
-        """Initialise the new class-object"""
-        if name != 'RecipeBase':
-            mcs.registry[mcs] = name
-
 class RecipeBase:
-    '''Abstract Base class for Recipes.'''
-#    __metaclass__ = abc.ABCMeta
-    __metaclass__ = RecipeType
-    
-    def __init__(self, parameters):
-        #self.iniconfig = SafeConfigParser()
-        self.parameters = parameters
+    '''Abstract Base class for Recipes.'''    
+    def __init__(self):
+        self.inputs = {}
+        self.optional = {}
         self._repeat = 1
+        
+    def initialize(self, param):
+        self.inputs = param.inputs
+        self.optional = param.optional
         
     def setup(self):
         '''Initialize structures only once before recipe execution.'''
@@ -96,37 +90,27 @@ class RecipeResult:
 #    __metaclass__ = abc.ABCMeta
     def __init__(self, qa):
         self.qa = qa
+        self.products = {}
 
-class ParametersDescription:
-    def __init__(self, inputs, outputs, optional, pipeline, systemwide):
+
+class ParameterDescription(object):
+    def __init__(self, inputs, optional):
         self.inputs = inputs
-        self.outputs = outputs
         self.optional = optional
-        self.pipeline = pipeline
-        self.systemwide = systemwide
-        
-    def complete(self, obj):
-        
-        newvals = {}
-        
-        for key in ['inputs', 'outputs', 'optional', 'pipeline', 'systemwide']:
-            d = dict(getattr(self, key))
-            d.update(getattr(obj, key))
-            newvals[key] = d
     
+    def complete_group(self, obj, group):
+        d = dict(getattr(self, group))
+        d.update(getattr(obj, group))
+        return d
+
+    def complete(self, obj):        
+        newvals = {}
+        for group in ['inputs', 'optional']:            
+            newvals[group] = self.complete_group(obj, group)
+
         return Parameters(**newvals)
 
 class Parameters:
-    def __init__(self, inputs, outputs, optional, pipeline, systemwide):
+    def __init__(self, inputs, optional):
         self.inputs = inputs
-        self.outputs = outputs
         self.optional = optional
-        self.pipeline = pipeline
-        self.systemwide = systemwide
-
-
-_systemwide_parameters = {'compute_qa': True}
-
-def systemwide_parameters():
-    return _systemwide_parameters
-

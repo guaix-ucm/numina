@@ -26,7 +26,7 @@
 __version__ = "$Revision$"
 
 import logging.config
-import json
+import simplejson as json
 import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
@@ -98,14 +98,18 @@ def mode_run(args, options, logger):
     # are fullfilled by the parameters in the text file
     f = open(args[1])
     try:
-        lp = json.load(f, object_hook=from_json, encoding='utf-8')
+        loaded_params = json.load(f, object_hook=from_json, encoding='utf-8')
     finally:
         f.close()
-        
-    lp = recipemod.parameters_description().complete(lp)
     
-    recipe = recipemod.Recipe(lp)
-                
+    logger.debug('Completing the parameters')
+    param_desc = recipemod.ParameterDescription()
+    params = param_desc.complete(loaded_params)
+    
+    logger.debug('Creating the recipe')
+    recipe = recipemod.Recipe()
+    recipe.initialize(params)
+    
     logger.debug('Setting up the recipe')
     recipe.setup()
     
@@ -115,7 +119,7 @@ def mode_run(args, options, logger):
                      runs - recipe.repeat + 1, runs)
         try:
             result = recipe.run()
-            store_result(lp.outputs, result)
+            store_to_disk(result)
         except RecipeError, e:
             logger.error("%s", e)
         except (IOError, OSError), e:
@@ -125,10 +129,6 @@ def mode_run(args, options, logger):
     recipe.cleanup()
     
     logger.info('Completed execution')
-
-def store_result(outnames, result):
-    for key, value in outnames.iteritems():
-        store_to_disk(result.__dict__[key], value)
 
 def main(args=None):
     '''Entry point for the Numina CLI. '''        

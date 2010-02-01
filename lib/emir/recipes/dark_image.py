@@ -47,29 +47,30 @@ __version__ = "$Revision$"
 import logging
 
 import pyfits
-import scipy.stsci.image as im
 
-from numina.recipes import RecipeBase, RecipeResult
+import numina.recipes as nr
+from numina.image.combine import mean
 from numina.exceptions import RecipeError
 from emir.instrument.headers import EmirImage
 
 
 _logger = logging.getLogger("emir.recipes")
         
-_usage_string = "usage: %prog [options] recipe [recipe-options]"
-
-class Result(RecipeResult):
-    '''Result of the DarkImaging recipe.'''
-    def __init__(self, image, filename):
-        super(Result, self).__init__()
-        self.hdulist = image
-        self.filename = filename
         
-    def store(self):
-        _logger.debug('Saving %s' % self.filename)
-        self.hdulist.writeto(self.filename)
+class ParameterDescription(nr.ParameterDescription):
+    def __init__(self):
+        inputs={'images': []}
+        optional={}
+        super(ParameterDescription, self).__init__(inputs, optional)
+        
 
-class Recipe(RecipeBase):
+class Result(nr.RecipeResult):
+    '''Result of the DarkImaging recipe.'''
+    def __init__(self, qa, dark):
+        super(Result, self).__init__(qa)
+        self.products['dark'] = dark
+
+class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in Dark current image Mode.
     
     Here starts the long description...
@@ -77,43 +78,37 @@ class Recipe(RecipeBase):
     
     '''
     def __init__(self):
-        super(Recipe, self).__init__(optusage=_usage_string)
+        super(Recipe, self).__init__()
         # Default values. This can be read from a file
-        self.iniconfig.add_section('inputs')
-        self.iniconfig.set('inputs', 'files', '')
-        self.iniconfig.add_section('output')
-        self.iniconfig.set('output', 'filename', 'output.fits')
-        self.creator = FITSCreator(default_fits_headers)
+        self.creator = EmirImage()
+        
+    def initialize(self, param):
+        super(Recipe, self).initialize(param)
+        self.images = self.inputs['images']
+        
         
     def process(self):
-        pfiles = self.iniconfig.get('inputs', 'files')
-        pfiles = ' '.join(pfiles.splitlines()).replace(',', ' ').split()
-        if len(pfiles) == 0:
-            raise RecipeError("No files to process")
-        
-        images = []
+        fd = []
         try:
-            for i in pfiles:
+            for i in self.images:
                 _logger.debug('Loading %s', i)
-                images.append(pyfits.open(i))
+                fd.append(pyfits.open(i))
         except IOError, err:
             _logger.error(err)
             _logger.debug('Cleaning up hdus')
-            for i in images:
+            for i in fd:
                 i.close()            
             raise RecipeError(err)
         
-        _logger.debug('We have %d images', len(images))
+        _logger.debug('We have %d images', len(fd))
         # Data from the primary extension
-        data = [i['primary'].data for i in images]
+        data = [i['primary'].data for i in fd]
         #
-        result = im.average(data)
+        result = mean(data)
   
         # Final structure
         extensions = [('VARIANCE', None, None), ('NUMBER', None, None)]
         hdulist = self.creator.create(result, None, extensions)
         
-        filename = self.iniconfig.get('output', 'filename')
-        
-        return Result(hdulist, filename)
+        return Result(hdulist)
         

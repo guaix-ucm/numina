@@ -93,34 +93,27 @@ import itertools
 import pyfits
 import numpy as np
 
-from numina.recipes import RecipeBase, RecipeResult
-from numina.recipes import ParametersDescription, systemwide_parameters
+import numina.recipes as nr
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
 from numina.image.combine import median
-from emir.recipes import pipeline_parameters
 from emir.instrument.headers import EmirImage
 import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
 
-_param_desc = ParametersDescription(inputs={'images': [],
+class ParameterDescription(nr.ParameterDescription):
+    def __init__(self):
+        inputs={'images': [],
                                             'masks': [],
                                             'offsets': [],
                                             'master_bias': '',
                                             'master_dark': '',
                                             'master_flat': '',
-                                            'master_bpm': ''},
-                                    outputs={'result': 'result.fits'},
-                                    optional={'linearity': [1.0, 0.0],
-                                              },
-                                    pipeline=pipeline_parameters(),
-                                    systemwide=systemwide_parameters()
-                                    )
-
-def parameters_description():
-    return _param_desc
+                                            'master_bpm': ''}
+        optional={'linearity': [1.0, 0.0]}
+        super(ParameterDescription, self).__init__(inputs, optional)
 
 def combine_shape(shapes, offsets):
     # Computing final image size and new offsets
@@ -133,24 +126,22 @@ def combine_shape(shapes, offsets):
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
 
-class Result(RecipeResult):
+class Result(nr.RecipeResult):
     '''Result of the imaging mode recipe.'''
     def __init__(self, qa, result):
-        self.result = result
         super(Result, self).__init__(qa)
+        self.products['result'] = result
         
-class Recipe(RecipeBase):
+        
+class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in imaging mode.
      
     '''
-    def __init__(self, parameters):
-        super(Recipe, self).__init__(parameters)
-        self.images = self.parameters.inputs['images'].keys()
-        self.images.sort()
-        self.masks = [self.parameters.inputs['images'][k][0] for k in self.images]
-        self.baseshape = ()
-        self.ndim = len(self.baseshape)
-        self.input_checks()
+    def __init__(self):
+        super(Recipe, self).__init__()
+        self.images = []
+        self.masks = []
+        self.baseshape = ()        
 
         self.book_keeping = {}
         self.base = 'emir_%s.base'
@@ -159,9 +150,18 @@ class Recipe(RecipeBase):
         self.itermask = 'emir_%s.mask.iter.%02d'
         self.iteromask = 'emir_%s.omask.iter.%02d'
         self.inter = 'emir_intermediate.%02d.fits'
+        
+    def initialize(self, param):
+        super(Recipe, self).initialize(param)
+        self.images = self.inputs['images'].keys()
+        self.images.sort()
+        self.masks = [self.inputs['images'][k][0] for k in self.images]
+        
+        self.input_checks()
+
+
         for i,m in zip(self.images, self.masks):
             self.book_keeping[i] = dict(mask=m, version=i, omask=m, region=None)
-        
         
     def input_checks(self):
         
@@ -253,7 +253,7 @@ class Recipe(RecipeBase):
 
         def compute_sky_simple(file, iter):            
             # The sky images corresponding to file
-            sky_images = self.parameters.inputs['images'][file][2]
+            sky_images = self.inputs['images'][file][2]
             r_sky_images = [self.book_keeping[i]['version'] for i in sky_images]
             r_sky_masks = [self.book_keeping[i]['omask'] for i in sky_images]
             r_sky_regions = [self.book_keeping[i]['region'] for i in sky_images]
@@ -415,11 +415,11 @@ class Recipe(RecipeBase):
         
         # dark correction
         # open the master dark
-        dark_data = pyfits.getdata(self.parameters.inputs['master_dark'])    
-        flat_data = pyfits.getdata(self.parameters.inputs['master_flat'])
+        dark_data = pyfits.getdata(self.inputs['master_dark'])    
+        flat_data = pyfits.getdata(self.inputs['master_flat'])
         
         corrector1 = DarkCorrector(dark_data)
-        corrector2 = NonLinearityCorrector(self.parameters.inputs['linearity'])
+        corrector2 = NonLinearityCorrector(self.inputs['linearity'])
         corrector3 = FlatFieldCorrector(flat_data)
         
         generic_processing(self.images, [corrector1, corrector2, corrector3], backup=True)
@@ -428,7 +428,7 @@ class Recipe(RecipeBase):
         del flat_data    
 
         # Getting the offsets
-        offsets = [self.parameters.inputs['images'][k][1] for k in self.images]
+        offsets = [self.inputs['images'][k][1] for k in self.images]
         #offsets = [(0,0) for k in self.images]
                 
         # Computing the shape of the final image
@@ -442,7 +442,7 @@ class Recipe(RecipeBase):
             self.book_keeping[k]['omask'] = self.book_keeping[k]['mask']
         
         # Iterate 4 times
-        iterations = 4
+        iterations = 1
         
         for iter in xrange(0, iterations):
             _logger.info('Starting iteration %s', iter)
@@ -577,10 +577,7 @@ if __name__ == '__main__':
                         'master_flat': 'flat.fits',
                         'master_bpm': 'bpm.fits'
                         },
-          'outputs' : {},#'result': 'result.fits'},
-          'optional' : {},
-          'pipeline' : {},
-          'systemwide' : {'compute_qa': True}
+          'optional' : {}          
     }
     
     # Changing the offsets

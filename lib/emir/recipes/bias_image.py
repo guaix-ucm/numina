@@ -47,45 +47,40 @@ import logging
 
 import pyfits
 
-from emir.recipes import pipeline_parameters
+import numina.recipes as nr
 from emir.instrument.headers import EmirImage
-from numina.recipes import RecipeBase, RecipeResult
-from numina.recipes import ParametersDescription, systemwide_parameters
 from numina.image.combine import mean
 import numina.qa as qa
 
 _logger = logging.getLogger("emir.recipes")
 
-_param_desc = ParametersDescription(inputs={'images': []}, 
-                                    outputs={'bias': 'bias.fits'}, 
-                                    optional={}, 
-                                    pipeline=pipeline_parameters(), 
-                                    systemwide=systemwide_parameters()
-                                    )
+class ParameterDescription(nr.ParameterDescription):
+    def __init__(self):
+        inputs={'images': []}
+        optional={}
+        super(ParameterDescription, self).__init__(inputs, optional)
 
-def parameters_description():
-    return _param_desc
-
-class Result(RecipeResult):
+class Result(nr.RecipeResult):
     '''Result of the recipe.'''
-    def __init__(self, hdulist, qa):
+    def __init__(self, qa, hdulist):
         super(Result, self).__init__(qa)
-        self.bias = hdulist
+        self.products['bias'] = hdulist
 
 
-class Recipe(RecipeBase):
+class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in Bias image Mode.
     
     Here starts the long description...
     It continues several lines
     
     '''
-    #usage = 'usage: %prog [options] recipe [recipe-options]'
-    #cmdoptions = OptionParser(usage=usage)
-    #cmdoptions.add_option('--docs', action="store_true", dest="docs", 
-    #                      default=False, help="prints documentation")
-    def __init__(self, parameters):
-        super(Recipe, self).__init__(parameters)
+    def __init__(self):
+        super(Recipe, self).__init__()
+        self.images = []
+        
+    def initialize(self, param):
+        super(Recipe, self).initialize(param)
+        self.images = self.inputs['images']
         
     def process(self):
         
@@ -93,7 +88,7 @@ class Recipe(RecipeBase):
         
         # Open all zero images
         alldata = []
-        for n in self.parameters.inputs['images']:
+        for n in self.images:
             f = pyfits.open(n, 'readonly', memmap=True)
             alldata.append(f[0].data)
         
@@ -105,12 +100,12 @@ class Recipe(RecipeBase):
         creator = EmirImage()
         hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
         
-        if self.parameters.systemwide['compute_qa']:
+        if True:
             cqa = qa.GOOD
         else:
             cqa = qa.UNKNOWN
         
-        return Result(hdulist, cqa)
+        return Result(cqa, hdulist)
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
@@ -123,15 +118,12 @@ if __name__ == '__main__':
     
     pv = {'inputs' : {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
                      'apr21_0049.fits', 'apr21_0050.fits']},
-         'outputs' : {'bias': 'bias.fits'},
          'optional' : {},
-         'pipeline' : {},
-         'systemwide' : {'compute_qa': True}
     }
     
     p = Parameters(**pv)
     
-    os.chdir('/home/inferis/spr/IR/apr21')
+    os.chdir('/home/spr/Datos/emir/apr21')
     
     f = open('config.txt', 'w+')
     try:

@@ -22,8 +22,3 @@
 '''Recipes for Emir Observing Modes'''
 
 __version__ = "$Revision$"
-
-_pipeline_parameters = {'instrument': 'EMIR'}
-
-def pipeline_parameters():
-    return _pipeline_parameters

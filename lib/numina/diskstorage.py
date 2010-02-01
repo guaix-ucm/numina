@@ -21,9 +21,24 @@
 
 __version__ = "$Revision$"
 
+import simplejson as json
+
 from pyfits.NP_pyfits import HDUList
 
-def store_to_disk(obj, where):
-    if isinstance(obj, HDUList):
-        return obj.writeto(where, clobber=True, output_verify='ignore')
-    raise TypeError(repr(obj) + ' is not storable')
+def store_to_disk(result, filename='products.json'):
+    rep = {}
+    for key, val in result.products.iteritems():
+        if isinstance(val, HDUList):
+            #where = val[0].header.get('filename')
+            where = None
+            if not where:
+                where = '%s.fits' % key
+            val.writeto(where, clobber=True, output_verify='ignore')
+        else:
+            rep[key] = val
+    
+    f = open(filename, 'w+') 
+    try:
+        json.dump(rep, f)
+    finally:
+        f.close()
