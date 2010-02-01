@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -25,15 +25,42 @@ import simplejson as json
 
 from pyfits.NP_pyfits import HDUList
 
+_internal_map = {}
+
+def _store_fits(obj):
+    where = val['primary'].header.get('filename')
+    obj.writeto(where, clobber=True, output_verify='ignore')
+    
+_internal_map[HDUList] = _store_fits 
+
+def _store_map(obj):
+    filename = 'products.json'
+    f = open(filename, 'w+') 
+    try:
+        json.dump(obj, f)
+    finally:
+        f.close()
+
+_internal_map[type({})] = _store_map
+
+_internal_map[type([])] = _store_map
+
+def register(cls):
+    def wrap(f):
+        _internal_map[cls] = f
+        def w_f(*args):
+            return f(*args)
+        
+        return w_f
+    
+    return wrap
+
 def store_to_disk(result, filename='products.json'):
     rep = {}
     for key, val in result.products.iteritems():
-        if isinstance(val, HDUList):
-            #where = val[0].header.get('filename')
-            where = None
-            if not where:
-                where = '%s.fits' % key
-            val.writeto(where, clobber=True, output_verify='ignore')
+        if val.__class__ in _internal_map:
+            store = _internal_map[val.__class__]
+            store(val)
         else:
             rep[key] = val
     
