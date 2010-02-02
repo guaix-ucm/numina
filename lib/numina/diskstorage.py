@@ -27,24 +27,6 @@ from pyfits.NP_pyfits import HDUList
 
 _internal_map = {}
 
-def _store_fits(obj):
-    where = val['primary'].header.get('filename')
-    obj.writeto(where, clobber=True, output_verify='ignore')
-    
-_internal_map[HDUList] = _store_fits 
-
-def _store_map(obj):
-    filename = 'products.json'
-    f = open(filename, 'w+') 
-    try:
-        json.dump(obj, f)
-    finally:
-        f.close()
-
-_internal_map[type({})] = _store_map
-
-_internal_map[type([])] = _store_map
-
 def register(cls):
     def wrap(f):
         _internal_map[cls] = f
@@ -55,17 +37,32 @@ def register(cls):
     
     return wrap
 
-def store_to_disk(result, filename='products.json'):
-    rep = {}
-    for key, val in result.products.iteritems():
-        if val.__class__ in _internal_map:
-            store = _internal_map[val.__class__]
-            store(val)
-        else:
-            rep[key] = val
+def store(obj, where=None):
+    if obj.__class__ in _internal_map:
+        tstore = _internal_map[obj.__class__]
+        tstore(obj, where)
+    else:
+        raise TypeError(repr(obj) + ' is not storable')
+
+@register(HDUList)
+def _store_fits(obj, where=None):
+    where = obj['primary'].header.get('filename')
+    obj.writeto(where, clobber=True, output_verify='ignore')
     
-    f = open(filename, 'w+') 
+# _internal_map[HDUList] = _store_fits 
+@register(type({}))
+def _store_map(obj, where='products.json'):
+    f = open(where, 'w+') 
     try:
-        json.dump(rep, f)
+        json.dump(obj, f)
     finally:
         f.close()
+
+# _internal_map[type({})] = _store_map
+
+_internal_map[type([])] = _store_map
+
+def store_to_disk(obj):
+    for key, val in obj.products.iteritems():
+        store(val)
+    
