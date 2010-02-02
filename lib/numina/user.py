@@ -37,8 +37,8 @@ import xdg.BaseDirectory as xdgbd
 
 from numina import list_recipes, get_module, check_recipe
 from numina.exceptions import RecipeError
-from numina.jsonserializer import from_json
-from numina.diskstorage import store_to_disk
+from numina.jsonserializer import param_from_json
+from numina.diskstorage import store
 
 version_number = "0.0.6"
 version_line = '%prog ' + version_number
@@ -95,13 +95,9 @@ def mode_run(args, options, logger):
     logger.debug('Getting the parameters required by the module')
     
     # checking if the parameters of the recipe
-    # are fullfilled by the parameters in the text file
-    f = open(args[1])
-    try:
-        loaded_params = json.load(f, object_hook=from_json, encoding='utf-8')
-    finally:
-        f.close()
-    
+    # are fulfilled by the parameters in the text file
+    loaded_params = param_from_json(args[1])
+        
     logger.debug('Completing the parameters')
     param_desc = recipemod.ParameterDescription()
     params = param_desc.complete(loaded_params)
@@ -119,7 +115,7 @@ def mode_run(args, options, logger):
                      runs - recipe.repeat + 1, runs)
         try:
             result = recipe.run()
-            store_to_disk(result)
+            store(result)
         except RecipeError, e:
             logger.error("%s", e)
         except (IOError, OSError), e:

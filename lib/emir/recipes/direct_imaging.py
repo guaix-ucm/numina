@@ -88,11 +88,11 @@ process starts:
 __version__ = "$Revision$"
 
 import logging
-import itertools
 
 import pyfits
 import numpy as np
 
+import numina.diskstorage as ds
 import numina.recipes as nr
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
@@ -132,7 +132,10 @@ class Result(nr.RecipeResult):
         super(Result, self).__init__(qa)
         self.products['result'] = result
         
-        
+@ds.register(Result)
+def _store(obj, where):
+    ds.store(obj.products['result'], 'result.fits')   
+     
 class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in imaging mode.
      

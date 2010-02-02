@@ -26,6 +26,7 @@ __version__ = "$Revision$"
 
 import logging
 
+import numina.diskstorage as ds
 from numina.recipes import RecipeBase, RecipeResult
 import numina.recipes
 import numina.qa as QA
@@ -44,8 +45,12 @@ class Result(RecipeResult):
         super(Result, self).__init__(qa)
         self.products['result'] = result
         self.products['tables'] = [[0,0], [234.456]]
-        super(Result, self).__init__(qa)
-        
+
+@ds.register(Result)
+def _store(obj, where):
+    ds.store(obj.products, 'products')
+
+      
 class Recipe(RecipeBase):
     '''Recipe to process data taken in imaging mode.
      

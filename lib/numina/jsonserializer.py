@@ -21,6 +21,8 @@
 
 __version__ = "$Revision$"
 
+import simplejson as json
+
 import numina.recipes
 
 def to_json(obj):
@@ -61,3 +63,9 @@ def deunicode_json(obj):
     
     return obj
 
+def param_from_json(name):
+    f = open(name)
+    try:
+        return json.load(f, object_hook=from_json, encoding='utf-8')
+    finally:
+        f.close()

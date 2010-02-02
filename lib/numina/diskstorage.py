@@ -46,23 +46,24 @@ def store(obj, where=None):
 
 @register(HDUList)
 def _store_fits(obj, where=None):
-    where = obj['primary'].header.get('filename')
+    #where = obj['primary'].header.get('filename')
+    where = '%s.fits' % where
     obj.writeto(where, clobber=True, output_verify='ignore')
-    
-# _internal_map[HDUList] = _store_fits 
+ 
 @register(type({}))
-def _store_map(obj, where='products.json'):
+def _store_map(obj, where='products'):
+    where = '%s.json' % where
     f = open(where, 'w+') 
     try:
         json.dump(obj, f)
     finally:
         f.close()
 
-# _internal_map[type({})] = _store_map
-
 _internal_map[type([])] = _store_map
 
 def store_to_disk(obj):
-    for key, val in obj.products.iteritems():
-        store(val)
-    
+    if hasattr(obj, 'products'):
+        for key, val in obj.__dict__.iteritems():
+            store(val, key)
+    else:
+        raise TypeError(repr(obj) + ' is not storable')
