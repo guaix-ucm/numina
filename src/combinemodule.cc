@@ -329,7 +329,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
         double* weight = static_cast<double*> (PyArray_GETPTR1(weights, ii));
         if (zero and scale and weight)
         {
-          NPY_BEGIN_THREADS;
           void* d_dtpr = (*i)->dataptr;
           // Swap the value if needed and store it in the buffer
           datum_swap(buffer, d_dtpr, datum_need_to_swap, NULL);
@@ -343,7 +342,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
 
           data.push_back(converted);
           wdata.push_back(*weight);
-          NPY_END_THREADS;
         } else
         {
           std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Decref);
