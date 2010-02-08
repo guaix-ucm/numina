@@ -49,7 +49,7 @@ import numpy as np
 import numina.recipes as nr
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.image.processing import generic_processing
-from numina.image.combine import mean
+from numina.array.combine import mean
 from emir.instrument.headers import EmirImage
 import numina.qa as QA
 

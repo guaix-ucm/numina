@@ -26,8 +26,8 @@ from itertools import izip, imap, product
 
 import numpy as np
 
-from numina.image._combine import internal_combine, internal_combine_with_offsets
-from numina.image._combine import CombineError
+from numina.array._combine import internal_combine, internal_combine_with_offsets
+from numina.array._combine import CombineError
 
 
 def blockgen1d(block, size):

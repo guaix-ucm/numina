@@ -25,7 +25,7 @@ import unittest
 
 import scipy
 
-import numina.image.methods as mt
+import numina.array.methods as mt
 
 __metaclass__ = type
 

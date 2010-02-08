@@ -50,7 +50,7 @@ import pyfits
 import numina.diskstorage as ds
 import numina.recipes as nr
 from emir.instrument.headers import EmirImage
-from numina.image.combine import mean
+from numina.array.combine import mean
 import numina.qa as qa
 
 _logger = logging.getLogger("emir.recipes")

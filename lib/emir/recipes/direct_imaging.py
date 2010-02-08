@@ -97,7 +97,7 @@ import numina.recipes as nr
 #from numina.exceptions import RecipeError
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
-from numina.image.combine import median
+from numina.array.combine import median
 from emir.instrument.headers import EmirImage
 import numina.qa as QA
 

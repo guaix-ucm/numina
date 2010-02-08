@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -25,8 +25,8 @@ import unittest
 
 import scipy
 
-from numina.image.combine import mean
-from numina.image.combine import CombineError
+from numina.array.combine import mean
+from numina.array.combine import CombineError
 
 class CombineFilter1TestCase:
     def __init__(self):

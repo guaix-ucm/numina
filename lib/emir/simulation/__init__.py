@@ -29,7 +29,7 @@ import numpy
 from scipy.special import erf
 from scipy import maximum, minimum
 
-from numina.image import subarray_match
+from numina.array import subarray_match
 
 # Classes are new style
 __metaclass__ = type

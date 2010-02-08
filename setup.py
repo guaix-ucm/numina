@@ -5,7 +5,7 @@ from setuptools import setup, find_packages, Extension
 import numpy
 
 numpy_include = numpy.get_include()
-ex1 = Extension('numina.image._combine',
+ex1 = Extension('numina.array._combine',
                 ['src/combinemodule.cc', 
                  'src/methods.cc',
                  'src/methods_python.cc',  

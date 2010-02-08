@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -24,9 +24,9 @@ __version__ = '$Revision$'
 import unittest
 
 try:
-    import numina.image.ccombine as c
+    import numina.array.ccombine as c
 except ImportError:
-    import numina.image.combine as c
+    import numina.array.combine as c
 
 # Classes are new style
 __metaclass__ = type

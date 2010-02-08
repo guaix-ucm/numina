@@ -50,7 +50,7 @@ import pyfits
 
 import numina.diskstorage as ds
 import numina.recipes as nr
-from numina.image.combine import mean
+from numina.array.combine import mean
 from numina.exceptions import RecipeError
 from emir.instrument.headers import EmirImage
 
