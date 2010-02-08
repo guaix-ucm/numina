@@ -14,11 +14,11 @@ ex1 = Extension('numina.array._combine',
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
-      version='0.0.6',
+      version='0.1.0',
       author='Sergio Pascual',
       author_email='sergiopr@astrax.fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.0.6.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.1.0.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=find_packages('lib'),
@@ -30,7 +30,7 @@ setup(name='pyemir',
                       'console_scripts': ['numina = numina.user:main'],
                       },
       test_suite="nose.collector",
-      requires=['setuptools', 'numpy', 'pyfits', 'scipy', 'sphinx', 'nose', 'pyxdg'],
+      requires=['setuptools', 'numpy', 'pyfits', 'scipy', 'sphinx', 'nose', 'pyxdg', 'simplejson'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
@@ -54,6 +54,7 @@ setup(name='pyemir',
       - scipy (http://www.scipy.org) 
       - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
       - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
+      - simplejson (http://undefined.org/python/#simplejson)
       
       Webpage: https://guaix.fis.ucm.es/projects/emir
       Maintainer: sergiopr@astrax.fis.ucm.es

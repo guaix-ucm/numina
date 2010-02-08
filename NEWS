@@ -1,3 +1,11 @@
+Version 0.1.0
+(08 February 2010, from /pyemir/trunk revision 627)
+https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.1.0/
+
+Internal release, it includes the documentation of the Recipes and a bare bones recipe runner
+The performance of _combine has been increased in a factor of 2 
+
+
 Version 0.0.6
 (27 January 2010, from /pyemir/trunk revision 602)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.6/

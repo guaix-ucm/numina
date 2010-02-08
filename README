@@ -12,6 +12,7 @@ be able to be installed and work properly:
  - scipy (http://www.scipy.org)
  - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
  - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
+ - simplejson (http://undefined.org/python/#simplejson)
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
 Maintainer: sergiopr@astrax.fis.ucm.es
