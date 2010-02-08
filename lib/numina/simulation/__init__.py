@@ -23,14 +23,13 @@ __version__ = "$Revision$"
 
 import os
 from os.path import join as pjoin
-import cPickle
-from cPickle import dump
+from cPickle import dump, load
 import logging
 
 # Classes are new style
 __metaclass__ = type
 
-_logger = logging.getLogger("emir.storage")
+_logger = logging.getLogger("numina.storage")
 
 class RunCounter:
     '''Persistent run number counter'''
@@ -50,7 +49,7 @@ class RunCounter:
             pkl_file = open(self.pstore, 'rb')
             try:
                 _logger.debug('Loading status in %s' % self.pstore)
-                self.last = cPickle.load(pkl_file)
+                self.last = load(pkl_file)
             finally:
                 pkl_file.close() 
         except IOError, strrerror:            
@@ -60,7 +59,7 @@ class RunCounter:
         try:
             pkl_file = open(self.pstore, 'wb')
             try:                
-                cPickle.dump(self.last, pkl_file)
+                dump(self.last, pkl_file)
                 _logger.debug('Storing internal status in %s' % self.pstore)
             finally:
                 pkl_file.close()
