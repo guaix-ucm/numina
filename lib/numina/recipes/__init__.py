@@ -40,14 +40,11 @@ class RecipeBase:
         self.inputs = {}
         self.optional = {}
         self.repeat = 1
-        
-    def initialize(self, param):
+                
+    def setup(self, param):
+        '''Initialize structures only once before recipe execution.'''
         self.inputs = param.inputs
         self.optional = param.optional
-        
-    def setup(self):
-        '''Initialize structures only once before recipe execution.'''
-        pass
       
     def cleanup(self):
         '''Cleanup structures after recipe execution.'''

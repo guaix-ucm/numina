@@ -26,7 +26,6 @@
 __version__ = "$Revision$"
 
 import logging.config
-import simplejson as json
 import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
@@ -104,10 +103,9 @@ def mode_run(args, options, logger):
     
     logger.debug('Creating the recipe')
     recipe = recipemod.Recipe()
-    recipe.initialize(params)
     
     logger.debug('Setting up the recipe')
-    recipe.setup()
+    recipe.setup(params)
     
     runs = recipe.repeat
     while not recipe.complete():

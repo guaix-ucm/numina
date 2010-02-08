@@ -161,8 +161,8 @@ class Recipe(nr.RecipeBase):
         self.iteromask = 'emir_%s.omask.iter.%02d'
         self.inter = 'emir_intermediate.%02d.fits'
         
-    def initialize(self, param):
-        super(Recipe, self).initialize(param)
+    def setup(self, param):
+        super(Recipe, self).setup(param)
         self.images = self.inputs['images'].keys()
         self.images.sort()
         self.masks = [self.inputs['images'][k][0] for k in self.images]

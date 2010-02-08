@@ -79,8 +79,8 @@ class Recipe(nr.RecipeBase):
         _logger.info('Run counter created')
         self.runcounter = RunCounter("r%05d")
     
-    def initialize(self, param):
-        super(Recipe, self).initialize(param)
+    def setup(self, param):
+        super(Recipe, self).setup(param)
         _logger.info('Creating detector')
         
         self.detector = EmirDetector(**self.inputs['detector'])
@@ -90,9 +90,6 @@ class Recipe(nr.RecipeBase):
         self.input = np.zeros(self.inputs['detector']['shape'])
         self.detector.exposure(self.inputs['readout']['exposure'])
         self.repeat = self.inputs['readout']['repeat']
-        
-    def setup(self):
-        pass
      
     def process(self):
         _logger.info('Creating simulated array')    

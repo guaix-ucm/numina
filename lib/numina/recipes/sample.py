@@ -58,13 +58,13 @@ class Recipe(RecipeBase):
     def __init__(self):
         super(Recipe, self).__init__()
         
-    def initialize(self, param):
-        super(Recipe, self).initialize(param)
-        self.iterations = self.optional['iterations']
+    def setup(self, param):
+        super(Recipe, self).setup(param)
+        self.repeat = self.optional['iterations']
         
     def process(self):
         
-        return Result(QA.UNKNOWN, self.iterations)
+        return Result(QA.UNKNOWN, self.repeat)
     
 if __name__ == '__main__':
     import simplejson as json

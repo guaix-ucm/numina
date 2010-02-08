@@ -85,8 +85,8 @@ class Recipe(nr.RecipeBase):
         super(Recipe, self).__init__()
         self.images = []
         
-    def initialize(self, param):
-        super(Recipe, self).initialize(param)
+    def setup(self, param):
+        super(Recipe, self).setup(param)
         self.images = self.inputs['images']
         
     def process(self):

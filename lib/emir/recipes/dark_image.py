@@ -92,8 +92,8 @@ class Recipe(nr.RecipeBase):
         # Default values. This can be read from a file
         self.creator = EmirImage()
         
-    def initialize(self, param):
-        super(Recipe, self).initialize(param)
+    def setup(self, param):
+        super(Recipe, self).setup(param)
         self.images = self.inputs['images']
         
         

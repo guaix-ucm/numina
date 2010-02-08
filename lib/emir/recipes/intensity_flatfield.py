@@ -88,8 +88,8 @@ class Recipe(nr.RecipeBase):
     def __init__(self):
         super(Recipe, self).__init__()
 
-    def initialize(self, param):
-        super(Recipe, self).initialize(param)
+    def setup(self, param):
+        super(Recipe, self).setup(param)
 
     def process(self):
 
