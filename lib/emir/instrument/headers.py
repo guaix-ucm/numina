@@ -59,7 +59,7 @@ _common_fits_headers = {
   Card("CUNIT2", "Pixel", "System unit"),
   Card("CTYPE1", "LINEAR", "Type of WCS1"),
   Card("CTYPE2", "LINEAR", "Type of WCS2"),
-  Card("ORIGIN", "RIME-Image Simulator", "FITS file originator"),
+  Card("ORIGIN", "NUMINA", "FITS file originator"),
   Card("TELESCOP", "GTC", "Telescope id."),
   Card("OBSERVAT", "ORM", "Name of observatory"),
   Card("EQUINOX ", 2000.0, "[yr] Equinox of equatorial coordinates"),
@@ -72,7 +72,7 @@ _common_fits_headers = {
   Card("OBSGEOZ", 9.694391412e+5, "[m] Observation Z-position"),
   Card("PROP_ID", " ", "Proposal identification."),
   Card("PROP_PI", "", "PI of proposal."),
-  Card("OBSERVER", "RIME", "Name of Observer"),
+  Card("OBSERVER", "NUMINA", "Name of Observer"),
   Card("RUN", 0, "Run number"),
   Card("OBSTYPE", "", "Type of observation, e.g. TARGET"),
   Card("IMAGETY", "", "Type of observation, e.g. object"),
@@ -154,13 +154,15 @@ _spectrum_extra_fits_headers = {
 }
 
 
-def _merge(header1, header2):
+def _merge(headers1, headers2):
     '''Merge the contents of header2 with header1.'''
-    result = dict(header1)
+    result = {}
     
-    for key in result:
-        if key in header2:
-            result[key].ascard.extend(header2[key].ascard)
+    for key in headers1:
+        if key in headers2:
+            fhead = headers1[key].copy()
+            fhead.ascard.extend(headers2[key].ascard)
+            result[key] = fhead
 
     return result
 
@@ -175,5 +177,4 @@ class EmirImage(FITSCreator):
 class EmirSpectrum(FITSCreator):
     '''Builder of Emir spectrum.'''
     def __init__(self): 
-        super(EmirImage, self).__init__(_spectrum_fits_headers)
-
+        super(EmirSpectrum, self).__init__(_spectrum_fits_headers)
