@@ -45,14 +45,11 @@ def store(obj, where=None):
         raise TypeError(repr(obj) + ' is not storable')
 
 @register(HDUList)
-def _store_fits(obj, where=None):
-    #where = obj['primary'].header.get('filename')
-    where = '%s.fits' % where
+def _store_fits(obj, where='file.fits'):
     obj.writeto(where, clobber=True, output_verify='ignore')
  
 @register(type({}))
-def _store_map(obj, where='products'):
-    where = '%s.json' % where
+def _store_map(obj, where='products.json'):
     f = open(where, 'w+') 
     try:
         json.dump(obj, f)
