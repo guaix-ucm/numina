@@ -39,7 +39,7 @@ class RecipeBase:
     def __init__(self):
         self.inputs = {}
         self.optional = {}
-        self._repeat = 1
+        self.repeat = 1
         
     def initialize(self, param):
         self.inputs = param.inputs
@@ -56,7 +56,7 @@ class RecipeBase:
     def run(self):
         '''Run the recipe, don't override.'''
         try:
-            self._repeat -= 1
+            self.repeat -= 1
             result = self.process()
             return result            
         except RecipeError:
@@ -75,15 +75,7 @@ class RecipeBase:
         
         :rtype: bool
         '''
-        return self._repeat <= 0
-    
-    @property
-    def repeat(self):
-        '''Number of times the recipe has to be repeated yet.
-        
-        :rtype: int
-        '''
-        return self._repeat
+        return self.repeat <= 0
     
 class RecipeResult:
     '''Result of the run method of the Recipe.'''
