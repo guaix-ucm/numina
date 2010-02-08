@@ -281,18 +281,16 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
 
 if __name__ == "__main__":
     from numina.decorators import print_timing
-  
-    @print_timing
-    def tmean(images, masks=None, dtype=None, out=None, dof=0, offsets=None):
-        return mean(images, masks=masks, dtype=dtype, out=out, dof=dof, offsets=offsets)
+      
+    tmean = print_timing(mean)
     
     # Inputs
     shape = (2048, 2048)
     data_dtype = 'int16'
-    nimages = 100
+    nimages = 10
     minputs = [i * np.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [np.zeros(shape, dtype='int16') for i in xrange(nimages)]
-    offsets = np.array([[0, 0], [1, 1]] * 50, dtype='int16') 
+    offsets = np.array([[0, 0]] * nimages, dtype='int16') 
     
     print 'Computing'
     for i in range(1):
