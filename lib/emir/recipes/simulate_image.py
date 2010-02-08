@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -25,78 +25,75 @@ __version__ = "$Revision$"
 
 import logging
 
-import numpy
+import numpy as np
 
-from numina.recipes import RecipeBase
+import numina.recipes as nr
+import numina.diskstorage as ds
+import numina.qa as qa
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
 from emir.instrument.headers import EmirImage
 
-from dark_image import Result
-
-
-
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase):
+class ParameterDescription(nr.ParameterDescription):
+    def __init__(self):
+        inputs={'detector': {'shape': (2048, 2048),
+                             'ron': 2.16,
+                             'dark': 0.37,
+                             'gain': 3.028,
+                             'flat': 1.0,
+                             'well': 65536,},
+                'readout': {'mode': 'cds',
+                            'reads': 3,
+                            'repeat': 1,
+                            'scheme': 'perline',
+                            'exposure': 0},
+                'nformat': "r%05d",
+                }
+        optional={}
+        super(ParameterDescription, self).__init__(inputs, optional)
+
+class Result(nr.RecipeResult):
+    '''Result of the imaging mode recipe.'''
+    def __init__(self, qa, result, name):
+        super(Result, self).__init__(qa)
+        self.products['result'] = result
+        self.name = name
+        
+@ds.register(Result)
+def _store(obj, where):
+    ds.store(obj.products['result'], obj.name)   
+
+
+class Recipe(nr.RecipeBase):
     '''Recipe to simulate EMIR images.
     '''
     def __init__(self):
-        optusage = "usage: %prog [options] recipe [recipe-options]"
-        super(Recipe, self).__init__(optusage=optusage)
-        
-        # Default values. This can be read from a file
-        self.iniconfig.add_section('readout')
-        self.iniconfig.set('readout', 'mode', 'cds')
-        self.iniconfig.set('readout', 'reads', '3')
-        self.iniconfig.set('readout', 'repeat', '1')
-        self.iniconfig.set('readout', 'scheme', 'perline')
-        self.iniconfig.set('readout', 'exposure', '0')
-        self.iniconfig.add_section('detector')
-        self.iniconfig.set('detector', 'shape', '(2048,2048)')
-        self.iniconfig.set('detector', 'ron',' 2.16')
-        self.iniconfig.set('detector', 'dark', '0.37')
-        self.iniconfig.set('detector', 'gain', '3.028')
-        self.iniconfig.set('detector', 'flat', '1')
-        self.iniconfig.set('detector', 'well', '65536')
+        super(Recipe, self).__init__()
         #
         self.detector = None
         self.input = None
-        self.creator = None
-        self.runcounter = None
-        
-    def setup(self):
-        detector_conf = {}
-        detector_conf['shape'] = eval(self.iniconfig.get('detector', 'shape'))
-        for i in ['ron', 'dark', 'gain', 'flat', 'well']:
-            detector_conf[i] = self.iniconfig.getfloat('detector', i)
-
-        self.detector = EmirDetector(**detector_conf)
-        _logger.info('Created detector')
-    
-        readout_opt = {}
-                
-        for i in ['exposure']:
-            readout_opt[i] = self.iniconfig.getfloat('readout', i)
-        for i in ['reads', 'repeat']:
-            readout_opt[i] = self.iniconfig.getint('readout', i)
-        for i in ['mode', 'scheme']:
-            readout_opt[i] = self.iniconfig.get('readout', i)
-        
-        self._repeat = readout_opt['repeat']
-        
-        _logger.info('Detector configured')
-        self.detector.configure(readout_opt)
-        
-        self.input = numpy.zeros(detector_conf['shape'])
-        self.detector.exposure(readout_opt['exposure'])
-        
         _logger.info('FITS builder created')
         self.creator = EmirImage()
         _logger.info('Run counter created')
         self.runcounter = RunCounter("r%05d")
+    
+    def initialize(self, param):
+        super(Recipe, self).initialize(param)
+        _logger.info('Creating detector')
         
+        self.detector = EmirDetector(**self.inputs['detector'])
+        _logger.info('Configuring detector')
+        self.detector.configure(self.inputs['readout'])
         
+        self.input = np.zeros(self.inputs['detector']['shape'])
+        self.detector.exposure(self.inputs['readout']['exposure'])
+        self.repeat = self.inputs['readout']['repeat']
+        
+    def setup(self):
+        pass
+     
     def process(self):
         _logger.info('Creating simulated array')    
         output = self.detector.lpath(self.input)
@@ -108,12 +105,50 @@ class Recipe(RecipeBase):
         
         _logger.info('Building FITS structure')
         hdulist = self.creator.create(output, headers)
-        return Result(hdulist, cfile)
+        return Result(qa.UNKNOWN, hdulist, cfile)
 
     def cleanup(self):
-        self.runcounter.store()
+        pass
 
-
+if __name__ == '__main__':
+    import os
+    import json
+    import tempfile
+    
+    from numina.user import main
+    from numina.recipes import Parameters
+    from numina.jsonserializer import to_json
+      
+    inputs={'detector': {'shape': (2048, 2048),
+                             'ron': 2.16,
+                             'dark': 0.37,
+                             'gain': 3.028,
+                             'flat': 1.0,
+                             'well': 65536,},
+                'readout': {'mode': 'cds',
+                            'reads': 3,
+                            'repeat': 1,
+                            'scheme': 'perline',
+                            'exposure': 0},
+            'nformat': "r%05d",
+                }
+    optional={}
+    
+    p = Parameters(inputs, optional)
+    
+    tmpdir = tempfile.mkdtemp(suffix='emir')
+    os.chdir(tmpdir)
+    print 'Working directory is %s' % tmpdir
+    
+    cfile = 'config.json'
+    
+    f = open(cfile, 'w+')
+    try:
+        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
+    finally:
+        f.close()
+            
+    main(['--run', 'simulate_image', cfile])
         
 
 
