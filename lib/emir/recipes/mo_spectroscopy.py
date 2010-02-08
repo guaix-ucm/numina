@@ -47,7 +47,7 @@ along the slit, referred to the central pseudo-long-slit coordinates) of the
 valid sky regions. In this way, both *sky* and *science* spectra can be
 extracted from the same pseudo-long-slit, if this is required.
 
-The following possibilites must be considered at the time of creating the
+The following possibilities must be considered at the time of creating the
 association table among pseudo-long-slits:
 
  * A single *sky* pseudo-long-slit can be associated to several *science*
@@ -59,6 +59,12 @@ association table among pseudo-long-slits:
    *sky* spectra in another exposure.
  * The configuration of the CSU must be identical when pseudo-long-slits of
    different images are associated.
+
+**Observing modes:**
+
+ * Stare spectra
+ * Dithered/Nodded spectra
+ * Offset Spectra 
 
 **Inputs:**
 
@@ -136,3 +142,5 @@ treatment for the sky subtraction. The basic steps must include:
  * Spectra extraction: define optimal, average, peak, FWHM.
 
 '''
+
+__version__ = "$Revision$"

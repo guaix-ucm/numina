@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -25,13 +25,18 @@ Recipe to process spectral flat-fields. The flat-on and flat-off images are
 combined (method?) separately and the subtracted to obtain a thermal subtracted
 flat-field.
 
+**Observing modes:**
+
+    * Multislit mask Flat-Field
+     
 **Inputs:**
 
- * TBD
+ * A list of lamp-on flats
+ * A model of the detector 
 
 **Outputs:**
 
- * TBD
+ * A combined spectral flat field with with variance extension and quality flag.
 
 **Procedure:**
 
@@ -39,3 +44,4 @@ flat-field.
 
 '''
 
+__version__ = "$Revision$"

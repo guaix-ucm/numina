@@ -28,6 +28,9 @@ here is a table that clearly specifies which images can be labelled as
 *science* and *sky* (when the size of the targets are small compared to the
 offsets).
 
+**Observing modes:
+ * Micro-dithered images 
+
 **Inputs:**
 
  * Science frames + [Sky Frames]
@@ -80,3 +83,5 @@ too high *n* value. An iterative process starts:
    calibration might be computed using available stars (TBD).
 
 '''
+
+__version__ = "$Revision$"

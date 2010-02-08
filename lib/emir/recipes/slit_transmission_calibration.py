@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -21,16 +21,22 @@
 
 '''Recipe to calibrate the slit transmission.
 
+**Observing modes:**
+
+    * Slit transmission calibration
+     
 **Inputs:**
 
- * TBD
+ * A list of uniformly illuminated images of MSM
 
 **Outputs:**
 
- * TBD
+ * A list of slit transmission functions 
 
 **Procedure:**
 
  * TBD
 
 '''
+
+__version__ = "$Revision$"

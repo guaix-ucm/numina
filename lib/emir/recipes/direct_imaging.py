@@ -31,6 +31,13 @@ images can be labeled as *science*, and which ones as *sky*. Note that some
 images are used both as *science* and *sky* (when the size of the targets are
 small compared to the offsets).
 
+**Observing modes:**
+ 
+ * StareImage
+ * Nodded/Beam-switched images
+ * Dithered images 
+
+
 **Inputs:**
 
  * Science frames + [Sky Frames]

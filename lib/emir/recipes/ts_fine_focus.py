@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -19,3 +19,23 @@
 
 # $Id$
 
+'''Recipe for finding the best focus.
+
+**Observing modes:**
+
+ * Telescope fine focus 
+
+**Inputs:**
+
+ * A list of images
+ * A list of sky images
+ * Bias, dark, flat
+ * A model of the detector
+ * List of focii 
+
+**Outputs:**
+ * Best focus
+  
+'''
+
+__version__ = "$Revision$"

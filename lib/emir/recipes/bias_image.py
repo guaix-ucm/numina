@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -21,8 +21,11 @@
 
 '''Bias image recipe and associates.
 
-Recipe to process bias images. Bias images only appear in Simple Readout mode
-(check this).
+Recipe to process bias images. Bias images only appear in Simple Readout mode.
+
+**Observing modes:**
+
+ * Bias Image (3.1)   
 
 **Inputs:**
 

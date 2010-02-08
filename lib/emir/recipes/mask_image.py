@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -20,6 +20,14 @@
 # $Id$
 
 '''
-EMIR recipe to process mask images.
+Mask image Recipe.
+
+Recipe to process mask images.
+
+**Observing modes:
+
+  *  Mask imaging
 
 '''
+
+__version__ = "$Revision$"

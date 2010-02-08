@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -19,3 +19,11 @@
 
 # $Id$
 
+'''Recipe for the processing of target acquisition images.
+
+**Observing modes:**
+
+    * Target acquisition
+'''
+
+__version__ = "$Revision$"

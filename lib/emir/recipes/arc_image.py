@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -21,18 +21,25 @@
 
 '''Arc Image Recipe.
 
-Recipe to process the arc images.
+Recipe to process the arc images. 
 
-**Inputs:**
+**Observing modes:**
 
- * TBD
+ * Wavelength calibration (3.5)  
+
+**Inputs**
+
+ * List of arcs
+ * Reference spectrum
 
 **Outputs:**
 
- * TBD
+ * 2D Wavelength transformation
 
 **Procedure:**
 
  * TBD
 
 '''
+
+__version__ = "$Revision$"

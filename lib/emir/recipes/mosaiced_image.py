@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -25,6 +25,10 @@ Mosaiced images can be properly merged using `swarp
 <http://terapix.iap.fr/rubrique.php?id_rubrique=49>`_, either by using it
 directly or by writing our recipe following its structure.
 
+**Observing modes:**
+
+ * Mosaiced images
+
 **Inputs:**
 
  * TBD
@@ -38,3 +42,5 @@ directly or by writing our recipe following its structure.
  * TBD
 
 '''
+
+__version__ = "$Revision$"

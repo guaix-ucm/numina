@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -23,13 +23,17 @@
 
 Recipe to calibrate the detector nonlinearity.
 
+**Observing modes:**
+
+ * Not considered
+
 **Inputs:**
 
- * TBD
+ * A list of dome flat fields with the adequate exposure times.
 
 **Outputs:**
 
- * TBD
+ * The polynomial in a given format (TBD)
 
 **Procedure:**
 
@@ -40,3 +44,5 @@ fit is performed, this time of ADU_linear/ADU_obs, versus ADU_obs. The
 polinomyal terms of the fit are computed.
 
 '''
+
+__version__ = "$Revision$"

@@ -25,9 +25,16 @@ Recipe to process intensity flat-fields. The flat-on and flat-off images are
 combined (method?) separately and the subtracted to obtain a thermal subtracted
 flat-field.
 
+**Observing modes:**
+
+ * Intensity Flat-Field
+
 **Inputs:**
 
- * TBD
+  * A list of lamp-on flats
+  * A list of lamp-off flats
+  * A master dark frame
+  * A model of the detector. 
 
 **Outputs:**
 
@@ -35,7 +42,8 @@ flat-field.
 
 **Procedure:**
 
- * TBD
+ * A combined thermal subtracted flat field, normalized to median 1, 
+   with with variance extension and quality flag. 
 
 '''
 
