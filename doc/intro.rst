@@ -14,8 +14,11 @@ be able to be installed and work properly:
 
  - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
+ - numpy (http://numpy.scipy.org/)
  - scipy (http://www.scipy.org)
- 
+ - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
+ - simplejson (http://undefined.org/python/#simplejson)
+
 Additional packages are optionally required:
  - nose (http://somethingaboutorange.com/mrl/projects/nose) to run the tests
  - sphinx (http://sphinx.pocoo.org) to build the documentation
