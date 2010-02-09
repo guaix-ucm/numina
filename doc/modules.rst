@@ -6,6 +6,7 @@ Numina modules
 
 .. toctree::
 
+   array
    exceptions
    image
    methods
