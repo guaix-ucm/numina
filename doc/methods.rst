@@ -1,9 +1,9 @@
 .. $Id$
 
-:mod:`numina.image.methods` --- Combination methods
+:mod:`numina.array.methods` --- Combination methods
 ===================================================
 
-.. automodule:: numina.image.methods
+.. automodule:: numina.array.methods
    :synopsis: Combination methods
    :members:
    

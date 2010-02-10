@@ -24,7 +24,7 @@ Mask image Recipe.
 
 Recipe to process mask images.
 
-**Observing modes:
+**Observing modes:**
 
   *  Mask imaging
 

@@ -28,7 +28,7 @@ here is a table that clearly specifies which images can be labelled as
 *science* and *sky* (when the size of the targets are small compared to the
 offsets).
 
-**Observing modes:
+**Observing modes:**
  * Micro-dithered images 
 
 **Inputs:**
