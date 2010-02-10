@@ -21,10 +21,8 @@
 
 __version__ = "$Revision$"
  
-import math
+#import math
 from math import sin, cos, tan
-import sys
-import os
 import pkgutil
 from StringIO import StringIO
 
@@ -32,7 +30,6 @@ from scipy import array
 import scipy.interpolate as sil
 from scipy import loadtxt
 
-from emir.exceptions import Error
 
 # Classes are new style
 __metaclass__ = type
@@ -73,14 +70,14 @@ class RBModel:
     name = 'Ratnatunga & Bahcall'
     filters = [PhotometricFilter.FILTER_K]
         
-    def differential_counts(self, mag, filter_=PhotometricFilter.FILTER_K):
-        if filter_ == PhotometricFilter.FILTER_V:
+    def differential_counts(self, mag, filter=PhotometricFilter.FILTER_K):
+        if filter == PhotometricFilter.FILTER_V:
             return self._differential_counts_color(mag, self._null)
-        elif filter_ == PhotometricFilter.FILTER_K:
+        elif filter == PhotometricFilter.FILTER_K:
             return self._differential_counts_color(mag, self._colorsVK)    
             
-    def integral_counts(self, mag, filter_=PhotometricFilter.FILTER_K):
-        if filter_ == PhotometricFilter.FILTER_K:
+    def integral_counts(self, mag, filter=PhotometricFilter.FILTER_K):
+        if filter == PhotometricFilter.FILTER_K:
             return self._integral_counts_color(mag, self._colorsVK)
         return 0.
     
@@ -104,14 +101,14 @@ class SpagnaModel:
     Number of stars per square arc minute
     '''
     
-    _J_counts_data = loadtxt(StringIO(pkgutil.get_data('emir.simulation','spagna-J.dat')))
+    _J_counts_data = loadtxt(StringIO(pkgutil.get_data('numina.simulation','spagna-J.dat')))
     # Data in file is for square degree
     _J_counts_data[:, 1:3] /= 3600.0
     _spl_J_1 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 1])
     _spl_J_2 = sil.splrep(_J_counts_data[:, 0], _J_counts_data[:, 2])
     del _J_counts_data
     
-    _K_counts_data = loadtxt(StringIO(pkgutil.get_data('emir.simulation','spagna-K.dat')))    
+    _K_counts_data = loadtxt(StringIO(pkgutil.get_data('numina.simulation','spagna-K.dat')))    
     # Data in file is for square degree
     _K_counts_data[:, 1:3] /= 3600.0
     _spl_K_1 = sil.splrep(_K_counts_data[:, 0], _K_counts_data[:, 1])
@@ -206,6 +203,9 @@ class BSModel:
         return (firstTerm + secondTerm) / 3600.0
 
 if __name__ == '__main__':
+    import numpy.random
+    from math import sqrt, log
+    
     rbmodel = RBModel()
     #print rbmodel.integral_counts(18)
     #print rbmodel.differential_counts(18)    
@@ -215,9 +215,7 @@ if __name__ == '__main__':
     bsmodel = BSModel()
     #print sgmodel.integral_counts(18)
     #print bsmodel.differential_counts(18)
-  
-    import numpy.random
-  
+
     class GeneralRandom:
         ''' Recipe from http://code.activestate.com/recipes/576556/'''
         def __init__(self, x, p, Nrl=1000):
@@ -260,7 +258,7 @@ if __name__ == '__main__':
         print nstars
   
         seeing = 1.0
-        from math import sqrt, log
+
         scale = 2 * sqrt(2 * log(2))
   
         delta = 0.1
