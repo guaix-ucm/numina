@@ -25,7 +25,7 @@ Additional packages are optionally required:
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
 
-Maintainer: sergiopr@astrax.fis.ucm.es
+Maintainer: sergiopr@fis.ucm.es
 
 
 Building 

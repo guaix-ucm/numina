@@ -16,7 +16,7 @@ ex1 = Extension('numina.array._combine',
 setup(name='pyemir',
       version='0.1.0',
       author='Sergio Pascual',
-      author_email='sergiopr@astrax.fis.ucm.es',
+      author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
       download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.1.0.tar.gz',
       license='GPLv3',
@@ -57,7 +57,7 @@ setup(name='pyemir',
       - simplejson (http://undefined.org/python/#simplejson)
       
       Webpage: https://guaix.fis.ucm.es/projects/emir
-      Maintainer: sergiopr@astrax.fis.ucm.es
+      Maintainer: sergiopr@fis.ucm.es
             
       EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
       for the Nasmyth focus of GTC. It will allow observers to obtain from tens to 
