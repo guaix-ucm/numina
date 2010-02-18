@@ -1,3 +1,12 @@
+Version 0.2.0
+(18 February 2010, from /pyemir/trunk revision 639)
+https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.2.0/
+
+direct_image implemented
+Multidimensional GuassianProfile with tests
+Simulation tools moved to numina
+
+
 Version 0.1.0
 (08 February 2010, from /pyemir/trunk revision 627)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.1.0/
