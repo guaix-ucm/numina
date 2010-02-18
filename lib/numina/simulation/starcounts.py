@@ -20,9 +20,8 @@
 # $Id$
 
 __version__ = "$Revision$"
- 
-#import math
-from math import sin, cos, tan
+
+from math import sin, cos, tan, pi
 import pkgutil
 from StringIO import StringIO
 
@@ -152,9 +151,9 @@ class BSModel:
     @classmethod
     def integral_counts(cls, mag, filter=PhotometricFilter.FILTER_V):
         if filter == PhotometricFilter.FILTER_V:
-            return cls.dFunction(mag, 0., 0.5 * math.pi, *cls.params[1])
+            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[1])
         elif filter == PhotometricFilter.FILTER_B:
-            return cls.dFunction(mag, 0., 0.5 * math.pi, *cls.params[4])
+            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[4])
         else:
             return 0.
         return 0.
@@ -162,9 +161,9 @@ class BSModel:
     @classmethod
     def differential_counts(cls, mag, filter=PhotometricFilter.FILTER_V):
         if filter == PhotometricFilter.FILTER_V:
-            return cls.dFunction(mag, 0., 0.5 * math.pi, *cls.params[0])
+            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[0])
         elif filter == PhotometricFilter.FILTER_B:
-            return cls.dFunction(mag, 0., 0.5 * math.pi, *cls.params[3])
+            return cls.dFunction(mag, 0., 0.5 * pi, *cls.params[3])
         else:
             return 0.
         return 0.
