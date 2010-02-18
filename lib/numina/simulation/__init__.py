@@ -27,11 +27,8 @@ from cPickle import dump, load
 import logging
 import math
 
-import numpy as np
-from scipy.special import erf
-from scipy import maximum, minimum
-import scipy.stats.mvn as mvn
 import numpy
+import scipy.stats.mvn as mvn
 
 from numina.array import subarray_match
 
@@ -41,23 +38,41 @@ __metaclass__ = type
 _logger = logging.getLogger("numina.storage")
 
 class RunCounter:
-    '''Persistent run number counter'''
-    def __init__(self, template, ext='.fits',
-                 directory=".", pstore='index.pkl', last=1):
+    '''Run number counter'''
+    def __init__(self, template, suffix='.fits',
+                 dir=None, last=1):
         self.template = template
-        self.ext = ext
-        self.directory = directory
+        self.suffix = suffix
+        self.last = last
+        if dir is not None:
+            self.complete = pjoin(dir, self.template + self.suffix)
+        else:
+            self.complete = self.template + self.suffix
+           
+    def runstring(self):
+        '''Return the run number and the file name.'''
+        run = self.template % self.last
+        cfile = self.complete % self.last
+        self.last += 1
+        return (run, cfile)
+
+class PersistentRunCounter:
+    '''Persistent run number counter'''
+    def __init__(self, template, suffix='.fits',
+                 dir=None, pstore='index.pkl', last=1):
+        self.template = template
+        self.suffix = suffix
         self.pstore = pstore
         self.last = last
-        self.complete = pjoin(self.directory, self.template + self.ext)
-        _logger.debug('Accessing image directory: %s' % self.directory)
-        if not os.access(self.directory, os.F_OK):
-            _logger.debug('Creating image directory %s' % self.directory)
-            os.mkdir(self.directory)
+        if dir is not None:
+            self.complete = pjoin(dir, self.template + self.suffix)
+            if not os.access(dir, os.F_OK):
+                os.mkdir(dir)
+        else:
+            self.complete = self.template + self.suffix
         try:
             pkl_file = open(self.pstore, 'rb')
-            try:
-                _logger.debug('Loading status in %s' % self.pstore)
+            try:                
                 self.last = load(pkl_file)
             finally:
                 pkl_file.close() 
@@ -69,7 +84,6 @@ class RunCounter:
             pkl_file = open(self.pstore, 'wb')
             try:                
                 dump(self.last, pkl_file)
-                _logger.debug('Storing internal status in %s' % self.pstore)
             finally:
                 pkl_file.close()
         except IOError, strrerror:            
@@ -82,7 +96,6 @@ class RunCounter:
         self.last += 1
         return (run, cfile)
         
-
 class Profile:
     '''Base class for profiles'''
     def __init__(self, center):
