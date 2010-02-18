@@ -25,7 +25,6 @@ import unittest
 
 import scipy
 
-from numina.image.storage import FITSCreator
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
 from emir.instrument.headers import EmirImage

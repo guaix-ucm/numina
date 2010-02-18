@@ -120,7 +120,7 @@ if __name__ == '__main__':
     from numina.user import main
     from numina.recipes import Parameters
     from numina.jsonserializer import to_json
-    import json
+    import simplejson as json
     import os
     
     pv = {'inputs' : {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',

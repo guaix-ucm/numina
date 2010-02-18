@@ -152,7 +152,7 @@ if __name__ == '__main__':
     _logger.setLevel(logging.DEBUG)
     from numina.user import main
     from numina.recipes import Parameters
-    import json
+    import simplejson as json
     import os
     from numina.jsonserializer import to_json
 

@@ -538,7 +538,7 @@ if __name__ == '__main__':
     #logging.basicConfig(level=logging.INFO)
     #_logger.setLevel(logging.INFO)
     import os
-    import json
+    import simplejson as json
     
     from numina.user import main
     from numina.recipes import Parameters

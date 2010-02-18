@@ -109,7 +109,7 @@ class Recipe(nr.RecipeBase):
 
 if __name__ == '__main__':
     import os
-    import json
+    import simplejson as json
     import tempfile
     
     from numina.user import main
