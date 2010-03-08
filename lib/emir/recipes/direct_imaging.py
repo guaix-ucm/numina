@@ -119,7 +119,9 @@ class ParameterDescription(nr.ParameterDescription):
                                             'master_dark': '',
                                             'master_flat': '',
                                             'master_bpm': ''}
-        optional={'linearity': [1.0, 0.0]}
+        optional={'linearity': [1.0, 0.0],
+                  'extinction': 0
+                  }
         super(ParameterDescription, self).__init__(inputs, optional)
 
 def combine_shape(shapes, offsets):
@@ -160,18 +162,25 @@ class Recipe(nr.RecipeBase):
         self.itermask = 'emir_%s.mask.iter.%02d'
         self.iteromask = 'emir_%s.omask.iter.%02d'
         self.inter = 'emir_intermediate.%02d.fits'
+        #
+        # To be from inputs read later
+        self.extinction = 0
+        self.airmass_keyword = 'AIRMASS'
+        self.airmasses = []
         
     def setup(self, param):
         super(Recipe, self).setup(param)
         self.images = self.inputs['images'].keys()
         self.images.sort()
         self.masks = [self.inputs['images'][k][0] for k in self.images]
+        self.extinction = param.optional['extinction']
         
         self.input_checks()
 
-
         for i,m in zip(self.images, self.masks):
             self.book_keeping[i] = dict(mask=m, version=i, omask=m, region=None)
+            
+        
         
     def input_checks(self):
         
@@ -186,6 +195,7 @@ class Recipe(nr.RecipeBase):
                 _logger.debug("Opening image %s", file)
                 image_shapes.append(hdulist['primary'].data.shape)
                 _logger.debug("Shape of image %s is %s", file, image_shapes[-1])
+                self.airmasses.append(hdulist['primary'].header[self.airmass_keyword])
             finally:
                 hdulist.close()
         
@@ -411,7 +421,8 @@ class Recipe(nr.RecipeBase):
                     fd.append(hdulist)
 
                 _logger.info('Iter %d, combining images', iter)
-                final_data = median(data, masks, zeros=backgrounds, dtype='float32')
+                extinc = [pow(10, 0.4 * i * self.extinction)  for i in self.airmasses]
+                final_data = median(data, masks, zeros=backgrounds, scales=extinc, dtype='float32')
             finally:
                 # One liner
                 _logger.debug("Closing the data files")
@@ -429,7 +440,7 @@ class Recipe(nr.RecipeBase):
         flat_data = pyfits.getdata(self.inputs['master_flat'])
         
         corrector1 = DarkCorrector(dark_data)
-        corrector2 = NonLinearityCorrector(self.inputs['linearity'])
+        corrector2 = NonLinearityCorrector(self.optional['linearity'])
         corrector3 = FlatFieldCorrector(flat_data)
         
         generic_processing(self.images, [corrector1, corrector2, corrector3], backup=True)
@@ -582,12 +593,13 @@ if __name__ == '__main__':
                         'apr21_0080.fits': ('bpm.fits', (-16, 36), ['apr21_0080.fits']),
                         'apr21_0081.fits': ('bpm.fits', (-16, 36), ['apr21_0081.fits'])
                         },   
-                        'master_dark': 'Dark50.fits',
-                        'linearity': [1.00, 0.00],
+                        'master_dark': 'Dark50.fits',                        
                         'master_flat': 'flat.fits',
                         'master_bpm': 'bpm.fits'
                         },
-          'optional' : {}          
+          'optional' : {'linearity': [1.00, 0.00],
+                        'extinction,': 0.05,
+                        }          
     }
     
     # Changing the offsets
