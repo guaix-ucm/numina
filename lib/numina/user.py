@@ -30,6 +30,10 @@ import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import pkgutil
+# get_data is not in python 2.5
+if not hasattr(pkgutil, 'get_data'):
+    from compatibility import get_data
+    pkgutil.get_data = get_data
 import StringIO
 
 import xdg.BaseDirectory as xdgbd
