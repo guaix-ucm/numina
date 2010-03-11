@@ -39,7 +39,7 @@ from numina.exceptions import RecipeError
 from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
 
-version_number = "0.0.6"
+version_number = "0.2.0"
 version_line = '%prog ' + version_number
 
 def parse_cmdline(args=None):
