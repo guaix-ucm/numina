@@ -1,3 +1,10 @@
+Version 0.2.1
+(15 March 2010, from /pyemir/trunk revision 647)
+https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.2.1/
+
+Bugfixes: #89, pkgutil.get_data not present in python 2.5 
+
+
 Version 0.2.0
 (18 February 2010, from /pyemir/trunk revision 639)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.2.0/
