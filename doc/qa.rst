@@ -1,4 +1,3 @@
-.. $Id$
 
 :mod:`numina.qa` --- Quality Assess for Numina 
 ==============================================

@@ -1,4 +1,3 @@
-.. $Id$
 
 :mod:`numina.recipes` --- Base classes for Recipes
 ==================================================

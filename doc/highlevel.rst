@@ -1,11 +1,10 @@
-.. $Id$
 
 ==========================================================
 High Level description of the EMIR Data Reduction Pipeline
 ==========================================================
 
 :author: Nicolás Cardiel
-:revision: $Revision$
+:revision: 1
 :date: |today|
 
 Introduction

@@ -1,4 +1,3 @@
-.. $Id$
 
 :mod:`numina.exceptions` --- Numina exceptions
 ==============================================

@@ -1,4 +1,3 @@
-.. $Id$
 
 :mod:`numina.user` --- CLI interface
 ====================================

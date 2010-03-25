@@ -1,4 +1,3 @@
-.. $Id$
 
 :mod:`emir.recipes` --- Reduction Recipes for EMIR
 ==================================================

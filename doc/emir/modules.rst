@@ -1,4 +1,3 @@
-.. $Id$
 
 ============
 Emir modules
