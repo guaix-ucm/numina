@@ -17,13 +17,9 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Recipe for the processing of multi-slit/long-slit check images.
 
 **Observing modes:**
 
     * MSM and LSM check
 '''
-
-__version__ = "$Revision$"

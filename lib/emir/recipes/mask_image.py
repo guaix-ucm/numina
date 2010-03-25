@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''
 Mask image Recipe.
 
@@ -30,4 +28,3 @@ Recipe to process mask images.
 
 '''
 
-__version__ = "$Revision$"

@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Spectral Flatfield Recipe.
 
 Recipe to process spectral flat-fields. The flat-on and flat-off images are
@@ -44,4 +42,3 @@ flat-field.
 
 '''
 
-__version__ = "$Revision$"

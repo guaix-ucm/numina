@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Recipe for the reduction of imaging mode observations.
 
 Recipe to reduce observations obtained in imaging mode, considering different
@@ -92,7 +90,6 @@ process starts:
 
 '''
 
-__version__ = "$Revision$"
 
 import logging
 

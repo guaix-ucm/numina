@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Detector Nonlinearity Recipe.
 
 Recipe to calibrate the detector nonlinearity.
@@ -45,4 +43,3 @@ polinomyal terms of the fit are computed.
 
 '''
 
-__version__ = "$Revision$"

@@ -17,9 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
 
-__version__ = "$Revision$"
 
 from pyfits import Header, Card
 

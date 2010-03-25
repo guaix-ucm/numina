@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Recipe to calibrate the slit transmission.
 
 **Observing modes:**
@@ -38,5 +36,3 @@
  * TBD
 
 '''
-
-__version__ = "$Revision$"

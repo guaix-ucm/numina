@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -17,11 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''The emir package'''
 
-__version__ = "$Revision$"
 
 import logging
 
@@ -29,6 +26,8 @@ try:
     from logging import NullHandler
 except ImportError:
     from numina.logger import NullHandler
+
+__version__ = '0.2.1'
 
 
 # Top level NullHandler

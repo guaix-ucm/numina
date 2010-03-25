@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''Bias image recipe and associates.
 
 Recipe to process bias images. Bias images only appear in Simple Readout mode.
@@ -43,7 +41,6 @@ sigma-clipping algorithm.
 
 '''
 
-__version__ = "$Revision$"
 
 
 import logging

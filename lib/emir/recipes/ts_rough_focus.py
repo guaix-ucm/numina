@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Recipe for finding the best focus.
 
 **Observing modes:**
@@ -38,5 +36,3 @@
  * Best focus
   
 '''
-
-__version__ = "$Revision$"

@@ -17,13 +17,9 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Recipe for the processing of target acquisition images.
 
 **Observing modes:**
 
     * Target acquisition
 '''
-
-__version__ = "$Revision$"

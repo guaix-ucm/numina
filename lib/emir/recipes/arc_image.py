@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Arc Image Recipe.
 
 Recipe to process the arc images. 
@@ -42,4 +40,3 @@ Recipe to process the arc images.
 
 '''
 
-__version__ = "$Revision$"

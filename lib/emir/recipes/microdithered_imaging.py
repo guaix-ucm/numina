@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual, Nicolas Cardiel
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-# $Id$
 
 '''Recipe for the reduction of microdithering imaging.
 
@@ -83,5 +81,3 @@ too high *n* value. An iterative process starts:
    calibration might be computed using available stars (TBD).
 
 '''
-
-__version__ = "$Revision$"

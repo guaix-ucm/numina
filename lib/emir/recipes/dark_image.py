@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Dark image recipe.
 
 Recipe to process dark images. The dark images will be combined 
@@ -46,7 +44,6 @@ The process will remove cosmic rays (using a typical sigma-clipping algorithm).
 
 ''' 
 
-__version__ = "$Revision$"
 
 import logging
 

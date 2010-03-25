@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Recipe for the reduction of mosaiced images.
 
 Mosaiced images can be properly merged using `swarp
@@ -42,5 +40,3 @@ directly or by writing our recipe following its structure.
  * TBD
 
 '''
-
-__version__ = "$Revision$"

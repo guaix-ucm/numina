@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
-
 '''Geometric Distortion Calibration.
 
 **Observing modes:**
@@ -39,4 +37,3 @@
 
 '''
 
-__version__ = "$Revision$"

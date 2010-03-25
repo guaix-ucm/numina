@@ -17,11 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''Recipe for image simulation'''
 
-__version__ = "$Revision$"
 
 import logging
 
