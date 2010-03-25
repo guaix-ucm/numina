@@ -17,11 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''Decorators for the numina package'''
-
-__version__ = "$Revision$"
 
 import time
 import logging

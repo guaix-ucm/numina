@@ -17,10 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
-__version__ = "$Revision$"
-
 import simplejson as json
 
 from pyfits.NP_pyfits import HDUList

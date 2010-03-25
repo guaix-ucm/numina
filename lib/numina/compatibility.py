@@ -17,11 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''Module providing compatibility code between python 2.5 and python 2.6.'''
-
-__version__ = "$Revision$"
 
 import pkgutil
 import sys

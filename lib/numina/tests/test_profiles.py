@@ -16,12 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
-
-# $Id$ 
-
+ 
 '''Unit test for GaussProfile'''
 
-__version__ = '$Revision: 411 $'
 
 import unittest
 import math

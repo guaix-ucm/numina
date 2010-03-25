@@ -17,9 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
-__version__ = "$Revision: 410 $"
 
 import datetime
 import logging

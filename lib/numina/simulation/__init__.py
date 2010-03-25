@@ -17,10 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
-__version__ = "$Revision$"
-
 import os
 from os.path import join as pjoin
 from cPickle import dump, load

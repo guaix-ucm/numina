@@ -17,10 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
-__version__ = "$Revision$"
-
 from math import sin, cos, tan, pi
 import pkgutil
 from StringIO import StringIO

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2009 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -17,11 +17,9 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
 
 '''Recipes for Emir Observing Modes'''
 
-__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

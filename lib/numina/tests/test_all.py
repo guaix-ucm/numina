@@ -1,5 +1,5 @@
 #
-# Copyright 2008 Sergio Pascual
+# Copyright 2008-2010 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
@@ -16,12 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
-
-# $Id$ 
-
+ 
 '''A module used to run all the numina unit tests'''
-
-__version__ = '$Revision: 411 $'
 
 import sys, os
 import unittest

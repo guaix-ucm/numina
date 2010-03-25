@@ -17,13 +17,10 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''User command line interface of Numina.
 
 '''
 
-__version__ = "$Revision$"
 
 import logging.config
 import os

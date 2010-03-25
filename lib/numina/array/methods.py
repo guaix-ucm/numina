@@ -17,7 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# $Id$
 
 '''
 This module implements different combination methods 
@@ -32,7 +31,6 @@ first value and the third the number of points used in the
 calculus.
 '''
 
-__version__ = "$Revision$"
 
 # Classes are new style
 __metaclass__ = type

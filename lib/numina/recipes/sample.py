@@ -17,12 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''Sample numina recipe.'''
-
-__version__ = "$Revision$"
-
 
 import logging
 

@@ -17,8 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# $Id$
-
 '''Basic tools and classes used to generate recipe modules.
 
 A recipe is a module that complies with the *reduction recipe API*:
@@ -26,8 +24,6 @@ A recipe is a module that complies with the *reduction recipe API*:
  * It must provide a `Recipe` class that derives from :class:`numina.recipes.RecipeBase`.
 
 '''
-
-__version__ = "$Revision$"
 
 from numina.exceptions import RecipeError, ParameterError
 
