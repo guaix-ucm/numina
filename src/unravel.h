@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #ifndef PYEMIR_UNRAVEL_H
 #define PYEMIR_UNRAVEL_H

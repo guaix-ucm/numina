@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #ifndef PYEMIR_METHODS_H
 #define PYEMIR_METHODS_H

@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #include <Python.h>
 

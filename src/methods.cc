@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #include <cstddef>
 #include <algorithm>

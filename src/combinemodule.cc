@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #include <vector>
 #include <memory>

@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #ifndef PYEMIR_METHOD_EXCEPTION_H
 #define PYEMIR_METHOD_EXCEPTION_H

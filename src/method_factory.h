@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #ifndef PYEMIR_METHOD_FACTORY_H
 #define PYEMIR_METHOD_FACTORY_H

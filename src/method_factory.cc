@@ -18,7 +18,6 @@
  *
  */
 
-/* $Id$ */
 
 #include "method_factory.h"
 #include "methods.h"
