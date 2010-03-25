@@ -21,7 +21,6 @@
 
 '''
 
-
 import logging.config
 import os
 from optparse import OptionParser
@@ -35,13 +34,12 @@ import StringIO
 
 import xdg.BaseDirectory as xdgbd
 
-from numina import list_recipes, get_module, check_recipe
+from numina import list_recipes, get_module, check_recipe, __version__
 from numina.exceptions import RecipeError
 from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
-
-version_number = "0.2.1"
-version_line = '%prog ' + version_number
+ 
+version_line = '%prog ' + __version__ 
 
 def parse_cmdline(args=None):
     '''Parse the command line.'''
@@ -150,7 +148,7 @@ def main(args=None):
     
     logger = logging.getLogger("numina")
     
-    logger.info('Numina: EMIR recipe runner version %s', version_number)
+    logger.info('Numina: EMIR recipe runner version %s', __version__)
     
     if options.module is None:
         options.module = config.get('ohoh', 'module')
