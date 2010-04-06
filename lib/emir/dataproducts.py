@@ -24,3 +24,4 @@ class EmirImage:
         
 class EmirSpectrum:
     pass
+
