@@ -1,0 +1,9 @@
+
+syntax: regexp
+^build$
+syntax: regexp
+^lib/pyemir\.egg-info$
+syntax: regexp
+^lib/numina/array/_combine\.so$
+syntax: glob
+*.pyc
