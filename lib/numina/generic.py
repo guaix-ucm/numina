@@ -27,14 +27,11 @@ class GenericFunction(object):
     def register(self, cls):
         '''Register a new type class with a generic function.
         
+        Classes managed by generic must be new type
         >>> @generic
         ... def store(obj, where):
-        ...     print repr(obj), 'not storable'
+        ...     print 'object not storable'
         ... 
-        >>> store('something', 'somewhere')
-        'something' not storable
-    
-        Classes managed by generic must be new type
         >>> class B(object): 
         ...     pass
         ...
@@ -54,6 +51,31 @@ class GenericFunction(object):
 
         return decorator
 
+    def unregister(self, cls):
+        '''Remove a registered class within a generic function.
+        
+        >>> @generic
+        ... def store(obj, where):
+        ...     print 'object not storable'
+        ... 
+        >>> class B(object): 
+        ...     pass
+        ...
+        >>> @store.register(B)
+        ... def store_b(obj, where):
+        ...     print 'Storing a B object in', where
+        ...
+        >>> store.unregister(B)
+        >>> b = B()
+        >>> store(b, 'somewhere')
+        object not storable
+        
+        '''
+
+        if cls in self._internal_map:
+            del self._internal_map[cls]
+
+
     def __call__(self, *args):
         obj = args[0]
         candidates = []
@@ -72,10 +94,10 @@ def generic(function):
     
     >>> @generic
     ... def store(obj, where):
-    ...     print repr(obj), 'not storable'
+    ...     print 'object not storable'
     ... 
     >>> store('something', 'somewhere')
-    'something' not storable
+    object not storable
     
     Classes managed by generic must be new type
     >>> class B(object): 
