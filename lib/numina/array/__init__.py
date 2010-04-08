@@ -17,8 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import scipy as sc
-
+from scipy import asarray, zeros_like, minimum, maximum
 
 def subarray_match(shape, ref, sshape, sref=None):
     '''Compute the slice representation of intersection of two arrays.
@@ -37,6 +36,7 @@ def subarray_match(shape, ref, sshape, sref=None):
     
     Example: 
     
+      >>> import numpy
       >>> im = numpy.zeros((1000, 1000))
       >>> sim = numpy.ones((40, 40))
       >>> i,j = subarray_match(im.shape, [20, 23], sim.shape)
@@ -44,16 +44,16 @@ def subarray_match(shape, ref, sshape, sref=None):
     
     '''
     # Reference point in im
-    ref1 = sc.asarray(ref, dtype='int')  
+    ref1 = asarray(ref, dtype='int')  
     
     if sref is not None:
-        ref2 = sc.asarray(sref, dtype='int')
+        ref2 = asarray(sref, dtype='int')
     else:
-        ref2 = sc.zeros_like(ref1) 
+        ref2 = zeros_like(ref1) 
     
     offset = ref1 - ref2    
-    urc1 = sc.minimum(offset + sc.asarray(sshape) - 1, sc.asarray(shape) - 1)
-    blc1 = sc.maximum(offset, 0)
+    urc1 = minimum(offset + asarray(sshape) - 1, asarray(shape) - 1)
+    blc1 = maximum(offset, 0)
     urc2 = urc1 - offset
     blc2 = blc1 - offset
     
