@@ -108,14 +108,14 @@ _logger = logging.getLogger("emir.recipes")
 
 class ParameterDescription(nr.ParameterDescription):
     def __init__(self):
-        inputs={'images': [],
+        inputs = {'images': [],
                                             'masks': [],
                                             'offsets': [],
                                             'master_bias': '',
                                             'master_dark': '',
                                             'master_flat': '',
                                             'master_bpm': ''}
-        optional={'linearity': [1.0, 0.0],
+        optional = {'linearity': [1.0, 0.0],
                   'extinction': 0
                   }
         super(ParameterDescription, self).__init__(inputs, optional)
@@ -169,7 +169,7 @@ class Recipe(nr.RecipeBase):
         
         self.input_checks()
 
-        for i,m in zip(self.images, self.masks):
+        for i, m in zip(self.images, self.masks):
             self.book_keeping[i] = dict(mask=m, version=i, omask=m, region=None)
             
         
@@ -181,24 +181,24 @@ class Recipe(nr.RecipeBase):
         
         image_shapes = []
         
-        for file in self.images:
-            hdulist = pyfits.open(file)
+        for fname in self.images:
+            hdulist = pyfits.open(fname)
             try:
-                _logger.debug("Opening image %s", file)
+                _logger.debug("Opening image %s", fname)
                 image_shapes.append(hdulist['primary'].data.shape)
-                _logger.debug("Shape of image %s is %s", file, image_shapes[-1])
+                _logger.debug("Shape of image %s is %s", fname, image_shapes[-1])
                 self.airmasses.append(hdulist['primary'].header[self.airmass_keyword])
             finally:
                 hdulist.close()
         
         mask_shapes = []
         
-        for file in self.masks:
-            hdulist = pyfits.open(file)
+        for fname in self.masks:
+            hdulist = pyfits.open(fname)
             try:
-                _logger.debug("Opening mask %s", file)
+                _logger.debug("Opening mask %s", fname)
                 mask_shapes.append(hdulist['primary'].data.shape)
-                _logger.debug("Shape of mask %s is %s", file, mask_shapes[-1])
+                _logger.debug("Shape of mask %s is %s", fname, mask_shapes[-1])
             finally:
                 hdulist.close()
 
@@ -230,46 +230,47 @@ class Recipe(nr.RecipeBase):
         def resize_images(finalshape, offsetsp):
             
             # Resize images
-            for file, offset in zip(self.images, offsetsp):
-                hdulist = pyfits.open(file, mode='readonly')
+            for fname, offset in zip(self.images, offsetsp):
+                hdulist = pyfits.open(fname, mode='readonly')
                 try:
                     p = hdulist['primary']
                     newdata = np.zeros(finalshape, dtype=p.data.dtype)
                     region = newslice(offset, self.baseshape)
                     newdata[region] = p.data
-                    newfile = self.base % file
-                    pyfits.writeto(newfile, newdata, p.header, 
+                    newfile = self.base % fname
+                    pyfits.writeto(newfile, newdata, p.header,
                                    output_verify='silentfix', clobber=True)
-                    _logger.info('Resized image %s, offset %s, new shape %s', file, offset, finalshape)
-                    self.book_keeping[file]['region'] = region
-                    self.book_keeping[file]['version'] = newfile    
+                    _logger.info('Resized image %s, offset %s, new shape %s', fname, offset, finalshape)
+                    self.book_keeping[fname]['region'] = region
+                    self.book_keeping[fname]['version'] = newfile    
                 finally:
                     hdulist.close()
     
             # Resize masks
-            for file, base in zip(self.masks, self.images):
-                hdulist = pyfits.open(file, mode='readonly')
+            for fname, base in zip(self.masks, self.images):
+                hdulist = pyfits.open(fname, mode='readonly')
                 try:
                     p = hdulist['primary']
                     newdata = np.ones(finalshape, dtype=p.data.dtype)
                     region = self.book_keeping[base]['region']
                     newdata[region] = p.data
                     newfile = self.basemask % base
-                    pyfits.writeto(newfile, newdata, p.header, 
+                    pyfits.writeto(newfile, newdata, p.header,
                                    output_verify='silentfix', clobber=True)
-                    _logger.info('Resized image %s into image %s, new shape %s', file, newfile, finalshape)
+                    _logger.info('Resized image %s into image %s, new shape %s',
+                                 fname, newfile, finalshape)
                     
                     self.book_keeping[base]['mask'] = newfile    
                 finally:
                     hdulist.close()                
 
-        def compute_sky_simple(file, iter):            
-            # The sky images corresponding to file
-            sky_images = self.inputs['images'][file][2]
+        def compute_sky_simple(fname,iternr):            
+            # The sky images corresponding to fname
+            sky_images = self.inputs['images'][fname][2]
             r_sky_images = [self.book_keeping[i]['version'] for i in sky_images]
             r_sky_masks = [self.book_keeping[i]['omask'] for i in sky_images]
             r_sky_regions = [self.book_keeping[i]['region'] for i in sky_images]
-            _logger.info('Iter %d, sky images for %s are %s', iter, file, sky_images)
+            _logger.info('Iter %d, sky images for %s are %s', itern, fname, sky_images)
             
             if len(sky_images) == 1:
                 pass
@@ -279,15 +280,15 @@ class Recipe(nr.RecipeBase):
                 data = []
                 masks = []
                 
-                for file, region in zip(r_sky_images, r_sky_regions):
-                    _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')                    
+                for fname, region in zip(r_sky_images, r_sky_regions):
+                    _logger.debug('Opening %s', fname)
+                    hdulist = pyfits.open(fname, memmap=True, mode='readonly')                    
                     data.append(hdulist['primary'].data[region])
                     fd.append(hdulist)
                 
-                for file, region in zip(r_sky_masks, r_sky_regions):
-                    _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')                    
+                for fname, region in zip(r_sky_masks, r_sky_regions):
+                    _logger.debug('Opening %s', fname)
+                    hdulist = pyfits.open(fname, memmap=True, mode='readonly')                    
                     masks.append(hdulist['primary'].data[region])
                     fd.append(hdulist)
                 
@@ -307,39 +308,39 @@ class Recipe(nr.RecipeBase):
                 _logger.debug("Closing the sky files")
                 map(pyfits.HDUList.close, fd)
             
-            _logger.info('Iter %d, median sky background %f', iter, median_sky)
+            _logger.info('Iter %d, median sky background %f', itern, median_sky)
             return median_sky
         
-        def compute_superflat(iter):
-            # The sky images corresponding to file
-            _logger.info('Iter %d, computing superflat', iter)
+        def compute_superflat(itern):
+            # The sky images corresponding to fname
+            _logger.info('Iter %d, computing superflat', itern)
             fimages = [self.base % i for i in self.images]
             fmasks = [self.book_keeping[i]['mask'] for i in self.images]
-            regions =  [self.book_keeping[i]['region'] for i in self.images]
+            regions = [self.book_keeping[i]['region'] for i in self.images]
             
             try:       
                 fd = []
                 data = []
                 masks = []
                 
-                for file, region in zip(fimages, regions):
-                    _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')  
+                for fname, region in zip(fimages, regions):
+                    _logger.debug('Opening %s', fname)
+                    hdulist = pyfits.open(fname, memmap=True, mode='readonly')  
                     data.append(hdulist['primary'].data[region])
                     fd.append(hdulist)
                 
-                for file, region in zip(fmasks, regions):
-                    _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')                    
+                for fname, region in zip(fmasks, regions):
+                    _logger.debug('Opening %s', fname)
+                    hdulist = pyfits.open(fname, memmap=True, mode='readonly')                    
                     masks.append(hdulist['primary'].data[region])
                     fd.append(hdulist)
-                _logger.info("Iter %d, computing the median of the images", iter)        
+                _logger.info("Iter %d, computing the median of the images", itern)        
                 scales = [np.median(d[m == 0]) for d, m in zip(data, masks)]
                 
                 # Combine the sky images with masks
-                _logger.info("Iter %d, combining the images without offsets", iter)            
+                _logger.info("Iter %d, combining the images without offsets", itern)            
                 superflat = median(data, masks, scales=scales)
-                pyfits.writeto('superflat.fits.iter.%02d' % iter, superflat[0], clobber=True)
+                pyfits.writeto('superflat.fits.itern.%02d' % itern, superflat[0], clobber=True)
 
             finally:
                 _logger.debug("Closing the files")
@@ -347,48 +348,48 @@ class Recipe(nr.RecipeBase):
             
             return superflat    
                 
-        def superflat_processing(superflat, iter):
+        def superflat_processing(superflat, itern):
             # TODO: handle masks
-            # The sky images corresponding to file
+            # The sky images corresponding to fname
             
             flat = superflat[0]
             mask = (flat == 0)
             flat[mask] = 1
 
-            regions =  [self.book_keeping[i]['region'] for i in self.images]
+            regions = [self.book_keeping[i]['region'] for i in self.images]
             
-            for file, region in zip(self.images, regions):
-                bfile = self.base % file
+            for fname, region in zip(self.images, regions):
+                bfile = self.base % fname
                 _logger.debug('Opening %s', bfile)
                 hdulist = pyfits.open(bfile, mode='readonly')
                 try:
-                    _logger.info('Iter %d, processing image %s with superflat', iter, (bfile))
+                    _logger.info('Iter %d, processing image %s with superflat', itern, (bfile))
                     newdata = np.zeros_like(hdulist['primary'].data)
-                    newdata[region] =  hdulist['primary'].data[region] / flat
-                    newfile = self.iter % (file, iter)
-                    _logger.debug("Saving file %s", newfile)
-                    self.book_keeping[file]['version'] = newfile
-                    pyfits.writeto(newfile, newdata, header=hdulist['primary'].header, 
+                    newdata[region] = hdulist['primary'].data[region] / flat
+                    newfile = self.iter % (fname, itern)
+                    _logger.debug("Saving fname %s", newfile)
+                    self.book_keeping[fname]['version'] = newfile
+                    pyfits.writeto(newfile, newdata, header=hdulist['primary'].header,
                                    clobber=True)
                 finally:
                     hdulist.close()
 
-        def mask_merging(file, obj_mask, iter):
-            mask = self.book_keeping[file]['mask']
+        def mask_merging(fname, obj_mask, itern):
+            mask = self.book_keeping[fname]['mask']
             hdulist = pyfits.open(mask, mode='readonly')
             try:
                 p = hdulist['primary']
                 newdata = (p.data != 0) | (obj_mask != 0)
                 newdata = newdata.astype('int')
-                newfile = self.iteromask % (file, iter)
-                pyfits.writeto(newfile, newdata, p.header, 
+                newfile = self.iteromask % (fname, itern)
+                pyfits.writeto(newfile, newdata, p.header,
                                output_verify='silentfix', clobber=True)
-                self.book_keeping[file]['omask'] = newfile
-                _logger.info('Iter %d, mask %s merged with object mask into %s', iter, file, newfile)
+                self.book_keeping[fname]['omask'] = newfile
+                _logger.info('Iter %d, mask %s merged with object mask into %s', itern, fname, newfile)
             finally:
                 hdulist.close() 
         
-        def combine_images(backgrounds, iter):
+        def combine_images(backgrounds, itern):
             
             # Combine
             r_images = [self.book_keeping[i]['version'] for i in self.images]
@@ -398,21 +399,21 @@ class Recipe(nr.RecipeBase):
                 data = []
                 masks = []
             
-                for file in r_images:
-                    _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
+                for fname in r_images:
+                    _logger.debug('Opening %s', fname)
+                    hdulist = pyfits.open(fname, memmap=True, mode='readonly')
                     data.append(hdulist['primary'].data)
                     _logger.debug('Append fits handle %s', hdulist)
                     fd.append(hdulist)
                 
-                for file in r_masks:
-                    _logger.debug('Opening %s', file)
-                    hdulist = pyfits.open(file, memmap=True, mode='readonly')
+                for fname in r_masks:
+                    _logger.debug('Opening %s', fname)
+                    hdulist = pyfits.open(fname, memmap=True, mode='readonly')
                     masks.append(hdulist['primary'].data)
                     _logger.debug('Append fits handle %s', hdulist)
                     fd.append(hdulist)
 
-                _logger.info('Iter %d, combining images', iter)
+                _logger.info('Iter %d, combining images', itern)
                 extinc = [pow(10, 0.4 * i * self.extinction)  for i in self.airmasses]
                 final_data = median(data, masks, zeros=backgrounds, scales=extinc, dtype='float32')
             finally:
@@ -457,60 +458,60 @@ class Recipe(nr.RecipeBase):
         # Iterate 4 times
         iterations = 1
         
-        for iter in xrange(0, iterations):
-            _logger.info('Starting iteration %s', iter)
+        for itern in xrange(0, iterations):
+            _logger.info('Starting iteration %s', itern)
             
             # Super flat
-            superflat = compute_superflat(iter)
+            superflat = compute_superflat(itern)
             
-            superflat_processing(superflat, iter)
+            superflat_processing(superflat, itern)
             
             # TODO Only for images that are Science images
-            _logger.info('Iter %d, sky subtraction', iter)     
-            sky_backgrounds = map(lambda f : compute_sky_simple(f, iter), self.images)
+            _logger.info('Iter %d, sky subtraction', itern)     
+            sky_backgrounds = map(lambda f : compute_sky_simple(f, itern), self.images)
         
             # Combine
-            final_data = combine_images(sky_backgrounds, iter)
+            final_data = combine_images(sky_backgrounds, itern)
         
             if save_intermediate:
-                newfile = self.inter % iter
+                newfile = self.inter % itern
                 final = fc.create(final_data[0])
                 final.writeto(newfile, output_verify='silentfix', clobber=True)
         
             # Generate object mask (using sextractor)
             _logger.info('Iter % d, generating objects mask')
-            obj_mask = sextractor_object_mask(final_data[0], iter)
+            obj_mask = sextractor_object_mask(final_data[0], itern)
         
             _logger.info('Iter %d, merging object mask with masks')
-            map(lambda f: mask_merging(f, obj_mask, iter), self.images)
+            map(lambda f: mask_merging(f, obj_mask, itern), self.images)
             
-        for iter in xrange(iterations, iterations + 1):
-            _logger.info('Starting iteration %s', iter)
+        for itern in xrange(iterations, iterations + 1):
+            _logger.info('Starting iteration %s', itern)
             
             # Compute sky from the image (median)
             # TODO Only for images that are Science images
-            _logger.info('Iter %d, sky subtraction', iter)
-            sky_backgrounds = map(lambda f : compute_sky_simple(f, iter), self.images)
+            _logger.info('Iter %d, sky subtraction', itern)
+            sky_backgrounds = map(lambda f : compute_sky_simple(f, itern), self.images)
         
             # Combine
-            final_data = combine_images(sky_backgrounds, iter)    
+            final_data = combine_images(sky_backgrounds, itern)    
         
         
         _logger.info('Finished iterations')
         
-        final = fc.create(final_data[0], extensions=[('variance', final_data[1], None), 
+        final = fc.create(final_data[0], extensions=[('variance', final_data[1], None),
                                                      ('map', final_data[2].astype('int16'), None)])
         _logger.info("Final image created")
         
         return Result(QA.UNKNOWN, final)
 
     
-def sextractor_object_mask(array, iter):
+def sextractor_object_mask(array, itern):
     import tempfile
     import subprocess
     import os.path
     
-    checkimage = "emir_check%02d.fits" % iter
+    checkimage = "emir_check%02d.fits" % itern
     
     # A temporary file used to store the array in fits format
     tf = tempfile.NamedTemporaryFile(prefix='emir_', dir='.')
@@ -518,7 +519,7 @@ def sextractor_object_mask(array, iter):
         
     # Run sextractor, it will create a image called check.fits
     # With the segmentation mask inside
-    sub = subprocess.Popen(["sex", 
+    sub = subprocess.Popen(["sex",
                             "-CHECKIMAGE_TYPE", "SEGMENTATION",
                             "-CHECKIMAGE_NAME", checkimage,
                             '-VERBOSE_TYPE', 'NORMAL',
@@ -584,8 +585,8 @@ if __name__ == '__main__':
                         'apr21_0079.fits': ('bpm.fits', (-15, 36), ['apr21_0079.fits']),
                         'apr21_0080.fits': ('bpm.fits', (-16, 36), ['apr21_0080.fits']),
                         'apr21_0081.fits': ('bpm.fits', (-16, 36), ['apr21_0081.fits'])
-                        },   
-                        'master_dark': 'Dark50.fits',                        
+                        },
+                        'master_dark': 'Dark50.fits',
                         'master_flat': 'flat.fits',
                         'master_bpm': 'bpm.fits'
                         },
