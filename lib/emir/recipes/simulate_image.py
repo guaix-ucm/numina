@@ -28,7 +28,7 @@ import numina.recipes as nr
 import numina.qa as qa
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
-from emir.instrument.headers import EmirImage
+from emir.instrument.headers import EmirImageCreator
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -66,7 +66,7 @@ class Recipe(nr.RecipeBase):
         self.detector = None
         self.input = None
         _logger.info('FITS builder created')
-        self.creator = EmirImage()
+        self.creator = EmirImageCreator()
         _logger.info('Run counter created')
         self.runcounter = RunCounter("r%05d")
     

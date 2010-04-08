@@ -52,7 +52,7 @@ import pyfits
 import numina.recipes as nr
 from numina.array.combine import mean
 from numina.exceptions import RecipeError
-from emir.instrument.headers import EmirImage
+from emir.instrument.headers import EmirImageCreator
 
 
 _logger = logging.getLogger("emir.recipes")
@@ -81,7 +81,7 @@ class Recipe(nr.RecipeBase):
     def __init__(self):
         super(Recipe, self).__init__()
         # Default values. This can be read from a file
-        self.creator = EmirImage()
+        self.creator = EmirImageCreator()
         
     def setup(self, param):
         super(Recipe, self).setup(param)

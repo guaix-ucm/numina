@@ -46,7 +46,7 @@ import logging
 import pyfits
 
 import numina.recipes as nr
-from emir.instrument.headers import EmirImage
+from emir.instrument.headers import EmirImageCreator
 from numina.array.combine import mean
 import numina.qa as qa
 
@@ -94,7 +94,7 @@ class Recipe(nr.RecipeBase):
         # Combine them
         cube = mean(alldata, allmasks)
         
-        creator = EmirImage()
+        creator = EmirImageCreator()
         hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
         
         if True:

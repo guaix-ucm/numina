@@ -101,7 +101,7 @@ import numina.recipes as nr
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.image.processing import generic_processing
 from numina.array.combine import median
-from emir.instrument.headers import EmirImage
+from emir.instrument.headers import EmirImageCreator
 import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
@@ -424,7 +424,7 @@ class Recipe(nr.RecipeBase):
         
         save_intermediate = True
         # Final result constructor
-        fc = EmirImage()
+        fc = EmirImageCreator()
         
         # dark correction
         # open the master dark

@@ -167,12 +167,12 @@ def _merge(headers1, headers2):
 _image_fits_headers = _merge(_common_fits_headers, _image_extra_fits_headers)
 _spectrum_fits_headers = _merge(_common_fits_headers, _spectrum_extra_fits_headers)
 
-class EmirImage(FITSCreator):
+class EmirImageCreator(FITSCreator):
     '''Builder of Emir direct image.'''
     def __init__(self): 
-        super(EmirImage, self).__init__(_image_fits_headers)
+        super(EmirImageCreator, self).__init__(_image_fits_headers)
         
-class EmirSpectrum(FITSCreator):
+class EmirSpectrumCreator(FITSCreator):
     '''Builder of Emir spectrum.'''
     def __init__(self): 
-        super(EmirSpectrum, self).__init__(_spectrum_fits_headers)
+        super(EmirSpectrumCreator, self).__init__(_spectrum_fits_headers)
