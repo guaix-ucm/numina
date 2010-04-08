@@ -41,13 +41,10 @@ sigma-clipping algorithm.
 
 '''
 
-
-
 import logging
 
 import pyfits
 
-import numina.diskstorage as ds
 import numina.recipes as nr
 from emir.instrument.headers import EmirImage
 from numina.array.combine import mean
@@ -66,10 +63,6 @@ class Result(nr.RecipeResult):
     def __init__(self, qa, hdulist):
         super(Result, self).__init__(qa)
         self.products['bias'] = hdulist
-
-@ds.register(Result)
-def _store(obj, where):
-    ds.store(obj.products['bias'], 'bias.fits')
 
 class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in Bias image Mode.

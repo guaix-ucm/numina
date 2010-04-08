@@ -49,7 +49,6 @@ import logging
 
 import pyfits
 
-import numina.diskstorage as ds
 import numina.recipes as nr
 from numina.array.combine import mean
 from numina.exceptions import RecipeError
@@ -71,11 +70,6 @@ class Result(nr.RecipeResult):
     def __init__(self, qa, dark):
         super(Result, self).__init__(qa)
         self.products['dark'] = dark
-
-@ds.register(Result)
-def _store(obj, where):
-    ds.store(obj.products['dark'], 'dark.fits')
-
 
 class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in Dark current image Mode.

@@ -21,7 +21,7 @@ import unittest
 import tempfile
 import os
 
-import numina.diskstorage as ds
+from numina.diskstorage import store
 
 class DiskStorageTestCase(unittest.TestCase):
     
@@ -30,7 +30,7 @@ class DiskStorageTestCase(unittest.TestCase):
         class MyClass(object):
             pass
         
-        @ds.register(MyClass)
+        @store.register(MyClass)
         def mystore(obj, where):
             where.write('MyClass')
             
@@ -38,7 +38,7 @@ class DiskStorageTestCase(unittest.TestCase):
         
         f = tempfile.NamedTemporaryFile(delete=False)
         
-        ds.store(m, f)
+        store(m, f)
         name = f.name
         f.close()
         

@@ -25,6 +25,7 @@ A recipe is a module that complies with the *reduction recipe API*:
 
 '''
 
+from numina.diskstorage import store
 from numina.exceptions import RecipeError, ParameterError
 
 # Classes are new style
@@ -77,6 +78,11 @@ class RecipeResult:
         self.qa = qa
         self.products = {}
 
+@store.register(RecipeResult)
+def _store_rr(obj, where=None):
+    # We store the values inside obj.products
+    for key, val in obj.products.iteritems():
+        store(val, key)
 
 class ParameterDescription(object):
     def __init__(self, inputs, optional):

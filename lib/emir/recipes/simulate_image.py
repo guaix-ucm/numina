@@ -25,7 +25,6 @@ import logging
 import numpy as np
 
 import numina.recipes as nr
-import numina.diskstorage as ds
 import numina.qa as qa
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
@@ -57,11 +56,6 @@ class Result(nr.RecipeResult):
         super(Result, self).__init__(qa)
         self.products['result'] = result
         self.name = name
-        
-@ds.register(Result)
-def _store(obj, where):
-    ds.store(obj.products['result'], obj.name)   
-
 
 class Recipe(nr.RecipeBase):
     '''Recipe to simulate EMIR images.

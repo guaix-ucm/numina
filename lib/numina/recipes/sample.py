@@ -21,7 +21,6 @@
 
 import logging
 
-import numina.diskstorage as ds
 from numina.recipes import RecipeBase, RecipeResult
 import numina.recipes
 import numina.qa as QA
@@ -38,13 +37,9 @@ class Result(RecipeResult):
     '''Result of the sample recipe.'''
     def __init__(self, qa, result):
         super(Result, self).__init__(qa)
-        self.products['result'] = result
-        self.products['tables'] = [[0,0], [234.456]]
-
-@ds.register(Result)
-def _store(obj, where):
-    ds.store(obj.products, 'products')
-
+        self.products['values'] = {}
+        self.products['values']['result'] = result
+        self.products['values']['tables'] = [[0,0], [234.456]]
       
 class Recipe(RecipeBase):
     '''Recipe to process data taken in imaging mode.
@@ -69,7 +64,7 @@ if __name__ == '__main__':
     from numina.recipes import Parameters
     from numina.jsonserializer import to_json 
         
-    p = Parameters({}, {'iterations':'3'})
+    p = Parameters({}, {'iterations': 3})
     
     f = tempfile.NamedTemporaryFile(delete=False)
     try:

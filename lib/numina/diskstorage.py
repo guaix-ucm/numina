@@ -21,30 +21,17 @@ import simplejson as json
 
 from pyfits.NP_pyfits import HDUList
 
-_internal_map = {}
+from generic import generic
 
-def register(cls):
-    def wrap(f):
-        _internal_map[cls] = f
-        def w_f(*args):
-            return f(*args)
-        
-        return w_f
-    
-    return wrap
-
+@generic
 def store(obj, where=None):
-    if obj.__class__ in _internal_map:
-        tstore = _internal_map[obj.__class__]
-        tstore(obj, where)
-    else:
-        raise TypeError(repr(obj) + ' is not storable')
+    raise TypeError(repr(obj) + ' is not storable')
 
-@register(HDUList)
+@store.register(HDUList)
 def _store_fits(obj, where='file.fits'):
     obj.writeto(where, clobber=True, output_verify='ignore')
  
-@register(type({}))
+@store.register(type({}))
 def _store_map(obj, where='products.json'):
     f = open(where, 'w+') 
     try:
@@ -52,11 +39,9 @@ def _store_map(obj, where='products.json'):
     finally:
         f.close()
 
-_internal_map[type([])] = _store_map
-
-def store_to_disk(obj):
-    if hasattr(obj, 'products'):
-        for key, val in obj.__dict__.iteritems():
-            store(val, key)
-    else:
-        raise TypeError(repr(obj) + ' is not storable')
+#def store_to_disk(obj):
+#    if hasattr(obj, 'products'):
+#        for key, val in obj.__dict__.iteritems():
+#            store(val, key)
+#    else:
+#        raise TypeError(repr(obj) + ' is not storable')
