@@ -527,7 +527,7 @@ def sextractor_object_mask(array, itern):
                            stdout=subprocess.PIPE)
     sub.communicate()
     
-    segfile = os.path.join('.', 'check.fits')
+    segfile = os.path.join('.', checkimage)
     
     # Read the segmentation image
     result = pyfits.getdata(segfile)
