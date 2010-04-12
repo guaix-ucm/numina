@@ -58,7 +58,7 @@ class BiasImageTestCase(unittest.TestCase):
             i = 0
             while i < upto:
                 output = self.detector.lpath(self.input_)
-                run, cfile = self.runcounter.runstring()
+                run, _cfile = self.runcounter.runstring()
                 headers = {'RUN': run}
                 headers.update(self.detector.metadata())
                 print headers

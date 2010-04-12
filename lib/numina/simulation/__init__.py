@@ -125,7 +125,7 @@ class GaussProfile(Profile):
         def myfun(*args):
             low = numpy.asarray(args)
             up = low + 1
-            v,i = mvn.mvnun(lower=low, upper=up, means=means, covar=covar)
+            v, _i = mvn.mvnun(lower=low, upper=up, means=means, covar=covar)
             return v
     
         return myfun

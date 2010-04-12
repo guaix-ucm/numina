@@ -74,7 +74,7 @@ def list_recipes(path):
     '''List all the recipes in a module'''
     module = __import__(path, fromlist="dummy")
     result = []
-    for importer, modname, ispkg in pkgutil.iter_modules(module.__path__):
+    for _importer, modname, _ispkg in pkgutil.iter_modules(module.__path__):
         rmodule = __import__('.'.join([path, modname]), fromlist="dummy")
         if check_recipe(rmodule):
             result.append((modname, rmodule.__doc__.splitlines()[0]))
