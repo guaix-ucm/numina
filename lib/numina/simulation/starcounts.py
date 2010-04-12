@@ -220,7 +220,7 @@ if __name__ == '__main__':
             self.inversecdfbins = Nrl
             self.Nrl = Nrl
             y = numpy.arange(Nrl) / float(Nrl)
-            delta = 1.0 / Nrl
+            _delta = 1.0 / Nrl
             self.inversecdf = numpy.zeros(Nrl)
             self.inversecdf[0] = self.x[0]
             cdf_idx = 0
@@ -240,37 +240,36 @@ if __name__ == '__main__':
             return y
 
 
-        scmodel = sgmodel
-        magmin = 12.0
-        magmax = 25.0
-  
-        plate_scale = 0.2
-        detector_shape = (2048, 2048)
-        pixel_area = detector_shape
-        detector_area = (plate_scale ** 2 * detector_shape[0] * detector_shape[1]) / 3600.
-  
-        nstars = int(round(detector_area * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))))  
-        print nstars
-  
-        seeing = 1.0
-
-        scale = 2 * sqrt(2 * log(2))
-  
-        delta = 0.1
-        steps = int(round((magmax - magmin) / delta))
-        x = magmin + delta * numpy.arange(steps)
-        p = numpy.array([scmodel.differential_counts(i) for i in x])
-        
-        g = GeneralRandom(x, p)
-  
-        mags = g.random(nstars)
-        y = numpy.random.uniform(high=pixel_area[0], size=nstars)
-        x = numpy.random.uniform(high=pixel_area[1], size=nstars)
-  
-        numpy.random.seed(100)
-        x = numpy.random.uniform(high=2048, size=nstars)
-        y = numpy.random.uniform(high=2048, size=nstars)
-        sigmas = [seeing / scale / plate_scale] * nstars
-        ints = [100] * nstars 
-        mag = g.random(N=nstars)
-        
+    scmodel = sgmodel
+    magmin = 12.0
+    magmax = 25.0
+    
+    plate_scale = 0.2
+    detector_shape = (2048, 2048)
+    pixel_area = detector_shape
+    detector_area = (plate_scale ** 2 * detector_shape[0] * detector_shape[1]) / 3600.
+    
+    nstars = int(round(detector_area * (scmodel.integral_counts(magmax) - scmodel.integral_counts(magmin))))  
+    print nstars
+    
+    seeing = 1.0
+    
+    scale = 2 * sqrt(2 * log(2))
+    
+    delta = 0.1
+    steps = int(round((magmax - magmin) / delta))
+    x = magmin + delta * numpy.arange(steps)
+    p = numpy.array([scmodel.differential_counts(i) for i in x])
+    
+    g = GeneralRandom(x, p)
+    
+    mags = g.random(nstars)
+    y = numpy.random.uniform(high=pixel_area[0], size=nstars)
+    x = numpy.random.uniform(high=pixel_area[1], size=nstars)
+    
+    numpy.random.seed(100)
+    x = numpy.random.uniform(high=2048, size=nstars)
+    y = numpy.random.uniform(high=2048, size=nstars)
+    sigmas = [seeing / scale / plate_scale] * nstars
+    ints = [100] * nstars 
+    mag = g.random(N=nstars)
