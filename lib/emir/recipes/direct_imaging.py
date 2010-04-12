@@ -479,10 +479,10 @@ class Recipe(nr.RecipeBase):
                 final.writeto(newfile, output_verify='silentfix', clobber=True)
         
             # Generate object mask (using sextractor)
-            _logger.info('Iter % d, generating objects mask')
+            _logger.info('Iter %d, generating objects mask', itern)
             obj_mask = sextractor_object_mask(final_data[0], itern)
         
-            _logger.info('Iter %d, merging object mask with masks')
+            _logger.info('Iter %d, merging object mask with masks', itern)
             map(lambda f: mask_merging(f, obj_mask, itern), self.images)
             
         for itern in xrange(iterations, iterations + 1):
