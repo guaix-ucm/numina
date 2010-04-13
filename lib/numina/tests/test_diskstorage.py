@@ -50,7 +50,7 @@ class DiskStorageTestCase(unittest.TestCase):
             fo.close()
             
         os.remove(name)
-        
+        store.unregister(MyClass)
 
 def test_suite():
     suite = unittest.TestSuite()
