@@ -5,10 +5,10 @@ from setuptools import setup, find_packages, Extension
 import numpy
 
 numpy_include = numpy.get_include()
-ex1 = Extension('numina.array._combine',
-                ['src/combinemodule.cc', 
+cext = Extension('numina.array._combine',
+                ['src/combinemodule.cc',
                  'src/methods.cc',
-                 'src/methods_python.cc',  
+                 'src/methods_python.cc',
                  'src/method_factory.cc',
                  ],
           include_dirs=[numpy_include])
@@ -23,9 +23,10 @@ setup(name='pyemir',
       description='EMIR Data Processing Pipeline',
       packages=find_packages('lib'),
       package_dir={'': 'lib'},
-      package_data={'emir.simulation': ['*.dat'],
-                      'numina': ['*.cfg', 'logging.ini']},
-      ext_modules=[ex1],
+      package_data={'numina.simulation': ['*.dat'],
+                      'numina': ['*.cfg', 'logging.ini']
+                      },
+      ext_modules=[cext, ],
       entry_points={
                       'console_scripts': ['numina = numina.user:main'],
                       },
