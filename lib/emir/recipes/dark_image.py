@@ -25,7 +25,7 @@ They do not have to be of the same exposure time t, they will be
 scaled to the same t0 ~ 60s (those with very short exposure time 
 should be avoided).
 
-**Observing mode:
+**Observing mode:**
 
  * Dark current Image (3.2)
 
