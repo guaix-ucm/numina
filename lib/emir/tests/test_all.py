@@ -39,7 +39,7 @@ class PrintInfoFakeTest(unittest.TestCase):
         print_info()
 
 def suite():
-    test_modules = ['test_methods', 'test_combine']
+    test_modules = ['test_bias_image']
     alltests = unittest.TestSuite()
     for name in test_modules:
         module = __import__(name)

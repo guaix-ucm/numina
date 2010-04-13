@@ -8,7 +8,6 @@ Numina modules
    array
    exceptions
    image
-   methods
    instrument
    recipes
    qa
