@@ -1,3 +1,14 @@
+Version 0.2.2 (13 Apr 2010) Bugfix release
+
+Bugfixes:
+ * #91  Error creating object mask in direct_imaging
+ * Doctest errors fixed
+
+Enhancement: 
+ * #86 Combines images using extinction
+ * store function uses custom generic function (is extensible)
+ * repository migrated to mercurial
+
 Version 0.2.1
 (15 March 2010, from /pyemir/trunk revision 647)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.2.1/
