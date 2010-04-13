@@ -1,10 +1,16 @@
+Version 0.2.3 (13 Apr 2010) Bugfix release
+
+Bugfixes:
+ * #94  Missing header files inside src
+ * Errors in documentation fixed
+
 Version 0.2.2 (13 Apr 2010) Bugfix release
 
 Bugfixes:
  * #91  Error creating object mask in direct_imaging
  * Doctest errors fixed
 
-Enhancement: 
+Enhancements: 
  * #86 Combines images using extinction
  * store function uses custom generic function (is extensible)
  * repository migrated to mercurial

@@ -27,7 +27,7 @@ try:
 except ImportError:
     from numina.logger import NullHandler
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 
 # Top level NullHandler
