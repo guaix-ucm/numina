@@ -1,3 +1,4 @@
+
 #
 # Copyright 2008-2010 Sergio Pascual
 # 
@@ -109,12 +110,13 @@ _logger = logging.getLogger("emir.recipes")
 class ParameterDescription(nr.ParameterDescription):
     def __init__(self):
         inputs = {'images': [],
-                                            'masks': [],
-                                            'offsets': [],
-                                            'master_bias': '',
-                                            'master_dark': '',
-                                            'master_flat': '',
-                                            'master_bpm': ''}
+                  'masks': [],
+                  'offsets': [],
+                  'master_bias': '',
+                  'master_dark': '',
+                  'master_flat': '',
+                  'master_bpm': ''
+        }
         optional = {'linearity': [1.0, 0.0],
                   'extinction': 0
                   }
@@ -264,7 +266,7 @@ class Recipe(nr.RecipeBase):
                 finally:
                     hdulist.close()                
 
-        def compute_sky_simple(fname,iternr):            
+        def compute_sky_simple(fname, iternr):            
             # The sky images corresponding to fname
             sky_images = self.inputs['images'][fname][2]
             r_sky_images = [self.book_keeping[i]['version'] for i in sky_images]
