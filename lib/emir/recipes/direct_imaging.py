@@ -340,7 +340,7 @@ class Recipe(nr.RecipeBase):
                 # Combine the sky images with masks
                 _logger.info("Iter %d, combining the images without offsets", itern)            
                 superflat = median(data, masks, scales=scales)
-                pyfits.writeto('superflat.fits.itern.%02d' % itern, superflat[0], clobber=True)
+                pyfits.writeto('emir_superflat.fits.itern.%02d' % itern, superflat[0], clobber=True)
 
             finally:
                 _logger.debug("Closing the files")
