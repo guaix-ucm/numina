@@ -1,3 +1,4 @@
+
 #
 # Copyright 2008-2010 Sergio Pascual
 # 
@@ -111,12 +112,13 @@ _logger = logging.getLogger("emir.recipes")
 class ParameterDescription(nr.ParameterDescription):
     def __init__(self):
         inputs = {'images': [],
-                                            'masks': [],
-                                            'offsets': [],
-                                            'master_bias': '',
-                                            'master_dark': '',
-                                            'master_flat': '',
-                                            'master_bpm': ''}
+                  'masks': [],
+                  'offsets': [],
+                  'master_bias': '',
+                  'master_dark': '',
+                  'master_flat': '',
+                  'master_bpm': ''
+        }
         optional = {'linearity': [1.0, 0.0],
                   'extinction': 0
                   }

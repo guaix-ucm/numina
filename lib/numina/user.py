@@ -107,6 +107,7 @@ def mode_run(args, options, logger):
     recipe.setup(params)
     
     runs = recipe.repeat
+    errorcount = 0
     while not recipe.complete():
         logger.debug('Running the recipe instance %d of %d ', 
                      runs - recipe.repeat + 1, runs)
@@ -115,13 +116,19 @@ def mode_run(args, options, logger):
             store(result)
         except RecipeError, e:
             logger.error("%s", e)
+            errorcount += 1
         except (IOError, OSError), e:
             logger.error("%s", e)
+            errorcount += 1
     
     logger.debug('Cleaning up the recipe')
     recipe.cleanup()
     
-    logger.info('Completed execution')
+    if errorcount > 0:
+        logger.error('Errors during execution')
+        logger.error('Number of errors: %d', errorcount)
+    else:
+        logger.error('Completed execution')
 
 def main(args=None):
     '''Entry point for the Numina CLI. '''        
