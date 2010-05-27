@@ -3,6 +3,7 @@ import logging
 import time 
 import sys
 import os
+import warnings
 
 import numpy
 
@@ -15,6 +16,18 @@ from processing import compute_median
 from utils import iterqueue
 
 logging.basicConfig(level=logging.INFO)
+
+# Ignore pyfits Overwrite warning, pyfits >= 2.3 only
+#warnings.filterwarnings('ignore', '.*overwrite.*',)
+
+def send_warnings_to_log(message, category, filename, lineno, file=None, line=None):
+    logging.warning(
+        '%s:%s: %s:%s' % 
+        (filename, lineno, category.__name__, message))
+    return
+
+old_showwarning = warnings.showwarning
+warnings.showwarning = send_warnings_to_log
 
 _logger = logging.getLogger("numina")
 
@@ -127,7 +140,7 @@ if __name__ == '__main__':
     store3 = worker.para_map(snode3, store1, nthreads=4)
 
     # We need to store this result
-
+    _logger.info('Iter %d, finished')
     sys.exit(0)
 
 
