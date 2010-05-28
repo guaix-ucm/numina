@@ -3,7 +3,6 @@ import logging
 import time
 
 _logger = logging.getLogger('numina.node')
-_logger.setLevel(logging.WARN)
 
 class Node(object):
     def __init__(self):
