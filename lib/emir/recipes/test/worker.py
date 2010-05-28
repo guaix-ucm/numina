@@ -96,7 +96,7 @@ def para_map(worker, data, nthreads=4, daemons=True):
     wp.stop()
 
     for i in iterqueue(wp.qerr):
-        print i
+        _logger.error(i)
 
     result = []
     for i in iterqueue(wp.qout):
