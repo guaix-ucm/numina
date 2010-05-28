@@ -42,9 +42,9 @@ class WorkerPool(object):
         _logger.debug('creating workers')
         for _i in range(nthreads):
             _logger.debug('worker number %d created', _i)
-            self.init_worker(node, nthreads, daemons)
+            self.init_worker(node, daemons)
 
-    def init_worker(self, node, nthreads=2, daemons=True):
+    def init_worker(self, node, daemons=True):
         wn = Worker(node, self.qin, self.qout, self.qerr)
         nt = threading.Thread(target=wn.run)
         nt.daemon = daemons
