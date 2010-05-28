@@ -15,15 +15,13 @@ from processing import OpenNode, CloseNode, BackupNode
 from processing import compute_median
 from utils import iterqueue
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.ERROR)
 
 # Ignore pyfits Overwrite warning, pyfits >= 2.3 only
 #warnings.filterwarnings('ignore', '.*overwrite.*',)
 
 def send_warnings_to_log(message, category, filename, lineno, file=None, line=None):
-    logging.warning(
-        '%s:%s: %s:%s' % 
-        (filename, lineno, category.__name__, message))
+    logging.warning('%s', message)
     return
 
 old_showwarning = warnings.showwarning
@@ -100,7 +98,8 @@ if __name__ == '__main__':
     corrector2 = NonLinearityCorrector(pv['optional']['linearity'])
     corrector3 = FlatFieldCorrector(flat_data)
         
-    
+    _logger = logging.getLogger('numina')
+    _logger.setLevel(logging.INFO)
 
     # Reading data:
     initd = []
@@ -119,13 +118,31 @@ if __name__ == '__main__':
 
     # Step 2, compute superflat
     _logger.info('Iter %d, SF: computing scale factor', iteration)
-    snode2 = SerialNode([OpenNode(), AdaptorNode(compute_median), 
-                         ParallelAdaptor(IdNode(), CloseNode())])
+    # Actions:
+    snode2 = SerialNode( # -> Runs its internal nodes one after another
+                        [OpenNode(), # -> Load the data
+                         AdaptorNode(compute_median), # -> Call the compute_median on data
+                                                      # -> It returns the median AND
+                                                      # -> the data
+                         ParallelAdaptor( # A series of nodes in parallel
+                                         IdNode(), # gets the median and returns the median
+                                         CloseNode() # gets the data and closes the file in the end
+                                         )
+                         ]
+    )
+    
     store2 = worker.para_map(snode2, store1, nthreads=4)
-
+    
+    # We get the scale factor
+    #scales = [s for (s,) in store2]
+    
+    # This 
+    scales, = zip(*store2)
     # Operation to create an intermediate sky flat
+    
+    
     map(OpenNode(), store1)
-    scales = [s for (s,) in store2]
+    
     _logger.info("Iter %d, SF: combining the images without offsets", iteration)
     sf_data = image.combine('median', store1, scales=scales)
     map(CloseNode(), store1)
@@ -133,14 +150,16 @@ if __name__ == '__main__':
     # We are saving here only data part
     pyfits.writeto('emir_sf.iter.%02d.fits' % iteration, sf_data[0], clobber=True)
 
-    sys.exit(0)
+    #sys.exit(0)
+    
     # Step 3, apply superflat
-    snode3 = SerialNode([OpenNode(), FlatFieldCorrector(sf_data, mark=False), CloseNode()])
+    _logger.info("Iter %d, SF: apply superflat", iteration)
+    snode3 = SerialNode([OpenNode(), FlatFieldCorrector(sf_data[0], mark=False), CloseNode()])
 
     store3 = worker.para_map(snode3, store1, nthreads=4)
 
     # We need to store this result
-    _logger.info('Iter %d, finished')
+    _logger.info('Iter %d, finished', iteration)
     sys.exit(0)
 
 
