@@ -21,6 +21,18 @@ class SerialNode(Node):
     def __init__(self, nodeseq):
         super(SerialNode, self).__init__()
         self.nodeseq = nodeseq
+        
+    def __iter__(self):
+        return self.nodeseq.__iter__()
+    
+    def __len__(self):
+        return self.nodeseq.__len__()
+    
+    def __getitem__(self, key):
+        return self.nodeseq[key]
+    
+    def __setitem__(self, key, value):
+        self.nodeseq[key] = value
 
     def __call__(self, inp):
         for nd in self.nodeseq:
@@ -50,9 +62,9 @@ class IdNode(Node):
         return ri
 
 class ParallelAdaptor(Node):
-    def __init__(self, *args):
+    def __init__(self, nodeseq):
         super(ParallelAdaptor, self).__init__()
-        self.funcs = args
+        self.nodeseq = nodeseq
         
     def obtain_tuple(self, arg):
         if isinstance(arg, tuple):
@@ -61,7 +73,7 @@ class ParallelAdaptor(Node):
 
     def __call__(self, arg):
         args = self.obtain_tuple(arg)
-        result = tuple(func(arg) for func, arg in zip(self.funcs, args))
+        result = tuple(func(arg) for func, arg in zip(self.nodeseq, args))
         return result
 
 class Corrector(Node):
