@@ -37,12 +37,12 @@ class EmirImage(object):
     def is_open(self):
         return self._open
 
-    def open(self):
+    def open(self, mode='copyonwrite', memmap=False):
         self._open = True
-        self.hdulist.append(pyfits.open(self.datafile, memmap=True, mode='update'))
+        self.hdulist.append(pyfits.open(self.datafile, memmap=memmap, mode=mode))
         self.data = self.hdulist[0]['primary'].data
         self.meta = self.hdulist[0]['primary'].header
-        self.hdulist.append(pyfits.open(self.maskfile, memmap=True, mode='update'))
+        self.hdulist.append(pyfits.open(self.maskfile, memmap=memmap, mode=mode))
         self.mask = self.hdulist[-1]['primary'].data
 
     def close(self):
