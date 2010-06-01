@@ -4,6 +4,7 @@ import logging
 import numpy
 
 import node
+import image
 
 _logger = logging.getLogger('numina.processing')
 
@@ -31,13 +32,40 @@ def version_file(file_spec, vtype='copy'):
     return False
 
 class OpenNode(node.Node):
-    def __init__(self):
+    def __init__(self, mode='copyonwrite', memmap=False):
         super(OpenNode, self).__init__()
+        self.mode = mode
+        self.memmap = memmap
 
     def __call__(self, ri):
         _logger.debug('opening %s', ri)
-        ri.open()
+        ri.open(mode=self.mode, memmap=self.memmap)
         return ri
+
+class SaveAsNode(node.Node):
+    
+    def uuidname(self, img_):
+        import uuid
+        d = uuid.uuid4().hex
+        m = uuid.uuid4().hex
+        return (d, m)
+    
+    def __init__(self, namegen=None):
+        super(SaveAsNode, self).__init__()
+        if namegen is None:
+            self.namegen = self.uuidname
+        else:
+            self.namegen = namegen
+             
+    def check_if_processed(self, img):
+        return False
+    
+    def __call__(self, img):
+        names = self.namegen(img)
+        img.hdulist[0].writeto(names[0], output_verify='ignore', clobber=True)
+        img.hdulist[1].writeto(names[1], output_verify='ignore', clobber=True)
+        newimg = image.EmirImage(names[0], names[1])
+        return img, newimg
 
 class CloseNode(node.Node):
     def __init__(self):
@@ -45,7 +73,7 @@ class CloseNode(node.Node):
 
     def __call__(self, ri):
         _logger.debug('closing %s', ri)
-        #ri.close()
+        ri.close()
         return ri
 
 class BackupNode(node.Node):
@@ -118,4 +146,4 @@ class FlatFieldCorrector(node.Corrector):
 def compute_median(img):
     value = numpy.median(img.data[img.mask == 0])
     _logger.debug('median value of %s is %f', img, value)
-    return value
+    return value, img
