@@ -53,8 +53,14 @@ class ParallelAdaptor(Node):
     def __init__(self, *args):
         super(ParallelAdaptor, self).__init__()
         self.funcs = args
+        
+    def obtain_tuple(self, arg):
+        if isinstance(arg, tuple):
+            return arg
+        return (arg,)
 
-    def __call__(self, *args):
+    def __call__(self, arg):
+        args = self.obtain_tuple(arg)
         result = tuple(func(arg) for func, arg in zip(self.funcs, args))
         return result
 
