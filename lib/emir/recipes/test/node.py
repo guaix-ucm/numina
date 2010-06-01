@@ -75,6 +75,18 @@ class ParallelAdaptor(Node):
         args = self.obtain_tuple(arg)
         result = tuple(func(arg) for func, arg in zip(self.nodeseq, args))
         return result
+    
+    def __iter__(self):
+        return self.nodeseq.__iter__()
+    
+    def __len__(self):
+        return self.nodeseq.__len__()
+    
+    def __getitem__(self, key):
+        return self.nodeseq[key]
+    
+    def __setitem__(self, key, value):
+        self.nodeseq[key] = value
 
 class Corrector(Node):
     def __init__(self, label=None, mark=True, dtype='float32'):
