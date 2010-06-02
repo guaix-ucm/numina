@@ -45,11 +45,11 @@ class EmirImage(object):
         self.hdulist.append(pyfits.open(self.maskfile, memmap=memmap, mode=mode))
         self.mask = self.hdulist[-1]['primary'].data
 
-    def close(self):
+    def close(self, output_verify='exception'):
         if self.is_open():
             for h in self.hdulist:
-                h.flush()
-                h.close()
+                h['primary'].data = self.data
+                h.close(output_verify=output_verify)
         self._open = False
         self.data = None
         self.mask = None

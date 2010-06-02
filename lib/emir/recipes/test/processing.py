@@ -68,12 +68,13 @@ class SaveAsNode(node.Node):
         return img, newimg
 
 class CloseNode(node.Node):
-    def __init__(self):
+    def __init__(self, output_verify='exception'):
         super(CloseNode, self).__init__()
+        self.output_verify = output_verify
 
     def __call__(self, ri):
         _logger.debug('closing %s', ri)
-        ri.close()
+        ri.close(output_verify=self.output_verify)
         return ri
 
 class BackupNode(node.Node):
