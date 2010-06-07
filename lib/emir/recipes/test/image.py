@@ -22,10 +22,12 @@ class FitsHandle(object):
 
 
 class EmirImage(object):
-    def __init__(self, datafile, maskfile):
+    def __init__(self, datafile, maskfile, offset=None):
         super(EmirImage, self).__init__()
         self.data = None
         self.mask = None
+        self.offset = offset
+        self.noffset = None
         self.region = None
         self.proc = False
         self.meta = None
