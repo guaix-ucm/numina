@@ -1,5 +1,6 @@
 
 import logging
+import copy
 
 import numpy
 
@@ -64,7 +65,11 @@ class SaveAsNode(node.Node):
         names = self.namegen(img)
         img.hdulist[0].writeto(names[0], output_verify='ignore', clobber=True)
         img.hdulist[1].writeto(names[1], output_verify='ignore', clobber=True)
-        newimg = image.EmirImage(names[0], names[1])
+        #newimg = image.EmirImage(names[0], names[1], offset=img.offset)
+        newimg = copy.copy(img)
+        newimg.datafile = names[0]
+        newimg.maskfile = names[1]
+        newimg.close()
         return img, newimg
 
 class CloseNode(node.Node):
