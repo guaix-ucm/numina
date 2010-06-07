@@ -5,7 +5,7 @@ import copy
 import numpy
 
 import node
-import image
+from numina.array import subarray_match
 
 _logger = logging.getLogger('numina.processing')
 
@@ -94,16 +94,19 @@ class BackupNode(node.Node):
 class ResizeNode(node.Corrector):
     def __init__(self, finalshape):
         super(ResizeNode, self).__init__()
-        self.finalshape
-
+        self.finals = finalshape
+  
     def __call__(self, img):
-        finalshape = None
-        #offsetsp
-#        for fname, offset in zip(self.images, offsetsp):
-        newdata = numpy.zeros(self.finalshape, dtype=img.data.dtype)
-        img.region = newslice(img.offset, img.data.shape)
-        newdata[img.region] = img.data
+        newdata = numpy.zeros(self.finals, dtype=img.data.dtype)
+        region, ign_ = subarray_match(self.finals, img.noffset, img.data.shape)
+        assert newdata[region].shape == img.data.shape
+        newdata[region] = img.data
+        img.region = region
+        img.data = newdata
         return img
+    
+    def check_if_processed(self, img):
+        return False
 
 class BiasCorrector(node.Corrector):
     def __init__(self, biasmap, mark=True, dtype='float32'):
