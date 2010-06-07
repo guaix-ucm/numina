@@ -87,6 +87,9 @@ class Worker(object):
 
 def para_map(worker, data, nthreads=4, daemons=True):
 
+    if nthreads <= 1:
+        return map(worker, data)
+
     wp = WorkerPool()
 
     for i in data:
