@@ -90,7 +90,7 @@ class Corrector(Node):
             
     def __call__(self, img):
         _logger.info('%s already processed by %s', img, self)
-        return
+        return img
 
     def check_if_processed(self, img):
         if self.mark and img and img.meta.has_key(self.label[0]):
