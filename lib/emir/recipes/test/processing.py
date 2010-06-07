@@ -65,7 +65,6 @@ class SaveAsNode(node.Node):
         names = self.namegen(img)
         img.hdulist[0].writeto(names[0], output_verify='ignore', clobber=True)
         img.hdulist[1].writeto(names[1], output_verify='ignore', clobber=True)
-        #newimg = image.EmirImage(names[0], names[1], offset=img.offset)
         newimg = copy.copy(img)
         newimg.datafile = names[0]
         newimg.maskfile = names[1]
@@ -113,44 +112,52 @@ class BiasCorrector(node.Corrector):
         super(BiasCorrector, self).__init__(label=('NUM-DK','Dark removed with numina'), dtype=dtype, mark=mark)
         self.biasmap = biasmap
 
-    def __call__(self, image):
-        _logger.debug('correcting bias in %s', image)
-        image.data -= self.biasmap
-        image.data = image.data.astype(self.dtype)
-        return image
+    def __call__(self, img):
+        if self.check_if_processed(img):
+            return super(BiasCorrector, self).__call__(img)
+        _logger.debug('correcting bias in %s', img)
+        img.data -= self.biasmap
+        img.data = img.data.astype(self.dtype)
+        return img
 
 class DarkCorrector(node.Corrector):
     def __init__(self, darkmap, mark=True, dtype='float32'):
         super(DarkCorrector, self).__init__(label=('NUM-DK','Bias removed with numina'), dtype=dtype, mark=mark)
         self.darkmap = darkmap
 
-    def __call__(self, image):
-        _logger.debug('correcting dark in %s', image)
-        image.data -= self.darkmap
-        image.data = image.data.astype(self.dtype)
-        return image
+    def __call__(self, img):
+        if self.check_if_processed(img):
+            return super(DarkCorrector, self).__call__(img)
+        _logger.debug('correcting dark in %s', img)
+        img.data -= self.darkmap
+        img.data = img.data.astype(self.dtype)
+        return img
 
 class NonLinearityCorrector(node.Corrector):
     def __init__(self, polynomial, mark=True, dtype='float32'):
         super(NonLinearityCorrector, self).__init__(label=('NUM-LIN','Non-linearity removed with numina'), dtype=dtype, mark=mark)
         self.polynomial = polynomial
                 
-    def __call__(self, image):
-        _logger.debug('correcting non linearity in %s', image)
-        image.data = numpy.polyval(self.polynomial, image.data)
-        image.data = image.data.astype(self.dtype)
-        return image
+    def __call__(self, img):
+        if self.check_if_processed(img):
+            return super(NonLinearityCorrector, self).__call__(img)
+        _logger.debug('correcting non linearity in %s', img)
+        img.data = numpy.polyval(self.polynomial, img.data)
+        img.data = img.data.astype(self.dtype)
+        return img
         
 class FlatFieldCorrector(node.Corrector):
     def __init__(self, flatdata, mark=True, dtype='float32'):
         super(FlatFieldCorrector, self).__init__(label=('NUM-FF','Flat field removed with numina'), dtype=dtype, mark=mark)
         self.flatdata = flatdata
 
-    def __call__(self, image):
-        _logger.debug('correcting flatfield in %s', image)
-        image.data /= self.flatdata
-        image.data = image.data.astype(self.dtype)
-        return image
+    def __call__(self, img):
+        if self.check_if_processed(img):
+            return super(FlatFieldCorrector, self).__call__(img)
+        _logger.debug('correcting flatfield in %s', img)
+        img.data /= self.flatdata
+        img.data = img.data.astype(self.dtype)
+        return img
 
 def compute_median(img):
     value = numpy.median(img.data[img.mask == 0])

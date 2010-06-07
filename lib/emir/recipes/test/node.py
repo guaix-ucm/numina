@@ -7,14 +7,8 @@ _logger = logging.getLogger('numina.node')
 class Node(object):
     def __init__(self):
         super(Node, self).__init__()
-
-    def mark_as_processed(self, img):
-        pass
-
-    def check_if_processed(self, img):
-        return False
     
-    def __call__(self, image):
+    def __call__(self, img):
         raise NotImplementedError
 
 class SerialNode(Node):
@@ -34,14 +28,10 @@ class SerialNode(Node):
     def __setitem__(self, key, value):
         self.nodeseq[key] = value
 
-    def __call__(self, inp):
+    def __call__(self, img):
         for nd in self.nodeseq:
-            if not nd.check_if_processed(inp):
-                out = nd(inp)
-                inp = out
-            else:
-                _logger.info('%s already processed by %s', inp, nd)
-                out = inp
+            out = nd(img)
+            img = out
         return out
 
 class AdaptorNode(Node):
@@ -50,16 +40,16 @@ class AdaptorNode(Node):
         super(AdaptorNode, self).__init__()
         self.work = work
 
-    def __call__(self, ri):
-        return self.work(ri)
+    def __call__(self, img):
+        return self.work(img)
 
 class IdNode(Node):
     def __init__(self):
         '''Identity'''
         super(IdNode, self).__init__()
 
-    def __call__(self, ri):
-        return ri
+    def __call__(self, img):
+        return img
 
 class ParallelAdaptor(Node):
     def __init__(self, nodeseq):
@@ -71,8 +61,8 @@ class ParallelAdaptor(Node):
             return arg
         return (arg,)
 
-    def __call__(self, arg):
-        args = self.obtain_tuple(arg)
+    def __call__(self, img):
+        args = self.obtain_tuple(img)
         result = tuple(func(arg) for func, arg in zip(self.nodeseq, args))
         return result
     
@@ -97,6 +87,10 @@ class Corrector(Node):
             self.label = ('NUM', 'Numina comment')
         else:
             self.label = label
+            
+    def __call__(self, img):
+        _logger.info('%s already processed by %s', img, self)
+        return
 
     def check_if_processed(self, img):
         if self.mark and img and img.meta.has_key(self.label[0]):
