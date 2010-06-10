@@ -56,9 +56,9 @@ def combine(mode, images, *args, **kwds):
     return superflat
 
 def combine2(mode, images, *args, **kwds):
-    data = [i.data[i.region] for i in images]
-    #masks = [i.mask[i.region] != 0 for i in images]
-    superflat = median(data)
+    data = [i.data for i in images]
+    masks = [i.mask != 0 for i in images]
+    superflat = median(data, [], *args, **kwds)
     return superflat
 
 

@@ -14,29 +14,6 @@ class Node(object):
     def __call__(self, img):
         return self._run(img)
 
-class SerialFlow(Node):
-    def __init__(self, nodeseq):
-        super(SerialFlow, self).__init__()
-        self.nodeseq = nodeseq
-        
-    def __iter__(self):
-        return self.nodeseq.__iter__()
-    
-    def __len__(self):
-        return self.nodeseq.__len__()
-    
-    def __getitem__(self, key):
-        return self.nodeseq[key]
-    
-    def __setitem__(self, key, value):
-        self.nodeseq[key] = value
-
-    def _run(self, img):
-        for nd in self.nodeseq:
-            out = nd(img)
-            img = out
-        return out
-
 class AdaptorNode(Node):
     def __init__(self, work):
         '''work is a function object'''
@@ -54,32 +31,17 @@ class IdNode(Node):
     def _run(self, img):
         return img
 
-class ParallelAdaptor(Node):
-    def __init__(self, nodeseq):
-        super(ParallelAdaptor, self).__init__()
-        self.nodeseq = nodeseq
-        
-    def obtain_tuple(self, arg):
-        if isinstance(arg, tuple):
-            return arg
-        return (arg,)
+class OutputSelector(Node):
+    def __init__(self, indexes):
+        super(OutputSelector, self).__init__()
+        self.indexes = indexes
 
-    def _run(self, img):
-        args = self.obtain_tuple(img)
-        result = tuple(func(arg) for func, arg in zip(self.nodeseq, args))
-        return result
-    
-    def __iter__(self):
-        return self.nodeseq.__iter__()
-    
-    def __len__(self):
-        return self.nodeseq.__len__()
-    
-    def __getitem__(self, key):
-        return self.nodeseq[key]
-    
-    def __setitem__(self, key, value):
-        self.nodeseq[key] = value
+    def _run(self, arg):
+        res = tuple(ar for idx, ar in enumerate(arg) if idx in self.indexes)
+        if len(res) == 1:
+            return res[0]
+        return res
+
 
 class Corrector(Node):
     def __init__(self, label=None, mark=True, dtype='float32'):
