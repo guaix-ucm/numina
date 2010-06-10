@@ -7,13 +7,16 @@ _logger = logging.getLogger('numina.node')
 class Node(object):
     def __init__(self):
         super(Node, self).__init__()
+        
+    def _run(self, img):
+        raise NotImplementedError
     
     def __call__(self, img):
-        raise NotImplementedError
+        return self._run(img)
 
-class SerialNode(Node):
+class SerialFlow(Node):
     def __init__(self, nodeseq):
-        super(SerialNode, self).__init__()
+        super(SerialFlow, self).__init__()
         self.nodeseq = nodeseq
         
     def __iter__(self):
@@ -28,7 +31,7 @@ class SerialNode(Node):
     def __setitem__(self, key, value):
         self.nodeseq[key] = value
 
-    def __call__(self, img):
+    def _run(self, img):
         for nd in self.nodeseq:
             out = nd(img)
             img = out
@@ -40,7 +43,7 @@ class AdaptorNode(Node):
         super(AdaptorNode, self).__init__()
         self.work = work
 
-    def __call__(self, img):
+    def _run(self, img):
         return self.work(img)
 
 class IdNode(Node):
@@ -48,7 +51,7 @@ class IdNode(Node):
         '''Identity'''
         super(IdNode, self).__init__()
 
-    def __call__(self, img):
+    def _run(self, img):
         return img
 
 class ParallelAdaptor(Node):
@@ -61,7 +64,7 @@ class ParallelAdaptor(Node):
             return arg
         return (arg,)
 
-    def __call__(self, img):
+    def _run(self, img):
         args = self.obtain_tuple(img)
         result = tuple(func(arg) for func, arg in zip(self.nodeseq, args))
         return result
@@ -89,7 +92,11 @@ class Corrector(Node):
             self.label = label
             
     def __call__(self, img):
-        _logger.info('%s already processed by %s', img, self)
+        if self.check_if_processed(img):
+            _logger.info('%s already processed by %s', img, self)
+            return img
+        else:
+            self._run(img)
         return img
 
     def check_if_processed(self, img):

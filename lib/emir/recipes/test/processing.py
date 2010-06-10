@@ -38,7 +38,7 @@ class OpenNode(node.Node):
         self.mode = mode
         self.memmap = memmap
 
-    def __call__(self, ri):
+    def _run(self, ri):
         _logger.debug('opening %s', ri)
         ri.open(mode=self.mode, memmap=self.memmap)
         return ri
@@ -57,18 +57,16 @@ class SaveAsNode(node.Node):
             self.namegen = self.uuidname
         else:
             self.namegen = namegen
-             
-    def check_if_processed(self, img):
-        return False
     
-    def __call__(self, img):
+    def _run(self, img):
         names = self.namegen(img)
+        
         img.hdulist[0].writeto(names[0], output_verify='ignore', clobber=True)
         img.hdulist[1].writeto(names[1], output_verify='ignore', clobber=True)
         newimg = copy.copy(img)
         newimg.datafile = names[0]
         newimg.maskfile = names[1]
-        newimg.close()
+        _logger.debug('saving %s as %s', img, newimg)
         return img, newimg
 
 class CloseNode(node.Node):
@@ -76,7 +74,7 @@ class CloseNode(node.Node):
         super(CloseNode, self).__init__()
         self.output_verify = output_verify
 
-    def __call__(self, ri):
+    def _run(self, ri):
         _logger.debug('closing %s', ri)
         ri.close(output_verify=self.output_verify)
         return ri
@@ -85,7 +83,7 @@ class BackupNode(node.Node):
     def __init__(self):
         super(BackupNode, self).__init__()
 
-    def __call__(self, ri):
+    def _run(self, ri):
         _logger.debug('backup %s', ri)
         version_file(ri.datafile)
         return ri
@@ -95,29 +93,30 @@ class ResizeNode(node.Corrector):
         super(ResizeNode, self).__init__()
         self.finals = finalshape
   
-    def __call__(self, img):
+    def _run(self, img):
         newdata = numpy.zeros(self.finals, dtype=img.data.dtype)
         region, ign_ = subarray_match(self.finals, img.noffset, img.data.shape)
-        assert newdata[region].shape == img.data.shape
+        
         newdata[region] = img.data
         img.region = region
         img.data = newdata
+        
+        newmask = numpy.zeros(self.finals, dtype=img.data.dtype)
+        newmask[region] = img.mask
+        img.mask = newmask
+        
         return img
-    
-    def check_if_processed(self, img):
-        return False
 
 class BiasCorrector(node.Corrector):
     def __init__(self, biasmap, mark=True, dtype='float32'):
         super(BiasCorrector, self).__init__(label=('NUM-DK','Dark removed with numina'), dtype=dtype, mark=mark)
         self.biasmap = biasmap
 
-    def __call__(self, img):
-        if self.check_if_processed(img):
-            return super(BiasCorrector, self).__call__(img)
+    def _run(self, img):
         _logger.debug('correcting bias in %s', img)
         img.data -= self.biasmap
         img.data = img.data.astype(self.dtype)
+        self.mark_as_processed(img)
         return img
 
 class DarkCorrector(node.Corrector):
@@ -125,12 +124,11 @@ class DarkCorrector(node.Corrector):
         super(DarkCorrector, self).__init__(label=('NUM-DK','Bias removed with numina'), dtype=dtype, mark=mark)
         self.darkmap = darkmap
 
-    def __call__(self, img):
-        if self.check_if_processed(img):
-            return super(DarkCorrector, self).__call__(img)
+    def _run(self, img):
         _logger.debug('correcting dark in %s', img)
         img.data -= self.darkmap
         img.data = img.data.astype(self.dtype)
+        self.mark_as_processed(img)
         return img
 
 class NonLinearityCorrector(node.Corrector):
@@ -138,28 +136,32 @@ class NonLinearityCorrector(node.Corrector):
         super(NonLinearityCorrector, self).__init__(label=('NUM-LIN','Non-linearity removed with numina'), dtype=dtype, mark=mark)
         self.polynomial = polynomial
                 
-    def __call__(self, img):
-        if self.check_if_processed(img):
-            return super(NonLinearityCorrector, self).__call__(img)
+    def _run(self, img):
         _logger.debug('correcting non linearity in %s', img)
         img.data = numpy.polyval(self.polynomial, img.data)
         img.data = img.data.astype(self.dtype)
+        self.mark_as_processed(img)
         return img
         
 class FlatFieldCorrector(node.Corrector):
-    def __init__(self, flatdata, mark=True, dtype='float32'):
+    def __init__(self, flatdata, mark=True, region=False, dtype='float32'):
         super(FlatFieldCorrector, self).__init__(label=('NUM-FF','Flat field removed with numina'), dtype=dtype, mark=mark)
         self.flatdata = flatdata
+        self.region = region
 
-    def __call__(self, img):
-        if self.check_if_processed(img):
-            return super(FlatFieldCorrector, self).__call__(img)
+    def _run(self, img):
         _logger.debug('correcting flatfield in %s', img)
-        img.data /= self.flatdata
+        if self.region and img.region is not None:
+            img.data[img.region] /= self.flatdata
+        else:
+            img.data /= self.flatdata
         img.data = img.data.astype(self.dtype)
+        self.mark_as_processed(img)
         return img
 
 def compute_median(img):
-    value = numpy.median(img.data[img.mask == 0])
+    valid_data = img.data[img.region]
+    valid_mask = img.mask[img.region]
+    value = numpy.median(valid_data)
     _logger.debug('median value of %s is %f', img, value)
     return value, img
