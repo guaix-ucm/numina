@@ -3,8 +3,10 @@ import logging
 import copy
 
 import numpy
+import pyfits
 
 import node
+import image
 from numina.array import subarray_match
 
 _logger = logging.getLogger('numina.processing')
@@ -32,9 +34,9 @@ def version_file(file_spec, vtype='copy'):
         raise RuntimeError("Can't %s %r, all names taken" % (vtype, file_spec))
     return False
 
-class OpenNode(node.Node):
+class OpenImage(node.Node):
     def __init__(self, mode='copyonwrite', memmap=False):
-        super(OpenNode, self).__init__()
+        super(OpenImage, self).__init__()
         self.mode = mode
         self.memmap = memmap
 
@@ -45,14 +47,14 @@ class OpenNode(node.Node):
 
 class SaveAsNode(node.Node):
     
-    def uuidname(self, img_):
+    def uuidname(self, _img):
         import uuid
         d = uuid.uuid4().hex
         m = uuid.uuid4().hex
         return (d, m)
     
     def __init__(self, namegen=None):
-        super(SaveAsNode, self).__init__()
+        super(SaveAsNode, self).__init__(ninputs=1, noutputs=2)
         if namegen is None:
             self.namegen = self.uuidname
         else:
@@ -68,10 +70,35 @@ class SaveAsNode(node.Node):
         newimg.maskfile = names[1]
         _logger.debug('saving %s as %s', img, newimg)
         return img, newimg
+    
+class CopyMask(node.Node):
+    
+    def uuidname(self, _img):
+        import uuid
+        d = uuid.uuid4().hex
+        m = uuid.uuid4().hex
+        return (d, m)
+    
+    def __init__(self, namegen=None):
+        super(CopyMask, self).__init__(ninputs=1, noutputs=2)
+        if namegen is None:
+            self.namegen = self.uuidname
+        else:
+            self.namegen = namegen
+    
+    def _run(self, img):
+        names = self.namegen(img)
+        
+        img.hdulist[1].writeto(names, output_verify='ignore', clobber=True)
+        newimg = image.Image(datafile=names)
+        newimg.region = img.region
+        newimg.label = img.label
+        _logger.debug('saving %s as %s', img, newimg)
+        return img, newimg
 
-class CloseNode(node.Node):
+class CloseImage(node.Node):
     def __init__(self, output_verify='exception'):
-        super(CloseNode, self).__init__()
+        super(CloseImage, self).__init__()
         self.output_verify = output_verify
 
     def _run(self, ri):
@@ -95,7 +122,7 @@ class ResizeNode(node.Corrector):
   
     def _run(self, img):
         newdata = numpy.zeros(self.finals, dtype=img.data.dtype)
-        region, ign_ = subarray_match(self.finals, img.noffset, img.data.shape)
+        region, _ign = subarray_match(self.finals, img.noffset, img.data.shape)
         
         newdata[region] = img.data
         img.region = region
@@ -160,8 +187,45 @@ class FlatFieldCorrector(node.Corrector):
         return img
 
 def compute_median(img):
-    valid_data = img.data[img.region]
-    valid_mask = img.mask[img.region]
-    value = numpy.median(valid_data)
+    d = img.data[img.region]
+    m = img.mask[img.region]
+    value = numpy.median(d[m == 0])
     _logger.debug('median value of %s is %f', img, value)
     return value, img
+
+
+class SextractorObjectMask(node.Node):
+    def __init__(self, namegen):
+        super(SextractorObjectMask, self).__init__()
+        self.namegen = namegen
+        
+    def _run(self, array):
+        import tempfile
+        import subprocess
+        import os.path
+    
+        checkimage = self.namegen(None)
+    
+        # A temporary file used to store the array in fits format
+        tf = tempfile.NamedTemporaryFile(prefix='emir_', dir='.')
+        pyfits.writeto(filename=tf, data=array)
+        
+        # Run sextractor, it will create a image called check.fits
+        # With the segmentation mask inside
+        sub = subprocess.Popen(["sex",
+                                "-CHECKIMAGE_TYPE", "SEGMENTATION",
+                                "-CHECKIMAGE_NAME", checkimage,
+                                '-VERBOSE_TYPE', 'QUIET',
+                                tf.name],
+                                stdout=subprocess.PIPE)
+        sub.communicate()
+    
+        segfile = os.path.join('.', checkimage)
+    
+        # Read the segmentation image
+        result = pyfits.getdata(segfile)
+    
+        # Close the tempfile
+        tf.close()    
+    
+        return result

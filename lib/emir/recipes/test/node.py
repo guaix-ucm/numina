@@ -5,9 +5,19 @@ import time
 _logger = logging.getLogger('numina.node')
 
 class Node(object):
-    def __init__(self):
+    def __init__(self, ninputs=1, noutputs=1):
         super(Node, self).__init__()
-        
+        self._nin = ninputs
+        self._nout = noutputs
+    
+    @property
+    def ninputs(self):
+        return self._nin
+    
+    @property
+    def noutputs(self):
+        return self._nout       
+    
     def _run(self, img):
         raise NotImplementedError
     
@@ -15,9 +25,9 @@ class Node(object):
         return self._run(img)
 
 class AdaptorNode(Node):
-    def __init__(self, work):
+    def __init__(self, work, ninputs=1, noutputs=1):
         '''work is a function object'''
-        super(AdaptorNode, self).__init__()
+        super(AdaptorNode, self).__init__(ninputs, noutputs)
         self.work = work
 
     def _run(self, img):
@@ -32,11 +42,13 @@ class IdNode(Node):
         return img
 
 class OutputSelector(Node):
-    def __init__(self, indexes):
-        super(OutputSelector, self).__init__()
+    def __init__(self, ninputs, indexes):
+        noutputs = len(indexes) 
+        super(OutputSelector, self).__init__(ninputs, noutputs)
         self.indexes = indexes
 
     def _run(self, arg):
+#        print arg
         res = tuple(ar for idx, ar in enumerate(arg) if idx in self.indexes)
         if len(res) == 1:
             return res[0]
