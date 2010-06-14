@@ -66,14 +66,12 @@ class MaskMerging(Node):
         self.namegen = namegen
         
     def _run(self, img):
-        newdata = (img.mask != 0) | (self.objmask != 0)
+        newdata = (img.data != 0) | (self.objmask != 0)
         newdata = newdata.astype('int')
         newfile = self.namegen(img)
         pyfits.writeto(newfile, newdata, output_verify='silentfix', clobber=True)
-        _logger.info('Mask %s merged with object mask into %s', img.maskfile, newfile)
+        _logger.info('Mask %s merged with object mask into %s', img.datafile, newfile)
         return img
-
-
 
 def combine_shape(shapes, offsets):
     # Computing final image size and new offsets
@@ -92,6 +90,14 @@ def compute_sky_simple(img):
     median_sky = numpy.median(d[m == 0])
     _logger.debug('median sky value is %f', median_sky)
     return median_sky, img
+
+def compute_sky_simple2(imgs):
+    img, omask = imgs
+    d = img.data[img.region]
+    m = omask.data[img.region]
+    median_sky = numpy.median(d[m == 0])
+    _logger.debug('median sky value is %f', median_sky)
+    return median_sky, img, omask
 
 
 if __name__ == '__main__':
@@ -246,11 +252,13 @@ if __name__ == '__main__':
     # Operation to create an intermediate sky flat
         
     result = map(OpenImage(), imagesl[2])
-    _logger.info("Iter %d, SF: combining the images without offsets", iteration)
+    try:
+        _logger.info("Iter %d, SF: combining the images without offsets", iteration)
     
     
-    sf_data = image.combine('median', result, scales=scales)
-    map(CloseImage(), result)
+        sf_data = image.combine('median', result, scales=scales)
+    finally:
+        map(CloseImage(), result)
     
     # Zero masks
     # TODO Do a better fix here
@@ -260,9 +268,6 @@ if __name__ == '__main__':
     
     # We are saving here only data part
     pyfits.writeto('emir_sf.iter.%02d.fits' % iteration, sf_data[0], clobber=True)
-    
-    map(CloseImage(), result)
-    #sys.exit(0)
     
     # Step 3, apply superflat
     _logger.info("Iter %d, SF: apply superflat", iteration)
@@ -287,51 +292,47 @@ if __name__ == '__main__':
     
     # Compute simple sky
     # Actions:
-    flow = SerialFlow([OpenImage(mode='readonly'),
-                       AdaptorNode(compute_sky_simple, noutputs=2),
+    flow = SerialFlow([ParallelFlow([
+                                     OpenImage(mode='readonly'),
+                                     OpenImage(mode='readonly')]),
+                       AdaptorNode(compute_sky_simple2, ninputs=2, noutputs=3),
                        ParallelFlow([IdNode(),
+                                     CloseImage(),
                                      CloseImage()
                                     ]),
-                       OutputSelector(2, (0,))
+                       OutputSelector(3, (0,))
                     ]
     )
     
+    skyback = map(flow, zip(imagesl[3], omasksl[-1]))
     
-    
-    skyback = map(flow, imagesl[3])
-    sys.exit(0)
     result = map(OpenImage(), imagesl[3])
-    _logger.info("Iter %d, Combining the images", iteration)
+    try:
+        _logger.info("Iter %d, Combining the images", iteration)
     
-    # Write a node for this
-    extinc = [pow(10, 0.4 * 1.2 * 0.01)  for i in result]
-    sf_data = image.combine2('median', result, zeros=skyback, scales=extinc, dtype='float32')
+        # Write a node for this
+        extinc = [pow(10, 0.4 * 1.2 * 0.01)  for i in result]
+        sf_data = image.combine2('median', result, zeros=skyback, scales=extinc, dtype='float32')
     
-    # We are saving here only data part
-    pyfits.writeto('result.%02d.fits' % iteration, sf_data[0], clobber=True)
-    
-    map(CloseImage(), result)
+        # We are saving here only data part
+        pyfits.writeto('result.%02d.fits' % iteration, sf_data[0], clobber=True)
+    finally:
+        map(CloseImage(), result)
     
     _logger.info('Iter %d, generating objects mask', iteration)
     sex_om = SextractorObjectMask(segmask_naming(iteration))
-    
-    
-    print sf_data[0].shape
-    print sf_data[0]
     
     obj_mask = sex_om(sf_data[0])
     
     _logger.info('Iter %d, merging object mask with masks', iteration)
     #map(lambda f: mask_merging(f, obj_mask, itern), self.images)
     # We need to store this result
-    dflow = SerialFlow([OpenImage(mode='readonly'),
+    flow = SerialFlow([OpenImage(mode='readonly'),
                         MaskMerging(obj_mask, omask_naming(iteration)),
                         CloseImage()
                         ])
     
-    procd['mmerge'] = dflow
-    
-    result = map(procd['mmerge'], imagesl[3])
+    result = map(flow, omasksl[-1])
     
     _logger.info('Iter %d, finished', iteration)
     

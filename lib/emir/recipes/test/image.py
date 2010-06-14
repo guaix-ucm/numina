@@ -99,5 +99,10 @@ def combine(mode, images, *args, **kwds):
     superflat = median(data, masks, *args, **kwds)
     return superflat
 
+def combine2(mode, images, *args, **kwds):
+    data = [i.data for i in images]
+    masks = [i.mask for i in images]
+    superflat = median(data, masks, *args, **kwds)
+    return superflat
 
 
