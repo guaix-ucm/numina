@@ -66,7 +66,7 @@ class SaveAsNode(node.Node):
         img.hdulist[0].writeto(names[0], output_verify='ignore', clobber=True)
         img.hdulist[1].writeto(names[1], output_verify='ignore', clobber=True)
         newimg = copy.copy(img)
-        newimg.datafile = names[0]
+        newimg.filename = names[0]
         newimg.maskfile = names[1]
         _logger.debug('saving %s as %s', img, newimg)
         return img, newimg
@@ -112,7 +112,7 @@ class BackupNode(node.Node):
 
     def _run(self, ri):
         _logger.debug('backup %s', ri)
-        version_file(ri.datafile)
+        version_file(ri.filename)
         return ri
 
 class ResizeNode(node.Corrector):
@@ -121,16 +121,16 @@ class ResizeNode(node.Corrector):
         self.finals = finalshape
   
     def _run(self, img):
-        newdata = numpy.zeros(self.finals, dtype=img.data.dtype)
-        region, _ign = subarray_match(self.finals, img.noffset, img.data.shape)
+        newdata = numpy.zeros(self.finals, dtype=_imgs.data.dtype)
+        region, _ign = subarray_match(self.finals, img.noffset, _imgs.data.shape)
         
         newdata[region] = img.data
         img.region = region
         img.data = newdata
         
-        newmask = numpy.zeros(self.finals, dtype=img.data.dtype)
-        newmask[region] = img.mask
-        img.mask = newmask
+        newmask = numpy.zeros(self.finals, dtype=_imgs.data.dtype)
+        newmask[region] = img._masks
+        img._masks = newmask
         
         return img
 
@@ -142,7 +142,7 @@ class BiasCorrector(node.Corrector):
     def _run(self, img):
         _logger.debug('correcting bias in %s', img)
         img.data -= self.biasmap
-        img.data = img.data.astype(self.dtype)
+        img.data = _imgs.data.astype(self.dtype)
         self.mark_as_processed(img)
         return img
 
@@ -154,7 +154,7 @@ class DarkCorrector(node.Corrector):
     def _run(self, img):
         _logger.debug('correcting dark in %s', img)
         img.data -= self.darkmap
-        img.data = img.data.astype(self.dtype)
+        img.data = _imgs.data.astype(self.dtype)
         self.mark_as_processed(img)
         return img
 
@@ -166,7 +166,7 @@ class NonLinearityCorrector(node.Corrector):
     def _run(self, img):
         _logger.debug('correcting non linearity in %s', img)
         img.data = numpy.polyval(self.polynomial, img.data)
-        img.data = img.data.astype(self.dtype)
+        img.data = _imgs.data.astype(self.dtype)
         self.mark_as_processed(img)
         return img
         
@@ -182,13 +182,13 @@ class FlatFieldCorrector(node.Corrector):
             img.data[img.region] /= self.flatdata
         else:
             img.data /= self.flatdata
-        img.data = img.data.astype(self.dtype)
+        img.data = _imgs.data.astype(self.dtype)
         self.mark_as_processed(img)
         return img
 
-def compute_median(img):
-    d = img.data[img.region]
-    m = img.mask[img.region]
+def compute_median(img, mask, region):
+    d = img.data[region]
+    m = mask.data[region]
     value = numpy.median(d[m == 0])
     _logger.debug('median value of %s is %f', img, value)
     return value, img
@@ -206,12 +206,12 @@ class SextractorObjectMask(node.Node):
     
         checkimage = self.namegen(None)
     
-        # A temporary file used to store the array in fits format
+        # A temporary filename used to store the array in fits format
         tf = tempfile.NamedTemporaryFile(prefix='emir_', dir='.')
         pyfits.writeto(filename=tf, data=array)
         
         # Run sextractor, it will create a image called check.fits
-        # With the segmentation mask inside
+        # With the segmentation _masks inside
         sub = subprocess.Popen(["sex",
                                 "-CHECKIMAGE_TYPE", "SEGMENTATION",
                                 "-CHECKIMAGE_NAME", checkimage,
