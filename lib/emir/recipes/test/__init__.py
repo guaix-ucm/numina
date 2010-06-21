@@ -1,3 +1,21 @@
+#
+# Copyright 2008-2010 Sergio Pascual
+# 
+# This file is part of PyEmir
+# 
+# PyEmir is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# PyEmir is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 import logging
 import time 
@@ -28,32 +46,49 @@ _logger.setLevel(logging.DEBUG)
 _logger = logging.getLogger("numina")
 _logger.setLevel(logging.DEBUG)
     
-def name_redimensioned_images(label, ext='.fits'):
-    dn = 'emir_%s_base%s' % (label, ext)
-    mn = 'emir_%s_mask%s' % (label, ext)
+def name_redimensioned_images(label, iteration, ext='.fits'):
+    dn = 'emir_%s_base_i%02d%s' % (label, iteration, ext)
+    mn = 'emir_%s_mask_i%02d%s' % (label, iteration, ext)
     return dn, mn
    
 def segmask_naming(iteration):
     def namer(img_):
-        return "emir_check%02d.fits" % iteration
+        return "emir_check_i%02d.fits" % iteration
         
     return namer
 
 def name_segmask(iteration):
-    return "emir_check%02d.fits" % iteration
+    return "emir_check_i%02d.fits" % iteration
 
 def name_skyflat(label, iteration, ext='.fits'):
-    dn = 'emir_%s_iter%02d%s' % (label, iteration, ext)
+    dn = 'emir_%s_f_i%02d%s' % (label, iteration, ext)
+    return dn
+
+def name_skysub(label, iteration, ext='.fits'):
+    dn = 'emir_%s_fs_i%02d%s' % (label, iteration, ext)
     return dn
 
 def name_object_mask(label, iteration, ext='.fits'):
-    return 'emir_%s_omask_iter%02d%s' % (label, iteration + 1, ext)
+    return 'emir_%s_omask_i%02d%s' % (label, iteration + 1, ext)
 
 def copy_img(img, dst):
     shutil.copy(img.filename, dst)
     newimg = copy.copy(img)
     newimg.filename = dst
     return newimg
+
+def compute_sky_advanced(data, omasks):
+    d = data[0]
+    m = omasks[0]
+    median_sky = numpy.median(d[m == 0])
+    result = numpy.zeros(data[0].shape)
+    result += median_sky
+    return result
+    #p = reduce(lambda x,y:x*y, omasks)
+    #huecos = numpy.any(p != 0)
+    
+    result = median(data, omasks)
+    return result[0]
 
 def compute_median_background(img, omask, region):
     d = img.data[region]
@@ -65,15 +100,16 @@ class WorkData(object):
     def __init__(self, img=None, mask=None, omask=None):
         super(WorkData, self).__init__()
         self._imgs = []
-        self.dum = []
         self._masks = []
         self._omasks = []
         self.local = {}
         
         if img is not None:
             self._imgs.append(img)
+            self.base = img
         if mask is not None:
             self._masks.append(mask)
+            self.mase = mask
         if omask is not None:
             self._omasks.append(omask)
 
@@ -104,8 +140,18 @@ class WorkData(object):
         img = self.omask
         newimg = copy_img(img, dst)
         self._omasks.append(newimg)
-        return newimg    
-
+        return newimg
+    
+    def append_img(self, newimg):
+        self._imgs.append(newimg)
+        
+    def append_mask(self, newimg):
+        self._masks.append(newimg)
+        
+    def append_omask(self, newimg):
+        self._omasks.append(newimg)        
+        
+    
 def f_flow1(od, flow):
     img = od._imgs[-1]
     img.open(mode='update')
@@ -115,58 +161,63 @@ def f_flow1(od, flow):
     finally:
         img.close(output_verify='fix')
         
-def f_resize_images(od, finalshape):
-    n, d = name_redimensioned_images(od.local['label'])
-    od.copy_img(n)
-    od.copy_mask(d)
-
+def f_resize_images(od, iteration, finalshape):
+    n, d = name_redimensioned_images(od.local['label'], iteration)
+    
+    newimg = copy_img(od.base, n)
+    newmsk = copy_img(od.mase, d)
+    
     shape = od.local['baseshape']
     region, _ign = subarray_match(finalshape, od.local['noffset'], shape)
+    
+    if od.local.has_key('region'):
+        assert od.local['region'] == region
+        
     od.local['region'] = region
     # Resize image
-    img = od.img
-    img.open(mode='update')
-    try:
-        img.data = resize_array(img.data, finalshape, region)
-        _logger.debug('%s resized', img)
-    finally:
-        _logger.debug('Closing %s', img)
-        img.close()
 
-    # Resize mask
-    mask = od.mask    
-    mask.open(mode='update')
+    newimg.open(mode='update')
     try:
-        mask.data = resize_array(mask.data, finalshape, region)
-        _logger.debug('%s resized', mask)
+        newimg.data = resize_array(newimg.data, finalshape, region)
+        _logger.debug('%s resized to %s', newimg, finalshape)
     finally:
-        mask.close()
-        _logger.debug('Closing %s', mask)
+        newimg.close()
+    
+    newmsk.open(mode='update')
+    try:
+        newmsk.data = resize_array(newmsk.data, finalshape, region)
+        _logger.debug('%s resized to %s', newmsk, finalshape)
+    finally:
+        newmsk.close()
+        
+    od.append_img(newimg)
+    od.append_mask(newmsk)
+    
     return od        
 
 def f_create_omasks(od):
-    mask = od.mask
     dst = name_object_mask(od.local['label'], iteration=-1)
-    shutil.copy(mask.filename, dst)
-    newimg = image.Image(filename=dst)
-    od._omasks.append(newimg)
+    newimg = copy_img(od.mask, dst)
+    od.append_omask(newimg)
 
 def f_flow4(od):
-    img = od.img
-    mask = od.mask
-    img.open(mode='readonly')
-    mask.open(mode='readonly')
     region = od.local['region']
+    
+    od.img.open(mode='readonly')
     try:
-        d = img.data[region]
-        m = mask.data[region]
-        value = numpy.median(d[m == 0])
-        _logger.debug('median value of %s is %f', img, value)
-        od.local['median_scale'] = value
-        return value        
+        od.mask.open(mode='readonly')        
+        try:
+            d = od.img.data[region]
+            m = od.mask.data[region]
+            value = numpy.median(d[m == 0])
+            _logger.debug('median value of %s is %f', od.img, value)
+            od.local['median_scale'] = value
+            return value        
+        finally:
+            od.mask.close()
     finally:
-        img.close()
-        mask.close()
+        od.img.close()
+        
 
 def f_flow5(od, iteration, sf_data):
 
@@ -182,24 +233,56 @@ def f_flow5(od, iteration, sf_data):
     
     return od
         
-def f_flow6(od):
-    img = od.img
-    img.open()
+def f_sky_removal_simple(od, iteration):
+    dst = name_skysub(od.local['label'], iteration)
+    od.copy_img(dst)
+    #
+    od.img.open(mode='update')
     try:
-        omask = od.omask
-        omask.open()
+        od.omask.open()
         try:
-            sky = compute_median_background(img, omask, od.local['region'])
+            sky = compute_median_background(od.img, od.omask, od.local['region'])
             _logger.debug('median sky value is %f', sky)
             od.local['median_sky'] = sky
-            return sky
+            
+            _logger.info('Iter %d, SC: subtracting sky', iteration)
+            region = od.local['region']
+            od.img.data[region] -= od.local['median_sky']
+            
+            return od
         finally:
-            omask.close()
+            od.omask.close()
     finally:
-        img.close()
+        od.img.close()
         
+def f_sky_removal_advanced(od, iteration):
+    dst = name_skysub(od.local['label'], iteration)
+    result = copy_img(od.img, dst)
+    #
+    result.open(mode='update')
+    try:
+        bw, fw = od.local['sky_related']
+        rep = bw + fw
+        data = [i.img.data[i.local['region']] for i in rep]
+        omasks = [i.omask.data[i.local['region']] for i in rep]
+        sky_b = compute_sky_advanced(data, omasks)
+        
+        _logger.info('Iter %d, SC: saving sky', iteration)
+        filename = 'emir_%s_skyb_i%02d.fits' % (od.local['label'], iteration)
+        pyfits.writeto(filename, sky_b, clobber=True)
+        
+        _logger.info('Iter %d, SC: subtracting sky', iteration)
+        region = od.local['region']
+        result.data[region] -= sky_b
+        
+        od.local['skysub'] = result
+        
+        return od
+    finally:
+        result.close()
+
 def f_merge_mask(od, obj_mask, iteration):
-    '''Merge bad pixel _masks with object _masks'''
+    '''Merge bad pixel masks with object masks'''
     dst = name_object_mask(od.local['label'], iteration)
     od.copy_omask(dst)
     #
@@ -231,9 +314,7 @@ def run(pv, nthreads=4, niteration=4):
         od.local['offset'] = pv['inputs']['images'][i][1]
         
         odl.append(od)
-    
-    offsets = [od.local['offset'] for od in odl]
-    
+            
     image_shapes = []
     
     for od in odl:
@@ -249,14 +330,7 @@ def run(pv, nthreads=4, niteration=4):
         finally:
             _logger.debug("closing image %s", img.filename)
             img.close()
-    
-    
-    
-    finalshape, offsetsp = combine_shape(image_shapes, offsets)
-    
-    for od, off in zip(odl, offsetsp):
-        od.local['noffset'] = off
-    
+        
     # Initialize processing nodes, step 1
     dark_data = pyfits.getdata(pv['inputs']['master_dark'])    
     flat_data = pyfits.getdata(pv['inputs']['master_flat'])
@@ -269,13 +343,28 @@ def run(pv, nthreads=4, niteration=4):
     
     _logger.info('Basic processing')    
     para_map(lambda x : f_flow1(x, sss), odl, nthreads=nthreads)
-
-    para_map(lambda x: f_resize_images(x, finalshape), odl, nthreads=nthreads)
     
-    para_map(f_create_omasks, odl, nthreads=nthreads)
+    obj_mask = None
     
-            
-    for iteration in range(0, niteration):
+    for iteration in range(1, niteration + 1):
+        
+        _logger.info('Iter %d, computing offsets', iteration)
+        
+        offsets = [od.local['offset'] for od in odl]
+        finalshape, offsetsp = combine_shape(image_shapes, offsets)
+    
+        for od, off in zip(odl, offsetsp):
+            od.local['noffset'] = off
+        
+        _logger.info('Iter %d, resizing images and mask', iteration)
+        para_map(lambda x: f_resize_images(x, iteration, finalshape), odl, nthreads=nthreads)
+    
+        _logger.info('Iter %d, initialize object masks', iteration)
+        para_map(f_create_omasks, odl, nthreads=nthreads)
+        
+        if obj_mask is not None:
+            _logger.info('Iter %d, merging object masks with masks', iteration)
+            para_map(lambda x: f_merge_mask(x, obj_mask, iteration), odl, nthreads=nthreads)
         
         _logger.info('Iter %d, superflat correction (SF)', iteration)
         _logger.info('Iter %d, SF: computing scale factors', iteration)
@@ -295,7 +384,7 @@ def run(pv, nthreads=4, niteration=4):
     
         # We are saving here only data part
         # FIXME, this should be done better
-        pyfits.writeto('emir_sf.iter.%02d.fits' % iteration, sf_data[0], clobber=True)
+        pyfits.writeto('emir_sf_i%02d.fits' % iteration, sf_data[0], clobber=True)
     
         # Step 3, apply superflat
         _logger.info("Iter %d, SF: apply superflat", iteration)
@@ -303,75 +392,77 @@ def run(pv, nthreads=4, niteration=4):
         para_map(lambda x: f_flow5(x, iteration, sf_data), odl, nthreads=nthreads)
         
         # Compute sky backgrounf correction
-        _logger.info('Iter %d, sky correction (SC)', iteration)    
-        _logger.info('Iter %d, SC: computing simple sky', iteration)
-        import pickle
-        f = open('odl.pkl', 'wb')
-        try:
-            pickle.dump(odl, f)
-        finally:
-            f.close()
+        _logger.info('Iter %d, sky correction (SC)', iteration)
         
+        if iteration == 0:
+            _logger.info('Iter %d, SC: computing simple sky', iteration)
         
-        
-        
-        skyback = para_map(f_flow6, odl, nthreads=nthreads)
-
+            para_map(lambda x: f_sky_removal_simple(x, iteration), odl, nthreads=nthreads)
+                            
+        else:
+            _logger.info('Iter %d, SC: computing advanced sky', iteration)
+            
+            nimages = 5
+            
+            _logger.info('Iter %d, SC: relating images with their sky backgrounds', iteration)
+            odl = related(odl, nimages)
+                        
+            try:
+                map(lambda x: x.img.open(mode='readonly', memmap=True), odl)
+                map(lambda x: x.omask.open(mode='readonly', memmap=True), odl)
+                for od in odl:
+                    f_sky_removal_advanced(od, iteration)
+            finally:
+                map(lambda x: x.img.close(), odl)
+                map(lambda x: x.omask.close(), odl)
+                
+            # We update img list now
+            # after the sky background is computed for every image
+            for od in odl:
+                od.append_img(od.local['skysub'])    
+            
         imgslll = [od.img for od in odl]
         mskslll = [od.mask for od in odl]
                 
         try:
-            map(lambda x: x.open(), imgslll)
-            map(lambda x: x.open(), mskslll)
+            map(lambda x: x.open(mode='readonly', memmap=True), imgslll)
+            map(lambda x: x.open(mode='readonly', memmap=True), mskslll)
             _logger.info("Iter %d, Combining the images", iteration)
-    
-            # Write a node for this
-            airmasses = [od.local['airmass'] for od in odl]
-            extinc = [pow(10, 0.4 * am * extinction)  for am in airmasses]
+
+            extinc = [pow(10, 0.4 * od.local['airmass'] * extinction) for od in odl]
             data = [i.data for i in imgslll]
             masks = [i.data for i in mskslll]
-            sf_data = median(data, masks, zeros=skyback, scales=extinc, dtype='float32')
-    
+            sf_data = median(data, masks, scales=extinc, dtype='float32')
+
             # We are saving here only data part
-            pyfits.writeto('emir_result.%02d.fits' % iteration, sf_data[0], clobber=True)
+            pyfits.writeto('emir_result_i%02d.fits' % iteration, sf_data[0], clobber=True)
         finally:
             map(lambda x: x.close(), imgslll)
             map(lambda x: x.close(), mskslll)
+
             
-        _logger.info('Iter %d, generating objects _masks', iteration)
+        _logger.info('Iter %d, generating objects masks', iteration)
         sex_om = SextractorObjectMask(segmask_naming(iteration))
     
         obj_mask = sex_om(sf_data[0])
     
-        _logger.info('Iter %d, merging object _masks with masks', iteration)
-    
-        para_map(lambda x: f_merge_mask(x, obj_mask, iteration), odl, nthreads=nthreads)
-        
         _logger.info('Iter %d, finished', iteration)
 
-def run2(pv, nthreads=4, niteration=4):
-    import pickle
+def print_related(od):
+    bw, fw = od.local['sky_related']
+    print od.local['label'],':',
+    for b in bw:
+        print b.local['label'],
+    print '|',
+    for f in fw:
+        print f.local['label'],
+    print
 
-    f = open('odl.pkl', 'rb')
-    try:
-        odl = pickle.load(f)
-    finally:
-        f.close()
-        
-    odl.sort(key=lambda odl: odl.local['label'])
-    nox = 5
-
-    def print_related(od):
-        bw, fw = od.local['sky_related']
-        print od.local['label'],':',
-        for b in bw:
-                print b.local['label'],
-        print '|',
-        for f in fw:
-                print f.local['label'],
-        print
-
+def related(odl, nimages=5):
     
+    odl.sort(key=lambda odl: odl.local['label'])
+    nox = nimages
+
     for idx, od in enumerate(odl[0:nox]):
         bw = odl[0:2 * nox + 1][0:idx]
         fw = odl[0:2 * nox + 1][idx + 1:]
@@ -388,19 +479,8 @@ def run2(pv, nthreads=4, niteration=4):
         bw = odl[-2 * nox - 1:][0:idx + nox + 1]
         fw = odl[-2 * nox - 1:][nox + idx + 2:]
         od.local['sky_related'] = (bw, fw)
-        #print_related(od)
     
-    # _logger.info('Opening sky files')
-    try:
-        map(lambda x: x.img.open(mode='readonly', memmap=True), odl)
-        map(lambda x: x.mask.open(mode='readonly', memmap=True), odl)
-        for od in odl:
-            bw, fw = od.local['sky_related']
-            print_related(od)
-    finally:
-        map(lambda x: x.img.close(), odl)
-        map(lambda x: x.mask.close(), odl)
-
+    return odl
 
 if __name__ == '__main__':
     import os.path
@@ -464,4 +544,4 @@ if __name__ == '__main__':
         o_ = -y, -x
         pv['inputs']['images'][k] = (m_, o_, s_)
 
-    run2(pv, nthreads=1, niteration=2)
+    run(pv, nthreads=1, niteration=4)
