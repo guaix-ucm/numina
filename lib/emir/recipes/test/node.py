@@ -54,7 +54,6 @@ class OutputSelector(Node):
             return res[0]
         return res
 
-
 class Corrector(Node):
     def __init__(self, label=None, mark=True, dtype='float32'):
         super(Corrector, self).__init__()

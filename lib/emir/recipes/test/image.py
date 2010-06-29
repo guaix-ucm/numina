@@ -1,5 +1,8 @@
 
+import numpy
 import pyfits
+import shutil
+import copy
 
 class Image(object):
     def __init__(self, filename):
@@ -38,3 +41,21 @@ class Image(object):
     def __getstate__(self):
         return dict(data=None, meta=None, filename=self.filename,
                     _open=False, hdulist=None)
+        
+    def copy(self, dst):
+        shutil.copy(self.filename, dst)
+        newimg = copy.copy(self)
+        newimg.filename = dst
+        return newimg
+
+def copy_img(img, dst):
+    shutil.copy(img.filename, dst)
+    newimg = copy.copy(img)
+    newimg.filename = dst
+    return newimg
+
+def compute_median(img, mask, region):
+    d = img.data[region]
+    m = mask.data[region]
+    value = numpy.median(d[m == 0])
+    return value, img
