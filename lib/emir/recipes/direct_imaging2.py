@@ -92,35 +92,25 @@ process starts:
 '''
 
 import logging
-import time 
-import sys
 import os
-import warnings
-import shutil
-import copy
 
 import numpy
 import pyfits
 
-import registry
-import image
-from flow import SerialFlow
-from processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
+import numina.recipes.registry as registry
+import numina.image
+from numina.image.flow import SerialFlow
+from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 #from processing import compute_median
 from numina.logger import captureWarnings
 from numina.array.combine import median
 from numina.array import subarray_match
-from worker import para_map
-from array import combine_shape, resize_array, flatcombine, correct_flatfield
-from array import compute_median_background, compute_sky_advanced, create_object_mask
+from numina.worker import para_map
+from numina.array import combine_shape, resize_array, flatcombine, correct_flatfield
+from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 import numina.recipes as nr
-#from numina.exceptions import RecipeError
-#from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
-from numina.image.processing import generic_processing
-#from numina.array.combine import median
+import numina.qa
 from emir.instrument.headers import EmirImageCreator
-import numina.qa as QA
-from numina.exceptions import RecipeError
 
 logging.basicConfig(level=logging.INFO)
 
@@ -129,283 +119,78 @@ _logger.setLevel(logging.DEBUG)
 _logger = logging.getLogger("numina")
 _logger.setLevel(logging.DEBUG)
 
-
 _logger = logging.getLogger("emir.recipes")
 
-class WorkData(object):
-    '''The data processed during the run of the recipe.
+class Result(nr.RecipeResult):
+    '''Result of the imaging mode recipe.'''
+    def __init__(self, qa, result):
+        super(Result, self).__init__(qa)
+        self.products['result'] = result
+
+class Recipe(nr.RecipeBase):
     
-    Each instance contains the science image, its mask
-    and the object mask produced during the processing.
-    
-    The local member contains data local to each particular image
-     '''
-    def __init__(self, img=None, mask=None, omask=None):
-        super(WorkData, self).__init__()
-        self._imgs = []
-        self._masks = []
-        self._omasks = []
-        self.local = {}
+    class WorkData(object):
+        '''The data processed during the run of the recipe.
         
-        if img is not None:
-            self._imgs.append(img)
-            self.base = img
-        if mask is not None:
-            self._masks.append(mask)
-            self.mase = mask
-        if omask is not None:
-            self._omasks.append(omask)
-
-    @property
-    def img(self):
-        return self._imgs[-1]
-    
-    @property
-    def mask(self):
-        return self._masks[-1]
-    
-    @property
-    def omask(self):
-        return self._omasks[-1]    
-    
-    def copy_img(self, dst):
-        newimg = self.img.copy(dst)
-        self._imgs.append(newimg)
-        return newimg
-    
-    def copy_mask(self, dst):
-        img = self.mask
-        newimg = img.copy(dst)
-        self._masks.append(newimg)
-        return newimg
-    
-    def copy_omask(self, dst):
-        img = self.omask
-        newimg = img.copy(dst)
-        self._omasks.append(newimg)
-        return newimg
-    
-    def append_img(self, newimg):
-        self._imgs.append(newimg)
+        Each instance contains the science image, its mask
+        and the object mask produced during the processing.
         
-    def append_mask(self, newimg):
-        self._masks.append(newimg)
-        
-    def append_omask(self, newimg):
-        self._omasks.append(newimg)        
-
-def print_related(od):
-    bw, fw = od.local['sky_related']
-    print od.local['label'],':',
-    for b in bw:
-        print b.local['label'],
-    print '|',
-    for f in fw:
-        print f.local['label'],
-    print
-
-def related(odl, nimages=5):
-    
-    odl.sort(key=lambda odl: odl.local['label'])
-    nox = nimages
-
-    for idx, od in enumerate(odl[0:nox]):
-        bw = odl[0:2 * nox + 1][0:idx]
-        fw = odl[0:2 * nox + 1][idx + 1:]
-        od.local['sky_related'] = (bw, fw)
-        #print_related(od)
-
-    for idx, od in enumerate(odl[nox:-nox]):
-        bw = odl[idx:idx + nox]
-        fw = odl[idx + nox + 1:idx + 2 * nox + 1]
-        od.local['sky_related'] = (bw, fw)
-        #print_related(od)
- 
-    for idx, od in enumerate(odl[-nox:]):
-        bw = odl[-2 * nox - 1:][0:idx + nox + 1]
-        fw = odl[-2 * nox - 1:][nox + idx + 2:]
-        od.local['sky_related'] = (bw, fw)
-    
-    return odl
-
-# Different intermediate images are created during the run of the recipe
-# These functions are used to give them a meaningful name
-# If a name with meaning is not required, the function name_uuidname
-# can be used
-
-def name_redimensioned_images(label, iteration, ext='.fits'):
-    dn = 'emir_%s_base_i%02d%s' % (label, iteration, ext)
-    mn = 'emir_%s_mask_i%02d%s' % (label, iteration, ext)
-    return dn, mn
-
-def name_segmask(iteration):
-    return "emir_check_i%02d.fits" % iteration
-
-def name_skyflat(label, iteration, ext='.fits'):
-    dn = 'emir_%s_f_i%02d%s' % (label, iteration, ext)
-    return dn
-
-def name_skysub(label, iteration, ext='.fits'):
-    dn = 'emir_%s_fs_i%02d%s' % (label, iteration, ext)
-    return dn
-
-def name_object_mask(label, iteration, ext='.fits'):
-    return 'emir_%s_omask_i%02d%s' % (label, iteration + 1, ext)
-
-def name_uuidname():
-    import uuid
-    return uuid.uuid4().hex
-
-# Flows, these functions are run inside para_map, so
-# they can be run in parallel
-
-def f_basic_processing(od, flow):
-    img = od.img
-    img.open(mode='update')
-    try:
-        img = flow(img)
-        return od        
-    finally:
-        img.close(output_verify='fix')
-        
-def f_resize_images(od, iteration, finalshape):
-    n, d = name_redimensioned_images(od.local['label'], iteration)
-    
-    newimg = od.base.copy(n)
-    newmsk = od.mase.copy(d)
-    
-    shape = od.local['baseshape']
-    region, _ign = subarray_match(finalshape, od.local['noffset'], shape)
-    
-    if od.local.has_key('region'):
-        assert od.local['region'] == region
-        
-    od.local['region'] = region
-    # Resize image
-
-    newimg.open(mode='update')
-    try:
-        newimg.data = resize_array(newimg.data, finalshape, region)
-        _logger.debug('%s resized to %s', newimg, finalshape)
-    finally:
-        newimg.close()
-    
-    newmsk.open(mode='update')
-    try:
-        newmsk.data = resize_array(newmsk.data, finalshape, region)
-        _logger.debug('%s resized to %s', newmsk, finalshape)
-    finally:
-        newmsk.close()
-        
-    od.append_img(newimg)
-    od.append_mask(newmsk)
-    
-    return od        
-
-def f_create_omasks(od):
-    dst = name_object_mask(od.local['label'], iteration=-1)
-    newimg = od.mask.copy(dst)
-    od.append_omask(newimg)
-
-def f_flow4(od):
-    region = od.local['region']
-    
-    od.img.open(mode='readonly')
-    try:
-        od.mask.open(mode='readonly')        
-        try:
-            d = od.img.data[region]
-            m = od.mask.data[region]
-            value = numpy.median(d[m == 0])
-            _logger.debug('median value of %s is %f', od.img, value)
-            od.local['median_scale'] = value
-            return od        
-        finally:
-            od.mask.close()
-    finally:
-        od.img.close()
-        
-
-def f_sky_flatfielding(od, iteration, sf_data):
-
-    dst = name_skyflat(od.local['label'], iteration)
-    od.copy_img(dst)
-    img = od.img
-    region = od.local['region']
-    img.open(mode='update')
-    try:
-        img.data[region] = correct_flatfield(img.data[region], sf_data[0])
-    finally:
-        img.close()
-    
-    return od
-        
-def f_sky_removal_simple(od, iteration):
-    dst = name_skysub(od.local['label'], iteration)
-    od.copy_img(dst)
-    #
-    od.img.open(mode='update')
-    try:
-        od.omask.open()
-        try:
-            sky = compute_median_background(od.img, od.omask, od.local['region'])
-            _logger.debug('median sky value is %f', sky)
-            od.local['median_sky'] = sky
+        The local member contains data local to each particular image
+         '''
+        def __init__(self, img=None, mask=None, omask=None):
+            super(Recipe.WorkData, self).__init__()
+            self._imgs = []
+            self._masks = []
+            self._omasks = []
+            self.local = {}
             
-            _logger.info('Iter %d, SC: subtracting sky', iteration)
-            region = od.local['region']
-            od.img.data[region] -= od.local['median_sky']
+            if img is not None:
+                self._imgs.append(img)
+                self.base = img
+            if mask is not None:
+                self._masks.append(mask)
+                self.mase = mask
+            if omask is not None:
+                self._omasks.append(omask)
+    
+        @property
+        def img(self):
+            return self._imgs[-1]
+        
+        @property
+        def mask(self):
+            return self._masks[-1]
+        
+        @property
+        def omask(self):
+            return self._omasks[-1]    
+        
+        def copy_img(self, dst):
+            newimg = self.img.copy(dst)
+            self._imgs.append(newimg)
+            return newimg
+        
+        def copy_mask(self, dst):
+            img = self.mask
+            newimg = img.copy(dst)
+            self._masks.append(newimg)
+            return newimg
+        
+        def copy_omask(self, dst):
+            img = self.omask
+            newimg = img.copy(dst)
+            self._omasks.append(newimg)
+            return newimg
+        
+        def append_img(self, newimg):
+            self._imgs.append(newimg)
             
-            return od
-        finally:
-            od.omask.close()
-    finally:
-        od.img.close()
-        
-def f_sky_removal_advanced(od, iteration):
-    dst = name_skysub(od.local['label'], iteration)
-    result = od.img.copy(dst)
-    #
-    result.open(mode='update')
-    try:
-        bw, fw = od.local['sky_related']
-        rep = bw + fw
-        data = [i.img.data[i.local['region']] for i in rep]
-        omasks = [i.omask.data[i.local['region']] for i in rep]
-        sky_b = compute_sky_advanced(data, omasks)
-        
-        _logger.info('Iter %d, SC: saving sky', iteration)
-        filename = 'emir_%s_skyb_i%02d.fits' % (od.local['label'], iteration)
-        pyfits.writeto(filename, sky_b, clobber=True)
-        
-        _logger.info('Iter %d, SC: subtracting sky', iteration)
-        region = od.local['region']
-        result.data[region] -= sky_b
-        
-        # We can't modify the current od.img until all
-        # the images are processed
-        od.local['skysub'] = result
-        
-        return od
-    finally:
-        result.close()
-
-def f_merge_mask(od, obj_mask, iteration):
-    '''Merge bad pixel masks with object masks'''
-    dst = name_object_mask(od.local['label'], iteration)
-    od.copy_omask(dst)
-    #
-    img = od.omask
-    img.open(mode='update')
-    try:
-        img.data = (img.data != 0) | (obj_mask != 0)
-        img.data = img.data.astype('int')
-        return od
-    finally:
-        img.close()
-                
-
-class Recipe(object):
+        def append_mask(self, newimg):
+            self._masks.append(newimg)
+            
+        def append_omask(self, newimg):
+            self._omasks.append(newimg)        
+    
     param = ['master_dark',
         'master_bpm',
         'master_dark',
@@ -414,26 +199,257 @@ class Recipe(object):
         'extinction',
         'nthreads',
         'images',
+        'niteration'
     ]
     def __init__(self):
         self.values = {}
-        for p in self.param:
-            self.values[p] = registry.lookup('1', p)
+        for name in self.param:
+            self.values[name] = registry.lookup('1', name)
+        self.repeat = 1
 
+    def setup(self, *args):
+        pass
+
+
+    # Different intermediate images are created during the run of the recipe
+    # These functions are used to give them a meaningful name
+    # If a name with meaning is not required, the function name_uuidname
+    # can be used
+    
+    @staticmethod
+    def name_redimensioned_images(label, iteration, ext='.fits'):
+        dn = 'emir_%s_base_i%02d%s' % (label, iteration, ext)
+        mn = 'emir_%s_mask_i%02d%s' % (label, iteration, ext)
+        return dn, mn
+    
+    @staticmethod
+    def name_segmask(iteration):
+        return "emir_check_i%02d.fits" % iteration
+
+    @staticmethod    
+    def name_skyflat(label, iteration, ext='.fits'):
+        dn = 'emir_%s_f_i%02d%s' % (label, iteration, ext)
+        return dn
+
+    @staticmethod    
+    def name_skysub(label, iteration, ext='.fits'):
+        dn = 'emir_%s_fs_i%02d%s' % (label, iteration, ext)
+        return dn
+    
+    @staticmethod    
+    def name_object_mask(label, iteration, ext='.fits'):
+        return 'emir_%s_omask_i%02d%s' % (label, iteration + 1, ext)
+    
+    @staticmethod    
+    def name_uuidname():
+        import uuid
+        return uuid.uuid4().hex
+
+# Flows, these functions are run inside para_map, so
+# they can be run in parallel
+    
+    @staticmethod
+    def f_basic_processing(od, flow):
+        img = od.img
+        img.open(mode='update')
+        try:
+            img = flow(img)
+            return od        
+        finally:
+            img.close(output_verify='fix')
+            
+    @staticmethod            
+    def f_resize_images(od, iteration, finalshape):
+        n, d = Recipe.name_redimensioned_images(od.local['label'], iteration)
+        
+        newimg = od.base.copy(n)
+        newmsk = od.mase.copy(d)
+        
+        shape = od.local['baseshape']
+        region, _ign = subarray_match(finalshape, od.local['noffset'], shape)
+        
+        if od.local.has_key('region'):
+            assert od.local['region'] == region
+            
+        od.local['region'] = region
+        # Resize image
+    
+        newimg.open(mode='update')
+        try:
+            newimg.data = resize_array(newimg.data, finalshape, region)
+            _logger.debug('%s resized to %s', newimg, finalshape)
+        finally:
+            newimg.close()
+        
+        newmsk.open(mode='update')
+        try:
+            newmsk.data = resize_array(newmsk.data, finalshape, region)
+            _logger.debug('%s resized to %s', newmsk, finalshape)
+        finally:
+            newmsk.close()
+            
+        od.append_img(newimg)
+        od.append_mask(newmsk)
+        
+        return od        
+    
+    @staticmethod    
+    def f_create_omasks(od):
+        dst = Recipe.name_object_mask(od.local['label'], iteration=-1)
+        newimg = od.mask.copy(dst)
+        od.append_omask(newimg)
+    
+    @staticmethod
+    def f_flow4(od):
+        region = od.local['region']
+        
+        od.img.open(mode='readonly')
+        try:
+            od.mask.open(mode='readonly')        
+            try:
+                d = od.img.data[region]
+                m = od.mask.data[region]
+                value = numpy.median(d[m == 0])
+                _logger.debug('median value of %s is %f', od.img, value)
+                od.local['median_scale'] = value
+                return od        
+            finally:
+                od.mask.close()
+        finally:
+            od.img.close()
+            
+    @staticmethod
+    def f_sky_flatfielding(od, iteration, sf_data):
+    
+        dst = Recipe.name_skyflat(od.local['label'], iteration)
+        od.copy_img(dst)
+        img = od.img
+        region = od.local['region']
+        img.open(mode='update')
+        try:
+            img.data[region] = correct_flatfield(img.data[region], sf_data[0])
+        finally:
+            img.close()
+        
+        return od
+    
+    @staticmethod
+    def f_sky_removal_simple(od, iteration):
+        dst = Recipe.name_skysub(od.local['label'], iteration)
+        od.copy_img(dst)
+        #
+        od.img.open(mode='update')
+        try:
+            od.omask.open()
+            try:
+                sky = compute_median_background(od.img, od.omask, od.local['region'])
+                _logger.debug('median sky value is %f', sky)
+                od.local['median_sky'] = sky
+                
+                _logger.info('Iter %d, SC: subtracting sky', iteration)
+                region = od.local['region']
+                od.img.data[region] -= od.local['median_sky']
+                
+                return od
+            finally:
+                od.omask.close()
+        finally:
+            od.img.close()
+
+    @staticmethod            
+    def f_sky_removal_advanced(od, iteration):
+        dst = Recipe.name_skysub(od.local['label'], iteration)
+        result = od.img.copy(dst)
+        #
+        result.open(mode='update')
+        try:
+            bw, fw = od.local['sky_related']
+            rep = bw + fw
+            data = [i.img.data[i.local['region']] for i in rep]
+            omasks = [i.omask.data[i.local['region']] for i in rep]
+            sky_b = compute_sky_advanced(data, omasks)
+            
+            _logger.info('Iter %d, SC: saving sky', iteration)
+            filename = 'emir_%s_skyb_i%02d.fits' % (od.local['label'], iteration)
+            pyfits.writeto(filename, sky_b, clobber=True)
+            
+            _logger.info('Iter %d, SC: subtracting sky', iteration)
+            region = od.local['region']
+            result.data[region] -= sky_b
+            
+            # We can't modify the current od.img until all
+            # the images are processed
+            od.local['skysub'] = result
+        
+            return od
+        finally:
+            result.close()
+
+    @staticmethod
+    def f_merge_mask(od, obj_mask, iteration):
+        '''Merge bad pixel masks with object masks'''
+        dst = Recipe.name_object_mask(od.local['label'], iteration)
+        od.copy_omask(dst)
+        #
+        img = od.omask
+        img.open(mode='update')
+        try:
+            img.data = (img.data != 0) | (obj_mask != 0)
+            img.data = img.data.astype('int')
+            return od
+        finally:
+            img.close()
+    
+    def print_related(self, od):
+        bw, fw = od.local['sky_related']
+        print od.local['label'],':',
+        for b in bw:
+            print b.local['label'],
+        print '|',
+        for ff in fw:
+            print ff.local['label'],
+        print
+    
+    def related(self, odl, nimages=5):
+        
+        odl.sort(key=lambda odl: odl.local['label'])
+        nox = nimages
+    
+        for idx, od in enumerate(odl[0:nox]):
+            bw = odl[0:2 * nox + 1][0:idx]
+            fw = odl[0:2 * nox + 1][idx + 1:]
+            od.local['sky_related'] = (bw, fw)
+            #print_related(od)
+    
+        for idx, od in enumerate(odl[nox:-nox]):
+            bw = odl[idx:idx + nox]
+            fw = odl[idx + nox + 1:idx + 2 * nox + 1]
+            od.local['sky_related'] = (bw, fw)
+            #print_related(od)
+     
+        for idx, od in enumerate(odl[-nox:]):
+            bw = odl[-2 * nox - 1:][0:idx + nox + 1]
+            fw = odl[-2 * nox - 1:][nox + idx + 2:]
+            od.local['sky_related'] = (bw, fw)
+        
+        return odl
+
+
+            
     def process(self):
         extinction = self.values['extinction']
         nthreads = self.values['nthreads']
-        niteration = 4
+        niteration = self.values['niteration']
         airmass_keyword = 'AIRMASS'
         
         odl = []
         
         for i in self.values['images']:
-            img = image.Image(filename=i)
-            mask = image.Image(filename='bpm.fits')
-            om = image.Image(filename='bpm.fits')
+            img = numina.image.Image(filename=i)
+            mask = numina.image.Image(filename='bpm.fits')
+            om = numina.image.Image(filename='bpm.fits')
             
-            od = WorkData(img, mask, om)
+            od = Recipe.WorkData(img, mask, om)
             
             label, _ext = os.path.splitext(i)
             od.local['label'] = label
@@ -463,12 +479,12 @@ class Recipe(object):
         
         sss = SerialFlow([
                           DarkCorrector(dark_data),
-                          NonLinearityCorrector(pv['optional']['linearity']),
+                          NonLinearityCorrector(self.values['nonlinearity']),
                           FlatFieldCorrector(flat_data)],
                           )
         
         _logger.info('Basic processing')    
-        para_map(lambda x : f_basic_processing(x, sss), odl, nthreads=nthreads)
+        para_map(lambda x : Recipe.f_basic_processing(x, sss), odl, nthreads=nthreads)
         
         sf_data = None
         
@@ -483,22 +499,22 @@ class Recipe(object):
                 od.local['noffset'] = off
             
             _logger.info('Iter %d, resizing images and mask', iteration)
-            para_map(lambda x: f_resize_images(x, iteration, finalshape), odl, nthreads=nthreads)
+            para_map(lambda x: self.f_resize_images(x, iteration, finalshape), odl, nthreads=nthreads)
         
             _logger.info('Iter %d, initialize object masks', iteration)
-            para_map(f_create_omasks, odl, nthreads=nthreads)
+            para_map(self.f_create_omasks, odl, nthreads=nthreads)
             
             if sf_data is not None:
                 _logger.info('Iter %d, generating objects masks', iteration)    
-                obj_mask = create_object_mask(sf_data[0], name_segmask(iteration))
+                obj_mask = create_object_mask(sf_data[0], self.name_segmask(iteration))
                 
                 _logger.info('Iter %d, merging object masks with masks', iteration)
-                para_map(lambda x: f_merge_mask(x, obj_mask, iteration), odl, nthreads=nthreads)
+                para_map(lambda x: self.f_merge_mask(x, obj_mask, iteration), odl, nthreads=nthreads)
             
             _logger.info('Iter %d, superflat correction (SF)', iteration)
             _logger.info('Iter %d, SF: computing scale factors', iteration)
             
-            para_map(f_flow4, odl, nthreads=nthreads)
+            para_map(self.f_flow4, odl, nthreads=nthreads)
             # Operation to create an intermediate sky flat
             
             try:
@@ -520,7 +536,7 @@ class Recipe(object):
             # Step 3, apply superflat
             _logger.info("Iter %d, SF: apply superflat", iteration)
     
-            para_map(lambda x: f_sky_flatfielding(x, iteration, sf_data), odl, nthreads=nthreads)
+            para_map(lambda x: self.f_sky_flatfielding(x, iteration, sf_data), odl, nthreads=nthreads)
             
             # Compute sky backgrounf correction
             _logger.info('Iter %d, sky correction (SC)', iteration)
@@ -528,7 +544,7 @@ class Recipe(object):
             if iteration in [1]:
                 _logger.info('Iter %d, SC: computing simple sky', iteration)
             
-                para_map(lambda x: f_sky_removal_simple(x, iteration), odl, nthreads=nthreads)
+                para_map(lambda x: self.f_sky_removal_simple(x, iteration), odl, nthreads=nthreads)
                                 
             else:
                 _logger.info('Iter %d, SC: computing advanced sky', iteration)
@@ -536,13 +552,13 @@ class Recipe(object):
                 nimages = 5
                 
                 _logger.info('Iter %d, SC: relating images with their sky backgrounds', iteration)
-                odl = related(odl, nimages)
+                odl = self.related(odl, nimages)
                             
                 try:
                     map(lambda x: x.img.open(mode='readonly', memmap=True), odl)
                     map(lambda x: x.omask.open(mode='readonly', memmap=True), odl)
                     for od in odl:
-                        f_sky_removal_advanced(od, iteration)
+                        self.f_sky_removal_advanced(od, iteration)
                 finally:
                     map(lambda x: x.img.close(), odl)
                     map(lambda x: x.omask.close(), odl)
@@ -570,18 +586,24 @@ class Recipe(object):
             finally:
                 map(lambda x: x.close(), imgslll)
                 map(lambda x: x.close(), mskslll)
-    
-                
-    
-        
+
             _logger.info('Iter %d, finished', iteration)
+            
+            
+        _logger.info('Finished iterations')
+        
+        fc = EmirImageCreator()
+        final = fc.create(sf_data[0], extensions=[('variance', sf_data[1], None),
+                                                     ('map', sf_data[2].astype('int16'), None)])
+        _logger.info("Final image created")
+        
+        return Result(numina.qa.UNKNOWN, final)
 
 if __name__ == '__main__':
-    import os.path
     from numina.recipes import Parameters
     import simplejson as json
     from numina.jsonserializer import to_json
-#    import registry
+    from numina.user import main
     
     captureWarnings(True)
     
@@ -661,10 +683,5 @@ if __name__ == '__main__':
     newrepo = [filerepo] + repos
 
     registry.set_repo_list(newrepo)
-
-    #run(pv, nthreads=1, niteration=4)
     
-    r = Recipe()
-    r.process()
-    
-    
+    main(['--run', 'direct_imaging2', 'config-d.json'])

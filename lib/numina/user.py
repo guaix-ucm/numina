@@ -38,7 +38,8 @@ from numina import list_recipes, get_module, check_recipe, __version__
 from numina.exceptions import RecipeError
 from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
- 
+import numina.recipes.registry as registry
+
 version_line = '%prog ' + __version__ 
 
 def parse_cmdline(args=None):
@@ -94,17 +95,20 @@ def mode_run(args, options, logger):
     
     # checking if the parameters of the recipe
     # are fulfilled by the parameters in the text file
-    loaded_params = param_from_json(args[1])
-        
-    logger.debug('Completing the parameters')
-    param_desc = recipemod.ParameterDescription()
-    params = param_desc.complete(loaded_params)
     
+    repos = registry.get_repo_list()
+    
+    filerepo = registry.JSON_Repo(args[1])
+
+    newrepo = [filerepo] + repos
+
+    registry.set_repo_list(newrepo)
+        
     logger.debug('Creating the recipe')
     recipe = recipemod.Recipe()
     
     logger.debug('Setting up the recipe')
-    recipe.setup(params)
+    recipe.setup(None)
     
     runs = recipe.repeat
     errorcount = 0
@@ -128,7 +132,7 @@ def mode_run(args, options, logger):
         logger.error('Errors during execution')
         logger.error('Number of errors: %d', errorcount)
     else:
-        logger.error('Completed execution')
+        logger.info('Completed execution')
 
 def main(args=None):
     '''Entry point for the Numina CLI. '''        

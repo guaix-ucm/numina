@@ -19,7 +19,7 @@
 
 import simplejson as json
 
-from pyfits.NP_pyfits import HDUList
+from pyfits import HDUList
 
 from generic import generic
 

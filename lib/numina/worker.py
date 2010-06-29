@@ -23,7 +23,7 @@ import threading
 import logging
 import sys
 
-from utils import iterqueue
+from numina.iterqueue import iterqueue
 
 _logger = logging.getLogger('worker')
 
