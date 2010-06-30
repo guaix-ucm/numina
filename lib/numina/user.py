@@ -103,12 +103,15 @@ def mode_run(args, options, logger):
     newrepo = [filerepo] + repos
 
     registry.set_repo_list(newrepo)
+
+    obsblock_id = 1
+    
+    param = {}
+    for name in recipemod.Recipe.required_parameters:
+        param[name] = registry.lookup(obsblock_id, name)
         
     logger.debug('Creating the recipe')
-    recipe = recipemod.Recipe()
-    
-    logger.debug('Setting up the recipe')
-    recipe.setup(None)
+    recipe = recipemod.Recipe(param)
     
     runs = recipe.repeat
     errorcount = 0
@@ -116,7 +119,7 @@ def mode_run(args, options, logger):
         logger.debug('Running the recipe instance %d of %d ', 
                      runs - recipe.repeat + 1, runs)
         try:
-            result = recipe.run()
+            result = recipe()
             store(result)
         except RecipeError, e:
             logger.error("%s", e)

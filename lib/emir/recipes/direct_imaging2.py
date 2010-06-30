@@ -191,7 +191,8 @@ class Recipe(nr.RecipeBase):
         def append_omask(self, newimg):
             self._omasks.append(newimg)        
     
-    param = ['master_dark',
+    required_parameters = [
+        'master_dark',
         'master_bpm',
         'master_dark',
         'master_flat',
@@ -199,16 +200,11 @@ class Recipe(nr.RecipeBase):
         'extinction',
         'nthreads',
         'images',
-        'niteration'
+        'niteration',
     ]
-    def __init__(self):
-        self.values = {}
-        for name in self.param:
-            self.values[name] = registry.lookup('1', name)
-        self.repeat = 1
-
-    def setup(self, *args):
-        pass
+    
+    def __init__(self, values):
+        super(Recipe, self).__init__(values)
 
 
     # Different intermediate images are created during the run of the recipe
@@ -436,7 +432,7 @@ class Recipe(nr.RecipeBase):
 
 
             
-    def process(self):
+    def run(self):
         extinction = self.values['extinction']
         nthreads = self.values['nthreads']
         niteration = self.values['niteration']
@@ -600,7 +596,7 @@ class Recipe(nr.RecipeBase):
         return Result(numina.qa.UNKNOWN, final)
 
 if __name__ == '__main__':
-    from numina.recipes import Parameters
+    from numina.recipes.registry import Parameters
     import simplejson as json
     from numina.jsonserializer import to_json
     from numina.user import main
@@ -610,8 +606,8 @@ if __name__ == '__main__':
     os.chdir('/home/spr/Datos/emir/apr21')
     
     
-    pv = {'inputs' :  {},
-          'optional' : {'linearity': [1.00, 0.00],
+    pv = {'niteration': 2,
+          'linearity': [1.00, 0.00],
                         'extinction': 0.05,
                         'niteration': 2, 
                         'master_dark': 'Dark50.fits',
@@ -653,19 +649,18 @@ if __name__ == '__main__':
                         'apr21_0079.fits': ('bpm.fits', (-15, 36), ['apr21_0079.fits']),
                         'apr21_0080.fits': ('bpm.fits', (-16, 36), ['apr21_0080.fits']),
                         'apr21_0081.fits': ('bpm.fits', (-16, 36), ['apr21_0081.fits'])
-                        },
-                        }          
+                        },          
     }
     
     # Changing the offsets
     # x, y -> -y, -x
-    for k in pv['optional']['images']:
-        m_, o_, s_ = pv['optional']['images'][k]
+    for k in pv['images']:
+        m_, o_, s_ = pv['images'][k]
         x, y = o_
         o_ = -y, -x
-        pv['optional']['images'][k] = (m_, o_, s_)
+        pv['images'][k] = (m_, o_, s_)
 
-    p = Parameters(**pv)
+    p = Parameters(pv)
     
     os.chdir('/home/spr/Datos/emir/apr21')
     
@@ -674,14 +669,5 @@ if __name__ == '__main__':
         json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
-        
-        
-    repos = registry.get_repo_list()
-    
-    filerepo = registry.JSON_Repo('/home/spr/Datos/emir/apr21/config-d.json')
-
-    newrepo = [filerepo] + repos
-
-    registry.set_repo_list(newrepo)
     
     main(['--run', 'direct_imaging2', 'config-d.json'])

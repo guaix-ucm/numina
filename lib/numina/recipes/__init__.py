@@ -24,6 +24,7 @@ A recipe is a module that complies with the *reduction recipe API*:
  * It must provide a `Recipe` class that derives from :class:`numina.recipes.RecipeBase`.
 
 '''
+import warnings
 
 from numina.diskstorage import store
 from numina.exceptions import RecipeError, ParameterError
@@ -32,32 +33,32 @@ from numina.exceptions import RecipeError, ParameterError
 __metaclass__ = type
 
 class RecipeBase:
-    '''Abstract Base class for Recipes.'''    
-    def __init__(self):
-        self.inputs = {}
-        self.optional = {}
+    '''Abstract Base class for Recipes.'''
+    
+    required_parameters = []
+    
+    def __init__(self, param):
+        self.values = param
         self.repeat = 1
                 
-    def setup(self, param):
-        '''Initialize structures only once before recipe execution.'''
-        self.inputs = param.inputs
-        self.optional = param.optional
+    def setup(self, _param):
+        warnings.warn("the setup method is deprecated", DeprecationWarning, stacklevel=2)
       
     def cleanup(self):
         '''Cleanup structures after recipe execution.'''
         pass
     
-    def run(self):
+    def __call__(self):
         '''Run the recipe, don't override.'''
         try:
             self.repeat -= 1
-            result = self.process()
+            result = self.run()
             return result            
         except RecipeError:
             raise
         
 #    @abc.abstractmethod
-    def process(self):
+    def run(self):
         ''' Override this method with custom code.
         
         :rtype: RecipeResult
@@ -83,25 +84,3 @@ def _store_rr(obj, where=None):
     # We store the values inside obj.products
     for key, val in obj.products.iteritems():
         store(val, key)
-
-class ParameterDescription(object):
-    def __init__(self, inputs, optional):
-        self.inputs = inputs
-        self.optional = optional
-    
-    def complete_group(self, obj, group):
-        d = dict(getattr(self, group))
-        d.update(getattr(obj, group))
-        return d
-
-    def complete(self, obj):        
-        newvals = {}
-        for group in ['inputs', 'optional']:            
-            newvals[group] = self.complete_group(obj, group)
-
-        return Parameters(**newvals)
-
-class Parameters:
-    def __init__(self, inputs, optional):
-        self.inputs = inputs
-        self.optional = optional

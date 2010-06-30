@@ -22,10 +22,31 @@ from __future__ import with_statement
 import collections
 import simplejson as json
 
-from numina.jsonserializer import deunicode_json
+import numina.jsonserializer
 import schema
 
-Parameter = collections.namedtuple('Parameter', 'name value description')
+Parameter = collections.namedtuple('Parameter', 'name value')
+
+class ParameterDescription(object):
+    def __init__(self, inputs, optional):
+        self.inputs = inputs
+        self.optional = optional
+    
+    def complete_group(self, obj, group):
+        d = dict(getattr(self, group))
+        d.update(getattr(obj, group))
+        return d
+
+    def complete(self, obj):        
+        newvals = {}
+        for group in ['inputs', 'optional']:            
+            newvals[group] = self.complete_group(obj, group)
+
+        return Parameters(**newvals)
+
+class Parameters:
+    def __init__(self, params):
+        self.params = params
 
 class DictRepo(object):
     def __init__(self, dicto):
@@ -34,20 +55,20 @@ class DictRepo(object):
     def lookup(self, uid, parameter):
         return self._data.get(parameter)
 
-    def list_keys(self):
+    def keys(self):
         return self._data.keys()
 
 class JSON_Repo(object):
     def __init__(self, filename):
         with open(filename) as f:
             r = json.load(f)
-            r = deunicode_json(r)
-        self._data = r['__value__']['optional']
+            r = numina.jsonserializer.deunicode_json(r)
+        self._data = r['__value__']['params']
 
     def lookup(self, uid, parameter):
         return self._data.get(parameter)
 
-    def list_keys(self):
+    def keys(self):
         return self._data.keys()
 
 _repos = [DictRepo({'hare': 90, 'linearity':[1.0, 0.0], 'master_dark':'dum.fits'})]
@@ -65,7 +86,7 @@ def set_repo_list(newlist):
 def list_keys():
     result = {}
     for r in _repos:
-        keys = r.list_keys()
+        keys = r.keys()
         for k in keys:
             sch = schema.lookup(k)
             if sch is None:

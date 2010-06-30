@@ -20,19 +20,19 @@
 
 import simplejson as json
 
-import numina.recipes
+import numina.recipes.registry
 
 def to_json(obj):
-    if isinstance(obj, numina.recipes.Parameters):
-        return {'__class__': 'numina.recipes.Parameters',
+    if isinstance(obj, numina.recipes.registry.Parameters):
+        return {'__class__': 'numina.recipes.registry.Parameters',
                 '__value__': obj.__dict__}
     raise TypeError(repr(obj) + ' is not JSON serializable')
 
 def from_json(obj):
     if '__class__' in obj:
-        if obj['__class__'] == 'numina.recipes.Parameters':
+        if obj['__class__'] == 'numina.recipes.registry.Parameters':
             dparam = deunicode_json(obj['__value__'])
-            return numina.recipes.Parameters(**dparam)
+            return numina.recipes.registry.Parameters(**dparam)
     return obj
 
 def deunicode_json(obj):

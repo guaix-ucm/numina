@@ -22,17 +22,10 @@
 import logging
 
 from numina.recipes import RecipeBase, RecipeResult
-import numina.recipes
 import numina.qa as QA
 
 _logger = logging.getLogger("numina.recipes")
 
-class ParameterDescription(numina.recipes.ParameterDescription):
-    def __init__(self):
-        inputs = {'images': []}
-        optional = {'iterations': 1}
-        super(ParameterDescription, self).__init__(inputs, optional)
-        
 class Result(RecipeResult):
     '''Result of the sample recipe.'''
     def __init__(self, qa, result):
@@ -45,26 +38,21 @@ class Recipe(RecipeBase):
     '''Recipe to process data taken in imaging mode.
      
     '''
-    def __init__(self):
-        super(Recipe, self).__init__()
+    def __init__(self, param):
+        super(Recipe, self).__init__(param)
         
-    def setup(self, param):
-        super(Recipe, self).setup(param)
-        self.repeat = self.optional['iterations']
-        
-    def process(self):
-        
+    def run(self):
         return Result(QA.UNKNOWN, self.repeat)
     
 if __name__ == '__main__':
     import simplejson as json
     import tempfile
     
+    import numina.recipes
     from numina.user import main
-    from numina.recipes import Parameters
     from numina.jsonserializer import to_json 
         
-    p = Parameters({}, {'iterations': 3})
+    p = numina.recipes.registry.Parameters({'iterations': 3})
     
     f = tempfile.NamedTemporaryFile(delete=False)
     try:
