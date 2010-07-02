@@ -54,16 +54,7 @@ from numina.array.combine import mean
 from numina.exceptions import RecipeError
 from emir.instrument.headers import EmirImageCreator
 
-
 _logger = logging.getLogger("emir.recipes")
-        
-        
-class ParameterDescription(nr.ParameterDescription):
-    def __init__(self):
-        inputs={'images': []}
-        optional={}
-        super(ParameterDescription, self).__init__(inputs, optional)
-        
 
 class Result(nr.RecipeResult):
     '''Result of the DarkImaging recipe.'''
@@ -78,28 +69,29 @@ class Recipe(nr.RecipeBase):
     It continues several lines
     
     '''
-    def __init__(self):
-        super(Recipe, self).__init__()
+    required_parameters = [
+        'nthreads',
+        'images',
+    ]    
+        
+    def __init__(self, value):
+        super(Recipe, self).__init__(value)
         # Default values. This can be read from a file
-        self.creator = EmirImageCreator()
+        self.creator = EmirImageCreator()        
         
-    def setup(self, param):
-        super(Recipe, self).setup(param)
-        self.images = self.inputs['images']
-        
-        
-    def process(self):
+    def run(self):
         fd = []
         try:
-            for i in self.images:
+            for i in self.values['images']:
                 _logger.debug('Loading %s', i)
                 fd.append(pyfits.open(i))
         except IOError, err:
             _logger.error(err)
-            _logger.debug('Cleaning up hdus')
-            for i in fd:
-                i.close()            
+            _logger.debug('Cleaning up hdus')            
             raise RecipeError(err)
+        finally:
+            for i in fd:
+                i.close()
         
         _logger.debug('We have %d images', len(fd))
         # Data from the primary extension

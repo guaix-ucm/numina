@@ -48,21 +48,15 @@ import pyfits
 import numina.recipes as nr
 from emir.instrument.headers import EmirImageCreator
 from numina.array.combine import mean
-import numina.qa as qa
+import numina.qa
 
 _logger = logging.getLogger("emir.recipes")
 
-class ParameterDescription(nr.ParameterDescription):
-    def __init__(self):
-        inputs={'images': []}
-        optional={}
-        super(ParameterDescription, self).__init__(inputs, optional)
-
 class Result(nr.RecipeResult):
     '''Result of the recipe.'''
-    def __init__(self, qa, hdulist):
+    def __init__(self, qa, result):
         super(Result, self).__init__(qa)
-        self.products['bias'] = hdulist
+        self.products['bias'] = result
 
 class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in Bias image Mode.
@@ -71,26 +65,30 @@ class Recipe(nr.RecipeBase):
     It continues several lines
     
     '''
-    def __init__(self):
-        super(Recipe, self).__init__()
-        self.images = []
+    
+    required_parameters = [
+        'nthreads',
+        'images',
+    ]
+    
+    def __init__(self, values):
+        super(Recipe, self).__init__(values)
         
-    def setup(self, param):
-        super(Recipe, self).setup(param)
-        self.images = self.inputs['images']
-        
-    def process(self):
+    def run(self):
         
         # Sanity check, check: all images belong to the same detector mode
         
         # Open all zero images
         alldata = []
-        for n in self.images:
-            f = pyfits.open(n, 'readonly', memmap=True)
-            alldata.append(f[0].data)
-        
         allmasks = []
-        
+        try:
+            for n in self.values['images']:
+                f = pyfits.open(n, 'readonly', memmap=True)
+                alldata.append(f[0].data)
+        finally:
+            for hdu in alldata:
+                hdu.close()
+                
         # Combine them
         cube = mean(alldata, allmasks)
         
@@ -98,27 +96,26 @@ class Recipe(nr.RecipeBase):
         hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
         
         if True:
-            cqa = qa.GOOD
+            cqa = numina.qa.GOOD
         else:
-            cqa = qa.UNKNOWN
+            cqa = numina.qa.UNKNOWN
         
         return Result(cqa, hdulist)
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
+    from numina.recipes.registry import Parameters
     from numina.user import main
-    from numina.recipes import Parameters
     from numina.jsonserializer import to_json
     import simplejson as json
     import os
     
-    pv = {'inputs' : {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
-                     'apr21_0049.fits', 'apr21_0050.fits']},
-         'optional' : {},
+    pv = {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
+                     'apr21_0049.fits', 'apr21_0050.fits']
     }
     
-    p = Parameters(**pv)
+    p = Parameters(pv)
     
     os.chdir('/home/spr/Datos/emir/apr21')
     

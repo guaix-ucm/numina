@@ -36,7 +36,7 @@ import xdg.BaseDirectory as xdgbd
 
 from numina import list_recipes, get_module, check_recipe, __version__
 from numina.exceptions import RecipeError
-from numina.jsonserializer import param_from_json
+#from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
 import numina.recipes.registry as registry
 

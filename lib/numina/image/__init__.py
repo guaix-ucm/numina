@@ -24,13 +24,14 @@ import numpy
 import pyfits
 
 class Image(object):
-    def __init__(self, filename):
+    def __init__(self, filename, extension=None):
         super(Image, self).__init__()
         self.data = None
         self.meta = None
         self.filename = filename
         self._open = False
         self.hdulist = None
+        self.extension = extension or 'primary'
 
     def is_open(self):
         return self._open
@@ -39,12 +40,12 @@ class Image(object):
         if not self.is_open():
             self._open = True
             self.hdulist = pyfits.open(self.filename, memmap=memmap, mode=mode)
-            self.data = self.hdulist['primary'].data
-            self.meta = self.hdulist['primary'].header
+            self.data = self.hdulist[self.extension].data
+            self.meta = self.hdulist[self.extension].header
         
     def close(self, output_verify='exception'):
         if self.is_open():
-            self.hdulist['primary'].data = self.data
+            self.hdulist[self.extension].data = self.data
             self.hdulist.close(output_verify=output_verify)
         self._open = False
         self.data = None
@@ -55,11 +56,14 @@ class Image(object):
         return new
 
     def __str__(self):
-        return 'Image(filename="%s")' % (self.filename)
+        return 'Image(filename="%s", extension="%s")' % (self.filename, self.extension)
     
     def __getstate__(self):
-        return dict(data=None, meta=None, filename=self.filename,
-                    _open=False, hdulist=None)
+        return dict(filename=self.filename, extension=self.extension)
+                
+    def __setstate__(self, data):
+        self.__init__(**data)
+        #self.__dict__ = data
         
     def copy(self, dst):
         shutil.copy(self.filename, dst)

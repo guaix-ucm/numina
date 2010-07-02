@@ -17,6 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''Iterate over a Queue.'''
+
 import Queue
 
 def iterqueue(qu):
@@ -30,7 +32,7 @@ def iterqueue(qu):
     >>> qu.put(1)
     >>> qu.put(2)
     >>> qu.put(3)    
-    >>> for i in iterqueue(b):
+    >>> for i in iterqueue(qu):
     ...     print i
     ... 
     1

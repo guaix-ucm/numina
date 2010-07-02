@@ -32,57 +32,42 @@ from emir.instrument.headers import EmirImageCreator
 
 _logger = logging.getLogger("emir.recipes")
 
-class ParameterDescription(nr.ParameterDescription):
-    def __init__(self):
-        inputs={'detector': {'shape': (2048, 2048),
-                             'ron': 2.16,
-                             'dark': 0.37,
-                             'gain': 3.028,
-                             'flat': 1.0,
-                             'well': 65536,},
-                'readout': {'mode': 'cds',
-                            'reads': 3,
-                            'repeat': 1,
-                            'scheme': 'perline',
-                            'exposure': 0},
-                'nformat': "r%05d",
-                }
-        optional={}
-        super(ParameterDescription, self).__init__(inputs, optional)
-
 class Result(nr.RecipeResult):
     '''Result of the imaging mode recipe.'''
     def __init__(self, qa, result, name):
         super(Result, self).__init__(qa)
-        self.products['result'] = result
+        self.products[name] = result
         self.name = name
 
 class Recipe(nr.RecipeBase):
     '''Recipe to simulate EMIR images.
     '''
-    def __init__(self):
-        super(Recipe, self).__init__()
+    
+    required_parameters = ['detector', 
+                           'readout',
+                           'nformat'
+                           ]
+    
+    
+    def __init__(self, values):
+        super(Recipe, self).__init__(values)
         #
-        self.detector = None
-        self.input = None
         _logger.info('FITS builder created')
         self.creator = EmirImageCreator()
         _logger.info('Run counter created')
         self.runcounter = RunCounter("r%05d")
-    
-    def setup(self, param):
-        super(Recipe, self).setup(param)
+        
         _logger.info('Creating detector')
         
-        self.detector = EmirDetector(**self.inputs['detector'])
+        self.detector = EmirDetector(**self.values['detector'])
         _logger.info('Configuring detector')
-        self.detector.configure(self.inputs['readout'])
+        self.detector.configure(self.values['readout'])
         
-        self.input = np.zeros(self.inputs['detector']['shape'])
-        self.detector.exposure(self.inputs['readout']['exposure'])
-        self.repeat = self.inputs['readout']['repeat']
+        self.input = np.zeros(self.values['detector']['shape'])
+        self.detector.exposure(self.values['readout']['exposure'])
+        self.repeat = self.values['readout']['repeat']
      
-    def process(self):
+    def run(self):
         _logger.info('Creating simulated array')    
         output = self.detector.lpath(self.input)
         run, cfile = self.runcounter.runstring()
@@ -95,19 +80,16 @@ class Recipe(nr.RecipeBase):
         hdulist = self.creator.create(output, headers)
         return Result(qa.UNKNOWN, hdulist, cfile)
 
-    def cleanup(self):
-        pass
-
 if __name__ == '__main__':
     import os
     import simplejson as json
     import tempfile
     
     from numina.user import main
-    from numina.recipes import Parameters
+    from numina.recipes.registry import Parameters
     from numina.jsonserializer import to_json
       
-    inputs={'detector': {'shape': (2048, 2048),
+    pv={'detector': {'shape': (2048, 2048),
                              'ron': 2.16,
                              'dark': 0.37,
                              'gain': 3.028,
@@ -115,18 +97,17 @@ if __name__ == '__main__':
                              'well': 65536,},
                 'readout': {'mode': 'cds',
                             'reads': 3,
-                            'repeat': 1,
+                            'repeat': 3,
                             'scheme': 'perline',
                             'exposure': 0},
             'nformat': "r%05d",
                 }
-    optional={}
     
-    p = Parameters(inputs, optional)
+    p = Parameters(pv)
     
     tmpdir = tempfile.mkdtemp(suffix='emir')
     os.chdir(tmpdir)
-    print 'Working directory is %s' % tmpdir
+    _logger.info('Working directory is %s', tmpdir)
     
     cfile = 'config.json'
     

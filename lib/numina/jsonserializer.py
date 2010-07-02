@@ -17,6 +17,8 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+'''Serialize objects using JSON.'''
+
 
 def to_json(obj):
     if hasattr(obj, '__getstate__'):
@@ -28,8 +30,15 @@ def to_json(obj):
             '__value__': dparam,
             }
 
-def from_json(obj):
+def obj_is_serialized_class(obj):
+    '''Check if obj represents a serialized class.'''
     if '__class__' in obj and '__module__' in obj and '__value__' in obj:
+        return True
+    return False
+
+
+def from_json(obj):
+    if obj_is_serialized_class(obj):
         clsname = obj['__class__']
         modname = obj['__module__']
         _mod = __import__(modname, globals(), locals(), [clsname], -1)
@@ -37,6 +46,7 @@ def from_json(obj):
         result = super(type(cls), cls).__new__(cls)
         
         dparam = deunicode_json(obj['__value__'])
+        
         if hasattr(result, '__setstate__'):
             result.__setstate__(dparam)
         else:
