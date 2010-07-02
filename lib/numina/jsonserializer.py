@@ -18,21 +18,30 @@
 # 
 
 
-import simplejson as json
-
-import numina.recipes.registry
-
 def to_json(obj):
-    if isinstance(obj, numina.recipes.registry.Parameters):
-        return {'__class__': 'numina.recipes.registry.Parameters',
-                '__value__': obj.__dict__}
-    raise TypeError(repr(obj) + ' is not JSON serializable')
+    if hasattr(obj, '__getstate__'):
+        dparam = obj.__getstate__()
+    else:
+        dparam = obj.__dict__
+    return {'__class__': obj.__class__.__name__,
+            '__module__': obj.__class__.__module__,
+            '__value__': dparam,
+            }
 
 def from_json(obj):
-    if '__class__' in obj:
-        if obj['__class__'] == 'numina.recipes.registry.Parameters':
-            dparam = deunicode_json(obj['__value__'])
-            return numina.recipes.registry.Parameters(**dparam)
+    if '__class__' in obj and '__module__' in obj and '__value__' in obj:
+        clsname = obj['__class__']
+        modname = obj['__module__']
+        _mod = __import__(modname, globals(), locals(), [clsname], -1)
+        cls = getattr(_mod, clsname)
+        result = super(type(cls), cls).__new__(cls)
+        
+        dparam = deunicode_json(obj['__value__'])
+        if hasattr(result, '__setstate__'):
+            result.__setstate__(dparam)
+        else:
+            result.__dict__ = dparam
+        return result
     return obj
 
 def deunicode_json(obj):
@@ -60,9 +69,3 @@ def deunicode_json(obj):
     
     return obj
 
-def param_from_json(name):
-    f = open(name)
-    try:
-        return json.load(f, object_hook=from_json, encoding='utf-8')
-    finally:
-        f.close()
