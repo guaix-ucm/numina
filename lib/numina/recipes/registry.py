@@ -44,7 +44,7 @@ class ParameterDescription(object):
 
         return Parameters(**newvals)
 
-class Parameters:
+class Parameters(object):
     def __init__(self, params):
         self.params = params
 
@@ -60,10 +60,9 @@ class DictRepo(object):
 
 class JSON_Repo(object):
     def __init__(self, filename):
-        with open(filename) as f:
-            r = json.load(f)
-            r = numina.jsonserializer.deunicode_json(r)
-        self._data = r['__value__']['params']
+        with open(filename, mode='r') as f:
+            r = json.load(f, object_hook=numina.jsonserializer.from_json, encoding='utf-8')
+        self._data = r.params
 
     def lookup(self, uid, parameter):
         return self._data.get(parameter)
