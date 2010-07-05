@@ -24,7 +24,8 @@ setup(name='pyemir',
       packages=find_packages('lib'),
       package_dir={'': 'lib'},
       package_data={'numina.simulation': ['*.dat'],
-                      'numina': ['*.cfg', 'logging.ini']
+                      'numina': ['*.cfg', 'logging.ini'],
+                      'emir.instrument': ['headers.json'],
                       },
       ext_modules=[cext, ],
       entry_points={
