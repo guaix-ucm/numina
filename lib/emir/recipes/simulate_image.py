@@ -28,7 +28,7 @@ import numina.recipes as nr
 import numina.qa as qa
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
-from emir.instrument.headers import EmirImageCreator
+from emir.dataproducts import create_raw
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -52,8 +52,6 @@ class Recipe(nr.RecipeBase):
     def __init__(self, values):
         super(Recipe, self).__init__(values)
         #
-        _logger.info('FITS builder created')
-        self.creator = EmirImageCreator()
         _logger.info('Run counter created')
         self.runcounter = RunCounter("r%05d")
         
@@ -77,7 +75,7 @@ class Recipe(nr.RecipeBase):
         headers.update(self.detector.metadata())
         
         _logger.info('Building FITS structure')
-        hdulist = self.creator.create(output, headers)
+        hdulist = create_raw(output, headers)
         return Result(qa.UNKNOWN, hdulist, cfile)
 
 if __name__ == '__main__':
@@ -86,10 +84,9 @@ if __name__ == '__main__':
     import tempfile
     
     from numina.user import main
-    from numina.recipes.registry import Parameters
     from numina.jsonserializer import to_json
       
-    pv={'detector': {'shape': (2048, 2048),
+    pv = {'detector': {'shape': (2048, 2048),
                              'ron': 2.16,
                              'dark': 0.37,
                              'gain': 3.028,
@@ -103,8 +100,6 @@ if __name__ == '__main__':
             'nformat': "r%05d",
                 }
     
-    p = Parameters(pv)
-    
     tmpdir = tempfile.mkdtemp(suffix='emir')
     os.chdir(tmpdir)
     _logger.info('Working directory is %s', tmpdir)
@@ -113,7 +108,7 @@ if __name__ == '__main__':
     
     f = open(cfile, 'w+')
     try:
-        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
+        json.dump(pv, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
             

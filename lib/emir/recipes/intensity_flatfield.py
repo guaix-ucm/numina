@@ -168,7 +168,6 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
     from numina.user import main
-    from numina.recipes.registry import Parameters
     import simplejson as json
     import os
     from numina.jsonserializer import to_json
@@ -214,13 +213,11 @@ if __name__ == '__main__':
                         'master_bpm': Image('bpm.fits')
     }
     
-    p = Parameters(pv)
-    
     os.chdir('/home/spr/Datos/emir/apr21')
     
     f = open('config-iff.txt', 'w+')
     try:
-        json.dump(p, f, default=to_json, encoding='utf-8')
+        json.dump(pv, f, default=to_json, encoding='utf-8')
     finally:
         f.close()
         

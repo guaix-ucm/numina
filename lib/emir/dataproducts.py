@@ -19,9 +19,26 @@
 
 '''Data products produced by the EMIR pipeline.'''
 
-class EmirImage:
-    pass
-        
-class EmirSpectrum:
-    pass
+from emir.instrument.headers import EmirImageCreator
 
+class EmirImage(object):
+    def __init__(self, data, variance=None, numbers=None):
+        pass
+        
+class EmirSpectrum(object):
+    def __init__(self):
+        pass
+
+
+def create_result(data, variance, exmap):
+    creator = EmirImageCreator()
+    hdulist = creator.create(data, extensions=
+                             [('VARIANCE', variance, None), 
+                              ('MAP', exmap, None)])
+    return hdulist
+
+
+def create_raw(data, headers):
+    creator = EmirImageCreator()
+    hdulist = creator.create(data, headers)
+    return hdulist

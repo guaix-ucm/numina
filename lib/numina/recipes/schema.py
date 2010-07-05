@@ -22,6 +22,7 @@ import collections
 Schema = collections.namedtuple('Schema', 'name value description')
 
 _data = {
+            'images': Schema('images', None, 'Images obtained during the observing block'),
             'extinction': Schema('extinction', 0.0, 'Atmospheric extinction'),
             'nonlinearity': Schema('nonlinearity', [1.0, 0.0], 'Non-linearity correction'),
             'master_dark': Schema('master_dark', None, 'Master dark'),
@@ -55,7 +56,7 @@ def lookup(parameter):
             break
     return defc
 
-def list():
+def keys():
     result = {}
     for r in _schema:
         keys = r.keys()

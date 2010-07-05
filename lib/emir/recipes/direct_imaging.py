@@ -100,7 +100,6 @@ import pyfits
 import numina.image
 from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
-#from processing import compute_median
 from numina.logger import captureWarnings
 from numina.array.combine import median
 from numina.array import subarray_match
@@ -109,7 +108,7 @@ from numina.array import combine_shape, resize_array, flatcombine, correct_flatf
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 import numina.recipes as nr
 import numina.qa
-from emir.instrument.headers import EmirImageCreator
+from emir.dataproducts import create_result
 
 logging.basicConfig(level=logging.INFO)
 
@@ -469,17 +468,24 @@ class Recipe(nr.RecipeBase):
                 img.close()
             
         # Initialize processing nodes, step 1
-        dark_data = pyfits.getdata(self.values['master_dark'])    
-        flat_data = pyfits.getdata(self.values['master_flat'])
-        
-        sss = SerialFlow([
+        try:
+            dark_data = self.values['master_dark'].open(mode='readonly')    
+            flat_data = self.values['master_flat'].open(mode='readonly')
+            
+            dark_data = self.values['master_dark'].data    
+            flat_data = self.values['master_flat'].data
+            
+            sss = SerialFlow([
                           DarkCorrector(dark_data),
                           NonLinearityCorrector(self.values['nonlinearity']),
                           FlatFieldCorrector(flat_data)],
                           )
         
-        _logger.info('Basic processing')    
-        para_map(lambda x : Recipe.f_basic_processing(x, sss), odl, nthreads=nthreads)
+            _logger.info('Basic processing')    
+            para_map(lambda x : Recipe.f_basic_processing(x, sss), odl, nthreads=nthreads)
+        finally:
+            self.values['master_dark'].close()    
+            self.values['master_flat'].close() 
         
         sf_data = None
         
@@ -587,15 +593,15 @@ class Recipe(nr.RecipeBase):
             
         _logger.info('Finished iterations')
         
-        fc = EmirImageCreator()
-        final = fc.create(sf_data[0], extensions=[('variance', sf_data[1], None),
-                                                     ('map', sf_data[2].astype('int16'), None)])
+        result = create_result(sf_data[0], 
+                                variance=sf_data[1], 
+                                exmap=sf_data[2].astype('int16'))
+        
         _logger.info("Final image created")
         
-        return Result(numina.qa.UNKNOWN, final)
+        return Result(numina.qa.UNKNOWN, result)
 
 if __name__ == '__main__':
-    from numina.recipes.registry import Parameters
     import simplejson as json
     from numina.jsonserializer import to_json
     from numina.user import main
@@ -605,13 +611,12 @@ if __name__ == '__main__':
     os.chdir('/home/spr/Datos/emir/apr21')
     
     
-    pv = {'niteration': 2,
-          'linearity': [1.00, 0.00],
-                        'extinction': 0.05,
-                        'niteration': 2, 
-                        'master_dark': 'Dark50.fits',
-                        'master_flat': 'flat.fits',
-                        'master_bpm': 'bpm.fits',
+    pv = {'linearity': [1.00, 0.00],
+          'extinction': 0.05,
+          'niteration': 2, 
+                        'master_dark': Image('Dark50.fits'),
+                        'master_flat': Image('flat.fits'),
+                        'master_bpm': Image('bpm.fits'),
                         'images':  
                        {'apr21_0046.fits': ('bpm.fits', (0, 0), ['apr21_0046.fits']),
                         'apr21_0047.fits': ('bpm.fits', (0, 0), ['apr21_0047.fits']),
@@ -658,14 +663,12 @@ if __name__ == '__main__':
         x, y = o_
         o_ = -y, -x
         pv['images'][k] = (m_, o_, s_)
-
-    p = Parameters(pv)
     
     os.chdir('/home/spr/Datos/emir/apr21')
     
     f = open('config-d.json', 'w+')
     try:
-        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
+        json.dump(pv, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
     

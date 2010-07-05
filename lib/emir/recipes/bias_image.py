@@ -43,22 +43,24 @@ sigma-clipping algorithm.
 
 import logging
 
-import pyfits
-
-import numina.recipes as nr
-from emir.instrument.headers import EmirImageCreator
+from numina.recipes import RecipeResult, RecipeBase
+from emir.dataproducts import create_result
 from numina.array.combine import mean
 import numina.qa
 
 _logger = logging.getLogger("emir.recipes")
 
-class Result(nr.RecipeResult):
+class RecipeInput(object):
+    def __init__(self):
+        pass
+
+class Result(RecipeResult):
     '''Result of the recipe.'''
     def __init__(self, qa, result):
         super(Result, self).__init__(qa)
         self.products['bias'] = result
 
-class Recipe(nr.RecipeBase):
+class Recipe(RecipeBase):
     '''Recipe to process data taken in Bias image Mode.
     
     Here starts the long description...
@@ -83,47 +85,53 @@ class Recipe(nr.RecipeBase):
         allmasks = []
         try:
             for n in self.values['images']:
-                f = pyfits.open(n, 'readonly', memmap=True)
-                alldata.append(f[0].data)
+                n.open(mode='readonly', memmap=True)
+                alldata.append(n.data)
+            
+            # Combine them
+            cube = mean(alldata, allmasks)
+        
+            result = create_result(cube[0], 
+                                   variance=cube[1], 
+                                   exmap=cube[2].astype('int16'))
+            if True:
+                cqa = numina.qa.GOOD
+            else:
+                cqa = numina.qa.UNKNOWN
+        
+            return Result(cqa, result)
         finally:
-            for hdu in alldata:
-                hdu.close()
-                
-        # Combine them
-        cube = mean(alldata, allmasks)
-        
-        creator = EmirImageCreator()
-        hdulist = creator.create(cube[0], extensions=[('VARIANCE', cube[1], None)])
-        
-        if True:
-            cqa = numina.qa.GOOD
-        else:
-            cqa = numina.qa.UNKNOWN
-        
-        return Result(cqa, hdulist)
-    
+            for n in self.values['images']:
+                n.close()
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    _logger.setLevel(logging.DEBUG)
-    from numina.recipes.registry import Parameters
-    from numina.user import main
-    from numina.jsonserializer import to_json
-    import simplejson as json
     import os
     
-    pv = {'images': ['apr21_0046.fits', 'apr21_0047.fits', 'apr21_0048.fits',
-                     'apr21_0049.fits', 'apr21_0050.fits']
+    import simplejson as json
+    
+    from numina.image import Image
+    from numina.user import main
+    from numina.jsonserializer import to_json
+
+    logging.basicConfig(level=logging.DEBUG)
+    _logger.setLevel(logging.DEBUG)
+    
+    pv = {'images': [Image('apr21_0046.fits'), 
+                     Image('apr21_0047.fits'), 
+                     Image('apr21_0048.fits'),
+                     Image('apr21_0049.fits'), 
+                     Image('apr21_0050.fits')
+                     ]
     }
     
-    p = Parameters(pv)
     
     os.chdir('/home/spr/Datos/emir/apr21')
     
-    f = open('config.txt', 'w+')
+    ff = open('config.txt', 'w+')
     try:
-        json.dump(p, f, default=to_json, encoding='utf-8',indent=2)
+        json.dump(pv, ff, default=to_json, encoding='utf-8', indent=2)
     finally:
-        f.close()
+        ff.close()
     
     # main(['--list'])
     main(['-d', '--run', 'bias_image','config.txt'])

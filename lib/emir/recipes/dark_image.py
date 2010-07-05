@@ -47,22 +47,20 @@ The process will remove cosmic rays (using a typical sigma-clipping algorithm).
 
 import logging
 
-import pyfits
-
-import numina.recipes as nr
+from numina.recipes import RecipeResult, RecipeBase
 from numina.array.combine import mean
-from numina.exceptions import RecipeError
-from emir.instrument.headers import EmirImageCreator
+from emir.dataproducts import create_result
+import numina.qa
 
 _logger = logging.getLogger("emir.recipes")
 
-class Result(nr.RecipeResult):
+class Result(RecipeResult):
     '''Result of the DarkImaging recipe.'''
     def __init__(self, qa, dark):
         super(Result, self).__init__(qa)
         self.products['dark'] = dark
 
-class Recipe(nr.RecipeBase):
+class Recipe(RecipeBase):
     '''Recipe to process data taken in Dark current image Mode.
     
     Here starts the long description...
@@ -76,32 +74,29 @@ class Recipe(nr.RecipeBase):
         
     def __init__(self, value):
         super(Recipe, self).__init__(value)
-        # Default values. This can be read from a file
-        self.creator = EmirImageCreator()        
+        # Default values. This can be read from a file        
         
     def run(self):
-        fd = []
+        
+        alldata = []
+        allmasks = []
+        
         try:
-            for i in self.values['images']:
-                _logger.debug('Loading %s', i)
-                fd.append(pyfits.open(i))
-        except IOError, err:
-            _logger.error(err)
-            _logger.debug('Cleaning up hdus')            
-            raise RecipeError(err)
+            for n in self.values['images']:
+                n.open(mode='readonly', memmap=True)
+                alldata.append(n.data)
+            
+            # Combine them
+            cube = mean(alldata, allmasks)
+        
+            result = create_result(cube[0], variance=cube[1], exmap=cube[2])
+            if True:
+                cqa = numina.qa.GOOD
+            else:
+                cqa = numina.qa.UNKNOWN
+        
+            return Result(cqa, result)
         finally:
-            for i in fd:
-                i.close()
-        
-        _logger.debug('We have %d images', len(fd))
-        # Data from the primary extension
-        data = [i['primary'].data for i in fd]
-        #
-        result = mean(data)
-  
-        # Final structure
-        extensions = [('VARIANCE', None, None), ('NUMBER', None, None)]
-        hdulist = self.creator.create(result, None, extensions)
-        
-        return Result(hdulist)
+            for n in self.values['images']:
+                n.close()
         
