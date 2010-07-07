@@ -19,7 +19,13 @@
 
 '''Data products produced by the EMIR pipeline.'''
 
-from emir.instrument.headers import EmirImageCreator
+import logging
+
+import pyfits
+
+from emir.instrument.headers import default
+
+_logger = logging.getLogger("numina.image")
 
 class EmirImage(object):
     def __init__(self, data, variance=None, numbers=None):
@@ -29,16 +35,47 @@ class EmirSpectrum(object):
     def __init__(self):
         pass
 
+# Image -> Raw: PRIMARY
+#       -> Result: PRIMARY, VARIANCE, MAP 
 
-def create_result(data, variance, exmap):
-    creator = EmirImageCreator()
-    hdulist = creator.create(data, extensions=
-                             [('VARIANCE', variance, None), 
-                              ('MAP', exmap, None)])
+result_types = ['image', 'spectrum']
+_extensions = ['primary', 'variance', 'map', 'wcs']
+
+def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
+    
+    if imgtype not in result_types:
+        raise TypeError('%s not in %s' % (imgtype, result_types))
+    
+    hdefault = default_headers or default
+    
+    hdu = pyfits.PrimaryHDU(data, hdefault[imgtype]['primary'])
+                
+    if headers is not None:
+        _logger.info('Updating keywords in %s header', 'PRIMARY')      
+        for key in headers:
+            if key in hdu.header:
+                _logger.debug('Updating keyword %s with value %s', 
+                              key, headers[key])
+                hdu.header[key] = headers[key]
+            else:
+                _logger.warning("Keyword %s not permitted in FITS header", key)
+    return pyfits.HDUList([hdu])
+
+
+def create_result(data=None, headers=None, 
+                   variance=None, variance_headers=None,
+                   exmap=None, exmap_headers=None,
+                   default_headers=None, imgtype='image'):
+    hdulist = create_raw(data, headers, default_headers, imgtype)
+    extensions = {}
+    extensions['variance'] = (variance, variance_headers)
+    extensions['map'] = (exmap, exmap_headers)
+    
+    hdefault = default_headers or default
+    
+    for extname in ['variance', 'map']:
+        edata = extensions[extname]
+        hdu = pyfits.ImageHDU(edata[0], hdefault[imgtype][extname], name=extname)
+        hdulist.append(hdu)
     return hdulist
 
-
-def create_raw(data, headers):
-    creator = EmirImageCreator()
-    hdulist = creator.create(data, headers)
-    return hdulist

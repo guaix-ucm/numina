@@ -17,10 +17,6 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-
-'''Recipes for Emir Observing Modes'''
-
-
 # Classes are new style
 __metaclass__ = type
 

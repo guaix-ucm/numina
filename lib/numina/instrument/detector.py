@@ -20,20 +20,11 @@
 import scipy
 import numpy.random
 
+from numina.array import numberarray
 from numina.exceptions import DetectorElapseError
 
 # Classes are new style
 __metaclass__ = type
-
-def numberarray(x, shape=(5, 5)):
-    '''Return x if it is an array or create an array and fill it with x.''' 
-    try:
-        iter(x)
-    except TypeError:
-        return scipy.ones(shape) * x
-    else:
-        return x
-
 
 class Detector:
     '''A generic optical or IR bidimensional detector.'''

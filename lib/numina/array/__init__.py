@@ -173,3 +173,13 @@ def create_object_mask(array, segmask_name=None):
         ck_img.close()
 
     return result
+
+def numberarray(x, shape=(5, 5)):
+    '''Return x if it is an array or create an array and fill it with x.''' 
+    try:
+        iter(x)
+    except TypeError:
+        return numpy.ones(shape) * x
+    else:
+        return x
+

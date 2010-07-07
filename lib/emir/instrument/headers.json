@@ -18,7 +18,8 @@
     "Starting pixel in X spatial direction"
    ]
   }, 
-  "wcs": {}, 
+  "wcs": {},
+  "map": {}, 
   "primary": {
    "CRVAL2": [
     1, 
@@ -47,6 +48,16 @@
   }
  }, 
  "common": {
+  "map": {   
+   "EXTVER": [
+    1, 
+    "Exposure map"
+   ], 
+   "EXTNAME": [
+    "EXPMAP", 
+    ""
+   ]
+  },
   "variance": {
    "DATE-OBS": [
     "", 
@@ -361,7 +372,8 @@
     "Starting wavelength of output spectra"
    ]
   }, 
-  "wcs": {}, 
+  "wcs": {},
+  "map": {},
   "primary": {
    "CRVAL2": [
     1, 

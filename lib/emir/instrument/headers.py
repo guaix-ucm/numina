@@ -29,7 +29,7 @@ from numina.image.storage import FITSCreator
 from numina.jsonserializer import deunicode_json
 
 _result_types = ['image', 'spectrum']
-_extensions = ['primary', 'variance', 'wcs']
+_extensions = ['primary', 'variance', 'map', 'wcs']
 
 _all_headers = deunicode_json(loads(get_data('emir.instrument','headers.json')))
         
@@ -37,17 +37,23 @@ def _merge(headers, result_type):
     if result_type not in _result_types:
         raise TypeError('Image type not "image" or "spectrum"') 
 
+    result = {}
     for ext in _extensions:
         final = dict(headers['common'][ext])
         final.update(headers[result_type][ext])
         rr = []
         for key, (val, comment) in final.iteritems():
             rr.append(Card(key, val, comment))
-        header = Header(rr)
-        return header
-        
+        result[ext] = Header(rr)
+    
+    return result
+
 _image_fits_headers = _merge(_all_headers, 'image')
 _spectrum_fits_headers = _merge(_all_headers, 'spectrum')
+
+default = dict(image=_image_fits_headers,
+               spectrum=_spectrum_fits_headers)
+
 
 class EmirImageCreator(FITSCreator):
     '''Builder of Emir direct image.'''
