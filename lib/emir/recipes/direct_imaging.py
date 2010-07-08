@@ -58,7 +58,7 @@ small compared to the offsets).
 
 **Outputs:**
 
- * Image with three extensions: final image scaled to the individual exposure
+ * DiskImage with three extensions: final image scaled to the individual exposure
    time, variance  and exposure time map OR number of images combined (TBD)
 
 **Procedure:**
@@ -98,6 +98,7 @@ import numpy
 import pyfits
 
 import numina.image
+import numina.qa
 from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.logger import captureWarnings
@@ -106,26 +107,18 @@ from numina.array import subarray_match
 from numina.worker import para_map
 from numina.array import combine_shape, resize_array, flatcombine, correct_flatfield
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
-import numina.recipes as nr
-import numina.qa
-from emir.dataproducts import create_result
-
-logging.basicConfig(level=logging.INFO)
-
-_logger = logging.getLogger("numina.processing")
-_logger.setLevel(logging.DEBUG)
-_logger = logging.getLogger("numina")
-_logger.setLevel(logging.DEBUG)
+from numina.recipes import RecipeBase, RecipeResult
+from emir.dataproducts import create_result, create_raw
 
 _logger = logging.getLogger("emir.recipes")
 
-class Result(nr.RecipeResult):
+class Result(RecipeResult):
     '''Result of the imaging mode recipe.'''
     def __init__(self, qa, result):
         super(Result, self).__init__(qa)
-        self.products['result'] = result
+        self.products['result.fits'] = result
 
-class Recipe(nr.RecipeBase):
+class Recipe(RecipeBase):
     
     class WorkData(object):
         '''The data processed during the run of the recipe.
@@ -413,7 +406,6 @@ class Recipe(nr.RecipeBase):
             bw = odl[0:2 * nox + 1][0:idx]
             fw = odl[0:2 * nox + 1][idx + 1:]
             od.local['sky_related'] = (bw, fw)
-            #print_related(od)
     
         for idx, od in enumerate(odl[nox:-nox]):
             bw = odl[idx:idx + nox]
@@ -439,15 +431,15 @@ class Recipe(nr.RecipeBase):
         odl = []
         
         for i in self.values['images']:
-            img = numina.image.Image(filename=i)
-            mask = numina.image.Image(filename='bpm.fits')
-            om = numina.image.Image(filename='bpm.fits')
+            img = numina.image.DiskImage(filename=i)
+            mask = numina.image.DiskImage(filename='bpm.fits')
+            om = numina.image.DiskImage(filename='bpm.fits')
             
             od = Recipe.WorkData(img, mask, om)
             
             label, _ext = os.path.splitext(i)
             od.local['label'] = label
-            od.local['offset'] = self.values['images'][i][1]
+            od.local['offset'] = self.values['images'][i][0]
             
             odl.append(od)
                 
@@ -531,9 +523,10 @@ class Recipe(nr.RecipeBase):
                 map(lambda x: x.mask.close(), odl)
         
             # We are saving here only data part
-            # FIXME, this should be done better
-            pyfits.writeto('emir_sf_i%02d.fits' % iteration, sf_data[0], clobber=True)
-        
+            sf_hdu = create_raw(sf_data[0])
+            sf_hdu.writeto('emir_sf_i%02d.fits' % iteration, clobber=True)
+            del sf_hdu
+            
             # Step 3, apply superflat
             _logger.info("Iter %d, SF: apply superflat", iteration)
     
@@ -605,65 +598,57 @@ if __name__ == '__main__':
     import simplejson as json
     from numina.jsonserializer import to_json
     from numina.user import main
-    from numina.image import Image
+    from numina.image import DiskImage
     captureWarnings(True)
     
     os.chdir('/home/spr/Datos/emir/apr21')
     
     
-    pv = {'linearity': [1.00, 0.00],
+    pv = {'nonlinearity': [1.00, 0.00],
           'extinction': 0.05,
           'niteration': 2, 
-                        'master_dark': Image('Dark50.fits'),
-                        'master_flat': Image('flat.fits'),
-                        'master_bpm': Image('bpm.fits'),
+                        'master_dark': DiskImage('Dark50.fits'),
+                        'master_flat': DiskImage('flat.fits'),
+                        'master_bpm': DiskImage('bpm.fits'),
                         'images':  
-                       {'apr21_0046.fits': ('bpm.fits', (0, 0), ['apr21_0046.fits']),
-                        'apr21_0047.fits': ('bpm.fits', (0, 0), ['apr21_0047.fits']),
-                        'apr21_0048.fits': ('bpm.fits', (0, 0), ['apr21_0048.fits']),
-                        'apr21_0049.fits': ('bpm.fits', (21, -23), ['apr21_0049.fits']),
-                        'apr21_0051.fits': ('bpm.fits', (21, -23), ['apr21_0051.fits']),
-                        'apr21_0052.fits': ('bpm.fits', (-15, -35), ['apr21_0052.fits']),
-                        'apr21_0053.fits': ('bpm.fits', (-15, -35), ['apr21_0053.fits']),
-                        'apr21_0054.fits': ('bpm.fits', (-15, -35), ['apr21_0054.fits']),
-                        'apr21_0055.fits': ('bpm.fits', (24, 12), ['apr21_0055.fits']),
-                        'apr21_0056.fits': ('bpm.fits', (24, 12), ['apr21_0056.fits']),
-                        'apr21_0057.fits': ('bpm.fits', (24, 12), ['apr21_0057.fits']),
-                        'apr21_0058.fits': ('bpm.fits', (-27, 18), ['apr21_0058.fits']),
-                        'apr21_0059.fits': ('bpm.fits', (-27, 18), ['apr21_0059.fits']),
-                        'apr21_0060.fits': ('bpm.fits', (-27, 18), ['apr21_0060.fits']),
-                        'apr21_0061.fits': ('bpm.fits', (-38, -16), ['apr21_0061.fits']),
-                        'apr21_0062.fits': ('bpm.fits', (-38, -16), ['apr21_0062.fits']),
-                        'apr21_0063.fits': ('bpm.fits', (-38, -17), ['apr21_0063.fits']),
-                        'apr21_0064.fits': ('bpm.fits', (5, 27), ['apr21_0064.fits']),
-                        'apr21_0065.fits': ('bpm.fits', (5, 27), ['apr21_0065.fits']),
-                        'apr21_0066.fits': ('bpm.fits', (5, 27), ['apr21_0066.fits']),
-                        'apr21_0067.fits': ('bpm.fits', (32, -13), ['apr21_0067.fits']),
-                        'apr21_0068.fits': ('bpm.fits', (33, -13), ['apr21_0068.fits']),
-                        'apr21_0069.fits': ('bpm.fits', (32, -13), ['apr21_0069.fits']),
-                        'apr21_0070.fits': ('bpm.fits', (-52, 7), ['apr21_0070.fits']),
-                        'apr21_0071.fits': ('bpm.fits', (-52, 8), ['apr21_0071.fits']),
-                        'apr21_0072.fits': ('bpm.fits', (-52, 8), ['apr21_0072.fits']),
-                        'apr21_0073.fits': ('bpm.fits', (-3, -49), ['apr21_0073.fits']),
-                        'apr21_0074.fits': ('bpm.fits', (-3, -49), ['apr21_0074.fits']),
-                        'apr21_0075.fits': ('bpm.fits', (-3, -49), ['apr21_0075.fits']),
-                        'apr21_0076.fits': ('bpm.fits', (-49, -33), ['apr21_0076.fits']),
-                        'apr21_0077.fits': ('bpm.fits', (-49, -32), ['apr21_0077.fits']),
-                        'apr21_0078.fits': ('bpm.fits', (-49, -32), ['apr21_0078.fits']),
-                        'apr21_0079.fits': ('bpm.fits', (-15, 36), ['apr21_0079.fits']),
-                        'apr21_0080.fits': ('bpm.fits', (-16, 36), ['apr21_0080.fits']),
-                        'apr21_0081.fits': ('bpm.fits', (-16, 36), ['apr21_0081.fits'])
+                       {'apr21_0046.fits': ((0, 0), ['apr21_0046.fits']),
+                        'apr21_0047.fits': ((0, 0), ['apr21_0047.fits']),
+                        'apr21_0048.fits': ((0, 0), ['apr21_0048.fits']),
+                        'apr21_0049.fits': ((23, -21), ['apr21_0049.fits']),
+                        'apr21_0051.fits': ((23, -21), ['apr21_0051.fits']),
+                        'apr21_0052.fits': ((35, 15), ['apr21_0052.fits']),
+                        'apr21_0053.fits': ((35, 15), ['apr21_0053.fits']),
+                        'apr21_0054.fits': ((35, 15), ['apr21_0054.fits']),
+                        'apr21_0055.fits': ((-12, -24), ['apr21_0055.fits']),
+                        'apr21_0056.fits': ((-12, -24), ['apr21_0056.fits']),
+                        'apr21_0057.fits': ((-12, -24), ['apr21_0057.fits']),
+                        'apr21_0058.fits': ((-18, 27), ['apr21_0058.fits']),
+                        'apr21_0059.fits': ((-18, 27), ['apr21_0059.fits']),
+                        'apr21_0060.fits': ((-18, 27), ['apr21_0060.fits']),
+                        'apr21_0061.fits': ((16, 38), ['apr21_0061.fits']),
+                        'apr21_0062.fits': ((16, 38), ['apr21_0062.fits']),
+                        'apr21_0063.fits': ((17, 38), ['apr21_0063.fits']),
+                        'apr21_0064.fits': ((-27, -5), ['apr21_0064.fits']),
+                        'apr21_0065.fits': ((-27, -5), ['apr21_0065.fits']),
+                        'apr21_0066.fits': ((-27, -5), ['apr21_0066.fits']),
+                        'apr21_0067.fits': ((13, -32), ['apr21_0067.fits']),
+                        'apr21_0068.fits': ((13, -33), ['apr21_0068.fits']),
+                        'apr21_0069.fits': ((13, -32), ['apr21_0069.fits']),
+                        'apr21_0070.fits': ((-7, 52), ['apr21_0070.fits']),
+                        'apr21_0071.fits': ((-8, 52), ['apr21_0071.fits']),
+                        'apr21_0072.fits': ((-8, 52), ['apr21_0072.fits']),
+                        'apr21_0073.fits': ((49, 3), ['apr21_0073.fits']),
+                        'apr21_0074.fits': ((49, 3), ['apr21_0074.fits']),
+                        'apr21_0075.fits': ((49, 3), ['apr21_0075.fits']),
+                        'apr21_0076.fits': ((33, 49), ['apr21_0076.fits']),
+                        'apr21_0077.fits': ((32, 49), ['apr21_0077.fits']),
+                        'apr21_0078.fits': ((32, 49), ['apr21_0078.fits']),
+                        'apr21_0079.fits': ((-36, 15), ['apr21_0079.fits']),
+                        'apr21_0080.fits': ((-36, 16), ['apr21_0080.fits']),
+                        'apr21_0081.fits': ((-36, 16), ['apr21_0081.fits'])
                         },          
-    }
-    
-    # Changing the offsets
-    # x, y -> -y, -x
-    for k in pv['images']:
-        m_, o_, s_ = pv['images'][k]
-        x, y = o_
-        o_ = -y, -x
-        pv['images'][k] = (m_, o_, s_)
-    
+    }    
+
     os.chdir('/home/spr/Datos/emir/apr21')
     
     f = open('config-d.json', 'w+')

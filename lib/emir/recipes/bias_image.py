@@ -23,7 +23,7 @@ Recipe to process bias images. Bias images only appear in Simple Readout mode.
 
 **Observing modes:**
 
- * Bias Image (3.1)   
+ * Bias DiskImage (3.1)   
 
 **Inputs:**
 
@@ -109,18 +109,18 @@ if __name__ == '__main__':
     
     import simplejson as json
     
-    from numina.image import Image
+    from numina.image import DiskImage
     from numina.user import main
     from numina.jsonserializer import to_json
 
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
     
-    pv = {'images': [Image('apr21_0046.fits'), 
-                     Image('apr21_0047.fits'), 
-                     Image('apr21_0048.fits'),
-                     Image('apr21_0049.fits'), 
-                     Image('apr21_0050.fits')
+    pv = {'images': [DiskImage('apr21_0046.fits'), 
+                     DiskImage('apr21_0047.fits'), 
+                     DiskImage('apr21_0048.fits'),
+                     DiskImage('apr21_0049.fits'), 
+                     DiskImage('apr21_0050.fits')
                      ]
     }
     

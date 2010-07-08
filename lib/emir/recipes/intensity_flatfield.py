@@ -51,7 +51,7 @@ import logging
 import numpy
 
 import numina.recipes as nr
-from numina.image import Image
+from numina.image import DiskImage
 from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.array import flatcombine
@@ -113,7 +113,7 @@ class Recipe(nr.RecipeBase):
     def run(self):
         nthreads = self.values['nthreads']
         
-        simages = [Image(filename=i) for i in self.values['images']]
+        simages = [DiskImage(filename=i) for i in self.values['images']]
         smasks =  [self.values['master_bpm']] * len(simages)
                        
         # Initialize processing nodes, step 1
@@ -207,10 +207,10 @@ if __name__ == '__main__':
                                   'apr21_0079.fits',            
                                   'apr21_0080.fits',
                                   'apr21_0081.fits'],
-                        'master_bias': Image('mbias.fits'),
-                        'master_dark': Image('Dark50.fits'),
+                        'master_bias': DiskImage('mbias.fits'),
+                        'master_dark': DiskImage('Dark50.fits'),
                         'linearity': [1e-3, 1e-2, 0.99, 0.00],
-                        'master_bpm': Image('bpm.fits')
+                        'master_bpm': DiskImage('bpm.fits')
     }
     
     os.chdir('/home/spr/Datos/emir/apr21')
