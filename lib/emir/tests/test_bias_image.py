@@ -17,14 +17,14 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-
+import datetime
 import unittest
 
 import scipy
 
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
-from emir.instrument.headers import EmirImageCreator
+from emir.dataproducts import create_raw
 
 # Classes are new style
 __metaclass__ = type
@@ -48,7 +48,6 @@ class BiasImageTestCase(unittest.TestCase):
         self.input_ = scipy.zeros(detector_conf['shape'])
         self.detector.exposure(readout_opt['exposure'])
         
-        self.creator = EmirImageCreator()
         self.runcounter = RunCounter("r%05d")
         
         
@@ -59,10 +58,11 @@ class BiasImageTestCase(unittest.TestCase):
             while i < upto:
                 output = self.detector.lpath(self.input_)
                 run, _cfile = self.runcounter.runstring()
-                headers = {'RUN': run}
+                now = datetime.datetime.now()
+                nowstr = now.strftime('%FT%T')
+                headers = {'RUN': run, 'DATE': nowstr, 'DATE-OBS':nowstr}
                 headers.update(self.detector.metadata())
-                print headers
-                hdulist = self.creator.create(output, headers)
+                hdulist = create_raw(output, headers)
                 yield hdulist
                 i += 1
         

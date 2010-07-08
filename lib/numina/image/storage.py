@@ -36,7 +36,7 @@ class FITSCreator:
         
     def _init_primary_HDU(self, data=None, headers=None):
         '''Create the primary HDU of the FITS file.'''
-        hdu = pyfits.PrimaryHDU(data, self.defaults['PRIMARY'])
+        hdu = pyfits.PrimaryHDU(data, self.defaults['primary'])
                 
         if headers is not None:
             _logger.info('Updating keywords in %s header', 'PRIMARY')      
