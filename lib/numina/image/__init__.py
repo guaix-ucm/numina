@@ -23,9 +23,9 @@ import copy
 import numpy
 import pyfits
 
-class Image(object):
+class DiskImage(object):
     def __init__(self, filename, extension=None):
-        super(Image, self).__init__()
+        super(DiskImage, self).__init__()
         self.data = None
         self.meta = None
         self.filename = filename
@@ -52,11 +52,11 @@ class Image(object):
         self.hdulist = None
         
     def __copy__(self):
-        new = Image(filename=self.filename)
+        new = DiskImage(filename=self.filename)
         return new
 
     def __str__(self):
-        return 'Image(filename="%s", extension="%s")' % (self.filename, self.extension)
+        return 'DiskImage(filename="%s", extension="%s")' % (self.filename, self.extension)
     
     def __getstate__(self):
         return dict(filename=self.filename, extension=self.extension)
