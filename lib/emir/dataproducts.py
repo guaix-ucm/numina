@@ -25,26 +25,18 @@ import pyfits
 
 from emir.instrument.headers import default
 
-_logger = logging.getLogger("numina.image")
-
-class EmirImage(object):
-    def __init__(self, data, variance=None, numbers=None):
-        pass
-        
-class EmirSpectrum(object):
-    def __init__(self):
-        pass
+_logger = logging.getLogger('emir.dataproducts')
 
 # Image -> Raw: PRIMARY
 #       -> Result: PRIMARY, VARIANCE, MAP 
 
-result_types = ['image', 'spectrum']
+_result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
 
 def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
     
-    if imgtype not in result_types:
-        raise TypeError('%s not in %s' % (imgtype, result_types))
+    if imgtype not in _result_types:
+        raise TypeError('%s not in %s' % (imgtype, _result_types))
     
     hdefault = default_headers or default
     
