@@ -38,10 +38,3 @@ def _store_map(obj, where='products.json'):
         json.dump(obj, f)
     finally:
         f.close()
-
-#def store_to_disk(obj):
-#    if hasattr(obj, 'products'):
-#        for key, val in obj.__dict__.iteritems():
-#            store(val, key)
-#    else:
-#        raise TypeError(repr(obj) + ' is not storable')
