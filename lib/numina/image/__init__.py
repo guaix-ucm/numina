@@ -24,30 +24,32 @@ import numpy
 import pyfits
 
 class DiskImage(object):
-    def __init__(self, filename, extension=None):
+    def __init__(self, filename):
         super(DiskImage, self).__init__()
         self.data = None
         self.meta = None
         self.filename = filename
         self._open = False
+        self._open_extension = 'primary'
         self.hdulist = None
-        self.extension = extension or 'primary'
 
     def is_open(self):
         return self._open
 
-    def open(self, mode='copyonwrite', memmap=False):
-        if not self.is_open():
+    def open(self, mode='copyonwrite', memmap=False, extension='primary'):
+        if not self.is_open():            
             self._open = True
+            self._open_extension = extension
             self.hdulist = pyfits.open(self.filename, memmap=memmap, mode=mode)
-            self.data = self.hdulist[self.extension].data
-            self.meta = self.hdulist[self.extension].header
+            self.data = self.hdulist[extension].data
+            self.meta = self.hdulist[extension].header
         
     def close(self, output_verify='exception'):
         if self.is_open():
-            self.hdulist[self.extension].data = self.data
+            self.hdulist[self._open_extension].data = self.data
             self.hdulist.close(output_verify=output_verify)
         self._open = False
+        self._open_extension = 'primary'
         self.data = None
         self.hdulist = None
         
@@ -56,14 +58,13 @@ class DiskImage(object):
         return new
 
     def __str__(self):
-        return 'DiskImage(filename="%s", extension="%s")' % (self.filename, self.extension)
+        return 'DiskImage(filename="%s")' % (self.filename)
     
     def __getstate__(self):
-        return dict(filename=self.filename, extension=self.extension)
+        return dict(filename=self.filename)
                 
     def __setstate__(self, data):
         self.__init__(**data)
-        #self.__dict__ = data
         
     def copy(self, dst):
         shutil.copy(self.filename, dst)
