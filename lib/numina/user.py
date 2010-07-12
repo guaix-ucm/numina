@@ -40,12 +40,14 @@ from numina.exceptions import RecipeError
 from numina.diskstorage import store
 import numina.recipes.registry as registry
 
-version_line = '%prog ' + __version__ 
+
 
 def parse_cmdline(args=None):
     '''Parse the command line.'''
     usage = "usage: %prog [options] recipe [recipe-options]"
-    
+
+    version_line = '%prog ' + __version__ 
+
     parser = OptionParser(usage=usage, version=version_line, 
                           description=__doc__)
     # Command line options
@@ -69,7 +71,17 @@ def parse_cmdline(args=None):
     return (options, args)
 
 def mode_list(module):
-    '''Run the list mode of Numina.'''
+    '''Run the list mode of Numina.
+    
+    >>> mode_list('emir.recipes')
+    bias_image Bias image recipe and associates.
+    dark_image Dark image recipe.
+    direct_imaging Recipe for the reduction of imaging mode observations.
+    intensity_flatfield Intensity Flatfield Recipe.
+    simulate_image Recipe for image simulation
+    
+    
+    '''
     for m, d in list_recipes(module):
         print m, d
     
