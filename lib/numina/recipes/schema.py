@@ -29,7 +29,7 @@ _data = {
             'master_bpm': Schema('master_bpm', None, 'Master bad pixel mask'),
             'master_bias': Schema('master_bias', None, 'Master bias'),
             'master_flat': Schema('master_flat', None, 'Master flat'),
-            'nthreads': Schema('nthreads', 1, 'Nunber of threads'),
+            'nthreads': Schema('nthreads', 1, 'Number of threads'),
         }
 
 class BaseSchema(object):
