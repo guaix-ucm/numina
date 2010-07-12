@@ -19,10 +19,8 @@
 
 '''The Numen GTC recipe runner'''
 
-import inspect
 import logging
 import sys
-import pkgutil
 
 import pkg_resources
 
@@ -69,34 +67,6 @@ def get_module(name):
     __import__(name)
     module_object = sys.modules[name]
     return module_object
-
-def list_recipes(path):
-    '''List all the recipes in a module'''
-    module = __import__(path, fromlist="dummy")
-    result = []
-    for _importer, modname, _ispkg in pkgutil.iter_modules(module.__path__):
-        rmodule = __import__('.'.join([path, modname]), fromlist="dummy")
-        if check_recipe(rmodule):
-            result.append((modname, rmodule.__doc__.splitlines()[0]))
-    return result
-
-def check_recipe(module):
-    '''Check if a module has the Recipe API.'''
-    
-    def has_class(module, name, BaseClass):
-        if hasattr(module, name):
-            cls = getattr(module, name)
-            if inspect.isclass(cls) and issubclass(cls, BaseClass) and not cls is BaseClass:
-                return True
-        return False
-    
-    if (has_class(module, 'Recipe', RecipeBase) and 
-        has_class(module, 'Result', RecipeResult) and
-        hasattr(module, '__doc__')):
-        return True
-    
-    return False
-
 
 def load_pkg_recipes():
     '''Return a dictionary of capabilities and recipes, using setuptools mechanism.

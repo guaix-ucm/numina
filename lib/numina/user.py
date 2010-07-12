@@ -34,7 +34,8 @@ import StringIO
 
 import xdg.BaseDirectory as xdgbd
 
-from numina import list_recipes, get_module, check_recipe, __version__
+from numina import get_module, __version__
+from numina.recipes import list_recipes, check_recipe
 from numina.exceptions import RecipeError
 #from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
