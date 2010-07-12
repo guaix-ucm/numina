@@ -28,33 +28,41 @@ _logger = logging.getLogger("numina.recipes")
 
 class Result(RecipeResult):
     '''Result of the sample recipe.'''
-    def __init__(self, qa, result):
+    def __init__(self, qa, result, itern):
         super(Result, self).__init__(qa)
-        self.products['values'] = {}
-        self.products['values']['result'] = result
-        self.products['values']['tables'] = [[0,0], [234.456]]
+        prodkey = 'values%02d.txt' % itern
+        self.products[prodkey] = {}
+        self.products[prodkey]['result'] = result
+        self.products[prodkey]['tables'] = [[0,0], [234.456]]
       
 class Recipe(RecipeBase):
     '''Recipe to process data taken in imaging mode.
      
     '''
+    
+    required_parameters = [
+        'niterations'
+    ]
+    
     def __init__(self, param):
         super(Recipe, self).__init__(param)
+        self.repeat = param['niterations']
+        self.biter = param['niterations']
         
     def run(self):
-        return Result(QA.UNKNOWN, self.repeat)
+        itern =  self.biter - self.repeat     
+        return Result(QA.UNKNOWN, self.values['niterations'], itern)
     
 if __name__ == '__main__':
     import simplejson as json
     import tempfile
     
-    import numina.recipes
     from numina.user import main
     from numina.jsonserializer import to_json 
         
-    p = numina.recipes.registry.Parameters({'iterations': 3})
+    p = {'niterations': 3}
     
-    f = tempfile.NamedTemporaryFile(delete=False)
+    f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
     try:
         json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
     finally:

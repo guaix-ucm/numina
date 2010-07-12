@@ -30,6 +30,7 @@ _data = {
             'master_bias': Schema('master_bias', None, 'Master bias'),
             'master_flat': Schema('master_flat', None, 'Master flat'),
             'nthreads': Schema('nthreads', 1, 'Number of threads'),
+            'niterations': Schema('niterations', 1, 'Number of iterations'),
         }
 
 class BaseSchema(object):
@@ -59,8 +60,8 @@ def lookup(parameter):
 def keys():
     result = {}
     for r in _schema:
-        keys = r.keys()
-        for k in keys:
+        kys = r.keys()
+        for k in kys:
             schema = lookup(k)
             if schema is None:
                 # Schema not defined

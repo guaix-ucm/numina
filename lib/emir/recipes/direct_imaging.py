@@ -191,7 +191,7 @@ class Recipe(RecipeBase):
         'extinction',
         'nthreads',
         'images',
-        'niteration',
+        'niterations',
     ]
     
     def __init__(self, values):
@@ -425,7 +425,7 @@ class Recipe(RecipeBase):
     def run(self):
         extinction = self.values['extinction']
         nthreads = self.values['nthreads']
-        niteration = self.values['niteration']
+        niteration = self.values['niterations']
         airmass_keyword = 'AIRMASS'
         
         odl = []
@@ -606,7 +606,7 @@ if __name__ == '__main__':
     
     pv = {'nonlinearity': [1.00, 0.00],
           'extinction': 0.05,
-          'niteration': 2, 
+          'niterations': 2, 
                         'master_dark': DiskImage('Dark50.fits'),
                         'master_flat': DiskImage('flat.fits'),
                         'master_bpm': DiskImage('bpm.fits'),
