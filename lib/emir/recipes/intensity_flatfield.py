@@ -81,6 +81,7 @@ class Recipe(nr.RecipeBase):
         'nthreads',                         
     ]
     
+    capabilities = ['intensity_flatfield']
     
     def __init__(self, values):
         super(Recipe, self).__init__(values)
@@ -210,7 +211,8 @@ if __name__ == '__main__':
                         'master_bias': DiskImage('mbias.fits'),
                         'master_dark': DiskImage('Dark50.fits'),
                         'linearity': [1e-3, 1e-2, 0.99, 0.00],
-                        'master_bpm': DiskImage('bpm.fits')
+                        'master_bpm': DiskImage('bpm.fits'),
+        'observing_mode': 'intensity_flatfield'
     }
     
     os.chdir('/home/spr/Datos/emir/apr21')
@@ -221,4 +223,4 @@ if __name__ == '__main__':
     finally:
         f.close()
         
-    main(['-d', '--run', 'intensity_flatfield', 'config-iff.txt'])
+    main(['-d', '--run', 'config-iff.txt'])

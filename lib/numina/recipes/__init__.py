@@ -39,6 +39,8 @@ class RecipeBase:
     
     required_parameters = []
     
+    capabilities = []
+    
     def __init__(self, param):
         self.values = param
         self.repeat = 1
@@ -115,6 +117,19 @@ def check_recipe(module):
     
     return False
 
+# Alternate recipe system
 
-        
-        
+def init_recipe_system(modules):
+    for mod in modules:
+        module = __import__(mod, fromlist="dummy")
+        for _importer, modname, _ispkg in pkgutil.iter_modules(module.__path__):
+            __import__('.'.join([mod, modname]), fromlist="dummy")
+            
+def list_recipes_():
+    return RecipeBase.__subclasses__()
+    
+def list_recipes_by_obs_mode(obsmode):
+    return [rclass for rclass in list_recipes_() 
+            if obsmode in rclass.capabilities]
+    
+    

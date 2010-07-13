@@ -40,6 +40,8 @@ class Recipe(RecipeBase):
      
     '''
     
+    capabilities = ['sample']
+    
     required_parameters = [
         'niterations'
     ]
@@ -60,7 +62,7 @@ if __name__ == '__main__':
     from numina.user import main
     from numina.jsonserializer import to_json 
         
-    p = {'niterations': 3}
+    p = {'niterations': 3, 'observing_mode': 'sample'}
     
     f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
     try:
@@ -68,5 +70,5 @@ if __name__ == '__main__':
     finally:
         f.close()
             
-    main(['--module', 'numina.recipes', '--run', 'sample', f.name])
+    main(['--module', 'numina.recipes', '--run', f.name])
     

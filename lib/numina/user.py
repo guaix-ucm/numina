@@ -23,6 +23,7 @@
 
 import logging.config
 import os
+import sys
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import pkgutil
@@ -150,6 +151,65 @@ def mode_run(args, options, logger):
     else:
         logger.info('Completed execution')
 
+def mode_run2(args, options, logger):
+    from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
+
+    init_recipe_system([options.module])
+
+    repos = registry.get_repo_list()    
+    filerepo = registry.JSON_Repo(args[0])
+    newrepo = [filerepo] + repos
+    registry.set_repo_list(newrepo)
+
+    obsblock_id = 1
+    obsmode = ''
+    try: 
+        obsmode = registry.lookup(obsblock_id, 'observing_mode')
+    except LookupError:
+        logger.error('observing_mode not defined in input file')
+        sys.exit(1)
+
+    recipes = [c for c in list_recipes_by_obs_mode(obsmode)]
+    
+    if not recipes:
+        logger.error('No Recipe with observing mode %s', obsmode)
+        sys.exit(1)
+
+    myrecipe = recipes[0]
+
+    logger.debug('Getting the parameters required by the recipe')    
+    param = {}
+    for name in myrecipe.required_parameters:
+        param[name] = registry.lookup(obsblock_id, name)
+         
+    logger.debug('Creating the recipe')
+    recipe = myrecipe(param)
+    
+    runs = recipe.repeat
+    errorcount = 0
+    while not recipe.complete():
+        logger.debug('Running the recipe instance %d of %d ', 
+                     runs - recipe.repeat + 1, runs)
+        try:
+            result = recipe()
+            store(result)
+        except RecipeError, e:
+            logger.error("%s", e)
+            errorcount += 1
+        except (IOError, OSError), e:
+            logger.error("%s", e)
+            errorcount += 1
+    
+    logger.debug('Cleaning up the recipe')
+    recipe.cleanup()
+    
+    if errorcount > 0:
+        logger.error('Errors during execution')
+        logger.error('Number of errors: %d', errorcount)
+    else:
+        logger.info('Completed execution')
+
+
 def main(args=None):
     '''Entry point for the Numina CLI. '''        
     # Configuration options from a text file    
@@ -187,7 +247,7 @@ def main(args=None):
         mode_none()
         return 0
     elif options.mode == 'run':
-        return mode_run(args, options, logger)
+        return mode_run2(args, options, logger)
     
 if __name__ == '__main__':
     main()

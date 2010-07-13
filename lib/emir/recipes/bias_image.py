@@ -23,7 +23,7 @@ Recipe to process bias images. Bias images only appear in Simple Readout mode.
 
 **Observing modes:**
 
- * Bias DiskImage (3.1)   
+ * Bias Image (3.1)   
 
 **Inputs:**
 
@@ -50,28 +50,21 @@ import numina.qa
 
 _logger = logging.getLogger("emir.recipes")
 
-class RecipeInput(object):
-    def __init__(self):
-        pass
-
 class Result(RecipeResult):
     '''Result of the recipe.'''
     def __init__(self, qa, result):
         super(Result, self).__init__(qa)
-        self.products['bias'] = result
+        self.products['bias.fits'] = result
 
 class Recipe(RecipeBase):
-    '''Recipe to process data taken in Bias image Mode.
-    
-    Here starts the long description...
-    It continues several lines
-    
-    '''
+    '''Recipe to process data taken in Bias image Mode'''
     
     required_parameters = [
         'nthreads',
         'images',
     ]
+
+    capabilities = ['bias_image']
     
     def __init__(self, values):
         super(Recipe, self).__init__(values)
@@ -94,12 +87,8 @@ class Recipe(RecipeBase):
             result = create_result(cube[0], 
                                    variance=cube[1], 
                                    exmap=cube[2].astype('int16'))
-            if True:
-                cqa = numina.qa.GOOD
-            else:
-                cqa = numina.qa.UNKNOWN
         
-            return Result(cqa, result)
+            return Result(numina.qa.UNKNOWN, result)
         finally:
             for n in self.values['images']:
                 n.close()
@@ -116,12 +105,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
     
-    pv = {'images': [DiskImage('apr21_0046.fits'), 
+    pv = {'observing_mode': 'bias_image',
+          'images': [DiskImage('apr21_0046.fits'), 
                      DiskImage('apr21_0047.fits'), 
                      DiskImage('apr21_0048.fits'),
                      DiskImage('apr21_0049.fits'), 
                      DiskImage('apr21_0050.fits')
-                     ]
+                     ],
     }
     
     
@@ -132,7 +122,6 @@ if __name__ == '__main__':
         json.dump(pv, ff, default=to_json, encoding='utf-8', indent=2)
     finally:
         ff.close()
-    
-    # main(['--list'])
-    main(['-d', '--run', 'bias_image','config.txt'])
+
+    main(['-d', '--run', 'config.txt'])
 

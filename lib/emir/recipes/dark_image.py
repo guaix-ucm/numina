@@ -61,12 +61,10 @@ class Result(RecipeResult):
         self.products['dark'] = dark
 
 class Recipe(RecipeBase):
-    '''Recipe to process data taken in Dark current image Mode.
+    '''Recipe to process data taken in Dark current image Mode'''
     
-    Here starts the long description...
-    It continues several lines
+    capabilities = ['dark_current_image']
     
-    '''
     required_parameters = [
         'nthreads',
         'images',
@@ -90,13 +88,11 @@ class Recipe(RecipeBase):
             cube = mean(alldata, allmasks)
         
             result = create_result(cube[0], variance=cube[1], exmap=cube[2])
-            if True:
-                cqa = numina.qa.GOOD
-            else:
-                cqa = numina.qa.UNKNOWN
         
-            return Result(cqa, result)
+            return Result(numina.qa.UNKNOWN, result)
+
         finally:
             for n in self.values['images']:
                 n.close()
-        
+
+    

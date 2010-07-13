@@ -58,7 +58,7 @@ small compared to the offsets).
 
 **Outputs:**
 
- * DiskImage with three extensions: final image scaled to the individual exposure
+ * Image with three extensions: final image scaled to the individual exposure
    time, variance  and exposure time map OR number of images combined (TBD)
 
 **Procedure:**
@@ -182,6 +182,8 @@ class Recipe(RecipeBase):
             
         def append_omask(self, newimg):
             self._omasks.append(newimg)        
+
+    capabilities = ['dithered_images','nodded-beamswitched_images', 'stare_images']
     
     required_parameters = [
         'master_dark',
@@ -605,7 +607,8 @@ if __name__ == '__main__':
     os.chdir('/home/spr/Datos/emir/apr21')
     
     
-    pv = {'nonlinearity': [1.00, 0.00],
+    pv = {'observing_mode': 'dithered_images',
+          'nonlinearity': [1.00, 0.00],
           'extinction': 0.05,
           'niterations': 2, 
                         'master_dark': DiskImage('Dark50.fits'),
@@ -658,4 +661,4 @@ if __name__ == '__main__':
     finally:
         f.close()
     
-    main(['--run', 'direct_imaging', 'config-d.json'])
+    main(['--run', 'config-d.json'])

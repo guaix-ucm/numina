@@ -48,6 +48,7 @@ class Recipe(nr.RecipeBase):
                            'nformat'
                            ]
     
+    capabilities = ['simulate_image']
     
     def __init__(self, values):
         super(Recipe, self).__init__(values)
@@ -98,6 +99,7 @@ if __name__ == '__main__':
                             'scheme': 'perline',
                             'exposure': 0},
             'nformat': "r%05d",
+            'observing_mode': 'simulate_image'
                 }
     
     tmpdir = tempfile.mkdtemp(suffix='emir')
@@ -112,7 +114,7 @@ if __name__ == '__main__':
     finally:
         f.close()
             
-    main(['--run', 'simulate_image', cfile])
+    main(['--run', cfile])
         
 
 
