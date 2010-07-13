@@ -20,8 +20,8 @@
 '''Recipe for the reduction of multiobject spectroscopy.
 
 Recipe to reduce observations obtained in multiobject spectroscopy,
-considering different possibilities depending on the observing strategy. In
-particular, the following strategies are considered: stare spectra,
+considering different possibilities depending on the observing mode. In
+particular, the following observing modes are considered: stare spectra,
 dithered/nodded spectra, and offset spectra.
 
 The special flexibility of the Cold Slit Unit (CSU) allows to obtain slit
@@ -35,7 +35,7 @@ that are aligned consecutively is *Nslit*>1, the total length of the
 pseudo-long-slit will be *Nslit* x *Lslit*.
 
 In order to unambiguously proceed with a proper sky subtraction for different
-observing strategies, a table specifying which pseudo-long-slits with *sky*
+observing modes, a table specifying which pseudo-long-slits with *sky*
 spectra are associated to the pseudo-long-slits with *science* spectra must be
 provided. In addition, this table must specify the characteristics of the data
 obtained through each pseudo-long-slit. More precisely, in the case of
@@ -67,7 +67,7 @@ association table among pseudo-long-slits:
 **Inputs:**
 
  * Science frames + [Sky Frames]
- * An indication of the observing strategy: **stare spectra**, 
+ * An indication of the observing mode: **stare spectra**, 
    **dithered/nodded spectra**, or **offset spectra**. In the case of
    dithered/nodded spectra, the corresponding offsets must be indicated (these
    offsets must be integer and can be zero)
@@ -101,14 +101,14 @@ The reduction will be carried out by extracting the different pseudo-long-slits
 and following a *traditional* long-slit reduction, making the appropriate
 treatment for the sky subtraction. The basic steps must include:
 
- * Data modelling (if appropriate/possible) and variance frame creation (from
+ * Data modeling (if appropriate/possible) and variance frame creation (from
    first principles)
 
  * Correction of non-linearity
 
  * Dark correction: this step can be avoided in most cases, since the
    extracted sky spectra may contain that information. However, if observing
-   strategies with different exposure times for *science* and *sky* frames ar
+   modes with different exposure times for *science* and *sky* frames are
    allowed, this correction may be necessary.
 
  * Flatfielding: distinguish between high frequency (pixel-to-pixel) and 

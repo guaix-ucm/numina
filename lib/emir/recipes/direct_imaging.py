@@ -22,7 +22,7 @@
 
 Recipe to reduce observations obtained in imaging mode, considering different
 possibilities depending on the size of the offsets between individual images.
-In particular, the following strategies are considered: stare imaging, nodded
+In particular, the following observing modes are considered: stare imaging, nodded
 beamswitched imaging, and dithered imaging. 
 
 A critical piece of information here is a table that clearly specifies which
@@ -40,7 +40,7 @@ small compared to the offsets).
 **Inputs:**
 
  * Science frames + [Sky Frames]
- * An indication of the observing strategy: **stare image**, **nodded
+ * An indication of the observing mode: **stare image**, **nodded
    beamswitched image**, or **dithered imaging**
  * A table relating each science image with its sky image(s) (TBD if it's in 
    the FITS header and/or in other format)
