@@ -19,12 +19,11 @@
 import tempfile
 import subprocess
 import logging
+from itertools import imap, product
 
 import numpy
 import pyfits
 from scipy import asarray, zeros_like, minimum, maximum
-
-from numina.array.combine import median
 
 _logger = logging.getLogger("numina.array")
 
@@ -81,10 +80,9 @@ def subarray_match(shape, ref, sshape, sref=None):
     return (f, s)
 
 def combine_shape(shapes, offsets):
-    # Computing final image size and new offsets
-    sharr = numpy.asarray(shapes)
-
-    offarr = numpy.asarray(offsets)        
+    # Computing final array size and new offsets
+    sharr = asarray(shapes)
+    offarr = asarray(offsets)        
     ucorners = offarr + sharr
     ref = offarr.min(axis=0)     
     finalshape = ucorners.max(axis=0) - ref 
@@ -95,20 +93,6 @@ def resize_array(data, finalshape, region):
     newdata = numpy.zeros(finalshape, dtype=data.dtype)
     newdata[region] = data
     return newdata
-
-def flatcombine(data, masks, scales=None, blank=1.0):
-    # Zero masks
-    # TODO Do a better fix here
-    # This is to avoid negative of zero values in the flat field
-    #if scales is not None:
-    #    maxscale = max(scales)
-    #    scales = [s / maxscale for s in scales]
-    
-    sf_data = median(data, masks, scales=scales)
-    
-    mm = sf_data[0] <= 0
-    sf_data[0][mm] = blank
-    return sf_data
 
 def correct_dark(data, dark, dtype='float32'):
     result = data - dark
@@ -126,6 +110,7 @@ def correct_nonlinearity(data, polynomial, dtype='float32'):
     return result
 
 def compute_sky_advanced(data, omasks):
+    from numina.array.combine import median
     d = data[0]
     m = omasks[0]
     median_sky = numpy.median(d[m == 0])
@@ -182,4 +167,68 @@ def numberarray(x, shape=(5, 5)):
         return numpy.ones(shape) * x
     else:
         return x
+
+def blockgen1d(block, size):
+    '''Compute 1d block intervals to be used by combine.
+    
+    blockgen1d computes the slices by recursively halving the initial
+    interval (0, size) by 2 until its size is lesser or equal than block
+    
+    :param block: an integer maximum block size
+    :param size: original size of the interval, it corresponds to a 0:size slice
+    :return: a list of slices
+    
+    Example:
+    
+        >>> blockgen1d(512, 1024)
+        [slice(0, 512, None), slice(512, 1024, None)]
+        
+        >>> blockgen1d(500, 1024)
+        [slice(0, 256, None), slice(256, 512, None), slice(512, 768, None), slice(768, 1024, None)]
+    
+    '''
+    def numblock(block, x):
+        '''Compute recursively the numeric intervals
+        '''
+        a, b = x
+        if b - a <= block:
+            return [x]
+        else:
+            result = []
+            d = int(b - a) / 2
+            for i in imap(numblock, [block, block], [(a, a + d), (a + d, b)]):
+                result.extend(i)
+            return result
+        
+    return [slice(*l) for l in numblock(block, (0, size))]
+
+
+def blockgen(blocks, shape):
+    '''Generate a list of slice tuples to be used by combine.
+    
+    The tuples represent regions in an N-dimensional image.
+    
+    :param blocks: a tuple of block sizes
+    :param shape: the shape of the n-dimensional array
+    :return: an iterator to the list of tuples of slices
+    
+    Example:
+        
+        >>> blocks = (500, 512)
+        >>> shape = (1040, 1024)
+        >>> for i in blockgen(blocks, shape):
+        ...     print i
+        (slice(0, 260, None), slice(0, 512, None))
+        (slice(0, 260, None), slice(512, 1024, None))
+        (slice(260, 520, None), slice(0, 512, None))
+        (slice(260, 520, None), slice(512, 1024, None))
+        (slice(520, 780, None), slice(0, 512, None))
+        (slice(520, 780, None), slice(512, 1024, None))
+        (slice(780, 1040, None), slice(0, 512, None))
+        (slice(780, 1040, None), slice(512, 1024, None))
+        
+    
+    '''
+    iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
+    return product(*iterables)
 

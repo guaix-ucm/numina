@@ -105,7 +105,8 @@ from numina.logger import captureWarnings
 from numina.array.combine import median
 from numina.array import subarray_match
 from numina.worker import para_map
-from numina.array import combine_shape, resize_array, flatcombine, correct_flatfield
+from numina.array import combine_shape, resize_array, correct_flatfield
+from numina.array.combine import flatcombine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 from numina.recipes import RecipeBase, RecipeResult
 from emir.dataproducts import create_result, create_raw

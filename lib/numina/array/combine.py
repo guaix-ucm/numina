@@ -17,101 +17,32 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from itertools import izip, imap, product
+'''Different methods for combining lists of arrays'''
 
-import numpy as np
+from itertools import izip
 
+import numpy
+
+from numina.array import combine_shape
 from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import CombineError
 
-
-def blockgen1d(block, size):
-    '''Compute 1d block intervals to be used by combine.
+def combine(method, images, masks=None, dtype=None, out=None,
+             args=(), zeros=None, scales=None, weights=None, offsets=None):
+    # method should be a string
     
-    blockgen1d computes the slices by recursively halving the initial
-    interval (0, size) by 2 until its size is lesser or equal than block
+    WORKTYPE = 'float'
     
-    :param block: an integer maximum block size
-    :param size: original size of the interval, it corresponds to a 0:size slice
-    :return: a list of slices
+    if method not in ['mean', 'median', 'sigmaclip']:
+        if not callable(method):
+            raise CombineError('method is neither a string nor callable')
     
-    Example:
-    
-        >>> blockgen1d(512, 1024)
-        [slice(0, 512, None), slice(512, 1024, None)]
-        
-        >>> blockgen1d(500, 1024)
-        [slice(0, 256, None), slice(256, 512, None), slice(512, 768, None), slice(768, 1024, None)]
-    
-    '''
-    def numblock(block, x):
-        '''Compute recursively the numeric intervals
-        '''
-        a, b = x
-        if b - a <= block:
-            return [x]
-        else:
-            result = []
-            d = int(b - a) / 2
-            for i in imap(numblock, [block, block], [(a, a + d), (a + d, b)]):
-                result.extend(i)
-            return result
-        
-    return [slice(*l) for l in numblock(block, (0, size))]
-
-
-def blockgen(blocks, shape):
-    '''Generate a list of slice tuples to be used by combine.
-    
-    The tuples represent regions in an N-dimensional image.
-    
-    :param blocks: a tuple of block sizes
-    :param shape: the shape of the n-dimensional array
-    :return: an iterator to the list of tuples of slices
-    
-    Example:
-        
-        >>> blocks = (500, 512)
-        >>> shape = (1040, 1024)
-        >>> for i in blockgen(blocks, shape):
-        ...     print i
-        (slice(0, 260, None), slice(0, 512, None))
-        (slice(0, 260, None), slice(512, 1024, None))
-        (slice(260, 520, None), slice(0, 512, None))
-        (slice(260, 520, None), slice(512, 1024, None))
-        (slice(520, 780, None), slice(0, 512, None))
-        (slice(520, 780, None), slice(512, 1024, None))
-        (slice(780, 1040, None), slice(0, 512, None))
-        (slice(780, 1040, None), slice(512, 1024, None))
-        
-    
-    '''
-    iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
-    return product(*iterables)
-   
-def combine_shape(shapes, offsets):
-    # Computing final image size and new offsets
-    sharr = np.asarray(shapes)
-    
-    offarr = np.asarray(offsets)        
-    ucorners = offarr + sharr
-    ref = offarr.min(axis=0)        
-    finalshape = ucorners.max(axis=0) - ref 
-    offsetsp = offarr - ref
-    return (finalshape, offsetsp)
-
-def _combine(method, images, masks=None, dtype=None, out=None,
-             args=(), zeros=None, scales=None, weights=None, offsets=None,):
-        # method should be a string
-    if not isinstance(method, basestring) and not callable(method):
-        raise CombineError('method is neither a string or callable')
-    
-    # Check inputs
+    # Check inumpy.uts
     if not images:
         raise CombineError("len(inputs) == 0")
 
     number_of_images = len(images)
-    images = map(np.asanyarray, images)
+    images = map(numpy.asanyarray, images)
     
     # All images have the same shape
     allshapes = [i.shape for i in images]
@@ -137,36 +68,36 @@ def _combine(method, images, masks=None, dtype=None, out=None,
         if any(imshape != ma.shape for (imshape, ma) in izip(allshapes, masks)):
             raise CombineError("mask and image have different shape")
     else:
-        masks = [np.zeros(baseshape, dtype=np.bool)] * number_of_images
+        masks = [numpy.zeros(baseshape, dtype='bool')] * number_of_images
         
     # Creating out if needed
     # We need three numbers
     outshape = (3,) + tuple(finalshape)
     
     if out is None:
-        out = np.zeros(outshape, dtype='float')
+        out = numpy.zeros(outshape, dtype=WORKTYPE)
     else:
         if out.shape != outshape:
             raise CombineError("result has wrong shape")  
     
     if zeros is None:
-        zeros = np.zeros(number_of_images, dtype='float')
+        zeros = numpy.zeros(number_of_images, dtype=WORKTYPE)
     else:
-        zeros = np.asanyarray(zeros, dtype='float')
+        zeros = numpy.asanyarray(zeros, dtype=WORKTYPE)
         if zeros.shape != (number_of_images,):
             raise CombineError('incorrect number of zeros')
         
     if scales is None:
-        scales = np.ones(number_of_images, dtype='float')
+        scales = numpy.ones(number_of_images, dtype=WORKTYPE)
     else:
-        scales = np.asanyarray(scales, dtype='float')
+        scales = numpy.asanyarray(scales, dtype=WORKTYPE)
         if scales.shape != (number_of_images,):
             raise CombineError('incorrect number of scales')
         
     if weights is None:
-        weights = np.ones(number_of_images, dtype='float')
+        weights = numpy.ones(number_of_images, dtype=WORKTYPE)
     else:
-        weights = np.asanyarray(scales, dtype='float')
+        weights = numpy.asanyarray(scales, dtype=WORKTYPE)
         if weights.shape != (number_of_images,):
             raise CombineError('incorrect number of weights')
 
@@ -217,7 +148,7 @@ def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
                [ 2.  ,  2.  ]]])
        
     '''
-    return _combine('mean', images, masks=masks, dtype=dtype, out=out, args=(dof,),
+    return combine('mean', images, masks=masks, dtype=dtype, out=out, args=(dof,),
                     zeros=zeros, scales=scales, weights=weights, offsets=offsets)
     
     
@@ -244,7 +175,7 @@ def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :raise CombineError: if method is not callable
        
     '''
-    return _combine('median', images, masks=masks, dtype=dtype, out=out,
+    return combine('median', images, masks=masks, dtype=dtype, out=out,
                     zeros=zeros, scales=scales, weights=weights, offsets=offsets)    
 
 def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
@@ -269,10 +200,20 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :return: mean, variance and number of points stored in    
     '''
     
-    return _combine('sigmaclip', images, masks=masks, dtype=dtype, out=out,
+    return combine('sigmaclip', images, masks=masks, dtype=dtype, out=out,
                     args=(low, high, dof), zeros=zeros, scales=scales, 
                     weights=weights, offsets=offsets)
 
+def flatcombine(data, masks, dtype=None, scales=None, 
+                blank=1.0, method='median', args=()):
+    
+    result = combine(method, data, masks=masks, 
+                     dtype=dtype, scales=scales, args=args)
+    
+    # Sustitute values <= 0 by blank
+    mm = result[0] <= 0
+    result[0][mm] = blank
+    return result
 
 if __name__ == "__main__":
     from numina.decorators import print_timing
@@ -283,9 +224,9 @@ if __name__ == "__main__":
     shape = (2048, 2048)
     data_dtype = 'int16'
     nimages = 10
-    minputs = [i * np.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
-    mmasks = [np.zeros(shape, dtype='int16') for i in xrange(nimages)]
-    offsets = np.array([[0, 0]] * nimages, dtype='int16') 
+    minputs = [i * numpy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
+    mmasks = [numpy.zeros(shape, dtype='int16') for i in xrange(nimages)]
+    offsets = numpy.array([[0, 0]] * nimages, dtype='int16') 
     
     print 'Computing'
     for i in range(1):
