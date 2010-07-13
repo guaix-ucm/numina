@@ -54,7 +54,7 @@ import numina.recipes as nr
 from numina.image import DiskImage
 from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
-from numina.array import flatcombine
+from numina.array.combine import flatcombine
 from numina.worker import para_map
 from emir.instrument.headers import EmirImageCreator
 import numina.qa as QA
