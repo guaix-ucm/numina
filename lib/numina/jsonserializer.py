@@ -24,7 +24,10 @@ def to_json(obj):
     if hasattr(obj, '__getstate__'):
         dparam = obj.__getstate__()
     else:
-        dparam = obj.__dict__
+        try:
+            dparam = obj.__dict__
+        except AttributeError:
+            raise TypeError('%s is not JSON serializable' % obj.__class__)
     return {'__class__': obj.__class__.__name__,
             '__module__': obj.__class__.__module__,
             '__value__': dparam,
