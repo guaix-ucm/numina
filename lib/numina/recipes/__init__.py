@@ -88,36 +88,6 @@ def _store_rr(obj, where=None):
     # We store the values inside obj.products
     for key, val in obj.products.iteritems():
         store(val, key)
-        
-        
-def list_recipes(path):
-    '''List all the recipes in a module'''
-    module = __import__(path, fromlist="dummy")
-    result = []
-    for _importer, modname, _ispkg in pkgutil.iter_modules(module.__path__):
-        rmodule = __import__('.'.join([path, modname]), fromlist="dummy")
-        if check_recipe(rmodule):
-            result.append((modname, rmodule.__doc__.splitlines()[0]))
-    return result
-
-def check_recipe(module):
-    '''Check if a module has the Recipe API.'''
-    
-    def has_class(module, name, BaseClass):
-        if hasattr(module, name):
-            cls = getattr(module, name)
-            if inspect.isclass(cls) and issubclass(cls, BaseClass) and not cls is BaseClass:
-                return True
-        return False
-    
-    if (has_class(module, 'Recipe', RecipeBase) and 
-        has_class(module, 'Result', RecipeResult) and
-        hasattr(module, '__doc__')):
-        return True
-    
-    return False
-
-# Alternate recipe system
 
 def init_recipe_system(modules):
     for mod in modules:
@@ -125,11 +95,11 @@ def init_recipe_system(modules):
         for _importer, modname, _ispkg in pkgutil.iter_modules(module.__path__):
             __import__('.'.join([mod, modname]), fromlist="dummy")
             
-def list_recipes_():
+def list_recipes():
     return RecipeBase.__subclasses__()
     
 def list_recipes_by_obs_mode(obsmode):
-    return [rclass for rclass in list_recipes_() 
+    return [rclass for rclass in list_recipes() 
             if obsmode in rclass.capabilities]
     
     

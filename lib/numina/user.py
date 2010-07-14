@@ -23,7 +23,6 @@
 
 import logging.config
 import os
-import sys
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 import pkgutil
@@ -37,6 +36,7 @@ import xdg.BaseDirectory as xdgbd
 
 from numina import __version__
 from numina.recipes import list_recipes
+from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
 from numina.exceptions import RecipeError
 #from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
@@ -72,30 +72,16 @@ def parse_cmdline(args=None):
     (options, args) = parser.parse_args(args)
     return (options, args)
 
-def mode_list(module):
-    '''Run the list mode of Numina.
-    
-    >>> mode_list('emir.recipes')
-    bias_image Bias image recipe and associates.
-    dark_image Dark image recipe.
-    direct_imaging Recipe for the reduction of imaging mode observations.
-    intensity_flatfield Intensity Flatfield Recipe.
-    simulate_image Recipe for image simulation
-    
-    
-    '''
-    for m, d in list_recipes(module):
-        print m, d
+def mode_list():
+    '''Run the list mode of Numina'''
+    for recipeclass in list_recipes():
+        print recipeclass
     
 def mode_none():
     '''Do nothing in Numina.'''
     pass
 
-def mode_run(args, options, logger):
-    from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
-
-    init_recipe_system([options.module])
-
+def mode_run(args, logger):
     repos = registry.get_repo_list()    
     filerepo = registry.JSON_Repo(args[0])
     newrepo = [filerepo] + repos
@@ -181,14 +167,16 @@ def main(args=None):
     if options.module is None:
         options.module = config.get('ohoh', 'module')
     
+    init_recipe_system([options.module])
+    
     if options.mode == 'list':
-        mode_list(options.module) 
+        mode_list() 
         return 0
     elif options.mode == 'none':
         mode_none()
         return 0
     elif options.mode == 'run':
-        return mode_run(args, options, logger)
+        return mode_run(args, logger)
     
 if __name__ == '__main__':
     main()
