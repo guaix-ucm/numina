@@ -88,18 +88,25 @@ def _store_rr(obj, where=None):
     # We store the values inside obj.products
     for key, val in obj.products.iteritems():
         store(val, key)
-
-def init_recipe_system(modules):
-    for mod in modules:
-        module = __import__(mod, fromlist="dummy")
-        for _importer, modname, _ispkg in pkgutil.iter_modules(module.__path__):
-            __import__('.'.join([mod, modname]), fromlist="dummy")
             
 def list_recipes():
     return RecipeBase.__subclasses__()
     
 def list_recipes_by_obs_mode(obsmode):
-    return [rclass for rclass in list_recipes() 
-            if obsmode in rclass.capabilities]
+    return list(recipes_by_obs_mode(obsmode))
     
+def recipes_by_obs_mode(obsmode):
+    for rclass in list_recipes():
+        if obsmode in rclass.capabilities:
+            yield rclass
     
+def walk_modules(mod):
+    module = __import__(mod, fromlist="dummy")
+    for _, nmod, _ in pkgutil.walk_packages(path=module.__path__,
+                                                prefix=module.__name__ + '.'):
+        yield nmod
+        
+def init_recipe_system(modules):
+    for mod in modules:
+        for sub in walk_modules(mod):
+            __import__(sub, fromlist="dummy")
