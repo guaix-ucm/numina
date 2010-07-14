@@ -110,7 +110,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   PyArrayObject* scales = NULL;
   PyArrayObject* zeros = NULL;
   PyArrayObject* weights = NULL;
-  NPY_BEGIN_THREADS_DEF;
 
   static char *kwlist[] = { "method", "data", "masks", "out0", "out1", "out2",
       "args", "zeros", "scales", "weights", NULL };
@@ -352,7 +351,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
       }
     }
 
-    NPY_BEGIN_THREADS;
     // And pass the data to the combine method
     method_ptr->run(&data[0], &wdata[0], data.size(), pvalues);
 
@@ -368,7 +366,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     // We clean up the data storage
     data.clear();
     wdata.clear();
-    NPY_END_THREADS;
+
     // And move all the iterators to the next point
     std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);
     std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
@@ -404,7 +402,6 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
   PyObject* clean = NULL;
   std::vector<PyObject*> cleanup;
 
-  NPY_BEGIN_THREADS_DEF;
 
   static char *kwlist[] = { "method", "data", "masks", "offsets", "out0",
       "out1", "out2", "args", "zeros", "scales", "weights", NULL };
@@ -673,7 +670,7 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
         if (zero and scale and weight)
         {
           PyArray_ITER_GOTO(*i, new_coordinates);
-          NPY_BEGIN_THREADS;
+
           void* d_dtpr = (*i)->dataptr;
           // Swap the value if needed and store it in the buffer
           datum_swap(buffer, d_dtpr, datum_need_to_swap, NULL);
@@ -687,7 +684,7 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
 
           data.push_back(converted);
           wdata.push_back(*weight);
-          NPY_END_THREADS;
+
         } else
         {
           std::for_each(cleanup.begin(), cleanup.end(), My_Py_Decref);
@@ -696,7 +693,6 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
         }
       }
     }
-    NPY_BEGIN_THREADS;
 
     // And pass the data to the combine method
     method_ptr->run(&data[0], &wdata[0], data.size(), pvalues);
@@ -713,7 +709,6 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
     // We clean up the data storage
     data.clear();
     wdata.clear();
-    NPY_END_THREADS;
 
     std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
   }

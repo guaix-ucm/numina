@@ -33,13 +33,9 @@ PythonMethod::PythonMethod(PyObject* callback, PyObject* arguments) :
 	Method(), m_callback(callback), m_arguments(arguments) {
 }
 
-// This function adquiries the GIL, that was previously
-// released in combinemodule.cc
 void PythonMethod::run(double* data, double* weights, size_t size, double* results[3]) const {
 	npy_intp dims = size;
-	NPY_ALLOW_C_API_DEF;
 
-	NPY_ALLOW_C_API;
 	PyObject* pydata = PyArray_SimpleNewFromData(1, &dims, PyArray_DOUBLE,
 			(void*) data);
 
@@ -60,7 +56,6 @@ void PythonMethod::run(double* data, double* weights, size_t size, double* resul
 		}
 	}
 	Py_DECREF(result);
-	NPY_DISABLE_C_API;
 }
 
 } // namespace Numina
