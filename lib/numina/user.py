@@ -35,8 +35,8 @@ import StringIO
 
 import xdg.BaseDirectory as xdgbd
 
-from numina import get_module, __version__
-from numina.recipes import list_recipes, check_recipe
+from numina import __version__
+from numina.recipes import list_recipes
 from numina.exceptions import RecipeError
 #from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
@@ -92,66 +92,6 @@ def mode_none():
     pass
 
 def mode_run(args, options, logger):
-    '''Run the execution mode of Numina'''
-    rename = args[0]
-    recipemod = get_module('.'.join([options.module, args[0]]))
-       
-    # running the recipe
-    logger.info('Created instance of module %s', rename)
-    
-    if not check_recipe(recipemod):
-        logger.error('%s is not a valid Recipe', rename)
-        return 2
-    
-    # Getting the parameters of the recipe
-    
-    logger.debug('Getting the parameters required by the module')
-    
-    # checking if the parameters of the recipe
-    # are fulfilled by the parameters in the text file
-    
-    repos = registry.get_repo_list()
-    
-    filerepo = registry.JSON_Repo(args[1])
-
-    newrepo = [filerepo] + repos
-
-    registry.set_repo_list(newrepo)
-
-    obsblock_id = 1
-    
-    param = {}
-    for name in recipemod.Recipe.required_parameters:
-        param[name] = registry.lookup(obsblock_id, name)
-        
-    logger.debug('Creating the recipe')
-    recipe = recipemod.Recipe(param)
-    
-    runs = recipe.repeat
-    errorcount = 0
-    while not recipe.complete():
-        logger.debug('Running the recipe instance %d of %d ', 
-                     runs - recipe.repeat + 1, runs)
-        try:
-            result = recipe()
-            store(result)
-        except RecipeError, e:
-            logger.error("%s", e)
-            errorcount += 1
-        except (IOError, OSError), e:
-            logger.error("%s", e)
-            errorcount += 1
-    
-    logger.debug('Cleaning up the recipe')
-    recipe.cleanup()
-    
-    if errorcount > 0:
-        logger.error('Errors during execution')
-        logger.error('Number of errors: %d', errorcount)
-    else:
-        logger.info('Completed execution')
-
-def mode_run2(args, options, logger):
     from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
 
     init_recipe_system([options.module])
@@ -167,48 +107,49 @@ def mode_run2(args, options, logger):
         obsmode = registry.lookup(obsblock_id, 'observing_mode')
     except LookupError:
         logger.error('observing_mode not defined in input file')
-        sys.exit(1)
+        return 1
 
-    recipes = [c for c in list_recipes_by_obs_mode(obsmode)]
+    recipeclasses = list_recipes_by_obs_mode(obsmode)
     
-    if not recipes:
+    if not recipeclasses:
         logger.error('No Recipe with observing mode %s', obsmode)
-        sys.exit(1)
+        return 1
 
-    myrecipe = recipes[0]
-
-    logger.debug('Getting the parameters required by the recipe')    
-    param = {}
-    for name in myrecipe.required_parameters:
-        param[name] = registry.lookup(obsblock_id, name)
-         
-    logger.debug('Creating the recipe')
-    recipe = myrecipe(param)
+    for RecipeClass in recipeclasses:
     
-    runs = recipe.repeat
-    errorcount = 0
-    while not recipe.complete():
-        logger.debug('Running the recipe instance %d of %d ', 
-                     runs - recipe.repeat + 1, runs)
-        try:
-            result = recipe()
-            store(result)
-        except RecipeError, e:
-            logger.error("%s", e)
-            errorcount += 1
-        except (IOError, OSError), e:
-            logger.error("%s", e)
-            errorcount += 1
-    
-    logger.debug('Cleaning up the recipe')
-    recipe.cleanup()
-    
-    if errorcount > 0:
-        logger.error('Errors during execution')
-        logger.error('Number of errors: %d', errorcount)
-    else:
-        logger.info('Completed execution')
-
+        logger.debug('Getting the parameters required by the recipe')    
+        param = {}
+        for name in RecipeClass.required_parameters:
+            param[name] = registry.lookup(obsblock_id, name)
+             
+        logger.debug('Creating the recipe')
+        recipe = RecipeClass(param)
+        
+        runs = recipe.repeat
+        errorcount = 0
+        while not recipe.complete():
+            logger.debug('Running the recipe instance %d of %d ', 
+                         runs - recipe.repeat + 1, runs)
+            try:
+                result = recipe()
+                store(result)
+            except RecipeError, e:
+                logger.error("%s", e)
+                errorcount += 1
+            except (IOError, OSError), e:
+                logger.error("%s", e)
+                errorcount += 1
+        
+        logger.debug('Cleaning up the recipe')
+        recipe.cleanup()
+        
+        if errorcount > 0:
+            logger.error('Errors during execution')
+            logger.error('Number of errors: %d', errorcount)
+            return errorcount
+        else:
+            logger.info('Completed execution')
+        return 0
 
 def main(args=None):
     '''Entry point for the Numina CLI. '''        
@@ -247,7 +188,7 @@ def main(args=None):
         mode_none()
         return 0
     elif options.mode == 'run':
-        return mode_run2(args, options, logger)
+        return mode_run(args, options, logger)
     
 if __name__ == '__main__':
     main()
