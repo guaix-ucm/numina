@@ -22,6 +22,7 @@ import simplejson as json
 from pyfits import HDUList
 
 from generic import generic
+from jsonserializer import to_json
 
 @generic
 def store(obj, where=None):
@@ -35,6 +36,6 @@ def _store_fits(obj, where='file.fits'):
 def _store_map(obj, where='products.json'):
     f = open(where, 'w+') 
     try:
-        json.dump(obj, f)
+        json.dump(obj, f, default=to_json)
     finally:
         f.close()
