@@ -36,6 +36,6 @@ def _store_fits(obj, where='file.fits'):
 def _store_map(obj, where='products.json'):
     f = open(where, 'w+') 
     try:
-        json.dump(obj, f, default=to_json)
+        json.dump(obj, f, default=to_json, indent=1, encoding='utf-8')
     finally:
         f.close()
