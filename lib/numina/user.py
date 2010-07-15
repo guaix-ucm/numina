@@ -111,21 +111,20 @@ def mode_run(args, logger):
         logger.debug('Creating the recipe')
         recipe = RecipeClass(param)
         
-        runs = recipe.repeat
-        errorcount = 0
-        while not recipe.complete():
-            logger.debug('Running the recipe instance %d of %d ', 
-                         runs - recipe.repeat + 1, runs)
-            try:
-                result = recipe()
-                store(result)
-            except RecipeError, e:
-                logger.error("%s", e)
-                errorcount += 1
-            except (IOError, OSError), e:
-                logger.error("%s", e)
-                errorcount += 1
         
+        errorcount = 0
+        try:
+            for result in recipe():
+                logger.info('Running the recipe instance %d of %d ', 
+                         recipe.current + 1, recipe.repeat)
+                store(result)
+        except RecipeError, e:
+            logger.error("%s", e)
+            errorcount += 1
+        except (IOError, OSError), e:
+            logger.error("%s", e)
+            errorcount += 1
+            
         logger.debug('Cleaning up the recipe')
         recipe.cleanup()
         

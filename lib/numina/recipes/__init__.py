@@ -44,6 +44,7 @@ class RecipeBase:
     def __init__(self, param):
         self.values = param
         self.repeat = 1
+        self.current = 0
                 
     def setup(self, _param):
         warnings.warn("the setup method is deprecated", DeprecationWarning, stacklevel=2)
@@ -54,12 +55,15 @@ class RecipeBase:
     
     def __call__(self):
         '''Run the recipe, don't override.'''
-        try:
-            self.repeat -= 1
-            result = self.run()
-            return result            
-        except RecipeError:
-            raise
+        
+        for self.current in range(self.repeat):
+            try:
+                result = self.run()
+                yield result
+            except (RecipeError,), e:
+                yield {'error': True, 'exception': e}
+            except (IOError, OSError), e:
+                yield {'error': True, 'exception': e}
         
 #    @abc.abstractmethod
     def run(self):
@@ -75,7 +79,8 @@ class RecipeBase:
         :rtype: bool
         '''
         return self.repeat <= 0
-    
+
+
 class RecipeResult:
     '''Result of the run method of the Recipe.'''
 #    __metaclass__ = abc.ABCMeta
@@ -110,3 +115,22 @@ def init_recipe_system(modules):
     for mod in modules:
         for sub in walk_modules(mod):
             __import__(sub, fromlist="dummy")
+            
+            
+            
+if __name__ == '__main__':
+    import simplejson as json
+    import tempfile
+    
+    from numina.user import main
+    from numina.jsonserializer import to_json 
+        
+    p = {'niterations': 1, 'observing_mode': 'sample'}
+    
+    f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
+    try:
+        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
+    finally:
+        f.close()
+            
+    main(['--module', 'numina.recipes', '--run', f.name])
