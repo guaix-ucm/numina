@@ -88,6 +88,11 @@ class GenericFunction(object):
                 return func(*args)
         else:
             self._default_impl(*args)
+            
+    def is_registered(self, cls):
+        if cls in self._internal_map:
+            return True
+        return False
 
 def generic(function):
     '''Decorate a function, making it the default implementation of a generic function.

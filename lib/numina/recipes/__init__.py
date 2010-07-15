@@ -27,12 +27,21 @@ A recipe is a module that complies with the *reduction recipe API*:
 import warnings
 import inspect
 import pkgutil
+import datetime
 
-from numina.diskstorage import store
 from numina.exceptions import RecipeError, ParameterError
 
 # Classes are new style
 __metaclass__ = type
+
+ERROR = 1
+OK = 0
+UNKNOWN = -1
+
+_level_names = {ERROR: 'ERROR',
+                OK: 'OK',
+                UNKNOWN: 'UNKNOWN'}
+
 
 class RecipeBase:
     '''Abstract Base class for Recipes.'''
@@ -41,6 +50,12 @@ class RecipeBase:
     
     capabilities = []
     
+    __version__ = 1
+        
+    @classmethod
+    def info(cls):
+        return dict(name=cls.__name__, module=cls.__module__, version=cls.__version__)
+        
     def __init__(self, param):
         self.values = param
         self.repeat = 1
@@ -56,16 +71,46 @@ class RecipeBase:
     def __call__(self):
         '''Run the recipe, don't override.'''
         
+        TIMEFMT = '%FT%T'
+        
         for self.current in range(self.repeat):
             try:
-                result = self.run()
-                yield result
-            except (RecipeError,), e:
-                yield {'error': True, 'exception': e}
-            except (IOError, OSError), e:
-                yield {'error': True, 'exception': e}
-        
-#    @abc.abstractmethod
+                product = RecipeResult(recipe=self.info(), 
+                               run=dict(start=None,
+                                        end=None,
+                                        status=UNKNOWN,
+                                        error={},
+                                        repeat=self.repeat,
+                                        current=self.current + 1),
+                               result={}
+                               )
+                
+                run_info = dict(repeat=self.repeat, 
+                                current=self.current + 1)
+                
+                now1 = datetime.datetime.now()
+                run_info['start'] = now1.strftime(TIMEFMT)
+                
+                product['result'] = self.run()
+                
+                now2 = datetime.datetime.now()                
+                run_info['end'] = now2.strftime(TIMEFMT)
+                # Status 0 means all correct
+                run_info['status'] = OK
+                         
+            except (IOError, OSError, RecipeError), e:
+                now2 = datetime.datetime.now()                
+                run_info['end'] = now2.strftime(TIMEFMT)
+                # Status 0 means all correct
+                run_info['status'] = ERROR                
+                run_info['error'] = dict(type=e.__class__.__name__, 
+                                         message=str(e))
+            finally:
+                product['run'].update(run_info)
+                
+            
+            yield product
+
     def run(self):
         ''' Override this method with custom code.
         
@@ -79,20 +124,10 @@ class RecipeBase:
         :rtype: bool
         '''
         return self.repeat <= 0
-
-
-class RecipeResult:
-    '''Result of the run method of the Recipe.'''
-#    __metaclass__ = abc.ABCMeta
-    def __init__(self, qa):
-        self.qa = qa
-        self.products = {}
-
-@store.register(RecipeResult)
-def _store_rr(obj, where=None):
-    # We store the values inside obj.products
-    for key, val in obj.products.iteritems():
-        store(val, key)
+        
+class RecipeResult(dict):
+    '''Result of the __call__ method of the Recipe.'''
+    pass
             
 def list_recipes():
     return RecipeBase.__subclasses__()

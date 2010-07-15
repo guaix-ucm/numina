@@ -21,24 +21,13 @@
 
 import logging
 
-from numina.recipes import RecipeBase, RecipeResult
+from numina.recipes import RecipeBase, RecipeError
 import numina.qa as QA
 
 _logger = logging.getLogger("numina.recipes")
 
-class Result(RecipeResult):
-    '''Result of the sample recipe.'''
-    def __init__(self, qa, result, itern):
-        super(Result, self).__init__(qa)
-        prodkey = 'values%02d.txt' % itern
-        self.products[prodkey] = {}
-        self.products[prodkey]['result'] = result
-        self.products[prodkey]['tables'] = [[0,0], [234.456]]
-      
-class Recipe(RecipeBase):
-    '''Recipe to process data taken in imaging mode.
-     
-    '''
+class Sample(RecipeBase):
+    '''Sample recipe'''
     
     capabilities = ['sample']
     
@@ -46,23 +35,26 @@ class Recipe(RecipeBase):
         'niterations'
     ]
     
+    __version__ = 1
+    
     def __init__(self, param):
-        super(Recipe, self).__init__(param)
-        self.repeat = param['niterations']
-        self.biter = param['niterations']
+        super(Sample, self).__init__(param)
+        self.repeat = 2
         
     def run(self):
-        itern =  self.biter - self.repeat     
-        return Result(QA.UNKNOWN, self.values['niterations'], itern)
-    
+        if self.current == 0:
+            raise RecipeError('Intended')
+        return {'qa': QA.UNKNOWN,
+                'result': 1}
+        
 if __name__ == '__main__':
     import simplejson as json
-    import tempfile
+    import tempfile 
     
     from numina.user import main
     from numina.jsonserializer import to_json 
         
-    p = {'niterations': 3, 'observing_mode': 'sample'}
+    p = {'niterations': 3, 'repeat': 3, 'observing_mode': 'sample'}
     
     f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
     try:

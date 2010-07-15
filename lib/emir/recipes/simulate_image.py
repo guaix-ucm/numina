@@ -77,7 +77,7 @@ class Recipe(nr.RecipeBase):
         
         _logger.info('Building FITS structure')
         hdulist = create_raw(output, headers)
-        return Result(qa.UNKNOWN, hdulist, cfile)
+        return {'qa': qa.UNKNOWN, cfile: hdulist}
 
 if __name__ == '__main__':
     import os

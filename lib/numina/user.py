@@ -21,6 +21,8 @@
 
 '''
 
+import uuid
+import datetime
 import logging.config
 import os
 from optparse import OptionParser
@@ -37,12 +39,8 @@ import xdg.BaseDirectory as xdgbd
 from numina import __version__
 from numina.recipes import list_recipes
 from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
-from numina.exceptions import RecipeError
-#from numina.jsonserializer import param_from_json
 from numina.diskstorage import store
 import numina.recipes.registry as registry
-
-
 
 def parse_cmdline(args=None):
     '''Parse the command line.'''
@@ -96,7 +94,7 @@ def mode_run(args, logger):
         return 1
 
     recipeclasses = list_recipes_by_obs_mode(obsmode)
-    
+        
     if not recipeclasses:
         logger.error('No Recipe with observing mode %s', obsmode)
         return 1
@@ -105,39 +103,53 @@ def mode_run(args, logger):
     
         logger.debug('Getting the parameters required by the recipe')    
         param = {}
+        
+        for name in ['observing_mode']:
+            param[name] = registry.lookup(obsblock_id, name)
+        
         for name in RecipeClass.required_parameters:
             param[name] = registry.lookup(obsblock_id, name)
              
         logger.debug('Creating the recipe')
         recipe = RecipeClass(param)
         
-        
         errorcount = 0
-        try:
-            for result in recipe():
-                logger.info('Running the recipe instance %d of %d ', 
-                         recipe.current + 1, recipe.repeat)
-                store(result)
-        except RecipeError, e:
-            logger.error("%s", e)
-            errorcount += 1
-        except (IOError, OSError), e:
-            logger.error("%s", e)
-            errorcount += 1
+
+        for result in recipe():
+            logger.info('Running the recipe instance %d of %d ', 
+                     recipe.current + 1, recipe.repeat)
+            
+            result['numina'] = info()
+            result['instrument'] = {'obsmode': obsmode}
+            
+            if result['run']['status'] != 0:
+                errorcount += 1
+            
+            # Creating the filename
+            nowstr = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+            uuidstr = str(uuid.uuid1())
+            
+            store(result, 'numina-%s-%s.log' % (nowstr, uuidstr))
             
         logger.debug('Cleaning up the recipe')
         recipe.cleanup()
         
         if errorcount > 0:
-            logger.error('Errors during execution')
-            logger.error('Number of errors: %d', errorcount)
+            logger.error('Errors during execution: %d', errorcount)
             return errorcount
         else:
             logger.info('Completed execution')
         return 0
 
+def info():
+    '''Information about this version of numina.
+    
+    This information will be stored in the result object of the recipe
+    '''
+    return {'version': __version__}
+
 def main(args=None):
-    '''Entry point for the Numina CLI. '''        
+    '''Entry point for the Numina CLI.'''        
     # Configuration options from a text file    
     config = SafeConfigParser()
     # Default values, it must exist

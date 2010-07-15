@@ -108,16 +108,10 @@ from numina.worker import para_map
 from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array.combine import flatcombine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
-from numina.recipes import RecipeBase, RecipeResult
+from numina.recipes import RecipeBase
 from emir.dataproducts import create_result, create_raw
 
 _logger = logging.getLogger("emir.recipes")
-
-class Result(RecipeResult):
-    '''Result of the imaging mode recipe.'''
-    def __init__(self, qa, result):
-        super(Result, self).__init__(qa)
-        self.products['result.fits'] = result
 
 class Recipe(RecipeBase):
     
@@ -520,7 +514,7 @@ class Recipe(RecipeBase):
                 data = [od.img.data[od.local['region']] for od in odl]
                 masks = [od.mask.data[od.local['region']] for od in odl]
                 scales = [od.local['median_scale'] for od in odl]
-                sf_data = flatcombine(data, masks, scales)
+                sf_data = flatcombine(data, masks, scales=scales)
             finally:
                 map(lambda x: x.img.close(), odl)
                 map(lambda x: x.mask.close(), odl)
@@ -595,7 +589,7 @@ class Recipe(RecipeBase):
         
         _logger.info("Final image created")
         
-        return Result(numina.qa.UNKNOWN, result)
+        return {'qa': numina.qa.UNKNOWN, 'result.fits': result}
 
 if __name__ == '__main__':
     import simplejson as json

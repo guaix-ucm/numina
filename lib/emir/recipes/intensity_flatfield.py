@@ -151,7 +151,7 @@ class Recipe(nr.RecipeBase):
             data = [img.data for img in simages]
             masks = [img.data for img in simages]
             _logger.info("Data combined")
-            illum_data = flatcombine(data, masks, scales, blank=1)
+            illum_data = flatcombine(data, masks, scales=scales, blank=1)
         finally:
             map(lambda x: x.close(), simages)
             map(lambda x: x.close(), smasks)
@@ -163,7 +163,7 @@ class Recipe(nr.RecipeBase):
                       ('NUMBER', illum_data[2], None)]
         illum = fc.create(illum_data[0], None, extensions)
         
-        return Result(QA.UNKNOWN, illum)
+        return {'qa': QA.UNKNOWN, 'illumination.fits': illum}
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

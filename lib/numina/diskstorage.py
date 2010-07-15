@@ -23,19 +23,41 @@ from pyfits import HDUList
 
 from generic import generic
 from jsonserializer import to_json
+from numina.recipes import RecipeResult
 
 @generic
 def store(obj, where=None):
-    raise TypeError(repr(obj) + ' is not storable')
+    raise TypeError(repr(type(obj)) + ' is not storable')
 
 @store.register(HDUList)
 def _store_fits(obj, where='file.fits'):
     obj.writeto(where, clobber=True, output_verify='ignore')
- 
-@store.register(type({}))
-def _store_map(obj, where='products.json'):
+
+@store.register(RecipeResult)
+def _store_rr(obj, where):
+    
+    external = []
+    
+    for key in obj:
+        t = type(obj[key])
+        
+        if t is dict:
+            _store_rr(obj[key], where)
+        elif t is list:
+            _store_rr(obj[key], where)
+        elif store.is_registered(t):
+            # FIXME: filename should come from somewhere
+            filename = key
+            external.append((filename, obj[key]))
+            obj[key] = '<file>: %s' % filename
+        else:
+            pass
+        
     f = open(where, 'w+') 
     try:
         json.dump(obj, f, default=to_json, indent=1, encoding='utf-8')
     finally:
         f.close()
+        
+    for filename, obj in external:
+        store(obj, filename)

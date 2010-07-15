@@ -43,18 +43,12 @@ sigma-clipping algorithm.
 
 import logging
 
-from numina.recipes import RecipeResult, RecipeBase
+from numina.recipes import RecipeBase
 from emir.dataproducts import create_result
 from numina.array.combine import mean
 import numina.qa
 
 _logger = logging.getLogger("emir.recipes")
-
-class Result(RecipeResult):
-    '''Result of the recipe.'''
-    def __init__(self, qa, result):
-        super(Result, self).__init__(qa)
-        self.products['bias.fits'] = result
 
 class Recipe(RecipeBase):
     '''Recipe to process data taken in Bias image Mode'''
@@ -88,7 +82,7 @@ class Recipe(RecipeBase):
                                    variance=cube[1], 
                                    exmap=cube[2].astype('int16'))
         
-            return Result(numina.qa.UNKNOWN, result)
+            return {'qa': numina.qa.UNKNOWN, 'bias.fits': result}
         finally:
             for n in self.values['images']:
                 n.close()

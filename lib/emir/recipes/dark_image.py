@@ -47,18 +47,12 @@ The process will remove cosmic rays (using a typical sigma-clipping algorithm).
 
 import logging
 
-from numina.recipes import RecipeResult, RecipeBase
+from numina.recipes import RecipeBase
 from numina.array.combine import mean
 from emir.dataproducts import create_result
 import numina.qa
 
 _logger = logging.getLogger("emir.recipes")
-
-class Result(RecipeResult):
-    '''Result of the DarkImaging recipe.'''
-    def __init__(self, qa, dark):
-        super(Result, self).__init__(qa)
-        self.products['dark'] = dark
 
 class Recipe(RecipeBase):
     '''Recipe to process data taken in Dark current image Mode'''
@@ -89,7 +83,7 @@ class Recipe(RecipeBase):
         
             result = create_result(cube[0], variance=cube[1], exmap=cube[2])
         
-            return Result(numina.qa.UNKNOWN, result)
+            return {'qa': numina.qa.UNKNOWN, 'dark.fits': result}
 
         finally:
             for n in self.values['images']:
