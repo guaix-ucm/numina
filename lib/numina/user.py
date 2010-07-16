@@ -117,7 +117,7 @@ def mode_run(args, logger):
             logger.info('Running the recipe instance %d of %d ', 
                      recipe.current + 1, recipe.repeat)
             
-            result['numina'] = info()
+            result['recipe_runner'] = info()
             result['instrument'] = {'obsmode': obsmode}
             
             if result['run']['status'] != 0:
@@ -144,7 +144,7 @@ def info():
     
     This information will be stored in the result object of the recipe
     '''
-    return {'version': __version__}
+    return dict(name='numina', version=__version__)
 
 def main(args=None):
     '''Entry point for the Numina CLI.'''        
