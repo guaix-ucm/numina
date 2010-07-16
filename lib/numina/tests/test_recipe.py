@@ -24,17 +24,21 @@ from numina import RecipeBase
 
 class Test(RecipeBase):
     '''Minimal class that implements RecipeBase.'''
-    def __init__(self):
-        super(Test, self).__init__()
+    def __init__(self, param):
+        super(Test, self).__init__(param)
         
-    def _process(self):
-        pass
+    def run(self):
+        return {}
+
 
 class RecipeTestCase(unittest.TestCase):
     '''Test of the Recipebase class.'''
     def setUp(self):
         '''Set up TestCase.'''
-        self.rc = Test()
+        self.rc = Test({})
+        
+    def test1(self):
+        self.assertTrue(callable(self.rc))
             
 def test_suite():
     suite = unittest.TestSuite()

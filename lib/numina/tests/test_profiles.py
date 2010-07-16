@@ -31,7 +31,7 @@ from numina.simulation import GaussProfile
 M_SQRT1_2 = math.sqrt(1. / 2.)
 
 class GaussProfileTestCase(unittest.TestCase):
-    '''Test of the Recipebase class.'''
+    '''Test of the GaussProfile class.'''
     
     @staticmethod
     def unidim(x, m, s):
