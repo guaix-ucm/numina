@@ -23,7 +23,7 @@ import logging
 
 import numpy
 
-import numina.recipes as nr
+from numina.recipes import RecipeBase
 from numina.image import DiskImage
 from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
@@ -34,14 +34,7 @@ import numina.qa as QA
 
 _logger = logging.getLogger("emir.recipes")
 
-class Result(nr.RecipeResult):
-    '''Result of the intensity flat-field mode recipe.'''
-    def __init__(self, qa, flat):
-        super(Result, self).__init__(qa)
-        self.products['flat'] = flat
-
-
-class Recipe(nr.RecipeBase):
+class Recipe(RecipeBase):
     '''Recipe to process data taken in intensity flat-field mode.
         
     Recipe to process intensity flat-fields. The flat-on and flat-off images are
