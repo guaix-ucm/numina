@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Decorators for the numina package'''
+'''Decorators for the numina package.'''
 
 import time
 import logging
@@ -25,7 +25,7 @@ import logging
 _logger = logging.getLogger("numina")
 
 def print_timing(func):
-    '''Print timing decorator'''
+    '''Print timing decorator.'''
     def wrapper(*arg, **keywords):
         t1 = time.time()
         res = func(*arg, **keywords)
@@ -35,7 +35,7 @@ def print_timing(func):
     return wrapper
 
 def log_timing(func):
-    '''Log timing decorator'''
+    '''Log timing decorator.'''
     def wrapper(*arg, **keywords):
         t1 = time.time()
         res = func(*arg, **keywords)

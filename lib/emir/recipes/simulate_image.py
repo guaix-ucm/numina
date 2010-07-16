@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Recipe for image simulation'''
+'''Recipe for image simulation.'''
 
 
 import logging
@@ -40,8 +40,7 @@ class Result(nr.RecipeResult):
         self.name = name
 
 class Recipe(nr.RecipeBase):
-    '''Recipe to simulate EMIR images.
-    '''
+    '''Recipe to simulate EMIR images.'''
     
     required_parameters = ['detector', 
                            'readout',

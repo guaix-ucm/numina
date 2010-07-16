@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
  
-'''Unit tests of Numina'''
+'''Unit tests of Numina.'''
 
 import unittest
 

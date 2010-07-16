@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
  
-'''A module used to run all the numina unit tests'''
+'''A module used to run all the numina unit tests.'''
 
 import sys, os
 import unittest

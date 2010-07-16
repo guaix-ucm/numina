@@ -18,16 +18,18 @@
 # 
 
 
-'''Extra logging handlers for the numina logging system'''
+'''Extra logging handlers for the numina logging system.'''
 
 import logging
 import warnings
 
 class NullHandler(logging.Handler):
-    '''NullHandler is the default log handler of the package. It 
-    doesn't emit nothing.'''
+    '''NullHandler is the default log handler of the package. 
+    
+    It doesn't emit nothing.
+    '''
     def emit(self, record):
-        '''Do-nothing method'''
+        '''Do-nothing method.'''
         pass
 
 # Warnings integration

@@ -43,7 +43,7 @@ class PhotometricFilter:
     FILTER_K = 6
         
 class RBModel:
-    '''Ratnatunga & Bahcall model
+    '''Star counts model from Ratnatunga & Bahcall.
     
     Number of stars per square arc minute
     '''
@@ -91,7 +91,7 @@ class RBModel:
 
 
 class SpagnaModel:
-    '''Spagna1999
+    '''Star counts model from Spagna 1999.
     
     Number of stars per square arc minute
     '''
@@ -134,7 +134,7 @@ class SpagnaModel:
         return 0.
 
 class BSModel:
-    '''Bahcall & Soneira
+    '''Star counts model from Bahcall & Soneira.
     
     Number of stars per square arc minute
     '''
@@ -166,7 +166,7 @@ class BSModel:
     
     @staticmethod
     def mu(magnitude):
-        '''Parameter \mu of Appendix B'''
+        '''Compute parameter \mu of Appendix B.'''
         if magnitude <= 12.:
             return 0.03
         if magnitude <= 20:
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     #print bsmodel.differential_counts(18)
 
     class GeneralRandom:
-        ''' Recipe from http://code.activestate.com/recipes/576556/'''
+        ''' Recipe from http://code.activestate.com/recipes/576556/.'''
         def __init__(self, x, p, Nrl=1000):
             self.x = x
             self.pdf = p / p.sum()

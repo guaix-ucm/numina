@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
  
-'''Unit test for GaussProfile'''
+'''Unit test for GaussProfile.'''
 
 
 import unittest

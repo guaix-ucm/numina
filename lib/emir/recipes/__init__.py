@@ -18,4 +18,4 @@
 # 
 
 
-'''Recipes for Emir Observing Modes'''
+'''Recipes for Emir Observing Modes.'''

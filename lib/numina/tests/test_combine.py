@@ -49,19 +49,19 @@ class CombineTestCase(unittest.TestCase):
         pass
          
     def test02Exception(self):
-        '''mean combine: CombineError is raised if images list is empty'''
+        '''mean combine: CombineError is raised if images list is empty.'''
         self.assertRaises(CombineError, mean, [])
     
     def test03Exception(self):
-        '''mean combine: CombineError is raised if inputs have different lengths'''
+        '''mean combine: CombineError is raised if inputs have different lengths.'''
         self.assertRaises(CombineError, mean, self.validImages, self.validMasks * 2)
         
     def test04(self):
-        '''mean combine: TypeError is raised if inputs aren't convertible to scipy.array'''
+        '''mean combine: TypeError is raised if inputs aren't convertible to scipy.array.'''
         self.assertRaises(TypeError, mean, ["a"])
 
     def testCombineMaskMean(self):
-        '''mean combine: combination of integer arrays with masks'''
+        '''mean combine: combination of integer arrays with masks.'''
         input1 = scipy.array([[1, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
         input2 = scipy.array([[3, 2, 8, 4], [6, 2, 0, 4], [1, 3, 3, 4]])
         input3 = scipy.array([[7, 2, 1, 4], [1, 2, 0, 4], [44, 2, 2, 0]])
@@ -96,7 +96,7 @@ class CombineTestCase(unittest.TestCase):
             self.assertEqual(cal, precal)
 
     def testCombineMean(self):
-        '''mean combine: combination of integer arrays'''
+        '''mean combine: combination of integer arrays.'''
         
         # Inputs
         input1 = scipy.array([[1, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])

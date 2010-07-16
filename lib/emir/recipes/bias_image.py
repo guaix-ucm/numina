@@ -51,7 +51,7 @@ import numina.qa
 _logger = logging.getLogger("emir.recipes")
 
 class Recipe(RecipeBase):
-    '''Recipe to process data taken in Bias image Mode'''
+    '''Recipe to process data taken in Bias image Mode.'''
     
     required_parameters = [
         'nthreads',

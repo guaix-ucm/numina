@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Exceptions for the numina package'''
+'''Exceptions for the numina package.'''
 
 class Error(Exception):
     """Base class for exceptions in the numina package."""

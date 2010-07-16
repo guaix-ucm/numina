@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''The Numen GTC recipe runner'''
+'''The Numen GTC recipe runner.'''
 
 import logging
 import sys
@@ -69,8 +69,7 @@ def get_module(name):
     return module_object
 
 def load_pkg_recipes():
-    '''Return a dictionary of capabilities and recipes, using setuptools mechanism.
-    ''' 
+    '''Return a dictionary of capabilities and recipes, using setuptools mechanism.''' 
     ENTRY_POINT = 'numina.recipes'
     env = pkg_resources.Environment()
     recipes = {}

@@ -24,7 +24,7 @@ import numina.array as array
 class ArrayTestCase(unittest.TestCase):
     
     def test_subarray_match(self):
-        '''Test subarray_match'''
+        '''Test subarray_match.'''
         
         # Shapes don't intersect
         minor, major = array.subarray_match((3,4,5), (10,10,10), (2,2,2))

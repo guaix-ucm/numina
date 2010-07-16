@@ -17,9 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''User command line interface of Numina.
-
-'''
+'''User command line interface of Numina.'''
 
 import uuid
 import datetime

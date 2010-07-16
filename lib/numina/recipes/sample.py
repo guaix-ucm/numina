@@ -27,7 +27,7 @@ import numina.qa as QA
 _logger = logging.getLogger("numina.recipes")
 
 class Sample(RecipeBase):
-    '''Sample recipe'''
+    '''Sample recipe.'''
     
     capabilities = ['sample']
     

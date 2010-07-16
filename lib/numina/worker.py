@@ -86,7 +86,7 @@ class Worker(object):
 
 
 def para_map(worker, data, nthreads=4, daemons=True):
-    '''Thread version of map, is not stable'''
+    '''Thread version of map, is not stable.'''
     if nthreads <= 1:
         return map(worker, data)
 

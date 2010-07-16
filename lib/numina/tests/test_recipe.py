@@ -17,13 +17,13 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
  
-'''Unit test for RecipeBase'''
+'''Unit test for RecipeBase.'''
 
 import unittest
 from numina import RecipeBase
 
 class Test(RecipeBase):
-    '''Minimal class that implementes RecipeBase.'''
+    '''Minimal class that implements RecipeBase.'''
     def __init__(self):
         super(Test, self).__init__()
         

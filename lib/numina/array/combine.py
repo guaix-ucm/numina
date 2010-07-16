@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Different methods for combining lists of arrays'''
+'''Different methods for combining lists of arrays.'''
 
 from itertools import izip
 

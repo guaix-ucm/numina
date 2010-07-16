@@ -19,9 +19,9 @@
 
 '''Basic tools and classes used to generate recipe modules.
 
-A recipe is a module that complies with the *reduction recipe API*:
+A recipe is a class that complies with the *reduction recipe API*:
 
- * It must provide a `Recipe` class that derives from :class:`numina.recipes.RecipeBase`.
+ * The class must derive from :class:`numina.recipes.RecipeBase`.
 
 '''
 import warnings
@@ -119,7 +119,7 @@ class RecipeBase:
         raise NotImplementedError
     
     def complete(self):
-        '''True once the recipe is completed.
+        '''Return True once the recipe is completed.
         
         :rtype: bool
         '''

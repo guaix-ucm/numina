@@ -55,7 +55,7 @@ import numina.qa
 _logger = logging.getLogger("emir.recipes")
 
 class Recipe(RecipeBase):
-    '''Recipe to process data taken in Dark current image Mode'''
+    '''Recipe to process data taken in Dark current image Mode.'''
     
     capabilities = ['dark_current_image']
     
