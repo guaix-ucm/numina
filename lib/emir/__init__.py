@@ -19,16 +19,9 @@
 
 '''The emir package'''
 
-
 import logging
 
-try:
-    from logging import NullHandler
-except ImportError:
-    from numina.logger import NullHandler
-
-__version__ = '0.2.4'
-
+from numina import NullHandler, __version__
 
 # Top level NullHandler
 logging.getLogger("emir").addHandler(NullHandler())
