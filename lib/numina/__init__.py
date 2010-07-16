@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''The Numen GTC recipe runner.'''
+'''Numina data processing system.'''
 
 import logging
 
@@ -26,7 +26,6 @@ try:
     from logging import NullHandler
 except ImportError:
     from logger import NullHandler
-
 
 __version__ = '0.2.4'
 
