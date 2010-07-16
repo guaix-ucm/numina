@@ -17,34 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Intensity Flatfield Recipe.
-
-Recipe to process intensity flat-fields. The flat-on and flat-off images are
-combined (method?) separately and the subtracted to obtain a thermal subtracted
-flat-field.
-
-**Observing modes:**
-
- * Intensity Flat-Field
-
-**Inputs:**
-
-  * A list of lamp-on flats
-  * A list of lamp-off flats
-  * A master dark frame
-  * A model of the detector. 
-
-**Outputs:**
-
- * TBD
-
-**Procedure:**
-
- * A combined thermal subtracted flat field, normalized to median 1, 
-   with with variance extension and quality flag. 
-
-'''
-
+'''Intensity Flatfield Recipe.'''
 
 import logging
 
@@ -70,8 +43,33 @@ class Result(nr.RecipeResult):
 
 class Recipe(nr.RecipeBase):
     '''Recipe to process data taken in intensity flat-field mode.
-     
+        
+    Recipe to process intensity flat-fields. The flat-on and flat-off images are
+    combined (method?) separately and the subtracted to obtain a thermal subtracted
+    flat-field.
+    
+    **Observing modes:**
+    
+     * Intensity Flat-Field
+    
+    **Inputs:**
+    
+      * A list of lamp-on flats
+      * A list of lamp-off flats
+      * A master dark frame
+      * A model of the detector. 
+    
+    **Outputs:**
+    
+     * TBD
+    
+    **Procedure:**
+    
+     * A combined thermal subtracted flat field, normalized to median 1, 
+       with with variance extension and quality flag. 
+    
     '''
+    
     required_parameters = [
         'images',
         'master_bias',

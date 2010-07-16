@@ -17,29 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Bias image recipe and associates.
-
-Recipe to process bias images. Bias images only appear in Simple Readout mode.
-
-**Observing modes:**
-
- * Bias Image (3.1)   
-
-**Inputs:**
-
- * A list of bias images
- * A model of the detector (gain, RN)
-
-**Outputs:**
-
- * A combined bias frame, with variance extension and quality flag. 
-
-**Procedure:**
-
-The list of images can be readly processed by combining them with a typical
-sigma-clipping algorithm.
-
-'''
+'''Bias image recipe and associates.'''
 
 import logging
 
@@ -51,7 +29,29 @@ import numina.qa
 _logger = logging.getLogger("emir.recipes")
 
 class Recipe(RecipeBase):
-    '''Recipe to process data taken in Bias image Mode.'''
+    '''Recipe to process data taken in Bias image Mode.
+
+    Bias images only appear in Simple Readout mode.
+
+    **Observing modes:**
+    
+     * Bias Image (3.1)   
+    
+    **Inputs:**
+    
+     * A list of bias images
+     * A model of the detector (gain, RN)
+    
+    **Outputs:**
+    
+     * A combined bias frame, with variance extension and quality flag. 
+    
+    **Procedure:**
+    
+    The list of images can be readly processed by combining them with a typical
+    sigma-clipping algorithm.
+    
+    '''
     
     required_parameters = [
         'nthreads',

@@ -18,78 +18,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipe for the reduction of imaging mode observations.
-
-Recipe to reduce observations obtained in imaging mode, considering different
-possibilities depending on the size of the offsets between individual images.
-In particular, the following observing modes are considered: stare imaging, nodded
-beamswitched imaging, and dithered imaging. 
-
-A critical piece of information here is a table that clearly specifies which
-images can be labeled as *science*, and which ones as *sky*. Note that some
-images are used both as *science* and *sky* (when the size of the targets are
-small compared to the offsets).
-
-**Observing modes:**
- 
- * StareImage
- * Nodded/Beam-switched images
- * Dithered images 
-
-
-**Inputs:**
-
- * Science frames + [Sky Frames]
- * An indication of the observing mode: **stare image**, **nodded
-   beamswitched image**, or **dithered imaging**
- * A table relating each science image with its sky image(s) (TBD if it's in 
-   the FITS header and/or in other format)
- * Offsets between them (Offsets must be integer)
- * Master Dark 
- * Bad pixel mask (BPM) 
- * Non-linearity correction polynomials 
- * Master flat (twilight/dome flats)
- * Master background (thermal background, only in K band)
- * Exposure Time (must be the same in all the frames)
- * Airmass for each frame
- * Detector model (gain, RN, lecture mode)
- * Average extinction in the filter
- * Astrometric calibration (TBD)
-
-**Outputs:**
-
- * Image with three extensions: final image scaled to the individual exposure
-   time, variance  and exposure time map OR number of images combined (TBD)
-
-**Procedure:**
-
-Images are corrected from dark, non-linearity and flat. Then, an iterative
-process starts:
-
- * Sky is computed from each frame, using the list of sky images of each
-   science frame. The objects are avoided using a mask (from the second
-   iteration on).
-
- * The relative offsets are the nominal from the telescope. From the second
-   iteration on, we refine them using objects of appropriate brightness (not
-   too bright, not to faint).
-
- * We combine the sky-subtracted images, output is: a new image, a variance
-   image and a exposure map/number of images used map.
-
- * An object mask is generated.
-
- * We recompute the sky map, using the object mask as an additional input. From
-   here we iterate (typically 4 times).
-
- * Finally, the images are corrected from atmospheric extinction and flux
-   calibrated.
-
- * A preliminary astrometric calibration can always be used (using the central
-   coordinates of the pointing and the plate scale in the detector). A better
-   calibration might be computed using available stars (TBD).
-
-'''
+'''Recipe for the reduction of imaging mode observations.'''
 
 import logging
 import os
@@ -114,7 +43,79 @@ from emir.dataproducts import create_result, create_raw
 _logger = logging.getLogger("emir.recipes")
 
 class Recipe(RecipeBase):
+    '''Recipe for the reduction of imaging mode observations.
+
+    Recipe to reduce observations obtained in imaging mode, considering different
+    possibilities depending on the size of the offsets between individual images.
+    In particular, the following observing modes are considered: stare imaging, nodded
+    beamswitched imaging, and dithered imaging. 
     
+    A critical piece of information here is a table that clearly specifies which
+    images can be labeled as *science*, and which ones as *sky*. Note that some
+    images are used both as *science* and *sky* (when the size of the targets are
+    small compared to the offsets).
+    
+    **Observing modes:**
+     
+     * StareImage
+     * Nodded/Beam-switched images
+     * Dithered images 
+    
+    
+    **Inputs:**
+    
+     * Science frames + [Sky Frames]
+     * An indication of the observing mode: **stare image**, **nodded
+       beamswitched image**, or **dithered imaging**
+     * A table relating each science image with its sky image(s) (TBD if it's in 
+       the FITS header and/or in other format)
+     * Offsets between them (Offsets must be integer)
+     * Master Dark 
+     * Bad pixel mask (BPM) 
+     * Non-linearity correction polynomials 
+     * Master flat (twilight/dome flats)
+     * Master background (thermal background, only in K band)
+     * Exposure Time (must be the same in all the frames)
+     * Airmass for each frame
+     * Detector model (gain, RN, lecture mode)
+     * Average extinction in the filter
+     * Astrometric calibration (TBD)
+    
+    **Outputs:**
+    
+     * Image with three extensions: final image scaled to the individual exposure
+       time, variance  and exposure time map OR number of images combined (TBD)
+    
+    **Procedure:**
+    
+    Images are corrected from dark, non-linearity and flat. Then, an iterative
+    process starts:
+    
+     * Sky is computed from each frame, using the list of sky images of each
+       science frame. The objects are avoided using a mask (from the second
+       iteration on).
+    
+     * The relative offsets are the nominal from the telescope. From the second
+       iteration on, we refine them using objects of appropriate brightness (not
+       too bright, not to faint).
+    
+     * We combine the sky-subtracted images, output is: a new image, a variance
+       image and a exposure map/number of images used map.
+    
+     * An object mask is generated.
+    
+     * We recompute the sky map, using the object mask as an additional input. From
+       here we iterate (typically 4 times).
+    
+     * Finally, the images are corrected from atmospheric extinction and flux
+       calibrated.
+    
+     * A preliminary astrometric calibration can always be used (using the central
+       coordinates of the pointing and the plate scale in the detector). A better
+       calibration might be computed using available stars (TBD).
+    
+    '''
+
     class WorkData(object):
         '''The data processed during the run of the recipe.
         
