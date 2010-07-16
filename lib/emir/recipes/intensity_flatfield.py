@@ -29,12 +29,13 @@ from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.array.combine import flatcombine
 from numina.worker import para_map
-from emir.instrument.headers import EmirImageCreator
 import numina.qa as QA
+from emir.instrument.headers import EmirImageCreator
+from emir.recipes import EmirRecipeMixin
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase):
+class Recipe(RecipeBase, EmirRecipeMixin):
     '''Recipe to process data taken in intensity flat-field mode.
         
     Recipe to process intensity flat-fields. The flat-on and flat-off images are

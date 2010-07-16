@@ -24,12 +24,14 @@ import logging
 
 from numina.recipes import RecipeBase
 from numina.array.combine import mean
-from emir.dataproducts import create_result
 import numina.qa
+from emir.dataproducts import create_result
+from emir.recipes import EmirRecipeMixin
+
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase):
+class Recipe(RecipeBase, EmirRecipeMixin):
     '''Recipe to process data taken in Dark current image Mode.
 
     Recipe to process dark images. The dark images will be combined 

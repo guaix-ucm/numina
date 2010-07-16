@@ -19,3 +19,6 @@
 
 
 '''Recipes for Emir Observing Modes.'''
+
+class EmirRecipeMixin:
+    instrument = ['emir']

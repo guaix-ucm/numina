@@ -39,10 +39,11 @@ from numina.array.combine import flatcombine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 from numina.recipes import RecipeBase
 from emir.dataproducts import create_result, create_raw
+from emir.recipes import EmirRecipeMixin
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase):
+class Recipe(RecipeBase, EmirRecipeMixin):
     '''Recipe for the reduction of imaging mode observations.
 
     Recipe to reduce observations obtained in imaging mode, considering different

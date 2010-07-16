@@ -29,10 +29,11 @@ import numina.qa as qa
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
 from emir.dataproducts import create_raw
+from emir.recipes import EmirRecipeMixin
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase):
+class Recipe(RecipeBase, EmirRecipeMixin):
     '''Recipe to simulate EMIR images.'''
     
     required_parameters = ['detector', 

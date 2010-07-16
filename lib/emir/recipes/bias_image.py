@@ -21,14 +21,15 @@
 
 import logging
 
-from numina.recipes import RecipeBase
-from emir.dataproducts import create_result
 from numina.array.combine import mean
 import numina.qa
+from numina.recipes import RecipeBase
+from emir.dataproducts import create_result
+from emir.recipes import EmirRecipeMixin
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase):
+class Recipe(RecipeBase, EmirRecipeMixin):
     '''Recipe to process data taken in Bias image Mode.
 
     Bias images only appear in Simple Readout mode.
