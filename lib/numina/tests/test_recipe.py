@@ -20,7 +20,7 @@
 '''Unit test for RecipeBase.'''
 
 import unittest
-from numina import RecipeBase
+from numina.recipes import RecipeBase
 
 class Test(RecipeBase):
     '''Minimal class that implements RecipeBase.'''
