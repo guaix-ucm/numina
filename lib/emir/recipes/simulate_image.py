@@ -24,7 +24,7 @@ import logging
 
 import numpy as np
 
-import numina.recipes as nr
+from numina.recipes import RecipeBase
 import numina.qa as qa
 from numina.simulation import RunCounter
 from emir.instrument.detector import EmirDetector
@@ -32,14 +32,7 @@ from emir.dataproducts import create_raw
 
 _logger = logging.getLogger("emir.recipes")
 
-class Result(nr.RecipeResult):
-    '''Result of the imaging mode recipe.'''
-    def __init__(self, qa, result, name):
-        super(Result, self).__init__(qa)
-        self.products[name] = result
-        self.name = name
-
-class Recipe(nr.RecipeBase):
+class Recipe(RecipeBase):
     '''Recipe to simulate EMIR images.'''
     
     required_parameters = ['detector', 
@@ -105,15 +98,15 @@ if __name__ == '__main__':
     os.chdir(tmpdir)
     _logger.info('Working directory is %s', tmpdir)
     
-    cfile = 'config.json'
+    conffile = 'config.json'
     
-    f = open(cfile, 'w+')
+    f = open(conffile, 'w+')
     try:
         json.dump(pv, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
             
-    main(['--run', cfile])
+    main(['--run', conffile])
         
 
 
