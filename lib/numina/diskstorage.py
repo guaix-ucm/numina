@@ -17,7 +17,10 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import simplejson as json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from pyfits import HDUList
 
@@ -30,11 +33,14 @@ def store(obj, where=None):
     raise TypeError(repr(type(obj)) + ' is not storable')
 
 @store.register(HDUList)
-def _store_fits(obj, where='file.fits'):
+def _store_fits(obj, where=None):
+    '''Save to disk an HDUList structure.'''
+    where = where or obj['primary'].header.get('FILENAME', 'file.fits')
     obj.writeto(where, clobber=True, output_verify='ignore')
 
 @store.register(RecipeResult)
 def _store_rr(obj, where):
+    '''Save to disk a RecipeResult.'''
     
     external = []
     
@@ -46,8 +52,7 @@ def _store_rr(obj, where):
         elif t is list:
             _store_rr(obj[key], where)
         elif store.is_registered(t):
-            # FIXME: filename should come from somewhere
-            filename = key
+            filename = generate_fname(obj[key])
             external.append((filename, obj[key]))
             obj[key] = '<file>: %s' % filename
         else:
@@ -61,3 +66,12 @@ def _store_rr(obj, where):
         
     for filename, obj in external:
         store(obj, filename)
+
+@generic
+def generate_fname(obj):
+    raise TypeError('A filename cannot be generated for % s' % repr(type(obj)))
+
+@generate_fname.register(HDUList)
+def _generate_fits(obj):
+    '''Generate a filename for a HDUList structure.'''
+    return obj['primary'].header.get('FILENAME', 'file.fits')
