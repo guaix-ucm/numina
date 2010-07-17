@@ -71,7 +71,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         # Default values. This can be read from a file        
         
     def run(self):
-        
+        OUTPUT = 'dark.fits'
+        primary_headers = {'FILENAME': OUTPUT}
+
         alldata = []
         allmasks = []
         
@@ -83,9 +85,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             # Combine them
             cube = mean(alldata, allmasks)
         
-            result = create_result(cube[0], variance=cube[1], exmap=cube[2])
+            result = create_result(cube[0], headers=primary_headers, 
+                                   variance=cube[1], exmap=cube[2])
         
-            return {'qa': numina.qa.UNKNOWN, 'dark.fits': result}
+            return {'qa': numina.qa.UNKNOWN, 'dark_image': result}
 
         finally:
             for n in self.values['images']:

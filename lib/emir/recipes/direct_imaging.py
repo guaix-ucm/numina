@@ -427,6 +427,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         niteration = self.values['niterations']
         airmass_keyword = 'AIRMASS'
         
+        OUTPUT = 'result.fits'
+        primary_headers = {'FILENAME': OUTPUT}
+        
         odl = []
         
         for i in self.values['images']:
@@ -585,13 +588,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
         _logger.info('Finished iterations')
         
-        result = create_result(sf_data[0], 
+        result = create_result(sf_data[0], headers=primary_headers,
                                 variance=sf_data[1], 
                                 exmap=sf_data[2].astype('int16'))
         
         _logger.info("Final image created")
         
-        return {'qa': numina.qa.UNKNOWN, 'result.fits': result}
+        return {'qa': numina.qa.UNKNOWN, 'result_image': result}
 
 if __name__ == '__main__':
     import simplejson as json

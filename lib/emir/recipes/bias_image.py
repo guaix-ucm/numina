@@ -66,6 +66,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
     def run(self):
         
+        OUTPUT = 'bias.fits'
+        primary_headers = {'FILENAME': OUTPUT}
         # Sanity check, check: all images belong to the same detector mode
         
         # Open all zero images
@@ -79,11 +81,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             # Combine them
             cube = mean(alldata, allmasks)
         
-            result = create_result(cube[0], 
+            result = create_result(cube[0], headers=primary_headers,
                                    variance=cube[1], 
                                    exmap=cube[2].astype('int16'))
         
-            return {'qa': numina.qa.UNKNOWN, 'bias.fits': result}
+            return {'qa': numina.qa.UNKNOWN, 'bias_image': result}
         finally:
             for n in self.values['images']:
                 n.close()

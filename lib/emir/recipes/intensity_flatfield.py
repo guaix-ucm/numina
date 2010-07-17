@@ -30,7 +30,7 @@ from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.array.combine import flatcombine
 from numina.worker import para_map
 import numina.qa as QA
-from emir.instrument.headers import EmirImageCreator
+from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 
 _logger = logging.getLogger("emir.recipes")
@@ -106,6 +106,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def run(self):
         nthreads = self.values['nthreads']
         
+        OUTPUT = 'illumination.fits'
+        primary_headers = {'FILENAME': OUTPUT}
+        
         simages = [DiskImage(filename=i) for i in self.values['images']]
         smasks =  [self.values['master_bpm']] * len(simages)
                        
@@ -148,14 +151,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             map(lambda x: x.close(), simages)
             map(lambda x: x.close(), smasks)
     
-        fc = EmirImageCreator()
-                
         _logger.info("Final image created")
-        extensions = [('VARIANCE', illum_data[1], None), 
-                      ('NUMBER', illum_data[2], None)]
-        illum = fc.create(illum_data[0], None, extensions)
+        illum = create_result(illum_data[0], headers=primary_headers, 
+                                   variance=illum_data[1], 
+                                   exmap=illum_data[2])
         
-        return {'qa': QA.UNKNOWN, 'illumination.fits': illum}
+        return {'qa': QA.UNKNOWN, 'illumination_image': illum}
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

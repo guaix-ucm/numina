@@ -22,7 +22,7 @@
 
 import logging
 
-import numpy as np
+import numpy
 
 from numina.recipes import RecipeBase
 import numina.qa as qa
@@ -55,7 +55,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         _logger.info('Configuring detector')
         self.detector.configure(self.values['readout'])
         
-        self.input = np.zeros(self.values['detector']['shape'])
+        self.input = numpy.zeros(self.values['detector']['shape'])
         self.detector.exposure(self.values['readout']['exposure'])
         self.repeat = self.values['readout']['repeat']
      
@@ -63,14 +63,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         _logger.info('Creating simulated array')    
         output = self.detector.lpath(self.input)
         run, cfile = self.runcounter.runstring()
-        headers = {'RUN': run}
+        headers = {'RUN': run, 'FILENAME': cfile}
         
         _logger.info('Collecting detector metadata')
         headers.update(self.detector.metadata())
         
         _logger.info('Building FITS structure')
         hdulist = create_raw(output, headers)
-        return {'qa': qa.UNKNOWN, cfile: hdulist}
+        return {'qa': qa.UNKNOWN, 'simulated_image': hdulist}
 
 if __name__ == '__main__':
     import os

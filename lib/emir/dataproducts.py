@@ -45,12 +45,9 @@ def create_raw(data=None, headers=None, default_headers=None, imgtype='image'):
     if headers is not None:
         _logger.info('Updating keywords in %s header', 'PRIMARY')      
         for key in headers:
-            if key in hdu.header:
-                _logger.debug('Updating keyword %s with value %s', 
-                              key, headers[key])
-                hdu.header[key] = headers[key]
-            else:
-                _logger.warning("Keyword %s not permitted in FITS header", key)
+            _logger.debug('Updating keyword %s with value %s', 
+                          key, headers[key])
+            hdu.header.update(key, headers[key])
     return pyfits.HDUList([hdu])
 
 
