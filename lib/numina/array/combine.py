@@ -125,7 +125,7 @@ def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     
     :param images: a list of arrays
     :param masks: a list of masked arrays, True values are masked
-    :param dtype: data type of the ouput
+    :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
     :param dof: degrees of freedom 
     :return: mean, variance and number of points stored in
@@ -167,7 +167,7 @@ def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     
     :param images: a list of arrays
     :param masks: a list of masked arrays, True values are masked
-    :param dtype: data type of the ouput
+    :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
  
     :return: mean, variance and number of points stored in
@@ -192,7 +192,7 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     
     :param images: a list of arrays
     :param masks: a list of masked arrays, True values are masked
-    :param dtype: data type of the ouput
+    :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
     :param low:
     :param high:
@@ -213,6 +213,14 @@ def flatcombine(data, masks, dtype=None, scales=None,
     # Sustitute values <= 0 by blank
     mm = result[0] <= 0
     result[0][mm] = blank
+    return result
+
+def zerocombine(data, masks, dtype=None, scales=None, 
+                method='median', args=()):
+    
+    result = combine(method, data, masks=masks, 
+                     dtype=dtype, scales=scales, args=args)
+
     return result
 
 if __name__ == "__main__":
