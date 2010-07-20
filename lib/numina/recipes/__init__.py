@@ -57,9 +57,9 @@ class RecipeBase:
         return dict(name=cls.__name__, module=cls.__module__, version=cls.__version__)
         
     def __init__(self, param):
-        self.values = param
-        self.repeat = 1
-        self.current = 0
+        self.parameters = param
+        self.repeat = param.get('recipe_repeat', 1)
+        self._current = 0
                 
     def setup(self, _param):
         warnings.warn("the setup method is deprecated", DeprecationWarning, stacklevel=2)
@@ -73,7 +73,7 @@ class RecipeBase:
         
         TIMEFMT = '%FT%T'
         
-        for self.current in range(self.repeat):
+        for self._current in range(self.repeat):
             try:
                 product = RecipeResult(recipe=self.info(), 
                                run=dict(start=None,
@@ -81,12 +81,12 @@ class RecipeBase:
                                         status=UNKNOWN,
                                         error={},
                                         repeat=self.repeat,
-                                        current=self.current + 1),
+                                        current=self._current + 1),
                                result={}
                                )
                 
                 run_info = dict(repeat=self.repeat, 
-                                current=self.current + 1)
+                                current=self._current + 1)
                 
                 now1 = datetime.datetime.now()
                 run_info['start'] = now1.strftime(TIMEFMT)
@@ -124,6 +124,10 @@ class RecipeBase:
         :rtype: bool
         '''
         return self.repeat <= 0
+    
+    @property
+    def current(self):
+        return self._current
         
 class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''

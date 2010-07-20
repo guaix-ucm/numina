@@ -422,9 +422,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             
     def run(self):
-        extinction = self.values['extinction']
-        nthreads = self.values['nthreads']
-        niteration = self.values['niterations']
+        extinction = self.parameters['extinction']
+        nthreads = self.parameters['nthreads']
+        niteration = self.parameters['niterations']
         airmass_keyword = 'AIRMASS'
         
         OUTPUT = 'result.fits'
@@ -432,7 +432,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         odl = []
         
-        for i in self.values['images']:
+        for i in self.parameters['images']:
             img = numina.image.DiskImage(filename=i)
             mask = numina.image.DiskImage(filename='bpm.fits')
             om = numina.image.DiskImage(filename='bpm.fits')
@@ -441,7 +441,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             label, _ext = os.path.splitext(i)
             od.local['label'] = label
-            od.local['offset'] = self.values['images'][i][0]
+            od.local['offset'] = self.parameters['images'][i][0]
             
             odl.append(od)
                 
@@ -463,23 +463,23 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
         # Initialize processing nodes, step 1
         try:
-            dark_data = self.values['master_dark'].open(mode='readonly')    
-            flat_data = self.values['master_flat'].open(mode='readonly')
+            dark_data = self.parameters['master_dark'].open(mode='readonly')    
+            flat_data = self.parameters['master_flat'].open(mode='readonly')
             
-            dark_data = self.values['master_dark'].data    
-            flat_data = self.values['master_flat'].data
+            dark_data = self.parameters['master_dark'].data    
+            flat_data = self.parameters['master_flat'].data
             
             sss = SerialFlow([
                           DarkCorrector(dark_data),
-                          NonLinearityCorrector(self.values['nonlinearity']),
+                          NonLinearityCorrector(self.parameters['nonlinearity']),
                           FlatFieldCorrector(flat_data)],
                           )
         
             _logger.info('Basic processing')    
             para_map(lambda x : Recipe.f_basic_processing(x, sss), odl, nthreads=nthreads)
         finally:
-            self.values['master_dark'].close()    
-            self.values['master_flat'].close() 
+            self.parameters['master_dark'].close()    
+            self.parameters['master_flat'].close() 
         
         sf_data = None
         

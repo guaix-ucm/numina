@@ -104,21 +104,21 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             od[0].close()            
 
     def run(self):
-        nthreads = self.values['nthreads']
+        nthreads = self.parameters['nthreads']
         
         OUTPUT = 'illumination.fits'
         primary_headers = {'FILENAME': OUTPUT}
         
-        simages = [DiskImage(filename=i) for i in self.values['images']]
-        smasks =  [self.values['master_bpm']] * len(simages)
+        simages = [DiskImage(filename=i) for i in self.parameters['images']]
+        smasks =  [self.parameters['master_bpm']] * len(simages)
                        
         # Initialize processing nodes, step 1
         try:
-            dark_data = self.values['master_dark'].open(mode='readonly',
+            dark_data = self.parameters['master_dark'].open(mode='readonly',
                                                         memmap=True)
             sss = SerialFlow([
                           DarkCorrector(dark_data),
-                          NonLinearityCorrector(self.values['nonlinearity']),
+                          NonLinearityCorrector(self.parameters['nonlinearity']),
                           ]
             )
         
@@ -126,7 +126,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             para_map(lambda x : Recipe.f_basic_processing(x, sss), zip(simages, smasks), 
                      nthreads=nthreads)
         finally:
-            self.values['master_dark'].close()
+            self.parameters['master_dark'].close()
         # Illumination seems to be necessary
         # ----------------------------------
         

@@ -51,13 +51,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         _logger.info('Creating detector')
         
-        self.detector = EmirDetector(**self.values['detector'])
+        self.detector = EmirDetector(**self.parameters['detector'])
         _logger.info('Configuring detector')
-        self.detector.configure(self.values['readout'])
+        self.detector.configure(self.parameters['readout'])
         
-        self.input = numpy.zeros(self.values['detector']['shape'])
-        self.detector.exposure(self.values['readout']['exposure'])
-        self.repeat = self.values['readout']['repeat']
+        self.input = numpy.zeros(self.parameters['detector']['shape'])
+        self.detector.exposure(self.parameters['readout']['exposure'])
+        self.repeat = self.parameters['readout']['repeat']
      
     def run(self):
         _logger.info('Creating simulated array')    

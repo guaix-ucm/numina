@@ -68,7 +68,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
     def __init__(self, value):
         super(Recipe, self).__init__(value)
-        # Default values. This can be read from a file        
+        # Default parameters. This can be read from a file        
         
     def run(self):
         OUTPUT = 'dark.fits'
@@ -78,7 +78,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         allmasks = []
         
         try:
-            for n in self.values['images']:
+            for n in self.parameters['images']:
                 n.open(mode='readonly', memmap=True)
                 alldata.append(n.data)
             
@@ -91,7 +91,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             return {'qa': numina.qa.UNKNOWN, 'dark_image': result}
 
         finally:
-            for n in self.values['images']:
+            for n in self.parameters['images']:
                 n.close()
 
     
