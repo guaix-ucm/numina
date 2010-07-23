@@ -34,5 +34,20 @@ Method* NamedMethodFactory::create(const std::string& name, PyObject* args) {
 	return NULL;
 }
 
+CombineMethod* CombineMethodFactory::create(const std::string& name, PyObject* args) {
+	if (name == "average")
+		return new AverageMethod2(args);
+	if (name == "median")
+		return new MedianMethod2();
+	return NULL;
+}
+
+RejectMethod* RejectMethodFactory::create(const std::string& name, PyObject* args) {
+	if (name == "none")
+		return new NoneReject(args);
+	return NULL;
+}
+
+
 } // namespace Numina
 

@@ -29,6 +29,7 @@
 #include "method_exception.h"
 
 namespace {
+
 double mean(double* data, size_t size) {
 	double sum = 0;
 	for (size_t i = 0; i < size; ++i)
@@ -47,18 +48,57 @@ double variance(double* data, size_t size, int dof, double mean) {
 }
 
 double stdev(double* data, size_t size, int dof, double mean) {
-	double sum = 0;
+	return sqrt(variance(data, size, dof, mean));
+}
 
-	for (size_t i = 0; i < size; ++i) {
-		const double fid = data[i] - mean;
-		sum += fid * fid;
+double* kth_smallest(double* data, size_t size, size_t kth) {
+	int l = 0;
+	int m = size - 1;
+
+	while (l < m) {
+		double x = *(data + kth);
+		int i = l;
+		int j = m;
+		do {
+			while (*(data + i) < x)
+				++i;
+			while (x < *(data + j))
+				--j;
+			if (i <= j) {
+				std::swap(*(data + i), *(data + j));
+				++i;
+				--j;
+			}
+		} while (i <= j);
+		if (j < kth)
+			l = i;
+		if (kth < i)
+			m = j;
+
 	}
-	return std::sqrt(sum / (size - dof));
+
+	return data + kth;
+}
+
+double median(double* data, size_t size) {
+	//std::nth_element(data, data + size / 2, data + size);
+	//median = *(data + size / 2);
+	const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
+	return *kth_smallest(data, size, midpt);
 }
 
 }
 
 namespace Numina {
+
+NoneReject::NoneReject(PyObject* args) {
+}
+
+NoneReject::~NoneReject() {
+}
+
+void NoneReject::run(double* data, double* weights, size_t size, double* results[3]) const {
+};
 
 MeanMethod::MeanMethod(PyObject* args) {
 	if (not PyArg_ParseTuple(args, "d", &m_dof))
@@ -97,6 +137,44 @@ void MeanMethod::run(double* data, double* weights, size_t size,
 	*results[1] = sum2 / (size - m_dof) - (sum * sum) / (size * (size - m_dof));
 }
 
+AverageMethod2::AverageMethod2(PyObject* args) {
+	if (not PyArg_ParseTuple(args, "d", &m_dof))
+		throw MethodException("problem creating MeanMethod");
+}
+
+AverageMethod2::~AverageMethod2() {
+}
+
+// weights are ignored for now
+void AverageMethod2::run(double* data, double* weights, size_t size,
+		double* results[3]) const {
+
+	if (size == 0) {
+		*results[0] = *results[1] = *results[2] = 0.0;
+		return;
+	}
+
+	if (size == 1) {
+		*results[0] = data[0];
+		*results[1] = 0.0;
+		*results[2] = 1;
+		return;
+	}
+
+	double sum = 0.0;
+	double sum2 = 0.0;
+
+	for (size_t i = 0; i < size; ++i) {
+		sum += data[i];
+		sum2 += data[i] * data[i];
+	}
+
+	*results[0] = sum / size;
+	*results[2] = size;
+	*results[1] = sum2 / (size - m_dof) - (sum * sum) / (size * (size - m_dof));
+}
+
+
 MedianMethod::MedianMethod() {
 }
 
@@ -118,8 +196,7 @@ void MedianMethod::run(double* data, double* weights, size_t size,
 		*results[0] = data[0];
 		break;
 	default: {
-		const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
-		*results[0] = *kth_smallest(data, size, midpt);
+		*results[0] = median(data, size);
 		//std::nth_element(data, data + size / 2, data + size);
 		//*results[0] = *(data + size / 2);
 
@@ -134,33 +211,40 @@ void MedianMethod::run(double* data, double* weights, size_t size,
 	}
 }
 
-double* MedianMethod::kth_smallest(double* data, size_t size, size_t kth) const {
-	int l = 0;
-	int m = size - 1;
+MedianMethod2::MedianMethod2() {
+}
 
-	while (l < m) {
-		double x = *(data + kth);
-		int i = l;
-		int j = m;
-		do {
-			while (*(data + i) < x)
-				++i;
-			while (x < *(data + j))
-				--j;
-			if (i <= j) {
-				std::swap(*(data + i), *(data + j));
-				++i;
-				--j;
-			}
-		} while (i <= j);
-		if (j < kth)
-			l = i;
-		if (kth < i)
-			m = j;
+MedianMethod2::~MedianMethod2() {
+}
 
+// weights are ignored for now
+void MedianMethod2::run(double* data, double* weights, size_t size,
+		double* results[3]) const {
+
+	*results[1] = 0.0;
+	*results[2] = size;
+
+	switch (size) {
+	case 0:
+		*results[0] = 0.0;
+		break;
+	case 1:
+		*results[0] = data[0];
+		break;
+	default: {
+		*results[0] = median(data, size);
+		//std::nth_element(data, data + size / 2, data + size);
+		//*results[0] = *(data + size / 2);
+
+		// Variance of the median from variance of the mean
+		// http://mathworld.wolfram.com/StatisticalMedian.html
+		const double smean = mean(data, size);
+		const double svar = variance(data, size, 1, smean);
+		*results[1] = 4 * size / (M_PI * (2 * size + 1)) * svar;
+
+		break;
 	}
-
-	return data + kth;
+	}
 }
 
 SigmaClipMethod::SigmaClipMethod(PyObject* args) {

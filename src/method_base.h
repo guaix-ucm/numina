@@ -30,6 +30,19 @@ public:
 	virtual void run(double* data, double* weights, size_t size, double* results[3]) const = 0;
 };
 
+class CombineMethod {
+public:
+	virtual ~CombineMethod() {}
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const = 0;
+};
+
+class RejectMethod {
+public:
+	virtual ~RejectMethod() {}
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const = 0;
+};
+
+
 } // namespace Numina
 
 #endif // PYEMIR_METHOD_BASE_H

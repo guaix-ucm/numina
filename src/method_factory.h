@@ -35,6 +35,15 @@ public:
 	static Method* create(const std::string& name, PyObject* args);
 };
 
+class CombineMethodFactory {
+public:
+	static CombineMethod* create(const std::string& name, PyObject* args);
+};
+
+class RejectMethodFactory {
+public:
+	static RejectMethod* create(const std::string& name, PyObject* args);
+};
 
 
 } // namespace Numina

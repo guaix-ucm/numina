@@ -37,14 +37,27 @@ private:
 	int m_dof;
 };
 
+class AverageMethod2: public CombineMethod {
+public:
+	AverageMethod2(PyObject* args);
+	virtual ~AverageMethod2();
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+private:
+	int m_dof;
+};
 
 class MedianMethod: public Method {
 public:
 	MedianMethod();
 	virtual ~MedianMethod();
 	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
-private:
-	double* kth_smallest(double* data, size_t size, size_t kth) const;
+};
+
+class MedianMethod2: public CombineMethod {
+public:
+	MedianMethod2();
+	virtual ~MedianMethod2();
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 };
 
 class SigmaClipMethod: public Method {
@@ -58,6 +71,12 @@ private:
   int m_dof;
 };
 
+class NoneReject: public RejectMethod {
+public:
+	NoneReject(PyObject* args);
+	virtual ~NoneReject();
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+};
 
 }
 

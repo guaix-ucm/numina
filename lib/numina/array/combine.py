@@ -27,13 +27,17 @@ from numina.array import combine_shape
 from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import CombineError
 
+METHODS = ['mean', 'median', 'sigmaclip']
+COMBINE_METHODS = ['average', 'median']
+REJECT_METHODS = ['none']
+
 def combine(method, images, masks=None, dtype=None, out=None,
              args=(), zeros=None, scales=None, weights=None, offsets=None):
     # method should be a string
     
     WORKTYPE = 'float'
     
-    if method not in ['mean', 'median', 'sigmaclip']:
+    if method not in METHODS:
         if not callable(method):
             raise CombineError('method is neither a string nor callable')
     
@@ -110,6 +114,92 @@ def combine(method, images, masks=None, dtype=None, out=None,
                                       offsets=offsets)
     
     return out.astype(dtype)
+
+def combine2(method, reject, images, masks=None, dtype=None, out=None,
+             args=(), zeros=None, scales=None, weights=None, offsets=None):
+        
+    WORKTYPE = 'float'
+    
+    if method not in COMBINE_METHODS:
+        raise CombineError('method is not an allowed string: %s' % COMBINE_METHODS)
+    
+    if reject not in REJECT_METHODS:
+        raise CombineError('reject is not an allowed string: %s' % REJECT_METHODS)
+    
+    # Check inumpy.uts
+    if not images:
+        raise CombineError("len(inputs) == 0")
+
+    number_of_images = len(images)
+    images = map(numpy.asanyarray, images)
+    
+    # All images have the same shape
+    allshapes = [i.shape for i in images]
+    baseshape = images[0].shape
+    if any(shape != baseshape for shape in allshapes[1:]):
+        raise CombineError("Images don't have the same shape")
+    
+    # Offsets
+    if offsets is None:
+        finalshape = baseshape
+    else:
+        if len(images) != len(offsets):
+            raise CombineError("len(inputs) != len(offsets)")
+        
+        finalshape, offsets = combine_shape(allshapes, offsets)
+        offsets = offsets.astype('int')
+        
+    if masks:
+        if len(images) != len(masks):
+            raise CombineError("len(inputs) != len(masks)")
+    
+        # Error if mask and image have different shape
+        if any(imshape != ma.shape for (imshape, ma) in izip(allshapes, masks)):
+            raise CombineError("mask and image have different shape")
+    else:
+        masks = [numpy.zeros(baseshape, dtype='bool')] * number_of_images
+        
+    # Creating out if needed
+    # We need three numbers
+    outshape = (3,) + tuple(finalshape)
+    
+    if out is None:
+        out = numpy.zeros(outshape, dtype=WORKTYPE)
+    else:
+        if out.shape != outshape:
+            raise CombineError("result has wrong shape")  
+    
+    if zeros is None:
+        zeros = numpy.zeros(number_of_images, dtype=WORKTYPE)
+    else:
+        zeros = numpy.asanyarray(zeros, dtype=WORKTYPE)
+        if zeros.shape != (number_of_images,):
+            raise CombineError('incorrect number of zeros')
+        
+    if scales is None:
+        scales = numpy.ones(number_of_images, dtype=WORKTYPE)
+    else:
+        scales = numpy.asanyarray(scales, dtype=WORKTYPE)
+        if scales.shape != (number_of_images,):
+            raise CombineError('incorrect number of scales')
+        
+    if weights is None:
+        weights = numpy.ones(number_of_images, dtype=WORKTYPE)
+    else:
+        weights = numpy.asanyarray(scales, dtype=WORKTYPE)
+        if weights.shape != (number_of_images,):
+            raise CombineError('incorrect number of weights')
+
+    if offsets is None:
+        internal_combine2(method, images, masks, out0=out[0], out1=out[1], out2=out[2], args=args, 
+                         zeros=zeros, scales=scales, weights=weights)
+    else:
+        internal_combine2_with_offsets(method, images, masks, out0=out[0], out1=out[1], out2=out[2], 
+                                      args=args, zeros=zeros, scales=scales, weights=weights, 
+                                      offsets=offsets)
+    
+    return out.astype(dtype)
+
 
 def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
          weights=None, dof=0, offsets=None):
