@@ -17,11 +17,9 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import os
 from os.path import join as pjoin
-from cPickle import dump, load
-import logging
 import math
+from itertools import count, imap
 
 import numpy
 import scipy.stats.mvn as mvn
@@ -30,68 +28,16 @@ from numina.array import subarray_match
 
 # Classes are new style
 __metaclass__ = type
-
-_logger = logging.getLogger("numina.storage")
-
-class RunCounter:
-    '''Run number counter'''
-    def __init__(self, template, suffix='.fits',
-                 dir=None, last=1):
-        self.template = template
-        self.suffix = suffix
-        self.last = last
-        if dir is not None:
-            self.complete = pjoin(dir, self.template + self.suffix)
-        else:
-            self.complete = self.template + self.suffix
-           
-    def runstring(self):
-        '''Return the run number and the file name.'''
-        run = self.template % self.last
-        cfile = self.complete % self.last
-        self.last += 1
-        return (run, cfile)
-
-class PersistentRunCounter:
-    '''Persistent run number counter'''
-    def __init__(self, template, suffix='.fits',
-                 dir=None, pstore='index.pkl', last=1):
-        self.template = template
-        self.suffix = suffix
-        self.pstore = pstore
-        self.last = last
-        if dir is not None:
-            self.complete = pjoin(dir, self.template + self.suffix)
-            if not os.access(dir, os.F_OK):
-                os.mkdir(dir)
-        else:
-            self.complete = self.template + self.suffix
-        try:
-            pkl_file = open(self.pstore, 'rb')
-            try:                
-                self.last = load(pkl_file)
-            finally:
-                pkl_file.close() 
-        except IOError, strrerror:            
-            _logger.error(strrerror)
-                
-    def store(self):
-        try:
-            pkl_file = open(self.pstore, 'wb')
-            try:                
-                dump(self.last, pkl_file)
-            finally:
-                pkl_file.close()
-        except IOError, strrerror:            
-            _logger.error(strrerror)
+         
+def run_counter(template, suffix='.fits',
+             dir=None, start=1):
+    '''Generate consecutive run strings.'''
+    template += suffix
+    if dir is not None:
+        template = pjoin(dir, template)
             
-    def runstring(self):
-        '''Return the run number and the file name.'''
-        run = self.template % self.last
-        cfile = self.complete % self.last
-        self.last += 1
-        return (run, cfile)
-        
+    return imap(lambda x: template % x, count(start))
+
 class Profile:
     '''Base class for profiles'''
     def __init__(self, center):
@@ -103,7 +49,7 @@ class Profile:
         y, x = numpy.indices(self.shape)
         return self.area(x, y)
 
-    def area(self, x ,y):
+    def area(self, x, y):
         return numpy.ones(self.shape)
 
 class GaussProfile(Profile):

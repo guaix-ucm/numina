@@ -27,6 +27,7 @@ import numpy
 from numina.recipes import RecipeBase
 import numina.qa as qa
 from numina.simulation import RunCounter
+from numina.simulation import run_counter
 from numina.recipes.registry import ProxyQuery
 from numina.recipes.registry import Schema
 from emir.instrument.detector import EmirDetector
@@ -50,7 +51,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         super(Recipe, self).__init__(parameters, runinfo)
         #
         _logger.info('Run counter created')
-        self.runcounter = RunCounter("r%05d")
+        self.runcounter = run_counter("r%05d", suffix='')
         
         _logger.info('Creating detector')
         
@@ -65,8 +66,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def run(self):
         _logger.info('Creating simulated array')    
         output = self.detector.lpath(self.input)
-        run, cfile = self.runcounter.runstring()
-        headers = {'RUN': run, 'FILENAME': cfile}
+        run = self.runcounter2.next()
+        headers = {'RUN': run, 'FILENAME': '%s.fits' % run}
         
         _logger.info('Collecting detector metadata')
         headers.update(self.detector.metadata())
@@ -94,7 +95,7 @@ if __name__ == '__main__':
                             'repeat': 3,
                             'scheme': 'perline',
                             'exposure': 0},
-            'nformat': "r%05d",
+            'name_format': "r%05d",
             },
             'run': {'mode': 'simulate_image',
                     'instrument': 'emir'
