@@ -56,9 +56,10 @@ class RecipeBase:
     def info(cls):
         return dict(name=cls.__name__, module=cls.__module__, version=cls.__version__)
         
-    def __init__(self, param):
+    def __init__(self, param, run):
         self.parameters = param
-        self.repeat = param.get('recipe_repeat', 1)
+        self.runinfo = run
+        self.repeat = run.get('repeat', 1)
         self._current = 0
                 
     def setup(self, _param):

@@ -21,11 +21,14 @@
 
 import logging
 
-from numina.array.combine import mean
+from numina.array.combine import zerocombine
+from numina.image import DiskImage
 import numina.qa
 from numina.recipes import RecipeBase
 from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
+from numina.recipes.registry import ProxyPath
+from numina.recipes.registry import Schema
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -55,31 +58,41 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     '''
     
     required_parameters = [
-        'nthreads',
-        'images',
+        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to bias images'),
+        Schema('combine', 'median', 'Combine method'),
+        Schema('output_filename', 'bias.fits', 'Name of the bias output image')
     ]
 
     capabilities = ['bias_image']
     
-    def __init__(self, values):
-        super(Recipe, self).__init__(values)
+    def __init__(self, param, runinfo):
+        super(Recipe, self).__init__(param, runinfo)
         
     def run(self):
         
-        OUTPUT = 'bias.fits'
-        primary_headers = {'FILENAME': OUTPUT}
+        if self.parameters['combine'] == 'mean':
+            args = (1,)
+        else:
+            args = ()
+        
+        primary_headers = {'FILENAME': self.parameters['output_filename']}
         # Sanity check, check: all images belong to the same detector mode
+        
+        images = [DiskImage(path) for path in self.parameters['images']]
+            
         
         # Open all zero images
         alldata = []
         allmasks = []
         try:
-            for n in self.values['images']:
+            for n in images:
                 n.open(mode='readonly', memmap=True)
                 alldata.append(n.data)
             
             # Combine them
-            cube = mean(alldata, allmasks)
+            cube = zerocombine(alldata, allmasks, 
+                               method=self.parameters['combine'], 
+                               args=args)
         
             result = create_result(cube[0], headers=primary_headers,
                                    variance=cube[1], 
@@ -87,7 +100,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
             return {'qa': numina.qa.UNKNOWN, 'bias_image': result}
         finally:
-            for n in self.values['images']:
+            for n in images:
                 n.close()
 
 if __name__ == '__main__':
@@ -95,23 +108,35 @@ if __name__ == '__main__':
     
     import simplejson as json
     
-    from numina.image import DiskImage
     from numina.user import main
     from numina.jsonserializer import to_json
 
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
-    
-    pv = {'observing_mode': 'bias_image',
-          'images': [DiskImage('apr21_0046.fits'), 
-                     DiskImage('apr21_0047.fits'), 
-                     DiskImage('apr21_0048.fits'),
-                     DiskImage('apr21_0049.fits'), 
-                     DiskImage('apr21_0050.fits')
-                     ],
+        
+    pv = {'recipe': {'parameters': {
+                                'output_filename': 'perryr.fits',
+                                'combine': 'mean',
+                                },
+                     'run': {'repeat': 1,
+                             'instrument': 'emir',
+                             'mode': 'bias_image',
+                             },   
+                        },
+          'observing_block': {'instrument': 'emir',
+                       'mode': 'bias_image',
+                       'id': 1,
+                       'result': {
+                                  'images': ['apr21_0046.fits', 
+                                             'apr21_0047.fits', 
+                                             'apr21_0048.fits',
+                                             'apr21_0049.fits', 
+                                             'apr21_0050.fits'
+                                             ],
+                            },
+                       },                     
     }
-    
-    
+        
     os.chdir('/home/spr/Datos/emir/apr21')
     
     ff = open('config.txt', 'w+')

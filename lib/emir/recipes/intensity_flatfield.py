@@ -29,6 +29,8 @@ from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector
 from numina.array.combine import flatcombine
 from numina.worker import para_map
+from numina.recipes.registry import ProxyPath, ProxyQuery
+from numina.recipes.registry import Schema
 import numina.qa as QA
 from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
@@ -65,18 +67,18 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     '''
     
     required_parameters = [
-        'images',
-        'master_bias',
-        'master_dark',
-        'master_bpm',
-        'nonlinearity',
-        'nthreads',                         
+        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),        
+        Schema('master_bias', ProxyQuery(), 'Master bias image'),
+        Schema('master_dark', ProxyQuery(), 'Master dark image'),
+        Schema('master_bpm', ProxyQuery(), 'Master bad pixel mask'),
+        Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),        
+        Schema('output_filename', 'result.fits', 'Name of the output image')
     ]
     
     capabilities = ['intensity_flatfield']
     
-    def __init__(self, values):
-        super(Recipe, self).__init__(values)
+    def __init__(self, param, runinfo):
+        super(Recipe, self).__init__(param, runinfo)
 
     @staticmethod
     def f_basic_processing(od, flow):
@@ -104,18 +106,17 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             od[0].close()            
 
     def run(self):
-        nthreads = self.parameters['nthreads']
         
-        OUTPUT = 'illumination.fits'
-        primary_headers = {'FILENAME': OUTPUT}
-        
+        nthreads = self.runinfo['nthreads']
+        primary_headers = {'FILENAME': self.parameters['output_filename']}
+                
         simages = [DiskImage(filename=i) for i in self.parameters['images']]
-        smasks =  [self.parameters['master_bpm']] * len(simages)
-                       
+        smasks =  [DiskImage(self.parameters['master_bpm'])] * len(simages)
+        
+        dark_image = DiskImage(self.parameters['master_dark'])
         # Initialize processing nodes, step 1
         try:
-            dark_data = self.parameters['master_dark'].open(mode='readonly',
-                                                        memmap=True)
+            dark_data = dark_image.open(mode='readonly', memmap=True)
             sss = SerialFlow([
                           DarkCorrector(dark_data),
                           NonLinearityCorrector(self.parameters['nonlinearity']),
@@ -126,7 +127,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             para_map(lambda x : Recipe.f_basic_processing(x, sss), zip(simages, smasks), 
                      nthreads=nthreads)
         finally:
-            self.parameters['master_dark'].close()
+            dark_image.close()
         # Illumination seems to be necessary
         # ----------------------------------
         
@@ -140,8 +141,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             # Operation to create an intermediate sky flat
             
         try:
-            map(lambda x: x.open(mode='readonly'), simages)
-            map(lambda x: x.open(mode='readonly'), smasks)
+            map(lambda x: x.open(mode='readonly', memmap=True), simages)
+            map(lambda x: x.open(mode='readonly', memmap=True), smasks)
             _logger.info("Combining the images without offsets")
             data = [img.data for img in simages]
             masks = [img.data for img in simages]
@@ -166,7 +167,8 @@ if __name__ == '__main__':
     import os
     from numina.jsonserializer import to_json
 
-    pv = {'images': ['apr21_0046.fits',
+    pv = {'recipe': {'parameters': 
+                        {'images': ['apr21_0046.fits',
                                   'apr21_0047.fits',
                                   'apr21_0048.fits',
                                   'apr21_0049.fits',
@@ -201,11 +203,14 @@ if __name__ == '__main__':
                                   'apr21_0079.fits',            
                                   'apr21_0080.fits',
                                   'apr21_0081.fits'],
-                        'master_bias': DiskImage('mbias.fits'),
-                        'master_dark': DiskImage('Dark50.fits'),
-                        'linearity': [1e-3, 1e-2, 0.99, 0.00],
-                        'master_bpm': DiskImage('bpm.fits'),
-        'observing_mode': 'intensity_flatfield'
+                                'master_bias': 'mbias.fits',
+                                'master_dark': 'Dark50.fits',
+                                'linearity': [1e-3, 1e-2, 0.99, 0.00],
+                                'master_bpm': 'bpm.fits',
+                                },
+                        'run': {'mode': 'intensity_flatfield',
+                                'instrument': 'emir'}
+                        },
     }
     
     os.chdir('/home/spr/Datos/emir/apr21')

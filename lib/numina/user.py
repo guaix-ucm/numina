@@ -35,6 +35,7 @@ import StringIO
 import xdg.BaseDirectory as xdgbd
 
 from numina import __version__
+from numina.logger import captureWarnings
 from numina.recipes import list_recipes
 from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
 from numina.diskstorage import store
@@ -78,66 +79,79 @@ def mode_none():
     pass
 
 def mode_run(args, logger):
-    repos = registry.get_repo_list()    
-    filerepo = registry.JSON_Repo(args[0])
-    newrepo = [filerepo] + repos
-    registry.set_repo_list(newrepo)
-
-    obsblock_id = 1
-    obsmode = ''
-    try: 
-        obsmode = registry.lookup(obsblock_id, 'observing_mode')
-    except LookupError:
-        logger.error('observing_mode not defined in input file')
-        return 1
-
-    recipeclasses = list_recipes_by_obs_mode(obsmode)
-        
-    if not recipeclasses:
-        logger.error('No Recipe with observing mode %s', obsmode)
-        return 1
-
-    for RecipeClass in recipeclasses:
     
-        logger.debug('Getting the parameters required by the recipe')    
-        param = {}
-        
-        for name in ['observing_mode']:
-            param[name] = registry.lookup(obsblock_id, name)
-        
-        for name in RecipeClass.required_parameters:
-            param[name] = registry.lookup(obsblock_id, name)
-             
-        logger.debug('Creating the recipe')
-        recipe = RecipeClass(param)
-        
-        errorcount = 0
+    registry.init_registry_from_file(args[0])
 
-        for result in recipe():
-            logger.info('Running the recipe instance %d of %d ', 
-                     recipe.current + 1, recipe.repeat)
+    try:
+        instrument = registry.mget(['/observing_block/instrument',
+                                    '/recipe/run/instrument'])
+
+        obsmode = registry.mget(['/observing_block/mode', 
+                                 '/recipe/run/mode'])
+    except KeyError:
+        logger.error('cannot retrieve instrument and obsmode')
+        return 1
+    
+    logger.info('our instrument is %s and our observing mode is %s', 
+                instrument, obsmode)
+    
+    for recipeClass in list_recipes():
+        if instrument in recipeClass.instrument and obsmode in recipeClass.capabilities:
+            parameters = {}
+            par = registry.get('/recipe/parameters')
+            for n, v, _ in recipeClass.required_parameters:
+                
+                # If the default value is ProxyPath
+                # the default value is from the root configuration object
+                #
+                if isinstance(v, registry.ProxyPath):
+                    try:
+                        defval = v.get()
+                    except KeyError:
+                        defval = None
+                else:
+                    defval = v
+                parameters[n] = par.get(n, defval)
+                logger.debug('parameter %s = %s',n, parameters[n])
+                
+                
+            logger.debug('Creating the recipe')
+            runinfo = registry.get('/recipe/run')
+            recipe = recipeClass(parameters, runinfo)
             
-            result['recipe_runner'] = info()
-            result['instrument'] = {'obsmode': obsmode}
+            errorcount = 0
+    
+            for result in recipe():
+                logger.info('Running the recipe instance %d of %d ', 
+                         recipe.current + 1, recipe.repeat)
+                
+                result['recipe_runner'] = info()
+                result['instrument'] = {'name': instrument, 
+                                        'mode': obsmode}
+                
+                if result['run']['status'] != 0:
+                    errorcount += 1
+                
+                # Creating the filename for the result
+                nowstr = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+                uuidstr = str(uuid.uuid1())
+                
+                store(result, 'numina-%s-%s.log' % (nowstr, uuidstr))
+                
+            logger.debug('Cleaning up the recipe')
+            recipe.cleanup()
             
-            if result['run']['status'] != 0:
-                errorcount += 1
-            
-            # Creating the filename
-            nowstr = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-            uuidstr = str(uuid.uuid1())
-            
-            store(result, 'numina-%s-%s.log' % (nowstr, uuidstr))
-            
-        logger.debug('Cleaning up the recipe')
-        recipe.cleanup()
+            if errorcount > 0:
+                logger.error('Errors during execution: %d', errorcount)
+                return errorcount
+            else:
+                logger.info('Completed execution')
+
+            return 0
+    else:
+        logger.error('observing mode %s is not processed by any recipe', obsmode)
         
-        if errorcount > 0:
-            logger.error('Errors during execution: %d', errorcount)
-            return errorcount
-        else:
-            logger.info('Completed execution')
-        return 0
+    return 0
 
 def info():
     '''Information about this version of numina.
@@ -177,6 +191,7 @@ def main(args=None):
         options.module = config.get('ohoh', 'module')
     
     init_recipe_system([options.module])
+    captureWarnings(True)
     
     if options.mode == 'list':
         mode_list() 

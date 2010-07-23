@@ -28,6 +28,7 @@ import pyfits
 
 import numina.image
 import numina.qa
+from numina.image import DiskImage
 from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
 from numina.logger import captureWarnings
@@ -38,6 +39,9 @@ from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array.combine import flatcombine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 from numina.recipes import RecipeBase
+from numina.recipes.registry import ProxyPath, ProxyQuery
+from numina.recipes.registry import Schema
+
 from emir.dataproducts import create_result, create_raw
 from emir.recipes import EmirRecipeMixin
 
@@ -182,19 +186,19 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     capabilities = ['dithered_images','nodded-beamswitched_images', 'stare_images']
     
     required_parameters = [
-        'master_dark',
-        'master_bpm',
-        'master_dark',
-        'master_flat',
-        'nonlinearity',
-        'extinction',
-        'nthreads',
-        'images',
-        'niterations',
+        Schema('extinction', ProxyQuery(dummy=1.0), 'Mean atmospheric extinction'),
+        Schema('master_bias', ProxyQuery(), 'Master bias image'),
+        Schema('master_dark', ProxyQuery(), 'Master dark image'),
+        Schema('master_bpm', ProxyQuery(), 'Master bad pixel mask'),
+        Schema('master_flat', ProxyQuery(), 'Master flat field image'),
+        Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),
+        Schema('iterations', 4, 'Iterations of the recipe'),
+        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),
+        Schema('output_filename', 'result.fits', 'Name of the output image')
     ]
     
-    def __init__(self, values):
-        super(Recipe, self).__init__(values)
+    def __init__(self, param, runinfo):
+        super(Recipe, self).__init__(param, runinfo)
 
 
     # Different intermediate images are created during the run of the recipe
@@ -423,12 +427,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
     def run(self):
         extinction = self.parameters['extinction']
-        nthreads = self.parameters['nthreads']
-        niteration = self.parameters['niterations']
+        nthreads = self.runinfo['threads']
+        niteration = self.parameters['iterations']
         airmass_keyword = 'AIRMASS'
         
-        OUTPUT = 'result.fits'
-        primary_headers = {'FILENAME': OUTPUT}
+        master_dark = DiskImage(self.parameters['master_dark'])
+        master_flat = DiskImage(self.parameters['master_flat'])
+        
+        primary_headers = {'FILENAME': self.parameters['output_filename']}
         
         odl = []
         
@@ -463,11 +469,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
         # Initialize processing nodes, step 1
         try:
-            dark_data = self.parameters['master_dark'].open(mode='readonly')    
-            flat_data = self.parameters['master_flat'].open(mode='readonly')
+            master_dark.open(mode='readonly')    
+            master_flat.open(mode='readonly')
             
-            dark_data = self.parameters['master_dark'].data    
-            flat_data = self.parameters['master_flat'].data
+            dark_data = master_dark.data    
+            flat_data = master_flat.data
             
             sss = SerialFlow([
                           DarkCorrector(dark_data),
@@ -478,8 +484,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info('Basic processing')    
             para_map(lambda x : Recipe.f_basic_processing(x, sss), odl, nthreads=nthreads)
         finally:
-            self.parameters['master_dark'].close()    
-            self.parameters['master_flat'].close() 
+            master_dark.close()    
+            master_flat.close() 
         
         sf_data = None
         
@@ -600,19 +606,23 @@ if __name__ == '__main__':
     import simplejson as json
     from numina.jsonserializer import to_json
     from numina.user import main
-    from numina.image import DiskImage
     captureWarnings(True)
     
     os.chdir('/home/spr/Datos/emir/apr21')
     
     
-    pv = {'observing_mode': 'dithered_images',
-          'nonlinearity': [1.00, 0.00],
-          'extinction': 0.05,
-          'niterations': 2, 
-                        'master_dark': DiskImage('Dark50.fits'),
-                        'master_flat': DiskImage('flat.fits'),
-                        'master_bpm': DiskImage('bpm.fits'),
+    pv = {'recipe': 
+          {'run': {'mode': 'dithered_images',
+                  'instrument': 'emir'
+                  }, 
+          'parameters': {
+                        'output_filename': 'result.fits',
+                        'nonlinearity': [1.00, 0.00],
+                        'extinction': 0.05,
+                        'iterations': 2, 
+                        'master_dark': 'Dark50.fits',
+                        'master_flat': 'flat.fits',
+                        'master_bpm': 'bpm.fits',
                         'images':  
                        {'apr21_0046.fits': ((0, 0), ['apr21_0046.fits']),
                         'apr21_0047.fits': ((0, 0), ['apr21_0047.fits']),
@@ -649,8 +659,10 @@ if __name__ == '__main__':
                         'apr21_0079.fits': ((-36, 15), ['apr21_0079.fits']),
                         'apr21_0080.fits': ((-36, 16), ['apr21_0080.fits']),
                         'apr21_0081.fits': ((-36, 16), ['apr21_0081.fits'])
-                        },          
-    }    
+                        },
+                        },
+                        }       
+    }
 
     os.chdir('/home/spr/Datos/emir/apr21')
     

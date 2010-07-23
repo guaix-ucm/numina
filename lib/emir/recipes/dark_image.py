@@ -24,10 +24,12 @@ import logging
 
 from numina.recipes import RecipeBase
 from numina.array.combine import mean
+from numina.image import DiskImage
 import numina.qa
 from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
-
+from numina.recipes.registry import ProxyPath
+from numina.recipes.registry import Schema
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -62,23 +64,24 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     capabilities = ['dark_current_image']
     
     required_parameters = [
-        'nthreads',
-        'images',
+        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths of dark images'),
+        Schema('output_filename', 'dark.fits', 'Name of the dark output image')
     ]    
         
-    def __init__(self, value):
-        super(Recipe, self).__init__(value)
+    def __init__(self, param, runinfo):
+        super(Recipe, self).__init__(param, runinfo)
         # Default parameters. This can be read from a file        
         
     def run(self):
-        OUTPUT = 'dark.fits'
-        primary_headers = {'FILENAME': OUTPUT}
+        primary_headers = {'FILENAME': self.parameters['output_filename']}
+
+        images = [DiskImage(path) for path in self.parameters['images']]
 
         alldata = []
         allmasks = []
         
         try:
-            for n in self.parameters['images']:
+            for n in images:
                 n.open(mode='readonly', memmap=True)
                 alldata.append(n.data)
             
@@ -86,12 +89,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             cube = mean(alldata, allmasks)
         
             result = create_result(cube[0], headers=primary_headers, 
-                                   variance=cube[1], exmap=cube[2])
+                                   variance=cube[1], 
+                                   exmap=cube[2].astype('int16'))
         
             return {'qa': numina.qa.UNKNOWN, 'dark_image': result}
 
         finally:
-            for n in self.parameters['images']:
+            for n in images:
                 n.close()
 
     

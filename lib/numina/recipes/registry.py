@@ -19,66 +19,137 @@
 
 from __future__ import with_statement
 
+import collections
+
 import simplejson as json
 
 from numina.jsonserializer import from_json
-import schema
 
-class DictRepo(object):
-    def __init__(self, dicto):
-        self._data = dicto
+Schema = collections.namedtuple('Schema', 'name value description')
 
-    def lookup(self, uid, parameter):
-        return self._data.get(parameter)
+_rr = dict(recipe={'parameters' : {},
+                    'run': {'repeat':1,
+                            'threads': 1,
+                            'instrument': None,
+                            'mode': None}
+                    }, 
+            observing_block={'instrument': None,
+                             'mode': None,
+                             'id': -1,
+                             'result': {}},
+            )
 
-    def keys(self):
-        return self._data.keys()
+class ProxyPath(object):
+    def __init__(self, path):
+        self.path = path
+        self._split = filter(None, path.split('/'))
 
-class JSON_Repo(object):
-    def __init__(self, filename):
-        with open(filename, mode='r') as f:
-            self._data = json.load(f, object_hook=from_json, encoding='utf-8')
+    def get(self):
+        global _rr
+        return _re_get(_rr, self._split)
 
-    def lookup(self, uid, parameter):
-        return self._data.get(parameter)
-
-    def keys(self):
-        return self._data.keys()
-
-_repos = [DictRepo({'hare': 90, 'linearity':[1.0, 0.0], 'master_dark':'dum.fits'})]
-
-def get_repo_list():
-    return _repos
-
-def set_repo_list(newlist):
-    global _repos
-    result = _repos
-    _repos = newlist
-    assert id(newlist) != id(result)
-    return result
-
-def list_keys():
-    result = {}
-    for r in _repos:
-        keys = r.keys()
-        for k in keys:
-            sch = schema.lookup(k)
-            if sch is None:
-                # Schema not defined
-                sch = schema.undefined(k)
-            result[k] = sch
-    return [val for val in result.itervalues()]
+class ProxyQuery(object):
+    def __init__(self, dummy=None):
+        self.dummy = dummy
         
+    def get(self):
+        return self.dummy
+    
+def init_registry():    
+    pass
 
-def lookup(uid, parameter):
-    defc = schema.lookup(parameter)
+def init_registry_from_file(filename):
+    global _rr
+    with open(filename, mode='r') as ff:
+        rr = json.load(ff, object_hook=from_json, encoding='utf-8')
+    
+    for keys, val in _re_list(rr, ''):
+        _re_set(_rr, keys[:-1], keys[-1], val)
 
-    for r in _repos:
-        val = r.lookup(uid, parameter)
-        if val is not None:
-            return val
+def print_registry():
+    _re_print(_rr, '')
 
-    if defc is not None:
-        return defc.value
+def _re_print(obj, prefix):
+    for key in obj:
+        if isinstance(obj[key], dict):
+            newpre = prefix + '/' + key
+            _re_print(obj[key], newpre)
+        else:
+            print prefix + '/' + key, ':', obj[key]
 
-    raise LookupError('Parameter %s not found in registry' % parameter)
+def list_registry():
+    global _rr
+    return _re_list(_rr, [])
+
+def _re_list(obj, prefix):
+    if obj and isinstance(obj, dict):
+        result = []
+        for key in obj:
+            newpre = list(prefix)
+            newpre.append(key)
+            result.extend(_re_list(obj[key], newpre))
+        return result
+    else:
+        return [(prefix, obj)]
+
+def _re_set(obj, path, key, value):
+    if not path:
+        if not isinstance(value, dict) and obj and obj.has_key(key) and isinstance(obj[key], dict):
+            raise TypeError('this path should be a directory')
+        if not isinstance(obj, dict):
+            raise TypeError('this path should be a directory')
+        obj[key] = value
+        return
+    else:
+        if isinstance(obj, dict):
+            newkey, newpath = path[0], path[1:]
+            if not obj.has_key(newkey):
+                obj[newkey] = {}
+            _re_set(obj[newkey], newpath, key, value)
+        else:
+            raise TypeError('path too short')
+
+def set(path, value):
+    global _rr
+    split = filter(None, path.split('/'))
+    if not split:
+        raise TypeError('can not set value on /')
+    newpath, newkey = split[:-1], split[-1]
+    _re_set(_rr, newpath, newkey, value)
+
+
+def get(path):
+    global _rr
+    split = filter(None, path.split('/'))
+    try:
+        return _re_get(_rr, split)
+    except KeyError:
+        raise KeyError(path)
+    
+def mget(paths):
+    from itertools import islice, ifilter, imap
+    
+    def helper(path):
+        try:
+            return get(path)
+        except KeyError:
+            return None
+        
+    result = list(islice(ifilter(None, imap(helper, paths)), 1))
+    if not result:
+        raise KeyError('paths %s' % paths)
+    return result[0]
+    
+
+def _re_get(obj, path):
+    if path and isinstance(obj, dict):
+        return _re_get(obj[path[0]], path[1:])
+    return obj
+
+if __name__ == '__main__':
+    
+    init_registry_from_file('/home/spr/Datos/emir/apr21/config.txt')
+
+    print get('/recipe')
+    
+

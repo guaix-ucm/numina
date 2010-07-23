@@ -30,16 +30,12 @@ class Sample(RecipeBase):
     '''Sample recipe.'''
     
     capabilities = ['sample']
-    
-    required_parameters = [
-        'niterations'
-    ]
+    instrument = ['sample']
     
     __version__ = 1
     
-    def __init__(self, param):
-        super(Sample, self).__init__(param)
-        self.repeat = 2
+    def __init__(self, param, run):
+        super(Sample, self).__init__(param, run)
         
     def run(self):
         if self.current == 0:
@@ -54,8 +50,9 @@ if __name__ == '__main__':
     from numina.user import main
     from numina.jsonserializer import to_json 
         
-    p = {'niterations': 3, 'repeat': 3, 'observing_mode': 'sample'}
-    
+
+    p = {'recipe': {'run': {'repeat': 2, 'mode': 'sample', 'instrument': 'sample'}}}   
+          
     f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
     try:
         json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
