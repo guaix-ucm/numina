@@ -22,7 +22,7 @@ import unittest
 
 import scipy
 
-from numina.simulation import RunCounter
+from numina.simulation import run_counter
 from emir.instrument.detector import EmirDetector
 from emir.dataproducts import create_raw
 
@@ -48,7 +48,7 @@ class BiasImageTestCase(unittest.TestCase):
         self.input_ = scipy.zeros(detector_conf['shape'])
         self.detector.exposure(readout_opt['exposure'])
         
-        self.runcounter = RunCounter("r%05d")
+        self.runcounter = run_counter("r%05d")
         
         
         self.nimages = 100
@@ -57,7 +57,7 @@ class BiasImageTestCase(unittest.TestCase):
             i = 0
             while i < upto:
                 output = self.detector.lpath(self.input_)
-                run, _cfile = self.runcounter.runstring()
+                run = self.runcounter.next()
                 now = datetime.datetime.now()
                 nowstr = now.strftime('%FT%T')
                 headers = {'RUN': run, 'DATE': nowstr, 'DATE-OBS':nowstr}
@@ -66,7 +66,7 @@ class BiasImageTestCase(unittest.TestCase):
                 yield hdulist
                 i += 1
         
-        self.images = [i for i in image_generator(self.nimages)]
+        self.images = list(image_generator(self.nimages))
         
 
     def tearDown(self):

@@ -26,7 +26,6 @@ import numpy
 
 from numina.recipes import RecipeBase
 import numina.qa as qa
-from numina.simulation import RunCounter
 from numina.simulation import run_counter
 from numina.recipes.registry import ProxyQuery
 from numina.recipes.registry import Schema
@@ -66,7 +65,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def run(self):
         _logger.info('Creating simulated array')    
         output = self.detector.lpath(self.input)
-        run = self.runcounter2.next()
+        run = self.runcounter.next()
         headers = {'RUN': run, 'FILENAME': '%s.fits' % run}
         
         _logger.info('Collecting detector metadata')
