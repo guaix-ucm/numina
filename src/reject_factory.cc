@@ -19,22 +19,20 @@
  */
 
 
-#ifndef PYEMIR_METHOD_FACTORY_H
-#define PYEMIR_METHOD_FACTORY_H
-
-#include <string>
-
-#include <Python.h>
-
-#include "method_base.h"
+#include "reject_factory.h"
+#include "reject_methods.h"
 
 namespace Numina {
 
-class CombineMethodFactory {
-public:
-	static auto_ptr<CombineMethod> create(const std::string& name, PyObject* args);
-};
+auto_ptr<RejectMethod>
+RejectMethodFactory::create(const std::string& name,
+		PyObject* args,
+		auto_ptr<CombineMethod> combine_method) {
+	if (name == "none")
+		return auto_ptr<RejectMethod>(new NoneReject(args, combine_method));
+	return auto_ptr<RejectMethod>();
+}
+
 
 } // namespace Numina
 
-#endif // PYEMIR_METHOD_BASE_H

@@ -19,10 +19,8 @@
  */
 
 
-#ifndef PYEMIR_METHOD_FACTORY_H
-#define PYEMIR_METHOD_FACTORY_H
-
-#include <string>
+#ifndef PYEMIR_METHODS_H
+#define PYEMIR_METHODS_H
 
 #include <Python.h>
 
@@ -30,11 +28,24 @@
 
 namespace Numina {
 
-class CombineMethodFactory {
+class NoneReject: public RejectMethod {
 public:
-	static auto_ptr<CombineMethod> create(const std::string& name, PyObject* args);
+	NoneReject(PyObject* args, auto_ptr<CombineMethod> combine_method);
+	virtual ~NoneReject();
+	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 };
 
-} // namespace Numina
 
-#endif // PYEMIR_METHOD_BASE_H
+class SigmaClipMethod: public RejectMethod {
+public:
+  SigmaClipMethod(PyObject* args, auto_ptr<CombineMethod> combine_method);
+  virtual ~SigmaClipMethod();
+  virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+private:
+  double m_low;
+  double m_high;
+};
+
+}
+
+#endif // PYEMIR_METHODS_H

@@ -24,30 +24,14 @@
 
 namespace Numina {
 
-Method* NamedMethodFactory::create(const std::string& name, PyObject* args) {
-	if (name == "mean")
-		return new MeanMethod(args);
-	if (name == "median")
-		return new MedianMethod();
-	if (name == "sigmaclip")
-	  return new SigmaClipMethod(args);
-	return NULL;
-}
-
-CombineMethod* CombineMethodFactory::create(const std::string& name, PyObject* args) {
+auto_ptr<CombineMethod>
+CombineMethodFactory::create(const std::string& name, PyObject* args) {
 	if (name == "average")
-		return new AverageMethod2(args);
+		return auto_ptr<CombineMethod>(new AverageMethod(args));
 	if (name == "median")
-		return new MedianMethod2();
-	return NULL;
+		return auto_ptr<CombineMethod>(new MedianMethod());
+	return auto_ptr<CombineMethod>();
 }
-
-RejectMethod* RejectMethodFactory::create(const std::string& name, PyObject* args) {
-	if (name == "none")
-		return new NoneReject(args);
-	return NULL;
-}
-
 
 } // namespace Numina
 

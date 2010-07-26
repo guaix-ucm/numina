@@ -19,29 +19,24 @@
  */
 
 
-#ifndef PYEMIR_METHODS_PYTHON_H
-#define PYEMIR_METHODS_PYTHON_H
+#ifndef PYEMIR_REJECT_FACTORY_H
+#define PYEMIR_REJECT_FACTORY_H
 
-#include "method_base.h"
+#include <string>
 
 #include <Python.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
-#define NO_IMPORT_ARRAY
-#include <numpy/arrayobject.h>
+#include "method_base.h"
 
 namespace Numina {
 
-class PythonMethod: public Method {
+class RejectMethodFactory {
 public:
-	PythonMethod(PyObject* callback, PyObject* arguments);
-	~PythonMethod() {};
-	void run(double* data, double* weights, size_t size, double* results[3]) const;
-private:
-	PyObject* m_callback;
-	PyObject* m_arguments; // This argument is ignored
+	static auto_ptr<RejectMethod> create(const std::string& name, PyObject* args,
+			auto_ptr<CombineMethod> combine_method);
 };
+
 
 } // namespace Numina
 
-#endif // PYEMIR_METHODS_PYTHON_H
+#endif // PYEMIR_REJECT_BASE_H

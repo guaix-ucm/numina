@@ -28,54 +28,22 @@
 
 namespace Numina {
 
-class MeanMethod: public Method {
+class AverageMethod: public CombineMethod {
 public:
-	MeanMethod(PyObject* args);
-	virtual ~MeanMethod();
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+	AverageMethod(PyObject* args);
+	virtual ~AverageMethod();
+	virtual void central_tendency(double* data, double* weights, size_t size,
+			double* central, double* variance) const;
 private:
 	int m_dof;
 };
 
-class AverageMethod2: public CombineMethod {
-public:
-	AverageMethod2(PyObject* args);
-	virtual ~AverageMethod2();
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
-private:
-	int m_dof;
-};
-
-class MedianMethod: public Method {
+class MedianMethod: public CombineMethod {
 public:
 	MedianMethod();
 	virtual ~MedianMethod();
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
-};
-
-class MedianMethod2: public CombineMethod {
-public:
-	MedianMethod2();
-	virtual ~MedianMethod2();
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
-};
-
-class SigmaClipMethod: public Method {
-public:
-  SigmaClipMethod(PyObject* args);
-  virtual ~SigmaClipMethod();
-  virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
-private:
-  double m_low;
-  double m_high;
-  int m_dof;
-};
-
-class NoneReject: public RejectMethod {
-public:
-	NoneReject(PyObject* args);
-	virtual ~NoneReject();
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+	virtual void central_tendency(double* data, double* weights, size_t size,
+			double* central, double* variance) const;
 };
 
 }
