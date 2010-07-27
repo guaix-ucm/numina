@@ -27,9 +27,65 @@ from numina.array import combine_shape
 from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import CombineError
 
-COMBINE_METHODS = ['average', 'median']
-REJECT_METHODS = ['none', 'sigmaclip']
+COMBINE_METHODS = {'average': [('dof', 1)], 'median': []}
+REJECT_METHODS = {'none': [], 'sigmaclip': [('low', 4.), ('high', 4.)]}
 
+def merge_default(sequence, defaults):
+    '''Return *sequence* elements, with *defaults* as default values.
+    
+    The length of the result sequence is equal to the length
+    of *defaults*. If values are missing from *sequence*, they are taken from
+    the same position in the sequence *defaults*.
+    
+    >>> list(merge_default([-4, 4, 8], defaults=[]))
+    []
+    >>> list(merge_default([-4, 4], defaults=[10, 20, -10, 0]))
+    [-4, 4, -10, 0]
+    
+    '''
+    iter1 = iter(sequence)
+    iter2 = iter(defaults)
+    
+    while True:
+        dfc = next(iter2)
+        try:
+            val = next(iter1)
+            yield val
+        except StopIteration:
+            yield dfc
+            
+            while True:
+                yield next(iter2)
+
+def assign_def_values(args, pars, name=None):
+    '''Assign default values from *pars* to *args*.
+    
+    *pars* is a list with tuples of pairs containing
+    the parameter name and its value.
+    
+    >>> assign_def_values((-10, 20), [('par1', 10), ('par2', 30)])
+    (-10, 20)
+    >>> assign_def_values((-10,), [('par1', 10), ('par2', 30)])
+    (-10, 30)
+    
+    Raises ValueError if *args* is longer than *pars*
+    
+    '''
+    if not args and pars:
+        # default arguments for method
+        # zip(*) is the equivalent to unzip
+        _, args = zip(*pars)
+    else:
+        npars = len(pars)
+        nargs = len(args)
+        if npars < nargs:
+            # We are passing more parameters than needed
+            name = name or 'function'
+            raise ValueError('%s is receiving %d parameters, only %d are needed' % 
+                               (name, nargs, npars))
+        elif npars > nargs:
+            args = merge_default(args, map(lambda x:x[1], pars))
+    return tuple(args)
 
 def combine(images, masks=None, dtype=None, out=None,
             method='average', margs=(), reject='none', rargs=(), 
@@ -41,8 +97,14 @@ def combine(images, masks=None, dtype=None, out=None,
         raise CombineError('method is not an allowed string: %s' % COMBINE_METHODS)
     
     if reject not in REJECT_METHODS:
-        raise CombineError('reject is not an allowed string: %s' % REJECT_METHODS)
+        raise CombineError('rejection method is not an allowed string: %s' % REJECT_METHODS)
     
+    try:
+        margs = assign_def_values(margs, COMBINE_METHODS[method], method)
+        rargs = assign_def_values(rargs, REJECT_METHODS[reject], reject)
+    except ValueError, err:
+        raise CombineError('%s' % err)
+        
     # Check inumpy.uts
     if not images:
         raise CombineError("len(inputs) == 0")
@@ -240,17 +302,17 @@ def zerocombine(data, masks, dtype=None, scales=None,
 
 if __name__ == "__main__":
     from numina.decorators import print_timing
-      
-    tmean = print_timing(mean)
     
+    tmean = print_timing(mean)
+
     # Inputs
     shape = (2048, 2048)
-    data_dtype = 'int16'
+    data_dtype = 'float32'
     nimages = 10
     minputs = [i * numpy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
     mmasks = [numpy.zeros(shape, dtype='int16') for i in xrange(nimages)]
     ioffsets = numpy.array([[0, 0]] * nimages, dtype='int16') 
-    
+        
     print 'Computing'
     for i in range(1):
         outrr = tmean(minputs, mmasks, offsets=ioffsets)

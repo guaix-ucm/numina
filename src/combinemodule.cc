@@ -101,8 +101,8 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   // Output has one dimension more than the inputs, of size
   // OUTDIM
   const size_t OUTDIM = 3;
-  char* method;
-  char* reject;
+  char* method = "average";
+  char* reject = "none";
   PyObject *images = NULL;
   PyObject *masks = NULL;
 
@@ -128,7 +128,6 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   {
     return NULL;
   }
-
 
   // Reject class
   std::auto_ptr<RejectMethod> reject_ptr;
