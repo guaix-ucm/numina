@@ -91,6 +91,7 @@ def assign_def_values(args, pars, name=None):
 def combine(images, masks=None, dtype=None, out=None,
             method='average', margs=(), reject='none', rargs=(), 
             zeros=None, scales=None, weights=None, offsets=None):
+    '''Stack arrays using different methods.'''
         
     WORKTYPE = 'float'
     
@@ -111,7 +112,7 @@ def combine(images, masks=None, dtype=None, out=None,
         raise CombineError("len(inputs) == 0")
 
     number_of_images = len(images)
-    
+    # checking the parameters of the different methods
     if reject == 'minmax':
         if rargs[0] + rargs[1] > number_of_images:
             raise CombineError('minmax rejection and rejected points > number of images')
