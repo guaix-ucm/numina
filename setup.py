@@ -11,6 +11,7 @@ cext = Extension('numina.array._combine',
                  'src/methods.cc',
                  'src/reject_factory.cc',
                  'src/method_factory.cc',
+                 'src/operations.cc',
                  ],
           include_dirs=[numpy_include])
 

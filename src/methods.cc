@@ -22,71 +22,11 @@
 
 #include "methods.h"
 #include "method_exception.h"
-
-namespace {
-
-double mean(double* data, size_t size) {
-	double sum = 0;
-	for (size_t i = 0; i < size; ++i)
-		sum += data[i];
-	return sum / size;
-}
-
-double variance(double* data, size_t size, int dof, double mean) {
-	double sum = 0;
-
-	for (size_t i = 0; i < size; ++i) {
-		const double fid = data[i] - mean;
-		sum += fid * fid;
-	}
-	return sum / (size - dof);
-}
-
-double stdev(double* data, size_t size, int dof, double mean) {
-	return sqrt(variance(data, size, dof, mean));
-}
-
-double* kth_smallest(double* data, size_t size, size_t kth) {
-	int l = 0;
-	int m = size - 1;
-
-	while (l < m) {
-		double x = *(data + kth);
-		int i = l;
-		int j = m;
-		do {
-			while (*(data + i) < x)
-				++i;
-			while (x < *(data + j))
-				--j;
-			if (i <= j) {
-				std::swap(*(data + i), *(data + j));
-				++i;
-				--j;
-			}
-		} while (i <= j);
-		if (j < kth)
-			l = i;
-		if (kth < i)
-			m = j;
-
-	}
-
-	return data + kth;
-}
-
-double median(double* data, size_t size) {
-	//std::nth_element(data, data + size / 2, data + size);
-	//median = *(data + size / 2);
-	const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
-	return *kth_smallest(data, size, midpt);
-}
-
-}
+#include "operations.h"
 
 namespace Numina {
 
-AverageMethod::AverageMethod(int dof) :
+AverageMethod::AverageMethod(unsigned int dof) :
 		m_dof(dof)
 {}
 
@@ -108,9 +48,9 @@ void AverageMethod::central_tendency(double* data, double* weights, size_t size,
 		return;
 	}
 
-	*central = mean(data, size);
+	*central = imean(data, data + size);
 
-	*var = variance(data, size, m_dof, *central);
+	*var = ivariance(data, data + size, m_dof, *central);
 }
 
 MedianMethod::MedianMethod() {
@@ -139,8 +79,8 @@ void MedianMethod::central_tendency(double* data, double* weights, size_t size,
 
 		// Variance of the median from variance of the mean
 		// http://mathworld.wolfram.com/StatisticalMedian.html
-		const double smean = mean(data, size);
-		const double svar = variance(data, size, 1, smean);
+		const double smean = imean(data, data + size);
+		const double svar = ivariance(data, data + size, 1, smean);
 		*var = 4 * size / (M_PI * (2 * size + 1)) * svar;
 
 		break;
