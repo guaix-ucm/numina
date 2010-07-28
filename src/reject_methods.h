@@ -19,8 +19,8 @@
  */
 
 
-#ifndef PYEMIR_METHODS_H
-#define PYEMIR_METHODS_H
+#ifndef PYEMIR_REJECT_METHODS_H
+#define PYEMIR_REJECT_METHODS_H
 
 #include "method_base.h"
 
@@ -56,4 +56,4 @@ private:
 
 }
 
-#endif // PYEMIR_METHODS_H
+#endif // PYEMIR_REJECT_METHODS_H
