@@ -49,7 +49,6 @@ void AverageMethod::central_tendency(double* data, double* weights, size_t size,
 	}
 
 	*central = imean(data, data + size);
-
 	*var = ivariance(data, data + size, m_dof, *central);
 }
 
