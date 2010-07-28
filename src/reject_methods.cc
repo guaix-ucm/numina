@@ -28,6 +28,49 @@
 #include "method_exception.h"
 #include "reject_methods.h"
 
+namespace {
+
+template<typename Iterator>
+std::pair<Iterator, Iterator>
+reject_min_max(Iterator begin, Iterator end, int nmin, int nmax) {
+
+Iterator pbegin = begin;
+
+if (nmin >= 1) {
+pbegin = begin + nmin - 1;
+std::nth_element(begin, pbegin, end);
+pbegin += 1;
+}
+
+Iterator pend = end;
+
+if (nmax >= 1) {
+pend = end - nmax - 1;
+std::nth_element(begin, pend, end);
+pend += 1;
+}
+
+return std::make_pair(pbegin, pend);
+}
+
+template<typename Iterator>
+double mmean(Iterator begin, Iterator end) {
+
+  size_t size = 0;
+  double sum = 0;
+
+  while(begin != end) {
+    sum += *begin;
+    ++begin;
+    ++size;
+  }
+
+  return sum / size;
+}
+
+
+}
+
 namespace Numina {
 
 NoneReject::NoneReject(PyObject* args, auto_ptr<CombineMethod> combine) :
@@ -41,13 +84,31 @@ NoneReject::~NoneReject() {
 void NoneReject::run(double* data, double* weights, size_t size, double* results[3]) const {
 	central_tendency(data, weights, size, results[0], results[1]);
 	*results[2] = size;
-};
+}
+
+
+MinMax::MinMax(PyObject* args, auto_ptr<CombineMethod> combine) :
+    RejectMethod(combine)
+{
+  if (not PyArg_ParseTuple(args, "II", &m_nmin, &m_nmax))
+    throw MethodException("problem creating MinMax");
+}
+
+MinMax::~MinMax() {}
+
+void MinMax::run(double* data, double* weights, size_t size, double* results[3]) const {
+
+  std::pair<double*, double*> result =
+  reject_min_max(data, data + size, m_nmin, m_nmax);
+  *results[2] = result.second - result.first;
+  central_tendency(result.first, weights, *results[2], results[0], results[1]);
+}
 
 SigmaClipMethod::SigmaClipMethod(PyObject* args, auto_ptr<CombineMethod> combine) :
 		RejectMethod(combine)
 {
 	if (not PyArg_ParseTuple(args, "dd", &m_low, &m_high))
-		throw MethodException("problem creating sigmaClipMethod");
+		throw MethodException("problem creating SigmaClipMethod");
 }
 
 SigmaClipMethod::~SigmaClipMethod() {

@@ -30,6 +30,8 @@ RejectMethodFactory::create(const std::string& name,
 		auto_ptr<CombineMethod> combine_method) {
 	if (name == "none")
 		return auto_ptr<RejectMethod>(new NoneReject(args, combine_method));
+	if (name == "minmax")
+	  return auto_ptr<RejectMethod>(new MinMax(args, combine_method));
 	return auto_ptr<RejectMethod>();
 }
 

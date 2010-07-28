@@ -28,7 +28,8 @@ from numina.array._combine import internal_combine, internal_combine_with_offset
 from numina.array._combine import CombineError
 
 COMBINE_METHODS = {'average': [('dof', 1)], 'median': []}
-REJECT_METHODS = {'none': [], 'sigmaclip': [('low', 4.), ('high', 4.)]}
+REJECT_METHODS = {'none': [], 'sigmaclip': [('low', 4.), ('high', 4.)], 
+                  'minmax': [('nlow', 0), ('nhigh', 0)]}
 
 def merge_default(sequence, defaults):
     '''Return *sequence* elements, with *defaults* as default values.
@@ -110,6 +111,11 @@ def combine(images, masks=None, dtype=None, out=None,
         raise CombineError("len(inputs) == 0")
 
     number_of_images = len(images)
+    
+    if reject == 'minmax':
+        if rargs[0] + rargs[1] > number_of_images:
+            raise CombineError('minmax rejection and rejected points > number of images')
+    
     images = map(numpy.asanyarray, images)
     
     # All images have the same shape
@@ -299,23 +305,3 @@ def zerocombine(data, masks, dtype=None, scales=None,
                      method=method, margs=margs)
 
     return result
-
-if __name__ == "__main__":
-    from numina.decorators import print_timing
-    
-    tmean = print_timing(mean)
-
-    # Inputs
-    shape = (2048, 2048)
-    data_dtype = 'float32'
-    nimages = 10
-    minputs = [i * numpy.ones(shape, dtype=data_dtype) for i in xrange(nimages)]
-    mmasks = [numpy.zeros(shape, dtype='int16') for i in xrange(nimages)]
-    ioffsets = numpy.array([[0, 0]] * nimages, dtype='int16') 
-        
-    print 'Computing'
-    for i in range(1):
-        outrr = tmean(minputs, mmasks, offsets=ioffsets)
-        print outrr[2]
-        outrr = tmean(minputs, mmasks)
-        print outrr[2]

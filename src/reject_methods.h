@@ -35,6 +35,16 @@ public:
 	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 };
 
+class MinMax: public RejectMethod {
+public:
+  MinMax(PyObject* args, auto_ptr<CombineMethod> combine_method);
+  virtual ~MinMax();
+  virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+private:
+  unsigned int m_nmin;
+  unsigned int m_nmax;
+};
+
 
 class SigmaClipMethod: public RejectMethod {
 public:
