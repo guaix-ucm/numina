@@ -73,7 +73,7 @@ double mmean(Iterator begin, Iterator end) {
 
 namespace Numina {
 
-NoneReject::NoneReject(PyObject* args, auto_ptr<CombineMethod> combine) :
+NoneReject::NoneReject(auto_ptr<CombineMethod> combine) :
 		RejectMethod(combine)
 {
 }
@@ -87,11 +87,11 @@ void NoneReject::run(double* data, double* weights, size_t size, double* results
 }
 
 
-MinMax::MinMax(PyObject* args, auto_ptr<CombineMethod> combine) :
-    RejectMethod(combine)
+MinMax::MinMax(auto_ptr<CombineMethod> combine, unsigned int nmin, unsigned int nmax) :
+    RejectMethod(combine),
+    m_nmin(nmin),
+    m_nmax(nmax)
 {
-  if (not PyArg_ParseTuple(args, "II", &m_nmin, &m_nmax))
-    throw MethodException("problem creating MinMax");
 }
 
 MinMax::~MinMax() {}
@@ -104,11 +104,11 @@ void MinMax::run(double* data, double* weights, size_t size, double* results[3])
   central_tendency(result.first, weights, *results[2], results[0], results[1]);
 }
 
-SigmaClipMethod::SigmaClipMethod(PyObject* args, auto_ptr<CombineMethod> combine) :
-		RejectMethod(combine)
+SigmaClipMethod::SigmaClipMethod(auto_ptr<CombineMethod> combine, double low, double high) :
+		RejectMethod(combine),
+		m_low(low),
+		m_high(high)
 {
-	if (not PyArg_ParseTuple(args, "dd", &m_low, &m_high))
-		throw MethodException("problem creating SigmaClipMethod");
 }
 
 SigmaClipMethod::~SigmaClipMethod() {

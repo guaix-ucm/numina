@@ -18,6 +18,8 @@
  *
  */
 
+#include <cmath>
+
 #include "methods.h"
 #include "method_exception.h"
 
@@ -84,10 +86,9 @@ double median(double* data, size_t size) {
 
 namespace Numina {
 
-AverageMethod::AverageMethod(PyObject* args) {
-	if (not PyArg_ParseTuple(args, "i", &m_dof))
-		throw MethodException("problem creating AverageMethod");
-}
+AverageMethod::AverageMethod(int dof) :
+		m_dof(dof)
+{}
 
 AverageMethod::~AverageMethod() {
 }

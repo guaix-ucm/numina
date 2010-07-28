@@ -22,22 +22,20 @@
 #ifndef PYEMIR_METHODS_H
 #define PYEMIR_METHODS_H
 
-#include <Python.h>
-
 #include "method_base.h"
 
 namespace Numina {
 
 class NoneReject: public RejectMethod {
 public:
-	NoneReject(PyObject* args, auto_ptr<CombineMethod> combine_method);
+	NoneReject(auto_ptr<CombineMethod> combine_method);
 	virtual ~NoneReject();
 	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 };
 
 class MinMax: public RejectMethod {
 public:
-  MinMax(PyObject* args, auto_ptr<CombineMethod> combine_method);
+  MinMax(auto_ptr<CombineMethod> combine_method, unsigned int nmin, unsigned int nmax);
   virtual ~MinMax();
   virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 private:
@@ -48,7 +46,7 @@ private:
 
 class SigmaClipMethod: public RejectMethod {
 public:
-  SigmaClipMethod(PyObject* args, auto_ptr<CombineMethod> combine_method);
+  SigmaClipMethod(auto_ptr<CombineMethod> combine_method, double low, double high);
   virtual ~SigmaClipMethod();
   virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
 private:

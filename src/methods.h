@@ -22,20 +22,18 @@
 #ifndef PYEMIR_METHODS_H
 #define PYEMIR_METHODS_H
 
-#include <Python.h>
-
 #include "method_base.h"
 
 namespace Numina {
 
 class AverageMethod: public CombineMethod {
 public:
-	AverageMethod(PyObject* args);
+	AverageMethod(unsigned int dof);
 	virtual ~AverageMethod();
 	virtual void central_tendency(double* data, double* weights, size_t size,
 			double* central, double* variance) const;
 private:
-	int m_dof;
+	unsigned int m_dof;
 };
 
 class MedianMethod: public CombineMethod {

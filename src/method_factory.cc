@@ -19,6 +19,7 @@
  */
 
 
+#include "method_exception.h"
 #include "method_factory.h"
 #include "methods.h"
 
@@ -26,10 +27,18 @@ namespace Numina {
 
 auto_ptr<CombineMethod>
 CombineMethodFactory::create(const std::string& name, PyObject* args) {
-	if (name == "average")
-		return auto_ptr<CombineMethod>(new AverageMethod(args));
-	if (name == "median")
+	if (name == "average") {
+
+		unsigned int dof = 0;
+
+		if (not PyArg_ParseTuple(args, "I", &dof))
+			throw MethodException("problem creating AverageMethod");
+
+		return auto_ptr<CombineMethod>(new AverageMethod(dof));
+	}
+	if (name == "median") {
 		return auto_ptr<CombineMethod>(new MedianMethod());
+	}
 	return auto_ptr<CombineMethod>();
 }
 

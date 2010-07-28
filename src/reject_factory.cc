@@ -19,6 +19,7 @@
  */
 
 
+#include "method_exception.h"
 #include "reject_factory.h"
 #include "reject_methods.h"
 
@@ -28,10 +29,23 @@ auto_ptr<RejectMethod>
 RejectMethodFactory::create(const std::string& name,
 		PyObject* args,
 		auto_ptr<CombineMethod> combine_method) {
-	if (name == "none")
-		return auto_ptr<RejectMethod>(new NoneReject(args, combine_method));
-	if (name == "minmax")
-	  return auto_ptr<RejectMethod>(new MinMax(args, combine_method));
+	if (name == "none") {
+		return auto_ptr<RejectMethod>(new NoneReject(combine_method));
+	}
+	if (name == "minmax") {
+		unsigned int nmin = 0;
+		unsigned int nmax = 0;
+	    if (not PyArg_ParseTuple(args, "II", &nmin, &nmax))
+	    	throw MethodException("problem creating MinMax");
+	  return auto_ptr<RejectMethod>(new MinMax(combine_method, nmin, nmax));
+	}
+	if (name == "sigmaclip") {
+		double low = 0.0;
+		double high = 0.0;
+		if (not PyArg_ParseTuple(args, "dd", &low, &high))
+			throw MethodException("problem creating SigmaClipMethod");
+	  return auto_ptr<RejectMethod>(new SigmaClipMethod(combine_method, low, high));
+	}
 	return auto_ptr<RejectMethod>();
 }
 
