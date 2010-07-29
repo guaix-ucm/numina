@@ -68,13 +68,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
         
-    def run(self):
-        
-        if self.parameters['combine'] == 'mean':
-            args = (1,)
-        else:
-            args = ()
-        
+    def run(self):        
         primary_headers = {'FILENAME': self.parameters['output_filename']}
         # Sanity check, check: all images belong to the same detector mode
         
@@ -91,8 +85,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             # Combine them
             cube = zerocombine(alldata, allmasks, 
-                               method=self.parameters['combine'], 
-                               args=args)
+                               method=self.parameters['combine'])
         
             result = create_result(cube[0], headers=primary_headers,
                                    variance=cube[1], 
@@ -116,7 +109,7 @@ if __name__ == '__main__':
         
     pv = {'recipe': {'parameters': {
                                 'output_filename': 'perryr.fits',
-                                'combine': 'mean',
+                                'combine': 'average',
                                 },
                      'run': {'repeat': 1,
                              'instrument': 'emir',

@@ -23,74 +23,26 @@ from itertools import izip
 
 import numpy
 
+from numina.recipes.registry import Schema
 from numina.array import combine_shape
 from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import CombineError
 
-COMBINE_METHODS = {'average': [('dof', 1)], 'median': []}
-REJECT_METHODS = {'none': [], 'sigmaclip': [('low', 4.), ('high', 4.)], 
-                  'minmax': [('nlow', 0), ('nhigh', 0)]}
+COMBINE_METHODS = {'average': [Schema('dof', 1, 'Description')], 
+                   'median': []
+                   }
 
-def merge_default(sequence, defaults):
-    '''Return *sequence* elements, with *defaults* as default values.
-    
-    The length of the result sequence is equal to the length
-    of *defaults*. If values are missing from *sequence*, they are taken from
-    the same position in the sequence *defaults*.
-    
-    >>> list(merge_default([-4, 4, 8], defaults=[]))
-    []
-    >>> list(merge_default([-4, 4], defaults=[10, 20, -10, 0]))
-    [-4, 4, -10, 0]
-    
-    '''
-    iter1 = iter(sequence)
-    iter2 = iter(defaults)
-    
-    while True:
-        dfc = next(iter2)
-        try:
-            val = next(iter1)
-            yield val
-        except StopIteration:
-            yield dfc
-            
-            while True:
-                yield next(iter2)
-
-def assign_def_values(args, pars, name=None):
-    '''Assign default values from *pars* to *args*.
-    
-    *pars* is a list with tuples of pairs containing
-    the parameter name and its value.
-    
-    >>> assign_def_values((-10, 20), [('par1', 10), ('par2', 30)])
-    (-10, 20)
-    >>> assign_def_values((-10,), [('par1', 10), ('par2', 30)])
-    (-10, 30)
-    
-    Raises ValueError if *args* is longer than *pars*
-    
-    '''
-    if not args and pars:
-        # default arguments for method
-        # zip(*) is the equivalent to unzip
-        _, args = zip(*pars)
-    else:
-        npars = len(pars)
-        nargs = len(args)
-        if npars < nargs:
-            # We are passing more parameters than needed
-            name = name or 'function'
-            raise ValueError('%s is receiving %d parameters, only %d are needed' % 
-                               (name, nargs, npars))
-        elif npars > nargs:
-            args = merge_default(args, map(lambda x:x[1], pars))
-    return tuple(args)
+REJECT_METHODS = {'none': [], 
+                  'sigmaclip': [Schema('low', 4., 'Description'), 
+                                Schema('high', 4., 'Description')], 
+                  'minmax': [Schema('nlow', 0, 'Description'), 
+                             Schema('nhigh', 0, 'Description')]
+                  }
 
 def combine(images, masks=None, dtype=None, out=None,
-            method='average', margs=(), reject='none', rargs=(), 
-            zeros=None, scales=None, weights=None, offsets=None):
+            method='average', reject='none', 
+            zeros=None, scales=None, weights=None, 
+            offsets=None, **kwds):
     '''Stack arrays using different methods.'''
         
     WORKTYPE = 'float'
@@ -100,12 +52,9 @@ def combine(images, masks=None, dtype=None, out=None,
     
     if reject not in REJECT_METHODS:
         raise CombineError('rejection method is not an allowed string: %s' % REJECT_METHODS)
-    
-    try:
-        margs = assign_def_values(margs, COMBINE_METHODS[method], method)
-        rargs = assign_def_values(rargs, REJECT_METHODS[reject], reject)
-    except ValueError, err:
-        raise CombineError('%s' % err)
+        
+    margs = tuple(kwds.get(par, dft) for par, dft, _ in COMBINE_METHODS[method])
+    rargs = tuple(kwds.get(par, dft) for par, dft, _ in REJECT_METHODS[reject])
         
     # Check inumpy.uts
     if not images:
@@ -190,8 +139,9 @@ def combine(images, masks=None, dtype=None, out=None,
     return out.astype(dtype)
 
 
-def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
-         weights=None, dof=0, offsets=None):
+def mean(images, masks=None, dtype=None, out=None,
+         reject='none', zeros=None, scales=None,
+         weights=None, offsets=None, dof=0, **kwds):
     '''Combine images using the mean, with masks and offsets.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -228,13 +178,15 @@ def mean(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
        
     '''
     return combine(images, masks=masks, dtype=dtype, out=out, 
-                   method='average', margs=(dof,), reject='none', 
-                   zeros=zeros, scales=scales, weights=weights, offsets=offsets)
+                   method='average', reject=reject, 
+                   zeros=zeros, scales=scales, weights=weights, 
+                   offsets=offsets, dof=dof, **kwds)
     
     
     
-def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None, 
-           weights=None, offsets=None):
+def median(images, masks=None, dtype=None, out=None, 
+           reject='none', zeros=None, scales=None, 
+           weights=None, offsets=None, **kwds):
     '''Combine images using the median, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -256,8 +208,9 @@ def median(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
        
     '''
     return combine(images, masks=masks, dtype=dtype, out=out,
-                   method='median', reject='none',
-                   zeros=zeros, scales=scales, weights=weights, offsets=offsets)    
+                   method='median', reject=reject,
+                   zeros=zeros, scales=scales, weights=weights, 
+                   offsets=offsets, **kwds)    
 
 def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
          weights=None, offsets=None, low=4., high=4., dof=0):
@@ -282,16 +235,16 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     '''
     
     return combine(images, masks=masks, dtype=dtype, out=out,
-                   method='average', margs=(dof,), 
-                   reject='sigmaclip', rargs=(low, high), 
-                   zeros=zeros, scales=scales, weights=weights, offsets=offsets)
+                   method='average', reject='sigmaclip', 
+                   zeros=zeros, scales=scales, weights=weights, 
+                   offsets=offsets, dof=dof, high=high, low=low)
 
 def flatcombine(data, masks, dtype=None, scales=None, 
-                blank=1.0, method='median', margs=()):
+                blank=1.0, method='median', reject='none', **kwds):
     
     result = combine(data, masks=masks, 
                      dtype=dtype, scales=scales, 
-                     method=method, margs=margs)
+                     method=method, reject=reject, **kwds)
     
     # Sustitute values <= 0 by blank
     mm = result[0] <= 0
@@ -299,10 +252,14 @@ def flatcombine(data, masks, dtype=None, scales=None,
     return result
 
 def zerocombine(data, masks, dtype=None, scales=None, 
-                method='median', margs=()):
+                method='median', reject='none', **kwds):
     
     result = combine(data, masks=masks, 
                      dtype=dtype, scales=scales, 
-                     method=method, margs=margs)
+                     method=method, reject=reject, **kwds)
 
     return result
+
+if __name__ == '__main__':
+    print combine([numpy.ones((100, 100))] * 3, method='average', reject='minmax')
+

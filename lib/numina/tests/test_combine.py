@@ -21,33 +21,8 @@ import unittest
 
 import numpy
 
-from numina.array.combine import assign_def_values
 from numina.array.combine import mean, combine
 from numina.array.combine import CombineError
-
-class AssignDefValuesTestCase(unittest.TestCase):
-    '''Test case for assign_def_values.'''
-    def testValues(self):
-        '''Test assign_def_values.'''
-        self.assertEqual(assign_def_values((), []), ())
-        self.assertRaises(ValueError, assign_def_values, (1,), [])
-        self.assertRaises(ValueError, assign_def_values, (2, 2), [])
-        
-        self.assertEqual(assign_def_values((), [('par1', 1)]), (1,))
-        self.assertEqual(assign_def_values((5,), [('par1', 1)]), (5,))
-        self.assertRaises(ValueError, assign_def_values, (8, 9), [('par1', 1)])
-        
-        self.assertEqual(assign_def_values((),
-                          [('par1', 1), ('par2', 2)]), (1, 2))
-        self.assertEqual(assign_def_values((5,),
-                          [('par1', 1), ('par2', 2)]), (5, 2))
-        self.assertEqual(assign_def_values((8, 9),
-                          [('par1', 1), ('par2', 2)]), (8, 9))
-        self.assertRaises(ValueError, assign_def_values, (8, 9, 10),
-                          [('par1', 1), ('par2', 2)])
-        
-        
-        
         
 class CombineTestCase(unittest.TestCase):
     def setUp(self):
@@ -145,21 +120,21 @@ class MinMaxTestCase(unittest.TestCase):
         
     def testBasic1(self):
         '''Test value if points rejected are less than the images.'''
-        for nmin in xrange(0, self.nimages):
-            for nmax in xrange(0, self.nimages - nmin):
-                r = combine(self.data, reject='minmax', rargs=(nmin, nmax))
+        for nlow in xrange(0, self.nimages):
+            for nhigh in xrange(0, self.nimages - nlow):
+                r = combine(self.data, reject='minmax', nlow=nlow, nhigh=nhigh)
             for v in r[0].flat:
                 self.assertEqual(v, 1)
             for v in r[1].flat:
                 self.assertEqual(v, 0)
             for v in r[2].flat:
-                self.assertEqual(v, self.nimages - nmin - nmax)
+                self.assertEqual(v, self.nimages - nlow - nhigh)
                 
     def testBasic2(self):
         '''Test value if points rejected are equal to the images.'''
-        for nmin in xrange(0, self.nimages):
-            nmax = self.nimages - nmin
-            r = combine(self.data, reject='minmax', rargs=(nmin, nmax))
+        for nlow in xrange(0, self.nimages):
+            nhigh = self.nimages - nlow
+            r = combine(self.data, reject='minmax', nlow=nlow, nhigh=nhigh)
             for v in r[0].flat:
                 self.assertEqual(v, 0)
             for v in r[1].flat:
@@ -169,10 +144,10 @@ class MinMaxTestCase(unittest.TestCase):
                 
     def testBasic3(self):
         '''Test CombineError is raised if points rejected are more than images.'''
-        for nmin in xrange(0, self.nimages):
-            nmax = self.nimages - nmin + 1
+        for nlow in xrange(0, self.nimages):
+            nhigh = self.nimages - nlow + 1
             self.assertRaises(CombineError, combine, self.data, 
-                              reject='minmax', rargs=(nmin, nmax))
+                              reject='minmax', nlow=nlow, nhigh=nhigh)
       
       
 def test_suite():
