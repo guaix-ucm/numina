@@ -41,7 +41,7 @@ public:
 		m_combine(combine)
 	{}
 	virtual ~RejectMethod() {}
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const = 0;
+	virtual void combine(double* data, double* weights, size_t size, double* results[3]) const = 0;
 	void central_tendency(double* data, double* weights, size_t size,
 			double* central, double* variance) const {
 		m_combine->central_tendency(data, weights, size, central, variance);

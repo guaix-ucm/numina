@@ -30,14 +30,14 @@ class NoneReject: public RejectMethod {
 public:
 	NoneReject(auto_ptr<CombineMethod> combine_method);
 	virtual ~NoneReject();
-	virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+	virtual void combine(double* data, double* weights, size_t size, double* results[3]) const;
 };
 
 class MinMax: public RejectMethod {
 public:
   MinMax(auto_ptr<CombineMethod> combine_method, unsigned int nmin, unsigned int nmax);
   virtual ~MinMax();
-  virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+  virtual void combine(double* data, double* weights, size_t size, double* results[3]) const;
 private:
   unsigned int m_nmin;
   unsigned int m_nmax;
@@ -48,7 +48,7 @@ class SigmaClipMethod: public RejectMethod {
 public:
   SigmaClipMethod(auto_ptr<CombineMethod> combine_method, double low, double high);
   virtual ~SigmaClipMethod();
-  virtual void run(double* data, double* weights, size_t size, double* results[3]) const;
+  virtual void combine(double* data, double* weights, size_t size, double* results[3]) const;
 private:
   double m_low;
   double m_high;

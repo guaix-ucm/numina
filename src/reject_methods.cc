@@ -40,7 +40,7 @@ NoneReject::~NoneReject()
 {
 }
 
-void NoneReject::run(double* data, double* weights, size_t size,
+void NoneReject::combine(double* data, double* weights, size_t size,
     double* results[3]) const
 {
   central_tendency(data, weights, size, results[0], results[1]);
@@ -57,7 +57,7 @@ MinMax::~MinMax()
 {
 }
 
-void MinMax::run(double* data, double* weights, size_t size, double* results[3]) const
+void MinMax::combine(double* data, double* weights, size_t size, double* results[3]) const
 {
 
   std::pair<double*, double*> result = reject_min_max(data, data + size,
@@ -76,7 +76,7 @@ SigmaClipMethod::~SigmaClipMethod()
 {
 }
 
-void SigmaClipMethod::run(double* data, double* weights, size_t size,
+void SigmaClipMethod::combine(double* data, double* weights, size_t size,
     double* results[3]) const
 {
 

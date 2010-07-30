@@ -362,7 +362,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     }
 
     // And pass the data to the combine method
-    reject_ptr->run(&data[0], &wdata[0], data.size(), pvalues);
+    reject_ptr->combine(&data[0], &wdata[0], data.size(), pvalues);
 
     // Conversion from NPY_DOUBLE to the type of output
     for (size_t i = 0; i < OUTDIM; ++i)
@@ -714,7 +714,7 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
     }
 
     // And pass the data to the combine method
-    reject_ptr->run(&data[0], &wdata[0], data.size(), pvalues);
+    reject_ptr->combine(&data[0], &wdata[0], data.size(), pvalues);
 
     // Conversion from NPY_DOUBLE to the type of output
     for (size_t i = 0; i < OUTDIM; ++i)
