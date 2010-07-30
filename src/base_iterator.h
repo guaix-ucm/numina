@@ -43,7 +43,7 @@ class BaseIterator: public BaseCRTP<BaseIterator<Derived, ValueType,
 public:
   //! The value type of the sequence
   typedef ValueType value_type;
-  //! The iterator category of the secuence
+  //! The iterator category of the sequence
   typedef IteratorCategory iterator_category;
   //! The reference type of the sequence
   typedef Reference reference;

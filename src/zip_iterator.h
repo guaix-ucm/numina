@@ -205,7 +205,8 @@ class ZipIterator: public Detail::BaseIterator<ZipIterator<IteratorPair> ,
     typename Detail::ZipIteratorTypes<IteratorPair>::pointer>
 {
 public:
-
+  typedef typename Detail::ZipIteratorTypes<IteratorPair>::reference reference;
+  typedef typename Detail::ZipIteratorTypes<IteratorPair>::difference_type difference_type;
   //! Empty constructor
   /**
    * Note that an empty constructed iterator is not valid until it points to valid data.
@@ -277,7 +278,8 @@ public:
   }
 
   //! Used to implement the different addition and subtraction operators in the base class
-  void advance(const difference_type n)
+  //void advance(const difference_type n)
+  void advance(const std::ptrdiff_t n)
   {
     std::advance(m_iterator_pair.first, n);
     std::advance(m_iterator_pair.second, n);
@@ -308,7 +310,7 @@ public:
    */
   difference_type distance_to(const ZipIterator& b) const
   {
-    return distance(m_iterator_pair.first, b.m_iterator_pair.first);
+    return std::distance(m_iterator_pair.first, b.m_iterator_pair.first);
   }
 
   /**

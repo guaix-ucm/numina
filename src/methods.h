@@ -32,6 +32,8 @@ public:
 	virtual ~AverageMethod();
 	virtual void central_tendency(double* data, double* weights, size_t size,
 			double* central, double* variance) const;
+	std::pair<double, double>
+	central_tendency2(double* begin, double* end, double* weights) const;
 private:
 	unsigned int m_dof;
 };

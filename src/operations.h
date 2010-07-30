@@ -170,6 +170,32 @@ std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
   return std::make_pair(pbegin, pend);
 }
 
+template<typename Iterator, typename StrictWeakOrdering>
+std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
+    int nmin, int nmax, StrictWeakOrdering comp)
+{
+  Iterator pbegin = begin;
+
+  if (nmin >= 1)
+  {
+    pbegin = begin + nmin - 1;
+    std::nth_element(begin, pbegin, end, comp);
+    pbegin += 1;
+  }
+
+  Iterator pend = end;
+
+  if (nmax >= 1)
+  {
+    pend = end - nmax - 1;
+    std::nth_element(begin, pend, end, comp);
+    pend += 1;
+  }
+
+  return std::make_pair(pbegin, pend);
+}
+
+
 } // namespace Numina
 
 #endif // PYEMIR_OPERATIONS_H

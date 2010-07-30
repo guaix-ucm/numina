@@ -33,7 +33,6 @@ AverageMethod::AverageMethod(unsigned int dof) :
 AverageMethod::~AverageMethod() {
 }
 
-// weights are ignored for now
 void AverageMethod::central_tendency(double* data, double* weights, size_t size,
 		double* central, double* var) const {
 
@@ -50,6 +49,21 @@ void AverageMethod::central_tendency(double* data, double* weights, size_t size,
 
 	*central = weighted_mean(data, data + size, weights);
 	*var = weighted_variance(data, data + size, weights, *central);
+}
+
+std::pair<double, double>
+AverageMethod::central_tendency2(double* begin, double* end, double* weights) const {
+
+  if (begin == end)
+    return std::make_pair(0.0, 0.0);
+
+
+  if (end - begin == 1)
+    return std::make_pair(*begin, 0.0);
+
+  const double central = weighted_mean(begin, end, weights);
+  const double var = weighted_variance(begin, end, weights, central);
+  return std::make_pair(central, var);
 }
 
 MedianMethod::MedianMethod() {
@@ -78,8 +92,8 @@ void MedianMethod::central_tendency(double* data, double* weights, size_t size,
 
 		// Variance of the median from variance of the mean
 		// http://mathworld.wolfram.com/StatisticalMedian.html
-		const double smean = imean(data, data + size);
-		const double svar = ivariance(data, data + size, 1, smean);
+		const double smean = mean(data, data + size);
+		const double svar = variance(data, data + size, 1, smean);
 		*var = 4 * size / (M_PI * (2 * size + 1)) * svar;
 
 		break;

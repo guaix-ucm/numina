@@ -27,9 +27,47 @@
 #include "operations.h"
 #include "method_exception.h"
 #include "reject_methods.h"
+#include "zip_iterator.h"
 
 namespace Numina
 {
+
+// Compares two std::pair objects. Returns true
+// if the first component of the first is less than the first component
+// of the second std::pair
+template<typename Iterator1, typename Iterator2>
+struct LessFirst: public std::binary_function<typename ZipIterator<std::pair<
+    Iterator1, Iterator2> >::value_type, typename ZipIterator<std::pair<
+    Iterator1, Iterator2> >::value_type, bool>
+{
+  bool operator()(
+      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& a,
+      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& b) const
+  {
+    return a.first < b.first;
+  }
+};
+
+// Checks if first component of a std::pair
+// is inside the range (low, high)
+template<typename Iterator1, typename Iterator2>
+class InRangeFirst: public std::unary_function<typename ZipIterator<std::pair<
+    Iterator1, Iterator2> >::value_type, bool>
+{
+public:
+  InRangeFirst(double low, double high) :
+    m_lowc(low), m_highc(high)
+  {
+  }
+  bool operator()(
+      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& x) const
+  {
+    return (x.first < m_highc) && (x.first > m_lowc);
+  }
+private:
+  double m_lowc;
+  double m_highc;
+};
 
 NoneReject::NoneReject(auto_ptr<CombineMethod> combine) :
   RejectMethod(combine)
@@ -57,13 +95,21 @@ MinMax::~MinMax()
 {
 }
 
-void MinMax::combine(double* data, double* weights, size_t size, double* results[3]) const
+void MinMax::combine(double* data, double* weights, size_t size,
+    double* results[3]) const
 {
+  typedef std::pair<double*, double*> IterPair;
+  typedef ZipIterator<IterPair> ZIter;
+  typedef std::pair<ZIter, ZIter> ZIterPair;
 
-  std::pair<double*, double*> result = reject_min_max(data, data + size,
-      m_nmin, m_nmax);
+  ZIterPair result = reject_min_max(make_zip_iterator(data, weights),
+      make_zip_iterator(data + size, weights + size), m_nmin, m_nmax,
+      LessFirst<double*, double*> ());
+
   *results[2] = result.second - result.first;
-  central_tendency(result.first, weights, *results[2], results[0], results[1]);
+  IterPair beg = result.first.get_iterator_pair();
+  IterPair end = result.second.get_iterator_pair();
+  central_tendency(beg.first, beg.second, *results[2], results[0], results[1]);
 }
 
 SigmaClipMethod::SigmaClipMethod(auto_ptr<CombineMethod> combine, double low,
@@ -79,22 +125,27 @@ SigmaClipMethod::~SigmaClipMethod()
 void SigmaClipMethod::combine(double* data, double* weights, size_t size,
     double* results[3]) const
 {
+  typedef std::pair<double*, double*> IterPair;
+  typedef ZipIterator<IterPair> ZIter;
+
+  ZIter begin = make_zip_iterator(data, weights);
+  ZIter end = make_zip_iterator(data + size, weights + size);
 
   int delta = 0;
   double c_mean = 0;
   double c_std = 0;
-  int c_size = size;
+  size_t c_size = size;
   do
   {
-    central_tendency(data, weights, size, &c_mean, &c_std);
+    central_tendency(data, weights, c_size, &c_mean, &c_std);
     c_std = sqrt(c_std);
 
-    double* end = std::partition(data, data + c_size, __gnu_cxx::compose2(
-        std::logical_and<bool>(), std::bind2nd(std::greater<double>(), c_mean
-            - c_std * m_low), std::bind2nd(std::less<double>(), c_mean + c_std
-            * m_high)));
-    delta = c_size - (end - data);
-    c_size = (end - data);
+    end = partition(begin, end, InRangeFirst<double*, double*> (c_mean
+        - c_std * m_low, c_mean + c_std * m_high));
+
+    delta = c_size - (end - begin);
+    c_size = end - begin;
+
   } while (delta);
   *results[0] = c_mean;
   *results[1] = c_std;
