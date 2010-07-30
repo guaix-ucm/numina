@@ -46,13 +46,13 @@ double stdev(double* data, size_t size, int dof, double mean) {
 }
 
 double* kth_smallest(double* data, size_t size, size_t kth) {
-	int l = 0;
-	int m = size - 1;
+	size_t l = 0;
+	size_t m = size - 1;
 
 	while (l < m) {
 		double x = *(data + kth);
-		int i = l;
-		int j = m;
+		size_t i = l;
+		size_t j = m;
 		do {
 			while (*(data + i) < x)
 				++i;
@@ -68,7 +68,6 @@ double* kth_smallest(double* data, size_t size, size_t kth) {
 			l = i;
 		if (kth < i)
 			m = j;
-
 	}
 
 	return data + kth;

@@ -59,7 +59,7 @@ double stdev(double* data, size_t size, int dof, double mean);
 double median(double* data, size_t size);
 
 template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type imean(Iterator begin,
+typename std::iterator_traits<Iterator>::value_type mean(Iterator begin,
     Iterator end)
 {
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
@@ -68,7 +68,7 @@ typename std::iterator_traits<Iterator>::value_type imean(Iterator begin,
 }
 
 template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type ivariance(Iterator begin,
+typename std::iterator_traits<Iterator>::value_type variance(Iterator begin,
     Iterator end, unsigned int dof,
     typename std::iterator_traits<Iterator>::value_type mean)
 {
@@ -77,6 +77,73 @@ typename std::iterator_traits<Iterator>::value_type ivariance(Iterator begin,
   return std::accumulate(begin, end, value_type(0),
       detail::CuadSum<value_type>(mean)) / std::distance(begin, end);
 }
+
+template<typename Iterator>
+typename std::iterator_traits<Iterator>::value_type weighted_mean(Iterator begin,
+    Iterator end, Iterator wbegin)
+{
+  typedef typename std::iterator_traits<Iterator>::value_type T;
+
+  const T allw = std::accumulate(wbegin, wbegin + (end - begin), T(0));
+  return std::inner_product(begin, end, wbegin, T(0)) / allw;
+}
+
+// A weighted_mean where the weights add up to one
+template<typename Iterator>
+typename std::iterator_traits<Iterator>::value_type weighted_mean_unit(Iterator begin,
+    Iterator end, Iterator wbegin)
+{
+  typedef typename std::iterator_traits<Iterator>::value_type T;
+
+  return std::inner_product(begin, end, wbegin, T(0));
+}
+
+template<typename Iterator>
+typename std::iterator_traits<Iterator>::value_type weighted_variance(Iterator begin,
+    Iterator end, Iterator wbegin, typename std::iterator_traits<Iterator>::value_type mean)
+{
+  typedef typename std::iterator_traits<Iterator>::value_type T;
+
+  T v1 = T(0);
+  T v2 = T(0);
+  T sum = T(0);
+
+  while(begin != end) {
+    v1 += *wbegin;
+    v2 += (*wbegin) * (*wbegin);
+    const T val = *begin - mean;
+    sum += *wbegin * val * val;
+
+    ++begin;
+    ++wbegin;
+
+  }
+
+  return v1 / (v1 * v1 - v2) * sum;
+}
+
+template<typename Iterator>
+typename std::iterator_traits<Iterator>::value_type weighted_variance_unit(Iterator begin,
+    Iterator end, Iterator wbegin, typename std::iterator_traits<Iterator>::value_type mean)
+{
+  typedef typename std::iterator_traits<Iterator>::value_type T;
+
+  T v2 = T(0);
+  T sum = T(0);
+
+  while(begin != end) {
+    v2 += (*wbegin) * (*wbegin);
+    const T val = *begin - mean;
+    sum += *wbegin * val * val;
+
+    ++begin;
+    ++wbegin;
+
+  }
+
+  return 1 / (1 - v2) * sum;
+}
+
 
 template<typename Iterator>
 std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
