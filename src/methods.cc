@@ -48,8 +48,8 @@ void AverageMethod::central_tendency(double* data, double* weights, size_t size,
 		return;
 	}
 
-	*central = imean(data, data + size);
-	*var = ivariance(data, data + size, m_dof, *central);
+	*central = weighted_mean(data, data + size, weights);
+	*var = weighted_variance(data, data + size, weights, *central);
 }
 
 MedianMethod::MedianMethod() {
