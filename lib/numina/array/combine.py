@@ -28,7 +28,7 @@ from numina.array import combine_shape
 from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import CombineError
 
-COMBINE_METHODS = {'average': [Schema('dof', 1, 'Description')], 
+COMBINE_METHODS = {'average': [], 
                    'median': []
                    }
 
@@ -121,7 +121,7 @@ def combine(images, masks=None, dtype=None, out=None,
     if weights is None:
         weights = numpy.ones(number_of_images, dtype=WORKTYPE)
     else:
-        weights = numpy.asanyarray(scales, dtype=WORKTYPE)
+        weights = numpy.asanyarray(weights, dtype=WORKTYPE)
         if weights.shape != (number_of_images,):
             raise CombineError('incorrect number of weights')
 
@@ -261,5 +261,7 @@ def zerocombine(data, masks, dtype=None, scales=None,
     return result
 
 if __name__ == '__main__':
-    print combine([numpy.ones((100, 100))] * 3, method='average', reject='minmax')
+    shape = (5, 5)
+    print combine([numpy.ones(shape) * i for i in xrange(3)], 
+                  method='average', reject='none', weights=[0,1,1])
 

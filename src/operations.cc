@@ -24,27 +24,6 @@
 
 namespace Numina {
 
-double mean(double* data, size_t size) {
-	double sum = 0;
-	for (size_t i = 0; i < size; ++i)
-		sum += data[i];
-	return sum / size;
-}
-
-double variance(double* data, size_t size, int dof, double mean) {
-	double sum = 0;
-
-	for (size_t i = 0; i < size; ++i) {
-		const double fid = data[i] - mean;
-		sum += fid * fid;
-	}
-	return sum / (size - dof);
-}
-
-double stdev(double* data, size_t size, int dof, double mean) {
-	return sqrt(variance(data, size, dof, mean));
-}
-
 double* kth_smallest(double* data, size_t size, size_t kth) {
 	size_t l = 0;
 	size_t m = size - 1;

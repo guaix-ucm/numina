@@ -23,12 +23,15 @@
 #define PYEMIR_METHOD_FACTORY_H
 
 #include <string>
+#include <memory>
 
 #include <Python.h>
 
 #include "method_base.h"
 
 namespace Numina {
+
+using std::auto_ptr;
 
 class CombineMethodFactory {
 public:

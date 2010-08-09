@@ -25,80 +25,32 @@
 #include "operations.h"
 
 namespace Numina {
-
-AverageMethod::AverageMethod(unsigned int dof) :
-		m_dof(dof)
-{}
-
-AverageMethod::~AverageMethod() {
-}
-
-void AverageMethod::central_tendency(double* data, double* weights, size_t size,
-		double* central, double* var) const {
-
-	if (size == 0) {
-		*central = *var = 0.0;
-		return;
-	}
-
-	if (size == 1) {
-		*central = data[0];
-		*var = 0.0;
-		return;
-	}
-
-	*central = weighted_mean(data, data + size, weights);
-	*var = weighted_variance(data, data + size, weights, *central);
-}
-
+/*
 std::pair<double, double>
-AverageMethod::central_tendency2(double* begin, double* end, double* weights) const {
+MedianMethod::central_tendency(double* begin, double* end, double* weights) const {
 
-  if (begin == end)
-    return std::make_pair(0.0, 0.0);
-
-
-  if (end - begin == 1)
-    return std::make_pair(*begin, 0.0);
-
-  const double central = weighted_mean(begin, end, weights);
-  const double var = weighted_variance(begin, end, weights, central);
-  return std::make_pair(central, var);
-}
-
-MedianMethod::MedianMethod() {
-}
-
-MedianMethod::~MedianMethod() {
-}
-
-// weights are ignored for now
-void MedianMethod::central_tendency(double* data, double* weights, size_t size,
-		double* central, double* var) const {
-
-	*var = 0.0;
-
+	size_t size = end - begin;
 	switch (size) {
 	case 0:
-		*central = 0.0;
+		return std::make_pair(0.0, 0.0);
 		break;
 	case 1:
-		*central = data[0];
+		return std::make_pair(*begin, 0.0);
 		break;
 	default: {
-		*central = median(data, size);
+		const double central = median(begin, size);
 		//std::nth_element(data, data + size / 2, data + size);
 		//*results[0] = *(data + size / 2);
 
 		// Variance of the median from variance of the mean
 		// http://mathworld.wolfram.com/StatisticalMedian.html
-		const double smean = mean(data, data + size);
-		const double svar = variance(data, data + size, 1, smean);
-		*var = 4 * size / (M_PI * (2 * size + 1)) * svar;
-
+		const double smean = mean(begin, end);
+		const double svar = variance(begin, end, 1, smean);
+		const double var = 4 * size / (M_PI * (2 * size + 1)) * svar;
+		return std::make_pair(central, var);
 		break;
 	}
 	}
 }
-
+*/
 } // namespace Numina

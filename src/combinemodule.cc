@@ -115,7 +115,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   PyArrayObject* weights = NULL;
 
   static char *kwlist[] = {"data", "masks", "out0", "out1", "out2",
-		  "method", "margs","reject", "rargs", "zeros", "scales", "weights", NULL };
+		  "method", "margs", "reject", "rargs", "zeros", "scales", "weights", NULL };
 
   int ok = PyArg_ParseTupleAndKeywords(args, kwds,
       "O!O!O!O!O!sO!sO!O!O!O!:internal_combine", kwlist,

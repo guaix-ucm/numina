@@ -23,12 +23,15 @@
 #define PYEMIR_REJECT_FACTORY_H
 
 #include <string>
+#include <memory>
 
 #include <Python.h>
 
 #include "method_base.h"
 
 namespace Numina {
+
+using std::auto_ptr;
 
 class RejectMethodFactory {
 public:

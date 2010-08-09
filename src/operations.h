@@ -25,22 +25,18 @@
 #include <algorithm>
 #include <numeric>
 
-namespace Numina
-{
+namespace Numina {
 
 namespace detail // implementation details
 {
 
 template<class T>
-class CuadSum
-{
+class CuadSum {
 public:
   CuadSum(T mean) :
-    m_mean(mean)
-  {
+    m_mean(mean) {
   }
-  T operator()(T sum, T val) const
-  {
+  T operator()(T sum, T val) const {
     const T inter = val - m_mean;
     return sum + inter * inter;
   }
@@ -50,65 +46,53 @@ private:
 
 } // namespace detail
 
-double mean(double* data, size_t size);
-
-double variance(double* data, size_t size, int dof, double mean);
-
-double stdev(double* data, size_t size, int dof, double mean);
-
 double median(double* data, size_t size);
 
 template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type mean(Iterator begin,
-    Iterator end)
-{
+inline typename std::iterator_traits<Iterator>::value_type mean(Iterator begin,
+    Iterator end) {
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
 
   return std::accumulate(begin, end, value_type(0)) / std::distance(begin, end);
 }
 
 template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type variance(Iterator begin,
-    Iterator end, unsigned int dof,
-    typename std::iterator_traits<Iterator>::value_type mean)
-{
+inline typename std::iterator_traits<Iterator>::value_type variance(
+    Iterator begin, Iterator end, unsigned int dof,
+    typename std::iterator_traits<Iterator>::value_type mean) {
 
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
   return std::accumulate(begin, end, value_type(0),
       detail::CuadSum<value_type>(mean)) / std::distance(begin, end);
 }
 
-template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type weighted_mean(Iterator begin,
-    Iterator end, Iterator wbegin)
-{
-  typedef typename std::iterator_traits<Iterator>::value_type T;
+template<typename Iterator1, typename Iterator2>
+inline typename std::iterator_traits<Iterator1>::value_type weighted_mean(
+    Iterator1 begin, Iterator1 end, Iterator2 wbegin) {
+  typedef typename std::iterator_traits<Iterator2>::value_type T;
 
   const T allw = std::accumulate(wbegin, wbegin + (end - begin), T(0));
   return std::inner_product(begin, end, wbegin, T(0)) / allw;
 }
 
 // A weighted_mean where the weights add up to one
-template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type weighted_mean_unit(Iterator begin,
-    Iterator end, Iterator wbegin)
-{
-  typedef typename std::iterator_traits<Iterator>::value_type T;
+template<typename Iterator1, typename Iterator2>
+inline typename std::iterator_traits<Iterator1>::value_type weighted_mean_unit(
+    Iterator1 begin, Iterator1 end, Iterator2 wbegin) {
+  typedef typename std::iterator_traits<Iterator2>::value_type T;
 
   return std::inner_product(begin, end, wbegin, T(0));
 }
 
-template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type weighted_variance(Iterator begin,
-    Iterator end, Iterator wbegin, typename std::iterator_traits<Iterator>::value_type mean)
-{
-  typedef typename std::iterator_traits<Iterator>::value_type T;
+template<typename Iterator1, typename Iterator2, typename T>
+inline T weighted_variance(Iterator1 begin, Iterator1 end, Iterator2 wbegin,
+    T mean) {
 
   T v1 = T(0);
   T v2 = T(0);
   T sum = T(0);
 
-  while(begin != end) {
+  while (begin != end) {
     v1 += *wbegin;
     v2 += (*wbegin) * (*wbegin);
     const T val = *begin - mean;
@@ -122,16 +106,14 @@ typename std::iterator_traits<Iterator>::value_type weighted_variance(Iterator b
   return v1 / (v1 * v1 - v2) * sum;
 }
 
-template<typename Iterator>
-typename std::iterator_traits<Iterator>::value_type weighted_variance_unit(Iterator begin,
-    Iterator end, Iterator wbegin, typename std::iterator_traits<Iterator>::value_type mean)
-{
-  typedef typename std::iterator_traits<Iterator>::value_type T;
+template<typename Iterator1, typename Iterator2, typename T>
+inline T weighted_variance_unit(Iterator1 begin, Iterator1 end,
+    Iterator2 wbegin, T mean) {
 
   T v2 = T(0);
   T sum = T(0);
 
-  while(begin != end) {
+  while (begin != end) {
     v2 += (*wbegin) * (*wbegin);
     const T val = *begin - mean;
     sum += *wbegin * val * val;
@@ -144,15 +126,42 @@ typename std::iterator_traits<Iterator>::value_type weighted_variance_unit(Itera
   return 1 / (1 - v2) * sum;
 }
 
+template<typename Iterator1, typename Iterator2>
+inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
+    typename std::iterator_traits<Iterator1>::value_type> average_central_tendency(
+    Iterator1 begin, Iterator1 end, Iterator2 weights) {
+  typedef typename std::iterator_traits<Iterator1>::value_type T;
+  if (begin == end)
+    return std::make_pair(T(0.0), T(0.0));
+  if (begin + 1 == end)
+    return std::make_pair(*begin, T(0.0));
+
+  const T m = weighted_mean(begin, end, weights);
+  const T v = weighted_variance(begin, end, weights, m);
+  return std::make_pair(m, v);
+}
+
+template<typename Iterator1, typename Iterator2>
+inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
+    typename std::iterator_traits<Iterator1>::value_type> median_central_tendency(
+    Iterator1 begin, Iterator1 end, Iterator2 weights) {
+  typedef typename std::iterator_traits<Iterator1>::value_type T;
+  if (begin == end)
+    return std::make_pair(T(0.0), T(0.0));
+  if (begin + 1 == end)
+    return std::make_pair(*begin, T(0.0));
+  // FIXME
+  const T m = weighted_mean(begin, end, weights);
+  const T v = weighted_variance(begin, end, weights, m);
+  return std::make_pair(m, v);
+}
 
 template<typename Iterator>
-std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
-    int nmin, int nmax)
-{
+inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
+    Iterator end, int nmin, int nmax) {
   Iterator pbegin = begin;
 
-  if (nmin >= 1)
-  {
+  if (nmin >= 1) {
     pbegin = begin + nmin - 1;
     std::nth_element(begin, pbegin, end);
     pbegin += 1;
@@ -160,8 +169,7 @@ std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
 
   Iterator pend = end;
 
-  if (nmax >= 1)
-  {
+  if (nmax >= 1) {
     pend = end - nmax - 1;
     std::nth_element(begin, pend, end);
     pend += 1;
@@ -171,13 +179,11 @@ std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
 }
 
 template<typename Iterator, typename StrictWeakOrdering>
-std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
-    int nmin, int nmax, StrictWeakOrdering comp)
-{
+inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
+    Iterator end, int nmin, int nmax, StrictWeakOrdering comp) {
   Iterator pbegin = begin;
 
-  if (nmin >= 1)
-  {
+  if (nmin >= 1) {
     pbegin = begin + nmin - 1;
     std::nth_element(begin, pbegin, end, comp);
     pbegin += 1;
@@ -185,8 +191,7 @@ std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
 
   Iterator pend = end;
 
-  if (nmax >= 1)
-  {
+  if (nmax >= 1) {
     pend = end - nmax - 1;
     std::nth_element(begin, pend, end, comp);
     pend += 1;
@@ -194,7 +199,6 @@ std::pair<Iterator, Iterator> reject_min_max(Iterator begin, Iterator end,
 
   return std::make_pair(pbegin, pend);
 }
-
 
 } // namespace Numina
 

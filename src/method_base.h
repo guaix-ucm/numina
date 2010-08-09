@@ -22,36 +22,23 @@
 #ifndef PYEMIR_METHOD_BASE_H
 #define PYEMIR_METHOD_BASE_H
 
-#include <memory>
-
 namespace Numina {
-
-using std::auto_ptr;
 
 class CombineMethod {
 public:
-	virtual ~CombineMethod() {}
-	virtual void central_tendency(double* data, double* weights, size_t size,
-			double* central, double* variance) const = 0;
+  virtual ~CombineMethod() {
+  }
+  virtual CombineMethod* clone() const = 0;
+  virtual std::pair<double, double> central_tendency(double* begin,
+      double* end, double* weights) const = 0;
 };
 
 class RejectMethod {
 public:
-	RejectMethod(auto_ptr<CombineMethod> combine) :
-		m_combine(combine)
-	{}
-	virtual ~RejectMethod() {}
-	virtual void combine(double* data, double* weights, size_t size, double* results[3]) const = 0;
-	void central_tendency(double* data, double* weights, size_t size,
-			double* central, double* variance) const {
-		m_combine->central_tendency(data, weights, size, central, variance);
-	}
-private:
-	// Non copyable
-	RejectMethod(const RejectMethod&);
-	const RejectMethod& operator=(const RejectMethod&);
-
-	auto_ptr<CombineMethod> m_combine;
+  virtual ~RejectMethod() {
+  }
+  virtual void combine(double* begin, double* end, double* weights,
+      double* results[3]) const = 0;
 };
 
 } // namespace Numina

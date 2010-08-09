@@ -18,34 +18,47 @@
  *
  */
 
-
 #ifndef PYEMIR_METHODS_H
 #define PYEMIR_METHODS_H
 
 #include "method_base.h"
+#include "operations.h"
 
 namespace Numina {
 
-class AverageMethod: public CombineMethod {
+template<typename MCNT>
+class CombineHV: public CombineMethod {
 public:
-	AverageMethod(unsigned int dof);
-	virtual ~AverageMethod();
-	virtual void central_tendency(double* data, double* weights, size_t size,
-			double* central, double* variance) const;
-	std::pair<double, double>
-	central_tendency2(double* begin, double* end, double* weights) const;
+  CombineHV(const MCNT& cn = MCNT()) :
+    m_cn(cn) {
+  }
+  virtual ~CombineHV() {
+  }
+  inline virtual CombineHV<MCNT>* clone() const {
+    return new CombineHV<MCNT>(*this);
+  }
+  inline virtual std::pair<double, double> central_tendency(double* begin,
+      double* end, double* weights) const {
+    return m_cn(begin, end, weights);
+  }
 private:
-	unsigned int m_dof;
+  MCNT m_cn;
 };
 
-class MedianMethod: public CombineMethod {
-public:
-	MedianMethod();
-	virtual ~MedianMethod();
-	virtual void central_tendency(double* data, double* weights, size_t size,
-			double* central, double* variance) const;
+struct MethodAverage {
+  inline std::pair<double, double> operator()(double* begin, double* end,
+      double* weights) const {
+    return average_central_tendency(begin, end, weights);
+  }
 };
 
-}
+struct MethodMedian {
+  inline std::pair<double, double> operator()(double* begin, double* end,
+      double* weights) const {
+    return median_central_tendency(begin, end, weights);
+  }
+};
+
+} // namespace Numina
 
 #endif // PYEMIR_METHODS_H

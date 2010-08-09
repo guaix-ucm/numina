@@ -7,8 +7,8 @@ import numpy
 numpy_include = numpy.get_include()
 cext = Extension('numina.array._combine',
                 ['src/combinemodule.cc',
-                 'src/reject_methods.cc',
-                 'src/methods.cc',
+              #   'src/reject_methods.cc',
+              #   'src/methods.cc',
                  'src/reject_factory.cc',
                  'src/method_factory.cc',
                  'src/operations.cc',
