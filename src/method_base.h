@@ -22,23 +22,29 @@
 #ifndef PYEMIR_METHOD_BASE_H
 #define PYEMIR_METHOD_BASE_H
 
+#include <vector>
+
 namespace Numina {
+
+typedef double ResultType;
+typedef std::vector<ResultType>::iterator DataIterator;
+typedef std::vector<ResultType>::iterator WeightsIterator;
 
 class CombineMethod {
 public:
   virtual ~CombineMethod() {
   }
   virtual CombineMethod* clone() const = 0;
-  virtual std::pair<double, double> central_tendency(double* begin,
-      double* end, double* weights) const = 0;
+  virtual std::pair<ResultType, ResultType> central_tendency(DataIterator begin,
+      DataIterator end, WeightsIterator weights) const = 0;
 };
 
 class RejectMethod {
 public:
   virtual ~RejectMethod() {
   }
-  virtual void combine(double* begin, double* end, double* weights,
-      double* results[3]) const = 0;
+  virtual void combine(DataIterator begin, DataIterator end, WeightsIterator weights,
+      ResultType* results[3]) const = 0;
 };
 
 } // namespace Numina

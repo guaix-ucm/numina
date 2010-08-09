@@ -27,10 +27,10 @@ namespace Numina {
 auto_ptr<CombineMethod>
 CombineMethodFactory::create(const std::string& name, PyObject* args) {
 	if (name == "average") {
-	  return auto_ptr<CombineMethod>(new CombineHV<MethodAverage>());
+	  return auto_ptr<CombineMethod>(new CombineHV<MethodAverage<DataIterator, WeightsIterator> >());
 	}
 	if (name == "median") {
-	  return auto_ptr<CombineMethod>(new CombineHV<MethodMedian>());
+	  return auto_ptr<CombineMethod>(new CombineHV<MethodMedian<DataIterator, WeightsIterator> >());
 	}
 	return auto_ptr<CombineMethod>();
 }

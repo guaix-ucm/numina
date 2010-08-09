@@ -35,12 +35,10 @@ namespace Numina {
 template<typename Iterator1, typename Iterator2>
 struct LessFirst: public std::binary_function<typename ZipIterator<std::pair<
     Iterator1, Iterator2> >::value_type, typename ZipIterator<std::pair<
-    Iterator1, Iterator2> >::value_type, bool>
-{
+    Iterator1, Iterator2> >::value_type, bool> {
   bool operator()(
       const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& a,
-      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& b) const
-  {
+      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& b) const {
     return a.first < b.first;
   }
 };
@@ -49,23 +47,19 @@ struct LessFirst: public std::binary_function<typename ZipIterator<std::pair<
 // is inside the range (low, high)
 template<typename Iterator1, typename Iterator2>
 class InRangeFirst: public std::unary_function<typename ZipIterator<std::pair<
-    Iterator1, Iterator2> >::value_type, bool>
-{
+    Iterator1, Iterator2> >::value_type, bool> {
 public:
   InRangeFirst(double low, double high) :
-    m_lowc(low), m_highc(high)
-  {
+    m_lowc(low), m_highc(high) {
   }
   bool operator()(
-      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& x) const
-  {
+      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& x) const {
     return (x.first < m_highc) && (x.first > m_lowc);
   }
 private:
   double m_lowc;
   double m_highc;
 };
-
 
 template<typename CentralTendency, typename Iterator1, typename Iterator2,
     typename Result = double>
@@ -180,7 +174,7 @@ private:
   std::auto_ptr<CombineMethod> m_cm;
 };
 
-typedef CTW<double*, double*, double> MyCTWType;
+typedef CTW<DataIterator, WeightsIterator, ResultType> MyCTWType;
 
 template<typename MRNT>
 class RejectHV: public RejectMethod {
@@ -190,8 +184,8 @@ public:
   }
   virtual ~RejectHV() {
   }
-  inline virtual void combine(double* begin, double* end, double* weights,
-      double* results[3]) const {
+  inline virtual void combine(DataIterator begin, DataIterator end,
+      WeightsIterator weights, ResultType* results[3]) const {
     m_rn.combine(begin, end, weights, results);
   }
 private:
