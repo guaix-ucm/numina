@@ -205,8 +205,6 @@ class ZipIterator: public Detail::BaseIterator<ZipIterator<IteratorPair> ,
     typename Detail::ZipIteratorTypes<IteratorPair>::pointer>
 {
 public:
-  typedef typename Detail::ZipIteratorTypes<IteratorPair>::reference reference;
-  typedef typename Detail::ZipIteratorTypes<IteratorPair>::difference_type difference_type;
   //! Empty constructor
   /**
    * Note that an empty constructed iterator is not valid until it points to valid data.
@@ -214,6 +212,7 @@ public:
 
   ZipIterator()
   {
+    typename ZipIterator::difference_type a;
   }
 
   //! Constructor from a pair of iterators
@@ -290,7 +289,7 @@ public:
    * Used to implement operator*() and operator->() in the base class
    * @return A reference to the pointed object
    */
-  reference dereference()
+  typename ZipIterator::reference dereference()
   {
     return m_internal_ref;
   }
@@ -299,7 +298,7 @@ public:
    * Used to implement operator*() and operator->() in the base class
    * @return A constant reference to the pointed object
    */
-  const reference dereference() const
+  const typename ZipIterator::reference dereference() const
   {
     return m_internal_ref;
   }
@@ -308,7 +307,7 @@ public:
    * Used to implement the difference between iterators and
    * ordering operators in the base class
    */
-  difference_type distance_to(const ZipIterator& b) const
+  typename ZipIterator::difference_type distance_to(const ZipIterator& b) const
   {
     return std::distance(m_iterator_pair.first, b.m_iterator_pair.first);
   }
