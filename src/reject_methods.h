@@ -61,14 +61,13 @@ private:
   double m_highc;
 };
 
-template<typename CentralTendency, typename Iterator1, typename Iterator2,
-    typename Result = double>
+template<typename CentralTendency>
 class RejectNone {
 public:
   RejectNone(const CentralTendency& central) :
     m_central(central) {
   }
-
+  template<typename Iterator1, typename Iterator2, typename Result>
   void combine(Iterator1 begin, Iterator1 end, Iterator2 weights,
       Result* results[3]) const {
     std::pair<Result, Result> r = m_central(begin, end, weights);
@@ -80,14 +79,13 @@ private:
   CentralTendency m_central;
 };
 
-template<typename CentralTendency, typename Iterator1, typename Iterator2,
-    typename Result = double>
+template<typename CentralTendency>
 class RejectMinMax {
 public:
   RejectMinMax(const CentralTendency& central, size_t nmin, size_t nmax) :
     m_central(central), m_nmin(nmin), m_nmax(nmax) {
   }
-
+  template<typename Iterator1, typename Iterator2, typename Result>
   void combine(Iterator1 begin, Iterator1 end, Iterator2 weights,
       Result* results[3]) const {
     typedef std::pair<Iterator1, Iterator2> IterPair;
@@ -111,8 +109,7 @@ private:
   size_t m_nmax;
 };
 
-template<typename CentralTendency, typename Iterator1, typename Iterator2,
-    typename Result = double>
+template<typename CentralTendency>
 class RejectSigmaClip {
 public:
   RejectSigmaClip(const CentralTendency& central, double low, double high) :
@@ -121,7 +118,7 @@ public:
 
   virtual ~RejectSigmaClip() {
   }
-
+  template<typename Iterator1, typename Iterator2, typename Result>
   void combine(Iterator1 begin, Iterator1 end, Iterator2 weights,
       Result* results[3]) const {
     typedef std::pair<Iterator1, Iterator2> IterPair;

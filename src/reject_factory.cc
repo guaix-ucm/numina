@@ -18,43 +18,37 @@
  *
  */
 
-
 #include "method_exception.h"
 #include "reject_factory.h"
 #include "reject_methods.h"
 
 namespace Numina {
 
-auto_ptr<RejectMethod>
-RejectMethodFactory::create(const std::string& name,
-		PyObject* args,
-		auto_ptr<CombineMethod> combine_method) {
+auto_ptr<RejectMethod> RejectMethodFactory::create(const std::string& name,
+    PyObject* args, auto_ptr<CombineMethod> combine_method) {
   const MyCTWType cm(combine_method);
-	if (name == "none") {
-	  return auto_ptr<RejectMethod>(new
-	      RejectHV<RejectNone<MyCTWType, DataIterator, WeightsIterator, ResultType> >(cm));
-	}
-	if (name == "minmax") {
-		unsigned int nmin = 0;
-		unsigned int nmax = 0;
-		if (not PyArg_ParseTuple(args, "II", &nmin, &nmax))
-	    	throw MethodException("problem creating MinMax");
-		const RejectMinMax<MyCTWType, DataIterator, WeightsIterator, ResultType> aa(cm, nmin, nmax);
-		return auto_ptr<RejectMethod>(new
-        RejectHV<RejectMinMax<MyCTWType, DataIterator, WeightsIterator, ResultType> >(aa));
-	}
-	if (name == "sigmaclip") {
-		double low = 0.0;
-		double high = 0.0;
-		if (not PyArg_ParseTuple(args, "dd", &low, &high))
-			throw MethodException("problem creating SigmaClipMethod");
-		const RejectSigmaClip<MyCTWType, DataIterator, WeightsIterator, ResultType> aa(cm, low, high);
-    return auto_ptr<RejectMethod>(new
-        RejectHV<RejectSigmaClip<MyCTWType, DataIterator, WeightsIterator, ResultType> >(aa));
-	}
-	return auto_ptr<RejectMethod>();
+  if (name == "none") {
+    return auto_ptr<RejectMethod> (new RejectHV<RejectNone<MyCTWType> > (cm));
+  }
+  if (name == "minmax") {
+    unsigned int nmin = 0;
+    unsigned int nmax = 0;
+    if (not PyArg_ParseTuple(args, "II", &nmin, &nmax))
+      throw MethodException("problem creating MinMax");
+    const RejectMinMax<MyCTWType> aa(cm, nmin, nmax);
+    return auto_ptr<RejectMethod> (new RejectHV<RejectMinMax<MyCTWType> > (aa));
+  }
+  if (name == "sigmaclip") {
+    double low = 0.0;
+    double high = 0.0;
+    if (not PyArg_ParseTuple(args, "dd", &low, &high))
+      throw MethodException("problem creating SigmaClipMethod");
+    const RejectSigmaClip<MyCTWType> aa(cm, low, high);
+    return auto_ptr<RejectMethod> (new RejectHV<RejectSigmaClip<MyCTWType> > (
+        aa));
+  }
+  return auto_ptr<RejectMethod> ();
 }
-
 
 } // namespace Numina
 

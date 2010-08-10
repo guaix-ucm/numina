@@ -45,16 +45,18 @@ private:
   MCNT m_cn;
 };
 
-template<typename Iterator1, typename Iterator2>
+
 struct MethodAverage {
+  template<typename Iterator1, typename Iterator2>
   inline std::pair<double, double> operator()(Iterator1 begin, Iterator1 end,
       Iterator2 weights) const {
     return average_central_tendency(begin, end, weights);
   }
 };
 
-template<typename Iterator1, typename Iterator2>
+
 struct MethodMedian {
+  template<typename Iterator1, typename Iterator2>
   inline std::pair<double, double> operator()(Iterator1 begin, Iterator1 end,
       Iterator2 weights) const {
     return median_central_tendency(begin, end, weights);
