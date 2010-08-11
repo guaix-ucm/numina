@@ -22,44 +22,14 @@
 #define PYEMIR_REJECT_METHODS_H
 
 #include <memory>
+#include <ext/functional>
 
+#include "functional.h"
 #include "method_base.h"
 #include "operations.h"
 #include "zip_iterator.h"
 
 namespace Numina {
-
-// Compares two std::pair objects. Returns true
-// if the first component of the first is less than the first component
-// of the second std::pair
-template<typename Iterator1, typename Iterator2>
-struct LessFirst: public std::binary_function<typename ZipIterator<std::pair<
-    Iterator1, Iterator2> >::value_type, typename ZipIterator<std::pair<
-    Iterator1, Iterator2> >::value_type, bool> {
-  bool operator()(
-      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& a,
-      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& b) const {
-    return a.first < b.first;
-  }
-};
-
-// Checks if first component of a std::pair
-// is inside the range (low, high)
-template<typename Iterator1, typename Iterator2>
-class InRangeFirst: public std::unary_function<typename ZipIterator<std::pair<
-    Iterator1, Iterator2> >::value_type, bool> {
-public:
-  InRangeFirst(double low, double high) :
-    m_lowc(low), m_highc(high) {
-  }
-  bool operator()(
-      const typename ZipIterator<std::pair<Iterator1, Iterator2> >::value_type& x) const {
-    return (x.first < m_highc) && (x.first > m_lowc);
-  }
-private:
-  double m_lowc;
-  double m_highc;
-};
 
 template<typename CentralTendency>
 class RejectNone {
@@ -94,7 +64,12 @@ public:
 
     ZIterPair result = reject_min_max(make_zip_iterator(begin, weights),
         make_zip_iterator(end, weights + (end - begin)), m_nmin, m_nmax,
-        LessFirst<Iterator1, Iterator2> ());
+        // Compares two std::pair objects. Returns true
+        // if the first component of the first is less than the first component
+        // of the second std::pair
+        compose(std::less<double>(), __gnu_cxx::select1st<
+            typename ZIter::value_type>(), __gnu_cxx::select1st<
+            typename ZIter::value_type>()));
 
     *results[2] = result.second - result.first;
     IterPair beg = result.first.get_iterator_pair();
@@ -136,8 +111,16 @@ public:
       c_mean = r.first;
       c_std = sqrt(r.second);
 
-      ned = partition(beg, ned, InRangeFirst<Iterator1, Iterator2> (c_mean
-          - c_std * m_low, c_mean + c_std * m_high));
+      ned = partition(beg, ned,
+      // Checks if first component of a std::pair
+          // is inside the range (low, high)
+          // equivalent to return (x.first < high) && (x.first > low);
+          __gnu_cxx::compose2(std::logical_and<bool>(), __gnu_cxx::compose1(
+              std::bind2nd(std::less<double>(), c_mean - c_std * m_low),
+              __gnu_cxx::select1st<typename ZIter::value_type>()),
+              __gnu_cxx::compose1(std::bind1st(std::greater<double>(), c_mean
+                  + c_std * m_high), __gnu_cxx::select1st<
+                  typename ZIter::value_type>())));
 
       delta = c_size - (ned - beg);
       c_size = end - begin;

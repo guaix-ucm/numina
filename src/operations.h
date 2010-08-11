@@ -27,7 +27,7 @@
 
 namespace Numina {
 
-namespace detail // implementation details
+namespace Detail // implementation details
 {
 
 template<class T>
@@ -53,7 +53,7 @@ inline typename std::iterator_traits<Iterator>::value_type mean(Iterator begin,
     Iterator end) {
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
 
-  return std::accumulate(begin, end, value_type(0)) / std::distance(begin, end);
+  return std::accumulate(begin, end, value_type(0.0)) / std::distance(begin, end);
 }
 
 template<typename Iterator>
@@ -63,7 +63,7 @@ inline typename std::iterator_traits<Iterator>::value_type variance(
 
   typedef typename std::iterator_traits<Iterator>::value_type value_type;
   return std::accumulate(begin, end, value_type(0),
-      detail::CuadSum<value_type>(mean)) / std::distance(begin, end);
+      Detail::CuadSum<value_type>(mean)) / std::distance(begin, end);
 }
 
 template<typename Iterator1, typename Iterator2>

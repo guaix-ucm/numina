@@ -37,7 +37,7 @@ public:
   inline virtual CombineHV<MCNT>* clone() const {
     return new CombineHV<MCNT>(*this);
   }
-  inline virtual std::pair<double, double> central_tendency(DataIterator begin,
+  inline virtual std::pair<ResultType, ResultType> central_tendency(DataIterator begin,
       DataIterator end, WeightsIterator weights) const {
     return m_cn(begin, end, weights);
   }
