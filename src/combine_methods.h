@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef PYEMIR_METHODS_H
-#define PYEMIR_METHODS_H
+#ifndef PYEMIR_COMBINE_METHODS_H
+#define PYEMIR_COMBINE_METHODS_H
 
 #include "method_base.h"
 #include "operations.h"
@@ -27,15 +27,15 @@
 namespace Numina {
 
 template<typename MCNT>
-class CombineHV: public CombineMethod {
+class CombineMethodAdaptor: public CombineMethod {
 public:
-  CombineHV(const MCNT& cn = MCNT()) :
+  CombineMethodAdaptor(const MCNT& cn = MCNT()) :
     m_cn(cn) {
   }
-  virtual ~CombineHV() {
+  virtual ~CombineMethodAdaptor() {
   }
-  inline virtual CombineHV<MCNT>* clone() const {
-    return new CombineHV<MCNT>(*this);
+  inline virtual CombineMethodAdaptor<MCNT>* clone() const {
+    return new CombineMethodAdaptor<MCNT>(*this);
   }
   inline virtual std::pair<ResultType, ResultType> central_tendency(DataIterator begin,
       DataIterator end, WeightsIterator weights) const {
@@ -65,4 +65,4 @@ struct MethodMedian {
 
 } // namespace Numina
 
-#endif // PYEMIR_METHODS_H
+#endif // PYEMIR_COMBINE_METHODS_H

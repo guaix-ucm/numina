@@ -157,12 +157,12 @@ private:
 typedef CTW<DataIterator, WeightsIterator, ResultType> MyCTWType;
 
 template<typename MRNT>
-class RejectHV: public RejectMethod {
+class RejectMethodAdaptor: public RejectMethod {
 public:
-  RejectHV(const MRNT& rn) :
+  RejectMethodAdaptor(const MRNT& rn) :
     m_rn(rn) {
   }
-  virtual ~RejectHV() {
+  virtual ~RejectMethodAdaptor() {
   }
   inline virtual void combine(DataIterator begin, DataIterator end,
       WeightsIterator weights, ResultType* results[3]) const {

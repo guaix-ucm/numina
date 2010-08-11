@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Sergio Pascual
+ * Copyright 2010 Sergio Pascual
  *
  * This file is part of PyEmir
  *
@@ -19,20 +19,17 @@
  */
 
 
-#include "method_factory.h"
-#include "combine_methods.h"
+#ifndef PYEMIR_WORKTYPES_H
+#define PYEMIR_WORKTYPES_H
+
+#include <vector>
 
 namespace Numina {
 
-auto_ptr<CombineMethod>
-CombineMethodFactory::create(const std::string& name, PyObject*) {
-	if (name == "average") {
-	  return auto_ptr<CombineMethod>(new CombineMethodAdaptor<MethodAverage>());
-	}
-	if (name == "median") {
-	  return auto_ptr<CombineMethod>(new CombineMethodAdaptor<MethodMedian>());
-	}
-	return auto_ptr<CombineMethod>();
-}
+typedef double ResultType;
+typedef std::vector<ResultType>::iterator DataIterator;
+typedef std::vector<ResultType>::iterator WeightsIterator;
 
 } // namespace Numina
+
+#endif // PYEMIR_WORKTYPES_H

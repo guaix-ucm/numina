@@ -22,13 +22,9 @@
 #ifndef PYEMIR_METHOD_BASE_H
 #define PYEMIR_METHOD_BASE_H
 
-#include <vector>
+#include "worktypes.h"
 
 namespace Numina {
-
-typedef double ResultType;
-typedef std::vector<ResultType>::iterator DataIterator;
-typedef std::vector<ResultType>::iterator WeightsIterator;
 
 class CombineMethod {
 public:

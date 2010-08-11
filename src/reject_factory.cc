@@ -28,7 +28,8 @@ auto_ptr<RejectMethod> RejectMethodFactory::create(const std::string& name,
     PyObject* args, auto_ptr<CombineMethod> combine_method) {
   const MyCTWType cm(combine_method);
   if (name == "none") {
-    return auto_ptr<RejectMethod> (new RejectHV<RejectNone<MyCTWType> > (cm));
+    return auto_ptr<RejectMethod> (new RejectMethodAdaptor<
+        RejectNone<MyCTWType> > (cm));
   }
   if (name == "minmax") {
     unsigned int nmin = 0;
@@ -36,7 +37,8 @@ auto_ptr<RejectMethod> RejectMethodFactory::create(const std::string& name,
     if (not PyArg_ParseTuple(args, "II", &nmin, &nmax))
       throw MethodException("problem creating MinMax");
     const RejectMinMax<MyCTWType> aa(cm, nmin, nmax);
-    return auto_ptr<RejectMethod> (new RejectHV<RejectMinMax<MyCTWType> > (aa));
+    return auto_ptr<RejectMethod> (new RejectMethodAdaptor<RejectMinMax<
+        MyCTWType> > (aa));
   }
   if (name == "sigmaclip") {
     double low = 0.0;
@@ -44,8 +46,8 @@ auto_ptr<RejectMethod> RejectMethodFactory::create(const std::string& name,
     if (not PyArg_ParseTuple(args, "dd", &low, &high))
       throw MethodException("problem creating SigmaClipMethod");
     const RejectSigmaClip<MyCTWType> aa(cm, low, high);
-    return auto_ptr<RejectMethod> (new RejectHV<RejectSigmaClip<MyCTWType> > (
-        aa));
+    return auto_ptr<RejectMethod> (new RejectMethodAdaptor<RejectSigmaClip<
+        MyCTWType> > (aa));
   }
   return auto_ptr<RejectMethod> ();
 }
