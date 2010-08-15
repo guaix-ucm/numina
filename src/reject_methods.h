@@ -137,24 +137,22 @@ private:
 };
 
 // Adaptor
-template<typename Iterator1, typename Iterator2, typename Result = double>
 class CTW {
 public:
   CTW(std::auto_ptr<CombineMethod> cm) :
     m_cm(cm) {
   }
-  CTW(const CTW& a) {
-    m_cm.reset(a.m_cm->clone());
+  CTW(const CTW& a) :
+    m_cm(a.m_cm) {
   }
-  std::pair<Result, Result> operator()(Iterator1 begin, Iterator1 end,
+  template<typename Iterator1, typename Iterator2>
+  std::pair<ResultType, ResultType> operator()(Iterator1 begin, Iterator1 end,
       Iterator2 weights) const {
     return m_cm->central_tendency(begin, end, weights);
   }
 private:
-  std::auto_ptr<CombineMethod> m_cm;
+  mutable std::auto_ptr<CombineMethod> m_cm;
 };
-
-typedef CTW<DataIterator, WeightsIterator, ResultType> MyCTWType;
 
 template<typename MRNT>
 class RejectMethodAdaptor: public RejectMethod {
