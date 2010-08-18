@@ -73,11 +73,11 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
 #define COMBINE_CHECK_1D_ARRAYS(ARRAY, NIMAGES) \
   if (PyArray_NDIM(ARRAY) != 1) \
   { \
-    return PyErr_Format(CombineError, "#ARRAY dimension != 1"); \
+    return PyErr_Format(CombineError, #ARRAY" dimension != 1"); \
   } \
   if (PyArray_SIZE(ARRAY) != NIMAGES) \
   { \
-    return PyErr_Format(CombineError, "#ARRAY size != number of images"); \
+    return PyErr_Format(CombineError, #ARRAY" size != number of images"); \
   }
 
 #define STORE_AND_CONVERT(OUTTYPE, OUTVAR, MSG) \
