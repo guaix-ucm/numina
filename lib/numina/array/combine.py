@@ -28,20 +28,20 @@ from numina.array import combine_shape
 from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import CombineError
 
-COMBINE_METHODS = {'average': [], 
+COMBINE_METHODS = {'average': [],
                    'median': []
                    }
 
-REJECT_METHODS = {'none': [], 
-                  'sigmaclip': [Schema('low', 4., 'Description'), 
-                                Schema('high', 4., 'Description')], 
-                  'minmax': [Schema('nlow', 0, 'Description'), 
+REJECT_METHODS = {'none': [],
+                  'sigmaclip': [Schema('low', 4., 'Description'),
+                                Schema('high', 4., 'Description')],
+                  'minmax': [Schema('nlow', 0, 'Description'),
                              Schema('nhigh', 0, 'Description')]
                   }
 
 def combine(images, masks=None, dtype=None, out=None,
-            method='average', reject='none', 
-            zeros=None, scales=None, weights=None, 
+            method='average', reject='none',
+            zeros=None, scales=None, weights=None,
             offsets=None, **kwds):
     '''Stack arrays using different methods.'''
         
@@ -70,7 +70,7 @@ def combine(images, masks=None, dtype=None, out=None,
     
     # All images have the same shape
     allshapes = [i.shape for i in images]
-    baseshape = images[0].shape
+    baseshape = allshapes[0]
     if any(shape != baseshape for shape in allshapes[1:]):
         raise CombineError("Images don't have the same shape")
     
@@ -78,18 +78,18 @@ def combine(images, masks=None, dtype=None, out=None,
     if offsets is None:
         finalshape = baseshape
     else:
-        if len(images) != len(offsets):
-            raise CombineError("len(inputs) != len(offsets)")
+        if len(offsets) != number_of_images:
+            raise CombineError('incorrect number of %s' % 'offsets')
         
         finalshape, offsets = combine_shape(allshapes, offsets)
         offsets = offsets.astype('int')
         
     if masks:
-        if len(images) != len(masks):
-            raise CombineError("len(inputs) != len(masks)")
+        if len(masks) != number_of_images:
+            raise CombineError('incorrect number of %s' % 'masks')
     
         # Error if mask and image have different shape
-        if any(imshape != ma.shape for (imshape, ma) in izip(allshapes, masks)):
+        if any(imshape != ma.shape for imshape, ma in izip(allshapes, masks)):
             raise CombineError("mask and image have different shape")
     else:
         masks = [numpy.zeros(baseshape, dtype='bool')] * number_of_images
@@ -98,42 +98,52 @@ def combine(images, masks=None, dtype=None, out=None,
     # We need three numbers
     outshape = (3,) + tuple(finalshape)
     
-    if out is None:
-        out = numpy.zeros(outshape, dtype=WORKTYPE)
-    else:
-        if out.shape != outshape:
-            raise CombineError("result has wrong shape")  
+    out = out or numpy.zeros(outshape, dtype=WORKTYPE)
+    out = numpy.asanyarray(out, dtype=WORKTYPE)
     
-    if zeros is None:
-        zeros = numpy.zeros(number_of_images, dtype=WORKTYPE)
-    else:
-        zeros = numpy.asanyarray(zeros, dtype=WORKTYPE)
-        if zeros.shape != (number_of_images,):
-            raise CombineError('incorrect number of zeros')
-        
-    if scales is None:
-        scales = numpy.ones(number_of_images, dtype=WORKTYPE)
-    else:
-        scales = numpy.asanyarray(scales, dtype=WORKTYPE)
-        if scales.shape != (number_of_images,):
-            raise CombineError('incorrect number of scales')
-        
-    if weights is None:
-        weights = numpy.ones(number_of_images, dtype=WORKTYPE)
-    else:
-        weights = numpy.asanyarray(weights, dtype=WORKTYPE)
-        if weights.shape != (number_of_images,):
-            raise CombineError('incorrect number of weights')
+    if out.shape != outshape:
+        raise CombineError("result has wrong shape")  
+    
+    zeros = zeros or numpy.zeros(number_of_images, dtype=WORKTYPE)
+    zeros = numpy.asanyarray(zeros, dtype=WORKTYPE)
+    
+    scales = scales or numpy.ones(number_of_images, dtype=WORKTYPE)
+    scales = numpy.asanyarray(scales, dtype=WORKTYPE)
+    # Scales must be not equal to zero
+    if numpy.any(scales == 0):
+        raise CombineError('scales must be != 0')
+    
+    weights = weights or numpy.ones(number_of_images, dtype=WORKTYPE)
+    weights = numpy.asanyarray(weights, dtype=WORKTYPE)
+    # weights are >= 0
+    if numpy.any(weights < 0):
+        raise CombineError('weights must be >= 0')
+    
+    # Additional checks
+    for llst, name in [(zeros, 'zeros'), (scales, 'scales'), (weights, 'weights')]:
+        if llst.ndim != 1:
+            raise CombineError('%s must be one dimensional' % name)
+        if len(llst) != number_of_images:
+            raise CombineError('incorrect number of %s' % name)
 
+    # If weight == 0, don't use that image
+    use_only = weights > 0
+    images = [im for im, use in zip(images, use_only.flat) if use]
+    masks = [mk for mk, use in zip(masks, use_only.flat) if use]
+    
     if offsets is None:
-        internal_combine(images, masks, out0=out[0], out1=out[1], out2=out[2], 
-                         method=method, margs=margs, reject=reject, rargs=rargs, 
-                         zeros=zeros, scales=scales, weights=weights)
+        internal_combine(images, masks, out0=out[0], out1=out[1], out2=out[2],
+                         method=method, margs=margs, reject=reject, rargs=rargs,
+                         zeros=zeros[use_only], 
+                         scales=scales[use_only], 
+                         weights=weights[use_only])
     else:
-        internal_combine_with_offsets(images, masks, 
-                                      out0=out[0], out1=out[1], out2=out[2], offsets=offsets,
-                                      method=method, margs=margs, reject=reject, rargs=rargs, 
-                                      zeros=zeros, scales=scales, weights=weights, 
+        internal_combine_with_offsets(images, masks,
+                                      out0=out[0], out1=out[1], out2=out[2], offsets=offsets[use_only],
+                                      method=method, margs=margs, reject=reject, rargs=rargs,
+                                      zeros=zeros[use_only], 
+                                      scales=scales[use_only], 
+                                      weights=weights[use_only]
                                       )
     
     return out.astype(dtype)
@@ -141,7 +151,7 @@ def combine(images, masks=None, dtype=None, out=None,
 
 def mean(images, masks=None, dtype=None, out=None,
          reject='none', zeros=None, scales=None,
-         weights=None, offsets=None, dof=0, **kwds):
+         weights=None, offsets=None, **kwds):
     '''Combine images using the mean, with masks and offsets.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -155,12 +165,8 @@ def mean(images, masks=None, dtype=None, out=None,
     :param images: a list of arrays
     :param masks: a list of masked arrays, True values are masked
     :param dtype: data type of the output
-    :param out: optional output, with one more axis than the input images
-    :param dof: degrees of freedom 
-    :return: mean, variance and number of points stored in
-    :raise TypeError: if method is not callable
-    :raise CombineError: if method is not callable
-    
+    :param out: optional output, with one more axis than the input images 
+    :return: mean, variance and number of points stored in    
     
     
     Example:
@@ -177,15 +183,15 @@ def mean(images, masks=None, dtype=None, out=None,
                [ 2.  ,  2.  ]]])
        
     '''
-    return combine(images, masks=masks, dtype=dtype, out=out, 
-                   method='average', reject=reject, 
-                   zeros=zeros, scales=scales, weights=weights, 
-                   offsets=offsets, dof=dof, **kwds)
+    return combine(images, masks=masks, dtype=dtype, out=out,
+                   method='average', reject=reject,
+                   zeros=zeros, scales=scales, weights=weights,
+                   offsets=offsets, **kwds)
     
     
     
-def median(images, masks=None, dtype=None, out=None, 
-           reject='none', zeros=None, scales=None, 
+def median(images, masks=None, dtype=None, out=None,
+           reject='none', zeros=None, scales=None,
            weights=None, offsets=None, **kwds):
     '''Combine images using the median, with masks.
     
@@ -203,17 +209,15 @@ def median(images, masks=None, dtype=None, out=None,
     :param out: optional output, with one more axis than the input images
  
     :return: mean, variance and number of points stored in
-    :raise TypeError: if method is not callable
-    :raise CombineError: if method is not callable
        
     '''
     return combine(images, masks=masks, dtype=dtype, out=out,
                    method='median', reject=reject,
-                   zeros=zeros, scales=scales, weights=weights, 
+                   zeros=zeros, scales=scales, weights=weights,
                    offsets=offsets, **kwds)    
 
 def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
-         weights=None, offsets=None, low=4., high=4., dof=0):
+         weights=None, offsets=None, low=4., high=4.):
     '''Combine images using the sigma-clipping, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -229,21 +233,20 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
     :param low:
-    :param high:
-    :param dof: degrees of freedom 
+    :param high: 
     :return: mean, variance and number of points stored in    
     '''
     
     return combine(images, masks=masks, dtype=dtype, out=out,
-                   method='average', reject='sigmaclip', 
-                   zeros=zeros, scales=scales, weights=weights, 
-                   offsets=offsets, dof=dof, high=high, low=low)
+                   method='average', reject='sigmaclip',
+                   zeros=zeros, scales=scales, weights=weights,
+                   offsets=offsets, high=high, low=low)
 
-def flatcombine(data, masks, dtype=None, scales=None, 
+def flatcombine(data, masks, dtype=None, scales=None,
                 blank=1.0, method='median', reject='none', **kwds):
     
-    result = combine(data, masks=masks, 
-                     dtype=dtype, scales=scales, 
+    result = combine(data, masks=masks,
+                     dtype=dtype, scales=scales,
                      method=method, reject=reject, **kwds)
     
     # Sustitute values <= 0 by blank
@@ -251,17 +254,17 @@ def flatcombine(data, masks, dtype=None, scales=None,
     result[0][mm] = blank
     return result
 
-def zerocombine(data, masks, dtype=None, scales=None, 
+def zerocombine(data, masks, dtype=None, scales=None,
                 method='median', reject='none', **kwds):
     
-    result = combine(data, masks=masks, 
-                     dtype=dtype, scales=scales, 
+    result = combine(data, masks=masks,
+                     dtype=dtype, scales=scales,
                      method=method, reject=reject, **kwds)
 
     return result
 
 if __name__ == '__main__':
     shape = (5, 5)
-    print combine([numpy.ones(shape) * i for i in xrange(3)], 
-                  method='average', reject='none', weights=[0,1,1])
-
+    rst = combine([numpy.ones(shape) * i for i in xrange(3)],
+                  method='average', reject='none', weights=[0, 1, 1])
+    print rst
