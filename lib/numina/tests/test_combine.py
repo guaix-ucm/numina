@@ -32,16 +32,41 @@ class CombineTestCase(unittest.TestCase):
         self.validMasks = [mask]
         databig = numpy.zeros((256, 256))
         self.validBig = [databig] * 100
-        databig = numpy.zeros((256, 256))
-        self.validBig = [databig] * 100
         
     def tearDown(self):
         pass
          
-    def test02Exception(self):
-        '''mean combine: CombineError is raised if images list is empty.'''
-        self.assertRaises(CombineError, mean, [])
-    
+    def testBaseCombineError(self):
+        '''test CombineError is raised for different operations.'''
+        # method is not an allowed string
+        self.assertRaises(CombineError, combine, self.validImages, method='dummy')
+        # reject is not an allowed string
+        self.assertRaises(CombineError, combine, self.validImages, reject='dummy')
+        # inputs is empty
+        self.assertRaises(CombineError, combine, [])
+        # images don't have the same shape
+        self.assertRaises(CombineError, combine, [self.validImages[0], self.validBig[0]])
+        # incorrect number of offsets
+        self.assertRaises(CombineError, combine, self.validImages, offsets=[])
+        # incorrect number of masks
+        self.assertRaises(CombineError, combine, self.validImages, self.validMasks * 2)
+        # mask and image have different shape
+        self.assertRaises(CombineError, combine, self.validImages, [numpy.array([True, False])])
+        # output has wrong shape
+        self.assertRaises(CombineError, combine, self.validImages, out=self.validImages[0])
+        # scales must be != 0
+        self.assertRaises(CombineError, combine, self.validImages, scales=[0])        
+        # weights must be >= 0'
+        self.assertRaises(CombineError, combine, self.validImages, weights=[-1])
+        # must be one dimensional
+        self.assertRaises(CombineError, combine, self.validImages, zeros=[[1, 2]])
+        self.assertRaises(CombineError, combine, self.validImages, scales=[[1, 2]])
+        self.assertRaises(CombineError, combine, self.validImages, weights=[[1, 2]])
+        # incorrect number of elements
+        self.assertRaises(CombineError, combine, self.validImages, zeros=[1, 2])
+        self.assertRaises(CombineError, combine, self.validImages, scales=[1, 2])
+        self.assertRaises(CombineError, combine, self.validImages, weights=[1, 2])
+        
     def test03Exception(self):
         '''mean combine: CombineError is raised if inputs have different lengths.'''
         self.assertRaises(CombineError, mean, self.validImages, self.validMasks * 2)

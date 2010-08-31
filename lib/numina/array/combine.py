@@ -56,7 +56,7 @@ def combine(images, masks=None, dtype=None, out=None,
     margs = tuple(kwds.get(par, dft) for par, dft, _ in COMBINE_METHODS[method])
     rargs = tuple(kwds.get(par, dft) for par, dft, _ in REJECT_METHODS[reject])
         
-    # Check inumpy.uts
+    # Check inputs
     if not images:
         raise CombineError("len(inputs) == 0")
 
@@ -72,7 +72,7 @@ def combine(images, masks=None, dtype=None, out=None,
     allshapes = [i.shape for i in images]
     baseshape = allshapes[0]
     if any(shape != baseshape for shape in allshapes[1:]):
-        raise CombineError("Images don't have the same shape")
+        raise CombineError("images don't have the same shape")
     
     # Offsets
     if offsets is None:
@@ -98,23 +98,31 @@ def combine(images, masks=None, dtype=None, out=None,
     # We need three numbers
     outshape = (3,) + tuple(finalshape)
     
-    out = out or numpy.zeros(outshape, dtype=WORKTYPE)
-    out = numpy.asanyarray(out, dtype=WORKTYPE)
+    if out is None:
+        out = numpy.zeros(outshape, dtype=WORKTYPE)
+    else:
+        out = numpy.asanyarray(out, dtype=WORKTYPE)
     
     if out.shape != outshape:
         raise CombineError("result has wrong shape")  
     
-    zeros = zeros or numpy.zeros(number_of_images, dtype=WORKTYPE)
-    zeros = numpy.asanyarray(zeros, dtype=WORKTYPE)
+    if zeros is None:
+        zeros = numpy.zeros(number_of_images, dtype=WORKTYPE)
+    else:
+        zeros = numpy.asanyarray(zeros, dtype=WORKTYPE)
     
-    scales = scales or numpy.ones(number_of_images, dtype=WORKTYPE)
-    scales = numpy.asanyarray(scales, dtype=WORKTYPE)
+    if scales is None:
+        scales = numpy.ones(number_of_images, dtype=WORKTYPE)
+    else:
+        scales = numpy.asanyarray(scales, dtype=WORKTYPE)
     # Scales must be not equal to zero
     if numpy.any(scales == 0):
         raise CombineError('scales must be != 0')
     
-    weights = weights or numpy.ones(number_of_images, dtype=WORKTYPE)
-    weights = numpy.asanyarray(weights, dtype=WORKTYPE)
+    if weights is None:
+        weights = numpy.ones(number_of_images, dtype=WORKTYPE)
+    else:
+        weights = numpy.asanyarray(weights, dtype=WORKTYPE)
     # weights are >= 0
     if numpy.any(weights < 0):
         raise CombineError('weights must be >= 0')
