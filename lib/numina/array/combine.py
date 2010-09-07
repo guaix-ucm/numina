@@ -178,17 +178,18 @@ def mean(images, masks=None, dtype=None, out=None,
     
     
     Example:
-    
        >>> import numpy
-       >>> image = numpy.array([[1.,3.],[1., -1.4]])
+       >>> image = numpy.array([[1., 3.], [1., -1.4]])
        >>> inputs = [image, image + 1]
-       >>> mean(inputs) #doctest: +NORMALIZE_WHITESPACE
-       array([[[ 1.5 ,  3.5 ],
-               [ 1.5 , -0.9 ]],
-              [[ 0.25,  0.25],
-               [ 0.25,  0.25]],
-              [[ 2.  ,  2.  ],
-               [ 2.  ,  2.  ]]])
+       >>> mean(inputs)
+       array([[[ 1.5,  3.5],
+               [ 1.5, -0.9]],
+       <BLANKLINE>
+              [[ 0.5,  0.5],
+               [ 0.5,  0.5]],
+       <BLANKLINE>
+              [[ 2. ,  2. ],
+               [ 2. ,  2. ]]])
        
     '''
     return combine(images, masks=masks, dtype=dtype, out=out,
@@ -257,7 +258,7 @@ def flatcombine(data, masks, dtype=None, scales=None,
                      dtype=dtype, scales=scales,
                      method=method, reject=reject, **kwds)
     
-    # Sustitute values <= 0 by blank
+    # Substitute values <= 0 by blank
     mm = result[0] <= 0
     result[0][mm] = blank
     return result
