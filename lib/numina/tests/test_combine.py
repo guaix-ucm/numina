@@ -95,19 +95,18 @@ class CombineTestCase(unittest.TestCase):
         rres = numpy.array([[3.66666667, 2., 4., 4.],
                             [2.6666666666666665, 0., 1. , 4.],
                             [18., 2., 1.5 , 2.66666667]])
-        rvar = numpy.array([[6.22222222222, 0.0, 8.66666666667, 0.0],
-                            [5.5555555555555554, 0.0, 2.0, 0.0],
-                            [348.666666667, 0.0, 2.25, 3.55555555556]])
+        rvar = numpy.array([[9.3333333333333339, 0.0, 13.0, 0.0],
+                            [8.3333333333333339, 0.0, 3.0, 0.0],
+                            [523.0, 0.0, 4.5, 5.3333333333333339]])
         rnum = numpy.array([[3, 3, 3, 2],
                             [3, 0, 3, 3],
                             [3, 1, 2, 3]])
         
-        out = mean(inputs, masks, dof=0)
+        out = combine(inputs, masks, method='average')
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[1].flat, rvar.flat):
-#            self.assertAlmostEqual(cal, precal)
-            pass
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, rnum.flat):
             self.assertEqual(cal, precal)
 
@@ -123,20 +122,18 @@ class CombineTestCase(unittest.TestCase):
         # Results
         rres = numpy.array([[3.66666667, 2., 4. , 4.0], [2.6666666666666665, 2., 1. , 4.],
                           [18., 2.33333333, 1.666666667 , 2.66666667]])
-        rvar = numpy.array([[6.22222222, 0., 8.66666667, 0.],
-                            [5.5555555555555554, 0., 2.00000000, 0.],
-                            [3.4866666666667e2, 0.222222222, 1.55555556, 3.55555556]])
+        rvar = numpy.array([[9.3333333333333339, 0., 13.0, 0.],
+                            [8.3333333333333339, 0., 3.00000000, 0.],
+                            [523.0, 0.33333333333333337, 2.333333333333333, 5.3333333333333339]])
         rnum = numpy.array([[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]])
         
-        #out = mean(inputs, dof=0)
         out = combine(inputs, method='average')
                 
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[1].flat, rvar.flat):
-        #    self.assertAlmostEqual(cal, precal)
-            pass
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, rnum.flat):
             self.assertEqual(cal, precal)
     
