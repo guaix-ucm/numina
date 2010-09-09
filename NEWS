@@ -1,3 +1,10 @@
+Version 0.2.5 (09 Sep 2010)
+
+Changes:
+ * Combine internals changed
+ * New method to load recipes, based in subclasses
+ * Recipe classes announce their capabilities
+
 Version 0.2.4 (08 Jul 2010)
 
 Changes:
