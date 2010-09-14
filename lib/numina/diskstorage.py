@@ -44,17 +44,24 @@ def _store_rr(obj, where):
     
     external = []
     
-    for key in obj:
-        t = type(obj[key])
+    try:
+        # Iterator for dictionaries        
+        iobj = obj.itervalues()
+    except AttributeError:
+        # All the rest
+        iobj = iter(obj)
+    
+    for val in iobj:
+        t = type(val)
         
         if t is dict:
-            _store_rr(obj[key], where)
+            _store_rr(val, where)
         elif t is list:
-            _store_rr(obj[key], where)
+            _store_rr(val, where)
         elif store.is_registered(t):
-            filename = generate_fname(obj[key])
-            external.append((filename, obj[key]))
-            obj[key] = '<file>: %s' % filename
+            filename = generate_fname(val)
+            external.append((filename, val))
+            val = '<file>: %s' % filename
         else:
             pass
         
