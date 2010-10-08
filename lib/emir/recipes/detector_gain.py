@@ -33,6 +33,7 @@ from emir.recipes import EmirRecipeMixin
 from numina.recipes.registry import ProxyPath
 from numina.recipes.registry import Schema
 from numina.image import DiskImage
+from emir.instrument.detector import CHANNELS, QUADRANTS
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -46,6 +47,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                'A list of paths to reset images'),
         Schema('ramps', ProxyPath('/observing_block/result/ramps'), 
                'A list of ramps'),
+        Schema('region', 'channel', 'Region used to compute: (full|quadrant|channel)')
     ]
     capabilities = ['detector_gain']
     
@@ -53,49 +55,48 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
 
-    def run(self):
-        # Complete detector
-        CHANNELS1 = [(slice(0, 2048, None), slice(0, 2048, None))]
-        # Quadrants 
-        CHANNELS2 = [(slice(0, 1024, None), slice(0, 1024, None)), 
-                     (slice(0, 1024, None), slice(1024, 2048, None)),
-                     (slice(1024, 2048, None), slice(0, 1024, None)),
-                     (slice(1024, 2048, None), slice(1024, 2048, None)),
-        ]
-        
-        
-        channels = CHANNELS2
+    def region_full(self):
+        return [(slice(0, 2048), slice(0, 2048))]
+    
+    def region_quadrant(self):
+        return QUADRANTS
+    
+    def region_channel(self):
+        return CHANNELS
+
+    def region(self):
+        fun = getattr(self, 'region_%s' %  self.parameters['region'])  
+        return fun()
+
+    def run(self):  
+        channels = self.region()
         ramps = self.parameters['ramps']
-        final = numpy.zeros((len(ramps), len(channels)))
-        final2 = numpy.zeros((len(ramps), len(channels)))
+        result_gain = numpy.zeros((len(ramps), len(channels)))
+        result_ron = numpy.zeros_like(final)
+        
         for ir, ramp in enumerate(ramps):
-            vall = 0
-            ffinal = final[ir]
-            ffinal2 = final2[ir]
-            store = numpy.zeros((len(ramp), len(channels)))
-            store2 = numpy.zeros_like(store)
+            counts = numpy.zeros((len(ramp), len(channels)))
+            variance = numpy.zeros_like(counts)
             for i, fname in enumerate(ramp):
                 dname = DiskImage(fname)
-                # Load file to data structure
-                sstore = store[i]
-                sstore2 = store2[i]
-                for j, channel in enumerate(channels):
-                    #print fname, channel
-                    dname.open(mode='readonly')
-                    sstore[j] = dname.data[channel].mean()
-                    sstore2[j] = dname.data[channel].var(ddof=1)
+                dname.open(mode='readonly')
+                try:
+                    for j, channel in enumerate(channels):    
+                        counts[i][j] = dname.data[channel].mean()
+                        variance[i][j] = dname.data[channel].var(ddof=1)
+                finally:
                     dname.close()
-                vall += 1
-            for j, _ in enumerate(channels):
-                ig, ron,_,_,_ = scipy.stats.linregress(store[:,j], store2[:,j])
 
-                ffinal[j] = 1.0 / ig
-                ffinal2[j] = ron
-        gch_mean = final.mean(axis=0)
-        gch_var = final.var(axis=0, ddof=1)
-        print final
-        rch_mean = final2.mean(axis=0)
-        rch_var = final2.var(axis=0, ddof=1)
+            for j, _ in enumerate(channels):
+                ig, ron,_,_,_ = scipy.stats.linregress(counts[:,j], variance[:,j])
+
+                result_gain[ir][j] = 1.0 / ig
+                result_ron[ir][j] = ron
+
+        gch_mean = result_gain.mean(axis=0)
+        gch_var = result_gain.var(axis=0, ddof=1)
+        rch_mean = result_ron.mean(axis=0)
+        rch_var = result_ron.var(axis=0, ddof=1)
         
         return {'qa': numina.qa.UNKNOWN, 'gain': {'mean': list(gch_mean.flat), 
                                                   'var': list(gch_var.flat)},
@@ -115,8 +116,7 @@ if __name__ == '__main__':
     _logger.setLevel(logging.DEBUG)
         
     pv = {'recipe': {'parameters': {
-                                'output_filename': 'perryr.fits',
-                                'combine': 'average',
+                                    'region': 'full'
                                 },
                      'run': {'repeat': 1,
                              'instrument': 'emir',
