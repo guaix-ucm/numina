@@ -72,7 +72,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         channels = self.region()
         ramps = self.parameters['ramps']
         result_gain = numpy.zeros((len(ramps), len(channels)))
-        result_ron = numpy.zeros_like(final)
+        result_ron = numpy.zeros_like(result_gain)
         
         for ir, ramp in enumerate(ramps):
             counts = numpy.zeros((len(ramp), len(channels)))
