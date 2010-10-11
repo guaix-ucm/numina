@@ -25,6 +25,7 @@ import logging.config
 import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
+from ConfigParser import Error as CPError
 import pkgutil
 # get_data is not in python 2.5
 if not hasattr(pkgutil, 'get_data'):
@@ -37,7 +38,7 @@ import xdg.BaseDirectory as xdgbd
 from numina import __version__
 from numina.logger import captureWarnings
 from numina.recipes import list_recipes
-from numina.recipes import init_recipe_system, list_recipes_by_obs_mode
+from numina.recipes import init_recipe_system
 from numina.diskstorage import store
 import numina.recipes.registry as registry
 
@@ -83,11 +84,8 @@ def mode_run(args, logger):
     registry.init_registry_from_file(args[0])
 
     try:
-        instrument = registry.mget(['/observing_block/instrument',
-                                    '/recipe/run/instrument'])
-
-        obsmode = registry.mget(['/observing_block/mode', 
-                                 '/recipe/run/mode'])
+        instrument = registry.get('/observing_block/instrument')
+        obsmode = registry.get('/observing_block/mode')
     except KeyError:
         logger.error('cannot retrieve instrument and obsmode')
         return 1
@@ -95,10 +93,29 @@ def mode_run(args, logger):
     logger.info('our instrument is %s and our observing mode is %s', 
                 instrument, obsmode)
     
+    list_recipes()
+    nrecipes = 0
+    
+    uuidstr = str(uuid.uuid1())
+    basecwd = os.getcwd()
+    basestoredir = os.path.join(basecwd, uuidstr)
+    
+    workdir = os.getcwd()
+    
+    os.mkdir(basestoredir)
+    
     for recipeClass in list_recipes():
-        if instrument in recipeClass.instrument and obsmode in recipeClass.capabilities:
+        if (instrument in recipeClass.instrument 
+            and obsmode in recipeClass.capabilities 
+            and '__main__' != recipeClass.__module__):
+            logger.info('Recipe is %s', recipeClass)
+            nrecipes += 1
             parameters = {}
-            par = registry.get('/recipe/parameters')
+            
+            fullname = "%s.%s" % (recipeClass.__module__,  recipeClass.__name__)
+            
+            par = registry.mget(['/recipes/default/parameters',
+                                 '/recipes/%s/parameters' % fullname])
             for n, v, _ in recipeClass.required_parameters:
                 
                 # If the default value is ProxyPath
@@ -116,7 +133,9 @@ def mode_run(args, logger):
                 
                 
             logger.debug('Creating the recipe')
-            runinfo = registry.get('/recipe/run')
+            runinfo = registry.mget(['/recipes/%s/run' % fullname, 
+                                     '/recipes/default/run'])
+
             recipe = recipeClass(parameters, runinfo)
             
             errorcount = 0
@@ -134,22 +153,30 @@ def mode_run(args, logger):
                 
                 # Creating the filename for the result
                 nowstr = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-                uuidstr = str(uuid.uuid1())
+
+                rdir = '%s-%d' % (fullname, recipe.current + 1)
                 
-                store(result, 'numina-%s-%s.log' % (nowstr, uuidstr))
+                storedir = os.path.join(basestoredir, rdir)
+                os.mkdir(storedir)
+                os.chdir(storedir)                                
+                store(result, 'numina-%s.log' % nowstr)
+                os.chdir(workdir)
+                
                 
             logger.debug('Cleaning up the recipe')
             recipe.cleanup()
             
             if errorcount > 0:
                 logger.error('Errors during execution: %d', errorcount)
-                return errorcount
             else:
                 logger.info('Completed execution')
 
-            return 0
-    else:
+            #return 0
+    if nrecipes == 0:
         logger.error('observing mode %s is not processed by any recipe', obsmode)
+
+
+    os.chdir(basecwd)
         
     return 0
 
@@ -179,7 +206,11 @@ def main(args=None):
 
     # logger file
     if options.logging is None:
-        options.logging = StringIO.StringIO(pkgutil.get_data('numina','logging.ini'))
+        # This should be a default path in defaults.cfg
+        try:
+            options.logging = config.get('numinaaa', 'loggingaa')
+        except CPError:
+            options.logging = StringIO.StringIO(pkgutil.get_data('numina','logging.ini'))
 
     logging.config.fileConfig(options.logging)
     
