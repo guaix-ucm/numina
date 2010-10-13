@@ -51,19 +51,22 @@ def parse_cmdline(args=None):
     parser = OptionParser(usage=usage, version=version_line, 
                           description=__doc__)
     # Command line options
+    parser.set_defaults(mode="none")
     parser.add_option('-d', '--debug', action="store_true", 
                       dest="debug", default=False, 
                       help="make lots of noise [default]")
-    parser.add_option('-o', '--output', action="store", dest="filename", 
-                      metavar="FILE", help="write output to FILE")
     parser.add_option('-l', action="store", dest="logging", metavar="FILE", 
                       help="FILE with logging configuration")
     parser.add_option('--module', action="store", dest="module", 
                       metavar="FILE", help="FILE")
     parser.add_option('--list', action="store_const", const='list', 
-                      dest="mode", default='none')
+                      dest="mode")
     parser.add_option('--run', action="store_const", const='run', 
-                      dest="mode", default='none')
+                      dest="mode")
+    parser.add_option('--resultdir', action="store", dest="storedir", 
+                      default=os.getcwd())
+    parser.add_option('--workdir', action="store", dest="workdir", 
+                      default=os.getcwd())
     
     # Stop when you find the first argument
     parser.disable_interspersed_args()
@@ -79,7 +82,7 @@ def mode_none():
     '''Do nothing in Numina.'''
     pass
 
-def mode_run(args, logger):
+def mode_run(args, logger, options):
     
     registry.init_registry_from_file(args[0])
 
@@ -93,16 +96,15 @@ def mode_run(args, logger):
     logger.info('our instrument is %s and our observing mode is %s', 
                 instrument, obsmode)
     
-    list_recipes()
     nrecipes = 0
     
-    uuidstr = str(uuid.uuid1())
-    basecwd = os.getcwd()
-    basestoredir = os.path.join(basecwd, uuidstr)
-    
-    workdir = os.getcwd()
-    
+    # Creating base directory for storing results
+    uuidstr = str(uuid.uuid1()) 
+    basestoredir = os.path.join(options.storedir, uuidstr)
     os.mkdir(basestoredir)
+    
+    workdir = options.workdir
+    basecwd = os.getcwd()
     
     for recipeClass in list_recipes():
         if (instrument in recipeClass.instrument 
@@ -158,7 +160,7 @@ def mode_run(args, logger):
                 
                 storedir = os.path.join(basestoredir, rdir)
                 os.mkdir(storedir)
-                os.chdir(storedir)                                
+                os.chdir(storedir)
                 store(result, 'numina-%s.log' % nowstr)
                 os.chdir(workdir)
                 
@@ -196,7 +198,8 @@ def main(args=None):
     config.readfp(StringIO.StringIO(pkgutil.get_data('numina','defaults.cfg')))
 
     # Custom values, site wide and local
-    config.read([os.path.join(xdgbd.xdg_config_home, 'numina/numina.cfg')])
+    config.read(['.numina/numina.cfg', 
+                 os.path.join(xdgbd.xdg_config_home, 'numina/numina.cfg')])
     
     # The cmd line is parsed
     options, args = parse_cmdline(args)
@@ -208,7 +211,7 @@ def main(args=None):
     if options.logging is None:
         # This should be a default path in defaults.cfg
         try:
-            options.logging = config.get('numinaaa', 'loggingaa')
+            options.logging = config.get('numina', 'logging')
         except CPError:
             options.logging = StringIO.StringIO(pkgutil.get_data('numina','logging.ini'))
 
@@ -216,10 +219,10 @@ def main(args=None):
     
     logger = logging.getLogger("numina")
     
-    logger.info('Numina: EMIR recipe runner version %s', __version__)
+    logger.info('Numina simple recipe runner version %s', __version__)
     
     if options.module is None:
-        options.module = config.get('ohoh', 'module')
+        options.module = config.get('numina', 'module')
     
     init_recipe_system([options.module])
     captureWarnings(True)
@@ -231,7 +234,7 @@ def main(args=None):
         mode_none()
         return 0
     elif options.mode == 'run':
-        return mode_run(args, logger)
+        return mode_run(args, logger, options)
     
 if __name__ == '__main__':
     main()
