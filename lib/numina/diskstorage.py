@@ -40,39 +40,38 @@ def _store_fits(obj, where=None):
 
 @store.register(RecipeResult)
 def _store_rr(obj, where):
-    '''Save to disk a RecipeResult.'''
+    '''Save to disk a RecipeResult.
     
-    external = []
+    Every object registered with store will be substituted by
+    a string containing a filename. The object will be saved
+    in the filename.
+    '''
     
-    try:
-        # Iterator for dictionaries        
-        iobj = obj.itervalues()
-    except AttributeError:
-        # All the rest
-        iobj = iter(obj)
+    external = [] 
     
-    for val in iobj:
-        t = type(val)
-        
-        if t is dict:
-            _store_rr(val, where)
-        elif t is list:
-            _store_rr(val, where)
-        elif store.is_registered(t):
-            filename = generate_fname(val)
-            external.append((filename, val))
-            val = '<file>: %s' % filename
-        else:
-            pass
+    parsed = _parse_rr(dict(obj), external)
         
     f = open(where, 'w+') 
     try:
-        json.dump(obj, f, default=to_json, indent=1, encoding='utf-8')
+        json.dump(parsed, f, default=to_json, indent=1, encoding='utf-8')
     finally:
         f.close()
         
-    for filename, obj in external:
-        store(obj, filename)
+    for filename, nobj in external:
+        store(nobj, filename)
+
+def _parse_rr(val, external):
+    t = type(val)
+    
+    if store.is_registered(t):
+        filename = generate_fname(val)
+        external.append((filename, val))
+        return '<file>: %s' % filename
+    if t is dict:
+        return dict(map(lambda x: (x[0], _parse_rr(x[1], external)), val.items()))
+    if t is list or t is tuple:
+        return map(lambda x: _parse_rr(x, external), val)
+    return val
 
 @generic
 def generate_fname(obj):
