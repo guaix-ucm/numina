@@ -24,8 +24,6 @@ import logging
 import numpy
 import scipy.stats
 
-#from numina.array.combine import zerocombine
-#from numina.image import DiskImage
 import numina.qa
 from numina.recipes import RecipeBase
 #from emir.dataproducts import create_result
@@ -34,10 +32,11 @@ from numina.recipes.registry import ProxyPath
 from numina.recipes.registry import Schema
 from numina.image import DiskImage
 from emir.instrument.detector import CHANNELS, QUADRANTS
+from emir.dataproducts import create_result
 
 _logger = logging.getLogger("emir.recipes")
 
-class Recipe(RecipeBase, EmirRecipeMixin):
+class Recipe1(RecipeBase, EmirRecipeMixin):
     '''Detector Gain Recipe.
     
     Recipe to calibrate the detector gain.
@@ -53,7 +52,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
     
     def __init__(self, param, runinfo):
-        super(Recipe, self).__init__(param, runinfo)
+        super(Recipe1, self).__init__(param, runinfo)
+        _logger.info('building')
 
     def region_full(self):
         return [(slice(0, 2048), slice(0, 2048))]
@@ -92,16 +92,68 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
                 result_gain[ir][j] = 1.0 / ig
                 result_ron[ir][j] = ron
-
+        _logger.info('running')
         gch_mean = result_gain.mean(axis=0)
         gch_var = result_gain.var(axis=0, ddof=1)
         rch_mean = result_ron.mean(axis=0)
         rch_var = result_ron.var(axis=0, ddof=1)
         
+        cube = numpy.zeros((2, 2048, 2048))
+         
+        for gain, var, channel in zip(gch_mean, gch_var, channels):
+            cube[0][channel] = gain
+            cube[1][channel] = var
+        
+        result = create_result(cube[0], variance=cube[1])                                    
+        
         return {'qa': numina.qa.UNKNOWN, 'gain': {'mean': list(gch_mean.flat), 
-                                                  'var': list(gch_var.flat)},
+                                                  'var': list(gch_var.flat),
+                                                  'image': result
+                                                  },
                                           'ron': {'mean': list(rch_mean.flat), 
-                                                  'var': list(rch_var.flat)}}
+                                                  'var': list(rch_var.flat)},
+                                                  }
+        
+class Recipe2(RecipeBase, EmirRecipeMixin):
+    '''Detector Gain Recipe.
+    
+    Recipe to calibrate the detector gain.
+    '''
+    required_parameters = [
+        Schema('value', 0, 'Number')
+    ]
+    capabilities = ['detector_gain']
+    
+    
+    def __init__(self, param, runinfo):
+        super(Recipe2, self).__init__(param, runinfo)
+
+    def run(self):  
+        
+        return {'qa': numina.qa.UNKNOWN, 'gain': {'mean': self.parameters['value'], 
+                                                  'var': 0},
+                                          }
+        
+        
+class Recipe3(RecipeBase, EmirRecipeMixin):
+    '''Detector Gain Recipe.
+    
+    Recipe to calibrate the detector gain.
+    '''
+    required_parameters = [
+        Schema('value', 0, 'Number')
+    ]
+    capabilities = ['detector_gain']
+    
+    
+    def __init__(self, param, runinfo):
+        super(Recipe3, self).__init__(param, runinfo)
+
+    def run(self):  
+        
+        return {'qa': numina.qa.UNKNOWN, 'gain': {'mean': self.parameters['value'], 
+                                                  'var': 0},
+                                          }
         
     
 if __name__ == '__main__':
@@ -115,14 +167,26 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
         
-    pv = {'recipe': {'parameters': {
-                                    'region': 'full'
+    pv = {'recipes': {'default': {'parameters': {
+                                    'region': 'channel'
                                 },
                      'run': {'repeat': 1,
-                             'instrument': 'emir',
-                             'mode': 'bias_image',
                              },   
                         },
+                      'emir.recipes.detector_gain.Recipe1': {
+                        'parameters': {
+                           'region': 'full'
+                    },                                                            
+                                                            },
+                      'emir.recipes.detector_gain.Recipe2': {
+                        'parameters': {
+                           'value': 0
+                    },
+                        'run': {'repeat': 2,
+                             },   
+                        },                 
+                      },
+                      
           'observing_block': {'instrument': 'emir',
                        'mode': 'detector_gain',
                        'id': 1,
@@ -152,4 +216,4 @@ if __name__ == '__main__':
     finally:
         ff.close()
 
-    main(['-d', '--run', 'config.txt'])
+    main(['-d', '--resultdir', '/home/spr', '--run', 'config.txt'])
