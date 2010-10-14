@@ -26,12 +26,11 @@ import os.path
 
 import numina.qa
 from numina.recipes import RecipeBase
-#from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 from numina.recipes.registry import ProxyPath
 from numina.recipes.registry import Schema
 from numina.image import DiskImage
-from emir.instrument.detector import CHANNELS, QUADRANTS
+from emir.instrument.detector import CHANNELS_READOUT
 from emir.dataproducts import create_result
 
 _logger = logging.getLogger("emir.recipes")
@@ -50,50 +49,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
-        _logger.info('building')
-
-    def region_full(self):
-        return [(slice(0, 2048), slice(0, 2048))]
-    
-    def region_quadrant(self):
-        return QUADRANTS
-    
-    def region_channel(self):
-        return CHANNELS
-
-    def region(self):
-        fun = getattr(self, 'region_%s' %  self.parameters['region'])  
-        return fun()
-    
-    def partition(self, pred, seq, maxval):
-        final = [[] for i in range(maxval)]
-        assert len(final) == maxval
-        for i in seq:
-            val = pred(i)
-            final[val].append(i)
-                
-        return final
-    
-    def partition2(self, pred, seq):
-        final = {}
-        for i in seq:
-            val = pred(i)
-            if val in final:
-                final[val].append(i)
-            else:
-                final[val] = [i]                
-        return final
-    
 
     def run(self):
         
         images = [DiskImage(os.path.join(self.runinfo['datadir'], path)) 
                   for path in self.parameters['images']]
-
-        nquad = 4
-        idx0, idx1, idx2, idx3 = self.partition(lambda x: (x / 128) % nquad, 
-                                                range(4096), nquad)
-
+        
         results = []
 
         for img in images:
@@ -105,11 +66,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             try:                                
                 f.shape = (1024, 4096)
                 rr = numpy.zeros((2048, 2048), dtype='int16')
-                # Fixme: signs missing here
-                rr[0:1024, 0:1024] = f[:,idx0]
-                rr[1024:2048, 0:1024] = f[:,idx1] 
-                rr[1024:2048, 1024:2048] = f[:,idx2]
-                rr[0:1024, 1024:2048] = f[:,idx3]  
+                for idx, channel in enumerate(CHANNELS_READOUT):
+                    rr[channel] = f[:,slice(128 * idx, 128 * (idx + 1))]
 
                 basename = os.path.basename(img.filename)
                 primary_headers = {'FILENAME': basename}
