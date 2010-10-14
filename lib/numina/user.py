@@ -63,11 +63,14 @@ def parse_cmdline(args=None):
                       dest="mode")
     parser.add_option('--run', action="store_const", const='run', 
                       dest="mode")
-    parser.add_option('--resultdir', action="store", dest="storedir", 
+    parser.add_option('--basedir', action="store", dest="basedir", 
                       default=os.getcwd())
-    parser.add_option('--workdir', action="store", dest="workdir", 
-                      default=os.getcwd())
+    parser.add_option('--resultsdir', action="store", dest="resultsdir")
+    parser.add_option('--workdir', action="store", dest="workdir")
+    parser.add_option('--datadir', action="store", dest="datadir")
     
+    parser.add_option('--cleanup', action="store_true", dest="cleanup", 
+                      default=False)
     # Stop when you find the first argument
     parser.disable_interspersed_args()
     (options, args) = parser.parse_args(args)
@@ -99,12 +102,10 @@ def mode_run(args, logger, options):
     nrecipes = 0
     
     # Creating base directory for storing results
-    uuidstr = str(uuid.uuid1()) 
-    basestoredir = os.path.join(options.storedir, uuidstr)
-    os.mkdir(basestoredir)
     
     workdir = options.workdir
-    basecwd = os.getcwd()
+    datadir = options.datadir
+    resultsdir = options.resultsdir
     
     for recipeClass in list_recipes():
         if (instrument in recipeClass.instrument 
@@ -137,11 +138,17 @@ def mode_run(args, logger, options):
             logger.debug('Creating the recipe')
             runinfo = registry.mget(['/recipes/%s/run' % fullname, 
                                      '/recipes/default/run'])
-
+            
+            runinfo['workdir'] = workdir
+            runinfo['datadir'] = datadir
+            runinfo['resultsdir'] = resultsdir
+            
             recipe = recipeClass(parameters, runinfo)
             
             errorcount = 0
     
+            # Running the recipe
+            os.chdir(workdir)
             for result in recipe():
                 logger.info('Running the recipe instance %d of %d ', 
                          recipe.current + 1, recipe.repeat)
@@ -158,12 +165,11 @@ def mode_run(args, logger, options):
 
                 rdir = '%s-%d' % (fullname, recipe.current + 1)
                 
-                storedir = os.path.join(basestoredir, rdir)
+                storedir = os.path.join(resultsdir, rdir)
                 os.mkdir(storedir)
                 os.chdir(storedir)
                 store(result, 'numina-%s.log' % nowstr)
                 os.chdir(workdir)
-                
                 
             logger.debug('Cleaning up the recipe')
             recipe.cleanup()
@@ -177,8 +183,11 @@ def mode_run(args, logger, options):
     if nrecipes == 0:
         logger.error('observing mode %s is not processed by any recipe', obsmode)
 
-
-    os.chdir(basecwd)
+    
+    import shutil
+    if options.cleanup:
+        logger.debug('Cleaning up the workdir')
+        shutil.rmtree(workdir)
         
     return 0
 
@@ -227,6 +236,18 @@ def main(args=None):
     init_recipe_system([options.module])
     captureWarnings(True)
     
+    if options.basedir is None:
+        options.basedir = os.getcwd()
+    
+    if options.workdir is None:
+        options.workdir = os.path.join(options.basedir, 'work')
+        
+    if options.datadir is None:
+        options.datadir = os.path.join(options.basedir, 'data')
+        
+    if options.resultsdir is None:
+        options.resultsdir = os.path.join(options.basedir, 'results')    
+    
     if options.mode == 'list':
         mode_list() 
         return 0
@@ -234,6 +255,14 @@ def main(args=None):
         mode_none()
         return 0
     elif options.mode == 'run':
+        
+        # Check workdir exists
+        if not os.path.exists(options.workdir):
+            os.mkdir(options.workdir)
+        # Check resultdir exists
+        if not os.path.exists(options.resultsdir):
+            os.mkdir(options.resultsdir)
+        
         return mode_run(args, logger, options)
     
 if __name__ == '__main__':
