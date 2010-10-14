@@ -17,16 +17,22 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+import os
+import shutil
 try:
     import json
 except ImportError:
     import simplejson as json
+import logging
 
 from pyfits import HDUList
 
 from generic import generic
 from jsonserializer import to_json
+from numina.image import DiskImage
 from numina.recipes import RecipeResult
+
+_logger = logging.getLogger("numina.storage")
 
 @generic
 def store(obj, where=None):
@@ -37,6 +43,22 @@ def _store_fits(obj, where=None):
     '''Save to disk an HDUList structure.'''
     where = where or obj['primary'].header.get('FILENAME', 'file.fits')
     obj.writeto(where, clobber=True, output_verify='ignore')
+
+@store.register(DiskImage)
+def _store_disk_image(obj, where=None):
+    '''Save to disk a DiskImage structure.'''
+    obj.open()
+    fitsobj = obj.hdulist
+    where = where or fitsobj['primary'].header.get('FILENAME', 'file.fits')
+    # File already exists in obj.filename
+    # Hardlink it or copy it
+    try:
+        os.link(obj.filename, where)
+    except OSError, e:
+        _logger.warning('Hardlinking %s: %s', obj.filename, e)
+        # hardlinking failed
+        shutil.copy(obj.filename, where)
+    obj.close()
 
 @store.register(RecipeResult)
 def _store_rr(obj, where):
@@ -81,3 +103,12 @@ def generate_fname(obj):
 def _generate_fits(obj):
     '''Generate a filename for a HDUList structure.'''
     return obj['primary'].header.get('FILENAME', 'file.fits')
+
+@generate_fname.register(DiskImage)
+def _generate_fits(obj):
+    '''Generate a filename for a  DiskImage structure.'''
+    obj.open()
+    fitsobj = obj.hdulist
+    where = fitsobj['primary'].header.get('FILENAME', 'file.fits')
+    obj.close()
+    return where
