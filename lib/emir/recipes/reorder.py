@@ -20,9 +20,11 @@
 '''Recipe for the reordering of frames.'''
 
 import logging
+import os.path
+import itertools as ito
 
 import numpy
-import os.path
+
 
 import numina.qa
 from numina.recipes import RecipeBase
@@ -49,11 +51,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
+        
+    def setup(self):
+        self.parameters['images'] = [DiskImage(os.path.abspath(path)) 
+                  for path in self.parameters['images']]
 
     def run(self):
         
-        images = [DiskImage(os.path.join(self.runinfo['datadir'], path)) 
-                  for path in self.parameters['images']]
+        images = self.parameters['images']
         
         results = []
 
@@ -66,8 +71,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             try:                                
                 f.shape = (1024, 4096)
                 rr = numpy.zeros((2048, 2048), dtype='int16')
-                for idx, channel in enumerate(CHANNELS_READOUT):
-                    rr[channel] = f[:,slice(128 * idx, 128 * (idx + 1))]
+                for idx, channel, conv in ito.izip(ito.count(0), 
+                                                   CHANNELS_READOUT,
+                                                   ito.cycle([lambda x:x, lambda x:x.T])
+                                                   ):
+                    rr[channel] = conv(f[:,slice(128 * idx, 128 * (idx + 1))])
 
                 basename = os.path.basename(img.filename)
                 primary_headers = {'FILENAME': basename}
@@ -75,7 +83,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                                        headers=primary_headers)
                 result.writeto(basename)
                 
-                #result.close()                
+                result.close()                
                 results.append(DiskImage(os.path.abspath(basename)))
             finally:
                 del f
