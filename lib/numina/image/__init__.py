@@ -37,12 +37,12 @@ class DiskImage(object):
         return self._open
 
     def open(self, mode='copyonwrite', memmap=False, extension='primary'):
-        if not self.is_open():            
-            self._open = True
-            self._open_extension = extension
+        if not self.is_open():
             self.hdulist = pyfits.open(self.filename, memmap=memmap, mode=mode)
             self.data = self.hdulist[extension].data
             self.meta = self.hdulist[extension].header
+            self._open = True
+            self._open_extension = extension
         
     def close(self, output_verify='exception'):
         if self.is_open():
