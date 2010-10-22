@@ -25,6 +25,8 @@ import numpy
 import pyfits
 from scipy import asarray, zeros_like, minimum, maximum
 
+from numina.diskstorage import link_or_copy
+
 _logger = logging.getLogger("numina.array")
 
 def subarray_match(shape, ref, sshape, sref=None):
@@ -127,25 +129,47 @@ def compute_median_background(img, omask, region):
     median_sky = numpy.median(d[m == 0])
     return median_sky
 
-def create_object_mask(array, segmask_name=None):
+class SextractorConf(object):
+    '''Configuration files for sextractor.'''
+    def __init__(self, sexfile, paramfile, nnwfile, convfile):
+        self.sexfile = sexfile
+        self.convfile = convfile
+        self.nnwfile = nnwfile
+        self.paramfile = paramfile
+
+def create_object_mask(sconf, array , segmask_name=None):
+    import shutil
+    import os.path
+    # Create a work place for sextractor
+    tdir = tempfile.mkdtemp(suffix='numina')
+
+    # A temporary filename used to store the array in fits format
+    tf = tempfile.NamedTemporaryFile(prefix='arraystore', dir=tdir)
+    pyfits.writeto(filename=tf.name, data=array)
 
     if segmask_name is None:
-        ck_img = tempfile.NamedTemporaryFile(prefix='emir_', dir='.')
+        ck_img = tempfile.NamedTemporaryFile(prefix='smask', dir=tdir)
     else:
         ck_img = segmask_name
 
-    # A temporary filename used to store the array in fits format
-    tf = tempfile.NamedTemporaryFile(prefix='emir_', dir='.')
-    pyfits.writeto(filename=tf, data=array)
-    
-    # Run sextractor, it will create a image called check.fits
+    # Copy or hardlink confiles into tdir
+
+    for filename in sconf.__dict__.itervalues():
+        link_or_copy(filename, tdir)
+    #
+    #
+
+    # Run sextractor inside tdir, it will create a image called check.fits
     # With the segmentation _masks inside
     sub = subprocess.Popen(["sex",
+                            "-c", os.path.basename(sconf.sexfile),
                             "-CHECKIMAGE_TYPE", "SEGMENTATION",
-                            "-CHECKIMAGE_NAME", ck_img,
+                            "-CHECKIMAGE_NAME", str(ck_img),
                             '-VERBOSE_TYPE', 'QUIET',
                             tf.name],
-                            stdout=subprocess.PIPE)
+                            stdout=subprocess.PIPE,
+                            cwd=tdir)
+
     sub.communicate()
 
     # Read the segmentation image
@@ -156,6 +180,9 @@ def create_object_mask(array, segmask_name=None):
     
     if segmask_name is None:
         ck_img.close()
+
+    # delete the tempdir
+    shutil.rmtree(tdir, ignore_errors=True)
 
     return result
 
@@ -231,4 +258,3 @@ def blockgen(blocks, shape):
     '''
     iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
     return product(*iterables)
-
