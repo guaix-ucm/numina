@@ -20,6 +20,7 @@
 '''Recipe for the reduction of gain calibration frames.'''
 
 import logging
+import os.path
 
 import numpy
 import scipy.stats
@@ -36,13 +37,19 @@ from emir.dataproducts import create_result
 
 _logger = logging.getLogger("emir.recipes")
 
+
+def multimap(fun, ll):
+    if hasattr(ll, "__iter__"):
+        return [multimap(fun, i) for i in ll]
+    return fun(ll)
+
 class Recipe1(RecipeBase, EmirRecipeMixin):
     '''Detector Gain Recipe.
     
     Recipe to calibrate the detector gain.
     '''
     required_parameters = [
-        Schema('resets', ProxyPath('/observing_block/result/reset'), 
+        Schema('resets', ProxyPath('/observing_block/result/resets'), 
                'A list of paths to reset images'),
         Schema('ramps', ProxyPath('/observing_block/result/ramps'), 
                'A list of ramps'),
@@ -67,8 +74,16 @@ class Recipe1(RecipeBase, EmirRecipeMixin):
     def region(self):
         fun = getattr(self, 'region_%s' %  self.parameters['region'])  
         return fun()
+    
+    def setup(self):
+        # Sanity check, check: all images belong to the same detector mode
+        
+        self.parameters['resets'] = map(lambda x: DiskImage(os.path.abspath(x)), 
+                                             self.parameters['resets'])
+        self.parameters['ramps'] = multimap(lambda x: DiskImage(os.path.abspath(x)), 
+                                             self.parameters['ramps'])
 
-    def run(self):  
+    def run(self):
         channels = self.region()
         ramps = self.parameters['ramps']
         result_gain = numpy.zeros((len(ramps), len(channels)))
@@ -77,15 +92,14 @@ class Recipe1(RecipeBase, EmirRecipeMixin):
         for ir, ramp in enumerate(ramps):
             counts = numpy.zeros((len(ramp), len(channels)))
             variance = numpy.zeros_like(counts)
-            for i, fname in enumerate(ramp):
-                dname = DiskImage(fname)
-                dname.open(mode='readonly')
+            for i, di in enumerate(ramp):
+                di.open(mode='readonly')
                 try:
                     for j, channel in enumerate(channels):    
-                        counts[i][j] = dname.data[channel].mean()
-                        variance[i][j] = dname.data[channel].var(ddof=1)
+                        counts[i][j] = di.data[channel].mean()
+                        variance[i][j] = di.data[channel].var(ddof=1)
                 finally:
-                    dname.close()
+                    di.close()
 
             for j, _ in enumerate(channels):
                 ig, ron,_,_,_ = scipy.stats.linregress(counts[:,j], variance[:,j])
@@ -216,4 +230,4 @@ if __name__ == '__main__':
     finally:
         ff.close()
 
-    main(['-d', '--resultdir', '/home/spr', '--run', 'config.txt'])
+    main(['-d', '--resultsdir', '/home/spr', '--run', 'config.txt'])
