@@ -145,6 +145,9 @@ def mode_run(args, logger, options):
             
             recipe = recipeClass(parameters, runinfo)
             
+            os.chdir(datadir)
+            recipe.setup()
+            
             errorcount = 0
     
             # Running the recipe
@@ -241,12 +244,18 @@ def main(args=None):
     
     if options.workdir is None:
         options.workdir = os.path.join(options.basedir, 'work')
+    else:
+        options.workdir = os.path.abspath(options.workdir)
         
     if options.datadir is None:
         options.datadir = os.path.join(options.basedir, 'data')
+    else:
+        options.datadir = os.path.abspath(options.datadir)
         
     if options.resultsdir is None:
-        options.resultsdir = os.path.join(options.basedir, 'results')    
+        options.resultsdir = os.path.join(options.basedir, 'results')
+    else:
+        options.resultsdir = os.path.abspath(options.resultsdir)
     
     if options.mode == 'list':
         mode_list() 
