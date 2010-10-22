@@ -137,5 +137,5 @@ if __name__ == '__main__':
     finally:
         ff.close()
 
-    main(['-d', '--basedir', basedir, '--datadir', '/home/spr/Datos/emir/test6/data',
+    main(['-d', '--basedir', basedir, '--datadir', 'data',
           '--run', 'config.txt'])
