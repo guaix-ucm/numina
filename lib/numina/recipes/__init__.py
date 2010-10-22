@@ -62,8 +62,8 @@ class RecipeBase:
         self.repeat = run.get('repeat', 1)
         self._current = 0
                 
-    def setup(self, _param):
-        warnings.warn("the setup method is deprecated", DeprecationWarning, stacklevel=2)
+    def setup(self):
+        pass
       
     def cleanup(self):
         '''Cleanup structures after recipe execution.'''
