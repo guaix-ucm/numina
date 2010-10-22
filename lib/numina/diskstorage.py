@@ -34,6 +34,16 @@ from numina.recipes import RecipeResult
 
 _logger = logging.getLogger("numina.storage")
 
+def link_or_copy(filename, where):
+    '''Hard link a file or copy it if hardlinking fails.'''
+    # Hardlink it or copy it
+    try:
+        os.link(filename, where)
+    except OSError:
+        # hardlinking failed
+        # try to copy
+        shutil.copy(filename, where)
+        
 @generic
 def store(obj, where=None):
     raise TypeError(repr(type(obj)) + ' is not storable')
@@ -52,12 +62,7 @@ def _store_disk_image(obj, where=None):
     where = where or fitsobj['primary'].header.get('FILENAME', 'file.fits')
     # File already exists in obj.filename
     # Hardlink it or copy it
-    try:
-        os.link(obj.filename, where)
-    except OSError, e:
-        _logger.warning('Hardlinking %s: %s', obj.filename, e)
-        # hardlinking failed
-        shutil.copy(obj.filename, where)
+    link_or_copy(obj.filename, where)
     obj.close()
 
 @store.register(RecipeResult)
