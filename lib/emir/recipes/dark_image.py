@@ -19,7 +19,7 @@
 
 '''Dark image recipe.''' 
 
-
+import os
 import logging
 
 from numina.recipes import RecipeBase
@@ -71,11 +71,16 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
         # Default parameters. This can be read from a file        
-        
+    
+    def  setup(self):
+        # Sanity check, check: all images belong to the same detector mode
+        self.parameters['images'] = [DiskImage(os.path.abspath(path)) 
+                  for path in self.parameters['images']]
+           
     def run(self):
         primary_headers = {'FILENAME': self.parameters['output_filename']}
-
-        images = [DiskImage(path) for path in self.parameters['images']]
+        
+        images = self.parameters['images']
 
         alldata = []
         allmasks = []
