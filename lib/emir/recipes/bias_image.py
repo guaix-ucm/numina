@@ -20,6 +20,7 @@
 '''Bias image recipe and associates.'''
 
 import logging
+import os
 
 from numina.array.combine import zerocombine
 from numina.image import DiskImage
@@ -68,12 +69,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
         
+    def  setup(self):
+        # Sanity check, check: all images belong to the same detector mode
+        self.parameters['images'] = [DiskImage(os.path.abspath(path)) 
+                  for path in self.parameters['images']]
+        
     def run(self):        
         primary_headers = {'FILENAME': self.parameters['output_filename']}
-        # Sanity check, check: all images belong to the same detector mode
         
-        images = [DiskImage(path) for path in self.parameters['images']]
-            
+        images = self.parameters['images']
         
         # Open all zero images
         alldata = []
@@ -98,6 +102,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
 if __name__ == '__main__':
     import os
+    import uuid
     
     import simplejson as json
     
@@ -107,15 +112,13 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
         
-    pv = {'recipe': {'parameters': {
+    pv = {'recipes': {'default': {'parameters': {
                                 'output_filename': 'perryr.fits',
                                 'combine': 'average',
                                 },
                      'run': {'repeat': 1,
-                             'instrument': 'emir',
-                             'mode': 'bias_image',
                              },   
-                        },
+                        }},
           'observing_block': {'instrument': 'emir',
                        'mode': 'bias_image',
                        'id': 1,
@@ -129,8 +132,14 @@ if __name__ == '__main__':
                             },
                        },                     
     }
-        
-    os.chdir('/home/spr/Datos/emir/apr21')
+    
+    os.chdir('/home/spr/Datos/emir/test7')
+    
+    
+    # Creating base directory for storing results
+    uuidstr = str(uuid.uuid1()) 
+    basedir = os.path.abspath(uuidstr)
+    os.mkdir(basedir)
     
     ff = open('config.txt', 'w+')
     try:
@@ -138,5 +147,5 @@ if __name__ == '__main__':
     finally:
         ff.close()
 
-    main(['-d', '--run', 'config.txt'])
+    main(['-d','--basedir', basedir, '--datadir', 'data', '--run', 'config.txt'])
 
