@@ -19,7 +19,6 @@
 
 '''User command line interface of Numina.'''
 
-import uuid
 import datetime
 import logging.config
 import os
@@ -133,11 +132,13 @@ def mode_run(args, logger, options):
                     defval = v
                 parameters[n] = par.get(n, defval)
                 logger.debug('parameter %s = %s',n, parameters[n])
-                
-                
+            
+            # Default runinfo
+            runinfo = dict(nthreads=1)
+             
             logger.debug('Creating the recipe')
-            runinfo = registry.mget(['/recipes/%s/run' % fullname, 
-                                     '/recipes/default/run'])
+            runinfo.update(registry.mget(['/recipes/%s/run' % fullname, 
+                                     '/recipes/default/run']))
             
             runinfo['workdir'] = workdir
             runinfo['datadir'] = datadir
