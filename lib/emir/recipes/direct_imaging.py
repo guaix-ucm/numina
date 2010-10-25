@@ -38,6 +38,7 @@ from numina.worker import para_map
 from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array.combine import flatcombine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
+from numina.array import SextractorConf
 from numina.recipes import RecipeBase
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
@@ -194,7 +195,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),
         Schema('iterations', 4, 'Iterations of the recipe'),
         Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),
-        Schema('output_filename', 'result.fits', 'Name of the output image')
+        Schema('output_filename', 'result.fits', 'Name of the output image'),
+        Schema('sexfile', None, ''),
+        Schema('paramfile', None, ''),
+        Schema('nnwfile', None, ''),
+        Schema('convfile', None, ''),
     ]
     
     def __init__(self, param, runinfo):
@@ -424,30 +429,45 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         return odl
 
 
+    def setup(self):
+        self.parameters['master_dark'] = DiskImage(os.path.abspath(self.parameters['master_dark']))
+        self.parameters['master_flat'] = DiskImage(os.path.abspath(self.parameters['master_flat']))
+        self.parameters['master_bpm'] = DiskImage(os.path.abspath(self.parameters['master_bpm']))
             
+        r = dict((key, numina.image.DiskImage(filename=os.path.abspath(key))) 
+             for key in self.parameters['images'])
+        
+        for key, val in self.parameters['images'].items():                
+            self.parameters['images'][key] = (r[key], val[0], [r[key] for key in val[1]])
+        
+        d = {}
+        for key in ['sexfile', 'paramfile', 'nnwfile', 'convfile']:
+            d[key] = os.path.abspath(self.parameters[key])
+            
+        self.sconf = SextractorConf(**d)
+                
     def run(self):
         extinction = self.parameters['extinction']
         nthreads = self.runinfo['threads']
         niteration = self.parameters['iterations']
         airmass_keyword = 'AIRMASS'
-        
-        master_dark = DiskImage(self.parameters['master_dark'])
-        master_flat = DiskImage(self.parameters['master_flat'])
-        
+        master_dark = self.parameters['master_dark']
+        master_flat = self.parameters['master_flat']   
+        master_bpm = self.parameters['master_bpm']
         primary_headers = {'FILENAME': self.parameters['output_filename']}
         
         odl = []
         
-        for i in self.parameters['images']:
-            img = numina.image.DiskImage(filename=i)
-            mask = numina.image.DiskImage(filename='bpm.fits')
-            om = numina.image.DiskImage(filename='bpm.fits')
+        for key, val in self.parameters['images'].items():
+            img = val[0]
+            mask = master_bpm
+            om = master_bpm
             
             od = Recipe.WorkData(img, mask, om)
             
-            label, _ext = os.path.splitext(i)
+            label, _ext = os.path.splitext(key)
             od.local['label'] = label
-            od.local['offset'] = self.parameters['images'][i][0]
+            od.local['offset'] = self.parameters['images'][key][1]
             
             odl.append(od)
                 
@@ -472,7 +492,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             master_dark.open(mode='readonly')    
             master_flat.open(mode='readonly')
             
-            dark_data = master_dark.data    
+            dark_data = master_dark.data
             flat_data = master_flat.data
             
             sss = SerialFlow([
@@ -484,8 +504,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info('Basic processing')    
             para_map(lambda x : Recipe.f_basic_processing(x, sss), odl, nthreads=nthreads)
         finally:
-            master_dark.close()    
-            master_flat.close() 
+            print master_dark.filename
+            master_dark.close()
+            
+            master_flat.close()
         
         sf_data = None
         
@@ -507,7 +529,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             if sf_data is not None:
                 _logger.info('Iter %d, generating objects masks', iteration)    
-                obj_mask = create_object_mask(sf_data[0], self.name_segmask(iteration))
+                obj_mask = create_object_mask(self.sconf, sf_data[0], os.path.abspath(self.name_segmask(iteration)))
                 
                 _logger.info('Iter %d, merging object masks with masks', iteration)
                 para_map(lambda x: self.f_merge_mask(x, obj_mask, iteration), odl, nthreads=nthreads)
@@ -603,6 +625,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         return {'qa': numina.qa.UNKNOWN, 'result_image': result}
 
 if __name__ == '__main__':
+    import uuid
     import simplejson as json
     from numina.jsonserializer import to_json
     from numina.user import main
@@ -611,9 +634,15 @@ if __name__ == '__main__':
     os.chdir('/home/spr/Datos/emir/apr21')
     
     
-    pv = {'recipe': 
+    pv = {'observing_block': {'instrument': 'emir',
+                       'mode': 'dithered_images',
+                       'id': 1,
+                       'result': {}
+                       },
+          'recipes': {'default': 
           {'run': {'mode': 'dithered_images',
-                  'instrument': 'emir'
+                  'instrument': 'emir',
+                  'threads': 1,
                   }, 
           'parameters': {
                         'output_filename': 'result.fits',
@@ -623,6 +652,10 @@ if __name__ == '__main__':
                         'master_dark': 'Dark50.fits',
                         'master_flat': 'flat.fits',
                         'master_bpm': 'bpm.fits',
+                        'sexfile': 'default.sex',
+                        'convfile': 'default.conv',
+                        'nnwfile': 'default.nnw',
+                        'paramfile': 'default.param',
                         'images':  
                        {'apr21_0046.fits': ((0, 0), ['apr21_0046.fits']),
                         'apr21_0047.fits': ((0, 0), ['apr21_0047.fits']),
@@ -661,15 +694,21 @@ if __name__ == '__main__':
                         'apr21_0081.fits': ((-36, 16), ['apr21_0081.fits'])
                         },
                         },
+                        },
                         }       
     }
 
     os.chdir('/home/spr/Datos/emir/apr21')
     
-    f = open('config-d.json', 'w+')
+    # Creating base directory for storing results
+    uuidstr = str(uuid.uuid1()) 
+    basedir = os.path.abspath(uuidstr)
+    os.mkdir(basedir) 
+    
+    f = open('config.txt', 'w+')
     try:
         json.dump(pv, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
     
-    main(['--run', 'config-d.json'])
+    main(['-d','--basedir', basedir, '--datadir', 'data', '--run', 'config.txt'])
