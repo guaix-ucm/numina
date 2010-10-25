@@ -107,6 +107,7 @@ class RecipeBase:
                 run_info['error'] = dict(type=e.__class__.__name__, 
                                          message=str(e))
             finally:
+                product['run'].update(self.runinfo)
                 product['run'].update(run_info)
                 
             
