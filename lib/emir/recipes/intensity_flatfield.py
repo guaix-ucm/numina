@@ -20,6 +20,7 @@
 '''Intensity Flatfield Recipe.'''
 
 import logging
+import os
 
 import numpy
 
@@ -67,11 +68,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     '''
     
     required_parameters = [
-        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),        
+        Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),
         Schema('master_bias', ProxyQuery(), 'Master bias image'),
         Schema('master_dark', ProxyQuery(), 'Master dark image'),
         Schema('master_bpm', ProxyQuery(), 'Master bad pixel mask'),
-        Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),        
+        Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),
         Schema('output_filename', 'result.fits', 'Name of the output image')
     ]
     
@@ -105,15 +106,21 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             od[1].close()
             od[0].close()            
 
+    def setup(self):
+        self.parameters['master_dark'] = DiskImage(os.path.abspath(self.parameters['master_dark']))
+        self.parameters['master_bpm'] = DiskImage(os.path.abspath(self.parameters['master_bpm']))
+            
+        self.parameters['images'] = [DiskImage(os.path.abspath(path)) 
+                                     for path in self.parameters['images']]            
+
     def run(self):
-        
         nthreads = self.runinfo['nthreads']
         primary_headers = {'FILENAME': self.parameters['output_filename']}
                 
-        simages = [DiskImage(filename=i) for i in self.parameters['images']]
-        smasks =  [DiskImage(self.parameters['master_bpm'])] * len(simages)
+        simages = self.parameters['images']
+        smasks = [self.parameters['master_bpm']] * len(simages)
         
-        dark_image = DiskImage(self.parameters['master_dark'])
+        dark_image = self.parameters['master_dark']
         # Initialize processing nodes, step 1
         try:
             dark_data = dark_image.open(mode='readonly', memmap=True)
@@ -124,7 +131,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             )
         
             _logger.info('Basic processing')    
-            para_map(lambda x : Recipe.f_basic_processing(x, sss), zip(simages, smasks), 
+            para_map(lambda x : Recipe.f_basic_processing(x, sss), zip(simages, smasks),
                      nthreads=nthreads)
         finally:
             dark_image.close()
@@ -135,7 +142,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
 #        simages, smasks, scales = para_map(self.f_flow4, 
         intermediate = para_map(self.f_flow4,
-                                           zip(simages, smasks), 
+                                           zip(simages, smasks),
                                            nthreads=nthreads)
         simages, smasks, scales = zip(*intermediate)
             # Operation to create an intermediate sky flat
@@ -153,22 +160,24 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             map(lambda x: x.close(), smasks)
     
         _logger.info("Final image created")
-        illum = create_result(illum_data[0], headers=primary_headers, 
-                                   variance=illum_data[1], 
+        illum = create_result(illum_data[0], headers=primary_headers,
+                                   variance=illum_data[1],
                                    exmap=illum_data[2])
         
         return {'qa': QA.UNKNOWN, 'illumination_image': illum}
     
 if __name__ == '__main__':
+    import uuid
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
     from numina.user import main
     import simplejson as json
-    import os
     from numina.jsonserializer import to_json
 
-    pv = {'recipe': {'parameters': 
-                        {'images': ['apr21_0046.fits',
+    pv = {'observing_block': {'instrument': 'emir',
+                       'mode': 'intensity_flatfield',
+                       'id': 1,
+                       'result': {'images': ['apr21_0046.fits',
                                   'apr21_0047.fits',
                                   'apr21_0048.fits',
                                   'apr21_0049.fits',
@@ -200,25 +209,38 @@ if __name__ == '__main__':
                                   'apr21_0076.fits',
                                   'apr21_0077.fits',
                                   'apr21_0078.fits',
-                                  'apr21_0079.fits',            
+                                  'apr21_0079.fits',
                                   'apr21_0080.fits',
                                   'apr21_0081.fits'],
-                                'master_bias': 'mbias.fits',
-                                'master_dark': 'Dark50.fits',
-                                'linearity': [1e-3, 1e-2, 0.99, 0.00],
-                                'master_bpm': 'bpm.fits',
-                                },
-                        'run': {'mode': 'intensity_flatfield',
-                                'instrument': 'emir'}
+                                  }
+                       },
+          'recipes': {'default': {
+                        'parameters': {  
+                            'master_bias': 'mbias.fits',
+                            'master_dark': 'Dark50.fits',
+                            'linearity': [1e-3, 1e-2, 0.99, 0.00],
+                            'master_bpm': 'bpm.fits',
                         },
-    }
+                        'run': {
+                            'instrument': 'emir',
+                            'threads': 2,
+                            }, 
+                        },
+                        }
+          }
     
-    os.chdir('/home/spr/Datos/emir/apr21')
     
-    f = open('config-iff.txt', 'w+')
+    os.chdir('/home/spr/Datos/emir/test8')
+    
+    uuidstr = str(uuid.uuid1()) 
+    basedir = os.path.abspath(uuidstr)
+    os.mkdir(basedir) 
+    
+    f = open('config.txt', 'w+')
     try:
-        json.dump(pv, f, default=to_json, encoding='utf-8')
+        json.dump(pv, f, default=to_json, encoding='utf-8', indent=2)
     finally:
         f.close()
-        
-    main(['-d', '--run', 'config-iff.txt'])
+    
+    main(['-d', '--basedir', basedir, '--datadir', 'data', '--run', 'config.txt'])
+
