@@ -59,7 +59,7 @@ class GaussProfile(Profile):
         # TODO check that center and covar are compatible
         
         self.covar = numpy.asarray(covar)
-        halfsize = numpy.round(scale * numpy.sqrt(covar.diagonal())).astype('int')
+        halfsize = numpy.round(scale * numpy.sqrt(self.covar.diagonal())).astype('int')
         self.selfcenter = self.peak +  halfsize
         self._shape = tuple(2 * halfsize + 1)
         self.density = self.mvnu(self.selfcenter, self.covar)
