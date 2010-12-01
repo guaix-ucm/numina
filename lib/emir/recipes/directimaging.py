@@ -71,8 +71,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     **Inputs:**
     
      * Science frames + [Sky Frames]
-     * An indication of the observing mode: **stare image**, **nodded
-       beamswitched image**, or **dithered imaging**
+     * Observing mode name: **stare image**, **nodded beamswitched image**, or **dithered imaging**
      * A table relating each science image with its sky image(s) (TBD if it's in 
        the FITS header and/or in other format)
      * Offsets between them (Offsets must be integer)
@@ -451,6 +450,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         nthreads = self.runinfo['threads']
         niteration = self.parameters['iterations']
         airmass_keyword = 'AIRMASS'
+        exposure_keyword = 'EXPOSED'
         master_dark = self.parameters['master_dark']
         master_flat = self.parameters['master_flat']   
         master_bpm = self.parameters['master_bpm']
@@ -483,6 +483,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 _logger.debug("shape of image %s is %s", img.filename, image_shapes[-1])
                 od.local['airmass'] = img.meta[airmass_keyword]
                 _logger.debug("airmass of image %s is %f", img.filename, od.local['airmass'])
+                od.local['exposure'] = img.meta[exposure_keyword]
+                _logger.debug("exposure of image %s is %f", img.filename, od.local['exposure'])
             finally:
                 _logger.debug("closing image %s", img.filename)
                 img.close()
@@ -524,9 +526,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info('Iter %d, resizing images and mask', iteration)
             para_map(lambda x: self.f_resize_images(x, iteration, finalshape), odl, nthreads=nthreads)
         
-            _logger.info('Iter %d, initialize object masks', iteration)
+            _logger.info('Iter %d, create object masks', iteration)
             para_map(self.f_create_omasks, odl, nthreads=nthreads)
             
+            # This loop is ignored the first iteration
             if sf_data is not None:
                 _logger.info('Iter %d, generating objects masks', iteration)    
                 obj_mask = create_object_mask(self.sconf, sf_data[0], os.path.abspath(self.name_segmask(iteration)))
@@ -547,7 +550,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 data = [od.img.data[od.local['region']] for od in odl]
                 masks = [od.mask.data[od.local['region']] for od in odl]
                 scales = [od.local['median_scale'] for od in odl]
-                sf_data = flatcombine(data, masks, scales=scales)
+                sf_data = flatcombine(data, masks, scales=scales, method='median')
             finally:
                 map(lambda x: x.img.close(), odl)
                 map(lambda x: x.mask.close(), odl)
