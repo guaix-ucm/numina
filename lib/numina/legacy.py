@@ -40,15 +40,15 @@ def get_module(name):
     
     It should work this way:
     
-      >>> m = get_module('emir.recipes.dark_image')
+      >>> m = get_module('emir.recipes.darkimage')
       >>> m.__name__
-      'emir.recipes.dark_image'
+      'emir.recipes.darkimage'
       
     Other approach that seems to work also is:
     
-      >>> m = __import__('emir.recipes.dark_image', globals(), locals(), [""], -1)
+      >>> m = __import__('emir.recipes.darkimage', globals(), locals(), [""], -1)
       >>> m.__name__
-      'emir.recipes.dark_image'
+      'emir.recipes.darkimage'
     
     .. _`__import__`: http://docs.python.org/library/functions.html?highlight=import#__import__
     
