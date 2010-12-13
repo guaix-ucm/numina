@@ -18,6 +18,7 @@
 # 
 
 import unittest
+import itertools
 
 import numpy
 
@@ -33,11 +34,8 @@ class CombineTestCase(unittest.TestCase):
         databig = numpy.zeros((256, 256))
         self.validBig = [databig] * 100
         
-    def tearDown(self):
-        pass
-         
-    def testBaseCombineError(self):
-        '''test CombineError is raised for different operations.'''
+    def test_CombineError(self):
+        '''Test CombineError is raised for different operations.'''
         # method is not an allowed string
         self.assertRaises(CombineError, combine, self.validImages, method='dummy')
         # reject is not an allowed string
@@ -67,16 +65,16 @@ class CombineTestCase(unittest.TestCase):
         self.assertRaises(CombineError, combine, self.validImages, scales=[1, 2])
         self.assertRaises(CombineError, combine, self.validImages, weights=[1, 2])
         
-    def test03Exception(self):
-        '''mean combine: CombineError is raised if inputs have different lengths.'''
+    def test_CombineException(self):
+        '''Combine: CombineError is raised if inputs have different lengths.'''
         self.assertRaises(CombineError, mean, self.validImages, self.validMasks * 2)
         
-    def test04(self):
-        '''mean combine: TypeError is raised if inputs aren't convertible to numpy.array.'''
+    def test_TypeError(self):
+        '''Combine: TypeError is raised if inputs aren't convertible to numpy.array.'''
         self.assertRaises(TypeError, mean, ["a"])
 
-    def testCombineMaskMean(self):
-        '''mean combine: combination of integer arrays with masks.'''
+    def testCombineMaskAverage(self):
+        '''Average combine: combination of integer arrays with masks.'''
         input1 = numpy.array([[1, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
         input2 = numpy.array([[3, 2, 8, 4], [6, 2, 0, 4], [1, 3, 3, 4]])
         input3 = numpy.array([[7, 2, 1, 4], [1, 2, 0, 4], [44, 2, 2, 0]])
@@ -110,8 +108,8 @@ class CombineTestCase(unittest.TestCase):
         for cal, precal in zip(out[2].flat, rnum.flat):
             self.assertEqual(cal, precal)
 
-    def testCombineMean(self):
-        '''mean combine: combination of integer arrays.'''
+    def testCombineAverage(self):
+        '''Average combine: combination of integer arrays.'''
         
         # Inputs
         input1 = numpy.array([[1, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
@@ -136,6 +134,29 @@ class CombineTestCase(unittest.TestCase):
             self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, rnum.flat):
             self.assertEqual(cal, precal)
+            
+    def test_median(self):
+        '''Median combine: combination of integer arrays.'''
+        # Inputs
+        input1 = numpy.array([[1, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
+        input2 = numpy.array([[1, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
+        input3 = numpy.array([[7, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
+        input4 = numpy.array([[7, 2, 3, 4], [1, 2, 3, 4], [9, 2, 0, 4]])
+        input5 = numpy.array([[7, 2, 1, 4], [1, 2, 0, 4], [44, 2, 2, 0]])
+        inputs = [input1, input2, input3, input4, input5]
+        
+        out = combine(inputs, method='median')
+    
+        rres = input3
+    
+            # Checking
+        for cal, precal in zip(out[0].flat, rres.flat):
+            self.assertAlmostEqual(cal, precal)
+#        for cal, precal in zip(out[1].flat, rvar.flat):
+#            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[2].flat, itertools.repeat(5)):
+            self.assertEqual(cal, precal)
+    
     
 class MinMaxTestCase(unittest.TestCase):
     '''Test case for the minmax rejection method.'''

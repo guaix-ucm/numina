@@ -46,7 +46,27 @@ private:
 
 } // namespace detail
 
-double median(double* data, size_t size);
+template<typename Iterator>
+inline typename std::iterator_traits<Iterator>::value_type median(Iterator begin,
+    Iterator end) {
+  typedef typename std::iterator_traits<Iterator>::value_type value_type;
+
+  std::size_t size = end - begin;
+  std::size_t middle = size / 2;
+  Iterator miditer = begin + middle;
+  std::nth_element(begin, miditer, end);
+
+  // Odd number of objects
+  if (size % 2 != 0)
+    return *miditer;
+
+  // Even number of objects
+  value_type store = *miditer;
+  Iterator miditer2 = miditer - 1;
+  std::nth_element(begin, miditer2, end);
+
+  return (store + *miditer2) / 2.0;
+}
 
 template<typename Iterator>
 inline typename std::iterator_traits<Iterator>::value_type mean(Iterator begin,
@@ -150,8 +170,10 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
     return std::make_pair(T(0.0), T(0.0));
   if (begin + 1 == end)
     return std::make_pair(*begin, T(0.0));
+
+  // Weights are ignored
+  const T m = median(begin, end);
   // FIXME
-  const T m = weighted_mean(begin, end, weights);
   const T v = weighted_variance(begin, end, weights, m);
   return std::make_pair(m, v);
 }
