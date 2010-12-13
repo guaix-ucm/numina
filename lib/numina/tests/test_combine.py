@@ -156,6 +156,28 @@ class CombineTestCase(unittest.TestCase):
 #            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(5)):
             self.assertEqual(cal, precal)
+            
+            
+    def test_median(self):
+        '''Median combine: combination an even number of integer arrays.'''
+        # Inputs
+        input1 = numpy.array([[1, 2, 3, -4]])
+        input2 = numpy.array([[1, 2, 6, 4]])
+        input3 = numpy.array([[7, 3, 8, -4]])
+        input4 = numpy.array([[7, 2, 3, 4]])
+        inputs = [input1, input2, input3, input4]
+        
+        out = combine(inputs, method='median')
+    
+        rres = numpy.array([[4, 2, 4.5, 0.0]], dtype='float')
+    
+            # Checking
+        for cal, precal in zip(out[0].flat, rres.flat):
+            self.assertAlmostEqual(cal, precal)
+#        for cal, precal in zip(out[1].flat, rvar.flat):
+#            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[2].flat, itertools.repeat(4)):
+            self.assertEqual(cal, precal)
     
     
 class MinMaxTestCase(unittest.TestCase):
