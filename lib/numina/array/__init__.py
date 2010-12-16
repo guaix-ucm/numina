@@ -124,8 +124,8 @@ def compute_sky_advanced(data, omasks):
     return result[0]
 
 def compute_median_background(img, omask, region):
-    d = img.data[region]
-    m = omask.data[region]
+    d = img[region]
+    m = omask[region]
     median_sky = numpy.median(d[m == 0])
     return median_sky
 
