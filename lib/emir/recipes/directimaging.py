@@ -71,29 +71,6 @@ def _name_skysub(label, iteration, ext='.fits'):
     dn = '%s_fs_i%02d%s' % (label, iteration, ext)
     return dn
 
-def sky_removal_simple(od, iteration):
-        dst = Recipe.name_skysub(od.local['label'], iteration)
-        od.copy_img(dst)
-        #
-        od.img.open(mode='update')
-        try:
-            od.omask.open()
-            try:
-                sky = compute_median_background(od.img, od.omask, od.local['region'])
-                _logger.debug('median sky value is %f', sky)
-                od.local['median_sky'] = sky
-                
-                _logger.info('Iter %d, SC: subtracting sky', iteration)
-                region = od.local['region']
-                od.img.data[region] -= od.local['median_sky']
-                
-                return od
-            finally:
-                od.omask.close()
-        finally:
-            od.img.close()
-
-
 class ImageInformation(object):
     pass
 
