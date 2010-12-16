@@ -44,13 +44,13 @@ class ImsurfitTestCase(unittest.TestCase):
         results0 = numpy.array([456.0, 0.3, -0.9])
         
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid0))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
             
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid1))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
@@ -63,13 +63,13 @@ class ImsurfitTestCase(unittest.TestCase):
         results0 = numpy.array([1.0, 0.1, 12, 3.0, -11.8, 9.2])
        
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid0))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
             
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid1))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
@@ -82,13 +82,13 @@ class ImsurfitTestCase(unittest.TestCase):
         
         results0 = numpy.array([456.0, 0.3, -0.9, 0.03, -0.01, 0.07, 0.0, -10, 0.0, 0.04])
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid0))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
             
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid1))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
@@ -102,13 +102,13 @@ class ImsurfitTestCase(unittest.TestCase):
                                 0.448, -0.28, 1.4, 1.24,
                                 -3.2, -1.2, 2.24, -8.1, -0.03])
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid0))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)
             
         z = numpy.sum(cf * v for cf, v in zip(results0.flat, self.grid1))
-        results = imsurfit(z, order=order)
+        results, = imsurfit(z, order=order)
         
         for i0, i in zip(results0.flat, results.flat):
             self.assertAlmostEqual(i0, i)

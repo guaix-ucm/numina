@@ -52,25 +52,26 @@ def _compute_weight(powers, wg):
 
         return cal1 * cal2
     
-def imsurfit(data, order):
+def imsurfit(data, order, output_fit=False):
     '''Fit a bidimensional polynomial to an image.
     
     
         :param data: a bidimensional array
         :param integer order: order of the polynomial
-        :returns: an array with the coefficients of the polynomial terms
+        :param bool output_fit: return the fitted image
+        :returns: a tuple with an array with the coefficients of the polynomial terms
         
         >>> import numpy
         >>> xx, yy = numpy.mgrid[-1:1:100j,-1:1:100j]
         >>> z = 456.0 + 0.3 * xx - 0.9* yy
         >>> imsurfit(z, order=1) #doctest: +NORMALIZE_WHITESPACE
-        array([  4.56000000e+02,   3.00000000e-01,  -9.00000000e-01])       
+        (array([  4.56000000e+02,   3.00000000e-01,  -9.00000000e-01]),)       
     
     '''
 
     # we create a grid with the same number of points
     # between -1 and 1
-    xx,yy = numpy.mgrid[-1:1:complex(0, data.shape[0]), -1:1:complex(0, data.shape[1])]
+    xx,yy = numpy.ogrid[-1:1:complex(0, data.shape[0]), -1:1:complex(0, data.shape[1])]
 
     ncoeff = (order + 1) * (order + 2) / 2
 
@@ -111,5 +112,17 @@ def imsurfit(data, order):
     # Making symmetric the array
     aa += numpy.triu(aa, k=1).T
    
-    result = numpy.linalg.solve(aa, bb)
-    return result
+    polycoeff = numpy.linalg.solve(aa, bb)
+    
+    if output_fit:
+        index = 0
+        result = 0
+        for o in range(order + 1):
+            for b in range(o + 1):
+                a = o - b
+                result +=  polycoeff[index] * (xx ** a) * (yy ** b)
+                index += 1
+
+        return (polycoeff, result)
+    
+    return (polycoeff,)    
