@@ -20,7 +20,7 @@
 import unittest
 import itertools
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 
 from numina.array.combine import mean, combine
 from numina.array.combine import CombineError

@@ -21,7 +21,7 @@
 
 from itertools import izip
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 
 from numina.recipes.registry import Schema
 from numina.array import combine_shape

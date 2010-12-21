@@ -23,7 +23,7 @@ import logging
 import os.path
 import itertools as ito
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 
 
 import numina.qa

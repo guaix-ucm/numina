@@ -21,7 +21,7 @@ from os.path import join as pjoin
 import math
 from itertools import count, imap
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 import scipy.stats.mvn as mvn
 
 from numina.array import subarray_match

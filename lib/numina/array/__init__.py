@@ -21,7 +21,7 @@ import subprocess
 import logging
 from itertools import imap, product
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 import pyfits
 from scipy import asarray, zeros_like, minimum, maximum
 

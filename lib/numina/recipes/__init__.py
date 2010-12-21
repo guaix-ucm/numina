@@ -136,7 +136,7 @@ class RecipeResult(dict):
     pass
             
 def list_recipes():
-    return RecipeBase.__subclasses__()
+    return RecipeBase.__subclasses__() # pylint: disable-msgs=E1101
     
 def list_recipes_by_obs_mode(obsmode):
     return list(recipes_by_obs_mode(obsmode))

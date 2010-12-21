@@ -20,7 +20,7 @@
 import shutil
 import copy
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 import pyfits
 
 class DiskImage(object):

@@ -104,13 +104,14 @@ def _parse_rr(val, external):
 def generate_fname(obj):
     raise TypeError('A filename cannot be generated for % s' % repr(type(obj)))
 
-@generate_fname.register(HDUList)
-def _generate_fits(obj):
+@generate_fname.register(HDUList) # pylint: disable-msgs=E1101
+def _generate_fits_hdulist(obj):
     '''Generate a filename for a HDUList structure.'''
     return obj['primary'].header.get('FILENAME', 'file.fits')
 
+# pylint: disable-msgs=E0102, E1101
 @generate_fname.register(DiskImage)
-def _generate_fits(obj):
+def _generate_fits_disk_image(obj):
     '''Generate a filename for a  DiskImage structure.'''
     obj.open()
     fitsobj = obj.hdulist

@@ -30,7 +30,7 @@ class DiskStorageTestCase(unittest.TestCase):
         class MyClass(object):
             pass
         
-        @store.register(MyClass)
+        @store.register(MyClass) # pylint: disable-msgs=E1101
         def mystore(obj, where):
             where.write('MyClass')
             

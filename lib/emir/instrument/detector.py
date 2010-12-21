@@ -19,7 +19,7 @@
 
 import itertools as ito
 
-import numpy
+import numpy # pylint: disable-msgs=E1101
 
 import numina.instrument.detector
 from numina.exceptions import DetectorReadoutError
