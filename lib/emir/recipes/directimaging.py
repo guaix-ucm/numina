@@ -52,24 +52,25 @@ from emir.recipes import EmirRecipeMixin
 _logger = logging.getLogger("emir.recipes")
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
-    dn = '%s_base_i%02d%s' % (label, iteration, ext)
-    mn = '%s_mask_i%02d%s' % (label, iteration, ext)
+    dn = '%s_r_i%01d%s' % (label, iteration, ext)
+    mn = '%s_mr_i%01d%s' % (label, iteration, ext)
     return dn, mn
 
 def _name_object_mask(label, iteration, ext='.fits'):
-    return '%s_omask_i%02d%s' % (label, iteration, ext)
+    return '%s_mro_i%01d%s' % (label, iteration, ext)
 
 def _name_skyflat_proc(label, iteration, ext='.fits'):
-    dn = '%s_sf_i%02d%s' % (label, iteration, ext)
-    return dn
-
-def _name_skyflat(label, iteration, ext='.fits'):
-    dn = 'superflat_%s_i%02d%s' % (label, iteration, ext)
+    dn = '%s_rf_i%01d%s' % (label, iteration, ext)
     return dn
 
 def _name_skysub(label, iteration, ext='.fits'):
-    dn = '%s_fs_i%02d%s' % (label, iteration, ext)
+    dn = '%s_rfs_i%01d%s' % (label, iteration, ext)
     return dn
+
+def _name_skyflat(label, iteration, ext='.fits'):
+    dn = 'superflat_%s_i%01d%s' % (label, iteration, ext)
+    return dn
+
 
 class ImageInformation(object):
     pass
@@ -237,7 +238,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         offsets = [self.parameters['images'][key][1] for key in sortedkeys]
         image_shapes = (2048, 2048)
         finalshape, offsetsp = combine_shape(image_shapes, offsets)
-        _logger.info('Shape of resizwed array is %s', finalshape)
+        _logger.info('Shape of resized array is %s', finalshape)
         
         _logger.info('Resizing image')
         for key, noffset in zip(sortedkeys, offsetsp):
@@ -249,10 +250,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             region, _ = subarray_match(finalshape, noffset, shape)
             ii.region = region
             dim = self.parameters['images'][key][0]
-            imgn, maskn = _name_redimensioned_images(os.path.splitext(key)[0], 0)
+            imgn, maskn = _name_redimensioned_images(ii.label, 0)
             ii.resized_base = imgn
             ii.resized_mask = maskn
             _logger.info('Resizing image %s', key)
+            
             hdulist = pyfits.open(dim.filename, mode='readonly')
             try:
                 hdu = hdulist['primary']
@@ -279,7 +281,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 hdulist.close()
         
             # Create empty object mask             
-            objmaskname = _name_object_mask(os.path.splitext(key)[0], 0)
+            objmaskname = _name_object_mask(ii.label, 0)
             ii.objmask = objmaskname
             _logger.info('Creating %s', objmaskname)
             iinfo.append(ii)
@@ -314,7 +316,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             sf_data = flatcombine(data, masks, scales=scales, method='median')
             #sf_data = combine(data, masks=masks, scales=scales, method='median')
 
-            pc, fitted = imsurfit(sf_data[0], order=2, outfit=True)
+            pc, fitted = imsurfit(sf_data[0], order=2, output_fit=True)
             _logger.info('polynomial fit %s', pc)
             #fitted /= fitted.mean()            
             
@@ -329,7 +331,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         _logger.info("Iter %d, SF: apply superflat", 0)
         # Process all images with the fitted flat    
         for image in iinfo:
-            
+            _logger.info("Iter %d, SF: apply superflat to image %s", 0, image.resized_base)
             hdulist = pyfits.open(image.resized_base, mode='readonly')
             data = hdulist['primary'].data[image.region]
             newdata = hdulist['primary'].data.copy()
@@ -337,8 +339,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             newheader = hdulist['primary'].header.copy()
             hdulist.close()
             phdu = pyfits.PrimaryHDU(newdata, newheader)
-            image.lastname = _name_skyflat_proc(image.base, 0)
-            phdu.writeto(_name_skyflat_proc(image.base, 0))
+            image.lastname = _name_skyflat_proc(image.label, 0)
+            phdu.writeto(image.lastname)
             
         _logger.info('Iter %d, sky correction (SC)', 0)
         _logger.info('Iter %d, SC: computing simple sky', 0)
@@ -354,16 +356,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 _logger.debug('median sky value is %f', sky)
                 image.median_sky = sky
                 
-                _logger.info('Iter %d, SC: subtracting sky', 0)
+                _logger.info('Iter %d, SC: subtracting sky to image %s', 0, image.lastname)
                 region = image.region
                 data[region] -= sky
-                
                 
             finally:
                 hdulist1.close()
                 hdulist2.close()
 
-        _logger.info("Iter %d, Combining the images", 0)
+        # Combining the images
         imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
         mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
         try:
@@ -376,7 +377,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             sf_data = median(data, masks, scales=extinc, dtype='float32')
     
             # We are saving here only data part
-            pyfits.writeto('result_i%02d.fits' % 0, sf_data[0], clobber=True)
+            pyfits.writeto('result_i%01d.fits' % 0, sf_data[0], clobber=True)
         finally:
             map(lambda x: x.close(), imgslll)
             map(lambda x: x.close(), mskslll)
