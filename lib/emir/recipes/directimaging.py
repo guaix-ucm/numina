@@ -73,7 +73,8 @@ def _name_skyflat(label, iteration, ext='.fits'):
 
 
 class ImageInformation(object):
-    pass
+    def __init__(self):
+        pass
 
 
 class Recipe(RecipeBase, EmirRecipeMixin):
@@ -195,110 +196,45 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             d[key] = os.path.abspath(self.parameters[key])
             
         self.sconf = SextractorConf(**d)
-                
-    def run(self):
         
-        sortedkeys = sorted(self.parameters['images'].keys())
-        
-        # Basic processing
-        # Open dark and flat
-        mdark = pyfits.getdata(self.parameters['master_dark'].filename)
-        #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
-        # Unused for the momment
-        # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
-        #
-        
-        iinfo = []
-        
-        _logger.info('Basic processing')
-        for key in sortedkeys:
-            dim = self.parameters['images'][key][0]
-            hdulist = pyfits.open(dim.filename, mode='readonly')
-            try:
-                hdu = hdulist['primary']
-                #if hdu.header.has_key('NMDARK'):
-                #    pass
-                newdata = hdu.data.copy()
-                newheader = hdu.header.copy()
-                _logger.info('Correcting dark %s', key)
-                newdata -= mdark
-                newheader.update('NMDARK', 'done')
-                #_logger.info('Correcting flat %s', key)
-                #newdata /= mflat
-                newhdu = pyfits.PrimaryHDU(newdata, newheader)
-                _logger.info('Saving %s', key)
-                newhdu.writeto(key)
-            finally:
-                hdulist.close()
-                
-        del mdark
-        #del mflat
-        
-        # Resizing images
-        offsets = [self.parameters['images'][key][1] for key in sortedkeys]
-        image_shapes = (2048, 2048)
-        finalshape, offsetsp = combine_shape(image_shapes, offsets)
-        _logger.info('Shape of resized array is %s', finalshape)
-        
-        _logger.info('Resizing image')
-        for key, noffset in zip(sortedkeys, offsetsp):
-            ii = ImageInformation()
-            ii.base = key
-            ii.label = os.path.splitext(key)[0]
-            ii.baseshape = image_shapes
-            shape = image_shapes
-            region, _ = subarray_match(finalshape, noffset, shape)
-            ii.region = region
-            dim = self.parameters['images'][key][0]
-            imgn, maskn = _name_redimensioned_images(ii.label, 0)
-            ii.resized_base = imgn
-            ii.resized_mask = maskn
-            _logger.info('Resizing image %s', key)
-            
-            hdulist = pyfits.open(dim.filename, mode='readonly')
-            try:
-                hdu = hdulist['primary']
-                basedata = hdu.data
-                newdata = resize_array(basedata, finalshape, region)                
-                newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-                _logger.info('Saving %s', imgn)
-                newhdu.writeto(imgn)
-            finally:
-                hdulist.close()
-        
-            _logger.info('Resizing mask %s', key)
-            # FIXME, we should open the base mask
-            hdulist = pyfits.open(dim.filename, mode='readonly')
-            try:
-                hdu = hdulist['primary']
-                # FIXME
-                basedata = numpy.zeros(shape, dtype='int')
-                newdata = resize_array(basedata, finalshape, region)                
-                newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-                _logger.info('Saving %s', maskn)
-                newhdu.writeto(maskn)
-            finally:
-                hdulist.close()
-        
-            # Create empty object mask             
-            objmaskname = _name_object_mask(ii.label, 0)
-            ii.objmask = objmaskname
-            _logger.info('Creating %s', objmaskname)
-            iinfo.append(ii)
-        
-        _logger.info('Superflat correction')
-        
-        _logger.info('SF: computing scale factors')
+    def compute_simple_sky(self, iinfo, iteration=0):
         for image in iinfo:
-            region = image.region
-            data = pyfits.getdata(image.resized_base)[region]
-            mask = pyfits.getdata(image.resized_mask)[region]
-            image.median_scale = numpy.median(data[mask == 0])
-            _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
-        
-        # Combining images to obtain the sky flat
-        # Open all images 
-        _logger.info("Iter %d, SF: combining the images without offsets", 0)
+            #dst = _name_skysub(image.resized_base, 0)
+            hdulist1 = pyfits.open(image.lastname, mode='update')
+            hdulist2 = pyfits.open(image.resized_mask)
+            data = hdulist1['primary'].data
+            mask = hdulist2['primary'].data
+            try:
+                sky = compute_median_background(data, mask, image.region)
+                _logger.debug('median sky value is %f', sky)
+                image.median_sky = sky
+                
+                _logger.info('Iter %d, SC: subtracting sky to image %s', 
+                             iteration, image.lastname)
+                region = image.region
+                data[region] -= sky
+                
+            finally:
+                hdulist1.close()
+                hdulist2.close()
+                
+    def combine_images(self, iinfo, iteration=0):
+        imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
+        mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
+        try:
+            #extinc = [pow(10, 0.4 * image.airmass * extinction) for image in iinfo]
+            extinc = [pow(10, 0.4 * 1.0 * self.parameters['extinction']) for image in iinfo]
+            data = [i['primary'].data for i in imgslll]
+            masks = [i['primary'].data for i in mskslll]
+            sf_data = median(data, masks, scales=extinc, dtype='float32')
+    
+            # We are saving here only data part
+            pyfits.writeto('result_i%0d.fits' % 0, sf_data[0], clobber=True)
+        finally:
+            map(lambda x: x.close(), imgslll)
+            map(lambda x: x.close(), mskslll)        
+
+    def compute_superflat(self, iinfo, iteration=0):
         try:
             filelist = []
             data = []
@@ -324,12 +260,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             sfhdu.writeto(_name_skyflat('comb', 0))
             sfhdu = pyfits.PrimaryHDU(fitted)            
             sfhdu.writeto(_name_skyflat('fit', 0))
+            return fitted
         finally:
             for fileh in filelist:
-                fileh.close()
-        
-        _logger.info("Iter %d, SF: apply superflat", 0)
-        # Process all images with the fitted flat    
+                fileh.close()        
+
+    def correct_superflat(self, iinfo, fitted, iteration=0):
         for image in iinfo:
             _logger.info("Iter %d, SF: apply superflat to image %s", 0, image.resized_base)
             hdulist = pyfits.open(image.resized_base, mode='readonly')
@@ -342,47 +278,121 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             image.lastname = _name_skyflat_proc(image.label, 0)
             phdu.writeto(image.lastname)
             
-        _logger.info('Iter %d, sky correction (SC)', 0)
-        _logger.info('Iter %d, SC: computing simple sky', 0)
-            
+    def run(self):
+        
+        sortedkeys = sorted(self.parameters['images'].keys())
+        
+        # Basic processing
+        # Open dark and flat
+        mdark = pyfits.getdata(self.parameters['master_dark'].filename)
+        #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
+        # Unused for the momment
+        # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
+        #
+        
+        iinfo = []
+        image_shapes = (2048, 2048)
+        for key in sortedkeys:
+            # Label
+            ii = ImageInformation()
+            ii.label = os.path.splitext(key)[0]
+            ii.base = self.parameters['images'][key][0].filename
+            ii.baseshape = image_shapes
+            ii.region = None
+            ii.resized_base = None
+            ii.resized_mask = None
+            ii.objmask = None
+            iinfo.append(ii)
+        
+        _logger.info('Basic processing')
         for image in iinfo:
-            #dst = _name_skysub(image.resized_base, 0)
-            hdulist1 = pyfits.open(image.lastname, mode='update')
-            hdulist2 = pyfits.open(image.resized_mask)
-            data = hdulist1['primary'].data
-            mask = hdulist2['primary'].data
+            hdulist = pyfits.open(image.base, mode='update')
             try:
-                sky = compute_median_background(data, mask, image.region)
-                _logger.debug('median sky value is %f', sky)
-                image.median_sky = sky
-                
-                _logger.info('Iter %d, SC: subtracting sky to image %s', 0, image.lastname)
-                region = image.region
-                data[region] -= sky
-                
+                hdu = hdulist['primary']
+                _logger.info('Correcting dark %s', image.label)
+                if not hdu.header.has_key('NMDARK'):
+                    hdu.data -= mdark
+                    hdu.header.update('NMDARK', 'done')
             finally:
-                hdulist1.close()
-                hdulist2.close()
+                hdulist.close()
+                
+        del mdark
+        #del mflat
+        
+        # Resizing images
+        offsets = [self.parameters['images'][key][1] for key in sortedkeys]
+        
+        finalshape, offsetsp = combine_shape(image_shapes, offsets)
+        _logger.info('Shape of resized array is %s', finalshape)
+        
+        _logger.info('Resizing images')
+        for image, noffset in zip(iinfo, offsetsp):
+            shape = image_shapes
+            region, _ = subarray_match(finalshape, noffset, shape)
+            image.region = region
+            imgn, maskn = _name_redimensioned_images(image.label, 0)
+            image.resized_base = imgn
+            image.resized_mask = maskn
+            _logger.info('Resizing image %s', image.base)
+            
+            hdulist = pyfits.open(image.base, mode='readonly')
+            try:
+                hdu = hdulist['primary']
+                basedata = hdu.data
+                newdata = resize_array(basedata, finalshape, region)                
+                newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+                _logger.info('Saving %s', imgn)
+                newhdu.writeto(imgn)
+            finally:
+                hdulist.close()
+        
+            _logger.info('Resizing mask %s', image.label)
+            # FIXME, we should open the base mask
+            hdulist = pyfits.open(image.base, mode='readonly')
+            try:
+                hdu = hdulist['primary']
+                # FIXME
+                basedata = numpy.zeros(shape, dtype='int')
+                newdata = resize_array(basedata, finalshape, region)                
+                newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+                _logger.info('Saving %s', maskn)
+                newhdu.writeto(maskn)
+            finally:
+                hdulist.close()
+        
+            # Create empty object mask             
+            objmaskname = _name_object_mask(image.label, 0)
+            image.objmask = objmaskname
+            _logger.info('Creating %s', objmaskname)
+        
+        _logger.info('Superflat correction')
+        
+        _logger.info('SF: computing scale factors')
+        for image in iinfo:
+            region = image.region
+            data = pyfits.getdata(image.resized_base)[region]
+            mask = pyfits.getdata(image.resized_mask)[region]
+            image.median_scale = numpy.median(data[mask == 0])
+            _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
+        
+        # Combining images to obtain the sky flat
+        # Open all images 
+        _logger.info("Iter %d, SF: combining the images without offsets", 0)
+        fitted = self.compute_superflat(iinfo, 0)
+        
+        _logger.info("Iter %d, SF: apply superflat", 0)
+        # Process all images with the fitted flat
+        self.correct_superflat(iinfo, fitted, 0)
+        
+        _logger.info('Iter %d, sky correction (SC)', 0)
+        _logger.info('Iter %d, SC: computing simple sky', 0)            
+        self.compute_simple_sky(iinfo, 0)
 
         # Combining the images
-        imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
-        mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
-        try:
-            _logger.info("Iter %d, Combining the images", 0)
-    
-            #extinc = [pow(10, 0.4 * image.airmass * extinction) for image in iinfo]
-            extinc = [pow(10, 0.4 * 1.0 * self.parameters['extinction']) for image in iinfo]
-            data = [i['primary'].data for i in imgslll]
-            masks = [i['primary'].data for i in mskslll]
-            sf_data = median(data, masks, scales=extinc, dtype='float32')
-    
-            # We are saving here only data part
-            pyfits.writeto('result_i%01d.fits' % 0, sf_data[0], clobber=True)
-        finally:
-            map(lambda x: x.close(), imgslll)
-            map(lambda x: x.close(), mskslll)
+        _logger.info("Iter %d, Combining the images", 0)
+        self.combine_images(iinfo, 0)
 
-            _logger.info('Iter %d, finished', 0)
+        _logger.info('Iter %d, finished', 0)
 
      
         result = 1
