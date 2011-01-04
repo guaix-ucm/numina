@@ -42,7 +42,7 @@ from numina.array.combine import flatcombine, combine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 from numina.array import SextractorConf
 from numina.image.imsurfit import imsurfit
-from numina.recipes import RecipeBase
+from numina.recipes import RecipeBase, RecipeError
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 
@@ -202,9 +202,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             #dst = _name_skysub(image.resized_base, 0)
             hdulist1 = pyfits.open(image.lastname, mode='update')
             hdulist2 = pyfits.open(image.resized_mask)
-            data = hdulist1['primary'].data
-            mask = hdulist2['primary'].data
             try:
+                data = hdulist1['primary'].data
+                mask = hdulist2['primary'].data
                 sky = compute_median_background(data, mask, image.region)
                 _logger.debug('median sky value is %f', sky)
                 image.median_sky = sky
@@ -222,8 +222,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
         mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
         try:
-            #extinc = [pow(10, 0.4 * image.airmass * extinction) for image in iinfo]
-            extinc = [pow(10, 0.4 * 1.0 * self.parameters['extinction']) for image in iinfo]
+            extinc = [pow(10, 0.4 * image.airmass * self.parameters['extinction']) for image in iinfo]
             data = [i['primary'].data for i in imgslll]
             masks = [i['primary'].data for i in mskslll]
             sf_data = median(data, masks, scales=extinc, dtype='float32')
@@ -290,7 +289,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
         #
         
-        iinfo = []
+        images_info = []
         image_shapes = (2048, 2048)
         for key in sortedkeys:
             # Label
@@ -302,10 +301,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             ii.resized_base = None
             ii.resized_mask = None
             ii.objmask = None
-            iinfo.append(ii)
+            hdr = pyfits.getheader(ii.base)
+            try:
+                ii.airmass = hdr[self.parameters['airmasskey']]
+            except KeyError, e:
+                raise RecipeError("%s in image %s" % (str(e), ii.base))
+            images_info.append(ii)
         
         _logger.info('Basic processing')
-        for image in iinfo:
+        for image in images_info:
             hdulist = pyfits.open(image.base, mode='update')
             try:
                 hdu = hdulist['primary']
@@ -326,7 +330,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         _logger.info('Shape of resized array is %s', finalshape)
         
         _logger.info('Resizing images')
-        for image, noffset in zip(iinfo, offsetsp):
+        for image, noffset in zip(images_info, offsetsp):
             shape = image_shapes
             region, _ = subarray_match(finalshape, noffset, shape)
             image.region = region
@@ -368,7 +372,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         _logger.info('Superflat correction')
         
         _logger.info('SF: computing scale factors')
-        for image in iinfo:
+        for image in images_info:
             region = image.region
             data = pyfits.getdata(image.resized_base)[region]
             mask = pyfits.getdata(image.resized_mask)[region]
@@ -378,19 +382,19 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         # Combining images to obtain the sky flat
         # Open all images 
         _logger.info("Iter %d, SF: combining the images without offsets", 0)
-        fitted = self.compute_superflat(iinfo, 0)
+        fitted = self.compute_superflat(images_info, 0)
         
         _logger.info("Iter %d, SF: apply superflat", 0)
         # Process all images with the fitted flat
-        self.correct_superflat(iinfo, fitted, 0)
+        self.correct_superflat(images_info, fitted, 0)
         
         _logger.info('Iter %d, sky correction (SC)', 0)
         _logger.info('Iter %d, SC: computing simple sky', 0)            
-        self.compute_simple_sky(iinfo, 0)
+        self.compute_simple_sky(images_info, 0)
 
         # Combining the images
         _logger.info("Iter %d, Combining the images", 0)
-        self.combine_images(iinfo, 0)
+        self.combine_images(images_info, 0)
 
         _logger.info('Iter %d, finished', 0)
 
