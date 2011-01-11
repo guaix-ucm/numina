@@ -75,6 +75,11 @@ def _name_skyflat(label, iteration, ext='.fits'):
 def _name_segmask(iteration, ext='.fits'):
     return "check_i%01d%s" % (iteration, ext)
     
+    
+def get_image_shape(header):
+    ndim = header['naxis']
+    return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1)) 
+
 class ImageInformation(object):
     def __init__(self):
         pass
@@ -296,30 +301,34 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
     def run(self):
         
-        sortedkeys = sorted(self.parameters['images'].keys())
+        #sortedkeys = sorted(self.parameters['images'].keys())
         
         # Basic processing
         # Open dark and flat
         mdark = pyfits.getdata(self.parameters['master_dark'].filename)
         #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
-        # Unused for the momment
+        # Unused for the moment
         # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
         #
         
         images_info = []
+        # FIXME, is can be read from the header with
+        # get_image_shape
         image_shapes = (2048, 2048)
-        for key in sortedkeys:
+        for key in sorted(self.parameters['images'].keys()):
             # Label
             ii = ImageInformation()
             ii.label = os.path.splitext(key)[0]
             ii.base = self.parameters['images'][key][0].filename
-            ii.baseshape = image_shapes
+            ii.offset = self.parameters['images'][key][1]
+
             ii.region = None
             ii.resized_base = None
             ii.resized_mask = None
             ii.objmask = None
             hdr = pyfits.getheader(ii.base)
             try:
+                ii.baseshape = get_image_shape(hdr)
                 ii.airmass = hdr[self.parameters['airmasskey']]
             except KeyError, e:
                 raise RecipeError("%s in image %s" % (str(e), ii.base))
@@ -342,7 +351,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         for iter_ in [1, 2]:
             # Resizing images
-            offsets = [self.parameters['images'][key][1] for key in sortedkeys]
+            offsets = [image.offset for image in images_info]
         
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
