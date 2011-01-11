@@ -340,91 +340,94 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         del mdark
         #del mflat
         
-        # Resizing images
-        _iter = 1
-        offsets = [self.parameters['images'][key][1] for key in sortedkeys]
+        for iter_ in [1, 2]:
+            # Resizing images
+            offsets = [self.parameters['images'][key][1] for key in sortedkeys]
         
-        finalshape, offsetsp = combine_shape(image_shapes, offsets)
-        _logger.info('Shape of resized array is %s', finalshape)
+            finalshape, offsetsp = combine_shape(image_shapes, offsets)
+            _logger.info('Shape of resized array is %s', finalshape)
         
-        _logger.info('Resizing images')
-        for image, noffset in zip(images_info, offsetsp):
-            shape = image_shapes
-            region, _ = subarray_match(finalshape, noffset, shape)
-            image.region = region
-            imgn, maskn = _name_redimensioned_images(image.label, _iter)
-            image.resized_base = imgn
-            image.resized_mask = maskn
-            _logger.info('Resizing image %s', image.base)
+            _logger.info('Resizing images')
+            for image, noffset in zip(images_info, offsetsp):
+                shape = image_shapes
+                region, _ = subarray_match(finalshape, noffset, shape)
+                image.region = region
+                imgn, maskn = _name_redimensioned_images(image.label, iter_)
+                image.resized_base = imgn
+                image.resized_mask = maskn
+                _logger.info('Resizing image %s', image.base)
+                
+                hdulist = pyfits.open(image.base, mode='readonly')
+                try:
+                    hdu = hdulist['primary']
+                    basedata = hdu.data
+                    newdata = resize_array(basedata, finalshape, region)                
+                    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+                    _logger.info('Saving %s', imgn)
+                    newhdu.writeto(imgn)
+                finally:
+                    hdulist.close()
             
-            hdulist = pyfits.open(image.base, mode='readonly')
-            try:
-                hdu = hdulist['primary']
-                basedata = hdu.data
-                newdata = resize_array(basedata, finalshape, region)                
-                newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-                _logger.info('Saving %s', imgn)
-                newhdu.writeto(imgn)
-            finally:
-                hdulist.close()
-        
-            _logger.info('Resizing mask %s', image.label)
-            # FIXME, we should open the base mask
-            hdulist = pyfits.open(image.base, mode='readonly')
-            try:
-                hdu = hdulist['primary']
-                # FIXME
-                basedata = numpy.zeros(shape, dtype='int')
-                newdata = resize_array(basedata, finalshape, region)                
-                newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-                _logger.info('Saving %s', maskn)
-                newhdu.writeto(maskn)
-            finally:
-                hdulist.close()
-        
-            # Create empty object mask             
-            objmaskname = _name_object_mask(image.label, _iter)
-            image.objmask = objmaskname
-            _logger.info('Creating %s', objmaskname)
-        
-        _logger.info('Superflat correction')
-        
-        _logger.info('SF: computing scale factors')
-        for image in images_info:
-            region = image.region
-            data = pyfits.getdata(image.resized_base)[region]
-            mask = pyfits.getdata(image.resized_mask)[region]
-            image.median_scale = numpy.median(data[mask == 0])
-            _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
-        
-        # Combining images to obtain the sky flat
-        # Open all images 
-        _logger.info("Iter %d, SF: combining the images without offsets", _iter)
-        fitted = self.compute_superflat(images_info, _iter)
-        
-        _logger.info("Iter %d, SF: apply superflat", _iter)
-        # Process all images with the fitted flat
-        for image in images_info:
-            self.correct_superflat(image, fitted, _iter)
-        
-        _logger.info('Iter %d, sky correction (SC)', _iter)
-        _logger.info('Iter %d, SC: computing simple sky', _iter)
-        for image in images_info:            
-            self.compute_simple_sky(image, _iter)
+                _logger.info('Resizing mask %s', image.label)
+                # FIXME, we should open the base mask
+                hdulist = pyfits.open(image.base, mode='readonly')
+                try:
+                    hdu = hdulist['primary']
+                    # FIXME
+                    basedata = numpy.zeros(shape, dtype='int')
+                    newdata = resize_array(basedata, finalshape, region)                
+                    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+                    _logger.info('Saving %s', maskn)
+                    newhdu.writeto(maskn)
+                finally:
+                    hdulist.close()
+            
+                # Create empty object mask             
+                objmaskname = _name_object_mask(image.label, iter_)
+                image.objmask = objmaskname
+                _logger.info('Creating %s', objmaskname)
+            
+            _logger.info('Superflat correction')
+            
+            _logger.info('SF: computing scale factors')
+            for image in images_info:
+                region = image.region
+                data = pyfits.getdata(image.resized_base)[region]
+                mask = pyfits.getdata(image.resized_mask)[region]
+                image.median_scale = numpy.median(data[mask == 0])
+                _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
+            
+            # Combining images to obtain the sky flat
+            # Open all images 
+            _logger.info("Iter %d, SF: combining the images without offsets", iter_)
+            fitted = self.compute_superflat(images_info, iter_)
+            
+            _logger.info("Iter %d, SF: apply superflat", iter_)
+            # Process all images with the fitted flat
+            for image in images_info:
+                self.correct_superflat(image, fitted, iter_)
+            
+            _logger.info('Iter %d, sky correction (SC)', iter_)
+            _logger.info('Iter %d, SC: computing simple sky', iter_)
+            for image in images_info:            
+                self.compute_simple_sky(image, iter_)
+    
+            # Combining the images
+            _logger.info("Iter %d, Combining the images", iter_)
+            sf_data = self.combine_images(images_info, iter_)
+            
+            _logger.info('Iter %d, generating objects masks', iter_)    
+            _obj_mask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
+            
+            _logger.info('Iter %d, merging object masks with masks', iter_)
+          
+            _logger.info('Iter %d, finished', iter_)
 
-        # Combining the images
-        _logger.info("Iter %d, Combining the images", _iter)
-        sf_data = self.combine_images(images_info, _iter)
+        primary_headers = {'FILENAME': self.parameters['resultname']}
+        result = create_result(sf_data[0], headers=primary_headers,
+                                variance=sf_data[1], 
+                                exmap=sf_data[2].astype('int16'))
         
-        _logger.info('Iter %d, generating objects masks', _iter)    
-        _obj_mask = create_object_mask(self.sconf, sf_data[0], _name_segmask(_iter))
-        
-        _logger.info('Iter %d, merging object masks with masks', _iter)
-      
-        _logger.info('Iter %d, finished', _iter)
-
-     
-        result = 1
+        _logger.info("Final image created")
         return {'qa': numina.qa.UNKNOWN, 'result_image': result}
-
 
