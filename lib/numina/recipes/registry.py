@@ -1,6 +1,6 @@
 
 #
-# Copyright 2010 Sergio Pascual
+# Copyright 2010-2011 Sergio Pascual
 # 
 # This file is part of PyEmir
 # 
