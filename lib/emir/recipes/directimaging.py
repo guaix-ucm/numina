@@ -341,12 +341,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             hdulist.close()
             
     def run(self):
-        
-        #sortedkeys = sorted(self.parameters['images'].keys())
-        
+                
         # Basic processing
         # Open dark and flat
         mdark = pyfits.getdata(self.parameters['master_dark'].filename)
+        # FIXME
         #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
         # Unused for the moment
         # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
@@ -388,15 +387,20 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 hdulist.close()
                 
         del mdark
+        # FIXME
         #del mflat
         niteration = 2
+        
+        sf_data = None
+        
         for iter_ in range(1, niteration + 1):
             # Resizing images
+            _logger.info('Iter %d, computing offsets', iter_)
             offsets = [image.offset for image in images_info]        
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
-        
-            _logger.info('Resizing images')
+            
+            _logger.info('Iter %d, resizing images and mask', iter_)            
             for image, noffset in zip(images_info, offsetsp):
                 shape = image_shapes
                 region, _ = subarray_match(finalshape, noffset, shape)
@@ -411,11 +415,17 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # Create empty object mask             
                 objmaskname = _name_object_mask(image.label, iter_)
                 image.objmask = objmaskname
-                _logger.info('Creating %s', objmaskname)
+                _logger.info('Iter %d, create object mask %s', iter_, objmaskname)
+
+            if iter_ != 1:
+                _logger.info('Iter %d, generating objects masks', iter_)    
+                _obj_mask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
             
-            _logger.info('Superflat correction')
-            
-            _logger.info('SF: computing scale factors')
+                _logger.info('Iter %d, merging object masks with masks', iter_)
+
+            _logger.info('Iter %d, superflat correction (SF)', iter_)
+            _logger.info('Iter %d, SF: computing scale factors', iter_)
+
             for image in images_info:
                 region = image.region
                 data = pyfits.getdata(image.resized_base)[region]
@@ -434,18 +444,21 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 self.correct_superflat(image, fitted, iter_)
             
             _logger.info('Iter %d, sky correction (SC)', iter_)
-            _logger.info('Iter %d, SC: computing simple sky', iter_)
-            for image in images_info:            
-                self.compute_simple_sky(image, iter_)
+            # In the first iteration
+            if iter_ == 1:
+                _logger.info('Iter %d, SC: computing simple sky', iter_)
+                for image in images_info:            
+                    self.compute_simple_sky(image, iter_)
+            else:
+                _logger.info('Iter %d, SC: computing adavanced sky', iter_)
+                for image in images_info:            
+                    self.compute_simple_sky(image, iter_)
     
             # Combining the images
             _logger.info("Iter %d, Combining the images", iter_)
             sf_data = self.combine_images(images_info, iter_)
             
-            _logger.info('Iter %d, generating objects masks', iter_)    
-            _obj_mask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
-            
-            _logger.info('Iter %d, merging object masks with masks', iter_)
+
           
             _logger.info('Iter %d, finished', iter_)
 
