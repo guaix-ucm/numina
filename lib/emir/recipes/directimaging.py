@@ -22,6 +22,7 @@
 import logging
 import os.path
 import shutil
+import itertools
 
 import numpy
 import pyfits
@@ -75,10 +76,32 @@ def _name_skyflat(label, iteration, ext='.fits'):
 def _name_segmask(iteration, ext='.fits'):
     return "check_i%01d%s" % (iteration, ext)
     
-    
 def get_image_shape(header):
     ndim = header['naxis']
-    return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1)) 
+    return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
+
+def resize_hdu(hdu, newshape, region):
+    basedata = hdu.data
+    newdata = resize_array(basedata, newshape, region)                
+    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+    return newhdu
+
+def resize_fits(fitsfile, newfilename, newshape, region):
+    
+    close_on_exit = False
+    if isinstance(fitsfile, basestring):
+        hdulist = pyfits.open(fitsfile, mode='readonly')
+        close_on_exit = True
+    else:
+        hdulist = fitsfile
+        
+    try:
+        hdu = hdulist['primary']
+        newhdu = resize_hdu(hdu, newshape, region)
+        newhdu.writeto(newfilename)
+    finally:
+        if close_on_exit:
+            hdulist.close()
 
 class ImageInformation(object):
     def __init__(self):
@@ -298,6 +321,24 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         phdu = pyfits.PrimaryHDU(newdata, newheader)
         image.lastname = _name_skyflat_proc(image.label, iteration)
         phdu.writeto(image.lastname)
+        
+    def resize_image_and_mask(self, image, finalshape, imgn, maskn):
+        _logger.info('Resizing image %s', image.label)
+        resize_fits(image.base, imgn, finalshape, image.region)
+    
+        _logger.info('Resizing mask %s', image.label)
+        # FIXME, we should open the base mask
+        hdulist = pyfits.open(image.base, mode='readonly')
+        try:
+            hdu = hdulist['primary']
+            # FIXME
+            basedata = numpy.zeros((2048, 2048), dtype='int')
+            newdata = resize_array(basedata, finalshape, image.region)                
+            newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+            _logger.info('Saving %s', maskn)
+            newhdu.writeto(maskn)
+        finally:
+            hdulist.close()
             
     def run(self):
         
@@ -348,11 +389,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
         del mdark
         #del mflat
-        
-        for iter_ in [1, 2]:
+        niteration = 2
+        for iter_ in range(1, niteration + 1):
             # Resizing images
-            offsets = [image.offset for image in images_info]
-        
+            offsets = [image.offset for image in images_info]        
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
         
@@ -361,35 +401,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 shape = image_shapes
                 region, _ = subarray_match(finalshape, noffset, shape)
                 image.region = region
+                image.noffset = noffset
                 imgn, maskn = _name_redimensioned_images(image.label, iter_)
                 image.resized_base = imgn
                 image.resized_mask = maskn
-                _logger.info('Resizing image %s', image.base)
                 
-                hdulist = pyfits.open(image.base, mode='readonly')
-                try:
-                    hdu = hdulist['primary']
-                    basedata = hdu.data
-                    newdata = resize_array(basedata, finalshape, region)                
-                    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-                    _logger.info('Saving %s', imgn)
-                    newhdu.writeto(imgn)
-                finally:
-                    hdulist.close()
-            
-                _logger.info('Resizing mask %s', image.label)
-                # FIXME, we should open the base mask
-                hdulist = pyfits.open(image.base, mode='readonly')
-                try:
-                    hdu = hdulist['primary']
-                    # FIXME
-                    basedata = numpy.zeros(shape, dtype='int')
-                    newdata = resize_array(basedata, finalshape, region)                
-                    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-                    _logger.info('Saving %s', maskn)
-                    newhdu.writeto(maskn)
-                finally:
-                    hdulist.close()
+                self.resize_image_and_mask(image, finalshape, imgn, maskn)
             
                 # Create empty object mask             
                 objmaskname = _name_object_mask(image.label, iter_)
