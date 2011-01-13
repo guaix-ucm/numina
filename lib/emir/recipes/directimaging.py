@@ -22,23 +22,17 @@
 import logging
 import os.path
 import shutil
-import itertools
 
 import numpy
 import pyfits
-import scipy
-import scipy.signal
-
 
 import numina.image
 import numina.qa
 from numina.image import DiskImage
-from numina.image.flow import SerialFlow
-from numina.image.processing import DarkCorrector, NonLinearityCorrector, FlatFieldCorrector
+
 from numina.logger import captureWarnings
 from numina.array.combine import median
 from numina.array import subarray_match
-from numina.worker import para_map
 from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array.combine import flatcombine, combine
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
@@ -236,11 +230,17 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         image.lastname = dst
         
         hdulist1 = pyfits.open(image.lastname, mode='update')
-        hdulist2 = pyfits.open(image.resized_mask)
         try:
             data = hdulist1['primary'].data
-            mask = hdulist2['primary'].data
-            sky = compute_median_background(data, mask, image.region)
+            d = data[image.region]
+            
+            if image.objmask_data is not None:
+                m = image.objmask_data[image.region]
+                sky = numpy.median(d[m == 0])
+            else:
+                _logger.debug('object mask empty')
+                sky = numpy.median(d)
+
             _logger.debug('median sky value is %f', sky)
             image.median_sky = sky
             
@@ -251,7 +251,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
         finally:
             hdulist1.close()
-            hdulist2.close()
                 
     def combine_images(self, iinfo, iteration):
         _logger.debug('Iter %d, opening sky-subtracted images', iteration)
@@ -366,6 +365,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             ii.resized_base = None
             ii.resized_mask = None
             ii.objmask = None
+            ii.objmask_data = None
             hdr = pyfits.getheader(ii.base)
             try:
                 ii.baseshape = get_image_shape(hdr)
@@ -400,10 +400,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
             
-            _logger.info('Iter %d, resizing images and mask', iter_)            
+            _logger.info('Iter %d, resizing images and masks', iter_)            
             for image, noffset in zip(images_info, offsetsp):
-                shape = image_shapes
-                region, _ = subarray_match(finalshape, noffset, shape)
+                region, _ = subarray_match(finalshape, noffset, image.baseshape)
                 image.region = region
                 image.noffset = noffset
                 imgn, maskn = _name_redimensioned_images(image.label, iter_)
@@ -411,17 +410,20 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 image.resized_mask = maskn
                 
                 self.resize_image_and_mask(image, finalshape, imgn, maskn)
-            
-                # Create empty object mask             
-                objmaskname = _name_object_mask(image.label, iter_)
-                image.objmask = objmaskname
-                _logger.info('Iter %d, create object mask %s', iter_, objmaskname)
 
-            if iter_ != 1:
-                _logger.info('Iter %d, generating objects masks', iter_)    
-                _obj_mask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
+            _logger.info('Iter %d, generating segmentation image', iter_)            
+            if sf_data is not None:
+                objmask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
+            else:
+                objmask = numpy.zeros(finalshape, dtype='int')
             
-                _logger.info('Iter %d, merging object masks with masks', iter_)
+            _logger.info('Iter %d, create object mask %s', iter_, image.objmask)                
+            # Update objects mask      
+            for image in images_info: 
+                image.objmask = _name_object_mask(image.label, iter_)
+                image.objmask_data = objmask[image.region]
+                pyfits.writeto(image.objmask, image.objmask_data)
+                            
 
             _logger.info('Iter %d, superflat correction (SF)', iter_)
             _logger.info('Iter %d, SF: computing scale factors', iter_)
