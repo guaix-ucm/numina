@@ -22,6 +22,7 @@
 import logging
 import os.path
 import shutil
+import itertools
 
 import numpy
 import pyfits
@@ -57,6 +58,10 @@ def _name_object_mask(label, iteration, ext='.fits'):
 
 def _name_skyflat_proc(label, iteration, ext='.fits'):
     dn = '%s_rf_i%01d%s' % (label, iteration, ext)
+    return dn
+
+def _name_skybackground(label, iteration, ext='.fits'):
+    dn = '%s_sky_i%01d%s' % (label, iteration, ext)
     return dn
 
 def _name_skysub_proc(label, iteration, ext='.fits'):
@@ -96,6 +101,30 @@ def resize_fits(fitsfile, newfilename, newshape, region):
     finally:
         if close_on_exit:
             hdulist.close()
+
+def update_sky_related(images, nimages=5):
+    
+    nox = nimages
+
+    for idx, image in enumerate(images[:nox]):
+        bw = images[0:2 * nox + 1][:idx]
+        fw = images[0:2 * nox + 1][idx + 1:]
+        image.sky_related = (bw, fw)
+
+    for idx, image in enumerate(images[nox:-nox]):
+        bw = images[idx:idx + nox]
+        fw = images[idx + nox + 1:idx + 2 * nox + 1]
+        image.sky_related = (bw, fw)
+ 
+    for idx, image in enumerate(images[-nox:]):
+        bw = images[-2 * nox - 1:][0:idx + nox + 1]
+        fw = images[-2 * nox - 1:][nox + idx + 2:]
+        image.sky_related = (bw, fw)
+    
+    return images
+
+
+
 
 class ImageInformation(object):
     def __init__(self):
@@ -251,6 +280,49 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
         finally:
             hdulist1.close()
+            
+    def compute_advanced_sky(self, image, objmask, iteration):
+        # Create a copy of the image
+        dst = _name_skysub_proc(image.label, iteration)
+        shutil.copy(image.lastname, dst)
+        image.lastname = dst
+        
+        _logger.info('Computing advanced sky for %s', image.label)
+        desc = []
+        data = []
+        masks = []
+
+        try:        
+            for i in itertools.chain(*image.sky_related):
+                filename = i.flat_corrected
+                hdulist = pyfits.open(filename, mode='update')
+                data.append(hdulist['primary'].data[i.region])
+                masks.append(objmask[i.region])
+                desc.append(hdulist)
+
+            sky, _, _num = median(data, masks)
+            # FIXME
+            # Check _num to see where we have
+            # pixels without information
+
+            hdulist1 = pyfits.open(image.lastname, mode='update')
+            try:
+                d = hdulist1['primary'].data[image.region]
+            
+                _logger.info('Iter %d, SC: subtracting sky to image %s', 
+                         iteration, i.flat_corrected)
+                name = _name_skybackground(image.label, iteration)
+                pyfits.writeto(name, sky)
+                d -= sky
+            
+            finally:
+                hdulist1.close()
+                                                       
+        finally:
+            for hdl in desc:
+                hdl.close()
+            
+            
                 
     def combine_images(self, iinfo, iteration):
         _logger.debug('Iter %d, opening sky-subtracted images', iteration)
@@ -319,6 +391,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
         image.lastname = _name_skyflat_proc(image.label, iteration)
+        image.flat_corrected = image.lastname
         phdu.writeto(image.lastname)
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
@@ -360,7 +433,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             ii.label = os.path.splitext(key)[0]
             ii.base = self.parameters['images'][key][0].filename
             ii.offset = self.parameters['images'][key][1]
-
+ 
             ii.region = None
             ii.resized_base = None
             ii.resized_mask = None
@@ -373,6 +446,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             except KeyError, e:
                 raise RecipeError("%s in image %s" % (str(e), ii.base))
             images_info.append(ii)
+    
+        images_info = update_sky_related(images_info, nimages=2)
     
         _logger.info('Basic processing')
         for image in images_info:
@@ -389,7 +464,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         del mdark
         # FIXME
         #del mflat
-        niteration = 2
+        niteration = 4
         
         sf_data = None
         
@@ -416,15 +491,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 objmask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
-            
-            _logger.info('Iter %d, create object mask %s', iter_, image.objmask)                
+                                        
             # Update objects mask      
-            for image in images_info: 
+            for image in images_info:
+                _logger.info('Iter %d, create object mask %s', iter_, image.objmask) 
                 image.objmask = _name_object_mask(image.label, iter_)
                 image.objmask_data = objmask[image.region]
                 pyfits.writeto(image.objmask, image.objmask_data)
                             
-
             _logger.info('Iter %d, superflat correction (SF)', iter_)
             _logger.info('Iter %d, SF: computing scale factors', iter_)
 
@@ -454,7 +528,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             else:
                 _logger.info('Iter %d, SC: computing adavanced sky', iter_)
                 for image in images_info:            
-                    self.compute_simple_sky(image, iter_)
+                    self.compute_advanced_sky(image, objmask, iter_)
     
             # Combining the images
             _logger.info("Iter %d, Combining the images", iter_)
