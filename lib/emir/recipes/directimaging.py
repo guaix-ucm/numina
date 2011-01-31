@@ -400,14 +400,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
         _logger.info('Resizing mask %s', image.label)
         # FIXME, we should open the base mask
-        hdulist = pyfits.open(image.base, mode='readonly')
+        hdulist = pyfits.open(image.mask, mode='readonly')
         try:
             hdu = hdulist['primary']
             # FIXME
-            basedata = numpy.zeros((2048, 2048), dtype='int')
+            basedata = hdu.data
             newdata = resize_array(basedata, finalshape, image.region)                
-            newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-            _logger.info('Saving %s', maskn)
+            newhdu = pyfits.PrimaryHDU(newdata, hdu.header)
             newhdu.writeto(maskn)
         finally:
             hdulist.close()
@@ -432,6 +431,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             ii = ImageInformation()
             ii.label = os.path.splitext(key)[0]
             ii.base = self.parameters['images'][key][0].filename
+            ii.mask = self.parameters['master_bpm'].filename
             ii.offset = self.parameters['images'][key][1]
  
             ii.region = None
