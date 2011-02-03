@@ -27,22 +27,22 @@ import itertools
 import numpy
 import pyfits
 
+
 import numina.image
 import numina.qa
 from numina.image import DiskImage
-
+from numina.image.imsurfit import imsurfit
 from numina.logger import captureWarnings
-from numina.array.combine import median
 from numina.array import subarray_match
 from numina.array import combine_shape, resize_array, correct_flatfield
-from numina.array.combine import flatcombine, combine
+from numina.array import fixpix
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 from numina.array import SextractorConf
-from numina.image.imsurfit import imsurfit
+from numina.array.combine import flatcombine, combine
+from numina.array.combine import median
 from numina.recipes import RecipeBase, RecipeError
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
-
 from emir.dataproducts import create_result, create_raw
 from emir.recipes import EmirRecipeMixin
 
@@ -78,6 +78,8 @@ def _name_segmask(iteration, ext='.fits'):
 def get_image_shape(header):
     ndim = header['naxis']
     return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
+
+
 
 def resize_hdu(hdu, newshape, region):
     basedata = hdu.data
@@ -364,10 +366,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 scales = [image.median_scale for image in iinfo]
                 
             _logger.debug('Iter %d, combining images', iteration)
-            sf_data = flatcombine(data, masks, scales=scales, method='median')
-            #sf_data = combine(data, masks=masks, scales=scales, method='median')
+            sf_data, _sf_var, _sf_num = flatcombine(data, masks, scales=scales, method='median')
+            
+            #FIXME Check _sf_num to see where we have holes
             _logger.debug('Iter %d, fitting to a smooth surface', iteration)
-            pc, fitted = imsurfit(sf_data[0], order=2, output_fit=True)
+            pc, fitted = imsurfit(sf_data, order=2, output_fit=True)
             _logger.info('polynomial fit %s', pc)
             #fitted /= fitted.mean()            
             
@@ -399,29 +402,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         resize_fits(image.base, imgn, finalshape, image.region)
     
         _logger.info('Resizing mask %s', image.label)
-        # FIXME, we should open the base mask
-        hdulist = pyfits.open(image.mask, mode='readonly')
-        try:
-            hdu = hdulist['primary']
-            # FIXME
-            basedata = hdu.data
-            newdata = resize_array(basedata, finalshape, image.region)                
-            newhdu = pyfits.PrimaryHDU(newdata, hdu.header)
-            newhdu.writeto(maskn)
-        finally:
-            hdulist.close()
+        resize_fits(image.mask, maskn, finalshape, image.region)
             
     def run(self):
-                
-        # Basic processing
-        # Open dark and flat
-        mdark = pyfits.getdata(self.parameters['master_dark'].filename)
-        # FIXME
-        #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
-        # Unused for the moment
-        # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
-        #
-        
         images_info = []
         # FIXME, is can be read from the header with
         # get_image_shape
@@ -450,21 +433,37 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         images_info = update_sky_related(images_info, nimages=2)
     
         _logger.info('Basic processing')
+
+        # Basic processing
+        # Open bpm, dark and flat
+        bpm = pyfits.getdata(self.parameters['master_bpm'].filename)
+        mdark = pyfits.getdata(self.parameters['master_dark'].filename)
+        # FIXME
+        #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
+        # Unused for the moment
+        # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
+        #
+        
         for image in images_info:
             hdulist = pyfits.open(image.base, mode='update')
             try:
-                hdu = hdulist['primary']
+                hdu = hdulist['primary']                
+                _logger.info('Interpolating BPM in %s', image.label)
+                if not hdu.header.has_key('NFIXPIX'):
+                    hdu.data = fixpix(hdu.data, bpm)
+                    hdu.header.update('NFIXPIX', 'done')
+
                 _logger.info('Correcting dark %s', image.label)
                 if not hdu.header.has_key('NMDARK'):
                     hdu.data -= mdark
                     hdu.header.update('NMDARK', 'done')
             finally:
                 hdulist.close()
-                
+        
+        del bpm
         del mdark
-        # FIXME
-        #del mflat
-        niteration = 4
+        
+        niteration = self.parameters['iterations']
         
         sf_data = None
         
@@ -488,6 +487,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             _logger.info('Iter %d, generating segmentation image', iter_)            
             if sf_data is not None:
+                # sextractor takes care of bad pixels
                 objmask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
@@ -509,8 +509,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 image.median_scale = numpy.median(data[mask == 0])
                 _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
             
-            # Combining images to obtain the sky flat
-            # Open all images 
+            # Combining images to obtain the sky flat 
             _logger.info("Iter %d, SF: combining the images without offsets", iter_)
             fitted = self.compute_superflat(images_info, iter_)
             
