@@ -22,8 +22,8 @@ import logging
 from itertools import imap, product
 
 import numpy # pylint: disable-msgs=E1101
-import pyfits
 from scipy import asarray, zeros_like, minimum, maximum
+from scipy.interpolate import interp1d
 
 from numina.diskstorage import link_or_copy
 
@@ -96,6 +96,21 @@ def resize_array(data, finalshape, region):
     newdata[region] = data
     return newdata
 
+def fixpix(data, mask, kind='linear'):
+    '''Interpolate 2D array data in rows'''
+    if data.shape != mask.shape:
+        raise ValueError
+
+    if not numpy.any(mask):
+        return data
+
+    x = numpy.arange(0, data.shape[0])    
+    for row, mrow in zip(data, mask):
+        if numpy.any(mrow): # Interpolate if there's some pixel missing
+            itp = interp1d(x[mrow == False], row[mrow == False], kind=kind, copy=False)
+            row[mrow == True] = itp(x[mrow == True])
+    return data
+
 def correct_dark(data, dark, dtype='float32'):
     result = data - dark
     result = result.astype(dtype)
@@ -140,6 +155,8 @@ class SextractorConf(object):
 def create_object_mask(sconf, array , segmask_name=None):
     import shutil
     import os.path
+    import pyfits
+    
     # Create a work place for sextractor
     tdir = tempfile.mkdtemp(prefix='numina-')
 

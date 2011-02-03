@@ -19,6 +19,8 @@
 
 import unittest
 
+import numpy
+
 import numina.array as array
 
 class ArrayTestCase(unittest.TestCase):
@@ -71,6 +73,31 @@ class ArrayTestCase(unittest.TestCase):
         cminor, cmajor = array.subarray_match((200, 100), (-10, -20), (100, 100))
         self.assertEqual(cminor, major)
         self.assertEqual(cmajor, minor)
+        
+class FixpixTestCase(unittest.TestCase):
+    def test_exception(self):
+        data = numpy.zeros((10,10))
+        mask = numpy.zeros((100,100))
+        
+        self.assertRaises(ValueError, array.fixpix, data, mask)
+        
+        
+    def test_array_is_the_same(self):
+        data = numpy.zeros((10,10))
+        mask = numpy.zeros((10,10))
+        
+        data2 = array.fixpix(data, mask)
+        
+        self.assertIs(data2, data)
+        
+    def test_simple_interpolation(self):
+        data = numpy.array([[1.0, -1000, 3.0], [4.0, -1000, 6.0], [7.0, -10000, 9.0]])
+        mask = numpy.array([[0,1,0], [0,1,0], [0,1,0]])
+        
+        data2 = array.fixpix(data, mask)
+        for i, v in zip(data2[:,1], [2.0, 5.0, 8.0]):
+            self.assertAlmostEqual(i, v)
+        
         
 def test_suite():
     suite = unittest.TestSuite()
