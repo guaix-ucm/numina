@@ -251,16 +251,30 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
                    zeros=zeros, scales=scales, weights=weights,
                    offsets=offsets, high=high, low=low)
 
-def flatcombine(data, masks, dtype=None, scales=None,
+def flatcombine(data, masks=None, dtype=None, scales=None,
                 blank=1.0, method='median', reject='none', **kwds):
+    '''Combine flat images.
     
+    :param images: a list of arrays
+    :param masks: a list of mask arrays, True values are masked
+    :param dtype: data type of the output
+    :param out: optional output, with one more axis than the input images
+    :param blank: non-positive values are substituted by this on output
+    :param method: central tendency method
+    :param reject: rejection method
+    :return: mean, variance and number of points stored in    
+    '''
+        
     result = combine(data, masks=masks,
                      dtype=dtype, scales=scales,
                      method=method, reject=reject, **kwds)
     
     # Substitute values <= 0 by blank
     mm = result[0] <= 0
-    result[0][mm] = blank
+    result[0, mm] = blank
+    # Add values to mask
+    result[1:2, mm] = 0
+    
     return result
 
 def zerocombine(data, masks, dtype=None, scales=None,
@@ -272,8 +286,3 @@ def zerocombine(data, masks, dtype=None, scales=None,
 
     return result
 
-if __name__ == '__main__':
-    shape = (5, 5)
-    rst = combine([numpy.ones(shape) * i for i in xrange(3)],
-                  method='average', reject='none', weights=[0, 1, 1])
-    print rst
