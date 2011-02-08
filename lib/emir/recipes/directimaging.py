@@ -26,7 +26,7 @@ import itertools
 
 import numpy
 import pyfits
-
+import scipy.ndimage as ndimage
 
 import numina.image
 import numina.qa
@@ -125,8 +125,68 @@ def update_sky_related(images, nimages=5):
     
     return images
 
+def fit_bilinear(x,y,z):
+    '''Bilinear least square fit to a region'''
+    meanx = x.mean()
+    meany = y.mean()
+    x_ = x - meanx
+    y_ = y - meany
 
+    y2m = (y_**2).mean()
+    x2m = (x_**2).mean()
+    amat = numpy.zeros(shape=(3,3))
+    amat[0,0] = 1
+    amat[1,1] = x2m
+    amat[2,2] = y2m
+    coff = numpy.empty(shape=(3,))
+    coff[0] = z.mean()
+    coff[1] = (x_ * z).mean()
+    coff[2] = (y_ * z).mean()
+    pc = numpy.linalg.solve(amat, coff)
 
+    def calc(x,y):
+        return pc[0] + pc[1] * (x - meanx) + pc[2] * (y - meanx)
+
+def fixpix2(data, mask, iterations=3, output=None):
+    '''Substitute pixels in mask by a bilinear least square fitting.
+    '''
+    out = output if output is not None else data.copy()
+    
+    # A binary mask, regions are ones
+    binry = mask != 0
+    
+    # Label regions in the binary mask
+    lblarr, labl = ndimage.label(binry)
+    
+    # Structure for dilation is 8-way
+    stct = ndimage.generate_binary_structure(2, 2)
+    # Pixels in the background
+    back = lblarr == 0
+    # For each object
+    for idx in range(1, labl + 1):
+        # Pixels of the object
+        segm = lblarr == idx
+        # Pixels of the object or the background
+        # dilation will only touch these pixels
+        dilmask =  numpy.logical_or(back, segm)
+        # Dilation 3 times
+        more = ndimage.binary_dilation(segm, stct, 
+                                       iterations=iterations, 
+                                       mask=dilmask)
+        # Border pixels
+        # Pixels in the border around the object are
+        # more and (not segm)
+        border = numpy.logical_and(more, numpy.logical_not(segm))
+        # Pixels in the border
+        xi, yi = border.nonzero()
+        # Bilinear leastsq calculator
+        calc = fit_bilinear(xi, yi, out[xi,yi])
+        # Pixels in the region
+        xi, yi = segm.nonzero()
+        # Value is obtained from the fit
+        out[segm] = calc(xi, yi)
+        
+    return out
 
 class ImageInformation(object):
     def __init__(self):
@@ -366,9 +426,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 scales = [image.median_scale for image in iinfo]
                 
             _logger.debug('Iter %d, combining images', iteration)
-            sf_data, _sf_var, _sf_num = flatcombine(data, masks, scales=scales, method='median')
+            sf_data, _sf_var, _sf_num = flatcombine(data, masks, scales=scales, method='median', blank=1.0 / scales[0])
             
-            #FIXME Check _sf_num to see where we have holes
+            # _fs_num == 0 where there's no information
+            # these values have been scales to 1.0 / scales[0]
+            # so is safe to fit something here
+            
             _logger.debug('Iter %d, fitting to a smooth surface', iteration)
             pc, fitted = imsurfit(sf_data, order=2, output_fit=True)
             _logger.info('polynomial fit %s', pc)
@@ -406,9 +469,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
     def run(self):
         images_info = []
-        # FIXME, is can be read from the header with
-        # get_image_shape
-        image_shapes = (2048, 2048)
+        
         for key in sorted(self.parameters['images'].keys()):
             # Label
             ii = ImageInformation()
@@ -431,6 +492,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             images_info.append(ii)
     
         images_info = update_sky_related(images_info, nimages=2)
+        image_shapes = images_info[0].images_info
     
         _logger.info('Basic processing')
 
@@ -440,9 +502,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         mdark = pyfits.getdata(self.parameters['master_dark'].filename)
         # FIXME
         #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
-        # Unused for the moment
-        # mbpm = pyfits.getdata(self.parameters['master_bpm'].filename)
-        #
+
         
         for image in images_info:
             hdulist = pyfits.open(image.base, mode='update')
