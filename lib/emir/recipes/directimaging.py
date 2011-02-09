@@ -65,6 +65,11 @@ def _name_skybackground(label, iteration, ext='.fits'):
     dn = '%s_sky_i%01d%s' % (label, iteration, ext)
     return dn
 
+def _name_skybackgroundmask(label, iteration, ext='.fits'):
+    dn = '%s_skymask_i%01d%s' % (label, iteration, ext)
+    return dn
+
+
 def _name_skysub_proc(label, iteration, ext='.fits'):
     dn = '%s_rfs_i%01d%s' % (label, iteration, ext)
     return dn
@@ -397,7 +402,23 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             d[key] = os.path.abspath(self.parameters[key])
             
         self.sconf = SextractorConf(**d)
-        
+    
+    def basic_processing(self, image, bpm, dark):
+        hdulist = pyfits.open(image.base, mode='update')
+        try:
+            hdu = hdulist['primary']                
+            _logger.info('Interpolating BPM in %s', image.label)
+            if not hdu.header.has_key('NFIXPIX'):
+                hdu.data = fixpix(hdu.data, bpm)
+                hdu.header.update('NFIXPIX', 'done')
+
+            _logger.info('Correcting dark %s', image.label)
+            if not hdu.header.has_key('NMDARK'):
+                hdu.data -= dark
+                hdu.header.update('NMDARK', 'done')
+        finally:
+            hdulist.close()
+
     def compute_simple_sky(self, image, iteration):
         
         dst = _name_skysub_proc(image.label, iteration)
@@ -447,10 +468,20 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 masks.append(objmask[i.region])
                 desc.append(hdulist)
 
-            sky, _, _num = median(data, masks)
-            # FIXME
-            # Check _num to see where we have
-            # pixels without information
+            sky, _, num = median(data, masks)
+            if numpy.any(num == 0):
+                # We have pixels without
+                # sky background information
+                _logger.warn('Pixels without sky information in image %s',
+                             i.flat_corrected)
+                binmask = num == 0
+                # FIXME: during development, this is faster
+                sky[binmask] = sky[num != 0].mean()
+                # To continue we interpolate over the patches
+                #fixpix2(sky, binmask, output=sky, iterations=1)
+                name = _name_skybackgroundmask(image.label, iteration)
+                pyfits.writeto(name, binmask.astype('int16'))
+                
 
             hdulist1 = pyfits.open(image.lastname, mode='update')
             try:
@@ -577,7 +608,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             images_info.append(ii)
     
         images_info = update_sky_related(images_info, nimages=2)
-        image_shapes = images_info[0].images_info
+        image_shapes = images_info[0].baseshape
     
         _logger.info('Basic processing')
 
@@ -585,31 +616,18 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         # Open bpm, dark and flat
         bpm = pyfits.getdata(self.parameters['master_bpm'].filename)
         mdark = pyfits.getdata(self.parameters['master_dark'].filename)
-        # FIXME
+        # FIXME: Use a flat field image eventually
         #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
 
-        
         for image in images_info:
-            hdulist = pyfits.open(image.base, mode='update')
-            try:
-                hdu = hdulist['primary']                
-                _logger.info('Interpolating BPM in %s', image.label)
-                if not hdu.header.has_key('NFIXPIX'):
-                    hdu.data = fixpix(hdu.data, bpm)
-                    hdu.header.update('NFIXPIX', 'done')
-
-                _logger.info('Correcting dark %s', image.label)
-                if not hdu.header.has_key('NMDARK'):
-                    hdu.data -= mdark
-                    hdu.header.update('NMDARK', 'done')
-            finally:
-                hdulist.close()
+            self.basic_processing(image, bpm, mdark)
         
         del bpm
         del mdark
         
         niteration = self.parameters['iterations']
         
+        # Final image, not yet built
         sf_data = None
         
         for iter_ in range(1, niteration + 1):
