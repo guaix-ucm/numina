@@ -7,3 +7,10 @@ syntax: regexp
 ^lib/numina/array/_combine\.so$
 syntax: glob
 *.pyc
+
+syntax: regexp
+^dist$
+syntax: regexp
+^doc/doctrees$
+syntax: regexp
+^doc/html$

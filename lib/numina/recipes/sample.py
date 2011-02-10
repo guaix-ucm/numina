@@ -44,12 +44,11 @@ class Sample(RecipeBase):
                 'result': 1}
         
 if __name__ == '__main__':
-    import simplejson as json
     import tempfile 
     
     from numina.user import main
     from numina.jsonserializer import to_json 
-        
+    from numina.compatibility import json
 
     p = {'recipe': {'run': {'repeat': 2, 'mode': 'sample', 'instrument': 'sample'}}}   
           

@@ -23,6 +23,10 @@ import pkgutil
 import sys
 import os.path
 
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 def get_data(package, resource):
     """Get a resource from a package.

@@ -22,7 +22,8 @@ try:
 except ImportError:
     from numina.compatibility import get_data
 
-from simplejson import loads
+from numina.compatibility import json
+from json import loads
 from pyfits import Header, Card
 
 from numina.image.storage import FITSCreator

@@ -171,7 +171,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     _logger.setLevel(logging.DEBUG)
     from numina.user import main
-    import simplejson as json
+    from numina.compatibility import json
     from numina.jsonserializer import to_json
 
     pv = {'observing_block': {'instrument': 'emir',

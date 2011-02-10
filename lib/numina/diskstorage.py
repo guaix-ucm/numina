@@ -19,10 +19,8 @@
 
 import os
 import shutil
-try:
-    import json
-except ImportError:
-    import simplejson as json
+
+
 import logging
 
 from pyfits import HDUList
@@ -31,6 +29,7 @@ from generic import generic
 from jsonserializer import to_json
 from numina.image import DiskImage
 from numina.recipes import RecipeResult
+from numina.compatibility import json
 
 _logger = logging.getLogger("numina.storage")
 

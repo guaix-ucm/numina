@@ -104,8 +104,7 @@ if __name__ == '__main__':
     import os
     import uuid
     
-    import simplejson as json
-    
+    from numina.compatibility import json
     from numina.user import main
     from numina.jsonserializer import to_json
 

@@ -21,8 +21,7 @@ from __future__ import with_statement
 
 import collections
 
-import simplejson as json
-
+from numina.compatibility import json
 from numina.jsonserializer import from_json
 
 Schema = collections.namedtuple('Schema', 'name value description')

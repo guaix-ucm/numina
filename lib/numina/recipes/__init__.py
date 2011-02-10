@@ -160,7 +160,7 @@ def init_recipe_system(modules):
             
             
 if __name__ == '__main__':
-    import simplejson as json
+    from numina.compatibility import json
     import tempfile
     
     from numina.user import main
