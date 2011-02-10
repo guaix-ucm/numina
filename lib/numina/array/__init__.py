@@ -108,7 +108,8 @@ def fixpix(data, mask, kind='linear'):
     for row, mrow in zip(data, mask):
         if numpy.any(mrow): # Interpolate if there's some pixel missing
             itp = interp1d(x[mrow == False], row[mrow == False], kind=kind, copy=False)
-            row[mrow == True] = itp(x[mrow == True])
+            invalid = mrow == True
+            row[invalid] = itp(x[invalid]).astype(row.dtype)
     return data
 
 def correct_dark(data, dark, dtype='float32'):
