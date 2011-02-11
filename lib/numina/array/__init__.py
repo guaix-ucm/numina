@@ -210,7 +210,7 @@ def create_object_mask(sconf, array , segmask_name=None):
 
     return result
 
-def numberarray(x, shape=(5, 5)):
+def numberarray(x, shape):
     '''Return x if it is an array or create an array and fill it with x.''' 
     try:
         iter(x)
