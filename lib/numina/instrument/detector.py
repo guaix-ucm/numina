@@ -28,7 +28,7 @@ __metaclass__ = type
 
 class Detector:
     '''A generic optical or IR bidimensional detector.'''
-    def __init__(self, shape=(5, 5), gain=1.0, ron=0.0, dark=1.0, 
+    def __init__(self, shape, gain=1.0, ron=0.0, dark=1.0, 
                  well=65535, pedestal=200., flat=1.0, 
                  resetval=0, resetnoise=0.0):
         self._shape = shape

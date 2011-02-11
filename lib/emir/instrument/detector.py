@@ -80,87 +80,46 @@ QUADRANTS = [(slice(1024, 2048), slice(0, 1024)),
              (slice(1024, 2048), slice(1024, 2048))
              ]
 
-
-class EmirDetector(numina.instrument.detector.Detector):
-    '''The EMIR detector.'''
-    def __init__(self, shape=(5, 5), gain=1.0, ron=0.0, dark=1.0, well=65535,
-                 pedestal=200., flat=1.0, resetval=0, resetnoise=0.0):
-        super(EmirDetector, self).__init__(shape, gain, ron, dark, well,
-                                           pedestal, flat, resetval, resetnoise)
-        self.events = None
-        self.options = None
-        self._exposure = 0
+class ReadoutMode:
+    def __init__(self, mode, scheme, reads, repeat):
+        self.mode = mode
+        self.scheme = scheme
+        self.reads = reads
+        self.repeat = repeat
         
-    def configure(self, options):
-        self.options = options
-    
-    def exposure(self, exposure):
-        self._exposure = exposure
-        self.events = self.generate_events(exposure)
-    
-    def lpath(self, input_=None):
-        self.reset()
-        images = [self.read(t, input_) for t in self.events]
-        # Process the images according to the mode
-        final = self.process(images, self.events)
-        return final.astype(self.outtype)
-
-    def generate_events(self, exposure):
-        # generate read events according to the mode        
-        events_function = getattr(self, "events_%s" % self.options['mode'],
-                                  self.events_wrong)
-        return events_function(exposure)    
-    
-    def events_wrong(self, exposure):
-        msg = 'Readout mode %s doesn\'t exist' % self.options['mode']
-        raise DetectorReadoutError(msg)
-    
-    def events_single(self, exposure):
+class SingleReadoutMode(ReadoutMode):
+    def __init__(self, repeat=1):
+        ReadoutMode.__init__(self, 'single', 'perline', 1, repeat)
+        
+    def events(self, exposure):
         return [exposure]
     
-    def events_cds(self, exposure):
-        return [0, exposure]
-    
-    def events_fowler(self, exposure):
-        dt = self.readout_time
-        nsamples = int(self.options['reads'])
-        reads = [i * dt for i in range(nsamples)]
-        reads += [i * dt + exposure for i in reads]
-        return reads
-    
-    def events_ramp(self, exposure):
-        nsamples = int(self.options['reads'])
-        dt = exposure / (nsamples - 1.)
-        return [dt * i for i in range(nsamples)]
-    
     def process(self, images, events):
-        process_function = getattr(self, "process_%s" % self.options['mode'],
-                                   self.process_wrong)
-        return process_function(images, events)
-    
-    def process_wrong(self, images, events):
-        msg = "Readout mode %s doesn't exist" % self.options['mode']
-        raise DetectorReadoutError(msg)
-        
-    def process_ramp(self, images, events):
-        def slope(y, xcenter, varx, time):
-            return ((y - y.mean())*xcenter).sum() / varx * time
-        
-        events = numpy.array(events)
-        images = numpy.array(images)
-        meanx = events.mean()
-        sxx = events.var() * events.shape[0]
-        xcenter = events - meanx
-        images = numpy.dstack(images)
-        return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
-    
-    def process_single(self, images, events):
         return images[0]
     
-    def process_cds(self, images, events):
+class CdsReadoutMode(ReadoutMode):
+    def __init__(self, repeat=1):
+        ReadoutMode.__init__(self, 'CDS', 'perline', 1, repeat)
+        
+    def events(self, exposure):
+        return [0, exposure]
+    
+    def process(self, images, events):
         return images[1] - images[0]
     
-    def process_fowler(self, images, events):
+class FowlerReadoutMode(ReadoutMode):
+    def __init__(self, reads, repeat=1):
+        ReadoutMode.__init__(self, 'Fowler', 'perline', reads, repeat)
+        self.readout_time = 0.0
+        
+    def events(self, exposure):
+        dt = self.readout_time
+        nsamples = int(self.reads)
+        vreads = [i * dt for i in range(nsamples)]
+        vreads += [i * dt + exposure for i in vreads]
+        return vreads
+    
+    def process(self, images, events):
         # Subtracting correlated reads
         nsamples = len(images) / 2
         # nsamples has to be odd
@@ -168,14 +127,104 @@ class EmirDetector(numina.instrument.detector.Detector):
                                for i in range(nsamples)])
         # Final mean
         return reduced.mean(axis=0)
+
+class RampReadoutMode(ReadoutMode):
+    def __init__(self, reads, repeat=1):
+        ReadoutMode.__init__(self, 'Ramp', 'perline', reads, repeat)
+        
+    def events(self, exposure):
+        nsamples = int(self.reads)
+        dt = exposure / (nsamples - 1.)
+        return [dt * i for i in range(nsamples)]
     
+    def process(self, images, events):
+        
+        def slope(y, xcenter, varx, time):
+            return ((y - y.mean()) * xcenter).sum() / varx * time
+        
+        events = numpy.asarray(events)
+        images = numpy.asarray(images)
+        meanx = events.mean()
+        sxx = events.var() * events.shape[0]
+        xcenter = events - meanx
+        images = numpy.dstack(images)
+        return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
+    
+
+class Hawaii2(numina.instrument.detector.Detector):
+    '''The EMIR detector.'''
+    
+    AMP1 = QUADRANTS # 1 amplifier per quadrant
+    AMP8 = CHANNELS # 8 amplifiers per quadrant
+    
+    
+    def __init__(self, gain=1.0, ron=0.0, dark=1.0, well=65535,
+                 pedestal=200., flat=1.0, resetval=0, resetnoise=0.0,
+                 mode='8'):
+        super(Hawaii2, self).__init__((2048, 2048), gain, ron, dark, well,
+                                           pedestal, flat, resetval, resetnoise)
+        
+        if mode not in ['1', '8']:
+            raise ValueError('mode must be "1" or "8"')
+        
+        self.mode = mode
+        # Amplifier region
+        self.amp = self.AMP1 if mode == '1' else self.AMP8
+        
+        # Gain and RON per amplifier
+        self._ron = numpy.asarray(ron)
+        self._gain = numpy.asarray(gain)
+        
+        self.ronmode = SingleReadoutMode()
+        
+        self.events = None
+        
+        self._exposure = 0
+        
+    def read(self, time=None, source=None):
+        '''Read the detector.'''
+        if time is not None:
+            self.elapse(time, source)
+        self._time += self.readout_time
+        result = self._detector.copy()
+        result[result < 0] = 0
+        
+        # Gain and RON per amplifier        
+        ampgain = ito.cycle(self._gain.flat)
+        ampron = ito.cycle(self._ron.flat)
+        
+        for amp, gain, ron in zip(self.amp, ampgain, ampron):
+            data = result[amp]
+            data /= gain            
+            # Readout noise
+            data += numpy.random.standard_normal(data.shape) * ron
+        
+        result += self._pedestal
+        # result[result > self._well] = self._well
+        return result.astype(self.type)        
+        
+    def configure(self, ronmode):
+        self.ronmode = ronmode
+    
+    def exposure(self, exposure):
+        self._exposure = exposure
+        self.events = self.ronmode.events(exposure)
+    
+    def lpath(self, input_=None):
+        self.reset()
+        images = [self.read(t, input_) for t in self.events]
+        # Process the images according to the mode
+        final = self.ronmode.process(images, self.events)
+        return final.astype(self.outtype)
+     
     def metadata(self):
         '''Return metadata exported by the EMIRDetector.'''
-        mtdt = {'EXPOSED':self._exposure, 'EXPTIME':self._exposure,
+        mtdt = {'EXPOSED':self._exposure, 
+                'EXPTIME':self._exposure,
                 'ELAPSED':self.time_since_last_reset(),
                 'DARKTIME':self.time_since_last_reset(),
-                'READMODE':self.options['mode'].upper(),
-                'READSCHM':self.options['scheme'].upper(),
-                'READNUM':self.options['reads'],
-                'READREPT':self.options['repeat']}
+                'READMODE':self.ronmode.mode.upper(),
+                'READSCHM':self.ronmode.scheme.upper(),
+                'READNUM':self.ronmode.reads,
+                'READREPT':self.ronmode.repeat}
         return mtdt

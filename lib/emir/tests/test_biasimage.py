@@ -23,7 +23,7 @@ import unittest
 import scipy
 
 from numina.simulation import run_counter
-from emir.instrument.detector import EmirDetector
+from emir.instrument.detector import Hawaii2
 from emir.dataproducts import create_raw
 
 # Classes are new style
@@ -36,7 +36,7 @@ class BiasImageTestCase(unittest.TestCase):
         detector_conf = {'ron': 1, 'dark': 1, 'gain':1, 'flat':1, 'well': 65000}
         detector_conf['shape'] = (100, 100)
 
-        self.detector = EmirDetector(**detector_conf)
+        self.detector = Hawaii2(**detector_conf)
     
         readout_opt = {'exposure':0, 'reads':1, 'repeat':1,
                        'mode':'fowler', 'scheme':'perline'}
