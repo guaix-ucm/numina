@@ -25,11 +25,9 @@ import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as CPError
-import pkgutil
-# get_data is not in python 2.5
-if not hasattr(pkgutil, 'get_data'):
-    from compatibility import get_data
-    pkgutil.get_data = get_data
+
+from compatibility import get_data
+
 import StringIO
 
 import xdg.BaseDirectory as xdgbd
@@ -208,7 +206,7 @@ def main(args=None):
     config = SafeConfigParser()
     # Default values, it must exist
    
-    config.readfp(StringIO.StringIO(pkgutil.get_data('numina','defaults.cfg')))
+    config.readfp(StringIO.StringIO(get_data('numina','defaults.cfg')))
 
     # Custom values, site wide and local
     config.read(['.numina/numina.cfg', 
@@ -226,7 +224,7 @@ def main(args=None):
         try:
             options.logging = config.get('numina', 'logging')
         except CPError:
-            options.logging = StringIO.StringIO(pkgutil.get_data('numina','logging.ini'))
+            options.logging = StringIO.StringIO(get_data('numina','logging.ini'))
 
     logging.config.fileConfig(options.logging)
     

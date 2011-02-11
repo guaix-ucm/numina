@@ -28,7 +28,7 @@ try:
 except ImportError:
     import simplejson as json
 
-def get_data(package, resource):
+def _get_data(package, resource):
     """Get a resource from a package.
 
     This is a wrapper round the PEP 302 loader get_data API. The package
@@ -66,3 +66,10 @@ def get_data(package, resource):
     parts.insert(0, os.path.dirname(mod.__file__))
     resource_name = os.path.join(*parts)
     return loader.get_data(resource_name)
+
+try:
+    from pkgutil import get_data
+except ImportError:
+    get_data = _get_data
+    
+
