@@ -20,10 +20,10 @@
 import datetime
 import unittest
 
-import scipy
+import numpy
 
 from numina.simulation import run_counter
-from emir.instrument.detector import Hawaii2
+from emir.instrument.detector import EmirDetector, CdsReadoutMode
 from emir.dataproducts import create_raw
 
 # Classes are new style
@@ -33,25 +33,21 @@ class BiasImageTestCase(unittest.TestCase):
     '''Test case of the EMIR bias image recipe.'''
     def setUp(self):
         # Create some 'bias' images
-        detector_conf = {'ron': 1, 'dark': 1, 'gain':1, 'flat':1, 'well': 65000}
-        detector_conf['shape'] = (100, 100)
+        
 
-        self.detector = Hawaii2(**detector_conf)
-    
-        readout_opt = {'exposure':0, 'reads':1, 'repeat':1,
-                       'mode':'fowler', 'scheme':'perline'}
+        self.detector = EmirDetector()
                 
         self._repeat = 1
-
-        self.detector.configure(readout_opt)
+        romode = CdsReadoutMode()
+        self.detector.configure(romode)
         
-        self.input_ = scipy.zeros(detector_conf['shape'])
-        self.detector.exposure(readout_opt['exposure'])
+        self.input_ = numpy.zeros(self.detector.shape())
+        self.detector.exposure(0.0)
         
         self.runcounter = run_counter("r%05d")
         
         
-        self.nimages = 100
+        self.nimages = 10
         
         def image_generator(upto):
             i = 0

@@ -27,7 +27,7 @@ from numina.exceptions import DetectorElapseError
 __metaclass__ = type
 
 class Detector:
-    '''A generic optical or IR bidimensional detector.'''
+    '''A generic nIR bidimensional detector.'''
     def __init__(self, shape, gain=1.0, ron=0.0, dark=1.0, 
                  well=65535, pedestal=200., flat=1.0, 
                  resetval=0, resetnoise=0.0):
@@ -74,6 +74,7 @@ class Detector:
         if time is not None:
             self.elapse(time, source)
         self._time += self.readout_time
+        # Read is non destructive
         result = self._detector.copy()
         result[result < 0] = 0
         # Gain per channel

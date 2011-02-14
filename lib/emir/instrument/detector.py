@@ -21,8 +21,7 @@ import itertools as ito
 
 import numpy # pylint: disable-msgs=E1101
 
-import numina.instrument.detector
-from numina.exceptions import DetectorReadoutError
+from numina.instrument.detector import Detector
 
 # Classes are new style
 __metaclass__ = type
@@ -66,6 +65,23 @@ def braid(*iterables):
             buffer[idx] = next(i, None)
         if any(map(lambda x: x is None, buffer)):
             raise StopIteration
+        
+def braid2(*iterables):
+    '''Return the elements of each iterator in turn until some is exhausted.
+    
+    This function is similar to the roundrobin example 
+    in itertools documentation.
+    
+    >>> a = iter([1,2,3,4])
+    >>> b = iter(['a', 'b'])
+    >>> c = iter([1,1,1,1,'a', 'c'])
+    >>> d = iter([1,1,1,1,1,1])
+    >>> list(braid2(a, b, c, d))
+    [1, 'a', 1, 1, 2, 'b', 1, 1]
+    '''
+    for itbl in ito.izip(*iterables):
+        for it in itbl:
+            yield it
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
@@ -98,25 +114,38 @@ class SingleReadoutMode(ReadoutMode):
         return images[0]
     
 class CdsReadoutMode(ReadoutMode):
+    '''Correlated double sampling readout mode.'''
     def __init__(self, repeat=1):
         ReadoutMode.__init__(self, 'CDS', 'perline', 1, repeat)
         
     def events(self, exposure):
-        return [0, exposure]
+        '''
+        >>> cds_rm = CdsReadoutMode()
+        >>> cds_rm.events(10.0)
+        [0.0, 10.0]
+        '''
+        return [0.0, exposure]
     
     def process(self, images, events):
         return images[1] - images[0]
     
 class FowlerReadoutMode(ReadoutMode):
-    def __init__(self, reads, repeat=1):
+    '''Fowler sampling readout mode.'''
+    def __init__(self, reads, repeat=1, readout_time=0.0):
         ReadoutMode.__init__(self, 'Fowler', 'perline', reads, repeat)
-        self.readout_time = 0.0
+        self.readout_time = readout_time
         
     def events(self, exposure):
+        '''
+        
+        >>> frm = FowlerReadoutMode(reads=3, readout_time=0.8)
+        >>> frm.events(10.0)
+        [0.0, 0.8, 1.6, 10.0, 10.8, 11.6]
+        '''
+        
         dt = self.readout_time
-        nsamples = int(self.reads)
-        vreads = [i * dt for i in range(nsamples)]
-        vreads += [i * dt + exposure for i in vreads]
+        vreads = [i * dt for i in range(self.reads)]
+        vreads += [t + exposure for t in vreads]
         return vreads
     
     def process(self, images, events):
@@ -129,13 +158,13 @@ class FowlerReadoutMode(ReadoutMode):
         return reduced.mean(axis=0)
 
 class RampReadoutMode(ReadoutMode):
+    '''"Up the ramp" sampling readout mode.'''
     def __init__(self, reads, repeat=1):
         ReadoutMode.__init__(self, 'Ramp', 'perline', reads, repeat)
         
     def events(self, exposure):
-        nsamples = int(self.reads)
-        dt = exposure / (nsamples - 1.)
-        return [dt * i for i in range(nsamples)]
+        dt = exposure / (self.reads - 1.)
+        return [dt * i for i in range(self.reads)]
     
     def process(self, images, events):
         
@@ -151,8 +180,8 @@ class RampReadoutMode(ReadoutMode):
         return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
     
 
-class Hawaii2(numina.instrument.detector.Detector):
-    '''The EMIR detector.'''
+class Hawaii2(Detector):
+    '''Hawaii2 detector.'''
     
     AMP1 = QUADRANTS # 1 amplifier per quadrant
     AMP8 = CHANNELS # 8 amplifiers per quadrant
@@ -161,6 +190,12 @@ class Hawaii2(numina.instrument.detector.Detector):
     def __init__(self, gain=1.0, ron=0.0, dark=1.0, well=65535,
                  pedestal=200., flat=1.0, resetval=0, resetnoise=0.0,
                  mode='8'):
+        '''
+            :parameter gain: gain in e-/ADU
+            :parameter ron: ron in ADU
+            :parameter dark: dark current in e-/s
+            :parameter well: well depth in ADUs 
+        '''
         super(Hawaii2, self).__init__((2048, 2048), gain, ron, dark, well,
                                            pedestal, flat, resetval, resetnoise)
         
@@ -210,15 +245,40 @@ class Hawaii2(numina.instrument.detector.Detector):
         self._exposure = exposure
         self.events = self.ronmode.events(exposure)
     
-    def lpath(self, input_=None):
+    def lpath(self, source=None):
         self.reset()
-        images = [self.read(t, input_) for t in self.events]
+        images = [self.read(t, source) for t in self.events]
         # Process the images according to the mode
         final = self.ronmode.process(images, self.events)
         return final.astype(self.outtype)
-     
+
+class EmirDetector(Hawaii2):
+    def __init__(self, flat=1.0):        
+        # ADU, per AMP
+        ron = [3.14, 3.060, 3.09, 3.08, 3.06, 3.20, 3.13, 3.10, 2.98, 2.98, 
+               2.95, 3.06, 3.050, 3.01, 3.05, 3.20, 2.96, 3.0, 3.0, 2.99, 3.14, 
+               2.99, 3.06, 3.05, 3.08, 3.06, 3.01, 3.02, 3.07, 2.99, 3.03, 3.06]
+
+        # e-/ADU per AMP
+        gain = [2.83, 2.84, 2.82, 2.92, 2.98, 2.71, 3.03, 2.92, 3.04, 2.79, 2.72, 
+                3.07, 3.03, 2.91, 3.16, 3.22, 2.93, 2.88, 2.99, 3.24, 3.25, 3.12, 
+                3.29, 3.03, 3.04, 3.35, 3.11, 3.25, 3.29, 3.17, 2.93, 3.05]
+
+        # e-/s global median
+        dark = 0.298897832632
+
+        # ADU per AMP
+        wdepth = [42353.1, 42148.3, 42125.5, 42057.9, 41914.1, 42080.2, 42350.3, 
+                  41830.3, 41905.3, 42027.9, 41589.5, 41712.7, 41404.9, 41068.5, 
+                  40384.9, 40128.1, 41401.4, 41696.5, 41461.1, 41233.2, 41351.0, 
+                  41803.7, 41450.2, 41306.2, 41609.4, 41414.1, 41324.5, 41691.1, 
+                  41360.0, 41551.2, 41618.6, 41553.5]
+
+        super(EmirDetector, self).__init__(gain=gain, ron=ron, dark=dark, 
+                                           well=wdepth, flat=flat)
+    
     def metadata(self):
-        '''Return metadata exported by the EMIRDetector.'''
+        '''Return metadata exported by the EmirDetector.'''
         mtdt = {'EXPOSED':self._exposure, 
                 'EXPTIME':self._exposure,
                 'ELAPSED':self.time_since_last_reset(),
