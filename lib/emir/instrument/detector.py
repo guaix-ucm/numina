@@ -180,7 +180,7 @@ class RampReadoutMode(ReadoutMode):
         return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
     
 
-class Hawaii2(Detector):
+class Hawaii2Detector(Detector):
     '''Hawaii2 detector.'''
     
     AMP1 = QUADRANTS # 1 amplifier per quadrant
@@ -196,7 +196,7 @@ class Hawaii2(Detector):
             :parameter dark: dark current in e-/s
             :parameter well: well depth in ADUs 
         '''
-        super(Hawaii2, self).__init__((2048, 2048), gain, ron, dark, well,
+        super(Hawaii2Detector, self).__init__((2048, 2048), gain, ron, dark, well,
                                            pedestal, flat, resetval, resetnoise)
         
         if mode not in ['1', '8']:
@@ -252,7 +252,19 @@ class Hawaii2(Detector):
         final = self.ronmode.process(images, self.events)
         return final.astype(self.outtype)
 
-class EmirDetector(Hawaii2):
+    def metadata(self):
+        '''Return metadata exported by the EmirDetector.'''
+        mtdt = {'EXPOSED':self._exposure, 
+                'EXPTIME':self._exposure,
+                'ELAPSED':self.time_since_last_reset(),
+                'DARKTIME':self.time_since_last_reset(),
+                'READMODE':self.ronmode.mode.upper(),
+                'READSCHM':self.ronmode.scheme.upper(),
+                'READNUM':self.ronmode.reads,
+                'READREPT':self.ronmode.repeat}
+        return mtdt
+
+class EmirDetector(Hawaii2Detector):
     def __init__(self, flat=1.0):        
         # ADU, per AMP
         ron = [3.14, 3.060, 3.09, 3.08, 3.06, 3.20, 3.13, 3.10, 2.98, 2.98, 
@@ -277,14 +289,4 @@ class EmirDetector(Hawaii2):
         super(EmirDetector, self).__init__(gain=gain, ron=ron, dark=dark, 
                                            well=wdepth, flat=flat)
     
-    def metadata(self):
-        '''Return metadata exported by the EmirDetector.'''
-        mtdt = {'EXPOSED':self._exposure, 
-                'EXPTIME':self._exposure,
-                'ELAPSED':self.time_since_last_reset(),
-                'DARKTIME':self.time_since_last_reset(),
-                'READMODE':self.ronmode.mode.upper(),
-                'READSCHM':self.ronmode.scheme.upper(),
-                'READNUM':self.ronmode.reads,
-                'READREPT':self.ronmode.repeat}
-        return mtdt
+

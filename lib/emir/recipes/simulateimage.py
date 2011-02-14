@@ -29,7 +29,7 @@ import numina.qa as qa
 from numina.simulation import run_counter
 from numina.recipes.registry import ProxyQuery
 from numina.recipes.registry import Schema
-from emir.instrument.detector import Hawaii2
+from emir.instrument.detector import Hawaii2Detector
 from emir.dataproducts import create_raw
 from emir.recipes import EmirRecipeMixin
 
@@ -54,7 +54,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         _logger.info('Creating detector')
         
-        self.detector = Hawaii2(**self.parameters['detector'])
+        self.detector = Hawaii2Detector(**self.parameters['detector'])
         _logger.info('Configuring detector')
         self.detector.configure(self.parameters['readout'])
         

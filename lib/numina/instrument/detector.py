@@ -36,6 +36,7 @@ class Detector:
         self._gain = numberarray(gain, self._shape)
         self._ron = numberarray(ron, self._shape)
         self._dark = numberarray(dark, self._shape)
+        self._dark[self._dark < 0] = 0.0 
         self._pedestal = numberarray(pedestal, self._shape)
         self._well = numberarray(well, self._shape)
         self._flat = numberarray(flat, self._shape)
