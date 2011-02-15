@@ -23,11 +23,12 @@ import logging
 import os
 
 import numpy
+import pyfits
 
 from numina.recipes import RecipeBase
 from numina.image import DiskImage
 from numina.image.flow import SerialFlow
-from numina.image.processing import DarkCorrector, NonLinearityCorrector
+from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array.combine import flatcombine
 from numina.worker import para_map
 from numina.recipes.registry import ProxyPath, ProxyQuery
@@ -80,32 +81,39 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
-
-    @staticmethod
-    def f_basic_processing(od, flow):
-        img = od[0]
-        img.open(mode='update')
+                        
+    def basic_processing(self, image, flow):
+        hdulist = pyfits.open(image)
         try:
-            img = flow(img)
-            return od        
-        finally:
-            img.close(output_verify='fix')
+            hdu = hdulist['primary']                
+            # Processing
+            hdu = flow(hdu)
             
-    @staticmethod
-    def f_flow4(od):        
+            hdulist.writeto(os.path.basename(image), clobber=True)
+        finally:
+            hdulist.close()
+    
+    def compute_superflat(self):
         try:
-            od[0].open(mode='readonly')
-            od[1].open(mode='readonly')        
-            
-            d = od[0].data
-            m = od[1].data
-            value = numpy.median(d[m == 0])
-            _logger.debug('median value of %s is %f', od[0], value)
-            return od + (value,)    
+            filelist = []
+            data = []
+            for image in self.parameters['images']:
+                hdulist = pyfits.open(image.filename, memmap=True, mode='readonly')
+                filelist.append(hdulist)
+                data.append(hdulist['primary'].data)
+            _logger.info('Computing scale factors')            
+            scales = [numpy.median(datum) for datum in data]
+        
+            _logger.info('Combining')
+            illum = flatcombine(data, scales=scales, method='median', 
+                                blank=1.0 / scales[0])
+            return illum
         finally:
-            od[1].close()
-            od[0].close()            
+            for fileh in filelist:               
+                fileh.close()        
 
+    
+    
     def setup(self):
         self.parameters['master_dark'] = DiskImage(os.path.abspath(self.parameters['master_dark']))
         self.parameters['master_bpm'] = DiskImage(os.path.abspath(self.parameters['master_bpm']))
@@ -114,50 +122,24 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                                      for path in self.parameters['images']]            
 
     def run(self):
-        nthreads = self.runinfo['nthreads']
+        #nthreads = self.runinfo['nthreads']
         primary_headers = {'FILENAME': self.parameters['output_filename']}
-                
-        simages = self.parameters['images']
-        smasks = [self.parameters['master_bpm']] * len(simages)
+
+        bpm = pyfits.getdata(self.parameters['master_bpm'].filename)
+        dark = pyfits.getdata(self.parameters['master_dark'].filename)
         
-        dark_image = self.parameters['master_dark']
-        # Initialize processing nodes, step 1
-        try:
-            dark_data = dark_image.open(mode='readonly', memmap=True)
-            sss = SerialFlow([
-                          DarkCorrector(dark_data),
-                          NonLinearityCorrector(self.parameters['nonlinearity']),
-                          ]
-            )
+        basicflow = SerialFlow([BadPixelCorrector(bpm),
+                           NonLinearityCorrector(self.parameters['nonlinearity']),
+                           DarkCorrector(dark)])
         
-            _logger.info('Basic processing')    
-            para_map(lambda x : Recipe.f_basic_processing(x, sss), zip(simages, smasks),
-                     nthreads=nthreads)
-        finally:
-            dark_image.close()
+        for image in self.parameters['images']:
+            self.basic_processing(image.filename, basicflow)        
+        
         # Illumination seems to be necessary
         # ----------------------------------
         
-        _logger.info('Computing scale factors')
+        illum_data = self.compute_superflat()
             
-#        simages, smasks, scales = para_map(self.f_flow4, 
-        intermediate = para_map(self.f_flow4,
-                                           zip(simages, smasks),
-                                           nthreads=nthreads)
-        simages, smasks, scales = zip(*intermediate)
-            # Operation to create an intermediate sky flat
-            
-        try:
-            map(lambda x: x.open(mode='readonly', memmap=True), simages)
-            map(lambda x: x.open(mode='readonly', memmap=True), smasks)
-            _logger.info("Combining the images without offsets")
-            data = [img.data for img in simages]
-            masks = [img.data for img in simages]
-            _logger.info("Data combined")
-            illum_data = flatcombine(data, masks, scales=scales, blank=1)
-        finally:
-            map(lambda x: x.close(), simages)
-            map(lambda x: x.close(), smasks)
     
         _logger.info("Final image created")
         illum = create_result(illum_data[0], headers=primary_headers,
@@ -166,81 +148,3 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         return {'qa': QA.UNKNOWN, 'illumination_image': illum}
     
-if __name__ == '__main__':
-    import uuid
-    logging.basicConfig(level=logging.DEBUG)
-    _logger.setLevel(logging.DEBUG)
-    from numina.user import main
-    from numina.compatibility import json
-    from numina.jsonserializer import to_json
-
-    pv = {'observing_block': {'instrument': 'emir',
-                       'mode': 'intensity_flatfield',
-                       'id': 1,
-                       'result': {'images': ['apr21_0046.fits',
-                                  'apr21_0047.fits',
-                                  'apr21_0048.fits',
-                                  'apr21_0049.fits',
-                                  'apr21_0051.fits',
-                                  'apr21_0052.fits',
-                                  'apr21_0053.fits',
-                                  'apr21_0054.fits',
-                                  'apr21_0055.fits',
-                                  'apr21_0056.fits',
-                                  'apr21_0057.fits',
-                                  'apr21_0058.fits',
-                                  'apr21_0059.fits',
-                                  'apr21_0060.fits',
-                                  'apr21_0061.fits',
-                                  'apr21_0062.fits',
-                                  'apr21_0063.fits',
-                                  'apr21_0064.fits',
-                                  'apr21_0065.fits',
-                                  'apr21_0066.fits',
-                                  'apr21_0067.fits',
-                                  'apr21_0068.fits',
-                                  'apr21_0069.fits',
-                                  'apr21_0070.fits',
-                                  'apr21_0071.fits',
-                                  'apr21_0072.fits',
-                                  'apr21_0073.fits',
-                                  'apr21_0074.fits',
-                                  'apr21_0075.fits',
-                                  'apr21_0076.fits',
-                                  'apr21_0077.fits',
-                                  'apr21_0078.fits',
-                                  'apr21_0079.fits',
-                                  'apr21_0080.fits',
-                                  'apr21_0081.fits'],
-                                  }
-                       },
-          'recipes': {'default': {
-                        'parameters': {  
-                            'master_bias': 'mbias.fits',
-                            'master_dark': 'Dark50.fits',
-                            'linearity': [1e-3, 1e-2, 0.99, 0.00],
-                            'master_bpm': 'bpm.fits',
-                        },
-                        'run': {
-                            'instrument': 'emir',
-                            'threads': 2,
-                            }, 
-                        },
-                        }
-          }
-    
-    
-    os.chdir('/home/spr/Datos/emir/test8')
-    
-    uuidstr = str(uuid.uuid1()) 
-    basedir = os.path.abspath(uuidstr)
-    os.mkdir(basedir) 
-    
-    f = open('config.txt', 'w+')
-    try:
-        json.dump(pv, f, default=to_json, encoding='utf-8', indent=2)
-    finally:
-        f.close()
-    
-    main(['-d', '--basedir', basedir, '--datadir', 'data', '--run', 'config.txt'])
-
