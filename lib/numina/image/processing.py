@@ -24,9 +24,21 @@ import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
 
+class BadPixelCorrector(node.Corrector):
+    def __init__(self, badpixelmask, mark=True, dtype='float32'):
+        super(BadPixelCorrector, self).__init__(label=('NUM-BPM','Badpixel removed with numina'), dtype=dtype, mark=mark)
+        self.bpm = badpixelmask
+
+    def _run(self, img):
+        _logger.debug('correcting bad pixel mask in %s', img)        
+        img.data = array.fixpix(img.data, self.bpm)
+        self.mark_as_processed(img)
+        return img
+
+
 class BiasCorrector(node.Corrector):
     def __init__(self, biasmap, mark=True, dtype='float32'):
-        super(BiasCorrector, self).__init__(label=('NUM-DK','Dark removed with numina'), dtype=dtype, mark=mark)
+        super(BiasCorrector, self).__init__(label=('NUM-BS','Bias removed with numina'), dtype=dtype, mark=mark)
         self.biasmap = biasmap
 
     def _run(self, img):
