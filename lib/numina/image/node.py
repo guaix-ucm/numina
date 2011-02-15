@@ -66,7 +66,6 @@ class OutputSelector(Node):
         self.indexes = indexes
 
     def _run(self, arg):
-#        print arg
         res = tuple(ar for idx, ar in enumerate(arg) if idx in self.indexes)
         if len(res) == 1:
             return res[0]
@@ -91,11 +90,11 @@ class Corrector(Node):
         return img
 
     def check_if_processed(self, img):
-        if self.mark and img and img.meta.has_key(self.label[0]):
+        if self.mark and img and img.header.has_key(self.label[0]):
             return True
         return False
 
     def mark_as_processed(self, img):
         if self.mark:
-            img.meta.update(self.label[0], time.asctime(), self.label[1])
+            img.header.update(self.label[0], time.asctime(), self.label[1])
 
