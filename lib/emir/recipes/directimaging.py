@@ -33,7 +33,8 @@ import numina.image
 import numina.qa
 from numina.image import DiskImage
 from numina.image.imsurfit import imsurfit
-from numina.logger import captureWarnings
+from numina.image.flow import SerialFlow
+from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import subarray_match
 from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array import fixpix
@@ -402,20 +403,16 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             d[key] = os.path.abspath(self.parameters[key])
             
         self.sconf = SextractorConf(**d)
-    
-    def basic_processing(self, image, bpm, dark):
-        hdulist = pyfits.open(image.base, mode='update')
+                
+    def basic_processing(self, image, flow):
+        hdulist = pyfits.open(image.base)
         try:
-            hdu = hdulist['primary']                
-            _logger.info('Interpolating BPM in %s', image.label)
-            if not hdu.header.has_key('NFIXPIX'):
-                hdu.data = fixpix(hdu.data, bpm)
-                hdu.header.update('NFIXPIX', 'done')
+            hdu = hdulist['primary']         
 
-            _logger.info('Correcting dark %s', image.label)
-            if not hdu.header.has_key('NMDARK'):
-                hdu.data -= dark
-                hdu.header.update('NMDARK', 'done')
+            # Processing
+            hdu = flow(hdu)
+            
+            hdulist.writeto(os.path.basename(image.base), clobber=True)
         finally:
             hdulist.close()
 
@@ -618,12 +615,17 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         mdark = pyfits.getdata(self.parameters['master_dark'].filename)
         # FIXME: Use a flat field image eventually
         #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
+        
+        basicflow = SerialFlow([BadPixelCorrector(bpm),
+                                NonLinearityCorrector(self.parameters['nonlinearity']),
+                                DarkCorrector(mdark)])
 
         for image in images_info:
-            self.basic_processing(image, bpm, mdark)
+            self.basic_processing(image, basicflow)
         
         del bpm
         del mdark
+        del basicflow
         
         niteration = self.parameters['iterations']
         
