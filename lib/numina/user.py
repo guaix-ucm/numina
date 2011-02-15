@@ -121,7 +121,7 @@ def mode_run(args, logger, options):
                 # If the default value is ProxyPath
                 # the default value is from the root configuration object
                 #
-                if isinstance(v, registry.ProxyPath):
+                if isinstance(v, (registry.ProxyPath, registry.ProxyQuery)):
                     try:
                         defval = v.get()
                     except KeyError:
