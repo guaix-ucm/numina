@@ -99,33 +99,42 @@ public:
     typedef std::pair<Iterator1, Iterator2> IterPair;
     typedef ZipIterator<IterPair> ZIter;
 
+    size_t c_size = std::distance(begin, end);
     ZIter beg = make_zip_iterator(begin, weights);
-    ZIter ned = make_zip_iterator(end, weights + (end - begin));
+    ZIter ned = make_zip_iterator(end, weights + c_size);
 
-    int delta = 0;
-    double c_mean = 0;
-    double c_std = 0;
-    size_t c_size = end - begin;
+    double c_mean = 0.0;
+    double c_std = 0.0;
+    size_t nc_size = c_size;
+
     do {
-      std::pair<double, double> r = m_central(begin, begin + c_size, weights);
+      std::pair<double, double> r = m_central(begin, begin + nc_size, weights);
+
       c_mean = r.first;
       c_std = sqrt(r.second);
+      c_size = std::distance(beg, ned);
 
+      const double low = c_mean - c_std * m_low;
+      const double high = c_mean + c_std * m_high;
       ned = partition(beg, ned,
-      // Checks if first component of a std::pair
+          // Checks if first component of a std::pair
           // is inside the range (low, high)
-          // equivalent to return (x.first < high) && (x.first > low);
-          __gnu_cxx::compose2(std::logical_and<bool>(), __gnu_cxx::compose1(
-              std::bind2nd(std::less<double>(), c_mean - c_std * m_low),
-              __gnu_cxx::select1st<typename ZIter::value_type>()),
-              __gnu_cxx::compose1(std::bind1st(std::greater<double>(), c_mean
-                  + c_std * m_high), __gnu_cxx::select1st<
-                  typename ZIter::value_type>())));
+          // equivalent to return (low < x.first) && (high > x.first);
+          __gnu_cxx::compose2(std::logical_and<bool>(),
+              __gnu_cxx::compose1(
+                  std::bind1st(std::less<double>(), low),
+                  __gnu_cxx::select1st<typename ZIter::value_type>()),
+              __gnu_cxx::compose1(
+                  std::bind1st(std::greater<double>(), high),
+                  __gnu_cxx::select1st<typename ZIter::value_type>())
+            )
+          );
 
-      delta = c_size - (ned - beg);
-      c_size = end - begin;
+      nc_size = std::distance(beg, ned);
+      // We stop when std == 0, all the points would be reject otherwise
+      // or when no points are removed in the iteration
+    } while (c_std > 0 && (nc_size != c_size));
 
-    } while (delta);
     *results[0] = c_mean;
     *results[1] = c_std;
     *results[2] = c_size;
