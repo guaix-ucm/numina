@@ -17,23 +17,39 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-try:
-    from pkgutil import get_data
-except ImportError:
-    from numina.compatibility import get_data
-
-from numina.compatibility import json
-from json import loads
 from pyfits import Header, Card
 
+from numina.compatibility import get_data
+from numina.compatibility import json
 from numina.image.storage import FITSCreator
 from numina.jsonserializer import deunicode_json
 
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
 
-_all_headers = deunicode_json(loads(get_data('emir.instrument','headers.json')))
-        
+#_all_headers = deunicode_json(json.loads(get_data('emir.instrument','headers.json')))
+
+_all_headers = {
+ "image": {
+  "variance": {},
+  "wcs": {},
+  "map": {},
+  "primary": {}
+ },
+ "spectrum": {
+  "variance": {},
+  "wcs": {},
+  "map": {},
+  "primary": {}
+ },
+ "common": {
+  "variance": {},
+  "wcs": {},
+  "map": {},
+  "primary": {}
+ }
+}
+       
 def _merge(headers, result_type):
     if result_type not in _result_types:
         raise TypeError('Image type not "image" or "spectrum"') 
@@ -54,7 +70,6 @@ _spectrum_fits_headers = _merge(_all_headers, 'spectrum')
 
 default = dict(image=_image_fits_headers,
                spectrum=_spectrum_fits_headers)
-
 
 class EmirImageCreator(FITSCreator):
     '''Builder of Emir direct image.'''
