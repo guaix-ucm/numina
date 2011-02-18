@@ -44,29 +44,8 @@ def _ch3():
 def _ch4():
     return ito.izip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)), ito.repeat(slice(1024, 2048)))
 
-# FIXME: move this to numina
+# FIXME: move this to numina    
 def braid(*iterables):
-    '''Return the elements of each iterator in turn until some is exhausted.
-    
-    This function is similar to the roundrobin example 
-    in itertools documentation.
-    
-    >>> a = iter([1,2,3,4])
-    >>> b = iter(['a', 'b'])
-    >>> c = iter([1,1,1,1,'a', 'c'])
-    >>> d = iter([1,1,1,1,1,1])
-    >>> list(braid(a, b, c, d))
-    [1, 'a', 1, 1, 2, 'b', 1, 1]
-    '''
-    buffer = [next(i) for i in iterables]
-    while 1:
-        for i, idx in ito.izip(iterables, ito.count(0)):
-            yield buffer[idx]
-            buffer[idx] = next(i, None)
-        if any(map(lambda x: x is None, buffer)):
-            raise StopIteration
-        
-def braid2(*iterables):
     '''Return the elements of each iterator in turn until some is exhausted.
     
     This function is similar to the roundrobin example 
