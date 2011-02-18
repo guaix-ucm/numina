@@ -47,7 +47,7 @@ from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 from emir.dataproducts import create_result, create_raw
 from emir.recipes import EmirRecipeMixin
-from emir.instrument.detector import Hawii2Detector
+from emir.instrument.detector import Hawaii2Detector
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -548,7 +548,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 fileh.close()            
         
         # We interpolate holes by channel
-        for channel in Hawaii2Detector.amp8: 
+        for channel in Hawaii2Detector.AMP8: 
             mask = (sf_num[channel] == 0)
             if numpy.any(mask):                    
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
