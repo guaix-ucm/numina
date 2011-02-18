@@ -33,8 +33,8 @@ COMBINE_METHODS = {'average': [],
                    }
 
 REJECT_METHODS = {'none': [],
-                  'sigmaclip': [Schema('low', 4., 'Description'),
-                                Schema('high', 4., 'Description')],
+                  'sigmaclip': [Schema('low', 3., 'Description'),
+                                Schema('high', 3., 'Description')],
                   'minmax': [Schema('nlow', 0, 'Description'),
                              Schema('nhigh', 0, 'Description')]
                   }
@@ -226,7 +226,7 @@ def median(images, masks=None, dtype=None, out=None,
                    offsets=offsets, **kwds)    
 
 def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
-         weights=None, offsets=None, low=4., high=4.):
+         weights=None, offsets=None, low=3., high=3.):
     '''Combine images using the sigma-clipping, with masks.
     
     Inputs and masks are a list of array objects. All input arrays
@@ -252,7 +252,7 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
                    offsets=offsets, high=high, low=low)
 
 def flatcombine(data, masks=None, dtype=None, scales=None,
-                blank=1.0, method='median', reject='none', **kwds):
+                blank=1.0, method='average', reject='sigmaclip', **kwds):
     '''Combine flat images.
     
     :param images: a list of arrays
