@@ -47,6 +47,7 @@ from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 from emir.dataproducts import create_result, create_raw
 from emir.recipes import EmirRecipeMixin
+from emir.instrument.detector import Hawii2Detector
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -521,44 +522,41 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.debug('Iter %d, closing mask images', iteration)
             map(lambda x: x.close(), mskslll)        
 
-    def compute_superflat(self, iinfo, iteration):
+    def compute_superflat(self, iinfo, segmask, iteration):
         try:
             filelist = []
             data = []
-            masks = []
             for image in iinfo:
                 _logger.debug('Iter %d, opening resized image %s', iteration, image.resized_base)
                 hdulist = pyfits.open(image.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[image.region])
-                _logger.debug('Iter %d, opening mask image %s', iteration, image.resized_mask)
-                hdulist = pyfits.open(image.resized_mask, memmap=True, mode='readonly')
-                filelist.append(hdulist)
-                masks.append(hdulist['primary'].data[image.region])
 
                 scales = [image.median_scale for image in iinfo]
                 
+            masks = None
+            if segmask is not None:
+                masks = [segmask[image.region] for image in iinfo]
+                
+                
             _logger.debug('Iter %d, combining images', iteration)
-            sf_data, _sf_var, _sf_num = flatcombine(data, masks, scales=scales, method='median', blank=1.0 / scales[0])
-            
-            # _fs_num == 0 where there's no information
-            # these values have been scales to 1.0 / scales[0]
-            # so is safe to fit something here
-            
-            _logger.debug('Iter %d, fitting to a smooth surface', iteration)
-            pc, fitted = imsurfit(sf_data, order=2, output_fit=True)
-            _logger.info('polynomial fit %s', pc)
-            #fitted /= fitted.mean()            
-            
-            sfhdu = pyfits.PrimaryHDU(sf_data[0])            
-            sfhdu.writeto(_name_skyflat('comb', iteration))
-            sfhdu = pyfits.PrimaryHDU(fitted)            
-            sfhdu.writeto(_name_skyflat('fit', iteration))
-            return fitted
+            sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, method='median', 
+                                                    blank=1.0 / scales[0])
         finally:
             _logger.debug('Iter %d, closing resized images and mask', iteration)
             for fileh in filelist:               
-                fileh.close()        
+                fileh.close()            
+        
+        # We interpolate holes by channel
+        for channel in Hawaii2Detector.amp8: 
+            mask = (sf_num[channel] == 0)
+            if numpy.any(mask):                    
+                fixpix2(sf_data[channel], mask, out=sf_data[channel])
+        
+        sfhdu = pyfits.PrimaryHDU(sf_data)            
+        sfhdu.writeto(_name_skyflat('comb', iteration))
+        return sf_data
+        
 
     def correct_superflat(self, image, fitted, iteration):
         _logger.info("Iter %d, SF: apply superflat to image %s", iteration, image.resized_base)
@@ -676,12 +674,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             # Combining images to obtain the sky flat 
             _logger.info("Iter %d, SF: combining the images without offsets", iter_)
-            fitted = self.compute_superflat(images_info, iter_)
+            superflat = self.compute_superflat(images_info, objmask, iter_)
             
             _logger.info("Iter %d, SF: apply superflat", iter_)
             # Process all images with the fitted flat
             for image in images_info:
-                self.correct_superflat(image, fitted, iter_)
+                self.correct_superflat(image, superflat, iter_)
             
             _logger.info('Iter %d, sky correction (SC)', iter_)
             # In the first iteration
