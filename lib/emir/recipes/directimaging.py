@@ -506,7 +506,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         _logger.debug('Iter %d, opening mask images', iteration)
         mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
         try:
-            extinc = [pow(10, 0.4 * image.airmass * self.parameters['extinction']) for image in iinfo]
+            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo]
             data = [i['primary'].data for i in imgslll]
             masks = [i['primary'].data for i in mskslll]
             sf_data = median(data, masks, scales=extinc, dtype='float32')
@@ -538,14 +538,23 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             if segmask is not None:
                 masks = [segmask[image.region] for image in iinfo]
                 
-                
             _logger.debug('Iter %d, combining images', iteration)
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, method='median', 
                                                     blank=1.0 / scales[0])
+            
+            
+            
+            
         finally:
             _logger.debug('Iter %d, closing resized images and mask', iteration)
             for fileh in filelist:               
                 fileh.close()            
+
+        sfhdu = pyfits.PrimaryHDU(sf_data)
+        sfhdu.writeto(_name_skyflat('comb-pre', iteration))
+        sfhdu = pyfits.PrimaryHDU(sf_num)
+        sfhdu.writeto(_name_skyflat('comb-num', iteration))
+
         
         # We interpolate holes by channel
         for channel in Hawaii2Detector.AMP8: 
