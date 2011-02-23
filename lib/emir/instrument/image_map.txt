@@ -1,0 +1,3 @@
+EXTNAME = 'EXPMAP  '
+EXTVER  =                    1 / Exposure map                                   
+                                                            

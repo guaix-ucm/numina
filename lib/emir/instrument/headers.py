@@ -17,67 +17,54 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from pyfits import Header, Card
+import StringIO
+
+from pyfits import Header
 
 from numina.compatibility import get_data
-from numina.compatibility import json
 from numina.image.storage import FITSCreator
-from numina.jsonserializer import deunicode_json
+
 
 _result_types = ['image', 'spectrum']
 _extensions = ['primary', 'variance', 'map', 'wcs']
 
-#_all_headers = deunicode_json(json.loads(get_data('emir.instrument','headers.json')))
 
-_all_headers = {
- "image": {
-  "variance": {},
-  "wcs": {},
-  "map": {},
-  "primary": {}
- },
- "spectrum": {
-  "variance": {},
-  "wcs": {},
-  "map": {},
-  "primary": {}
- },
- "common": {
-  "variance": {},
-  "wcs": {},
-  "map": {},
-  "primary": {}
- }
-}
-       
-def _merge(headers, result_type):
-    if result_type not in _result_types:
-        raise TypeError('Image type not "image" or "spectrum"') 
+_table = {('image','primary'): 'image_primary.txt',
+          ('image', 'map'): 'image_map.txt',
+          ('image', 'wcs'): 'image_wcs.txt',
+          ('image', 'variance'): 'image_variance.txt',
+          ('spectrum','primary'): 'spectrum_primary.txt',
+          ('spectrum', 'map'): 'image_map.txt',
+          ('spectrum', 'wcs'): 'image_wcs.txt',
+          ('spectrum', 'variance'): 'image_variance.txt',
+          }
 
+def load_header(res, ext):
+    try:
+        res = _table[(res, ext)]
+    except KeyError:
+        return Header()    
+    sfile = StringIO.StringIO(get_data('emir.instrument', res))
+    hh = Header(txtfile=sfile)
+    return hh
+
+def load_all_headers():
     result = {}
-    for ext in _extensions:
-        final = dict(headers['common'][ext])
-        final.update(headers[result_type][ext])
-        rr = []
-        for key, (val, comment) in final.iteritems():
-            rr.append(Card(key, val, comment))
-        result[ext] = Header(rr)
+    for res in _result_types:
+        result[res] = {}
+        for ext in _extensions:
+            result[res][ext] = load_header(res, ext)
     
     return result
-
-_image_fits_headers = _merge(_all_headers, 'image')
-_spectrum_fits_headers = _merge(_all_headers, 'spectrum')
-
-default = dict(image=_image_fits_headers,
-               spectrum=_spectrum_fits_headers)
+    
+default = load_all_headers()
 
 class EmirImageCreator(FITSCreator):
     '''Builder of Emir direct image.'''
     def __init__(self): 
-        super(EmirImageCreator, self).__init__(_image_fits_headers)
+        super(EmirImageCreator, self).__init__(default['image'])
         
 class EmirSpectrumCreator(FITSCreator):
     '''Builder of Emir spectrum.'''
     def __init__(self): 
-        super(EmirSpectrumCreator, self).__init__(_spectrum_fits_headers)
-    
+        super(EmirSpectrumCreator, self).__init__(default['spectrum'])

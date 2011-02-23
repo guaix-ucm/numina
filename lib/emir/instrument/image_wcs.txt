@@ -1,0 +1,3 @@
+EXTNAME = 'WCSDVARR'
+EXTVER  =                    1 / Variance array version number                  
+                                                            
