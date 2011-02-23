@@ -55,7 +55,7 @@ class BiasImageTestCase(unittest.TestCase):
                 output = self.detector.lpath(self.input_)
                 run = self.runcounter.next()
                 now = datetime.datetime.now()
-                nowstr = now.strftime('%FT%T')
+                nowstr = now.isoformat()
                 headers = {'RUN': run, 'DATE': nowstr, 'DATE-OBS':nowstr}
                 headers.update(self.detector.metadata())
                 hdulist = create_raw(output, headers)
