@@ -87,8 +87,6 @@ def get_image_shape(header):
     ndim = header['naxis']
     return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
 
-
-
 def resize_hdu(hdu, newshape, region, fill=0.0):
     basedata = hdu.data
     newdata = resize_array(basedata, newshape, region, fill=fill)                
@@ -666,8 +664,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                                         
             # Update objects mask      
             for image in images_info:
-                _logger.info('Iter %d, create object mask %s', iter_, image.objmask) 
                 image.objmask = _name_object_mask(image.label, iter_)
+                _logger.info('Iter %d, create object mask %s', iter_, image.objmask)                 
                 image.objmask_data = objmask[image.region]
                 pyfits.writeto(image.objmask, image.objmask_data)
                             
