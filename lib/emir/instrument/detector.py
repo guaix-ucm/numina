@@ -55,7 +55,7 @@ def braid(*iterables):
     >>> b = iter(['a', 'b'])
     >>> c = iter([1,1,1,1,'a', 'c'])
     >>> d = iter([1,1,1,1,1,1])
-    >>> list(braid2(a, b, c, d))
+    >>> list(braid(a, b, c, d))
     [1, 'a', 1, 1, 2, 'b', 1, 1]
     '''
     for itbl in ito.izip(*iterables):
