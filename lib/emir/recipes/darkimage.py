@@ -22,7 +22,7 @@
 import os
 import logging
 
-from numina.recipes import RecipeBase
+from numina.recipes import RecipeBase, RecipeError
 from numina.array.combine import mean
 from numina.image import DiskImage
 import numina.qa
@@ -73,9 +73,31 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         # Default parameters. This can be read from a file        
     
     def  setup(self):
-        # Sanity check, check: all images belong to the same detector mode
+        
         self.parameters['images'] = [DiskImage(os.path.abspath(path)) 
                   for path in self.parameters['images']]
+        
+        # Sanity check, check: all images belong to the same detector mode
+        def readmode(hdr):
+            rom = [hdr[key] for key in ['EXPOSED','READSCHM', 
+                                         'READMODE', 'READNUM', 'READREPT', 
+                                         'DARKTIME', 'EXPTIME']]
+            return rom
+        
+        first = self.parameters['images'][0]
+        first.open(mode='readonly')
+        hdr = first.meta
+        first_rom = readmode(hdr)
+        first.close()
+        for image in self.parameters['images'][1:]:
+            image.open(mode='readonly')
+            hdr = image.meta
+            rom = readmode(hdr)
+            _logger.debug('Readmode parameters from image %s are %s', image.filename, rom)
+            if rom != first_rom:
+                _logger.warning('Got %s, expected %s', rom, first_rom)
+                raise RecipeError
+            image.close()
            
     def run(self):
         primary_headers = {'FILENAME': self.parameters['output_filename']}
