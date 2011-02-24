@@ -91,8 +91,9 @@ def combine_shape(shapes, offsets):
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
 
-def resize_array(data, finalshape, region):
-    newdata = numpy.zeros(finalshape, dtype=data.dtype)
+def resize_array(data, finalshape, region, fill=0):
+    newdata = numpy.empty(finalshape, dtype=data.dtype)
+    newdata.fill(fill)
     newdata[region] = data
     return newdata
 

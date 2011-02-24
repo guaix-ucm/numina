@@ -89,13 +89,13 @@ def get_image_shape(header):
 
 
 
-def resize_hdu(hdu, newshape, region):
+def resize_hdu(hdu, newshape, region, fill=0.0):
     basedata = hdu.data
-    newdata = resize_array(basedata, newshape, region)                
+    newdata = resize_array(basedata, newshape, region, fill=fill)                
     newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
     return newhdu
 
-def resize_fits(fitsfile, newfilename, newshape, region):
+def resize_fits(fitsfile, newfilename, newshape, region, fill=0.0):
     
     close_on_exit = False
     if isinstance(fitsfile, basestring):
@@ -106,7 +106,7 @@ def resize_fits(fitsfile, newfilename, newshape, region):
         
     try:
         hdu = hdulist['primary']
-        newhdu = resize_hdu(hdu, newshape, region)
+        newhdu = resize_hdu(hdu, newshape, region, fill=fill)
         newhdu.writeto(newfilename)
     finally:
         if close_on_exit:
@@ -585,7 +585,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         resize_fits(image.base, imgn, finalshape, image.region)
     
         _logger.info('Resizing mask %s', image.label)
-        resize_fits(image.mask, maskn, finalshape, image.region)
+        resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
             
     def run(self):
         images_info = []
@@ -709,7 +709,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
           
             _logger.info('Iter %d, finished', iter_)
 
-        primary_headers = {'FILENAME': self.parameters['resultname']}
+        primary_headers = {'FILENAME': self.parameters['resultname'],
+                           }
         result = create_result(sf_data[0], headers=primary_headers,
                                 variance=sf_data[1], 
                                 exmap=sf_data[2].astype('int16'))
