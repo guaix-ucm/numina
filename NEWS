@@ -1,3 +1,16 @@
+Version 0.3.0 (24 Feb 2011)
+
+Changes:
+ * Implemented some recipes for detector characterization
+ * Full treatment of EMIR detector amplifiers
+ * Module names follow PEP8
+ * Surface fitting routines
+ * Working methods in combine:
+   - Median
+   - Average
+   - Minamax
+   - Sigclip
+ 
 Version 0.2.5 (09 Sep 2010)
 
 Changes:
