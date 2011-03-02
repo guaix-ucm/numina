@@ -47,7 +47,7 @@ from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 from emir.dataproducts import create_result, create_raw
 from emir.recipes import EmirRecipeMixin
-from emir.instrument.detector import Hawaii2Detector
+import emir.instrument.detector as detector
 
 _logger = logging.getLogger("emir.recipes")
 
@@ -371,6 +371,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         Schema('resultname', 'result.fits', 'Name of the output image'),
         Schema('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
         Schema('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
+        Schema('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
         # Sextractor parameter files
         Schema('sexfile', None, 'Sextractor parameter file'),
         Schema('paramfile', None, 'Sextractor parameter file'),
@@ -388,6 +389,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         self.parameters['master_dark'] = DiskImage(os.path.abspath(self.parameters['master_dark']))
         self.parameters['master_flat'] = DiskImage(os.path.abspath(self.parameters['master_flat']))
         self.parameters['master_bpm'] = DiskImage(os.path.abspath(self.parameters['master_bpm']))
+        
+        try:
+            self.DetectorClass = getattr(detector, self.parameters['detector'])
+        except AttributeError:
+            raise RecipeError('Unknown detector class %s' % self.parameters['detector'])
+        
         
         # Converting self.parameters['images'] to DiskImage
         # with absolute path
@@ -555,7 +562,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
         
         # We interpolate holes by channel
-        for channel in Hawaii2Detector.AMP8: 
+        for channel in self.DetectorClass.AMP8: 
             mask = (sf_num[channel] == 0)
             if numpy.any(mask):                    
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
