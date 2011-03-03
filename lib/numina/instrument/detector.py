@@ -33,14 +33,14 @@ class Detector:
                  resetval=0, resetnoise=0.0):
         self.shape = shape
          
-        self._detector = numpy.zeros(self._shape)
-        self._gain = numberarray(gain, self._shape)
-        self._ron = numberarray(ron, self._shape)
-        self._dark = numberarray(dark, self._shape)
+        self._detector = numpy.zeros(self.shape)
+        self._gain = numberarray(gain, self.shape)
+        self._ron = numberarray(ron, self.shape)
+        self._dark = numberarray(dark, self.shape)
         self._dark[self._dark < 0] = 0.0 
-        self._pedestal = numberarray(pedestal, self._shape)
-        self._well = numberarray(well, self._shape)
-        self._flat = numberarray(flat, self._shape)
+        self._pedestal = numberarray(pedestal, self.shape)
+        self._well = numberarray(well, self.shape)
+        self._flat = numberarray(flat, self.shape)
         self._reset_noise = resetnoise
         self._reset_value = resetval
         self._time = 0
@@ -68,7 +68,7 @@ class Detector:
         self._time = 0
         self._detector[:] = self._reset_value
         # Considering normal reset noise
-        self._detector += numpy.random.standard_normal(self._shape) * self._reset_noise
+        self._detector += numpy.random.standard_normal(self.shape) * self._reset_noise
         self._time += self.reset_time
         
     def read(self, time=None, source=None):
@@ -82,7 +82,7 @@ class Detector:
         # Gain per channel
         result /= self._gain
         # Readout noise
-        result += numpy.random.standard_normal(self._shape) * self._ron
+        result += numpy.random.standard_normal(self.shape) * self._ron
         result += self._pedestal
         # result[result > self._well] = self._well
         return result.astype(self.type)
