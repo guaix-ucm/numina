@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import scipy
+import numpy
 import numpy.random
 
 from numina.array import numberarray
@@ -31,8 +31,9 @@ class Detector:
     def __init__(self, shape, gain=1.0, ron=0.0, dark=1.0, 
                  well=65535, pedestal=200., flat=1.0, 
                  resetval=0, resetnoise=0.0):
-        self._shape = shape
-        self._detector = scipy.zeros(self._shape)
+        self.shape = shape
+         
+        self._detector = numpy.zeros(self._shape)
         self._gain = numberarray(gain, self._shape)
         self._ron = numberarray(ron, self._shape)
         self._dark = numberarray(dark, self._shape)
@@ -89,10 +90,6 @@ class Detector:
     def data(self):
         '''Return the current content of the detector.'''
         return self._detector
-    
-    def shape(self):
-        '''Return the shape of the detector.'''
-        return self._shape
-    
+        
     def time_since_last_reset(self):
         return self._time

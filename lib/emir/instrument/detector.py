@@ -140,7 +140,6 @@ class RampReadoutMode(ReadoutMode):
         xcenter = events - meanx
         images = numpy.dstack(images)
         return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
-    
 
 class Hawaii2Detector(Detector):
     '''Hawaii2 detector.'''
@@ -148,6 +147,8 @@ class Hawaii2Detector(Detector):
     AMP1 = QUADRANTS # 1 amplifier per quadrant
     AMP8 = CHANNELS # 8 amplifiers per quadrant
     
+    shape = (2048, 2048)
+    amplifiers = CHANNELS
     
     def __init__(self, gain=1.0, ron=0.0, dark=1.0, well=65535,
                  pedestal=200., flat=1.0, resetval=0, resetnoise=0.0,
@@ -158,7 +159,7 @@ class Hawaii2Detector(Detector):
             :parameter dark: dark current in e-/s
             :parameter well: well depth in ADUs 
         '''
-        super(Hawaii2Detector, self).__init__((2048, 2048), gain, ron, dark, well,
+        super(Hawaii2Detector, self).__init__(self.shape, gain, ron, dark, well,
                                            pedestal, flat, resetval, resetnoise)
         
         if mode not in ['1', '8']:
@@ -166,7 +167,7 @@ class Hawaii2Detector(Detector):
         
         self.mode = mode
         # Amplifier region
-        self.amp = self.AMP1 if mode == '1' else self.AMP8
+        self.amplifiers = self.AMP1 if mode == '1' else self.AMP8
         
         # Gain and RON per amplifier
         self._ron = numpy.asarray(ron)

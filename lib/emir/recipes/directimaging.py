@@ -413,7 +413,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
         
         # We interpolate holes by channel
-        for channel in self.DetectorClass.AMP8: 
+        for channel in self.DetectorClass.amplifiers: 
             mask = (sf_num[channel] == 0)
             if numpy.any(mask):                    
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
