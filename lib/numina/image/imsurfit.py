@@ -126,3 +126,27 @@ def imsurfit(data, order, output_fit=False):
         return (polycoeff, result)
     
     return (polycoeff,)    
+
+class FitOne(object):
+    def __init__(self, x, y, z):
+        '''Fit a plane to a region using least squares.'''
+        x = x.astype('float')
+        y = y.astype('float')
+        self.xm = x.mean()
+        self.ym = y.mean()
+        x -= self.xm
+        y -= self.ym
+
+        aa = numpy.zeros(shape=(3,3))
+        aa[0,0] = 1
+        aa[1,1] = (x*x).mean()
+        aa[2,2] = (y*y).mean()
+        aa[1,2] = aa[2,1] = (x*y).mean()
+        bb = [z.mean(), (x*z).mean(), (y*z).mean()]
+
+        self.pf = numpy.linalg.solve(aa, bb)
+
+    def __call__(self, x, y):
+        xf = x.astype('float') - self.xm
+        yf = y.astype('float') - self.ym
+        return self.pf[0] + self.pf[1] * xf + self.pf[2] * yf

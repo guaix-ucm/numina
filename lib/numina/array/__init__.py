@@ -24,8 +24,10 @@ from itertools import imap, product
 import numpy # pylint: disable-msgs=E1101
 from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
+import scipy.ndimage as ndimage
 
 from numina.diskstorage import link_or_copy
+from numina.image.imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
 
@@ -112,6 +114,48 @@ def fixpix(data, mask, kind='linear'):
             invalid = mrow == True
             row[invalid] = itp(x[invalid]).astype(row.dtype)
     return data
+
+def fixpix2(data, mask, iterations=3, output=None):
+    '''Substitute pixels in mask by a bilinear least square fitting.
+    '''
+    out = output if output is not None else data.copy()
+    
+    # A binary mask, regions are ones
+    binry = mask != 0
+    
+    # Label regions in the binary mask
+    lblarr, labl = ndimage.label(binry)
+    
+    # Structure for dilation is 8-way
+    stct = ndimage.generate_binary_structure(2, 2)
+    # Pixels in the background
+    back = lblarr == 0
+    # For each object
+    for idx in range(1, labl + 1):
+        # Pixels of the object
+        segm = lblarr == idx
+        # Pixels of the object or the background
+        # dilation will only touch these pixels
+        dilmask =  numpy.logical_or(back, segm)
+        # Dilation 3 times
+        more = ndimage.binary_dilation(segm, stct, 
+                                       iterations=iterations, 
+                                       mask=dilmask)
+        # Border pixels
+        # Pixels in the border around the object are
+        # more and (not segm)
+        border = numpy.logical_and(more, numpy.logical_not(segm))
+        # Pixels in the border
+        xi, yi = border.nonzero()
+        # Bilinear leastsq calculator
+        calc = FitOne(xi, yi, out[xi,yi])
+        # Pixels in the region
+        xi, yi = segm.nonzero()
+        # Value is obtained from the fit
+        out[segm] = calc(xi, yi)
+        
+    return out
+
 
 def correct_dark(data, dark, dtype='float32'):
     result = data - dark

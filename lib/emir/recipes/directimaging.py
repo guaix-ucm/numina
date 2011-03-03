@@ -26,8 +26,6 @@ import itertools
 
 import numpy
 import pyfits
-import scipy.ndimage as ndimage
-import scipy.signal
 
 import numina.image
 import numina.qa
@@ -37,7 +35,7 @@ from numina.image.flow import SerialFlow
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import subarray_match
 from numina.array import combine_shape, resize_array, correct_flatfield
-from numina.array import fixpix
+from numina.array import fixpix2
 from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
 from numina.array import SextractorConf
 from numina.array.combine import flatcombine, combine
@@ -130,153 +128,6 @@ def update_sky_related(images, nimages=5):
         image.sky_related = (bw, fw)
     
     return images
-
-def sgolay2d ( z, window_size, order, derivative=None):
-    """
-    """
-    
-    # http://www.scipy.org/Cookbook/SavitzkyGolay
-    
-    # number of terms in the polynomial expression
-    n_terms = ( order + 1 ) * ( order + 2)  / 2.0
-
-    if  window_size % 2 == 0:
-        raise ValueError('window_size must be odd')
-
-    if window_size**2 < n_terms:
-        raise ValueError('order is too high for the window size')
-
-    half_size = window_size // 2
-
-    # exponents of the polynomial. 
-    # p(x,y) = a0 + a1*x + a2*y + a3*x^2 + a4*y^2 + a5*x*y + ... 
-    # this line gives a list of two item tuple. Each tuple contains 
-    # the exponents of the k-th term. First element of tuple is for x
-    # second element for y.
-    # Ex. exps = [(0,0), (1,0), (0,1), (2,0), (1,1), (0,2), ...]
-    exps = [ (k-n, n) for k in range(order+1) for n in range(k+1) ]
-
-    # coordinates of points
-    ind = numpy.arange(-half_size, half_size+1, dtype=numpy.float64)
-    dx = numpy.repeat( ind, window_size )
-    dy = numpy.tile( ind, [window_size, 1]).reshape(window_size**2, )
-
-    # build matrix of system of equation
-    A = numpy.empty( (window_size**2, len(exps)) )
-    for i, exp in enumerate( exps ):
-        A[:,i] = (dx**exp[0]) * (dy**exp[1])
-
-    # pad input array with appropriate values at the four borders
-    new_shape = z.shape[0] + 2*half_size, z.shape[1] + 2*half_size
-    Z = numpy.zeros( (new_shape) )
-    # top band
-    band = z[0, :]
-    Z[:half_size, half_size:-half_size] =  band -  numpy.abs( numpy.flipud( z[1:half_size+1, :] ) - band )
-    # bottom band
-    band = z[-1, :]
-    Z[-half_size:, half_size:-half_size] = band  + numpy.abs( numpy.flipud( z[-half_size-1:-1, :] )  -band )
-    # left band
-    band = numpy.tile( z[:,0].reshape(-1,1), [1,half_size])
-    Z[half_size:-half_size, :half_size] = band - numpy.abs( numpy.fliplr( z[:, 1:half_size+1] ) - band )
-    # right band
-    band = numpy.tile( z[:,-1].reshape(-1,1), [1,half_size] )
-    Z[half_size:-half_size, -half_size:] =  band + numpy.abs( numpy.fliplr( z[:, -half_size-1:-1] ) - band )
-    # central band
-    Z[half_size:-half_size, half_size:-half_size] = z
-
-    # top left corner
-    band = z[0,0]
-    Z[:half_size,:half_size] = band - numpy.abs( numpy.flipud(numpy.fliplr(z[1:half_size+1,1:half_size+1]) ) - band )
-    # bottom right corner
-    band = z[-1,-1]
-    Z[-half_size:,-half_size:] = band + numpy.abs( numpy.flipud(numpy.fliplr(z[-half_size-1:-1,-half_size-1:-1]) ) - band )
-
-    # top right corner
-    band = Z[half_size,-half_size:]
-    Z[:half_size,-half_size:] = band - numpy.abs( numpy.flipud(Z[half_size+1:2*half_size+1,-half_size:]) - band )
-    # bottom left corner
-    band = Z[-half_size:,half_size].reshape(-1,1)
-    Z[-half_size:,:half_size] = band - numpy.abs( numpy.fliplr(Z[-half_size:, half_size+1:2*half_size+1]) - band )
-
-    # solve system and convolve
-    if derivative == None:
-        m = numpy.linalg.pinv(A)[0].reshape((window_size, -1))
-        return scipy.signal.fftconvolve(Z, m, mode='valid')
-    elif derivative == 'col':
-        c = numpy.linalg.pinv(A)[1].reshape((window_size, -1))
-        return scipy.signal.fftconvolve(Z, -c, mode='valid')
-    elif derivative == 'row':
-        r = numpy.linalg.pinv(A)[2].reshape((window_size, -1))
-        return scipy.signal.fftconvolve(Z, -r, mode='valid')
-    elif derivative == 'both':
-        c = numpy.linalg.pinv(A)[1].reshape((window_size, -1))
-        r = numpy.linalg.pinv(A)[2].reshape((window_size, -1))
-        return scipy.signal.fftconvolve(Z, -r, mode='valid'), scipy.signal.fftconvolve(Z, -c, mode='valid')
-
-class FitOne(object):
-    def __init__(self, x,y,z):
-        '''Fit a plane to a region using least squares.'''
-        x = x.astype('float')
-        y = y.astype('float')
-        self.xm = x.mean()
-        self.ym = y.mean()
-        x -= self.xm
-        y -= self.ym
-
-        aa = numpy.zeros(shape=(3,3))
-        aa[0,0] = 1
-        aa[1,1] = (x*x).mean()
-        aa[2,2] = (y*y).mean()
-        aa[1,2] = aa[2,1] = (x*y).mean()
-        bb = [z.mean(), (x*z).mean(), (y*z).mean()]
-
-        self.pf = numpy.linalg.solve(aa, bb)
-
-    def __call__(self, x, y):
-        xf = x.astype('float') - self.xm
-        yf = y.astype('float') - self.ym
-        return self.pf[0] + self.pf[1] * xf + self.pf[2] * yf
-
-def fixpix2(data, mask, iterations=3, output=None):
-    '''Substitute pixels in mask by a bilinear least square fitting.
-    '''
-    out = output if output is not None else data.copy()
-    
-    # A binary mask, regions are ones
-    binry = mask != 0
-    
-    # Label regions in the binary mask
-    lblarr, labl = ndimage.label(binry)
-    
-    # Structure for dilation is 8-way
-    stct = ndimage.generate_binary_structure(2, 2)
-    # Pixels in the background
-    back = lblarr == 0
-    # For each object
-    for idx in range(1, labl + 1):
-        # Pixels of the object
-        segm = lblarr == idx
-        # Pixels of the object or the background
-        # dilation will only touch these pixels
-        dilmask =  numpy.logical_or(back, segm)
-        # Dilation 3 times
-        more = ndimage.binary_dilation(segm, stct, 
-                                       iterations=iterations, 
-                                       mask=dilmask)
-        # Border pixels
-        # Pixels in the border around the object are
-        # more and (not segm)
-        border = numpy.logical_and(more, numpy.logical_not(segm))
-        # Pixels in the border
-        xi, yi = border.nonzero()
-        # Bilinear leastsq calculator
-        calc = FitOne(xi, yi, out[xi,yi])
-        # Pixels in the region
-        xi, yi = segm.nonzero()
-        # Value is obtained from the fit
-        out[segm] = calc(xi, yi)
-        
-    return out
 
 class ImageInformation(object):
     def __init__(self):

@@ -21,6 +21,7 @@ import itertools as ito
 
 import numpy # pylint: disable-msgs=E1101
 
+from numina import braid
 from numina.instrument.detector import Detector
 
 # Classes are new style
@@ -43,24 +44,6 @@ def _ch3():
 
 def _ch4():
     return ito.izip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)), ito.repeat(slice(1024, 2048)))
-
-# FIXME: move this to numina    
-def braid(*iterables):
-    '''Return the elements of each iterator in turn until some is exhausted.
-    
-    This function is similar to the roundrobin example 
-    in itertools documentation.
-    
-    >>> a = iter([1,2,3,4])
-    >>> b = iter(['a', 'b'])
-    >>> c = iter([1,1,1,1,'a', 'c'])
-    >>> d = iter([1,1,1,1,1,1])
-    >>> list(braid(a, b, c, d))
-    [1, 'a', 1, 1, 2, 'b', 1, 1]
-    '''
-    for itbl in ito.izip(*iterables):
-        for it in itbl:
-            yield it
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
