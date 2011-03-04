@@ -191,7 +191,7 @@ class Hawaii2Detector(Detector):
         ampgain = ito.cycle(self._gain.flat)
         ampron = ito.cycle(self._ron.flat)
         
-        for amp, gain, ron in zip(self.amp, ampgain, ampron):
+        for amp, gain, ron in zip(self.amplifiers, ampgain, ampron):
             data = result[amp]
             data /= gain            
             # Readout noise
