@@ -49,7 +49,7 @@ class BiasCorrector(node.Corrector):
 
 class DarkCorrector(node.Corrector):
     def __init__(self, darkmap, mark=True, dtype='float32'):
-        super(DarkCorrector, self).__init__(label=('NUM-DK','Bias removed with numina'), dtype=dtype, mark=mark)
+        super(DarkCorrector, self).__init__(label=('NUM-DK','Dark removed with numina'), dtype=dtype, mark=mark)
         self.darkmap = darkmap
 
     def _run(self, img):
