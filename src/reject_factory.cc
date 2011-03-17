@@ -49,6 +49,15 @@ auto_ptr<RejectMethod> RejectMethodFactory::create(const std::string& name,
     return auto_ptr<RejectMethod> (new RejectMethodAdaptor<RejectSigmaClip<
         CTW> > (aa));
   }
+  if (name == "quantileclip") {
+    double low = 0.0;
+    double high = 0.0;
+    if (not PyArg_ParseTuple(args, "dd", &low, &high))
+      throw MethodException("problem creating QuantileClipMethod");
+    const RejectQuantileClip<CTW> aa(cm, low, high);
+    return auto_ptr<RejectMethod> (new RejectMethodAdaptor<RejectQuantileClip<
+        CTW> > (aa));
+  }
   return auto_ptr<RejectMethod> ();
 }
 

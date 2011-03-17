@@ -36,7 +36,9 @@ REJECT_METHODS = {'none': [],
                   'sigmaclip': [Schema('low', 3., 'Description'),
                                 Schema('high', 3., 'Description')],
                   'minmax': [Schema('nlow', 0, 'Description'),
-                             Schema('nhigh', 0, 'Description')]
+                             Schema('nhigh', 0, 'Description')],
+                  'quantileclip' : [Schema('low', 0.1, 'Description'),
+                             Schema('high', 0.1, 'Description')],
                   }
 
 def combine(images, masks=None, dtype=None, out=None,
