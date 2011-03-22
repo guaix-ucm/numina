@@ -37,8 +37,7 @@ REJECT_METHODS = {'none': [],
                                 Schema('high', 3., 'Description')],
                   'minmax': [Schema('nlow', 0, 'Description'),
                              Schema('nhigh', 0, 'Description')],
-                  'quantileclip' : [Schema('low', 0.1, 'Description'),
-                             Schema('high', 0.1, 'Description')],
+                  'quantileclip' : [Schema('fclip', 0.1, 'Fraction of points clipped on both ends.')],
                   }
 
 def combine(images, masks=None, dtype=None, out=None,
@@ -67,6 +66,9 @@ def combine(images, masks=None, dtype=None, out=None,
     if reject == 'minmax':
         if rargs[0] + rargs[1] > number_of_images:
             raise CombineError('minmax rejection and rejected points > number of images')
+    if reject == 'quantileclip':
+        if rargs[0] > 0.4:
+            raise CombineError('quantile clip cannot reject more than 40% of the points')
     
     images = map(numpy.asanyarray, images)
     
