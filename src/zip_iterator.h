@@ -212,7 +212,6 @@ public:
 
   ZipIterator()
   {
-    typename ZipIterator::difference_type a;
   }
 
   //! Constructor from a pair of iterators
