@@ -69,6 +69,8 @@ def combine(images, masks=None, dtype=None, out=None,
     if reject == 'quantileclip':
         if rargs[0] > 0.4:
             raise CombineError('quantile clip cannot reject more than 40% of the points')
+        if rargs[0] < 0.0:
+            raise CombineError('quantile clip cannot reject a negative fraction')
     
     images = map(numpy.asanyarray, images)
     

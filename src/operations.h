@@ -180,7 +180,7 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
 
 template<typename Iterator>
 inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
-    Iterator end, int nmin, int nmax) {
+    Iterator end, size_t nmin, size_t nmax) {
   Iterator pbegin = begin;
 
   if (nmin >= 1) {
@@ -193,7 +193,7 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
 
   if (nmax >= 1) {
     pend = end - nmax - 1;
-    std::nth_element(begin, pend, end);
+    std::nth_element(pbegin, pend, end);
     pend += 1;
   }
 
@@ -202,7 +202,7 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
 
 template<typename Iterator, typename StrictWeakOrdering>
 inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
-    Iterator end, int nmin, int nmax, StrictWeakOrdering comp) {
+    Iterator end, size_t nmin, size_t nmax, StrictWeakOrdering comp) {
 
   Iterator pbegin = begin;
   if (nmin >= 1) {
@@ -214,7 +214,7 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
   Iterator pend = end;
   if (nmax >= 1) {
     pend = end - nmax - 1;
-    std::nth_element(begin, pend, end, comp);
+    std::nth_element(pbegin, pend, end, comp);
     pend += 1;
   }
 

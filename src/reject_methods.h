@@ -165,12 +165,13 @@ public:
     size_t nclip = static_cast<size_t>(floor(n_elem_to_clip));
     size_t mclip = static_cast<size_t>(ceil(n_elem_to_clip));
 
+    *results[2] = n_elem - 2 * n_elem_to_clip;
+
     if (nclip == mclip) {
       // No interpolation
       std::pair<double, double> r = central(begin, end, weights, nclip);
       *results[0] = r.first;
       *results[1] = r.second;
-      *results[2] = n_elem - nclip;
     }
     else {
       // Interpolation
@@ -178,7 +179,6 @@ public:
       std::pair<double, double> r2 = central(begin, end, weights, mclip);
       *results[0] = r1.first + (n_elem_to_clip - nclip) * (r2.first - r1.first);
       *results[1] = r1.second + (n_elem_to_clip - nclip) * (r2.second - r1.second);
-      *results[2] = n_elem - n_elem_to_clip;
     }
   }
 

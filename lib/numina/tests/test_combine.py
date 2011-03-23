@@ -158,7 +158,7 @@ class CombineTestCase(unittest.TestCase):
             self.assertEqual(cal, precal)
             
             
-    def test_median(self):
+    def test_median2(self):
         '''Median combine: combination an even number of integer arrays.'''
         # Inputs
         input1 = numpy.array([[1, 2, 3, -4]])
@@ -216,7 +216,110 @@ class MinMaxTestCase(unittest.TestCase):
             nhigh = self.nimages - nlow + 1
             self.assertRaises(CombineError, combine, self.data, 
                               reject='minmax', nlow=nlow, nhigh=nhigh)
-      
+
+class QuantileClipTestCase(unittest.TestCase):
+    '''Test case for the quantileclip rejection method.'''
+    def setUp(self):
+        self.nimages = 10
+        self.data = [numpy.ones((2, 2))] * self.nimages
+        
+    def testBasic0(self):
+        '''Test CombineError is raised if fraction of points rejected is < 0.0.'''
+        self.assertRaises(CombineError, combine, self.data, 
+                              reject='quantileclip', fclip=-0.01)        
+        
+    def testBasic1(self):
+        '''Test CombineError is raised if fraction of points rejected is > 0.4.'''
+        self.assertRaises(CombineError, combine, self.data, 
+                              reject='quantileclip', fclip=0.41)
+        
+    def testBasic2(self):
+        '''Test integer rejections'''
+        r = combine(self.data, reject='quantileclip', fclip=0.0)
+        for v in r[0].flat:
+            self.assertEqual(v, 1)
+        for v in r[1].flat:
+            self.assertEqual(v, 0)
+        for v in r[2].flat:
+            self.assertEqual(v, 10)
+  
+        r = combine(self.data, reject='quantileclip', fclip=0.1)
+        for v in r[0].flat:
+            self.assertEqual(v, 1)
+        for v in r[1].flat:
+            self.assertEqual(v, 0)
+        for v in r[2].flat:
+            self.assertEqual(v, 8)
+        
+        r = combine(self.data, reject='quantileclip', fclip=0.2)
+        for v in r[0].flat:
+            self.assertEqual(v, 1)
+        for v in r[1].flat:
+            self.assertEqual(v, 0)
+        for v in r[2].flat:
+            self.assertEqual(v, 6)
+
+    def testBasic3(self):
+        '''Test simple fractional rejections'''
+        r = combine(self.data, reject='quantileclip', fclip=0.23)
+        for v in r[0].flat:
+            self.assertEqual(v, 1)
+        for v in r[1].flat:
+            self.assertEqual(v, 0)
+        for v in r[2].flat:
+            self.assertAlmostEqual(v, 5.4)
+            
+    def testBasic4(self):
+        '''Test complex fractional rejections'''
+        data = [numpy.array([i]) for i in range(10)]
+
+        r = combine(data, reject='quantileclip', fclip=0.0)
+        for v in r[0].flat:
+            self.assertAlmostEqual(v, 4.5)
+        for v in r[1].flat:
+            self.assertAlmostEqual(v, 9.166666666)
+        for v in r[2].flat:
+            self.assertAlmostEqual(v, 10)
+            
+        r = combine(data, method='average', reject='quantileclip', fclip=0.1)
+        for v in r[0].flat:            
+            self.assertAlmostEqual(v, 4.5)
+        for v in r[1].flat:
+            self.assertAlmostEqual(v, 6.0)
+        for v in r[2].flat:
+            self.assertAlmostEqual(v, 8)            
+            
+        r = combine(data, method='average', reject='quantileclip', fclip=0.2)
+        for v in r[0].flat:            
+            self.assertAlmostEqual(v, 4.5)
+        for v in r[1].flat:
+            self.assertAlmostEqual(v, 3.5)
+        for v in r[2].flat:
+            self.assertAlmostEqual(v, 6)
+
+        r = combine(data, reject='quantileclip', fclip=0.09)
+        for v in r[0].flat:
+            self.assertAlmostEqual(v, 4.5)
+        for v in r[1].flat:
+            self.assertAlmostEqual(v, 6.3166666666666664)
+        for v in r[2].flat:
+            self.assertAlmostEqual(v, 8.2)
+            
+    def testResults5(self):
+        '''Test deviante points are ignored'''
+        data = [numpy.array([1.0]) for _ in range(22)]
+        data[0][0] = 89
+        data[12][0] = -89
+        
+        r = combine(data, reject='quantileclip', fclip=0.15)
+        for v in r[0].flat:
+            self.assertAlmostEqual(v, 1.0)
+        for v in r[1].flat:
+            self.assertAlmostEqual(v, 0.0)
+        for v in r[2].flat:
+            self.assertAlmostEqual(v, 15.4)        
+        
+        
       
 def test_suite():
     suite = unittest.TestSuite()
