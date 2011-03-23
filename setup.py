@@ -13,6 +13,11 @@ cext = Extension('numina.array._combine',
                  ],
           include_dirs=[numpy_include])
 
+uext = Extension('numina.array._ufunc',
+                ['src/ufunc.cc',
+                 ],
+          include_dirs=[numpy_include])
+
 setup(name='pyemir',
       version='0.3.0',
       author='Sergio Pascual',
@@ -27,7 +32,7 @@ setup(name='pyemir',
                       'numina': ['*.cfg', 'logging.ini'],
                       'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
                       },
-      ext_modules=[cext],
+      ext_modules=[cext, uext],
       entry_points={
                       'console_scripts': ['numina = numina.user:main'],
                       },

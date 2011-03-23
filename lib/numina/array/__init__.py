@@ -327,3 +327,24 @@ def blockgen(blocks, shape):
     '''
     iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
     return product(*iterables)
+
+
+if __name__ == '__main__':
+    import _ufunc
+    from timeit import Timer
+    
+    
+    a = numpy.arange(10000)
+    
+    def test1():
+        _ufunc.test3(a)
+    
+    def test2():
+        numpy.median(a)
+
+    t = Timer("test1()", "from __main__ import test1")
+    print t.timeit()
+    
+    t = Timer("test2()", "from __main__ import test2")
+    print t.timeit()
+
