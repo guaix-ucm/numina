@@ -251,5 +251,14 @@ class EmirDetector(Hawaii2Detector):
 
         super(EmirDetector, self).__init__(gain=gain, ron=ron, dark=dark, 
                                            well=wdepth, flat=flat)
-    
+
+class Hawaii1Detector(Detector):
+    '''Hawaii1 detector.'''
+        
+    shape = (1024, 1024)
+    amplifiers =  [(slice(512, 1024), slice(0, 512)),
+             (slice(0, 512), slice(0, 512)),
+             (slice(0, 512), slice(512, 1024)),
+             (slice(512, 1024), slice(512, 1024))
+             ]
 
