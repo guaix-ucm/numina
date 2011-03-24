@@ -32,17 +32,19 @@ import numina.qa
 from numina.image import DiskImage
 from numina.image.imsurfit import imsurfit
 from numina.image.flow import SerialFlow
+from numina.image.background import create_background_map
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import subarray_match
 from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array import fixpix2
-from numina.array import compute_median_background, compute_sky_advanced, create_object_mask
+from numina.array import compute_median_background, compute_sky_advanced
 from numina.array import SextractorConf
 from numina.array.combine import flatcombine, combine
 from numina.array.combine import median
 from numina.recipes import RecipeBase, RecipeError
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
+from numina.util.sextractor import SExtractor
 from emir.dataproducts import create_result, create_raw
 from emir.recipes import EmirRecipeMixin
 import emir.instrument.detector as detector
@@ -111,17 +113,19 @@ def resize_fits(fitsfile, newfilename, newshape, region, fill=0.0):
 def update_sky_related(images, nimages=5):
     
     nox = nimages
-
+    # The first nimages
     for idx, image in enumerate(images[:nox]):
         bw = images[0:2 * nox + 1][:idx]
         fw = images[0:2 * nox + 1][idx + 1:]
         image.sky_related = (bw, fw)
 
+    # Images between nimages and -nimages
     for idx, image in enumerate(images[nox:-nox]):
         bw = images[idx:idx + nox]
         fw = images[idx + nox + 1:idx + 2 * nox + 1]
         image.sky_related = (bw, fw)
  
+    # The last nimages
     for idx, image in enumerate(images[-nox:]):
         bw = images[-2 * nox - 1:][0:idx + nox + 1]
         fw = images[-2 * nox - 1:][nox + idx + 2:]
@@ -218,10 +222,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         Schema('master_flat', ProxyQuery(), 'Master flat field image'),
         Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),
         Schema('iterations', 4, 'Iterations of the recipe'),
+        Schema('sky_images', 5, 'Images used to estimate the background around current image'),
         Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),
         Schema('resultname', 'result.fits', 'Name of the output image'),
         Schema('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
         Schema('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
+        Schema('juliandatekey', 'MJD-OBS', 'Julian date keyword'),
         Schema('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
         # Sextractor parameter files
         Schema('sexfile', None, 'Sextractor parameter file'),
@@ -303,26 +309,64 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         finally:
             hdulist1.close()
             
+    def compute_advanced_sky2(self, image, objmask, iteration):
+        # Create a copy of the image
+        dst = _name_skysub_proc(image.label, iteration)
+        shutil.copy(image.lastname, dst)
+        image.lastname = dst
+        
+        data = pyfits.getdata(image.lastname)
+        sky, _ = create_background_map(data[image.region], 128, 128)
+        
+        _logger.info('Computing advanced sky for %s', image.label)            
+        
+        hdulist = pyfits.open(image.lastname, mode='update')
+        try:
+            d = hdulist['primary'].data[image.region]
+        
+            _logger.info('Iter %d, SC: subtracting sky to image %s', 
+                     iteration, image.label)
+            name = _name_skybackground(image.label, iteration)
+            pyfits.writeto(name, sky)
+            d -= sky
+        
+        finally:
+            hdulist.close()            
+            
     def compute_advanced_sky(self, image, objmask, iteration):
         # Create a copy of the image
         dst = _name_skysub_proc(image.label, iteration)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
+                
+        max_time_sep = 10.0 / 1440.0
+        thistime = image.mjd
         
         _logger.info('Computing advanced sky for %s', image.label)
         desc = []
         data = []
         masks = []
 
-        try:        
+        try:
+            idx = 0
             for i in itertools.chain(*image.sky_related):
+                time_sep = abs(thistime - i.mjd)
+                if time_sep > max_time_sep:
+                    _logger.warn('Image %s is separated from %s more than the allowed %d', i.label, image.label, max_time_sep * 1440)
+                    _logger.warn('Image %s will not be used', i.label)
+                    continue
                 filename = i.flat_corrected
-                hdulist = pyfits.open(filename, mode='update')
+                hdulist = pyfits.open(filename, mode='readonly')
                 data.append(hdulist['primary'].data[i.region])
+                pyfits.writeto('%s-part-%d.fits' % (image.label, idx), data[-1], clobber=True, header=hdulist[0].header)
                 masks.append(objmask[i.region])
+                pyfits.writeto('%s-part-m-%d.fits' % (image.label, idx), masks[-1], clobber=True)
                 desc.append(hdulist)
+                idx += 1
 
-            sky, _, num = median(data, masks)
+            _logger.debug('Computing background with %d images', len(data))
+            sky, _, num = combine(data, masks, method='median',
+                                  reject='minmax', nlow=1, nhigh=1)
             if numpy.any(num == 0):
                 # We have pixels without
                 # sky background information
@@ -396,7 +440,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
             _logger.debug('Iter %d, combining images', iteration)
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, method='median', 
-                                                    blank=1.0 / scales[0])
+                                                    blank=1.0 / scales[0], 
+                                                    reject='minmax', nlow=1, nhigh=1)
             
             
             
@@ -463,11 +508,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             try:
                 ii.baseshape = get_image_shape(hdr)
                 ii.airmass = hdr[self.parameters['airmasskey']]
+                ii.mjd = hdr[self.parameters['juliandatekey']]
             except KeyError, e:
                 raise RecipeError("%s in image %s" % (str(e), ii.base))
             images_info.append(ii)
     
-        images_info = update_sky_related(images_info, nimages=2)
+        images_info = update_sky_related(images_info, nimages=self.parameters['sky_images'])
         image_shapes = images_info[0].baseshape
     
         _logger.info('Basic processing')
@@ -516,7 +562,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info('Iter %d, generating segmentation image', iter_)            
             if sf_data is not None:
                 # sextractor takes care of bad pixels
-                objmask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))
+                sex = SExtractor()
+                sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
+                sex.config["CHECKIMAGE_NAME"] = _name_segmask(iter_)
+                sex.config['VERBOSE_TYPE'] = 'QUIET'
+                filename = 'result_i%0d.fits' % (iter_ - 1)
+                # Lauch SExtractor on a FITS file
+                sex.run(filename)
+                objmask = pyfits.getdata(_name_segmask(iter_))
+                #objmask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))                
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
@@ -534,7 +588,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 region = image.region
                 data = pyfits.getdata(image.resized_base)[region]
                 mask = pyfits.getdata(image.resized_mask)[region]
-                image.median_scale = numpy.median(data[mask == 0])
+                # FIXME: while developing this is faster, remove later            
+                image.median_scale = numpy.median(data[mask == 0][::10])
                 _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
             
             # Combining images to obtain the sky flat 
@@ -553,9 +608,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 for image in images_info:            
                     self.compute_simple_sky(image, iter_)
             else:
-                _logger.info('Iter %d, SC: computing adavanced sky', iter_)
+                _logger.info('Iter %d, SC: computing advanced sky', iter_)
                 for image in images_info:            
-                    self.compute_advanced_sky(image, objmask, iter_)
+                    self.compute_advanced_sky2(image, objmask, iter_)
     
             # Combining the images
             _logger.info("Iter %d, Combining the images", iter_)
