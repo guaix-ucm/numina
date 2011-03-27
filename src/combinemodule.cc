@@ -80,6 +80,19 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
     return PyErr_Format(CombineError, #ARRAY" size != number of images"); \
   }
 
+// Convenience check macro
+#define CHECK_1D_ARRAYS(ARRAY, NIMAGES) \
+  if (PyArray_NDIM(ARRAY) != 1) \
+  { \
+    PyErr_SetString(CombineError, #ARRAY" dimension != 1"); \
+    goto exit; \
+  } \
+  if (PyArray_SIZE(ARRAY) != NIMAGES) \
+  { \
+    PyErr_SetString(CombineError, #ARRAY" size != number of images"); \
+    goto exit; \
+  }
+
 #define STORE_AND_CONVERT(OUTTYPE, OUTVAR, MSG) \
     if (clean == NULL) \
     { \
@@ -389,6 +402,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
   return Py_BuildValue("(O,O,O)", out[0], out[1], out[2]);
 
 }
+
 static PyObject* py_internal_combine_with_offsets(PyObject *self,
     PyObject *args, PyObject *kwds)
 {
@@ -736,11 +750,179 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
   return Py_BuildValue("(O,O,O)", out[0], out[1], out[2]);
 }
 
-static PyMethodDef combine_methods[] = { { "internal_combine",
-    (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS,
-    internal_combine__doc__ }, { "internal_combine_with_offsets",
-    (PyCFunction) py_internal_combine_with_offsets, METH_VARARGS
+static int Py_FilterFunc(double *buffer, int size,
+                                                 double *output, void *data)
+{
+  int i;
+  *output = 0.0;
+  for(i = 0; i < size; ++i)
+    *output += buffer[i];
+  *output /= size;
+  return 1;
+}
+
+int NU_generic_combine(PyObject** images, PyObject** masks, int size,
+    PyObject* out,
+    int (*function)(double*, int, double*, void*),
+    void* vdata,
+    double* zeros,
+    double* scales,
+    double* weights)
+{
+  // Check images and masks
+  // Create iterators
+
+  // Iterators
+    VectorPyArrayIter iiter(size);
+    std::transform(images, images + size, iiter.begin(), &My_PyArray_IterNew);
+    VectorPyArrayIter miter(size);
+    std::transform(masks, masks + size, miter.begin(), &My_PyArray_IterNew);
+    VectorPyArrayIter oiter(1);
+    std::transform(&out, &out + 1, oiter.begin(), &My_PyArray_IterNew);
+
+    // Data and data weights
+      std::vector<double> data;
+      data.reserve(size);
+      std::vector<double> wdata;
+      wdata.reserve(size);
+
+  PyArrayIterObject* iter = oiter[0];
+  double* ovalue;
+  while (iter->index < iter->size)
+    {
+      int ii = 0;
+      VectorPyArrayIter::const_iterator i = iiter.begin();
+      VectorPyArrayIter::const_iterator m = miter.begin();
+      for (; i != iiter.end(); ++i, ++m, ++ii)
+      {
+        void* d_dtpr = (*i)->dataptr;
+        double* p = (double*) d_dtpr;
+        const double converted = (*p - zeros[ii]) / scales[ii];
+        data.push_back(converted);
+        wdata.push_back(weights[ii]);
+      }
+
+      function(&data[0], data.size(), ovalue, vdata);
+      oiter[0]->dataptr = (char*) ovalue;
+
+      // We clean up the data storage
+      data.clear();
+      wdata.clear();
+      // And move all the iterators to the next point
+      std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);
+      std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
+      std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
+    }
+  // Clean up memory
+  std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Decref);
+  //std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Decref);
+  std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Decref);
+  return 1;
+}
+
+typedef int (*RR)(double*, int, double*, void*);
+
+static PyObject* py_generic_combine(PyObject *self, PyObject *args)
+{
+  /* Arguments */
+  PyObject *images = NULL;
+  PyObject *masks = NULL;
+  PyObject *out = NULL;
+  PyObject* fnc = NULL;
+
+  PyObject* scales = NULL;
+  PyObject* zeros = NULL;
+  PyObject* weights = NULL;
+
+
+  PyObject *images_seq = NULL;
+  PyObject *masks_seq = NULL;
+  PyObject* zeros_arr = NULL;
+  PyObject* scales_arr = NULL;
+  PyObject* weights_arr = NULL;
+
+  void *func = (void*)Py_FilterFunc;
+  void *data = NULL;
+
+  Py_ssize_t nimages = 0;
+  Py_ssize_t nmasks = 0;
+
+  PyObject** allimages = NULL;
+  PyObject** allmasks = NULL;
+
+  int ok = PyArg_ParseTuple(args,
+      "OOO!OO!O!O!:generic_combine",
+      &images,
+      &masks,
+      &PyArray_Type, &out,
+      &fnc,
+      &PyArray_Type, &zeros,
+      &PyArray_Type, &scales,
+      &PyArray_Type, &weights);
+
+  if (!ok)
+  {
+    goto exit;
+  }
+
+  images_seq = PySequence_Fast(images, "expected a sequence");
+  nimages = PySequence_Size(images_seq);
+
+  masks_seq = PySequence_Fast(masks, "expected a sequence");
+  nmasks = PySequence_Size(masks_seq);
+
+  if (nimages != nmasks) {
+    PyErr_SetString(CombineError, "error");
+    goto exit;
+  }
+
+  allimages = PySequence_Fast_ITEMS(images_seq);
+  allmasks = PySequence_Fast_ITEMS(masks_seq);
+
+
+  if (PyCObject_Check(fnc)) {
+      func = PyCObject_AsVoidPtr(fnc);
+      data = PyCObject_GetDesc(fnc);
+  } else {
+      PyErr_SetString(PyExc_RuntimeError,
+                                      "function parameter is not callable");
+      goto exit;
+  }
+
+  // Checking zeros, scales and weights
+  CHECK_1D_ARRAYS(zeros, nimages);
+  CHECK_1D_ARRAYS(scales, nimages);
+  CHECK_1D_ARRAYS(weights, nimages);
+
+  zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
+  scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
+  weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
+
+  if( not NU_generic_combine(allimages, allmasks, nimages, out,
+      (RR)func, data,
+      (double*)PyArray_DATA(zeros_arr),
+      (double*)PyArray_DATA(scales_arr),
+      (double*)PyArray_DATA(weights_arr)
+      )
+    )
+    goto exit;
+
+exit:
+  Py_XDECREF(images_seq);
+  Py_XDECREF(masks_seq);
+  Py_XDECREF(zeros_arr);
+  Py_XDECREF(scales_arr);
+  Py_XDECREF(weights_arr);
+  return PyErr_Occurred() ? NULL : Py_BuildValue("");
+
+}
+
+static PyMethodDef combine_methods[] = {
+    { "internal_combine", (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS,
+    internal_combine__doc__ },
+    { "internal_combine_with_offsets", (PyCFunction) py_internal_combine_with_offsets, METH_VARARGS
         | METH_KEYWORDS, internal_combine__doc__ },
+    {"generic_combine", (PyCFunction) py_generic_combine, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
