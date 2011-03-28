@@ -33,7 +33,7 @@
 #include "reject_factory.h"
 #include "method_exception.h"
 
-#include "operations.h"
+#include "nu_combine_methods.h"
 
 using Numina::CombineMethodFactory;
 using Numina::RejectMethodFactory;
@@ -109,15 +109,13 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
 // An exception in this module
 static PyObject* CombineError;
 
-static const int OUTDIM = 3;
-
 static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     PyObject *kwds)
 {
 
   // Output has one dimension more than the inputs, of size
   // OUTDIM
-  const size_t OUTDIM = 3;
+  const size_t OUTDIM = NU_COMBINE_OUTDIM;
   char* method = "average";
   char* reject = "none";
   PyObject *images = NULL;
@@ -413,7 +411,7 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
 
   // Output has one dimension more than the inputs, of size
   // OUTDIM
-  const size_t OUTDIM = 3;
+  const size_t OUTDIM = NU_COMBINE_OUTDIM;
   char *method = "average";
   char *reject = "none";
   PyObject *images = NULL;
@@ -754,26 +752,8 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
   return Py_BuildValue("(O,O,O)", out[0], out[1], out[2]);
 }
 
-typedef int (*CombineFunc)(double*, double*, int, double*[OUTDIM], void*);
-
-static int NU_mean_function(double *data, double *weights,
-    int size, double *out[OUTDIM], void *func_data)
-{
-
-  int i;
-  *out[0] = 0.0;
-  *out[1] = 0.0;
-  *out[2] = size;
-  std::pair<double, double> r = Numina::average_central_tendency(data, data + size, weights);
-
-  *out[0] = r.first;
-  *out[1] = r.second;
-
-  return 1;
-}
-
 int NU_generic_combine(PyObject** images, PyObject** masks, int size,
-    PyObject* out[OUTDIM],
+    PyObject* out[NU_COMBINE_OUTDIM],
     CombineFunc function,
     void* vdata,
     double* zeros,
@@ -822,6 +802,7 @@ int NU_generic_combine(PyObject** images, PyObject** masks, int size,
   // A buffer used to store intermediate results during swapping
   char buffer[NPY_BUFSIZE];
 
+  const size_t OUTDIM = NU_COMBINE_OUTDIM;
   // Iterators
   VectorPyArrayIter iiter(size);
   std::transform(images, images + size, iiter.begin(), &My_PyArray_IterNew);
@@ -926,6 +907,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   PyObject *masks = NULL;
   // Output has one dimension more than the inputs, of size
   // OUTDIM
+  const size_t OUTDIM = NU_COMBINE_OUTDIM;
   PyObject *out[OUTDIM] = {NULL, NULL, NULL};
   PyObject* fnc = NULL;
 
