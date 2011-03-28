@@ -350,6 +350,18 @@ class SExtractor:
         "VERBOSE_TYPE":
         {"comment": 'can be "QUIET", "NORMAL" or "FULL"',
          "value": "QUIET"},
+         
+        "WEIGHT_TYPE":
+        {"comment": 'can be "NONE", "BACKGROUND", "MAP_RMS", "MAP_VAR" or "MAP_WEIGHT"',
+         "value": "NONE"},
+
+        "WEIGHT_IMAGE":
+        {"comment": 'can be "NONE" or filename',
+         "value": "NONE"},
+                  
+         "WEIGHT THRESH":
+        {"comment": 'can be "NONE" or filename',
+         "value": 0},
 
         # -- Extra-keys (will not be saved in the main configuration file
 
