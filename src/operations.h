@@ -24,6 +24,9 @@
 #include <iterator>
 #include <algorithm>
 #include <numeric>
+#include <ext/functional>
+
+#include "zip_iterator.h"
 
 namespace Numina {
 
@@ -220,6 +223,34 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
 
   return std::make_pair(pbegin, pend);
 }
+
+template<typename Iterator1, typename Iterator2>
+std::pair<double, double>
+average_central_tendency_clip(Iterator1 begin, Iterator1 end, Iterator2 weights,
+    size_t low, size_t high) {
+  typedef std::pair<Iterator1, Iterator2> _IterPair;
+  typedef ZipIterator<_IterPair> _ZIter;
+  typedef std::pair<_ZIter, _ZIter> _ZIterPair;
+
+  _ZIter beg = make_zip_iterator(begin, weights);
+  size_t n_elem = std::distance(begin, end);
+  _ZIter ned = make_zip_iterator(end, weights + n_elem);
+
+  _ZIterPair result = reject_min_max(beg, ned, low, high,
+      // Compares two std::pair objects. Returns true
+      // if the first component of the first is less than the first component
+      // of the second std::pair
+      compose(std::less<typename std::iterator_traits<Iterator1>::value_type>(), __gnu_cxx::select1st<
+          typename _ZIter::value_type>(), __gnu_cxx::select1st<
+          typename _ZIter::value_type>()));
+
+  _IterPair itp_beg = result.first.get_iterator_pair();
+  _IterPair itp_end = result.second.get_iterator_pair();
+
+  return average_central_tendency(itp_beg.first, itp_end.first, itp_beg.second);
+}
+
+
 
 } // namespace Numina
 

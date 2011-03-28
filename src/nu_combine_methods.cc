@@ -31,13 +31,13 @@ using Numina::ZipIterator;
 using Numina::make_zip_iterator;
 using Numina::compose;
 using Numina::average_central_tendency;
+using Numina::average_central_tendency_clip;
 using Numina::median_central_tendency;
 
 typedef std::pair<double*, double*> IterPair;
 typedef ZipIterator<IterPair> ZIter;
 typedef std::pair<ZIter, ZIter> ZIterPair;
 typedef std::pair<double, double> ValuePair;
-
 
 int NU_mean_function(double *data, double *weights,
     int size, double *out[3], void *func_data)
@@ -93,8 +93,8 @@ int NU_sigmaclip_function(double *data, double *weights,
     int size, double *out[3], void *func_data) {
 
     double* fdata = (double*) func_data;
-    double& low = *fdata;
-    double& high = *(fdata + 1);
+    double& slow = *fdata;
+    double& shigh = *(fdata + 1);
 
     size_t c_size = size;
     ZIter beg = make_zip_iterator(data, weights);
@@ -111,8 +111,8 @@ int NU_sigmaclip_function(double *data, double *weights,
       c_std = sqrt(r.second);
       c_size = std::distance(beg, ned);
 
-      const double low = c_mean - c_std * low;
-      const double high = c_mean + c_std * high;
+      const double low = c_mean - c_std * slow;
+      const double high = c_mean + c_std * shigh;
       ned = partition(beg, ned,
           // Checks if first component of a std::pair
           // is inside the range (low, high)
@@ -139,6 +139,34 @@ int NU_sigmaclip_function(double *data, double *weights,
   return 1;
 }
 
+int NU_quantileclip_function(double *data, double *weights,
+    int size, double *out[3], void *func_data) {
+
+  double* fclip = (double*) func_data;
+
+  size_t n_elem = size;
+  double n_elem_to_clip = n_elem * (*fclip);
+  size_t nclip = static_cast<size_t>(floor(n_elem_to_clip));
+  size_t mclip = static_cast<size_t>(ceil(n_elem_to_clip));
+
+  *out[2] = n_elem - 2 * n_elem_to_clip;
+
+  if (nclip == mclip) {
+    // No interpolation
+    ValuePair r = average_central_tendency_clip(data, data + size, weights, nclip, nclip);
+    *out[0] = r.first;
+    *out[1] = r.second;
+  }
+  else {
+    // Interpolation
+    ValuePair r1 = average_central_tendency_clip(data, data + size, weights, nclip, nclip);
+    ValuePair r2 = average_central_tendency_clip(data, data + size, weights, mclip, mclip);
+    *out[0] = r1.first + (n_elem_to_clip - nclip) * (r2.first - r1.first);
+    *out[1] = r1.second + (n_elem_to_clip - nclip) * (r2.second - r1.second);
+  }
+
+  return 1;
+}
 
 void NU_destructor_function(void* cobject, void *cdata) {
   if (cdata)
