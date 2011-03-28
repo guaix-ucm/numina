@@ -888,8 +888,13 @@ exit:
 }
 
 static PyObject *
-py_method_function(PyObject *obj, PyObject *args) {
+py_method_mean(PyObject *obj, PyObject *args) {
   return PyCObject_FromVoidPtr((void*)NU_mean_function, NULL);
+}
+
+static PyObject *
+py_method_median(PyObject *obj, PyObject *args) {
+  return PyCObject_FromVoidPtr((void*)NU_median_function, NULL);
 }
 
 static PyObject *
@@ -917,7 +922,8 @@ static PyMethodDef combine_methods[] = {
     { "internal_combine_with_offsets", (PyCFunction) py_internal_combine_with_offsets, METH_VARARGS
         | METH_KEYWORDS, internal_combine__doc__ },
     {"generic_combine", (PyCFunction) py_generic_combine, METH_VARARGS, ""},
-    {"mean_method", (PyCFunction) py_method_function, METH_VARARGS, ""},
+    {"mean_method", (PyCFunction) py_method_mean, METH_VARARGS, ""},
+    {"median_method", (PyCFunction) py_method_median, METH_VARARGS, ""},
     {"minmax_method", (PyCFunction) py_method_minmax, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };

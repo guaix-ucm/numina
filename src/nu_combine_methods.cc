@@ -49,6 +49,18 @@ int NU_mean_function(double *data, double *weights,
   return 1;
 }
 
+int NU_median_function(double *data, double *weights,
+    int size, double *out[3], void *func_data)
+{
+  *out[2] = size;
+  ValuePair r = median_central_tendency(data, data + size, weights);
+
+  *out[0] = r.first;
+  *out[1] = r.second;
+
+  return 1;
+}
+
 int NU_minmax_function(double *data, double *weights,
     int size, double *out[3], void *func_data)
 {
