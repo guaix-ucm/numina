@@ -30,6 +30,7 @@ using Numina::ZipIterator;
 using Numina::make_zip_iterator;
 using Numina::compose;
 using Numina::average_central_tendency;
+using Numina::median_central_tendency;
 
 typedef std::pair<double*, double*> IterPair;
 typedef ZipIterator<IterPair> ZIter;
