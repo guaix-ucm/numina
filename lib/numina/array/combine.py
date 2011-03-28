@@ -99,7 +99,7 @@ def combine(images, masks=None, dtype=None, out=None,
             raise CombineError("mask and image have different shape")
     else:
         masks = [numpy.zeros(baseshape, dtype='bool')] * number_of_images
-        
+    
     # Creating out if needed
     # We need three numbers
     outshape = (3,) + tuple(finalshape)
@@ -107,7 +107,7 @@ def combine(images, masks=None, dtype=None, out=None,
     if out is None:
         out = numpy.zeros(outshape, dtype=WORKTYPE)
     else:
-        out = numpy.asanyarray(out, dtype=WORKTYPE)
+        pass#out = numpy.asanyarray(out, dtype=WORKTYPE)
     
     if out.shape != outshape:
         raise CombineError("result has wrong shape")  

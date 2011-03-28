@@ -10,6 +10,8 @@ cext = Extension('numina.array._combine',
                  'src/reject_factory.cc',
                  'src/method_factory.cc',
                  'src/operations.cc',
+                 'src/nu_combine_methods.cc',
+                 'src/nu_combine.cc'
                  ],
           include_dirs=[numpy_include])
 
