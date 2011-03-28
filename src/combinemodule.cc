@@ -863,7 +863,6 @@ int NU_generic_combine(PyObject** images, PyObject** masks, int size,
       // Convert to NPY_BOOL
       mask_converter(buffer, &m_val, 1, NULL, NULL);
 
-      //if (0) printf("masked\n");
       if (not m_val) // <- True values are skipped
       {
         // If mask converts to NPY_FALSE,
@@ -890,7 +889,6 @@ int NU_generic_combine(PyObject** images, PyObject** masks, int size,
     // And pass the data to the combine method
 
     function(&data[0], &wdata[0], data.size(), pvalues, vdata);
-    //if (0) printf("output written\n");
     // Conversion from NPY_DOUBLE to the type of output
     for (size_t i = 0; i < OUTDIM; ++i)
     {
@@ -1034,7 +1032,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
   scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
   weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
-  //printf("antes\n");
+
   if( not NU_generic_combine(allimages, allmasks, nimages, out,
       (CombineFunc)func, data,
       (double*)PyArray_DATA(zeros_arr),
@@ -1043,7 +1041,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       )
     )
     goto exit;
-  //printf("despues\n");
+
 exit:
   Py_XDECREF(images_seq);
   Py_XDECREF(masks_seq);
