@@ -561,12 +561,37 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             _logger.info('Iter %d, generating segmentation image', iter_)            
             if sf_data is not None:
+                #
+                remove_border = True
+                
                 # sextractor takes care of bad pixels
                 sex = SExtractor()
                 sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
                 sex.config["CHECKIMAGE_NAME"] = _name_segmask(iter_)
                 sex.config['VERBOSE_TYPE'] = 'QUIET'
+                                
+                if remove_border:
+                    weigthmap = 'weights4rms.fits'
+                    # Create weight map, remove n pixs from either side                                
+                    w1 = 80
+                    w2 = 80
+                    wmap = numpy.ones_like(sf_data[0])
+                    
+                    cos_win1 = numpy.hanning(2 * w1)
+                    cos_win2 = numpy.hanning(2 * w2)
+                                           
+                    wmap[:,:w1] *= cos_win1[:w1]                    
+                    wmap[:,-w1:] *= cos_win1[-w1:]
+                    wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
+                    wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
+                    
+                    pyfits.writeto(weigthmap, wmap, clobber=True)
+                                        
+                    sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+                    sex.config['WEIGHT_IMAGE'] = weigthmap
+                    
                 filename = 'result_i%0d.fits' % (iter_ - 1)
+                
                 # Lauch SExtractor on a FITS file
                 sex.run(filename)
                 objmask = pyfits.getdata(_name_segmask(iter_))
