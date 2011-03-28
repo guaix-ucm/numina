@@ -33,6 +33,8 @@
 #include "reject_factory.h"
 #include "method_exception.h"
 
+#include "operations.h"
+
 using Numina::CombineMethodFactory;
 using Numina::RejectMethodFactory;
 using Numina::CombineMethod;
@@ -106,6 +108,8 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
 
 // An exception in this module
 static PyObject* CombineError;
+
+static const int OUTDIM = 3;
 
 static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     PyObject *kwds)
@@ -750,84 +754,181 @@ static PyObject* py_internal_combine_with_offsets(PyObject *self,
   return Py_BuildValue("(O,O,O)", out[0], out[1], out[2]);
 }
 
-static int Py_FilterFunc(double *buffer, int size,
-                                                 double *output, void *data)
+typedef int (*CombineFunc)(double*, double*, int, double*[OUTDIM], void*);
+
+static int NU_mean_function(double *data, double *weights,
+    int size, double *out[OUTDIM], void *func_data)
 {
+
   int i;
-  *output = 0.0;
-  for(i = 0; i < size; ++i)
-    *output += buffer[i];
-  *output /= size;
+  *out[0] = 0.0;
+  *out[1] = 0.0;
+  *out[2] = size;
+  std::pair<double, double> r = Numina::average_central_tendency(data, data + size, weights);
+
+  *out[0] = r.first;
+  *out[1] = r.second;
+
   return 1;
 }
 
 int NU_generic_combine(PyObject** images, PyObject** masks, int size,
-    PyObject* out,
-    int (*function)(double*, int, double*, void*),
+    PyObject* out[OUTDIM],
+    CombineFunc function,
     void* vdata,
     double* zeros,
     double* scales,
     double* weights)
 {
-  // Check images and masks
-  // Create iterators
+
+  // Select the functions we are going to use
+  // to transform the data in arrays into
+  // the doubles we're working on
+
+  PyArray_Descr* descr = NULL;
+
+  // Conversion for inputs
+  descr = PyArray_DESCR(images[0]);
+  // Convert from the array to NPY_DOUBLE
+  PyArray_VectorUnaryFunc* datum_converter = PyArray_GetCastFunc(descr,
+      NPY_DOUBLE);
+  // Swap bytes
+  PyArray_CopySwapFunc* datum_swap = descr->f->copyswap;
+  bool datum_need_to_swap = PyArray_ISBYTESWAPPED(images[0]);
+
+  // Conversion for masks
+  descr = PyArray_DESCR(masks[0]);
+  // Convert from the array to NPY_BOOL
+  PyArray_VectorUnaryFunc* mask_converter =
+      PyArray_GetCastFunc(descr, NPY_BOOL);
+  // Swap bytes
+  PyArray_CopySwapFunc* mask_swap = descr->f->copyswap;
+  bool mask_need_to_swap = PyArray_ISBYTESWAPPED(masks[0]);
+
+  // Conversion for outputs
+  descr = PyArray_DESCR(out[0]);
+  // Swap bytes
+  PyArray_CopySwapFunc* out_swap = descr->f->copyswap;
+  // Inverse cast
+  PyArray_Descr* descr_to = PyArray_DescrFromType(NPY_DOUBLE);
+  // We cast from double to the type of out array
+  PyArray_VectorUnaryFunc* out_converter = PyArray_GetCastFunc(descr_to,
+      PyArray_TYPE(out[0]));
+
+  bool out_need_to_swap = PyArray_ISBYTESWAPPED(out[0]);
+  // This is probably not needed
+  Py_DECREF(descr_to);
+
+  // A buffer used to store intermediate results during swapping
+  char buffer[NPY_BUFSIZE];
 
   // Iterators
-    VectorPyArrayIter iiter(size);
-    std::transform(images, images + size, iiter.begin(), &My_PyArray_IterNew);
-    VectorPyArrayIter miter(size);
-    std::transform(masks, masks + size, miter.begin(), &My_PyArray_IterNew);
-    VectorPyArrayIter oiter(1);
-    std::transform(&out, &out + 1, oiter.begin(), &My_PyArray_IterNew);
+  VectorPyArrayIter iiter(size);
+  std::transform(images, images + size, iiter.begin(), &My_PyArray_IterNew);
+  VectorPyArrayIter miter(size);
+  std::transform(masks, masks + size, miter.begin(), &My_PyArray_IterNew);
+  VectorPyArrayIter oiter(OUTDIM);
+  std::transform(out, out + OUTDIM, oiter.begin(), &My_PyArray_IterNew);
 
-    // Data and data weights
-      std::vector<double> data;
-      data.reserve(size);
-      std::vector<double> wdata;
-      wdata.reserve(size);
-
+  // basic iterator, we move through the
+  // first result image
   PyArrayIterObject* iter = oiter[0];
-  double* ovalue;
+
+  // Data and data weights
+  std::vector<double> data;
+  data.reserve(size);
+  std::vector<double> wdata;
+  wdata.reserve(size);
+
+  // pointers to the pixels in out[0,1,2] arrays
+  double* pvalues[OUTDIM];
+  double values[OUTDIM];
+
+  for (int i = 0; i < OUTDIM; ++i)
+    pvalues[i] = &values[i];
+
   while (iter->index < iter->size)
+  {
+    int ii = 0;
+    VectorPyArrayIter::const_iterator i = iiter.begin();
+    VectorPyArrayIter::const_iterator m = miter.begin();
+    for (; i != iiter.end(); ++i, ++m, ++ii)
     {
-      int ii = 0;
-      VectorPyArrayIter::const_iterator i = iiter.begin();
-      VectorPyArrayIter::const_iterator m = miter.begin();
-      for (; i != iiter.end(); ++i, ++m, ++ii)
+
+      void* m_dtpr = (*m)->dataptr;
+      // Swap the value if needed and store it in the buffer
+      mask_swap(buffer, m_dtpr, mask_need_to_swap, NULL);
+
+      npy_bool m_val = NPY_FALSE;
+      // Convert to NPY_BOOL
+      mask_converter(buffer, &m_val, 1, NULL, NULL);
+
+      //if (0) printf("masked\n");
+      if (not m_val) // <- True values are skipped
       {
-        void* d_dtpr = (*i)->dataptr;
-        double* p = (double*) d_dtpr;
-        const double converted = (*p - zeros[ii]) / scales[ii];
-        data.push_back(converted);
-        wdata.push_back(weights[ii]);
+        // If mask converts to NPY_FALSE,
+        // we store the value of the image array
+        //if (zero and scale and weight)
+        {
+          void* d_dtpr = (*i)->dataptr;
+          // Swap the value if needed and store it in the buffer
+          datum_swap(buffer, d_dtpr, datum_need_to_swap, NULL);
+
+          double d_val = 0;
+          // Convert to NPY_DOUBLE
+          datum_converter(buffer, &d_val, 1, NULL, NULL);
+
+          // Subtract zero and divide by scale
+          const double converted = (d_val - zeros[ii]) / (scales[ii]);
+
+          data.push_back(converted);
+          wdata.push_back(weights[ii]);
+        }
       }
-
-      function(&data[0], data.size(), ovalue, vdata);
-      oiter[0]->dataptr = (char*) ovalue;
-
-      // We clean up the data storage
-      data.clear();
-      wdata.clear();
-      // And move all the iterators to the next point
-      std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);
-      std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
-      std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
     }
+
+    // And pass the data to the combine method
+
+    function(&data[0], &wdata[0], data.size(), pvalues, vdata);
+    //if (0) printf("output written\n");
+    // Conversion from NPY_DOUBLE to the type of output
+    for (size_t i = 0; i < OUTDIM; ++i)
+    {
+      // Cast to out
+      out_converter(pvalues[i], buffer, 1, NULL, NULL);
+      // Swap if needed
+      out_swap(oiter[i]->dataptr, buffer, out_need_to_swap, NULL);
+
+    }
+
+
+    // We clean up the data storage
+    data.clear();
+    wdata.clear();
+
+    // And move all the iterators to the next point
+    std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Next);
+    std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Next);
+    std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
+  }
   // Clean up memory
   std::for_each(iiter.begin(), iiter.end(), My_PyArray_Iter_Decref);
-  //std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Decref);
+  std::for_each(miter.begin(), miter.end(), My_PyArray_Iter_Decref);
   std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Decref);
+
   return 1;
 }
 
-typedef int (*RR)(double*, int, double*, void*);
+
 
 static PyObject* py_generic_combine(PyObject *self, PyObject *args)
 {
   /* Arguments */
   PyObject *images = NULL;
   PyObject *masks = NULL;
-  PyObject *out = NULL;
+  // Output has one dimension more than the inputs, of size
+  // OUTDIM
+  PyObject *out[OUTDIM] = {NULL, NULL, NULL};
   PyObject* fnc = NULL;
 
   PyObject* scales = NULL;
@@ -841,20 +942,23 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   PyObject* scales_arr = NULL;
   PyObject* weights_arr = NULL;
 
-  void *func = (void*)Py_FilterFunc;
+  void *func = (void*)NU_mean_function;
   void *data = NULL;
 
   Py_ssize_t nimages = 0;
   Py_ssize_t nmasks = 0;
+  Py_ssize_t ui = 0;
 
   PyObject** allimages = NULL;
   PyObject** allmasks = NULL;
 
   int ok = PyArg_ParseTuple(args,
-      "OOO!OO!O!O!:generic_combine",
+      "OOO!O!O!OO!O!O!:generic_combine",
       &images,
       &masks,
-      &PyArray_Type, &out,
+      &PyArray_Type, &out[0],
+      &PyArray_Type, &out[1],
+      &PyArray_Type, &out[2],
       &fnc,
       &PyArray_Type, &zeros,
       &PyArray_Type, &scales,
@@ -872,13 +976,46 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   nmasks = PySequence_Size(masks_seq);
 
   if (nimages != nmasks) {
-    PyErr_SetString(CombineError, "error");
+    PyErr_Format(CombineError, "number of images (%zd) and masks (%zd) is different", nimages, nmasks);
+    goto exit;
+  }
+
+  if (nimages == 0) {
+    PyErr_Format(CombineError, "data list is empty");
     goto exit;
   }
 
   allimages = PySequence_Fast_ITEMS(images_seq);
   allmasks = PySequence_Fast_ITEMS(masks_seq);
 
+  for(ui = 0; ui < nimages; ++ui) {
+    if (not PyArray_Check(allimages[ui])) {
+      PyErr_Format(CombineError,
+              "item %zd in data list is not a ndarray or subclass", ui);
+      goto exit;
+    }
+
+    // checking dtype is the same
+    if (not PyArray_EquivArrTypes(allimages[0], allimages[ui])) {
+      PyErr_Format(CombineError,
+          "item %zd in data list has inconsistent dtype", ui);
+      goto exit;
+    }
+
+    if (not PyArray_Check(allmasks[ui])) {
+      PyErr_Format(CombineError,
+              "item %zd in masks list is not a ndarray or subclass", ui);
+      goto exit;
+    }
+
+    // checking dtype is the same
+    if (not PyArray_EquivArrTypes(allmasks[0], allmasks[ui])) {
+      PyErr_Format(CombineError,
+          "item %zd in masks list has inconsistent dtype", ui);
+      goto exit;
+
+    }
+  }
 
   if (PyCObject_Check(fnc)) {
       func = PyCObject_AsVoidPtr(fnc);
@@ -897,16 +1034,16 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
   scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
   weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
-
+  //printf("antes\n");
   if( not NU_generic_combine(allimages, allmasks, nimages, out,
-      (RR)func, data,
+      (CombineFunc)func, data,
       (double*)PyArray_DATA(zeros_arr),
       (double*)PyArray_DATA(scales_arr),
       (double*)PyArray_DATA(weights_arr)
       )
     )
     goto exit;
-
+  //printf("despues\n");
 exit:
   Py_XDECREF(images_seq);
   Py_XDECREF(masks_seq);
@@ -917,12 +1054,18 @@ exit:
 
 }
 
+static PyObject *
+py_method_function(PyObject *obj, PyObject *args) {
+  return PyCObject_FromVoidPtr((void*)NU_mean_function, NULL);
+}
+
 static PyMethodDef combine_methods[] = {
     { "internal_combine", (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS,
     internal_combine__doc__ },
     { "internal_combine_with_offsets", (PyCFunction) py_internal_combine_with_offsets, METH_VARARGS
         | METH_KEYWORDS, internal_combine__doc__ },
     {"generic_combine", (PyCFunction) py_generic_combine, METH_VARARGS, ""},
+    {"mean_method", (PyCFunction) py_method_function, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
