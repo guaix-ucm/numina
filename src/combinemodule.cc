@@ -889,11 +889,19 @@ exit:
 
 static PyObject *
 py_method_mean(PyObject *obj, PyObject *args) {
+  if (not PyArg_ParseTuple(args, "")) {
+    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+    return NULL;
+  }
   return PyCObject_FromVoidPtr((void*)NU_mean_function, NULL);
 }
 
 static PyObject *
 py_method_median(PyObject *obj, PyObject *args) {
+  if (not PyArg_ParseTuple(args, "")) {
+    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+    return NULL;
+  }
   return PyCObject_FromVoidPtr((void*)NU_median_function, NULL);
 }
 
