@@ -93,8 +93,8 @@ int NU_sigmaclip_function(double *data, double *weights,
     int size, double *out[3], void *func_data) {
 
     double* fdata = (double*) func_data;
-    double& low = *((double*) func_data);
-    double& high = *((double*) func_data + 1);
+    double& low = *fdata;
+    double& high = *(fdata + 1);
 
     size_t c_size = size;
     ZIter beg = make_zip_iterator(data, weights);
