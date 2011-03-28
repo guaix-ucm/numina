@@ -914,7 +914,23 @@ py_method_minmax(PyObject *obj, PyObject *args) {
   return PyCObject_FromVoidPtrAndDesc((void*)NU_minmax_function, funcdata, NU_destructor_function);
 }
 
+static PyObject *
+py_method_sigmaclip(PyObject *obj, PyObject *args) {
+  double low = 0.0;
+  double high = 0.0;
+  if (not PyArg_ParseTuple(args, "dd", &low, &high)) {
+    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+    return NULL;
+  }
 
+  double *funcdata = (double*)malloc(2 * sizeof(double));
+
+  funcdata[0] = low;
+  funcdata[1] = high;
+
+  return PyCObject_FromVoidPtrAndDesc((void*)NU_sigmaclip_function, funcdata, NU_destructor_function);
+
+}
 
 static PyMethodDef combine_methods[] = {
     { "internal_combine", (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS,
@@ -925,6 +941,7 @@ static PyMethodDef combine_methods[] = {
     {"mean_method", (PyCFunction) py_method_mean, METH_VARARGS, ""},
     {"median_method", (PyCFunction) py_method_median, METH_VARARGS, ""},
     {"minmax_method", (PyCFunction) py_method_minmax, METH_VARARGS, ""},
+    {"sigmaclip_method", (PyCFunction) py_method_sigmaclip, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
