@@ -24,6 +24,6 @@
 
 #define NU_COMBINE_OUTDIM 3
 
-typedef int (*CombineFunc)(double*, double*, int, double*[NU_COMBINE_OUTDIM], void*);
+typedef int (*CombineFunc)(double*, double*, size_t, double*[NU_COMBINE_OUTDIM], void*);
 
 #endif // NU_COMBINE_DEFS_H

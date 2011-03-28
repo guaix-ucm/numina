@@ -22,6 +22,7 @@
 #include <ext/functional>
 #include <cmath>
 
+#include "nu_combine_defs.h"
 #include "functional.h"
 #include "method_base.h"
 #include "operations.h"
@@ -40,7 +41,7 @@ typedef std::pair<ZIter, ZIter> ZIterPair;
 typedef std::pair<double, double> ValuePair;
 
 int NU_mean_function(double *data, double *weights,
-    int size, double *out[3], void *func_data)
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
 {
   *out[2] = size;
   ValuePair r = average_central_tendency(data, data + size, weights);
@@ -52,7 +53,7 @@ int NU_mean_function(double *data, double *weights,
 }
 
 int NU_median_function(double *data, double *weights,
-    int size, double *out[3], void *func_data)
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
 {
   *out[2] = size;
   ValuePair r = median_central_tendency(data, data + size, weights);
@@ -64,7 +65,7 @@ int NU_median_function(double *data, double *weights,
 }
 
 int NU_minmax_function(double *data, double *weights,
-    int size, double *out[3], void *func_data)
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
 {
   unsigned int* fdata = (unsigned int*) func_data;
   unsigned int& nmin = *fdata;
@@ -90,26 +91,25 @@ int NU_minmax_function(double *data, double *weights,
 }
 
 int NU_sigmaclip_function(double *data, double *weights,
-    int size, double *out[3], void *func_data) {
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data) {
 
     double* fdata = (double*) func_data;
     double& slow = *fdata;
     double& shigh = *(fdata + 1);
 
-    size_t c_size = size;
     ZIter beg = make_zip_iterator(data, weights);
     ZIter ned = make_zip_iterator(data + size, weights + size);
 
     double c_mean = 0.0;
     double c_std = 0.0;
-    size_t nc_size = c_size;
+    size_t nc_size = size;
 
     do {
       ValuePair r = average_central_tendency(data, data + nc_size, weights);
 
       c_mean = r.first;
       c_std = sqrt(r.second);
-      c_size = std::distance(beg, ned);
+      size = std::distance(beg, ned);
 
       const double low = c_mean - c_std * slow;
       const double high = c_mean + c_std * shigh;
@@ -130,17 +130,17 @@ int NU_sigmaclip_function(double *data, double *weights,
       nc_size = std::distance(beg, ned);
       // We stop when std == 0, all the points would be reject otherwise
       // or when no points are removed in the iteration
-    } while (c_std > 0 && (nc_size != c_size));
+    } while (c_std > 0 && (nc_size != size));
 
     *out[0] = c_mean;
     *out[1] = c_std;
-    *out[2] = c_size;
+    *out[2] = size;
 
   return 1;
 }
 
 int NU_quantileclip_function(double *data, double *weights,
-    int size, double *out[3], void *func_data) {
+    int size, double *out[NU_COMBINE_OUTDIM], void *func_data) {
 
   double* fclip = (double*) func_data;
 
