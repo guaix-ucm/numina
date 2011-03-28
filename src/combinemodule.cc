@@ -892,6 +892,25 @@ py_method_function(PyObject *obj, PyObject *args) {
   return PyCObject_FromVoidPtr((void*)NU_mean_function, NULL);
 }
 
+static PyObject *
+py_method_minmax(PyObject *obj, PyObject *args) {
+  unsigned int nmin = 0;
+  unsigned int nmax = 0;
+  if (not PyArg_ParseTuple(args, "II", &nmin, &nmax)) {
+    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+    return NULL;
+  }
+
+  unsigned int *funcdata = (unsigned int*)malloc(2 * sizeof(unsigned int));
+
+  funcdata[0] = nmin;
+  funcdata[1] = nmax;
+
+  return PyCObject_FromVoidPtrAndDesc((void*)NU_minmax_function, funcdata, NU_destructor_function);
+}
+
+
+
 static PyMethodDef combine_methods[] = {
     { "internal_combine", (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS,
     internal_combine__doc__ },
@@ -899,6 +918,7 @@ static PyMethodDef combine_methods[] = {
         | METH_KEYWORDS, internal_combine__doc__ },
     {"generic_combine", (PyCFunction) py_generic_combine, METH_VARARGS, ""},
     {"mean_method", (PyCFunction) py_method_function, METH_VARARGS, ""},
+    {"minmax_method", (PyCFunction) py_method_minmax, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 

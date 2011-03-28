@@ -27,4 +27,9 @@
 int NU_mean_function(double *data, double *weights,
     int size, double *out[NU_COMBINE_OUTDIM], void *func_data);
 
+int NU_minmax_function(double *data, double *weights,
+    int size, double *out[NU_COMBINE_OUTDIM], void *func_data);
+
+void NU_destructor_function(void* cobject, void *cdata);
+
 #endif // NU_COMBINE_METHODS_H

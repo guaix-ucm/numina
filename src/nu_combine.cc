@@ -129,7 +129,7 @@ int NU_generic_combine(PyObject** images, PyObject** masks, int size,
   double* pvalues[OUTDIM];
   double values[OUTDIM];
 
-  for (int i = 0; i < OUTDIM; ++i)
+  for (size_t i = 0; i < OUTDIM; ++i)
     pvalues[i] = &values[i];
 
   while (iter->index < iter->size)

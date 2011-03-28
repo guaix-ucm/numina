@@ -18,16 +18,66 @@
  *
  */
 
+#include <memory>
+#include <ext/functional>
+
+#include "functional.h"
+#include "method_base.h"
 #include "operations.h"
+#include "zip_iterator.h"
+
+using Numina::ZipIterator;
+using Numina::make_zip_iterator;
+using Numina::compose;
+using Numina::average_central_tendency;
+
+typedef std::pair<double*, double*> IterPair;
+typedef ZipIterator<IterPair> ZIter;
+typedef std::pair<ZIter, ZIter> ZIterPair;
+typedef std::pair<double, double> ValuePair;
+
 
 int NU_mean_function(double *data, double *weights,
     int size, double *out[3], void *func_data)
 {
   *out[2] = size;
-  std::pair<double, double> r = Numina::average_central_tendency(data, data + size, weights);
+  ValuePair r = average_central_tendency(data, data + size, weights);
 
   *out[0] = r.first;
   *out[1] = r.second;
 
   return 1;
 }
+
+int NU_minmax_function(double *data, double *weights,
+    int size, double *out[3], void *func_data)
+{
+  static size_t nmin = 1;
+  static size_t nmax = 1;
+
+  ZIterPair result = reject_min_max(make_zip_iterator(data, weights),
+      make_zip_iterator(data + size, weights + size), nmin, nmax,
+      // Compares two std::pair objects. Returns true
+      // if the first component of the first is less than the first component
+      // of the second std::pair
+      compose(std::less<double>(), __gnu_cxx::select1st<
+          typename ZIter::value_type>(), __gnu_cxx::select1st<
+          typename ZIter::value_type>()));
+
+  *out[2] = result.second - result.first;
+  IterPair beg = result.first.get_iterator_pair();
+  IterPair ned = result.second.get_iterator_pair();
+  ValuePair r = average_central_tendency(beg.first, ned.first, beg.second);
+  *out[0] = r.first;
+  *out[1] = r.second;
+
+  return 1;
+}
+
+void NU_destructor_function(void* cobject, void *cdata) {
+  if (cdata)
+      free(cdata);
+}
+
+
+
