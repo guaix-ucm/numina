@@ -24,12 +24,19 @@
 
 #include "nu_combine_defs.h"
 
-int NU_generic_combine(PyObject** images, PyObject** masks, int size,
+int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
     PyObject* out[NU_COMBINE_OUTDIM],
     CombineFunc function,
     void* vdata,
-    double* zeros,
-    double* scales,
-    double* weights);
+    const double* zeros,
+    const double* scales,
+    const double* weights);
+
+bool NU_combine_image_check(PyObject* exception,
+    PyObject* image,
+    PyObject* ref,
+    PyObject* typeref,
+    const char* name,
+    size_t index);
 
 #endif // NU_COMBINE_H

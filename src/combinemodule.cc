@@ -336,7 +336,9 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     {
 
       void* m_dtpr = (*m)->dataptr;
+      printf("index %i %p\n",ii, m_dtpr);
       // Swap the value if needed and store it in the buffer
+
       mask_swap(buffer, m_dtpr, mask_need_to_swap, NULL);
 
       npy_bool m_val = NPY_FALSE;
@@ -354,6 +356,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
         if (zero and scale and weight)
         {
           void* d_dtpr = (*i)->dataptr;
+          printf("index %i %p\n",ii, d_dtpr);
           // Swap the value if needed and store it in the buffer
           datum_swap(buffer, d_dtpr, datum_need_to_swap, NULL);
 
@@ -785,17 +788,24 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   PyObject** allimages = NULL;
   PyObject** allmasks = NULL;
 
+  double* zbuffer = NULL;
+  double* sbuffer = NULL;
+  double* wbuffer = NULL;
+
+  int image_ndim = 0;
+  int image_dim_i = 0;
+
   int ok = PyArg_ParseTuple(args,
-      "OOO!O!O!OO!O!O!:generic_combine",
+      "OOO!O!O!OOOO:generic_combine",
       &images,
       &masks,
       &PyArray_Type, &out[0],
       &PyArray_Type, &out[1],
       &PyArray_Type, &out[2],
       &fnc,
-      &PyArray_Type, &zeros,
-      &PyArray_Type, &scales,
-      &PyArray_Type, &weights);
+      &zeros,
+      &scales,
+      &weights);
 
   if (!ok)
   {
@@ -805,49 +815,24 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   images_seq = PySequence_Fast(images, "expected a sequence");
   nimages = PySequence_Size(images_seq);
 
-  masks_seq = PySequence_Fast(masks, "expected a sequence");
-  nmasks = PySequence_Size(masks_seq);
-
-  if (nimages != nmasks) {
-    PyErr_Format(CombineError, "number of images (%zd) and masks (%zd) is different", nimages, nmasks);
-    goto exit;
-  }
-
   if (nimages == 0) {
     PyErr_Format(CombineError, "data list is empty");
     goto exit;
   }
 
+  // Converted to an array of pointers
   allimages = PySequence_Fast_ITEMS(images_seq);
-  allmasks = PySequence_Fast_ITEMS(masks_seq);
 
+  // Checking for images
   for(ui = 0; ui < nimages; ++ui) {
-    if (not PyArray_Check(allimages[ui])) {
-      PyErr_Format(CombineError,
-              "item %zd in data list is not a ndarray or subclass", ui);
+    if (not NU_combine_image_check(CombineError, allimages[ui], allimages[0], allimages[0], "data", ui))
       goto exit;
-    }
+  }
 
-    // checking dtype is the same
-    if (not PyArray_EquivArrTypes(allimages[0], allimages[ui])) {
-      PyErr_Format(CombineError,
-          "item %zd in data list has inconsistent dtype", ui);
+  // Checking for outputs
+  for(ui = 0; ui < OUTDIM; ++ui) {
+    if (not NU_combine_image_check(CombineError, out[ui], allimages[0], out[0], "output", ui))
       goto exit;
-    }
-
-    if (not PyArray_Check(allmasks[ui])) {
-      PyErr_Format(CombineError,
-              "item %zd in masks list is not a ndarray or subclass", ui);
-      goto exit;
-    }
-
-    // checking dtype is the same
-    if (not PyArray_EquivArrTypes(allmasks[0], allmasks[ui])) {
-      PyErr_Format(CombineError,
-          "item %zd in masks list has inconsistent dtype", ui);
-      goto exit;
-
-    }
   }
 
   if (PyCObject_Check(fnc)) {
@@ -860,28 +845,81 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   }
 
   // Checking zeros, scales and weights
-  CHECK_1D_ARRAYS(zeros, nimages);
-  CHECK_1D_ARRAYS(scales, nimages);
-  CHECK_1D_ARRAYS(weights, nimages);
+  if (zeros == Py_None) {
+    zbuffer = new double[nimages];
+    std::fill(zbuffer, zbuffer + nimages, 0.0);
+  }
+  else {
+    CHECK_1D_ARRAYS(zeros, nimages);
+    zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
+    zbuffer = (double*)PyArray_DATA(zeros_arr);
+  }
 
-  zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
-  scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
-  weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
+  if (scales == Py_None) {
+    sbuffer = new double[nimages];
+    std::fill(sbuffer, sbuffer + nimages, 1.0);
+  }
+  else {
+    CHECK_1D_ARRAYS(scales, nimages);
+    scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
+    sbuffer = (double*)PyArray_DATA(scales_arr);
+  }
+
+  if (weights == Py_None) {
+    wbuffer = new double[nimages];
+    std::fill(wbuffer, wbuffer + nimages, 1.0);
+  }
+  else {
+    CHECK_1D_ARRAYS(weights, nimages);
+    weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
+    wbuffer = (double*)PyArray_DATA(weights_arr);
+  }
+
+  if (masks == Py_None) {
+    allmasks = NULL;
+  }
+  else {
+    // Checking the masks
+    masks_seq = PySequence_Fast(masks, "expected a sequence");
+    nmasks = PySequence_Size(masks_seq);
+
+    if (nimages != nmasks) {
+      PyErr_Format(CombineError, "number of images (%zd) and masks (%zd) is different", nimages, nmasks);
+      goto exit;
+    }
+
+    allmasks = PySequence_Fast_ITEMS(masks_seq);
+
+    for(ui = 0; ui < nimages; ++ui) {
+      if (not NU_combine_image_check(CombineError, allmasks[ui], allimages[0], allmasks[0], "masks", ui))
+        goto exit;
+    }
+  }
 
   if( not NU_generic_combine(allimages, allmasks, nimages, out,
-      (CombineFunc)func, data,
-      (double*)PyArray_DATA(zeros_arr),
-      (double*)PyArray_DATA(scales_arr),
-      (double*)PyArray_DATA(weights_arr)
-      )
+      (CombineFunc)func, data, zbuffer, sbuffer, wbuffer)
     )
     goto exit;
 
 exit:
   Py_XDECREF(images_seq);
-  Py_XDECREF(masks_seq);
+
+  if (masks != Py_None)
+    Py_XDECREF(masks_seq);
+
+  if (zeros == Py_None)
+    delete [] zbuffer;
+
   Py_XDECREF(zeros_arr);
+
+  if (scales == Py_None)
+    delete [] sbuffer;
+
   Py_XDECREF(scales_arr);
+
+  if (weights == Py_None)
+    delete [] wbuffer;
+
   Py_XDECREF(weights_arr);
   return PyErr_Occurred() ? NULL : Py_BuildValue("");
 
