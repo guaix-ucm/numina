@@ -796,7 +796,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   int image_dim_i = 0;
 
   int ok = PyArg_ParseTuple(args,
-      "OOO!O!O!OOOO:generic_combine",
+      "OOO!O!O!O|OOO:generic_combine",
       &images,
       &masks,
       &PyArray_Type, &out[0],
@@ -975,7 +975,6 @@ py_method_sigmaclip(PyObject *obj, PyObject *args) {
   funcdata[1] = high;
 
   return PyCObject_FromVoidPtrAndDesc((void*)NU_sigmaclip_function, funcdata, NU_destructor_function);
-
 }
 static PyObject *
 py_method_quantileclip(PyObject *obj, PyObject *args) {
@@ -985,12 +984,15 @@ py_method_quantileclip(PyObject *obj, PyObject *args) {
     return NULL;
   }
 
+  if (fclip < 0 || fclip > 0.4) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter fclip");
+    return NULL;
+  }
+
   double *funcdata = (double*)malloc(sizeof(double));
   *funcdata = fclip;
   return PyCObject_FromVoidPtrAndDesc((void*)NU_quantileclip_function, funcdata, NU_destructor_function);
 }
-
-
 
 static PyMethodDef combine_methods[] = {
     { "internal_combine", (PyCFunction) py_internal_combine, METH_VARARGS | METH_KEYWORDS,
@@ -1002,7 +1004,7 @@ static PyMethodDef combine_methods[] = {
     {"median_method", (PyCFunction) py_method_median, METH_VARARGS, ""},
     {"minmax_method", (PyCFunction) py_method_minmax, METH_VARARGS, ""},
     {"sigmaclip_method", (PyCFunction) py_method_sigmaclip, METH_VARARGS, ""},
-    {"quantileclip_method", (PyCFunction) py_method_sigmaclip, METH_VARARGS, ""},
+    {"quantileclip_method", (PyCFunction) py_method_quantileclip, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 

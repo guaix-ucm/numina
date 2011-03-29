@@ -243,7 +243,11 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
     }
 
     // And pass the data to the combine method
-    function(&data[0], &wdata[0], data.size(), pvalues, vdata);
+    if (not function(&data[0], &wdata[0], data.size(), pvalues, vdata)) {
+      if (not PyErr_Occurred())
+        PyErr_SetString(PyExc_RuntimeError, "unknown error in combine method");
+      goto exit;
+    }
 
     // Conversion from NPY_DOUBLE to the type of output
     for (size_t i = 0; i < OUTDIM; ++i)
@@ -265,8 +269,8 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
     std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Next);
   }
 
+  exit:
   // Clean up memory (automatic for images and masks)
   std::for_each(oiter.begin(), oiter.end(), My_PyArray_Iter_Decref);
-
-  return 1;
+  return PyErr_Occurred() ? 0 : 1;
 }

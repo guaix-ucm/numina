@@ -67,9 +67,12 @@ int NU_median_function(double *data, double *weights,
 int NU_minmax_function(double *data, double *weights,
     size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
 {
-  unsigned int* fdata = (unsigned int*) func_data;
-  unsigned int& nmin = *fdata;
-  unsigned int& nmax = *(fdata + 1);
+  unsigned* fdata = (unsigned*) func_data;
+  unsigned& nmin = *fdata;
+  unsigned& nmax = *(fdata + 1);
+
+  if ((nmin + nmax) > size)
+    return 0;
 
   ZIterPair result = reject_min_max(make_zip_iterator(data, weights),
       make_zip_iterator(data + size, weights + size), nmin, nmax,
@@ -140,12 +143,12 @@ int NU_sigmaclip_function(double *data, double *weights,
 }
 
 int NU_quantileclip_function(double *data, double *weights,
-    int size, double *out[NU_COMBINE_OUTDIM], void *func_data) {
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data) {
 
-  double* fclip = (double*) func_data;
+  double& fclip = *(double*) func_data;
 
   size_t n_elem = size;
-  double n_elem_to_clip = n_elem * (*fclip);
+  double n_elem_to_clip = n_elem * (fclip);
   size_t nclip = static_cast<size_t>(floor(n_elem_to_clip));
   size_t mclip = static_cast<size_t>(ceil(n_elem_to_clip));
 
