@@ -336,7 +336,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
     {
 
       void* m_dtpr = (*m)->dataptr;
-      printf("index %i %p\n",ii, m_dtpr);
+
       // Swap the value if needed and store it in the buffer
 
       mask_swap(buffer, m_dtpr, mask_need_to_swap, NULL);
@@ -356,7 +356,7 @@ static PyObject* py_internal_combine(PyObject *self, PyObject *args,
         if (zero and scale and weight)
         {
           void* d_dtpr = (*i)->dataptr;
-          printf("index %i %p\n",ii, d_dtpr);
+
           // Swap the value if needed and store it in the buffer
           datum_swap(buffer, d_dtpr, datum_need_to_swap, NULL);
 

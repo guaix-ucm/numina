@@ -62,7 +62,7 @@ public:
   Handler() {}
   virtual ~Handler() {}
   virtual void value(char buffer[], int i, void* val) = 0;
-  virtual inline void advance() = 0;
+  virtual void advance() = 0;
 };
 
 class NullHandler : public Handler {
@@ -75,17 +75,17 @@ public:
 
 class ImageHandler : public Handler {
 public:
-  ImageHandler(PyObject** frames, size_t size) :
+  ImageHandler(PyObject** frames, size_t size, int totype) :
     Handler(),
     m_frames(frames),
     m_size(size),
     m_iters(size)
   {
 
-    // Conversion for masks
+    // Conversion for images
     PyArray_Descr* descr = PyArray_DESCR(m_frames[0]);
-    // Convert from the array to NPY_BOOL
-    m_converter = PyArray_GetCastFunc(descr, NPY_BOOL);
+    // Convert from the array totype
+    m_converter = PyArray_GetCastFunc(descr, totype);
     // Swap bytes
     m_swap = descr->f->copyswap;
     m_need_to_swap = PyArray_ISBYTESWAPPED(m_frames[0]);
@@ -95,7 +95,6 @@ public:
 
   void value(char buffer[], int i, void* val) {
     // Swap the value if needed and store it in the buffer
-    printf("index %i %p\n",i, m_iters[i]->dataptr);
     m_swap(buffer, m_iters[i]->dataptr, m_need_to_swap, NULL);
     // Convert
     m_converter(buffer, val, 1, NULL, NULL);
@@ -169,7 +168,7 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
   PyArray_Descr* descr = NULL;
 
   // Conversion for inputs
-  std::auto_ptr<Handler> image_handler(new ImageHandler(images, size));
+  std::auto_ptr<ImageHandler> image_handler(new ImageHandler(images, size, NPY_DOUBLE));
 
   // Conversion for masks (if they exist)
   std::auto_ptr<Handler> mask_handler;
@@ -178,7 +177,7 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
   if (masks == NULL) {
     mask_handler.reset(new NullHandler());
   } else {
-    mask_handler.reset(new ImageHandler(masks, size));
+    mask_handler.reset(new ImageHandler(masks, size, NPY_BOOL));
   }
 
   // Conversion for outputs
@@ -205,7 +204,6 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
   // first result image
   PyArrayIterObject* iter = oiter[0];
 
-
   // Data and data weights
   std::vector<double> data;
   data.reserve(size);
@@ -219,27 +217,20 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
   for (size_t i = 0; i < OUTDIM; ++i)
     pvalues[i] = &values[i];
 
-
-
   while (iter->index < iter->size)
   {
-    printf("%d %d\n", iter->index, iter->size);
     for (size_t ii = 0; ii < size; ++ii)
     {
 
-
-      if(weights[ii] < 0) {
-
+      if(weights[ii] < 0)
         continue;
-      }
 
       npy_bool m_val = NPY_FALSE;
       mask_handler->value(buffer, ii, &m_val);
 
       // True values are skipped
-      if (m_val == NPY_TRUE) {
+      if (m_val == NPY_TRUE)
         continue;
-      }
 
       double d_val = 0;
       image_handler->value(buffer, ii, &d_val);
@@ -250,10 +241,10 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
       data.push_back(converted);
       wdata.push_back(weights[ii]);
     }
-    for(int i = 0; i < data.size(); ++i)
-      printf("%f\n", data[i]);
+
     // And pass the data to the combine method
     function(&data[0], &wdata[0], data.size(), pvalues, vdata);
+
     // Conversion from NPY_DOUBLE to the type of output
     for (size_t i = 0; i < OUTDIM; ++i)
     {
