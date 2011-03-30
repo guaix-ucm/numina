@@ -39,8 +39,8 @@ from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array import fixpix2
 from numina.array import compute_median_background, compute_sky_advanced
 from numina.array import SextractorConf
-from numina.array.combine import flatcombine, combine
-from numina.array.combine import median
+from numina.array.combine import flatcombine, median
+
 from numina.recipes import RecipeBase, RecipeError
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
@@ -365,8 +365,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 idx += 1
 
             _logger.debug('Computing background with %d images', len(data))
-            sky, _, num = combine(data, masks, method='median',
-                                  reject='minmax', nlow=1, nhigh=1)
+            sky, _, num = median(data, masks)
             if numpy.any(num == 0):
                 # We have pixels without
                 # sky background information

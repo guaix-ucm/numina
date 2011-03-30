@@ -23,7 +23,7 @@ import itertools
 import numpy # pylint: disable-msgs=E1101
 
 from numina.array.combine import generic_combine
-from numina.array.combine import mean, median, combine, minmax, quantileclip
+from numina.array.combine import mean, median, minmax, quantileclip
 from numina.array.combine import mean_method
 from numina.array.combine import CombineError
         
@@ -33,7 +33,7 @@ class CombineTestCase(unittest.TestCase):
         self.validImages = [data]
         mask = numpy.array([[True, False], [True, False]])
         self.validMasks = [mask]
-        self.out = numpy.empty((3,2,2))
+        self.out = numpy.empty((3, 2, 2))
         databig = numpy.zeros((256, 256))
         self.validBig = [databig] * 100
         self.validOut = numpy.empty((3, 256, 256))
@@ -148,7 +148,6 @@ class CombineTestCase(unittest.TestCase):
                             [523.0, 0.33333333333333337, 2.333333333333333, 5.3333333333333339]])
         rnum = numpy.array([[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]])
         
-        #out = combine(inputs, method='average')
         out = mean(inputs)       
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
@@ -208,7 +207,7 @@ class MinMaxTestCase(unittest.TestCase):
     def setUp(self):
         self.nimages = 10
         self.data = [numpy.ones((2, 2))] * self.nimages
-        self.out = numpy.empty((3,2,2))
+        self.out = numpy.empty((3, 2, 2))
         
     def testBasic1(self):
         '''Test value if points rejected are less than the images.'''

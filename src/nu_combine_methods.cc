@@ -26,7 +26,6 @@
 
 #include "nu_combine_defs.h"
 #include "functional.h"
-#include "method_base.h"
 #include "operations.h"
 #include "zip_iterator.h"
 
