@@ -22,6 +22,8 @@
 #include <ext/functional>
 #include <cmath>
 
+#include <Python.h>
+
 #include "nu_combine_defs.h"
 #include "functional.h"
 #include "method_base.h"
@@ -71,8 +73,18 @@ int NU_minmax_function(double *data, double *weights,
   unsigned& nmin = *fdata;
   unsigned& nmax = *(fdata + 1);
 
-  if ((nmin + nmax) > size)
+  if ((nmin + nmax) == size) {
+    *out[0] = 0;
+    *out[1] = 0;
+    *out[2] = 0;
+    return 1;
+  }
+
+  if ((nmin + nmax) > size) {
+    PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
     return 0;
+  }
+
 
   ZIterPair result = reject_min_max(make_zip_iterator(data, weights),
       make_zip_iterator(data + size, weights + size), nmin, nmax,
