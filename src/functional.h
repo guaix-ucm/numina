@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef PYEMIR_FUNCTIONAL_H
-#define PYEMIR_FUNCTIONAL_H
+#ifndef NU_FUNCTIONAL_H
+#define NU_FUNCTIONAL_H
 
 namespace Numina {
 
@@ -49,4 +49,4 @@ Compose<F1, F2, F3> compose(const F1& f1, const F2& f2, const F3& f3) {
 
 } // namespace Numina
 
-#endif // PYEMIR_FUNCTIONAL_H
+#endif // NU_FUNCTIONAL_H

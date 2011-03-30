@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef PYEMIR_OPERATIONS_H
-#define PYEMIR_OPERATIONS_H
+#ifndef NU_OPERATIONS_H
+#define NU_OPERATIONS_H
 
 #include <iterator>
 #include <algorithm>
@@ -254,4 +254,4 @@ average_central_tendency_clip(Iterator1 begin, Iterator1 end, Iterator2 weights,
 
 } // namespace Numina
 
-#endif // PYEMIR_OPERATIONS_H
+#endif // NU_OPERATIONS_H

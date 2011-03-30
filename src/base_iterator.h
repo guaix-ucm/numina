@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef PYEMIR_BASEITERATOR_H
-#define PYEMIR_BASEITERATOR_H
+#ifndef NU_BASEITERATOR_H
+#define NU_BASEITERATOR_H
 
 #include <cstddef>
 
@@ -272,4 +272,4 @@ public:
 } // namespace Numina
 
 
-#endif // PYEMIR_BASEITERATOR_H
+#endif // NU_BASEITERATOR_H
