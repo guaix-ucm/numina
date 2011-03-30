@@ -337,7 +337,7 @@ def generic_combine(method, images, masks=None, dtype=None, out=None,
             zeros=None, scales=None, weights=None):
     '''Stack arrays using different methods.'''
     
-    # FIXME: implement this part C
+    # FIXME: implement this part in C
     if out is None:
         # Creating out if needed
         # We need three numbers
