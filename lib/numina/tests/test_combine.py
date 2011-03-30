@@ -22,7 +22,9 @@ import itertools
 
 import numpy # pylint: disable-msgs=E1101
 
-from numina.array.combine import mean, combine
+from numina.array.combine import generic_combine
+from numina.array.combine import mean, median, combine, minmax, quantileclip
+from numina.array.combine import mean_method
 from numina.array.combine import CombineError
         
 class CombineTestCase(unittest.TestCase):
@@ -31,39 +33,60 @@ class CombineTestCase(unittest.TestCase):
         self.validImages = [data]
         mask = numpy.array([[True, False], [True, False]])
         self.validMasks = [mask]
+        self.out = numpy.empty((3,2,2))
         databig = numpy.zeros((256, 256))
         self.validBig = [databig] * 100
+        self.validOut = numpy.empty((3, 256, 256))
         
     def test_CombineError(self):
         '''Test CombineError is raised for different operations.'''
-        # method is not an allowed string
-        self.assertRaises(CombineError, combine, self.validImages, method='dummy')
-        # reject is not an allowed string
-        self.assertRaises(CombineError, combine, self.validImages, reject='dummy')
+        
+        # method is not valid
+        self.assertRaises(RuntimeError, generic_combine, "dum", self.validImages)
+        
         # inputs is empty
-        self.assertRaises(CombineError, combine, [])
+        self.assertRaises(CombineError, generic_combine, 
+                          mean_method, [], out=self.out)
         # images don't have the same shape
-        self.assertRaises(CombineError, combine, [self.validImages[0], self.validBig[0]])
-        # incorrect number of offsets
-        self.assertRaises(CombineError, combine, self.validImages, offsets=[])
+        self.assertRaises(CombineError, generic_combine, 
+                          mean_method, [self.validImages[0], self.validBig[0]],
+                          out=self.validOut
+                          )
+
         # incorrect number of masks
-        self.assertRaises(CombineError, combine, self.validImages, self.validMasks * 2)
+        self.assertRaises(CombineError, generic_combine, 
+                          mean_method, self.validImages, 
+                          out=self.validOut,
+                          masks=self.validMasks)
+        
         # mask and image have different shape
-        self.assertRaises(CombineError, combine, self.validImages, [numpy.array([True, False])])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages,                           
+                          out=self.validOut,
+                          masks=[numpy.array([True, False])]
+                          )
         # output has wrong shape
-        self.assertRaises(CombineError, combine, self.validImages, out=self.validImages[0])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=numpy.empty((3, 80, 12)))
         # scales must be != 0
-        self.assertRaises(CombineError, combine, self.validImages, scales=[0])        
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, scales=numpy.zeros(1))        
         # weights must be >= 0'
-        self.assertRaises(CombineError, combine, self.validImages, weights=[-1])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, weights=numpy.array([-1]))
         # must be one dimensional
-        self.assertRaises(CombineError, combine, self.validImages, zeros=[[1, 2]])
-        self.assertRaises(CombineError, combine, self.validImages, scales=[[1, 2]])
-        self.assertRaises(CombineError, combine, self.validImages, weights=[[1, 2]])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, zeros=[[1, 2]])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, scales=[[1, 2]])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, weights=[[1, 2]])
         # incorrect number of elements
-        self.assertRaises(CombineError, combine, self.validImages, zeros=[1, 2])
-        self.assertRaises(CombineError, combine, self.validImages, scales=[1, 2])
-        self.assertRaises(CombineError, combine, self.validImages, weights=[1, 2])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, zeros=[1, 2])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, scales=[1, 2])
+        self.assertRaises(CombineError, generic_combine, mean_method, self.validImages, 
+                          out=self.validOut, weights=[1, 2])
         
     def test_CombineException(self):
         '''Combine: CombineError is raised if inputs have different lengths.'''
@@ -100,7 +123,7 @@ class CombineTestCase(unittest.TestCase):
                             [3, 0, 3, 3],
                             [3, 1, 2, 3]])
         
-        out = combine(inputs, masks, method='average')
+        out = mean(inputs, masks)
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[1].flat, rvar.flat):
@@ -125,8 +148,8 @@ class CombineTestCase(unittest.TestCase):
                             [523.0, 0.33333333333333337, 2.333333333333333, 5.3333333333333339]])
         rnum = numpy.array([[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]])
         
-        out = combine(inputs, method='average')
-                
+        #out = combine(inputs, method='average')
+        out = mean(inputs)       
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
@@ -145,7 +168,7 @@ class CombineTestCase(unittest.TestCase):
         input5 = numpy.array([[7, 2, 1, 4], [1, 2, 0, 4], [44, 2, 2, 0]])
         inputs = [input1, input2, input3, input4, input5]
         
-        out = combine(inputs, method='median')
+        out = median(inputs)
     
         rres = input3
     
@@ -167,7 +190,7 @@ class CombineTestCase(unittest.TestCase):
         input4 = numpy.array([[7, 2, 3, 4]])
         inputs = [input1, input2, input3, input4]
         
-        out = combine(inputs, method='median')
+        out = median(inputs)
     
         rres = numpy.array([[4, 2, 4.5, 0.0]], dtype='float')
     
@@ -185,37 +208,39 @@ class MinMaxTestCase(unittest.TestCase):
     def setUp(self):
         self.nimages = 10
         self.data = [numpy.ones((2, 2))] * self.nimages
+        self.out = numpy.empty((3,2,2))
         
     def testBasic1(self):
         '''Test value if points rejected are less than the images.'''
-        for nlow in xrange(0, self.nimages):
-            for nhigh in xrange(0, self.nimages - nlow):
-                r = combine(self.data, reject='minmax', nlow=nlow, nhigh=nhigh)
-            for v in r[0].flat:
+        for nmin in xrange(0, self.nimages):
+            for nmax in xrange(0, self.nimages - nmin):
+                minmax(self.data, out=self.out, nmin=nmin, nmax=nmax)
+            for v in self.out[0].flat:
                 self.assertEqual(v, 1)
-            for v in r[1].flat:
+            for v in self.out[1].flat:
                 self.assertEqual(v, 0)
-            for v in r[2].flat:
-                self.assertEqual(v, self.nimages - nlow - nhigh)
+            for v in self.out[2].flat:
+                self.assertEqual(v, self.nimages - nmin - nmax)
                 
     def testBasic2(self):
         '''Test value if points rejected are equal to the images.'''
-        for nlow in xrange(0, self.nimages):
-            nhigh = self.nimages - nlow
-            r = combine(self.data, reject='minmax', nlow=nlow, nhigh=nhigh)
-            for v in r[0].flat:
+        for nmin in xrange(0, self.nimages):
+            nmax = self.nimages - nmin
+            minmax(self.data, out=self.out, nmin=nmin, nmax=nmax)
+            for v in self.out[0].flat:
                 self.assertEqual(v, 0)
-            for v in r[1].flat:
+            for v in self.out[1].flat:
                 self.assertEqual(v, 0)
-            for v in r[2].flat:
+            for v in self.out[2].flat:
                 self.assertEqual(v, 0)
                 
     def testBasic3(self):
-        '''Test CombineError is raised if points rejected are more than images.'''
-        for nlow in xrange(0, self.nimages):
-            nhigh = self.nimages - nlow + 1
-            self.assertRaises(CombineError, combine, self.data, 
-                              reject='minmax', nlow=nlow, nhigh=nhigh)
+        '''Test ValueError is raised if points rejected are more than images.'''
+        for nmin in xrange(0, self.nimages):
+            nmax = self.nimages - nmin + 1
+            
+            self.assertRaises(ValueError, minmax, self.data, 
+                              nmin=nmin, nmax=nmax)
 
 class QuantileClipTestCase(unittest.TestCase):
     '''Test case for the quantileclip rejection method.'''
@@ -224,18 +249,16 @@ class QuantileClipTestCase(unittest.TestCase):
         self.data = [numpy.ones((2, 2))] * self.nimages
         
     def testBasic0(self):
-        '''Test CombineError is raised if fraction of points rejected is < 0.0.'''
-        self.assertRaises(CombineError, combine, self.data, 
-                              reject='quantileclip', fclip=-0.01)        
+        '''Test ValueError is raised if fraction of points rejected is < 0.0.'''
+        self.assertRaises(ValueError, quantileclip, self.data, fclip=-0.01)        
         
     def testBasic1(self):
-        '''Test CombineError is raised if fraction of points rejected is > 0.4.'''
-        self.assertRaises(CombineError, combine, self.data, 
-                              reject='quantileclip', fclip=0.41)
+        '''Test ValueError is raised if fraction of points rejected is > 0.4.'''
+        self.assertRaises(ValueError, quantileclip, self.data, fclip=0.41)
         
     def testBasic2(self):
         '''Test integer rejections'''
-        r = combine(self.data, reject='quantileclip', fclip=0.0)
+        r = quantileclip(self.data, fclip=0.0)
         for v in r[0].flat:
             self.assertEqual(v, 1)
         for v in r[1].flat:
@@ -243,7 +266,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[2].flat:
             self.assertEqual(v, 10)
   
-        r = combine(self.data, reject='quantileclip', fclip=0.1)
+        r = quantileclip(self.data, fclip=0.1)
         for v in r[0].flat:
             self.assertEqual(v, 1)
         for v in r[1].flat:
@@ -251,7 +274,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[2].flat:
             self.assertEqual(v, 8)
         
-        r = combine(self.data, reject='quantileclip', fclip=0.2)
+        r = quantileclip(self.data, fclip=0.2)
         for v in r[0].flat:
             self.assertEqual(v, 1)
         for v in r[1].flat:
@@ -261,7 +284,7 @@ class QuantileClipTestCase(unittest.TestCase):
 
     def testBasic3(self):
         '''Test simple fractional rejections'''
-        r = combine(self.data, reject='quantileclip', fclip=0.23)
+        r = quantileclip(self.data, fclip=0.23)
         for v in r[0].flat:
             self.assertEqual(v, 1)
         for v in r[1].flat:
@@ -273,7 +296,7 @@ class QuantileClipTestCase(unittest.TestCase):
         '''Test complex fractional rejections'''
         data = [numpy.array([i]) for i in range(10)]
 
-        r = combine(data, reject='quantileclip', fclip=0.0)
+        r = quantileclip(data, fclip=0.0)
         for v in r[0].flat:
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
@@ -281,7 +304,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[2].flat:
             self.assertAlmostEqual(v, 10)
             
-        r = combine(data, method='average', reject='quantileclip', fclip=0.1)
+        r = quantileclip(data, fclip=0.1)
         for v in r[0].flat:            
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
@@ -289,7 +312,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[2].flat:
             self.assertAlmostEqual(v, 8)            
             
-        r = combine(data, method='average', reject='quantileclip', fclip=0.2)
+        r = quantileclip(data, fclip=0.2)
         for v in r[0].flat:            
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
@@ -297,7 +320,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[2].flat:
             self.assertAlmostEqual(v, 6)
 
-        r = combine(data, reject='quantileclip', fclip=0.09)
+        r = quantileclip(data, fclip=0.09)
         for v in r[0].flat:
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
@@ -306,12 +329,12 @@ class QuantileClipTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, 8.2)
             
     def testResults5(self):
-        '''Test deviante points are ignored'''
+        '''Test deviant points are ignored'''
         data = [numpy.array([1.0]) for _ in range(22)]
         data[0][0] = 89
         data[12][0] = -89
         
-        r = combine(data, reject='quantileclip', fclip=0.15)
+        r = quantileclip(data, fclip=0.15)
         for v in r[0].flat:
             self.assertAlmostEqual(v, 1.0)
         for v in r[1].flat:
@@ -324,6 +347,8 @@ class QuantileClipTestCase(unittest.TestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(CombineTestCase))
+    suite.addTest(unittest.makeSuite(MinMaxTestCase))
+    suite.addTest(unittest.makeSuite(QuantileClipTestCase))
     return suite
 
 if __name__ == '__main__':

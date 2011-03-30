@@ -796,13 +796,13 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   int image_dim_i = 0;
 
   int ok = PyArg_ParseTuple(args,
-      "OOO!O!O!O|OOO:generic_combine",
+      "OOO!O!O!|OOOO:generic_combine",
+      &fnc,
       &images,
-      &masks,
       &PyArray_Type, &out[0],
       &PyArray_Type, &out[1],
       &PyArray_Type, &out[2],
-      &fnc,
+      &masks,
       &zeros,
       &scales,
       &weights);
@@ -945,14 +945,14 @@ py_method_median(PyObject *obj, PyObject *args) {
 
 static PyObject *
 py_method_minmax(PyObject *obj, PyObject *args) {
-  unsigned int nmin = 0;
-  unsigned int nmax = 0;
+  unsigned nmin = 0;
+  unsigned nmax = 0;
   if (not PyArg_ParseTuple(args, "II", &nmin, &nmax)) {
     PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
     return NULL;
   }
 
-  unsigned int *funcdata = (unsigned int*)malloc(2 * sizeof(unsigned int));
+  unsigned* funcdata = (unsigned*)malloc(2 * sizeof(unsigned));
 
   funcdata[0] = nmin;
   funcdata[1] = nmax;

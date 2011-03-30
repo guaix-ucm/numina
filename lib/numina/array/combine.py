@@ -25,7 +25,7 @@ import numpy # pylint: disable-msgs=E1101
 
 from numina.recipes.registry import Schema
 from numina.array import combine_shape
-from numina.array._combine import internal_combine, internal_combine_with_offsets, generic_combine
+from numina.array._combine import internal_combine, internal_combine_with_offsets
 from numina.array._combine import generic_combine as internal_generic_combine
 from numina.array._combine import sigmaclip_method, quantileclip_method, minmax_method
 from numina.array._combine import mean_method, median_method
@@ -272,7 +272,7 @@ def minmax(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :param nmax: 
     :return: mean, variance and number of points stored in    
     '''
-    
+        
     return generic_combine(minmax_method(nmin, nmax), images, 
                            masks=masks, dtype=dtype, out=out,
                            zeros=zeros, scales=scales, weights=weights)    
@@ -349,24 +349,23 @@ def generic_combine(method, images, masks=None, dtype=None, out=None,
     else:
         out = numpy.asanyarray(out)
         
-    internal_generic_combine(images, masks, out[0], out[1], out[2], method,                                      
-                             zeros, scales, weights)
+    internal_generic_combine(method, images, out[0], out[1], out[2], masks, zeros, scales, weights)
     return out
 
 if __name__ == '__main__':
     import timeit
     
-    images = [numpy.ones((1,1))]*2
-    masks = [numpy.zeros((1,1))]*2
+    images = [numpy.ones((2048,2048))]*10
+    masks = [numpy.zeros((2048,2048))]*10
     masks2 = None
     zeros = None
     scales = None
     weights = None
     
-    out = numpy.zeros((3,1,1), dtype='float')
+    out = numpy.zeros((3,2048,2048), dtype='float')
                 
     def test1():
-        combine2(mean_method(), images, masks=masks, dtype='float', out=out,
+        mean(images, masks=masks, dtype='float', out=out,
                    zeros=zeros, scales=scales, weights=weights,
                    )  
     def test2():
@@ -374,52 +373,15 @@ if __name__ == '__main__':
                    method='average',
                    zeros=zeros, scales=scales, weights=weights,
                    )        
-    def test3():
-        generic_combine(images, masks2, out[0], out[1], out[2], mean_method(), zeros, scales, weights)
-        
-    def test3b():
-        generic_combine(images, masks, out[0], out[1], out[2], mean_method(), zeros, scales, weights)        
-        
-        
-    def test4():
-        mean(images, masks=masks, dtype='float', out=out,
-                   zeros=zeros, scales=scales, weights=weights,
-                   )
-                
-                
-    def test5():
-        median(images, masks=masks, dtype='float', out=out,                   
-                   zeros=zeros, scales=scales, weights=weights,
-                   )        
-    
-    test1()
-    print out
-    
-    test2()
-    print out
-    
-    
-    do_timeing = False
+
+    do_timeing = True
     
     if do_timeing:
         t = timeit.Timer('test1()', 'from __main__ import test1')
         print t.timeit(10000)
     
         t = timeit.Timer('test2()', 'from __main__ import test2')
-        print t.timeit(10000)
-    
-        t = timeit.Timer('test3()', 'from __main__ import test3')
-        print t.timeit(10000)
-    
-        t = timeit.Timer('test3b()', 'from __main__ import test3b')
         print t.timeit(10000)    
-    
-        t = timeit.Timer('test4()', 'from __main__ import test4')
-        print t.timeit(10000)
-    
-        t = timeit.Timer('test5()', 'from __main__ import test5')
-        print t.timeit(10000)        
-    
     
     
     
