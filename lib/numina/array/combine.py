@@ -351,38 +351,3 @@ def generic_combine(method, images, masks=None, dtype=None, out=None,
         
     internal_generic_combine(method, images, out[0], out[1], out[2], masks, zeros, scales, weights)
     return out
-
-if __name__ == '__main__':
-    import timeit
-    
-    images = [numpy.ones((2048,2048))]*10
-    masks = [numpy.zeros((2048,2048))]*10
-    masks2 = None
-    zeros = None
-    scales = None
-    weights = None
-    
-    out = numpy.zeros((3,2048,2048), dtype='float')
-                
-    def test1():
-        mean(images, masks=masks, dtype='float', out=out,
-                   zeros=zeros, scales=scales, weights=weights,
-                   )  
-    def test2():
-        combine(images, masks=masks, dtype='float', out=out,
-                   method='average',
-                   zeros=zeros, scales=scales, weights=weights,
-                   )        
-
-    do_timeing = True
-    
-    if do_timeing:
-        t = timeit.Timer('test1()', 'from __main__ import test1')
-        print t.timeit(10000)
-    
-        t = timeit.Timer('test2()', 'from __main__ import test2')
-        print t.timeit(10000)    
-    
-    
-    
-    
