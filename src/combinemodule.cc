@@ -58,43 +58,23 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
   return (PyArrayIterObject*) PyArray_IterNew(obj);
 }
 
-// Convenience check macro
-#define COMBINE_CHECK_1D_ARRAYS(ARRAY, NIMAGES) \
-  if (PyArray_NDIM(ARRAY) != 1) \
-  { \
-    return PyErr_Format(CombineError, #ARRAY" dimension != 1"); \
-  } \
-  if (PyArray_SIZE(ARRAY) != NIMAGES) \
-  { \
-    return PyErr_Format(CombineError, #ARRAY" size != number of images"); \
-  }
-
-// Convenience check macro
-#define CHECK_1D_ARRAYS(ARRAY, NIMAGES) \
-  if (PyArray_NDIM(ARRAY) != 1) \
-  { \
-    PyErr_SetString(CombineError, #ARRAY" dimension != 1"); \
-    goto exit; \
-  } \
-  if (PyArray_SIZE(ARRAY) != NIMAGES) \
-  { \
-    PyErr_SetString(CombineError, #ARRAY" size != number of images"); \
-    goto exit; \
-  }
-
-#define STORE_AND_CONVERT(OUTTYPE, OUTVAR, MSG) \
-    if (clean == NULL) \
-    { \
-      std::for_each(cleanup.begin(), cleanup.end(), My_Py_Decref); \
-      return PyErr_Format(CombineError, MSG); \
-    } else \
-    { \
-      cleanup.push_back(clean); \
-      OUTVAR = (OUTTYPE) clean; \
-    }
-
 // An exception in this module
 static PyObject* CombineError;
+
+// Convenience check function
+static inline bool check_1d_array(PyObject* array, size_t nimages, const char* name) {
+  if (PyArray_NDIM(array) != 1)
+  {
+    PyErr_Format(CombineError, "%s dimension %i != 1", name, PyArray_NDIM(array));
+    return false;
+  }
+  if (PyArray_SIZE(array) != nimages)
+  {
+    PyErr_Format(CombineError, "%s size %zd != number of images", name, PyArray_SIZE(array));
+    return false;
+  }
+  return true;
+}
 
 static PyObject* py_generic_combine(PyObject *self, PyObject *args)
 {
@@ -187,8 +167,10 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     std::fill(zbuffer, zbuffer + nimages, 0.0);
   }
   else {
-    CHECK_1D_ARRAYS(zeros, nimages);
     zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
+    if (not check_1d_array(zeros, nimages, "zeros"))
+      goto exit;
+
     zbuffer = (double*)PyArray_DATA(zeros_arr);
   }
 
@@ -197,8 +179,10 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     std::fill(sbuffer, sbuffer + nimages, 1.0);
   }
   else {
-    CHECK_1D_ARRAYS(scales, nimages);
     scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
+    if (not check_1d_array(scales_arr, nimages, "scales"))
+      goto exit;
+
     sbuffer = (double*)PyArray_DATA(scales_arr);
   }
 
@@ -207,8 +191,10 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     std::fill(wbuffer, wbuffer + nimages, 1.0);
   }
   else {
-    CHECK_1D_ARRAYS(weights, nimages);
     weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
+    if (not check_1d_array(weights, nimages, "weights"))
+      goto exit;
+
     wbuffer = (double*)PyArray_DATA(weights_arr);
   }
 
