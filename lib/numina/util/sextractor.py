@@ -359,7 +359,7 @@ class SExtractor:
         {"comment": 'can be "NONE" or filename',
          "value": "NONE"},
                   
-         "WEIGHT THRESH":
+         "WEIGHT_THRESH":
         {"comment": 'can be "NONE" or filename',
          "value": 0},
 
