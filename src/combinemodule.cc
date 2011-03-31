@@ -132,9 +132,6 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   double* sbuffer = NULL;
   double* wbuffer = NULL;
 
-  int image_ndim = 0;
-  int image_dim_i = 0;
-
   int ok = PyArg_ParseTuple(args,
       "OOO!O!O!|OOOO:generic_combine",
       &fnc,
