@@ -232,8 +232,12 @@ average_central_tendency_clip(Iterator1 begin, Iterator1 end, Iterator2 weights,
   typedef ZipIterator<_IterPair> _ZIter;
   typedef std::pair<_ZIter, _ZIter> _ZIterPair;
 
-  _ZIter beg = make_zip_iterator(begin, weights);
   size_t n_elem = std::distance(begin, end);
+
+  if ((low + high) >= n_elem)
+    return std::make_pair(0.0, 0.0);
+
+  _ZIter beg = make_zip_iterator(begin, weights);
   _ZIter ned = make_zip_iterator(end, weights + n_elem);
 
   _ZIterPair result = reject_min_max(beg, ned, low, high,
