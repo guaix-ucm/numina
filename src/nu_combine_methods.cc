@@ -158,12 +158,19 @@ int NU_quantileclip_function(double *data, double *weights,
 
   double& fclip = *(double*) func_data;
 
-  size_t n_elem = size;
-  double n_elem_to_clip = n_elem * (fclip);
+  double n_elem_to_clip = size * (fclip);
   size_t nclip = static_cast<size_t>(floor(n_elem_to_clip));
   size_t mclip = static_cast<size_t>(ceil(n_elem_to_clip));
 
-  *out[2] = n_elem - 2 * n_elem_to_clip;
+  if (size - 2 * mclip <= 0) {
+    // We reject more points that we have locally
+    *out[0] = 0.0;
+    *out[1] = 0.0;
+    *out[2] = size - 2 * mclip;
+    return 1;
+  }
+
+  *out[2] = size - 2 * n_elem_to_clip;
 
   if (nclip == mclip) {
     // No interpolation
