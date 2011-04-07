@@ -27,29 +27,46 @@ import itertools
 import numpy
 import pyfits
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numdisplay.zscale
+
 import numina.image
 import numina.qa
 from numina.image import DiskImage
-from numina.image.imsurfit import imsurfit
 from numina.image.flow import SerialFlow
 from numina.image.background import create_background_map
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import subarray_match
 from numina.array import combine_shape, resize_array, correct_flatfield
 from numina.array import fixpix2
-from numina.array import compute_median_background, compute_sky_advanced
-from numina.array import SextractorConf
-from numina.array.combine import flatcombine, median
+from numina.array.combine import flatcombine, median, quantileclip
 
 from numina.recipes import RecipeBase, RecipeError
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 from numina.util.sextractor import SExtractor
-from emir.dataproducts import create_result, create_raw
+from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 import emir.instrument.detector as detector
 
+
 _logger = logging.getLogger("emir.recipes")
+
+mpl.interactive(True)
+mpl.rcParams['toolbar'] = 'None'
+_figure = plt.figure()
+_figure.canvas.set_window_title('Recipe Plots')
+_figure.patch.set(fc='white')
+
+_axes = _figure.add_subplot(111)
+_axes.set(visible=False)
+_image_axes = None
+
+_figure.canvas.draw()
+
+_cmap = mpl.cm.get_cmap('gray')
+_norm = mpl.colors.LogNorm()
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
     dn = '%s_r_i%01d%s' % (label, iteration, ext)
@@ -229,11 +246,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         Schema('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
         Schema('juliandatekey', 'MJD-OBS', 'Julian date keyword'),
         Schema('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
-        # Sextractor parameter files
-        Schema('sexfile', None, 'Sextractor parameter file'),
-        Schema('paramfile', None, 'Sextractor parameter file'),
-        Schema('nnwfile', None, 'Sextractor parameter file'),
-        Schema('convfile', None, 'Sextractor parameter file'),
     ]
     
     provides = []
@@ -260,12 +272,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         for key, val in self.parameters['images'].items():                
             self.parameters['images'][key] = (r[key], val[0], [r[key] for key in val[1]])
-        
-        d = {}
-        for key in ['sexfile', 'paramfile', 'nnwfile', 'convfile']:
-            d[key] = os.path.abspath(self.parameters[key])
-            
-        self.sconf = SextractorConf(**d)
                 
     def basic_processing(self, image, flow):
         hdulist = pyfits.open(image.base)
@@ -399,7 +405,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             
                 
-    def combine_images(self, iinfo, iteration):
+    def combine_images(self, iinfo, iteration, out=None):
         _logger.debug('Iter %d, opening sky-subtracted images', iteration)
         imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
         _logger.debug('Iter %d, opening mask images', iteration)
@@ -408,12 +414,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo]
             data = [i['primary'].data for i in imgslll]
             masks = [i['primary'].data for i in mskslll]
-            sf_data = median(data, masks, scales=extinc, dtype='float32')
+            if out is not None:
+                quantileclip(data, masks, scales=extinc, dtype='float32', out=out, fclip=0.1)
+            else:
+                out = quantileclip(data, masks, scales=extinc, dtype='float32', fclip=0.1)
 
             # We are saving here only data part
-            pyfits.writeto('result_i%0d.fits' % iteration, sf_data[0], clobber=True)
-                        
-            return sf_data
+            pyfits.writeto('result_i%0d.fits' % iteration, out[0], clobber=True)
+                
+            return out
             
         finally:
             _logger.debug('Iter %d, closing sky-subtracted images', iteration)
@@ -431,16 +440,23 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[image.region])
 
-                scales = [image.median_scale for image in iinfo]
+            scales = [image.median_scale for image in iinfo]
+
+            # FIXME: plotting            
+            _axes.plot(scales, 'r*')
+            _axes.autoscale()
+            _axes.set_title("")
+            _axes.set_xlabel('Image number')
+            _axes.set_ylabel('Median')
+            _figure.canvas.draw()
                 
             masks = None
             if segmask is not None:
                 masks = [segmask[image.region] for image in iinfo]
                 
             _logger.debug('Iter %d, combining images', iteration)
-            sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, method='median', 
-                                                    blank=1.0 / scales[0], 
-                                                    reject='minmax', nlow=1, nhigh=1)
+            sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
+                                                    blank=1.0 / scales[0])
             
             
             
@@ -454,6 +470,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sfhdu.writeto(_name_skyflat('comb-pre', iteration))
         sfhdu = pyfits.PrimaryHDU(sf_num)
         sfhdu.writeto(_name_skyflat('comb-num', iteration))
+
+
 
         
         # We interpolate holes by channel
@@ -473,6 +491,19 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         data = hdulist['primary'].data[image.region]
         newdata = hdulist['primary'].data.copy()
         newdata[image.region] = correct_flatfield(data, fitted)
+        # FIXME: plotting
+        thedata = newdata[image.region]
+        z1, z2 = numdisplay.zscale.zscale(thedata)
+        _image_axes.set_clim(z1, z2)
+        #_norm.autoscale(thedata)
+        _image_axes.set_data(thedata)        
+        clim = _image_axes.get_clim()
+        _axes.set_title('%s, bg=%g fg=%g, linscale' % (image.resized_base, clim[0], clim[1]))
+        _axes.set_xlabel('X')
+        _axes.set_ylabel('Y')
+        _image_axes.set(visible=True)
+        _figure.canvas.draw()
+                
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
@@ -488,6 +519,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
             
     def run(self):
+        global _image_axes
+
         images_info = []
         
         for key in sorted(self.parameters['images'].keys()):
@@ -622,6 +655,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             _logger.info("Iter %d, SF: apply superflat", iter_)
             # Process all images with the fitted flat
+
+            _image_axes = _axes.imshow(numpy.zeros((1024,1024)), cmap=_cmap, norm=_norm)
+            _image_axes.set(visible=False)
+            _axes.set(visible=True)
             for image in images_info:
                 self.correct_superflat(image, superflat, iter_)
             
