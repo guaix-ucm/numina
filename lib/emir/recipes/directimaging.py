@@ -23,6 +23,7 @@ import logging
 import os.path
 import shutil
 import itertools
+import math
 
 import numpy
 import pyfits
@@ -421,6 +422,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             # We are saving here only data part
             pyfits.writeto('result_i%0d.fits' % iteration, out[0], clobber=True)
+            pyfits.writeto('result_var_i%0d.fits' % iteration, out[1], clobber=True)
+            pyfits.writeto('result_npix_i%0d.fits' % iteration, out[2], clobber=True)
                 
             return out
             
@@ -445,11 +448,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             # FIXME: plotting            
             _axes.plot(scales, 'r*')
             _axes.autoscale()
+            _axes.set(visible=True)
             _axes.set_title("")
             _axes.set_xlabel('Image number')
             _axes.set_ylabel('Median')
             _figure.canvas.draw()
-                
+            a = raw_input('Esperando input: ')
             masks = None
             if segmask is not None:
                 masks = [segmask[image.region] for image in iinfo]
@@ -491,18 +495,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         data = hdulist['primary'].data[image.region]
         newdata = hdulist['primary'].data.copy()
         newdata[image.region] = correct_flatfield(data, fitted)
-        # FIXME: plotting
-        thedata = newdata[image.region]
-        z1, z2 = numdisplay.zscale.zscale(thedata)
-        _image_axes.set_clim(z1, z2)
-        #_norm.autoscale(thedata)
-        _image_axes.set_data(thedata)        
-        clim = _image_axes.get_clim()
-        _axes.set_title('%s, bg=%g fg=%g, linscale' % (image.resized_base, clim[0], clim[1]))
-        _axes.set_xlabel('X')
-        _axes.set_ylabel('Y')
-        _image_axes.set(visible=True)
-        _figure.canvas.draw()
+
                 
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
@@ -510,6 +503,22 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         image.lastname = _name_skyflat_proc(image.label, iteration)
         image.flat_corrected = image.lastname
         phdu.writeto(image.lastname)
+        
+        # FIXME: plotting
+        thedata = newdata[image.region]
+        z1, z2 = numdisplay.zscale.zscale(thedata)
+        _image_axes.set_clim(z1, z2)
+        #_norm.autoscale(thedata)
+        _image_axes.set_data(thedata)        
+        clim = _image_axes.get_clim()
+        _axes.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))
+        _axes.set_xlabel('X')
+        _axes.set_ylabel('Y')
+        _image_axes.set(visible=True)
+        _figure.canvas.draw()
+        
+        
+        
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
@@ -627,7 +636,57 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # Lauch SExtractor on a FITS file
                 sex.run(filename)
                 objmask = pyfits.getdata(_name_segmask(iter_))
-                #objmask = create_object_mask(self.sconf, sf_data[0], _name_segmask(iter_))                
+                
+                # FIXME, more plots
+                
+                                
+                def truncated(array, frac=0.1):
+                    '''Dirty truncated mean'''
+                    nf = int(array.size * frac)
+                    array.sort()
+                    new = array[nf:-nf]
+                    return new.mean(), new.std()
+                
+                ndata = sf_data[2].astype('int')                        
+                data = sf_data[0]
+                
+                nimages = ndata.max()
+
+                rnimage = range(1, nimages + 1)
+                rmean = rnimage[:]
+                rstd = rnimage[:]
+                
+                for pix in rnimage:
+                    m1 = ndata == pix
+                    r = data[m1]
+                    rmean[pix - 1], rstd[pix - 1] = truncated(r)                
+             
+                # Mixing styles here,
+                plt.clf()
+                _figure.subplots_adjust(hspace=0.001)
+                
+                ax1 = _figure.add_subplot(3,1,1)
+                pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
+                ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
+                ax1.set_title("")
+                plt.ylabel('measured sky rms')
+                pred = [0.0 for _ in rnimage]
+                
+                ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
+                pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
+                avg_rms = sum(pred) / len(pred)
+                ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
+                plt.ylabel('scaled sky rms')
+
+                ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
+                ax3.plot(rnimage, rmean, 'b*')
+                plt.ylabel('mean sky')
+                plt.xlabel('number of frames per pixel')
+
+                xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
+                plt.setp(xticklabels, visible=False)
+                _figure.canvas.draw()
+                                
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
