@@ -31,6 +31,8 @@ import pyfits
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+from matplotlib.collections import PatchCollection
 import numdisplay.zscale
 
 import numina.image
@@ -48,6 +50,7 @@ from numina.recipes import RecipeBase, RecipeError
 from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 from numina.util.sextractor import SExtractor
+from numina.util.sextractor import open as sopen
 from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 import emir.instrument.detector as detector
@@ -592,6 +595,19 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             _logger.info('Iter %d, generating segmentation image', iter_)            
             if sf_data is not None:
+                
+                # FIXME more plots
+                _figure.clf()
+                ax = _figure.add_subplot(111)
+                cmap = mpl.cm.get_cmap('gray')
+                norm = mpl.colors.LogNorm()
+                ax.set_title('Result image')              
+                ax.set_xlabel('X')
+                ax.set_ylabel('Y')
+                z1, z2 = numdisplay.zscale.zscale(sf_data[0])
+                ax.imshow(sf_data[0], cmap=cmap, clim=(z1, z2))                                
+                _figure.canvas.draw()
+                a = raw_input()
                 #
                 remove_border = True
                 
@@ -600,7 +616,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
                 sex.config["CHECKIMAGE_NAME"] = _name_segmask(iter_)
                 sex.config['VERBOSE_TYPE'] = 'QUIET'
-                                
+                sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+                sex.config['PARAMETERS_LIST'].append('X_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('A_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('B_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')           
                 if remove_border:
                     weigthmap = 'weights4rms.fits'
                     # Create weight map, remove n pixs from either side                                
@@ -620,12 +641,36 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                                         
                     sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
                     sex.config['WEIGHT_IMAGE'] = weigthmap
-                    
+                
                 filename = 'result_i%0d.fits' % (iter_ - 1)
                 
                 # Lauch SExtractor on a FITS file
                 sex.run(filename)
+                
+                # Plot objects
+                # FIXME, plot sextractor objects on top of image
+                patches = []
+                catalog_f = sopen(sex.config['CATALOG_NAME'])
+                try:
+                    star = catalog_f.readline()
+                    while star:                        
+                        e = Ellipse((star['X_IMAGE'], star['Y_IMAGE']), 
+                                    10 * star['A_IMAGE'], 10 * star['B_IMAGE'], 
+                                    star['THETA_IMAGE'])
+                        patches.append(e)
+                        # FIXME Plot a ellipse
+                        star = catalog_f.readline()
+                finally:
+                    catalog_f.close()
+                    
+                p = PatchCollection(patches, alpha=0.4)
+                ax.add_collection(p)
+                _figure.canvas.draw()
+                
                 objmask = pyfits.getdata(_name_segmask(iter_))
+                
+                
+                
                 
                               
             else:
