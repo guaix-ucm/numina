@@ -56,18 +56,8 @@ _logger = logging.getLogger("emir.recipes")
 
 mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'
-_figure = plt.figure()
+_figure = plt.figure(facecolor='white')
 _figure.canvas.set_window_title('Recipe Plots')
-_figure.patch.set(fc='white')
-
-_axes = _figure.add_subplot(111)
-_axes.set(visible=False)
-_image_axes = None
-
-_figure.canvas.draw()
-
-_cmap = mpl.cm.get_cmap('gray')
-_norm = mpl.colors.LogNorm()
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
     dn = '%s_r_i%01d%s' % (label, iteration, ext)
@@ -445,15 +435,16 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             scales = [image.median_scale for image in iinfo]
 
-            # FIXME: plotting            
-            _axes.plot(scales, 'r*')
-            _axes.autoscale()
-            _axes.set(visible=True)
-            _axes.set_title("")
-            _axes.set_xlabel('Image number')
-            _axes.set_ylabel('Median')
+            
+            # FIXME: plotting
+            _figure.clf()
+            ax = _figure.add_subplot(1,1,1) 
+            ax.plot(scales, 'r*')
+            ax.set_title("")
+            ax.set_xlabel('Image number')
+            ax.set_ylabel('Median')
             _figure.canvas.draw()
-            a = raw_input('Esperando input: ')
+
             masks = None
             if segmask is not None:
                 masks = [segmask[image.region] for image in iinfo]
@@ -506,15 +497,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         # FIXME: plotting
         thedata = newdata[image.region]
+        ax = _figure.gca()
+        image_axes, = ax.get_images()
+        image_axes.set_data(thedata)
         z1, z2 = numdisplay.zscale.zscale(thedata)
-        _image_axes.set_clim(z1, z2)
-        #_norm.autoscale(thedata)
-        _image_axes.set_data(thedata)        
-        clim = _image_axes.get_clim()
-        _axes.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))
-        _axes.set_xlabel('X')
-        _axes.set_ylabel('Y')
-        _image_axes.set(visible=True)
+        image_axes.set_clim(z1, z2)
+        clim = image_axes.get_clim()
+        ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
         _figure.canvas.draw()
         
         
@@ -528,8 +517,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
             
     def run(self):
-        global _image_axes
-
+        
         images_info = []
         
         for key in sorted(self.parameters['images'].keys()):
@@ -637,9 +625,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 sex.run(filename)
                 objmask = pyfits.getdata(_name_segmask(iter_))
                 
-                # FIXME, more plots
-                
-                                
+                # FIXME, more plots          
                 def truncated(array, frac=0.1):
                     '''Dirty truncated mean'''
                     nf = int(array.size * frac)
@@ -662,7 +648,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                     rmean[pix - 1], rstd[pix - 1] = truncated(r)                
              
                 # Mixing styles here,
-                plt.clf()
+                _figure.clf()
                 _figure.subplots_adjust(hspace=0.001)
                 
                 ax1 = _figure.add_subplot(3,1,1)
@@ -715,9 +701,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info("Iter %d, SF: apply superflat", iter_)
             # Process all images with the fitted flat
 
-            _image_axes = _axes.imshow(numpy.zeros((1024,1024)), cmap=_cmap, norm=_norm)
-            _image_axes.set(visible=False)
-            _axes.set(visible=True)
+            _figure.clf()
+            ax = _figure.add_subplot(111)
+            cmap = mpl.cm.get_cmap('gray')
+            norm = mpl.colors.LogNorm()
+            ax.imshow(numpy.zeros((1024,1024)), cmap=cmap, norm=norm)
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
             for image in images_info:
                 self.correct_superflat(image, superflat, iter_)
             
