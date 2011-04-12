@@ -24,6 +24,7 @@ import os.path
 import shutil
 import itertools
 import math
+import time
 
 import numpy
 import pyfits
@@ -58,6 +59,7 @@ mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'
 _figure = plt.figure(facecolor='white')
 _figure.canvas.set_window_title('Recipe Plots')
+_figure.canvas.draw()
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
     dn = '%s_r_i%01d%s' % (label, iteration, ext)
@@ -672,7 +674,29 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
                 plt.setp(xticklabels, visible=False)
                 _figure.canvas.draw()
-                                
+                
+                time.sleep(3)
+                
+                # Fake sky error image
+                _figure.clf()
+                ax = _figure.add_subplot(111)
+                cmap = mpl.cm.get_cmap('gray')
+                norm = mpl.colors.LogNorm()                
+                ax.set_xlabel('X')
+                ax.set_ylabel('Y')
+                
+                ax.imshow(sf_data[2], cmap=cmap, norm=norm)                                
+                _figure.canvas.draw()
+                
+                time.sleep(3)
+                
+                # Create fake error image
+                fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
+
+                ax.imshow(fake, cmap=cmap, norm=norm)                
+                _figure.canvas.draw()
+                pyfits.writeto('fake_sky_rms_i%0d.fits' % iter_, fake)
+                              
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
