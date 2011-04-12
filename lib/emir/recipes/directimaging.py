@@ -627,75 +627,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 sex.run(filename)
                 objmask = pyfits.getdata(_name_segmask(iter_))
                 
-                # FIXME, more plots          
-                def truncated(array, frac=0.1):
-                    '''Dirty truncated mean'''
-                    nf = int(array.size * frac)
-                    array.sort()
-                    new = array[nf:-nf]
-                    return new.mean(), new.std()
-                
-                ndata = sf_data[2].astype('int')                        
-                data = sf_data[0]
-                
-                nimages = ndata.max()
-
-                rnimage = range(1, nimages + 1)
-                rmean = rnimage[:]
-                rstd = rnimage[:]
-                
-                for pix in rnimage:
-                    m1 = ndata == pix
-                    r = data[m1]
-                    rmean[pix - 1], rstd[pix - 1] = truncated(r)                
-             
-                # Mixing styles here,
-                _figure.clf()
-                _figure.subplots_adjust(hspace=0.001)
-                
-                ax1 = _figure.add_subplot(3,1,1)
-                pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
-                ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
-                ax1.set_title("")
-                ax1.set_ylabel('measured sky rms')
-                
-                ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
-                pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
-                avg_rms = sum(pred) / len(pred)
-                ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
-                ax2.set_ylabel('scaled sky rms')
-
-                ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
-                ax3.plot(rnimage, rmean, 'b*')
-                ax3.set_ylabel('mean sky')
-                ax3.set_xlabel('number of frames per pixel')
-
-                xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
-                mpl.artist.setp(xticklabels, visible=False)
-                _figure.canvas.draw()
-                
-                time.sleep(3)
-                
-                # Fake sky error image
-                _figure.clf()
-                ax = _figure.add_subplot(111)
-                cmap = mpl.cm.get_cmap('gray')
-                norm = mpl.colors.LogNorm()
-                ax.set_title('Number of images combined')              
-                ax.set_xlabel('X')
-                ax.set_ylabel('Y')
-                
-                ax.imshow(sf_data[2], cmap=cmap, norm=norm)                                
-                _figure.canvas.draw()
-                
-                time.sleep(3)
-                
-                # Create fake error image
-                fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
-                ax.set_title('Fake sky error image')
-                ax.imshow(fake, cmap=cmap, norm=norm)                
-                _figure.canvas.draw()
-                pyfits.writeto('fake_sky_rms_i%0d.fits' % iter_, fake)
                               
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
@@ -750,8 +681,73 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info("Iter %d, Combining the images", iter_)
             sf_data = self.combine_images(images_info, iter_)
             
+            # FIXME, more plots          
+            def truncated(array, frac=0.1):
+                '''Dirty truncated mean'''
+                nf = int(array.size * frac)
+                array.sort()
+                new = array[nf:-nf]
+                return new.mean(), new.std()
+            
+            ndata = sf_data[2].astype('int')                        
+            data = sf_data[0]
+            
+            nimages = ndata.max()
 
-          
+            rnimage = range(1, nimages + 1)
+            rmean = rnimage[:]
+            rstd = rnimage[:]
+            
+            for pix in rnimage:
+                rmean[pix - 1], rstd[pix - 1] = truncated(data[ndata == pix])                
+            
+            _figure.clf()
+            _figure.subplots_adjust(hspace=0.001)
+            
+            ax1 = _figure.add_subplot(3,1,1)
+            pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
+            ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
+            ax1.set_title("")
+            ax1.set_ylabel('measured sky rms')
+            
+            ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
+            pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
+            avg_rms = sum(pred) / len(pred)
+            ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
+            ax2.set_ylabel('scaled sky rms')
+
+            ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
+            ax3.plot(rnimage, rmean, 'b*')
+            ax3.set_ylabel('mean sky')
+            ax3.set_xlabel('number of frames per pixel')
+
+            xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
+            mpl.artist.setp(xticklabels, visible=False)
+            _figure.canvas.draw()
+            
+            time.sleep(3)
+            
+            # Fake sky error image
+            _figure.clf()
+            ax = _figure.add_subplot(111)
+            cmap = mpl.cm.get_cmap('gray')
+            norm = mpl.colors.LogNorm()
+            ax.set_title('Number of images combined')              
+            ax.set_xlabel('X')
+            ax.set_ylabel('Y')
+            
+            ax.imshow(sf_data[2], cmap=cmap, norm=norm)                                
+            _figure.canvas.draw()
+            
+            time.sleep(3)
+            
+            # Create fake error image
+            fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
+            ax.set_title('Fake sky error image')
+            ax.imshow(fake, cmap=cmap, norm=norm)                
+            _figure.canvas.draw()
+            pyfits.writeto('fake_sky_rms_i%0d.fits' % iter_, fake)
+                      
             _logger.info('Iter %d, finished', iter_)
 
         primary_headers = {'FILENAME': self.parameters['resultname'],
