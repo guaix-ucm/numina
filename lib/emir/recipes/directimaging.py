@@ -657,22 +657,21 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
                 ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
                 ax1.set_title("")
-                plt.ylabel('measured sky rms')
-                pred = [0.0 for _ in rnimage]
+                ax1.set_ylabel('measured sky rms')
                 
                 ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
                 pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
                 avg_rms = sum(pred) / len(pred)
                 ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
-                plt.ylabel('scaled sky rms')
+                ax2.set_ylabel('scaled sky rms')
 
                 ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
                 ax3.plot(rnimage, rmean, 'b*')
-                plt.ylabel('mean sky')
-                plt.xlabel('number of frames per pixel')
+                ax3.set_ylabel('mean sky')
+                ax3.set_xlabel('number of frames per pixel')
 
                 xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
-                plt.setp(xticklabels, visible=False)
+                mpl.artist.setp(xticklabels, visible=False)
                 _figure.canvas.draw()
                 
                 time.sleep(3)
@@ -681,7 +680,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 _figure.clf()
                 ax = _figure.add_subplot(111)
                 cmap = mpl.cm.get_cmap('gray')
-                norm = mpl.colors.LogNorm()                
+                norm = mpl.colors.LogNorm()
+                ax.set_title('Number of images combined')              
                 ax.set_xlabel('X')
                 ax.set_ylabel('Y')
                 
@@ -692,7 +692,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
                 # Create fake error image
                 fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
-
+                ax.set_title('Fake sky error image')
                 ax.imshow(fake, cmap=cmap, norm=norm)                
                 _figure.canvas.draw()
                 pyfits.writeto('fake_sky_rms_i%0d.fits' % iter_, fake)
