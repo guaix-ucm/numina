@@ -51,6 +51,7 @@ from numina.recipes.registry import ProxyPath, ProxyQuery
 from numina.recipes.registry import Schema
 from numina.util.sextractor import SExtractor
 from numina.util.sextractor import open as sopen
+import numina.util.sexcatalog as sexcatalog
 from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 import emir.instrument.detector as detector
@@ -574,6 +575,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         # Final image, not yet built
         sf_data = None
+        seeing_fwhm = None
         
         for iter_ in range(1, niteration + 1):
             # Resizing images
@@ -607,7 +609,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 z1, z2 = numdisplay.zscale.zscale(sf_data[0])
                 ax.imshow(sf_data[0], cmap=cmap, clim=(z1, z2))                                
                 _figure.canvas.draw()
-                a = raw_input()
+                raw_input('sextractor ')
                 #
                 remove_border = True
                 
@@ -616,17 +618,25 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
                 sex.config["CHECKIMAGE_NAME"] = _name_segmask(iter_)
                 sex.config['VERBOSE_TYPE'] = 'QUIET'
+                sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
+                sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
+
+                if seeing_fwhm is not None:
+                    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+
                 sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
                 sex.config['PARAMETERS_LIST'].append('X_IMAGE')
                 sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
                 sex.config['PARAMETERS_LIST'].append('A_IMAGE')
                 sex.config['PARAMETERS_LIST'].append('B_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')           
+                sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('CLASS_STAR')                
                 if remove_border:
                     weigthmap = 'weights4rms.fits'
                     # Create weight map, remove n pixs from either side                                
-                    w1 = 80
-                    w2 = 80
+                    w1 = 90
+                    w2 = 90
                     wmap = numpy.ones_like(sf_data[0])
                     
                     cos_win1 = numpy.hanning(2 * w1)
@@ -637,9 +647,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                     wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
                     wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
                     
-                    pyfits.writeto(weigthmap, wmap, clobber=True)
+                    #pyfits.writeto(weigthmap, wmap, clobber=True)
+                    wm = sf_data[2].copy()
+                    wm[wm < 10] = 0
+                    pyfits.writeto(weigthmap, wm, clobber=True)
                                         
                     sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+                    sex.config['WEIGHT_THRESH'] = 50
                     sex.config['WEIGHT_IMAGE'] = weigthmap
                 
                 filename = 'result_i%0d.fits' % (iter_ - 1)
@@ -650,14 +664,25 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # Plot objects
                 # FIXME, plot sextractor objects on top of image
                 patches = []
+                fwhms = []
+                nfirst = 0
                 catalog_f = sopen(sex.config['CATALOG_NAME'])
                 try:
                     star = catalog_f.readline()
-                    while star:                        
-                        e = Ellipse((star['X_IMAGE'], star['Y_IMAGE']), 
-                                    10 * star['A_IMAGE'], 10 * star['B_IMAGE'], 
-                                    star['THETA_IMAGE'])
+                    while star:
+                        flags = star['FLAGS']
+                        # ignoring those objects with corrupted apertures
+                        if flags & sexcatalog.CORRUPTED_APER:
+                            star = catalog_f.readline()
+                            continue
+                        center = (star['X_IMAGE'], star['Y_IMAGE'])
+                        wd = 10 * star['A_IMAGE']
+                        hd = 10 * star['B_IMAGE']
+                        color = 'red' if nfirst > 200 else 'green'
+                        e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
                         patches.append(e)
+                        fwhms.append(star['FWHM_IMAGE'])
+                        nfirst += 1
                         # FIXME Plot a ellipse
                         star = catalog_f.readline()
                 finally:
@@ -666,13 +691,18 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 p = PatchCollection(patches, alpha=0.4)
                 ax.add_collection(p)
                 _figure.canvas.draw()
+                raw_input('histo') # pause
+                _figure.clf()
+                plt.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
+                _figure.canvas.draw()
+            
+                # mode with an histogram
+                hist, edges = numpy.histogram(fwhms, 50)
+                idx = hist.argmax()
                 
-                objmask = pyfits.getdata(_name_segmask(iter_))
-                
-                
-                
-                
-                              
+                seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
+                _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+                objmask = pyfits.getdata(_name_segmask(iter_))             
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
