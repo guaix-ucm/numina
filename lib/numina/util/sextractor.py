@@ -309,7 +309,7 @@ class SExtractor:
 
         "BACK_TYPE":
         {"comment": "Type of background to subtract: MANUAL or AUTO generated",
-         "value": 'MANUAL'},
+         "value": 'AUTO'},
 
         "BACK_VALUE":
         {"comment": "User-supplied constant value to be subtracted as sky",
