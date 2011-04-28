@@ -702,7 +702,54 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
                 seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
                 _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-                objmask = pyfits.getdata(_name_segmask(iter_))             
+                objmask = pyfits.getdata(_name_segmask(iter_))
+                
+                # Check photometry of few objects
+                weigthmap = 'weights4rms.fits'
+                
+                wmap = numpy.zeros_like(sf_data[0])
+                wmap[512:1024, 512:1024] = 1                    
+                pyfits.writeto(weigthmap, wmap, clobber=True)
+                
+                basename = 'result_i%0d.fits' % (iter_ - 1)
+                sex = SExtractor()
+                sex.config['VERBOSE_TYPE'] = 'QUIET'
+                sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
+                sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
+                sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+                sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+                sex.config['WEIGHT_IMAGE'] = weigthmap
+                
+                sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+                sex.config['PARAMETERS_LIST'].append('X_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('A_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('B_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+                sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+                
+                base = [None] * len(images_info)
+                
+                for idx, image in enumerate(images_info):
+                    imagename = _name_skysub_proc(image.label, iter_ - 1)
+
+
+                    sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, iter_)
+
+                    # Lauch SExtractor on a FITS file
+                    # om double image mode
+                    _logger.info('Runing sextractor in %s', imagename)
+                    sex.run('%s,%s' % (basename, imagename))
+                    catalog = sex.catalog()
+                    
+                    base[idx] = [obj['FLUX_BEST'] for obj in catalog]
+                                
+                base = numpy.array(base)
+                _figure.clf()
+                plt.plot(base[:, 10])
+                _figure.canvas.draw()
+                
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
