@@ -250,6 +250,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
     def __init__(self, param, runinfo):
         super(Recipe, self).__init__(param, runinfo)
+        
+        self.iter = 0
 
     def setup(self):
         # Parameters will store the image with absolute paths
@@ -283,9 +285,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         finally:
             hdulist.close()
 
-    def compute_simple_sky(self, image, iteration):
+    def compute_simple_sky(self, image):
         
-        dst = _name_skysub_proc(image.label, iteration)
+        dst = _name_skysub_proc(image.label, self.iter)
         prev = image.lastname
         shutil.copy(image.lastname, dst)
         image.lastname = dst
@@ -306,16 +308,16 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             image.median_sky = sky
             
             _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                         iteration, prev)
+                         self.iter, prev)
             region = image.region
             data[region] -= sky
             
         finally:
             hdulist1.close()
             
-    def compute_advanced_sky2(self, image, objmask, iteration):
+    def compute_advanced_sky2(self, image, objmask):
         # Create a copy of the image
-        dst = _name_skysub_proc(image.label, iteration)
+        dst = _name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
         
@@ -329,17 +331,17 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             d = hdulist['primary'].data[image.region]
         
             _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                     iteration, image.label)
-            name = _name_skybackground(image.label, iteration)
+                     self.iter, image.label)
+            name = _name_skybackground(image.label, self.iter)
             pyfits.writeto(name, sky)
             d -= sky
         
         finally:
             hdulist.close()            
             
-    def compute_advanced_sky(self, image, objmask, iteration):
+    def compute_advanced_sky(self, image, objmask):
         # Create a copy of the image
-        dst = _name_skysub_proc(image.label, iteration)
+        dst = _name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
                 
@@ -380,7 +382,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 sky[binmask] = sky[num != 0].mean()
                 # To continue we interpolate over the patches
                 #fixpix2(sky, binmask, output=sky, iterations=1)
-                name = _name_skybackgroundmask(image.label, iteration)
+                name = _name_skybackgroundmask(image.label, self.iter)
                 pyfits.writeto(name, binmask.astype('int16'))
                 
 
@@ -389,8 +391,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 d = hdulist1['primary'].data[image.region]
             
                 _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                         iteration, i.flat_corrected)
-                name = _name_skybackground(image.label, iteration)
+                         self.iter, i.flat_corrected)
+                name = _name_skybackground(image.label, self.iter)
                 pyfits.writeto(name, sky)
                 d -= sky
             
@@ -403,10 +405,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             
                 
-    def combine_images(self, iinfo, iteration, out=None):
-        _logger.debug('Iter %d, opening sky-subtracted images', iteration)
+    def combine_images(self, iinfo, out=None):
+        _logger.debug('Iter %d, opening sky-subtracted images', self.iter)
         imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
-        _logger.debug('Iter %d, opening mask images', iteration)
+        _logger.debug('Iter %d, opening mask images', self.iter)
         mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
         try:
             extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo]
@@ -418,16 +420,16 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 out = quantileclip(data, masks, scales=extinc, dtype='float32', fclip=0.1)
 
             # We are saving here only data part
-            pyfits.writeto('result_i%0d.fits' % iteration, out[0], clobber=True)
-            pyfits.writeto('result_var_i%0d.fits' % iteration, out[1], clobber=True)
-            pyfits.writeto('result_npix_i%0d.fits' % iteration, out[2], clobber=True)
+            pyfits.writeto('result_i%0d.fits' % self.iter, out[0], clobber=True)
+            pyfits.writeto('result_var_i%0d.fits' % self.iter, out[1], clobber=True)
+            pyfits.writeto('result_npix_i%0d.fits' % self.iter, out[2], clobber=True)
                 
             return out
             
         finally:
-            _logger.debug('Iter %d, closing sky-subtracted images', iteration)
+            _logger.debug('Iter %d, closing sky-subtracted images', self.iter)
             map(lambda x: x.close(), imgslll)
-            _logger.debug('Iter %d, closing mask images', iteration)
+            _logger.debug('Iter %d, closing mask images', self.iter)
             map(lambda x: x.close(), mskslll)
                 
     def figure_check_combination(self, rnimage, rmean, rstd):            
@@ -504,7 +506,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
         _figure.canvas.draw()
         
-    def figure_median_background(self, scales, iteration):
+    def figure_median_background(self, scales):
         # FIXME: plotting
         _figure.clf()
         ax = _figure.add_subplot(1,1,1) 
@@ -513,14 +515,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         ax.set_xlabel('Image number')
         ax.set_ylabel('Median')
         _figure.canvas.draw()
-        _figure.savefig('median-sky-background_i%02d.png' % iteration)
+        _figure.savefig('median-sky-background_i%02d.png' % self.iter)
 
-    def compute_superflat(self, iinfo, segmask, iteration):
+    def compute_superflat(self, iinfo, segmask):
         try:
             filelist = []
             data = []
             for image in iinfo:
-                _logger.debug('Iter %d, opening resized image %s', iteration, image.resized_base)
+                _logger.debug('Iter %d, opening resized image %s', self.iter, image.resized_base)
                 hdulist = pyfits.open(image.resized_base, memmap=True, mode='readonly')
                 filelist.append(hdulist)
                 data.append(hdulist['primary'].data[image.region])
@@ -529,13 +531,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             
             # FIXME: plotting
-            self.figure_median_background(scales, iteration)
+            self.figure_median_background(scales)
 
             masks = None
             if segmask is not None:
                 masks = [segmask[image.region] for image in iinfo]
                 
-            _logger.debug('Iter %d, combining images', iteration)
+            _logger.debug('Iter %d, combining images', self.iter)
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])
             
@@ -543,14 +545,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             
         finally:
-            _logger.debug('Iter %d, closing resized images and mask', iteration)
+            _logger.debug('Iter %d, closing resized images and mask', self.iter)
             for fileh in filelist:               
                 fileh.close()            
 
         sfhdu = pyfits.PrimaryHDU(sf_data)
-        sfhdu.writeto(_name_skyflat('comb-pre', iteration))
+        sfhdu.writeto(_name_skyflat('comb-pre', self.iter))
         sfhdu = pyfits.PrimaryHDU(sf_num)
-        sfhdu.writeto(_name_skyflat('comb-num', iteration))
+        sfhdu.writeto(_name_skyflat('comb-num', self.iter))
 
 
 
@@ -562,12 +564,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
         
         sfhdu = pyfits.PrimaryHDU(sf_data)            
-        sfhdu.writeto(_name_skyflat('comb', iteration))
+        sfhdu.writeto(_name_skyflat('comb', self.iter))
         return sf_data
         
 
-    def correct_superflat(self, image, fitted, iteration):
-        _logger.info("Iter %d, SF: apply superflat to image %s", iteration, image.resized_base)
+    def correct_superflat(self, image, fitted):
+        _logger.info("Iter %d, SF: apply superflat to image %s", self.iter, image.resized_base)
         hdulist = pyfits.open(image.resized_base, mode='readonly')
         data = hdulist['primary'].data[image.region]
         newdata = hdulist['primary'].data.copy()
@@ -577,14 +579,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         newheader = hdulist['primary'].header.copy()
         hdulist.close()
         phdu = pyfits.PrimaryHDU(newdata, newheader)
-        image.lastname = _name_skyflat_proc(image.label, iteration)
+        image.lastname = _name_skyflat_proc(image.label, self.iter)
         image.flat_corrected = image.lastname
         phdu.writeto(image.lastname)
         
         # FIXME: plotting
         self.figure_image(newdata[image.region], image)
         
-    def check_photometry(self, images_info, sf_data, seeing_fwhm, iter_):
+    def check_photometry(self, images_info, sf_data, seeing_fwhm):
         # Check photometry of few objects
         weigthmap = 'weights4rms.fits'
         
@@ -593,7 +595,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         wmap[512:1024, 512:1024] = 1                    
         pyfits.writeto(weigthmap, wmap, clobber=True)
         
-        basename = 'result_i%0d.fits' % (iter_ - 1)
+        basename = 'result_i%0d.fits' % (self.iter - 1)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
@@ -606,7 +608,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
         sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
         
-        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % iter_
+        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % self.iter
         _logger.info('Runing sextractor in %s', basename)
         sex.run(basename)
         
@@ -621,10 +623,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         base = numpy.empty((len(images_info), OBJS_I_KEEP))
         
         for idx, image in enumerate(images_info):
-            imagename = _name_skysub_proc(image.label, iter_ - 1)
+            imagename = _name_skysub_proc(image.label, self.iter - 1)
 
 
-            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, iter_)
+            sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, self.iter)
 
             # Lauch SExtractor on a FITS file
             # om double image mode
@@ -698,25 +700,27 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sf_data = None
         seeing_fwhm = None
         
-        for iter_ in range(1, niteration + 1):
+        for self.iter in range(1, niteration + 1):
             # Resizing images
-            _logger.info('Iter %d, computing offsets', iter_)
+            
+            
+            _logger.info('Iter %d, computing offsets', self.iter)
             offsets = [image.offset for image in images_info]        
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
             
-            _logger.info('Iter %d, resizing images and masks', iter_)            
+            _logger.info('Iter %d, resizing images and masks', self.iter)            
             for image, noffset in zip(images_info, offsetsp):
                 region, _ = subarray_match(finalshape, noffset, image.baseshape)
                 image.region = region
                 image.noffset = noffset
-                imgn, maskn = _name_redimensioned_images(image.label, iter_)
+                imgn, maskn = _name_redimensioned_images(image.label, self.iter)
                 image.resized_base = imgn
                 image.resized_mask = maskn
                 
                 self.resize_image_and_mask(image, finalshape, imgn, maskn)
 
-            _logger.info('Iter %d, generating segmentation image', iter_)            
+            _logger.info('Iter %d, generating segmentation image', self.iter)            
             if sf_data is not None:
                 
                 # FIXME more plots
@@ -729,7 +733,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # sextractor takes care of bad pixels
                 sex = SExtractor()
                 sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
-                sex.config["CHECKIMAGE_NAME"] = _name_segmask(iter_)
+                sex.config["CHECKIMAGE_NAME"] = _name_segmask(self.iter)
                 sex.config['VERBOSE_TYPE'] = 'QUIET'
                 sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
                 sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
@@ -769,7 +773,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                     sex.config['WEIGHT_THRESH'] = 50
                     sex.config['WEIGHT_IMAGE'] = weigthmap
                 
-                filename = 'result_i%0d.fits' % (iter_ - 1)
+                filename = 'result_i%0d.fits' % (self.iter - 1)
                 
                 # Lauch SExtractor on a FITS file
                 sex.run(filename)
@@ -817,22 +821,22 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
                 seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
                 _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-                objmask = pyfits.getdata(_name_segmask(iter_))
+                objmask = pyfits.getdata(_name_segmask(self.iter))
 
                 _logger.info('Checking photometry')
-                self.check_photometry(images_info, sf_data, seeing_fwhm, iter_)
+                self.check_photometry(images_info, sf_data, seeing_fwhm)
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
             # Update objects mask      
             for image in images_info:
-                image.objmask = _name_object_mask(image.label, iter_)
-                _logger.info('Iter %d, create object mask %s', iter_, image.objmask)                 
+                image.objmask = _name_object_mask(image.label, self.iter)
+                _logger.info('Iter %d, create object mask %s', self.iter, image.objmask)                 
                 image.objmask_data = objmask[image.region]
                 pyfits.writeto(image.objmask, image.objmask_data)
                             
-            _logger.info('Iter %d, superflat correction (SF)', iter_)
-            _logger.info('Iter %d, SF: computing scale factors', iter_)
+            _logger.info('Iter %d, superflat correction (SF)', self.iter)
+            _logger.info('Iter %d, SF: computing scale factors', self.iter)
 
             for image in images_info:
                 region = image.region
@@ -843,31 +847,31 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
             
             # Combining images to obtain the sky flat 
-            _logger.info("Iter %d, SF: combining the images without offsets", iter_)
-            superflat = self.compute_superflat(images_info, objmask, iter_)
+            _logger.info("Iter %d, SF: combining the images without offsets", self.iter)
+            superflat = self.compute_superflat(images_info, objmask)
             
-            _logger.info("Iter %d, SF: apply superflat", iter_)
+            _logger.info("Iter %d, SF: apply superflat", self.iter)
             # Process all images with the fitted flat
 
             self.figure_init()
 
             for image in images_info:
-                self.correct_superflat(image, superflat, iter_)
+                self.correct_superflat(image, superflat)
             
-            _logger.info('Iter %d, sky correction (SC)', iter_)
+            _logger.info('Iter %d, sky correction (SC)', self.iter)
             # In the first iteration
-            if iter_ == 1:
-                _logger.info('Iter %d, SC: computing simple sky', iter_)
+            if self.iter == 1:
+                _logger.info('Iter %d, SC: computing simple sky', self.iter)
                 for image in images_info:            
-                    self.compute_simple_sky(image, iter_)
+                    self.compute_simple_sky(image)
             else:
-                _logger.info('Iter %d, SC: computing advanced sky', iter_)
+                _logger.info('Iter %d, SC: computing advanced sky', self.iter)
                 for image in images_info:            
-                    self.compute_advanced_sky2(image, objmask, iter_)
+                    self.compute_advanced_sky2(image, objmask)
     
             # Combining the images
-            _logger.info("Iter %d, Combining the images", iter_)
-            sf_data = self.combine_images(images_info, iter_)
+            _logger.info("Iter %d, Combining the images", self.iter)
+            sf_data = self.combine_images(images_info)
             
             # FIXME, more plots          
             def truncated(array, frac=0.1):
@@ -904,9 +908,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             # ax.set_title('Fake sky error image')
                 
 
-            pyfits.writeto('fake_sky_rms_i%0d.fits' % iter_, fake)
+            pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake)
                       
-            _logger.info('Iter %d, finished', iter_)
+            _logger.info('Iter %d, finished', self.iter)
 
         primary_headers = {'FILENAME': self.parameters['resultname'],
                            }
