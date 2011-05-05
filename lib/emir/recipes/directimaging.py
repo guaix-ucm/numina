@@ -62,9 +62,6 @@ _logger = logging.getLogger("emir.recipes")
 
 mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'
-_figure = plt.figure(facecolor='white')
-_figure.canvas.set_window_title('Recipe Plots')
-_figure.canvas.draw()
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
     dn = '%s_r_i%01d%s' % (label, iteration, ext)
@@ -252,6 +249,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         super(Recipe, self).__init__(param, runinfo)
         
         self.iter = 0
+        self._figure = plt.figure(facecolor='white')
+        self._figure.canvas.set_window_title('Recipe Plots')
+        self._figure.canvas.draw()
 
     def setup(self):
         # Parameters will store the image with absolute paths
@@ -433,46 +433,46 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             map(lambda x: x.close(), mskslll)
                 
     def figure_check_combination(self, rnimage, rmean, rstd):            
-        _figure.clf()
-        _figure.subplots_adjust(hspace=0.001)
+        self._figure.clf()
+        self._figure.subplots_adjust(hspace=0.001)
         
-        ax1 = _figure.add_subplot(3,1,1)
+        ax1 = self._figure.add_subplot(3,1,1)
         pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
         ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
         ax1.set_title("")
         ax1.set_ylabel('measured sky rms')
         
-        ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
+        ax2 = self._figure.add_subplot(3,1,2, sharex=ax1)
         pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
         avg_rms = sum(pred) / len(pred)
         ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
         ax2.set_ylabel('scaled sky rms')
 
-        ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
+        ax3 = self._figure.add_subplot(3,1,3, sharex=ax1)
         ax3.plot(rnimage, rmean, 'b*')
         ax3.set_ylabel('mean sky')
         ax3.set_xlabel('number of frames per pixel')
 
         xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
         mpl.artist.setp(xticklabels, visible=False)
-        _figure.canvas.draw()
+        self._figure.canvas.draw()
         
         return avg_rms         
 
     def figure_fake_sky_error(self, data):
-        _figure.clf()
-        ax = _figure.add_subplot(111)
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
         norm = mpl.colors.LogNorm()
         ax.set_title('Number of images combined')              
         ax.set_xlabel('X')
         ax.set_ylabel('Y')            
         ax.imshow(data, cmap=cmap, norm=norm)                                
-        _figure.canvas.draw()
+        self._figure.canvas.draw()
 
     def figure_final_before_s(self, data):
-        _figure.clf()
-        ax = _figure.add_subplot(111)
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
         norm = mpl.colors.LogNorm()
         ax.set_title('Result image')              
@@ -480,16 +480,16 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         ax.set_ylabel('Y')
         z1, z2 = numdisplay.zscale.zscale(data)
         ax.imshow(data, cmap=cmap, clim=(z1, z2))                                
-        _figure.canvas.draw()
+        self._figure.canvas.draw()
 
     def figure_fwhm_histogram(self, fwhms):
-        _figure.clf()
+        self._figure.clf()
         plt.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
-        _figure.canvas.draw()
+        self._figure.canvas.draw()
                          
     def figure_init(self):
-        _figure.clf()
-        ax = _figure.add_subplot(111)
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
         norm = mpl.colors.LogNorm()
         ax.imshow(numpy.zeros((1024,1024)), cmap=cmap, norm=norm)
@@ -497,25 +497,25 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         ax.set_ylabel('Y')        
                  
     def figure_image(self, thedata, image):        
-        ax = _figure.gca()
+        ax = self._figure.gca()
         image_axes, = ax.get_images()
         image_axes.set_data(thedata)
         z1, z2 = numdisplay.zscale.zscale(thedata)
         image_axes.set_clim(z1, z2)
         clim = image_axes.get_clim()
         ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
-        _figure.canvas.draw()
+        self._figure.canvas.draw()
         
     def figure_median_background(self, scales):
         # FIXME: plotting
-        _figure.clf()
-        ax = _figure.add_subplot(1,1,1) 
+        self._figure.clf()
+        ax = self._figure.add_subplot(1,1,1) 
         ax.plot(scales, 'r*')
         ax.set_title("")
         ax.set_xlabel('Image number')
         ax.set_ylabel('Median')
-        _figure.canvas.draw()
-        _figure.savefig('median-sky-background_i%02d.png' % self.iter)
+        self._figure.canvas.draw()
+        self._figure.savefig('median-sky-background_i%02d.png' % self.iter)
 
     def compute_superflat(self, iinfo, segmask):
         try:
@@ -806,9 +806,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                     catalog_f.close()
                     
                 p = PatchCollection(patches, alpha=0.4)
-                ax = _figure.gca()
+                ax = self._figure.gca()
                 ax.add_collection(p)
-                _figure.canvas.draw()
+                self._figure.canvas.draw()
                 raw_input('histo') # pause
 
                 self.figure_fwhm_histogram(fwhms)
