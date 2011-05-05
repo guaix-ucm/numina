@@ -428,7 +428,92 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.debug('Iter %d, closing sky-subtracted images', iteration)
             map(lambda x: x.close(), imgslll)
             _logger.debug('Iter %d, closing mask images', iteration)
-            map(lambda x: x.close(), mskslll)        
+            map(lambda x: x.close(), mskslll)
+                
+    def figure_check_combination(self, rnimage, rmean, rstd):            
+        _figure.clf()
+        _figure.subplots_adjust(hspace=0.001)
+        
+        ax1 = _figure.add_subplot(3,1,1)
+        pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
+        ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
+        ax1.set_title("")
+        ax1.set_ylabel('measured sky rms')
+        
+        ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
+        pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
+        avg_rms = sum(pred) / len(pred)
+        ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
+        ax2.set_ylabel('scaled sky rms')
+
+        ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
+        ax3.plot(rnimage, rmean, 'b*')
+        ax3.set_ylabel('mean sky')
+        ax3.set_xlabel('number of frames per pixel')
+
+        xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
+        mpl.artist.setp(xticklabels, visible=False)
+        _figure.canvas.draw()
+        
+        return avg_rms         
+
+    def figure_fake_sky_error(self, data):
+        _figure.clf()
+        ax = _figure.add_subplot(111)
+        cmap = mpl.cm.get_cmap('gray')
+        norm = mpl.colors.LogNorm()
+        ax.set_title('Number of images combined')              
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')            
+        ax.imshow(data, cmap=cmap, norm=norm)                                
+        _figure.canvas.draw()
+
+    def figure_final_before_s(self, data):
+        _figure.clf()
+        ax = _figure.add_subplot(111)
+        cmap = mpl.cm.get_cmap('gray')
+        norm = mpl.colors.LogNorm()
+        ax.set_title('Result image')              
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        z1, z2 = numdisplay.zscale.zscale(data)
+        ax.imshow(data, cmap=cmap, clim=(z1, z2))                                
+        _figure.canvas.draw()
+
+    def figure_fwhm_histogram(self, fwhms):
+        _figure.clf()
+        plt.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
+        _figure.canvas.draw()
+                         
+    def figure_init(self):
+        _figure.clf()
+        ax = _figure.add_subplot(111)
+        cmap = mpl.cm.get_cmap('gray')
+        norm = mpl.colors.LogNorm()
+        ax.imshow(numpy.zeros((1024,1024)), cmap=cmap, norm=norm)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')        
+                 
+    def figure_image(self, thedata, image):        
+        ax = _figure.gca()
+        image_axes, = ax.get_images()
+        image_axes.set_data(thedata)
+        z1, z2 = numdisplay.zscale.zscale(thedata)
+        image_axes.set_clim(z1, z2)
+        clim = image_axes.get_clim()
+        ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
+        _figure.canvas.draw()
+        
+    def figure_median_background(self, scales, iteration):
+        # FIXME: plotting
+        _figure.clf()
+        ax = _figure.add_subplot(1,1,1) 
+        ax.plot(scales, 'r*')
+        ax.set_title("")
+        ax.set_xlabel('Image number')
+        ax.set_ylabel('Median')
+        _figure.canvas.draw()
+        _figure.savefig('median-sky-background_i%02d.png' % iteration)
 
     def compute_superflat(self, iinfo, segmask, iteration):
         try:
@@ -444,13 +529,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             
             # FIXME: plotting
-            _figure.clf()
-            ax = _figure.add_subplot(1,1,1) 
-            ax.plot(scales, 'r*')
-            ax.set_title("")
-            ax.set_xlabel('Image number')
-            ax.set_ylabel('Median')
-            _figure.canvas.draw()
+            self.figure_median_background(scales, iteration)
 
             masks = None
             if segmask is not None:
@@ -503,15 +582,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         phdu.writeto(image.lastname)
         
         # FIXME: plotting
-        thedata = newdata[image.region]
-        ax = _figure.gca()
-        image_axes, = ax.get_images()
-        image_axes.set_data(thedata)
-        z1, z2 = numdisplay.zscale.zscale(thedata)
-        image_axes.set_clim(z1, z2)
-        clim = image_axes.get_clim()
-        ax.set_title('%s, bg=%g fg=%g, linscale' % (image.lastname, clim[0], clim[1]))        
-        _figure.canvas.draw()
+        self.figure_image(newdata[image.region], image)
         
     def check_photometry(self, images_info, sf_data, seeing_fwhm, iter_):
         # Check photometry of few objects
@@ -649,16 +720,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             if sf_data is not None:
                 
                 # FIXME more plots
-                _figure.clf()
-                ax = _figure.add_subplot(111)
-                cmap = mpl.cm.get_cmap('gray')
-                norm = mpl.colors.LogNorm()
-                ax.set_title('Result image')              
-                ax.set_xlabel('X')
-                ax.set_ylabel('Y')
-                z1, z2 = numdisplay.zscale.zscale(sf_data[0])
-                ax.imshow(sf_data[0], cmap=cmap, clim=(z1, z2))                                
-                _figure.canvas.draw()
+                self.figure_final_before_s(sf_data[0])
+
                 raw_input('sextractor ')
                 #
                 remove_border = True
@@ -739,12 +802,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                     catalog_f.close()
                     
                 p = PatchCollection(patches, alpha=0.4)
+                ax = _figure.gca()
                 ax.add_collection(p)
                 _figure.canvas.draw()
                 raw_input('histo') # pause
-                _figure.clf()
-                plt.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
-                _figure.canvas.draw()
+
+                self.figure_fwhm_histogram(fwhms)
+                
+
             
                 # mode with an histogram
                 hist, edges = numpy.histogram(fwhms, 50)
@@ -784,13 +849,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             _logger.info("Iter %d, SF: apply superflat", iter_)
             # Process all images with the fitted flat
 
-            _figure.clf()
-            ax = _figure.add_subplot(111)
-            cmap = mpl.cm.get_cmap('gray')
-            norm = mpl.colors.LogNorm()
-            ax.imshow(numpy.zeros((1024,1024)), cmap=cmap, norm=norm)
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
+            self.figure_init()
+
             for image in images_info:
                 self.correct_superflat(image, superflat, iter_)
             
@@ -829,51 +889,21 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             for pix in rnimage:
                 rmean[pix - 1], rstd[pix - 1] = truncated(data[ndata == pix])                
             
-            _figure.clf()
-            _figure.subplots_adjust(hspace=0.001)
-            
-            ax1 = _figure.add_subplot(3,1,1)
-            pred = [rstd[-1] * math.sqrt(rnimage[-1] / float(npix)) for npix in rnimage]
-            ax1.plot(rnimage, rstd, 'g*', rnimage, pred, 'y-')
-            ax1.set_title("")
-            ax1.set_ylabel('measured sky rms')
-            
-            ax2 = _figure.add_subplot(3,1,2, sharex=ax1)
-            pred = [val * math.sqrt(npix) for val, npix in zip(rstd, rnimage)]
-            avg_rms = sum(pred) / len(pred)
-            ax2.plot(rnimage, pred, 'r*', [rnimage[0], rnimage[-1]], [avg_rms,avg_rms])
-            ax2.set_ylabel('scaled sky rms')
-
-            ax3 = _figure.add_subplot(3,1,3, sharex=ax1)
-            ax3.plot(rnimage, rmean, 'b*')
-            ax3.set_ylabel('mean sky')
-            ax3.set_xlabel('number of frames per pixel')
-
-            xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
-            mpl.artist.setp(xticklabels, visible=False)
-            _figure.canvas.draw()
-            
+            avg_rms = self.figure_check_combination(rnimage, rmean, rstd)
+                        
             time.sleep(3)
             
             # Fake sky error image
-            _figure.clf()
-            ax = _figure.add_subplot(111)
-            cmap = mpl.cm.get_cmap('gray')
-            norm = mpl.colors.LogNorm()
-            ax.set_title('Number of images combined')              
-            ax.set_xlabel('X')
-            ax.set_ylabel('Y')
-            
-            ax.imshow(sf_data[2], cmap=cmap, norm=norm)                                
-            _figure.canvas.draw()
-            
+            self.figure_fake_sky_error(sf_data[2])
             time.sleep(3)
             
             # Create fake error image
             fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
-            ax.set_title('Fake sky error image')
-            ax.imshow(fake, cmap=cmap, norm=norm)                
-            _figure.canvas.draw()
+            self.figure_fake_sky_error(fake)
+
+            # ax.set_title('Fake sky error image')
+                
+
             pyfits.writeto('fake_sky_rms_i%0d.fits' % iter_, fake)
                       
             _logger.info('Iter %d, finished', iter_)
