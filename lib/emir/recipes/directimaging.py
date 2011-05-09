@@ -373,9 +373,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 hdulist = pyfits.open(filename, mode='readonly')
                 data.append(hdulist['primary'].data[i.region])
                 scales.append(numpy.median(data[-1]))
-                pyfits.writeto('%s-part-%d.fits' % (image.label, idx), data[-1], clobber=True, header=hdulist[0].header)
                 masks.append(objmask[i.region])
-                pyfits.writeto('%s-part-m-%d.fits' % (image.label, idx), masks[-1], clobber=True)
                 desc.append(hdulist)
                 idx += 1
 
