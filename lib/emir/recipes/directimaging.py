@@ -146,8 +146,15 @@ def update_sky_related(images, nimages=5):
     return images
 
 class ImageInformation(object):
+    '''Selected metadata from an image.
+    
+    Selected metadata from an image. It stores also processing status'''
     def __init__(self):
-        pass
+        self.label = ''
+        self.airmass = 0
+        self.mjd = 0
+        self.exposure = 0 # Exposure time
+
 
 
 class Recipe(RecipeBase, EmirRecipeMixin):
@@ -352,6 +359,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         desc = []
         data = []
         masks = []
+        scales = []
 
         try:
             idx = 0
@@ -364,6 +372,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 filename = i.flat_corrected
                 hdulist = pyfits.open(filename, mode='readonly')
                 data.append(hdulist['primary'].data[i.region])
+                scales.append(numpy.median(data[-1]))
                 pyfits.writeto('%s-part-%d.fits' % (image.label, idx), data[-1], clobber=True, header=hdulist[0].header)
                 masks.append(objmask[i.region])
                 pyfits.writeto('%s-part-m-%d.fits' % (image.label, idx), masks[-1], clobber=True)
@@ -371,7 +380,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 idx += 1
 
             _logger.debug('Computing background with %d images', len(data))
-            sky, _, num = median(data, masks)
+            sky, _, num = median(data, masks, scales=scales)
             if numpy.any(num == 0):
                 # We have pixels without
                 # sky background information
@@ -394,7 +403,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                          self.iter, i.flat_corrected)
                 name = _name_skybackground(image.label, self.iter)
                 pyfits.writeto(name, sky)
-                d -= sky
+                # FIXME
+                # sky median is 1.0 ?
+                d -= sky / numpy.median(sky) * numpy.median(d)
             
             finally:
                 hdulist1.close()
@@ -456,15 +467,17 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         xticklabels = ax1.get_xticklabels() + ax2.get_xticklabels()
         mpl.artist.setp(xticklabels, visible=False)
         self._figure.canvas.draw()
-        
+        self._figure.savefig('figure-check-combination_i%01d.png' % self.iter)
         return avg_rms         
 
-    def figure_fake_sky_error(self, data):
+    def figure_fake_sky_error(self, data, title=None):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
         norm = mpl.colors.LogNorm()
-        ax.set_title('Number of images combined')              
+        if title is not None:
+            ax.set_title(title)
+                          
         ax.set_xlabel('X')
         ax.set_ylabel('Y')            
         ax.imshow(data, cmap=cmap, norm=norm)                                
@@ -484,9 +497,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
     def figure_fwhm_histogram(self, fwhms):
         self._figure.clf()
-        plt.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
+        ax = self._figure.add_subplot(111)
+        ax.set_title('FWHM of objects')
+        ax.hist(fwhms, 50, normed=1, facecolor='g', alpha=0.75)
         self._figure.canvas.draw()
-                         
+        self._figure.savefig('figure-fwhm-histogram_i%01d.png' % self.iter)
+                   
     def figure_init(self):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
@@ -515,7 +531,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         ax.set_xlabel('Image number')
         ax.set_ylabel('Median')
         self._figure.canvas.draw()
-        self._figure.savefig('median-sky-background_i%02d.png' % self.iter)
+        self._figure.savefig('figure-median-sky-background_i%01d.png' % self.iter)
 
     def compute_superflat(self, iinfo, segmask):
         try:
@@ -664,6 +680,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             ii.objmask_data = None
             hdr = pyfits.getheader(ii.base)
             try:
+                ii.exposure = hdr[self.parameters['exposurekey']]
                 ii.baseshape = get_image_shape(hdr)
                 ii.airmass = hdr[self.parameters['airmasskey']]
                 ii.mjd = hdr[self.parameters['juliandatekey']]
@@ -673,6 +690,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
         images_info = update_sky_related(images_info, nimages=self.parameters['sky_images'])
         image_shapes = images_info[0].baseshape
+    
     
         _logger.info('Basic processing')
 
@@ -726,7 +744,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # FIXME more plots
                 self.figure_final_before_s(sf_data[0])
 
-                raw_input('sextractor ')
+                time.sleep(3)
                 #
                 remove_border = True
                 
@@ -809,12 +827,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 ax = self._figure.gca()
                 ax.add_collection(p)
                 self._figure.canvas.draw()
-                raw_input('histo') # pause
+                self._figure.savefig('figure-segmentation-overlay_%01d.png' % self.iter)
+                time.sleep(3)
 
                 self.figure_fwhm_histogram(fwhms)
-                
-
-            
+                            
                 # mode with an histogram
                 hist, edges = numpy.histogram(fwhms, 50)
                 idx = hist.argmax()
@@ -866,8 +883,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                     self.compute_simple_sky(image)
             else:
                 _logger.info('Iter %d, SC: computing advanced sky', self.iter)
+                
+                import cPickle as pickle
+                
+                output = open('data.pkl', 'wb')
+                pickle.dump(images_info, output)
+                output.close()
+                
                 for image in images_info:            
-                    self.compute_advanced_sky2(image, objmask)
+                    self.compute_advanced_sky(image, objmask)
     
             # Combining the images
             _logger.info("Iter %d, Combining the images", self.iter)
@@ -898,15 +922,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             time.sleep(3)
             
             # Fake sky error image
-            self.figure_fake_sky_error(sf_data[2])
+            self.figure_fake_sky_error(sf_data[2], title='Number of images combined')
             time.sleep(3)
             
             # Create fake error image
             fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
-            self.figure_fake_sky_error(fake)
-
-            # ax.set_title('Fake sky error image')
-                
+            self.figure_fake_sky_error(fake, title='Fake sky error image')
 
             pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake)
                       
