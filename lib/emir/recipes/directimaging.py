@@ -242,6 +242,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         Schema('nonlinearity', ProxyQuery(dummy=[1.0, 0.0]), 'Polynomial for non-linearity correction'),
         Schema('iterations', 4, 'Iterations of the recipe'),
         Schema('sky_images', 5, 'Images used to estimate the background around current image'),
+        Schema('sky_images_sep_time', 10, 'Maximum separation time between sky images in minutes'),
         Schema('images', ProxyPath('/observing_block/result/images'), 'A list of paths to images'),
         Schema('resultname', 'result.fits', 'Name of the output image'),
         Schema('airmasskey', 'AIRMASS', 'Name of airmass header keyword'),
@@ -351,8 +352,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         dst = _name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
         image.lastname = dst
-                
-        max_time_sep = 10.0 / 1440.0
+        
+        # Fraction of julian day
+        max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
         thistime = image.mjd
         
         _logger.info('Computing advanced sky for %s', image.label)
@@ -366,7 +368,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             for i in itertools.chain(*image.sky_related):
                 time_sep = abs(thistime - i.mjd)
                 if time_sep > max_time_sep:
-                    _logger.warn('Image %s is separated from %s more than the allowed %d', i.label, image.label, max_time_sep * 1440)
+                    _logger.warn('Image %s is separated from %s more than the allowed %d', 
+                                 i.label, image.label, self.parameters['sky_images_sep_time'])
                     _logger.warn('Image %s will not be used', i.label)
                     continue
                 filename = i.flat_corrected
