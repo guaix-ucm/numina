@@ -55,6 +55,8 @@ def from_json(obj):
         else:
             result.__dict__ = dparam
         return result
+    elif isinstance(obj, dict):
+        return deunicode_json(obj)
     return obj
 
 def deunicode_json(obj):
