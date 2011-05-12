@@ -26,7 +26,7 @@ from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
-from numina.diskstorage import link_or_copy
+import numina.diskstorage
 from numina.image.imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
@@ -223,7 +223,7 @@ def create_object_mask(sconf, array , segmask_name=None):
     # Copy or hardlink configuration files into tdir
 
     for filename in sconf.__dict__.itervalues():
-        link_or_copy(filename, tdir)
+        numina.diskstorage.link_or_copy(filename, tdir)
     #
 
     # Run sextractor inside tdir, it will create a image called check.fits

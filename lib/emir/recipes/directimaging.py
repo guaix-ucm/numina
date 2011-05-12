@@ -38,12 +38,12 @@ import numdisplay.zscale
 
 import numina.image
 import numina.qa
-from numina.image import DiskImage
+from numina.image import DiskImage, get_image_shape, resize_fits
 from numina.image.flow import SerialFlow
 from numina.image.background import create_background_map
 from numina.image.processing import DarkCorrector, NonLinearityCorrector, BadPixelCorrector
 from numina.array import subarray_match
-from numina.array import combine_shape, resize_array, correct_flatfield
+from numina.array import combine_shape, correct_flatfield
 from numina.array import fixpix2
 from numina.array.combine import flatcombine, median, quantileclip
 
@@ -95,33 +95,6 @@ def _name_skyflat(label, iteration, ext='.fits'):
 def _name_segmask(iteration, ext='.fits'):
     return "check_i%01d%s" % (iteration, ext)
     
-def get_image_shape(header):
-    ndim = header['naxis']
-    return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
-
-def resize_hdu(hdu, newshape, region, fill=0.0):
-    basedata = hdu.data
-    newdata = resize_array(basedata, newshape, region, fill=fill)                
-    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
-    return newhdu
-
-def resize_fits(fitsfile, newfilename, newshape, region, fill=0.0):
-    
-    close_on_exit = False
-    if isinstance(fitsfile, basestring):
-        hdulist = pyfits.open(fitsfile, mode='readonly')
-        close_on_exit = True
-    else:
-        hdulist = fitsfile
-        
-    try:
-        hdu = hdulist['primary']
-        newhdu = resize_hdu(hdu, newshape, region, fill=fill)
-        newhdu.writeto(newfilename)
-    finally:
-        if close_on_exit:
-            hdulist.close()
-
 def update_sky_related(images, nimages=5):
     
     nox = nimages
