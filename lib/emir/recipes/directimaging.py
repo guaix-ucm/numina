@@ -368,18 +368,22 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 name = _name_skybackgroundmask(image.label, self.iter)
                 pyfits.writeto(name, binmask.astype('int16'))
                 
-
             hdulist1 = pyfits.open(image.lastname, mode='update')
             try:
                 d = hdulist1['primary'].data[image.region]
             
                 _logger.info('Iter %d, SC: subtracting sky to image %s', 
                          self.iter, i.flat_corrected)
-                name = _name_skybackground(image.label, self.iter)
-                pyfits.writeto(name, sky)
+                
                 # FIXME
                 # sky median is 1.0 ?
-                d -= sky / numpy.median(sky) * numpy.median(d)
+                sky = sky / numpy.median(sky) * numpy.median(d)
+                self.figure_image(sky, image)                 
+                d -= sky
+                
+                name = _name_skybackground(image.label, self.iter)
+                pyfits.writeto(name, sky)
+                
             
             finally:
                 hdulist1.close()
