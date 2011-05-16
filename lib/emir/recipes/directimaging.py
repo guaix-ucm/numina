@@ -533,29 +533,20 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
             _logger.debug('Iter %d, combining images', self.iter)
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
-                                                    blank=1.0 / scales[0])
-            
-            
-            
-            
+                                                    blank=1.0 / scales[0])            
         finally:
             _logger.debug('Iter %d, closing resized images and mask', self.iter)
             for fileh in filelist:               
                 fileh.close()            
 
-        sfhdu = pyfits.PrimaryHDU(sf_data)
-        sfhdu.writeto(_name_skyflat('comb-pre', self.iter))
-        sfhdu = pyfits.PrimaryHDU(sf_num)
-        sfhdu.writeto(_name_skyflat('comb-num', self.iter))
-
-
-
-        
         # We interpolate holes by channel
         for channel in self.DetectorClass.amplifiers: 
             mask = (sf_num[channel] == 0)
             if numpy.any(mask):                    
                 fixpix2(sf_data[channel], mask, out=sf_data[channel])
+
+        # Normalize, flat has mean = 1
+        sf_data /= sf_data.mean()
         
         sfhdu = pyfits.PrimaryHDU(sf_data)            
         sfhdu.writeto(_name_skyflat('comb', self.iter))
