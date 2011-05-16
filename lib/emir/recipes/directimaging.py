@@ -448,7 +448,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         self._figure.savefig('figure-check-combination_i%01d.png' % self.iter)
         return avg_rms         
 
-    def figure_fake_sky_error(self, data, title=None):
+    def figure_simple_image(self, data, title=None):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
@@ -860,14 +860,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 for image in images_info:            
                     self.compute_simple_sky(image)
             else:
-                _logger.info('Iter %d, SC: computing advanced sky', self.iter)
-                
-                import cPickle as pickle
-                
-                output = open('data.pkl', 'wb')
-                pickle.dump(images_info, output)
-                output.close()
-                
+                _logger.info('Iter %d, SC: computing advanced sky', self.iter)             
                 for image in images_info:            
                     self.compute_advanced_sky(image, objmask)
     
