@@ -569,7 +569,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         phdu.writeto(image.lastname)
         
         # FIXME: plotting
-        self.figure_image(newdata[image.region], image)
+        try:
+            self.figure_image(newdata[image.region], image)
+        except ValueError:
+            _logger.warning('Problem plotting %s', image.lastname)
         
     def check_photometry(self, images_info, sf_data, seeing_fwhm):
         # Check photometry of few objects
@@ -884,12 +887,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             time.sleep(3)
             
             # Fake sky error image
-            self.figure_fake_sky_error(sf_data[2], title='Number of images combined')
+            self.figure_simple_image(sf_data[2], title='Number of images combined')
             time.sleep(3)
             
             # Create fake error image
             fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
-            self.figure_fake_sky_error(fake, title='Fake sky error image')
+            self.figure_simple_image(fake, title='Fake sky error image')
 
             pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake)
                       
