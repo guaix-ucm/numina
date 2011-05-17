@@ -574,13 +574,35 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         except ValueError:
             _logger.warning('Problem plotting %s', image.lastname)
         
+    def check_photometry_plot(self, base):
+        rebase = base / base[0]
+        x = range(len(base[:,0]))
+        data = rebase[:,0]
+        fmax = data.max()
+#        fmin = data.min()
+        m = numpy.median(data)
+        s = data.std()
+        n = 1
+        self._figure.clf()
+        ax = self._figure.add_subplot(111)
+        ax.set_title('Relative flux of brightest object')
+        ax.scatter(x, data)
+        ax.set_ylim([0, max(fmax, m + n * s)])
+        ax.plot([x[0], x[-1]], [m,m], 'r--')
+        ax.plot([x[0], x[-1]], [m + n * s,m + n *s], 'g--')
+        ax.plot([x[0], x[-1]], [m - n * s,m - n *s], 'g--')
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-relative-flux_i%01d.png' % self.iter)
+        
     def check_photometry(self, images_info, sf_data, seeing_fwhm):
         # Check photometry of few objects
         weigthmap = 'weights4rms.fits'
         
         wmap = numpy.zeros_like(sf_data[0])
+        
         # Center of the image
-        wmap[512:1024, 512:1024] = 1                    
+        border = 300
+        wmap[border:-border, border:-border] = 1                    
         pyfits.writeto(weigthmap, wmap, clobber=True)
         
         basename = 'result_i%0d.fits' % (self.iter - 1)
@@ -593,12 +615,13 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sex.config['WEIGHT_IMAGE'] = weigthmap
         
         sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+        sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
         sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
         sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
         
         sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % self.iter
         _logger.info('Runing sextractor in %s', basename)
-        sex.run(basename)
+        sex.run('%s,%s' % (basename, basename))
         
         # Sort catalog by flux
         catalog = sex.catalog()
@@ -623,6 +646,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             catalog = sex.catalog()
             
             base[idx] = [obj['FLUX_BEST'] for obj in catalog if obj['NUMBER'] in indices]
+                
+        self.check_photometry_plot(base)                   
                         
         numpy.save('base.bin', base)
         
