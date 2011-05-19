@@ -118,6 +118,9 @@ def update_sky_related(images, nimages=5):
     
     return images
 
+VALID_SCIENCE = 1
+VALID_SKY = 2
+
 class ImageInformation(object):
     '''Selected metadata from an image.
     
@@ -127,7 +130,9 @@ class ImageInformation(object):
         self.airmass = 0
         self.mjd = 0
         self.exposure = 0 # Exposure time
-
+        self.flags = VALID_SCIENCE | VALID_SKY
+        self.valid_science = True
+        self.valid_sky = True
 
 
 class Recipe(RecipeBase, EmirRecipeMixin):
@@ -330,7 +335,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         max_time_sep = self.parameters['sky_images_sep_time'] / 1440.0
         thistime = image.mjd
         
-        _logger.info('Computing advanced sky for %s', image.label)
+        _logger.info('Iter %d, SC: computing advanced sky for %s', self.iter, image.label)
         desc = []
         data = []
         masks = []
@@ -341,9 +346,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             for i in itertools.chain(*image.sky_related):
                 time_sep = abs(thistime - i.mjd)
                 if time_sep > max_time_sep:
-                    _logger.warn('Image %s is separated from %s more than the allowed %d', 
+                    _logger.warn('image %s is separated from %s more than %dm', 
                                  i.label, image.label, self.parameters['sky_images_sep_time'])
-                    _logger.warn('Image %s will not be used', i.label)
+                    _logger.warn('image %s will not be used', i.label)
                     continue
                 filename = i.flat_corrected
                 hdulist = pyfits.open(filename, mode='readonly')
@@ -353,12 +358,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 desc.append(hdulist)
                 idx += 1
 
-            _logger.debug('Computing background with %d images', len(data))
+            _logger.debug('computing background with %d images', len(data))
             sky, _, num = median(data, masks, scales=scales)
             if numpy.any(num == 0):
                 # We have pixels without
                 # sky background information
-                _logger.warn('Pixels without sky information in image %s',
+                _logger.warn('pixels without sky information in image %s',
                              i.flat_corrected)
                 binmask = num == 0
                 # FIXME: during development, this is faster
@@ -371,9 +376,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             hdulist1 = pyfits.open(image.lastname, mode='update')
             try:
                 d = hdulist1['primary'].data[image.region]
-            
-                _logger.info('Iter %d, SC: subtracting sky to image %s', 
-                         self.iter, i.flat_corrected)
                 
                 # FIXME
                 # sky median is 1.0 ?
@@ -383,7 +385,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
                 name = _name_skybackground(image.label, self.iter)
                 pyfits.writeto(name, sky)
-                
+                _logger.info('Iter %d, SC: subtracting sky %s to image %s', 
+                             self.iter, name, image.lastname)                
             
             finally:
                 hdulist1.close()
@@ -396,11 +399,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
     def combine_images(self, iinfo, out=None):
         _logger.debug('Iter %d, opening sky-subtracted images', self.iter)
-        imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo]
+        imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo if image.valid_science]
         _logger.debug('Iter %d, opening mask images', self.iter)
-        mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo]
+        mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo if image.valid_science]
+        _logger.debug('Iter %d, combining %d images', self.iter, len(imgslll))
         try:
-            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo]
+            extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo if image.valid_science]
             data = [i['primary'].data for i in imgslll]
             masks = [i['primary'].data for i in mskslll]
             if out is not None:
@@ -531,7 +535,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             if segmask is not None:
                 masks = [segmask[image.region] for image in iinfo]
                 
-            _logger.debug('Iter %d, combining images', self.iter)
+            _logger.debug('Iter %d, combining %d images', self.iter, len(data))
             sf_data, _sf_var, sf_num = flatcombine(data, masks, scales=scales, 
                                                     blank=1.0 / scales[0])            
         finally:
@@ -645,11 +649,18 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             sex.run('%s,%s' % (basename, imagename))
             catalog = sex.catalog()
             
+            # TODO: correct from extinction
             base[idx] = [obj['FLUX_BEST'] for obj in catalog if obj['NUMBER'] in indices]
                 
         self.check_photometry_plot(base)                   
-                        
-        numpy.save('base.bin', base)
+        
+        # Let's say some images are are rejected
+        for img in images_info[10:15]:
+            img.valid_science = False
+            
+        for img in images_info:
+            if not img.valid_science:
+                _logger.info('Image %s reject due to low flux in objects', img.label)
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
@@ -720,13 +731,19 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             
             _logger.info('Iter %d, computing offsets', self.iter)
-            offsets = [image.offset for image in images_info]        
+            
+            offsets = [image.offset for image in images_info if image.valid_science]        
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
             
+            
             _logger.info('Iter %d, resizing images and masks', self.iter)            
             for image, noffset in zip(images_info, offsetsp):
-                region, _ = subarray_match(finalshape, noffset, image.baseshape)
+                if image.valid_science:
+                    region, _ = subarray_match(finalshape, noffset, image.baseshape)
+                else:
+                    region = None
+                    noffset = None
                 image.region = region
                 image.noffset = noffset
                 imgn, maskn = _name_redimensioned_images(image.label, self.iter)
@@ -842,7 +859,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             else:
                 objmask = numpy.zeros(finalshape, dtype='int')
                                         
-            # Update objects mask      
+            # Update objects mask
+            # For all images    
             for image in images_info:
                 image.objmask = _name_object_mask(image.label, self.iter)
                 _logger.info('Iter %d, create object mask %s', self.iter, image.objmask)                 
@@ -851,7 +869,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                             
             _logger.info('Iter %d, superflat correction (SF)', self.iter)
             _logger.info('Iter %d, SF: computing scale factors', self.iter)
-
+            
+            # FIXME: not sure
             for image in images_info:
                 region = image.region
                 data = pyfits.getdata(image.resized_base)[region]
@@ -869,6 +888,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
 
             self.figure_init()
 
+            # FIXME: not sure
             for image in images_info:
                 self.correct_superflat(image, superflat)
             
@@ -879,12 +899,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 for image in images_info:            
                     self.compute_simple_sky(image)
             else:
-                _logger.info('Iter %d, SC: computing advanced sky', self.iter)             
-                for image in images_info:            
-                    self.compute_advanced_sky(image, objmask)
+                _logger.info('Iter %d, SC: computing advanced sky', self.iter)
+                # FIXME: Only for science          
+                for image in images_info:
+                    if image.valid_science:       
+                        self.compute_advanced_sky(image, objmask)
     
             # Combining the images
             _logger.info("Iter %d, Combining the images", self.iter)
+            # FIXME: only for science
             sf_data = self.combine_images(images_info)
             
             # FIXME, more plots          
