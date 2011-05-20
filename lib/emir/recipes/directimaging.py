@@ -578,23 +578,23 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         except ValueError:
             _logger.warning('Problem plotting %s', image.lastname)
         
-    def check_photometry_plot(self, base):
-        rebase = base / base[0]
-        x = range(len(base[:,0]))
-        data = rebase[:,0]
-        fmax = data.max()
-#        fmin = data.min()
-        m = numpy.median(data)
-        s = data.std()
-        n = 1
+    def check_photometry_plot(self, vals, errors, levels, sigma):
+        x = range(len(errors))
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         ax.set_title('Relative flux of brightest object')
-        ax.scatter(x, data)
-        ax.set_ylim([0, max(fmax, m + n * s)])
-        ax.plot([x[0], x[-1]], [m,m], 'r--')
-        ax.plot([x[0], x[-1]], [m + n * s,m + n *s], 'g--')
-        ax.plot([x[0], x[-1]], [m - n * s,m - n *s], 'g--')
+        for v,c in zip(vals, ['b', 'r', 'g', 'y']):
+            ax.scatter(v[0], v[1], c=c)
+            #w = error[v[0]]
+            #ax.errorbar(v[0], v[1], yerr=w, fmt=None, c=c)
+            
+        s = 0.01
+        n = 3
+        ax.plot([x[0], x[-1]], [1, 1], 'r--')
+        ax.plot([x[0], x[-1]], [1 - n * s,1 - n * s], 'b--')
+        for f in [0.9, 0.7, 0.5, 0.0]:
+            ax.plot([x[0], x[-1]], [f * 1, f * 1], 'g--')
+            
         self._figure.canvas.draw()
         self._figure.savefig('figure-relative-flux_i%01d.png' % self.iter)
         
@@ -649,10 +649,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             sex.run('%s,%s' % (basename, imagename))
             catalog = sex.catalog()
             
-            # TODO: correct from extinction
-            base[idx] = [obj['FLUX_BEST']
+            # Extinction correction
+            excor = pow(10, -0.4 * image.airmass * self.parameters['extinction'])
+            base[idx] = [obj['FLUX_BEST'] * excor
                                      for obj in catalog if obj['NUMBER'] in indices]
-            error[idx] = [obj['FLUXERR_BEST'] 
+            error[idx] = [obj['FLUXERR_BEST'] * excor
                                      for obj in catalog if obj['NUMBER'] in indices]
         
         data = base / base[0]
@@ -664,10 +665,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         levels = [0.5, 0.7, 0.9] # This should be a parameter
         
-        #self.check_photometry_plot(wdata)
         x = range(len(images_info))
-        vals, (fmax, s) = self.check_photometry_categorize(x, wdata, 
+        vals, (_, sigma) = self.check_photometry_categorize(x, wdata, 
                                                            levels, tags=['VVVB', 'VVB', 'VB', 'OK'])
+        self.check_photometry_plot(vals, error, levels, sigma)
         for x, _, t in vals:
             if t in ['OK']:
                 for p in x:
