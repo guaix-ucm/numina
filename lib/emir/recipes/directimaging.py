@@ -631,15 +631,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         catalog = sex.catalog()
         catalog = sorted(catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
         
-        # set of indices of the 10 first objects
+        # set of indices of the N first objects
         OBJS_I_KEEP = 3
         indices = set(obj['NUMBER'] for obj in catalog[:OBJS_I_KEEP])
         
         base = numpy.empty((len(images_info), OBJS_I_KEEP))
+        error = numpy.empty((len(images_info), OBJS_I_KEEP))
         
         for idx, image in enumerate(images_info):
             imagename = _name_skysub_proc(image.label, self.iter - 1)
-
 
             sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, self.iter)
 
@@ -650,17 +650,67 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             catalog = sex.catalog()
             
             # TODO: correct from extinction
-            base[idx] = [obj['FLUX_BEST'] for obj in catalog if obj['NUMBER'] in indices]
-                
-        self.check_photometry_plot(base)                   
+            base[idx] = [obj['FLUX_BEST']
+                                     for obj in catalog if obj['NUMBER'] in indices]
+            error[idx] = [obj['FLUXERR_BEST'] 
+                                     for obj in catalog if obj['NUMBER'] in indices]
         
-        # Let's say some images are are rejected
-        for img in images_info[10:15]:
-            img.valid_science = False
-            
-        for img in images_info:
-            if not img.valid_science:
-                _logger.info('Image %s reject due to low flux in objects', img.label)
+        data = base / base[0]
+        err = error / base[0] # sigma
+        w = 1 / err / err
+        # weighted mean of the flux values
+        wdata = numpy.average(data, axis=1, weights=w)
+        wsigma = 1 / numpy.sqrt(w.sum(axis=1))
+        
+        levels = [0.5, 0.7, 0.9] # This should be a parameter
+        
+        #self.check_photometry_plot(wdata)
+        x = range(len(images_info))
+        vals, (fmax, s) = self.check_photometry_categorize(x, wdata, 
+                                                           levels, tags=['VVVB', 'VVB', 'VB', 'OK'])
+        for x, _, t in vals:
+            if t in ['OK']:
+                for p in x:
+                    images_info[p].valid_science = True
+            elif t in ['VB', 'VVB']:
+                for p in x:
+                    images_info[p].valid_science = True
+            else:
+                for p in x:
+                    images_info[p].valid_science = False
+                    _logger.info('Image %s reject due to low flux in objects', images_info[p].label)                
+                
+    def check_photometry_categorize(self, x, y, levels, tags=None):
+        '''Put every point in its category.
+    
+        levels must be sorted.'''   
+        x = numpy.asarray(x)
+        y = numpy.asarray(y)
+        ys = y.copy()
+        ys.sort()
+        # Mean of the upper half
+        m = ys[len(ys) / 2:].mean()
+        y /= m
+        m = 1.0
+        s = ys[len(ys) / 2:].std()
+        result = []
+
+        if tags is None:
+            tags = range(len(levels) + 1)
+
+        for l, t in zip(levels, tags):
+            indc = y < l
+            if indc.any():
+                x1 = x[indc]
+                y1 = y[indc]
+                result.append((x1, y1, t))
+
+                x = x[indc == False]
+                y = y[indc == False]
+        else:
+            result.append((x, y, tags[-1]))
+
+        return result, (m,s)     
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
