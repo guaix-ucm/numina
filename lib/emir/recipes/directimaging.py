@@ -227,6 +227,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         Schema('exposurekey', 'EXPOSED', 'Name of exposure header keyword'),
         Schema('juliandatekey', 'MJD-OBS', 'Julian date keyword'),
         Schema('detector', 'Hawaii2Detector', 'Name of the class containing the detector geometry'),
+        Schema('check_photometry_levels', [0.5, 0.8], 'Levels to check the flux of the objects'),
+        Schema('check_photometry_actions', ['warn', 'warn', 'default'], 'Actions to take on images'),
     ]
     
     provides = []
@@ -258,7 +260,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         for key, val in self.parameters['images'].items():                
             self.parameters['images'][key] = (r[key], val[0], [r[key] for key in val[1]])
-                
+                            
     def basic_processing(self, image, flow):
         hdulist = pyfits.open(image.base)
         try:
@@ -680,9 +682,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         
         # Actions
         dactions = {'warn': warn_action, 'reject': reject_action, 'default': default_action}
-        
-        levels = [0.5, 0.95] # This should be a parameter
-        actions = ['reject', 'warn', 'default'] # This should be a parameter
+
+        levels = self.parameters['check_photometry_levels']
+        actions = self.parameters['check_photometry_actions']
         
         x = range(len(images_info))
         vals, (_, sigma) = self.check_photometry_categorize(x, wdata, 
