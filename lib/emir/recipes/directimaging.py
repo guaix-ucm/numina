@@ -578,22 +578,21 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         except ValueError:
             _logger.warning('Problem plotting %s', image.lastname)
         
-    def check_photometry_plot(self, vals, errors, levels, sigma):
+    def check_photometry_plot(self, vals, errors, levels, nsigma):
         x = range(len(errors))
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         ax.set_title('Relative flux of brightest object')
         for v,c in zip(vals, ['b', 'r', 'g', 'y']):
             ax.scatter(v[0], v[1], c=c)
-            #w = error[v[0]]
-            #ax.errorbar(v[0], v[1], yerr=w, fmt=None, c=c)
+            w = errors[v[0]]
+            ax.errorbar(v[0], v[1], yerr=w, fmt=None, c=c)
             
-        s = 0.01
-        n = 3
+
         ax.plot([x[0], x[-1]], [1, 1], 'r--')
-        ax.plot([x[0], x[-1]], [1 - n * s,1 - n * s], 'b--')
-        for f in [0.9, 0.7, 0.5, 0.0]:
-            ax.plot([x[0], x[-1]], [f * 1, f * 1], 'g--')
+        ax.plot([x[0], x[-1]], [1 - nsigma, 1 - nsigma], 'b--')
+        for f in levels:
+            ax.plot([x[0], x[-1]], [f, f], 'g--')
             
         self._figure.canvas.draw()
         self._figure.savefig('figure-relative-flux_i%01d.png' % self.iter)
@@ -651,9 +650,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
             # Extinction correction
             excor = pow(10, -0.4 * image.airmass * self.parameters['extinction'])
-            base[idx] = [obj['FLUX_BEST'] * excor
+            excor = 1.0
+            base[idx] = [obj['FLUX_BEST'] / excor
                                      for obj in catalog if obj['NUMBER'] in indices]
-            error[idx] = [obj['FLUXERR_BEST'] * excor
+            error[idx] = [obj['FLUXERR_BEST'] / excor
                                      for obj in catalog if obj['NUMBER'] in indices]
         
         data = base / base[0]
@@ -663,23 +663,42 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         wdata = numpy.average(data, axis=1, weights=w)
         wsigma = 1 / numpy.sqrt(w.sum(axis=1))
         
-        levels = [0.5, 0.7, 0.9] # This should be a parameter
+        # Actions to carry over images when checking the flux
+        # of the objects in different images
+        def warn_action(img):
+            _logger.warn('Image %s has low flux in objects', img.label)
+            img.valid_science = True
+        
+        def reject_action(img):
+            img.valid_science = False
+            _logger.info('Image %s rejected, has low flux in objects', img.label)            
+            pass
+        
+        def default_action(img):
+            _logger.info('Image %s accepted, has correct flux in objects', img.label)      
+            img.valid_science = True
+        
+        # Actions
+        dactions = {'warn': warn_action, 'reject': reject_action, 'default': default_action}
+        
+        levels = [0.5, 0.95] # This should be a parameter
+        actions = ['reject', 'warn', 'default'] # This should be a parameter
         
         x = range(len(images_info))
         vals, (_, sigma) = self.check_photometry_categorize(x, wdata, 
-                                                           levels, tags=['VVVB', 'VVB', 'VB', 'OK'])
-        self.check_photometry_plot(vals, error, levels, sigma)
+                                                           levels, tags=actions)
+        # n sigma level to plt
+        n = 3
+        self.check_photometry_plot(vals, wsigma, levels, n * sigma)
+        
         for x, _, t in vals:
-            if t in ['OK']:
-                for p in x:
-                    images_info[p].valid_science = True
-            elif t in ['VB', 'VVB']:
-                for p in x:
-                    images_info[p].valid_science = True
-            else:
-                for p in x:
-                    images_info[p].valid_science = False
-                    _logger.info('Image %s reject due to low flux in objects', images_info[p].label)                
+            try:
+                action = dactions[t]
+            except KeyError:
+                _logger.warning('Action named %s not recognized, ignoring', t)
+                action = default_action
+            for p in x:
+                action(images_info[p])                
                 
     def check_photometry_categorize(self, x, y, levels, tags=None):
         '''Put every point in its category.
