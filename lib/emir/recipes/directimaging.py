@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib.collections import PatchCollection
 import numdisplay.zscale
+from scipy.spatial import cKDTree as KDTree
 
 import numina.image
 import numina.qa
@@ -702,6 +703,67 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             for p in x:
                 action(images_info[p])                
                 
+    def check_position(self, images_info, sf_data, seeing_fwhm):
+        # Check position of bright objects
+        weigthmap = 'weights4rms.fits'
+        
+        wmap = numpy.zeros_like(sf_data[0])
+        
+        # Center of the image
+        border = 300
+        wmap[border:-border, border:-border] = 1                    
+        pyfits.writeto(weigthmap, wmap, clobber=True)
+        
+        basename = 'result_i%0d.fits' % (self.iter - 1)
+        sex = SExtractor()
+        sex.config['VERBOSE_TYPE'] = 'QUIET'
+        sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
+        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
+        sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+        sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+        sex.config['WEIGHT_IMAGE'] = weigthmap
+        
+        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+        sex.config['PARAMETERS_LIST'].append('FLUXERR_BEST')
+        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')
+        
+        sex.config['CATALOG_NAME'] = 'master-catalogue-i%01d.cat' % self.iter
+        
+        _logger.info('Runing sextractor in %s', basename)
+        sex.run('%s,%s' % (basename, basename))
+        
+        # Sort catalog by flux
+        catalog = sex.catalog()
+        catalog = sorted(catalog, key=operator.itemgetter('FLUX_BEST'), reverse=True)
+        
+        # set of indices of the N first objects
+        OBJS_I_KEEP = 10
+        
+        master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
+        
+        for image in images_info:
+            imagename = _name_skysub_proc(image.label, self.iter - 1)
+
+            sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.label, self.iter)
+
+            # Lauch SExtractor on a FITS file
+            # om double image mode
+            _logger.info('Runing sextractor in %s', imagename)
+            sex.run(imagename)
+            catalog = sex.catalog()
+            
+            
+            data = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog]
+            
+            tree = KDTree(data)
+            
+            # Search 2 neighbors
+            dists, _ids = tree.query(master, 2)
+            _logger.info('Mean offset correction for image %s is %f', imagename, dists[:,0].mean())
+                            
+                
+                
     def check_photometry_categorize(self, x, y, levels, tags=None):
         '''Put every point in its category.
     
@@ -925,7 +987,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
                 _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
                 objmask = pyfits.getdata(_name_segmask(self.iter))
-
+                _logger.info('Checking positions')
+                self.check_position(images_info, sf_data, seeing_fwhm)
                 _logger.info('Checking photometry')
                 self.check_photometry(images_info, sf_data, seeing_fwhm)
             else:
