@@ -615,8 +615,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
-        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
-        sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds
+        if seeing_fwhm is not None:
+            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
         sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
         sex.config['WEIGHT_IMAGE'] = weigthmap
         
@@ -718,8 +719,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
-        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
-        sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds
+        if  seeing_fwhm is not None:
+            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
         sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
         sex.config['WEIGHT_IMAGE'] = weigthmap
         
@@ -759,8 +761,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             tree = KDTree(data)
             
             # Search 2 neighbors
-            dists, _ids = tree.query(master, 2)
+            dists, _ids = tree.query(master, 2, distance_upper_bound=5)
+            
+            for i in dists[:,0]:
+                print i
+            
+            
             _logger.info('Mean offset correction for image %s is %f', imagename, dists[:,0].mean())
+            #raw_input('press any key')
                             
                 
                 
@@ -795,6 +803,110 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             result.append((x, y, tags[-1]))
 
         return result, (m,s)     
+
+    def create_mask(self, sf_data, seeing_fwhm):
+         # FIXME more plots
+        self.figure_final_before_s(sf_data[0])
+
+        time.sleep(3)
+        #
+        remove_border = True
+        
+        # sextractor takes care of bad pixels
+        sex = SExtractor()
+        sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
+        sex.config["CHECKIMAGE_NAME"] = _name_segmask(self.iter)
+        sex.config['VERBOSE_TYPE'] = 'QUIET'
+        sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
+        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
+
+        if seeing_fwhm is not None:
+            sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
+
+        sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
+        sex.config['PARAMETERS_LIST'].append('X_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('A_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('B_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
+        sex.config['PARAMETERS_LIST'].append('CLASS_STAR')                
+        if remove_border:
+            weigthmap = 'weights4rms.fits'
+            # Create weight map, remove n pixs from either side                                
+            w1 = 90
+            w2 = 90
+            wmap = numpy.ones_like(sf_data[0])
+            
+            cos_win1 = numpy.hanning(2 * w1)
+            cos_win2 = numpy.hanning(2 * w2)
+                                   
+            wmap[:,:w1] *= cos_win1[:w1]                    
+            wmap[:,-w1:] *= cos_win1[-w1:]
+            wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
+            wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
+            
+            #pyfits.writeto(weigthmap, wmap, clobber=True)
+            wm = sf_data[2].copy()
+            wm[wm < 10] = 0
+            pyfits.writeto(weigthmap, wm, clobber=True)
+                                
+            sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
+            sex.config['WEIGHT_THRESH'] = 50
+            sex.config['WEIGHT_IMAGE'] = weigthmap
+        
+        filename = 'result_i%0d.fits' % (self.iter - 1)
+        
+        # Lauch SExtractor on a FITS file
+        sex.run(filename)
+        
+        # Plot objects
+        # FIXME, plot sextractor objects on top of image
+        patches = []
+        fwhms = []
+        nfirst = 0
+        catalog_f = sopen(sex.config['CATALOG_NAME'])
+        try:
+            star = catalog_f.readline()
+            while star:
+                flags = star['FLAGS']
+                # ignoring those objects with corrupted apertures
+                if flags & sexcatalog.CORRUPTED_APER:
+                    star = catalog_f.readline()
+                    continue
+                center = (star['X_IMAGE'], star['Y_IMAGE'])
+                wd = 10 * star['A_IMAGE']
+                hd = 10 * star['B_IMAGE']
+                color = 'red'
+                e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
+                patches.append(e)
+                fwhms.append(star['FWHM_IMAGE'])
+                nfirst += 1
+                # FIXME Plot a ellipse
+                star = catalog_f.readline()
+        finally:
+            catalog_f.close()
+            
+        p = PatchCollection(patches, alpha=0.4)
+        ax = self._figure.gca()
+        ax.add_collection(p)
+        self._figure.canvas.draw()
+        self._figure.savefig('figure-segmentation-overlay_%01d.png' % self.iter)
+        time.sleep(3)
+
+        self.figure_fwhm_histogram(fwhms)
+                    
+        # mode with an histogram
+        hist, edges = numpy.histogram(fwhms, 50)
+        idx = hist.argmax()
+        
+        seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
+        _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+        objmask = pyfits.getdata(_name_segmask(self.iter))
+        return objmask
+    
+
+
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
@@ -869,8 +981,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             offsets = [image.offset for image in images_info if image.valid_science]        
             finalshape, offsetsp = combine_shape(image_shapes, offsets)
             _logger.info('Shape of resized array is %s', finalshape)
-            
-            
             _logger.info('Iter %d, resizing images and masks', self.iter)            
             for image, noffset in zip(images_info, offsetsp):
                 if image.valid_science:
@@ -885,108 +995,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 image.resized_mask = maskn
                 
                 self.resize_image_and_mask(image, finalshape, imgn, maskn)
-
-            _logger.info('Iter %d, generating segmentation image', self.iter)            
+                        
             if sf_data is not None:
-                
-                # FIXME more plots
-                self.figure_final_before_s(sf_data[0])
-
-                time.sleep(3)
-                #
-                remove_border = True
-                
-                # sextractor takes care of bad pixels
-                sex = SExtractor()
-                sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
-                sex.config["CHECKIMAGE_NAME"] = _name_segmask(self.iter)
-                sex.config['VERBOSE_TYPE'] = 'QUIET'
-                sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
-                sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
-
-                if seeing_fwhm is not None:
-                    sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
-
-                sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
-                sex.config['PARAMETERS_LIST'].append('X_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('Y_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('A_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('B_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('THETA_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('FWHM_IMAGE')
-                sex.config['PARAMETERS_LIST'].append('CLASS_STAR')                
-                if remove_border:
-                    weigthmap = 'weights4rms.fits'
-                    # Create weight map, remove n pixs from either side                                
-                    w1 = 90
-                    w2 = 90
-                    wmap = numpy.ones_like(sf_data[0])
-                    
-                    cos_win1 = numpy.hanning(2 * w1)
-                    cos_win2 = numpy.hanning(2 * w2)
-                                           
-                    wmap[:,:w1] *= cos_win1[:w1]                    
-                    wmap[:,-w1:] *= cos_win1[-w1:]
-                    wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
-                    wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
-                    
-                    #pyfits.writeto(weigthmap, wmap, clobber=True)
-                    wm = sf_data[2].copy()
-                    wm[wm < 10] = 0
-                    pyfits.writeto(weigthmap, wm, clobber=True)
-                                        
-                    sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-                    sex.config['WEIGHT_THRESH'] = 50
-                    sex.config['WEIGHT_IMAGE'] = weigthmap
-                
-                filename = 'result_i%0d.fits' % (self.iter - 1)
-                
-                # Lauch SExtractor on a FITS file
-                sex.run(filename)
-                
-                # Plot objects
-                # FIXME, plot sextractor objects on top of image
-                patches = []
-                fwhms = []
-                nfirst = 0
-                catalog_f = sopen(sex.config['CATALOG_NAME'])
-                try:
-                    star = catalog_f.readline()
-                    while star:
-                        flags = star['FLAGS']
-                        # ignoring those objects with corrupted apertures
-                        if flags & sexcatalog.CORRUPTED_APER:
-                            star = catalog_f.readline()
-                            continue
-                        center = (star['X_IMAGE'], star['Y_IMAGE'])
-                        wd = 10 * star['A_IMAGE']
-                        hd = 10 * star['B_IMAGE']
-                        color = 'red'
-                        e = Ellipse(center, wd, hd, star['THETA_IMAGE'], color=color)
-                        patches.append(e)
-                        fwhms.append(star['FWHM_IMAGE'])
-                        nfirst += 1
-                        # FIXME Plot a ellipse
-                        star = catalog_f.readline()
-                finally:
-                    catalog_f.close()
-                    
-                p = PatchCollection(patches, alpha=0.4)
-                ax = self._figure.gca()
-                ax.add_collection(p)
-                self._figure.canvas.draw()
-                self._figure.savefig('figure-segmentation-overlay_%01d.png' % self.iter)
-                time.sleep(3)
-
-                self.figure_fwhm_histogram(fwhms)
-                            
-                # mode with an histogram
-                hist, edges = numpy.histogram(fwhms, 50)
-                idx = hist.argmax()
-                
-                seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
-                _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
-                objmask = pyfits.getdata(_name_segmask(self.iter))
+                _logger.info('Iter %d, generating segmentation image', self.iter)
+                objmask = self.create_mask(sf_data, seeing_fwhm)
                 _logger.info('Checking positions')
                 self.check_position(images_info, sf_data, seeing_fwhm)
                 _logger.info('Checking photometry')
