@@ -58,15 +58,14 @@ from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 import emir.instrument.detector as detector
 
-
 _logger = logging.getLogger("emir.recipes")
 
 mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
-    dn = '%s_r_i%01d%s' % (label, iteration, ext)
-    mn = '%s_mr_i%01d%s' % (label, iteration, ext)
+    dn = '%s_r%s' % (label, ext)
+    mn = '%s_mr%s' % (label, ext)
     return dn, mn
 
 def _name_object_mask(label, iteration, ext='.fits'):
@@ -383,6 +382,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # FIXME
                 # sky median is 1.0 ?
                 sky = sky / numpy.median(sky) * numpy.median(d)
+                # FIXME
                 self.figure_image(sky, image)                 
                 d -= sky
                 
@@ -402,9 +402,14 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 
     def combine_images(self, iinfo, out=None):
         _logger.debug('Iter %d, opening sky-subtracted images', self.iter)
-        imgslll = [pyfits.open(image.lastname, mode='readonly', memmap=True) for image in iinfo if image.valid_science]
+
+        def fun(name):
+            '''Open FITS with memmap in readonly mode'''
+            return pyfits.open(name, mode='readonly', memmap=True)
+
+        imgslll = [fun(image.lastname) for image in iinfo if image.valid_science]
         _logger.debug('Iter %d, opening mask images', self.iter)
-        mskslll = [pyfits.open(image.resized_mask, mode='readonly', memmap=True) for image in iinfo if image.valid_science]
+        mskslll = [fun(image.resized_mask) for image in iinfo if image.valid_science]
         _logger.debug('Iter %d, combining %d images', self.iter, len(imgslll))
         try:
             extinc = [pow(10, -0.4 * image.airmass * self.parameters['extinction']) for image in iinfo if image.valid_science]
@@ -415,7 +420,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             else:
                 out = quantileclip(data, masks, scales=extinc, dtype='float32', fclip=0.1)
 
-            # We are saving here only data part
+            # saving the three extensions
             pyfits.writeto('result_i%0d.fits' % self.iter, out[0], clobber=True)
             pyfits.writeto('result_var_i%0d.fits' % self.iter, out[1], clobber=True)
             pyfits.writeto('result_npix_i%0d.fits' % self.iter, out[2], clobber=True)
@@ -427,7 +432,46 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             map(lambda x: x.close(), imgslll)
             _logger.debug('Iter %d, closing mask images', self.iter)
             map(lambda x: x.close(), mskslll)
-                
+       
+    def figures_after_combine(self, sf_data):
+       
+         # FIXME, more plots
+        def truncated(array, frac=0.1):
+            '''Dirty truncated mean'''
+            nf = int(array.size * frac)
+            array.sort()
+            new = array[nf:-nf]
+            return new.mean(), new.std()
+            
+        ndata = sf_data[2].astype('int')                        
+        data = sf_data[0]
+            
+        nimages = ndata.max()
+
+        rnimage = range(1, nimages + 1)
+        rmean = rnimage[:]
+        rstd = rnimage[:]
+            
+        for pix in rnimage:
+            rmean[pix - 1], rstd[pix - 1] = truncated(data[ndata == pix])                
+            
+        avg_rms = self.figure_check_combination(rnimage, rmean, rstd)
+                        
+        time.sleep(3)
+            
+        # Fake sky error image
+        self.figure_simple_image(sf_data[2], title='Number of images combined')
+        time.sleep(3)
+            
+        # Create fake error image
+        fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
+        self.figure_simple_image(fake, title='Fake sky error image')
+        # store fake image
+        pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake)
+
+
+
+         
     def figure_check_combination(self, rnimage, rmean, rstd):            
         self._figure.clf()
         self._figure.subplots_adjust(hspace=0.001)
@@ -488,14 +532,15 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         self._figure.canvas.draw()
         self._figure.savefig('figure-fwhm-histogram_i%01d.png' % self.iter)
                    
-    def figure_init(self):
+    def figure_init(self, shape):
         self._figure.clf()
         ax = self._figure.add_subplot(111)
         cmap = mpl.cm.get_cmap('gray')
         norm = mpl.colors.LogNorm()
-        ax.imshow(numpy.zeros((1024,1024)), cmap=cmap, norm=norm)
+        ax.imshow(numpy.zeros(shape), cmap=cmap, norm=norm)
         ax.set_xlabel('X')
-        ax.set_ylabel('Y')        
+        ax.set_ylabel('Y')
+        self._figure.canvas.draw()      
                  
     def figure_image(self, thedata, image):        
         ax = self._figure.gca()
@@ -519,6 +564,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         self._figure.savefig('figure-median-sky-background_i%01d.png' % self.iter)
 
     def compute_superflat(self, iinfo, segmask):
+        _logger.info("Iter %d, SF: combining the images without offsets", self.iter)
         try:
             filelist = []
             data = []
@@ -558,6 +604,20 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sfhdu = pyfits.PrimaryHDU(sf_data)            
         sfhdu.writeto(_name_skyflat('comb', self.iter))
         return sf_data
+
+    def apply_superflat(self, images_info, superflat):
+        _logger.info("Iter %d, SF: apply superflat", self.iter)
+
+        # FIXME, shape not generic        
+        shape = (1024, 1024)
+        self.figure_init(shape)            
+
+
+        # Process all images with the fitted flat
+        # FIXME: not sure
+        for image in images_info:
+            self.correct_superflat(image, superflat)
+        return images_info
         
 
     def correct_superflat(self, image, fitted):
@@ -580,6 +640,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             self.figure_image(newdata[image.region], image)
         except ValueError:
             _logger.warning('Problem plotting %s', image.lastname)
+            raise
         
     def check_photometry_plot(self, vals, errors, levels, nsigma):
         x = range(len(errors))
@@ -611,7 +672,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         wmap[border:-border, border:-border] = 1                    
         pyfits.writeto(weigthmap, wmap, clobber=True)
         
-        basename = 'result_i%0d.fits' % (self.iter - 1)
+        basename = 'result_i%0d.fits' % (self.iter)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
@@ -642,7 +703,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         error = numpy.empty((len(images_info), OBJS_I_KEEP))
         
         for idx, image in enumerate(images_info):
-            imagename = _name_skysub_proc(image.label, self.iter - 1)
+            imagename = _name_skysub_proc(image.label, self.iter)
 
             sex.config['CATALOG_NAME'] = 'catalogue-%s-i%01d.cat' % (image.label, self.iter)
 
@@ -705,6 +766,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 action(images_info[p])                
                 
     def check_position(self, images_info, sf_data, seeing_fwhm):
+
+        _logger.info('Checking positions')
         # Check position of bright objects
         weigthmap = 'weights4rms.fits'
         
@@ -715,7 +778,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         wmap[border:-border, border:-border] = 1                    
         pyfits.writeto(weigthmap, wmap, clobber=True)
         
-        basename = 'result_i%0d.fits' % (self.iter - 1)
+        basename = 'result_i%0d.fits' % (self.iter)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
         sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
@@ -745,12 +808,12 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         master = [(obj['X_IMAGE'], obj['Y_IMAGE']) for obj in catalog[:OBJS_I_KEEP]]
         
         for image in images_info:
-            imagename = _name_skysub_proc(image.label, self.iter - 1)
+            imagename = _name_skysub_proc(image.label, self.iter)
 
             sex.config['CATALOG_NAME'] = 'catalogue-self-%s-i%01d.cat' % (image.label, self.iter)
 
             # Lauch SExtractor on a FITS file
-            # om double image mode
+            # on double image mode
             _logger.info('Runing sextractor in %s', imagename)
             sex.run(imagename)
             catalog = sex.catalog()
@@ -855,7 +918,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             sex.config['WEIGHT_THRESH'] = 50
             sex.config['WEIGHT_IMAGE'] = weigthmap
         
-        filename = 'result_i%0d.fits' % (self.iter - 1)
+        filename = 'result_i%0d.fits' % (self.iter)
         
         # Lauch SExtractor on a FITS file
         sex.run(filename)
@@ -903,10 +966,33 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
         _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
         objmask = pyfits.getdata(_name_segmask(self.iter))
-        return objmask
+        return objmask, seeing_fwhm
     
 
+    def resize(self, images_info):
+        _logger.info('Computing offsets')
+        image_shapes = images_info[0].baseshape
+        offsets = [image.offset for image in images_info if image.valid_science]        
+        finalshape, offsetsp = combine_shape(image_shapes, offsets)
+        _logger.info('Shape of resized array is %s', finalshape)
 
+        _logger.info('Resizing images and masks')            
+        
+        for image, noffset in zip(images_info, offsetsp):
+            if image.valid_science:
+                region, _ = subarray_match(finalshape, noffset, image.baseshape)
+            else:
+                region = None
+                noffset = None
+            image.region = region
+            image.noffset = noffset
+            imgn, maskn = _name_redimensioned_images(image.label, self.iter)
+            image.resized_base = imgn
+            image.resized_mask = maskn
+                    
+            self.resize_image_and_mask(image, finalshape, imgn, maskn)
+
+        return images_info
         
     def resize_image_and_mask(self, image, finalshape, imgn, maskn):
         _logger.info('Resizing image %s', image.label)
@@ -914,11 +1000,31 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     
         _logger.info('Resizing mask %s', image.label)
         resize_fits(image.mask, maskn, finalshape, image.region, fill=1)
+
+
+    def update_scale_factors(self, images_info):
+
+        _logger.info('Iter %d, SF: computing scale factors', self.iter)
+        # FIXME: not sure
+        for image in images_info:
+            region = image.region
+            data = pyfits.getdata(image.resized_base)[region]
+            mask = pyfits.getdata(image.resized_mask)[region]
+            # FIXME: while developing this ::10 is faster, remove later            
+            image.median_scale = numpy.median(data[mask == 0][::10])
+            _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
+        return images_info
             
     def run(self):
         
+        # States
+        BASIC, PRERED, CHECKRED, FULLRED, COMPLETE = range(5)
+
+        state = BASIC
+
         images_info = []
         
+        # Creating ImageInformation
         for key in sorted(self.parameters['images'].keys()):
             # Label
             ii = ImageInformation()
@@ -945,153 +1051,123 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         images_info = update_sky_related(images_info, nimages=self.parameters['sky_images'])
         image_shapes = images_info[0].baseshape
     
-    
-        _logger.info('Basic processing')
-
-        # Basic processing
-        # Open bpm, dark and flat
-        bpm = pyfits.getdata(self.parameters['master_bpm'].filename)
-        mdark = pyfits.getdata(self.parameters['master_dark'].filename)
-        # FIXME: Use a flat field image eventually
-        #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
-        
-        basicflow = SerialFlow([BadPixelCorrector(bpm),
-                                NonLinearityCorrector(self.parameters['nonlinearity']),
-                                DarkCorrector(mdark)])
-
-        for image in images_info:
-            self.basic_processing(image, basicflow)
-        
-        del bpm
-        del mdark
-        del basicflow
-        
         niteration = self.parameters['iterations']
-        
         # Final image, not yet built
         sf_data = None
         seeing_fwhm = None
+        self.iter = 0
+
+        while True:
+            if state == BASIC:    
+                _logger.info('Basic processing')
+
+                # Basic processing
+                # Open bpm, dark and flat
+                bpm = pyfits.getdata(self.parameters['master_bpm'].filename)
+                mdark = pyfits.getdata(self.parameters['master_dark'].filename)
+                # FIXME: Use a flat field image eventually
+                #mflat = pyfits.getdata(self.parameters['master_flat'].filename)
         
-        for self.iter in range(1, niteration + 1):
-            # Resizing images
-            
-            
-            _logger.info('Iter %d, computing offsets', self.iter)
-            
-            offsets = [image.offset for image in images_info if image.valid_science]        
-            finalshape, offsetsp = combine_shape(image_shapes, offsets)
-            _logger.info('Shape of resized array is %s', finalshape)
-            _logger.info('Iter %d, resizing images and masks', self.iter)            
-            for image, noffset in zip(images_info, offsetsp):
-                if image.valid_science:
-                    region, _ = subarray_match(finalshape, noffset, image.baseshape)
-                else:
-                    region = None
-                    noffset = None
-                image.region = region
-                image.noffset = noffset
-                imgn, maskn = _name_redimensioned_images(image.label, self.iter)
-                image.resized_base = imgn
-                image.resized_mask = maskn
-                
-                self.resize_image_and_mask(image, finalshape, imgn, maskn)
-                        
-            if sf_data is not None:
-                _logger.info('Iter %d, generating segmentation image', self.iter)
-                objmask = self.create_mask(sf_data, seeing_fwhm)
-                _logger.info('Checking positions')
-                self.check_position(images_info, sf_data, seeing_fwhm)
-                _logger.info('Checking photometry')
-                self.check_photometry(images_info, sf_data, seeing_fwhm)
-            else:
-                objmask = numpy.zeros(finalshape, dtype='int')
-                                        
-            # Update objects mask
-            # For all images    
-            for image in images_info:
-                image.objmask = _name_object_mask(image.label, self.iter)
-                _logger.info('Iter %d, create object mask %s', self.iter, image.objmask)                 
-                image.objmask_data = objmask[image.region]
-                pyfits.writeto(image.objmask, image.objmask_data)
-                            
-            _logger.info('Iter %d, superflat correction (SF)', self.iter)
-            _logger.info('Iter %d, SF: computing scale factors', self.iter)
-            
-            # FIXME: not sure
-            for image in images_info:
-                region = image.region
-                data = pyfits.getdata(image.resized_base)[region]
-                mask = pyfits.getdata(image.resized_mask)[region]
-                # FIXME: while developing this is faster, remove later            
-                image.median_scale = numpy.median(data[mask == 0][::10])
-                _logger.debug('median value of %s is %f', image.resized_base, image.median_scale)
-            
-            # Combining images to obtain the sky flat 
-            _logger.info("Iter %d, SF: combining the images without offsets", self.iter)
-            superflat = self.compute_superflat(images_info, objmask)
-            
-            _logger.info("Iter %d, SF: apply superflat", self.iter)
-            # Process all images with the fitted flat
+                basicflow = SerialFlow([BadPixelCorrector(bpm),
+                                NonLinearityCorrector(self.parameters['nonlinearity']),
+                                DarkCorrector(mdark)])
 
-            self.figure_init()
+                for image in images_info:
+                    self.basic_processing(image, basicflow)
+        
+                del bpm
+                del mdark
+                del basicflow
+                state = PRERED
 
-            # FIXME: not sure
-            for image in images_info:
-                self.correct_superflat(image, superflat)
+            elif state == PRERED:
+                # Resizing images                            
+                images_info = self.resize(images_info)
+
+                # startup plot system
+
+
+
+                # superflat
+                _logger.info('Iter %d, superflat correction (SF)', self.iter)
+                # Compute scale factors (median)           
+                images_info = self.update_scale_factors(images_info)
+
+                # Create superflat
+                superflat = self.compute_superflat(images_info, None)
             
-            _logger.info('Iter %d, sky correction (SC)', self.iter)
-            # In the first iteration
-            if self.iter == 1:
-                _logger.info('Iter %d, SC: computing simple sky', self.iter)
+                # Apply superflat
+                images_info = self.apply_superflat(images_info, superflat)
+
+                _logger.info('Simple sky correction')
                 for image in images_info:            
                     self.compute_simple_sky(image)
-            else:
-                _logger.info('Iter %d, SC: computing advanced sky', self.iter)
+                
+                # Combining the images
+                _logger.info("Iter %d, Combining the images", self.iter)
+                # FIXME: only for science
+                sf_data = self.combine_images(images_info)
+            
+                self.figures_after_combine(sf_data)
+                      
+                _logger.info('Iter %d, finished', self.iter)
+
+                state = CHECKRED
+            elif state == CHECKRED:
+                
+                seeing_fwhm = None
+
+                #self.check_position(images_info, sf_data, seeing_fwhm)
+                recompute = False
+                if recompute:
+                    _logger.info('Recentering is needed')
+                    state = PRERED
+                else:
+                    _logger.info('Recentering is not needed')
+                    _logger.info('Checking photometry')
+                    self.check_photometry(images_info, sf_data, seeing_fwhm)
+                    state = FULLRED
+                    
+            elif state == FULLRED:
+
+                # Generating segmentation image
+                _logger.info('Iter %d, generating segmentation image', self.iter)
+                objmask, seeing_fwhm = self.create_mask(sf_data, seeing_fwhm)
+                self.iter +=1
+                # Update objects mask
+                # For all images    
+                for image in images_info:
+                    image.objmask = _name_object_mask(image.label, self.iter)
+                    _logger.info('Iter %d, create object mask %s', self.iter,  image.objmask)                 
+                    image.objmask_data = objmask[image.region]
+                    pyfits.writeto(image.objmask, image.objmask_data)
+
+                _logger.info('Iter %d, superflat correction (SF)', self.iter)
+                # Compute scale factors (median)           
+                images_info = self.update_scale_factors(images_info)
+            
+                # Combining images to obtain the sky flat
+                superflat = self.compute_superflat(images_info, objmask)
+    
+                # Apply superflat
+                images_info = self.apply_superflat(images_info, superflat)
+
+                _logger.info('Iter %d, advanced sky correction (SC)', self.iter)
                 # FIXME: Only for science          
                 for image in images_info:
                     if image.valid_science:       
                         self.compute_advanced_sky(image, objmask)
-    
-            # Combining the images
-            _logger.info("Iter %d, Combining the images", self.iter)
-            # FIXME: only for science
-            sf_data = self.combine_images(images_info)
             
-            # FIXME, more plots          
-            def truncated(array, frac=0.1):
-                '''Dirty truncated mean'''
-                nf = int(array.size * frac)
-                array.sort()
-                new = array[nf:-nf]
-                return new.mean(), new.std()
-            
-            ndata = sf_data[2].astype('int')                        
-            data = sf_data[0]
-            
-            nimages = ndata.max()
+                # Combining the images
+                _logger.info("Iter %d, Combining the images", self.iter)
+                # FIXME: only for science
+                sf_data = self.combine_images(images_info)
+                self.figures_after_combine(sf_data)
 
-            rnimage = range(1, nimages + 1)
-            rmean = rnimage[:]
-            rstd = rnimage[:]
-            
-            for pix in rnimage:
-                rmean[pix - 1], rstd[pix - 1] = truncated(data[ndata == pix])                
-            
-            avg_rms = self.figure_check_combination(rnimage, rmean, rstd)
-                        
-            time.sleep(3)
-            
-            # Fake sky error image
-            self.figure_simple_image(sf_data[2], title='Number of images combined')
-            time.sleep(3)
-            
-            # Create fake error image
-            fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
-            self.figure_simple_image(fake, title='Fake sky error image')
-
-            pyfits.writeto('fake_sky_rms_i%0d.fits' % self.iter, fake)
-                      
-            _logger.info('Iter %d, finished', self.iter)
+                if self.iter >= niteration:
+                    state = COMPLETE
+            else:
+                break
 
         primary_headers = {'FILENAME': self.parameters['resultname'],
                            }
