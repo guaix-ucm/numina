@@ -610,10 +610,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
     def apply_superflat(self, images_info, superflat):
         _logger.info("Iter %d, SF: apply superflat", self.iter)
 
-        # FIXME, shape not generic        
-        shape = (1024, 1024)
-        self.figure_init(shape)            
-
+        
+        self.figure_init(images_info[0].baseshape)            
 
         # Process all images with the fitted flat
         # FIXME: not sure
