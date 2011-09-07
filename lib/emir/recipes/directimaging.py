@@ -642,7 +642,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             self.figure_image(newdata[image.region], image)
         except ValueError:
             _logger.warning('Problem plotting %s', image.lastname)
-            raise
         
     def check_photometry_plot(self, vals, errors, levels, nsigma):
         x = range(len(errors))
