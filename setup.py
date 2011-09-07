@@ -19,11 +19,11 @@ uext = Extension('numina.array._ufunc',
           include_dirs=[numpy_include])
 
 setup(name='pyemir',
-      version='0.3.0',
+      version='0.4.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.3.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.4.0.tar.gz',
       license='GPLv3',
       description='EMIR Data Processing Pipeline',
       packages=find_packages('lib'),
