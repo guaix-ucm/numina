@@ -58,6 +58,8 @@ from emir.dataproducts import create_result
 from emir.recipes import EmirRecipeMixin
 import emir.instrument.detector as detector
 
+__all__ = ['Recipe']
+
 _logger = logging.getLogger("emir.recipes")
 
 mpl.interactive(True)
