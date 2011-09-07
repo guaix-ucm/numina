@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef PYEMIR_BASE_CRTP_H
-#define PYEMIR_BASE_CRTP_H
+#ifndef NU_BASE_CRTP_H
+#define NU_BASE_CRTP_H
 
 /**
  * @file
@@ -60,4 +60,4 @@ struct BaseCRTP
 
 } // namespace Numina
 
-#endif // PYEMIR_BASE_CRTP_H
+#endif // NU_BASE_CRTP_H

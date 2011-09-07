@@ -19,20 +19,24 @@
  */
 
 
-#ifndef PYEMIR_METHOD_EXCEPTION_H
-#define PYEMIR_METHOD_EXCEPTION_H
+#ifndef NU_COMBINE_H
+#define NU_COMBINE_H
 
-#include <stdexcept>
+#include "nu_combine_defs.h"
 
-namespace Numina {
+int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
+    PyObject* out[NU_COMBINE_OUTDIM],
+    CombineFunc function,
+    void* vdata,
+    const double* zeros,
+    const double* scales,
+    const double* weights);
 
-class MethodException : public std::invalid_argument{
-public:
-	MethodException(const char* what_arg) :
-		std::invalid_argument(what_arg)
-	{}
-};
+bool NU_combine_image_check(PyObject* exception,
+    PyObject* image,
+    PyObject* ref,
+    PyObject* typeref,
+    const char* name,
+    size_t index);
 
-} // namespace Numina
-
-#endif // PYEMIR_METHOD_EXCEPTION_H
+#endif // NU_COMBINE_H

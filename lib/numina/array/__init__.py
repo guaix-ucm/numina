@@ -24,8 +24,10 @@ from itertools import imap, product
 import numpy # pylint: disable-msgs=E1101
 from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
+import scipy.ndimage as ndimage
 
-from numina.diskstorage import link_or_copy
+import numina.diskstorage
+from numina.image.imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
 
@@ -113,6 +115,48 @@ def fixpix(data, mask, kind='linear'):
             row[invalid] = itp(x[invalid]).astype(row.dtype)
     return data
 
+def fixpix2(data, mask, iterations=3, output=None):
+    '''Substitute pixels in mask by a bilinear least square fitting.
+    '''
+    out = output if output is not None else data.copy()
+    
+    # A binary mask, regions are ones
+    binry = mask != 0
+    
+    # Label regions in the binary mask
+    lblarr, labl = ndimage.label(binry)
+    
+    # Structure for dilation is 8-way
+    stct = ndimage.generate_binary_structure(2, 2)
+    # Pixels in the background
+    back = lblarr == 0
+    # For each object
+    for idx in range(1, labl + 1):
+        # Pixels of the object
+        segm = lblarr == idx
+        # Pixels of the object or the background
+        # dilation will only touch these pixels
+        dilmask =  numpy.logical_or(back, segm)
+        # Dilation 3 times
+        more = ndimage.binary_dilation(segm, stct, 
+                                       iterations=iterations, 
+                                       mask=dilmask)
+        # Border pixels
+        # Pixels in the border around the object are
+        # more and (not segm)
+        border = numpy.logical_and(more, numpy.logical_not(segm))
+        # Pixels in the border
+        xi, yi = border.nonzero()
+        # Bilinear leastsq calculator
+        calc = FitOne(xi, yi, out[xi,yi])
+        # Pixels in the region
+        xi, yi = segm.nonzero()
+        # Value is obtained from the fit
+        out[segm] = calc(xi, yi)
+        
+    return out
+
+
 def correct_dark(data, dark, dtype='float32'):
     result = data - dark
     result = result.astype(dtype)
@@ -179,7 +223,7 @@ def create_object_mask(sconf, array , segmask_name=None):
     # Copy or hardlink configuration files into tdir
 
     for filename in sconf.__dict__.itervalues():
-        link_or_copy(filename, tdir)
+        numina.diskstorage.link_or_copy(filename, tdir)
     #
 
     # Run sextractor inside tdir, it will create a image called check.fits
@@ -283,3 +327,24 @@ def blockgen(blocks, shape):
     '''
     iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
     return product(*iterables)
+
+
+if __name__ == '__main__':
+    import _ufunc
+    from timeit import Timer
+    
+    
+    a = numpy.arange(10000)
+    
+    def test1():
+        _ufunc.test3(a)
+    
+    def test2():
+        numpy.median(a)
+
+    t = Timer("test1()", "from __main__ import test1")
+    print t.timeit()
+    
+    t = Timer("test2()", "from __main__ import test2")
+    print t.timeit()
+

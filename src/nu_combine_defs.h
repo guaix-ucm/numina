@@ -19,27 +19,11 @@
  */
 
 
-#ifndef PYEMIR_REJECT_FACTORY_H
-#define PYEMIR_REJECT_FACTORY_H
+#ifndef NU_COMBINE_DEFS_H
+#define NU_COMBINE_DEFS_H
 
-#include <string>
-#include <memory>
+#define NU_COMBINE_OUTDIM 3
 
-#include <Python.h>
+typedef int (*CombineFunc)(double*, double*, size_t, double*[NU_COMBINE_OUTDIM], void*);
 
-#include "method_base.h"
-
-namespace Numina {
-
-using std::auto_ptr;
-
-class RejectMethodFactory {
-public:
-	static auto_ptr<RejectMethod> create(const std::string& name, PyObject* args,
-			auto_ptr<CombineMethod> combine_method);
-};
-
-
-} // namespace Numina
-
-#endif // PYEMIR_REJECT_BASE_H
+#endif // NU_COMBINE_DEFS_H

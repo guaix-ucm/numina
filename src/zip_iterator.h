@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef NUMINA_ZIP_ITERATOR_H
-#define NUMINA_ZIP_ITERATOR_H
+#ifndef NU_ZIP_ITERATOR_H
+#define NU_ZIP_ITERATOR_H
 
 #include <utility>
 
@@ -212,7 +212,6 @@ public:
 
   ZipIterator()
   {
-    typename ZipIterator::difference_type a;
   }
 
   //! Constructor from a pair of iterators
@@ -362,4 +361,4 @@ ZipIterator<std::pair<Iterator1, Iterator2> > make_zip_iterator(
 
 } // namespace Numina
 
-#endif // NUMINA_ZIP_ITERATOR_H
+#endif // NU_ZIP_ITERATOR_H

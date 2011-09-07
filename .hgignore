@@ -14,3 +14,5 @@ syntax: regexp
 ^doc/doctrees$
 syntax: regexp
 ^doc/html$
+syntax: regexp
+^lib/numina/array/_ufunc\.so$

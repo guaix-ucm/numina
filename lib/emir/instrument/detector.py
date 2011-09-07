@@ -21,6 +21,7 @@ import itertools as ito
 
 import numpy # pylint: disable-msgs=E1101
 
+from numina import braid
 from numina.instrument.detector import Detector
 
 # Classes are new style
@@ -43,24 +44,6 @@ def _ch3():
 
 def _ch4():
     return ito.izip(ito.starmap(slice, _channel_gen1(1024, 2048, 128)), ito.repeat(slice(1024, 2048)))
-
-# FIXME: move this to numina    
-def braid(*iterables):
-    '''Return the elements of each iterator in turn until some is exhausted.
-    
-    This function is similar to the roundrobin example 
-    in itertools documentation.
-    
-    >>> a = iter([1,2,3,4])
-    >>> b = iter(['a', 'b'])
-    >>> c = iter([1,1,1,1,'a', 'c'])
-    >>> d = iter([1,1,1,1,1,1])
-    >>> list(braid(a, b, c, d))
-    [1, 'a', 1, 1, 2, 'b', 1, 1]
-    '''
-    for itbl in ito.izip(*iterables):
-        for it in itbl:
-            yield it
 
 # Channels are listed per quadrant and then in fast readout order
 CHANNELS = list(ito.chain(_ch1(), _ch2(), _ch3(), _ch4()))
@@ -157,7 +140,6 @@ class RampReadoutMode(ReadoutMode):
         xcenter = events - meanx
         images = numpy.dstack(images)
         return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
-    
 
 class Hawaii2Detector(Detector):
     '''Hawaii2 detector.'''
@@ -165,6 +147,8 @@ class Hawaii2Detector(Detector):
     AMP1 = QUADRANTS # 1 amplifier per quadrant
     AMP8 = CHANNELS # 8 amplifiers per quadrant
     
+    shape = (2048, 2048)
+    amplifiers = CHANNELS
     
     def __init__(self, gain=1.0, ron=0.0, dark=1.0, well=65535,
                  pedestal=200., flat=1.0, resetval=0, resetnoise=0.0,
@@ -175,7 +159,7 @@ class Hawaii2Detector(Detector):
             :parameter dark: dark current in e-/s
             :parameter well: well depth in ADUs 
         '''
-        super(Hawaii2Detector, self).__init__((2048, 2048), gain, ron, dark, well,
+        super(Hawaii2Detector, self).__init__(self.shape, gain, ron, dark, well,
                                            pedestal, flat, resetval, resetnoise)
         
         if mode not in ['1', '8']:
@@ -183,7 +167,7 @@ class Hawaii2Detector(Detector):
         
         self.mode = mode
         # Amplifier region
-        self.amp = self.AMP1 if mode == '1' else self.AMP8
+        self.amplifiers = self.AMP1 if mode == '1' else self.AMP8
         
         # Gain and RON per amplifier
         self._ron = numpy.asarray(ron)
@@ -207,7 +191,7 @@ class Hawaii2Detector(Detector):
         ampgain = ito.cycle(self._gain.flat)
         ampron = ito.cycle(self._ron.flat)
         
-        for amp, gain, ron in zip(self.amp, ampgain, ampron):
+        for amp, gain, ron in zip(self.amplifiers, ampgain, ampron):
             data = result[amp]
             data /= gain            
             # Readout noise
@@ -267,5 +251,14 @@ class EmirDetector(Hawaii2Detector):
 
         super(EmirDetector, self).__init__(gain=gain, ron=ron, dark=dark, 
                                            well=wdepth, flat=flat)
-    
+
+class Hawaii1Detector(Detector):
+    '''Hawaii1 detector.'''
+        
+    shape = (1024, 1024)
+    amplifiers =  [(slice(512, 1024), slice(0, 512)),
+             (slice(0, 512), slice(0, 512)),
+             (slice(0, 512), slice(512, 1024)),
+             (slice(512, 1024), slice(512, 1024))
+             ]
 

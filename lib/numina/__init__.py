@@ -31,3 +31,23 @@ __version__ = '0.3.0'
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(NullHandler())
+
+def braid(*iterables):
+    '''Return the elements of each iterator in turn until some is exhausted.
+    
+    This function is similar to the roundrobin example 
+    in itertools documentation.
+    
+    >>> a = iter([1,2,3,4])
+    >>> b = iter(['a', 'b'])
+    >>> c = iter([1,1,1,1,'a', 'c'])
+    >>> d = iter([1,1,1,1,1,1])
+    >>> list(braid(a, b, c, d))
+    [1, 'a', 1, 1, 2, 'b', 1, 1]
+    '''
+    
+    from itertools import izip
+    
+    for itbl in izip(*iterables):
+        for it in itbl:
+            yield it

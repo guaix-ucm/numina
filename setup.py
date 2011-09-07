@@ -7,9 +7,14 @@ import numpy
 numpy_include = numpy.get_include()
 cext = Extension('numina.array._combine',
                 ['src/combinemodule.cc',
-                 'src/reject_factory.cc',
-                 'src/method_factory.cc',
                  'src/operations.cc',
+                 'src/nu_combine_methods.cc',
+                 'src/nu_combine.cc'
+                 ],
+          include_dirs=[numpy_include])
+
+uext = Extension('numina.array._ufunc',
+                ['src/ufunc.cc',
                  ],
           include_dirs=[numpy_include])
 
@@ -27,7 +32,7 @@ setup(name='pyemir',
                       'numina': ['*.cfg', 'logging.ini'],
                       'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
                       },
-      ext_modules=[cext],
+      ext_modules=[cext, uext],
       entry_points={
                       'console_scripts': ['numina = numina.user:main'],
                       },

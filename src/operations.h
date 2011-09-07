@@ -18,12 +18,15 @@
  *
  */
 
-#ifndef PYEMIR_OPERATIONS_H
-#define PYEMIR_OPERATIONS_H
+#ifndef NU_OPERATIONS_H
+#define NU_OPERATIONS_H
 
 #include <iterator>
 #include <algorithm>
 #include <numeric>
+#include <ext/functional>
+
+#include "zip_iterator.h"
 
 namespace Numina {
 
@@ -180,7 +183,7 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
 
 template<typename Iterator>
 inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
-    Iterator end, int nmin, int nmax) {
+    Iterator end, size_t nmin, size_t nmax) {
   Iterator pbegin = begin;
 
   if (nmin >= 1) {
@@ -193,7 +196,7 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
 
   if (nmax >= 1) {
     pend = end - nmax - 1;
-    std::nth_element(begin, pend, end);
+    std::nth_element(pbegin, pend, end);
     pend += 1;
   }
 
@@ -202,9 +205,9 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
 
 template<typename Iterator, typename StrictWeakOrdering>
 inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
-    Iterator end, int nmin, int nmax, StrictWeakOrdering comp) {
-  Iterator pbegin = begin;
+    Iterator end, size_t nmin, size_t nmax, StrictWeakOrdering comp) {
 
+  Iterator pbegin = begin;
   if (nmin >= 1) {
     pbegin = begin + nmin - 1;
     std::nth_element(begin, pbegin, end, comp);
@@ -212,16 +215,47 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
   }
 
   Iterator pend = end;
-
   if (nmax >= 1) {
     pend = end - nmax - 1;
-    std::nth_element(begin, pend, end, comp);
+    std::nth_element(pbegin, pend, end, comp);
     pend += 1;
   }
 
   return std::make_pair(pbegin, pend);
 }
 
+template<typename Iterator1, typename Iterator2>
+std::pair<double, double>
+average_central_tendency_clip(Iterator1 begin, Iterator1 end, Iterator2 weights,
+    size_t low, size_t high) {
+  typedef std::pair<Iterator1, Iterator2> _IterPair;
+  typedef ZipIterator<_IterPair> _ZIter;
+  typedef std::pair<_ZIter, _ZIter> _ZIterPair;
+
+  size_t n_elem = std::distance(begin, end);
+
+  if ((low + high) >= n_elem)
+    return std::make_pair(0.0, 0.0);
+
+  _ZIter beg = make_zip_iterator(begin, weights);
+  _ZIter ned = make_zip_iterator(end, weights + n_elem);
+
+  _ZIterPair result = reject_min_max(beg, ned, low, high,
+      // Compares two std::pair objects. Returns true
+      // if the first component of the first is less than the first component
+      // of the second std::pair
+      compose(std::less<typename std::iterator_traits<Iterator1>::value_type>(), __gnu_cxx::select1st<
+          typename _ZIter::value_type>(), __gnu_cxx::select1st<
+          typename _ZIter::value_type>()));
+
+  _IterPair itp_beg = result.first.get_iterator_pair();
+  _IterPair itp_end = result.second.get_iterator_pair();
+
+  return average_central_tendency(itp_beg.first, itp_end.first, itp_beg.second);
+}
+
+
+
 } // namespace Numina
 
-#endif // PYEMIR_OPERATIONS_H
+#endif // NU_OPERATIONS_H

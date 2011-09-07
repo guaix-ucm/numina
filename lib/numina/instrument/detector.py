@@ -17,7 +17,7 @@
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import scipy
+import numpy
 import numpy.random
 
 from numina.array import numberarray
@@ -31,15 +31,16 @@ class Detector:
     def __init__(self, shape, gain=1.0, ron=0.0, dark=1.0, 
                  well=65535, pedestal=200., flat=1.0, 
                  resetval=0, resetnoise=0.0):
-        self._shape = shape
-        self._detector = scipy.zeros(self._shape)
-        self._gain = numberarray(gain, self._shape)
-        self._ron = numberarray(ron, self._shape)
-        self._dark = numberarray(dark, self._shape)
+        self.shape = shape
+         
+        self._detector = numpy.zeros(self.shape)
+        self._gain = numberarray(gain, self.shape)
+        self._ron = numberarray(ron, self.shape)
+        self._dark = numberarray(dark, self.shape)
         self._dark[self._dark < 0] = 0.0 
-        self._pedestal = numberarray(pedestal, self._shape)
-        self._well = numberarray(well, self._shape)
-        self._flat = numberarray(flat, self._shape)
+        self._pedestal = numberarray(pedestal, self.shape)
+        self._well = numberarray(well, self.shape)
+        self._flat = numberarray(flat, self.shape)
         self._reset_noise = resetnoise
         self._reset_value = resetval
         self._time = 0
@@ -67,7 +68,7 @@ class Detector:
         self._time = 0
         self._detector[:] = self._reset_value
         # Considering normal reset noise
-        self._detector += numpy.random.standard_normal(self._shape) * self._reset_noise
+        self._detector += numpy.random.standard_normal(self.shape) * self._reset_noise
         self._time += self.reset_time
         
     def read(self, time=None, source=None):
@@ -81,7 +82,7 @@ class Detector:
         # Gain per channel
         result /= self._gain
         # Readout noise
-        result += numpy.random.standard_normal(self._shape) * self._ron
+        result += numpy.random.standard_normal(self.shape) * self._ron
         result += self._pedestal
         # result[result > self._well] = self._well
         return result.astype(self.type)
@@ -89,10 +90,6 @@ class Detector:
     def data(self):
         '''Return the current content of the detector.'''
         return self._detector
-    
-    def shape(self):
-        '''Return the shape of the detector.'''
-        return self._shape
-    
+        
     def time_since_last_reset(self):
         return self._time
