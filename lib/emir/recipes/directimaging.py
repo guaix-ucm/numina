@@ -62,7 +62,7 @@ __all__ = ['Recipe']
 
 _logger = logging.getLogger("emir.recipes")
 
-mpl.interactive(True)
+#mpl.interactive(True)
 mpl.rcParams['toolbar'] = 'None'
 
 def _name_redimensioned_images(label, iteration, ext='.fits'):
