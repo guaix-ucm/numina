@@ -29,6 +29,13 @@
 
 // Ufunc
 
+/*
+ * When installing pyemir with pip, this ufunc breaks the compillation
+ * Somehow, the symbol PyUFunc_dd_d is not loaded
+ * So I remove it
+ */
+
+/*
 double test1(double a, double b) {
   return 2 * a + b;
 }
@@ -62,7 +69,7 @@ static void add_test1(PyObject *dictionary) {
   PyDict_SetItemString(dictionary, "test1", f);
   Py_DECREF(f);
 }
-
+*/
 
 // Generic Ufunc
 // http://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
@@ -217,7 +224,7 @@ PyMODINIT_FUNC init_ufunc(void)
   import_array();
   import_ufunc();
 
-  add_test1(d);
+//  add_test1(d);
   add_test2(d);
   add_median(d);
 }

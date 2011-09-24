@@ -24,7 +24,6 @@ import os.path
 import shutil
 import itertools
 import math
-import time
 import operator
 
 import numpy
@@ -459,12 +458,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             
         avg_rms = self.figure_check_combination(rnimage, rmean, rstd)
                         
-        time.sleep(3)
-            
         # Fake sky error image
         self.figure_simple_image(sf_data[2], title='Number of images combined')
-        time.sleep(3)
-            
+
         # Create fake error image
         fake = numpy.where(sf_data[2] > 0, numpy.random.normal(avg_rms / numpy.sqrt(sf_data[2])), 0.0)
         self.figure_simple_image(fake, title='Fake sky error image')
@@ -867,10 +863,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         return result, (m,s)     
 
     def create_mask(self, sf_data, seeing_fwhm):
-         # FIXME more plots
+        # FIXME more plots
         self.figure_final_before_s(sf_data[0])
 
-        time.sleep(3)
         #
         remove_border = True
         
@@ -954,7 +949,6 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         ax.add_collection(p)
         self._figure.canvas.draw()
         self._figure.savefig('figure-segmentation-overlay_%01d.png' % self.iter)
-        time.sleep(3)
 
         self.figure_fwhm_histogram(fwhms)
                     
