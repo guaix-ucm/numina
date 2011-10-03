@@ -115,10 +115,10 @@ def fixpix(data, mask, kind='linear'):
             row[invalid] = itp(x[invalid]).astype(row.dtype)
     return data
 
-def fixpix2(data, mask, iterations=3, output=None):
+def fixpix2(data, mask, iterations=3, out=None):
     '''Substitute pixels in mask by a bilinear least square fitting.
     '''
-    out = output if output is not None else data.copy()
+    out = out if out is not None else data.copy()
     
     # A binary mask, regions are ones
     binry = mask != 0
