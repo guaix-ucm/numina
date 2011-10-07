@@ -305,6 +305,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             hdulist1.close()
             
     def compute_advanced_sky2(self, image, objmask):
+        '''Create a background map of the image and subtract it.'''
         # Create a copy of the image
         dst = _name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
@@ -329,6 +330,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
             hdulist.close()            
             
     def compute_advanced_sky(self, image, objmask):
+        '''Create a background map from nearby images.'''
         # Create a copy of the image
         dst = _name_skysub_proc(image.label, self.iter)
         shutil.copy(image.lastname, dst)
@@ -372,7 +374,7 @@ class Recipe(RecipeBase, EmirRecipeMixin):
                 # FIXME: during development, this is faster
                 sky[binmask] = sky[num != 0].mean()
                 # To continue we interpolate over the patches
-                #fixpix2(sky, binmask, output=sky, iterations=1)
+                #fixpix2(sky, binmask, out=sky, iterations=1)
                 name = _name_skybackgroundmask(image.label, self.iter)
                 pyfits.writeto(name, binmask.astype('int16'))
                 
@@ -670,8 +672,8 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         basename = 'result_i%0d.fits' % (self.iter)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
-        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds
+        sex.config['PIXEL_SCALE'] = 1
+        sex.config['BACK_TYPE'] = 'AUTO' 
         if seeing_fwhm is not None:
             sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
         sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
@@ -776,9 +778,9 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         basename = 'result_i%0d.fits' % (self.iter)
         sex = SExtractor()
         sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
-        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds
-        if  seeing_fwhm is not None:
+        sex.config['PIXEL_SCALE'] = 1
+        sex.config['BACK_TYPE'] = 'AUTO'
+        if  seeing_fwhm is not None and seeing_fwhm > 0:
             sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
         sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
         sex.config['WEIGHT_IMAGE'] = weigthmap
@@ -874,10 +876,10 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sex.config['CHECKIMAGE_TYPE'] = "SEGMENTATION"
         sex.config["CHECKIMAGE_NAME"] = _name_segmask(self.iter)
         sex.config['VERBOSE_TYPE'] = 'QUIET'
-        sex.config['PIXEL_SCALE'] = 0.5 # Pixel scale in arcseconds
-        sex.config['BACK_TYPE'] = 'AUTO' # Pixel scale in arcseconds 
+        sex.config['PIXEL_SCALE'] = 1
+        sex.config['BACK_TYPE'] = 'AUTO' 
 
-        if seeing_fwhm is not None:
+        if seeing_fwhm is not None and seeing_fwhm > 0:
             sex.config['SEEING_FWHM'] = seeing_fwhm * sex.config['PIXEL_SCALE']
 
         sex.config['PARAMETERS_LIST'].append('FLUX_BEST')
@@ -890,26 +892,35 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         sex.config['PARAMETERS_LIST'].append('CLASS_STAR')                
         if remove_border:
             weigthmap = 'weights4rms.fits'
-            # Create weight map, remove n pixs from either side                                
-            w1 = 90
-            w2 = 90
-            wmap = numpy.ones_like(sf_data[0])
             
-            cos_win1 = numpy.hanning(2 * w1)
-            cos_win2 = numpy.hanning(2 * w2)
+            # Create weight map, remove n pixs from either side
+            # using a Hannig filter
+            # npix = 90          
+            # w1 = npix
+            # w2 = npix
+            # wmap = numpy.ones_like(sf_data[0])
+            
+            # cos_win1 = numpy.hanning(2 * w1)
+            # cos_win2 = numpy.hanning(2 * w2)
                                    
-            wmap[:,:w1] *= cos_win1[:w1]                    
-            wmap[:,-w1:] *= cos_win1[-w1:]
-            wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
-            wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
+            # wmap[:,:w1] *= cos_win1[:w1]                    
+            # wmap[:,-w1:] *= cos_win1[-w1:]
+            # wmap[:w2,:] *= cos_win2[:w2, numpy.newaxis]
+            # wmap[-w2:,:] *= cos_win2[-w2:, numpy.newaxis]                 
             
-            #pyfits.writeto(weigthmap, wmap, clobber=True)
+            # Take the number of combined images from the combined image
             wm = sf_data[2].copy()
-            wm[wm < 10] = 0
+            # Dont search objects where nimages < lower
+            # FIXME: this is a magic number
+            # We ignore objects in regions where we have less
+            # than 10% of the images
+            lower = sf_data[2].max() / 10
+            wm[wm < lower] = 0
             pyfits.writeto(weigthmap, wm, clobber=True)
                                 
             sex.config['WEIGHT_TYPE'] = 'MAP_WEIGHT'
-            sex.config['WEIGHT_THRESH'] = 50
+            # FIXME: this is a magic number
+            # sex.config['WEIGHT_THRESH'] = 50
             sex.config['WEIGHT_IMAGE'] = weigthmap
         
         filename = 'result_i%0d.fits' % (self.iter)
@@ -957,7 +968,11 @@ class Recipe(RecipeBase, EmirRecipeMixin):
         idx = hist.argmax()
         
         seeing_fwhm = 0.5 * (edges[idx] + edges[idx + 1]) 
-        _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
+        if seeing_fwhm <= 0:
+            _logger.warning('Seeing FHWM %f pixels is negative, reseting', seeing_fwhm)
+            seeing_fwhm = None
+        else:
+            _logger.info('Seeing FHWM %f pixels (%f arcseconds)', seeing_fwhm, seeing_fwhm * sex.config['PIXEL_SCALE'])
         objmask = pyfits.getdata(_name_segmask(self.iter))
         return objmask, seeing_fwhm
     
