@@ -352,15 +352,15 @@ class SExtractor:
          "value": "QUIET"},
          
         "WEIGHT_TYPE":
-        {"comment": 'can be "NONE", "BACKGROUND", "MAP_RMS", "MAP_VAR" or "MAP_WEIGHT"',
+        {"comment": 'type of WEIGHTing: NONE, BACKGROUND, MAP_RMS, MAP_VAR or MAP_WEIGHT',
          "value": "NONE"},
 
         "WEIGHT_IMAGE":
-        {"comment": 'can be "NONE" or filename',
+        {"comment": '# weight-map filename',
          "value": "NONE"},
                   
          "WEIGHT_THRESH":
-        {"comment": 'can be "NONE" or filename',
+        {"comment": 'weight threshold[s] for bad pixels',
          "value": 0},
 
         # -- Extra-keys (will not be saved in the main configuration file
