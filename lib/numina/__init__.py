@@ -27,7 +27,7 @@ try:
 except ImportError:
     from logger import NullHandler
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(NullHandler())
