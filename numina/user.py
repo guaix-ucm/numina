@@ -32,7 +32,7 @@ import xdg.BaseDirectory as xdgbd
 import json
 import importlib
 
-from numina import __version__, ObservingResult, FitsEncoder
+from numina import __version__, ObservingResult, ProductEncoder
 from numina.recipes import list_recipes, init_recipe_system, find_recipe
 
 _logger = logging.getLogger("numina")
@@ -197,7 +197,7 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
         os.chdir(resultsdir)
 
         with open('result.json', 'w+') as fd:
-            json.dump(result, fd, indent=1, cls=FitsEncoder)
+            json.dump(result, fd, indent=1, cls=ProductEncoder)
     
         with open('result.json', 'r') as fd:
             result = json.load(fd)

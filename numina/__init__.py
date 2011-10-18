@@ -72,7 +72,7 @@ class ObservingResult(object):
 
 # FIXME: pyfits.core.HDUList is treated like a list
 # each extension is stored separately
-class FitsEncoder(json.JSONEncoder):
+class ProductEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, pyfits.core.PrimaryHDU):
             filename = 'result.fits'
