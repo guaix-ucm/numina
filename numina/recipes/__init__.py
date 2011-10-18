@@ -32,6 +32,7 @@ import inspect
 import pkgutil
 import datetime
 
+import pyfits
 from numina.exceptions import RecipeError, ParameterError
 
 # Classes are new style
@@ -134,6 +135,27 @@ class Image(RecipeType):
 class Map(RecipeType):
     def __init__(self, tag, comment='', default=None):
         RecipeType.__init__(self, tag, comment, default)        
+
+class Product(object):
+    pass
+
+class Image2(Product):
+    def __init__(self, image):
+        self.image = image
+
+    def __getstate__(self):
+        # save fits file
+        filename = 'result.fits'
+        if self.image[0].header.has_key('FILENAME'):
+            filename = self.image[0].header['FILENAME']
+            self.image.writeto(filename, clobber=True)
+
+        return {'image': filename}
+
+    def __setstate__(self, state):
+        # this is not exactly what we had in the begining...
+        self.image = pyfits.open(state['image'])
+
 
 def list_recipes():
     '''List all defined recipes'''

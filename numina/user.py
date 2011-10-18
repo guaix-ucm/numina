@@ -32,9 +32,9 @@ import xdg.BaseDirectory as xdgbd
 import json
 import importlib
 
-from numina import __version__, ObservingResult, ProductEncoder
+from numina import __version__, ObservingResult
 from numina.recipes import list_recipes, init_recipe_system, find_recipe
-
+from numina.jsonserializer import to_json
 _logger = logging.getLogger("numina")
 
 def parse_cmdline(args=None):
@@ -161,7 +161,7 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
             raise ValueError('parameter %s must be defined' % req.tag)
 
     for req in RecipeClass.__provides__:
-        _logger.info('recipe provides %s', req.tag)
+        _logger.info('recipe provides %s', req)
     
     # Creating base directory for storing results
                    
@@ -197,7 +197,7 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
         os.chdir(resultsdir)
 
         with open('result.json', 'w+') as fd:
-            json.dump(result, fd, indent=1, cls=ProductEncoder)
+            json.dump(result, fd, indent=1, default=to_json)
     
         with open('result.json', 'r') as fd:
             result = json.load(fd)
