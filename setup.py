@@ -18,19 +18,17 @@ uext = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-setup(name='pyemir',
+setup(name='numina',
       version='0.4.2',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/pyemir-0.4.2.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.4.2.tar.gz',
       license='GPLv3',
-      description='EMIR Data Processing Pipeline',
-      packages=find_packages('lib'),
-      package_dir={'': 'lib'},
+      description='Numina reduction library',
+      packages=find_packages('.'),
       package_data={'numina.simulation': ['*.dat'],
                       'numina': ['*.cfg', 'logging.ini'],
-                      'emir.instrument': ['image_*.txt', 'spectrum_*.txt'],
                       },
       ext_modules=[cext, uext],
       entry_points={
@@ -50,29 +48,11 @@ setup(name='pyemir',
                    "Topic :: Scientific/Engineering :: Astronomy",
                    ],
       long_description='''\
-      This is PyEmir, the data reduction pipeline for EMIR.
+      This is Numina reduction package
       
-      PyEmir is distributed under GNU GPL, either version 3 of the License, 
-      or (at your option) any later version. See the file COPYING for details.
-     
-      PyEmir requires the following packages installed in order to
-      be able to be installed and work properly:
+      Numina is the data reduction package used for the following GTC
+      instruments: EMIR, FRIDA, MEGARA
       
-      - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
-      - numpy (http://numpy.scipy.org/)
-      - scipy (http://www.scipy.org) 
-      - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
-      - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
-      - simplejson (http://undefined.org/python/#simplejson)
-      
-      Webpage: https://guaix.fis.ucm.es/projects/emir
       Maintainer: sergiopr@fis.ucm.es
-            
-      EMIR is a wide-field, near-infrared, multi-object spectrograph proposed 
-      for the Nasmyth focus of GTC. It will allow observers to obtain from tens to 
-      hundreds of intermediate resolution spectra simultaneously, in the 
-      nIR bands Z, J, H and K. A multi-slit mask unit will be used for target acquisition. 
-      EMIR is designed to address the science goals of the proposing team and 
-      of the Spanish community at large. 
       ''',
       )

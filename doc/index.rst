@@ -24,16 +24,10 @@
   
   </style>
 
-PyEmir User Guide
-==================
+Numina User Guide
+=================
 
-Welcome. This is the User Guide for PyEmir (version |version|), 
-
-EMIR is a **wide-field, near-infrared, multi-object spectrograph** proposed 
-for the Nasmyth focus of GTC_. It will allow observers to obtain from **tens to hundreds of 
-intermediate resolution spectra simultaneously**, in the nIR bands *Z, J, H* and  *K*. 
-A multi-slit mask unit will be used for target acquisition. EMIR is designed 
-to address the science goals of the proposing team and of the Spanish community at large.
+Welcome. This is the User Guide for Numina (version |version|), 
 
 .. raw:: html
 
@@ -41,7 +35,6 @@ to address the science goals of the proposing team and of the Spanish community 
     <tbody>
       <tr>
        <td width="50%">
-       <p class="biglink"><a href="highlevel.html">High level description of the pipeline</a></p>
        <p class="biglink"><a href="contents.html">Complete table of contents</a></p>
        </td>
        <td width="50%">

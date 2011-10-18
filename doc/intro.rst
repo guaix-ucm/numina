@@ -1,14 +1,15 @@
 
 ===================
-PyEmir Installation
+Numina Installation
 ===================
 
-This is PyEmir, the data reduction pipeline for EMIR. 
+This is Numina, the data reduction package used by the following GTC
+instruments: EMIR, FRIDA, MEGARA
 
-PyEmir is distributed under GNU GPL, either version 3 of the License, 
+Numina is distributed under GNU GPL, either version 3 of the License, 
 or (at your option) any later version. See the file COPYING for details.
 
-PyEmir requires the following packages installed in order to
+Numina requires the following packages installed in order to
 be able to be installed and work properly:
 
  - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
@@ -41,7 +42,7 @@ For additional options::
 
 Building the documentation
 ---------------------------
-The Pyemir documentation is base on sphinx. With the package installed, the 
+The Numina documentation is base on sphinx. With the package installed, the 
 documentation can be built with a custom buld target::
 
   $ python setup.py build_sphinx

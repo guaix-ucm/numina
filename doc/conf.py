@@ -30,7 +30,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.pngmath',
               'sphinx.ext.coverage']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['pyemir_templates']
+templates_path = ['numina_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
@@ -42,7 +42,7 @@ source_suffix = '.rst'
 master_doc = 'contents'
 
 # General information about the project.
-project = u'PyEmir'
+project = u'Numina'
 copyright = u'2010-2011, Sergio Pascual, Nicolás Cardiel'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -116,7 +116,7 @@ html_logo = 'images/logo.png'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['pyemir_static']
+html_static_path = ['numina_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -169,9 +169,7 @@ latex_paper_size = 'a4'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-  ('contents', 'numina.tex', ur'PyEmir Documentation',
-   ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
-  ('emir/recipes', 'recipes.tex', ur'EMIR recipes',
+  ('contents', 'numina.tex', ur'Numina Documentation',
    ur'Sergio Pascual, Nicolás Cardiel', 'manual'),
 ]
 
