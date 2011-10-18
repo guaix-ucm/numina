@@ -20,6 +20,11 @@
 '''Numina data processing system.'''
 
 import logging
+import json
+
+import pyfits
+
+from numina.recipes import RecipeBase, Image
 
 # pylint: disable-msg=E0611
 try:
@@ -51,3 +56,41 @@ def braid(*iterables):
     for itbl in izip(*iterables):
         for it in itbl:
             yield it
+
+class ReductionResult(object):
+    def __init__(self):
+        self.id = None
+        self.reduction_block = None
+        self.other = None
+        self.status = 0
+        self.picklable = {}
+
+class ObservingResult(object):
+    def __init__(self):
+        self.id = None
+        self.images = []
+
+# FIXME: pyfits.core.HDUList is treated like a list
+# each extension is stored separately
+class FitsEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, pyfits.core.PrimaryHDU):
+            filename = 'result.fits'
+            if obj.header.has_key('FILENAME'):
+                filename = obj.header['FILENAME']
+            obj.writeto(filename, clobber=True)
+            return filename
+        return json.JSONEncoder.default(self, obj)
+
+class FITSHistoryHandler(logging.Handler):
+    '''Logging handler using HISTORY FITS cards'''
+    def __init__(self, header):
+        logging.Handler.__init__(self)
+        self.header = header
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.header.add_history(msg)
+
+
+

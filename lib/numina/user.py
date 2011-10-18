@@ -15,7 +15,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''User command line interface of Numina.'''
 
@@ -25,19 +25,17 @@ import os
 from optparse import OptionParser
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as CPError
-
-from compatibility import get_data
-
+from logging import captureWarnings
+from pkgutil import get_data
 import StringIO
-
 import xdg.BaseDirectory as xdgbd
+import json
+import importlib
 
-from numina import __version__
-from numina.logger import captureWarnings
-from numina.recipes import list_recipes
-from numina.recipes import init_recipe_system
-from numina.diskstorage import store
-import numina.recipes.registry as registry
+from numina import __version__, ObservingResult, FitsEncoder
+from numina.recipes import list_recipes, init_recipe_system, find_recipe
+
+_logger = logging.getLogger("numina")
 
 def parse_cmdline(args=None):
     '''Parse the command line.'''
@@ -64,7 +62,6 @@ def parse_cmdline(args=None):
                       default=os.getcwd())
     parser.add_option('--resultsdir', action="store", dest="resultsdir")
     parser.add_option('--workdir', action="store", dest="workdir")
-    parser.add_option('--datadir', action="store", dest="datadir")
     
     parser.add_option('--cleanup', action="store_true", dest="cleanup", 
                       default=False)
@@ -75,6 +72,7 @@ def parse_cmdline(args=None):
 
 def mode_list():
     '''Run the list mode of Numina'''
+    _logger.debug('list mode')
     for recipeclass in list_recipes():
         print recipeclass
     
@@ -82,116 +80,145 @@ def mode_none():
     '''Do nothing in Numina.'''
     pass
 
-def mode_run(args, logger, options):
-    
-    registry.init_registry_from_file(args[0])
+def main_internal(cls, obsres, 
+    instrument, 
+    parameters, 
+    runinfo, 
+    workdir=None):
 
+    csd = os.getcwd()
+
+    if workdir is not None:
+        workdir = os.path.abspath(workdir)
+
+    recipe = cls()
+
+    recipe.configure(instrument=instrument,
+                    parameters=parameters,
+                    runinfo=runinfo)
+
+    os.chdir(workdir)
     try:
-        instrument = registry.get('/observing_block/instrument')
-        obsmode = registry.get('/observing_block/mode')
-    except KeyError:
-        logger.error('cannot retrieve instrument and obsmode')
-        return 1
+        result = recipe(obsres)
+    finally:
+        os.chdir(csd)
+
+    return result
+
+# part of this code appears in
+# pontifex/process.py
+
+def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
+
+    workdir = os.getcwd() if workdir is None else workdir
+    resultsdir = os.getcwd if resultsdir is None else resultsdir
+
+    # json decode
+    with open(task_control, 'r') as fd:
+        task_control = json.load(fd)
     
-    logger.info('our instrument is %s and our observing mode is %s', 
-                instrument, obsmode)
-    
-    nrecipes = 0
+    ins_pars = {}
+
+    if 'instrument' in task_control:
+        _logger.info('file contains instrument config')
+        ins_pars = task_control['instrument']
+    if 'observing_result' in task_control:
+        _logger.info('file contains observing result')
+        obsres = ObservingResult()
+        obsres.__dict__ = task_control['observing_result']
+
+    if 'reduction' in task_control:
+        params = task_control['reduction']['parameters']
+        
+    _logger.info('instrument=%(instrument)s mode=%(mode)s', 
+                obsres.__dict__)
+    try:
+        entry_point = find_recipe(obsres.instrument, obsres.mode)
+        _logger.info('entry point is %s', entry_point)
+    except ValueError:
+        _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
+        raise
+
+    mod, klass = entry_point.split(':')
+
+    module = importlib.import_module(mod)
+    RecipeClass = getattr(module, klass)
+
+    _logger.info('matching parameters')
+
+    parameters = {}
+
+    for req in RecipeClass.__requires__:
+        _logger.info('recipe requires %s', req.tag)
+        if req.tag in params:
+            _logger.debug('parameter %s has value %s', req.tag, params[req.tag])
+            parameters[req.tag] = params[req.tag]
+        elif req.default is not None:
+            _logger.debug('parameter %s has default value %s', req.tag, req.default)
+            parameters[req.tag] = req.default
+        else:
+            _logger.error('parameter %s must be defined', req.tag)
+            raise ValueError('parameter %s must be defined' % req.tag)
+
+    for req in RecipeClass.__provides__:
+        _logger.info('recipe provides %s', req.tag)
     
     # Creating base directory for storing results
-    
-    workdir = options.workdir
-    datadir = options.datadir
-    resultsdir = options.resultsdir
-    
-    for recipeClass in list_recipes():
-        if (instrument in recipeClass.instrument 
-            and obsmode in recipeClass.capabilities 
-            and '__main__' != recipeClass.__module__):
-            logger.info('Recipe is %s', recipeClass)
-            nrecipes += 1
-            parameters = {}
+                   
+    _logger.debug('creating runinfo')
             
-            fullname = "%s.%s" % (recipeClass.__module__,  recipeClass.__name__)
-            
-            par = registry.mget(['/recipes/default/parameters',
-                                 '/recipes/%s/parameters' % fullname])
-            for n, v, _ in recipeClass.required_parameters:
-                
-                # If the default value is ProxyPath
-                # the default value is from the root configuration object
-                #
-                if isinstance(v, (registry.ProxyPath, registry.ProxyQuery)):
-                    try:
-                        defval = v.get()
-                    except KeyError:
-                        defval = None
-                else:
-                    defval = v
-                parameters[n] = par.get(n, defval)
-                logger.debug('parameter %s = %s',n, parameters[n])
-            
-            # Default runinfo
-            runinfo = dict(nthreads=1)
-             
-            logger.debug('Creating the recipe')
-            runinfo.update(registry.mget(['/recipes/%s/run' % fullname, 
-                                     '/recipes/default/run']))
-            
-            runinfo['workdir'] = workdir
-            runinfo['datadir'] = datadir
-            runinfo['resultsdir'] = resultsdir
-            
-            recipe = recipeClass(parameters, runinfo)
-            
-            os.chdir(datadir)
-            recipe.setup()
-            
-            errorcount = 0
-    
-            # Running the recipe
-            os.chdir(workdir)
-            for result in recipe():
-                logger.info('Running the recipe instance %d of %d ', 
-                         recipe.current + 1, recipe.repeat)
-                
-                result['recipe_runner'] = info()
-                result['instrument'] = {'name': instrument, 
-                                        'mode': obsmode}
-                
-                if result['run']['status'] != 0:
-                    errorcount += 1
-                
-                # Creating the filename for the result
-                nowstr = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    runinfo = {}
+    runinfo['workdir'] = workdir
+    runinfo['resultsdir'] = resultsdir
+    runinfo['entrypoint'] = entry_point
 
-                rdir = '%s-%d' % (fullname, recipe.current + 1)
-                
-                storedir = os.path.join(resultsdir, rdir)
-                os.mkdir(storedir)
-                os.chdir(storedir)
-                store(result, 'numina-%s.log' % nowstr)
-                os.chdir(workdir)
-                
-            logger.debug('Cleaning up the recipe')
-            recipe.cleanup()
-            
-            if errorcount > 0:
-                logger.error('Errors during execution: %d', errorcount)
-            else:
-                logger.info('Completed execution')
+    # Set custom logger
+    _recipe_logger = logging.getLogger('%(instrument)s.recipes' % obsres.__dict__)
+    _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-            #return 0
-    if nrecipes == 0:
-        logger.error('observing mode %s is not processed by any recipe', obsmode)
+    _logger.debug('creating custom logger "processing.log"')
+    os.chdir(resultsdir)
+    fh = logging.FileHandler('processing.log')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(_recipe_formatter)
+    _recipe_logger.addHandler(fh)
 
+    result = {}
+    try:
+        # Running the recipe
+        _logger.debug('running the recipe %s', RecipeClass.__name__)
+
+        result = main_internal(RecipeClass, obsres, ins_pars, parameters, 
+                                runinfo, workdir=workdir)
+
+        result['recipe_runner'] = info()
+        result['runinfo'] = runinfo
     
-    import shutil
-    if options.cleanup:
-        logger.debug('Cleaning up the workdir')
-        shutil.rmtree(workdir)
-        
-    return 0
+        os.chdir(resultsdir)
+
+        with open('result.json', 'w+') as fd:
+            json.dump(result, fd, indent=1, cls=FitsEncoder)
+    
+        with open('result.json', 'r') as fd:
+            result = json.load(fd)
+
+        import shutil
+        if cleanup:
+            _logger.debug('Cleaning up the workdir')
+            shutil.rmtree(workdir)
+    except Exception as error:
+        _logger.error('%s', error)
+        result['error'] = {'type': error.__class__.__name__, 
+                                    'message': str(error)}
+    finally:
+        _recipe_logger.removeHandler(fh)
+
+    return result
+
+
+
+def mode_run(args, options):
+    return recipe(args[0], options.workdir, options.resultsdir, options.cleanup)
 
 def info():
     '''Information about this version of numina.
@@ -206,7 +233,7 @@ def main(args=None):
     config = SafeConfigParser()
     # Default values, it must exist
    
-    config.readfp(StringIO.StringIO(get_data('numina','defaults.cfg')))
+    #config.readfp(StringIO.StringIO(get_data('numina','defaults.cfg')))
 
     # Custom values, site wide and local
     config.read(['.numina/numina.cfg', 
@@ -230,29 +257,29 @@ def main(args=None):
     
     logger = logging.getLogger("numina")
     
-    logger.info('Numina simple recipe runner version %s', __version__)
+    _logger.info('Numina simple recipe runner version %s', __version__)
     
-    if options.module is None:
-        options.module = config.get('numina', 'module')
+#    if options.module is None:
+#        options.module = config.get('numina', 'module')
     
-    init_recipe_system([options.module])
+#    init_recipe_system([options.module])
+    import sys
+    sys.path.append('/home/spr/devel/pontifex')
+    init_recipe_system(['clodia', 'emir', 'megara', 'frida'])
     captureWarnings(True)
     
     if options.basedir is None:
         options.basedir = os.getcwd()
+    else:
+        options.basedir = os.path.abspath(options.basedir)    
     
     if options.workdir is None:
-        options.workdir = os.path.join(options.basedir, 'work')
+        options.workdir = os.path.abspath(os.path.join(options.basedir, 'work'))
     else:
         options.workdir = os.path.abspath(options.workdir)
-        
-    if options.datadir is None:
-        options.datadir = os.path.join(options.basedir, 'data')
-    else:
-        options.datadir = os.path.abspath(options.datadir)
-        
+                
     if options.resultsdir is None:
-        options.resultsdir = os.path.join(options.basedir, 'results')
+        options.resultsdir = os.path.abspath(os.path.join(options.basedir, 'results'))
     else:
         options.resultsdir = os.path.abspath(options.resultsdir)
     
@@ -263,6 +290,11 @@ def main(args=None):
         mode_none()
         return 0
     elif options.mode == 'run':
+
+        # Check basedir exists
+        if not os.path.exists(options.basedir):
+            os.mkdir(options.basedir)
+
         
         # Check workdir exists
         if not os.path.exists(options.workdir):
@@ -271,7 +303,7 @@ def main(args=None):
         if not os.path.exists(options.resultsdir):
             os.mkdir(options.resultsdir)
         
-        return mode_run(args, logger, options)
-    
+        return mode_run(args, options)
+
 if __name__ == '__main__':
     main()

@@ -24,6 +24,9 @@ A recipe is a class that complies with the *reduction recipe API*:
  * The class must derive from :class:`numina.recipes.RecipeBase`.
 
 '''
+
+import abc
+import importlib
 import warnings
 import inspect
 import pkgutil
@@ -42,125 +45,114 @@ _level_names = {ERROR: 'ERROR',
                 OK: 'OK',
                 UNKNOWN: 'UNKNOWN'}
 
+def find_recipe(instrument, mode):
+    base = '%s.recipes' % instrument
+    try:
+        mod = importlib.import_module(base)
+    except ImportError:
+        msg = 'No instrument %s' % instrument
+        raise ValueError(msg)
 
-class RecipeBase:
-    '''Abstract Base class for Recipes.'''
-    
-    required_parameters = []
-    
-    capabilities = []
-    
-    __version__ = 1
+    try:
+        entry = mod.find_recipe(mode)
+    except KeyError:
+        msg = 'No recipe for mode %s' % mode
+        raise ValueError(msg)
         
-    @classmethod
-    def info(cls):
-        return dict(name=cls.__name__, module=cls.__module__, version=cls.__version__)
-        
-    def __init__(self, param, run):
-        self.parameters = param
-        self.runinfo = run
-        self.repeat = run.get('repeat', 1)
-        self._current = 0
-                
-    def setup(self):
-        pass
-      
-    def cleanup(self):
-        '''Cleanup structures after recipe execution.'''
-        pass
-    
-    def __call__(self):
-        '''Run the recipe, don't override.'''
-        
-        TIMEFMT = '%FT%T'
-        
-        for self._current in range(self.repeat):
-            try:
-                product = RecipeResult(recipe=self.info(), 
-                               run=dict(start=None,
-                                        end=None,
-                                        status=UNKNOWN,
-                                        error={},
-                                        repeat=self.repeat,
-                                        current=self._current + 1),
-                               result={}
-                               )
-                
-                run_info = dict(repeat=self.repeat, 
-                                current=self._current + 1)
-                
-                now1 = datetime.datetime.now()
-                run_info['start'] = now1.strftime(TIMEFMT)
-                
-                product['result'] = self.run()
-                
-                now2 = datetime.datetime.now()                
-                run_info['end'] = now2.strftime(TIMEFMT)
-                # Status 0 means all correct
-                run_info['status'] = OK
-                         
-            except (IOError, OSError, RecipeError), e:
-                now2 = datetime.datetime.now()                
-                run_info['end'] = now2.strftime(TIMEFMT)
-                # Status 0 means all correct
-                run_info['status'] = ERROR                
-                run_info['error'] = dict(type=e.__class__.__name__, 
-                                         message=str(e))
-            finally:
-                product['run'].update(self.runinfo)
-                product['run'].update(run_info)
-                
-            
-            yield product
+    return '%s.%s' % (base, entry)
 
-    def run(self):
-        ''' Override this method with custom code.
-        
-        :rtype: RecipeResult
-        '''
-        raise NotImplementedError
+def find_parameters(recipe_name):
+    # query somewhere for the precomputed parameters
+    return {}
+
+class RecipeBase(object):
+    '''Base class for all instrument recipes'''
+
+    __metaclass__ = abc.ABCMeta
+
+    def __init__(self, *args, **kwds):
+        super(RecipeBase, self).__init__()
+        self.__author__ = 'Unknown'
+        self.__version__ = '0.0.0'
+        self.environ = {}
+        self.parameters = {}
+        self.instrument = None
+
+        self.configure(**kwds)
     
-    def complete(self):
-        '''Return True once the recipe is completed.
-        
-        :rtype: bool
-        '''
-        return self.repeat <= 0
-    
-    @property
-    def current(self):
-        return self._current
-        
+    def configure(self, **kwds):
+        if 'author' in kwds:
+            self.__author__ = kwds['author']
+        if 'version' in kwds:
+            self.__version__ = kwds['version']
+        if 'parameters' in kwds:
+            self.parameters = kwds['parameters']
+        if 'instrument' in kwds:
+            self.instrument = kwds['instrument']
+        if 'runinfo' in kwds:
+            self.runinfo = kwds['runinfo']
+
+    @abc.abstractmethod
+    def run(self, block):
+        return
+
+    def __call__(self, block, environ=None):
+
+        if environ is not None:
+            self.environ.update(environ)
+
+        self.environ['block_id'] = block.id
+
+        try:
+
+            result = self.run(block)
+
+        except Exception as exc:
+            result = {'error': {'type': exc.__class__.__name__, 
+                                'message': str(exc)}}
+
+        return result
+
 class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
-            
+
+class RecipeType(object):
+    def __init__(self, tag, comment='', default=None):
+        self.tag = tag
+        self.comment = comment
+        self.default = default
+
+class Keyword(RecipeType):
+    def __init__(self, tag, comment='', default=None):
+        RecipeType.__init__(self, tag, comment, default)        
+
+class Image(RecipeType):
+    def __init__(self, tag, comment='', default=None):
+        RecipeType.__init__(self, tag, comment, default)        
+
+class Map(RecipeType):
+    def __init__(self, tag, comment='', default=None):
+        RecipeType.__init__(self, tag, comment, default)        
+
 def list_recipes():
+    '''List all defined recipes'''
     return RecipeBase.__subclasses__() # pylint: disable-msgs=E1101
     
-def list_recipes_by_obs_mode(obsmode):
-    return list(recipes_by_obs_mode(obsmode))
-    
-def recipes_by_obs_mode(obsmode):
-    for rclass in list_recipes():
-        if obsmode in rclass.capabilities:
-            yield rclass
-    
 def walk_modules(mod):
-    module = __import__(mod, fromlist="dummy")
+    module = importlib.import_module(mod)
     for _, nmod, _ in pkgutil.walk_packages(path=module.__path__,
-                                                prefix=module.__name__ + '.'):
+                                    prefix=module.__name__ + '.'):
         yield nmod
         
 def init_recipe_system(modules):
+    '''Load all recipe classes in modules'''
     for mod in modules:
         for sub in walk_modules(mod):
-            __import__(sub, fromlist="dummy")
-            
-            
-            
+            mod = importlib.import_module(sub)
+        
 if __name__ == '__main__':
-    from numina.compatibility import json
+    import json
     import tempfile
     
     from numina.user import main
