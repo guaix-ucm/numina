@@ -33,8 +33,9 @@ import json
 import importlib
 
 from numina import __version__, ObservingResult
-from numina.recipes import list_recipes, init_recipe_system, find_recipe
+from numina.recipes import list_recipes, init_recipe_system, find_recipe, Product
 from numina.jsonserializer import to_json
+
 _logger = logging.getLogger("numina")
 
 def parse_cmdline(args=None):
@@ -149,16 +150,19 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
     parameters = {}
 
     for req in RecipeClass.__requires__:
-        _logger.info('recipe requires %s', req.tag)
-        if req.tag in params:
-            _logger.debug('parameter %s has value %s', req.tag, params[req.tag])
-            parameters[req.tag] = params[req.tag]
-        elif req.default is not None:
-            _logger.debug('parameter %s has default value %s', req.tag, req.default)
-            parameters[req.tag] = req.default
+        _logger.info('recipe requires %s', req.name)
+        if req.name in params:
+            _logger.debug('parameter %s has value %s', req.name, params[req.name])
+            parameters[req.name] = params[req.name]
+        elif issubclass(req.value, Product):
+            _logger.error('parameter %s must be defined', req.name)
+            raise ValueError('parameter %s must be defined' % req.name)        
+        elif req.value is not None:
+            _logger.debug('parameter %s has default value %s', req.name, req.value)
+            parameters[req.name] = req.value
         else:
-            _logger.error('parameter %s must be defined', req.tag)
-            raise ValueError('parameter %s must be defined' % req.tag)
+            _logger.error('parameter %s must be defined', req.name)
+            raise ValueError('parameter %s must be defined' % req.name)
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)

@@ -118,30 +118,20 @@ class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
 
-class RecipeType(object):
-    def __init__(self, tag, comment='', default=None):
-        self.tag = tag
-        self.comment = comment
-        self.default = default
-
-class Keyword(RecipeType):
-    def __init__(self, tag, comment='', default=None):
-        RecipeType.__init__(self, tag, comment, default)        
-
-class Image(RecipeType):
-    def __init__(self, tag, comment='', default=None):
-        RecipeType.__init__(self, tag, comment, default)        
-
-class Map(RecipeType):
-    def __init__(self, tag, comment='', default=None):
-        RecipeType.__init__(self, tag, comment, default)        
+class Parameter(object):
+    def __init__(self, name, value, description):
+        self.name = name
+        self.value = value
+        self.description = description
 
 class Product(object):
+    '''Base class for Recipe Products'''
     pass
 
-class Image2(Product):
+class Image(Product):
     def __init__(self, image):
         self.image = image
+        self.filename = None
 
     def __getstate__(self):
         # save fits file
@@ -155,6 +145,7 @@ class Image2(Product):
     def __setstate__(self, state):
         # this is not exactly what we had in the begining...
         self.image = pyfits.open(state['image'])
+        self.filename = state['image']
 
 
 def list_recipes():
