@@ -31,6 +31,7 @@ import StringIO
 import xdg.BaseDirectory as xdgbd
 import json
 import importlib
+import inspect
 
 from numina import __version__, ObservingResult
 from numina.recipes import list_recipes, init_recipe_system, find_recipe, Product
@@ -119,13 +120,16 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
         task_control = json.load(fd)
     
     ins_pars = {}
-
+    params = {}
+    obsres = ObservingResult()
+    obsres.instrument = 'none'
+    obsres.mode = 'none'
+    
     if 'instrument' in task_control:
         _logger.info('file contains instrument config')
         ins_pars = task_control['instrument']
     if 'observing_result' in task_control:
-        _logger.info('file contains observing result')
-        obsres = ObservingResult()
+        _logger.info('file contains observing result')        
         obsres.__dict__ = task_control['observing_result']
 
     if 'reduction' in task_control:
@@ -145,7 +149,7 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
     module = importlib.import_module(mod)
     RecipeClass = getattr(module, klass)
 
-    _logger.info('matching parameters')
+    _logger.info('matching parameters')    
 
     parameters = {}
 
@@ -154,7 +158,7 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
         if req.name in params:
             _logger.debug('parameter %s has value %s', req.name, params[req.name])
             parameters[req.name] = params[req.name]
-        elif issubclass(req.value, Product):
+        elif inspect.isclass(req.value) and issubclass(req.value, Product):
             _logger.error('parameter %s must be defined', req.name)
             raise ValueError('parameter %s must be defined' % req.name)        
         elif req.value is not None:
@@ -222,7 +226,7 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
 
 
 def mode_run(args, options):
-    return recipe(args[0], options.workdir, options.resultsdir, options.cleanup)
+    return run_recipe(args[0], options.workdir, options.resultsdir, options.cleanup)
 
 def info():
     '''Information about this version of numina.
@@ -263,12 +267,12 @@ def main(args=None):
     
     _logger.info('Numina simple recipe runner version %s', __version__)
     
-#    if options.module is None:
-#        options.module = config.get('numina', 'module')
+    # FIXME: hardcoded path
+    if options.module is None:
+        options.module = 'emir'
     
-#    init_recipe_system([options.module])
-    # FIXME: module names are hardcoded
-    init_recipe_system(['clodia', 'emir', 'megara', 'frida'])
+    init_recipe_system([options.module])
+
     captureWarnings(True)
     
     if options.basedir is None:

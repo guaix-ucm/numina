@@ -25,11 +25,11 @@ import logging
 
 from pyfits import HDUList
 
-from generic import generic
-from jsonserializer import to_json
-from numina.image import DiskImage
-from numina.recipes import RecipeResult
-from numina.compatibility import json
+from .generic import generic
+from .jsonserializer import to_json
+#from .image import DiskImage
+from .recipes import RecipeResult
+from .compatibility import json
 
 _logger = logging.getLogger("numina.storage")
 
@@ -53,16 +53,16 @@ def _store_fits(obj, where=None):
     where = where or obj['primary'].header.get('FILENAME', 'file.fits')
     obj.writeto(where, clobber=True, output_verify='ignore')
 
-@store.register(DiskImage)
-def _store_disk_image(obj, where=None):
-    '''Save to disk a DiskImage structure.'''
-    obj.open()
-    fitsobj = obj.hdulist
-    where = where or fitsobj['primary'].header.get('FILENAME', 'file.fits')
-    # File already exists in obj.filename
-    # Hardlink it or copy it
-    link_or_copy(obj.filename, where)
-    obj.close()
+#@store.register(DiskImage)
+#def _store_disk_image(obj, where=None):
+#    '''Save to disk a DiskImage structure.'''
+#    obj.open()
+#    fitsobj = obj.hdulist
+#    where = where or fitsobj['primary'].header.get('FILENAME', 'file.fits')
+#    # File already exists in obj.filename
+#    # Hardlink it or copy it
+#    link_or_copy(obj.filename, where)
+#    obj.close()
 
 @store.register(RecipeResult)
 def _store_rr(obj, where):
@@ -109,11 +109,11 @@ def _generate_fits_hdulist(obj):
     return obj['primary'].header.get('FILENAME', 'file.fits')
 
 # pylint: disable-msgs=E0102, E1101
-@generate_fname.register(DiskImage)
-def _generate_fits_disk_image(obj):
-    '''Generate a filename for a  DiskImage structure.'''
-    obj.open()
-    fitsobj = obj.hdulist
-    where = fitsobj['primary'].header.get('FILENAME', 'file.fits')
-    obj.close()
-    return where
+#@generate_fname.register(DiskImage)
+#def _generate_fits_disk_image(obj):
+#    '''Generate a filename for a  DiskImage structure.'''
+#    obj.open()
+#    fitsobj = obj.hdulist
+#    where = fitsobj['primary'].header.get('FILENAME', 'file.fits')
+#    obj.close()
+#    return where

@@ -23,7 +23,7 @@ import copy
 import numpy # pylint: disable-msgs=E1101
 import pyfits
 
-import numina.array
+from ..array import resize_array 
 
 class DiskImage(object):
     def __init__(self, filename):
