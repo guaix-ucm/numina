@@ -86,11 +86,11 @@ def get_image_shape(header):
 
 def resize_hdu(hdu, newshape, region, fill=0.0):
     basedata = hdu.data
-    newdata = numina.array.resize_array(basedata, newshape, region, fill=fill)                
+    newdata = resize_array(basedata, newshape, region, fill=fill)                
     newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
     return newhdu
 
-def resize_fits(fitsfile, newfilename, newshape, region, fill=0.0):
+def resize_fits(fitsfile, newfilename, newshape, region, fill=0.0, clobber=True):
     
     close_on_exit = False
     if isinstance(fitsfile, basestring):
@@ -102,7 +102,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, fill=0.0):
     try:
         hdu = hdulist['primary']
         newhdu = resize_hdu(hdu, newshape, region, fill=fill)
-        newhdu.writeto(newfilename)
+        newhdu.writeto(newfilename, clobber=clobber)
     finally:
         if close_on_exit:
             hdulist.close()

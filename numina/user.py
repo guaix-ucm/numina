@@ -32,6 +32,7 @@ import xdg.BaseDirectory as xdgbd
 import json
 import importlib
 import inspect
+import traceback
 
 from numina import __version__, ObservingResult
 from numina.recipes import list_recipes, init_recipe_system, find_recipe, Product
@@ -217,7 +218,8 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
     except Exception as error:
         _logger.error('%s', error)
         result['error'] = {'type': error.__class__.__name__, 
-                                    'message': str(error)}
+                                    'message': str(error), 
+                                    'traceback': traceback.format_exc()}
     finally:
         _recipe_logger.removeHandler(fh)
 

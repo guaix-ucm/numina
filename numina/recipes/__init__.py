@@ -31,6 +31,7 @@ import warnings
 import inspect
 import pkgutil
 import datetime
+import traceback
 
 import pyfits
 from numina.exceptions import RecipeError, ParameterError
@@ -110,8 +111,9 @@ class RecipeBase(object):
 
         except Exception as exc:
             result = {'error': {'type': exc.__class__.__name__, 
-                                'message': str(exc)}}
-
+                                'message': str(exc), 
+                                'traceback': traceback.format_exc()}
+                      }
         return result
 
 class RecipeResult(dict):
