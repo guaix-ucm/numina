@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
-import tempfile
-import subprocess
 import logging
 from itertools import imap, product
 
@@ -26,7 +24,6 @@ from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
-import numina.diskstorage
 from numina.image.imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
@@ -189,71 +186,6 @@ def compute_median_background(img, omask, region):
     m = omask[region]
     median_sky = numpy.median(d[m == 0])
     return median_sky
-
-class SextractorConf(object):
-    '''Configuration files for sextractor.'''
-    def __init__(self, sexfile, paramfile, nnwfile, convfile):
-        self.sexfile = sexfile
-        self.convfile = convfile
-        self.nnwfile = nnwfile
-        self.paramfile = paramfile
-
-def create_object_mask(sconf, array , segmask_name=None):
-    import shutil
-    import os.path
-    import pyfits
-    
-    # Create a work place for sextractor
-    tdir = tempfile.mkdtemp(prefix='numina-')
-
-    # A temporary filename used to store the array in fits format
-    tf = tempfile.NamedTemporaryFile(prefix='arraystore', dir=tdir)
-    
-    pyfits.writeto(filename=tf.name, data=array)
-    
-    if segmask_name is None:
-        ck_img = tempfile.NamedTemporaryFile(prefix='smask', dir=tdir)
-        ck_img_filename = ck_img.name
-    else:
-        if os.path.isabs(segmask_name):
-            ck_img_filename = segmask_name
-        else:
-            ck_img_filename = os.path.abspath(segmask_name)
-
-    # Copy or hardlink configuration files into tdir
-
-    for filename in sconf.__dict__.itervalues():
-        numina.diskstorage.link_or_copy(filename, tdir)
-    #
-
-    # Run sextractor inside tdir, it will create a image called check.fits
-    # With the segmentation mask inside
-
-    sub = subprocess.Popen(["sex",
-                            "-c", os.path.basename(sconf.sexfile),
-                            "-CHECKIMAGE_TYPE", "SEGMENTATION",
-                            "-CHECKIMAGE_NAME", ck_img_filename,
-                            '-VERBOSE_TYPE', 'QUIET',
-                            tf.name],
-                            stdout=subprocess.PIPE,
-                            cwd=tdir)
-    
-    sub.communicate()
-
-    # Read the segmentation image
-    result = pyfits.getdata(ck_img_filename)
-
-    # Close the array tempfile
-    tf.close()
-    
-    # Close the mask tempfile
-    if segmask_name is None:        
-        ck_img.close()
-
-    # delete the tempdir
-    shutil.rmtree(tdir, ignore_errors=True)
-
-    return result
 
 def numberarray(x, shape):
     '''Return x if it is an array or create an array and fill it with x.''' 
