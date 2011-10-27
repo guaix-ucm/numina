@@ -19,11 +19,11 @@ uext = Extension('numina.array._ufunc',
           include_dirs=[numpy_include])
 
 setup(name='numina',
-      version='0.4.2',
+      version='0.5.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.4.2.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.5.0.tar.gz',
       license='GPLv3',
       description='Numina reduction library',
       packages=find_packages('.'),
