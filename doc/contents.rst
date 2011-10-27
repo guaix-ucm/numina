@@ -3,7 +3,7 @@
    contain the root `toctree` directive.
 
 ====================
-PyEmir Documentation
+Numina Documentation
 ====================
 
 .. toctree::
@@ -11,7 +11,6 @@ PyEmir Documentation
 
    intro
    highlevel
-   emir/modules
    modules
 
    

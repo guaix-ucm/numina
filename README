@@ -1,10 +1,14 @@
+======
+Numina
+======
 
-This is PyEmir, the data reduction pipeline for EMIR. 
+This is Numina, the data reduction package used by the following GTC
+instruments: EMIR, FRIDA, MEGARA
 
-PyEmir is distributed under GNU GPL, either version 3 of the License, 
+Numina is distributed under GNU GPL, either version 3 of the License, 
 or (at your option) any later version. See the file COPYING for details.
 
-PyEmir requires the following packages installed in order to
+Numina requires the following packages installed in order to
 be able to be installed and work properly:
 
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
