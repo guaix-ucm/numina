@@ -24,7 +24,7 @@ from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
-from numina.image.imsurfit import FitOne
+from numina.array.imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
 
