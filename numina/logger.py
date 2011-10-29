@@ -23,6 +23,16 @@
 import logging
 import warnings
 
+class FITSHistoryHandler(logging.Handler):
+    '''Logging handler using HISTORY FITS cards'''
+    def __init__(self, header):
+        logging.Handler.__init__(self)
+        self.header = header
+
+    def emit(self, record):
+        msg = self.format(record)
+        self.header.add_history(msg)
+
 class NullHandler(logging.Handler):
     '''NullHandler is the default log handler of the package. 
     

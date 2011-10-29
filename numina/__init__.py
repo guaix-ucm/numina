@@ -82,15 +82,6 @@ class ProductEncoder(json.JSONEncoder):
             return filename
         return json.JSONEncoder.default(self, obj)
 
-class FITSHistoryHandler(logging.Handler):
-    '''Logging handler using HISTORY FITS cards'''
-    def __init__(self, header):
-        logging.Handler.__init__(self)
-        self.header = header
-
-    def emit(self, record):
-        msg = self.format(record)
-        self.header.add_history(msg)
 
 
 
