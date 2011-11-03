@@ -110,7 +110,7 @@ def main_internal(cls, obsres,
 # part of this code appears in
 # pontifex/process.py
 
-def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
+def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=False):
 
     workdir = os.getcwd() if workdir is None else workdir
     resultsdir = os.getcwd if resultsdir is None else resultsdir
@@ -224,30 +224,117 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
 
     return result
 
+def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):    
+    _logger.info('instrument=%(instrument)s mode=%(mode)s', 
+                obsres.__dict__)
+    try:
+        entry_point = find_recipe(obsres.instrument, obsres.mode)
+        _logger.info('entry point is %s', entry_point)
+    except ValueError:
+        _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
+        raise
+
+    mod, klass = entry_point.split(':')
+
+    module = importlib.import_module(mod)
+    RecipeClass = getattr(module, klass)
+
+    _logger.info('matching parameters')    
+
+    parameters = {}
+
+    for req in RecipeClass.__requires__:
+        _logger.info('recipe requires %s', req.name)
+        if req.name in params:
+            _logger.debug('parameter %s has value %s', req.name, params[req.name])
+            parameters[req.name] = params[req.name]
+        elif inspect.isclass(req.value) and issubclass(req.value, Product):
+            _logger.error('parameter %s must be defined', req.name)
+            raise ValueError('parameter %s must be defined' % req.name)        
+        elif req.value is not None:
+            _logger.debug('parameter %s has default value %s', req.name, req.value)
+            parameters[req.name] = req.value
+        else:
+            _logger.error('parameter %s must be defined', req.name)
+            raise ValueError('parameter %s must be defined' % req.name)
+
+    for req in RecipeClass.__provides__:
+        _logger.info('recipe provides %s', req)
+    
+    # Creating base directory for storing results
+                   
+    _logger.debug('creating runinfo')
+            
+    runinfo = {}
+    runinfo['workdir'] = workdir
+    runinfo['resultsdir'] = resultsdir
+    runinfo['entrypoint'] = entry_point
+
+    # Set custom logger
+    _recipe_logger = logging.getLogger('%(instrument)s.recipes' % obsres.__dict__)
+    _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+    _logger.debug('creating custom logger "processing.log"')
+    os.chdir(resultsdir)
+    fh = logging.FileHandler('processing.log')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(_recipe_formatter)
+    _recipe_logger.addHandler(fh)
+
+    result = {}
+    try:
+        # Running the recipe
+        _logger.debug('running the recipe %s', RecipeClass.__name__)
+
+        result = main_internal(RecipeClass, obsres, instrument, parameters, 
+                                runinfo, workdir=workdir)
+
+        result['recipe_runner'] = info()
+        result['runinfo'] = runinfo
+    
+        os.chdir(resultsdir)
+
+        with open('result.json', 'w+') as fd:
+            json.dump(result, fd, indent=1, default=to_json)
+    
+        with open('result.json', 'r') as fd:
+            result = json.load(fd)
+
+        import shutil
+        if cleanup:
+            _logger.debug('Cleaning up the workdir')
+            shutil.rmtree(workdir)
+    except Exception as error:
+        _logger.error('%s', error)
+        result['error'] = {'type': error.__class__.__name__, 
+                                    'message': str(error), 
+                                    'traceback': traceback.format_exc()}
+    finally:
+        _recipe_logger.removeHandler(fh)
+
+    return result
+
 
 
 def mode_run(args):
         
-    if args.basedir is None:
-        args.basedir = os.getcwd()
-    else:
-        args.basedir = os.path.abspath(args.basedir)    
+    
+    args.basedir = os.path.abspath(args.basedir)    
     
     if args.workdir is None:
-        args.workdir = os.path.abspath(os.path.join(args.basedir, 'work'))
-    else:
-        args.workdir = os.path.abspath(args.workdir)
+        args.workdir = os.path.join(args.basedir, 'work')
+    
+    args.workdir = os.path.abspath(args.workdir)
                 
     if args.resultsdir is None:
-        args.resultsdir = os.path.abspath(os.path.join(args.basedir, 'results'))
-    else:
-        args.resultsdir = os.path.abspath(args.resultsdir)
+        args.resultsdir = os.path.join(args.basedir, 'results')
+    
+    args.resultsdir = os.path.abspath(args.resultsdir)
 
     # FIXME: race condition here
     # Check basedir exists
     if not os.path.exists(args.basedir):
         os.mkdir(args.basedir)
-
         
     # Check workdir exists
     if not os.path.exists(args.workdir):
@@ -256,8 +343,38 @@ def mode_run(args):
     # Check resultdir exists
     if not os.path.exists(args.resultsdir):
         os.mkdir(args.resultsdir)
-                    
-    return run_recipe(args.task, args.workdir, args.resultsdir, args.cleanup)
+
+    # json decode
+    with open(args.task, 'r') as fd:
+        task_control = json.load(fd)
+    
+    instrument = {}
+    reduction = {}
+    
+    obsres = ObservingResult()
+    obsres.instrument = 'none'
+    obsres.mode = 'none'
+    
+        # Read instrument information from args.instrument
+    if args.instrument is not None:
+        _logger.info('reading instrument config from %s', args.instrument)
+        with open(args.instrument, 'r') as fd:
+            # json decode    
+            instrument = json.load(fd)
+    elif 'instrument' in task_control:
+        _logger.info('reading instrument config from %s', args.task)
+        instrument = task_control['instrument']
+        
+    if 'observing_result' in task_control:
+        _logger.info('reading observing result from %s', args.task)
+        obsres.__dict__ = task_control['observing_result']
+
+    if 'reduction' in task_control:
+        _logger.info('reading reduction parameters from %s', args.task)
+        reduction = task_control['reduction']['parameters']
+        
+    return run_recipe(obsres, reduction, instrument, 
+                       args.workdir, args.resultsdir, args.cleanup)
 
 def info():
     '''Information about this version of numina.
@@ -307,6 +424,7 @@ def main(args=None):
     
     parser_run.set_defaults(command=mode_run)    
 
+    parser_run.add_argument('--instrument', dest='instrument', default=None)
     parser_run.add_argument('--basedir', action="store", dest="basedir", 
                       default=os.getcwd())
     # FIXME: It is questionable if this flag should be used or not
