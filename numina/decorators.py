@@ -30,7 +30,7 @@ def print_timing(func):
         t1 = time.time()
         res = func(*arg, **keywords)
         t2 = time.time()
-        print '%s took %0.3f s' % (func.func_name, (t2 - t1))
+        print '%s took %0.3f s' % (func.__name__, (t2 - t1))
         return res
     return wrapper
 
@@ -40,6 +40,6 @@ def log_timing(func):
         t1 = time.time()
         res = func(*arg, **keywords)
         t2 = time.time()
-        _logger.debug('%s took %0.3f s' % (func.func_name, (t2 - t1)))
+        _logger.debug('%s took %0.3f s', func.__name__, t2 - t1)
         return res
     return wrapper

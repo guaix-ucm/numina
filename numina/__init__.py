@@ -30,7 +30,7 @@ from numina.recipes import RecipeBase, Image
 try:
     from logging import NullHandler
 except ImportError:
-    from logger import NullHandler
+    from .logger import NullHandler
 
 __version__ = '0.5.0'
 

@@ -19,7 +19,7 @@
 
 import logging
 
-import node
+from . import node
 import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
