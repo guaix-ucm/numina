@@ -28,7 +28,7 @@ setup(name='numina',
       description='Numina reduction library',
       packages=find_packages('.'),
       package_data={'numina.simulation': ['*.dat'],
-                      'numina': ['*.cfg', 'logging.ini'],
+                      'numina': ['*.cfg'],
                       },
       ext_modules=[cext, uext],
       entry_points={

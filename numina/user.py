@@ -41,6 +41,41 @@ from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
 
+_loggconf = {'version': 1,
+             'formatters': {'simple': {'format': '%(levelname)s: %(message)s'},
+                            'state': {'format': '%(asctime)s - %(message)s'},
+                            'unadorned': {'format': '%(message)s'},
+                            'detailed': {'format': '%(name)s %(levelname)s %(message)s'},
+                            },
+             'handlers': {'unadorned_console': 
+                          {'class': 'logging.StreamHandler',                           
+                           'formatter': 'unadorned',
+                           'level': 'INFO'                           
+                            },
+                          'simple_console': 
+                          {'class': 'logging.StreamHandler',                           
+                           'formatter': 'simple',
+                           'level': 'INFO'                           
+                            },
+                          'simple_console_warnings_only': 
+                          {'class': 'logging.StreamHandler',                           
+                           'formatter': 'simple',
+                           'level': 'WARNING'                           
+                            },
+                          'detailed_console': 
+                          {'class': 'logging.StreamHandler',                           
+                           'formatter': 'detailed',
+                           'level': 'INFO'                           
+                            },
+                          },
+             # FIXME: hardcoded emir logger here           
+             'loggers': {'numina': {'handlers': ['simple_console'], 'level': 'NOTSET', 'propagate': False},
+                         'numina.recipes': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
+                         'emir': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
+                         },
+             'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
+             }
+
 def mode_list(args):
     '''Run the list mode of Numina'''
     _logger.debug('list mode')
@@ -274,7 +309,7 @@ def main(args=None):
 
     parser_run.add_argument('--basedir', action="store", dest="basedir", 
                       default=os.getcwd())
-    # FIXME It is questionable if this flag should be used or not
+    # FIXME: It is questionable if this flag should be used or not
     parser_run.add_argument('--datadir', action="store", dest="datadir")
     parser_run.add_argument('--resultsdir', action="store", dest="resultsdir")
     parser_run.add_argument('--workdir', action="store", dest="workdir")    
@@ -285,16 +320,18 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # logger file
-    if args.logging is None:
+    if args.logging is not None:
+        logging.config.fileConfig(args.logging)
+    else:
         # This should be a default path in defaults.cfg
         try:
             args.logging = config.get('numina', 'logging')
+            logging.config.fileConfig(args.logging)
         except ConfigParserError:
-            args.logging = StringIO.StringIO(get_data('numina','logging.ini'))
-
-    logging.config.fileConfig(args.logging)
+            logging.config.dictConfig(_loggconf)
     
-    logger = logging.getLogger("numina")
+                
+    _logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
         
