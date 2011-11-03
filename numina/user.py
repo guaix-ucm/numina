@@ -23,8 +23,9 @@ import datetime
 import logging.config
 import os
 from optparse import OptionParser
+import argparse
 from ConfigParser import SafeConfigParser
-from ConfigParser import Error as CPError
+from ConfigParser import Error as ConfigParserError
 from logging import captureWarnings
 from pkgutil import get_data
 import StringIO
@@ -40,48 +41,11 @@ from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
 
-def parse_cmdline(args=None):
-    '''Parse the command line.'''
-    usage = "usage: %prog [options] recipe [recipe-options]"
-
-    version_line = '%prog ' + __version__ 
-
-    parser = OptionParser(usage=usage, version=version_line, 
-                          description=__doc__)
-    # Command line options
-    parser.set_defaults(mode="none")
-    parser.add_option('-d', '--debug', action="store_true", 
-                      dest="debug", default=False, 
-                      help="make lots of noise [default]")
-    parser.add_option('-l', action="store", dest="logging", metavar="FILE", 
-                      help="FILE with logging configuration")
-    parser.add_option('--module', action="store", dest="module", 
-                      metavar="FILE", help="FILE")
-    parser.add_option('--list', action="store_const", const='list', 
-                      dest="mode")
-    parser.add_option('--run', action="store_const", const='run', 
-                      dest="mode")
-    parser.add_option('--basedir', action="store", dest="basedir", 
-                      default=os.getcwd())
-    parser.add_option('--resultsdir', action="store", dest="resultsdir")
-    parser.add_option('--workdir', action="store", dest="workdir")
-    
-    parser.add_option('--cleanup', action="store_true", dest="cleanup", 
-                      default=False)
-    # Stop when you find the first argument
-    parser.disable_interspersed_args()
-    (options, args) = parser.parse_args(args)
-    return (options, args)
-
-def mode_list():
+def mode_list(args):
     '''Run the list mode of Numina'''
     _logger.debug('list mode')
     for recipeclass in list_recipes():
         print recipeclass
-    
-def mode_none():
-    '''Do nothing in Numina.'''
-    pass
 
 def main_internal(cls, obsres, 
     instrument, 
@@ -227,8 +191,38 @@ def run_recipe(task_control, workdir=None, resultsdir=None, cleanup=False):
 
 
 
-def mode_run(args, options):
-    return run_recipe(args[0], options.workdir, options.resultsdir, options.cleanup)
+def mode_run(args):
+        
+    if args.basedir is None:
+        args.basedir = os.getcwd()
+    else:
+        args.basedir = os.path.abspath(args.basedir)    
+    
+    if args.workdir is None:
+        args.workdir = os.path.abspath(os.path.join(args.basedir, 'work'))
+    else:
+        args.workdir = os.path.abspath(args.workdir)
+                
+    if args.resultsdir is None:
+        args.resultsdir = os.path.abspath(os.path.join(args.basedir, 'results'))
+    else:
+        args.resultsdir = os.path.abspath(args.resultsdir)
+
+    # FIXME: race condition here
+    # Check basedir exists
+    if not os.path.exists(args.basedir):
+        os.mkdir(args.basedir)
+
+        
+    # Check workdir exists
+    if not os.path.exists(args.workdir):
+        os.mkdir(args.workdir)
+    
+    # Check resultdir exists
+    if not os.path.exists(args.resultsdir):
+        os.mkdir(args.resultsdir)
+                    
+    return run_recipe(args.task, args.workdir, args.resultsdir, args.cleanup)
 
 def info():
     '''Information about this version of numina.
@@ -239,7 +233,7 @@ def info():
 
 def main(args=None):
     '''Entry point for the Numina CLI.'''        
-    # Configuration options from a text file    
+    # Configuration args from a text file    
     config = SafeConfigParser()
     # Default values, it must exist
    
@@ -250,69 +244,64 @@ def main(args=None):
                  os.path.join(xdgbd.xdg_config_home, 'numina/numina.cfg')])
     
     # The cmd line is parsed
-    options, args = parse_cmdline(args)
+    '''Parse the command line.'''
+    usage = "usage: %prog [args] recipe [recipe-args]"
 
-    # After processing both the command line and the files
-    # we get the values of everything
+    version_line = '%prog ' + __version__ 
+
+    parser = argparse.ArgumentParser(description='Command line interface of Numina',
+                                     prog='numina',
+                                     epilog="For detailed help pass " \
+                                               "--help to a target")
+    
+    parser.add_argument('-d', '--debug', action="store_true", 
+                      dest="debug", default=False, 
+                      help="make lots of noise [default]")
+    parser.add_argument('-l', action="store", dest="logging", metavar="FILE", 
+                      help="FILE with logging configuration")
+    parser.add_argument('--module', action="store", dest="module", 
+                      metavar="FILE", help="FILE", default='emir')
+    
+    subparsers = parser.add_subparsers(title='Targets',
+                                       description='These are valid commands you can ask numina to do.')
+    parser_list = subparsers.add_parser('list', help='list help')
+    
+    parser_list.set_defaults(command=mode_list)
+    
+    parser_run = subparsers.add_parser('run', help='run help')
+    
+    parser_run.set_defaults(command=mode_run)    
+
+    parser_run.add_argument('--basedir', action="store", dest="basedir", 
+                      default=os.getcwd())
+    # FIXME It is questionable if this flag should be used or not
+    parser_run.add_argument('--datadir', action="store", dest="datadir")
+    parser_run.add_argument('--resultsdir', action="store", dest="resultsdir")
+    parser_run.add_argument('--workdir', action="store", dest="workdir")    
+    parser_run.add_argument('--cleanup', action="store_true", dest="cleanup", 
+                      default=False)
+    parser_run.add_argument('task')
+    
+    args = parser.parse_args(args)
 
     # logger file
-    if options.logging is None:
+    if args.logging is None:
         # This should be a default path in defaults.cfg
         try:
-            options.logging = config.get('numina', 'logging')
-        except CPError:
-            options.logging = StringIO.StringIO(get_data('numina','logging.ini'))
+            args.logging = config.get('numina', 'logging')
+        except ConfigParserError:
+            args.logging = StringIO.StringIO(get_data('numina','logging.ini'))
 
-    logging.config.fileConfig(options.logging)
+    logging.config.fileConfig(args.logging)
     
     logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
-    
-    # FIXME: hardcoded path
-    if options.module is None:
-        options.module = 'emir'
-    
-    init_recipe_system([options.module])
-
+        
+    init_recipe_system([args.module])
     captureWarnings(True)
     
-    if options.basedir is None:
-        options.basedir = os.getcwd()
-    else:
-        options.basedir = os.path.abspath(options.basedir)    
-    
-    if options.workdir is None:
-        options.workdir = os.path.abspath(os.path.join(options.basedir, 'work'))
-    else:
-        options.workdir = os.path.abspath(options.workdir)
-                
-    if options.resultsdir is None:
-        options.resultsdir = os.path.abspath(os.path.join(options.basedir, 'results'))
-    else:
-        options.resultsdir = os.path.abspath(options.resultsdir)
-    
-    if options.mode == 'list':
-        mode_list() 
-        return 0
-    elif options.mode == 'none':
-        mode_none()
-        return 0
-    elif options.mode == 'run':
-
-        # Check basedir exists
-        if not os.path.exists(options.basedir):
-            os.mkdir(options.basedir)
-
-        
-        # Check workdir exists
-        if not os.path.exists(options.workdir):
-            os.mkdir(options.workdir)
-        # Check resultdir exists
-        if not os.path.exists(options.resultsdir):
-            os.mkdir(options.resultsdir)
-        
-        return mode_run(args, options)
+    args.command(args)
 
 if __name__ == '__main__':
     main()
