@@ -21,7 +21,7 @@ import unittest
 
 import numpy
 
-from numina.image.imsurfit import imsurfit
+from numina.array.imsurfit import imsurfit
 
 class ImsurfitTestCase(unittest.TestCase):
     
