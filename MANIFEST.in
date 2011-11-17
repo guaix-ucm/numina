@@ -1,6 +1,5 @@
 include COPYING MANIFEST.in
 include src/*.h
 include numina/defaults.cfg
-include numina/simulation/*.dat
 recursive-include doc *
 
