@@ -23,18 +23,18 @@ import collections
 
 class TreeDict(collections.MutableMapping):
     def __init__(self):
-        self.data = {}
+        self._data = {}
 
     def __getitem__(self, key):
         keys = key.split('.')
-        return self._rec_getitem(self.data, keys[0], keys[1:])
+        return self._rec_getitem(self._data, keys[0], keys[1:])
 
     def __iter__(self):
-        pass
+        return iter(self._data)
 
     def __setitem__(self, key, value):
         keys = key.split('.')
-        return self._rec_setitem(self.data, value, keys[0], keys[1:])
+        return self._rec_setitem(self._data, value, keys[0], keys[1:])
 
     def __delitem__(self, key):
         pass
