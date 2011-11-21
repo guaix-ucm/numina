@@ -21,7 +21,7 @@
 
 import unittest
 
-import test_all
+from . import test_all
 
 def tests(verbosity=1):
     '''Run all unit tests.'''

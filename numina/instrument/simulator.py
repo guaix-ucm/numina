@@ -98,7 +98,7 @@ class CCDDetector(object):
             if amp.ron > 0:
                 try:
                     data[amp.shape] = normal(self.buffer[amp.shape], amp.ron)
-                except Exception, e:
+                except Exception as e:
                     _logger.error(str(e))
             # gain
             data[amp.shape] /= amp.gain

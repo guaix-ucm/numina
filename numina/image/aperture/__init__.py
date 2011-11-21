@@ -19,4 +19,4 @@
 
 '''Aperture photometry'''
 
-from elliptical import aperture as elliptical_aperture
+from .elliptical import aperture as elliptical_aperture

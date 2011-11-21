@@ -19,7 +19,7 @@
 
 import math
 
-from pixelize import pixelize, rpixelize, frac
+from .pixelize import pixelize, rpixelize, frac
 
 class EllipticalAperture(object):
     '''Geometrical properties of the aperture'''

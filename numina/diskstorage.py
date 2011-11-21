@@ -96,7 +96,7 @@ def _parse_rr(val, external):
     if t is dict:
         return dict(map(lambda x: (x[0], _parse_rr(x[1], external)), val.items()))
     if t is list or t is tuple:
-        return map(lambda x: _parse_rr(x, external), val)
+        return [_parse_rr(x, external) for x in  val]
     return val
 
 @generic
