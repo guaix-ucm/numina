@@ -75,5 +75,5 @@ class CCDDetector(object):
         return data
 
     def mode(self, name):
-        pass
+        self.meta['readmode'] = name
     
