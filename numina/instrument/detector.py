@@ -20,6 +20,7 @@
 import numpy
 import numpy.random
 
+from numina.treedict import TreeDict
 from numina.array import numberarray
 from numina.exceptions import DetectorElapseError
 
@@ -49,6 +50,15 @@ class Detector:
         self.reset_time = 0
         self.type = 'int16'
         self.outtype = 'int16'
+
+        self.meta = TreeDict()
+        self.meta['readscheme'] = 'PERLINE'
+        self.meta['readmode'] = 'CDS'
+        self.meta['readnum'] = 0
+        self.meta['readrep'] = 0
+        self.meta['exposed'] = 0
+
+
         
     def elapse(self, time, source=None):
         '''
@@ -62,10 +72,12 @@ class Detector:
         if source is not None:
             self._detector += numpy.random.poisson(self._flat * source * etime).astype('float')
         self._time = time
+        self.meta['exposed'] = time
         
     def reset(self):
         '''Reset the detector.'''
         self._time = 0
+        self.meta['exposed'] = 0
         self._detector[:] = self._reset_value
         # Considering normal reset noise
         self._detector += numpy.random.standard_normal(self.shape) * self._reset_noise
