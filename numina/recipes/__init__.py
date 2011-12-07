@@ -38,6 +38,7 @@ import pyfits
 
 from numina.exceptions import RecipeError, ParameterError
 from numina.logger import FITSHistoryHandler
+from numina.config import pipeline_path
 
 # Classes are new style
 __metaclass__ = type
@@ -167,6 +168,10 @@ def pipelines(paths):
     '''Load all recipe classes in modules'''
     for _, name, _ in pkgutil.iter_modules(paths):
         yield name
+
+def s_pipelines():
+    paths = pipeline_path()
+    return pipelines(paths)
         
 def init_recipe_system(paths):
     '''Load all recipe classes in modules'''
@@ -189,6 +194,10 @@ def init_recipe_system(paths):
                 print 'error loading', nmod
 
     return pipelines
+
+def s_init_recipe_system():
+    paths = pipeline_path()
+    return init_recipe_system(paths)
 
 def log_to_history(logger):
     '''Decorate function, adding a logger handler stored in FITS.'''
