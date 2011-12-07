@@ -18,8 +18,8 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
+import json
 
-from numina.compatibility import json
 from numina.jsonserializer import from_json
 
 Schema = collections.namedtuple('Schema', 'name value description')

@@ -19,8 +19,7 @@
 
 import os
 import shutil
-
-
+import json
 import logging
 
 from pyfits import HDUList
@@ -29,7 +28,6 @@ from .generic import generic
 from .jsonserializer import to_json
 #from .image import DiskImage
 from .recipes import RecipeResult
-from .compatibility import json
 
 _logger = logging.getLogger("numina.storage")
 

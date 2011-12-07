@@ -48,7 +48,7 @@ if __name__ == '__main__':
     
     from numina.user import main
     from numina.jsonserializer import to_json 
-    from numina.compatibility import json
+    import json
 
     p = {'recipe': {'run': {'repeat': 2, 'mode': 'sample', 'instrument': 'sample'}}}   
           
