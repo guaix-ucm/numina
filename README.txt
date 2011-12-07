@@ -3,7 +3,7 @@ Numina
 ======
 
 This is Numina, the data reduction package used by the following GTC
-instruments: EMIR, FRIDA, MEGARA
+instruments: EMIR, FRIDA, MEGARA, MIRADAS
 
 Numina is distributed under GNU GPL, either version 3 of the License, 
 or (at your option) any later version. See the file COPYING for details.
