@@ -25,7 +25,7 @@ setup(name='numina',
       url='http://guaix.fis.ucm.es/projects/emir',
       download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.5.0.tar.gz',
       license='GPLv3',
-      description='Numina reduction library',
+      description='Numina reduction package',
       packages=find_packages('.'),
       package_data={'numina': ['*.cfg'],
                     },
@@ -49,7 +49,7 @@ setup(name='numina',
       This is Numina reduction package
       
       Numina is the data reduction package used for the following GTC
-      instruments: EMIR, FRIDA, MEGARA
+      instruments: EMIR, FRIDA, MEGARA, MIRADAS
       
       Maintainer: sergiopr@fis.ucm.es
       ''',
