@@ -162,14 +162,33 @@ def walk_modules(mod):
     for _, nmod, _ in pkgutil.walk_packages(path=module.__path__,
                                     prefix=module.__name__ + '.'):
         yield nmod
-        
-def init_recipe_system(modules):
+
+def pipelines(paths):
     '''Load all recipe classes in modules'''
-    for mod in modules:
-        for sub in walk_modules(mod):
-            mod = importlib.import_module(sub)
+    for _, name, _ in pkgutil.iter_modules(paths):
+        yield name
+        
+def init_recipe_system(paths):
+    '''Load all recipe classes in modules'''
+    pipelines = {}
+    for impt, name, isp in pkgutil.iter_modules(paths):
+        loader = impt.find_module(name)
+        mod = loader.load_module(name)
+        pipelines[name] = mod
 
+    for key in pipelines:
+        # import recipes
+        # import everything under 'name.recipes'
+        recipes = importlib.import_module('%s.recipes' % key)
+        for impt, nmod, ispkg in pkgutil.walk_packages(path=recipes.__path__,
+                                            prefix=recipes.__name__ + '.'):
+            loader = impt.find_module(nmod)
+            try:
+                mod = loader.load_module(nmod)
+            except ImportError as ex:
+                print 'error loading', nmod
 
+    return pipelines
 
 def log_to_history(logger):
     '''Decorate function, adding a logger handler stored in FITS.'''

@@ -452,8 +452,12 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
-        
-    init_recipe_system([args.module])
+    # FIXME: here we need a list of paths        
+    pipelines = init_recipe_system(['pipelines'])
+    for key in pipelines:
+        pl = pipelines[key]
+        version = getattr(pl, '__version__', '0.0.0')
+        _logger.info('Loaded pipeline for %s, version %s', key, version)
     captureWarnings(True)
     
     args.command(args)
