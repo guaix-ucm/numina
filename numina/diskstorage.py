@@ -19,8 +19,8 @@
 
 import os
 import shutil
-import logging
 import json
+import logging
 
 from pyfits import HDUList
 

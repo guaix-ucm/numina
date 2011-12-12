@@ -23,11 +23,16 @@ import os.path
 
 from xdg.BaseDirectory import xdg_data_dirs
 
+__all__ = ['pipeline_path']
 
-_rel_path = ['pipelines']
-_abs_path = [os.path.join(d, 'numina/pipelines') for d in xdg_data_dirs]
-pipelines_path = _abs_path + _rel_path
+_path = ['/usr/lib64/numina/pipelines']
 
+_path2 = [os.path.join(base, 'numina/pipelines') for base in xdg_data_dirs]
+
+_path.extend(_path2)
+
+def pipeline_path():
+    return _path
 
 if __name__ == '__main__':
-    print pipelines_path
+    print pipeline_path()

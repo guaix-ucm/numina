@@ -36,7 +36,7 @@ import inspect
 import traceback
 
 from numina import __version__, ObservingResult
-from numina.recipes import list_recipes, init_recipe_system2, find_recipe, Product
+from numina.recipes import list_recipes, s_init_recipe_system, find_recipe, Product
 from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
@@ -389,7 +389,7 @@ def main(args=None):
     config = SafeConfigParser()
     # Default values, it must exist
    
-    #config.readfp(StringIO.StringIO(get_data('numina','defaults.cfg')))
+    config.readfp(StringIO.StringIO(get_data('numina','defaults.cfg')))
 
     # Custom values, site wide and local
     config.read(['.numina/numina.cfg', 
@@ -452,8 +452,7 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
-    # FIXME: here we need a list of paths        
-    pipelines = init_recipe_system2()
+    pipelines = s_init_recipe_system()
     for key in pipelines:
         pl = pipelines[key]
         version = getattr(pl, '__version__', '0.0.0')
