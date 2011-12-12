@@ -26,16 +26,10 @@ import pyfits
 
 from numina.recipes import RecipeBase, Image
 
-# pylint: disable-msg=E0611
-try:
-    from logging import NullHandler
-except ImportError:
-    from .logger import NullHandler
-
 __version__ = '0.5.0'
 
 # Top level NullHandler
-logging.getLogger("numina").addHandler(NullHandler())
+logging.getLogger("numina").addHandler(logging.NullHandler())
 
 def braid(*iterables):
     '''Return the elements of each iterator in turn until some is exhausted.
@@ -81,7 +75,4 @@ class ProductEncoder(json.JSONEncoder):
             obj.writeto(filename, clobber=True)
             return filename
         return json.JSONEncoder.default(self, obj)
-
-
-
 
