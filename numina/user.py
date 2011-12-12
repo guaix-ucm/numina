@@ -36,7 +36,7 @@ import inspect
 import traceback
 
 from numina import __version__, ObservingResult
-from numina.recipes import list_recipes, init_recipe_system, find_recipe, Product
+from numina.recipes import list_recipes, init_recipe_system2, find_recipe, Product
 from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
@@ -453,7 +453,7 @@ def main(args=None):
     
     _logger.info('Numina simple recipe runner version %s', __version__)
     # FIXME: here we need a list of paths        
-    pipelines = init_recipe_system(['pipelines'])
+    pipelines = init_recipe_system2()
     for key in pipelines:
         pl = pipelines[key]
         version = getattr(pl, '__version__', '0.0.0')

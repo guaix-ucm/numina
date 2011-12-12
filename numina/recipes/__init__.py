@@ -36,6 +36,7 @@ import logging
 
 import pyfits
 
+from ..config import pipelines_path
 from numina.exceptions import RecipeError, ParameterError
 from numina.logger import FITSHistoryHandler
 
@@ -168,6 +169,9 @@ def pipelines(paths):
     for _, name, _ in pkgutil.iter_modules(paths):
         yield name
         
+def init_recipe_system2():
+    return init_recipe_system(pipelines_path)
+
 def init_recipe_system(paths):
     '''Load all recipe classes in modules'''
     pipelines = {}
