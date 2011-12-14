@@ -77,11 +77,18 @@ _loggconf = {'version': 1,
              'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
              }
 
+def fully_qualified_name(obj, sep='.'):
+    if inspect.isclass(obj):
+        return obj.__module__ + sep + obj.__name__
+    else:
+        return obj.__module__ + sep + obj.__class__.__name__
+
 def mode_list(args):
     '''Run the list mode of Numina'''
     _logger.debug('list mode')
-    for recipeclass in list_recipes():
-        print recipeclass
+    for recipeCls in list_recipes():
+#        print fully_qualified_name(recipeCls)
+        print recipeCls
 
 def main_internal(cls, obsres, 
     instrument, 
