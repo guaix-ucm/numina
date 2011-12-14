@@ -22,6 +22,10 @@
 
 import logging
 
+import pyfits
+
+from .recipes import Image
+
 class FITSHistoryHandler(logging.Handler):
     '''Logging handler using HISTORY FITS cards'''
     def __init__(self, header):
@@ -32,3 +36,28 @@ class FITSHistoryHandler(logging.Handler):
         msg = self.format(record)
         self.header.add_history(msg)
 
+def log_to_history(logger):
+    '''Decorate function, adding a logger handler stored in FITS.'''
+
+    def log_to_history_decorator(method):
+
+        def l2h_method(self, block):
+            history_header = pyfits.Header()
+
+            fh =  FITSHistoryHandler(history_header)
+            fh.setLevel(logging.INFO)
+            logger.addHandler(fh)
+
+            try:
+                result = method(self, block)
+                if 'products' in result:
+                    for r in result['products']:
+                       if isinstance(r, Image):
+                           hdr = r.image[0].header
+                           hdr.ascardlist().extend(history_header.ascardlist())
+                return result 
+            finally:
+                logger.removeHandler(fh)
+        return l2h_method
+
+    return log_to_history_decorator

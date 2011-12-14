@@ -198,33 +198,6 @@ def init_recipe_system(paths):
 def s_init_recipe_system():
     paths = pipeline_path()
     return init_recipe_system(paths)
-
-def log_to_history(logger):
-    '''Decorate function, adding a logger handler stored in FITS.'''
-
-    def log_to_history_decorator(method):
-
-        def l2h_method(self, block):
-            history_header = pyfits.Header()
-
-            fh =  FITSHistoryHandler(history_header)
-            fh.setLevel(logging.INFO)
-            logger.addHandler(fh)
-
-            try:
-                result = method(self, block)
-                if 'products' in result:
-                    for r in result['products']:
-                       if isinstance(r, Image):
-                           hdr = r.image[0].header
-                           hdr.ascardlist().extend(history_header.ascardlist())
-                return result 
-            finally:
-                logger.removeHandler(fh)
-        return l2h_method
-
-    return log_to_history_decorator
-
         
 if __name__ == '__main__':
     import json
