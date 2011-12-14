@@ -36,7 +36,8 @@ import inspect
 import traceback
 
 from numina import __version__, ObservingResult
-from numina.recipes import list_recipes, s_init_recipe_system, find_recipe, Product
+from numina.pipeline import init_pipeline_system
+from numina.recipes import list_recipes, find_recipe, Product
 from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
@@ -452,7 +453,7 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
-    pipelines = s_init_recipe_system()
+    pipelines = init_pipeline_system()
     for key in pipelines:
         pl = pipelines[key]
         version = getattr(pl, '__version__', '0.0.0')

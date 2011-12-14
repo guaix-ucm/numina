@@ -27,18 +27,11 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 import abc
 import importlib
-import warnings
-import inspect
-import pkgutil
-import datetime
 import traceback
-import logging
 
 import pyfits
 
 from numina.exceptions import RecipeError, ParameterError
-from numina.logger import FITSHistoryHandler
-from numina.config import pipeline_path
 
 # Classes are new style
 __metaclass__ = type
@@ -164,40 +157,7 @@ def walk_modules(mod):
                                     prefix=module.__name__ + '.'):
         yield nmod
 
-def pipelines(paths):
-    '''Load all recipe classes in modules'''
-    for _, name, _ in pkgutil.iter_modules(paths):
-        yield name
 
-def s_pipelines():
-    paths = pipeline_path()
-    return pipelines(paths)
-        
-def init_recipe_system(paths):
-    '''Load all recipe classes in modules'''
-    pipelines = {}
-    for impt, name, isp in pkgutil.iter_modules(paths):
-        loader = impt.find_module(name)
-        mod = loader.load_module(name)
-        pipelines[name] = mod
-
-    for key in pipelines:
-        # import recipes
-        # import everything under 'name.recipes'
-        recipes = importlib.import_module('%s.recipes' % key)
-        for impt, nmod, ispkg in pkgutil.walk_packages(path=recipes.__path__,
-                                            prefix=recipes.__name__ + '.'):
-            loader = impt.find_module(nmod)
-            try:
-                mod = loader.load_module(nmod)
-            except ImportError as ex:
-                print 'error loading', nmod
-
-    return pipelines
-
-def s_init_recipe_system():
-    paths = pipeline_path()
-    return init_recipe_system(paths)
         
 if __name__ == '__main__':
     import json
