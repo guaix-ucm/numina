@@ -1,18 +1,15 @@
 
 syntax: regexp
 ^build$
-syntax: regexp
-^lib/pyemir\.egg-info$
-syntax: regexp
-^lib/numina/array/_combine\.so$
+^numina\.egg-info$
+^numina/array/_combine\.so$
+^numina/array/_ufunc\.so$
+^doc/html$
+^dist$
+^doc/doctrees$
+
 syntax: glob
 *.pyc
-
-syntax: regexp
-^dist$
-syntax: regexp
-^doc/doctrees$
-syntax: regexp
-^doc/html$
-syntax: regexp
-^lib/numina/array/_ufunc\.so$
+*~
+.project
+.pydevproject
