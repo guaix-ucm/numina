@@ -110,9 +110,7 @@ class ParallelFlow(Flow):
     
     def __setitem__(self, key, value):
         self.nodeseq[key] = value
-        
-        
-        
+
 class MixerFlow(Flow):
     def __init__(self, table):
         nin = max(table) + 1
