@@ -189,6 +189,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     runinfo['entrypoint'] = entry_point
 
     # Set custom logger
+    # FIXME we are assuming here that Recipe top package is named after the instrument
     _recipe_logger = logging.getLogger('%(instrument)s.recipes' % obsres.__dict__)
     _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
