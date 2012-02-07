@@ -76,6 +76,7 @@ class RecipeBase(object):
         self.environ = {}
         self.parameters = {}
         self.instrument = None
+        self.runinfo = {}
 
         self.configure(**kwds)
     
