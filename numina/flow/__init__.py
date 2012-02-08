@@ -17,42 +17,17 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+import abc
 import logging
+
+from .node import Node
 
 _logger = logging.getLogger('numina.flow')
 
 class FlowError(Exception):
     pass
 
-class Flow(object):
-    def __init__(self, ninputs=1, noutputs=1):
-        super(Flow, self).__init__()
-        self._nin = ninputs
-        self._nout = noutputs
-        
-    @property
-    def ninputs(self):
-        return self._nin
-    
-    @property
-    def noutputs(self):
-        return self._nout
-        
-    def _run(self, img):
-        raise NotImplementedError
-    
-    def __call__(self, img):
-        return self._run(img)
-    
-    def obtain_tuple(self, arg):
-        if isinstance(arg, tuple):
-            return arg
-        return (arg,)
-   
-    def execute(self, arg):
-        return self._run(arg)
-
-class SerialFlow(Flow):
+class SerialFlow(Node):
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
         for i,o in zip(nodeseq, nodeseq[1:]):
@@ -79,7 +54,7 @@ class SerialFlow(Flow):
             img = out
         return out
 
-class ParallelFlow(Flow):
+class ParallelFlow(Node):
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
         nin = sum((f.ninputs for f in nodeseq), 0)
@@ -87,8 +62,7 @@ class ParallelFlow(Flow):
         super(ParallelFlow, self).__init__(nin, nout)
         
         
-    def _run(self, img):
-        args = self.obtain_tuple(img)
+    def _run(self, args):
         out = []
         for func, arg in zip(self.nodeseq, args):
             r = func(arg)
@@ -111,15 +85,14 @@ class ParallelFlow(Flow):
     def __setitem__(self, key, value):
         self.nodeseq[key] = value
 
-class MixerFlow(Flow):
+class MixerFlow(Node):
     def __init__(self, table):
         nin = max(table) + 1
         nout = len(table)
         super(MixerFlow, self).__init__(nin, nout)
         self.table = table
         
-    def _run(self, img):
-        args = self.obtain_tuple(img)
+    def _run(self, args):
         assert len(args) == self.ninputs
         
         return tuple(args[idx] for idx in self.table)

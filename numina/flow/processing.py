@@ -19,12 +19,12 @@
 
 import logging
 
-from . import node
+from .node import Corrector
 import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
 
-class BadPixelCorrector(node.Corrector):
+class BadPixelCorrector(Corrector):
     def __init__(self, badpixelmask, mark=True, dtype='float32'):
         super(BadPixelCorrector, self).__init__(label=('NUM-BPM','Badpixel removed with numina'), dtype=dtype, mark=mark)
         self.bpm = badpixelmask
@@ -36,7 +36,7 @@ class BadPixelCorrector(node.Corrector):
         return img
 
 
-class BiasCorrector(node.Corrector):
+class BiasCorrector(Corrector):
     def __init__(self, biasmap, mark=True, dtype='float32'):
         super(BiasCorrector, self).__init__(label=('NUM-BS','Bias removed with numina'), dtype=dtype, mark=mark)
         self.biasmap = biasmap
@@ -47,7 +47,7 @@ class BiasCorrector(node.Corrector):
         self.mark_as_processed(img)
         return img
 
-class DarkCorrector(node.Corrector):
+class DarkCorrector(Corrector):
     def __init__(self, darkmap, mark=True, dtype='float32'):
         super(DarkCorrector, self).__init__(label=('NUM-DK','Dark removed with numina'), dtype=dtype, mark=mark)
         self.darkmap = darkmap
@@ -58,7 +58,7 @@ class DarkCorrector(node.Corrector):
         self.mark_as_processed(img)
         return img
 
-class NonLinearityCorrector(node.Corrector):
+class NonLinearityCorrector(Corrector):
     def __init__(self, polynomial, mark=True, dtype='float32'):
         super(NonLinearityCorrector, self).__init__(label=('NUM-LIN','Non-linearity removed with numina'), dtype=dtype, mark=mark)
         self.polynomial = polynomial
@@ -69,7 +69,7 @@ class NonLinearityCorrector(node.Corrector):
         self.mark_as_processed(img)
         return img
         
-class FlatFieldCorrector(node.Corrector):
+class FlatFieldCorrector(Corrector):
     def __init__(self, flatdata, mark=True, dtype='float32'):
         super(FlatFieldCorrector, self).__init__(label=('NUM-FF','Flat field removed with numina'), dtype=dtype, mark=mark)
         self.flatdata = flatdata
