@@ -118,6 +118,18 @@ class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
 
+class provides(object):
+    '''Decorator to add the list of provided products to recipe'''
+    def __init__(self, *products):
+        self.products = products
+
+    def __call__(self, klass):
+        if hasattr(klass, '__provides__'):
+            klass.__provides__.extend(self.products)
+        else:
+            klass.__provides__ = list(self.products)
+        return klass
+
 class Parameter(object):
     def __init__(self, name, value, description):
         self.name = name
