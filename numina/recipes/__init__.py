@@ -129,6 +129,18 @@ class provides(object):
         else:
             klass.__provides__ = list(self.products)
         return klass
+    
+class requires(object):
+    '''Decorator to add the list of required parameters to recipe'''
+    def __init__(self, *parameters):
+        self.parameters = parameters
+
+    def __call__(self, klass):
+        if hasattr(klass, '__requires__'):
+            klass.__requires__.extend(self.parameters)
+        else:
+            klass.__requires__ = list(self.parameters)
+        return klass
 
 class Parameter(object):
     def __init__(self, name, value, description):
