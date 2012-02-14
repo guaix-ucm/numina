@@ -59,10 +59,24 @@ class ReductionResult(object):
         self.status = 0
         self.picklable = {}
 
+class ImageInformation(object):
+    def __init__(self):
+        self.label = None
+        self.target = None
+        self.itype = None
+        self.exposure = 0.0
+        self.ra = 0.0
+        self.dec = 0.0
+        self.mdj = 0.0
+        self.airmass = 1.0
+
 class ObservingResult(object):
     def __init__(self):
         self.id = None
-        self.images = []
+        self.mode = None
+        self.instrument = None
+        self.images = [] # list of ImageInformation
+        self.children = [] # other ObservingResult
 
 # FIXME: pyfits.core.HDUList is treated like a list
 # each extension is stored separately
