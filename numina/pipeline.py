@@ -19,40 +19,74 @@
 
 '''Pipeline loader.'''
 
-import pkgutil
+import os
+import os.path
+import ConfigParser
 import importlib
+import pkgutil
+import logging
 
 from numina.config import pipeline_path
 
-def load_pipelines_from(paths):
-    '''Load all recipe classes in modules'''
-    for _, name, _ in pkgutil.iter_modules(paths):
-        yield name
+_logger = logging.getLogger('numina')
 
-def pipelines():
-    paths = pipeline_path()
-    return load_pipelines_from(paths)
-        
 def load_pipelines_from(paths):
-    '''Load all recipe classes in modules'''
     pipelines = {}
-    for impt, name, isp in pkgutil.iter_modules(paths):
-        loader = impt.find_module(name)
-        mod = loader.load_module(name)
-        pipelines[name] = mod
+    for path in paths:
+        thispipe = load_pipelines_from_ini(path)
+        pipelines.update(thispipe)
+    return pipelines
 
-    for key in pipelines:
-        # import recipes
-        # import everything under 'name.recipes'
-        recipes = importlib.import_module('%s.recipes' % key)
-        for impt, nmod, ispkg in pkgutil.walk_packages(path=recipes.__path__,
-                                            prefix=recipes.__name__ + '.'):
-            loader = impt.find_module(nmod)
+def import_pipeline(name, path):
+    if not path:
+        _logger.debug('Import pipeline %s from system', name)
+        try:
+            mod = importlib.import_module(name)
+            return mod
+        except ImportError:
+            _logger.warning('No module named', name)
+    else:
+        _logger.debug('Import pipeline %s from %s', name, path)
+        for impt, mname, isp in pkgutil.iter_modules([path]):
+            if mname == name:
+                loader = impt.find_module(mname)
+                mod = loader.load_module(mname)
+                return mod
+        else:
+            _logger.warning('No module named', name)
+            
+def import_recipes(name):
+    # import recipes
+    # import everything under 'name.recipes'
+    recipes = importlib.import_module('%s.recipes' % name)
+    for impt, nmod, ispkg in pkgutil.walk_packages(path=recipes.__path__, prefix=recipes.__name__ + '.'):
+        loader = impt.find_module(nmod)
+        try:
+            mod = loader.load_module(nmod)
+        except ImportError:
+            _logger.warning('Error loading', nmod)
+
+def load_pipelines_from_ini(path):
+    '''Load files in ini format from path'''
+    
+    pipelines = {}
+    
+    for base, sub, files in os.walk(path):
+        files.sort()
+        for fname in files:
+            defaults = {'name': fname, 'path': None}
+            config = ConfigParser.SafeConfigParser(defaults=defaults,
+                                                   allow_no_value=True)
+            config.read(os.path.join(base, fname))
             try:
-                mod = loader.load_module(nmod)
-            except ImportError as ex:
-                print 'error loading', nmod
-
+                name = config.get('pipeline', 'name')
+                path = config.get('pipeline', 'path')
+                path = os.path.expanduser(path)
+                pipelines[name] = import_pipeline(name, path)
+                import_recipes(name)
+            except ConfigParser.NoSectionError:
+                _logger.warning('Not valid ini file', fname)
+    
     return pipelines
 
 def init_pipeline_system():
