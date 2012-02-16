@@ -134,10 +134,10 @@ int NU_sigmaclip_function(double *data, double *weights,
           __gnu_cxx::compose2(std::logical_and<bool>(),
               __gnu_cxx::compose1(
                   std::bind1st(std::less<double>(), low),
-                  __gnu_cxx::select1st<typename ZIter::value_type>()),
+                  __gnu_cxx::select1st<ZIter::value_type>()),
               __gnu_cxx::compose1(
                   std::bind1st(std::greater<double>(), high),
-                  __gnu_cxx::select1st<typename ZIter::value_type>())
+                  __gnu_cxx::select1st<ZIter::value_type>())
             )
           );
 
