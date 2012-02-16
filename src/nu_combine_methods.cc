@@ -91,8 +91,8 @@ int NU_minmax_function(double *data, double *weights,
       // if the first component of the first is less than the first component
       // of the second std::pair
       compose(std::less<double>(), __gnu_cxx::select1st<
-          typename ZIter::value_type>(), __gnu_cxx::select1st<
-          typename ZIter::value_type>()));
+          ZIter::value_type>(), __gnu_cxx::select1st<
+          ZIter::value_type>()));
 
   *out[2] = result.second - result.first;
   IterPair beg = result.first.get_iterator_pair();
