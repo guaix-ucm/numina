@@ -208,7 +208,7 @@ def generic_combine(method, images, masks=None, dtype=None, out=None,
             outshape = (3,) + tuple(images[0].shape)
             out = numpy.zeros(outshape, dtype)
         except AttributeError:
-            raise TypeError
+            raise TypeError('First element in images does not have .shape attribute')
     else:
         out = numpy.asanyarray(out)
         
