@@ -28,10 +28,13 @@ A recipe is a class that complies with the *reduction recipe API*:
 import abc
 import importlib
 import traceback
+import logging
 
 import pyfits
 
 from numina.exceptions import RecipeError, ParameterError
+
+_logger = logging.getLogger('numina')
 
 # Classes are new style
 __metaclass__ = type
@@ -112,6 +115,7 @@ class RecipeBase(object):
                                 'message': str(exc), 
                                 'traceback': traceback.format_exc()}
                       }
+            _logger.error("During recipe execution %s", exc)
         return result
 
 class RecipeResult(dict):
