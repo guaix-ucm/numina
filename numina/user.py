@@ -311,13 +311,15 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
 
         import shutil
         if cleanup:
-            _logger.debug('Cleaning up the workdir')
+            _logger.debug('cleaning up the workdir')
             shutil.rmtree(workdir)
+        _logger.info('finished')
     except Exception as error:
         _logger.error('%s', error)
         result['error'] = {'type': error.__class__.__name__, 
                                     'message': str(error), 
                                     'traceback': traceback.format_exc()}
+        _logger.error('finishing with errors: %s', error)
     finally:
         _recipe_logger.removeHandler(fh)
 
