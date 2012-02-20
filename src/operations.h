@@ -220,8 +220,9 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
   // Weights are ignored
   const T m = median(begin, end);
   const T avg = mean(begin, end);
-
-  const T v = weighted_population_variance(begin, end, weights, avg);
+  // Using this http://mathworld.wolfram.com/StatisticalMedian.html
+  // as a first approach
+  const T v = weighted_population_variance(begin, end, weights, avg) / 0.637;
   return std::make_pair(m, v);
 }
 
