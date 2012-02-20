@@ -37,7 +37,7 @@ import traceback
 
 from numina import __version__, ObservingResult
 from numina.pipeline import init_pipeline_system
-from numina.recipes import list_recipes, find_recipe, Product
+from numina.recipes import list_recipes, find_recipe, DataProduct
 from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
@@ -166,7 +166,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
         if req.name in params:
             _logger.debug('parameter %s has value %s', req.name, params[req.name])
             parameters[req.name] = params[req.name]
-        elif inspect.isclass(req.value) and issubclass(req.value, Product):
+        elif inspect.isclass(req.value) and issubclass(req.value, DataProduct):
             _logger.error('parameter %s must be defined', req.name)
             raise ValueError('parameter %s must be defined' % req.name)        
         elif req.value is not None:
@@ -257,7 +257,7 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
         if req.name in params:
             _logger.debug('parameter %s has value %s', req.name, params[req.name])
             parameters[req.name] = params[req.name]
-        elif inspect.isclass(req.value) and issubclass(req.value, Product):
+        elif inspect.isclass(req.value) and issubclass(req.value, DataProduct):
             _logger.error('parameter %s must be defined', req.name)
             raise ValueError('parameter %s must be defined' % req.name)        
         elif req.value is not None:

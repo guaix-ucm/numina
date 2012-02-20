@@ -24,7 +24,7 @@ import logging
 
 import pyfits
 
-from .recipes import Image
+from .recipes import DataFrame
 
 class FITSHistoryHandler(logging.Handler):
     '''Logging handler using HISTORY FITS cards'''
@@ -52,7 +52,7 @@ def log_to_history(logger):
                 result = method(self, block)
                 if 'products' in result:
                     for r in result['products']:
-                       if isinstance(r, Image):
+                       if isinstance(r, DataFrame):
                            hdr = r.image[0].header
                            hdr.ascardlist().extend(history_header.ascardlist())
                 return result 

@@ -146,17 +146,22 @@ class requires(object):
             klass.__requires__ = list(self.parameters)
         return klass
 
-class Parameter(object):
-    def __init__(self, name, value, description):
+class Requirement(object):
+    def __init__(self, name, value, description, soft=False):
         self.name = name
         self.value = value
         self.description = description
+        self.soft = soft
 
-class Product(object):
+class Parameter(Requirement):
+    def __init__(self, name, value, description, soft=False):
+        super(Parameter, self).__init__(name, value, description, soft)
+
+class DataProduct(object):
     '''Base class for Recipe Products'''
     pass
 
-class Image(Product):
+class DataFrame(DataProduct):
     def __init__(self, image):
         self.image = image
         self.filename = None

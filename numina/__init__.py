@@ -24,7 +24,7 @@ import json
 
 import pyfits
 
-from numina.recipes import RecipeBase, Image
+from numina.recipes import RecipeBase, DataFrame
 
 __version__ = '0.5.0'
 
@@ -59,7 +59,7 @@ class ReductionResult(object):
         self.status = 0
         self.picklable = {}
 
-class ImageInformation(object):
+class FrameInformation(object):
     def __init__(self):
         self.label = None
         self.target = None
@@ -75,7 +75,7 @@ class ObservingResult(object):
         self.id = None
         self.mode = None
         self.instrument = None
-        self.images = [] # list of ImageInformation
+        self.images = [] # list of FrameInformation
         self.children = [] # other ObservingResult
 
 # FIXME: pyfits.core.HDUList is treated like a list
