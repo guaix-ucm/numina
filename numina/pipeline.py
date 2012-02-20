@@ -64,7 +64,7 @@ def import_recipes(name):
         try:
             mod = loader.load_module(nmod)
         except ImportError:
-            _logger.warning('Error loading', nmod)
+            _logger.warning('Error loading %s', nmod)
 
 def load_pipelines_from_ini(path):
     '''Load files in ini format from path'''
