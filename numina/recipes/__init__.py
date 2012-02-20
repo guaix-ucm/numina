@@ -147,6 +147,11 @@ class requires(object):
         return klass
 
 class Requirement(object):
+    '''Requirements of Recipes
+    
+        :param soft: Make the Requirement soft
+    
+    '''
     def __init__(self, name, value, description, soft=False):
         self.name = name
         self.value = value
