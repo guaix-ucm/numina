@@ -46,22 +46,22 @@ def mean(images, masks=None, dtype=None, out=None,
     :param masks: a list of masked arrays, True values are masked
     :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images 
-    :return: mean, variance and number of points stored in    
+    :return: mean, variance of the mean and number of points stored in    
     
     
     Example:
-       >>> import numpy
-       >>> image = numpy.array([[1., 3.], [1., -1.4]])
-       >>> inputs = [image, image + 1]
-       >>> mean(inputs)
-       array([[[ 1.5,  3.5],
-               [ 1.5, -0.9]],
-       <BLANKLINE>
-              [[ 0.5,  0.5],
-               [ 0.5,  0.5]],
-       <BLANKLINE>
-              [[ 2. ,  2. ],
-               [ 2. ,  2. ]]])
+        >>> import numpy
+        >>> image = numpy.array([[1., 3.], [1., -1.4]])
+        >>> inputs = [image, image + 1]
+        >>> mean(inputs)
+        array([[[ 1.5 ,  3.5 ],
+                [ 1.5 , -0.9 ]],
+        <BLANKLINE>
+               [[ 0.25,  0.25],
+                [ 0.25,  0.25]],
+        <BLANKLINE>
+               [[ 2.  ,  2.  ],
+                [ 2.  ,  2.  ]]])
        
     '''
     return generic_combine(mean_method(), images, masks=masks, dtype=dtype, out=out,                   
@@ -85,7 +85,7 @@ def median(images, masks=None, dtype=None, out=None,
     :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
  
-    :return: mean, variance and number of points stored in
+    :return: median, variance of the median and number of points stored in
        
     '''
     return generic_combine(median_method(), images, masks=masks, dtype=dtype, out=out,
@@ -109,7 +109,7 @@ def sigmaclip(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :param out: optional output, with one more axis than the input images
     :param low:
     :param high: 
-    :return: mean, variance and number of points stored in    
+    :return: mean, variance of the mean and number of points stored in    
     '''
     return generic_combine(sigmaclip_method(low, high), images, 
                            masks=masks, dtype=dtype, out=out,
@@ -133,7 +133,7 @@ def minmax(images, masks=None, dtype=None, out=None, zeros=None, scales=None,
     :param out: optional output, with one more axis than the input images
     :param nmin:
     :param nmax: 
-    :return: mean, variance and number of points stored in    
+    :return: mean, variance of the mean and number of points stored in    
     '''
         
     return generic_combine(minmax_method(nmin, nmax), images, 
@@ -157,7 +157,7 @@ def quantileclip(images, masks=None, dtype=None, out=None, zeros=None, scales=No
     :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
     :param fclip: fraction of points removed on both ends. Maximum is 0.4 (80% of points rejected) 
-    :return: mean, variance and number of points stored in    
+    :return: mean, variance of the mean and number of points stored in    
     ''' 
     return generic_combine(quantileclip_method(fclip), images, masks=masks, dtype=dtype, out=out,
                            zeros=zeros, scales=scales, weights=weights)
@@ -173,7 +173,7 @@ def flatcombine(data, masks=None, dtype=None, scales=None,
     :param dtype: data type of the output
     :param out: optional output, with one more axis than the input images
     :param blank: non-positive values are substituted by this on output
-    :return: mean, variance and number of points stored in    
+    :return: mean, variance of the mean and number of points stored in    
     '''
         
     result = sigmaclip(data, masks=masks,
