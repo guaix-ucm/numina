@@ -108,6 +108,49 @@ inline typename std::iterator_traits<Iterator1>::value_type weighted_mean_unit(
 }
 
 template<typename Iterator1, typename Iterator2, typename T>
+inline T weighted_population_variance(Iterator1 begin, Iterator1 end,
+    Iterator2 wbegin, T mean) {
+
+  T v1 = T(0);
+  T v2 = T(0);
+  T sum = T(0);
+
+  while (begin != end) {
+    v1 += *wbegin;
+    v2 += (*wbegin) * (*wbegin);
+    const T val = *begin - mean;
+    sum += *wbegin * val * val;
+
+    ++begin;
+    ++wbegin;
+
+  }
+
+  return v1 / (v2 * v1 * v1 - v2 * v2) * sum;
+}
+
+template<typename Iterator1, typename Iterator2, typename T>
+inline T weighted_population_variance_unit(Iterator1 begin, Iterator1 end,
+    Iterator2 wbegin, T mean) {
+
+  T v2 = T(0);
+  T sum = T(0);
+
+  while (begin != end) {
+    v2 += (*wbegin) * (*wbegin);
+    const T val = *begin - mean;
+    sum += *wbegin * val * val;
+
+    ++begin;
+    ++wbegin;
+
+  }
+
+  return 1 / (v2 - v2 * v2) * sum;
+}
+
+
+template<typename Iterator1, typename Iterator2, typename T>
 inline T weighted_variance(Iterator1 begin, Iterator1 end, Iterator2 wbegin,
     T mean) {
 
@@ -160,7 +203,7 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
     return std::make_pair(*begin, T(0.0));
 
   const T m = weighted_mean(begin, end, weights);
-  const T v = weighted_variance(begin, end, weights, m);
+  const T v = weighted_population_variance(begin, end, weights, m);
   return std::make_pair(m, v);
 }
 
@@ -176,8 +219,9 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
 
   // Weights are ignored
   const T m = median(begin, end);
-  // FIXME
-  const T v = weighted_variance(begin, end, weights, m);
+  const T avg = mean(begin, end);
+
+  const T v = weighted_population_variance(begin, end, weights, avg);
   return std::make_pair(m, v);
 }
 
