@@ -173,12 +173,14 @@ class CombineTestCase(unittest.TestCase):
         out = median(inputs)
     
         rres = input3
-    
-            # Checking
+        rvar = [3.39089482, 0., 0.25117739, 0., 0., 0.,
+                0.56514914, 0., 76.92307692, 0., 0.25117739, 1.00470958]
+        
+        # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-#        for cal, precal in zip(out[1].flat, rvar.flat):
-#            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(5)):
             self.assertEqual(cal, precal)
             
@@ -195,12 +197,14 @@ class CombineTestCase(unittest.TestCase):
         out = median(inputs)
     
         rres = numpy.array([[4, 2, 4.5, 0.0]], dtype='float')
-    
-            # Checking
+        rvar = [4.7095761381475665, 0.09811616954474098, 
+                2.3547880690737832, 8.372579801151229]
+        
+        # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-#        for cal, precal in zip(out[1].flat, rvar.flat):
-#            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(4)):
             self.assertEqual(cal, precal)
     
