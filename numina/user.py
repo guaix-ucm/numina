@@ -233,14 +233,14 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
 
     return result
 
-def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):    
-    _logger.info('instrument=%(instrument)s mode=%(mode)s', 
-                obsres.__dict__)
+def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup): 
+    _logger.info('instrument={0.instrument[name]} mode={0.mode}'.format(obsres))
     try:
-        entry_point = find_recipe(obsres.instrument, obsres.mode)
+        entry_point = find_recipe(obsres.instrument['name'], obsres.mode)
         _logger.info('entry point is %s', entry_point)
     except ValueError:
-        _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
+        _logger.warning('cannot find entry point for {0.instrument[name]} mode={0.mode}'
+                        .format(obsres))
         raise
 
     mod, klass = entry_point.split(':')
@@ -383,6 +383,7 @@ def mode_run(args):
     if 'observing_result' in task_control:
         _logger.info('reading observing result from %s', args.task)
         obsres.__dict__ = task_control['observing_result']
+        obsres.instrument = instrument
 
     if 'reduction' in task_control:
         _logger.info('reading reduction parameters from %s', args.task)
