@@ -75,11 +75,8 @@ def _store_rr(obj, where):
     
     parsed = _parse_rr(dict(obj), external)
         
-    f = open(where, 'w+') 
-    try:
+    with open(where, 'w+') as f:
         json.dump(parsed, f, default=to_json, indent=1, encoding='utf-8')
-    finally:
-        f.close()
         
     for filename, nobj in external:
         store(nobj, filename)
