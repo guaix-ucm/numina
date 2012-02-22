@@ -18,55 +18,177 @@
 # 
 
 import logging
+import time
 
-from .node import Corrector
+from .node import Node
 import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
 
-class BadPixelCorrector(Corrector):
-    def __init__(self, badpixelmask, mark=True, dtype='float32'):
-        super(BadPixelCorrector, self).__init__(label=('NUM-BPM','Badpixel removed with numina'), dtype=dtype, mark=mark)
+class SimpleDataModel(object):
+    '''Model of the Data being processed'''
+    def get_data(self, img):
+        return img['primary'].data
+    
+    def get_header(self, img):
+        return img['primary'].header
+    
+    def get_variance(self, img):
+        return img['variance'].data
+
+
+class NoTag(object):
+    
+    def check_if_processed(self, img):
+        return False
+    
+    def tag_as_processed(self, img):
+        pass
+
+
+class TagFits(object):
+    def __init__(self, tag, comment):
+        self.tag = tag
+        self.comment = comment
+        
+    def check_if_processed(self, header):
+        return header.has_key(self.tag)
+    
+    def tag_as_processed(self, header):
+        header.update(self.tag, time.asctime(), self.comment)
+
+class Corrector(Node):
+    def __init__(self, datamodel, tagger, dtype='float32'):
+        super(Corrector, self).__init__()
+        self.tagger = tagger
+        if not datamodel:
+            self.datamodel = SimpleDataModel()
+        else:
+            self.datamodel = datamodel
+        self.dtype = dtype
+            
+    def __call__(self, img):
+        hdr = self.datamodel.get_header(img)
+        if self.tagger.check_if_processed(hdr):
+            _logger.info('%s already processed by %s', img, self)
+            return img
+        else:
+            self._run(img)
+            self.tagger.tag_as_processed(hdr)
+        return img
+    
+class TagOptionalCorrector(Corrector):
+    def __init__(self, datamodel, tagger, mark=True, dtype='float32'):
+        if not mark:
+            tagger = NoTag()
+        
+        super(TagOptionalCorrector, self).__init__(datamodel=datamodel, 
+                                                   tagger=tagger, dtype=dtype)
+
+class BadPixelCorrector(TagOptionalCorrector):
+    def __init__(self, badpixelmask, mark=True, tagger=None, datamodel=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-BPM','Badpixel removed with Numina')
+        
+        super(BadPixelCorrector, self).__init__(datamodel, tagger, mark, dtype=dtype)
         self.bpm = badpixelmask
 
     def _run(self, img):
         _logger.debug('correcting bad pixel mask in %s', img)        
         img.data = array.fixpix(img.data, self.bpm)
-        self.mark_as_processed(img)
         return img
 
 
-class BiasCorrector(Corrector):
-    def __init__(self, biasmap, mark=True, dtype='float32'):
-        super(BiasCorrector, self).__init__(label=('NUM-BS','Bias removed with numina'), dtype=dtype, mark=mark)
+class BiasCorrector(TagOptionalCorrector):
+    def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        
+        
+        if tagger is None:
+            tagger = TagFits('NUM-BS','Bias removed with Numina')
+            
+        self.update_variance = False
+        
+        if biasvar:
+            self.update_variance = True
+        
+        super(BiasCorrector, self).__init__(datamodel=datamodel,
+                                            tagger=tagger, 
+                                            mark=mark, 
+                                            dtype=dtype)
         self.biasmap = biasmap
+        self.biasvar = biasvar
 
     def _run(self, img):
         _logger.debug('correcting bias in %s', img)
-        img.data = array.correct_dark(img.data, self.biasmap, dtype=self.dtype)
-        self.mark_as_processed(img)
+        data = self.datamodel.get_data(img)
+
+        
+        data -= self.biasmap
+        
+        if self.update_variance:
+            variance = self.datamodel.get_variance(img)
+            variance += self.biasvar 
+        
         return img
 
-class DarkCorrector(Corrector):
-    def __init__(self, darkmap, mark=True, dtype='float32'):
-        super(DarkCorrector, self).__init__(label=('NUM-DK','Dark removed with numina'), dtype=dtype, mark=mark)
+class DarkCorrector(TagOptionalCorrector):
+    def __init__(self, darkmap, darkvar=None, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+                
+        if tagger is None:
+            tagger = TagFits('NUM-DK','Dark removed with Numina')
+            
+        self.update_variance = False
+        
+        if darkvar:
+            self.update_variance = True
+        
+        super(DarkCorrector, self).__init__(datamodel=datamodel,
+                                            tagger=tagger, 
+                                            mark=mark, 
+                                            dtype=dtype)
         self.darkmap = darkmap
-
+        self.darkvar = darkvar
+    
     def _run(self, img):
         _logger.debug('correcting dark in %s', img)
-        img.data = array.correct_dark(img.data, self.darkmap, dtype=self.dtype)
-        self.mark_as_processed(img)
+        data = self.datamodel.get_data(img)
+
+        
+        data -= self.darkmap
+        
+        if self.update_variance:
+            variance = self.datamodel.get_variance(img)
+            variance += self.darkvar 
+        
         return img
 
-class NonLinearityCorrector(Corrector):
-    def __init__(self, polynomial, mark=True, dtype='float32'):
-        super(NonLinearityCorrector, self).__init__(label=('NUM-LIN','Non-linearity removed with numina'), dtype=dtype, mark=mark)
+class NonLinearityCorrector(TagOptionalCorrector):
+    def __init__(self, polynomial, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-LIN','Non-linearity corrected with Numina')
+            
+        self.update_variance = False
+                
+        super(NonLinearityCorrector, self).__init__(datamodel=datamodel,
+                                            tagger=tagger, 
+                                            mark=mark, 
+                                            dtype=dtype)
+        
         self.polynomial = polynomial
                 
     def _run(self, img):
         _logger.debug('correcting non linearity in %s', img)
-        img.data = array.correct_nonlinearity(img.data, self.polynomial, dtype=self.dtype)
-        self.mark_as_processed(img)
+        
+        data = self.datamodel.get_data(img)
+        
+        data = array.correct_nonlinearity(data, self.polynomial, dtype=self.dtype)
+        
         return img
         
 class FlatFieldCorrector(Corrector):

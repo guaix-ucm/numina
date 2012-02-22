@@ -19,7 +19,6 @@
 
 import abc
 import logging
-import time
 
 _logger = logging.getLogger('numina.node')
 
@@ -47,8 +46,7 @@ class Node(object):
     def __call__(self, img):
         args = self.obtain_tuple(img)        
         return self._run(img)
-    
-    @staticmethod
+
     def obtain_tuple(self, arg):
         if isinstance(arg, tuple):
             return arg
@@ -86,30 +84,5 @@ class OutputSelector(Node):
             return res[0]
         return res
 
-class Corrector(Node):
-    def __init__(self, label=None, mark=True, dtype='float32'):
-        super(Corrector, self).__init__()
-        self.dtype = dtype
-        self.mark = mark
-        if not label:
-            self.label = ('NUM', 'Numina comment')
-        else:
-            self.label = label
-            
-    def __call__(self, img):
-        if self.check_if_processed(img):
-            _logger.info('%s already processed by %s', img, self)
-            return img
-        else:
-            self._run(img)
-        return img
 
-    def check_if_processed(self, img):
-        if self.mark and img and img.header.has_key(self.label[0]):
-            return True
-        return False
-
-    def mark_as_processed(self, img):
-        if self.mark:
-            img.header.update(self.label[0], time.asctime(), self.label[1])
 
