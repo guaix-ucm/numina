@@ -17,21 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from .base import BaseConectable
-
-class Shutter(BaseConectable):
-    def __init__(self):
-        self.closed = True 
-    
-    def open(self):
-        self.closed = False
-    
-    def close(self):
-        self.closed = True
-        
-    def emit(self):
-        if self.closed:
-            return 0.0
-        else:
-            return self.source.emit()
-        
+class BaseConectable(object):
+    def connect(self, source):
+        self.source = source

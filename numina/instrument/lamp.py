@@ -17,34 +17,22 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-# Classes are new style
-__metaclass__ = type
+class Lamp(object):
+    def __init__(self, radiance):
+        self.off = True
+        self.radiance = radiance
 
-class Lamp:
-    def __init__(self, name, code, source):
-        self.name = name
-        self.code = code
-        self._source = source
-        self.power = False
-    
-    @property
-    def source(self):
-        if self.power:
-            return self._source
+    def switchon(self):
+        self.off = False
+
+    def switchoff(self):
+        self.off = True
+
+    def switch(self, off):
+        self.off = off
+
+    def emit(self):
+        if self.off:
+            return 0.0
         else:
-            return None
-    
-
-class Lamps:
-    def __init__(self, lamplist):
-        self.lamplist = lamplist
-    
-    @property
-    def source(self):
-        for i in self.lamplist:
-            if i.power:
-                return i.source
-    
-    def switch(self, status):
-        for i in self.lamplist:
-            i.power = status
+            return radiance

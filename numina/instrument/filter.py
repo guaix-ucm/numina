@@ -17,41 +17,17 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from .base import BaseConectable
+
 # Classes are new style
 __metaclass__ = type
 
-class Empty:
-    name = 'Empty'
-    code = 'Empty'
-    def lpath(self, input_):
-        return input_
 
-class Filter:
-    def __init__(self, name, code, trans, **kwrd):
+class Filter(BaseConectable):
+    def __init__(self, name, code, trans):
         self.name = name
         self.code = code
         self.trans = trans
-        
-    def lpath(self, input_):
-        return input_
 
-class FilterWheel:
-    def __init__(self, filterlist):
-        self._filterlist = filterlist
-        self._pos = 0
-        self._size = len(filterlist)
-        
-    def set_position(self, pos):
-        self._pos = pos % self._size
-        
-    def get_current_filter(self):
-        return self._filterlist[self._pos]
-    
-    def lpath(self, input_):
-        return self._filterlist[self._pos].path(input_)
-    
-    def get_size(self):
-        return self._size
-    
-    def metadata(self):
-        return {'FILTER': self._filterlist[self._pos].code}
+    def emit(self):
+        return self.trans * self.source.emit()

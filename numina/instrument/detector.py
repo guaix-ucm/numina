@@ -29,6 +29,8 @@ from numina.array import numberarray
 from numina.exceptions import DetectorElapseError
 from numina.astrotime import datetime_to_mjd
 
+from .base import BaseConectable
+
 Amplifier = namedtuple('Amplifier', ['shape', 'gain', 'ron', 'wdepth'])
 
 class Das(object):
@@ -150,7 +152,7 @@ class RampReadoutMode(ReadoutMode):
         images = numpy.dstack(images)
         return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
 
-class ArrayDetector(object):
+class ArrayDetector(BaseConectable):
     def __init__(self, shape, amplifiers, 
                  bias=100.0, 
                  reset_value=0.0, reset_noise=0.0,
@@ -227,9 +229,9 @@ class CCDDetector(ArrayDetector):
 
         self._last_read += dt
         
-        # Source is not implemented
-        
-        self.buffer += poisson(self.dark * dt, size=self.shape).astype('float')
+        source = self.source.emit() * self.flat
+        self.buffer += poisson((self.dark + source) * dt, 
+                               size=self.shape).astype('float')
         
         
     def readout(self):
@@ -260,8 +262,8 @@ class nIRDetector(ArrayDetector):
     def expose(self, dt, source=None):
 
         self._last_read += dt
-        # Source is not implemented        
-        self.buffer += poisson(self._dark * dt).astype('float')
+        source = self.source.emit() * self._flat 
+        self.buffer += poisson((self._dark + source) * dt).astype('float')
         
 if __name__ == '__main__':
     

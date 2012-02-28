@@ -17,21 +17,29 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from .base import BaseConectable
 
-class Shutter(BaseConectable):
-    def __init__(self):
-        self.closed = True 
+class MultiSource(object):
+    def __init__(self, *sources):
+        self.sources = sources
+
+    def emit(self):
+        return sum(src.emit() for src in self.sources)
+
+class LightSource(object):
     
-    def open(self):
-        self.closed = False
-    
-    def close(self):
-        self.closed = True
+    def __add__(self, other):
+        return MultiSource(self, other)
+
+class Sky(object):
+    def __init__(self, radiance):
+        self.radiance = radiance
         
     def emit(self):
-        if self.closed:
-            return 0.0
-        else:
-            return self.source.emit()
+        return radiance
+
+class ThermalBackground(object):
+    def __init__(self, radiance):
+        self.radiance = radiance
         
+    def emit(self):
+        return self.radiance

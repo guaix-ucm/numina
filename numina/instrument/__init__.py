@@ -17,3 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
     
+from .shutter import Shutter
+from .lamp import Lamp
+from .sources import Sky, ThermalBackground, MultiSource
