@@ -62,6 +62,7 @@ class ReductionResult(object):
 class FrameInformation(object):
     def __init__(self):
         self.label = None
+        self.object = None
         self.target = None
         self.itype = None
         self.exposure = 0.0
@@ -77,6 +78,31 @@ class ObservingResult(object):
         self.instrument = None
         self.images = [] # list of FrameInformation
         self.children = [] # other ObservingResult
+        
+
+def frameinfo_from_list(values):
+    # FIXME: modify when format is changed
+    # For this format
+    # [r0007.fits, M 33, 10.0, TARGET, 23.4620835, 30.66027777]
+    frameinfo = FrameInformation()
+    frameinfo.label = values[0]
+    frameinfo.object = values[1]
+    frameinfo.exposure = values[2]
+    frameinfo.itype = values[3]
+    frameinfo.ra = values[4]
+    frameinfo.dec = values[5]
+    return frameinfo
+
+def obsres_from_dict(values):
+    
+    obsres = ObservingResult()
+    
+    obsres.id = values['id']
+    obsres.mode = values['mode']
+    obsres.instrument = values['instrument']
+    obsres.images = [frameinfo_from_list(val) for val in values['images']]
+    
+    return obsres
 
 # FIXME: pyfits.core.HDUList is treated like a list
 # each extension is stored separately

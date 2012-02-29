@@ -35,7 +35,7 @@ import importlib
 import inspect
 import traceback
 
-from numina import __version__, ObservingResult
+from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes, find_recipe, DataProduct
 from numina.jsonserializer import to_json
@@ -129,9 +129,6 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     
     ins_pars = {}
     params = {}
-    obsres = ObservingResult()
-    obsres.instrument = 'none'
-    obsres.mode = 'none'
     
     if 'instrument' in task_control:
         _logger.info('file contains instrument config')
@@ -234,12 +231,12 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     return result
 
 def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup): 
-    _logger.info('instrument={0.instrument[name]} mode={0.mode}'.format(obsres))
+    _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
     try:
-        entry_point = find_recipe(obsres.instrument['name'], obsres.mode)
+        entry_point = find_recipe(obsres.instrument, obsres.mode)
         _logger.info('entry point is %s', entry_point)
     except ValueError:
-        _logger.warning('cannot find entry point for {0.instrument[name]} mode={0.mode}'
+        _logger.warning('cannot find entry point for {0.instrument} mode={0.mode}'
                         .format(obsres))
         raise
 
@@ -332,8 +329,7 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
 
 
 def mode_run(args):
-        
-    
+    '''Recipe execution mode of numina.'''
     args.basedir = os.path.abspath(args.basedir)    
     
     if args.workdir is None:
@@ -346,7 +342,6 @@ def mode_run(args):
     
     args.resultsdir = os.path.abspath(args.resultsdir)
 
-    # FIXME: race condition here
     # Check basedir exists
     if not os.path.exists(args.basedir):
         os.mkdir(args.basedir)
@@ -359,36 +354,56 @@ def mode_run(args):
     if not os.path.exists(args.resultsdir):
         os.mkdir(args.resultsdir)
 
-    # json decode
-    with open(args.task, 'r') as fd:
-        task_control = json.load(fd)
+
     
     instrument = {}
     reduction = {}
+
+    obsres_read = False
+    instrument_read = False
     
-    obsres = ObservingResult()
-    obsres.instrument = 'none'
-    obsres.mode = 'none'
+    # Read observing result from args.
+    if args.obsblock is not None:
+        _logger.info('reading observing block from %s', args.obsblock)
+        with open(args.obsblock, 'r') as fd:
+            obsres_read = True
+            obsres_dict = json.load(fd)
+            obsres = obsres_from_dict(obsres_dict)
     
-        # Read instrument information from args.instrument
+    # Read instrument information from args.instrument
     if args.instrument is not None:
         _logger.info('reading instrument config from %s', args.instrument)
         with open(args.instrument, 'r') as fd:
             # json decode    
             instrument = json.load(fd)
-    elif 'instrument' in task_control:
+            instrument_read = True
+
+    # json decode
+    with open(args.task, 'r') as fd:
+        task_control = json.load(fd)
+            
+    if not instrument_read and 'instrument' in task_control:
         _logger.info('reading instrument config from %s', args.task)
         instrument = task_control['instrument']
         
-    if 'observing_result' in task_control:
+    if not obsres_read and 'observing_result' in task_control:
         _logger.info('reading observing result from %s', args.task)
-        obsres.__dict__ = task_control['observing_result']
-        obsres.instrument = instrument
+        obsres_read = True
+        obsres_dict = task_control['observing_result']
+        obsres = obsres_from_dict(obsres_dict)
 
     if 'reduction' in task_control:
         _logger.info('reading reduction parameters from %s', args.task)
         reduction = task_control['reduction']['parameters']
         
+    if not obsres_read:
+        _logger.error('observing result not read from input files')
+        return
+        
+    if not instrument_read:
+        _logger.error('instrument not read from input files')
+        return
+    
     return run_recipe(obsres, reduction, instrument, 
                        args.workdir, args.resultsdir, args.cleanup)
 
@@ -441,6 +456,7 @@ def main(args=None):
     parser_run.set_defaults(command=mode_run)    
 
     parser_run.add_argument('--instrument', dest='instrument', default=None)
+    parser_run.add_argument('--obsblock', dest='obsblock', default=None)
     parser_run.add_argument('--basedir', action="store", dest="basedir", 
                       default=os.getcwd())
     # FIXME: It is questionable if this flag should be used or not
