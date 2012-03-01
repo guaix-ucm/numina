@@ -191,14 +191,28 @@ class NonLinearityCorrector(TagOptionalCorrector):
         
         return img
         
-class FlatFieldCorrector(Corrector):
-    def __init__(self, flatdata, mark=True, dtype='float32'):
-        super(FlatFieldCorrector, self).__init__(label=('NUM-FF','Flat field removed with numina'), dtype=dtype, mark=mark)
+class FlatFieldCorrector(TagOptionalCorrector):
+    def __init__(self, flatdata, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-FF','Flat-field removed with Numina')
+            
+        self.update_variance = False
+                
+        super(FlatFieldCorrector, self).__init__(
+            datamodel=datamodel,
+            tagger=tagger, 
+            mark=mark, 
+            dtype=dtype)
+        
         self.flatdata = flatdata
-
+                
     def _run(self, img):
-        _logger.debug('correcting flatfield in %s', img)
-        img.data = array.correct_flatfield(img.data, self.flatdata, dtype=self.dtype)
-        self.mark_as_processed(img)
+        _logger.debug('correcting flat-field in %s', img)
+        
+        data = self.datamodel.get_data(img)
+        
+        data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
+        
         return img
-
