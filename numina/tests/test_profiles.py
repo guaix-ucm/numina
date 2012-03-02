@@ -26,7 +26,7 @@ import math
 import numpy as np # pylint: disable-msgs=E1101
 from scipy.special import erf
 
-from numina.simulation import GaussProfile
+from numina.instrument.profiles import GaussProfile
 
 M_SQRT1_2 = math.sqrt(1. / 2.)
 
