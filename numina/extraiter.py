@@ -20,6 +20,7 @@
 '''Numina itertools.'''
 
 from itertools import izip
+import Queue
 
 def braid(*iterables):
     '''Return the elements of each iterator in turn until some is exhausted.
@@ -39,3 +40,26 @@ def braid(*iterables):
         for it in itbl:
             yield it
 
+def iterqueue(qu):
+    '''Iterate over a Queue.
+    
+    The iteration doesn't block. It calls Queue.get_nowait method
+    
+    Example usage:
+    
+    >>> qu = Queue.Queue()
+    >>> qu.put(1)
+    >>> qu.put(2)
+    >>> qu.put(3)    
+    >>> for i in iterqueue(qu):
+    ...     print i
+    ... 
+    1
+    2
+    3
+    '''
+    try:
+        while True:
+            yield qu.get_nowait()
+    except Queue.Empty:
+        raise StopIteration
