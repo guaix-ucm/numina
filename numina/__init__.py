@@ -76,7 +76,8 @@ class ObservingResult(object):
         self.id = None
         self.mode = None
         self.instrument = None
-        self.images = [] # list of FrameInformation
+        self.frames = [] # list of FrameInformation
+        self.images = self.frames
         self.children = [] # other ObservingResult
         
 
@@ -100,7 +101,7 @@ def obsres_from_dict(values):
     obsres.id = values['id']
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
-    obsres.images = [frameinfo_from_list(val) for val in values['images']]
+    obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
     
     return obsres
 
