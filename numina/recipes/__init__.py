@@ -122,6 +122,14 @@ class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
 
+class ReductionResult(object):
+    def __init__(self):
+        self.id = None
+        self.reduction_block = None
+        self.other = None
+        self.status = 0
+        self.picklable = {}
+
 class provides(object):
     '''Decorator to add the list of provided products to recipe'''
     def __init__(self, *products):
@@ -167,24 +175,68 @@ class DataProduct(object):
     pass
 
 class DataFrame(DataProduct):
-    def __init__(self, image):
-        self.image = image
+    def __init__(self, frame):
+        self.frame = frame
         self.filename = None
 
     def __getstate__(self):
         # save fits file
         filename = 'result.fits'
-        if self.image[0].header.has_key('FILENAME'):
-            filename = self.image[0].header['FILENAME']
-            self.image.writeto(filename, clobber=True)
+        if self.frame[0].header.has_key('FILENAME'):
+            filename = self.frame[0].header['FILENAME']
+            self.frame.writeto(filename, clobber=True)
 
-        return {'image': filename}
+        return {'frame': filename}
 
     def __setstate__(self, state):
         # this is not exactly what we had in the begining...
-        self.image = pyfits.open(state['image'])
-        self.filename = state['image']
+        self.frame = pyfits.open(state['frame'])
+        self.filename = state['frame']
 
+class FrameInformation(object):
+    def __init__(self):
+        self.label = None
+        self.object = None
+        self.target = None
+        self.itype = None
+        self.exposure = 0.0
+        self.ra = 0.0
+        self.dec = 0.0
+        self.mdj = 0.0
+        self.airmass = 1.0
+
+class ObservingResult(object):
+    def __init__(self):
+        self.id = None
+        self.mode = None
+        self.instrument = None
+        self.frames = [] # list of FrameInformation
+        self.children = [] # other ObservingResult
+        
+
+def frameinfo_from_list(values):
+    # FIXME: modify when format is changed
+    # For this format
+    # [r0007.fits, M 33, 10.0, TARGET, 23.4620835, 30.66027777]
+    frameinfo = FrameInformation()
+    frameinfo.label = values[0]
+    frameinfo.object = values[1]
+    frameinfo.exposure = values[2]
+    frameinfo.itype = values[3]
+    frameinfo.ra = values[4]
+    frameinfo.dec = values[5]
+    return frameinfo
+
+def obsres_from_dict(values):
+    
+    obsres = ObservingResult()
+    
+    obsres.id = values['id']
+    obsres.mode = values['mode']
+    obsres.instrument = values['instrument']
+    obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
+    
+    return obsres
 
 def list_recipes():
     '''List all defined recipes'''
@@ -196,21 +248,3 @@ def walk_modules(mod):
                                     prefix=module.__name__ + '.'):
         yield nmod
 
-
-        
-if __name__ == '__main__':
-    import json
-    import tempfile
-    
-    from numina.user import main
-    from numina.jsonserializer import to_json 
-        
-    p = {'niterations': 1, 'observing_mode': 'sample'}
-    
-    f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
-    try:
-        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
-    finally:
-        f.close()
-            
-    main(['--module', 'numina.recipes', '--run', f.name])
