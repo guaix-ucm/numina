@@ -17,8 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import math
-
 import numpy # pylint: disable-msgs=E1101
 import scipy.stats.mvn as mvn
 
