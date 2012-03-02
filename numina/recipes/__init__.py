@@ -39,14 +39,6 @@ _logger = logging.getLogger('numina')
 # Classes are new style
 __metaclass__ = type
 
-ERROR = 1
-OK = 0
-UNKNOWN = -1
-
-_level_names = {ERROR: 'ERROR',
-                OK: 'OK',
-                UNKNOWN: 'UNKNOWN'}
-
 def find_recipe(instrument, mode):
     base = '%s.recipes' % instrument
     try:
@@ -62,10 +54,6 @@ def find_recipe(instrument, mode):
         raise ValueError(msg)
         
     return '%s.%s' % (base, entry)
-
-def find_parameters(recipe_name):
-    # query somewhere for the precomputed parameters
-    return {}
 
 class RecipeBase(object):
     '''Base class for all instrument recipes'''
