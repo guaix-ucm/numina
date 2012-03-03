@@ -42,12 +42,9 @@ class DiskStorageTestCase(unittest.TestCase):
         name = f.name
         f.close()
         
-        fo = open(name)
-        try:
+        with open(name) as fo:
             line = fo.readline()
             self.assertEqual(line, 'MyClass')
-        finally:
-            fo.close()
             
         os.remove(name)
         store.unregister(MyClass)
