@@ -31,13 +31,13 @@ from pkgutil import get_data
 import StringIO
 import xdg.BaseDirectory as xdgbd
 import json
-import importlib
 import inspect
 import traceback
 
 from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
-from numina.recipes import list_recipes, find_recipe, DataProduct
+from numina.recipes import list_recipes, DataProduct
+from numina.pipeline import find_recipe_class
 from numina.jsonserializer import to_json
 
 _logger = logging.getLogger("numina")
@@ -143,16 +143,11 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     _logger.info('instrument=%(instrument)s mode=%(mode)s', 
                 obsres.__dict__)
     try:
-        entry_point = find_recipe(obsres.instrument, obsres.mode)
-        _logger.info('entry point is %s', entry_point)
+        RecipeClass = find_recipe_class(obsres.instrument, obsres.mode)
+        _logger.info('entry point is %s id=%i', RecipeClass, id(RecipeClass))
     except ValueError:
         _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
         raise
-
-    mod, klass = entry_point.split(':')
-
-    module = importlib.import_module(mod)
-    RecipeClass = getattr(module, klass)
 
     _logger.info('matching parameters')    
 
@@ -183,7 +178,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     runinfo = {}
     runinfo['workdir'] = workdir
     runinfo['resultsdir'] = resultsdir
-    runinfo['entrypoint'] = entry_point
+    runinfo['entrypoint'] = RecipeClass
 
     # Set custom logger
     # FIXME we are assuming here that Recipe top package is named after the instrument
@@ -233,17 +228,12 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
 def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup): 
     _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
     try:
-        entry_point = find_recipe(obsres.instrument, obsres.mode)
-        _logger.info('entry point is %s', entry_point)
+        RecipeClass = find_recipe_class(obsres.instrument, obsres.mode)
+        _logger.info('entry point is %s %d', RecipeClass, id(RecipeClass))
     except ValueError:
-        _logger.warning('cannot find entry point for {0.instrument} mode={0.mode}'
+        _logger.warning('cannot find recipe class for {0.instrument} mode={0.mode}'
                         .format(obsres))
         raise
-
-    mod, klass = entry_point.split(':')
-
-    module = importlib.import_module(mod)
-    RecipeClass = getattr(module, klass)
 
     _logger.info('matching parameters')    
 
@@ -278,7 +268,7 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
     runinfo = {}
     runinfo['workdir'] = workdir
     runinfo['resultsdir'] = resultsdir
-    runinfo['entrypoint'] = entry_point
+    runinfo['entrypoint'] = fully_qualified_name(RecipeClass)
 
     # Set custom logger
     _recipe_logger = logging.getLogger('%(instrument)s.recipes' % obsres.__dict__)
@@ -484,11 +474,13 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
+    
     pipelines = init_pipeline_system()
     for key in pipelines:
         pl = pipelines[key]
         version = getattr(pl, '__version__', '0.0.0')
-        _logger.info('Loaded pipeline for %s, version %s', key, version)
+        instrument = key
+        _logger.info('Loaded pipeline for %s, version %s', instrument, version)
     captureWarnings(True)
     
     args.command(args)

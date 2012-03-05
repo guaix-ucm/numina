@@ -26,7 +26,6 @@ A recipe is a class that complies with the *reduction recipe API*:
 '''
 
 import abc
-import importlib
 import pkgutil
 import traceback
 import logging
@@ -38,22 +37,6 @@ from .oblock import obsres_from_dict
 from .requirements import Parameter
 
 _logger = logging.getLogger('numina')
-
-def find_recipe(instrument, mode):
-    base = '%s.recipes' % instrument
-    try:
-        mod = importlib.import_module(base)
-    except ImportError:
-        msg = 'No instrument %s' % instrument
-        raise ValueError(msg)
-
-    try:
-        entry = mod.find_recipe(mode)
-    except KeyError:
-        msg = 'No recipe for mode %s' % mode
-        raise ValueError(msg)
-        
-    return '%s.%s' % (base, entry)
 
 def list_recipes():
     '''List all defined recipes'''
@@ -114,7 +97,7 @@ class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
 
-# FIXME: check if thsi class can be removed
+# FIXME: check if this class can be removed
 class ReductionResult(object):
     def __init__(self):
         self.id = None
