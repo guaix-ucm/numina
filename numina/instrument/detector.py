@@ -54,9 +54,12 @@ class Das(object):
         now = datetime.now()
         self._meta['dateobs'] = now.isoformat()
         self._meta['mjdobs'] = datetime_to_mjd(now)
+        
         alldata = []
         events = self.mode.events(exposure)
-
+        
+        self.detector.reset()
+        
         for time in events:
             self.detector.expose_until(time)
             data = self.detector.readout()
@@ -182,7 +185,7 @@ class ArrayDetector(BaseConectable):
             data[amp.shape] /= amp.gain
         data += self.bias
         data = data.astype(self.outtype)
-        self._last_read += self.reset_time        
+        self._last_read += self.readout_time        
         # FIXME: increase dark current here
         # self.buffer += poisson(self.dark * self.reset_time).astype('float')
         return data
