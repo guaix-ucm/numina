@@ -46,14 +46,9 @@ class ObservingResult(object):
 def frameinfo_from_list(values):
     # FIXME: modify when format is changed
     # For this format
-    # [r0007.fits, M 33, 10.0, TARGET, 23.4620835, 30.66027777]
     frameinfo = FrameInformation()
     frameinfo.label = values[0]
-    frameinfo.object = values[1]
-    frameinfo.exposure = values[2]
-    frameinfo.itype = values[3]
-    frameinfo.ra = values[4]
-    frameinfo.dec = values[5]
+    frameinfo.itype = values[1]
     return frameinfo
 
 def obsres_from_dict(values):
