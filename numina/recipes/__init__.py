@@ -25,8 +25,8 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 '''
 
+
 import abc
-import pkgutil
 import traceback
 import logging
 
@@ -46,6 +46,9 @@ class RecipeBase(object):
     '''Base class for all instrument recipes'''
 
     __metaclass__ = abc.ABCMeta
+    
+    # Recipe own logger
+    logger = _logger
 
     def __init__(self, *args, **kwds):
         super(RecipeBase, self).__init__()
