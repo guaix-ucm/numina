@@ -85,11 +85,10 @@ def init_pipeline_system():
     return load_pipelines_from(paths)
 
 def find_recipe_class(instrument, mode):
-    for drp in _pipelines.values():
-        if drp.instrument.lower() == instrument:
-            rmod = getattr(drp, 'recipes')
-            break
-    else:
+    try:
+        drp = _pipelines[instrument]
+        rmod = getattr(drp, 'recipes')
+    except KeyError:
         msg = 'No pipeline for instrument %s' % instrument
         raise ValueError(msg)
     
