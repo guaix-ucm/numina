@@ -20,9 +20,6 @@
 '''Numina data processing system.'''
 
 import logging
-import json
-
-import pyfits
 
 from numina.recipes import RecipeBase, DataFrame
 from numina.recipes import obsres_from_dict
@@ -32,16 +29,4 @@ __version__ = '0.5.0'
 # Top level NullHandler
 logging.getLogger("numina").addHandler(logging.NullHandler())
 
-
-# FIXME: pyfits.core.HDUList is treated like a list
-# each extension is stored separately
-class ProductEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, pyfits.core.PrimaryHDU):
-            filename = 'result.fits'
-            if obj.header.has_key('FILENAME'):
-                filename = obj.header['FILENAME']
-            obj.writeto(filename, clobber=True)
-            return filename
-        return json.JSONEncoder.default(self, obj)
 
