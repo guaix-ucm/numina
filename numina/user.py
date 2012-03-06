@@ -271,7 +271,9 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
     runinfo['entrypoint'] = fully_qualified_name(RecipeClass)
 
     # Set custom logger
-    _recipe_logger = logging.getLogger('%(instrument)s.recipes' % obsres.__dict__)
+    _logger.debug('getting recipe logger')
+    
+    _recipe_logger = RecipeClass.logger
     _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     _logger.debug('creating custom logger "processing.log"')
@@ -344,8 +346,6 @@ def mode_run(args):
     if not os.path.exists(args.resultsdir):
         os.mkdir(args.resultsdir)
 
-
-    
     instrument = {}
     reduction = {}
 
