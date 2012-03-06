@@ -84,9 +84,21 @@ def get_image_shape(header):
     ndim = header['naxis']
     return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
 
+def custom_slice_to_str(slc):
+    if slc.step is None:
+        return '%i:%i' % (slc.start, slc.stop)
+    else:
+        return '%i:%i:%i' % (slc.start, slc.stop, slc.step)
+
+def custom_region_to_str(region):
+    jints = [custom_slice_to_str(slc) for slc in region]
+    return '[' + ','.join(jints) + ']'
+
 def resize_hdu(hdu, newshape, region, fill=0.0):
     basedata = hdu.data
-    newdata = resize_array(basedata, newshape, region, fill=fill)                
+    newdata = resize_array(basedata, newshape, region, fill=fill)
+    hdu.header.update('NVALREGI', custom_region_to_str(region), 
+                      'Valid region of resized FITS')          
     newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
     return newhdu
 
