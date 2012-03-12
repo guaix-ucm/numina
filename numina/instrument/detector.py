@@ -30,6 +30,7 @@ from numina.exceptions import DetectorElapseError
 from numina.astrotime import datetime_to_mjd
 
 from .base import BaseConectable
+from .mapping import Mapper
 
 Amplifier = namedtuple('Amplifier', ['shape', 'gain', 'ron', 'wdepth'])
 
@@ -172,6 +173,7 @@ class ArrayDetector(BaseConectable):
         
         self.buffer = numpy.zeros(self.shape)
         self.outtype = outtype
+        self.mapper = Mapper(shape)
         
         self.meta = TreeDict()
         
@@ -232,7 +234,8 @@ class CCDDetector(ArrayDetector):
 
         self._last_read += dt
         
-        source = self.source.emit() * self.flat
+        source = self.mapper.sample(self.source)
+        source *= self.flat
         self.buffer += poisson((self.dark + source) * dt, 
                                size=self.shape).astype('float')
         
@@ -265,7 +268,8 @@ class nIRDetector(ArrayDetector):
     def expose(self, dt, source=None):
 
         self._last_read += dt
-        source = self.source.emit() * self._flat 
+        source = self.mapper.sample(self.source)
+        source *= self._flat 
         self.buffer += poisson((self._dark + source) * dt).astype('float')
         
 if __name__ == '__main__':
