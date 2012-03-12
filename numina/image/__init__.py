@@ -23,7 +23,7 @@ import copy
 import numpy # pylint: disable-msgs=E1101
 import pyfits
 
-from ..array import resize_array 
+from numina.array import resize_array 
 
 def compute_median(img, mask, region):
     d = img.data[region]
@@ -45,15 +45,16 @@ def custom_region_to_str(region):
     jints = [custom_slice_to_str(slc) for slc in region]
     return '[' + ','.join(jints) + ']'
 
-def resize_hdu(hdu, newshape, region, fill=0.0, scale=1):
+def resize_hdu(hdu, newshape, region, fill=0.0, scale=1, conserve=True):
     basedata = hdu.data
-    newdata = resize_array(basedata, newshape, region, fill=fill, scale=scale)
+    newdata = resize_array(basedata, newshape, region, fill=fill, scale=scale, conserve=conserve)
     hdu.header.update('NVALREGI', custom_region_to_str(region), 
                       'Valid region of resized FITS')          
     newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
     return newhdu
 
-def resize_fits(fitsfile, newfilename, newshape, region, scale=1, fill=0.0, clobber=True):
+def resize_fits(fitsfile, newfilename, newshape, region, scale=1, fill=0.0, clobber=True, 
+                conserve=True):
     
     close_on_exit = False
     if isinstance(fitsfile, basestring):
@@ -64,7 +65,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, scale=1, fill=0.0, clob
         
     try:
         hdu = hdulist['primary']
-        newhdu = resize_hdu(hdu, newshape, region, fill=fill, scale=scale)
+        newhdu = resize_hdu(hdu, newshape, region, fill=fill, scale=scale, conserve=conserve)
         newhdu.writeto(newfilename, clobber=clobber)
     finally:
         if close_on_exit:
