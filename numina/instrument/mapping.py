@@ -19,7 +19,7 @@
 
 import numpy
 
-from source import LightSource
+from .sources import LightSource
 
 class Mapper(object):
     def __init__(self, shape):
@@ -28,7 +28,7 @@ class Mapper(object):
     def sample(self, source):
         val = source.emit()
 
-        if isinstance(val, (float, numpy.array)):
+        if isinstance(val, (float, numpy.ndarray)):
             return val
 
         if isinstance(val, LightSource):
