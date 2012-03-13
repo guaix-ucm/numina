@@ -25,12 +25,6 @@ import pyfits
 
 from numina.array import resize_array 
 
-def compute_median(img, mask, region):
-    d = img.data[region]
-    m = mask.data[region]
-    value = numpy.median(d[m == 0])
-    return value, img
-
 def get_hdu_shape(header):
     ndim = header['naxis']
     return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
