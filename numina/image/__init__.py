@@ -17,10 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import shutil
-import copy
-
-import numpy # pylint: disable-msgs=E1101
 import pyfits
 
 from numina.array import resize_array 
