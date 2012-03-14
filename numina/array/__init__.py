@@ -90,7 +90,11 @@ def combine_shape(shapes, offsets):
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
 
-def resize_array(data, finalshape, region, scale=1, fill=0, conserve=True):
+def resize_array(data, finalshape, region, window=None, scale=1, fill=0, conserve=True):
+    
+    if window:
+        data = data[window]
+    
     
     if scale == 1:
         finaldata = data

@@ -35,16 +35,20 @@ def custom_region_to_str(region):
     jints = [custom_slice_to_str(slc) for slc in region]
     return '[' + ','.join(jints) + ']'
 
-def resize_hdu(hdu, newshape, region, fill=0.0, scale=1, conserve=True):
+def resize_hdu(hdu, newshape, region, window=None, fill=0.0, scale=1, conserve=True):
     basedata = hdu.data
-    newdata = resize_array(basedata, newshape, region, fill=fill, scale=scale, conserve=conserve)
+    newdata = resize_array(basedata, newshape, region, window=window, 
+                           fill=fill, scale=scale, conserve=conserve)
     hdu.header.update('NVALREGI', custom_region_to_str(region), 
-                      'Valid region of resized FITS')          
+                      'Valid region of resized FITS')
+    if window:
+        hdu.header.update('OVALREGI', custom_region_to_str(window), 
+                          'Valid region of original FITS')                  
     newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
     return newhdu
 
-def resize_fits(fitsfile, newfilename, newshape, region, scale=1, fill=0.0, clobber=True, 
-                conserve=True):
+def resize_fits(fitsfile, newfilename, newshape, region, window=None,
+                scale=1, fill=0.0, clobber=True, conserve=True):
     
     close_on_exit = False
     if isinstance(fitsfile, basestring):
@@ -55,7 +59,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, scale=1, fill=0.0, clob
         
     try:
         hdu = hdulist['primary']
-        newhdu = resize_hdu(hdu, newshape, region, fill=fill, scale=scale, conserve=conserve)
+        newhdu = resize_hdu(hdu, newshape, region, fill=fill, window=window, scale=scale, conserve=conserve)
         newhdu.writeto(newfilename, clobber=clobber)
     finally:
         if close_on_exit:
