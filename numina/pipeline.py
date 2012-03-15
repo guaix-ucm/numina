@@ -46,7 +46,7 @@ def import_pipeline(name, path):
             mod = importlib.import_module(name)
             return mod
         except ImportError:
-            _logger.warning('No module named', name)
+            _logger.warning('No module named %s', name)
     else:
         _logger.debug('Import pipeline %s from %s', name, path)
         for impt, mname, isp in pkgutil.iter_modules([path]):
@@ -55,7 +55,7 @@ def import_pipeline(name, path):
                 mod = loader.load_module(mname)
                 return mod
         else:
-            _logger.warning('No module named', name)
+            _logger.warning('No module named %s', name)
             
 def load_pipelines_from_ini(path):
     '''Load files in ini format from path'''
