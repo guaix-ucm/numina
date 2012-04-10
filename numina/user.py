@@ -30,6 +30,7 @@ from logging import captureWarnings
 import xdg.BaseDirectory as xdgbd
 import inspect
 import traceback
+import shutil
 
 from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
@@ -209,7 +210,6 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
         with open('result.txt', 'r') as fd:
             result = sload(fd)
 
-        import shutil
         if cleanup:
             _logger.debug('Cleaning up the workdir')
             shutil.rmtree(workdir)
@@ -300,7 +300,6 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
         with open('result.json', 'r') as fd:
             result = sload(fd)
 
-        import shutil
         if cleanup:
             _logger.debug('cleaning up the workdir')
             shutil.rmtree(workdir)
