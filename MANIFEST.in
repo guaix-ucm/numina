@@ -1,5 +1,4 @@
 include *.txt
 include src/*.h
-include numina/defaults.cfg
 recursive-include doc *
 

@@ -27,8 +27,6 @@ import argparse
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
 from logging import captureWarnings
-from pkgutil import get_data
-import StringIO
 import xdg.BaseDirectory as xdgbd
 import inspect
 import traceback
@@ -410,9 +408,10 @@ def main(args=None):
     '''Entry point for the Numina CLI.'''        
     # Configuration args from a text file    
     config = SafeConfigParser()
-    # Default values, it must exist
-   
-    config.readfp(StringIO.StringIO(get_data('numina','defaults.cfg')))
+
+    # Building programatically    
+    config.add_section('numina')
+    config.set('numina', 'format', 'yaml')
 
     # Custom values, site wide and local
     config.read(['.numina/numina.cfg', 
