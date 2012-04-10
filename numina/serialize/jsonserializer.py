@@ -19,6 +19,7 @@
 
 '''Serialize objects using JSON.'''
 
+import json
 
 def to_json(obj):
     if hasattr(obj, '__getstate__'):
@@ -84,3 +85,9 @@ def deunicode_json(obj):
     
     return obj
 
+
+def dump(data, fd):
+    json.dump(data, fd, indent=1, default=to_json)
+
+
+load = json.load

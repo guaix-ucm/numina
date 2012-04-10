@@ -30,7 +30,6 @@ from logging import captureWarnings
 from pkgutil import get_data
 import StringIO
 import xdg.BaseDirectory as xdgbd
-import json
 import inspect
 import traceback
 
@@ -38,7 +37,7 @@ from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes, DataProduct
 from numina.pipeline import find_recipe_class
-from numina.jsonserializer import to_json
+from numina.serialize import lookup
 
 _logger = logging.getLogger("numina")
 
@@ -76,6 +75,9 @@ _loggconf = {'version': 1,
                          },
              'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
              }
+
+sload = None
+sdump = None
 
 def fully_qualified_name(obj, sep='.'):
     if inspect.isclass(obj):
@@ -125,7 +127,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
 
     # json decode
     with open(task_control, 'r') as fd:
-        task_control = json.load(fd)
+        task_control = sload(fd)
     
     ins_pars = {}
     params = {}
@@ -206,10 +208,10 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
         os.chdir(resultsdir)
 
         with open('result.json', 'w+') as fd:
-            json.dump(result, fd, indent=1, default=to_json)
+            sdump(result, fd)
     
         with open('result.json', 'r') as fd:
-            result = json.load(fd)
+            result = sload(fd)
 
         import shutil
         if cleanup:
@@ -297,10 +299,10 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
         os.chdir(resultsdir)
 
         with open('result.json', 'w+') as fd:
-            json.dump(result, fd, indent=1, default=to_json)
+            sdump(result, fd)
     
         with open('result.json', 'r') as fd:
-            result = json.load(fd)
+            result = sload(fd)
 
         import shutil
         if cleanup:
@@ -357,7 +359,7 @@ def mode_run(args):
         _logger.info('reading observing block from %s', args.obsblock)
         with open(args.obsblock, 'r') as fd:
             obsres_read = True
-            obsres_dict = json.load(fd)
+            obsres_dict = sload(fd)
             obsres = obsres_from_dict(obsres_dict)
     
     # Read instrument information from args.instrument
@@ -365,12 +367,12 @@ def mode_run(args):
         _logger.info('reading instrument config from %s', args.instrument)
         with open(args.instrument, 'r') as fd:
             # json decode    
-            instrument = json.load(fd)
+            instrument = sload(fd)
             instrument_read = True
 
     # json decode
     with open(args.task, 'r') as fd:
-        task_control = json.load(fd)
+        task_control = sload(fd)
             
     if not instrument_read and 'instrument' in task_control:
         _logger.info('reading instrument config from %s', args.task)
@@ -459,6 +461,7 @@ def main(args=None):
     
     args = parser.parse_args(args)
 
+
     # logger file
     if args.logging is not None:
         logging.config.fileConfig(args.logging)
@@ -474,6 +477,17 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     
     _logger.info('Numina simple recipe runner version %s', __version__)
+
+    serformat = config.get('numina', 'format')
+    _logger.info('Serialization format is %s', serformat)
+    try:
+        global sdump, sload
+        sname, sdump, sload = lookup(serformat)      
+    except LookupError:
+        _logger.info('Serrialization format %s is not define', serformat)
+        raise
+
+
     
     pipelines = init_pipeline_system()
     for key in pipelines:
