@@ -203,10 +203,10 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     
         os.chdir(resultsdir)
 
-        with open('result.json', 'w+') as fd:
+        with open('result.txt', 'w+') as fd:
             sdump(result, fd)
     
-        with open('result.json', 'r') as fd:
+        with open('result.txt', 'r') as fd:
             result = sload(fd)
 
         import shutil
