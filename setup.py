@@ -35,7 +35,7 @@ setup(name='numina',
                       },
       test_suite="nose.collector",
       install_requires=['setuptools', 'numpy', 'pyfits', 'scipy', 
-		'sphinx', 'pyxdg', 'simplejson', 'nose'],
+		'sphinx', 'simplejson', 'nose'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',

@@ -27,7 +27,6 @@ import argparse
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
 from logging import captureWarnings
-import xdg.BaseDirectory as xdgbd
 import inspect
 import traceback
 import shutil
@@ -37,6 +36,7 @@ from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes, DataProduct
 from numina.pipeline import find_recipe_class
 from numina.serialize import lookup
+from numina.xdgdirs import xdg_config_home
 
 _logger = logging.getLogger("numina")
 
@@ -412,7 +412,7 @@ def main(args=None):
 
     # Custom values, site wide and local
     config.read(['.numina/numina.cfg', 
-                 os.path.join(xdgbd.xdg_config_home, 'numina/numina.cfg')])
+                 os.path.join(xdg_config_home, 'numina/numina.cfg')])
     
     # The cmd line is parsed
     '''Parse the command line.'''

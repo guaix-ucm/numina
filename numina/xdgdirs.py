@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,23 +17,25 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Numina directories to hold pipelines.'''
+'''
+Implementation of some of freedesktop.org Base Directories.
 
-import os.path
+The directories are defined here:
 
-from numina.xdgdirs import xdg_data_dirs
+http://standards.freedesktop.org/basedir-spec/
 
-__all__ = ['pipeline_path']
+We only require xdg_data_dirs and xdg_config_home
+'''
 
-# FIXME: this path is hardcoded
-_path = ['/usr/lib64/numina/pipelines']
+import os
 
-_path2 = [os.path.join(base, 'numina/pipelines') for base in xdg_data_dirs]
+_home = os.environ.get('HOME', '/')
 
-_path.extend(_path2)
+xdg_data_home = os.environ.get('XDG_DATA_HOME',
+            os.path.join(_home, '.local', 'share'))
 
-def pipeline_path():
-    return _path
+xdg_data_dirs = [xdg_data_home] + \
+    os.environ.get('XDG_DATA_DIRS', '/usr/local/share:/usr/share').split(':')
 
-if __name__ == '__main__':
-    print pipeline_path()
+xdg_config_home = os.environ.get('XDG_CONFIG_HOME',
+            os.path.join(_home, '.config'))
