@@ -21,8 +21,7 @@
 Basic Data Products
 '''
 
-
-from numina.exceptions import RecipeError, ParameterError
+import pyfits
 
 class DataProduct(object):
     '''Base class for Recipe Products'''
@@ -38,11 +37,11 @@ class DataFrame(DataProduct):
         filename = 'result.fits'
         if self.frame[0].header.has_key('FILENAME'):
             filename = self.frame[0].header['FILENAME']
-            self.frame.writeto(filename, clobber=True)
+        self.frame.writeto(filename, clobber=True)
 
         return {'frame': filename}
 
     def __setstate__(self, state):
-        # this is not exactly what we had in the begining...
+        # FIXME: this is not exactly what we had in the begining...
         self.frame = pyfits.open(state['frame'])
         self.filename = state['frame']
