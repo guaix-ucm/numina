@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages, Extension
+from distutils.core import setup, Extension
 
 import numpy
 
@@ -26,17 +26,15 @@ setup(name='numina',
       download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.5.0.tar.gz',
       license='GPLv3',
       description='Numina reduction package',
-      packages=find_packages('.'),
-      package_data={'numina': ['*.cfg'],
-                    },
+      packages=['numina', 'numina.array', 'numina.flow', 
+                'numina.image', 'numina.image.aperture',
+                'numina.instrument',
+                'numina.recipes', 'numina.serialize', 
+                'numina.tests', 'numina.util'],
       ext_modules=[cext, uext],
       data_files=[('share/numina/pipelines', ['pipelines/README'])],
-      entry_points={
-                      'console_scripts': ['numina = numina.user:main'],
-                      },
-      test_suite="nose.collector",
-      install_requires=['setuptools', 'numpy', 'pyfits', 'scipy', 
-		'sphinx', 'PyYaml', 'nose'],
+      scripts=['scripts/numina'],
+      requires=['numpy', 'pyfits', 'scipy', 'sphinx', 'PyYaml', 'nose'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
