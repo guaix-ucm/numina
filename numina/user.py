@@ -66,10 +66,8 @@ _loggconf = {'version': 1,
                            'level': 'INFO'                           
                             },
                           },
-             # FIXME: hardcoded emir logger here           
              'loggers': {'numina': {'handlers': ['simple_console'], 'level': 'NOTSET', 'propagate': False},
                          'numina.recipes': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
-                         'emir': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
                          },
              'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
              }
