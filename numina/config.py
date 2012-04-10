@@ -20,13 +20,15 @@
 '''Numina directories to hold pipelines.'''
 
 import os.path
+import sys
 
 from numina.xdgdirs import xdg_data_dirs
 
 __all__ = ['pipeline_path']
 
-# FIXME: this path is hardcoded
-_path = ['/usr/lib64/numina/pipelines']
+# FIXME: we need here install prefix, not the sys.prefix
+# still don't now the best way to do it
+_path = [os.path.join(sys.prefix, 'share/numina/pipelines')]
 
 _path2 = [os.path.join(base, 'numina/pipelines') for base in xdg_data_dirs]
 

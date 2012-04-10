@@ -30,6 +30,7 @@ setup(name='numina',
       package_data={'numina': ['*.cfg'],
                     },
       ext_modules=[cext, uext],
+      data_files=[('share/numina/pipelines', ['pipelines/README'])],
       entry_points={
                       'console_scripts': ['numina = numina.user:main'],
                       },
