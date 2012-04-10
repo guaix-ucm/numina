@@ -143,7 +143,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
                 obsres.__dict__)
     try:
         RecipeClass = find_recipe_class(obsres.instrument, obsres.mode)
-        _logger.info('entry point is %s id=%i', RecipeClass, id(RecipeClass))
+        _logger.info('entry point is %s', RecipeClass)
     except ValueError:
         _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
         raise
