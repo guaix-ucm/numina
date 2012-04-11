@@ -16,3 +16,5 @@ syntax: glob
 
 syntax: regexp
 ^build/lib\.linux-x86_64-2\.7/numina$
+syntax: regexp
+^MANIFEST$
