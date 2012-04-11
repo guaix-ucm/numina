@@ -1,5 +1,6 @@
 include *.txt
 include src/*.h
 include pipelines/README
+include scripts/numina
 recursive-include doc *
 
