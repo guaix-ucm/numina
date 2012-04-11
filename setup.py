@@ -34,7 +34,7 @@ setup(name='numina',
       ext_modules=[cext, uext],
       data_files=[('share/numina/pipelines', ['pipelines/README'])],
       scripts=['scripts/numina'],
-      requires=['numpy', 'pyfits', 'scipy', 'sphinx', 'PyYaml', 'nose'],
+      requires=['numpy', 'pyfits', 'scipy', 'PyYaml'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
