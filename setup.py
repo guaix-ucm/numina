@@ -19,7 +19,7 @@ uext = Extension('numina.array._ufunc',
           include_dirs=[numpy_include])
 
 setup(name='numina',
-      version='0.5.0',
+      version='0.5.90',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
