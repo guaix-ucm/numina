@@ -21,7 +21,7 @@ import math
 import random
 import unittest
 
-from numina.image.aperture.elliptical import aperture
+from numina.frame.aperture.elliptical import aperture
 
 class EllipticalApertureTestCase(unittest.TestCase):
     
