@@ -23,7 +23,7 @@ import logging
 _logger = logging.getLogger('numina.node')
 
 class Node(object):
-    
+    '''An elemental operation in a Flow.'''
     __metaclass__ = abc.ABCMeta
     
     def __init__(self, ninputs=1, noutputs=1):
@@ -56,6 +56,7 @@ class Node(object):
         return self._run(arg)
 
 class AdaptorNode(Node):
+    '''A :class:`Node` that runs a function.'''
     def __init__(self, work, ninputs=1, noutputs=1):
         '''work is a function object'''
         super(AdaptorNode, self).__init__(ninputs, noutputs)
@@ -65,6 +66,7 @@ class AdaptorNode(Node):
         return self.work(img)
 
 class IdNode(Node):
+    '''A Node that returns its inputs.'''
     def __init__(self):
         '''Identity'''
         super(IdNode, self).__init__()
@@ -73,6 +75,7 @@ class IdNode(Node):
         return img
 
 class OutputSelector(Node):
+    '''A Node that returns part of the results.'''
     def __init__(self, ninputs, indexes):
         noutputs = len(indexes) 
         super(OutputSelector, self).__init__(ninputs, noutputs)

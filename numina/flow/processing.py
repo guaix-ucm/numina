@@ -58,6 +58,7 @@ class TagFits(object):
         header.update(self.tag, time.asctime(), self.comment)
 
 class Corrector(Node):
+    '''A Node that corrects a frame from instrumental signatures.'''
     def __init__(self, datamodel, tagger, dtype='float32'):
         super(Corrector, self).__init__()
         self.tagger = tagger
@@ -86,6 +87,7 @@ class TagOptionalCorrector(Corrector):
                                                    tagger=tagger, dtype=dtype)
 
 class BadPixelCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from bad pixels.'''
     def __init__(self, badpixelmask, mark=True, tagger=None, datamodel=None, dtype='float32'):
         
         if tagger is None:
@@ -101,6 +103,7 @@ class BadPixelCorrector(TagOptionalCorrector):
 
 
 class BiasCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from bias.'''
     def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True, 
                  tagger=None, dtype='float32'):
         
@@ -135,6 +138,7 @@ class BiasCorrector(TagOptionalCorrector):
         return img
 
 class DarkCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from dark current.'''
     def __init__(self, darkmap, darkvar=None, datamodel=None, mark=True, 
                  tagger=None, dtype='float32'):
                 
@@ -167,6 +171,7 @@ class DarkCorrector(TagOptionalCorrector):
         return img
 
 class NonLinearityCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from non-linearity.'''
     def __init__(self, polynomial, datamodel=None, mark=True, 
                  tagger=None, dtype='float32'):
         
@@ -192,6 +197,7 @@ class NonLinearityCorrector(TagOptionalCorrector):
         return img
         
 class FlatFieldCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from flat-field.'''
     def __init__(self, flatdata, datamodel=None, mark=True, 
                  tagger=None, dtype='float32'):
         

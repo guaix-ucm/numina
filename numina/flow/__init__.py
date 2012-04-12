@@ -25,9 +25,11 @@ from .node import Node
 _logger = logging.getLogger('numina.flow')
 
 class FlowError(Exception):
+    '''Error base class for flows.'''
     pass
 
 class SerialFlow(Node):
+    '''A flow where Nodes are executed sequentially.''' 
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
         for i,o in zip(nodeseq, nodeseq[1:]):
@@ -55,6 +57,7 @@ class SerialFlow(Node):
         return out
 
 class ParallelFlow(Node):
+    '''A flow where Nodes are executed in parallel.'''
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
         nin = sum((f.ninputs for f in nodeseq), 0)
