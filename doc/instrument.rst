@@ -6,3 +6,6 @@
    :synopsis: Numina instrument
    :members:
    
+.. automodule:: numina.instrument.detector
+   :synopsis: Numina instrument
+   :members:

@@ -12,3 +12,12 @@
 .. autoclass:: RecipeResult
    :members:
    :show-inheritance:
+
+.. automodule:: numina.recipes.oblock
+   :members:
+
+.. automodule:: numina.recipes.products
+   :members:
+
+.. automodule:: numina.recipes.requirements
+   :members:
