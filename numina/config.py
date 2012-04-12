@@ -35,6 +35,7 @@ _path2 = [os.path.join(base, 'numina/pipelines') for base in xdg_data_dirs]
 _path.extend(_path2)
 
 def pipeline_path():
+    '''Return a list of directories where look for pipelines.'''
     return _path
 
 if __name__ == '__main__':
