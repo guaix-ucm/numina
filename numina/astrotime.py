@@ -23,6 +23,20 @@ import datetime
 _MJDREF = datetime.datetime(year=1858, month=11, day=17)
 
 def datetime_to_mjd(dt):
+    '''Convert a datetime object to Modified Julian Date.
+    
+    >>> from datetime import datetime
+    >>> ref = datetime(year=1858, month=11, day=17)
+    >>> datetime_to_mjd(ref)
+    0.0
+    
+    >>> current = datetime(year=2012, month=4, day=12,
+    ... hour=23, minute=38, second=44)
+    >>> datetime_to_mjd(current)
+    56029.98523148148
+    
+    
+    '''
     diff = dt - _MJDREF
     result  = diff.days + (diff.seconds + diff.microseconds / 1e6) / 86400.0
     return result
