@@ -33,6 +33,7 @@ _logger = logging.getLogger('numina')
 _pipelines = {}
 
 def load_pipelines_from(paths):
+    '''Load pipelines from ini files in paths.'''
     global _pipelines
     for path in paths:
         thispipe = load_pipelines_from_ini(path)
@@ -40,6 +41,7 @@ def load_pipelines_from(paths):
     return _pipelines
 
 def import_pipeline(name, path):
+    '''Import a pipeline module from a given path.'''
     if not path:
         _logger.debug('Import pipeline %s from system', name)
         try:
@@ -81,10 +83,12 @@ def load_pipelines_from_ini(path):
     return _pipelines
 
 def init_pipeline_system():
+    '''Load all available pipelines.'''
     paths = pipeline_path()
     return load_pipelines_from(paths)
 
 def find_recipe_class(instrument, mode):
+    '''Find the Recipe suited to process a given observing mode.''' 
     try:
         drp = _pipelines[instrument]
         rmod = getattr(drp, 'recipes')
