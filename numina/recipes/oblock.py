@@ -23,6 +23,7 @@ Results of the Observing Blocks
 
 
 class FrameInformation(object):
+    '''Information of a frame observed during a block.'''
     def __init__(self):
         self.label = None
         self.object = None
@@ -35,6 +36,9 @@ class FrameInformation(object):
         self.airmass = 1.0
 
 class ObservingResult(object):
+    '''The result of a observing block.
+    
+    '''
     def __init__(self):
         self.id = None
         self.mode = None
@@ -44,6 +48,7 @@ class ObservingResult(object):
         
 
 def frameinfo_from_list(values):
+    '''Build a FrameInformation object from a list.'''
     # FIXME: modify when format is changed
     # For this format
     frameinfo = FrameInformation()
@@ -52,7 +57,7 @@ def frameinfo_from_list(values):
     return frameinfo
 
 def obsres_from_dict(values):
-    
+    '''Build a ObservingResult object from a dictionary.'''
     obsres = ObservingResult()
     
     obsres.id = values['id']

@@ -9,8 +9,8 @@ Numina Documentation
 .. toctree::
    :maxdepth: 2
 
+   index
    intro
-   highlevel
    modules
 
    

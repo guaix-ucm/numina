@@ -78,6 +78,18 @@ class RecipeBase(object):
         return
 
     def __call__(self, block, environ=None):
+        '''
+        Process ``block`` with the Recipe.
+        
+        Process the result of the observing block with the
+        Recipe.
+        
+        :param block: the result of a observing block
+        :param type: ObservingResult
+        :param environ: a dictionary with custom parameters
+        :rtype: a dictionary with the result of the processing or an error 
+        
+        '''
 
         if environ is not None:
             self.environ.update(environ)

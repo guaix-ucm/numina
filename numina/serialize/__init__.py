@@ -24,6 +24,7 @@ from collections import namedtuple
 SerializerInfo = namedtuple('SerializerInfo', ['name', 'dump', 'load'])
 
 def lookup(name):
+    '''Lookup a serializer by name.'''
     if name == 'json':
         from .jsonserializer import dump, load
         return SerializerInfo('json', dump, load)
