@@ -20,18 +20,21 @@
 '''Very simple generic function implementation.'''
 
 class GenericFunction(object):
+    '''A generic fucntion representation.'''
     def __init__(self, f):
         self._internal_map = {}
         self._default_impl = f
 
     def register(self, cls):
         '''Register a new type class with a generic function.
-        
-        Classes managed by generic must be new type
+                
         >>> @generic
         ... def store(obj, where):
         ...     print 'object not storable'
-        ... 
+        ...
+        
+        Classes managed by generic must be new type
+        
         >>> class B(object): 
         ...     pass
         ...
@@ -105,6 +108,7 @@ def generic(function):
     object not storable
     
     Classes managed by generic must be new type
+    
     >>> class B(object): 
     ...     pass
     ...
@@ -117,6 +121,7 @@ def generic(function):
     Storing a B object in somewhere
     
     generic follows inheritance diagram
+    
     >>> class C(B):
     ...    pass
     ...
