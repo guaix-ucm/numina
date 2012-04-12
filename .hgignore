@@ -7,14 +7,12 @@ syntax: regexp
 ^doc/html$
 ^dist$
 ^doc/doctrees$
+^MANIFEST$
+^build/lib\.linux-x86_64-2\.7/numina$
 
 syntax: glob
 *.pyc
 *~
 .project
 .pydevproject
-
-syntax: regexp
-^build/lib\.linux-x86_64-2\.7/numina$
-syntax: regexp
-^MANIFEST$
+.settings
