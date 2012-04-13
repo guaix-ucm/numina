@@ -1,10 +1,27 @@
 
+.. _user:
+
+#################
+Numina User Guide
+#################
+
+This guide is intended as an introductory overview of Numina and
+explains how to install and make use of the most important features of
+Numina. For detailed reference documentation of the functions and
+classes contained in the package, see the :ref:`reference`.
+
+.. warning::
+
+   This "User Guide" is still a work in progress; some of the material
+   is not organized, and several aspects of Numina are not yet covered
+   sufficient detail.
+   
 ===================
 Numina Installation
 ===================
 
 This is Numina, the data reduction package used by the following GTC
-instruments: EMIR, FRIDA, MEGARA
+instruments: EMIR, FRIDA, MEGARA and MIRADAS
 
 Numina is distributed under GNU GPL, either version 3 of the License, 
 or (at your option) any later version. See the file COPYING for details.

@@ -1,16 +1,25 @@
-.. numina documentation master file, created by sphinx-quickstart on Mon May 25 16:54:57 2009.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+
+.. _reference:
 
 ====================
-Numina Documentation
+Numina Reference
 ====================
+
+:Release: |version|
+
+:Date: |today|
+
+.. warning::
+
+   This "Reference" is still a work in progress; some of the material
+   is not organized, and several aspects of Numina are not yet covered
+   sufficient detail.
+
+.. module:: numina
 
 .. toctree::
    :maxdepth: 2
 
-   index
-   intro
    modules
 
    
