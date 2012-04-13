@@ -15,6 +15,6 @@ Numina reference guide: :ref:`reference`.
 
    intro
    creation
-   contents
+   reference/contents
 
 .. _GTC: http://www.gtc.iac.es
