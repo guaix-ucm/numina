@@ -23,11 +23,11 @@ Recipes have different execution environments. Some recipes are designed
 to process observing modes required for the observation. These modes
 are related to visualization, acquisition and focusing. The Recipes
 are integrated in the GTC environment. We call these recipes the
-**Data Factory Pipeline**, (DFP).
+**Data Factory Pipeline**, (:term:`DFP`).
 
 Other group of recipes are devoted to scientific observing modes: imaging, 
 spectroscopy and auxiliary calibrations. These Recipes constitute the
-**Data Reduction Pipeline**, (DRP). The software is meant to be standalone,
+**Data Reduction Pipeline**, (:term:`DRP`). The software is meant to be standalone,
 users shall download the software and run it in their own computers, with
 reduction parameters and calibrations provided by the instrument team.
 
