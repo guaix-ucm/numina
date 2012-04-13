@@ -15,7 +15,7 @@ Numina reference guide: :ref:`reference`.
 
    user/index
    creation
-   reference/contents
+   reference/index
    glossary
 
 .. _GTC: http://www.gtc.iac.es
