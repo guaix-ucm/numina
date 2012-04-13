@@ -16,3 +16,6 @@ syntax: glob
 .project
 .pydevproject
 .settings
+
+syntax: regexp
+^doc/_build$
