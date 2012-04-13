@@ -13,7 +13,7 @@ Numina reference guide: :ref:`reference`.
 .. toctree::
    :maxdepth: 1
 
-   intro
+   user/index
    creation
    reference/contents
 
