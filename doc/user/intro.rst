@@ -1,60 +1,74 @@
-
 ===================
 Numina Installation
 ===================
 
 This is Numina, the data reduction package used by the following GTC
-instruments: EMIR, FRIDA, MEGARA and MIRADAS
+instruments: EMIR, FRIDA, MEGARA and MIRADAS.
 
 Numina is distributed under GNU GPL, either version 3 of the License, 
-or (at your option) any later version. See the file COPYING for details.
+or (at your option) any later version. See the file LICENSE.txt 
+for details.
 
-Numina requires the following packages installed in order to
-be able to be installed and work properly:
+Requirements
+------------
 
- - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
- - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
- - numpy (http://numpy.scipy.org/)
- - scipy (http://www.scipy.org)
- - pyxdg (http://www.freedesktop.org/wiki/Software/pyxdg)
- - simplejson (http://undefined.org/python/#simplejson)
+Python 2.7 is required. Numina requires the following 
+packages installed in order to work properly:
+
+ - `numpy <http://numpy.scipy.org/>`_ 
+ - `scipy <http://www.scipy.org>`_
+ - `pyfits <http://www.stsci.edu/resources/software_hardware/pyfits>`_
+ - `PyYaml <http://http://pyyaml.org/>`_
 
 Additional packages are optionally required:
- - nose (http://somethingaboutorange.com/mrl/projects/nose) to run the tests
- - sphinx (http://sphinx.pocoo.org) to build the documentation
+ - `sphinx`_  to build the documentation
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
 
 Maintainer: sergiopr@fis.ucm.es
 
+Stable version
+--------------
 
-Building 
---------
+The latest stable version of Numina can be downloaded from  
+ftp://astrax.fis.ucm.es/pub/software/numina/
 
-Run the following command::
+To install numina, use the standard installation procedure:::
 
-   $ python setup.py build
+    $ tar zxvf numina-X.Y.Z.tar.gz
+    $ cd numina-X.Y.Z
+    $ python setup.py install
+    
+The `install` command provides options to change the target directory. By default
+installation requires administrative privileges. The different installation options
+can be checked with::: 
 
+   $ python setup.py install --help
+   
+Development version
+-------------------
 
-For additional options::
+The development version can be checked out with:::
 
-   $ python setup.py build --help
+    $ hg clone https://guaix.fis.ucm.es/hg/numina
+
+And then installed following the standard procedure:::
+
+    $ cd numina
+    $ python setup.py install
 
 Building the documentation
 ---------------------------
-The Numina documentation is base on sphinx. With the package installed, the 
-documentation can be built with a custom buld target::
+The Numina documentation is base on `sphinx`_. With the package installed, the 
+html documentation can be built from the `doc` directory::
 
-  $ python setup.py build_sphinx
-
-
-Installation
-------------
-
-Run the command::
-
-   $ python setup.py install
-
-For additional options::
-
-   $ python setup.py install --help
+  $ cd doc
+  $ make html
+  
+The documentation will be copied to a directory under `build/sphinx`.
+  
+The documentation can be built in different formats. The complete list will appear
+if you type `make` 
+  
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _sphinx: http://sphinx.pocoo.org
