@@ -268,14 +268,19 @@ py_method_median(PyObject *obj, PyObject *args) {
 
 static PyObject *
 py_method_minmax(PyObject *obj, PyObject *args) {
-  unsigned nmin = 0;
-  unsigned nmax = 0;
-  if (not PyArg_ParseTuple(args, "II", &nmin, &nmax)) {
+  int nmin = 0;
+  int nmax = 0;
+  if (not PyArg_ParseTuple(args, "ii", &nmin, &nmax)) {
     PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
     return NULL;
   }
 
-  unsigned* funcdata = (unsigned*)malloc(2 * sizeof(unsigned));
+  if (nmin < 0 | nmax < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, nmin and nmax must be >= 0");
+    return NULL;
+  }
+
+  int* funcdata = (int*)malloc(2 * sizeof(int));
 
   funcdata[0] = nmin;
   funcdata[1] = nmax;
@@ -289,6 +294,16 @@ py_method_sigmaclip(PyObject *obj, PyObject *args) {
   double high = 0.0;
   if (not PyArg_ParseTuple(args, "dd", &low, &high)) {
     PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+    return NULL;
+  }
+
+  if (low < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, low < 0");
+    return NULL;
+  }
+
+  if (high < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, high < 0");
     return NULL;
   }
 
@@ -308,7 +323,7 @@ py_method_quantileclip(PyObject *obj, PyObject *args) {
   }
 
   if (fclip < 0 || fclip > 0.4) {
-    PyErr_SetString(PyExc_ValueError, "invalid parameter fclip");
+    PyErr_SetString(PyExc_ValueError, "invalid parameter fclip, must be 0 <= fclip < 0.4");
     return NULL;
   }
 

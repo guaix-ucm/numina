@@ -68,9 +68,9 @@ int NU_median_function(double *data, double *weights,
 int NU_minmax_function(double *data, double *weights,
     size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
 {
-  unsigned* fdata = (unsigned*) func_data;
-  unsigned& nmin = *fdata;
-  unsigned& nmax = *(fdata + 1);
+  int* fdata = (int*) func_data;
+  int& nmin = *fdata;
+  int& nmax = *(fdata + 1);
 
   if ((nmin + nmax) == size) {
     *out[0] = 0;
