@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 import numpy
 
@@ -23,7 +23,7 @@ setup(name='numina',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.6.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.6.0.tar.gz',
       license='GPLv3',
       description='Numina reduction package',
       packages=['numina', 'numina.array', 'numina.flow', 
@@ -34,7 +34,7 @@ setup(name='numina',
       ext_modules=[cext, uext],
       data_files=[('share/numina/pipelines', ['pipelines/README'])],
       scripts=['scripts/numina'],
-      requires=['numpy', 'pyfits', 'scipy', 'PyYaml'],
+      requires=['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml'],
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
