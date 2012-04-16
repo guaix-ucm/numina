@@ -18,12 +18,14 @@ uext = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
+REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
+
 setup(name='numina',
       version='0.6.0dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.6.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.6.0dev.tar.gz',
       license='GPLv3',
       description='Numina reduction package',
       packages=['numina', 'numina.array', 'numina.flow', 
@@ -34,7 +36,8 @@ setup(name='numina',
       ext_modules=[cext, uext],
       data_files=[('share/numina/pipelines', ['pipelines/README'])],
       scripts=['scripts/numina'],
-      requires=['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml'],
+      requires=REQUIRES,
+      install_requires=REQUIRES,
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
@@ -44,12 +47,5 @@ setup(name='numina',
                    "Operating System :: OS Independent",
                    "Topic :: Scientific/Engineering :: Astronomy",
                    ],
-      long_description='''\
-      This is Numina reduction package
-      
-      Numina is the data reduction package used for the following GTC
-      instruments: EMIR, FRIDA, MEGARA, MIRADAS
-      
-      Maintainer: sergiopr@fis.ucm.es
-      ''',
+      long_description=open('README.txt').read()
       )
