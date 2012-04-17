@@ -5,7 +5,12 @@
 .. automodule:: numina.array
    :synopsis: Array manipulation
    :members:
-   
+
+:mod:`numina.array.background` --- Background estimation
+========================================================
+
+.. automodule:: numina.array.background
+   :members:
    
 :mod:`numina.array.combine` --- Array combination
 =================================================
@@ -217,3 +222,13 @@ Once the module is created and loaded, a sample session would be:
     >>> method = sigmaclip_combine(3.0, 3.0)
     ...
     >>> o = generic_combine(method, arrays)
+    
+    
+    
+    
+:mod:`numina.array.imsurfit` --- Image surface fitting
+======================================================
+
+.. automodule:: numina.array.imsurfit
+   :synopsis: Image surface fitting
+   :members:
