@@ -34,7 +34,7 @@ import shutil
 from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes, DataProduct
-from numina.pipeline import find_recipe_class
+from numina.pipeline import get_recipe
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
 
@@ -142,7 +142,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
     _logger.info('instrument=%(instrument)s mode=%(mode)s', 
                 obsres.__dict__)
     try:
-        RecipeClass = find_recipe_class(obsres.instrument, obsres.mode)
+        RecipeClass = get_recipe(obsres.instrument, obsres.mode)
         _logger.info('entry point is %s', RecipeClass)
     except ValueError:
         _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
@@ -226,7 +226,7 @@ def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=Fa
 def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup): 
     _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
     try:
-        RecipeClass = find_recipe_class(obsres.instrument, obsres.mode)
+        RecipeClass = get_recipe(obsres.instrument, obsres.mode)
         _logger.info('entry point is %s %d', RecipeClass, id(RecipeClass))
     except ValueError:
         _logger.warning('cannot find recipe class for {0.instrument} mode={0.mode}'
@@ -482,13 +482,11 @@ def main(args=None):
     except LookupError:
         _logger.info('Serrialization format %s is not define', serformat)
         raise
-
-
     
     pipelines = init_pipeline_system()
     for key in pipelines:
         pl = pipelines[key]
-        version = getattr(pl, '__version__', '0.0.0')
+        version = pl.version
         instrument = key
         _logger.info('Loaded pipeline for %s, version %s', instrument, version)
     captureWarnings(True)

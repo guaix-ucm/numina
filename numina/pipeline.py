@@ -32,12 +32,31 @@ _logger = logging.getLogger('numina')
 
 _pipelines = {}
 
+class Pipeline(object):
+    def __init__(self, name, version, recipes):
+        self.name = name
+        self.version = version
+        self.recipes = recipes
+
+    def get_recipe(self, mode):
+        return self.recipes[mode]
+
+def get_pipeline(name):
+    return _pipelines[name]
+
+def register_pipeline(pipe):
+    global _pipelines
+
+    _pipelines[pipe.name] = pipe
+
+def register_recipes(name, recipes):
+    pipe = Pipeline(name, recipes)
+    register_pipeline(pipe)
+
 def load_pipelines_from(paths):
     '''Load pipelines from ini files in paths.'''
-    global _pipelines
     for path in paths:
-        thispipe = load_pipelines_from_ini(path)
-        _pipelines.update(thispipe)
+        load_pipelines_from_ini(path)
     return _pipelines
 
 def import_pipeline(name, path):
@@ -62,8 +81,6 @@ def import_pipeline(name, path):
 def load_pipelines_from_ini(path):
     '''Load files in ini format from path'''
     
-    global _pipelines
-    
     for base, sub, files in os.walk(path):
         files.sort()
         for fname in files:
@@ -75,29 +92,25 @@ def load_pipelines_from_ini(path):
                 name = config.get('pipeline', 'name')
                 path = config.get('pipeline', 'path')
                 path = os.path.expanduser(path)
-                _pipelines[name] = import_pipeline(name, path)
-                importlib.import_module('%s.recipes' % name)
+                import_pipeline(name, path)
             except ConfigParser.NoSectionError:
                 _logger.warning('Not valid ini file', fname)
     
-    return _pipelines
-
 def init_pipeline_system():
     '''Load all available pipelines.'''
     paths = pipeline_path()
     return load_pipelines_from(paths)
 
-def find_recipe_class(instrument, mode):
+def get_recipe(name, mode):
     '''Find the Recipe suited to process a given observing mode.''' 
     try:
-        drp = _pipelines[instrument]
-        rmod = getattr(drp, 'recipes')
+        drp = _pipelines[name]
     except KeyError:
-        msg = 'No pipeline for instrument %s' % instrument
+        msg = 'No pipeline named %s' % name
         raise ValueError(msg)
     
     try:
-        klass = rmod.find_recipe_class(mode)
+        klass = pipe.get_recipe(mode)
     except KeyError:
         msg = 'No recipe for mode %s' % mode
         raise ValueError(msg)
