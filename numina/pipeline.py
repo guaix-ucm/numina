@@ -25,12 +25,16 @@ import ConfigParser
 import importlib
 import pkgutil
 import logging
+import fnmatch
 
 from numina.config import pipeline_path
 
 _logger = logging.getLogger('numina')
 
 _pipelines = {}
+
+_FILE_EXTENSION = 'ini'
+_FILE_PATTERN = '*.%s' % _FILE_EXTENSION
 
 class Pipeline(object):
     '''A pipeline.'''
@@ -72,8 +76,10 @@ def register_recipes(name, recipes):
 
 def load_pipelines_from(paths):
     '''Load pipelines from ini files in paths.'''
+    global _pipelines
     for path in paths:
-        load_pipelines_from_ini(path)
+        thispipe = load_pipelines_from_ini(path)
+        _pipelines.update(thispipe)
     return _pipelines
 
 def import_pipeline(name, path):
@@ -86,7 +92,7 @@ def import_pipeline(name, path):
         except ImportError:
             _logger.warning('No module named %s', name)
     else:
-        _logger.debug('Import pipeline %s from %s', name, path)
+        _logger.debug('Import module %s from %s', name, path)
         for impt, mname, isp in pkgutil.iter_modules([path]):
             if mname == name:
                 loader = impt.find_module(mname)
@@ -94,24 +100,35 @@ def import_pipeline(name, path):
                 return mod
         else:
             _logger.warning('No module named %s', name)
-            
 def load_pipelines_from_ini(path):
     '''Load files in ini format from path'''
-    
-    for base, sub, files in os.walk(path):
-        files.sort()
-        for fname in files:
-            defaults = {'name': fname, 'path': None}
+
+    global _pipelines
+
+    try:
+        _logger.debug('Loading pipelines from %s', path)
+        for fname in fnmatch.filter(os.listdir(path), _FILE_PATTERN):
+            dname, pext = os.path.splitext(fname)
+            # By default, the name is the filename with extension removed
+            defaults = {'name': dname, 'path': None}
             config = ConfigParser.SafeConfigParser(defaults=defaults,
                                                    allow_no_value=True)
-            config.read(os.path.join(base, fname))
+            config.read(os.path.join(path, fname))
             try:
+
                 name = config.get('pipeline', 'name')
-                path = config.get('pipeline', 'path')
-                path = os.path.expanduser(path)
-                import_pipeline(name, path)
+
+                ppath = config.get('pipeline', 'path')
+
+                ppath = os.path.expanduser(ppath)
+
+                import_pipeline(name, ppath)
             except ConfigParser.NoSectionError:
-                _logger.warning('Not valid ini file', fname)
+                _logger.warning('Not valid ini file %s', fname)
+    except OSError as error:
+        _logger.debug(error)
+
+    return _pipelines
     
 def init_pipeline_system():
     '''Load all available pipelines.'''
@@ -121,7 +138,7 @@ def init_pipeline_system():
 def get_recipe(name, mode):
     '''Find the Recipe suited to process a given observing mode.''' 
     try:
-        drp = _pipelines[name]
+        pipe = _pipelines[name]
     except KeyError:
         msg = 'No pipeline named %s' % name
         raise ValueError(msg)
