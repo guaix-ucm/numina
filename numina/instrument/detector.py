@@ -22,7 +22,6 @@ from datetime import datetime
 
 import numpy
 import numpy.random
-from numpy.random import normal, poisson
 
 from numina.treedict import TreeDict
 from numina.array import numberarray
@@ -74,6 +73,7 @@ class Das(object):
         return self._meta
 
 class ReadoutMode(object):
+    '''Base class for readout modes.'''
     def __init__(self, mode, scheme, reads, repeat):
         self.mode = mode
         self.scheme = scheme
@@ -157,6 +157,7 @@ class RampReadoutMode(ReadoutMode):
         return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
 
 class ArrayDetector(BaseConectable):
+    '''A bidimensional detector.'''
     def __init__(self, shape, amplifiers, 
                  bias=100.0, 
                  reset_value=0.0, reset_noise=0.0,
@@ -183,13 +184,13 @@ class ArrayDetector(BaseConectable):
         data[data < 0] = 0
         for amp in self.amplifiers:
             if amp.ron > 0:
-                data[amp.shape] = normal(self.buffer[amp.shape], amp.ron)
+                data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
             data[amp.shape] /= amp.gain
         data += self.bias
         data = data.astype(self.outtype)
         self._last_read += self.readout_time        
         # FIXME: increase dark current here
-        # self.buffer += poisson(self.dark * self.reset_time).astype('float')
+        # self.buffer += numpy.random.poisson(self.dark * self.reset_time).astype('float')
         return data
     
     def time_since_last_reset(self):
@@ -200,7 +201,7 @@ class ArrayDetector(BaseConectable):
         self.buffer.fill(self.reset_value)
         self._last_read = self.reset_time
         if self.reset_noise > 0.0:
-            self.buffer += normal(self.shape) * self.reset_noise
+            self.buffer += numpy.random.normal(self.shape) * self.reset_noise
             
     def expose_until(self, time):
         '''
@@ -236,7 +237,7 @@ class CCDDetector(ArrayDetector):
         
         source = self.mapper.sample(self.source)
         source *= self.flat
-        self.buffer += poisson((self.dark + source) * dt, 
+        self.buffer += numpy.random.poisson((self.dark + source) * dt, 
                                size=self.shape).astype('float')
         
         
@@ -250,6 +251,7 @@ class CCDDetector(ArrayDetector):
 
 class nIRDetector(ArrayDetector):
     '''A generic nIR bidimensional detector.'''
+    
     def __init__(self, shape, amplifiers, dark=1.0, 
                  pedestal=200., flat=1.0, 
                  resetval=0, resetnoise=0.0):
@@ -270,7 +272,7 @@ class nIRDetector(ArrayDetector):
         self._last_read += dt
         source = self.mapper.sample(self.source)
         source *= self._flat 
-        self.buffer += poisson((self._dark + source) * dt).astype('float')
+        self.buffer += numpy.random.poisson((self._dark + source) * dt).astype('float')
         
 if __name__ == '__main__':
     
