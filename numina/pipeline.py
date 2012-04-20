@@ -33,6 +33,7 @@ _logger = logging.getLogger('numina')
 _pipelines = {}
 
 class Pipeline(object):
+    '''A pipeline.'''
     def __init__(self, name, version, recipes):
         self.name = name
         self.version = version
@@ -42,14 +43,30 @@ class Pipeline(object):
         return self.recipes[mode]
 
 def get_pipeline(name):
+    '''Get a pipeline from the global register.
+    
+    :param name: Name of the pipeline
+    :raises: ValueError if the named pipeline does not exist
+    '''
     return _pipelines[name]
 
 def register_pipeline(pipe):
+    '''Register a pipeline in the global register.
+    
+    :param pipe: a Pipeline instance
+    '''
+    
     global _pipelines
 
     _pipelines[pipe.name] = pipe
 
 def register_recipes(name, recipes):
+    '''Register a group of recipes.
+    
+    :param name: name of the pipeline
+    :param recipes: a dictionary with recipe classes
+    
+    '''
     pipe = Pipeline(name, recipes)
     register_pipeline(pipe)
 
