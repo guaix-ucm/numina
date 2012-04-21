@@ -117,7 +117,7 @@ def main_internal(cls, obsres,
 # part of this code appears in
 # pontifex/process.py
 
-def run_recipe_from_file(task_control, workdir=None, resultsdir=None, cleanup=False):
+def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=None, cleanup=False):
 
     workdir = os.getcwd() if workdir is None else workdir
     resultsdir = os.getcwd if resultsdir is None else resultsdir
@@ -480,7 +480,7 @@ def main(args=None):
         global sdump, sload
         sname, sdump, sload = lookup(serformat)      
     except LookupError:
-        _logger.info('Serrialization format %s is not define', serformat)
+        _logger.info('Serialization format %s is not define', serformat)
         raise
     
     pipelines = init_pipeline_system()
