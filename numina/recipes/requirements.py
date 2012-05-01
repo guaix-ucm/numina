@@ -26,15 +26,16 @@ Recipe requirements
 class Requirement(object):
     '''Requirements of Recipes
     
-        :param soft: Make the Requirement soft
+        :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, name, value, description, soft=False):
+    def __init__(self, name, value, description, optional=False):
         self.name = name
         self.value = value
         self.description = description
-        self.soft = soft
+        self.optional = optional
 
 class Parameter(Requirement):
-    def __init__(self, name, value, description, soft=False):
-        super(Parameter, self).__init__(name, value, description, soft)
+    def __init__(self, name, value, description, optional=False):
+        super(Parameter, self).__init__(name, value, description, 
+                                        optional=optional)

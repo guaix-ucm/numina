@@ -240,8 +240,8 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
         if req.name in params:
             _logger.debug('parameter %s has value %s', req.name, params[req.name])
             parameters[req.name] = params[req.name]
-        elif req.soft:
-            _logger.debug('parameter %s is a soft dependency', req.name)
+        elif req.optional:
+            _logger.debug('parameter %s is an optional dependency', req.name)
             _logger.debug('assigning None')
             parameters[req.name] = None
         elif inspect.isclass(req.value) and issubclass(req.value, DataProduct):
