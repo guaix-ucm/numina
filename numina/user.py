@@ -19,10 +19,8 @@
 
 '''User command line interface of Numina.'''
 
-import datetime
 import logging.config
 import os
-from optparse import OptionParser
 import argparse
 from ConfigParser import SafeConfigParser
 from ConfigParser import Error as ConfigParserError
@@ -413,12 +411,6 @@ def main(args=None):
     # Custom values, site wide and local
     config.read(['.numina/numina.cfg', 
                  os.path.join(xdg_config_home, 'numina/numina.cfg')])
-    
-    # The cmd line is parsed
-    '''Parse the command line.'''
-    usage = "usage: %prog [args] recipe [recipe-args]"
-
-    version_line = '%prog ' + __version__ 
 
     parser = argparse.ArgumentParser(description='Command line interface of Numina',
                                      prog='numina',

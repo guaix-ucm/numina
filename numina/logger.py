@@ -52,9 +52,9 @@ def log_to_history(logger):
                 result = method(self, block)
                 if 'products' in result:
                     for r in result['products']:
-                       if isinstance(r, DataFrame):
-                           hdr = r.image[0].header
-                           hdr.ascardlist().extend(history_header.ascardlist())
+                        if isinstance(r, DataFrame):
+                            hdr = r.image[0].header
+                            hdr.ascardlist().extend(history_header.ascardlist())
                 return result 
             finally:
                 logger.removeHandler(fh)

@@ -61,7 +61,6 @@
 #
 # ======================================================================
 
-import os
 
 """
 A simple interface to manipulate SExtractor ASCII catalogs
@@ -136,8 +135,6 @@ Examples:
 
 import __builtin__
 
-import sys
-import exceptions
 
 # ======================================================================
 

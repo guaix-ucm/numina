@@ -20,7 +20,6 @@
 from collections import namedtuple
 from datetime import datetime
 
-import numpy
 import numpy.random
 
 from numina.treedict import TreeDict

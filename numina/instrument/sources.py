@@ -35,7 +35,7 @@ class Sky(object):
         self.radiance = radiance
         
     def emit(self):
-        return radiance
+        return self.radiance
 
 class ThermalBackground(object):
     def __init__(self, radiance):

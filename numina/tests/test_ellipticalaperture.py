@@ -40,20 +40,20 @@ class EllipticalApertureTestCase(unittest.TestCase):
             b = 10**random.uniform(-1, 2)
             x0 = random.uniform(-2, 2)
             y0 = random.uniform(-2, 2)
-            sum = 0.0
+            ssum = 0.0
             for _,_,w in aperture(a, b, x0, y0):
-                sum += w
+                ssum += w
             
-            self.assertAlmostEqual(sum, math.pi * a * b)
+            self.assertAlmostEqual(ssum, math.pi * a * b)
             
             
         for a in range(1, 50):
             for b in range(1, 50):
-                sum = 0.0
+                ssum = 0.0
                 for _,_,w in aperture(a, b, 0.0, 0.0):
-                    sum += w
+                    ssum += w
             
-                self.assertAlmostEqual(sum, math.pi * a * b)
+                self.assertAlmostEqual(ssum, math.pi * a * b)
             
             
             

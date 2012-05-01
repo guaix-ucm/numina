@@ -19,7 +19,6 @@
 
 '''Pipeline loader.'''
 
-import os
 import os.path
 import ConfigParser
 import importlib
@@ -93,7 +92,7 @@ def import_pipeline(name, path):
             _logger.warning('No module named %s', name)
     else:
         _logger.debug('Import module %s from %s', name, path)
-        for impt, mname, isp in pkgutil.iter_modules([path]):
+        for impt, mname, _isp in pkgutil.iter_modules([path]):
             if mname == name:
                 loader = impt.find_module(mname)
                 mod = loader.load_module(mname)
@@ -108,7 +107,7 @@ def load_pipelines_from_ini(path):
     try:
         _logger.debug('Loading pipelines from %s', path)
         for fname in fnmatch.filter(os.listdir(path), _FILE_PATTERN):
-            dname, pext = os.path.splitext(fname)
+            dname, _pext = os.path.splitext(fname)
             # By default, the name is the filename with extension removed
             defaults = {'name': dname, 'path': None}
             config = ConfigParser.SafeConfigParser(defaults=defaults,

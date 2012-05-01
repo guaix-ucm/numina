@@ -35,4 +35,4 @@ class Lamp(object):
         if self.off:
             return 0.0
         else:
-            return radiance
+            return self.radiance

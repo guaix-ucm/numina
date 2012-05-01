@@ -44,7 +44,7 @@ class Node(object):
         raise NotImplementedError
     
     def __call__(self, img):
-        args = self.obtain_tuple(img)        
+        _args = self.obtain_tuple(img)        
         return self._run(img)
 
     def obtain_tuple(self, arg):

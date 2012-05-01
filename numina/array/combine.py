@@ -19,8 +19,6 @@
 
 '''Different methods for combining lists of arrays.'''
 
-from itertools import izip
-
 import numpy # pylint: disable-msgs=E1101
 
 from numina.array._combine import generic_combine as internal_generic_combine
