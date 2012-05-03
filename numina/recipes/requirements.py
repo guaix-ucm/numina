@@ -21,6 +21,9 @@
 Recipe requirements
 '''
 
+import inspect
+
+from .products import DataProduct
 
 
 class Requirement(object):
@@ -34,7 +37,44 @@ class Requirement(object):
         self.value = value
         self.description = description
         self.soft = soft
+        
+    def lookup(self, params):    
+        if self.name in params:
+            # FIXME: add validation
+            return params[self.name]
+        elif self.soft:
+            return None
+        else:
+            return self.value
 
 class Parameter(Requirement):
     def __init__(self, name, value, description, soft=False):
         super(Parameter, self).__init__(name, value, description, soft)
+        
+        
+        
+class DataProductParameter(Parameter):
+    def __init__(self, name, valueclass, description, soft=False):
+        
+        self.default = None
+        
+        if not inspect.isclass(valueclass):
+            self.default = valueclass
+            valueclass = valueclass.__class__
+             
+        if not issubclass(valueclass, DataProduct):
+            raise TypeError('valueclass must derive from DataProduct')
+        
+        super(DataProductParameter, self).__init__(name, valueclass, 
+                                                   description, soft)
+
+    def lookup(self, params):    
+        if self.name in params:
+            # FIXME: add validation
+            return params[self.name]
+        elif self.soft:
+            return None
+        elif self.default is not None:
+            return self.default
+        else:
+            raise LookupError('parameter %s must be defined' % self.name)
