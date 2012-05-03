@@ -151,19 +151,13 @@ def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=No
     parameters = {}
 
     for req in RecipeClass.__requires__:
-        _logger.info('recipe requires %s', req.name)
-        if req.name in params:
-            _logger.debug('parameter %s has value %s', req.name, params[req.name])
-            parameters[req.name] = params[req.name]
-        elif inspect.isclass(req.value) and issubclass(req.value, DataProduct):
-            _logger.error('parameter %s must be defined', req.name)
-            raise ValueError('parameter %s must be defined' % req.name)        
-        elif req.value is not None:
-            _logger.debug('parameter %s has default value %s', req.name, req.value)
-            parameters[req.name] = req.value
-        else:
-            _logger.error('parameter %s must be defined', req.name)
-            raise ValueError('parameter %s must be defined' % req.name)
+        try:
+            _logger.info('recipe requires %s', req.name)
+            parameters[req.name]= req.lookup(params)
+            _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
+        except LookupError as error:
+            _logger.error('%s', error)
+            raise
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)
@@ -236,23 +230,13 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
     parameters = {}
 
     for req in RecipeClass.__requires__:
-        _logger.info('recipe requires %s', req.name)
-        if req.name in params:
-            _logger.debug('parameter %s has value %s', req.name, params[req.name])
-            parameters[req.name] = params[req.name]
-        elif req.optional:
-            _logger.debug('parameter %s is an optional dependency', req.name)
-            _logger.debug('assigning None')
-            parameters[req.name] = None
-        elif inspect.isclass(req.value) and issubclass(req.value, DataProduct):
-            _logger.error('parameter %s must be defined', req.name)
-            raise ValueError('parameter %s must be defined' % req.name)        
-        elif req.value is not None:
-            _logger.debug('parameter %s has default value %s', req.name, req.value)
-            parameters[req.name] = req.value
-        else:
-            _logger.error('parameter %s must be defined', req.name)
-            raise ValueError('parameter %s must be defined' % req.name)
+        try:
+            _logger.info('recipe requires %s', req.name)
+            parameters[req.name]= req.lookup(params)
+            _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
+        except LookupError as error:
+            _logger.error('%s', error)
+            raise
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)

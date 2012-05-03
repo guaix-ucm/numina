@@ -34,7 +34,7 @@ from numina.exceptions import RecipeError
 
 from .products import DataFrame, DataProduct 
 from .oblock import obsres_from_dict
-from .requirements import Parameter
+from .requirements import Parameter, DataProductParameter
 
 _logger = logging.getLogger('numina')
 
