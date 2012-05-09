@@ -72,16 +72,13 @@ _loggconf = {'version': 1,
              'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
              }
 
-sload = None
-sdump = None
-
 def fully_qualified_name(obj, sep='.'):
     if inspect.isclass(obj):
         return obj.__module__ + sep + obj.__name__
     else:
         return obj.__module__ + sep + obj.__class__.__name__
 
-def mode_list(args):
+def mode_list(serializer, args):
     '''Run the list mode of Numina'''
     _logger.debug('list mode')
     for recipeCls in list_recipes():
@@ -116,14 +113,14 @@ def main_internal(cls, obsres,
 # part of this code appears in
 # pontifex/process.py
 
-def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=None, cleanup=False):
+def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None, cleanup=False):
 
     workdir = os.getcwd() if workdir is None else workdir
     resultsdir = os.getcwd if resultsdir is None else resultsdir
 
     # json decode
     with open(task_control, 'r') as fd:
-        task_control = sload(fd)
+        task_control = serializer.load(fd)
     
     ins_pars = {}
     params = {}
@@ -200,10 +197,10 @@ def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=No
         os.chdir(resultsdir)
 
         with open('result.txt', 'w+') as fd:
-            sdump(result, fd)
+            serializer.dump(result, fd)
     
         with open('result.txt', 'r') as fd:
-            result = sload(fd)
+            result = serializer.load(fd)
 
         if cleanup:
             _logger.debug('Cleaning up the workdir')
@@ -218,7 +215,7 @@ def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=No
 
     return result
 
-def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup): 
+def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, cleanup): 
     _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
     _logger.info('pipeline={0[pipeline]}'.format(instrument))
     try:
@@ -283,11 +280,11 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
     
         os.chdir(resultsdir)
 
-        with open('result.json', 'w+') as fd:
-            sdump(result, fd)
+        with open('result.txt', 'w+') as fd:
+            serializer.dump(result, fd)
     
-        with open('result.json', 'r') as fd:
-            result = sload(fd)
+        with open('result.txt', 'r') as fd:
+            result = serializer.load(fd)
 
         if cleanup:
             _logger.debug('cleaning up the workdir')
@@ -306,7 +303,7 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
 
 
 
-def mode_run(args):
+def mode_run(serializer, args):
     '''Recipe execution mode of numina.'''
     args.basedir = os.path.abspath(args.basedir)    
     
@@ -343,7 +340,7 @@ def mode_run(args):
         _logger.info('reading observing block from %s', args.obsblock)
         with open(args.obsblock, 'r') as fd:
             obsres_read = True
-            obsres_dict = sload(fd)
+            obsres_dict = serializer.load(fd)
             obsres = obsres_from_dict(obsres_dict)
     
     # Read instrument information from args.instrument
@@ -351,12 +348,12 @@ def mode_run(args):
         _logger.info('reading instrument config from %s', args.instrument)
         with open(args.instrument, 'r') as fd:
             # json decode    
-            instrument = sload(fd)
+            instrument = serializer.load(fd)
             instrument_read = True
 
     # Read task information from args.task
     with open(args.task, 'r') as fd:
-        task_control = sload(fd)
+        task_control = serializer.load(fd)
             
     if not instrument_read and 'instrument' in task_control:
         _logger.info('reading instrument config from %s', args.task)
@@ -380,7 +377,7 @@ def mode_run(args):
         _logger.error('instrument not read from input files')
         return
     
-    return run_recipe(obsres, reduction, instrument, 
+    return run_recipe(serializer, obsres, reduction, instrument, 
                        args.workdir, args.resultsdir, args.cleanup)
 
 def info():
@@ -457,15 +454,6 @@ def main(args=None):
     
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    serformat = config.get('numina', 'format')
-    _logger.info('Serialization format is %s', serformat)
-    try:
-        global sdump, sload
-        _sname, sdump, sload = lookup(serformat)      
-    except LookupError:
-        _logger.info('Serialization format %s is not define', serformat)
-        raise
-    
     pipelines = init_pipeline_system()
     for key in pipelines:
         pl = pipelines[key]
@@ -473,8 +461,19 @@ def main(args=None):
         instrument = key
         _logger.info('Loaded pipeline for %s, version %s', instrument, version)
     captureWarnings(True)
+
+    # Serialization loaded after pipelines, so that
+    # pipelines can provide their own
+    # serialization format
+    serformat = config.get('numina', 'format')
+    _logger.info('Serialization format is %s', serformat)
+    try:
+        serializer = lookup(serformat)      
+    except LookupError:
+        _logger.info('Serialization format %s is not defined', serformat)
+        raise
     
-    args.command(args)
+    args.command(serializer, args)
 
 if __name__ == '__main__':
     main()
