@@ -22,8 +22,8 @@
 import collections
 
 class TreeDict(collections.MutableMapping):
-    def __init__(self):
-        self._data = {}
+    def __init__(self, *args, **keywords):
+        self._data = dict(*args, **keywords)
 
     def __getitem__(self, key):
         keys = key.split('.')
