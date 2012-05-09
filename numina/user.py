@@ -141,8 +141,9 @@ def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=No
         
     _logger.info('instrument=%(instrument)s mode=%(mode)s', 
                 obsres.__dict__)
+    _logger.info('pipeline=%s', ins_pars['pipeline'])
     try:
-        RecipeClass = get_recipe(obsres.instrument, obsres.mode)
+        RecipeClass = get_recipe(ins_pars['pipeline'], obsres.mode)
         _logger.info('entry point is %s', RecipeClass)
     except ValueError:
         _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
@@ -219,8 +220,9 @@ def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=No
 
 def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup): 
     _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
+    _logger.info('pipeline={0[pipeline]}'.format(instrument))
     try:
-        RecipeClass = get_recipe(obsres.instrument, obsres.mode)
+        RecipeClass = get_recipe(instrument['pipeline'], obsres.mode)
         _logger.info('entry point is %s %d', RecipeClass, id(RecipeClass))
     except ValueError:
         _logger.warning('cannot find recipe class for {0.instrument} mode={0.mode}'
