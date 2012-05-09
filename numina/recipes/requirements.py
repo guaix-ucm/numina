@@ -32,7 +32,7 @@ class Requirement(object):
         :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, name, value, description, optional=False):
+    def __init__(self, name, description, value=None, optional=False):
         self.name = name
         self.value = value
         self.description = description
@@ -44,14 +44,24 @@ class Requirement(object):
             return params[self.name]
         elif self.optional:
             return None
-        else:
+        elif self.value is not None:
             return self.value
+        else:
+            raise LookupError('parameter %s must be defined' % self.name)
 
 class Parameter(Requirement):
     def __init__(self, name, value, description, optional=False):
-        super(Parameter, self).__init__(name, value, 
-description, optional=optional)
+        super(Parameter, self).__init__(name, description, 
+            value=value, optional=optional)
         
+    def lookup(self, params):    
+        if self.name in params:
+            # FIXME: add validation
+            return params[self.name]
+        elif self.optional:
+            return None
+        else:
+            return self.value
         
         
 class DataProductParameter(Parameter):
