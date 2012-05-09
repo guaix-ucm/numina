@@ -29,9 +29,10 @@ import inspect
 import traceback
 import shutil
 
+from numina.treedict import TreeDict
 from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
-from numina.recipes import list_recipes, DataProduct
+from numina.recipes import list_recipes
 from numina.pipeline import get_recipe
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
@@ -131,8 +132,9 @@ def run_recipe_from_file(task_control, sload, sdump, workdir=None, resultsdir=No
         _logger.info('file contains instrument config')
         ins_pars = task_control['instrument']
     if 'observing_result' in task_control:
-        _logger.info('file contains observing result')        
-        obsres.__dict__ = task_control['observing_result']
+        _logger.info('file contains observing result')
+        obsres_dict = task_control['observing_result']
+        obsres = obsres_from_dict(obsres_dict)
 
     if 'reduction' in task_control:
         params = task_control['reduction']['parameters']
@@ -227,12 +229,15 @@ def run_recipe(obsres, params, instrument, workdir, resultsdir, cleanup):
 
     _logger.info('matching parameters')    
 
+    allmetadata = params
+    allmetadata['instrument'] = instrument
+    allm = TreeDict(allmetadata)
     parameters = {}
 
     for req in RecipeClass.__requires__:
         try:
             _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= req.lookup(params)
+            parameters[req.name]= req.lookup(allm)
             _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
         except LookupError as error:
             _logger.error('%s', error)
@@ -347,7 +352,7 @@ def mode_run(args):
             instrument = sload(fd)
             instrument_read = True
 
-    # json decode
+    # Read task information from args.task
     with open(args.task, 'r') as fd:
         task_control = sload(fd)
             
@@ -361,9 +366,9 @@ def mode_run(args):
         obsres_dict = task_control['observing_result']
         obsres = obsres_from_dict(obsres_dict)
 
-    if 'reduction' in task_control:
+    if 'parameters' in task_control:
         _logger.info('reading reduction parameters from %s', args.task)
-        reduction = task_control['reduction']['parameters']
+        reduction = task_control['parameters']
         
     if not obsres_read:
         _logger.error('observing result not read from input files')
@@ -454,7 +459,7 @@ def main(args=None):
     _logger.info('Serialization format is %s', serformat)
     try:
         global sdump, sload
-        sname, sdump, sload = lookup(serformat)      
+        _sname, sdump, sload = lookup(serformat)      
     except LookupError:
         _logger.info('Serialization format %s is not define', serformat)
         raise
