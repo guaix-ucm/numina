@@ -221,7 +221,7 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     _logger.info('pipeline={0[pipeline]}'.format(instrument))
     try:
         RecipeClass = get_recipe(instrument['pipeline'], obsres.mode)
-        _logger.info('entry point is %s %d', RecipeClass, id(RecipeClass))
+        _logger.info('entry point is %s', RecipeClass)
     except ValueError:
         _logger.warning('cannot find recipe class for {0.instrument} mode={0.mode}'
                         .format(obsres))
