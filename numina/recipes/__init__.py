@@ -85,7 +85,7 @@ class RecipeBase(object):
         Recipe.
         
         :param block: the result of a observing block
-        :param type: ObservingResult
+        :param type: ObservationResult
         :param environ: a dictionary with custom parameters
         :rtype: a dictionary with the result of the processing or an error 
         
@@ -111,15 +111,6 @@ class RecipeBase(object):
 class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
-
-# FIXME: check if this class can be removed
-class ReductionResult(object):
-    def __init__(self):
-        self.id = None
-        self.reduction_block = None
-        self.other = None
-        self.status = 0
-        self.picklable = {}
 
 class provides(object):
     '''Decorator to add the list of provided products to recipe'''
