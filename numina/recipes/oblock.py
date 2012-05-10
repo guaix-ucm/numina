@@ -35,16 +35,16 @@ class FrameInformation(object):
         self.mdj = 0.0
         self.airmass = 1.0
 
-class ObservingResult(object):
+class ObservationResult(object):
     '''The result of a observing block.
     
     '''
     def __init__(self):
-        self.id = None
+        self.id = 1
         self.mode = None
         self.instrument = None
         self.frames = [] # list of FrameInformation
-        self.children = [] # other ObservingResult
+        self.children = [] # other ObservationResult
         
 
 def frameinfo_from_list(values):
@@ -57,10 +57,11 @@ def frameinfo_from_list(values):
     return frameinfo
 
 def obsres_from_dict(values):
-    '''Build a ObservingResult object from a dictionary.'''
-    obsres = ObservingResult()
+    '''Build a ObservationResult object from a dictionary.'''
+    obsres = ObservationResult()
     
-    obsres.id = values['id']
+    if id in values:
+        obsres.id = values['id']
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
     obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
