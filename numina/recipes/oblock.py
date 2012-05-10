@@ -26,14 +26,7 @@ class FrameInformation(object):
     '''Information of a frame observed during a block.'''
     def __init__(self):
         self.label = None
-        self.object = None
-        self.target = None
         self.itype = None
-        self.exposure = 0.0
-        self.ra = 0.0
-        self.dec = 0.0
-        self.mdj = 0.0
-        self.airmass = 1.0
 
 class ObservationResult(object):
     '''The result of a observing block.
