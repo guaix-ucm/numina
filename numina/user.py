@@ -19,6 +19,7 @@
 
 '''User command line interface of Numina.'''
 
+import sys
 import logging.config
 import os
 import argparse
@@ -240,7 +241,7 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
             _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
         except LookupError as error:
             _logger.error('%s', error)
-            raise
+            sys.exit(1)
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)
