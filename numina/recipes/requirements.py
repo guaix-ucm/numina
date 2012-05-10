@@ -83,7 +83,7 @@ class DataProductParameter(Parameter):
         if self.name in params:
             # FIXME: add validation
             return params[self.name]
-        elif self.soft:
+        elif self.optional:
             return None
         elif self.default is not None:
             return self.default
