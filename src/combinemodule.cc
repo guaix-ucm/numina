@@ -275,7 +275,7 @@ py_method_minmax(PyObject *obj, PyObject *args) {
     return NULL;
   }
 
-  if (nmin < 0 | nmax < 0) {
+  if ((nmin < 0) || (nmax < 0)) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter, nmin and nmax must be >= 0");
     return NULL;
   }
