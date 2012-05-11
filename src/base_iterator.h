@@ -52,6 +52,9 @@ public:
   //! The pointer type of  of the sequence
   typedef Pointer pointer;
 
+  typedef BaseCRTP<BaseIterator<Derived, ValueType,
+      IteratorCategory, Reference, Pointer, Difference> , Derived> Base;
+
   /**
    * Default constructor
    */
@@ -66,7 +69,7 @@ public:
    */
   const reference operator[](difference_type n) const
   {
-    return *(&derived(*this) + n);
+    return *(&Base::derived(*this) + n);
   }
   /**
    * Implementation of operator[]
@@ -75,7 +78,7 @@ public:
    */
   reference operator[](difference_type n)
   {
-    return *(&derived(*this) + n);
+    return *(&Base::derived(*this) + n);
   }
 
   /**
@@ -84,7 +87,7 @@ public:
    */
   reference operator*()
   {
-    return derived(*this).dereference();
+    return Base::derived(*this).dereference();
   }
   /**
    * Implementation of operator*() const
@@ -92,7 +95,7 @@ public:
    */
   const reference operator*() const
   {
-    return derived(*this).dereference();
+    return Base::derived(*this).dereference();
   }
 
   /**
@@ -101,7 +104,7 @@ public:
    */
   pointer operator->()
   {
-    return &derived(*this).dereference();
+    return &Base::derived(*this).dereference();
   }
 
   /**
@@ -110,7 +113,7 @@ public:
    */
   const pointer operator->() const
   {
-    return &derived(*this).dereference();
+    return &Base::derived(*this).dereference();
   }
 
   /**
@@ -119,8 +122,8 @@ public:
    */
   Derived& operator++()
   {
-    derived(*this).increment();
-    return derived(*this);
+    Base::derived(*this).increment();
+    return Base::derived(*this);
   }
 
   /**
@@ -129,8 +132,8 @@ public:
    */
   Derived operator++(int)
   {
-    Derived tmp = derived(*this);
-    ++derived(*this);
+    Derived tmp = Base::derived(*this);
+    ++Base::derived(*this);
     return tmp;
   }
 
@@ -140,8 +143,8 @@ public:
    */
   Derived& operator--()
   {
-    derived(*this).decrement();
-    return derived(*this);
+    Base::derived(*this).decrement();
+    return Base::derived(*this);
   }
   /**
    * Implementation of operator--(int) (postdecrement)
@@ -149,8 +152,8 @@ public:
    */
   Derived operator--(int)
   {
-    Derived tmp = derived(*this);
-    --derived(*this);
+    Derived tmp = Base::derived(*this);
+    --Base::derived(*this);
     return tmp;
   }
   /**
@@ -160,8 +163,8 @@ public:
    */
   Derived& operator+=(difference_type n)
   {
-    derived(*this).advance(n);
-    return derived(*this);
+    Base::derived(*this).advance(n);
+    return Base::derived(*this);
   }
   /**
    * Implementation of operator-=()
@@ -170,8 +173,8 @@ public:
    */
   Derived& operator-=(difference_type n)
   {
-    derived(*this).advance(-n);
-    return derived(*this);
+    Base::derived(*this).advance(-n);
+    return Base::derived(*this);
   }
   /**
    * Implementation of operator+()
@@ -180,7 +183,7 @@ public:
    */
   Derived operator+(difference_type n) const
   {
-    Derived tmp = derived(*this);
+    Derived tmp = Base::derived(*this);
     return tmp += n;
   }
   /**
@@ -190,7 +193,7 @@ public:
    */
   Derived operator-(difference_type n) const
   {
-    Derived tmp = derived(*this);
+    Derived tmp = Base::derived(*this);
     return tmp -= n;
   }
 
@@ -201,7 +204,7 @@ public:
    */
   difference_type operator-(const Derived& rhs) const
   {
-    return -derived(*this).distance_to(rhs);
+    return -Base::derived(*this).distance_to(rhs);
   }
 
   /**
@@ -212,7 +215,7 @@ public:
    */
   bool operator==(const Derived& rhs) const
   {
-    return derived(*this).equal(rhs);
+    return Base::derived(*this).equal(rhs);
   }
   /**
    * Inequallity operator. Returns false if the iterators point to the same
@@ -222,7 +225,7 @@ public:
    */
   bool operator!=(const Derived& rhs) const
   {
-    return !derived(*this).equal(rhs);
+    return !Base::derived(*this).equal(rhs);
   }
 
   /**
@@ -233,7 +236,7 @@ public:
    */
   bool operator<(const Derived& rhs) const
   {
-    return (derived(*this).distance_to(rhs) > 0);
+    return (Base::derived(*this).distance_to(rhs) > 0);
   }
   /**
    * Less equal  operator. Returns true if the iterator rhs is closer (or at the same distance)
@@ -243,7 +246,7 @@ public:
    */
   bool operator<=(const Derived& rhs) const
   {
-    return (derived(*this).distance_to(rhs) >= 0);
+    return (Base::derived(*this).distance_to(rhs) >= 0);
   }
   /**
    * Greater than operator. Returns true if the iterator rhs is located before
@@ -253,7 +256,7 @@ public:
    */
   bool operator>(const Derived& rhs) const
   {
-    return (derived(*this).distance_to(rhs) < 0);
+    return (Base::derived(*this).distance_to(rhs) < 0);
   }
   /**
    * Greater than equal operator. Returns true if the iterator rhs is located before
@@ -263,7 +266,7 @@ public:
    */
   bool operator>=(const Derived& rhs) const
   {
-    return (derived(*this).distance_to(rhs) <= 0);
+    return (Base::derived(*this).distance_to(rhs) <= 0);
   }
 };
 
