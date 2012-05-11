@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -116,9 +116,11 @@ class CombineTestCase(unittest.TestCase):
         rres = numpy.array([[3.66666667, 2., 4., 4.],
                             [2.6666666666666665, 0., 1. , 4.],
                             [18., 2., 1.5 , 2.66666667]])
-        rvar = numpy.array([[9.3333333333333339, 0.0, 13.0, 0.0],
-                            [8.3333333333333339, 0.0, 3.0, 0.0],
-                            [523.0, 0.0, 4.5, 5.3333333333333339]])
+        rvar = numpy.array([[3.11111111, 0., 4.33333333, 0.],
+                            [2.77777778, 0., 1.,  0.],
+                            [174.33333333, 0., 2.25, 1.77777778]
+                            ])                            
+        
         rnum = numpy.array([[3, 3, 3, 2],
                             [3, 0, 3, 3],
                             [3, 1, 2, 3]])
@@ -145,7 +147,8 @@ class CombineTestCase(unittest.TestCase):
                           [18., 2.33333333, 1.666666667 , 2.66666667]])
         rvar = numpy.array([[9.3333333333333339, 0., 13.0, 0.],
                             [8.3333333333333339, 0., 3.00000000, 0.],
-                            [523.0, 0.33333333333333337, 2.333333333333333, 5.3333333333333339]])
+                            [523.0, 0.33333333333333337, 2.333333333333333, 
+                             5.3333333333333339]]) / len(inputs)
         rnum = numpy.array([[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]])
         
         out = mean(inputs)       
@@ -170,12 +173,14 @@ class CombineTestCase(unittest.TestCase):
         out = median(inputs)
     
         rres = input3
-    
-            # Checking
+        rvar = [3.39089482, 0., 0.25117739, 0., 0., 0.,
+                0.56514914, 0., 76.92307692, 0., 0.25117739, 1.00470958]
+        
+        # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-#        for cal, precal in zip(out[1].flat, rvar.flat):
-#            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(5)):
             self.assertEqual(cal, precal)
             
@@ -192,12 +197,14 @@ class CombineTestCase(unittest.TestCase):
         out = median(inputs)
     
         rres = numpy.array([[4, 2, 4.5, 0.0]], dtype='float')
-    
-            # Checking
+        rvar = [4.7095761381475665, 0.09811616954474098, 
+                2.3547880690737832, 8.372579801151229]
+        
+        # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-#        for cal, precal in zip(out[1].flat, rvar.flat):
-#            self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(4)):
             self.assertEqual(cal, precal)
     
@@ -299,7 +306,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[0].flat:
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
-            self.assertAlmostEqual(v, 9.166666666)
+            self.assertAlmostEqual(v, 0.9166666666)
         for v in r[2].flat:
             self.assertAlmostEqual(v, 10)
             
@@ -307,7 +314,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[0].flat:            
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
-            self.assertAlmostEqual(v, 6.0)
+            self.assertAlmostEqual(v, 0.75)
         for v in r[2].flat:
             self.assertAlmostEqual(v, 8)            
             
@@ -315,7 +322,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[0].flat:            
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
-            self.assertAlmostEqual(v, 3.5)
+            self.assertAlmostEqual(v, 0.58333333333333337)
         for v in r[2].flat:
             self.assertAlmostEqual(v, 6)
 
@@ -323,7 +330,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[0].flat:
             self.assertAlmostEqual(v, 4.5)
         for v in r[1].flat:
-            self.assertAlmostEqual(v, 6.3166666666666664)
+            self.assertAlmostEqual(v, 0.76666666666666672)
         for v in r[2].flat:
             self.assertAlmostEqual(v, 8.2)
             

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -23,7 +23,7 @@ import threading
 import logging
 import sys
 
-from numina.iterqueue import iterqueue
+from numina.extraiter import iterqueue
 
 _logger = logging.getLogger('worker')
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -24,7 +24,7 @@ from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
-from numina.array.imsurfit import FitOne
+from .imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
 
@@ -90,11 +90,45 @@ def combine_shape(shapes, offsets):
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
 
-def resize_array(data, finalshape, region, fill=0):
+def resize_array(data, finalshape, region, window=None, scale=1, fill=0, conserve=True):
+    
+    if window:
+        data = data[window]
+    
+    
+    if scale == 1:
+        finaldata = data
+    else:
+        finaldata = rebin_scale(data, scale)
+    
     newdata = numpy.empty(finalshape, dtype=data.dtype)
     newdata.fill(fill)
-    newdata[region] = data
+    newdata[region] = finaldata
+    # Conserve the total sum of the original data
+    if conserve:
+        newdata[region] /= scale**2
     return newdata
+
+def rebin_scale(a, scale=1):
+    '''Scale an array to a new shape.'''
+    
+    newshape = tuple((side * scale) for side in a.shape)
+    
+    slices = [slice(0, old, float(old)/new) for old, new in zip(a.shape, newshape)]
+    coordinates = numpy.mgrid[slices]
+    indices = coordinates.astype('i')   #choose the biggest smaller integer index
+    return a[tuple(indices)]
+
+
+def rebin(a, newshape):
+    '''Rebin an array to a new shape.'''
+    
+    assert len(a.shape) == len(newshape)
+
+    slices = [slice(0, old, float(old)/new) for old, new in zip(a.shape, newshape)]
+    coordinates = numpy.mgrid[slices]
+    indices = coordinates.astype('i')   #choose the biggest smaller integer index
+    return a[tuple(indices)]
 
 def fixpix(data, mask, kind='linear'):
     '''Interpolate 2D array data in rows'''

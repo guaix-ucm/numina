@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -21,7 +21,7 @@ import unittest
 
 import numpy
 
-from numina.image.imsurfit import imsurfit
+from numina.array.imsurfit import imsurfit
 
 class ImsurfitTestCase(unittest.TestCase):
     

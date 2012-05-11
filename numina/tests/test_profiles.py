@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -26,7 +26,7 @@ import math
 import numpy as np # pylint: disable-msgs=E1101
 from scipy.special import erf
 
-from numina.simulation import GaussProfile
+from numina.instrument.profiles import GaussProfile
 
 M_SQRT1_2 = math.sqrt(1. / 2.)
 

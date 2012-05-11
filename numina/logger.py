@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -21,53 +21,43 @@
 '''Extra logging handlers for the numina logging system.'''
 
 import logging
-import warnings
 
-class NullHandler(logging.Handler):
-    '''NullHandler is the default log handler of the package. 
-    
-    It doesn't emit nothing.
-    '''
+import pyfits
+
+from .recipes import DataFrame
+
+class FITSHistoryHandler(logging.Handler):
+    '''Logging handler using HISTORY FITS cards'''
+    def __init__(self, header):
+        logging.Handler.__init__(self)
+        self.header = header
+
     def emit(self, record):
-        '''Do-nothing method.'''
-        pass
+        msg = self.format(record)
+        self.header.add_history(msg)
 
-# Warnings integration
-# Backported from python 2.7
+def log_to_history(logger):
+    '''Decorate function, adding a logger handler stored in FITS.'''
 
-_warnings_showwarning = None
+    def log_to_history_decorator(method):
 
-def _showwarning(message, category, filename, lineno, file=None, line=None):
-    """
-    Implementation of showwarnings which redirects to logging, which will first
-    check to see if the file parameter is None. If a file is specified, it will
-    delegate to the original warnings implementation of showwarning. Otherwise,
-    it will call warnings.formatwarning and will log the resulting string to a
-    warnings logger named "py.warnings" with level logging.WARNING.
-    """
-    if file is not None:
-        if _warnings_showwarning is not None:
-            _warnings_showwarning(message, category, filename, lineno, file, line)
-    else:
-        s = warnings.formatwarning(message, category, filename, lineno, line)
-        logger = logging.getLogger("py.warnings")
-        if not logger.handlers:
-            logger.addHandler(NullHandler())
-        logger.warning("%s", s)
+        def l2h_method(self, block):
+            history_header = pyfits.Header()
 
-def captureWarnings(capture):
-    """
-    If capture is true, redirect all warnings to the logging package.
-    If capture is False, ensure that warnings are not redirected to logging
-    but to their original destinations.
-    """
-    global _warnings_showwarning
-    if capture:
-        if _warnings_showwarning is None:
-            _warnings_showwarning = warnings.showwarning
-            warnings.showwarning = _showwarning
-    else:
-        if _warnings_showwarning is not None:
-            warnings.showwarning = _warnings_showwarning
-            _warnings_showwarning = None
+            fh =  FITSHistoryHandler(history_header)
+            fh.setLevel(logging.INFO)
+            logger.addHandler(fh)
 
+            try:
+                result = method(self, block)
+                if 'products' in result:
+                    for r in result['products']:
+                        if isinstance(r, DataFrame):
+                            hdr = r.image[0].header
+                            hdr.ascardlist().extend(history_header.ascardlist())
+                return result 
+            finally:
+                logger.removeHandler(fh)
+        return l2h_method
+
+    return log_to_history_decorator

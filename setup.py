@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, Extension
 
 import numpy
 
@@ -18,25 +18,26 @@ uext = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
+REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
+
 setup(name='numina',
-      version='0.5.0',
+      version='0.6.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/users/spr/emir/numina-0.5.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.6.0dev.tar.gz',
       license='GPLv3',
-      description='Numina reduction library',
-      packages=find_packages('.'),
-      package_data={'numina.simulation': ['*.dat'],
-                      'numina': ['*.cfg', 'logging.ini'],
-                      },
+      description='Numina reduction package',
+      packages=['numina', 'numina.array', 'numina.flow', 
+                'numina.frame', 'numina.frame.aperture',
+                'numina.instrument',
+                'numina.recipes', 'numina.serialize', 
+                'numina.tests', 'numina.util'],
       ext_modules=[cext, uext],
-      entry_points={
-                      'console_scripts': ['numina = numina.user:main'],
-                      },
-      test_suite="nose.collector",
-      install_requires=['setuptools', 'numpy', 'pyfits', 'scipy', 
-		'sphinx', 'pyxdg', 'simplejson', 'nose'],
+      data_files=[('share/numina/pipelines', ['pipelines/README'])],
+      scripts=['scripts/numina'],
+      requires=REQUIRES,
+      install_requires=REQUIRES,
       classifiers=[
                    "Programming Language :: Python",
                    'Development Status :: 3 - Alpha',
@@ -46,12 +47,5 @@ setup(name='numina',
                    "Operating System :: OS Independent",
                    "Topic :: Scientific/Engineering :: Astronomy",
                    ],
-      long_description='''\
-      This is Numina reduction package
-      
-      Numina is the data reduction package used for the following GTC
-      instruments: EMIR, FRIDA, MEGARA
-      
-      Maintainer: sergiopr@fis.ucm.es
-      ''',
+      long_description=open('README.txt').read()
       )

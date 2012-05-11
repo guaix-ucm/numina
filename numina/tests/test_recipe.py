@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -20,6 +20,8 @@
 '''Unit test for RecipeBase.'''
 
 import unittest
+import collections
+
 from numina.recipes import RecipeBase
 
 class Test(RecipeBase):
@@ -38,7 +40,7 @@ class RecipeTestCase(unittest.TestCase):
         self.rc = Test({}, {})
         
     def test1(self):
-        self.assertTrue(callable(self.rc))
+        self.assertTrue(isinstance(self.rc, collections.Callable))
             
 def test_suite():
     suite = unittest.TestSuite()

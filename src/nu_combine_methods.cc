@@ -1,20 +1,20 @@
 /*
- * Copyright 2008-2011 Sergio Pascual
+ * Copyright 2008-2012 Universidad Complutense de Madrid
  *
- * This file is part of PyEmir
+ * This file is part of Numina
  *
- * PyEmir is free software: you can redistribute it and/or modify
+ * Numina is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * PyEmir is distributed in the hope that it will be useful,
+ * Numina is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with PyEmir.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Numina.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -68,18 +68,20 @@ int NU_median_function(double *data, double *weights,
 int NU_minmax_function(double *data, double *weights,
     size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
 {
-  unsigned* fdata = (unsigned*) func_data;
-  unsigned& nmin = *fdata;
-  unsigned& nmax = *(fdata + 1);
+  int* fdata = (int*) func_data;
+  int& nmin = *fdata;
+  int& nmax = *(fdata + 1);
 
-  if ((nmin + nmax) == size) {
+  const size_t total = static_cast<size_t>(nmin + nmax);
+
+  if (total == size) {
     *out[0] = 0;
     *out[1] = 0;
     *out[2] = 0;
     return 1;
   }
 
-  if ((nmin + nmax) > size) {
+  if (total > size) {
     PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
     return 0;
   }
@@ -91,8 +93,8 @@ int NU_minmax_function(double *data, double *weights,
       // if the first component of the first is less than the first component
       // of the second std::pair
       compose(std::less<double>(), __gnu_cxx::select1st<
-          typename ZIter::value_type>(), __gnu_cxx::select1st<
-          typename ZIter::value_type>()));
+          ZIter::value_type>(), __gnu_cxx::select1st<
+          ZIter::value_type>()));
 
   *out[2] = result.second - result.first;
   IterPair beg = result.first.get_iterator_pair();
@@ -134,10 +136,10 @@ int NU_sigmaclip_function(double *data, double *weights,
           __gnu_cxx::compose2(std::logical_and<bool>(),
               __gnu_cxx::compose1(
                   std::bind1st(std::less<double>(), low),
-                  __gnu_cxx::select1st<typename ZIter::value_type>()),
+                  __gnu_cxx::select1st<ZIter::value_type>()),
               __gnu_cxx::compose1(
                   std::bind1st(std::greater<double>(), high),
-                  __gnu_cxx::select1st<typename ZIter::value_type>())
+                  __gnu_cxx::select1st<ZIter::value_type>())
             )
           );
 

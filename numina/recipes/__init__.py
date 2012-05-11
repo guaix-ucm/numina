@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -25,52 +25,30 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 '''
 
+
 import abc
-import importlib
-import warnings
-import inspect
-import pkgutil
-import datetime
 import traceback
+import logging
 
-import pyfits
-from numina.exceptions import RecipeError, ParameterError
+from numina.exceptions import RecipeError
 
-# Classes are new style
-__metaclass__ = type
+from .products import DataFrame, DataProduct 
+from .oblock import obsres_from_dict
+from .requirements import Parameter, DataProductParameter
 
-ERROR = 1
-OK = 0
-UNKNOWN = -1
+_logger = logging.getLogger('numina')
 
-_level_names = {ERROR: 'ERROR',
-                OK: 'OK',
-                UNKNOWN: 'UNKNOWN'}
-
-def find_recipe(instrument, mode):
-    base = '%s.recipes' % instrument
-    try:
-        mod = importlib.import_module(base)
-    except ImportError:
-        msg = 'No instrument %s' % instrument
-        raise ValueError(msg)
-
-    try:
-        entry = mod.find_recipe(mode)
-    except KeyError:
-        msg = 'No recipe for mode %s' % mode
-        raise ValueError(msg)
-        
-    return '%s.%s' % (base, entry)
-
-def find_parameters(recipe_name):
-    # query somewhere for the precomputed parameters
-    return {}
-
+def list_recipes():
+    '''List all defined recipes'''
+    return RecipeBase.__subclasses__() # pylint: disable-msgs=E1101
+    
 class RecipeBase(object):
     '''Base class for all instrument recipes'''
 
     __metaclass__ = abc.ABCMeta
+    
+    # Recipe own logger
+    logger = _logger
 
     def __init__(self, *args, **kwds):
         super(RecipeBase, self).__init__()
@@ -79,6 +57,7 @@ class RecipeBase(object):
         self.environ = {}
         self.parameters = {}
         self.instrument = None
+        self.runinfo = {}
 
         self.configure(**kwds)
     
@@ -99,6 +78,18 @@ class RecipeBase(object):
         return
 
     def __call__(self, block, environ=None):
+        '''
+        Process ``block`` with the Recipe.
+        
+        Process the result of the observing block with the
+        Recipe.
+        
+        :param block: the result of a observing block
+        :param type: ObservationResult
+        :param environ: a dictionary with custom parameters
+        :rtype: a dictionary with the result of the processing or an error 
+        
+        '''
 
         if environ is not None:
             self.environ.update(environ)
@@ -114,71 +105,36 @@ class RecipeBase(object):
                                 'message': str(exc), 
                                 'traceback': traceback.format_exc()}
                       }
+            _logger.error("During recipe execution %s", exc)
         return result
 
 class RecipeResult(dict):
     '''Result of the __call__ method of the Recipe.'''
     pass
 
-class Parameter(object):
-    def __init__(self, name, value, description):
-        self.name = name
-        self.value = value
-        self.description = description
+class provides(object):
+    '''Decorator to add the list of provided products to recipe'''
+    def __init__(self, *products):
+        self.products = products
 
-class Product(object):
-    '''Base class for Recipe Products'''
-    pass
-
-class Image(Product):
-    def __init__(self, image):
-        self.image = image
-        self.filename = None
-
-    def __getstate__(self):
-        # save fits file
-        filename = 'result.fits'
-        if self.image[0].header.has_key('FILENAME'):
-            filename = self.image[0].header['FILENAME']
-            self.image.writeto(filename, clobber=True)
-
-        return {'image': filename}
-
-    def __setstate__(self, state):
-        # this is not exactly what we had in the begining...
-        self.image = pyfits.open(state['image'])
-        self.filename = state['image']
-
-
-def list_recipes():
-    '''List all defined recipes'''
-    return RecipeBase.__subclasses__() # pylint: disable-msgs=E1101
+    def __call__(self, klass):
+        if hasattr(klass, '__provides__'):
+            klass.__provides__.extend(self.products)
+        else:
+            klass.__provides__ = list(self.products)
+        return klass
     
-def walk_modules(mod):
-    module = importlib.import_module(mod)
-    for _, nmod, _ in pkgutil.walk_packages(path=module.__path__,
-                                    prefix=module.__name__ + '.'):
-        yield nmod
-        
-def init_recipe_system(modules):
-    '''Load all recipe classes in modules'''
-    for mod in modules:
-        for sub in walk_modules(mod):
-            mod = importlib.import_module(sub)
-        
-if __name__ == '__main__':
-    import json
-    import tempfile
-    
-    from numina.user import main
-    from numina.jsonserializer import to_json 
-        
-    p = {'niterations': 1, 'observing_mode': 'sample'}
-    
-    f = tempfile.NamedTemporaryFile(prefix='tmp', suffix='numina', delete=False)
-    try:
-        json.dump(p, f, default=to_json, encoding='utf-8', indent=2)
-    finally:
-        f.close()
-            
-    main(['--module', 'numina.recipes', '--run', f.name])
+class requires(object):
+    '''Decorator to add the list of required parameters to recipe'''
+    def __init__(self, *parameters):
+        self.parameters = parameters
+
+    def __call__(self, klass):
+        if hasattr(klass, '__requires__'):
+            klass.__requires__.extend(self.parameters)
+        else:
+            klass.__requires__ = list(self.parameters)
+        return klass
+
+
+

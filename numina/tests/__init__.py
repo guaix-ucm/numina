@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -21,7 +21,7 @@
 
 import unittest
 
-import test_all
+from . import test_all
 
 def tests(verbosity=1):
     '''Run all unit tests.'''

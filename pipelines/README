@@ -1,0 +1,27 @@
+Put your pipeline ini files in this directory
+
+Valid formats for this file are:
+
+$ cat emir
+[pipeline]
+
+$ cat emir
+[pipeline]
+name = 
+
+# Loads a pipeline called emir from system path
+
+$ cat 00emir
+[pipeline]
+name = emir
+
+# Loads a pipeline called emir from system path
+
+$ cat 00emir
+[pipeline]
+name = emir
+path = /my/directory/outside/pythonpath
+
+# Loads a pipeline called emir from custom directory path
+
+

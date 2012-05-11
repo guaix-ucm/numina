@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,40 +17,21 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from .base import BaseConectable
 
-# Classes are new style
-__metaclass__ = type
-
-class Shutter:
+class Shutter(BaseConectable):
     def __init__(self):
-        self._closed = True 
-    
-    def status(self, closed=True):
-        self._closed = closed
+        self.closed = True 
     
     def open(self):
-        if self._closed:
-            self._closed = False
-        else:
-            pass
-        
-    def close(self):
-        if not self._closed:
-            self._closed = True
-        else:
-            pass
-        
-    def lpath(self, input):
-        if self._closed:
-            return None
-        else:
-            return input
-        
-    def configure(self, open):
-        if open:
-            self._closed = False
-        else:
-            self._closed = True
+        self.closed = False
     
-    def metadata(self):
-        return {}
+    def close(self):
+        self.closed = True
+        
+    def emit(self):
+        if self.closed:
+            return 0.0
+        else:
+            return self.source.emit()
+        

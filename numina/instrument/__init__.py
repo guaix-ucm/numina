@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2011 Sergio Pascual
+# Copyright 2008-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -16,3 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
+    
+from .shutter import Shutter
+from .lamp import Lamp
+from .sources import Sky, ThermalBackground, MultiSource
