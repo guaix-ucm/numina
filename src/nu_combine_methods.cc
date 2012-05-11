@@ -72,14 +72,16 @@ int NU_minmax_function(double *data, double *weights,
   int& nmin = *fdata;
   int& nmax = *(fdata + 1);
 
-  if ((nmin + nmax) == size) {
+  const size_t total = static_cast<size_t>(nmin + nmax);
+
+  if (total == size) {
     *out[0] = 0;
     *out[1] = 0;
     *out[2] = 0;
     return 1;
   }
 
-  if ((nmin + nmax) > size) {
+  if (total > size) {
     PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
     return 0;
   }
