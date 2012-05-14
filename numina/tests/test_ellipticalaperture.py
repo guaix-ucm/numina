@@ -31,7 +31,7 @@ class EllipticalApertureTestCase(unittest.TestCase):
             generator = aperture(a, b, 0.0, 0.0)
             self.assertRaises(ValueError, generator.next)
             
-            
+    @unittest.skip      
     def test_full_area(self):
         '''Test the area of the full ellipse.'''
         

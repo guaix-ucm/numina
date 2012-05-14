@@ -38,31 +38,10 @@ class Requirement(object):
         self.description = description
         self.optional = optional
         
-    def lookup(self, params):    
-        if self.name in params:
-            # FIXME: add validation
-            return params[self.name]
-        elif self.optional:
-            return None
-        elif self.value is not None:
-            return self.value
-        else:
-            raise LookupError('parameter %s must be defined' % self.name)
-
 class Parameter(Requirement):
     def __init__(self, name, value, description, optional=False):
         super(Parameter, self).__init__(name, description, 
             value=value, optional=optional)
-        
-    def lookup(self, params):    
-        if self.name in params:
-            # FIXME: add validation
-            return params[self.name]
-        elif self.optional:
-            return None
-        else:
-            return self.value
-        
         
 class DataProductParameter(Parameter):
     def __init__(self, name, valueclass, description, optional=False):
@@ -78,14 +57,3 @@ class DataProductParameter(Parameter):
         
         super(DataProductParameter, self).__init__(name, valueclass, 
                                                    description, optional)
-
-    def lookup(self, params):    
-        if self.name in params:
-            # FIXME: add validation
-            return params[self.name]
-        elif self.optional:
-            return None
-        elif self.default is not None:
-            return self.default
-        else:
-            raise LookupError('parameter %s must be defined' % self.name)
