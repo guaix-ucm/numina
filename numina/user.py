@@ -34,6 +34,7 @@ from numina.treedict import TreeDict
 from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes
+from numina.recipes.lookup import lookup as lookup_param
 from numina.pipeline import get_recipe
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
@@ -154,7 +155,7 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
     for req in RecipeClass.__requires__:
         try:
             _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= req.lookup(params)
+            parameters[req.name]= lookup_param(req, params)
             _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
         except LookupError as error:
             _logger.error('%s', error)
@@ -237,7 +238,7 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     for req in RecipeClass.__requires__:
         try:
             _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= req.lookup(allm)
+            parameters[req.name]= lookup_param(allm)
             _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
         except LookupError as error:
             _logger.error('%s', error)
