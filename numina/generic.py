@@ -90,7 +90,7 @@ class GenericFunction(object):
                 func = self._internal_map[base]
                 return func(*args)
         else:
-            self._default_impl(*args)
+            return self._default_impl(*args)
             
     def is_registered(self, cls):
         if cls in self._internal_map:
