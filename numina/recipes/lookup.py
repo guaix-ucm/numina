@@ -18,7 +18,7 @@
 # 
 
 '''
-Generic functions used by numina CLI to look up values of the requirements
+Recipe requirements
 '''
 
 from .requirements import Requirement, Parameter, DataProductParameter
@@ -27,10 +27,7 @@ from numina.generic import generic
 
 @generic
 def lookup(req, source):
-    '''Look up values of the requirements.'''
-    
-    # We don't have a default implementation
-    raise NotImplementedError
+    pass
 
 @lookup.register(Requirement)
 def _lookup_req(req, source):    
