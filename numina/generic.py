@@ -20,7 +20,7 @@
 '''Very simple generic function implementation.'''
 
 class GenericFunction(object):
-    '''A generic fucntion representation.'''
+    '''A generic function representation.'''
     def __init__(self, f):
         self._internal_map = {}
         self._default_impl = f
