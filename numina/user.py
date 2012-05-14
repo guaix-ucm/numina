@@ -238,7 +238,7 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     for req in RecipeClass.__requires__:
         try:
             _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= lookup_param(allm)
+            parameters[req.name]= lookup_param(req, allm)
             _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
         except LookupError as error:
             _logger.error('%s', error)
