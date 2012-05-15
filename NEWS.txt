@@ -1,3 +1,12 @@
+Version 0.6.1 (15 May 2012)
+---------------------------
+
+Changes:
+
+  * lookup is a generic function
+  * added tests for generic
+  * fixed a bug in default implementation of generic
+
 Version 0.6.0 (11 May 2012)
 ---------------------------
 

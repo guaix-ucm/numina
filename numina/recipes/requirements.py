@@ -37,14 +37,11 @@ class Requirement(object):
         self.value = value
         self.description = description
         self.optional = optional
-
+        
 class Parameter(Requirement):
     def __init__(self, name, value, description, optional=False):
         super(Parameter, self).__init__(name, description, 
             value=value, optional=optional)
-        
-
-        
         
 class DataProductParameter(Parameter):
     def __init__(self, name, valueclass, description, optional=False):
@@ -60,4 +57,3 @@ class DataProductParameter(Parameter):
         
         super(DataProductParameter, self).__init__(name, valueclass, 
                                                    description, optional)
-
