@@ -37,6 +37,7 @@ setup(name='numina',
       data_files=[('share/numina/pipelines', ['pipelines/README'])],
       scripts=['scripts/numina'],
       requires=REQUIRES,
+      setup_requires=['numpy'],
       install_requires=REQUIRES,
       classifiers=[
                    "Programming Language :: Python",
