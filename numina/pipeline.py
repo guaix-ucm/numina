@@ -53,6 +53,22 @@ def get_pipeline(name):
     '''
     return _pipelines[name]
 
+def get_recipe(name, mode):
+    '''Find the Recipe suited to process a given observing mode.''' 
+    try:
+        pipe = _pipelines[name]
+    except KeyError:
+        msg = 'No pipeline named %s' % name
+        raise ValueError(msg)
+    
+    try:
+        klass = pipe.get_recipe(mode)
+    except KeyError:
+        msg = 'No recipe for mode %s' % mode
+        raise ValueError(msg)
+        
+    return klass
+
 def register_pipeline(pipe):
     '''Register a pipeline in the global register.
     
@@ -73,80 +89,16 @@ def register_recipes(name, recipes):
     pipe = Pipeline(name, recipes)
     register_pipeline(pipe)
 
-def load_pipelines_from(paths):
-    '''Load pipelines from ini files in paths.'''
-    global _pipelines
-    for path in paths:
-        thispipe = load_pipelines_from_ini(path)
-        _pipelines.update(thispipe)
-    return _pipelines
 
-def import_pipeline(name, path):
-    '''Import a pipeline module from a given path.'''
-    if not path:
-        _logger.debug('Import pipeline %s from system', name)
-        try:
-            mod = importlib.import_module(name)
-            return mod
-        except ImportError:
-            _logger.warning('No module named %s', name)
-    else:
-        _logger.debug('Import module %s from %s', name, path)
-        for impt, mname, _isp in pkgutil.iter_modules([path]):
-            if mname == name:
-                loader = impt.find_module(mname)
-                mod = loader.load_module(mname)
-                return mod
-        else:
-            _logger.warning('No module named %s', name)
-def load_pipelines_from_ini(path):
-    '''Load files in ini format from path'''
-
-    global _pipelines
-
-    try:
-        _logger.debug('Loading pipelines from %s', path)
-        for fname in fnmatch.filter(os.listdir(path), _FILE_PATTERN):
-            dname, _pext = os.path.splitext(fname)
-            # By default, the name is the filename with extension removed
-            defaults = {'name': dname, 'path': None}
-            config = ConfigParser.SafeConfigParser(defaults=defaults,
-                                                   allow_no_value=True)
-            config.read(os.path.join(path, fname))
-            try:
-
-                name = config.get('pipeline', 'name')
-
-                ppath = config.get('pipeline', 'path')
-
-                ppath = os.path.expanduser(ppath)
-
-                import_pipeline(name, ppath)
-            except ConfigParser.NoSectionError:
-                _logger.warning('Not valid ini file %s', fname)
-    except OSError as error:
-        _logger.debug(error)
-
-    return _pipelines
-    
+# pkgutil.iter_modules([path]):
 def init_pipeline_system():
     '''Load all available pipelines.'''
-    paths = pipeline_path()
-    return load_pipelines_from(paths)
+    import numina.pipelines as master
+    import pkgutil
 
-def get_recipe(name, mode):
-    '''Find the Recipe suited to process a given observing mode.''' 
-    try:
-        pipe = _pipelines[name]
-    except KeyError:
-        msg = 'No pipeline named %s' % name
-        raise ValueError(msg)
-    
-    try:
-        klass = pipe.get_recipe(mode)
-    except KeyError:
-        msg = 'No recipe for mode %s' % mode
-        raise ValueError(msg)
-        
-    return klass
-
+    #for i in pkgutil.iter_modules(master.__path__):
+    for i in pkgutil.walk_packages(master.__path__, master.__name__ + '.'):
+        imp, name, is_pkg = i
+        loader = imp.find_module(name)
+        mod = loader.load_module(name)
+    return _pipelines

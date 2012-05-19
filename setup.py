@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup, Extension
+from setuptools import find_packages
 
 import numpy
 
@@ -28,13 +29,8 @@ setup(name='numina',
       download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.6.1.tar.gz',
       license='GPLv3',
       description='Numina reduction package',
-      packages=['numina', 'numina.array', 'numina.flow', 
-                'numina.frame', 'numina.frame.aperture',
-                'numina.instrument',
-                'numina.recipes', 'numina.serialize', 
-                'numina.tests', 'numina.util'],
+      packages=find_packages('.'),
       ext_modules=[cext, uext],
-      data_files=[('share/numina/pipelines', ['pipelines/README'])],
       scripts=['scripts/numina'],
       requires=REQUIRES,
       setup_requires=['numpy'],
