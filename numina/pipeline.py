@@ -19,21 +19,14 @@
 
 '''Pipeline loader.'''
 
-import os.path
-import ConfigParser
-import importlib
-import pkgutil
 import logging
-import fnmatch
+import pkgutil
 
-from numina.config import pipeline_path
+import numina.pipelines as namespace
 
 _logger = logging.getLogger('numina')
 
 _pipelines = {}
-
-_FILE_EXTENSION = 'ini'
-_FILE_PATTERN = '*.%s' % _FILE_EXTENSION
 
 class Pipeline(object):
     '''A pipeline.'''
@@ -90,15 +83,11 @@ def register_recipes(name, recipes):
     register_pipeline(pipe)
 
 
-# pkgutil.iter_modules([path]):
 def init_pipeline_system():
     '''Load all available pipelines.'''
-    import numina.pipelines as master
-    import pkgutil
-
-    #for i in pkgutil.iter_modules(master.__path__):
-    for i in pkgutil.walk_packages(master.__path__, master.__name__ + '.'):
-        imp, name, is_pkg = i
+    
+    for i in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+        imp, name, _is_pkg = i
         loader = imp.find_module(name)
-        mod = loader.load_module(name)
+        _mod = loader.load_module(name)
     return _pipelines
