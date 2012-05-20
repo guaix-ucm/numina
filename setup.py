@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup, Extension
+from setuptools import find_packages
 
 import numpy
 
@@ -21,25 +22,21 @@ uext = Extension('numina.array._ufunc',
 REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
 
 setup(name='numina',
-      version='0.6.1',
+      version='0.7.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.6.1.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.7.0.tar.gz',
       license='GPLv3',
       description='Numina reduction package',
-      packages=['numina', 'numina.array', 'numina.flow', 
-                'numina.frame', 'numina.frame.aperture',
-                'numina.instrument',
-                'numina.recipes', 'numina.serialize', 
-                'numina.tests', 'numina.util'],
+      packages=find_packages('.'),
       ext_modules=[cext, uext],
-      data_files=[('share/numina/pipelines', ['pipelines/README'])],
       scripts=['scripts/numina'],
       requires=REQUIRES,
+      setup_requires=['numpy'],
       install_requires=REQUIRES,
       classifiers=[
-                   "Programming Language :: Python",
+                   "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
                    "Environment :: Other Environment",
                    "Intended Audience :: Science/Research",
