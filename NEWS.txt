@@ -1,3 +1,9 @@
+
+Changes:
+
+  * using namespace package numina.pipelines to hold pipelines
+
+
 Version 0.6.1 (15 May 2012)
 ---------------------------
 
