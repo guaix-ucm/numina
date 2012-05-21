@@ -27,6 +27,7 @@ import numina.pipelines as namespace
 _logger = logging.getLogger('numina')
 
 _pipelines = {}
+_instruments = {}
 
 class Pipeline(object):
     '''A pipeline.'''
@@ -37,6 +38,27 @@ class Pipeline(object):
 
     def get_recipe(self, mode):
         return self.recipes[mode]
+
+class BaseInstrument(object):
+    name = 'Undefined'
+    modes = []
+        
+class ObservingMode(object):
+    def __init__(self):
+        self.name = ''
+        self.uuid = ''
+        self.key = ''
+        self.url = ''
+        self.instrument = ''
+        self.summary = ''
+        self.description = ''
+        self.recipe = ''
+        self.status = ''
+        self.date = ''
+        self.reference = ''
+        
+def get_instruments():
+    return _instruments
 
 def get_pipeline(name):
     '''Get a pipeline from the global register.
@@ -90,4 +112,35 @@ def init_pipeline_system():
         imp, name, _is_pkg = i
         loader = imp.find_module(name)
         _mod = loader.load_module(name)
+        
+        
+    # Loaded all DRP modules
+    
+    # populate instruments list
+    for InsCls in BaseInstrument.__subclasses__():
+        ins = InsCls()
+        global _instruments
+        _instruments[ins.name] = ins 
+        
     return _pipelines
+
+
+# Quick constructor and representer
+# for Observing Modes in YAML 
+
+import yaml
+
+def om_repr(dumper, data):
+    return dumper.represent_mapping(u'!om', data.__dict__)
+
+def om_cons(loader, node):
+    om = ObservingMode()
+    value = loader.construct_mapping(node)
+    om.__dict__ = value
+    return om
+
+
+
+yaml.add_representer(ObservingMode, om_repr)
+yaml.add_constructor(u'!om', om_cons)
+

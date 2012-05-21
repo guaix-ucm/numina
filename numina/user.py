@@ -35,7 +35,7 @@ from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes
 from numina.recipes.lookup import lookup as lookup_param
-from numina.pipeline import get_recipe
+from numina.pipeline import get_recipe, get_instruments
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
 
@@ -86,6 +86,28 @@ def mode_list(serializer, args):
     for recipeCls in list_recipes():
 #        print fully_qualified_name(recipeCls)
         print recipeCls
+        
+def print_instrument(instrument):
+    print 'Name:', instrument.name
+    
+    if instrument.modes:
+        print 'Observing modes'
+        print '---------------'
+        for mode in instrument.modes:
+            print_obsmode(mode)
+    print '---'
+
+def print_obsmode(obsmode):
+    print obsmode.name, ':', obsmode.summary
+    print 'Recipe:', obsmode.recipe
+    print '--'
+
+def mode_list_instrument(serializer, args):
+    '''Run the list_instrument mode of Numina'''
+    _logger.debug('list_instrument mode')
+    ins = get_instruments()
+    for theins in ins.values():
+        print_instrument(theins)
 
 def main_internal(cls, obsres, 
     instrument, 
@@ -420,6 +442,10 @@ def main(args=None):
     parser_list = subparsers.add_parser('list', help='list help')
     
     parser_list.set_defaults(command=mode_list)
+    
+    parser_list_instrument = subparsers.add_parser('list_instrument', help='list_instrument help')
+    
+    parser_list_instrument.set_defaults(command=mode_list_instrument)
     
     parser_run = subparsers.add_parser('run', help='run help')
     

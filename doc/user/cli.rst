@@ -74,3 +74,11 @@ The list subcommand lists all the recipes available in the system.
 It is called like this::
 
      $ numina [global-options] list
+
+Options for list_instrument
+===========================
+The list_instrument subcommand lists all the instrumetns available in the system.
+
+It is called like this::
+
+     $ numina [global-options] list_instrument
