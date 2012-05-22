@@ -23,8 +23,25 @@ Recipe requirements
 
 import inspect
 
+from numina.exceptions import ParameterError
 from .products import DataProduct
 
+class RequirementParser(object):
+    
+    def __init__(self, requirements, lookup):
+        self.requirements = requirements
+        self.lookup = lookup
+
+    def parse(self, metadata):
+        parameters = {}
+        
+        for req in self.requirements:
+            value = self.lookup(req, metadata)
+            if req.choiches and (value not in req.choiches):
+                raise ParameterError('%s not in %s' % (value, req.choices))
+                
+            parameters[req.dest]= value 
+        return parameters
 
 class Requirement(object):
     '''Requirements of Recipes
@@ -32,28 +49,35 @@ class Requirement(object):
         :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, name, description, value=None, optional=False):
+    def __init__(self, name, description, value=None, optional=False, type=None,
+                 dest=None):
         self.name = name
-        self.value = value
+        self.default = value
         self.description = description
         self.optional = optional
+        self.type = type
+        
+        if dest is None:
+            self.dest = name
+        
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s(name='%s', description='%s', default=%s, optional=%s, type=%s, dest='%s')" % (sclass, 
+            self.name, self.description, self.default, self.optional, self.type, self.dest)
         
 class Parameter(Requirement):
-    def __init__(self, name, value, description, optional=False):
+    def __init__(self, name, value, description, optional=False, type=None):
         super(Parameter, self).__init__(name, description, 
-            value=value, optional=optional)
+            value=value, optional=optional, type=type)
         
-class DataProductParameter(Parameter):
+class DataProductRequirement(Requirement):
     def __init__(self, name, valueclass, description, optional=False):
         
-        self.default = None
-        
         if not inspect.isclass(valueclass):
-            self.default = valueclass
             valueclass = valueclass.__class__
              
         if not issubclass(valueclass, DataProduct):
             raise TypeError('valueclass must derive from DataProduct')
         
-        super(DataProductParameter, self).__init__(name, valueclass, 
-                                                   description, optional)
+        super(DataProductRequirement, self).__init__(name, description, optional=optional,
+                                                   type=valueclass)

@@ -34,6 +34,7 @@ from numina.treedict import TreeDict
 from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes
+from numina.recipes.requirements import RequirementParser
 from numina.recipes.lookup import lookup as lookup_param
 from numina.pipeline import get_recipe, get_instruments
 from numina.serialize import lookup
@@ -87,6 +88,38 @@ def mode_list(serializer, args):
 #        print fully_qualified_name(recipeCls)
         print recipeCls
         
+def super_load(path):
+    spl = path.split('.')
+    cls = spl[-1]
+    mods = '.'.join(spl[:-1])
+    import importlib
+    mm = importlib.import_module(mods)
+    Cls = getattr(mm, cls)
+    return Cls
+    
+    
+def mode_show(serializer, args):
+    '''Run the show mode of Numina'''
+    _logger.debug('show mode')
+    if args.id is None:
+        for Cls in list_recipes():
+            print_recipe(Cls)            
+    else:
+        Cls = super_load(args.id)
+        print_recipe(Cls)
+
+def print_requirement(req):
+    print req
+
+def print_recipe(recipe):
+    print 'Recipe:', recipe.__name__
+    print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
+    print 'Requirements'
+    print '------------'
+    for i in recipe.__requires__:
+        print_requirement(i)
+    print
+
 def print_instrument(instrument):
     print 'Name:', instrument.name
     
@@ -174,14 +207,13 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
 
     parameters = {}
 
-    for req in RecipeClass.__requires__:
-        try:
-            _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= lookup_param(req, params)
-            _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
-        except LookupError as error:
-            _logger.error('%s', error)
-            raise
+    reqparser = RequirementParser(RecipeClass.__requires__, lookup_param)
+
+    try:
+        reqparser.parse(params)
+    except LookupError as error:
+        _logger.error('%s', error)
+        raise
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)
@@ -257,14 +289,13 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     allm = TreeDict(allmetadata)
     parameters = {}
 
-    for req in RecipeClass.__requires__:
-        try:
-            _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= lookup_param(req, allm)
-            _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
-        except LookupError as error:
-            _logger.error('%s', error)
-            sys.exit(1)
+    reqparser = RequirementParser(RecipeClass.__requires__, lookup_param)
+
+    try:
+        parameters = reqparser.parse(allm)
+    except LookupError as error:
+        _logger.error('%s', error)
+        sys.exit(1)
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)
@@ -434,14 +465,18 @@ def main(args=None):
                       help="make lots of noise [default]")
     parser.add_argument('-l', action="store", dest="logging", metavar="FILE", 
                       help="FILE with logging configuration")
-    parser.add_argument('--module', action="store", dest="module", 
-                      metavar="FILE", help="FILE", default='emir')
-    
+
     subparsers = parser.add_subparsers(title='Targets',
                                        description='These are valid commands you can ask numina to do.')
+    parser_show = subparsers.add_parser('show', help='show help')
+    
+    parser_show.set_defaults(command=mode_show)
+    parser_show.add_argument('id', nargs='?', default=None)
+    
     parser_list = subparsers.add_parser('list', help='list help')
     
     parser_list.set_defaults(command=mode_list)
+    parser_list.add_argument('recipe', nargs='?', default=None)
     
     parser_list_instrument = subparsers.add_parser('list_instrument', help='list_instrument help')
     
@@ -462,9 +497,9 @@ def main(args=None):
     parser_run.add_argument('--cleanup', action="store_true", dest="cleanup", 
                       default=False)
     parser_run.add_argument('task')
-    
+    print parser
     args = parser.parse_args(args)
-
+    
 
     # logger file
     if args.logging is not None:

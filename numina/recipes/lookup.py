@@ -21,7 +21,7 @@
 Generic functions used by numina CLI to look up values of the requirements
 '''
 
-from .requirements import Requirement, Parameter, DataProductParameter
+from .requirements import Requirement, Parameter, DataProductRequirement
 
 from numina.generic import generic
 
@@ -55,7 +55,7 @@ def _lookup_param(req, source):
         return req.value
         
         
-@lookup.register(DataProductParameter)
+@lookup.register(DataProductRequirement)
 def _lookup(req, source):
     if req.name in source:
         # FIXME: add validation
