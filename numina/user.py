@@ -494,9 +494,8 @@ def main(args=None):
     parser_run.add_argument('--cleanup', action="store_true", dest="cleanup", 
                       default=False)
     parser_run.add_argument('task')
-    print parser
-    args = parser.parse_args(args)
     
+    args = parser.parse_args(args)
 
     # logger file
     if args.logging is not None:
