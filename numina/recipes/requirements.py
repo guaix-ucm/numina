@@ -23,8 +23,13 @@ Recipe requirements
 
 import inspect
 
-from numina.exceptions import RequirementError
+from numina.exceptions import Error
 from .products import DataProduct
+
+class RequirementError(Error):
+    '''Error in the parameters of a recipe.'''
+    def __init__(self, txt):
+        super(RequirementError, self).__init__(txt)
 
 class RequirementLookup(object):
     def lookup(self, req, source):

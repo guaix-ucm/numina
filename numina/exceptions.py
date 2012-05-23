@@ -39,7 +39,3 @@ class DetectorReadoutError(Error):
     def __init__(self, txt):
         super(DetectorReadoutError, self).__init__(txt)
 
-class RequirementError(Error):
-    '''Error in the parameters of a recipe.'''
-    def __init__(self, txt):
-        super(RequirementError, self).__init__(txt)
