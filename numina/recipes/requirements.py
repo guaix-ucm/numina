@@ -23,25 +23,49 @@ Recipe requirements
 
 import inspect
 
-from numina.exceptions import ParameterError
+from numina.exceptions import RequirementError
 from .products import DataProduct
+
+class RequirementLookup(object):
+    def lookup(self, req, source):
+        if req.name in source:
+            return source[req.name]
+        elif req.optional:
+            return None
+        elif req.default is not None:
+            return req.value
+        else:
+            raise RequirementError('Requirement %s must be defined' % req.name)
 
 class RequirementParser(object):
     
-    def __init__(self, requirements, lookup):
+    def __init__(self, requirements, lookupclass=RequirementLookup):
         self.requirements = requirements
-        self.lookup = lookup
+        self.lc = lookupclass()
 
     def parse(self, metadata):
         parameters = {}
         
         for req in self.requirements:
-            value = self.lookup(req, metadata)
+            value = self.lc.lookup(req, metadata)
             if req.choiches and (value not in req.choiches):
-                raise ParameterError('%s not in %s' % (value, req.choices))
+                raise RequirementError('%s not in %s' % (value, req.choices))
                 
             parameters[req.dest]= value 
         return parameters
+
+    def print_requirements(self):
+        
+        for req in self.requirements:
+            dispname = req.name
+    
+            if req.optional:
+                dispname = req.name + '(optional)'
+    
+            if req.default is not None:
+                dispname = dispname + '=' + str(req.default)
+        
+            print "%s [%s]" % (dispname, req.description)
 
 class Requirement(object):
     '''Requirements of Recipes
@@ -64,6 +88,8 @@ class Requirement(object):
         sclass = type(self).__name__
         return "%s(name='%s', description='%s', default=%s, optional=%s, type=%s, dest='%s')" % (sclass, 
             self.name, self.description, self.default, self.optional, self.type, self.dest)
+        
+
         
 class Parameter(Requirement):
     def __init__(self, name, value, description, optional=False, type=None):

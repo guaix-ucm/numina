@@ -35,7 +35,6 @@ from numina import __version__, obsres_from_dict
 from numina.pipeline import init_pipeline_system
 from numina.recipes import list_recipes
 from numina.recipes.requirements import RequirementParser
-from numina.recipes.lookup import lookup as lookup_param
 from numina.pipeline import get_recipe, get_instruments
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
@@ -108,16 +107,14 @@ def mode_show(serializer, args):
         Cls = super_load(args.id)
         print_recipe(Cls)
 
-def print_requirement(req):
-    print req
 
 def print_recipe(recipe):
     print 'Recipe:', recipe.__name__
     print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
     print 'Requirements'
     print '------------'
-    for i in recipe.__requires__:
-        print_requirement(i)
+    rp = RequirementParser(recipe.__requires__)
+    rp.print_requirements()
     print
 
 def print_instrument(instrument):
@@ -207,10 +204,10 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
 
     parameters = {}
 
-    reqparser = RequirementParser(RecipeClass.__requires__, lookup_param)
+    reqparser = RequirementParser(RecipeClass.__requires__)
 
     try:
-        reqparser.parse(params)
+        parameters = reqparser.parse(params)
     except LookupError as error:
         _logger.error('%s', error)
         raise
@@ -289,7 +286,7 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     allm = TreeDict(allmetadata)
     parameters = {}
 
-    reqparser = RequirementParser(RecipeClass.__requires__, lookup_param)
+    reqparser = RequirementParser(RecipeClass.__requires__)
 
     try:
         parameters = reqparser.parse(allm)
