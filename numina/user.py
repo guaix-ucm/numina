@@ -100,13 +100,38 @@ def super_load(path):
 def mode_show(serializer, args):
     '''Run the show mode of Numina'''
     _logger.debug('show mode')
+    if args.what == 'om':
+        show_observingmodes(args)
+    elif args.what == 'rcp':
+        show_recipes(args)
+    else:
+        show_instruments(args)
+        
+def show_recipes(args):
     if args.id is None:
         for Cls in list_recipes():
             print_recipe(Cls)            
     else:
         Cls = super_load(args.id)
-        print_recipe(Cls)
+        print_recipe(Cls)    
 
+def show_observingmodes(args):
+    
+    if args.id:
+        must_print = lambda x: x.uuid == args.id 
+    else:
+        must_print = lambda x: True
+    
+    ins = get_instruments()
+    for theins in ins.values():
+        for mode in theins.modes:
+            if must_print(mode):
+                print_obsmode(mode)
+
+def show_instruments(args):
+    ins = get_instruments()
+    for theins in ins.values():
+        print_instrument(theins, modes=False)
 
 def print_recipe(recipe):
     print 'Recipe:', recipe.__name__
@@ -117,27 +142,21 @@ def print_recipe(recipe):
     rp.print_requirements()
     print
 
-def print_instrument(instrument):
+def print_instrument(instrument, modes=True):
     print 'Name:', instrument.name
     
-    if instrument.modes:
+    if modes and instrument.modes:
         print 'Observing modes'
         print '---------------'
         for mode in instrument.modes:
             print_obsmode(mode)
-    print '---'
+        print '---'
 
 def print_obsmode(obsmode):
     print obsmode.name, ':', obsmode.summary
     print 'Recipe:', obsmode.recipe
+    print 'UUID:', obsmode.uuid
     print '--'
-
-def mode_list_instrument(serializer, args):
-    '''Run the list_instrument mode of Numina'''
-    _logger.debug('list_instrument mode')
-    ins = get_instruments()
-    for theins in ins.values():
-        print_instrument(theins)
 
 def main_internal(cls, obsres, 
     instrument, 
@@ -467,17 +486,21 @@ def main(args=None):
                                        description='These are valid commands you can ask numina to do.')
     parser_show = subparsers.add_parser('show', help='show help')
     
-    parser_show.set_defaults(command=mode_show)
-    parser_show.add_argument('id', nargs='?', default=None)
+    parser_show.add_argument('-o', '--observing-modes', action='store_const', dest='what', const='om',
+                             help='Show observing modes')
+    parser_show.add_argument('-r', action='store_const', dest='what', const='rcp',
+                             help='Show recipes')
+    parser_show.add_argument('-i', action='store_const', dest='what', const='ins',
+                             help='Show instruments')
+    
+    parser_show.set_defaults(command=mode_show, what='om')
+    parser_show.add_argument('id', nargs='?', default=None,
+                             help='Identificator')
     
     parser_list = subparsers.add_parser('list', help='list help')
     
     parser_list.set_defaults(command=mode_list)
     parser_list.add_argument('recipe', nargs='?', default=None)
-    
-    parser_list_instrument = subparsers.add_parser('list_instrument', help='list_instrument help')
-    
-    parser_list_instrument.set_defaults(command=mode_list_instrument)
     
     parser_run = subparsers.add_parser('run', help='run help')
     
