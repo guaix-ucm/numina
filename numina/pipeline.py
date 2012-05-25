@@ -29,8 +29,8 @@ _logger = logging.getLogger('numina')
 _pipelines = {}
 _instruments = {}
 
-class Pipeline(object):
-    '''A pipeline.'''
+class BasePipeline(object):
+    '''Base class for pipelines.'''
     def __init__(self, name, version, recipes):
         self.name = name
         self.version = version
@@ -84,27 +84,6 @@ def get_recipe(name, mode):
         
     return klass
 
-def register_pipeline(pipe):
-    '''Register a pipeline in the global register.
-    
-    :param pipe: a Pipeline instance
-    '''
-    
-    global _pipelines
-
-    _pipelines[pipe.name] = pipe
-
-def register_recipes(name, recipes):
-    '''Register a group of recipes.
-    
-    :param name: name of the pipeline
-    :param recipes: a dictionary with recipe classes
-    
-    '''
-    pipe = Pipeline(name, recipes)
-    register_pipeline(pipe)
-
-
 def init_pipeline_system():
     '''Load all available pipelines.'''
     
@@ -121,6 +100,12 @@ def init_pipeline_system():
         ins = InsCls()
         global _instruments
         _instruments[ins.name] = ins 
+        
+        
+    for PipeCls in BasePipeline.__subclasses__():
+        pipe = PipeCls()
+        global _pipelines
+        _pipelines[pipe.name] = pipe
         
     return _pipelines
 
