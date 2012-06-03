@@ -153,7 +153,8 @@ def print_instrument(instrument, modes=True):
         print '---'
 
 def print_obsmode(obsmode):
-    print obsmode.name, ':', obsmode.summary
+    print '%s: %s' % (obsmode.name, obsmode.summary)
+    print 'Instrument:', obsmode.instrument
     print 'Recipe:', obsmode.recipe
     print 'UUID:', obsmode.uuid
     print '--'

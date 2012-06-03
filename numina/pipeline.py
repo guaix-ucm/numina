@@ -21,6 +21,7 @@
 
 import logging
 import pkgutil
+import importlib
 
 import numina.pipelines as namespace
 
@@ -28,6 +29,14 @@ _logger = logging.getLogger('numina')
 
 _pipelines = {}
 _instruments = {}
+
+def import_object(path):
+    spl = path.split('.')
+    cls = spl[-1]
+    mods = '.'.join(spl[:-1])
+    mm = importlib.import_module(mods)
+    Cls = getattr(mm, cls)
+    return Cls
 
 class BasePipeline(object):
     '''Base class for pipelines.'''
@@ -53,6 +62,7 @@ class ObservingMode(object):
         self.summary = ''
         self.description = ''
         self.recipe = ''
+        self.recipe_class = None
         self.status = ''
         self.date = ''
         self.reference = ''
@@ -114,6 +124,7 @@ def init_pipeline_system():
 # for Observing Modes in YAML 
 
 import yaml
+import uuid
 
 def om_repr(dumper, data):
     return dumper.represent_mapping(u'!om', data.__dict__)
@@ -122,6 +133,7 @@ def om_cons(loader, node):
     om = ObservingMode()
     value = loader.construct_mapping(node)
     om.__dict__ = value
+    om.uuid = uuid.UUID(om.uuid)
     return om
 
 
