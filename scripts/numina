@@ -1,5 +1,0 @@
-#!/usr/bin/python
-
-from numina.user import main
-
-main()
