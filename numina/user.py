@@ -32,10 +32,10 @@ import shutil
 
 from numina.treedict import TreeDict
 from numina import __version__, obsres_from_dict
-from numina.pipeline import init_pipeline_system
-from numina.recipes import list_recipes
-from numina.recipes.requirements import RequirementParser
-from numina.pipeline import get_recipe, get_instruments
+from numina.core import init_pipeline_system
+from numina.core import list_recipes
+from numina.core import RequirementParser
+from numina.core import get_recipe, get_instruments
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
 
@@ -228,6 +228,7 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
 
     try:
         parameters = reqparser.parse(params)
+        names = reqparser.parse2(params)
     except LookupError as error:
         _logger.error('%s', error)
         raise

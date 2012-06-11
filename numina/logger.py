@@ -24,7 +24,7 @@ import logging
 
 import pyfits
 
-from .recipes import DataFrame
+from numina.core.recipes import DataFrame
 
 class FITSHistoryHandler(logging.Handler):
     '''Logging handler using HISTORY FITS cards'''

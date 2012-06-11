@@ -21,7 +21,7 @@
 
 A recipe is a class that complies with the *reduction recipe API*:
 
- * The class must derive from :class:`numina.recipes.RecipeBase`.
+ * The class must derive from :class:`numina.core.RecipeBase`.
 
 '''
 
@@ -72,6 +72,8 @@ class RecipeBase(object):
             self.instrument = kwds['instrument']
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
+        if 'requirements' in kwds:
+            self.requirements = kwds['requirements']
 
     @abc.abstractmethod
     def run(self, block):
@@ -93,8 +95,6 @@ class RecipeBase(object):
 
         if environ is not None:
             self.environ.update(environ)
-
-        self.environ['block_id'] = block.id
 
         try:
 

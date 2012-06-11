@@ -22,7 +22,7 @@
 import unittest
 import collections
 
-from numina.recipes import RecipeBase
+from numina.core import RecipeBase
 
 class Test(RecipeBase):
     '''Minimal class that implements RecipeBase.'''

@@ -31,6 +31,16 @@ class RequirementError(Error):
     def __init__(self, txt):
         super(RequirementError, self).__init__(txt)
 
+class Names(object):
+    def __init__(self, **kwds):
+        for name, val in kwds.iteritems():
+            setattr(self, name, val)
+
+    __hash__ = None
+
+    def __contains__(self, key):
+        return key in self.__dict__
+
 class RequirementLookup(object):
     def lookup(self, req, source):
         if req.name in source:
@@ -58,6 +68,20 @@ class RequirementParser(object):
                 
             parameters[req.dest]= value 
         return parameters
+
+    def parse2(self, metadata):
+        parameters = {}
+        
+        for req in self.requirements:
+            value = self.lc.lookup(req, metadata)
+            if req.choiches and (value not in req.choiches):
+                raise RequirementError('%s not in %s' % (value, req.choices))
+                
+            parameters[req.dest]= value
+        names = Names(**parameters)
+
+        setattr(names, '_parser', 'XX')
+        return names
 
     def print_requirements(self):
         
