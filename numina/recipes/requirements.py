@@ -38,7 +38,7 @@ class RequirementLookup(object):
         elif req.optional:
             return None
         elif req.default is not None:
-            return req.value
+            return req.default
         else:
             raise RequirementError('Requirement %s must be defined' % req.name)
 
@@ -53,7 +53,7 @@ class RequirementParser(object):
         
         for req in self.requirements:
             value = self.lc.lookup(req, metadata)
-            if req.choiches and (value not in req.choiches):
+            if req.choices and (value not in req.choices):
                 raise RequirementError('%s not in %s' % (value, req.choices))
                 
             parameters[req.dest]= value 
@@ -79,27 +79,28 @@ class Requirement(object):
     
     '''
     def __init__(self, name, description, value=None, optional=False, type=None,
-                 dest=None):
+                 dest=None, choices=None):
         self.name = name
         self.default = value
         self.description = description
         self.optional = optional
         self.type = type
+        self.choices = choices
         
         if dest is None:
             self.dest = name
         
     def __repr__(self):
         sclass = type(self).__name__
-        return "%s(name='%s', description='%s', default=%s, optional=%s, type=%s, dest='%s')" % (sclass, 
-            self.name, self.description, self.default, self.optional, self.type, self.dest)
+        return "%s(name='%s', description='%s', default=%s, optional=%s, type=%s, dest='%s', choices=%r)" % (sclass, 
+            self.name, self.description, self.default, self.optional, self.type, self.dest, self.choices)
         
 
         
 class Parameter(Requirement):
-    def __init__(self, name, value, description, optional=False, type=None):
+    def __init__(self, name, value, description, optional=False, type=None, choices=None):
         super(Parameter, self).__init__(name, description, 
-            value=value, optional=optional, type=type)
+            value=value, optional=optional, type=type, choices=choices)
         
 class DataProductRequirement(Requirement):
     def __init__(self, name, valueclass, description, optional=False):
