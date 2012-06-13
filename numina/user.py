@@ -408,37 +408,38 @@ def mode_run(serializer, args):
     instrument_read = False
     
     # Read observing result from args.
-    if args.obsblock is not None:
-        _logger.info('reading observing block from %s', args.obsblock)
-        with open(args.obsblock, 'r') as fd:
-            obsres_read = True
-            obsres_dict = serializer.load(fd)
-            obsres = obsres_from_dict(obsres_dict)
+    _logger.info('reading observing block from %s', args.obsblock)
+    with open(args.obsblock, 'r') as fd:
+        obsres_read = True
+        obsres_dict = serializer.load(fd)
+        obsres = obsres_from_dict(obsres_dict)
     
     # Read instrument information from args.instrument
     if args.instrument is not None:
         _logger.info('reading instrument config from %s', args.instrument)
         with open(args.instrument, 'r') as fd:
-            # json decode    
             instrument = serializer.load(fd)
             instrument_read = True
 
     # Read task information from args.task
-    with open(args.task, 'r') as fd:
-        task_control = serializer.load(fd)
+    if args.reqs is not None:
+        with open(args.reqs, 'r') as fd:
+            task_control = serializer.load(fd)
+    else:
+        task_control = {}
             
     if not instrument_read and 'instrument' in task_control:
         _logger.info('reading instrument config from %s', args.task)
         instrument = task_control['instrument']
         
     if not obsres_read and 'observing_result' in task_control:
-        _logger.info('reading observing result from %s', args.task)
+        _logger.info('reading observing result from %s', args.reqs)
         obsres_read = True
         obsres_dict = task_control['observing_result']
         obsres = obsres_from_dict(obsres_dict)
 
     if 'parameters' in task_control:
-        _logger.info('reading reduction parameters from %s', args.task)
+        _logger.info('reading reduction parameters from %s', args.reqs)
         reduction = task_control['parameters']
         
     if not obsres_read:
@@ -508,7 +509,8 @@ def main(args=None):
     parser_run.set_defaults(command=mode_run)    
 
     parser_run.add_argument('--instrument', dest='instrument', default=None)
-    parser_run.add_argument('--obsblock', dest='obsblock', default=None)
+    parser_run.add_argument('--parameters', dest='reqs', default=None)
+    parser_run.add_argument('--requirements', dest='reqs', default=None)
     parser_run.add_argument('--basedir', action="store", dest="basedir", 
                       default=os.getcwd())
     # FIXME: It is questionable if this flag should be used or not
@@ -517,7 +519,7 @@ def main(args=None):
     parser_run.add_argument('--workdir', action="store", dest="workdir")    
     parser_run.add_argument('--cleanup', action="store_true", dest="cleanup", 
                       default=False)
-    parser_run.add_argument('task')
+    parser_run.add_argument('obsblock')
     
     args = parser.parse_args(args)
 
