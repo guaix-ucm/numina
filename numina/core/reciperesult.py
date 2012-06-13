@@ -18,8 +18,40 @@
 # 
 
 
-from .product import Product
-import traceback
+import inspect
+
+from .products import DataProduct
+
+class Product(object):
+    '''Product holder for RecipeResult.'''
+    def __init__(self, product_type, optional=False, *args, **kwds):
+
+        if inspect.isclass(product_type):
+            product_type = product_type()
+
+        if isinstance(product_type, Optional):
+            self.product_type = product_type.product_type
+            self.optional = True
+        elif isinstance(product_type, DataProduct):
+            self.product_type = product_type
+            self.optional = optional
+        else:
+            raise TypeError('product_type must be of class DataProduct')
+
+    def __repr__(self):
+        return 'Product(type=%r)' % self.product_type.__class__.__name__
+
+
+class Optional(object):
+    def __init__(self, product_type):
+
+        if inspect.isclass(product_type):
+            product_type = product_type()
+
+        if isinstance(product_type, DataProduct):
+            self.product_type = product_type
+        else:
+            raise TypeError('product_type must be of class DataProduct')
 
 class RecipeResult(object):
     def __news__(cls):

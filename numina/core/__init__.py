@@ -27,4 +27,4 @@ from .requirements import Parameter, Requirement
 from .products import DataProduct
 from .exceptions import RecipeError
 from .recipeinput import RecipeInput, requires
-from .reciperesult import RecipeResult, provides
+from .reciperesult import RecipeResult, provides, Product, Optional
