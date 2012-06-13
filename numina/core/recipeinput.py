@@ -47,3 +47,13 @@ class requires(object):
             klass.__requires__ = list(self.requirements)
         return klass
 
+class define_input(object):
+    def __init__(self, input_):
+        if not issubclass(result, Requirement):
+            raise TypeError
+
+        self.klass = input_
+
+    def __call__(self, klass):
+        klass.RecipeInput = self.klass
+        return klass

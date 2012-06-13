@@ -26,5 +26,6 @@ from .requirements import RequirementParser, DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProduct
 from .exceptions import RecipeError
-from .recipeinput import RecipeInput, requires
+from .recipeinput import RecipeInput, requires, define_input
 from .reciperesult import RecipeResult, provides, Product, Optional
+from .reciperesult import define_result
