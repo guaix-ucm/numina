@@ -85,8 +85,9 @@ class RequirementParser(object):
 
     def print_requirements(self):
         
-        for req in self.requirements:
-            dispname = req.name
+        for name, req in self.requirements.items():
+            dispname = name
+            #dispname = req.name
     
             if req.optional:
                 dispname = req.name + '(optional)'
@@ -102,16 +103,16 @@ class Requirement(object):
         :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, name, description, value=None, optional=False, type=None,
+    def __init__(self, description, value=None, optional=False, type=None,
                  dest=None):
-        self.name = name
+        self.name = 'req'
         self.default = value
         self.description = description
         self.optional = optional
         self.type = type
         
         if dest is None:
-            self.dest = name
+            self.dest = self.name
         
     def __repr__(self):
         sclass = type(self).__name__
@@ -121,12 +122,12 @@ class Requirement(object):
 
         
 class Parameter(Requirement):
-    def __init__(self, name, value, description, optional=False, type=None):
-        super(Parameter, self).__init__(name, description, 
+    def __init__(self, value, description, optional=False, type=None, choices=None):
+        super(Parameter, self).__init__(description, 
             value=value, optional=optional, type=type)
         
 class DataProductRequirement(Requirement):
-    def __init__(self, name, valueclass, description, optional=False):
+    def __init__(self, valueclass, description, optional=False):
         
         if not inspect.isclass(valueclass):
             valueclass = valueclass.__class__
@@ -134,5 +135,4 @@ class DataProductRequirement(Requirement):
         if not issubclass(valueclass, DataProduct):
             raise TypeError('valueclass must derive from DataProduct')
         
-        super(DataProductRequirement, self).__init__(name, description, optional=optional,
-                                                   type=valueclass)
+        super(DataProductRequirement, self).__init__(description, optional=optional, type=valueclass)

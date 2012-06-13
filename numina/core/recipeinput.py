@@ -24,7 +24,6 @@ Recipe inputs
 from .requirements import Requirement
 
 class RecipeInput(object):
-
     def __new__(cls, *args, **kwds):
         cls._requirements = {}
         for name in dir(cls):
@@ -49,11 +48,24 @@ class requires(object):
 
 class define_input(object):
     def __init__(self, input_):
-        if not issubclass(result, Requirement):
+        if not issubclass(input_, RecipeInput):
             raise TypeError
 
         self.klass = input_
+        self.requires = {}
+
+        for i in dir(input_):
+            if not i.startswith('_'):
+                val = getattr(input_, i)
+                if isinstance(val, Requirement):
+                    val.dest = i
+                    self.requires[i] = val
 
     def __call__(self, klass):
+        if hasattr(klass, '__requires__'):
+            klass.__requires__.update(self.requires)
+        else:
+            klass.__requires__ = self.requires
+        
         klass.RecipeInput = self.klass
         return klass

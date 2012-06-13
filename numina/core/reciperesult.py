@@ -120,7 +120,7 @@ def transmit(result):
 
 class define_result(object):
     def __init__(self, result):
-        if not issubclass(result, ValidRecipeResult):
+        if not issubclass(result, RecipeResult):
             raise TypeError
 
         self.provides = {}

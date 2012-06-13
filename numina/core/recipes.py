@@ -44,6 +44,9 @@ class RecipeBase(object):
 
     __metaclass__ = abc.ABCMeta
     
+    __requires__ = {}
+    __provides__ = {}
+
     # Recipe own logger
     logger = _logger
 
