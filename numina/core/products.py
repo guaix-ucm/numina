@@ -23,25 +23,32 @@ Basic Data Products
 
 import pyfits
 
+from numina.core import DataFrame
+
 class DataProduct(object):
-    '''Base class for Recipe Products'''
-    pass
+    def validate(self, obj):
+        return True
 
-class DataFrame(DataProduct):
-    def __init__(self, frame):
-        self.frame = frame
-        self.filename = None
+    def store(self, obj):
+        return obj
 
-    def __getstate__(self):
-        # save fits file
-        filename = 'result.fits'
-        if self.frame[0].header.has_key('FILENAME'):
-            filename = self.frame[0].header['FILENAME']
-        self.frame.writeto(filename, clobber=True)
+class FrameDataProduct(DataProduct):
 
-        return {'frame': filename}
+    def store(self, obj):
 
-    def __setstate__(self, state):
-        # FIXME: this is not exactly what we had in the begining...
-        self.frame = pyfits.open(state['frame'])
-        self.filename = state['frame']
+        if isinstance(obj, basestring):
+            return DataFrame(filename=obj)
+        else:
+            return DataFrame(frame=obj)
+
+    def validate(self, obj):
+
+        if isinstance(obj, basestring):
+            # check that this is a FITS file
+            # try - open
+            pass
+        elif isinstance(obj, pyfits.HDUList):
+            # is an HDUList
+            pass
+        else:
+            raise ValidationError('FrameDataProduct is neither a file nor FITS')

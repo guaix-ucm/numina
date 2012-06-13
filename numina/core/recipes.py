@@ -30,9 +30,9 @@ import abc
 import traceback
 import logging
 
-from numina.exceptions import RecipeError
+from numina.core import RecipeError
 
-from .products import DataFrame, DataProduct 
+from .products import DataProduct 
 from .oblock import obsres_from_dict
 from .requirements import Parameter, DataProductRequirement
 
@@ -124,17 +124,3 @@ class provides(object):
             klass.__provides__ = list(self.products)
         return klass
     
-class requires(object):
-    '''Decorator to add the list of required parameters to recipe'''
-    def __init__(self, *parameters):
-        self.parameters = parameters
-
-    def __call__(self, klass):
-        if hasattr(klass, '__requires__'):
-            klass.__requires__.extend(self.parameters)
-        else:
-            klass.__requires__ = list(self.parameters)
-        return klass
-
-
-
