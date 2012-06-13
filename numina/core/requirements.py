@@ -43,14 +43,14 @@ class Names(object):
 
 class RequirementLookup(object):
     def lookup(self, req, source):
-        if req.name in source:
-            return source[req.name]
+        if req.dest in source:
+            return source[req.dest]
         elif req.optional:
             return None
         elif req.default is not None:
             return req.value
         else:
-            raise RequirementError('Requirement %s must be defined' % req.name)
+            raise RequirementError('Requirement %s must be defined' % req.dest)
 
 class RequirementParser(object):
     
@@ -62,6 +62,9 @@ class RequirementParser(object):
         parameters = {}
         
         for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
             value = self.lc.lookup(req, metadata)
             if req.choiches and (value not in req.choiches):
                 raise RequirementError('%s not in %s' % (value, req.choices))
@@ -73,6 +76,9 @@ class RequirementParser(object):
         parameters = {}
         
         for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
             value = self.lc.lookup(req, metadata)
             if req.choiches and (value not in req.choiches):
                 raise RequirementError('%s not in %s' % (value, req.choices))
@@ -85,12 +91,14 @@ class RequirementParser(object):
 
     def print_requirements(self):
         
-        for name, req in self.requirements.items():
-            dispname = name
-            #dispname = req.name
+        for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
+            dispname = req.dest
     
             if req.optional:
-                dispname = req.name + '(optional)'
+                dispname = dispname + '(optional)'
     
             if req.default is not None:
                 dispname = dispname + '=' + str(req.default)
@@ -105,29 +113,26 @@ class Requirement(object):
     '''
     def __init__(self, description, value=None, optional=False, type=None,
                  dest=None):
-        self.name = 'req'
         self.default = value
         self.description = description
         self.optional = optional
         self.type = type
-        
-        if dest is None:
-            self.dest = self.name
+        self.dest = None
         
     def __repr__(self):
         sclass = type(self).__name__
-        return "%s(name='%s', description='%s', default=%s, optional=%s, type=%s, dest='%s')" % (sclass, 
-            self.name, self.description, self.default, self.optional, self.type, self.dest)
+        return "%s(dest=%r, description='%s', default=%s, optional=%s, type=%s)" % (sclass, 
+            self.dest, self.description, self.default, self.optional, self.type)
         
 
         
 class Parameter(Requirement):
-    def __init__(self, value, description, optional=False, type=None, choices=None):
+    def __init__(self, value, description, optional=False, type=None, choices=None, dest=None):
         super(Parameter, self).__init__(description, 
-            value=value, optional=optional, type=type)
+            value=value, optional=optional, type=type, dest=dest)
         
 class DataProductRequirement(Requirement):
-    def __init__(self, valueclass, description, optional=False):
+    def __init__(self, valueclass, description, optional=False, dest=None):
         
         if not inspect.isclass(valueclass):
             valueclass = valueclass.__class__
@@ -135,4 +140,4 @@ class DataProductRequirement(Requirement):
         if not issubclass(valueclass, DataProduct):
             raise TypeError('valueclass must derive from DataProduct')
         
-        super(DataProductRequirement, self).__init__(description, optional=optional, type=valueclass)
+        super(DataProductRequirement, self).__init__(description, optional=optional, type=valueclass, dest=None)

@@ -224,7 +224,6 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
     _logger.info('matching parameters')    
 
     parameters = {}
-
     reqparser = RequirementParser(RecipeClass.__requires__)
 
     try:
