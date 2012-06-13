@@ -156,6 +156,7 @@ def print_obsmode(obsmode):
     print '%s: %s' % (obsmode.name, obsmode.summary)
     print 'Instrument:', obsmode.instrument
     print 'Recipe:', obsmode.recipe
+    print 'Key:', obsmode.key
     print 'UUID:', obsmode.uuid
     print '--'
 
