@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from .recipes import RecipeBase, provides
+from .recipes import RecipeBase
 from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import init_pipeline_system, BaseInstrument, BasePipeline
@@ -27,3 +27,4 @@ from .requirements import Parameter, Requirement
 from .products import DataProduct
 from .exceptions import RecipeError
 from .recipeinput import RecipeInput, requires
+from .reciperesult import RecipeResult, provides

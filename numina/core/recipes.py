@@ -31,10 +31,7 @@ import traceback
 import logging
 
 from numina.core import RecipeError
-
-from .products import DataProduct 
-from .oblock import obsres_from_dict
-from .requirements import Parameter, DataProductRequirement
+from numina.core import ErrorRecipeResult
 
 _logger = logging.getLogger('numina')
 
@@ -97,30 +94,42 @@ class RecipeBase(object):
             self.environ.update(environ)
 
         try:
-
             result = self.run(block)
-
         except Exception as exc:
-            result = {'error': {'type': exc.__class__.__name__, 
-                                'message': str(exc), 
-                                'traceback': traceback.format_exc()}
-                      }
             _logger.error("During recipe execution %s", exc)
-        return result
+            return ErrorRecipeResult(exc.__class__.__name__, 
+                                     str(exc),
+                                     traceback.format_exc())
 
-class RecipeResult(dict):
-    '''Result of the __call__ method of the Recipe.'''
-    pass
-
-class provides(object):
-    '''Decorator to add the list of provided products to recipe'''
-    def __init__(self, *products):
-        self.products = products
-
-    def __call__(self, klass):
-        if hasattr(klass, '__provides__'):
-            klass.__provides__.extend(self.products)
+        if isinstance(val, RecipeResult):
+            return val
         else:
-            klass.__provides__ = list(self.products)
-        return klass
-    
+            return self.convert(val)
+
+    @classmethod
+    def convert(cls, value):
+        '''Convert from a dictionary to a RecipeResult'''
+        if 'error' in value:
+            err = value['error']
+            if _valid_err(err):
+                return ErrorRecipeResult(err['type'], err['message'], err['traceback'])
+            else:
+                raise ValueError('malformed value to convert')
+        elif 'products' in value:
+            prod = value['products']
+            products = {'product%d' % i: prod for i, prod in enumerate(prod)}
+            return cls.RecipeResult(**products)
+        else:
+            raise ValueError('malformed value to convert')
+
+
+def _valid_err(err):
+    if not isinstance(err, dict):
+        return False
+    if not 'type' in err:
+        return False
+    if not 'message' in err:
+        return False
+    if not 'traceback' in err:
+        return False
+    return True
