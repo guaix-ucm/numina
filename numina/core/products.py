@@ -23,7 +23,7 @@ Basic Data Products
 
 import pyfits
 
-from numina.core import DataFrame
+from .dataframe import DataFrame
 
 class DataProduct(object):
     def validate(self, obj):

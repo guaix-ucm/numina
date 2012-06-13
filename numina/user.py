@@ -30,14 +30,15 @@ import inspect
 import traceback
 import shutil
 
-from numina.treedict import TreeDict
-from numina import __version__, obsres_from_dict
+from numina import __version__
+from numina.core import obsres_from_dict
 from numina.core import init_pipeline_system
 from numina.core import list_recipes
 from numina.core import RequirementParser
 from numina.core import get_recipe, get_instruments
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
+from numina.treedict import TreeDict
 
 _logger = logging.getLogger("numina")
 

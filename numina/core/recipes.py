@@ -30,8 +30,8 @@ import abc
 import traceback
 import logging
 
-from numina.core import RecipeError
-from numina.core import ErrorRecipeResult
+from numina.exceptions import RecipeError
+from .reciperesult import ErrorRecipeResult
 
 _logger = logging.getLogger('numina')
 

@@ -25,7 +25,8 @@ from .pipeline import get_recipe, get_instruments
 from .requirements import RequirementParser, DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProduct
-from .exceptions import RecipeError
+from numina.exceptions import RecipeError
 from .recipeinput import RecipeInput, requires, define_input
 from .reciperesult import RecipeResult, provides, Product, Optional
 from .reciperesult import define_result
+from .oblock import obsres_from_dict
