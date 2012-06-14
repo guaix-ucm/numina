@@ -95,6 +95,9 @@ class RequirementParser(object):
             if req.dest is None:
                 # FIXME: add warning or something here
                 continue
+            if req.hidden:
+                # I Do not want to print it
+                continue
             dispname = req.dest
     
             if req.optional:
@@ -112,27 +115,27 @@ class Requirement(object):
     
     '''
     def __init__(self, description, value=None, optional=False, type=None,
-                 dest=None):
+                 dest=None, hidden=False):
         self.default = value
         self.description = description
         self.optional = optional
         self.type = type
-        self.dest = None
+        self.dest = dest
+        self.hidden = hidden
         
     def __repr__(self):
         sclass = type(self).__name__
         return "%s(dest=%r, description='%s', default=%s, optional=%s, type=%s)" % (sclass, 
             self.dest, self.description, self.default, self.optional, self.type)
-        
 
-        
 class Parameter(Requirement):
-    def __init__(self, value, description, optional=False, type=None, choices=None, dest=None):
+    def __init__(self, value, description, optional=False, type=None, choices=None, 
+                 dest=None, hidden=False):
         super(Parameter, self).__init__(description, 
-            value=value, optional=optional, type=type, dest=dest)
+            value=value, optional=optional, type=type, dest=dest, hidden=False)
         
 class DataProductRequirement(Requirement):
-    def __init__(self, valueclass, description, optional=False, dest=None):
+    def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
         
         if not inspect.isclass(valueclass):
             valueclass = valueclass.__class__
@@ -140,4 +143,5 @@ class DataProductRequirement(Requirement):
         if not issubclass(valueclass, DataProduct):
             raise TypeError('valueclass must derive from DataProduct')
         
-        super(DataProductRequirement, self).__init__(description, optional=optional, type=valueclass, dest=None)
+        super(DataProductRequirement, self).__init__(description, optional=optional, 
+                                                     type=valueclass, dest=dest, hidden=hidden)

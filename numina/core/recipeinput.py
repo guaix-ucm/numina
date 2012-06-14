@@ -58,7 +58,8 @@ class define_input(object):
             if not i.startswith('_'):
                 val = getattr(input_, i)
                 if isinstance(val, Requirement):
-                    val.dest = i
+                    if val.dest is None:
+                        val.dest = i
                     self.requires.append(val)
 
     def __call__(self, klass):
