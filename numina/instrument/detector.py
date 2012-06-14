@@ -32,7 +32,7 @@ from .mapping import Mapper
 
 Amplifier = namedtuple('Amplifier', ['shape', 'gain', 'ron', 'wdepth'])
 
-class Das(object):
+class DAS(object):
     '''Data Acquisition System.'''
     def __init__(self, detector):
         self.detector = detector
@@ -281,14 +281,14 @@ if __name__ == '__main__':
     a = Amplifier(ampshape, 2.1, 4.5, 65000)
     det = CCDDetector(shape, [a], bias=100, dark=20.0)
     
-    das1 = Das(det)
+    das1 = DAS(det)
     
     
     #print d
         
     ndet = nIRDetector(shape, [a], dark=20.0, pedestal=100)
     ndet.readout_time = 0.12
-    das2 = Das(ndet)
+    das2 = DAS(ndet)
     mode = FowlerReadoutMode(5, 1, readout_time=ndet.readout_time)
     das2.readmode(mode)
     pp = das2.acquire(10)
