@@ -135,8 +135,9 @@ def show_instruments(args):
         print_instrument(theins, modes=False)
 
 def print_recipe(recipe):
-    print 'Recipe:', recipe.__name__
-    print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
+    print 'Recipe:', recipe.__module__ + '.' + recipe.__name__
+    if recipe.__doc__:
+        print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
     print 'Requirements'
     print '------------'
     rp = RequirementParser(recipe.__requires__)
