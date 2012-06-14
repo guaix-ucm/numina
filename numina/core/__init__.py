@@ -22,6 +22,7 @@ from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import init_pipeline_system, BaseInstrument, BasePipeline
 from .pipeline import get_recipe, get_instruments
+from .pipeline import import_object
 from .requirements import RequirementParser, DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProduct, FrameDataProduct
