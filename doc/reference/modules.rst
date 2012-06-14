@@ -7,7 +7,6 @@ Numina modules
 
    array
    astrotime
-   config
    core
    flow
    exceptions

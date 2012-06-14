@@ -1,7 +1,7 @@
 
-:mod:`numina.pipeline` --- 
+:mod:`numina.core.pipeline` --- 
 ==========================================
 
-.. automodule:: numina.pipeline
+.. automodule:: numina.core.pipeline
    :synopsis: TBD
    :members:

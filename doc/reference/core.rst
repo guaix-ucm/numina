@@ -1,23 +1,53 @@
 
-:mod:`numina.core.recipes` --- Base classes for Recipes
-========================================================
+:mod:`numina.core` --- Core classes for Pipelines
+==================================================
 
-.. automodule:: numina.core.recipes
-   :synopsis:  Base classes for Recipes
-   
-.. autoclass:: RecipeBase
-   :members:
-   :show-inheritance:
-   
-.. autoclass:: RecipeResult
-   :members:
-   :show-inheritance:
 
+:mod:`numina.core.dataframe` --- 
+==================================================
+.. automodule:: numina.core.dataframe
+   :synopsis:  Base DataFrame
+   
+:mod:`numina.core.oblock` --- 
+==================================================
+   
 .. automodule:: numina.core.oblock
    :members:
+
+:mod:`numina.core.pipeline` --- 
+==================================================
+
+.. automodule:: numina.core.pipeline
+   :synopsis: TBD
+   :members:
+
+:mod:`numina.core.products` --- 
+==================================================
 
 .. automodule:: numina.core.products
    :members:
 
+:mod:`numina.core.recipeinput` --- 
+==================================================
+
+.. automodule:: numina.core.recipeinput
+   :synopsis:  Base classes for Recipe Inputs
+
+:mod:`numina.core.reciperesult` --- 
+==================================================
+
+.. automodule:: numina.core.reciperesult
+   :synopsis:  Base classes for Recipe Results
+
+:mod:`numina.core.recipes` --- 
+==================================================
+.. automodule:: numina.core.recipes
+   :synopsis:  Base classes for Recipes
+
+:mod:`numina.core.requirements` --- 
+==================================================
+
 .. automodule:: numina.core.requirements
    :members:
+
+
