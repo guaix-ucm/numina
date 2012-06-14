@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from .recipes import RecipeBase
+from .recipes import BaseRecipe
 from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import init_pipeline_system, BaseInstrument, BasePipeline
@@ -31,5 +31,3 @@ from .reciperesult import RecipeResult, provides, Product, Optional
 from .reciperesult import ValidRecipeResult
 from .reciperesult import define_result
 from .oblock import obsres_from_dict
-
-BaseRecipe = RecipeBase

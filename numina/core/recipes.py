@@ -21,7 +21,7 @@
 
 A recipe is a class that complies with the *reduction recipe API*:
 
- * The class must derive from :class:`numina.core.RecipeBase`.
+ * The class must derive from :class:`numina.core.BaseRecipe`.
 
 '''
 
@@ -31,15 +31,15 @@ import traceback
 import logging
 
 from numina.exceptions import RecipeError
-from .reciperesult import ErrorRecipeResult
+from .reciperesult import ErrorRecipeResult, RecipeResult
 
 _logger = logging.getLogger('numina')
 
 def list_recipes():
     '''List all defined recipes'''
-    return RecipeBase.__subclasses__() # pylint: disable-msgs=E1101
+    return BaseRecipe.__subclasses__() # pylint: disable-msgs=E1101
     
-class RecipeBase(object):
+class BaseRecipe(object):
     '''Base class for all instrument recipes'''
 
     __metaclass__ = abc.ABCMeta
@@ -51,7 +51,7 @@ class RecipeBase(object):
     logger = _logger
 
     def __init__(self, *args, **kwds):
-        super(RecipeBase, self).__init__()
+        super(BaseRecipe, self).__init__()
         self.__author__ = 'Unknown'
         self.__version__ = '0.0.0'
         self.environ = {}
@@ -104,10 +104,10 @@ class RecipeBase(object):
                                      str(exc),
                                      traceback.format_exc())
 
-        if isinstance(val, RecipeResult):
-            return val
+        if isinstance(result, RecipeResult):
+            return result
         else:
-            return self.convert(val)
+            return self.convert(result)
 
     @classmethod
     def convert(cls, value):
