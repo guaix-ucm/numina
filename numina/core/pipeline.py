@@ -97,11 +97,12 @@ def get_recipe(name, mode):
 def init_pipeline_system():
     '''Load all available pipelines.'''
     
-    for i in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
-        imp, name, _is_pkg = i
-        loader = imp.find_module(name)
-        _mod = loader.load_module(name)
-        
+    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+        try:
+            loader = imp.find_module(name)
+            _mod = loader.load_module(name)
+        except ImportError as error:
+            _logger.warning('Problem importing %s, error was "%s"', name, error)
         
     # Loaded all DRP modules
     
