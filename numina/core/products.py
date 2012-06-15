@@ -41,6 +41,8 @@ class FrameDataProduct(DataProduct):
 
         if isinstance(obj, basestring):
             return DataFrame(filename=obj)
+        elif isinstance(obj, DataFrame):
+            return obj
         else:
             return DataFrame(frame=obj)
 
@@ -53,5 +55,8 @@ class FrameDataProduct(DataProduct):
         elif isinstance(obj, pyfits.HDUList):
             # is an HDUList
             pass
+        elif isinstance(obj, DataFrame):
+            #is a DataFrame
+            pass
         else:
-            raise ValidationError('FrameDataProduct is neither a file nor FITS')
+            raise ValidationError('object is not a valid FrameDataProduct')
