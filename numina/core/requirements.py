@@ -48,7 +48,7 @@ class RequirementLookup(object):
         elif req.optional:
             return None
         elif req.default is not None:
-            return req.value
+            return req.default
         else:
             raise RequirementError('Requirement %s must be defined' % req.dest)
 
@@ -115,24 +115,25 @@ class Requirement(object):
     
     '''
     def __init__(self, description, value=None, optional=False, type=None,
-                 dest=None, hidden=False):
+                 dest=None, hidden=False, choices=None):
         self.default = value
         self.description = description
         self.optional = optional
         self.type = type
         self.dest = dest
         self.hidden = hidden
+        self.choices = choices
         
     def __repr__(self):
         sclass = type(self).__name__
-        return "%s(dest=%r, description='%s', default=%s, optional=%s, type=%s)" % (sclass, 
-            self.dest, self.description, self.default, self.optional, self.type)
+        return "%s(dest=%r, description='%s', default=%s, optional=%s, type=%s, choices=%r)" % (sclass, 
+            self.dest, self.description, self.default, self.optional, self.type, self.choices)
 
 class Parameter(Requirement):
     def __init__(self, value, description, optional=False, type=None, choices=None, 
                  dest=None, hidden=False):
         super(Parameter, self).__init__(description, 
-            value=value, optional=optional, type=type, dest=dest, hidden=False)
+            value=value, optional=optional, type=type, dest=dest, hidden=hidden, choices=choices)
         
 class DataProductRequirement(Requirement):
     def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
