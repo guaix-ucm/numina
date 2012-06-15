@@ -291,6 +291,9 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
 
     return result
 
+class TaskResult(object):
+    pass
+
 def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, cleanup): 
     _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
     _logger.info('pipeline={0[pipeline]}'.format(instrument))
@@ -335,14 +338,15 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     _recipe_logger = RecipeClass.logger
     _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    _logger.debug('creating custom logger "processing.log"')
+    logfile = 'processing.log'
+    _logger.debug('creating custom logger "%s"', logfile)
     os.chdir(resultsdir)
-    fh = logging.FileHandler('processing.log')
+    fh = logging.FileHandler(logfile)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(_recipe_formatter)
     _recipe_logger.addHandler(fh)
 
-    result = {}
+    task = TaskResult()
     try:
         # Running the recipe
         _logger.debug('running the recipe %s', RecipeClass.__name__)
@@ -350,16 +354,17 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
         result = main_internal(RecipeClass, obsres, instrument, parameters, 
                                 runinfo, workdir=workdir)
 
-        result['recipe_runner'] = info()
-        result['runinfo'] = runinfo
+        task.result = result
+        task.recipe_runner = info()
+        task.runinfo = runinfo
     
         os.chdir(resultsdir)
 
         with open('result.txt', 'w+') as fd:
-            serializer.dump(result, fd)
+            serializer.dump(task, fd)
     
         with open('result.txt', 'r') as fd:
-            result = serializer.load(fd)
+            task = serializer.load(fd)
 
         if cleanup:
             _logger.debug('cleaning up the workdir')
@@ -367,14 +372,12 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
         _logger.info('finished')
     except Exception as error:
         _logger.error('%s', error)
-        result['error'] = {'type': error.__class__.__name__, 
-                                    'message': str(error), 
-                                    'traceback': traceback.format_exc()}
+        task.error = error
         _logger.error('finishing with errors: %s', error)
     finally:
         _recipe_logger.removeHandler(fh)
 
-    return result
+    return task
 
 
 
