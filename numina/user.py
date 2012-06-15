@@ -220,8 +220,8 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
         RecipeClass = get_recipe(ins_pars['pipeline'], obsres.mode)
         _logger.info('entry point is %s', RecipeClass)
     except ValueError:
-        _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
-        raise
+        _logger.error('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
+        sys.exit(1)
 
     _logger.info('matching parameters')    
 
@@ -298,9 +298,9 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
         RecipeClass = get_recipe(instrument['pipeline'], obsres.mode)
         _logger.info('entry point is %s', RecipeClass)
     except ValueError:
-        _logger.warning('cannot find recipe class for {0.instrument} mode={0.mode}'
+        _logger.error('cannot find recipe class for {0.instrument} mode={0.mode}'
                         .format(obsres))
-        raise
+        sys.exit(1)
 
     _logger.info('matching parameters')    
 
