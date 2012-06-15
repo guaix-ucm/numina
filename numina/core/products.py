@@ -25,6 +25,9 @@ import pyfits
 
 from .dataframe import DataFrame
 
+class ValidationError(Exception):
+    pass
+
 class DataProduct(object):
     def validate(self, obj):
         return True
