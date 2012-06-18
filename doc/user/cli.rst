@@ -31,7 +31,7 @@ appropriated reduction recipe.
 
 It is called like this::
 
-     $ numina [global-options] run [comand-options] task
+     $ numina [global-options] run [comand-options] observation-result
 
 .. program:: numina run
 
@@ -39,9 +39,9 @@ It is called like this::
 
    File with the instrument description
    
-.. option:: --obsblock filename
+.. option:: --parameters filename
 
-   File with the observing block description
+   File with the description of the parameters of the recipe
       
 .. option:: --basedir path
 
@@ -63,9 +63,32 @@ It is called like this::
 
    Remove intermediate and temporal files created by the recipe
    
-.. option:: task filename
+.. option:: observing_result filename
 
-   Filename of a file contaning the parameters of the reduction    
+   Filename contaning the description of the observation result
+
+Options for show
+================
+The show subcommand outputs information about the loaded pipelines
+
+It is called like this::
+
+     $ numina [global-options] show [show-options] 
+
+.. program:: numina show
+
+.. option:: -o, --observing-modes
+
+   Show Observing Modes
+
+.. option:: -r [id]
+
+   Show Recipe whose identificator is id. If not listed, shows all
+   recipes
+   
+.. option:: -i
+
+   Show Instruments
 
 Options for list
 ================
