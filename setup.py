@@ -22,7 +22,7 @@ uext = Extension('numina.array._ufunc',
 REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
 
 setup(name='numina',
-      version='0.8.0dev',
+      version='0.8.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
