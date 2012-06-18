@@ -15,7 +15,6 @@ Numina modules
    generic
    logger
    instrument
-   pipeline
    serialize
    qa
    treedict

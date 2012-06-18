@@ -22,11 +22,11 @@ uext = Extension('numina.array._ufunc',
 REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
 
 setup(name='numina',
-      version='0.7.0',
+      version='0.8.0dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.7.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.8.0.tar.gz',
       license='GPLv3',
       description='Numina reduction package',
       packages=find_packages('.'),
