@@ -21,7 +21,7 @@
 
 A recipe is a class that complies with the *reduction recipe API*:
 
- * The class must derive from :class:`numina.recipes.RecipeBase`.
+ * The class must derive from :class:`numina.core.BaseRecipe`.
 
 '''
 
@@ -31,27 +31,27 @@ import traceback
 import logging
 
 from numina.exceptions import RecipeError
-
-from .products import DataFrame, DataProduct 
-from .oblock import obsres_from_dict
-from .requirements import Parameter, DataProductParameter
+from .reciperesult import ErrorRecipeResult, RecipeResult
 
 _logger = logging.getLogger('numina')
 
 def list_recipes():
     '''List all defined recipes'''
-    return RecipeBase.__subclasses__() # pylint: disable-msgs=E1101
+    return BaseRecipe.__subclasses__() # pylint: disable-msgs=E1101
     
-class RecipeBase(object):
+class BaseRecipe(object):
     '''Base class for all instrument recipes'''
 
     __metaclass__ = abc.ABCMeta
     
+    __requires__ = {}
+    __provides__ = {}
+
     # Recipe own logger
     logger = _logger
 
     def __init__(self, *args, **kwds):
-        super(RecipeBase, self).__init__()
+        super(BaseRecipe, self).__init__()
         self.__author__ = 'Unknown'
         self.__version__ = '0.0.0'
         self.environ = {}
@@ -72,6 +72,8 @@ class RecipeBase(object):
             self.instrument = kwds['instrument']
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
+        if 'requirements' in kwds:
+            self.requirements = kwds['requirements']
 
     @abc.abstractmethod
     def run(self, block):
@@ -94,47 +96,43 @@ class RecipeBase(object):
         if environ is not None:
             self.environ.update(environ)
 
-        self.environ['block_id'] = block.id
-
         try:
-
             result = self.run(block)
-
         except Exception as exc:
-            result = {'error': {'type': exc.__class__.__name__, 
-                                'message': str(exc), 
-                                'traceback': traceback.format_exc()}
-                      }
             _logger.error("During recipe execution %s", exc)
-        return result
+            return ErrorRecipeResult(exc.__class__.__name__, 
+                                     str(exc),
+                                     traceback.format_exc())
 
-class RecipeResult(dict):
-    '''Result of the __call__ method of the Recipe.'''
-    pass
-
-class provides(object):
-    '''Decorator to add the list of provided products to recipe'''
-    def __init__(self, *products):
-        self.products = products
-
-    def __call__(self, klass):
-        if hasattr(klass, '__provides__'):
-            klass.__provides__.extend(self.products)
+        if isinstance(result, RecipeResult):
+            return result
         else:
-            klass.__provides__ = list(self.products)
-        return klass
-    
-class requires(object):
-    '''Decorator to add the list of required parameters to recipe'''
-    def __init__(self, *parameters):
-        self.parameters = parameters
+            return self.convert(result)
 
-    def __call__(self, klass):
-        if hasattr(klass, '__requires__'):
-            klass.__requires__.extend(self.parameters)
+    @classmethod
+    def convert(cls, value):
+        '''Convert from a dictionary to a RecipeResult'''
+        if 'error' in value:
+            err = value['error']
+            if _valid_err(err):
+                return ErrorRecipeResult(err['type'], err['message'], err['traceback'])
+            else:
+                raise ValueError('malformed value to convert')
+        elif 'products' in value:
+            prod = value['products']
+            products = {'product%d' % i: prod for i, prod in enumerate(prod)}
+            return cls.RecipeResult(**products)
         else:
-            klass.__requires__ = list(self.parameters)
-        return klass
+            raise ValueError('malformed value to convert')
 
 
-
+def _valid_err(err):
+    if not isinstance(err, dict):
+        return False
+    if not 'type' in err:
+        return False
+    if not 'message' in err:
+        return False
+    if not 'traceback' in err:
+        return False
+    return True

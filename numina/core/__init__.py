@@ -17,31 +17,17 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''
-Basic Data Products
-'''
-
-import pyfits
-
-class DataProduct(object):
-    '''Base class for Recipe Products'''
-    pass
-
-class DataFrame(DataProduct):
-    def __init__(self, frame):
-        self.frame = frame
-        self.filename = None
-
-    def __getstate__(self):
-        # save fits file
-        filename = 'result.fits'
-        if self.frame[0].header.has_key('FILENAME'):
-            filename = self.frame[0].header['FILENAME']
-        self.frame.writeto(filename, clobber=True)
-
-        return {'frame': filename}
-
-    def __setstate__(self, state):
-        # FIXME: this is not exactly what we had in the begining...
-        self.frame = pyfits.open(state['frame'])
-        self.filename = state['frame']
+from .recipes import BaseRecipe
+from .recipes import list_recipes
+from .dataframe import DataFrame
+from .pipeline import init_pipeline_system, BaseInstrument, BasePipeline
+from .pipeline import get_recipe, get_instruments
+from .pipeline import import_object
+from .requirements import RequirementParser, DataProductRequirement
+from .requirements import Parameter, Requirement
+from .products import DataProduct, FrameDataProduct
+from numina.exceptions import RecipeError
+from .recipeinput import RecipeInput, requires, define_input
+from .reciperesult import RecipeResult, provides, Product, Optional
+from .reciperesult import define_result
+from .oresult import obsres_from_dict

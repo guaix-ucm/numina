@@ -7,7 +7,7 @@ Numina modules
 
    array
    astrotime
-   config
+   core
    flow
    exceptions
    extraiter
@@ -15,8 +15,6 @@ Numina modules
    generic
    logger
    instrument
-   pipeline
-   recipes
    serialize
    qa
    treedict

@@ -28,6 +28,9 @@ class FrameInformation(object):
         self.label = None
         self.itype = None
 
+    def __repr__(self):
+        return 'FrameInformation(label=%r, itype=%r)' % (self.label, self.itype)
+
 class ObservationResult(object):
     '''The result of a observing block.
     

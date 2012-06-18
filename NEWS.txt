@@ -1,3 +1,11 @@
+Version 0.8.0 (18 Jun 2012)
+
+Changes:
+ 
+  * new format of the recipe input and recipe results
+  * new command 'show' in CLI
+
+
 Version 0.7.0 (20 May 2012)
 ---------------------------
 

@@ -21,10 +21,10 @@
 
 import logging
 
-from numina.recipes import RecipeBase, DataFrame
-from numina.recipes import obsres_from_dict
+#from numina.recipes import RecipeBase, DataFrame
+#from numina.recipes import obsres_from_dict
 
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(logging.NullHandler())

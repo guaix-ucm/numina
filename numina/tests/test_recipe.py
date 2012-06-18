@@ -22,9 +22,9 @@
 import unittest
 import collections
 
-from numina.recipes import RecipeBase
+from numina.core import BaseRecipe
 
-class Test(RecipeBase):
+class Test(BaseRecipe):
     '''Minimal class that implements RecipeBase.'''
     def __init__(self, param, runinfo):
         super(Test, self).__init__(param, runinfo)

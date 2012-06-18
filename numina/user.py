@@ -30,14 +30,15 @@ import inspect
 import traceback
 import shutil
 
-from numina.treedict import TreeDict
-from numina import __version__, obsres_from_dict
-from numina.pipeline import init_pipeline_system
-from numina.recipes import list_recipes
-from numina.recipes.lookup import lookup as lookup_param
-from numina.pipeline import get_recipe
+from numina import __version__
+from numina.core import obsres_from_dict
+from numina.core import init_pipeline_system
+from numina.core import list_recipes
+from numina.core import RequirementParser
+from numina.core import get_recipe, get_instruments
 from numina.serialize import lookup
 from numina.xdgdirs import xdg_config_home
+from numina.treedict import TreeDict
 
 _logger = logging.getLogger("numina")
 
@@ -86,6 +87,80 @@ def mode_list(serializer, args):
     for recipeCls in list_recipes():
 #        print fully_qualified_name(recipeCls)
         print recipeCls
+        
+def super_load(path):
+    spl = path.split('.')
+    cls = spl[-1]
+    mods = '.'.join(spl[:-1])
+    import importlib
+    mm = importlib.import_module(mods)
+    Cls = getattr(mm, cls)
+    return Cls
+    
+    
+def mode_show(serializer, args):
+    '''Run the show mode of Numina'''
+    _logger.debug('show mode')
+    if args.what == 'om':
+        show_observingmodes(args)
+    elif args.what == 'rcp':
+        show_recipes(args)
+    else:
+        show_instruments(args)
+        
+def show_recipes(args):
+    if args.id is None:
+        for Cls in list_recipes():
+            print_recipe(Cls)            
+    else:
+        Cls = super_load(args.id)
+        print_recipe(Cls)    
+
+def show_observingmodes(args):
+    
+    if args.id:
+        must_print = lambda x: x.uuid == args.id 
+    else:
+        must_print = lambda x: True
+    
+    ins = get_instruments()
+    for theins in ins.values():
+        for mode in theins.modes:
+            if must_print(mode):
+                print_obsmode(mode)
+
+def show_instruments(args):
+    ins = get_instruments()
+    for theins in ins.values():
+        print_instrument(theins, modes=False)
+
+def print_recipe(recipe):
+    print 'Recipe:', recipe.__module__ + '.' + recipe.__name__
+    if recipe.__doc__:
+        print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
+    print 'Requirements'
+    print '------------'
+    rp = RequirementParser(recipe.__requires__)
+    rp.print_requirements()
+    print
+
+def print_instrument(instrument, modes=True):
+    print 'Name:', instrument.name
+    
+    if modes and instrument.modes:
+        print 'Observing modes'
+        print '---------------'
+        for mode in instrument.modes:
+            print_obsmode(mode)
+        print '---'
+
+def print_obsmode(obsmode):
+    print '%s: %s' % (obsmode.name, obsmode.summary)
+    print 'Instrument:', obsmode.instrument
+    print 'Recipe:', obsmode.recipe
+    print 'Key:', obsmode.key
+    print 'UUID:', obsmode.uuid
+    print '--'
 
 def main_internal(cls, obsres, 
     instrument, 
@@ -145,21 +220,20 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
         RecipeClass = get_recipe(ins_pars['pipeline'], obsres.mode)
         _logger.info('entry point is %s', RecipeClass)
     except ValueError:
-        _logger.warning('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
-        raise
+        _logger.error('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
+        sys.exit(1)
 
     _logger.info('matching parameters')    
 
     parameters = {}
+    reqparser = RequirementParser(RecipeClass.__requires__)
 
-    for req in RecipeClass.__requires__:
-        try:
-            _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= lookup_param(req, params)
-            _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
-        except LookupError as error:
-            _logger.error('%s', error)
-            raise
+    try:
+        parameters = reqparser.parse(params)
+        names = reqparser.parse2(params)
+    except LookupError as error:
+        _logger.error('%s', error)
+        raise
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)
@@ -217,6 +291,9 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
 
     return result
 
+class TaskResult(object):
+    pass
+
 def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, cleanup): 
     _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
     _logger.info('pipeline={0[pipeline]}'.format(instrument))
@@ -224,9 +301,9 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
         RecipeClass = get_recipe(instrument['pipeline'], obsres.mode)
         _logger.info('entry point is %s', RecipeClass)
     except ValueError:
-        _logger.warning('cannot find recipe class for {0.instrument} mode={0.mode}'
+        _logger.error('cannot find recipe class for {0.instrument} mode={0.mode}'
                         .format(obsres))
-        raise
+        sys.exit(1)
 
     _logger.info('matching parameters')    
 
@@ -235,14 +312,13 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     allm = TreeDict(allmetadata)
     parameters = {}
 
-    for req in RecipeClass.__requires__:
-        try:
-            _logger.info('recipe requires %s', req.name)
-            parameters[req.name]= lookup_param(req, allm)
-            _logger.debug('parameter %s has value %s', req.name, parameters[req.name])
-        except LookupError as error:
-            _logger.error('%s', error)
-            sys.exit(1)
+    reqparser = RequirementParser(RecipeClass.__requires__)
+
+    try:
+        parameters = reqparser.parse(allm)
+    except LookupError as error:
+        _logger.error('%s', error)
+        sys.exit(1)
 
     for req in RecipeClass.__provides__:
         _logger.info('recipe provides %s', req)
@@ -262,14 +338,15 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
     _recipe_logger = RecipeClass.logger
     _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    _logger.debug('creating custom logger "processing.log"')
+    logfile = 'processing.log'
+    _logger.debug('creating custom logger "%s"', logfile)
     os.chdir(resultsdir)
-    fh = logging.FileHandler('processing.log')
+    fh = logging.FileHandler(logfile)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(_recipe_formatter)
     _recipe_logger.addHandler(fh)
 
-    result = {}
+    task = TaskResult()
     try:
         # Running the recipe
         _logger.debug('running the recipe %s', RecipeClass.__name__)
@@ -277,16 +354,17 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
         result = main_internal(RecipeClass, obsres, instrument, parameters, 
                                 runinfo, workdir=workdir)
 
-        result['recipe_runner'] = info()
-        result['runinfo'] = runinfo
+        task.result = result
+        task.recipe_runner = info()
+        task.runinfo = runinfo
     
         os.chdir(resultsdir)
 
         with open('result.txt', 'w+') as fd:
-            serializer.dump(result, fd)
+            serializer.dump(task, fd)
     
         with open('result.txt', 'r') as fd:
-            result = serializer.load(fd)
+            task = serializer.load(fd)
 
         if cleanup:
             _logger.debug('cleaning up the workdir')
@@ -294,14 +372,12 @@ def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, clea
         _logger.info('finished')
     except Exception as error:
         _logger.error('%s', error)
-        result['error'] = {'type': error.__class__.__name__, 
-                                    'message': str(error), 
-                                    'traceback': traceback.format_exc()}
+        task.error = error
         _logger.error('finishing with errors: %s', error)
     finally:
         _recipe_logger.removeHandler(fh)
 
-    return result
+    return task
 
 
 
@@ -338,37 +414,38 @@ def mode_run(serializer, args):
     instrument_read = False
     
     # Read observing result from args.
-    if args.obsblock is not None:
-        _logger.info('reading observing block from %s', args.obsblock)
-        with open(args.obsblock, 'r') as fd:
-            obsres_read = True
-            obsres_dict = serializer.load(fd)
-            obsres = obsres_from_dict(obsres_dict)
+    _logger.info('reading observing block from %s', args.obsblock)
+    with open(args.obsblock, 'r') as fd:
+        obsres_read = True
+        obsres_dict = serializer.load(fd)
+        obsres = obsres_from_dict(obsres_dict)
     
     # Read instrument information from args.instrument
     if args.instrument is not None:
         _logger.info('reading instrument config from %s', args.instrument)
         with open(args.instrument, 'r') as fd:
-            # json decode    
             instrument = serializer.load(fd)
             instrument_read = True
 
     # Read task information from args.task
-    with open(args.task, 'r') as fd:
-        task_control = serializer.load(fd)
+    if args.reqs is not None:
+        with open(args.reqs, 'r') as fd:
+            task_control = serializer.load(fd)
+    else:
+        task_control = {}
             
     if not instrument_read and 'instrument' in task_control:
         _logger.info('reading instrument config from %s', args.task)
         instrument = task_control['instrument']
         
     if not obsres_read and 'observing_result' in task_control:
-        _logger.info('reading observing result from %s', args.task)
+        _logger.info('reading observing result from %s', args.reqs)
         obsres_read = True
         obsres_dict = task_control['observing_result']
         obsres = obsres_from_dict(obsres_dict)
 
     if 'parameters' in task_control:
-        _logger.info('reading reduction parameters from %s', args.task)
+        _logger.info('reading reduction parameters from %s', args.reqs)
         reduction = task_control['parameters']
         
     if not obsres_read:
@@ -412,21 +489,34 @@ def main(args=None):
                       help="make lots of noise [default]")
     parser.add_argument('-l', action="store", dest="logging", metavar="FILE", 
                       help="FILE with logging configuration")
-    parser.add_argument('--module', action="store", dest="module", 
-                      metavar="FILE", help="FILE", default='emir')
-    
+
     subparsers = parser.add_subparsers(title='Targets',
                                        description='These are valid commands you can ask numina to do.')
+    parser_show = subparsers.add_parser('show', help='show help')
+    
+    parser_show.add_argument('-o', '--observing-modes', action='store_const', dest='what', const='om',
+                             help='Show observing modes')
+    parser_show.add_argument('-r', action='store_const', dest='what', const='rcp',
+                             help='Show recipes')
+    parser_show.add_argument('-i', action='store_const', dest='what', const='ins',
+                             help='Show instruments')
+    
+    parser_show.set_defaults(command=mode_show, what='om')
+    parser_show.add_argument('id', nargs='?', default=None,
+                             help='Identificator')
+    
     parser_list = subparsers.add_parser('list', help='list help')
     
     parser_list.set_defaults(command=mode_list)
+    parser_list.add_argument('recipe', nargs='?', default=None)
     
     parser_run = subparsers.add_parser('run', help='run help')
     
     parser_run.set_defaults(command=mode_run)    
 
     parser_run.add_argument('--instrument', dest='instrument', default=None)
-    parser_run.add_argument('--obsblock', dest='obsblock', default=None)
+    parser_run.add_argument('--parameters', dest='reqs', default=None)
+    parser_run.add_argument('--requirements', dest='reqs', default=None)
     parser_run.add_argument('--basedir', action="store", dest="basedir", 
                       default=os.getcwd())
     # FIXME: It is questionable if this flag should be used or not
@@ -435,10 +525,9 @@ def main(args=None):
     parser_run.add_argument('--workdir', action="store", dest="workdir")    
     parser_run.add_argument('--cleanup', action="store_true", dest="cleanup", 
                       default=False)
-    parser_run.add_argument('task')
+    parser_run.add_argument('obsblock')
     
     args = parser.parse_args(args)
-
 
     # logger file
     if args.logging is not None:

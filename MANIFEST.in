@@ -1,5 +1,4 @@
 include *.txt
 include src/*.h
-include scripts/numina
 recursive-include doc *
 
