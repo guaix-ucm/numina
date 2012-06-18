@@ -53,11 +53,11 @@ class Optional(object):
         else:
             raise TypeError('product_type must be of class DataProduct')
 
-class RecipeResult(object):
+class BaseRecipeResult(object):
     def __news__(cls):
-        return super(RecipeResult, cls).__new__(cls)
+        return super(BaseRecipeResult, cls).__new__(cls)
 
-class ErrorRecipeResult(RecipeResult):
+class ErrorRecipeResult(BaseRecipeResult):
     def __init__(self, errortype, message, traceback):
         self.errortype = errortype
         self.message = message
@@ -68,7 +68,7 @@ class ErrorRecipeResult(RecipeResult):
         return "%s(errortype=%r, message='%s')" % (sclass, 
             self.errortype, self.message)
 
-class ValidRecipeResult(RecipeResult):
+class RecipeResult(BaseRecipeResult):
 
     def __new__(cls, *args, **kwds):
 
@@ -77,7 +77,7 @@ class ValidRecipeResult(RecipeResult):
             if isinstance(val, Product):
                 cls._products[key] = val
 
-        return super(ValidRecipeResult, cls).__new__(cls, *args, **kwds)
+        return super(RecipeResult, cls).__new__(cls, *args, **kwds)
 
     def __init__(self, *args, **kwds):
         for key, prod in self._products.iteritems():
@@ -93,7 +93,7 @@ class ValidRecipeResult(RecipeResult):
                 # optional product, skip
                 setattr(self, key, None)
 
-        super(ValidRecipeResult, self).__init__(self, *args, **kwds)
+        super(RecipeResult, self).__init__(self, *args, **kwds)
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -105,9 +105,9 @@ class ValidRecipeResult(RecipeResult):
         return '%s(%s)' % (sclass, ', '.join(full))
 
 def transmit(result):
-    if not isinstance(result, RecipeResult):
+    if not isinstance(result, BaseRecipeResult):
         raise TypeError('result must be a RecipeResult')
-    if isinstance(result, ValidRecipeResult):
+    if isinstance(result, RecipeResult):
         print 'transmit as valid'
     elif isinstance(result, ErrorRecipeResult):
         res = {'error': {'type': result.errortype,
@@ -120,7 +120,7 @@ def transmit(result):
 
 class define_result(object):
     def __init__(self, result):
-        if not issubclass(result, RecipeResult):
+        if not issubclass(result, BaseRecipeResult):
             raise TypeError
 
         self.provides = {}
@@ -157,7 +157,7 @@ class provides(object):
             klass.__provides__ = self.products
 
         a = type('%s_RecipeResult' % klass.__name__, 
-                        (ValidRecipeResult,), 
+                        (RecipeResult,), 
                         self.products)
 
         klass.RecipeResult = a

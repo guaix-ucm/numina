@@ -29,6 +29,5 @@ from .products import DataProduct, FrameDataProduct
 from numina.exceptions import RecipeError
 from .recipeinput import RecipeInput, requires, define_input
 from .reciperesult import RecipeResult, provides, Product, Optional
-from .reciperesult import ValidRecipeResult
 from .reciperesult import define_result
-from .oblock import obsres_from_dict
+from .oresult import obsres_from_dict
