@@ -3,7 +3,13 @@
 from setuptools import setup, Extension
 from setuptools import find_packages
 
-import numpy
+import sys
+
+try:
+    import numpy
+except ImportError:
+    print 'numpy is required to install numina'
+    sys.exit(1)
 
 numpy_include = numpy.get_include()
 cext = Extension('numina.array._combine',
