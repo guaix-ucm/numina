@@ -53,7 +53,7 @@ def blockgen1d(block, size):
             return [x]
         else:
             result = []
-            d = int(b - a) / 2
+            d = int(b - a) // 2
             for i in imap(numblock, [block, block], [(a, a + d), (a + d, b)]):
                 result.extend(i)
             return result
