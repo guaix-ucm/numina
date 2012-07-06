@@ -12,6 +12,13 @@
 .. automodule:: numina.array.background
    :members:
    
+:mod:`numina.array.blocks` --- Generation of blocks
+====================================================
+
+.. automodule:: numina.array.blocks
+   :members:  
+ 
+   
 :mod:`numina.array.combine` --- Array combination
 =================================================
 
