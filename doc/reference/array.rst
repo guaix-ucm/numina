@@ -232,6 +232,12 @@ Once the module is created and loaded, a sample session would be:
     
     
     
+:mod:`numina.array.cosmetics` --- Array cosmetics
+===================================================
+
+.. automodule:: numina.array.cosmetics
+   :synopsis: Array cosmetics
+   :members:
     
 :mod:`numina.array.imsurfit` --- Image surface fitting
 ======================================================
