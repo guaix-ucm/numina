@@ -16,8 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
+
+from __future__ import division
+
 import logging
 from itertools import imap, product
+
+from numpy.lib.stride_tricks import as_strided as ast
 
 _logger = logging.getLogger("numina.array")
 
@@ -223,3 +228,51 @@ def blk_nd(blk, shape):
     '''
     internals = (blk_1d(b, s) for b,s in zip(blk, shape))
     return product(*internals)
+
+
+
+def block_view(A, block=(3, 3)):
+    """Provide a 2D block view to 2D array. 
+    
+    No error checking made. Therefore meaningful (as implemented) only for 
+    blocks strictly compatible with the shape of A.
+    
+    """
+    
+    # simple shape and strides computations may seem at first strange
+    # unless one is able to recognize the 'tuple additions' involved ;-)
+    shape= (A.shape[0] // block[0], A.shape[1] // block[1]) + block
+    strides= (block[0] * A.strides[0], block[1] * A.strides[1]) + A.strides
+    return ast(A, shape=shape, strides=strides)
+
+if __name__ == '__main__':
+    from numpy import arange
+    A = arange(144).reshape(12, 12)
+    print block_view(A)[0, 0]
+    #[[ 0  1  2]
+    # [12 13 14]
+    # [24 25 26]]
+    print block_view(A, (2, 6))[0, 0]
+    #[[ 0  1  2  3  4  5]
+    # [12 13 14 15 16 17]]
+    print block_view(A, (3, 12))[0, 0]
+    #[[ 0  1  2  3  4  5  6  7  8  9 10 11]
+    # [12 13 14 15 16 17 18 19 20 21 22 23]
+    # [24 25 26 27 28 29 30 31 32 33 34 35]]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
