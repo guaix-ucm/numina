@@ -77,7 +77,7 @@ class RecipeResult(BaseRecipeResult):
             if isinstance(val, Product):
                 cls._products[key] = val
 
-        return super(RecipeResult, cls).__new__(cls, *args, **kwds)
+        return super(RecipeResult, cls).__new__(cls)
 
     def __init__(self, *args, **kwds):
         for key, prod in self._products.iteritems():
