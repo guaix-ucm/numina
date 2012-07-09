@@ -19,6 +19,7 @@
 
 import logging
 import operator
+import itertools
 
 import numpy
 import scipy.stats
@@ -143,37 +144,43 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
     return ratio, mask, sig
 
 # IRAF task
-def ccdmask(flat1, flat2=None, mask=None, nmed=(7, 7), nsig=(15, 15),
-                lowercut=6.0, uppercut=6.0, 
-                siglev=1.0, posthook=None):
+def ccdmask(flat1, flat2=None, mask=None, 
+                lowercut=6.0, uppercut=6.0, siglev=1.0, 
+                mode='region', nmed=(7, 7), nsig=(15, 15)):
     '''Find cosmetic defects in a detector using two flat field images.
     
     Two arrays representing flat fields of different exposure times are
     required. Cosmetic defects are selected as points that deviate
     significantly of the expected normal distribution of pixels in
-    the ratio between `flat2` and `flat1`.
-    
-    The median of the ratio array is computed in boxes of `nmed` 
-    and subtracted to it.
-    
-    The standard deviation of the distribution of pixels is computed
-    in boxes of shape `nsig` pixels. It is obtained computing the percentiles 
+    the ratio between `flat2` and `flat1`. The median of the ratio
+    is computed and subtracted. Then, the standard deviation is estimated
+    computing the percentiles 
     nearest to the pixel values corresponding to`siglev` in the normal CDF. 
-    The standard deviation is then the distance
-    between the pixel values divided by two times `siglev`.
-    The ratio image is then normalized with this standard deviation.
+    The standard deviation is then the distance between the pixel values 
+    divided by two times `siglev`. The ratio image is then normalized with 
+    this standard deviation.
     
-    The values in the ratio above `uppercut` are flagged as hot pixels,
+    The behavior of the function depends on the value of the parameter
+    `mode`. If the value is 'region' (the default), both the median
+    and the sigma are computed in boxes. If the value is 'full', these
+    values are computed using the full array.
+    
+    The size of the boxes in 'region' mode is given by `nmed` for
+    the median computation and `nsig` for the standard deviation.
+    
+    The values in the normalized ratio array above `uppercut` are flagged as hot pixels,
     and those below '-lowercut` are flagged as dead pixels in the output mask. 
     
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
-    :parameter nmed: region used to compute the median
-    :parameter nsig: region used to estimate the standard deviation
+
     :parameter lowercut: values below this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
+    :parameter mode: either 'full' or 'region'
+    :parameter nmed: region used to compute the median
+    :parameter nsig: region used to estimate the standard deviation
     :returns: the normalized ratio of the flats, the updated mask and standard deviation
     
     .. note::
@@ -190,18 +197,23 @@ def ccdmask(flat1, flat2=None, mask=None, nmed=(7, 7), nsig=(15, 15),
     
     '''
     # check inputs
+    
+    if mode not in ['full', 'region']:
+        raise ValueError("mode must be either 'full' or 'region'")
+    
     for vname in ['lowercut', 'uppercut', 'nsig']:
         val = locals()[vname]
         if val <= 0:
             raise ValueError('%s must be > 0' % vname)
-        
-    for vname in ['nsig', 'nmed']:
-        val = locals()[vname]
-        if any(s <= 0 for s in val):
-            raise ValueError('%s members must be > 0' % vname)
+    
+    if mode == 'region':
+        for vname in ['nsig', 'nmed']:
+            val = locals()[vname]
+            if any(s <= 0 for s in val):
+                raise ValueError('%s members must be > 0' % vname)
 
-    if reduce(operator.mul, nsig) < 100:
-        raise ValueError('nsig size >= 100 required to have enough points for statistics')
+        if reduce(operator.mul, nsig) < 100:
+            raise ValueError('nsig size >= 100 required to have enough points for statistics')
 
     if flat2 is None:
         # we have to swap flat1 and flat2, and
@@ -235,11 +247,15 @@ def ccdmask(flat1, flat2=None, mask=None, nmed=(7, 7), nsig=(15, 15),
     ratio[gmask] = flat2[gmask] / flat1[gmask]
     ratio[smask] = invalid[smask]
 
-    _logger.info('computing median in boxes of %r', nmed)
-    ratio_med = scipy.ndimage.filters.median_filter(ratio, size=nmed)
-
-    # subtracting the median map
-    ratio[gmask] -= ratio_med[gmask]
+    if mode == 'region':
+        _logger.info('computing median in boxes of %r', nmed)
+        ratio_med = scipy.ndimage.filters.median_filter(ratio, size=nmed)
+        # subtracting the median map
+        ratio[gmask] -= ratio_med[gmask]
+    else:
+        _logger.info('computing median in full array')
+        ratio_med = numpy.median(ratio[gmask])
+        ratio[gmask] -= ratio_med
 
     # Quantiles that contain nsig sigma in normal distribution
     qns = 100 * scipy.stats.norm.cdf(siglev)
@@ -250,11 +266,19 @@ def ccdmask(flat1, flat2=None, mask=None, nmed=(7, 7), nsig=(15, 15),
     # in several blocks of shape nsig
     # we estimate sigma
     sigma = numpy.zeros_like(ratio)
-    mshape = max_blk_coverage(blk=nsig, shape=ratio.shape)
-
-    _logger.info('estimating sigma in boxes of %r', nsig)
-    _logger.info('shape covered by boxes is  %r', mshape)
-    for blk in blk_nd_short(blk=nsig, shape=ratio.shape):
+    
+    if mode == 'region':
+        mshape = max_blk_coverage(blk=nsig, shape=ratio.shape)
+        _logger.info('estimating sigma in boxes of %r', nsig)
+        _logger.info('shape covered by boxes is  %r', mshape)
+        block_gen = blk_nd_short(blk=nsig, shape=ratio.shape)
+    else:
+        mshape = ratio.shape
+        _logger.info('estimating sigma in full array')
+        # slice(None) is equivalent to [:]
+        block_gen = itertools.repeat(slice(None), 1)
+        
+    for blk in block_gen:
         # mask for this region
         m = mask[blk] == PIXEL_VALID
         valid_points = numpy.ravel(ratio[blk][m])
