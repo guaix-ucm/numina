@@ -54,7 +54,7 @@ class Optional(object):
             raise TypeError('product_type must be of class DataProduct')
 
 class BaseRecipeResult(object):
-    def __news__(cls):
+    def __new__(cls):
         return super(BaseRecipeResult, cls).__new__(cls)
 
 class ErrorRecipeResult(BaseRecipeResult):
