@@ -97,7 +97,6 @@ class RecipeResult(BaseRecipeResult):
 
     def __repr__(self):
         sclass = type(self).__name__
-        full0 = '%s(' % sclass
         full = []
         for key in self._products:
             val = getattr(self, key)
