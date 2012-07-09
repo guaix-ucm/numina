@@ -18,6 +18,7 @@
 #
 
 import logging
+import operator
 
 import numpy
 import scipy.stats
@@ -45,7 +46,7 @@ def update_mask(mask, gmask, newmask, value):
     return mask, gmask, smask
 
 def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0, 
-                nsig=2.0, posthook=None):
+                siglev=2.0, posthook=None):
     '''Find cosmetic defects in a detector using two flat field images.
     
     Two arrays representing flat fields of different exposure times are
@@ -69,14 +70,14 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
     :parameter mask: an integer array representing initial mask.
     :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
-    :parameter nsig: level to estimate the standar deviation.
+    :parameter siglev: level to estimate the standard deviation.
     :returns: the normalized ratio of the flats, the updated mask and standard deviation
     
     '''
 
     # check inputs
 
-    for vname in ['lowercut', 'uppercut', 'nsig']:
+    for vname in ['lowercut', 'uppercut', 'siglev']:
         val = locals()[vname]
         if val <= 0:
             raise ValueError('%s must be > 0' % vname)
@@ -109,10 +110,10 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
     ratio[gmask] -= ratio_med
 
     # Quantiles that contain nsig sigma in normal distribution
-    _logger.debug('estimating sigma using nsig=%f', nsig)
-    qns = 100 * scipy.stats.norm.cdf(nsig)
+    _logger.debug('estimating sigma using level=%f', siglev)
+    qns = 100 * scipy.stats.norm.cdf(siglev)
     pns = 100 - qns
-    _logger.debug('percentiles at nsig=%f', nsig)
+    _logger.debug('percentiles at nsig=%f', siglev)
     _logger.debug('low %f%% high %f%%', pns, qns)
 
     valid = ratio[gmask]
@@ -123,7 +124,7 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
     _logger.debug('low %f high %f', ls, hs)
 
     # sigma estimation
-    sig = (hs - ls) / (2 * nsig)
+    sig = (hs - ls) / (2 * siglev)
     _logger.info('sigma estimation is %f ', sig)
 
     # normalized points
@@ -142,10 +143,9 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
     return ratio, mask, sig
 
 # IRAF task
-def ccdmask(flat1, flat2=None, mask=None, ncmed=7, nlmed=7, 
-                ncsig=15, nlsig=15,
+def ccdmask(flat1, flat2=None, mask=None, nmed=(7, 7), nsig=(15, 15),
                 lowercut=6.0, uppercut=6.0, 
-                nsig=1.0, posthook=None):
+                siglev=1.0, posthook=None):
     '''Find cosmetic defects in a detector using two flat field images.
     
     Two arrays representing flat fields of different exposure times are
@@ -153,15 +153,14 @@ def ccdmask(flat1, flat2=None, mask=None, ncmed=7, nlmed=7,
     significantly of the expected normal distribution of pixels in
     the ratio between `flat2` and `flat1`.
     
-    The median of the ratio array is computed in boxes of (nlmed, ncmed) 
+    The median of the ratio array is computed in boxes of `nmed` 
     and subtracted to it.
     
     The standard deviation of the distribution of pixels is computed
-    in boxes of (nlsig, ncsig) pixels. It is
-    obtained computing the percentiles nearest to the pixel values 
-    corresponding to`nsig` in the normal CDF. 
+    in boxes of shape `nsig` pixels. It is obtained computing the percentiles 
+    nearest to the pixel values corresponding to`siglev` in the normal CDF. 
     The standard deviation is then the distance
-    between the pixel values divided by two times `nsig`.
+    between the pixel values divided by two times `siglev`.
     The ratio image is then normalized with this standard deviation.
     
     The values in the ratio above `uppercut` are flagged as hot pixels,
@@ -170,13 +169,11 @@ def ccdmask(flat1, flat2=None, mask=None, ncmed=7, nlmed=7,
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
-    :parameter ncmed: number of columns used to compute the median
-    :parameter nlmed: number of lines used to compute the median
-    :parameter ncsig: number of columns used to estimate the standard deviation
-    :parameter nlsig: number of lines used to estimate the standard deviation
+    :parameter nmed: region used to compute the median
+    :parameter nsig: region used to estimate the standard deviation
     :parameter lowercut: values below this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
-    :parameter nsig: level to estimate the standard deviation.
+    :parameter siglev: level to estimate the standard deviation.
     :returns: the normalized ratio of the flats, the updated mask and standard deviation
     
     .. note::
@@ -193,14 +190,18 @@ def ccdmask(flat1, flat2=None, mask=None, ncmed=7, nlmed=7,
     
     '''
     # check inputs
-    for vname in ['lowercut', 'uppercut', 'nsig', 'ncsig', 'nlsig',
-                    'ncmed', 'nlmed']:
+    for vname in ['lowercut', 'uppercut', 'nsig']:
         val = locals()[vname]
         if val <= 0:
             raise ValueError('%s must be > 0' % vname)
+        
+    for vname in ['nsig', 'nmed']:
+        val = locals()[vname]
+        if any(s <= 0 for s in val):
+            raise ValueError('%s members must be > 0' % vname)
 
-    if ncsig * nlsig < 100:
-        raise ValueError('ncsig * nlsig >= 100 required to have enough points for statistics')
+    if reduce(operator.mul, nsig) < 100:
+        raise ValueError('nsig size >= 100 required to have enough points for statistics')
 
     if flat2 is None:
         # we have to swap flat1 and flat2, and
@@ -234,27 +235,26 @@ def ccdmask(flat1, flat2=None, mask=None, ncmed=7, nlmed=7,
     ratio[gmask] = flat2[gmask] / flat1[gmask]
     ratio[smask] = invalid[smask]
 
-    _logger.info('computing median in boxes of %r', (nlmed, ncmed))
-    ratio_med = scipy.ndimage.filters.median_filter(ratio, size=(nlmed, ncmed))
+    _logger.info('computing median in boxes of %r', nmed)
+    ratio_med = scipy.ndimage.filters.median_filter(ratio, size=nmed)
 
     # subtracting the median map
     ratio[gmask] -= ratio_med[gmask]
 
     # Quantiles that contain nsig sigma in normal distribution
-    qns = 100 * scipy.stats.norm.cdf(nsig)
+    qns = 100 * scipy.stats.norm.cdf(siglev)
     pns = 100 - qns
-    _logger.info('percentiles at nsig=%f', nsig)
+    _logger.info('percentiles at siglev=%f', siglev)
     _logger.info('low %f%% high %f%%', pns, qns)
 
-    # in several blocks of shape nlsig, ncsig
+    # in several blocks of shape nsig
     # we estimate sigma
     sigma = numpy.zeros_like(ratio)
-    medianbox = (nlsig, ncsig)
-    mshape = max_blk_coverage(blk=medianbox, shape=ratio.shape)
+    mshape = max_blk_coverage(blk=nsig, shape=ratio.shape)
 
-    _logger.info('estimating sigma in boxes of %r', medianbox)
+    _logger.info('estimating sigma in boxes of %r', nsig)
     _logger.info('shape covered by boxes is  %r', mshape)
-    for blk in blk_nd_short(blk=medianbox, shape=ratio.shape):
+    for blk in blk_nd_short(blk=nsig, shape=ratio.shape):
         # mask for this region
         m = mask[blk] == PIXEL_VALID
         valid_points = numpy.ravel(ratio[blk][m])
@@ -265,7 +265,7 @@ def ccdmask(flat1, flat2=None, mask=None, ncmed=7, nlmed=7,
         _logger.debug('low %f high %f', ls, hs)
 
         # sigma estimation
-        sig = (hs - ls) / (2 * nsig)
+        sig = (hs - ls) / (2 * siglev)
         _logger.debug('sigma estimation is %f ', sig)
 
         # normalized points

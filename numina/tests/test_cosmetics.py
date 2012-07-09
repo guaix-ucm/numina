@@ -37,11 +37,11 @@ class CosmeticsTestCase(unittest.TestCase):
         
         self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, lowercut=0.0)
         self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, uppercut=0.0)
-        self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, nsig=0.0)
+        self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, siglev=0.0)
 
         self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, lowercut=-1.0)
         self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, uppercut=-10.0)
-        self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, nsig=-20.0)
+        self.assertRaises(ValueError, cosmetics, self.flat1, self.flat2, self.mask, siglev=-20.0)
         
 class CcdmaskTestCase(unittest.TestCase):
     
@@ -57,8 +57,8 @@ class CcdmaskTestCase(unittest.TestCase):
         
         self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, lowercut=0.0)
         self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, uppercut=0.0)
-        self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, nsig=0.0)
+        self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, siglev=0.0)
 
         self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, lowercut=-1.0)
         self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, uppercut=-10.0)
-        self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, nsig=-20.0)
+        self.assertRaises(ValueError, ccdmask, self.flat1, self.flat2, self.mask, siglev=-20.0)
