@@ -30,6 +30,7 @@ import abc
 import traceback
 import logging
 
+from numina import __version__
 from numina.exceptions import RecipeError
 from .reciperesult import ErrorRecipeResult, RecipeResult
 
@@ -124,6 +125,13 @@ class BaseRecipe(object):
             return cls.RecipeResult(**products)
         else:
             raise ValueError('malformed value to convert')
+
+    def update_header(self, hdr):
+        hdr.update('NUMXVER', __version__, 'Numina package version')
+        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
+        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
+        return hdr
+
 
 
 def _valid_err(err):
