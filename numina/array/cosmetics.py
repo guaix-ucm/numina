@@ -106,7 +106,7 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
 
     _logger.info('computing median using all the image')
     ratio_med = numpy.median(ratio[gmask])
-
+    _logger.info('median value is %f', ratio_med)
     # subtracting the median map
     ratio[gmask] -= ratio_med
 
