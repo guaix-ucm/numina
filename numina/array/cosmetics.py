@@ -134,7 +134,9 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
 
     f1_ratio = ratio[gmask]
     f1_mask = mask[gmask]
+    _logger.info('flagging points over %4.2f sigma as hot pixels', uppercut)
     f1_mask[f1_ratio >= uppercut] = PIXEL_HOT
+    _logger.info('tagging points under %4.2f sigma as dead pixels', lowercut)
     f1_mask[f1_ratio <= -lowercut] = PIXEL_DEAD
     mask[gmask] = f1_mask
 
