@@ -21,6 +21,8 @@
 Basic Data Products
 '''
 
+import warnings
+
 import pyfits
 
 class DataFrame(object):
@@ -44,7 +46,9 @@ class DataFrame(object):
                 filename = self.frame[0].header['FILENAME']
             else:
                 filename = 'result.fits'
-            self.frame.writeto(filename, clobber=True)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                self.frame.writeto(filename, clobber=True)
 
         return {'filename': filename}
 
