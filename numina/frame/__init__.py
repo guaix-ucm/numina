@@ -17,6 +17,8 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+import warnings
+
 import pyfits
 
 from numina.array import resize_array 
@@ -60,7 +62,9 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
     try:
         hdu = hdulist['primary']
         newhdu = resize_hdu(hdu, newshape, region, fill=fill, window=window, scale=scale, conserve=conserve)
-        newhdu.writeto(newfilename, clobber=clobber)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            newhdu.writeto(newfilename, clobber=clobber)
     finally:
         if close_on_exit:
             hdulist.close()

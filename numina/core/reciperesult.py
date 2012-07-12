@@ -54,7 +54,7 @@ class Optional(object):
             raise TypeError('product_type must be of class DataProduct')
 
 class BaseRecipeResult(object):
-    def __news__(cls):
+    def __new__(cls, *args, **kwds):
         return super(BaseRecipeResult, cls).__new__(cls)
 
 class ErrorRecipeResult(BaseRecipeResult):
@@ -77,7 +77,7 @@ class RecipeResult(BaseRecipeResult):
             if isinstance(val, Product):
                 cls._products[key] = val
 
-        return super(RecipeResult, cls).__new__(cls, *args, **kwds)
+        return super(RecipeResult, cls).__new__(cls)
 
     def __init__(self, *args, **kwds):
         for key, prod in self._products.iteritems():
@@ -97,7 +97,6 @@ class RecipeResult(BaseRecipeResult):
 
     def __repr__(self):
         sclass = type(self).__name__
-        full0 = '%s(' % sclass
         full = []
         for key in self._products:
             val = getattr(self, key)

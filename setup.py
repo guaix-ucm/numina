@@ -3,7 +3,13 @@
 from setuptools import setup, Extension
 from setuptools import find_packages
 
-import numpy
+import sys
+
+try:
+    import numpy
+except ImportError:
+    print 'numpy is required to install numina'
+    sys.exit(1)
 
 numpy_include = numpy.get_include()
 cext = Extension('numina.array._combine',
@@ -21,12 +27,14 @@ uext = Extension('numina.array._ufunc',
 
 REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
 
+from numina import __version__
+
 setup(name='numina',
-      version='0.8.0',
+      version=__version__,
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/projects/emir',
-      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-0.8.0.tar.gz',
+      download_url='ftp://astrax.fis.ucm.es/pub/software/numina/numina-%s.tar.gz' % __version__,
       license='GPLv3',
       description='Numina reduction package',
       packages=find_packages('.'),

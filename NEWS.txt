@@ -1,3 +1,10 @@
+Version 0.8.1 (12 Jul 2012)
+
+Changes:
+  * New functions 'cosmetics' and 'ccdmask' to find bad pixels
+  * Pyfits warning about overwritting files hidden
+
+
 Version 0.8.0 (18 Jun 2012)
 
 Changes:

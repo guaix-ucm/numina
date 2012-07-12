@@ -24,6 +24,7 @@ from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
+from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
 
 _logger = logging.getLogger("numina.array")
@@ -229,71 +230,6 @@ def numberarray(x, shape):
         return numpy.ones(shape) * x
     else:
         return x
-
-def blockgen1d(block, size):
-    '''Compute 1d block intervals to be used by combine.
-    
-    blockgen1d computes the slices by recursively halving the initial
-    interval (0, size) by 2 until its size is lesser or equal than block
-    
-    :param block: an integer maximum block size
-    :param size: original size of the interval, it corresponds to a 0:size slice
-    :return: a list of slices
-    
-    Example:
-    
-        >>> blockgen1d(512, 1024)
-        [slice(0, 512, None), slice(512, 1024, None)]
-        
-        >>> blockgen1d(500, 1024)
-        [slice(0, 256, None), slice(256, 512, None), slice(512, 768, None), slice(768, 1024, None)]
-    
-    '''
-    def numblock(block, x):
-        '''Compute recursively the numeric intervals
-        '''
-        a, b = x
-        if b - a <= block:
-            return [x]
-        else:
-            result = []
-            d = int(b - a) / 2
-            for i in imap(numblock, [block, block], [(a, a + d), (a + d, b)]):
-                result.extend(i)
-            return result
-        
-    return [slice(*l) for l in numblock(block, (0, size))]
-
-
-def blockgen(blocks, shape):
-    '''Generate a list of slice tuples to be used by combine.
-    
-    The tuples represent regions in an N-dimensional image.
-    
-    :param blocks: a tuple of block sizes
-    :param shape: the shape of the n-dimensional array
-    :return: an iterator to the list of tuples of slices
-    
-    Example:
-        
-        >>> blocks = (500, 512)
-        >>> shape = (1040, 1024)
-        >>> for i in blockgen(blocks, shape):
-        ...     print i
-        (slice(0, 260, None), slice(0, 512, None))
-        (slice(0, 260, None), slice(512, 1024, None))
-        (slice(260, 520, None), slice(0, 512, None))
-        (slice(260, 520, None), slice(512, 1024, None))
-        (slice(520, 780, None), slice(0, 512, None))
-        (slice(520, 780, None), slice(512, 1024, None))
-        (slice(780, 1040, None), slice(0, 512, None))
-        (slice(780, 1040, None), slice(512, 1024, None))
-        
-    
-    '''
-    iterables = [blockgen1d(l, s) for (l, s) in zip(blocks, shape)]
-    return product(*iterables)
-
 
 if __name__ == '__main__':
     import _ufunc
