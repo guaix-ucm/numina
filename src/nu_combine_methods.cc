@@ -18,11 +18,11 @@
  *
  */
 
+#include <Python.h>
+
 #include <memory>
 #include <ext/functional>
 #include <cmath>
-
-#include <Python.h>
 
 #include "nu_combine_defs.h"
 #include "functional.h"

@@ -18,15 +18,14 @@
  *
  */
 
-
-#include <vector>
-#include <memory>
-#include <algorithm>
-
 #include <Python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
 #include <numpy/arrayobject.h>
+
+#include <vector>
+#include <memory>
+#include <algorithm>
 
 #include "nu_combine_methods.h"
 #include "nu_combine.h"
