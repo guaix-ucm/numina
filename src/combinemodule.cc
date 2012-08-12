@@ -55,18 +55,18 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
 static PyObject* CombineError;
 
 // Convenience check function
-static inline bool check_1d_array(PyObject* array, size_t nimages, const char* name) {
+static inline int check_1d_array(PyObject* array, size_t nimages, const char* name) {
   if (PyArray_NDIM(array) != 1)
   {
     PyErr_Format(CombineError, "%s dimension %i != 1", name, PyArray_NDIM(array));
-    return false;
+    return 0;
   }
   if (PyArray_SIZE(array) != nimages)
   {
     PyErr_Format(CombineError, "%s size %zd != number of images", name, PyArray_SIZE(array));
-    return false;
+    return 0;
   }
-  return true;
+  return 1;
 }
 
 static PyObject* py_generic_combine(PyObject *self, PyObject *args)
@@ -77,7 +77,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   // Output has one dimension more than the inputs, of size
   // OUTDIM
   const size_t OUTDIM = NU_COMBINE_OUTDIM;
-  PyObject *out[OUTDIM] = {NULL, NULL, NULL};
+  PyObject *out[NU_COMBINE_OUTDIM] = {NULL, NULL, NULL};
   PyObject* fnc = NULL;
 
   PyObject* scales = NULL;
@@ -135,13 +135,13 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
 
   // Checking for images
   for(ui = 0; ui < nimages; ++ui) {
-    if (not NU_combine_image_check(CombineError, allimages[ui], allimages[0], allimages[0], "data", ui))
+    if (!NU_combine_image_check(CombineError, allimages[ui], allimages[0], allimages[0], "data", ui))
       goto exit;
   }
 
   // Checking for outputs
   for(ui = 0; ui < OUTDIM; ++ui) {
-    if (not NU_combine_image_check(CombineError, out[ui], allimages[0], out[0], "output", ui))
+    if (!NU_combine_image_check(CombineError, out[ui], allimages[0], out[0], "output", ui))
       goto exit;
   }
 
@@ -160,12 +160,12 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       PyErr_NoMemory();
       goto exit;
     }
-    for(size_t i = 0; i < nimages; ++i)
-      zbuffer[i] = 0.0;
+    for(ui = 0; ui < nimages; ++ui)
+      zbuffer[ui] = 0.0;
   }
   else {
     zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (not check_1d_array(zeros, nimages, "zeros"))
+    if (!check_1d_array(zeros, nimages, "zeros"))
       goto exit;
 
     zbuffer = (double*)PyArray_DATA(zeros_arr);
@@ -177,12 +177,12 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       PyErr_NoMemory();
       goto exit;
     }
-    for(size_t i = 0; i < nimages; ++i)
-      sbuffer[i] = 1.0;
+    for(ui = 0; ui < nimages; ++ui)
+      sbuffer[ui] = 1.0;
   }
   else {
     scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (not check_1d_array(scales_arr, nimages, "scales"))
+    if (!check_1d_array(scales_arr, nimages, "scales"))
       goto exit;
 
     sbuffer = (double*)PyArray_DATA(scales_arr);
@@ -194,12 +194,12 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       PyErr_NoMemory();
       goto exit;
     }
-    for(size_t i = 0; i < nimages; ++i)
-      wbuffer[i] = 1.0;
+    for(ui = 0; ui < nimages; ++ui)
+      wbuffer[ui] = 1.0;
   }
   else {
     weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (not check_1d_array(weights, nimages, "weights"))
+    if (!check_1d_array(weights, nimages, "weights"))
       goto exit;
 
     wbuffer = (double*)PyArray_DATA(weights_arr);
@@ -221,12 +221,12 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     allmasks = PySequence_Fast_ITEMS(masks_seq);
 
     for(ui = 0; ui < nimages; ++ui) {
-      if (not NU_combine_image_check(CombineError, allmasks[ui], allimages[0], allmasks[0], "masks", ui))
+      if (!NU_combine_image_check(CombineError, allmasks[ui], allimages[0], allmasks[0], "masks", ui))
         goto exit;
     }
   }
 
-  if( not NU_generic_combine(allimages, allmasks, nimages, out,
+  if(!NU_generic_combine(allimages, allmasks, nimages, out,
       (CombineFunc)func, data, zbuffer, sbuffer, wbuffer)
     )
     goto exit;
@@ -318,7 +318,7 @@ py_method_sigmaclip(PyObject *obj, PyObject *args) {
   double *funcdata = NULL;
   PyObject *cap;
 
-  if (not PyArg_ParseTuple(args, "dd", &low, &high)) 
+  if (!PyArg_ParseTuple(args, "dd", &low, &high)) 
     return NULL;
 
   if (low < 0) {
@@ -360,7 +360,7 @@ py_method_quantileclip(PyObject *obj, PyObject *args) {
   double *funcdata = NULL;
   PyObject *cap;
 
-  if (not PyArg_ParseTuple(args, "d", &fclip)) 
+  if (!PyArg_ParseTuple(args, "d", &fclip)) 
     return NULL;
 
   if (fclip < 0 || fclip > 0.4) {
