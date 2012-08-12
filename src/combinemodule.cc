@@ -23,8 +23,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include <algorithm>
-
 #include "nu_combine_methods.h"
 #include "nu_combine.h"
 
@@ -157,8 +155,13 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
 
   // Checking zeros, scales and weights
   if (zeros == Py_None) {
-    zbuffer = new double[nimages];
-    std::fill(zbuffer, zbuffer + nimages, 0.0);
+    zbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
+    if (zbuffer == NULL) {
+      PyErr_NoMemory();
+      goto exit;
+    }
+    for(size_t i = 0; i < nimages; ++i)
+      zbuffer[i] = 0.0;
   }
   else {
     zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
@@ -169,8 +172,13 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   }
 
   if (scales == Py_None) {
-    sbuffer = new double[nimages];
-    std::fill(sbuffer, sbuffer + nimages, 1.0);
+    sbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
+    if (sbuffer == NULL) {
+      PyErr_NoMemory();
+      goto exit;
+    }
+    for(size_t i = 0; i < nimages; ++i)
+      sbuffer[i] = 1.0;
   }
   else {
     scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
@@ -181,8 +189,13 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   }
 
   if (weights == Py_None) {
-    wbuffer = new double[nimages];
-    std::fill(wbuffer, wbuffer + nimages, 1.0);
+    wbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
+    if (wbuffer == NULL) {
+      PyErr_NoMemory();
+      goto exit;
+    }
+    for(size_t i = 0; i < nimages; ++i)
+      wbuffer[i] = 1.0;
   }
   else {
     weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
@@ -225,21 +238,21 @@ exit:
     Py_XDECREF(masks_seq);
 
   if (zeros == Py_None)
-    delete [] zbuffer;
+    PyMem_Free(zbuffer);
 
   Py_XDECREF(zeros_arr);
 
   if (scales == Py_None)
-    delete [] sbuffer;
+    PyMem_Free(sbuffer);
 
   Py_XDECREF(scales_arr);
 
   if (weights == Py_None)
-    delete [] wbuffer;
+    PyMem_Free(wbuffer);
 
   Py_XDECREF(weights_arr);
-  return PyErr_Occurred() ? NULL : Py_BuildValue("");
 
+  return PyErr_Occurred() ? NULL : Py_BuildValue("");
 }
 
 void NU_destructor(PyObject *cap) {
