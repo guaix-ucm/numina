@@ -263,16 +263,12 @@ void NU_destructor(PyObject *cap) {
 
 static PyObject *
 py_method_mean(PyObject *obj, PyObject *args) {
-  if (!PyArg_ParseTuple(args, "")) 
-    return NULL;
   
   return PyCapsule_New((void*)NU_mean_function, "numina.cmethod", NULL);
 }
 
 static PyObject *
 py_method_median(PyObject *obj, PyObject *args) {
-  if (!PyArg_ParseTuple(args, ""))
-    return NULL;
   
   return PyCapsule_New((void*)NU_median_function, "numina.cmethod", NULL);
 }
@@ -395,12 +391,12 @@ py_method_quantileclip(PyObject *obj, PyObject *args) {
 }
 
 static PyMethodDef combine_methods[] = {
-    {"generic_combine", (PyCFunction) py_generic_combine, METH_VARARGS, ""},
-    {"mean_method", (PyCFunction) py_method_mean, METH_VARARGS, ""},
-    {"median_method", (PyCFunction) py_method_median, METH_VARARGS, ""},
-    {"minmax_method", (PyCFunction) py_method_minmax, METH_VARARGS, ""},
-    {"sigmaclip_method", (PyCFunction) py_method_sigmaclip, METH_VARARGS, ""},
-    {"quantileclip_method", (PyCFunction) py_method_quantileclip, METH_VARARGS, ""},
+    {"generic_combine", py_generic_combine, METH_VARARGS, ""},
+    {"mean_method", py_method_mean, METH_NOARGS, ""},
+    {"median_method", py_method_median, METH_NOARGS, ""},
+    {"minmax_method", py_method_minmax, METH_VARARGS, ""},
+    {"sigmaclip_method", py_method_sigmaclip, METH_VARARGS, ""},
+    {"quantileclip_method", py_method_quantileclip, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
