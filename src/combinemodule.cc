@@ -23,14 +23,10 @@
 #define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
 #include <numpy/arrayobject.h>
 
-#include <vector>
-#include <memory>
 #include <algorithm>
 
 #include "nu_combine_methods.h"
 #include "nu_combine.h"
-
-typedef std::vector<PyArrayIterObject*> VectorPyArrayIter;
 
 PyDoc_STRVAR(combine__doc__, "Internal combine module, not to be used directly.");
 
@@ -151,14 +147,13 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       goto exit;
   }
 
-  if (PyCObject_Check(fnc)) {
-      func = PyCObject_AsVoidPtr(fnc);
-      data = PyCObject_GetDesc(fnc);
-  } else {
-      PyErr_SetString(PyExc_RuntimeError,
-                                      "function parameter is not callable");
-      goto exit;
+  if (!PyCapsule_IsValid(fnc, "numina.cmethod")) {
+    PyErr_SetString(PyExc_TypeError, "parameter is not a valid capsule");
+    goto exit;
   }
+
+  func = PyCapsule_GetPointer(fnc, "numina.cmethod");
+  data = PyCapsule_GetContext(fnc);
 
   // Checking zeros, scales and weights
   if (zeros == Py_None) {
@@ -247,54 +242,75 @@ exit:
 
 }
 
+void NU_destructor(PyObject *cap) {
+  void* cdata;
+  cdata = PyCapsule_GetContext(cap);
+  PyMem_Free(cdata);
+}
+
 static PyObject *
 py_method_mean(PyObject *obj, PyObject *args) {
-  if (not PyArg_ParseTuple(args, "")) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  if (!PyArg_ParseTuple(args, "")) 
     return NULL;
-  }
-  return PyCObject_FromVoidPtr((void*)NU_mean_function, NULL);
+  
+  return PyCapsule_New((void*)NU_mean_function, "numina.cmethod", NULL);
 }
 
 static PyObject *
 py_method_median(PyObject *obj, PyObject *args) {
-  if (not PyArg_ParseTuple(args, "")) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  if (!PyArg_ParseTuple(args, ""))
     return NULL;
-  }
-  return PyCObject_FromVoidPtr((void*)NU_median_function, NULL);
+  
+  return PyCapsule_New((void*)NU_median_function, "numina.cmethod", NULL);
 }
 
 static PyObject *
 py_method_minmax(PyObject *obj, PyObject *args) {
   int nmin = 0;
   int nmax = 0;
-  if (not PyArg_ParseTuple(args, "ii", &nmin, &nmax)) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  int* funcdata = NULL;
+  PyObject * cap = NULL;
+
+  if (!PyArg_ParseTuple(args, "ii", &nmin, &nmax))
     return NULL;
-  }
 
   if ((nmin < 0) || (nmax < 0)) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter, nmin and nmax must be >= 0");
     return NULL;
   }
 
-  int* funcdata = (int*)malloc(2 * sizeof(int));
+  cap = PyCapsule_New((void*) NU_minmax_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (int*)PyMem_Malloc(2 * sizeof(int));
+  if (funcdata == NULL) {
+    Py_DECREF(cap);
+    return PyErr_NoMemory();
+  }
 
   funcdata[0] = nmin;
   funcdata[1] = nmax;
 
-  return PyCObject_FromVoidPtrAndDesc((void*)NU_minmax_function, funcdata, NU_destructor_function);
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
 }
 
 static PyObject *
 py_method_sigmaclip(PyObject *obj, PyObject *args) {
   double low = 0.0;
   double high = 0.0;
-  if (not PyArg_ParseTuple(args, "dd", &low, &high)) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  double *funcdata = NULL;
+  PyObject *cap;
+
+  if (not PyArg_ParseTuple(args, "dd", &low, &high)) 
     return NULL;
-  }
 
   if (low < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter, low < 0");
@@ -306,29 +322,63 @@ py_method_sigmaclip(PyObject *obj, PyObject *args) {
     return NULL;
   }
 
-  double *funcdata = (double*)malloc(2 * sizeof(double));
+  cap = PyCapsule_New((void*)NU_sigmaclip_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (double*)PyMem_Malloc(2 * sizeof(double));
+  if (funcdata == NULL) {
+      Py_DECREF(cap);
+      return PyErr_NoMemory();
+  }
 
   funcdata[0] = low;
   funcdata[1] = high;
 
-  return PyCObject_FromVoidPtrAndDesc((void*)NU_sigmaclip_function, funcdata, NU_destructor_function);
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
 }
+
 static PyObject *
 py_method_quantileclip(PyObject *obj, PyObject *args) {
   double fclip = 0.0;
-  if (not PyArg_ParseTuple(args, "d", &fclip)) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  double *funcdata = NULL;
+  PyObject *cap;
+
+  if (not PyArg_ParseTuple(args, "d", &fclip)) 
     return NULL;
-  }
 
   if (fclip < 0 || fclip > 0.4) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter fclip, must be 0 <= fclip < 0.4");
     return NULL;
   }
 
-  double *funcdata = (double*)malloc(sizeof(double));
+  cap = PyCapsule_New((void*) NU_quantileclip_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (double*)PyMem_Malloc(sizeof(double));
+  if (funcdata == NULL) {
+    Py_DECREF(cap);
+    return PyErr_NoMemory();
+  }
+
   *funcdata = fclip;
-  return PyCObject_FromVoidPtrAndDesc((void*)NU_quantileclip_function, funcdata, NU_destructor_function);
+
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
 }
 
 static PyMethodDef combine_methods[] = {

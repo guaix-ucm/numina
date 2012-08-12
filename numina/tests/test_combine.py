@@ -42,7 +42,7 @@ class CombineTestCase(unittest.TestCase):
         '''Test CombineError is raised for different operations.'''
         
         # method is not valid
-        self.assertRaises(RuntimeError, generic_combine, "dum", self.validImages)
+        self.assertRaises(TypeError, generic_combine, "dum", self.validImages)
         
         # inputs is empty
         self.assertRaises(CombineError, generic_combine, 
