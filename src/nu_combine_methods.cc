@@ -18,8 +18,6 @@
  *
  */
 
-#include <Python.h>
-
 #include <memory>
 #include <ext/functional>
 #include <cmath>
@@ -82,7 +80,10 @@ int NU_minmax_function(double *data, double *weights,
   }
 
   if (total > size) {
-    PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
+    *out[0] = NAN;
+    *out[1] = 0;
+    *out[2] = -1;
+    //PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
     return 0;
   }
 
