@@ -20,7 +20,7 @@
 
 #include <Python.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL combine_ARRAY_API
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 

@@ -20,7 +20,6 @@
 
 #include <Python.h>
 
-#define PY_UFUNC_UNIQUE_SYMBOL numina_UFUNC_API
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
 

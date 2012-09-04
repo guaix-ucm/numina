@@ -20,7 +20,7 @@
 
 #include <Python.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL combine_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include "nu_combine_methods.h"
@@ -61,7 +61,7 @@ static inline int check_1d_array(PyObject* array, size_t nimages, const char* na
     PyErr_Format(CombineError, "%s dimension %i != 1", name, PyArray_NDIM(array));
     return 0;
   }
-  if (PyArray_SIZE(array) != nimages)
+  if (PyArray_SIZE(array) != (npy_intp)nimages)
   {
     PyErr_Format(CombineError, "%s size %zd != number of images", name, PyArray_SIZE(array));
     return 0;
@@ -76,7 +76,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   PyObject *masks = NULL;
   // Output has one dimension more than the inputs, of size
   // OUTDIM
-  const size_t OUTDIM = NU_COMBINE_OUTDIM;
+  const Py_ssize_t OUTDIM = NU_COMBINE_OUTDIM;
   PyObject *out[NU_COMBINE_OUTDIM] = {NULL, NULL, NULL};
   PyObject* fnc = NULL;
 
