@@ -47,10 +47,6 @@ slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
   return std::make_pair(final, variance);
 }
 
-template<typename T> 
-struct rounding_policy {
-};
-
 template<typename T>
 inline T iround(double x) { return static_cast<T>(round(x));}
 
