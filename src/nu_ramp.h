@@ -26,6 +26,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include "operations.h"
+
 namespace Numina {
 
 template<typename Iterator>
@@ -72,7 +74,8 @@ Result glitches(Iterator begin, Iterator end, double dt, double gain, double ron
 
   // used to find glitches
   double sigma = std::sqrt(psmedian / gain + 2 * ron * ron);
-  std::vector<std::pair<double, double> > values;
+  std::vector<double> ramp_data;
+  std::vector<double> ramp_variances;
 
   PT init = dbuff;
   for(PT i = dbuff; i != dbuff + dbuff_s; ++i) {
@@ -80,22 +83,26 @@ Result glitches(Iterator begin, Iterator end, double dt, double gain, double ron
       std::ptrdiff_t boff = init - dbuff;
       std::ptrdiff_t eoff = i - dbuff;
       if (i - init + 1 >= 2) {
-        values.push_back(slope(begin + boff, begin + eoff + 1, dt, gain, ron));
+        std::pair<double, double> res = slope(begin + boff, begin + eoff + 1, dt, gain, ron);
+        ramp_data.push_back(res.first);
+        ramp_variances.push_back(1.0 / res.second);
       }
       init = i + 1;
       }
   }
   std::ptrdiff_t boff = init - dbuff;
-  if(end - (begin + boff) >= 2)
-    values.push_back(slope(begin + boff, end, dt, gain, ron));
+  if(end - (begin + boff) >= 2) {
+    std::pair<double, double> res =  slope(begin + boff, end, dt, gain, ron);
+    ramp_data.push_back(res.first);
+    ramp_variances.push_back(1.0 / res.second);
+  }
   delete [] dbuff;
 
-  // FIXME
-  // Compute thw weighted mean with these values
-  //for(size_t i = 0; i < values.size(); ++i) {
-  //  std::cout << "subramp " << iround<Result>(values[i].first) << std::endl;
-  //}
-  return iround<Result>(values[0].first);
+  double hatmu = weighted_mean(ramp_data.begin(), ramp_data.end(), ramp_variances.begin());
+  // This value is not used (for the moment)
+  // double hatmu_var = weighted_population_variance(ramp_data.begin(), ramp_data.end(), ramp_variances.begin(), hatmu);
+
+  return iround<Result>(hatmu);
 }
 
 
