@@ -240,7 +240,7 @@ class MinMaxTestCase(unittest.TestCase):
             for v in self.out[2].flat:
                 self.assertEqual(v, 0)
     
-    @unittest.skip
+    @unittest.skip("requires fixing generic_combine routine")     
     def testBasic3(self):
         '''Test ValueError is raised if points rejected are more than images.'''
         for nmin in xrange(0, self.nimages):
