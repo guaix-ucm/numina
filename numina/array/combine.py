@@ -52,14 +52,14 @@ def mean(arrays, masks=None, dtype=None, out=None,
         >>> image = numpy.array([[1., 3.], [1., -1.4]])
         >>> inputs = [image, image + 1]
         >>> mean(inputs)
-        array([[[ 1.5 ,  3.5 ],
-                [ 1.5 , -0.9 ]],
+        array([[[ 1.5,  3.5],
+                [ 1.5, -0.9]],
         <BLANKLINE>
-               [[ 0.25,  0.25],
-                [ 0.25,  0.25]],
+               [[ 0.5,  0.5],
+                [ 0.5,  0.5]],
         <BLANKLINE>
-               [[ 2.  ,  2.  ],
-                [ 2.  ,  2.  ]]])
+               [[ 2. ,  2. ],
+                [ 2. ,  2. ]]])
        
     '''
     return generic_combine(mean_method(), arrays, masks=masks, dtype=dtype, out=out,                   
