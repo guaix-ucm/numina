@@ -116,9 +116,9 @@ class CombineTestCase(unittest.TestCase):
         rres = numpy.array([[3.66666667, 2., 4., 4.],
                             [2.6666666666666665, 0., 1. , 4.],
                             [18., 2., 1.5 , 2.66666667]])
-        rvar = numpy.array([[3.11111111, 0., 4.33333333, 0.],
-                            [2.77777778, 0., 1.,  0.],
-                            [174.33333333, 0., 2.25, 1.77777778]
+        rvar = numpy.array([[3 * 3.11111111, 0., 3 * 4.33333333, 0.],
+                            [3 * 2.77777778, 0., 3 * 1.,  0.],
+                            [3 * 174.33333333, 0., 2 * 2.25, 3 * 1.77777778]
                             ])                            
         
         rnum = numpy.array([[3, 3, 3, 2],
@@ -128,8 +128,8 @@ class CombineTestCase(unittest.TestCase):
         out = mean(inputs, masks)
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-        #for cal, precal in zip(out[1].flat, rvar.flat):
-        #    self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar.flat):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, rnum.flat):
             self.assertEqual(cal, precal)
 
@@ -145,7 +145,7 @@ class CombineTestCase(unittest.TestCase):
         # Results
         rres = numpy.array([[3.66666667, 2., 4. , 4.0], [2.6666666666666665, 2., 1. , 4.],
                           [18., 2.33333333, 1.666666667 , 2.66666667]])
-        rvar = numpy.array([[9.3333333333333339, 0., 13.0, 0.],
+        rvar = 3 * numpy.array([[9.3333333333333339, 0., 13.0, 0.],
                             [8.3333333333333339, 0., 3.00000000, 0.],
                             [523.0, 0.33333333333333337, 2.333333333333333, 
                              5.3333333333333339]]) / len(inputs)
@@ -155,8 +155,8 @@ class CombineTestCase(unittest.TestCase):
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-        #for cal, precal in zip(out[1].flat, rvar.flat):
-        #    self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar.flat):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, rnum.flat):
             self.assertEqual(cal, precal)
             
@@ -173,14 +173,17 @@ class CombineTestCase(unittest.TestCase):
         out = median(inputs)
     
         rres = input3
-        rvar = [3.39089482, 0., 0.25117739, 0., 0., 0.,
-                0.56514914, 0., 76.92307692, 0., 0.25117739, 1.00470958]
+        rvar = [16.954474097331239, 0.0, 1.2558869701726849, 
+                0.0, 0.0, 0.0, 2.8257456828885403, 0.0, 
+                384.61538461538458, 0.0, 1.2558869701726847, 
+                5.0235478806907397]
         
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-        #for cal, precal in zip(out[1].flat, rvar):
-        #    self.assertAlmostEqual(cal, precal)
+        print list(out[1].flat)
+        for cal, precal in zip(out[1].flat, rvar):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(5)):
             self.assertEqual(cal, precal)
             
@@ -197,14 +200,14 @@ class CombineTestCase(unittest.TestCase):
         out = median(inputs)
     
         rres = numpy.array([[4, 2, 4.5, 0.0]], dtype='float')
-        rvar = [4.7095761381475665, 0.09811616954474098, 
-                2.3547880690737832, 8.372579801151229]
+        rvar = [18.838304552590266, 0.39246467817896391, 9.419152276295133, 
+                33.490319204604916]
         
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-        #for cal, precal in zip(out[1].flat, rvar):
-        #    self.assertAlmostEqual(cal, precal)
+        for cal, precal in zip(out[1].flat, rvar):
+            self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(4)):
             self.assertEqual(cal, precal)
     
