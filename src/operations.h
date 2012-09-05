@@ -146,7 +146,7 @@ inline T weighted_population_variance_unit(Iterator1 begin, Iterator1 end,
 
   }
 
-  return 1 / (v2 - v2 * v2) * sum;
+  return 1 / (1 - v2) * sum;
 }
 
 
