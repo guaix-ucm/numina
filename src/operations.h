@@ -126,7 +126,7 @@ inline T weighted_population_variance(Iterator1 begin, Iterator1 end,
 
   }
 
-  return v1 / (v2 * v1 * v1 - v2 * v2) * sum;
+  return v1 / (v1 * v1 - v2) * sum;
 }
 
 template<typename Iterator1, typename Iterator2, typename T>
@@ -146,7 +146,7 @@ inline T weighted_population_variance_unit(Iterator1 begin, Iterator1 end,
 
   }
 
-  return 1 / (v2 - v2 * v2) * sum;
+  return 1 / (1 - v2) * sum;
 }
 
 

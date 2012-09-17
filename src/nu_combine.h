@@ -32,7 +32,7 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
     const double* scales,
     const double* weights);
 
-bool NU_combine_image_check(PyObject* exception,
+int NU_combine_image_check(PyObject* exception,
     PyObject* image,
     PyObject* ref,
     PyObject* typeref,

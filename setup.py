@@ -12,7 +12,8 @@ except ImportError:
     sys.exit(1)
 
 numpy_include = numpy.get_include()
-cext = Extension('numina.array._combine',
+
+ext1 = Extension('numina.array._combine',
                 ['src/combinemodule.cc',
                  'src/operations.cc',
                  'src/nu_combine_methods.cc',
@@ -20,10 +21,15 @@ cext = Extension('numina.array._combine',
                  ],
           include_dirs=[numpy_include])
 
-uext = Extension('numina.array._ufunc',
+ext2 = Extension('numina.array._ufunc',
                 ['src/ufunc.cc',
                  ],
           include_dirs=[numpy_include])
+
+ext3 = Extension('numina.array._ramp', 
+                 ['src/rampmodule.cc'],
+                include_dirs=[numpy_include])
+
 
 REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
 
@@ -38,7 +44,7 @@ setup(name='numina',
       license='GPLv3',
       description='Numina reduction package',
       packages=find_packages('.'),
-      ext_modules=[cext, uext],
+      ext_modules=[ext1, ext2, ext3],
       entry_points={'console_scripts': ['numina = numina.user:main']},
       requires=REQUIRES,
       setup_requires=['numpy'],

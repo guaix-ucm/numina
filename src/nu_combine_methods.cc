@@ -22,8 +22,6 @@
 #include <ext/functional>
 #include <cmath>
 
-#include <Python.h>
-
 #include "nu_combine_defs.h"
 #include "functional.h"
 #include "operations.h"
@@ -82,7 +80,10 @@ int NU_minmax_function(double *data, double *weights,
   }
 
   if (total > size) {
-    PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
+    *out[0] = NAN;
+    *out[1] = 0;
+    *out[2] = -1;
+    //PyErr_SetString(PyExc_ValueError, "nmin + nmax greater than available points");
     return 0;
   }
 
@@ -191,10 +192,6 @@ int NU_quantileclip_function(double *data, double *weights,
   return 1;
 }
 
-void NU_destructor_function(void* cobject, void *cdata) {
-  if (cdata)
-      free(cdata);
-}
 
 
 

@@ -6,6 +6,20 @@
    :synopsis: Array manipulation
    :members:
 
+.. py:function:: process_ramp(inp[, out=None, axis=2, ron=0.0, gain=1.0, nsig=4.0, dt=1.0, saturation=65631])
+
+   Compute the result 2d array computing slopes in a 3d array or ramp.
+
+   :param inp: input array
+   :param out: output array
+   :param axis: unused
+   :param ron: readout noise of the detector
+   :param gain: gain of the detector
+   :param nsig: rejection level to detect glitched and cosmic rays
+   :param dt: time interval between exposures
+   :param saturation: saturation level
+   :return: a 2d array
+
 :mod:`numina.array.background` --- Background estimation
 ========================================================
 
@@ -29,7 +43,7 @@
    
 Combination methods in :mod:`numina.array.combine`
 ==================================================
-All these functions return a :class:`PyCObject`, that 
+All these functions return a :class:`PyCapsule`, that 
 can be passed to :func:`generic_combine`
    
    
@@ -69,7 +83,7 @@ Extending :func:`generic_combine`
 =================================
  
 New combination methods can be implemented and used by :func:`generic_combine`
-The combine function expects a :class:`PyCObject` object containing a pointer
+The combine function expects a :class:`PyCapsule` object containing a pointer
 to a C function implementing the combination method.
 
 .. c:function:: int combine(double *data, double *weights, size_t size, double *out[3], void *func_data)
@@ -89,10 +103,9 @@ to a C function implementing the combination method.
 If the function uses dynamically allocated data stored in *func_data*, we must also
 implement a function that deallocates the data once it is used. 
  
-.. c:function:: void destructor_function(void* cobject, void *cdata)
+.. c:function:: void destructor_function(PyObject* cobject)
 
-   :param cobject: the object owning **cdata**
-   :param cdata:  the allocated data
+   :param cobject: the object owning dynamically allocated data
    
  
 Simple combine method
@@ -123,7 +136,7 @@ very simple).
 A destructor function is not needed in this case as we are not using *func_data*. 
 
 The next step is to build a Python extension. First we need to create a function
-returning the :class:`PyCObject` in C code like this:
+returning the :class:`PyCapsule` in C code like this:
 
 
 .. code-block:: c
@@ -134,11 +147,13 @@ returning the :class:`PyCObject` in C code like this:
        PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
        return NULL;
      }
-
-   return PyCObject_FromVoidPtr((void*)min_combine);
+     return PyCapsule_New((void*)min_function, "numina.cmethod", NULL);
    }
 
-and then load it in a module like this:
+The string ``"numina.cmethod"`` is the name of the :class:`PyCapsule`. It cannot be loadded
+unless it is the name expected by the C code.
+
+The code to load it in a module is like this:
 
 .. code-block:: c
 
@@ -170,7 +185,7 @@ A combine method with parameters follow a similar approach. Let's say we want
 to implement a sigma-clipping method. We need to pass the function a *low* and
 a *high* rejection limits. Both numbers are real numbers greater than zero.
 
-First, the Python function.
+First, the Python function. I'm skipping error checking code hre.
 
 .. code-block:: c
 
@@ -178,33 +193,35 @@ First, the Python function.
    py_method_sigmaclip(PyObject *obj, PyObject *args) {
       double low = 0.0;
       double high = 0.0;
-     
+      PyObject *cap = NULL;
+
       if (!PyArg_ParseTuple(args, "dd", &low, &high)) {
          PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
          return NULL;
       }
 
-      /* I'm skipping here error checking code,
-         that low and high are positive */
+      cap = PyCapsule_New((void*) my_sigmaclip_function, "numina.cmethod", my_destructor);
          
-      /* Allocating space for the two parameters */     
-      double *funcdata = (double*)malloc(2 * sizeof(double));
+      /* Allocating space for the two parameters */
+      /* We use Python memory allocator */
+      double *funcdata = (double*)PyMem_Malloc(2 * sizeof(double));
 
       funcdata[0] = low;
       funcdata[1] = high;
-  
-      return PyCObject_FromVoidPtrAndDesc((void*)my_sigmaclip_function, 
-                     funcdata, my_destructor_function);
+      PyCapsule_SetContext(cap, funcdata);
+      return cap;
    }
 
-Notice that in this case we construct the :class:`PyCObject` passing a pointer,
-the allocated data and a deallocator. The deallocator is simply:
+Notice that in this case we construct the :class:`PyCObject` using the same function
+than in the previouis case. The aditional data is stored as *Context*.
+
+The deallocator is simply:
 
 .. code-block:: c
 
-   void my_destructor_function(void* cobject, void *cdata) {
-      if (cdata)
-         free(cdata);
+   void my_destructor_function(PyObject* cap) {
+      void* cdata = PyCapsule_GetContext(cap);
+      PyMem_Free(cdata);
    }
    
 and the combine function is:

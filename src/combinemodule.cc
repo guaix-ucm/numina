@@ -18,20 +18,13 @@
  *
  */
 
-
-#include <vector>
-#include <memory>
-#include <algorithm>
-
 #include <Python.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL numina_ARRAY_API
+#define PY_ARRAY_UNIQUE_SYMBOL combine_ARRAY_API
 #include <numpy/arrayobject.h>
 
 #include "nu_combine_methods.h"
 #include "nu_combine.h"
-
-typedef std::vector<PyArrayIterObject*> VectorPyArrayIter;
 
 PyDoc_STRVAR(combine__doc__, "Internal combine module, not to be used directly.");
 
@@ -62,18 +55,18 @@ static inline PyArrayIterObject* My_PyArray_IterNew(PyObject* obj)
 static PyObject* CombineError;
 
 // Convenience check function
-static inline bool check_1d_array(PyObject* array, size_t nimages, const char* name) {
+static inline int check_1d_array(PyObject* array, size_t nimages, const char* name) {
   if (PyArray_NDIM(array) != 1)
   {
     PyErr_Format(CombineError, "%s dimension %i != 1", name, PyArray_NDIM(array));
-    return false;
+    return 0;
   }
-  if (PyArray_SIZE(array) != nimages)
+  if (PyArray_SIZE(array) != (npy_intp)nimages)
   {
     PyErr_Format(CombineError, "%s size %zd != number of images", name, PyArray_SIZE(array));
-    return false;
+    return 0;
   }
-  return true;
+  return 1;
 }
 
 static PyObject* py_generic_combine(PyObject *self, PyObject *args)
@@ -83,8 +76,8 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
   PyObject *masks = NULL;
   // Output has one dimension more than the inputs, of size
   // OUTDIM
-  const size_t OUTDIM = NU_COMBINE_OUTDIM;
-  PyObject *out[OUTDIM] = {NULL, NULL, NULL};
+  const Py_ssize_t OUTDIM = NU_COMBINE_OUTDIM;
+  PyObject *out[NU_COMBINE_OUTDIM] = {NULL, NULL, NULL};
   PyObject* fnc = NULL;
 
   PyObject* scales = NULL;
@@ -142,57 +135,71 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
 
   // Checking for images
   for(ui = 0; ui < nimages; ++ui) {
-    if (not NU_combine_image_check(CombineError, allimages[ui], allimages[0], allimages[0], "data", ui))
+    if (!NU_combine_image_check(CombineError, allimages[ui], allimages[0], allimages[0], "data", ui))
       goto exit;
   }
 
   // Checking for outputs
   for(ui = 0; ui < OUTDIM; ++ui) {
-    if (not NU_combine_image_check(CombineError, out[ui], allimages[0], out[0], "output", ui))
+    if (!NU_combine_image_check(CombineError, out[ui], allimages[0], out[0], "output", ui))
       goto exit;
   }
 
-  if (PyCObject_Check(fnc)) {
-      func = PyCObject_AsVoidPtr(fnc);
-      data = PyCObject_GetDesc(fnc);
-  } else {
-      PyErr_SetString(PyExc_RuntimeError,
-                                      "function parameter is not callable");
-      goto exit;
+  if (!PyCapsule_IsValid(fnc, "numina.cmethod")) {
+    PyErr_SetString(PyExc_TypeError, "parameter is not a valid capsule");
+    goto exit;
   }
+
+  func = PyCapsule_GetPointer(fnc, "numina.cmethod");
+  data = PyCapsule_GetContext(fnc);
 
   // Checking zeros, scales and weights
   if (zeros == Py_None) {
-    zbuffer = new double[nimages];
-    std::fill(zbuffer, zbuffer + nimages, 0.0);
+    zbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
+    if (zbuffer == NULL) {
+      PyErr_NoMemory();
+      goto exit;
+    }
+    for(ui = 0; ui < nimages; ++ui)
+      zbuffer[ui] = 0.0;
   }
   else {
     zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (not check_1d_array(zeros, nimages, "zeros"))
+    if (!check_1d_array(zeros, nimages, "zeros"))
       goto exit;
 
     zbuffer = (double*)PyArray_DATA(zeros_arr);
   }
 
   if (scales == Py_None) {
-    sbuffer = new double[nimages];
-    std::fill(sbuffer, sbuffer + nimages, 1.0);
+    sbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
+    if (sbuffer == NULL) {
+      PyErr_NoMemory();
+      goto exit;
+    }
+    for(ui = 0; ui < nimages; ++ui)
+      sbuffer[ui] = 1.0;
   }
   else {
     scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (not check_1d_array(scales_arr, nimages, "scales"))
+    if (!check_1d_array(scales_arr, nimages, "scales"))
       goto exit;
 
     sbuffer = (double*)PyArray_DATA(scales_arr);
   }
 
   if (weights == Py_None) {
-    wbuffer = new double[nimages];
-    std::fill(wbuffer, wbuffer + nimages, 1.0);
+    wbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
+    if (wbuffer == NULL) {
+      PyErr_NoMemory();
+      goto exit;
+    }
+    for(ui = 0; ui < nimages; ++ui)
+      wbuffer[ui] = 1.0;
   }
   else {
     weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (not check_1d_array(weights, nimages, "weights"))
+    if (!check_1d_array(weights, nimages, "weights"))
       goto exit;
 
     wbuffer = (double*)PyArray_DATA(weights_arr);
@@ -214,12 +221,12 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     allmasks = PySequence_Fast_ITEMS(masks_seq);
 
     for(ui = 0; ui < nimages; ++ui) {
-      if (not NU_combine_image_check(CombineError, allmasks[ui], allimages[0], allmasks[0], "masks", ui))
+      if (!NU_combine_image_check(CombineError, allmasks[ui], allimages[0], allmasks[0], "masks", ui))
         goto exit;
     }
   }
 
-  if( not NU_generic_combine(allimages, allmasks, nimages, out,
+  if(!NU_generic_combine(allimages, allmasks, nimages, out,
       (CombineFunc)func, data, zbuffer, sbuffer, wbuffer)
     )
     goto exit;
@@ -231,71 +238,88 @@ exit:
     Py_XDECREF(masks_seq);
 
   if (zeros == Py_None)
-    delete [] zbuffer;
+    PyMem_Free(zbuffer);
 
   Py_XDECREF(zeros_arr);
 
   if (scales == Py_None)
-    delete [] sbuffer;
+    PyMem_Free(sbuffer);
 
   Py_XDECREF(scales_arr);
 
   if (weights == Py_None)
-    delete [] wbuffer;
+    PyMem_Free(wbuffer);
 
   Py_XDECREF(weights_arr);
-  return PyErr_Occurred() ? NULL : Py_BuildValue("");
 
+  return PyErr_Occurred() ? NULL : Py_BuildValue("");
+}
+
+void NU_destructor(PyObject *cap) {
+  void* cdata;
+  cdata = PyCapsule_GetContext(cap);
+  PyMem_Free(cdata);
 }
 
 static PyObject *
 py_method_mean(PyObject *obj, PyObject *args) {
-  if (not PyArg_ParseTuple(args, "")) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
-    return NULL;
-  }
-  return PyCObject_FromVoidPtr((void*)NU_mean_function, NULL);
+  
+  return PyCapsule_New((void*)NU_mean_function, "numina.cmethod", NULL);
 }
 
 static PyObject *
 py_method_median(PyObject *obj, PyObject *args) {
-  if (not PyArg_ParseTuple(args, "")) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
-    return NULL;
-  }
-  return PyCObject_FromVoidPtr((void*)NU_median_function, NULL);
+  
+  return PyCapsule_New((void*)NU_median_function, "numina.cmethod", NULL);
 }
 
 static PyObject *
 py_method_minmax(PyObject *obj, PyObject *args) {
   int nmin = 0;
   int nmax = 0;
-  if (not PyArg_ParseTuple(args, "ii", &nmin, &nmax)) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  int* funcdata = NULL;
+  PyObject * cap = NULL;
+
+  if (!PyArg_ParseTuple(args, "ii", &nmin, &nmax))
     return NULL;
-  }
 
   if ((nmin < 0) || (nmax < 0)) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter, nmin and nmax must be >= 0");
     return NULL;
   }
 
-  int* funcdata = (int*)malloc(2 * sizeof(int));
+  cap = PyCapsule_New((void*) NU_minmax_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (int*)PyMem_Malloc(2 * sizeof(int));
+  if (funcdata == NULL) {
+    Py_DECREF(cap);
+    return PyErr_NoMemory();
+  }
 
   funcdata[0] = nmin;
   funcdata[1] = nmax;
 
-  return PyCObject_FromVoidPtrAndDesc((void*)NU_minmax_function, funcdata, NU_destructor_function);
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
 }
 
 static PyObject *
 py_method_sigmaclip(PyObject *obj, PyObject *args) {
   double low = 0.0;
   double high = 0.0;
-  if (not PyArg_ParseTuple(args, "dd", &low, &high)) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  double *funcdata = NULL;
+  PyObject *cap;
+
+  if (!PyArg_ParseTuple(args, "dd", &low, &high)) 
     return NULL;
-  }
 
   if (low < 0) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter, low < 0");
@@ -307,38 +331,72 @@ py_method_sigmaclip(PyObject *obj, PyObject *args) {
     return NULL;
   }
 
-  double *funcdata = (double*)malloc(2 * sizeof(double));
+  cap = PyCapsule_New((void*)NU_sigmaclip_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (double*)PyMem_Malloc(2 * sizeof(double));
+  if (funcdata == NULL) {
+      Py_DECREF(cap);
+      return PyErr_NoMemory();
+  }
 
   funcdata[0] = low;
   funcdata[1] = high;
 
-  return PyCObject_FromVoidPtrAndDesc((void*)NU_sigmaclip_function, funcdata, NU_destructor_function);
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
 }
+
 static PyObject *
 py_method_quantileclip(PyObject *obj, PyObject *args) {
   double fclip = 0.0;
-  if (not PyArg_ParseTuple(args, "d", &fclip)) {
-    PyErr_SetString(PyExc_RuntimeError, "invalid parameters");
+  double *funcdata = NULL;
+  PyObject *cap;
+
+  if (!PyArg_ParseTuple(args, "d", &fclip)) 
     return NULL;
-  }
 
   if (fclip < 0 || fclip > 0.4) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter fclip, must be 0 <= fclip < 0.4");
     return NULL;
   }
 
-  double *funcdata = (double*)malloc(sizeof(double));
+  cap = PyCapsule_New((void*) NU_quantileclip_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (double*)PyMem_Malloc(sizeof(double));
+  if (funcdata == NULL) {
+    Py_DECREF(cap);
+    return PyErr_NoMemory();
+  }
+
   *funcdata = fclip;
-  return PyCObject_FromVoidPtrAndDesc((void*)NU_quantileclip_function, funcdata, NU_destructor_function);
+
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
 }
 
 static PyMethodDef combine_methods[] = {
-    {"generic_combine", (PyCFunction) py_generic_combine, METH_VARARGS, ""},
-    {"mean_method", (PyCFunction) py_method_mean, METH_VARARGS, ""},
-    {"median_method", (PyCFunction) py_method_median, METH_VARARGS, ""},
-    {"minmax_method", (PyCFunction) py_method_minmax, METH_VARARGS, ""},
-    {"sigmaclip_method", (PyCFunction) py_method_sigmaclip, METH_VARARGS, ""},
-    {"quantileclip_method", (PyCFunction) py_method_quantileclip, METH_VARARGS, ""},
+    {"generic_combine", py_generic_combine, METH_VARARGS, ""},
+    {"mean_method", py_method_mean, METH_NOARGS, ""},
+    {"median_method", py_method_median, METH_NOARGS, ""},
+    {"minmax_method", py_method_minmax, METH_VARARGS, ""},
+    {"sigmaclip_method", py_method_sigmaclip, METH_VARARGS, ""},
+    {"quantileclip_method", py_method_quantileclip, METH_VARARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
