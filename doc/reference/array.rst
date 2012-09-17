@@ -8,6 +8,8 @@
 
 .. py:function:: process_ramp(inp[, out=None, axis=2, ron=0.0, gain=1.0, nsig=4.0, dt=1.0, saturation=65631])
 
+   .. versionadded:: 0.8.2
+
    Compute the result 2d array computing slopes in a 3d array or ramp.
 
    :param inp: input array
