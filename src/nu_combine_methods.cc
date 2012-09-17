@@ -192,10 +192,6 @@ int NU_quantileclip_function(double *data, double *weights,
   return 1;
 }
 
-void NU_destructor_function(void* cobject, void *cdata) {
-  if (cdata)
-      free(cdata);
-}
 
 
 
