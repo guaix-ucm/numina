@@ -6,6 +6,20 @@
    :synopsis: Array manipulation
    :members:
 
+.. py:function:: process_ramp(inp[, out=None, axis=2, ron=0.0, gain=1.0, nsig=4.0, dt=1.0, saturation=65631])
+
+   Compute the result 2d array computing slopes in a 3d array or ramp.
+
+   :param inp: input array
+   :param out: output array
+   :param axis: unused
+   :param ron: readout noise of the detector
+   :param gain: gain of the detector
+   :param nsig: rejection level to detect glitched and cosmic rays
+   :param dt: time interval between exposures
+   :param saturation: saturation level
+   :return: a 2d array
+
 :mod:`numina.array.background` --- Background estimation
 ========================================================
 
