@@ -8,10 +8,10 @@
 .. automodule:: numina.core.dataframe
    :synopsis:  Base DataFrame
    
-:mod:`numina.core.oblock` --- 
+:mod:`numina.core.oresult` --- Observation Result
 ==================================================
    
-.. automodule:: numina.core.oblock
+.. automodule:: numina.core.oresult
    :members:
 
 :mod:`numina.core.pipeline` --- 
