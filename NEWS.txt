@@ -1,3 +1,8 @@
+Version 0.8.3 (24 Sep 2012)
+
+Bugfixes:
+  * #109, 110: bugs that prevented installing in Mac OS X
+
 Version 0.8.2 (17 Sep 2012)
 Changes:
   * New function 'process_ramp' to process images in follow-up-the-ramp mode

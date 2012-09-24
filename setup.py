@@ -30,8 +30,11 @@ ext3 = Extension('numina.array._ramp',
                  ['src/rampmodule.cc'],
                 include_dirs=[numpy_include])
 
-
-REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
+# requires is not used by pip
+# but install_requires is not supported 
+# http://bugs.python.org/issue1635217
+REQUIRES = ['setuptools', 'numpy (>=1.6)', 'pyfits', 'scipy', 'PyYaml']
+IREQUIRES = ['setuptools', 'numpy>=1.6', 'pyfits', 'scipy', 'PyYaml']
 
 from numina import __version__
 
@@ -48,7 +51,7 @@ setup(name='numina',
       entry_points={'console_scripts': ['numina = numina.user:main']},
       requires=REQUIRES,
       setup_requires=['numpy'],
-      install_requires=REQUIRES,
+      install_requires=IREQUIRES,
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
