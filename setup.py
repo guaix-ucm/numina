@@ -31,7 +31,7 @@ ext3 = Extension('numina.array._ramp',
                 include_dirs=[numpy_include])
 
 
-REQUIRES = ['setuptools', 'numpy', 'pyfits', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'numpy>=1.6', 'pyfits', 'scipy', 'PyYaml']
 
 from numina import __version__
 
