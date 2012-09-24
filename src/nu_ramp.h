@@ -79,7 +79,7 @@ Result glitches(Iterator begin, Iterator end, double dt, double gain, double ron
 
   PT init = dbuff;
   for(PT i = dbuff; i != dbuff + dbuff_s; ++i) {
-    if(std::abs(psmedian - *i) > nsig * sigma) {
+    if(std::abs(static_cast<double>(psmedian) - *i) > nsig * sigma) {
       std::ptrdiff_t boff = init - dbuff;
       std::ptrdiff_t eoff = i - dbuff;
       if (i - init + 1 >= 2) {

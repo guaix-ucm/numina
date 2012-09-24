@@ -68,17 +68,17 @@ static PyObject* py_ramp(PyObject *self, PyObject *args, PyObject *kwds)
 
   const int func_nloops = 10;
   const char func_sigs[] = {'d', 'f', 'q', 'i', 'h', 'b', 'Q', 'I', 'H', 'B'};
-  const void* func_loops[] = {
-     (void*) py_ramp_loop<npy_float64, npy_float64>,
-     (void*) py_ramp_loop<npy_float32, npy_float32>,
-     (void*) py_ramp_loop<npy_int64, npy_int64>,
-     (void*) py_ramp_loop<npy_int32, npy_int32>,
-     (void*) py_ramp_loop<npy_int16, npy_int16>,
-     (void*) py_ramp_loop<npy_int8, npy_int8>,
-     (void*) py_ramp_loop<npy_uint64, npy_uint64>,
-     (void*) py_ramp_loop<npy_uint32, npy_uint32>,
-     (void*) py_ramp_loop<npy_uint16, npy_uint16>,
-     (void*) py_ramp_loop<npy_uint8, npy_uint8>,
+  const LoopFunc func_loops[] = {
+      py_ramp_loop<npy_float64, npy_float64>,
+      py_ramp_loop<npy_float32, npy_float32>,
+      py_ramp_loop<npy_int64, npy_int64>,
+      py_ramp_loop<npy_int32, npy_int32>,
+      py_ramp_loop<npy_int16, npy_int16>,
+      py_ramp_loop<npy_int8, npy_int8>,
+      py_ramp_loop<npy_uint64, npy_uint64>,
+      py_ramp_loop<npy_uint32, npy_uint32>,
+      py_ramp_loop<npy_uint16, npy_uint16>,
+      py_ramp_loop<npy_uint8, npy_uint8>,
   };
 
   NpyIter* iter;
@@ -136,7 +136,7 @@ static PyObject* py_ramp(PyObject *self, PyObject *args, PyObject *kwds)
   
   for(ui = 0; ui < func_nloops; ++ui) {
     if (common->type == func_sigs[ui]) {
-      loopfunc = (LoopFunc) func_loops[ui];
+      loopfunc = func_loops[ui];
       break;
     }
   }
