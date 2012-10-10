@@ -161,6 +161,9 @@ class ArrayDetector(BaseConectable):
                  bias=100.0, 
                  reset_value=0.0, reset_noise=0.0,
                  outtype='int32'):
+        
+        super(ArrayDetector, self).__init__()
+        
         self.shape = shape
         self.amplifiers = amplifiers
         self.bias = bias
