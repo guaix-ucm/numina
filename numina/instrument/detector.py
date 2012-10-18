@@ -160,6 +160,7 @@ class ArrayDetector(BaseConectable):
     def __init__(self, shape, amplifiers, 
                  bias=100.0, 
                  reset_value=0.0, reset_noise=0.0,
+                 readout_time=0.0,
                  outtype='int32'):
         
         super(ArrayDetector, self).__init__()
@@ -171,7 +172,7 @@ class ArrayDetector(BaseConectable):
         self.reset_noise = reset_noise
         self.reset_time = 0.0
         
-        self.readout_time = 0.0
+        self.readout_time = readout_time
         self._last_read = 0.0
         
         self.buffer = numpy.zeros(self.shape)
@@ -184,15 +185,15 @@ class ArrayDetector(BaseConectable):
         '''Read the detector.'''
         data = self.buffer.copy()
         data[data < 0] = 0
+        data += numpy.random.poisson(self.dark * self.reset_time)
         for amp in self.amplifiers:
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
             data[amp.shape] /= amp.gain
         data += self.bias
         data = data.astype(self.outtype)
-        self._last_read += self.readout_time        
-        # FIXME: increase dark current here
-        # self.buffer += numpy.random.poisson(self.dark * self.reset_time).astype('float')
+        self._last_read += self.readout_time
+
         return data
     
     def time_since_last_reset(self):
@@ -254,9 +255,9 @@ class CCDDetector(ArrayDetector):
 class nIRDetector(ArrayDetector):
     '''A generic nIR bidimensional detector.'''
     
-    def __init__(self, shape, amplifiers, dark=1.0, 
-                 pedestal=200., flat=1.0, 
-                 resetval=0, resetnoise=0.0):
+    def __init__(self, shape, amplifiers, dark=0.0, 
+                 pedestal=0., flat=1.0, 
+                 resetval=1000, resetnoise=0.0):
         ArrayDetector.__init__(self, shape, amplifiers, 
                                pedestal)
 
@@ -264,8 +265,6 @@ class nIRDetector(ArrayDetector):
         self._dark[self._dark < 0] = 0.0 
         
         self._flat = numberarray(flat, self.shape)
-
-        
         self.readout_time = 0
         self.reset_time = 0        
 
@@ -275,6 +274,24 @@ class nIRDetector(ArrayDetector):
         source = self.mapper.sample(self.source)
         source *= self._flat 
         self.buffer += numpy.random.poisson((self._dark + source) * dt).astype('float')
+    
+    def readout(self):
+        '''Read the detector.'''
+        data = self.buffer.copy()
+        data[data < 0] = 0
+        source = self.mapper.sample(self.source)
+        source *= self._flat * self.readout_time
+        data += numpy.random.poisson((self._dark + source) * self.reset_time)
+        for amp in self.amplifiers:
+            if amp.ron > 0:
+                data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
+            data[amp.shape] /= amp.gain
+        data += self.bias
+        data = data.astype(self.outtype)
+        self._last_read += self.readout_time
+        return data
+        
+
         
 if __name__ == '__main__':
     

@@ -33,4 +33,6 @@ class Mapper(object):
 
         if isinstance(val, LightSource):
             return 0.0
+        
+        return val
 
