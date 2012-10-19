@@ -30,6 +30,16 @@
 
 namespace Numina {
 
+template<typename Result>
+struct RampResult {
+  Result value;
+  Result variance;
+  char map;
+  char mask;
+  char crmask;
+
+};
+
 template<typename Iterator>
 std::pair<double, double> 
 slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
@@ -57,7 +67,7 @@ template<> inline float iround(double x) { return (float)x;}
 template<> inline long double iround(double x) { return (long double)x;}
 
 template<typename Result, typename Iterator>
-Result glitches(Iterator begin, Iterator end, double dt, double gain, double ron, double nsig) {
+RampResult<Result>  glitches(Iterator begin, Iterator end, double dt, double gain, double ron, double nsig) {
 
   typedef typename std::iterator_traits<Iterator>::value_type T;
   typedef typename std::iterator_traits<Iterator>::pointer PT;
@@ -99,21 +109,30 @@ Result glitches(Iterator begin, Iterator end, double dt, double gain, double ron
   delete [] dbuff;
 
   double hatmu = weighted_mean(ramp_data.begin(), ramp_data.end(), ramp_variances.begin());
-  // This value is not used (for the moment)
-  // double hatmu_var = weighted_population_variance(ramp_data.begin(), ramp_data.end(), ramp_variances.begin(), hatmu);
+  //double hatmu_var = weighted_population_variance(ramp_data.begin(), ramp_data.end(), ramp_variances.begin(), hatmu);
 
-  return iround<Result>(hatmu);
+  RampResult<Result> result;
+  result.value = iround<Result>(hatmu);
+  result.variance = 11;// iround<Result>(hatmu_var);
+  result.map = 32;
+  result.mask = 12;
+  result.crmask = 11;
+  return result;
 }
 
-
 template<typename Result, typename Iterator>
-void ramp(Iterator begin, Iterator end, char* out, int saturation,
-  double dt, double gain, double ron, double nsig) {
+void ramp(Iterator begin, Iterator end,
+    char* value, char* variance, char* map, char* mask, char* crmask,
+    int saturation, double dt, double gain, double ron, double nsig)
+{
   typedef std::reverse_iterator<Iterator> ReverseIterator;
   std::reverse_iterator<Iterator> rbeg(end);
   std::reverse_iterator<Iterator> rend(begin);
 
-  Result* rout = reinterpret_cast<Result*>(out);
+  Result* rvalue = reinterpret_cast<Result*>(value);
+  Result* rvariance = reinterpret_cast<Result*>(variance);
+
+  // The rest are already char type...
 
   Iterator nend = begin;
 
@@ -124,8 +143,18 @@ void ramp(Iterator begin, Iterator end, char* out, int saturation,
     }
   }
 
-  *rout = glitches<Result>(begin, nend, dt, gain, ron, nsig);
-  }
+  RampResult<Result> result = glitches<Result>(begin, nend, dt, gain, ron, nsig);
+
+  *rvalue = result.value;
+  *rvariance = result.variance;
+  *map = result.map;
+  *mask= result.mask;
+  *crmask = result.crmask;
+ }
+
+
+
+
 
 } // namespace Numina
 
