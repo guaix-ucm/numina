@@ -40,7 +40,7 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
         int blank = 0; // this will be an argument in the future
         static std::vector<Arg> internal;
 
-        // The stride for 2-6 pointers is 0, so not advance is needed
+        // The stride for 2-6 pointers is 0, so no advance is needed
         // they are always the same
         Result* rvalue = reinterpret_cast<Result*>(dataptr[2]);
         Result* rvariance = reinterpret_cast<Result*>(dataptr[3]);
@@ -54,6 +54,7 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
         }
         else {
           while (count--) {
+            // Recovering values
             Arg value = *((Arg*)dataptr[0]);
 
             if(value < saturation)
@@ -74,9 +75,14 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
             *dataptr[5] = MASK_SATURATION;
           }
           else {
-           Numina::ramp<Result>(internal.begin(), internal.end(),
-             dataptr[2], dataptr[3], dataptr[4], dataptr[5], dataptr[6],
-             saturation, dt, gain, ron, nsig);
+            Numina::RampResult<Result> result = Numina::ramp<Result>(internal.begin(), internal.end(),
+                 dt, gain, ron, nsig);
+            *rvalue = result.value;
+            std::cout << result.value << std::endl;
+            *rvariance = result.variance;
+            *dataptr[4] = result.map; 
+            *dataptr[5] = result.mask;
+            *dataptr[6] = result.crmask;
           }
           internal.clear();
         }
@@ -157,8 +163,8 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   npy_uint32 whole_flags = NPY_ITER_EXTERNAL_LOOP|NPY_ITER_BUFFERED|NPY_ITER_REDUCE_OK|NPY_ITER_DELAY_BUFALLOC;
   npy_uint32 op_flags[7];
 
-  NPY_ORDER order = NPY_KEEPORDER;
-  NPY_CASTING casting = NPY_SAFE_CASTING;
+  NPY_ORDER order = NPY_ANYORDER;
+  NPY_CASTING casting = NPY_UNSAFE_CASTING;
 
   PyArray_Descr* dtypes[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
   PyArray_Descr* common = NULL;

@@ -37,26 +37,31 @@ struct RampResult {
   char map;
   char mask;
   char crmask;
-
 };
 
 template<typename Iterator>
-std::pair<double, double> 
+RampResult<double>
 slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
 
   typename std::iterator_traits<Iterator>::difference_type nn = end - begin;
   double delt =  12.0 / (nn * (nn + 1) * (nn - 1));
+  double delt2 = delt / dt;
   double nf = (nn - 1) / 2.0;
-  double final = 0;
-  double variance = 0;
+  double variance1, variance2;
+  RampResult<double> result;
 
   double add = 0.0;
   for(Iterator i = begin; i != end; ++i)
     add += *i * ((i - begin) - nf);
   
-  final = delt * add / dt;
-  variance = delt * ron * ron / dt / dt;
-  return std::make_pair(final, variance);
+  result.value = delt * add / dt;
+  double rg = ron / gain;
+  variance1 = rg * rg * delt2;
+  // Photon limiting case
+  variance2 = (6 * result.value * (nn * nn + 1)) / (5 * nn * dt * (nn * nn - 1) * gain);
+  result.variance = variance1 + variance2;
+  result.map = nn;
+  return result;
 }
 
 template<typename T>
@@ -66,11 +71,50 @@ template<> inline double iround(double x) { return x;}
 template<> inline float iround(double x) { return (float)x;}
 template<> inline long double iround(double x) { return (long double)x;}
 
+template<typename T>
+inline RampResult<T> rround(const RampResult<double>& x) { 
+  RampResult<T> res;
+  res.value = static_cast<T>(round(x.value));
+  res.variance = static_cast<T>(round(x.variance));
+  res.map = x.map;
+  res.mask = x.mask;
+  res.crmask = x.crmask;
+  return res;
+}
+
+template<> inline RampResult<double> rround(const RampResult<double>& x) { 
+   return x;
+}
+template<> inline RampResult<float> rround(const RampResult<double>& x) { 
+  RampResult<float> res;
+  res.value = static_cast<float>(x.value);
+  res.variance = static_cast<float>(x.variance);
+  res.map = x.map;
+  res.mask = x.mask;
+  res.crmask = x.crmask;
+  return res;
+}
+
+template<> inline RampResult<long double> rround(const RampResult<double>& x) { 
+  RampResult<long double> res;
+  res.value = static_cast<long double>(x.value);
+  res.variance = static_cast<long double>(x.variance);
+  res.map = x.map;
+  res.mask = x.mask;
+  res.crmask = x.crmask;
+  return res;
+}
+
 template<typename Result, typename Iterator>
-RampResult<Result>  glitches(Iterator begin, Iterator end, double dt, double gain, double ron, double nsig) {
+RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, double ron, double nsig) {
 
   typedef typename std::iterator_traits<Iterator>::value_type T;
   typedef typename std::iterator_traits<Iterator>::pointer PT;
+  RampResult<double> res = slope(begin, end, dt, gain, ron);
+  std::cout << res.variance << std::endl;
+  RampResult<Result> res2 = rround<Result>(res);
+  std::cout << res2.variance << std::endl;
+  return rround<Result>(res);
 
   PT dbuff = new T[end - begin - 1];
   const size_t dbuff_s = end - begin - 1;
@@ -93,68 +137,32 @@ RampResult<Result>  glitches(Iterator begin, Iterator end, double dt, double gai
       std::ptrdiff_t boff = init - dbuff;
       std::ptrdiff_t eoff = i - dbuff;
       if (i - init + 1 >= 2) {
-        std::pair<double, double> res = slope(begin + boff, begin + eoff + 1, dt, gain, ron);
-        ramp_data.push_back(res.first);
-        ramp_variances.push_back(1.0 / res.second);
+        RampResult<double> res = slope(begin + boff, begin + eoff + 1, dt, gain, ron);
+        ramp_data.push_back(res.value);
+        ramp_variances.push_back(1.0 / res.variance);
       }
       init = i + 1;
       }
   }
   std::ptrdiff_t boff = init - dbuff;
   if(end - (begin + boff) >= 2) {
-    std::pair<double, double> res =  slope(begin + boff, end, dt, gain, ron);
-    ramp_data.push_back(res.first);
-    ramp_variances.push_back(1.0 / res.second);
+    RampResult<double> res =  slope(begin + boff, end, dt, gain, ron);
+    ramp_data.push_back(res.value);
+    ramp_variances.push_back(1.0 / res.variance);
   }
   delete [] dbuff;
 
   double hatmu = weighted_mean(ramp_data.begin(), ramp_data.end(), ramp_variances.begin());
-  //double hatmu_var = weighted_population_variance(ramp_data.begin(), ramp_data.end(), ramp_variances.begin(), hatmu);
+  double hatmu_var = weighted_population_variance(ramp_data.begin(), ramp_data.end(), ramp_variances.begin(), hatmu);
 
   RampResult<Result> result;
   result.value = iround<Result>(hatmu);
   result.variance = 11;// iround<Result>(hatmu_var);
   result.map = 32;
-  result.mask = 12;
+  result.mask = 0;
   result.crmask = 11;
   return result;
 }
-
-template<typename Result, typename Iterator>
-void ramp(Iterator begin, Iterator end,
-    char* value, char* variance, char* map, char* mask, char* crmask,
-    int saturation, double dt, double gain, double ron, double nsig)
-{
-  typedef std::reverse_iterator<Iterator> ReverseIterator;
-  std::reverse_iterator<Iterator> rbeg(end);
-  std::reverse_iterator<Iterator> rend(begin);
-
-  Result* rvalue = reinterpret_cast<Result*>(value);
-  Result* rvariance = reinterpret_cast<Result*>(variance);
-
-  // The rest are already char type...
-
-  Iterator nend = begin;
-
-  for(ReverseIterator i = rbeg; i != rend; ++i) {
-     if (static_cast<int>(*i) < saturation) {
-       nend = end - (i - rbeg);
-       break;
-    }
-  }
-
-  RampResult<Result> result = glitches<Result>(begin, nend, dt, gain, ron, nsig);
-
-  *rvalue = result.value;
-  *rvariance = result.variance;
-  *map = result.map;
-  *mask= result.mask;
-  *crmask = result.crmask;
- }
-
-
-
-
 
 } // namespace Numina
 
