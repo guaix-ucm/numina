@@ -28,6 +28,50 @@
 
 #include "operations.h"
 
+
+namespace Numina {
+
+template<typename Iterator>
+Iterator kth_smallest(Iterator begin, Iterator end, size_t kth) {
+  typedef typename std::iterator_traits<Iterator>::value_type T;
+	size_t l = 0;
+	size_t m = (end - begin) - 1;
+
+	while (l < m) {
+		T x = *(begin + kth);
+		size_t i = l;
+		size_t j = m;
+		do {
+			while (*(begin + i) < x)
+				++i;
+			while (x < *(begin + j))
+				--j;
+			if (i <= j) {
+				std::swap(*(begin + i), *(begin + j));
+				++i;
+				--j;
+			}
+		} while (i <= j);
+		if (j < kth)
+			l = i;
+		if (kth < i)
+			m = j;
+	}
+
+	return begin + kth;
+}
+
+template<typename Iterator>
+Iterator median_1(Iterator begin, Iterator end) {
+        size_t size = end - begin;
+	//std::nth_element(data, data + size / 2, data + size);
+	//median = *(data + size / 2);
+	const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
+	return kth_smallest(begin, end, midpt);
+}
+
+} // namespace Numina
+
 namespace Numina {
 
 template<typename Result>
@@ -110,26 +154,24 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
 
   typedef typename std::iterator_traits<Iterator>::value_type T;
   typedef typename std::iterator_traits<Iterator>::pointer PT;
-  RampResult<double> res = slope(begin, end, dt, gain, ron);
-  std::cout << res.variance << std::endl;
-  RampResult<Result> res2 = rround<Result>(res);
-  std::cout << res2.variance << std::endl;
-  return rround<Result>(res);
 
-  PT dbuff = new T[end - begin - 1];
   const size_t dbuff_s = end - begin - 1;
+  PT dbuff = new T[dbuff_s];
 
+  // Differences between consecutive reads
   std::transform(begin + 1, end, begin, dbuff, std::minus<T>());
+  // Compute the median...
   PT dbuff2 = new T[end - begin - 1];
   std::copy(dbuff, dbuff + dbuff_s, dbuff2);
-  std::nth_element(dbuff2, dbuff2 + dbuff_s / 2, dbuff2 + dbuff_s);
-  T psmedian = dbuff2[dbuff_s / 2];
+  T psmedian = *median_1(dbuff2, dbuff2 + dbuff_s);
   delete [] dbuff2;
 
   // used to find glitches
   double sigma = std::sqrt(psmedian / gain + 2 * ron * ron);
   std::vector<double> ramp_data;
   std::vector<double> ramp_variances;
+  std::vector<char> ramp_map;
+  std::vector<char> ramp_cmap;
 
   PT init = dbuff;
   for(PT i = dbuff; i != dbuff + dbuff_s; ++i) {
@@ -140,6 +182,8 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
         RampResult<double> res = slope(begin + boff, begin + eoff + 1, dt, gain, ron);
         ramp_data.push_back(res.value);
         ramp_variances.push_back(1.0 / res.variance);
+        ramp_map.push_back(res.map);
+        ramp_cmap.push_back(i-dbuff + 1);
       }
       init = i + 1;
       }
@@ -149,18 +193,22 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
     RampResult<double> res =  slope(begin + boff, end, dt, gain, ron);
     ramp_data.push_back(res.value);
     ramp_variances.push_back(1.0 / res.variance);
+    ramp_map.push_back(res.map);
   }
   delete [] dbuff;
 
   double hatmu = weighted_mean(ramp_data.begin(), ramp_data.end(), ramp_variances.begin());
-  double hatmu_var = weighted_population_variance(ramp_data.begin(), ramp_data.end(), ramp_variances.begin(), hatmu);
+  double hatmu_var = std::accumulate(ramp_variances.begin(), ramp_variances.end(), 0.0);
 
   RampResult<Result> result;
   result.value = iround<Result>(hatmu);
-  result.variance = 11;// iround<Result>(hatmu_var);
-  result.map = 32;
+  result.variance = iround<Result>(1 / hatmu_var);
+  result.map = std::accumulate(ramp_map.begin(), ramp_map.end(), 0);
   result.mask = 0;
-  result.crmask = 11;
+  if(!ramp_cmap.empty())
+   result.crmask = ramp_cmap[0];
+  else
+   result.crmask = 0;
   return result;
 }
 

@@ -24,7 +24,6 @@
 #include <numeric>
 
 #include <numpy/arrayobject.h>
-#include <iostream>
 #include "nu_ramp.h"
 
 #define MASK_GOOD 0
@@ -78,7 +77,6 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
             Numina::RampResult<Result> result = Numina::ramp<Result>(internal.begin(), internal.end(),
                  dt, gain, ron, nsig);
             *rvalue = result.value;
-            std::cout << result.value << std::endl;
             *rvariance = result.variance;
             *dataptr[4] = result.map; 
             *dataptr[5] = result.mask;
