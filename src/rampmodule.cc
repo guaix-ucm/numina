@@ -120,6 +120,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
 
   PyObject* ret = NULL; // A five tuple: (value, var, nmap, mask, crmask)
 
+  const int NOPS = 7;
   double ron = 0.0;
   double gain = 1.0;
   double nsig = 4.0;
@@ -141,7 +142,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   char *kwlist[] = {"inpt", "dt", "gain", "ron", "badpixels", "out",
       "saturation", "nsig", "blank", NULL};
 
-  const int func_nloops = 11;
+  const int FUNC_NLOOPS = 11;
   const char func_sigs[] = {'g', 'd', 'f', 'q', 'i', 'h', 'b', 'Q', 'I', 'H', 'B'};
   const LoopFunc func_loops[] = {
       py_ramp_loop<npy_float128, npy_float128>,
@@ -158,14 +159,14 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   };
 
   NpyIter* iter;
-  PyArrayObject* arrs[7];
+  PyArrayObject* arrs[NOPS];
   npy_uint32 whole_flags = NPY_ITER_EXTERNAL_LOOP|NPY_ITER_BUFFERED|NPY_ITER_REDUCE_OK|NPY_ITER_DELAY_BUFALLOC;
-  npy_uint32 op_flags[7];
+  npy_uint32 op_flags[NOPS];
 
   NPY_ORDER order = NPY_ANYORDER;
   NPY_CASTING casting = NPY_UNSAFE_CASTING;
 
-  PyArray_Descr* dtypes[7] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+  PyArray_Descr* dtypes[NOPS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
   PyArray_Descr* common = NULL;
 
   int oa_ndim = 3; /* # iteration axes */
@@ -222,7 +223,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
 
   common = PyArray_ResultType(valid, arrs, 0, NULL);
 
-  for(ui = 0; ui < func_nloops; ++ui) {
+  for(ui = 0; ui < FUNC_NLOOPS; ++ui) {
     if (common->type == func_sigs[ui]) {
       loopfunc = func_loops[ui];
       break;
@@ -252,7 +253,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   dtypes[5] = PyArray_DescrFromType(NPY_UINT8); // new mask of bad pixels
   dtypes[6] = PyArray_DescrFromType(NPY_UINT8); // new mask of cosmic rays
 
-  iter = NpyIter_AdvancedNew(7, arrs, whole_flags, order, casting,
+  iter = NpyIter_AdvancedNew(NOPS, arrs, whole_flags, order, casting,
                               op_flags, dtypes, oa_ndim, op_axes,
                               NULL, 0);
   if (iter == NULL)
@@ -262,7 +263,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   NpyIter_Reset(iter, NULL);
 
   // Filling all with 0
-  for(ui=2; ui<7; ++ui)
+  for(ui=2; ui<NOPS; ++ui)
     _zerofill(NpyIter_GetOperandArray(iter)[ui]);
 
   iternext = NpyIter_GetIterNext(iter, NULL);
@@ -271,7 +272,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
   do {
-       loopfunc(7, dataptr, strideptr, innersizeptr, saturation, dt, gain, ron, nsig);
+       loopfunc(NOPS, dataptr, strideptr, innersizeptr, saturation, dt, gain, ron, nsig);
     } while(iternext(iter));
 
 
@@ -292,7 +293,7 @@ exit:
   Py_XDECREF(badpixels);
   //
   Py_XDECREF(common);
-  for(ui=0; ui<7; ++ui)
+  for(ui=0; ui<NOPS; ++ui)
     Py_XDECREF(dtypes[ui]);
 
   return ret;
