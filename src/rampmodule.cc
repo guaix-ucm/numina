@@ -305,15 +305,15 @@ exit:
 }
 
 static PyMethodDef ramp_methods[] = {
-    {"process_ramp_c", (PyCFunction) py_loopover, METH_VARARGS|METH_KEYWORDS, "Follow-up-the-ramp processing"},
-    {"loopover_ramp_c", (PyCFunction) py_loopover, METH_VARARGS|METH_KEYWORDS, "Follow-up-the-ramp processing"},
+    {"ramp_array", (PyCFunction) py_loopover, METH_VARARGS|METH_KEYWORDS, "Follow-up-the-ramp processing"},
+    {"fowler_array", (PyCFunction) py_loopover, METH_VARARGS|METH_KEYWORDS, "Fowler processing"},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
-PyMODINIT_FUNC init_ramp(void)
+PyMODINIT_FUNC init_nirproc(void)
 {
   PyObject *m;
-  m = Py_InitModule("_ramp", ramp_methods);
+  m = Py_InitModule("_nirproc", ramp_methods);
   import_array();
 
   if (m == NULL)

@@ -21,7 +21,7 @@ import unittest
 
 import numpy
 
-from numina.array._ramp import process_ramp_c as process_ramp
+from numina.array.nirproc import ramp_array
 
 class FollowUpTheRampTestCase(unittest.TestCase):
     def setUp(self):
@@ -31,15 +31,15 @@ class FollowUpTheRampTestCase(unittest.TestCase):
         self.sron = 1.0
     
     def test_exception(self):
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, -1.0, self.sron)
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, 0, self.sron)
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, -1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, nsig=0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, -1.0, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, 0.0, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, saturation=-100)
-        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, saturation=0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, -1.0, self.sron)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, 0, self.sron)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, -1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, nsig=0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, -1.0, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, 0.0, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, saturation=-100)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, saturation=0)
                 
 def test_suite():
     suite = unittest.TestSuite()

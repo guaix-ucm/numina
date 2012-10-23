@@ -26,7 +26,7 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-ext3 = Extension('numina.array._ramp', 
+ext3 = Extension('numina.array._nirproc', 
                  ['src/rampmodule.cc'],
                 include_dirs=[numpy_include])
 

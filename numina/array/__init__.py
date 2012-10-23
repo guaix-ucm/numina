@@ -26,7 +26,7 @@ import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
-from numina.array._ramp import process_ramp_c as process_ramp
+from numina.array._nirproc import ramp_array, fowler_array
 
 _logger = logging.getLogger("numina.array")
 
