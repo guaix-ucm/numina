@@ -141,9 +141,10 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   char *kwlist[] = {"inpt", "dt", "gain", "ron", "badpixels", "out",
       "saturation", "nsig", "blank", NULL};
 
-  const int func_nloops = 10;
-  const char func_sigs[] = {'d', 'f', 'q', 'i', 'h', 'b', 'Q', 'I', 'H', 'B'};
+  const int func_nloops = 11;
+  const char func_sigs[] = {'g', 'd', 'f', 'q', 'i', 'h', 'b', 'Q', 'I', 'H', 'B'};
   const LoopFunc func_loops[] = {
+      py_ramp_loop<npy_float128, npy_float128>,
       py_ramp_loop<npy_float64, npy_float64>,
       py_ramp_loop<npy_float32, npy_float32>,
       py_ramp_loop<npy_int64, npy_int64>,
