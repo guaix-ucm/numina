@@ -26,17 +26,20 @@ from numina.array._ramp import process_ramp_c as process_ramp
 class FollowUpTheRampTestCase(unittest.TestCase):
     def setUp(self):
         self.ramp = numpy.empty((1, 1, 10))
+        self.sdt = 1.0
+        self.sgain = 1.0
+        self.sron = 1.0
     
     def test_exception(self):
-        self.assertRaises(ValueError, process_ramp, self.ramp, gain=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, gain=0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, ron=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, nsig=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, nsig=0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, dt=-1.0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, dt=0)
-        self.assertRaises(ValueError, process_ramp, self.ramp, saturation=-100)
-        self.assertRaises(ValueError, process_ramp, self.ramp, saturation=0)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, -1.0, self.sron)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, 0, self.sron)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, -1.0)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, nsig=0)
+        self.assertRaises(ValueError, process_ramp, self.ramp, -1.0, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, process_ramp, self.ramp, 0.0, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, saturation=-100)
+        self.assertRaises(ValueError, process_ramp, self.ramp, self.sdt, self.sgain, self.sron, saturation=0)
                 
 def test_suite():
     suite = unittest.TestSuite()
