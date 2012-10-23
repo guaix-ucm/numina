@@ -44,9 +44,11 @@ class FollowUpTheRampTestCase(unittest.TestCase):
 class RampReadoutAxisTestCase(unittest.TestCase):
     
     def setUp(self):
-        self.emptybp = numpy.zeros((3,3), dtype='uint8')
-        self.data = numpy.arange(10, dtype='uint16')
-        self.data = numpy.tile(self.data, (3, 3, 1))
+        rows = 3
+        columns = 4
+        self.emptybp = numpy.zeros((rows, columns), dtype='uint8')
+        self.data = numpy.arange(10, dtype='int32')
+        self.data = numpy.tile(self.data, (rows, columns, 1))
 
         self.saturation = 65536
         self.dt = 1.0
@@ -153,6 +155,49 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         for v in res[0].flat:
             self.assertEqual(v, 1.0)
             
+    def test_results2(self):
+        '''Test we obtain correct values in RAMP mode'''
+
+        self.data *= 12
+        self.data[1,1,:] = 70000
+        self.data[2,2,5:] += 1300
+
+        self.emptybp[0,0] = 1
+        
+        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+                    outtype='float32',
+                    saturation=self.saturation, 
+                    badpixels=self.emptybp,
+                    nsig=self.nsig, 
+                    blank=self.blank)
+
+        res0 = 12 * numpy.ones((3,4), dtype='float32')
+        res0[0,0] = 0
+        res0[1,1] = 0
+        res1 = 1.4812121212 * numpy.ones((3,4), dtype='float32')
+        res1[0,0] = 0
+        res1[1,1] = 0
+        res1[2,2] = 1.61
+        res2 = 10 * numpy.ones((3,4), dtype='uint8')
+        res2[0,0] = 0
+        res2[1,1] = 0
+        res3 = numpy.zeros((3,4), dtype='uint8')
+        res3[0,0] = 1
+        res3[1,1] = 3
+        res4 = numpy.zeros((3,4), dtype='uint8')
+        res4[2,2] = 5
+
+        for xx,yy in zip(res[0].flat, res0.flat):
+            self.assertAlmostEqual(xx, yy)
+        for xx,yy in zip(res[1].flat, res1.flat):
+            self.assertAlmostEqual(xx, yy)
+        for xx,yy in zip(res[2].flat, res2.flat):
+            self.assertEqual(xx, yy)
+        for xx,yy in zip(res[3].flat, res3.flat):
+            self.assertEqual(xx, yy)
+        for xx,yy in zip(res[4].flat, res4.flat):
+            self.assertEqual(xx, yy)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(FollowUpTheRampTestCase))
