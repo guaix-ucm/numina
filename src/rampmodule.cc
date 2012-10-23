@@ -117,6 +117,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   PyArrayObject* nmap = NULL; // uint8
   PyArrayObject* mask = NULL; // uint8
   PyArrayObject* crmask = NULL; // uint8
+  PyArray_Descr* outtype = NULL; // default is float64
 
   PyObject* ret = NULL; // A five tuple: (value, var, nmap, mask, crmask)
 
@@ -130,7 +131,6 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
 
   npy_intp out_dims[2];
   int ui = 0;
-  int valid = 1;
 
   LoopFunc loopfunc = NULL;
 
@@ -170,7 +170,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   int op_axes1[] = {0, 1, -1};
   int* op_axes[] = {NULL, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1};
 
-  char *kwlist[] = {"rampdata", "dt", "gain", "ron", "badpixels", "outvalue",
+  char *kwlist[] = {"rampdata", "dt", "gain", "ron", "badpixels", "outtype",
       "saturation", "nsig", "blank", NULL};
 
   if(!PyArg_ParseTupleAndKeywords(args, kwds, 
@@ -178,7 +178,7 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
         &PyArray_Converter, &inp,
         &dt, &gain, &ron,
         &PyArray_Converter, &badpixels,
-        &PyArray_OutputConverter, &value,
+        &PyArray_DescrConverter2, &outtype,
         &saturation, &nsig, &blank)
         )
     return NULL;
@@ -189,6 +189,10 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
     badpixels = (PyArrayObject*)PyArray_ZEROS(2, out_dims, NPY_UINT8, 0);
   }
 
+  if (outtype == NULL) {
+    // Default dtype is float64
+    outtype = PyArray_DescrFromType(NPY_FLOAT64); 
+  }
 
   if (gain <= 0) {
     PyErr_SetString(PyExc_ValueError, "invalid parameter, gain <= 0.0");
@@ -216,13 +220,11 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   for(ui=2; ui <= 6; ++ui)
     op_flags[ui] = NPY_ITER_READWRITE | NPY_ITER_ALLOCATE;
 
-  // Using arrs as a temporary
+  // Using arrs and dtypes as a temporary
   arrs[0] = inp;
-  if(value != NULL)
-   valid = 2;
-  arrs[1] = value;
-
-  common = PyArray_ResultType(valid, arrs, 0, NULL);
+  dtypes[0] = outtype;
+  // Common dtype
+  common = PyArray_ResultType(1, arrs, 1, dtypes);
 
   // Looking for the correct loop
   for(ui = 0; ui < FUNC_NLOOPS; ++ui) {
@@ -295,6 +297,7 @@ exit:
   Py_XDECREF(badpixels);
   //
   Py_XDECREF(common);
+  Py_XDECREF(outtype);
   for(ui=0; ui<NOPS; ++ui)
     Py_XDECREF(dtypes[ui]);
 
