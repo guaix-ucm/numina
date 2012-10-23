@@ -21,7 +21,7 @@ import unittest
 
 import numpy
 
-from numina.array.nirproc import ramp_array
+from numina.array._nirproc import ramp_array
 
 class FollowUpTheRampTestCase(unittest.TestCase):
     def setUp(self):
