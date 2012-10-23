@@ -139,11 +139,8 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   npy_intp* strideptr = NULL;
   npy_intp* innersizeptr = NULL;
 
-  char *kwlist[] = {"inpt", "dt", "gain", "ron", "badpixels", "out",
-      "saturation", "nsig", "blank", NULL};
-
   const int FUNC_NLOOPS = 11;
-  const char func_sigs[] = {'g', 'd', 'f', 'q', 'i', 'h', 'b', 'Q', 'I', 'H', 'B'};
+  const char func_sigs[] = {'g', 'd', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
   const LoopFunc func_loops[] = {
       py_ramp_loop<npy_float128, npy_float128>,
       py_ramp_loop<npy_float64, npy_float64>,
@@ -173,7 +170,11 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
   int op_axes1[] = {0, 1, -1};
   int* op_axes[] = {NULL, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1};
 
-  if(!PyArg_ParseTupleAndKeywords(args, kwds, "O&ddd|O&O&Oidi:loopover_ramp_c", kwlist,
+  char *kwlist[] = {"rampdata", "dt", "gain", "ron", "badpixels", "outvalue",
+      "saturation", "nsig", "blank", NULL};
+
+  if(!PyArg_ParseTupleAndKeywords(args, kwds, 
+        "O&ddd|O&O&idi:loopover_ramp_c", kwlist,
         &PyArray_Converter, &inp,
         &dt, &gain, &ron,
         &PyArray_Converter, &badpixels,
@@ -190,19 +191,19 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
 
 
   if (gain <= 0) {
-    PyErr_SetString(PyExc_ValueError, "invalid parameter, gain <= 0");
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, gain <= 0.0");
     goto exit;
   }
   if (ron < 0) {
-    PyErr_SetString(PyExc_ValueError, "invalid parameter, ron < 0");
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, ron < 0.0");
     goto exit;
   }
   if (nsig <= 0) {
-    PyErr_SetString(PyExc_ValueError, "invalid parameter, nsig <= 0");
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, nsig <= 0.0");
     goto exit;
   }
   if (dt <= 0) {
-    PyErr_SetString(PyExc_ValueError, "invalid parameter, dt <= 0");
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, dt <= 0.0");
     goto exit;
   }
   if (saturation <= 0) {
@@ -223,15 +224,16 @@ static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
 
   common = PyArray_ResultType(valid, arrs, 0, NULL);
 
+  // Looking for the correct loop
   for(ui = 0; ui < FUNC_NLOOPS; ++ui) {
     if (common->type == func_sigs[ui]) {
       loopfunc = func_loops[ui];
       break;
     }
   }
+
   if (loopfunc == NULL) {
-    // FIXME
-    printf("No registered loopfunc\n");
+    PyErr_SetString(PyExc_TypeError, "no registered loopfunc");
     Py_DECREF(common);
     goto exit;
   }
