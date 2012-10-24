@@ -106,7 +106,205 @@ static int _zerofill(PyArrayObject *ret)
 }
 
 
-static PyObject* py_loopover(PyObject *self, PyObject *args, PyObject *kwds)
+static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
+{
+
+  PyArrayObject* inp = NULL;
+  PyArrayObject* badpixels = NULL;
+
+  PyArrayObject* value = NULL;
+  PyArrayObject* var = NULL;
+  PyArrayObject* nmap = NULL; // uint8
+  PyArrayObject* mask = NULL; // uint8
+  PyArrayObject* crmask = NULL; // uint8
+  PyArray_Descr* outtype = NULL; // default is float64
+
+  PyObject* ret = NULL; // A five tuple: (value, var, nmap, mask, crmask)
+
+  const int NOPS = 7;
+  double ron = 0.0;
+  double gain = 1.0;
+  double nsig = 4.0;
+  double dt = 1.0;
+  int saturation = 65631;
+  int blank = 0;
+
+  npy_intp out_dims[2];
+  int ui = 0;
+
+  LoopFunc loopfunc = NULL;
+
+  NpyIter_IterNextFunc *iternext = NULL;
+  char** dataptr = NULL;
+  npy_intp* strideptr = NULL;
+  npy_intp* innersizeptr = NULL;
+
+  const int FUNC_NLOOPS = 11;
+  const char func_sigs[] = {'g', 'd', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
+  const LoopFunc func_loops[] = {
+      py_ramp_loop<npy_float128, npy_float128>,
+      py_ramp_loop<npy_float64, npy_float64>,
+      py_ramp_loop<npy_float32, npy_float32>,
+      py_ramp_loop<npy_int64, npy_int64>,
+      py_ramp_loop<npy_int32, npy_int32>,
+      py_ramp_loop<npy_int16, npy_int16>,
+      py_ramp_loop<npy_int8, npy_int8>,
+      py_ramp_loop<npy_uint64, npy_uint64>,
+      py_ramp_loop<npy_uint32, npy_uint32>,
+      py_ramp_loop<npy_uint16, npy_uint16>,
+      py_ramp_loop<npy_uint8, npy_uint8>,
+  };
+
+  NpyIter* iter;
+  PyArrayObject* arrs[NOPS];
+  npy_uint32 whole_flags = NPY_ITER_EXTERNAL_LOOP|NPY_ITER_BUFFERED|NPY_ITER_REDUCE_OK|NPY_ITER_DELAY_BUFALLOC;
+  npy_uint32 op_flags[NOPS];
+
+  NPY_ORDER order = NPY_ANYORDER;
+  NPY_CASTING casting = NPY_UNSAFE_CASTING;
+
+  PyArray_Descr* dtypes[NOPS] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+  PyArray_Descr* common = NULL;
+
+  int oa_ndim = 3; /* # iteration axes */
+  int op_axes1[] = {0, 1, -1};
+  int* op_axes[] = {NULL, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1};
+
+  char *kwlist[] = {"rampdata", "dt", "gain", "ron", "badpixels", "outtype",
+      "saturation", "nsig", "blank", NULL};
+
+  if(!PyArg_ParseTupleAndKeywords(args, kwds, 
+        "O&ddd|O&O&idi:loopover_ramp_c", kwlist,
+        &PyArray_Converter, &inp,
+        &dt, &gain, &ron,
+        &PyArray_Converter, &badpixels,
+        &PyArray_DescrConverter2, &outtype,
+        &saturation, &nsig, &blank)
+        )
+    return NULL;
+
+  if (badpixels == NULL) {
+    out_dims[0] = PyArray_DIM(inp, 0);
+    out_dims[1] = PyArray_DIM(inp, 1);
+    badpixels = (PyArrayObject*)PyArray_ZEROS(2, out_dims, NPY_UINT8, 0);
+  }
+
+  if (outtype == NULL) {
+    // Default dtype is float64
+    outtype = PyArray_DescrFromType(NPY_FLOAT64); 
+  }
+
+  if (gain <= 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, gain <= 0.0");
+    goto exit;
+  }
+  if (ron < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, ron < 0.0");
+    goto exit;
+  }
+  if (nsig <= 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, nsig <= 0.0");
+    goto exit;
+  }
+  if (dt <= 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, dt <= 0.0");
+    goto exit;
+  }
+  if (saturation <= 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter, saturation <= 0");
+    goto exit;
+  }
+
+  op_flags[0] = NPY_ITER_READONLY;
+  op_flags[1] = NPY_ITER_READONLY | NPY_ITER_NO_BROADCAST;
+  for(ui=2; ui <= 6; ++ui)
+    op_flags[ui] = NPY_ITER_READWRITE | NPY_ITER_ALLOCATE;
+
+  // Using arrs and dtypes as a temporary
+  arrs[0] = inp;
+  dtypes[0] = outtype;
+  // Common dtype
+  common = PyArray_ResultType(1, arrs, 1, dtypes);
+
+  // Looking for the correct loop
+  for(ui = 0; ui < FUNC_NLOOPS; ++ui) {
+    if (common->type == func_sigs[ui]) {
+      loopfunc = func_loops[ui];
+      break;
+    }
+  }
+
+  if (loopfunc == NULL) {
+    PyErr_SetString(PyExc_TypeError, "no registered loopfunc");
+    Py_DECREF(common);
+    goto exit;
+  }
+
+  // Filling arrs with all the arrays
+  arrs[1] = badpixels;
+  arrs[2] = value;
+  // The following are dynamically allocated always
+  arrs[3] = var;
+  arrs[4] = nmap;
+  arrs[5] = mask;
+  arrs[6] = crmask;
+
+  dtypes[0] = PyArray_DescrFromType(common->type); // input
+  dtypes[1] = PyArray_DescrFromType(NPY_UINT8); // badpixels
+  dtypes[2] = PyArray_DescrFromType(common->type); // value
+  dtypes[3] = PyArray_DescrFromType(common->type); // variance
+  dtypes[4] = PyArray_DescrFromType(NPY_UINT8); // number of pixels
+  dtypes[5] = PyArray_DescrFromType(NPY_UINT8); // new mask of bad pixels
+  dtypes[6] = PyArray_DescrFromType(NPY_UINT8); // new mask of cosmic rays
+
+  iter = NpyIter_AdvancedNew(NOPS, arrs, whole_flags, order, casting,
+                              op_flags, dtypes, oa_ndim, op_axes,
+                              NULL, 0);
+  if (iter == NULL)
+    goto exit;
+
+  // FIXME: check this return value
+  NpyIter_Reset(iter, NULL);
+
+  // Filling all with 0
+  for(ui=2; ui<NOPS; ++ui)
+    _zerofill(NpyIter_GetOperandArray(iter)[ui]);
+
+  iternext = NpyIter_GetIterNext(iter, NULL);
+  dataptr = NpyIter_GetDataPtrArray(iter);
+  strideptr = NpyIter_GetInnerStrideArray(iter);
+  innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+  do {
+       loopfunc(NOPS, dataptr, strideptr, innersizeptr, saturation, dt, gain, ron, nsig);
+    } while(iternext(iter));
+
+
+  // the result is a 5-tuple
+  ret = Py_BuildValue("(O,O,O,O,O)",
+      (PyObject*)NpyIter_GetOperandArray(iter)[2],
+      (PyObject*)NpyIter_GetOperandArray(iter)[3],
+      (PyObject*)NpyIter_GetOperandArray(iter)[4],
+      (PyObject*)NpyIter_GetOperandArray(iter)[5],
+      (PyObject*)NpyIter_GetOperandArray(iter)[6]
+  );
+
+  NpyIter_Deallocate(iter);
+
+exit:
+  // Using PyArray_Converter requires DECREF
+  Py_XDECREF(inp);
+  Py_XDECREF(badpixels);
+  //
+  Py_XDECREF(common);
+  Py_XDECREF(outtype);
+  for(ui=0; ui<NOPS; ++ui)
+    Py_XDECREF(dtypes[ui]);
+
+  return ret;
+}
+
+static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
 {
 
   PyArrayObject* inp = NULL;
@@ -305,8 +503,8 @@ exit:
 }
 
 static PyMethodDef ramp_methods[] = {
-    {"ramp_array", (PyCFunction) py_loopover, METH_VARARGS|METH_KEYWORDS, "Follow-up-the-ramp processing"},
-    {"fowler_array", (PyCFunction) py_loopover, METH_VARARGS|METH_KEYWORDS, "Fowler processing"},
+    {"ramp_array", (PyCFunction) py_ramp_array, METH_VARARGS|METH_KEYWORDS, "Follow-up-the-ramp processing"},
+    {"fowler_array", (PyCFunction) py_fowler_array, METH_VARARGS|METH_KEYWORDS, "Fowler processing"},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
@@ -319,3 +517,4 @@ PyMODINIT_FUNC init_nirproc(void)
   if (m == NULL)
     return;
 }
+
