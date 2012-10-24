@@ -149,7 +149,11 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
 static int _zerofill(PyArrayObject *ret)
 {
     if (PyDataType_REFCHK(ret->descr)) {
+#if PY_MAJOR_VERSION >= 3
+        PyObject *zero = PyLong_FromLong(0);
+#else
         PyObject *zero = PyInt_FromLong(0);
+#endif
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
         if (PyErr_Occurred()) {
@@ -536,19 +540,45 @@ exit:
   return ret;
 }
 
-static PyMethodDef ramp_methods[] = {
+static PyMethodDef module_functions[] = {
     {"ramp_array", (PyCFunction) py_ramp_array, METH_VARARGS|METH_KEYWORDS, "Follow-up-the-ramp processing"},
     {"fowler_array", (PyCFunction) py_fowler_array, METH_VARARGS|METH_KEYWORDS, "Fowler processing"},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
-PyMODINIT_FUNC init_nirproc(void)
-{
-  PyObject *m;
-  m = Py_InitModule("_nirproc", ramp_methods);
-  import_array();
+#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_nirproc",     /* m_name */
+        "Processing of typical read modes of nIR detectors",  /* m_doc */
+        -1,                  /* m_size */
+        module_functions,    /* m_methods */
+        NULL,                /* m_reload */
+        NULL,                /* m_traverse */
+        NULL,                /* m_clear */
+        NULL,                /* m_free */
+    };
+#endif
 
-  if (m == NULL)
-    return;
-}
+#if PY_MAJOR_VERSION >= 3
+  PyMODINIT_FUNC PyInit_nirproc(void)
+  {
+   PyObject *m;
+   m = PyModule_Create(&moduledef);
+   if (m == NULL)
+     return NULL;
 
+   import_array();
+   return m;
+  }
+#else
+  PyMODINIT_FUNC init_nirproc(void)
+  {
+   PyObject *m;
+   m = Py_InitModule("_nirproc", module_functions);
+   import_array();
+
+   if (m == NULL)
+     return;
+  }
+#endif

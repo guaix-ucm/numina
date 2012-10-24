@@ -390,7 +390,7 @@ py_method_quantileclip(PyObject *obj, PyObject *args) {
   return cap;
 }
 
-static PyMethodDef combine_methods[] = {
+static PyMethodDef module_functions[] = {
     {"generic_combine", py_generic_combine, METH_VARARGS, ""},
     {"mean_method", py_method_mean, METH_NOARGS, ""},
     {"median_method", py_method_median, METH_NOARGS, ""},
@@ -400,10 +400,45 @@ static PyMethodDef combine_methods[] = {
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 
+#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_combine",     /* m_name */
+        combine__doc__,  /* m_doc */
+        -1,                  /* m_size */
+        module_functions,    /* m_methods */
+        NULL,                /* m_reload */
+        NULL,                /* m_traverse */
+        NULL,                /* m_clear */
+        NULL,                /* m_free */
+    };
+#endif
+#if PY_MAJOR_VERSION >= 3
+  PyMODINIT_FUNC PyInit_combine(void)
+  {
+   PyObject *m;
+   m = PyModule_Create(&moduledef);
+   if (m == NULL)
+     return NULL;
+
+   import_array();
+   if (CombineError == NULL)
+   {
+    /*
+     * A different base class can be used as base of the exception
+     * passing something instead of NULL
+     */
+     CombineError = PyErr_NewException("_combine.CombineError", NULL, NULL);
+   }
+   Py_INCREF(CombineError);
+   PyModule_AddObject(m, "CombineError", CombineError);
+   return m;
+  }
+#else
 PyMODINIT_FUNC init_combine(void)
 {
   PyObject *m;
-  m = Py_InitModule3("_combine", combine_methods, combine__doc__);
+  m = Py_InitModule3("_combine", module_functions, combine__doc__);
   import_array();
 
   if (m == NULL)
@@ -420,3 +455,4 @@ PyMODINIT_FUNC init_combine(void)
   Py_INCREF(CombineError);
   PyModule_AddObject(m, "CombineError", CombineError);
 }
+#endif

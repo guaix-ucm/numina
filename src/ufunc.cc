@@ -208,6 +208,41 @@ static void add_median(PyObject *dictionary) {
   Py_DECREF(f);
 }
 
+#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "_ufunc",     /* m_name */
+        "Ufunc tests and examples",  /* m_doc */
+        -1,                  /* m_size */
+        NULL,    /* m_methods */
+        NULL,                /* m_reload */
+        NULL,                /* m_traverse */
+        NULL,                /* m_clear */
+        NULL,                /* m_free */
+    };
+#endif
+#if PY_MAJOR_VERSION >= 3
+  PyMODINIT_FUNC PyInit_ufunc(void)
+  {
+   PyObject *m;
+   m = PyModule_Create(&moduledef);
+   if (m == NULL)
+     return NULL;
+
+   PyObject *d = PyModule_GetDict(m);
+   if (d == NULL)
+     return NULL;
+
+   import_array();
+   import_ufunc();
+
+//  add_test1(d);
+    add_test2(d);
+    add_median(d);
+
+   return m;
+  }
+#else
 PyMODINIT_FUNC init_ufunc(void)
 {
 
@@ -227,3 +262,4 @@ PyMODINIT_FUNC init_ufunc(void)
   add_test2(d);
   add_median(d);
 }
+#endif

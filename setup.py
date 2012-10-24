@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 from setuptools import setup, Extension
 from setuptools import find_packages
 
@@ -8,7 +10,7 @@ import sys
 try:
     import numpy
 except ImportError:
-    print 'numpy is required to install numina'
+    print('numpy is required to install numina')
     sys.exit(1)
 
 numpy_include = numpy.get_include()
@@ -52,6 +54,8 @@ setup(name='numina',
       requires=REQUIRES,
       setup_requires=['numpy'],
       install_requires=IREQUIRES,
+      use_2to3 = True,
+      test_suite= "numina.tests",
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',

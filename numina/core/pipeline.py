@@ -128,7 +128,7 @@ import yaml
 import uuid
 
 def om_repr(dumper, data):
-    return dumper.represent_mapping(u'!om', data.__dict__)
+    return dumper.represent_mapping('!om', data.__dict__)
 
 def om_cons(loader, node):
     om = ObservingMode()
@@ -140,5 +140,5 @@ def om_cons(loader, node):
 
 
 yaml.add_representer(ObservingMode, om_repr)
-yaml.add_constructor(u'!om', om_cons)
+yaml.add_constructor('!om', om_cons)
 

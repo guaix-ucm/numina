@@ -107,7 +107,7 @@ def transmit(result):
     if not isinstance(result, BaseRecipeResult):
         raise TypeError('result must be a RecipeResult')
     if isinstance(result, RecipeResult):
-        print 'transmit as valid'
+        pass # transmit as valid'
     elif isinstance(result, ErrorRecipeResult):
         res = {'error': {'type': result.errortype,
                          'message': result.message,

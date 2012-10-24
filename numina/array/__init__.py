@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
+
+from __future__ import print_function
+
 import logging
 from itertools import imap, product
 
@@ -246,8 +249,8 @@ if __name__ == '__main__':
         numpy.median(a)
 
     t = Timer("test1()", "from __main__ import test1")
-    print t.timeit()
+    print(t.timeit())
     
     t = Timer("test2()", "from __main__ import test2")
-    print t.timeit()
+    print(t.timeit())
 
