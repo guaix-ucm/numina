@@ -222,7 +222,7 @@ static void add_median(PyObject *dictionary) {
     };
 #endif
 #if PY_MAJOR_VERSION >= 3
-  PyMODINIT_FUNC PyInit_ufunc(void)
+  PyMODINIT_FUNC PyInit__ufunc(void)
   {
    PyObject *m;
    m = PyModule_Create(&moduledef);

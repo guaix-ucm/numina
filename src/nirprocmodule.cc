@@ -561,7 +561,7 @@ static PyMethodDef module_functions[] = {
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-  PyMODINIT_FUNC PyInit_nirproc(void)
+  PyMODINIT_FUNC PyInit__nirproc(void)
   {
    PyObject *m;
    m = PyModule_Create(&moduledef);

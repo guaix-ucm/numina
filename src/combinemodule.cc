@@ -414,7 +414,7 @@ static PyMethodDef module_functions[] = {
     };
 #endif
 #if PY_MAJOR_VERSION >= 3
-  PyMODINIT_FUNC PyInit_combine(void)
+  PyMODINIT_FUNC PyInit__combine(void)
   {
    PyObject *m;
    m = PyModule_Create(&moduledef);
