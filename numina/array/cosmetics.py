@@ -203,7 +203,7 @@ def ccdmask(flat1, flat2=None, mask=None,
     if mode not in ['full', 'region']:
         raise ValueError("mode must be either 'full' or 'region'")
     
-    for vname in ['lowercut', 'uppercut', 'nsig']:
+    for vname in ['lowercut', 'uppercut']:
         val = locals()[vname]
         if val <= 0:
             raise ValueError('%s must be > 0' % vname)
