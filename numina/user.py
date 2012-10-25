@@ -19,6 +19,8 @@
 
 '''User command line interface of Numina.'''
 
+from __future__ import print_function
+
 import sys
 import logging.config
 import os
@@ -86,7 +88,7 @@ def mode_list(serializer, args):
     _logger.debug('list mode')
     for recipeCls in list_recipes():
 #        print fully_qualified_name(recipeCls)
-        print recipeCls
+        print(recipeCls)
         
 def super_load(path):
     spl = path.split('.')
@@ -135,32 +137,32 @@ def show_instruments(args):
         print_instrument(theins, modes=False)
 
 def print_recipe(recipe):
-    print 'Recipe:', recipe.__module__ + '.' + recipe.__name__
+    print('Recipe:', recipe.__module__ + '.' + recipe.__name__)
     if recipe.__doc__:
-        print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
-    print 'Requirements'
-    print '------------'
+        print('Summary:', recipe.__doc__.expandtabs().splitlines()[0])
+    print('Requirements')
+    print('------------')
     rp = RequirementParser(recipe.__requires__)
     rp.print_requirements()
-    print
+    print()
 
 def print_instrument(instrument, modes=True):
-    print 'Name:', instrument.name
+    print('Name:', instrument.name)
     
     if modes and instrument.modes:
-        print 'Observing modes'
-        print '---------------'
+        print('Observing modes')
+        print('---------------')
         for mode in instrument.modes:
             print_obsmode(mode)
-        print '---'
+        print('---')
 
 def print_obsmode(obsmode):
-    print '%s: %s' % (obsmode.name, obsmode.summary)
-    print 'Instrument:', obsmode.instrument
-    print 'Recipe:', obsmode.recipe
-    print 'Key:', obsmode.key
-    print 'UUID:', obsmode.uuid
-    print '--'
+    print('%s: %s' % (obsmode.name, obsmode.summary))
+    print('Instrument:', obsmode.instrument)
+    print('Recipe:', obsmode.recipe)
+    print('Key:', obsmode.key)
+    print('UUID:', obsmode.uuid)
+    print('--')
 
 def main_internal(cls, obsres, 
     instrument, 
