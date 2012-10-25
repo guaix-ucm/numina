@@ -55,7 +55,7 @@ setup(name='numina',
       setup_requires=['numpy'],
       install_requires=IREQUIRES,
       use_2to3 = True,
-      test_suite= "nose.collector",
+      test_suite= "numina.tests",
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3.0",
