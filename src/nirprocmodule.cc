@@ -326,8 +326,10 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   if (iter == NULL)
     goto exit;
 
-  // FIXME: check this return value
-  NpyIter_Reset(iter, NULL);
+  if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+    NpyIter_Deallocate(iter);
+    goto exit;
+  }
 
   // Filling all with 0
   for(ui=2; ui<NOPS; ++ui)
@@ -500,8 +502,10 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   if (iter == NULL)
     goto exit;
 
-  // FIXME: check this return value
-  NpyIter_Reset(iter, NULL);
+  if (NpyIter_Reset(iter, NULL) != NPY_SUCCEED) {
+    NpyIter_Deallocate(iter);
+    goto exit;
+  }
 
   // Filling all with 0
   for(ui=2; ui<NOPS; ++ui)
