@@ -60,8 +60,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
     def test_saturation0(self):        
         '''Test we count correctly saturated pixels in RAMP mode.'''
         
-        MASK_SATURATION = 3 
-        MASK_GOOD = 0
+        MASK_SATURATION = 3
     
         # Nno points 
         self.data[:] = 50000 #- 32768
@@ -88,7 +87,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
     def test_saturation1(self):        
         '''Test we count correctly saturated pixels in RAMP mode.'''
         
-        MASK_SATURATION = 3 
         MASK_GOOD = 0
             
         saturation = 50000
