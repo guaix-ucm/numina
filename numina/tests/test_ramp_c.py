@@ -21,7 +21,7 @@ import unittest
 
 import numpy
 
-from numina.array._nirproc import ramp_array
+from numina.array import ramp_array
 
 class FollowUpTheRampTestCase(unittest.TestCase):
     def setUp(self):
@@ -165,7 +165,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.emptybp[0,0] = 1
         
         res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    outtype='float32',
+                    dtype='float32',
                     saturation=self.saturation, 
                     badpixels=self.emptybp,
                     nsig=self.nsig, 

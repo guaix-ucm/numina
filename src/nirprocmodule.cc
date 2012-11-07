@@ -186,9 +186,9 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   PyArrayObject* crmask = NULL; // uint8
   PyArray_Descr* outtype = NULL; // default is float64
 
-  PyObject* ret = NULL; // A five tuple: (value, var, nmap, mask, crmask)
+  PyObject* ret = NULL; // A 5-tuple: (value, var, nmap, mask, crmask)
 
-  const int NOPS = 7;
+  const int NOPS = 7; // 2+5
   double ron = 0.0;
   double gain = 1.0;
   double nsig = 4.0;
@@ -237,7 +237,7 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   int op_axes1[] = {0, 1, -1};
   int* op_axes[] = {NULL, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1};
 
-  char *kwlist[] = {"rampdata", "dt", "gain", "ron", "badpixels", "outtype",
+  char *kwlist[] = {"rampdata", "dt", "gain", "ron", "badpixels", "dtype",
       "saturation", "nsig", "blank", NULL};
 
   if(!PyArg_ParseTupleAndKeywords(args, kwds, 

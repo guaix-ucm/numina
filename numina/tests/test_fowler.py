@@ -165,7 +165,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.emptybp[0,0] = 1
         
         res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    outtype='float32',
+                    dtype='float32',
                     saturation=self.saturation, 
                     badpixels=self.emptybp,
                     nsig=self.nsig, 
