@@ -298,7 +298,7 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   }
 
   if (loopfunc == NULL) {
-    PyErr_SetString(PyExc_TypeError, "no registered loopfunc");
+    PyErr_Format(PyExc_TypeError, "no registered loopfunc '%c'", common->type);
     Py_DECREF(common);
     goto exit;
   }
@@ -379,9 +379,9 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   PyArrayObject* mask = NULL; // uint8
   PyArray_Descr* outtype = NULL; // default is float64
 
-  PyObject* ret = NULL; // A five tuple: (value, var, nmap, mask, crmask)
+  PyObject* ret = NULL; // A 4-tuple: (value, var, nmap, mask)
 
-  const int NOPS = 6;
+  const int NOPS = 6; // (2+4)-tuple
   int saturation = 65631;
   int blank = 0;
 
@@ -426,7 +426,7 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   int op_axes1[] = {0, 1, -1};
   int* op_axes[] = {NULL, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1, op_axes1};
 
-  char *kwlist[] = {"rampdata", "badpixels", "outtype",
+  char *kwlist[] = {"fowlerdata", "badpixels", "dtype",
       "saturation", "blank", NULL};
 
   if(!PyArg_ParseTupleAndKeywords(args, kwds, 
@@ -474,7 +474,7 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   }
 
   if (loopfunc == NULL) {
-    PyErr_SetString(PyExc_TypeError, "no registered loopfunc");
+    PyErr_Format(PyExc_TypeError, "no registered loopfunc '%c'", common->type);
     Py_DECREF(common);
     goto exit;
   }
