@@ -21,27 +21,27 @@ import unittest
 
 import numpy
 
-from numina.array.nirproc import ramp_array
+from numina.array import fowler_array
 
-class FollowUpTheRampTestCase(unittest.TestCase):
+class FowlerExceptionsTestCase(unittest.TestCase):
     def setUp(self):
-        self.ramp = numpy.empty((1, 1, 10))
-        self.sdt = 1.0
-        self.sgain = 1.0
-        self.sron = 1.0
+        self.fdata = numpy.empty((1, 1, 10))
     
     def test_exception(self):
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, -1.0, self.sron)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, 0, self.sron)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, -1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, nsig=0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, -1.0, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, 0.0, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, saturation=-100)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, saturation=0)
+        # Data must be ndarray
+        # FIXME: c-func does not behave this way
+        #self.assertRaises(TypeError, fowler_array, None)
+        # Dimension must be 3
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2,)))
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2,2)))
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2,3,4,5)))
+        # saturation in good shape
+        self.assertRaises(ValueError, fowler_array, self.fdata, saturation=-100)
+        self.assertRaises(ValueError, fowler_array, self.fdata, saturation=0)
+        # 2-axis must be even
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2,2,5)))
 
-class RampReadoutAxisTestCase(unittest.TestCase):
+class FowlerSaturationTestCase(unittest.TestCase):
     
     def setUp(self):
         rows = 3
@@ -49,44 +49,40 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.emptybp = numpy.zeros((rows, columns), dtype='uint8')
         self.data = numpy.arange(10, dtype='int32')
         self.data = numpy.tile(self.data, (rows, columns, 1))
-
+        self.blank = 1
         self.saturation = 65536
-        self.dt = 1.0
-        self.gain = 1.0
-        self.ron = 1.0
-        self.nsig = 4.0
-        self.blank = 0
-
+        
     def test_saturation0(self):        
-        '''Test we count correctly saturated pixels in RAMP mode.'''
+        '''Test we count correctly saturated pixels in Fowler mode.'''
         
         MASK_SATURATION = 3 
         MASK_GOOD = 0
     
-        # Nno points 
+        # No points 
         self.data[:] = 50000 #- 32768
         saturation = 40000 #- 32767
         
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    saturation=saturation, 
-                    nsig=self.nsig, 
-                    blank=self.blank)
+        res = fowler_array(self.data, saturation=saturation, blank=self.blank)
 
+        # Number of points
         for nn in res[2].flat:
             self.assertEqual(nn, 0)
 
+        # Mask value            
         for n in res[3].flat:
             self.assertEqual(n, MASK_SATURATION)
             
+        # Variance
         for v in res[1].flat:
-            self.assertEqual(v, 0)
-            
+            self.assertEqual(v, self.blank)
+        
+        # Values
         for v in res[0].flat:
             self.assertEqual(v, self.blank)
             
 
     def test_saturation1(self):        
-        '''Test we count correctly saturated pixels in RAMP mode.'''
+        '''Test we count correctly saturated pixels in Fowler mode.'''
         
         MASK_SATURATION = 3 
         MASK_GOOD = 0
@@ -94,32 +90,30 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         saturation = 50000
         self.data[..., 7:] = saturation 
         
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    saturation=saturation, 
-                    nsig=self.nsig, 
+        res = fowler_array(self.data, 
+                    saturation=saturation,
                     blank=self.blank)
 
         for nn in res[2].flat:
-            self.assertEqual(nn, 7)
+            self.assertEqual(nn, 2)
 
         for n in res[3].flat:
             self.assertEqual(n, MASK_GOOD)
             
         for v in res[1].flat:
-            self.assertEqual(v, 0.2142857142857143)
+            self.assertEqual(v, 0)
             
         for v in res[0].flat:
-            self.assertEqual(v, 1)
+            self.assertEqual(v, 5)
             
             
         
     def test_badpixel(self):
-        '''Test we ignore badpixels in RAMP mode.'''
+        '''Test we ignore badpixels in Fowler mode.'''
         self.emptybp[...] = 1
 
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    saturation=self.saturation, 
-                    nsig=self.nsig, 
+        res = fowler_array(self.data, 
+                    saturation=self.saturation,
                     badpixels=self.emptybp,
                     blank=self.blank)
 
@@ -130,77 +124,17 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(n, 1)
             
         for v in res[1].flat:
-            self.assertEqual(v, 0)
+            self.assertEqual(v, self.blank)
             
         for v in res[0].flat:
             self.assertEqual(v, self.blank)
+
             
-    def test_results1(self):
-        '''Test we obtain correct values in RAMP mode'''
-        
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    saturation=self.saturation, 
-                    nsig=self.nsig, 
-                    blank=self.blank)
-
-        for nn in res[2].flat:
-            self.assertEqual(nn, 10)
-
-        for n in res[3].flat:
-            self.assertEqual(n, 0)
-            
-        for v in res[1].flat:
-            self.assertEqual(v, 0.13454545454545455)
-            
-        for v in res[0].flat:
-            self.assertEqual(v, 1.0)
-            
-    def test_results2(self):
-        '''Test we obtain correct values in RAMP mode'''
-
-        self.data *= 12
-        self.data[1,1,:] = 70000
-        self.data[2,2,5:] += 1300
-
-        self.emptybp[0,0] = 1
-        
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
-                    dtype='float32',
-                    saturation=self.saturation, 
-                    badpixels=self.emptybp,
-                    nsig=self.nsig, 
-                    blank=self.blank)
-
-        res0 = 12 * numpy.ones((3,4), dtype='float32')
-        res0[0,0] = 0
-        res0[1,1] = 0
-        res1 = 1.4812121212 * numpy.ones((3,4), dtype='float32')
-        res1[0,0] = 0
-        res1[1,1] = 0
-        res1[2,2] = 1.61
-        res2 = 10 * numpy.ones((3,4), dtype='uint8')
-        res2[0,0] = 0
-        res2[1,1] = 0
-        res3 = numpy.zeros((3,4), dtype='uint8')
-        res3[0,0] = 1
-        res3[1,1] = 3
-        res4 = numpy.zeros((3,4), dtype='uint8')
-        res4[2,2] = 5
-
-        for xx,yy in zip(res[0].flat, res0.flat):
-            self.assertAlmostEqual(xx, yy)
-        for xx,yy in zip(res[1].flat, res1.flat):
-            self.assertAlmostEqual(xx, yy)
-        for xx,yy in zip(res[2].flat, res2.flat):
-            self.assertEqual(xx, yy)
-        for xx,yy in zip(res[3].flat, res3.flat):
-            self.assertEqual(xx, yy)
-        for xx,yy in zip(res[4].flat, res4.flat):
-            self.assertEqual(xx, yy)
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(FollowUpTheRampTestCase))
+    suite.addTest(unittest.makeSuite(FowlerExceptionsTestCase))
+    suite.addTest(unittest.makeSuite(FowlerSaturationTestCase))
     return suite
 
 if __name__ == '__main__':

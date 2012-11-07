@@ -31,17 +31,16 @@
 #define MASK_SATURATION 3
 
 typedef void (*LoopFuncRamp)(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
-    int saturation, double dt, double gain, double ron, double nsig);
+    int saturation, int blank, double dt, double gain, double ron, double nsig);
 
 typedef void (*LoopFuncFowler)(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
-    int saturation);
+    int saturation, int blank);
 
 
 template<typename Result, typename Arg>
 static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
-    int saturation, double dt, double gain, double ron, double nsig){
+    int saturation, int blank, double dt, double gain, double ron, double nsig){
         npy_intp count = *innersizeptr;
-        int blank = 0; // this will be an argument in the future
         static std::vector<Arg> internal;
 
         // The stride for 2-6 pointers is 0, so no advance is needed
@@ -95,9 +94,10 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
 
 template<typename Result, typename Arg>
 static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
-    int saturation){
+    int saturation, int blank){
         npy_intp count = *innersizeptr;
-        int blank = 0; // this will be an argument in the future
+        // count is even
+        npy_intp hsize = count / 2;
         static std::vector<Arg> internal;
 
         // The stride for 2-6 pointers is 0, so no advance is needed
@@ -109,7 +109,7 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
 
         if(*dataptr[1] != MASK_GOOD) {
           // mask is copied from badpixels
-          // all the rest are 0
+          // all the rest are blank
           *dataptr[5] = *dataptr[1];
         }
         else {
@@ -131,12 +131,12 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
           }
 
           // we don't have enough non saturated points
-          if(internal.size() <= 1) {
+          if(internal.size() <= hsize) {
             *dataptr[5] = MASK_SATURATION;
           }
           else {
             Numina::FowlerResult<Result> result =
-                Numina::fowler<Result>(internal.begin(), internal.end());
+                Numina::fowler<Result>(internal.begin(), internal.end(), hsize);
 
             *rvalue = result.value;
             *rvariance = result.variance;
@@ -146,8 +146,6 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
           internal.clear();
         }
 }
-
-
 
 // In numpy private API
 static int _zerofill(PyArrayObject *ret)
@@ -241,7 +239,7 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
       "saturation", "nsig", "blank", NULL};
 
   if(!PyArg_ParseTupleAndKeywords(args, kwds, 
-        "O&ddd|O&O&idi:loopover_ramp_c", kwlist,
+        "O&ddd|O&O&idi:ramp_array_c", kwlist,
         &PyArray_Converter, &inp,
         &dt, &gain, &ron,
         &PyArray_Converter, &badpixels,
@@ -345,7 +343,8 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
   do {
-       loopfunc(NOPS, dataptr, strideptr, innersizeptr, saturation, dt, gain, ron, nsig);
+       loopfunc(NOPS, dataptr, strideptr, innersizeptr, saturation, blank,
+           dt, gain, ron, nsig);
     } while(iternext(iter));
 
 
@@ -393,6 +392,7 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
 
   npy_intp out_dims[2];
   int ui = 0;
+  int hsize = 0;
 
   LoopFuncFowler loopfunc = NULL;
 
@@ -436,13 +436,25 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
       "saturation", "blank", NULL};
 
   if(!PyArg_ParseTupleAndKeywords(args, kwds, 
-        "O&|O&O&ii:loopover_fowler_c", kwlist,
+        "O&|O&O&ii:fowler_array_c", kwlist,
         &PyArray_Converter, &inp,
         &PyArray_Converter, &badpixels,
         &PyArray_DescrConverter2, &outtype,
         &saturation, &blank)
         )
     return NULL;
+
+  if (PyArray_NDIM(inp) != 3) {
+    PyErr_SetString(PyExc_ValueError, "input array is not 3D");
+        goto exit;
+  }
+
+  hsize = PyArray_DIM(inp, 2) / 2;
+
+  if (hsize * 2 != PyArray_DIM(inp, 2)) {
+     PyErr_SetString(PyExc_ValueError, "axis-2 in fowlerdata must be even");
+         goto exit;
+  }
 
   if (badpixels == NULL) {
     out_dims[0] = PyArray_DIM(inp, 0);
@@ -521,7 +533,7 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
   do {
-       loopfunc(NOPS, dataptr, strideptr, innersizeptr, saturation);
+       loopfunc(NOPS, dataptr, strideptr, innersizeptr, saturation, blank);
     } while(iternext(iter));
 
 

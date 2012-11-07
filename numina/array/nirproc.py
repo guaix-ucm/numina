@@ -86,12 +86,18 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
     outvar = None
     npixmask, nmask = None, None
     
+    if not isinstance(fowlerdata, numpy.ndarray):
+        raise TypeError('fowlerdata must be an instance of numpy.ndarray')
+    
     if fowlerdata.ndim != 3:
         raise ValueError('fowlerdata must be 3D')
     
     hsize = fowlerdata.shape[2] // 2
     if 2 * hsize != fowlerdata.shape[2]:
         raise ValueError('axis-2 in fowlerdata must be even')
+    
+    if saturation <= 0:
+        raise ValueError("invalid parameter, saturation <= 0")
     
     if badpixels is None:
         badpixels = numpy.zeros((fowlerdata.shape[0], fowlerdata.shape[1]), 

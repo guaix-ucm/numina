@@ -39,15 +39,27 @@ struct FowlerResult {
 };
 
 template<typename Result, typename Iterator>
-FowlerResult<Result>  fowler(Iterator begin, Iterator end) {
+FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
 
   typedef typename std::iterator_traits<Iterator>::value_type T;
   typedef typename std::iterator_traits<Iterator>::pointer PT;
+  Iterator i1 = begin;
+  Iterator i2 = begin + hsize;
+  Result accum = 0;
+  int npoints = 0;
+
+  for(;(i1!=end) and (i2 != end); ++i1, ++i2) {
+    T val = (*i2 - *i1);
+    accum += val;
+    accum2 += val * val;
+    npoints++;
+  }
 
   FowlerResult<Result> result;
-  result.value = iround<Result>(0);
-  result.variance = iround<Result>(0);
-  result.map = 0; //std::accumulate(ramp_map.begin(), ramp_map.end(), 0);
+  // Probably this can be done better
+  result.value = iround<Result>(accum / npoints);
+  result.variance = iround<Result>(accum2 / points) - result.value;
+  result.map = npoints;
   result.mask = 0;
 
   return result;
