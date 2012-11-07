@@ -29,7 +29,7 @@
 #define MASK_GOOD 0
 #define MASK_SATURATION 3
 
-typedef void (*LoopFunc)(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
+typedef void (*LoopFuncRamp)(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
     int saturation, double dt, double gain, double ron, double nsig);
 
 typedef void (*LoopFuncFowler)(int size, char** dataptr, npy_intp* strideptr, npy_intp* innersizeptr,
@@ -195,7 +195,7 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   npy_intp out_dims[2];
   int ui = 0;
 
-  LoopFunc loopfunc = NULL;
+  LoopFuncRamp loopfunc = NULL;
 
   NpyIter_IterNextFunc *iternext = NULL;
   char** dataptr = NULL;
@@ -204,7 +204,7 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
 
   const int FUNC_NLOOPS = 11;
   const char func_sigs[] = {'g', 'd', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
-  const LoopFunc func_loops[] = {
+  const LoopFuncRamp func_loops[] = {
       py_ramp_loop<npy_float128, npy_float128>,
       py_ramp_loop<npy_float64, npy_float64>,
       py_ramp_loop<npy_float32, npy_float32>,
