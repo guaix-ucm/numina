@@ -46,7 +46,7 @@ def _axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0)
             mask[...] = MASK_GOOD
         else:
             img[...] = mm.mean()
-            var[...] = mm.var() / npix
+            var[...] = mm.var()
             mask[...] = MASK_GOOD
 
 
@@ -86,9 +86,8 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
     outvar = None
     npixmask, nmask = None, None
     
-    if not isinstance(fowlerdata, numpy.ndarray):
-        raise TypeError('fowlerdata must be an instance of numpy.ndarray')
-    
+    fowlerdata = numpy.asarray(fowlerdata)
+        
     if fowlerdata.ndim != 3:
         raise ValueError('fowlerdata must be 3D')
     

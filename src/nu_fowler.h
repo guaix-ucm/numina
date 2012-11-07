@@ -46,6 +46,7 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   Iterator i1 = begin;
   Iterator i2 = begin + hsize;
   Result accum = 0;
+  Result accum2 = 0;
   int npoints = 0;
 
   for(;(i1!=end) and (i2 != end); ++i1, ++i2) {
@@ -58,7 +59,7 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   FowlerResult<Result> result;
   // Probably this can be done better
   result.value = iround<Result>(accum / npoints);
-  result.variance = iround<Result>(accum2 / points) - result.value;
+  result.variance = iround<Result>(accum2) / npoints - result.value * result.value;
   result.map = npoints;
   result.mask = 0;
 

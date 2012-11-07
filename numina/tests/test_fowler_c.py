@@ -23,14 +23,19 @@ import numpy
 
 from numina.array import fowler_array
 
-class FowlerExceptionsTestCase(unittest.TestCase):
+class FowlerTestCase(unittest.TestCase):
     def setUp(self):
         self.fdata = numpy.empty((1, 1, 10))
-    
+        rows = 3
+        columns = 4
+        self.emptybp = numpy.zeros((rows, columns), dtype='uint8')
+        self.data = numpy.arange(10, dtype='int32')
+        self.data = numpy.tile(self.data, (rows, columns, 1))
+        self.blank = 1
+        self.saturation = 65536
+            
     def test_exception(self):
-        # Data must be ndarray
-        # FIXME: c-func does not behave this way
-        #self.assertRaises(TypeError, fowler_array, None)
+        
         # Dimension must be 3
         self.assertRaises(ValueError, fowler_array, numpy.empty((2,)))
         self.assertRaises(ValueError, fowler_array, numpy.empty((2,2)))
@@ -40,23 +45,11 @@ class FowlerExceptionsTestCase(unittest.TestCase):
         self.assertRaises(ValueError, fowler_array, self.fdata, saturation=0)
         # 2-axis must be even
         self.assertRaises(ValueError, fowler_array, numpy.empty((2,2,5)))
-
-class FowlerSaturationTestCase(unittest.TestCase):
-    
-    def setUp(self):
-        rows = 3
-        columns = 4
-        self.emptybp = numpy.zeros((rows, columns), dtype='uint8')
-        self.data = numpy.arange(10, dtype='int32')
-        self.data = numpy.tile(self.data, (rows, columns, 1))
-        self.blank = 1
-        self.saturation = 65536
         
     def test_saturation0(self):        
         '''Test we count correctly saturated pixels in Fowler mode.'''
         
-        MASK_SATURATION = 3 
-        MASK_GOOD = 0
+        MASK_SATURATION = 3
     
         # No points 
         self.data[:] = 50000 #- 32768
@@ -84,7 +77,6 @@ class FowlerSaturationTestCase(unittest.TestCase):
     def test_saturation1(self):        
         '''Test we count correctly saturated pixels in Fowler mode.'''
         
-        MASK_SATURATION = 3 
         MASK_GOOD = 0
             
         saturation = 50000
@@ -129,12 +121,37 @@ class FowlerSaturationTestCase(unittest.TestCase):
         for v in res[0].flat:
             self.assertEqual(v, self.blank)
 
+    def test_results1(self):
+        '''Test we obtain correct values in Fowler mode'''
+        
+        data = numpy.zeros((4, 5, 10), dtype='int32')
+        vals = numpy.array([10, 13, 15, 17, 20, 411, 412, 414, 417, 422])
+        ovals = vals[5:] - vals[:5]
+        mean = ovals.mean()
+        var = ovals.var()
+        
+        for i in range(10):
+            data[..., i] = vals[i]
+        
+        res = fowler_array(data, 
+                    saturation=self.saturation, 
+                    blank=self.blank)
+        
+        for nn in res[2].flat:
+            self.assertEqual(nn, 5)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
             
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, var)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, mean)         
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(FowlerExceptionsTestCase))
-    suite.addTest(unittest.makeSuite(FowlerSaturationTestCase))
+    suite.addTest(unittest.makeSuite(FowlerTestCase))    
     return suite
 
 if __name__ == '__main__':
