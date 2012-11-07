@@ -25,6 +25,7 @@
 
 #include <numpy/arrayobject.h>
 #include "nu_ramp.h"
+#include "nu_fowler.h"
 
 #define MASK_GOOD 0
 #define MASK_SATURATION 3
@@ -60,6 +61,8 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
             // Recovering values
             Arg value = *((Arg*)dataptr[0]);
 
+            // FIXME: saturation is int
+            // value may be unsigned...
             if(value < saturation)
                internal.push_back(value);
             else {
@@ -122,7 +125,7 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
               break;
             }
             // Advance pointers
-            // to get all values in the ramp
+            // to get all values in the Fowler exposure
             for(int ui=0; ui < size; ++ui)
               dataptr[ui] += strideptr[ui];
           }
@@ -132,12 +135,13 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
             *dataptr[5] = MASK_SATURATION;
           }
           else {
-            /*Numina::RampResult<Result> result = Numina::ramp<Result>(internal.begin(), internal.end(),
-                 dt, gain, ron, nsig);
+            Numina::FowlerResult<Result> result =
+                Numina::fowler<Result>(internal.begin(), internal.end());
+
             *rvalue = result.value;
             *rvariance = result.variance;
             *dataptr[4] = result.map; 
-            *dataptr[5] = result.mask;*/
+            *dataptr[5] = result.mask;
           }
           internal.clear();
         }
