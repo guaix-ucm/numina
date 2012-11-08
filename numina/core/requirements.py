@@ -21,6 +21,8 @@
 Recipe requirements
 '''
 
+from __future__ import print_function
+
 import inspect
 
 from numina.exceptions import Error
@@ -106,7 +108,7 @@ class RequirementParser(object):
             if req.default is not None:
                 dispname = dispname + '=' + str(req.default)
         
-            print "%s [%s]" % (dispname, req.description)
+            print("%s [%s]" % (dispname, req.description))
 
 class Requirement(object):
     '''Requirements of Recipes

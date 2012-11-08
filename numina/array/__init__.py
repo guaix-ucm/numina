@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
+
+from __future__ import print_function
+
 import logging
 from itertools import imap, product
 
@@ -26,7 +29,7 @@ import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
-from numina.array._ramp import process_ramp_c as process_ramp
+from numina.array._nirproc import ramp_array, fowler_array
 
 _logger = logging.getLogger("numina.array")
 
@@ -246,8 +249,8 @@ if __name__ == '__main__':
         numpy.median(a)
 
     t = Timer("test1()", "from __main__ import test1")
-    print t.timeit()
+    print(t.timeit())
     
     t = Timer("test2()", "from __main__ import test2")
-    print t.timeit()
+    print(t.timeit())
 

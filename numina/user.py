@@ -19,6 +19,8 @@
 
 '''User command line interface of Numina.'''
 
+from __future__ import print_function
+
 import sys
 import logging.config
 import os
@@ -81,13 +83,6 @@ def fully_qualified_name(obj, sep='.'):
     else:
         return obj.__module__ + sep + obj.__class__.__name__
 
-def mode_list(serializer, args):
-    '''Run the list mode of Numina'''
-    _logger.debug('list mode')
-    for recipeCls in list_recipes():
-#        print fully_qualified_name(recipeCls)
-        print recipeCls
-        
 def super_load(path):
     spl = path.split('.')
     cls = spl[-1]
@@ -135,32 +130,32 @@ def show_instruments(args):
         print_instrument(theins, modes=False)
 
 def print_recipe(recipe):
-    print 'Recipe:', recipe.__module__ + '.' + recipe.__name__
+    print('Recipe:', recipe.__module__ + '.' + recipe.__name__)
     if recipe.__doc__:
-        print 'Summary:', recipe.__doc__.expandtabs().splitlines()[0]
-    print 'Requirements'
-    print '------------'
+        print('Summary:', recipe.__doc__.expandtabs().splitlines()[0])
+    print('Requirements')
+    print('------------')
     rp = RequirementParser(recipe.__requires__)
     rp.print_requirements()
-    print
+    print()
 
 def print_instrument(instrument, modes=True):
-    print 'Name:', instrument.name
+    print('Name:', instrument.name)
     
     if modes and instrument.modes:
-        print 'Observing modes'
-        print '---------------'
+        print('Observing modes')
+        print('---------------')
         for mode in instrument.modes:
             print_obsmode(mode)
-        print '---'
+        print('---')
 
 def print_obsmode(obsmode):
-    print '%s: %s' % (obsmode.name, obsmode.summary)
-    print 'Instrument:', obsmode.instrument
-    print 'Recipe:', obsmode.recipe
-    print 'Key:', obsmode.key
-    print 'UUID:', obsmode.uuid
-    print '--'
+    print('%s: %s' % (obsmode.name, obsmode.summary))
+    print('Instrument:', obsmode.instrument)
+    print('Recipe:', obsmode.recipe)
+    print('Key:', obsmode.key)
+    print('UUID:', obsmode.uuid)
+    print('--')
 
 def main_internal(cls, obsres, 
     instrument, 
@@ -504,11 +499,6 @@ def main(args=None):
     parser_show.set_defaults(command=mode_show, what='om')
     parser_show.add_argument('id', nargs='?', default=None,
                              help='Identificator')
-    
-    parser_list = subparsers.add_parser('list', help='list help')
-    
-    parser_list.set_defaults(command=mode_list)
-    parser_list.add_argument('recipe', nargs='?', default=None)
     
     parser_run = subparsers.add_parser('run', help='run help')
     

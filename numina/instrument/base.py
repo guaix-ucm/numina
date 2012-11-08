@@ -17,6 +17,12 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from .sources import ThermalBackground
+
 class BaseConectable(object):
+    
+    def __init__(self):
+        self.source = ThermalBackground(0.0)
+    
     def connect(self, source):
         self.source = source
