@@ -1,3 +1,5 @@
+Version 0.8.5
+
 Version 0.8.4 (07 Nov 2012)
 Changes:
   * Updated tests for ramp_array and fowler_array
