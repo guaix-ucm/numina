@@ -1,4 +1,6 @@
 Version 0.8.5
+Changes:
+  * Removed download_url from setup.py
 
 Version 0.8.4 (07 Nov 2012)
 Changes:
