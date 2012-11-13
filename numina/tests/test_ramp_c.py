@@ -108,10 +108,8 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             
         for v in res[0].flat:
             self.assertEqual(v, 1)
-            
-            
         
-    def test_badpixel(self):
+    def test_badpixel0(self):
         '''Test we ignore badpixels in RAMP mode.'''
         self.emptybp[...] = 1
 
@@ -132,6 +130,89 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             
         for v in res[0].flat:
             self.assertEqual(v, self.blank)
+
+    def test_badpixel1(self):
+        '''Test we handle correctly None badpixel mask.'''
+        rows = 3
+        columns = 4
+        self.emptybp[...] = 0
+        self.data = numpy.arange(10, dtype='int32')
+        self.data = numpy.tile(self.data, (rows, columns, 1))
+        value = 1.0
+        variance = 0.13454545454545455
+
+        # Badpixels is [0,..., 0]
+        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+                    saturation=self.saturation, 
+                    nsig=self.nsig, 
+                    badpixels=self.emptybp,
+                    blank=self.blank)
+
+        for n in res[4].flat:
+            self.assertEqual(n, 0)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
+
+        for nn in res[2].flat:
+            self.assertEqual(nn, 10)
+            
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, variance)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, value)
+
+        # Badpixels is None
+        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+                    saturation=self.saturation, 
+                    nsig=self.nsig, 
+                    badpixels=None,
+                    blank=self.blank)
+
+        for n in res[4].flat:
+            self.assertEqual(n, 0)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
+
+        for nn in res[2].flat:
+            self.assertEqual(nn, 10)
+            
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, variance)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, value)
+
+        # Badpixels has default value
+        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+                    saturation=self.saturation, 
+                    nsig=self.nsig, 
+                    blank=self.blank)
+
+        for n in res[4].flat:
+            self.assertEqual(n, 0)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
+
+        for nn in res[2].flat:
+            self.assertEqual(nn, 10)
+            
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, variance)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, value)
+            
+    def test_results1(self):
+        '''Test we obtain correct values in RAMP mode'''
+        
+            
+    def test_results1(self):
+        '''Test we obtain correct values in RAMP mode'''
+        
             
     def test_results1(self):
         '''Test we obtain correct values in RAMP mode'''
