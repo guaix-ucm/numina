@@ -109,6 +109,32 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         for v in res[0].flat:
             self.assertEqual(v, 1)
         
+    def test_dtypes0(self):
+        '''Test output is float64 by default'''
+        inttypes = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
+        floattypes = ['float32', 'float64', 'float128']
+        mdtype = numpy.dtype('uint8')
+        ddtype = numpy.dtype('float64')
+        rows = 3
+        columns = 4
+        for dtype in inttypes:
+            data = numpy.arange(10, dtype=dtype)
+            data = numpy.tile(self.data, (rows, columns, 1))
+            res = ramp_array(data, self.dt, self.gain, self.ron)
+            self.assertIs(res[0].dtype, ddtype)
+            self.assertIs(res[1].dtype, ddtype)
+            self.assertIs(res[2].dtype, mdtype)
+            self.assertIs(res[3].dtype, mdtype)
+
+        for dtype in floattypes:
+            data = numpy.arange(10, dtype=dtype)
+            data = numpy.tile(self.data, (rows, columns, 1))
+            res = ramp_array(data, self.dt, self.gain, self.ron)
+            self.assertIs(res[0].dtype, ddtype)
+            self.assertIs(res[1].dtype, ddtype)
+            self.assertIs(res[2].dtype, mdtype)
+            self.assertIs(res[3].dtype, mdtype)
+
     def test_badpixel0(self):
         '''Test we ignore badpixels in RAMP mode.'''
         self.emptybp[...] = 1
