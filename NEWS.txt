@@ -1,3 +1,7 @@
+Version 0.8.6 (13 Nov 2012)
+Bugfixes:
+  * Handle 32bits systems without float128
+
 Version 0.8.5 (13 Nov 2012)
 Changes:
   * Removed download_url from setup.py
