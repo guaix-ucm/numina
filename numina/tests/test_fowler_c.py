@@ -98,9 +98,35 @@ class FowlerTestCase(unittest.TestCase):
         for v in res[0].flat:
             self.assertEqual(v, 5)
             
-            
-        
-    def test_badpixel(self):
+    def test_dtypes0(self):
+        '''Test output is float64 by default'''
+        inttypes = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
+        floattypes = ['float32', 'float64', 'float128']
+        mdtype = numpy.dtype('uint8')
+        ddtype = numpy.dtype('float64')
+        rows = 3
+        columns = 4
+        for dtype in inttypes:
+            data = numpy.zeros(10, dtype=dtype)
+            data[5:] = 10
+            data = numpy.tile(self.data, (rows, columns, 1))
+            res = fowler_array(data) 
+            self.assertIs(res[0].dtype, ddtype)
+            self.assertIs(res[1].dtype, ddtype)
+            self.assertIs(res[2].dtype, mdtype)
+            self.assertIs(res[3].dtype, mdtype)
+
+        for dtype in floattypes:
+            data = numpy.zeros(10, dtype=dtype)
+            data[5:] = 10
+            data = numpy.tile(self.data, (rows, columns, 1))
+            res = fowler_array(data) 
+            self.assertIs(res[0].dtype, ddtype)
+            self.assertIs(res[1].dtype, ddtype)
+            self.assertIs(res[2].dtype, mdtype)
+            self.assertIs(res[3].dtype, mdtype)
+
+    def test_badpixel0(self):
         '''Test we ignore badpixels in Fowler mode.'''
         self.emptybp[...] = 1
 
@@ -120,6 +146,69 @@ class FowlerTestCase(unittest.TestCase):
             
         for v in res[0].flat:
             self.assertEqual(v, self.blank)
+
+    def test_badpixel1(self):
+        '''Test we handle correctly None badpixel mask.'''
+        self.emptybp[...] = 0
+        values = [2343,2454,2578, 2661,2709, 24311, 24445, 24405, 24612, 24707]
+        self.data = numpy.empty((3,4,10), dtype='int32')
+        for i in range(10):
+            self.data[..., i] = values[i]
+        arr = self.data[0,0,5:] - self.data[0,0,:5]
+        mean = arr.mean()
+        var = arr.var()
+
+        res = fowler_array(self.data, 
+                    saturation=self.saturation,
+                    badpixels=self.emptybp,
+                    blank=self.blank)
+
+        for nn in res[2].flat:
+            self.assertEqual(nn, 5)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
+            
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, var)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, mean)
+
+        self.emptybp = None
+        res = fowler_array(self.data, 
+                    saturation=self.saturation,
+                    badpixels=self.emptybp,
+                    blank=self.blank)
+
+        for nn in res[2].flat:
+            self.assertEqual(nn, 5)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
+            
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, var)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, mean)
+
+        res = fowler_array(self.data, 
+                    saturation=self.saturation,
+                    blank=self.blank)
+
+        for nn in res[2].flat:
+            self.assertEqual(nn, 5)
+
+        for n in res[3].flat:
+            self.assertEqual(n, 0)
+            
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, var)
+            
+        for v in res[0].flat:
+            self.assertAlmostEqual(v, mean)
+
 
     def test_results1(self):
         '''Test we obtain correct values in Fowler mode'''

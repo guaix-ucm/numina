@@ -242,7 +242,7 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
         "O&ddd|O&O&idi:ramp_array_c", kwlist,
         &PyArray_Converter, &inp,
         &dt, &gain, &ron,
-        &PyArray_Converter, &badpixels,
+        &PyArray_OutputConverter, &badpixels,
         &PyArray_DescrConverter2, &outtype,
         &saturation, &nsig, &blank)
         )
@@ -252,6 +252,9 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
     out_dims[0] = PyArray_DIM(inp, 0);
     out_dims[1] = PyArray_DIM(inp, 1);
     badpixels = (PyArrayObject*)PyArray_ZEROS(2, out_dims, NPY_UINT8, 0);
+  }
+  else {
+    Py_INCREF(badpixels); 
   }
 
   if (outtype == NULL) {
@@ -438,7 +441,7 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   if(!PyArg_ParseTupleAndKeywords(args, kwds, 
         "O&|O&O&ii:fowler_array_c", kwlist,
         &PyArray_Converter, &inp,
-        &PyArray_Converter, &badpixels,
+        &PyArray_OutputConverter, &badpixels,
         &PyArray_DescrConverter2, &outtype,
         &saturation, &blank)
         )
@@ -460,6 +463,9 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
     out_dims[0] = PyArray_DIM(inp, 0);
     out_dims[1] = PyArray_DIM(inp, 1);
     badpixels = (PyArrayObject*)PyArray_ZEROS(2, out_dims, NPY_UINT8, 0);
+  }
+  else {
+    Py_INCREF(badpixels);
   }
 
   if (outtype == NULL) {
