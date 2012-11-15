@@ -82,7 +82,7 @@ class RequirementParser(object):
                 # FIXME: add warning or something here
                 continue
             value = self.lc.lookup(req, metadata)
-            if req.choiches and (value not in req.choiches):
+            if req.choices and (value not in req.choiches):
                 raise RequirementError('%s not in %s' % (value, req.choices))
                 
             parameters[req.dest]= value
