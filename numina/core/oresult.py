@@ -56,10 +56,10 @@ def obsres_from_dict(values):
     '''Build a ObservationResult object from a dictionary.'''
     obsres = ObservationResult()
     
-    if id in values:
-        obsres.id = values['id']
+    obsres.id = values.get('id', 1)
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
+    obsres.configuration = values.get('configuration', 'default')
     obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
     
     return obsres

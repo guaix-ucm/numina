@@ -535,7 +535,12 @@ def main(args=None):
     
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    pipelines = init_pipeline_system()
+    instruments, pipelines = init_pipeline_system()
+    for key in instruments:
+        pl = instruments[key]
+        name = pl.name
+        _logger.info('Loaded instrument %s, %s', key, name)
+
     for key in pipelines:
         pl = pipelines[key]
         version = pl.version
