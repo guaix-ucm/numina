@@ -1,3 +1,7 @@
+Version 0.8.7 (19 Nov 2012)
+Bugfixes:
+ * FrameInfo can be read from a list or string
+
 Version 0.8.6 (13 Nov 2012)
 Bugfixes:
   * Handle 32bits systems without float128

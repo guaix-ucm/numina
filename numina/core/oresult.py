@@ -45,21 +45,25 @@ class ObservationResult(object):
 
 def frameinfo_from_list(values):
     '''Build a FrameInformation object from a list.'''
-    # FIXME: modify when format is changed
-    # For this format
     frameinfo = FrameInformation()
-    frameinfo.label = values[0]
-    frameinfo.itype = values[1]
+    if(isinstance(values, basestring)):
+        frameinfo.label = values
+        frameinfo.itype = 'UNKNOWN'
+    else:
+        # FIXME: modify when format is changed
+        # For this format        
+        frameinfo.label = values[0]
+        frameinfo.itype = values[1]
     return frameinfo
 
 def obsres_from_dict(values):
     '''Build a ObservationResult object from a dictionary.'''
     obsres = ObservationResult()
     
-    if id in values:
-        obsres.id = values['id']
+    obsres.id = values.get('id', 1)
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
+    obsres.configuration = values.get('configuration', 'default')
     obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
     
     return obsres

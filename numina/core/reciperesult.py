@@ -24,8 +24,9 @@ from .products import DataProduct
 
 class Product(object):
     '''Product holder for RecipeResult.'''
-    def __init__(self, product_type, optional=False, *args, **kwds):
+    def __init__(self, product_type, optional=False, validate=True, *args, **kwds):
 
+        self.validate = validate
         if inspect.isclass(product_type):
             product_type = product_type()
 
@@ -84,7 +85,8 @@ class RecipeResult(BaseRecipeResult):
             if key in kwds:
                 # validate
                 val = kwds[key]
-                prod.product_type.validate(val)
+                if prod.validate:
+                    prod.product_type.validate(val)
                 val = prod.product_type.store(val)
                 setattr(self, key, val)
             elif not prod.optional:

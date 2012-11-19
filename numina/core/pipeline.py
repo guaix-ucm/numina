@@ -118,7 +118,7 @@ def init_pipeline_system():
         global _pipelines
         _pipelines[pipe.name] = pipe
         
-    return _pipelines
+    return _instruments, _pipelines
 
 
 # Quick constructor and representer
