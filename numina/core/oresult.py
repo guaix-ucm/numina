@@ -41,6 +41,7 @@ class ObservationResult(object):
         self.instrument = None
         self.frames = [] # list of FrameInformation
         self.children = [] # other ObservationResult
+        self.pipeline = 'default'
         
 
 def frameinfo_from_list(values):
@@ -64,6 +65,7 @@ def obsres_from_dict(values):
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
+    obsres.pipeline = values.get('pipeline', 'default')
     obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
     
     return obsres
