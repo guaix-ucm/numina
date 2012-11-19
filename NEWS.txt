@@ -1,6 +1,7 @@
 Version 0.8.5
 Changes:
   * Removed download_url from setup.py
+  * FrameInfo can be read from a list or string
 
 Version 0.8.4 (07 Nov 2012)
 Changes:
