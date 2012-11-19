@@ -1,7 +1,15 @@
-Version 0.8.5
+Version 0.8.7
+Bugfixes:
+ * FrameInfo can be read from a list or string
+
+Version 0.8.6 (13 Nov 2012)
+Bugfixes:
+  * Handle 32bits systems without float128
+
+Version 0.8.5 (13 Nov 2012)
 Changes:
   * Removed download_url from setup.py
-  * FrameInfo can be read from a list or string
+  * Fixed bad handling of badpixels in nIR readout preprocessing routines
 
 Version 0.8.4 (07 Nov 2012)
 Changes:

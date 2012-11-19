@@ -203,11 +203,17 @@ static PyObject* py_ramp_array(PyObject *self, PyObject *args, PyObject *kwds)
   char** dataptr = NULL;
   npy_intp* strideptr = NULL;
   npy_intp* innersizeptr = NULL;
-
+#ifdef NPY_FLOAT128
   const int FUNC_NLOOPS = 11;
   const char func_sigs[] = {'g', 'd', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
+#else
+  const int FUNC_NLOOPS = 10;
+  const char func_sigs[] = {'d', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
+#endif /* NPY_FLOAT128 */
   const LoopFuncRamp func_loops[] = {
+#ifdef NPY_FLOAT128
       py_ramp_loop<npy_float128, npy_float128>,
+#endif
       py_ramp_loop<npy_float64, npy_float64>,
       py_ramp_loop<npy_float32, npy_float32>,
       py_ramp_loop<npy_int64, npy_int64>,
@@ -404,10 +410,17 @@ static PyObject* py_fowler_array(PyObject *self, PyObject *args, PyObject *kwds)
   npy_intp* strideptr = NULL;
   npy_intp* innersizeptr = NULL;
 
+#ifdef NPY_FLOAT128
   const int FUNC_NLOOPS = 11;
   const char func_sigs[] = {'g', 'd', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
+#else
+  const int FUNC_NLOOPS = 10;
+  const char func_sigs[] = {'d', 'f', 'l', 'i', 'h', 'b', 'L', 'I', 'H', 'B'};
+#endif /* NPY_FLOAT128 */
   const LoopFuncFowler func_loops[] = {
+#ifdef NPY_FLOAT128
       py_fowler_loop<npy_float128, npy_float128>,
+#endif /* NPY_FLOAT128 */
       py_fowler_loop<npy_float64, npy_float64>,
       py_fowler_loop<npy_float32, npy_float32>,
       py_fowler_loop<npy_int64, npy_int64>,
