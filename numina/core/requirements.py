@@ -84,11 +84,13 @@ class RequirementParser(object):
             value = self.lc.lookup(req, metadata)
             if req.choices and (value not in req.choiches):
                 raise RequirementError('%s not in %s' % (value, req.choices))
+
+            # Build value
+            mm = req.type.store(value)
                 
-            parameters[req.dest]= value
+            parameters[req.dest] = mm
         names = Names(**parameters)
 
-        setattr(names, '_parser', 'XX')
         return names
 
     def print_requirements(self):
@@ -121,7 +123,13 @@ class Requirement(object):
         self.default = value
         self.description = description
         self.optional = optional
-        self.type = type
+
+        if type is None:
+            self.type = None
+        elif inspect.isclass(type):
+            self.type = type()
+        else:
+            self.type = type
         self.dest = dest
         self.hidden = hidden
         self.choices = choices
@@ -140,11 +148,11 @@ class Parameter(Requirement):
 class DataProductRequirement(Requirement):
     def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
         
+        super(DataProductRequirement, self).__init__(description, optional=optional, 
+                                                     type=valueclass, dest=dest, hidden=hidden)
         if not inspect.isclass(valueclass):
             valueclass = valueclass.__class__
              
-        if not issubclass(valueclass, DataProduct):
+        if not isinstance(self.type, DataProduct):
             raise TypeError('valueclass must derive from DataProduct')
         
-        super(DataProductRequirement, self).__init__(description, optional=optional, 
-                                                     type=valueclass, dest=dest, hidden=hidden)
