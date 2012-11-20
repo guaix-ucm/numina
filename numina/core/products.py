@@ -39,7 +39,9 @@ class FrameDataProduct(DataProduct):
 
     def store(self, obj):
 
-        if isinstance(obj, basestring):
+        if obj is None:
+            return None
+        elif isinstance(obj, basestring):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj
