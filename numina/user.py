@@ -249,7 +249,7 @@ def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None
 
     _logger.debug('creating custom logger "processing.log"')
     os.chdir(resultsdir)
-    fh = logging.FileHandler('processing.log')
+    fh = logging.FileHandler('processing.log', mode='w')
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(_recipe_formatter)
     _recipe_logger.addHandler(fh)
