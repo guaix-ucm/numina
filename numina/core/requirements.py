@@ -52,7 +52,7 @@ class RequirementLookup(object):
         elif req.default is not None:
             return req.default
         else:
-            raise RequirementError('Requirement %s must be defined' % req.dest)
+            raise RequirementError('Requirement %r must be defined' % req.dest)
 
 class RequirementParser(object):
     
