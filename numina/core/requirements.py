@@ -60,7 +60,7 @@ class RequirementParser(object):
         if not inspect.isclass(recipe):
             recipe = recipe.__class__
         self.requirements = recipe.__requires__
-        self.rClass = recipe.RecipeInput
+        self.rClass = recipe.RecipeRequirements
         self.lc = lookupclass()
 
     def parse(self, metadata):
