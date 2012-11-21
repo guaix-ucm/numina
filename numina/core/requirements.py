@@ -56,6 +56,53 @@ class RequirementLookup(object):
 
 class RequirementParser(object):
     
+    def __init__(self, recipe, lookupclass=RequirementLookup):
+        if not inspect.isclass(recipe):
+            recipe = recipe.__class__
+        self.requirements = recipe.__requires__
+        self.rClass = recipe.RecipeInput
+        self.lc = lookupclass()
+
+    def parse(self, metadata):
+        parameters = {}
+        
+        for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
+            value = self.lc.lookup(req, metadata)
+            if req.choices and (value not in req.choiches):
+                raise RequirementError('%s not in %s' % (value, req.choices))
+
+            # Build value
+            mm = req.type.store(value)
+                
+            parameters[req.dest] = mm
+        names = self.rClass(**parameters)
+
+        return names
+
+    def print_requirements(self):
+        
+        for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
+            if req.hidden:
+                # I Do not want to print it
+                continue
+            dispname = req.dest
+    
+            if req.optional:
+                dispname = dispname + '(optional)'
+    
+            if req.default is not None:
+                dispname = dispname + '=' + str(req.default)
+        
+            print("%s [%s]" % (dispname, req.description))
+
+class _RequirementParser(object):
+    
     def __init__(self, requirements, lookupclass=RequirementLookup):
         self.requirements = requirements
         self.lc = lookupclass()

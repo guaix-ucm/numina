@@ -30,9 +30,26 @@ class RecipeInput(object):
             if not name.startswith('_'):
                 val = getattr(cls, name)
                 if isinstance(val, Requirement):
-                    cls._products[name] = val
+                    cls._requirements[name] = val
 
-        return super(RecipeInput, cls).__new__(cls, *args, **kwds)
+        return super(RecipeInput, cls).__new__(cls)
+
+    def __init__(self, *args, **kwds):
+        for key, req in self._requirements.iteritems():
+            if key in kwds:
+                # validate
+                val = kwds[key]
+                #if req.validate:
+                #    req.type.validate(val)
+                val = req.type.store(val)
+                setattr(self, key, val)
+            elif not req.optional:
+                raise ValueError(' %r not defined' % req.type.__class__.__name__)
+            else:
+                # optional product, skip
+                setattr(self, key, None)
+
+        super(RecipeInput, self).__init__(self, *args, **kwds)
 
 class requires(object):
     '''Decorator to add the list of required parameters to recipe'''
