@@ -120,20 +120,18 @@ def transmit(result):
         raise TypeError('Unknown subclass of RecipeResult')
 
 class define_result(object):
-    def __init__(self, result):
-        if not issubclass(result, BaseRecipeResult):
+    def __init__(self, resultClass):
+        if not issubclass(resultClass, BaseRecipeResult):
             raise TypeError
 
-        self.provides = {}
-        self.klass = result
+        self.provides = []
+        self.klass = resultClass
 
-        for i in dir(result):
+        for i in dir(resultClass):
             if not i.startswith('_'):
-                val = getattr(result, i)
+                val = getattr(resultClass, i)
                 if isinstance(val, Product):
-                    # provides should be a dictionary...
-                    #print i, val.product_type, val.optional
-                    self.provides[i] = val.product_type.__class__
+                    self.provides.append(val)
 
     def __call__(self, klass):
         if not hasattr(klass, '__provides__'):
