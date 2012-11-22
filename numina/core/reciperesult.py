@@ -24,7 +24,8 @@ from .products import DataProduct
 
 class Product(object):
     '''Product holder for RecipeResult.'''
-    def __init__(self, product_type, optional=False, validate=True, *args, **kwds):
+    def __init__(self, product_type, optional=False, validate=True, 
+            dest=None, *args, **kwds):
 
         self.validate = validate
         if inspect.isclass(product_type):
@@ -40,7 +41,7 @@ class Product(object):
             raise TypeError('product_type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Product(type=%r)' % self.product_type.__class__.__name__
+        return 'Product(type=%r, dest=%r)' % (self.product_type.__class__.__name__, self.dest)
 
 
 class Optional(object):
@@ -105,6 +106,11 @@ class RecipeResult(BaseRecipeResult):
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
+    def suggest_store(self, **kwds):
+        for k in kwds:
+            mm = getattr(self, k)
+            self._products[k].product_type.suggest(mm, kwds[k])
+
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):
         raise TypeError('result must be a RecipeResult')
@@ -127,9 +133,10 @@ class define_result(object):
         self.provides = []
         self.klass = resultClass
 
-        for i in dir(resultClass):
-            if not i.startswith('_'):
-                val = getattr(resultClass, i)
+        for k, v in resultClass.__dict__.iteritems():
+            if not k.startswith('_') and not inspect.isroutine(v):
+                val = getattr(resultClass, k)
+                val.dest = k
                 if isinstance(val, Product):
                     self.provides.append(val)
 

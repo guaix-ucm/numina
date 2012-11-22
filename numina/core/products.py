@@ -20,7 +20,6 @@
 '''
 Basic Data Products
 '''
-
 import pyfits
 
 from .dataframe import DataFrame
@@ -33,6 +32,9 @@ class DataProduct(object):
         return True
 
     def store(self, obj):
+        return obj
+
+    def suggest(self, obj, suggestion):
         return obj
 
 class FrameDataProduct(DataProduct):
@@ -53,6 +55,7 @@ class FrameDataProduct(DataProduct):
         if isinstance(obj, basestring):
             # check that this is a FITS file
             # try - open
+            # FIXME
             pass
         elif isinstance(obj, pyfits.HDUList):
             # is an HDUList
@@ -62,3 +65,18 @@ class FrameDataProduct(DataProduct):
             pass
         else:
             raise ValidationError('object is not a valid FrameDataProduct')
+
+    def suggest(self, obj, suggestion):
+        if not isinstance(suggestion, basestring):
+            raise TypeError('suggestion must be a string, not %r' % suggestion)
+            return obj
+        if isinstance(obj, basestring):
+            # check that this is a FITS file
+            # try - open
+            # FIXME
+            pass
+        elif isinstance(obj, pyfits.HDUList):
+            obj[0].update('filename', suggestion) 
+        elif isinstance(obj, DataFrame):
+            obj.filename = suggestion
+        return obj
