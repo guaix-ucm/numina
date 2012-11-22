@@ -165,11 +165,13 @@ class Requirement(object):
         :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, description, value=None, optional=False, type=None,
+    def __init__(self, description, value=None, optional=False, 
+                 validate=False, type=None,
                  dest=None, hidden=False, choices=None):
         self.default = value
         self.description = description
         self.optional = optional
+        self.validate = validate
 
         if type is None:
             self.type = None
