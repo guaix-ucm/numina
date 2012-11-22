@@ -80,17 +80,17 @@ class BaseRecipe(object):
     def run(self, block):
         return
 
-    def __call__(self, block, environ=None):
+    def __call__(self, observation_result, environ=None):
         '''
-        Process ``block`` with the Recipe.
+        Process ``observation_result`` with the Recipe.
         
         Process the result of the observing block with the
         Recipe.
         
-        :param block: the result of a observing block
+        :param observation_result: the result of a observing block
         :param type: ObservationResult
         :param environ: a dictionary with custom parameters
-        :rtype: a dictionary with the result of the processing or an error 
+        :rtype: a RecipeResult object or an error 
         
         '''
 
@@ -98,8 +98,8 @@ class BaseRecipe(object):
             self.environ.update(environ)
 
         try:
-            result = self.run(block)
-        except Exception as exc:
+            result = self.run(observation_result)
+        except StandardError as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 
                                      str(exc),
