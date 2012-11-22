@@ -101,8 +101,8 @@ def init_pipeline_system():
         try:
             loader = imp.find_module(name)
             _mod = loader.load_module(name)
-        except ImportError as error:
-            _logger.warning('Problem importing %s, error was "%s"', name, error)
+        except StandardError as error:
+            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
         
     # Loaded all DRP modules
     
