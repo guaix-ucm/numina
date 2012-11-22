@@ -53,8 +53,6 @@ class DataFrame(object):
         return {'filename': filename}
 
     def __setstate__(self, state):
-        # FIXME: this is not exactly what we had in the begining...
-        self.frame = pyfits.open(state['filename'])
         self.filename = state['filename']
 
     def __repr__(self):
