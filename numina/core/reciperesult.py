@@ -58,6 +58,9 @@ class Optional(object):
 class BaseRecipeResult(object):
     def __new__(cls, *args, **kwds):
         return super(BaseRecipeResult, cls).__new__(cls)
+    
+    def suggest_store(self, *args, **kwds):
+        pass
 
 class ErrorRecipeResult(BaseRecipeResult):
     def __init__(self, errortype, message, traceback):
