@@ -55,11 +55,12 @@ class BaseRecipe(object):
         super(BaseRecipe, self).__init__()
         self.__author__ = 'Unknown'
         self.__version__ = '0.0.0'
+        # These two are maintained
+        # for the moment
         self.environ = {}
-        self.parameters = {}
-        self.instrument = None
         self.runinfo = {}
-
+        #
+        self.instrument = None
         self.configure(**kwds)
     
     def configure(self, **kwds):
@@ -67,20 +68,17 @@ class BaseRecipe(object):
             self.__author__ = kwds['author']
         if 'version' in kwds:
             self.__version__ = kwds['version']
-        if 'parameters' in kwds:
-            self.parameters = kwds['parameters']
         if 'instrument' in kwds:
             self.instrument = kwds['instrument']
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
-        if 'requirements' in kwds:
-            self.requirements = kwds['requirements']
+        
 
     @abc.abstractmethod
-    def run(self, block):
+    def run(self, observation_result, requirements):
         return
 
-    def __call__(self, observation_result, environ=None):
+    def __call__(self, observation_result, requirements, environ=None):
         '''
         Process ``observation_result`` with the Recipe.
         
@@ -89,6 +87,8 @@ class BaseRecipe(object):
         
         :param observation_result: the result of a observing block
         :param type: ObservationResult
+        :param requirements: requirements of the Recipe
+        :param type: RecipeRequirement
         :param environ: a dictionary with custom parameters
         :rtype: a RecipeResult object or an error 
         
@@ -98,49 +98,12 @@ class BaseRecipe(object):
             self.environ.update(environ)
 
         try:
-            result = self.run(observation_result)
+            result = self.run(observation_result, requirements)
         except StandardError as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 
                                      str(exc),
                                      traceback.format_exc())
 
-        if isinstance(result, RecipeResult):
-            return result
-        else:
-            return self.convert(result)
-
-    @classmethod
-    def convert(cls, value):
-        '''Convert from a dictionary to a RecipeResult'''
-        if 'error' in value:
-            err = value['error']
-            if _valid_err(err):
-                return ErrorRecipeResult(err['type'], err['message'], err['traceback'])
-            else:
-                raise ValueError('malformed value to convert')
-        elif 'products' in value:
-            prod = value['products']
-            products = {'product%d' % i: prod for i, prod in enumerate(prod)}
-            return cls.RecipeResult(**products)
-        else:
-            raise ValueError('malformed value to convert')
-
-    def update_header(self, hdr):
-        hdr.update('NUMXVER', __version__, 'Numina package version')
-        hdr.update('NUMRNAM', self.__class__.__name__, 'Numina recipe name')
-        hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-        return hdr
-
-
-
-def _valid_err(err):
-    if not isinstance(err, dict):
-        return False
-    if not 'type' in err:
-        return False
-    if not 'message' in err:
-        return False
-    if not 'traceback' in err:
-        return False
-    return True
+        
+        return result
