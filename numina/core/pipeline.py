@@ -48,9 +48,39 @@ class BasePipeline(object):
     def get_recipe(self, mode):
         return self.recipes[mode]
 
+class InstrumentConfiguration(object):
+    def __init__(self, name, values):
+        self.version = name
+        self.configuration = values
+
 class BaseInstrument(object):
     name = 'Undefined'
     modes = []
+    configurations = {'default': None}
+
+    def __init__(self, name, config_name='default'):
+        self.name = name
+        self.config_name = config_name
+        self.config_version = '0.0.0'
+
+        cup = self.configurations.get(self.config_name)
+        if cup is not None:
+            self.config_version = cup.version
+            for key, val in cup.configuration.items():
+                # ignore the following
+                if key == 'instrument':
+                    if val != name:
+                        raise ValueError('instrument name in file and assigned differ')
+                elif key == 'name':
+                    if val != config_name:
+                        raise ValueError('config name in file and assigned differ')
+                elif key == 'pipeline':
+                    pass #ignore
+                else:
+                    setattr(self, key, val)
+        else:
+            raise ValueError('no configuration named %s', self.config_name)
+        
         
 class ObservingMode(object):
     def __init__(self):
