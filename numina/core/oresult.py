@@ -65,7 +65,7 @@ def dataframe_from_list(values):
     else:
         # FIXME: modify when format is changed
         # For this format
-        return DataFrame(filename=values[0])
+        return DataFrame(filename=values[0], itype=values[1])
 
 def obsres_from_dict(values):
     '''Build a ObservationResult object from a dictionary.'''

@@ -99,7 +99,7 @@ class BaseRecipe(object):
 
         try:
             result = self.run(observation_result, requirements)
-        except StandardError as exc:
+        except Exception as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 
                                      str(exc),

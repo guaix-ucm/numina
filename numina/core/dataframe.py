@@ -23,14 +23,13 @@ Basic Data Products
 
 import warnings
 
-import pyfits
-
 class DataFrame(object):
-    def __init__(self, frame=None, filename=None):
+    def __init__(self, frame=None, filename=None, itype='UNKNOWN'):
         if frame is None and filename is None:
             raise ValueError('only one in frame and filename can be None') 
         self.frame = frame
         self.filename = filename
+        self.itype = itype
 
     def __getstate__(self):
         if self.frame is None and self.filename is None:
@@ -50,11 +49,16 @@ class DataFrame(object):
                 warnings.simplefilter('ignore')
                 self.frame.writeto(filename, clobber=True)
 
-        return {'filename': filename}
+        return {'filename': filename, 'itype': self.itype}
+    
+    @property
+    def label(self):
+        return self.filename
 
     def __setstate__(self, state):
         self.filename = state['filename']
-
+        self.itype = state['itype']
+        
     def __repr__(self):
         if self.frame is None:
             return "DataFrame(filename=%r)" % self.filename
