@@ -41,7 +41,7 @@ class Product(object):
             raise TypeError('product_type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.product_type.__class__.__name__, self.dest)
+        return 'Product(type=%r, dest=%r)' % (self.product_type, self.dest)
 
 
 class Optional(object):
@@ -144,8 +144,7 @@ class define_result(object):
                     self.provides.append(val)
 
     def __call__(self, klass):
-        if not hasattr(klass, '__provides__'):
-            klass.__provides__ = self.provides
+        klass.__provides__ = self.provides
 
         klass.RecipeResult = self.klass
         return klass
