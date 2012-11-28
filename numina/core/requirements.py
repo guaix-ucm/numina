@@ -63,7 +63,7 @@ class RequirementParser(object):
         self.rClass = recipe.RecipeRequirements
         self.lc = lookupclass()
 
-    def parse(self, metadata):
+    def parse(self, metadata, validate=False):
         parameters = {}
         
         for req in self.requirements:
@@ -76,6 +76,10 @@ class RequirementParser(object):
 
             # Build value
             mm = req.type.store(value)
+            # validate
+            if req.validate or validate:
+                if mm is not None and not req.optional:
+                    req.type.validate(mm)
                 
             parameters[req.dest] = mm
         names = self.rClass(**parameters)
