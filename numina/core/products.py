@@ -68,7 +68,7 @@ class FrameDataProduct(DataProduct):
             #is a DataFrame
             pass
         else:
-            raise ValidationError('object is not a valid FrameDataProduct')
+            raise ValidationError('%r is not a valid FrameDataProduct' % obj)
 
     def suggest(self, obj, suggestion):
         if not isinstance(suggestion, basestring):
