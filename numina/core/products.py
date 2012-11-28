@@ -37,6 +37,10 @@ class DataProduct(object):
     def suggest(self, obj, suggestion):
         return obj
 
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s()" % (sclass, )
+
 class FrameDataProduct(DataProduct):
 
     def store(self, obj):
