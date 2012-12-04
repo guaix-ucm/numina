@@ -21,67 +21,87 @@
 
 from __future__ import print_function
 
-import sys
-import logging.config
 import os
+import pkgutil
+import logging
+import logging.config
+import sys
 import argparse
-from ConfigParser import SafeConfigParser
-from ConfigParser import Error as ConfigParserError
-from logging import captureWarnings
-import inspect
-import traceback
+import os
+import errno
 import shutil
+import datetime
+import ConfigParser as configparser
+import inspect
 
+import yaml
+
+import numina.pipelines as namespace
 from numina import __version__
-from numina.core import obsres_from_dict
-from numina.core import init_pipeline_system
-from numina.core import list_recipes
-from numina.core import RequirementParser
-from numina.core import get_recipe, get_instruments
-from numina.serialize import lookup
+from numina.core import RequirementParser, obsres_from_dict
+from numina.core import FrameDataProduct, BaseRecipe, DataProduct
+from numina.core import BaseInstrument, InstrumentConfiguration
+from numina.core.requirements import RequirementError
+from numina.core.products import ValidationError
 from numina.xdgdirs import xdg_config_home
-from numina.treedict import TreeDict
 
 _logger = logging.getLogger("numina")
 
-_loggconf = {'version': 1,
-             'formatters': {'simple': {'format': '%(levelname)s: %(message)s'},
-                            'state': {'format': '%(asctime)s - %(message)s'},
-                            'unadorned': {'format': '%(message)s'},
-                            'detailed': {'format': '%(name)s %(levelname)s %(message)s'},
-                            },
-             'handlers': {'unadorned_console': 
-                          {'class': 'logging.StreamHandler',                           
-                           'formatter': 'unadorned',
-                           'level': 'INFO'                           
-                            },
-                          'simple_console': 
-                          {'class': 'logging.StreamHandler',                           
-                           'formatter': 'simple',
-                           'level': 'INFO'                           
-                            },
-                          'simple_console_warnings_only': 
-                          {'class': 'logging.StreamHandler',                           
-                           'formatter': 'simple',
-                           'level': 'WARNING'                           
-                            },
-                          'detailed_console': 
-                          {'class': 'logging.StreamHandler',                           
-                           'formatter': 'detailed',
-                           'level': 'INFO'                           
-                            },
-                          },
-             'loggers': {'numina': {'handlers': ['simple_console'], 'level': 'NOTSET', 'propagate': False},
-                         'numina.recipes': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
-                         },
-             'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
-             }
+_logconf = {'version': 1,
+  'formatters': {'simple': {'format': '%(levelname)s: %(message)s'},
+                 'state': {'format': '%(asctime)s - %(message)s'},
+                 'unadorned': {'format': '%(message)s'},
+                 'detailed': {'format': '%(name)s %(levelname)s %(message)s'},
+                 },
+  'handlers': {'unadorned_console':
+               {'class': 'logging.StreamHandler',                     
+                'formatter': 'unadorned',
+                'level': 'INFO'
+                 },
+               'simple_console':
+               {'class': 'logging.StreamHandler',                     
+                'formatter': 'simple',
+                'level': 'INFO'
+                 },
+               'simple_console_warnings_only':
+               {'class': 'logging.StreamHandler',                     
+                'formatter': 'simple',
+                'level': 'WARNING'
+                 },
+               'detailed_console':
+               {'class': 'logging.StreamHandler',                     
+                'formatter': 'detailed',
+                'level': 'INFO'
+                 },
+               },
+  'loggers': {'numina': {'handlers': ['simple_console'], 'level': 'NOTSET', 'propagate': False},
+              'numina.recipes': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
+              },
+  'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
+}
+
+class ProcessingTask(object):
+    pass
 
 def fully_qualified_name(obj, sep='.'):
     if inspect.isclass(obj):
         return obj.__module__ + sep + obj.__name__
     else:
         return obj.__module__ + sep + obj.__class__.__name__
+
+def make_sure_path_doesnot_exist(path):
+    try:
+        shutil.rmtree(path)
+    except (OSError, IOError) as exception:
+        if exception.errno != errno.ENOENT:
+            raise
+
+def make_sure_path_exists(path):
+    try:
+        os.makedirs(path)
+    except (OSError, IOError) as exception:
+        if exception.errno != errno.EEXIST:
+            raise
 
 def super_load(path):
     spl = path.split('.')
@@ -91,431 +111,216 @@ def super_load(path):
     mm = importlib.import_module(mods)
     Cls = getattr(mm, cls)
     return Cls
-    
-    
-def mode_show(serializer, args):
-    '''Run the show mode of Numina'''
-    _logger.debug('show mode')
-    if args.what == 'om':
-        show_observingmodes(args)
-    elif args.what == 'rcp':
-        show_recipes(args)
-    else:
-        show_instruments(args)
-        
+
+def create_recipe_file_logger(logger, logfile, logformat):
+    _logger.debug('creating file logger %r from Recipe logger', logfile)
+    _recipe_formatter = logging.Formatter(logformat)
+    fh = logging.FileHandler(logfile, mode='w')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(_recipe_formatter)
+    return fh
+
 def show_recipes(args):
-    if args.id is None:
-        for Cls in list_recipes():
-            print_recipe(Cls)            
-    else:
-        Cls = super_load(args.id)
-        print_recipe(Cls)    
+    this_recipe_print = print_recipe
+    if args.template:
+        this_recipe_print = print_recipe_template
+    for theins in instruments.values():
+        if not args.instrument or (args.instrument == theins.name):
+            for mode in theins.modes:
+                if not args.name or (mode.recipe in args.name):
+                    Cls = super_load(mode.recipe)
+                    this_recipe_print(Cls, name=mode.recipe, insname=theins.name)
 
 def show_observingmodes(args):
-    
-    if args.id:
-        must_print = lambda x: x.uuid == args.id 
-    else:
-        must_print = lambda x: True
-    
-    ins = get_instruments()
-    for theins in ins.values():
-        for mode in theins.modes:
-            if must_print(mode):
-                print_obsmode(mode)
+    for theins in instruments.values():
+        if not args.instrument or (args.instrument == theins.name):
+            for mode in theins.modes:
+                if not args.name or (mode.key in args.name):
+                    print_obsmode(mode, ins=True)
 
 def show_instruments(args):
-    ins = get_instruments()
-    for theins in ins.values():
-        print_instrument(theins, modes=False)
+    for theins in instruments.values():
+        if not args.name or (theins.name in args.name):
+            print_instrument(theins, modes=args.om)
 
-def print_recipe(recipe):
-    print('Recipe:', recipe.__module__ + '.' + recipe.__name__)
-    if recipe.__doc__:
-        print('Summary:', recipe.__doc__.expandtabs().splitlines()[0])
-    print('Requirements')
-    print('------------')
-    rp = RequirementParser(recipe.__requires__)
-    rp.print_requirements()
-    print()
+def print_recipe_template(recipe, name=None, insname=None):
+
+    def print_io(req):
+        dispname = req.dest
+        if getattr(req, 'default', None) is not None:
+            return (dispname, req.default)
+        elif isinstance(req.type, FrameDataProduct):
+            return (dispname, dispname + '.fits')
+        elif isinstance(req.type, DataProduct):
+            return (dispname, getattr(req.type, 'default', None))
+        else:
+            return (dispname, None)
+
+    # Create a dictionary with tamplates
+    requires = {}
+    optional = {}
+    for req in recipe.__requires__:
+        if req.dest is None:
+            # FIXME: add warning or something here
+            continue
+        if req.hidden:
+            # I Do not want to print it
+            continue
+        if req.optional:
+            out = optional
+        else:
+            out = requires
+    
+        k, v = print_io(req)
+        out[k] = v
+
+    final = dict(requirements=requires)
+
+    print('# This is a numina %s template file' % (__version__,))
+    print('# for recipe %r' % (name,))
+    print('#')
+    if optional:
+        print('# The following requirements are optional:')
+        for kvals in optional.items():
+            print('#  %s: %s' % kvals)
+        print('# end of optional requirements')
+    print(yaml.dump(final), end='')
+    print('#products:')
+    for prod in recipe.__provides__:
+        print('# %s: %s' % print_io(prod))
+    print('#logger:')
+    print('# logfile: processing.log')
+    print('# format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"')
+    print('# enabled: true')
+    print('---')
+
+def print_recipe(recipe, name=None, insname=None):
+    try:
+        if name:
+            print('Recipe:', name)
+        else:
+            print('Recipe:', recipe.__module__ + '.' + recipe.__name__)
+        if recipe.__doc__:
+            print(' summary:', recipe.__doc__.lstrip().expandtabs().splitlines()[0])
+        if insname:
+            print(' instrument:', insname)
+        print(' requirements:')
+        rp = RequirementParser(recipe)
+        rp.print_requirements(pad='  ')
+        print()
+    except Exception as error:
+        _logger.warning('problem %s with recipe %r', error, recipe)
 
 def print_instrument(instrument, modes=True):
-    print('Name:', instrument.name)
-    
+    print('Instrument:', instrument.name)
+    for ic in instrument.configurations:
+        print(' has configuration',repr(ic))
+    for name, pl in instrument.pipelines.items():
+        print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
     if modes and instrument.modes:
-        print('Observing modes')
-        print('---------------')
+        print(' has observing modes:')
         for mode in instrument.modes:
-            print_obsmode(mode)
-        print('---')
+            print("  {0.name!r} ({0.key})".format(mode))
 
-def print_obsmode(obsmode):
-    print('%s: %s' % (obsmode.name, obsmode.summary))
-    print('Instrument:', obsmode.instrument)
-    print('Recipe:', obsmode.recipe)
-    print('Key:', obsmode.key)
-    print('UUID:', obsmode.uuid)
-    print('--')
+def print_obsmode(obsmode, ins=False):
+    print('Observing Mode: {0.name!r} ({0.key})'.format(obsmode))
+    print(' summary:', obsmode.summary)
+    if ins:
+        print(' instrument:', obsmode.instrument)
+    print(' recipe:', obsmode.recipe)
 
-def main_internal(cls, obsres, 
-    instrument, 
-    parameters, 
-    runinfo, 
-    workdir=None):
-
-    csd = os.getcwd()
-
-    if workdir is not None:
-        workdir = os.path.abspath(workdir)
-
+def run_recipe(cls, obs):
     recipe = cls()
-
-    recipe.configure(instrument=instrument,
-                    parameters=parameters,
-                    runinfo=runinfo)
-
-    os.chdir(workdir)
-    try:
-        result = recipe(obsres)
-    finally:
-        os.chdir(csd)
-
+    result = recipe(obs)
     return result
 
-# part of this code appears in
-# pontifex/process.py
-
-def run_recipe_from_file(serializer, task_control, workdir=None, resultsdir=None, cleanup=False):
-
-    workdir = os.getcwd() if workdir is None else workdir
-    resultsdir = os.getcwd if resultsdir is None else resultsdir
-
-    # json decode
-    with open(task_control, 'r') as fd:
-        task_control = serializer.load(fd)
+def init_pipeline_system(namespace):
+    '''Load all available pipelines from package 'namespace'.'''
     
-    ins_pars = {}
-    params = {}
-    
-    if 'instrument' in task_control:
-        _logger.info('file contains instrument config')
-        ins_pars = task_control['instrument']
-    if 'observing_result' in task_control:
-        _logger.info('file contains observing result')
-        obsres_dict = task_control['observing_result']
-        obsres = obsres_from_dict(obsres_dict)
-
-    if 'reduction' in task_control:
-        params = task_control['reduction']['parameters']
+    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+        try:
+            loader = imp.find_module(name)
+            _mod = loader.load_module(name)
+        except StandardError as error:
+            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
         
-    _logger.info('instrument=%(instrument)s mode=%(mode)s', 
-                obsres.__dict__)
-    _logger.info('pipeline=%s', ins_pars['pipeline'])
-    try:
-        RecipeClass = get_recipe(ins_pars['pipeline'], obsres.mode)
-        _logger.info('entry point is %s', RecipeClass)
-    except ValueError:
-        _logger.error('cannot find entry point for %(instrument)s and %(mode)s', obsres.__dict__)
-        sys.exit(1)
-
-    _logger.info('matching parameters')    
-
-    parameters = {}
-    reqparser = RequirementParser(RecipeClass.__requires__)
-
-    try:
-        parameters = reqparser.parse(params)
-        names = reqparser.parse2(params)
-    except LookupError as error:
-        _logger.error('%s', error)
-        raise
-
-    for req in RecipeClass.__provides__:
-        _logger.info('recipe provides %s', req)
-    
-    # Creating base directory for storing results
-                   
-    _logger.debug('creating runinfo')
-            
-    runinfo = {}
-    runinfo['workdir'] = workdir
-    runinfo['resultsdir'] = resultsdir
-    runinfo['entrypoint'] = RecipeClass
-
-    # Set custom logger
-    # FIXME we are assuming here that Recipe top package is named after the instrument
-    _recipe_logger = logging.getLogger('%(instrument)s.recipes' % obsres.__dict__)
-    _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    _logger.debug('creating custom logger "processing.log"')
-    os.chdir(resultsdir)
-    fh = logging.FileHandler('processing.log', mode='w')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(_recipe_formatter)
-    _recipe_logger.addHandler(fh)
-
-    result = {}
-    try:
-        # Running the recipe
-        _logger.debug('running the recipe %s', RecipeClass.__name__)
-
-        result = main_internal(RecipeClass, obsres, ins_pars, parameters, 
-                                runinfo, workdir=workdir)
-
-        result['recipe_runner'] = info()
-        result['runinfo'] = runinfo
-    
-        os.chdir(resultsdir)
-
-        with open('result.txt', 'w+') as fd:
-            serializer.dump(result, fd)
-    
-        with open('result.txt', 'r') as fd:
-            result = serializer.load(fd)
-
-        if cleanup:
-            _logger.debug('Cleaning up the workdir')
-            shutil.rmtree(workdir)
-    except Exception as error:
-        _logger.error('%s', error)
-        result['error'] = {'type': error.__class__.__name__, 
-                                    'message': str(error), 
-                                    'traceback': traceback.format_exc()}
-    finally:
-        _recipe_logger.removeHandler(fh)
-
-    return result
-
-class TaskResult(object):
-    pass
-
-def run_recipe(serializer, obsres, params, instrument, workdir, resultsdir, cleanup): 
-    _logger.info('instrument={0.instrument} mode={0.mode}'.format(obsres))
-    _logger.info('pipeline={0[pipeline]}'.format(instrument))
-    try:
-        RecipeClass = get_recipe(instrument['pipeline'], obsres.mode)
-        _logger.info('entry point is %s', RecipeClass)
-    except ValueError:
-        _logger.error('cannot find recipe class for {0.instrument} mode={0.mode}'
-                        .format(obsres))
-        sys.exit(1)
-
-    _logger.info('matching parameters')    
-
-    allmetadata = params
-    allmetadata['instrument'] = instrument
-    allm = TreeDict(allmetadata)
-    parameters = {}
-
-    reqparser = RequirementParser(RecipeClass.__requires__)
-
-    try:
-        parameters = reqparser.parse(allm)
-    except LookupError as error:
-        _logger.error('%s', error)
-        sys.exit(1)
-
-    for req in RecipeClass.__provides__:
-        _logger.info('recipe provides %s', req)
-    
-    # Creating base directory for storing results
-                   
-    _logger.debug('creating runinfo')
-            
-    runinfo = {}
-    runinfo['workdir'] = workdir
-    runinfo['resultsdir'] = resultsdir
-    runinfo['entrypoint'] = fully_qualified_name(RecipeClass)
-
-    # Set custom logger
-    _logger.debug('getting recipe logger')
-    
-    _recipe_logger = RecipeClass.logger
-    _recipe_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    logfile = 'processing.log'
-    _logger.debug('creating custom logger "%s"', logfile)
-    os.chdir(resultsdir)
-    fh = logging.FileHandler(logfile)
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(_recipe_formatter)
-    _recipe_logger.addHandler(fh)
-
-    task = TaskResult()
-    try:
-        # Running the recipe
-        _logger.debug('running the recipe %s', RecipeClass.__name__)
-
-        result = main_internal(RecipeClass, obsres, instrument, parameters, 
-                                runinfo, workdir=workdir)
-
-        task.result = result
-        task.recipe_runner = info()
-        task.runinfo = runinfo
-    
-        os.chdir(resultsdir)
-
-        with open('result.txt', 'w+') as fd:
-            serializer.dump(task, fd)
-    
-        with open('result.txt', 'r') as fd:
-            task = serializer.load(fd)
-
-        if cleanup:
-            _logger.debug('cleaning up the workdir')
-            shutil.rmtree(workdir)
-        _logger.info('finished')
-    except Exception as error:
-        _logger.error('%s', error)
-        task.error = error
-        _logger.error('finishing with errors: %s', error)
-    finally:
-        _recipe_logger.removeHandler(fh)
-
-    return task
-
-
-
-def mode_run(serializer, args):
-    '''Recipe execution mode of numina.'''
-    args.basedir = os.path.abspath(args.basedir)    
-    
-    if args.workdir is None:
-        args.workdir = os.path.join(args.basedir, 'work')
-    
-    args.workdir = os.path.abspath(args.workdir)
-                
-    if args.resultsdir is None:
-        args.resultsdir = os.path.join(args.basedir, 'results')
-    
-    args.resultsdir = os.path.abspath(args.resultsdir)
-
-    # Check basedir exists
-    if not os.path.exists(args.basedir):
-        os.mkdir(args.basedir)
-        
-    # Check workdir exists
-    if not os.path.exists(args.workdir):
-        os.mkdir(args.workdir)
-    
-    # Check resultdir exists
-    if not os.path.exists(args.resultsdir):
-        os.mkdir(args.resultsdir)
-
-    instrument = {}
-    reduction = {}
-
-    obsres_read = False
-    instrument_read = False
-    
-    # Read observing result from args.
-    _logger.info('reading observing block from %s', args.obsblock)
-    with open(args.obsblock, 'r') as fd:
-        obsres_read = True
-        obsres_dict = serializer.load(fd)
-        obsres = obsres_from_dict(obsres_dict)
-    
-    # Read instrument information from args.instrument
-    if args.instrument is not None:
-        _logger.info('reading instrument config from %s', args.instrument)
-        with open(args.instrument, 'r') as fd:
-            instrument = serializer.load(fd)
-            instrument_read = True
-
-    # Read task information from args.task
-    if args.reqs is not None:
-        with open(args.reqs, 'r') as fd:
-            task_control = serializer.load(fd)
-    else:
-        task_control = {}
-            
-    if not instrument_read and 'instrument' in task_control:
-        _logger.info('reading instrument config from %s', args.task)
-        instrument = task_control['instrument']
-        
-    if not obsres_read and 'observing_result' in task_control:
-        _logger.info('reading observing result from %s', args.reqs)
-        obsres_read = True
-        obsres_dict = task_control['observing_result']
-        obsres = obsres_from_dict(obsres_dict)
-
-    if 'parameters' in task_control:
-        _logger.info('reading reduction parameters from %s', args.reqs)
-        reduction = task_control['parameters']
-        
-    if not obsres_read:
-        _logger.error('observing result not read from input files')
-        return
-        
-    if not instrument_read:
-        _logger.error('instrument not read from input files')
-        return
-    
-    return run_recipe(serializer, obsres, reduction, instrument, 
-                       args.workdir, args.resultsdir, args.cleanup)
-
-def info():
-    '''Information about this version of numina.
-    
-    This information will be stored in the result object of the recipe
-    '''
-    return dict(name='numina', version=__version__)
-
 def main(args=None):
-    '''Entry point for the Numina CLI.'''        
-    # Configuration args from a text file    
-    config = SafeConfigParser()
+    '''Entry point for the Numina CLI.'''
+
+    # Configuration args from a text file
+    config = configparser.SafeConfigParser()
 
     # Building programatically    
     config.add_section('numina')
     config.set('numina', 'format', 'yaml')
 
     # Custom values, site wide and local
-    config.read(['.numina/numina.cfg', 
+    config.read(['.numina/numina.cfg',
                  os.path.join(xdg_config_home, 'numina/numina.cfg')])
 
-    parser = argparse.ArgumentParser(description='Command line interface of Numina',
-                                     prog='numina',
-                                     epilog="For detailed help pass " \
-                                               "--help to a target")
+    parser = argparse.ArgumentParser(
+                 description='Command line interface of Numina',
+                 prog='numina',
+                 epilog="For detailed help pass --help to a target")
     
-    parser.add_argument('-d', '--debug', action="store_true", 
-                      dest="debug", default=False, 
-                      help="make lots of noise [default]")
-    parser.add_argument('-l', action="store", dest="logging", metavar="FILE", 
-                      help="FILE with logging configuration")
-
+    parser.add_argument('-l', action="store", dest="logging", metavar="FILE",
+                              help="FILE with logging configuration")
+    parser.add_argument('-d', '--debug', action="store_true",
+                          dest="debug", default=False,
+                          help="make lots of noise")
     subparsers = parser.add_subparsers(title='Targets',
-                                       description='These are valid commands you can ask numina to do.')
-    parser_show = subparsers.add_parser('show', help='show help')
-    
-    parser_show.add_argument('-o', '--observing-modes', action='store_const', dest='what', const='om',
-                             help='Show observing modes')
-    parser_show.add_argument('-r', action='store_const', dest='what', const='rcp',
-                             help='Show recipes')
-    parser_show.add_argument('-i', action='store_const', dest='what', const='ins',
-                             help='Show instruments')
-    
-    parser_show.set_defaults(command=mode_show, what='om')
-    parser_show.add_argument('id', nargs='?', default=None,
-                             help='Identificator')
-    
-    parser_run = subparsers.add_parser('run', help='run help')
+            description='These are valid commands you can ask numina to do.')
+
+    parser_show_ins = subparsers.add_parser('show-instruments', help='show registered instruments')
+
+    parser_show_ins.set_defaults(command=show_instruments, verbose=0, what='om')
+    parser_show_ins.add_argument('-o', '--observing-modes', 
+                    action='store_true', dest='om', 
+                    help='list observing modes of each instrument')
+#    parser_show_ins.add_argument('--verbose', '-v', action='count')
+    parser_show_ins.add_argument('name', nargs='*', default=None,
+                             help='filter instruments by name')
+
+    parser_show_mode = subparsers.add_parser('show-modes', help='show information of observing modes')
+
+    parser_show_mode.set_defaults(command=show_observingmodes, verbose=0, what='om')
+#    parser_show_mode.add_argument('--verbose', '-v', action='count')
+    parser_show_mode.add_argument('-i','--instrument', help='filter modes by instrument')
+    parser_show_mode.add_argument('name', nargs='*', default=None,
+                             help='filter observing modes by name')
+
+    parser_show_rec = subparsers.add_parser('show-recipes', help='show information of recipes')
+
+    parser_show_rec.set_defaults(command=show_recipes, template=False)
+    parser_show_rec.add_argument('-i','--instrument', 
+                    help='filter recipes by instrument')
+    parser_show_rec.add_argument('-t', '--template', action='store_true', 
+                help='generate requirements YAML template')
+#    parser_show_rec.add_argument('--output', type=argparse.FileType('wb', 0))
+    parser_show_rec.add_argument('name', nargs='*', default=None,
+                             help='filter recipes by name')
+
+    parser_run = subparsers.add_parser('run', help='process a observation result')
     
     parser_run.set_defaults(command=mode_run)    
 
-    parser_run.add_argument('--instrument', dest='instrument', default=None)
-    parser_run.add_argument('--parameters', dest='reqs', default=None)
-    parser_run.add_argument('--requirements', dest='reqs', default=None)
+    parser_run.add_argument('-c', '--task-control', dest='reqs', help='configuration file of the processing task', metavar='FILE')
+    parser_run.add_argument('-r', '--requirements', dest='reqs', help='alias for --task-control', metavar='FILE')
+    parser_run.add_argument('-i','--instrument', dest='insconf', default="default", help='name of an instrument configuration')
+    parser_run.add_argument('-p','--pipeline', dest='pipe_name', 
+        help='name of a pipeline')
     parser_run.add_argument('--basedir', action="store", dest="basedir", 
-                      default=os.getcwd())
-    # FIXME: It is questionable if this flag should be used or not
-    parser_run.add_argument('--datadir', action="store", dest="datadir")
-    parser_run.add_argument('--resultsdir', action="store", dest="resultsdir")
-    parser_run.add_argument('--workdir', action="store", dest="workdir")    
+                      default=os.getcwd(),
+        help='path to create the following directories')
+    parser_run.add_argument('--datadir', action="store", dest="datadir", 
+        help='path to directory containing pristine data')
+    parser_run.add_argument('--resultsdir', action="store", dest="resultsdir",
+        help='path to directory to store results')
+    parser_run.add_argument('--workdir', action="store", dest="workdir",
+        help='path to directory containing intermediate files')
     parser_run.add_argument('--cleanup', action="store_true", dest="cleanup", 
-                      default=False)
-    parser_run.add_argument('obsblock')
+                    default=False, help='cleanup workdir on exit [disabled]')
+    parser_run.add_argument('obsresult', help='file with the observation result')
     
     args = parser.parse_args(args)
 
@@ -529,37 +334,279 @@ def main(args=None):
             logging.config.fileConfig(args.logging)
         except ConfigParserError:
             logging.config.dictConfig(_loggconf)
-    
-                
+
     _logger = logging.getLogger("numina")
-    
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    instruments, pipelines = init_pipeline_system()
-    for key in instruments:
-        pl = instruments[key]
-        name = pl.name
-        _logger.info('Loaded instrument %s, %s', key, name)
+    init_pipeline_system(namespace)
 
-    for key in pipelines:
-        pl = pipelines[key]
-        version = pl.version
-        instrument = key
-        _logger.info('Loaded pipeline for %s, version %s', instrument, version)
-    captureWarnings(True)
+    global instruments
+    instruments = {}
 
-    # Serialization loaded after pipelines, so that
-    # pipelines can provide their own
-    # serialization format
-    serformat = config.get('numina', 'format')
-    _logger.info('Serialization format is %s', serformat)
-    try:
-        serializer = lookup(serformat)      
-    except LookupError:
-        _logger.info('Serialization format %s is not defined', serformat)
-        raise
+    _logger.debug('Loading instruments and pipelines')
+    for InstrumentClass in BaseInstrument.__subclasses__():
+        _logger.debug('Loading instrument %s', InstrumentClass.name)
+        instruments[InstrumentClass.name] = InstrumentClass
+        for key, conf in InstrumentClass.configurations.items():
+            _logger.debug('with configuration %r', key)
+        for key, pipe in InstrumentClass.pipelines.items():
+            version = pipe.version
+            _logger.debug('%s has pipeline %r, version %s', InstrumentClass.name, key, version)
+
+    args.command(args)
+
+def mode_run(args):
+    '''Recipe execution mode of numina.'''
+    obname = args.obsresult
+    _logger.info("Loading observation result from %r", obname)
+
+    with open(obname) as fd:
+        obsres = obsres_from_dict(yaml.load(fd))
+
+    _logger.info("Identifier of the observation result: %d", obsres.id)
+    ins_name = obsres.instrument
+    _logger.info("instrument name: %s", ins_name)
+    MyInstrumentClass = instruments.get(ins_name)
+    if MyInstrumentClass is None:
+        _logger.error('instrument %r does not exist', ins_name)
+        sys.exit(1)
+    _logger.debug('instrument class is %s', MyInstrumentClass)
+
+    if args.insconf is not None:
+        _logger.debug("configuration from CLI is %r", args.insconf)
+        ins_conf = args.insconf
+    else:
+        ins_conf = obsres.configuration
+
+    _logger.info('loading instrument configuration %r', ins_conf)
+    my_ins_conf = MyInstrumentClass.configurations.get(ins_conf)
+
+    if my_ins_conf:
+        _logger.debug('instrument configuration object is %r', my_ins_conf)
+    else:
+        # Trying to open a file
+        try:
+            with open(ins_conf) as fd:
+                values = yaml.load(fd)
+            if values is None:
+                _logger.warning('%r is empty', ins_conf)
+                values = {}
+            else:
+                # FIXME this file should be validated
+                _logger.warning('loading no validated instrument configuration')
+                _logger.warning('you were warned')
+            
+            ins_conf = values.get('name', ins_conf)
+            my_ins_conf = InstrumentConfiguration(ins_conf, values)
+
+            # The new configuration must not overwrite existing configurations
+            if ins_conf not in MyInstrumentClass.configurations:
+                 MyInstrumentClass.configurations[ins_conf] = my_ins_conf
+            else:
+                _logger.error('a configuration already exists %r, exiting', ins_conf)
+            sys.exit(1)
+
+        except IOError:
+            _logger.error('instrument configuration %r does not exist', ins_conf)
+            sys.exit(1)
+
+    my_ins = MyInstrumentClass(ins_conf)
+
+    if args.pipe_name is not None:
+        _logger.debug("pipeline from CLI is %r", args.pipe_name)
+        pipe_name = args.pipe_name
+    else:
+        pipe_name = obsres.pipeline
+        _logger.debug("pipeline from ObsResult is %r", pipe_name)
+
+    my_pipe = MyInstrumentClass.pipelines.get(pipe_name)
+    if my_pipe is None:
+        _logger.error('instrument %r does not have pipeline named %r', ins_name, pipe_name)
+        sys.exit(1)
+
+    _logger.info('loading pipeline %r', pipe_name)
+    _logger.debug('pipeline object is %s', my_pipe)
     
-    args.command(serializer, args)
+    obs_mode = obsres.mode
+    _logger.info("observing mode: %r", obs_mode)
+
+    MyRecipeClass = my_pipe.recipes.get(obs_mode)
+    if MyRecipeClass is None:
+        _logger.error('pipeline %r does not have recipe to process %r obs mode', 
+                            pipe_name, obs_mode)
+        sys.exit(1)
+    _logger.debug('recipe class is %s', MyRecipeClass)
+
+    logger_control = dict(logfile='processing.log',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            enabled=True)
+                
+    task_control = dict(requirements={}, products={}, logger=logger_control)
+    task_control_loaded = {}
+
+    # Read task_control from args.reqs
+    if args.reqs is not None:
+        _logger.info('reading task control from %s', args.reqs)
+        with open(args.reqs, 'r') as fd:
+            task_control_loaded = yaml.load(fd)
+            # backward compatibility with 'parameters' key
+            if 'parameters' in task_control_loaded:
+                if 'requirements' not in task_control_loaded:
+                    _logger.warning("'requirements' missing, using 'parameters'")
+                    task_control_loaded['requirements'] = task_control_loaded['parameters']
+
+    for key in task_control:
+        if key in task_control_loaded:
+            task_control[key].update(task_control_loaded[key])
+
+    _logger.debug('parsing requirements')
+    rp = RequirementParser(MyRecipeClass)
+    try:
+        requires = rp.parse(task_control['requirements'], validate=False)
+    except ValidationError as error:
+        _logger.error('%s, exiting', error)
+        sys.exit(1)
+    except RequirementError as error:
+        _logger.error('%s, exiting', error)
+        sys.exit(1)
+
+    for i in MyRecipeClass.__requires__:
+        _logger.info("%r is %r", i.dest, getattr(requires, i.dest))
+
+    _logger.debug('parsing products')
+    for req in MyRecipeClass.__provides__:
+        _logger.info('recipe provides %r', req)
+
+    if logger_control['enabled']:
+        _logger.debug('custom logger file: %s', logger_control['logfile'])
+        _logger.debug('custom logger format: %s', logger_control['format'])
+    else:
+        _logger.debug('custom logger file disabled')
+
+    _logger.debug('frames in observation result')
+    for v in obsres.frames:
+        _logger.debug('%r', v)
+
+    if args.workdir is None:
+        args.workdir = os.path.join(args.basedir, '_work')
+
+    args.workdir = os.path.abspath(args.workdir)
+
+    if args.resultsdir is None:
+        args.resultsdir = os.path.join(args.basedir, '_results')
+
+    args.resultsdir = os.path.abspath(args.resultsdir)
+
+    if args.datadir is None:
+        args.datadir = os.path.join(args.basedir, '_data')
+
+    args.datadir = os.path.abspath(args.datadir)
+
+    runinfo = {}
+    runinfo['runner'] = 'numina'
+    runinfo['runner_version'] = __version__
+    runinfo['data_dir'] = args.datadir
+    runinfo['work_dir'] = args.workdir
+    runinfo['results_dir'] = args.resultsdir
+    runinfo['pipeline'] = pipe_name
+
+    _logger.debug('check datadir for pristine files: %r', runinfo['data_dir'])
+    
+    make_sure_path_doesnot_exist(runinfo['work_dir'])
+    _logger.debug('check workdir for working: %r', runinfo['work_dir']) 
+    make_sure_path_exists(runinfo['work_dir'])
+
+    make_sure_path_doesnot_exist(runinfo['results_dir'])
+    _logger.debug('check resultsdir to store results %r', runinfo['results_dir'])
+    make_sure_path_exists(runinfo['results_dir'])
+
+    _logger.info('copying files from %r to %r', runinfo['data_dir'], runinfo['work_dir'])
+    try:
+        _logger.debug('copying files from Observation Result')
+        nframes = []
+        for f in obsres.frames:
+            complete = os.path.abspath(os.path.join(runinfo['data_dir'], f.filename))
+            _logger.debug('copying %r to %r', f.filename, runinfo['work_dir'])
+            shutil.copy(complete, runinfo['work_dir'])
+        _logger.debug('copying files from Requirements')
+        for i in MyRecipeClass.__requires__:
+            if isinstance(i.type, FrameDataProduct):
+                value = getattr(requires, i.dest)
+                if value is not None:
+                    _logger.debug('copying %r to %r', value.filename, runinfo['work_dir'])
+                    complete = os.path.abspath(os.path.join(runinfo['data_dir'], value.filename))
+                    shutil.copy(complete, runinfo['work_dir'])
+    except (OSError, IOError) as exception:
+        _logger.error('%s', exception)
+        sys.exit(1)
+
+    # Creating custom logger file
+    _recipe_logger_name = 'numina.recipes'
+    _recipe_logger = logging.getLogger(_recipe_logger_name)
+    if logger_control['enabled']:
+        logfile = os.path.join(runinfo['results_dir'], logger_control['logfile'])
+        logformat = logger_control['format']
+        fh = create_recipe_file_logger(_recipe_logger, logfile, logformat)
+    else:
+        fh = logging.NullHandler()
+
+    _recipe_logger.addHandler(fh)
+
+    # Running the recipe
+    # we catch most exceptions
+    try:
+        TIMEFMT = '%FT%T'
+        _logger.info('creating the recipe')
+        recipe = MyRecipeClass()
+        recipe.configure(instrument=my_ins)
+        runinfo['recipe'] = recipe.__class__.__name__
+        runinfo['recipe_full_name'] = fully_qualified_name(recipe.__class__)
+        runinfo['recipe_version'] = recipe.__version__
+
+        _logger.debug('cwd to workdir')
+        csd = os.getcwd()
+        task = ProcessingTask()
+        os.chdir(runinfo['work_dir'])
+
+        _logger.info('running recipe')
+        now1 = datetime.datetime.now()
+        runinfo['time_start'] = now1.strftime(TIMEFMT)
+        result = recipe(obsres, requires)
+        now2 = datetime.datetime.now()
+        runinfo['time_end'] = now2.strftime(TIMEFMT)
+        runinfo['time_running'] = now2 - now1
+        _logger.info('result: %r', result)
+
+
+        observation = {}
+        observation['mode'] = obsres.mode
+        observation['observing_result'] = obsres.id
+        observation['instrument'] = obsres.instrument
+        observation['instrument_configuration'] = ins_conf
+        
+        task.result = result
+        task.runinfo = runinfo
+        task.observation = observation
+        
+        # back to were we start
+        os.chdir(csd)
+
+        _logger.debug('cwd to resultdir: %r', runinfo['results_dir'])
+        os.chdir(runinfo['results_dir'])
+        _logger.info('storing result')
+
+        result.suggest_store(**task_control['products'])
+
+        with open('result.txt', 'w+') as fd:
+            yaml.dump(task.__dict__, fd)
+        
+        _logger.debug('cwd to original path: %r', csd)
+        os.chdir(csd)
+    except StandardError as error:
+        _logger.error('finishing with errors: %s', error)
+    finally:
+        _recipe_logger.removeHandler(fh)
 
 if __name__ == '__main__':
     main()
+
