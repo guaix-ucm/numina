@@ -1,3 +1,9 @@
+Version 0.9.0
+Changes:
+ * Rewritten plugin load system
+ * Instrument, Pipeline and Recipe classes changed
+ * New CLI interface
+
 Version 0.8.7
 Bugfixes:
  * FrameInfo can be read from a list or string
