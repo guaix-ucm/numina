@@ -27,11 +27,11 @@
 .. automodule:: numina.core.products
    :members:
 
-:mod:`numina.core.recipeinput` --- 
+:mod:`numina.core.recipereqs` --- 
 ==================================================
 
-.. automodule:: numina.core.recipeinput
-   :synopsis:  Base classes for Recipe Inputs
+.. automodule:: numina.core.recipereqs
+   :synopsis:  Base classes for Recipe Requirements
 
 :mod:`numina.core.reciperesult` --- 
 ==================================================
