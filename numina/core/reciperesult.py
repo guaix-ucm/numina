@@ -32,16 +32,16 @@ class Product(object):
             product_type = product_type()
 
         if isinstance(product_type, Optional):
-            self.product_type = product_type.product_type
+            self.type = product_type.product_type
             self.optional = True
         elif isinstance(product_type, DataProduct):
-            self.product_type = product_type
+            self.type = product_type
             self.optional = optional
         else:
             raise TypeError('product_type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.product_type, self.dest)
+        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
 
 
 class Optional(object):
@@ -51,7 +51,7 @@ class Optional(object):
             product_type = product_type()
 
         if isinstance(product_type, DataProduct):
-            self.product_type = product_type
+            self.type = product_type
         else:
             raise TypeError('product_type must be of class DataProduct')
 
@@ -90,11 +90,11 @@ class RecipeResult(BaseRecipeResult):
                 # validate
                 val = kwds[key]
                 if prod.validate:
-                    prod.product_type.validate(val)
-                val = prod.product_type.store(val)
+                    prod.type.validate(val)
+                val = prod.type.store(val)
                 setattr(self, key, val)
             elif not prod.optional:
-                raise ValueError('required DataProduct %r not defined' % prod.product_type.__class__.__name__)
+                raise ValueError('required DataProduct %r not defined' % prod.type.__class__.__name__)
             else:
                 # optional product, skip
                 setattr(self, key, None)
@@ -112,7 +112,7 @@ class RecipeResult(BaseRecipeResult):
     def suggest_store(self, **kwds):
         for k in kwds:
             mm = getattr(self, k)
-            self._products[k].product_type.suggest(mm, kwds[k])
+            self._products[k].type.suggest(mm, kwds[k])
 
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):

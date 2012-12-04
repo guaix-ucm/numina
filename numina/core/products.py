@@ -28,6 +28,10 @@ class ValidationError(Exception):
     pass
 
 class DataProduct(object):
+
+    def __init__(self, default=None):
+        self.default = default
+
     def validate(self, obj):
         return True
 

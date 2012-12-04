@@ -86,7 +86,7 @@ class RequirementParser(object):
 
         return names
 
-    def print_requirements(self):
+    def print_requirements(self, pad=''):
         
         for req in self.requirements:
             if req.dest is None:
@@ -103,7 +103,7 @@ class RequirementParser(object):
             if req.default is not None:
                 dispname = dispname + '=' + str(req.default)
         
-            print("%s [%s]" % (dispname, req.description))
+            print("%s%s [%s]" % (pad, dispname, req.description))
 
 class _RequirementParser(object):
     
