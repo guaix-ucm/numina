@@ -18,21 +18,38 @@
 # 
 
 '''
-Recipe inputs
+Recipe requirements
 '''
 
 from .requirements import Requirement
 
-class RecipeInput(object):
+class RecipeRequirements(object):
     def __new__(cls, *args, **kwds):
         cls._requirements = {}
         for name in dir(cls):
             if not name.startswith('_'):
                 val = getattr(cls, name)
                 if isinstance(val, Requirement):
-                    cls._products[name] = val
+                    cls._requirements[name] = val
 
-        return super(RecipeInput, cls).__new__(cls, *args, **kwds)
+        return super(RecipeRequirements, cls).__new__(cls)
+
+    def __init__(self, *args, **kwds):
+        for key, req in self._requirements.iteritems():
+            if key in kwds:
+                # validate
+                val = kwds[key]
+                #if req.validate:
+                #    req.type.validate(val)
+                val = req.type.store(val)
+                setattr(self, key, val)
+            elif not req.optional:
+                raise ValueError(' %r not defined' % req.type.__class__.__name__)
+            else:
+                # optional product, skip
+                setattr(self, key, None)
+
+        super(RecipeRequirements, self).__init__(self, *args, **kwds)
 
 class requires(object):
     '''Decorator to add the list of required parameters to recipe'''
@@ -46,17 +63,17 @@ class requires(object):
             klass.__requires__ = list(self.requirements)
         return klass
 
-class define_input(object):
-    def __init__(self, input_):
-        if not issubclass(input_, RecipeInput):
+class define_requirements(object):
+    def __init__(self, requirementClass):
+        if not issubclass(requirementClass, RecipeRequirements):
             raise TypeError
 
-        self.klass = input_
+        self.klass = requirementClass
         self.requires = []
 
-        for i in dir(input_):
+        for i in dir(requirementClass):
             if not i.startswith('_'):
-                val = getattr(input_, i)
+                val = getattr(requirementClass, i)
                 if isinstance(val, Requirement):
                     if val.dest is None:
                         val.dest = i
@@ -64,5 +81,5 @@ class define_input(object):
 
     def __call__(self, klass):
         klass.__requires__ = self.requires
-        klass.RecipeInput = self.klass
+        klass.RecipeRequirements = self.klass
         return klass

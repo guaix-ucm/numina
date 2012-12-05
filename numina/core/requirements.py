@@ -52,9 +52,60 @@ class RequirementLookup(object):
         elif req.default is not None:
             return req.default
         else:
-            raise RequirementError('Requirement %s must be defined' % req.dest)
+            raise RequirementError('Requirement %r must be defined' % req.dest)
 
 class RequirementParser(object):
+    
+    def __init__(self, recipe, lookupclass=RequirementLookup):
+        if not inspect.isclass(recipe):
+            recipe = recipe.__class__
+        self.requirements = recipe.__requires__
+        self.rClass = recipe.RecipeRequirements
+        self.lc = lookupclass()
+
+    def parse(self, metadata, validate=False):
+        parameters = {}
+        
+        for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
+            value = self.lc.lookup(req, metadata)
+            if req.choices and (value not in req.choiches):
+                raise RequirementError('%s not in %s' % (value, req.choices))
+
+            # Build value
+            mm = req.type.store(value)
+            # validate
+            if req.validate or validate:
+                if mm is not None and not req.optional:
+                    req.type.validate(mm)
+                
+            parameters[req.dest] = mm
+        names = self.rClass(**parameters)
+
+        return names
+
+    def print_requirements(self, pad=''):
+        
+        for req in self.requirements:
+            if req.dest is None:
+                # FIXME: add warning or something here
+                continue
+            if req.hidden:
+                # I Do not want to print it
+                continue
+            dispname = req.dest
+    
+            if req.optional:
+                dispname = dispname + '(optional)'
+    
+            if req.default is not None:
+                dispname = dispname + '=' + str(req.default)
+        
+            print("%s%s [%s]" % (pad, dispname, req.description))
+
+class _RequirementParser(object):
     
     def __init__(self, requirements, lookupclass=RequirementLookup):
         self.requirements = requirements
@@ -84,11 +135,13 @@ class RequirementParser(object):
             value = self.lc.lookup(req, metadata)
             if req.choices and (value not in req.choiches):
                 raise RequirementError('%s not in %s' % (value, req.choices))
+
+            # Build value
+            mm = req.type.store(value)
                 
-            parameters[req.dest]= value
+            parameters[req.dest] = mm
         names = Names(**parameters)
 
-        setattr(names, '_parser', 'XX')
         return names
 
     def print_requirements(self):
@@ -116,12 +169,20 @@ class Requirement(object):
         :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, description, value=None, optional=False, type=None,
+    def __init__(self, description, value=None, optional=False, 
+                 validate=False, type=None,
                  dest=None, hidden=False, choices=None):
         self.default = value
         self.description = description
         self.optional = optional
-        self.type = type
+        self.validate = validate
+
+        if type is None:
+            self.type = None
+        elif inspect.isclass(type):
+            self.type = type()
+        else:
+            self.type = type
         self.dest = dest
         self.hidden = hidden
         self.choices = choices
@@ -140,11 +201,11 @@ class Parameter(Requirement):
 class DataProductRequirement(Requirement):
     def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
         
+        super(DataProductRequirement, self).__init__(description, optional=optional, 
+                                                     type=valueclass, dest=dest, hidden=hidden)
         if not inspect.isclass(valueclass):
             valueclass = valueclass.__class__
              
-        if not issubclass(valueclass, DataProduct):
+        if not isinstance(self.type, DataProduct):
             raise TypeError('valueclass must derive from DataProduct')
         
-        super(DataProductRequirement, self).__init__(description, optional=optional, 
-                                                     type=valueclass, dest=dest, hidden=hidden)

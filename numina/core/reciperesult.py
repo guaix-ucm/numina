@@ -24,23 +24,24 @@ from .products import DataProduct
 
 class Product(object):
     '''Product holder for RecipeResult.'''
-    def __init__(self, product_type, optional=False, validate=True, *args, **kwds):
+    def __init__(self, product_type, optional=False, validate=True, 
+            dest=None, *args, **kwds):
 
         self.validate = validate
         if inspect.isclass(product_type):
             product_type = product_type()
 
         if isinstance(product_type, Optional):
-            self.product_type = product_type.product_type
+            self.type = product_type.product_type
             self.optional = True
         elif isinstance(product_type, DataProduct):
-            self.product_type = product_type
+            self.type = product_type
             self.optional = optional
         else:
             raise TypeError('product_type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Product(type=%r)' % self.product_type.__class__.__name__
+        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
 
 
 class Optional(object):
@@ -50,13 +51,16 @@ class Optional(object):
             product_type = product_type()
 
         if isinstance(product_type, DataProduct):
-            self.product_type = product_type
+            self.type = product_type
         else:
             raise TypeError('product_type must be of class DataProduct')
 
 class BaseRecipeResult(object):
     def __new__(cls, *args, **kwds):
         return super(BaseRecipeResult, cls).__new__(cls)
+    
+    def suggest_store(self, *args, **kwds):
+        pass
 
 class ErrorRecipeResult(BaseRecipeResult):
     def __init__(self, errortype, message, traceback):
@@ -86,11 +90,11 @@ class RecipeResult(BaseRecipeResult):
                 # validate
                 val = kwds[key]
                 if prod.validate:
-                    prod.product_type.validate(val)
-                val = prod.product_type.store(val)
+                    prod.type.validate(val)
+                val = prod.type.store(val)
                 setattr(self, key, val)
             elif not prod.optional:
-                raise ValueError('required DataProduct %r not defined' % prod.product_type.__class__.__name__)
+                raise ValueError('required DataProduct %r not defined' % prod.type.__class__.__name__)
             else:
                 # optional product, skip
                 setattr(self, key, None)
@@ -104,6 +108,11 @@ class RecipeResult(BaseRecipeResult):
             val = getattr(self, key)
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
+
+    def suggest_store(self, **kwds):
+        for k in kwds:
+            mm = getattr(self, k)
+            self._products[k].type.suggest(mm, kwds[k])
 
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):
@@ -120,24 +129,22 @@ def transmit(result):
         raise TypeError('Unknown subclass of RecipeResult')
 
 class define_result(object):
-    def __init__(self, result):
-        if not issubclass(result, BaseRecipeResult):
+    def __init__(self, resultClass):
+        if not issubclass(resultClass, BaseRecipeResult):
             raise TypeError
 
-        self.provides = {}
-        self.klass = result
+        self.provides = []
+        self.klass = resultClass
 
-        for i in dir(result):
-            if not i.startswith('_'):
-                val = getattr(result, i)
+        for k, v in resultClass.__dict__.iteritems():
+            if not k.startswith('_') and not inspect.isroutine(v):
+                val = getattr(resultClass, k)
+                val.dest = k
                 if isinstance(val, Product):
-                    # provides should be a dictionary...
-                    #print i, val.product_type, val.optional
-                    self.provides[i] = val.product_type.__class__
+                    self.provides.append(val)
 
     def __call__(self, klass):
-        if not hasattr(klass, '__provides__'):
-            klass.__provides__ = self.provides
+        klass.__provides__ = self.provides
 
         klass.RecipeResult = self.klass
         return klass

@@ -21,6 +21,7 @@
 Results of the Observing Blocks 
 '''
 
+from dataframe import DataFrame
 
 class FrameInformation(object):
     '''Information of a frame observed during a block.'''
@@ -41,6 +42,7 @@ class ObservationResult(object):
         self.instrument = None
         self.frames = [] # list of FrameInformation
         self.children = [] # other ObservationResult
+        self.pipeline = 'default'
         
 
 def frameinfo_from_list(values):
@@ -56,6 +58,15 @@ def frameinfo_from_list(values):
         frameinfo.itype = values[1]
     return frameinfo
 
+def dataframe_from_list(values):
+    '''Build a DataFrame object from a list.'''
+    if(isinstance(values, basestring)):
+        return DataFrame(filename=values)
+    else:
+        # FIXME: modify when format is changed
+        # For this format
+        return DataFrame(filename=values[0], itype=values[1])
+
 def obsres_from_dict(values):
     '''Build a ObservationResult object from a dictionary.'''
     obsres = ObservationResult()
@@ -64,6 +75,7 @@ def obsres_from_dict(values):
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
-    obsres.frames = [frameinfo_from_list(val) for val in values['frames']]
+    obsres.pipeline = values.get('pipeline', 'default')
+    obsres.frames = [dataframe_from_list(val) for val in values['frames']]
     
     return obsres

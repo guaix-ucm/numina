@@ -20,7 +20,6 @@
 '''
 Basic Data Products
 '''
-
 import pyfits
 
 from .dataframe import DataFrame
@@ -29,17 +28,30 @@ class ValidationError(Exception):
     pass
 
 class DataProduct(object):
+
+    def __init__(self, default=None):
+        self.default = default
+
     def validate(self, obj):
         return True
 
     def store(self, obj):
         return obj
 
+    def suggest(self, obj, suggestion):
+        return obj
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s()" % (sclass, )
+
 class FrameDataProduct(DataProduct):
 
     def store(self, obj):
 
-        if isinstance(obj, basestring):
+        if obj is None:
+            return None
+        elif isinstance(obj, basestring):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj
@@ -51,6 +63,7 @@ class FrameDataProduct(DataProduct):
         if isinstance(obj, basestring):
             # check that this is a FITS file
             # try - open
+            # FIXME
             pass
         elif isinstance(obj, pyfits.HDUList):
             # is an HDUList
@@ -59,4 +72,19 @@ class FrameDataProduct(DataProduct):
             #is a DataFrame
             pass
         else:
-            raise ValidationError('object is not a valid FrameDataProduct')
+            raise ValidationError('%r is not a valid FrameDataProduct' % obj)
+
+    def suggest(self, obj, suggestion):
+        if not isinstance(suggestion, basestring):
+            raise TypeError('suggestion must be a string, not %r' % suggestion)
+            return obj
+        if isinstance(obj, basestring):
+            # check that this is a FITS file
+            # try - open
+            # FIXME
+            pass
+        elif isinstance(obj, pyfits.HDUList):
+            obj[0].update('filename', suggestion) 
+        elif isinstance(obj, DataFrame):
+            obj.filename = suggestion
+        return obj

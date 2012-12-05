@@ -21,13 +21,14 @@ from .recipes import BaseRecipe
 from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import init_pipeline_system, BaseInstrument, BasePipeline
+from .pipeline import InstrumentConfiguration
 from .pipeline import get_recipe, get_instruments
 from .pipeline import import_object
 from .requirements import RequirementParser, DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProduct, FrameDataProduct
 from numina.exceptions import RecipeError
-from .recipeinput import RecipeInput, requires, define_input
+from .recipereqs import RecipeRequirements, requires, define_requirements
 from .reciperesult import RecipeResult, provides, Product, Optional
 from .reciperesult import define_result
 from .oresult import obsres_from_dict
