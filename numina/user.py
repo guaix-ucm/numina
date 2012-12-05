@@ -332,8 +332,8 @@ def main(args=None):
         try:
             args.logging = config.get('numina', 'logging')
             logging.config.fileConfig(args.logging)
-        except ConfigParserError:
-            logging.config.dictConfig(_loggconf)
+        except configparser.Error:
+            logging.config.dictConfig(_logconf)
 
     _logger = logging.getLogger("numina")
     _logger.info('Numina simple recipe runner version %s', __version__)
