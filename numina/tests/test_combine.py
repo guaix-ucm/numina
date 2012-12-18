@@ -20,7 +20,7 @@
 import unittest
 import itertools
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 
 from numina.array.combine import generic_combine
 from numina.array.combine import mean, median, minmax, quantileclip

@@ -22,7 +22,7 @@ from __future__ import print_function
 import logging
 from itertools import imap, product
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage

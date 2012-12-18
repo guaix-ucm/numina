@@ -23,7 +23,7 @@
 import unittest
 import math
 
-import numpy as np # pylint: disable-msgs=E1101
+import numpy as np
 from scipy.special import erf
 
 from numina.instrument.profiles import GaussProfile

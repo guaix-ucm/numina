@@ -38,7 +38,7 @@ _logger = logging.getLogger('numina')
 
 def list_recipes():
     '''List all defined recipes'''
-    return BaseRecipe.__subclasses__() # pylint: disable-msgs=E1101
+    return BaseRecipe.__subclasses__()
     
 class BaseRecipe(object):
     '''Base class for all instrument recipes'''

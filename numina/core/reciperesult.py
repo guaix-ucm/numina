@@ -30,6 +30,7 @@ class Product(object):
         self.validate = validate
         if inspect.isclass(product_type):
             product_type = product_type()
+        self.dest = dest
 
         if isinstance(product_type, Optional):
             self.type = product_type.product_type

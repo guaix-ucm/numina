@@ -159,6 +159,8 @@ class ArrayDetector(BaseConectable):
     '''A bidimensional detector.'''
     def __init__(self, shape, amplifiers, 
                  bias=100.0, 
+                 dark=0.0,
+                 flat=1.0,
                  reset_value=0.0, reset_noise=0.0,
                  readout_time=0.0,
                  outtype='int32'):
@@ -168,6 +170,8 @@ class ArrayDetector(BaseConectable):
         self.shape = shape
         self.amplifiers = amplifiers
         self.bias = bias
+        self.dark = dark
+        self.flat = flat
         self.reset_value = reset_value
         self.reset_noise = reset_noise
         self.reset_time = 0.0
@@ -222,10 +226,9 @@ class ArrayDetector(BaseConectable):
             
 class CCDDetector(ArrayDetector):
     def __init__(self, shape, amplifiers, bias=100, dark=0.0):
-        ArrayDetector.__init__(self, shape, amplifiers, bias)
+        super(CCDDetector, self).__init__(shape, amplifiers,
+                    bias=bias, dark=dark)
 
-        self.dark = dark
-        
         self.meta['readmode'] = 'fast'
         self.meta['readscheme'] = 'perline'
 
@@ -256,15 +259,14 @@ class nIRDetector(ArrayDetector):
     '''A generic nIR bidimensional detector.'''
     
     def __init__(self, shape, amplifiers, dark=0.0, 
-                 pedestal=0., flat=1.0, 
+                 pedestal=0.0, flat=1.0, 
                  resetval=1000, resetnoise=0.0):
-        ArrayDetector.__init__(self, shape, amplifiers, 
-                               pedestal)
-
-        self._dark = numberarray(dark, self.shape)
-        self._dark[self._dark < 0] = 0.0 
+        super(nIRDetector, self).__init__(shape, 
+                    amplifiers, 
+                    pedestal, 
+                    dark=dark,
+                    flat=flat)
         
-        self._flat = numberarray(flat, self.shape)
         self.readout_time = 0
         self.reset_time = 0        
 
@@ -272,16 +274,17 @@ class nIRDetector(ArrayDetector):
 
         self._last_read += dt
         source = self.mapper.sample(self.source)
-        source *= self._flat 
-        self.buffer += numpy.random.poisson((self._dark + source) * dt).astype('float')
+        source *= self.flat 
+        sint = self.dark * numpy.ones(self.shape, dtype='int') + source
+        self.buffer += numpy.random.poisson(sint * dt).astype('float')
     
     def readout(self):
         '''Read the detector.'''
         data = self.buffer.copy()
         data[data < 0] = 0
         source = self.mapper.sample(self.source)
-        source *= self._flat * self.readout_time
-        data += numpy.random.poisson((self._dark + source) * self.reset_time)
+        source *= self.flat * self.readout_time
+        data += numpy.random.poisson((self.dark + source) * self.reset_time)
         for amp in self.amplifiers:
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)

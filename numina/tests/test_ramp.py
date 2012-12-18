@@ -235,14 +235,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
     def test_results1(self):
         '''Test we obtain correct values in RAMP mode'''
         
-            
-    def test_results1(self):
-        '''Test we obtain correct values in RAMP mode'''
-        
-            
-    def test_results1(self):
-        '''Test we obtain correct values in RAMP mode'''
-        
         res = ramp_array(self.data, self.dt, self.gain, self.ron,
                     saturation=self.saturation, 
                     nsig=self.nsig, 

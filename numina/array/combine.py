@@ -19,7 +19,7 @@
 
 '''Different methods for combining lists of arrays.'''
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 
 from numina.array._combine import generic_combine as internal_generic_combine
 from numina.array._combine import sigmaclip_method, quantileclip_method, minmax_method
