@@ -56,12 +56,12 @@ _logconf = {'version': 1,
   'handlers': {'unadorned_console':
                {'class': 'logging.StreamHandler',                     
                 'formatter': 'unadorned',
-                'level': 'INFO'
+                'level': 'DEBUG'
                  },
                'simple_console':
                {'class': 'logging.StreamHandler',                     
                 'formatter': 'simple',
-                'level': 'INFO'
+                'level': 'DEBUG'
                  },
                'simple_console_warnings_only':
                {'class': 'logging.StreamHandler',                     
@@ -71,11 +71,11 @@ _logconf = {'version': 1,
                'detailed_console':
                {'class': 'logging.StreamHandler',                     
                 'formatter': 'detailed',
-                'level': 'INFO'
+                'level': 'DEBUG'
                  },
                },
-  'loggers': {'numina': {'handlers': ['simple_console'], 'level': 'NOTSET', 'propagate': False},
-              'numina.recipes': {'handlers': ['detailed_console'], 'level': 'NOTSET', 'propagate': False},
+  'loggers': {'numina': {'handlers': ['simple_console'], 'level': 'DEBUG', 'propagate': False},
+              'numina.recipes': {'handlers': ['detailed_console'], 'level': 'DEBUG', 'propagate': False},
               },
   'root': {'handlers': ['detailed_console'], 'level': 'NOTSET'}
 }
