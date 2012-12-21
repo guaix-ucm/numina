@@ -41,10 +41,7 @@ class RecipeRequirements(object):
                 val = kwds[key]
                 #if req.validate:
                 #    req.type.validate(val)
-                # FIXME: better create a DefaultType
-                # that leaves value unchanged
-                if req.type is not None:
-                    val = req.type.store(val)
+                val = req.type.store(val)
                 setattr(self, key, val)
             elif not req.optional:
                 raise ValueError(' %r not defined' % req.type.__class__.__name__)

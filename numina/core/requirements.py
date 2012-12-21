@@ -65,12 +65,7 @@ class RequirementParser(object):
                 raise RequirementError('%s not in %s' % (value, req.choices))
 
             # Build value
-            # FIXME: better create a DefaultType
-            # that leaves value unchanged
-            if req.type is not None:
-                mm = req.type.store(value)
-            else:
-                mm = value
+            mm = req.type.store(value)
             # validate
             if req.validate or validate:
                 if mm is not None and not req.optional:
@@ -115,7 +110,7 @@ class Requirement(object):
         self.validate = validate
 
         if type is None:
-            self.type = None
+            self.type = DataProduct()
         elif inspect.isclass(type):
             self.type = type()
         else:
