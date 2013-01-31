@@ -30,7 +30,7 @@ from numina.astrotime import datetime_to_mjd
 from .base import BaseConectable
 from .mapping import Mapper
 
-Amplifier = namedtuple('Amplifier', ['shape', 'gain', 'ron', 'wdepth'])
+Channel = namedtuple('Channel', ['shape', 'gain', 'ron', 'wdepth'])
 
 class DAS(object):
     '''Data Acquisition System.'''
@@ -157,18 +157,19 @@ class RampReadoutMode(ReadoutMode):
 
 class ArrayDetector(BaseConectable):
     '''A bidimensional detector.'''
-    def __init__(self, shape, amplifiers, 
+    def __init__(self, shape, channels, 
                  bias=100.0, 
                  dark=0.0,
                  flat=1.0,
                  reset_value=0.0, reset_noise=0.0,
+                 bad_pixel_mask=None,
                  readout_time=0.0,
                  outtype='int32'):
         
         super(ArrayDetector, self).__init__()
         
         self.shape = shape
-        self.amplifiers = amplifiers
+        self.channels = channels
         self.bias = bias
         self.dark = dark
         self.flat = flat
@@ -178,24 +179,39 @@ class ArrayDetector(BaseConectable):
         
         self.readout_time = readout_time
         self._last_read = 0.0
+        self.bad_pixel_mask = bad_pixel_mask
         
         self.buffer = numpy.zeros(self.shape)
         self.outtype = outtype
         self.mapper = Mapper(shape)
         
+        self.dead_pixel_value = 0
+        self.hot_pixel_value = 65000
+
         self.meta = TreeDict()
         
     def readout(self):
         '''Read the detector.'''
         data = self.buffer.copy()
         data[data < 0] = 0
-        data += numpy.random.poisson(self.dark * self.reset_time)
-        for amp in self.amplifiers:
+        source = self.mapper.sample(self.source)
+        source *= self.flat * self.readout_time
+        data += numpy.random.poisson((self.dark + source) * self.reset_time)
+        for amp in self.channels:
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
             data[amp.shape] /= amp.gain
         data += self.bias
+
         data = data.astype(self.outtype)
+
+        if self.bad_pixel_mask is not None:
+            # processing badpixels:
+            data = numpy.where(self.bad_pixel_mask == 1, self.dead_pixel_value, data)
+            data = numpy.where(self.bad_pixel_mask == 2, self.hot_pixel_value, data)
+
+
+
         self._last_read += self.readout_time
 
         return data
@@ -225,9 +241,9 @@ class ArrayDetector(BaseConectable):
 
             
 class CCDDetector(ArrayDetector):
-    def __init__(self, shape, amplifiers, bias=100, dark=0.0):
-        super(CCDDetector, self).__init__(shape, amplifiers,
-                    bias=bias, dark=dark)
+    def __init__(self, shape, channels, bias=100, dark=0.0, bad_pixel_mask=None):
+        super(CCDDetector, self).__init__(shape, channels,
+                    bias=bias, dark=dark, bad_pixel_mask=bad_pixel_mask)
 
         self.meta['readmode'] = 'fast'
         self.meta['readscheme'] = 'perline'
@@ -245,27 +261,26 @@ class CCDDetector(ArrayDetector):
         source *= self.flat
         self.buffer += numpy.random.poisson((self.dark + source) * dt, 
                                size=self.shape).astype('float')
-        
-        
+          
     def readout(self):
         '''Read the CCD detector.'''
         self._last_read += self.readout_time
-        result = ArrayDetector.readout(self)
+        result = super(CCDDetector, self).readout()
         self.reset()
-        # result[result > self._well] = self._well
         return result
 
 class nIRDetector(ArrayDetector):
     '''A generic nIR bidimensional detector.'''
     
-    def __init__(self, shape, amplifiers, dark=0.0, 
-                 pedestal=0.0, flat=1.0, 
+    def __init__(self, shape, channels, dark=0.0, 
+                 pedestal=0.0, flat=1.0, bad_pixel_mask=None,
                  resetval=1000, resetnoise=0.0):
         super(nIRDetector, self).__init__(shape, 
-                    amplifiers, 
+                    channels, 
                     pedestal, 
                     dark=dark,
-                    flat=flat)
+                    flat=flat,
+                    bad_pixel_mask=bad_pixel_mask)
         
         self.readout_time = 0
         self.reset_time = 0        
@@ -280,17 +295,27 @@ class nIRDetector(ArrayDetector):
     
     def readout(self):
         '''Read the detector.'''
+
+        # FIXME: this identical to the base class readout
+
         data = self.buffer.copy()
         data[data < 0] = 0
         source = self.mapper.sample(self.source)
         source *= self.flat * self.readout_time
         data += numpy.random.poisson((self.dark + source) * self.reset_time)
-        for amp in self.amplifiers:
+        for amp in self.channels:
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
             data[amp.shape] /= amp.gain
         data += self.bias
         data = data.astype(self.outtype)
+
+        if self.bad_pixel_mask is not None:
+            # processing badpixels:
+            data = numpy.where(self.bad_pixel_mask == 1, self.dead_pixel_value, data)
+            data = numpy.where(self.bad_pixel_mask == 2, self.hot_pixel_value, data)
+
+
         self._last_read += self.readout_time
         return data
         
