@@ -32,6 +32,10 @@ from .mapping import Mapper
 
 Channel = namedtuple('Channel', ['shape', 'gain', 'ron', 'wdepth'])
 
+PIXEL_VALID = 0
+PIXEL_DEAD = 1
+PIXEL_HOT = 2
+
 class DAS(object):
     '''Data Acquisition System.'''
     def __init__(self, detector):
@@ -64,7 +68,7 @@ class DAS(object):
             data = self.detector.readout()
             alldata.append(data)
 
-        return self.mode.process(alldata, events)
+        return alldata, events
 
     @property
     def meta(self):
@@ -164,10 +168,12 @@ class ArrayDetector(BaseConectable):
                  reset_value=0.0, reset_noise=0.0,
                  bad_pixel_mask=None,
                  readout_time=0.0,
-                 outtype='int32'):
+                 out_dtype='uint16'):
         
         super(ArrayDetector, self).__init__()
-        
+        self.comp_dtype = 'int32'
+        self.out_dtype = out_dtype
+        self.out_dtype_info = numpy.iinfo(self.out_dtype)
         self.shape = shape
         self.channels = channels
         self.bias = bias
@@ -181,12 +187,12 @@ class ArrayDetector(BaseConectable):
         self._last_read = 0.0
         self.bad_pixel_mask = bad_pixel_mask
         
-        self.buffer = numpy.zeros(self.shape)
-        self.outtype = outtype
+        self.buffer = numpy.zeros(self.shape, dtype=self.comp_dtype)
+
         self.mapper = Mapper(shape)
         
-        self.dead_pixel_value = 0
-        self.hot_pixel_value = 65000
+        self.dead_pixel_value = self.out_dtype_info.min
+        self.hot_pixel_value = self.out_dtype_info.max
 
         self.meta = TreeDict()
         
@@ -203,14 +209,14 @@ class ArrayDetector(BaseConectable):
             data[amp.shape] /= amp.gain
         data += self.bias
 
-        data = data.astype(self.outtype)
+        numpy.clip(data, self.out_dtype_info.min, self.out_dtype_info.max, out=data)
+
+        data = data.astype(self.out_dtype)
 
         if self.bad_pixel_mask is not None:
             # processing badpixels:
-            data = numpy.where(self.bad_pixel_mask == 1, self.dead_pixel_value, data)
-            data = numpy.where(self.bad_pixel_mask == 2, self.hot_pixel_value, data)
-
-
+            data = numpy.where(self.bad_pixel_mask == PIXEL_DEAD, self.dead_pixel_value, data)
+            data = numpy.where(self.bad_pixel_mask == PIXEL_HOT, self.hot_pixel_value, data)
 
         self._last_read += self.readout_time
 
@@ -292,32 +298,6 @@ class nIRDetector(ArrayDetector):
         source *= self.flat 
         sint = self.dark * numpy.ones(self.shape, dtype='int') + source
         self.buffer += numpy.random.poisson(sint * dt).astype('float')
-    
-    def readout(self):
-        '''Read the detector.'''
-
-        # FIXME: this identical to the base class readout
-
-        data = self.buffer.copy()
-        data[data < 0] = 0
-        source = self.mapper.sample(self.source)
-        source *= self.flat * self.readout_time
-        data += numpy.random.poisson((self.dark + source) * self.reset_time)
-        for amp in self.channels:
-            if amp.ron > 0:
-                data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
-            data[amp.shape] /= amp.gain
-        data += self.bias
-        data = data.astype(self.outtype)
-
-        if self.bad_pixel_mask is not None:
-            # processing badpixels:
-            data = numpy.where(self.bad_pixel_mask == 1, self.dead_pixel_value, data)
-            data = numpy.where(self.bad_pixel_mask == 2, self.hot_pixel_value, data)
-
-
-        self._last_read += self.readout_time
-        return data
         
 
         
