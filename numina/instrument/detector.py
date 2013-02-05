@@ -81,7 +81,7 @@ class ReadoutMode(object):
 
 class SingleReadoutMode(ReadoutMode):
     def __init__(self, repeat=1):
-        ReadoutMode.__init__(self, 'single', 'perline', 1, repeat)
+        super(SingleReadoutMode, self).__init__('single', 'perline', 1, repeat)
         
     def events(self, exposure):
         return [exposure]
@@ -92,7 +92,7 @@ class SingleReadoutMode(ReadoutMode):
 class CdsReadoutMode(ReadoutMode):
     '''Correlated double sampling readout mode.'''
     def __init__(self, repeat=1):
-        ReadoutMode.__init__(self, 'CDS', 'perline', 1, repeat)
+        super(CdsReadoutMode, self).__init__('CDS', 'perline', 1, repeat)
         
     def events(self, exposure):
         '''
@@ -108,7 +108,7 @@ class CdsReadoutMode(ReadoutMode):
 class FowlerReadoutMode(ReadoutMode):
     '''Fowler sampling readout mode.'''
     def __init__(self, reads, repeat=1, readout_time=0.0):
-        ReadoutMode.__init__(self, 'Fowler', 'perline', reads, repeat)
+        super(FowlerReadoutMode, self).__init__('Fowler', 'perline', reads, repeat)
         self.readout_time = readout_time
         
     def events(self, exposure):
@@ -136,7 +136,7 @@ class FowlerReadoutMode(ReadoutMode):
 class RampReadoutMode(ReadoutMode):
     '''"Up the ramp" sampling readout mode.'''
     def __init__(self, reads, repeat=1):
-        ReadoutMode.__init__(self, 'Ramp', 'perline', reads, repeat)
+        super(RampReadoutMode, self).__init__('Ramp', 'perline', reads, repeat)
         
     def events(self, exposure):
         dt = exposure / (self.reads - 1.)
