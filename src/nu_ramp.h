@@ -32,47 +32,11 @@
 namespace Numina {
 
 template<typename Iterator>
-Iterator kth_smallest(Iterator begin, Iterator end, size_t kth) {
-  typedef typename std::iterator_traits<Iterator>::value_type T;
-	size_t l = 0;
-	size_t m = (end - begin) - 1;
-
-	while (l < m) {
-		T x = *(begin + kth);
-		size_t i = l;
-		size_t j = m;
-		do {
-			while (*(begin + i) < x)
-				++i;
-			while (x < *(begin + j))
-				--j;
-			if (i <= j) {
-				std::swap(*(begin + i), *(begin + j));
-				++i;
-				--j;
-			}
-		} while (i <= j);
-		if (j < kth)
-			l = i;
-		if (kth < i)
-			m = j;
-	}
-
-	return begin + kth;
-}
-
-template<typename Iterator>
 Iterator median_1(Iterator begin, Iterator end) {
         size_t size = end - begin;
-	//std::nth_element(data, data + size / 2, data + size);
-	//median = *(data + size / 2);
-	const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
-	return kth_smallest(begin, end, midpt);
+	std::nth_element(begin, begin + size / 2, end);
+	return begin + size / 2;
 }
-
-} // namespace Numina
-
-namespace Numina {
 
 template<typename Result>
 struct RampResult {

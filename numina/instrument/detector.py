@@ -296,7 +296,7 @@ class nIRDetector(ArrayDetector):
         self._last_read += dt
         source = self.mapper.sample(self.source)
         source *= self.flat 
-        sint = self.dark * numpy.ones(self.shape, dtype='int') + source
+        sint = self.dark * numpy.ones(self.shape, dtype=self.comp_dtype) + source
         self.buffer += numpy.random.poisson(sint * dt).astype('float')
         
 
