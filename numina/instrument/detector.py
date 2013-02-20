@@ -293,6 +293,8 @@ class nIRDetector(ArrayDetector):
                     pedestal, 
                     dark=dark,
                     flat=flat,
+                    reset_value=resetval, 
+                    reset_noise=resetnoise,
                     bad_pixel_mask=bad_pixel_mask)
         
         self.readout_time = 0
