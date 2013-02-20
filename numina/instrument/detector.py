@@ -195,6 +195,9 @@ class ArrayDetector(BaseConectable):
         self.hot_pixel_value = self.out_dtype_info.max
 
         self.meta = TreeDict()
+
+        # Empty nonlinearity
+        self.nonlinearity = lambda x: x
         
     def readout(self):
         '''Read the detector.'''
@@ -203,6 +206,10 @@ class ArrayDetector(BaseConectable):
         source = self.mapper.sample(self.source)
         source *= self.flat * self.readout_time
         data += numpy.random.poisson((self.dark + source) * self.reset_time)
+        
+        # FIXME: apply non-linearity here?
+        data = self.nonlinearity(data)
+
         for amp in self.channels:
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
