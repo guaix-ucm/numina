@@ -209,9 +209,9 @@ class ArrayDetector(BaseConectable):
         data += numpy.random.poisson((self.dark + source) * self.reset_time)
         
         for amp in self.channels:
+            data[amp.shape] /= amp.gain
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
-            data[amp.shape] /= amp.gain
             data[amp.shape] += self.bias
 
         numpy.clip(data, self.out_dtype_info.min, self.out_dtype_info.max, out=data)
