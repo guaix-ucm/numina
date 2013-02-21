@@ -177,27 +177,28 @@ class ArrayDetector(BaseConectable):
         self.shape = shape
         self.channels = channels
         self.bias = bias
-        self.dark = dark
-        self.flat = flat
         self.reset_value = reset_value
         self.reset_noise = reset_noise
         self.reset_time = 0.0
         
         self.readout_time = readout_time
         self._last_read = 0.0
-        self.bad_pixel_mask = bad_pixel_mask
         
         self.buffer = numpy.zeros(self.shape, dtype=self.comp_dtype)
 
+        self.dark = dark * numpy.ones_like(self.buffer)
+        self.flat = flat * numpy.ones_like(self.buffer)
+
         self.mapper = Mapper(shape)
         
+        self.bad_pixel_mask = bad_pixel_mask
         self.dead_pixel_value = self.out_dtype_info.min
         self.hot_pixel_value = self.out_dtype_info.max
 
         self.meta = TreeDict()
 
         # Empty nonlinearity
-        self.nonlinearity = lambda x: x
+        self.nonlinearity = lambda x: 1
         
     def readout(self):
         '''Read the detector.'''
@@ -207,14 +208,11 @@ class ArrayDetector(BaseConectable):
         source *= self.flat * self.readout_time
         data += numpy.random.poisson((self.dark + source) * self.reset_time)
         
-        # FIXME: apply non-linearity here?
-        data = self.nonlinearity(data)
-
         for amp in self.channels:
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
             data[amp.shape] /= amp.gain
-        data += self.bias
+            data[amp.shape] += self.bias
 
         numpy.clip(data, self.out_dtype_info.min, self.out_dtype_info.max, out=data)
 
@@ -251,7 +249,11 @@ class ArrayDetector(BaseConectable):
 
     def expose(self, dt):
         self._last_read += dt
-
+        source = self.mapper.sample(self.source)
+        source *= self.flat 
+        increase = numpy.random.poisson((self.dark + source) * dt)
+        self.buffer += increase
+        self.buffer *= self.nonlinearity(self.buffer)
             
 class CCDDetector(ArrayDetector):
     def __init__(self, shape, channels, bias=100, dark=0.0, bad_pixel_mask=None):
@@ -261,20 +263,6 @@ class CCDDetector(ArrayDetector):
         self.meta['readmode'] = 'fast'
         self.meta['readscheme'] = 'perline'
 
-    def expose(self, dt, source=None):
-        now = datetime.now()
-        # Recording time of start of exposure
-        self.meta['exposed'] = dt
-        self.meta['dateobs'] = now.isoformat()
-        self.meta['mjdobs'] = datetime_to_mjd(now)
-
-        self._last_read += dt
-        
-        source = self.mapper.sample(self.source)
-        source *= self.flat
-        self.buffer += numpy.random.poisson((self.dark + source) * dt, 
-                               size=self.shape).astype('float')
-          
     def readout(self):
         '''Read the CCD detector.'''
         self._last_read += self.readout_time
@@ -300,14 +288,6 @@ class nIRDetector(ArrayDetector):
         self.readout_time = 0
         self.reset_time = 0        
 
-    def expose(self, dt, source=None):
-
-        self._last_read += dt
-        source = self.mapper.sample(self.source)
-        source *= self.flat 
-        sint = self.dark * numpy.ones(self.shape, dtype=self.comp_dtype) + source
-        self.buffer += numpy.random.poisson(sint * dt).astype('float')
-        
 
         
 if __name__ == '__main__':
