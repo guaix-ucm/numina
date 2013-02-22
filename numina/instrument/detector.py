@@ -256,9 +256,10 @@ class ArrayDetector(BaseConectable):
         self.buffer *= self.nonlinearity(self.buffer)
             
 class CCDDetector(ArrayDetector):
-    def __init__(self, shape, channels, bias=100, dark=0.0, bad_pixel_mask=None):
+    def __init__(self, shape, channels, bias=100, dark=0.0, flat=1.0, bad_pixel_mask=None):
         super(CCDDetector, self).__init__(shape, channels,
-                    bias=bias, dark=dark, bad_pixel_mask=bad_pixel_mask)
+                    bias=bias, dark=dark, flat=flat, 
+                    bad_pixel_mask=bad_pixel_mask)
 
         self.meta['readmode'] = 'fast'
         self.meta['readscheme'] = 'perline'
