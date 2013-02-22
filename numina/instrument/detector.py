@@ -17,7 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from collections import namedtuple
 from datetime import datetime
 
 import numpy.random
@@ -30,7 +29,15 @@ from numina.astrotime import datetime_to_mjd
 from .base import BaseConectable
 from .mapping import Mapper
 
-Channel = namedtuple('Channel', ['shape', 'gain', 'ron', 'wdepth'])
+class Channel(object):
+    def __init__(self, shape, gain, ron, bias, wdepth, saturation):
+        self.shape = shape
+        # Electronics  
+        self.gain = gain
+        self.ron = ron
+        self.bias = bias
+        self.wdepth = wdepth
+        self.saturation = saturation
 
 PIXEL_VALID = 0
 PIXEL_DEAD = 1
@@ -162,7 +169,6 @@ class RampReadoutMode(ReadoutMode):
 class ArrayDetector(BaseConectable):
     '''A bidimensional detector.'''
     def __init__(self, shape, channels, 
-                 bias=100.0, 
                  dark=0.0,
                  flat=1.0,
                  reset_value=0.0, reset_noise=0.0,
@@ -176,7 +182,6 @@ class ArrayDetector(BaseConectable):
         self.out_dtype_info = numpy.iinfo(self.out_dtype)
         self.shape = shape
         self.channels = channels
-        self.bias = bias
         self.reset_value = reset_value
         self.reset_noise = reset_noise
         self.reset_time = 0.0
@@ -204,17 +209,19 @@ class ArrayDetector(BaseConectable):
         '''Read the detector.'''
         data = self.buffer.copy()
         data[data < 0] = 0
+        # Light entering during readout!
         source = self.mapper.sample(self.source)
         source *= self.flat * self.readout_time
         data += numpy.random.poisson((self.dark + source) * self.reset_time)
+        # until here
         
         for amp in self.channels:
             data[amp.shape] /= amp.gain
             if amp.ron > 0:
-                data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
-            data[amp.shape] += self.bias
-
-        numpy.clip(data, self.out_dtype_info.min, self.out_dtype_info.max, out=data)
+                data[amp.shape] = numpy.random.normal(data[amp.shape], amp.ron)
+            data[amp.shape] += amp.bias
+            numpy.clip(data[amp.shape], self.out_dtype_info.min, 
+                        amp.saturation, out=data[amp.shape])
 
         data = data.astype(self.out_dtype)
 
@@ -253,12 +260,13 @@ class ArrayDetector(BaseConectable):
         source *= self.flat 
         increase = numpy.random.poisson((self.dark + source) * dt)
         self.buffer += increase
-        self.buffer *= self.nonlinearity(self.buffer)
+        factor = self.nonlinearity(self.buffer)
+        self.buffer *= factor
             
 class CCDDetector(ArrayDetector):
-    def __init__(self, shape, channels, bias=100, dark=0.0, flat=1.0, bad_pixel_mask=None):
+    def __init__(self, shape, channels, dark=0.0, flat=1.0, bad_pixel_mask=None):
         super(CCDDetector, self).__init__(shape, channels,
-                    bias=bias, dark=dark, flat=flat, 
+                    dark=dark, flat=flat, 
                     bad_pixel_mask=bad_pixel_mask)
 
         self.meta['readmode'] = 'fast'
@@ -274,14 +282,10 @@ class CCDDetector(ArrayDetector):
 class nIRDetector(ArrayDetector):
     '''A generic nIR bidimensional detector.'''
     
-    def __init__(self, shape, channels, dark=0.0, 
-                 pedestal=0.0, flat=1.0, bad_pixel_mask=None,
-                 resetval=1000, resetnoise=0.0):
+    def __init__(self, shape, channels, dark=0.0, flat=1.0, 
+                bad_pixel_mask=None, resetval=0.0, resetnoise=0.0):
         super(nIRDetector, self).__init__(shape, 
-                    channels, 
-                    pedestal, 
-                    dark=dark,
-                    flat=flat,
+                    channels, dark=dark, flat=flat,
                     reset_value=resetval, 
                     reset_noise=resetnoise,
                     bad_pixel_mask=bad_pixel_mask)
@@ -289,33 +293,3 @@ class nIRDetector(ArrayDetector):
         self.readout_time = 0
         self.reset_time = 0        
 
-
-        
-if __name__ == '__main__':
-    
-    
-    shape = (10, 10)
-    ampshape = (slice(0, 10), slice(0, 10))
-    a = Amplifier(ampshape, 2.1, 4.5, 65000)
-    det = CCDDetector(shape, [a], bias=100, dark=20.0)
-    
-    das1 = DAS(det)
-    
-    
-    #print d
-        
-    ndet = nIRDetector(shape, [a], dark=20.0, pedestal=100)
-    ndet.readout_time = 0.12
-    das2 = DAS(ndet)
-    mode = FowlerReadoutMode(5, 1, readout_time=ndet.readout_time)
-    das2.readmode(mode)
-    pp = das2.acquire(10)
-    for key in das2.meta:
-        if key == 'detector':
-            for k in das2.meta['detector']:
-                print 'detector.',k
-                
-        else:
-            print key, das2.meta[key]
-    print pp
-    
