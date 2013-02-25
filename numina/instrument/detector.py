@@ -22,7 +22,6 @@ from datetime import datetime
 import numpy.random
 
 from numina.treedict import TreeDict
-from numina.array import numberarray
 from numina.exceptions import DetectorElapseError
 from numina.astrotime import datetime_to_mjd
 
