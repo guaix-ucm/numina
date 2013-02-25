@@ -217,6 +217,7 @@ class ArrayDetector(BaseConectable):
         
         for amp in self.channels:
             data[amp.shape] /= amp.gain
+            data[amp.shape] = self.nonlinearity(data[amp.shape])
             if amp.ron > 0:
                 data[amp.shape] = numpy.random.normal(data[amp.shape], amp.ron)
             data[amp.shape] += amp.bias
@@ -260,8 +261,6 @@ class ArrayDetector(BaseConectable):
         source *= self.flat 
         increase = numpy.random.poisson((self.dark + source) * dt)
         self.buffer += increase
-        factor = self.nonlinearity(self.buffer)
-        self.buffer *= factor
             
 class CCDDetector(ArrayDetector):
     def __init__(self, shape, channels, dark=0.0, flat=1.0, bad_pixel_mask=None):
