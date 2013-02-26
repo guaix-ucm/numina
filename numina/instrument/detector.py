@@ -202,7 +202,7 @@ class ArrayDetector(BaseConectable):
         self.meta = TreeDict()
 
         # Empty nonlinearity
-        self.nonlinearity = lambda x: 1
+        self.nonlinearity = lambda x: x
         
     def readout(self):
         '''Read the detector.'''
