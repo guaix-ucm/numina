@@ -89,6 +89,9 @@ class ReadoutMode(object):
         self.reads = reads
         self.repeat = repeat
 
+    def process(self, images, events):
+        return numpy.dstack(images)
+
 class SingleReadoutMode(ReadoutMode):
     def __init__(self, repeat=1):
         super(SingleReadoutMode, self).__init__('single', 'perline', 1, repeat)
@@ -112,9 +115,6 @@ class CdsReadoutMode(ReadoutMode):
         '''
         return [0.0, exposure]
     
-    def process(self, images, events):
-        return images[1] - images[0]
-    
 class FowlerReadoutMode(ReadoutMode):
     '''Fowler sampling readout mode.'''
     def __init__(self, reads, repeat=1, readout_time=0.0):
@@ -134,15 +134,6 @@ class FowlerReadoutMode(ReadoutMode):
         vreads += [t + exposure for t in vreads]
         return vreads
     
-    def process(self, images, events):
-        # Subtracting correlated reads
-        nsamples = len(images) / 2
-        # nsamples has to be odd
-        reduced = numpy.array([images[nsamples + i] - images[i] 
-                               for i in range(nsamples)])
-        # Final mean
-        return reduced.mean(axis=0)
-
 class RampReadoutMode(ReadoutMode):
     '''"Up the ramp" sampling readout mode.'''
     def __init__(self, reads, repeat=1):
@@ -152,19 +143,6 @@ class RampReadoutMode(ReadoutMode):
         dt = exposure / (self.reads - 1.)
         return [dt * i for i in range(self.reads)]
     
-    def process(self, images, events):
-        
-        def slope(y, xcenter, varx, time):
-            return ((y - y.mean()) * xcenter).sum() / varx * time
-        
-        events = numpy.asarray(events)
-        images = numpy.asarray(images)
-        meanx = events.mean()
-        sxx = events.var() * events.shape[0]
-        xcenter = events - meanx
-        images = numpy.dstack(images)
-        return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
-
 class ArrayDetector(BaseConectable):
     '''A bidimensional detector.'''
     def __init__(self, shape, channels, 
