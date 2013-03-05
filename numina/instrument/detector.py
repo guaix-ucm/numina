@@ -199,7 +199,7 @@ class ArrayDetector(BaseConectable):
                 data[amp.shape] = numpy.random.normal(data[amp.shape], amp.ron)
             data[amp.shape] += amp.bias
             numpy.clip(data[amp.shape], self.out_dtype_info.min, 
-                        amp.saturation, out=data[amp.shape])
+                        self.out_dtype_info.max, out=data[amp.shape])
 
         data = data.astype(self.out_dtype)
 
