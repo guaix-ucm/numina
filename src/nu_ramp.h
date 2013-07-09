@@ -73,13 +73,6 @@ slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
 }
 
 template<typename T>
-inline T iround(double x) { return static_cast<T>(round(x));}
-
-template<> inline double iround(double x) { return x;}
-template<> inline float iround(double x) { return (float)x;}
-template<> inline long double iround(double x) { return (long double)x;}
-
-template<typename T>
 inline RampResult<T> rround(const RampResult<double>& x) { 
   RampResult<T> res;
   res.value = static_cast<T>(round(x.value));
