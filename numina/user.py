@@ -40,7 +40,8 @@ import numina.pipelines as namespace
 from numina import __version__
 from numina.core import RequirementParser, obsres_from_dict
 from numina.core import FrameDataProduct, BaseRecipe, DataProduct
-from numina.core import BaseInstrument, InstrumentConfiguration
+from numina.core import InstrumentConfiguration
+from numina.core import init_drp_system, import_object
 from numina.core.requirements import RequirementError
 from numina.core.products import ValidationError
 from numina.xdgdirs import xdg_config_home
@@ -103,15 +104,6 @@ def make_sure_path_exists(path):
         if exception.errno != errno.EEXIST:
             raise
 
-def super_load(path):
-    spl = path.split('.')
-    cls = spl[-1]
-    mods = '.'.join(spl[:-1])
-    import importlib
-    mm = importlib.import_module(mods)
-    Cls = getattr(mm, cls)
-    return Cls
-
 def create_recipe_file_logger(logger, logfile, logformat):
     _logger.debug('creating file logger %r from Recipe logger', logfile)
     _recipe_formatter = logging.Formatter(logformat)
@@ -124,26 +116,29 @@ def show_recipes(args):
     this_recipe_print = print_recipe
     if args.template:
         this_recipe_print = print_recipe_template
-    for theins in instruments.values():
+
+    for theins in args.drps.values():
+        # Per instrument
         if not args.instrument or (args.instrument == theins.name):
-            for mode in theins.modes:
-                if not args.name or (mode.recipe in args.name):
-                    Cls = super_load(mode.recipe)
-                    this_recipe_print(Cls, name=mode.recipe, insname=theins.name)
+            for pipe in theins.pipelines.values():
+                for mode, recipe_fqn in pipe.recipes.items():
+                    if not args.name or (recipe_fqn in args.name):
+                        Cls = import_object(recipe_fqn)
+                        this_recipe_print(Cls, name=recipe_fqn, insname=theins.name, pipename=pipe.name, modename=mode)
 
 def show_observingmodes(args):
-    for theins in instruments.values():
+    for theins in args.drps.values():
         if not args.instrument or (args.instrument == theins.name):
             for mode in theins.modes:
                 if not args.name or (mode.key in args.name):
-                    print_obsmode(mode, ins=True)
+                    print_obsmode(mode, theins)
 
 def show_instruments(args):
-    for theins in instruments.values():
+    for theins in args.drps.values():
         if not args.name or (theins.name in args.name):
             print_instrument(theins, modes=args.om)
 
-def print_recipe_template(recipe, name=None, insname=None):
+def print_recipe_template(recipe, name=None, insname=None, pipename=None, modename=None):
 
     def print_io(req):
         dispname = req.dest
@@ -194,16 +189,19 @@ def print_recipe_template(recipe, name=None, insname=None):
     print('# enabled: true')
     print('---')
 
-def print_recipe(recipe, name=None, insname=None):
+def print_recipe(recipe, name=None, insname=None, pipename=None, modename=None):
     try:
-        if name:
-            print('Recipe:', name)
-        else:
-            print('Recipe:', recipe.__module__ + '.' + recipe.__name__)
+        if name is None:
+            name = recipe.__module__ + '.' + recipe.__name__
+        print('Recipe:', name)
         if recipe.__doc__:
             print(' summary:', recipe.__doc__.lstrip().expandtabs().splitlines()[0])
         if insname:
             print(' instrument:', insname)
+        if pipename:
+            print('  pipeline:', pipename)
+        if modename:
+            print('  obs mode:', modename)
         print(' requirements:')
         rp = RequirementParser(recipe)
         rp.print_requirements(pad='  ')
@@ -222,28 +220,11 @@ def print_instrument(instrument, modes=True):
         for mode in instrument.modes:
             print("  {0.name!r} ({0.key})".format(mode))
 
-def print_obsmode(obsmode, ins=False):
+def print_obsmode(obsmode, instrument, ins=False):
     print('Observing Mode: {0.name!r} ({0.key})'.format(obsmode))
     print(' summary:', obsmode.summary)
-    if ins:
-        print(' instrument:', obsmode.instrument)
-    print(' recipe:', obsmode.recipe)
+    print(' instrument:', instrument.name)
 
-def run_recipe(cls, obs):
-    recipe = cls()
-    result = recipe(obs)
-    return result
-
-def init_pipeline_system(namespace):
-    '''Load all available pipelines from package 'namespace'.'''
-    
-    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
-        try:
-            loader = imp.find_module(name)
-            _mod = loader.load_module(name)
-        except StandardError as error:
-            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
-        
 def main(args=None):
     '''Entry point for the Numina CLI.'''
 
@@ -338,20 +319,7 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    init_pipeline_system(namespace)
-
-    global instruments
-    instruments = {}
-
-    _logger.debug('Loading instruments and pipelines')
-    for InstrumentClass in BaseInstrument.__subclasses__():
-        _logger.debug('Loading instrument %s', InstrumentClass.name)
-        instruments[InstrumentClass.name] = InstrumentClass
-        for key, conf in InstrumentClass.configurations.items():
-            _logger.debug('with configuration %r', key)
-        for key, pipe in InstrumentClass.pipelines.items():
-            version = pipe.version
-            _logger.debug('%s has pipeline %r, version %s', InstrumentClass.name, key, version)
+    args.drps = init_drp_system(namespace)
 
     args.command(args)
 
@@ -366,11 +334,11 @@ def mode_run(args):
     _logger.info("Identifier of the observation result: %d", obsres.id)
     ins_name = obsres.instrument
     _logger.info("instrument name: %s", ins_name)
-    MyInstrumentClass = instruments.get(ins_name)
-    if MyInstrumentClass is None:
+    my_ins = args.drps.get(ins_name)
+    if my_ins is None:
         _logger.error('instrument %r does not exist', ins_name)
         sys.exit(1)
-    _logger.debug('instrument class is %s', MyInstrumentClass)
+    _logger.debug('instrument is %s', my_ins)
 
     if args.insconf is not None:
         _logger.debug("configuration from CLI is %r", args.insconf)
@@ -379,7 +347,7 @@ def mode_run(args):
         ins_conf = obsres.configuration
 
     _logger.info('loading instrument configuration %r', ins_conf)
-    my_ins_conf = MyInstrumentClass.configurations.get(ins_conf)
+    my_ins_conf = my_ins.configurations.get(ins_conf)
 
     if my_ins_conf:
         _logger.debug('instrument configuration object is %r', my_ins_conf)
@@ -400,8 +368,8 @@ def mode_run(args):
             my_ins_conf = InstrumentConfiguration(ins_conf, values)
 
             # The new configuration must not overwrite existing configurations
-            if ins_conf not in MyInstrumentClass.configurations:
-                 MyInstrumentClass.configurations[ins_conf] = my_ins_conf
+            if ins_conf not in my_ins.configurations:
+                 my_ins.configurations[ins_conf] = my_ins_conf
             else:
                 _logger.error('a configuration already exists %r, exiting', ins_conf)
             sys.exit(1)
@@ -410,8 +378,6 @@ def mode_run(args):
             _logger.error('instrument configuration %r does not exist', ins_conf)
             sys.exit(1)
 
-    my_ins = MyInstrumentClass(ins_conf)
-
     if args.pipe_name is not None:
         _logger.debug("pipeline from CLI is %r", args.pipe_name)
         pipe_name = args.pipe_name
@@ -419,7 +385,7 @@ def mode_run(args):
         pipe_name = obsres.pipeline
         _logger.debug("pipeline from ObsResult is %r", pipe_name)
 
-    my_pipe = MyInstrumentClass.pipelines.get(pipe_name)
+    my_pipe = my_ins.pipelines.get(pipe_name)
     if my_pipe is None:
         _logger.error('instrument %r does not have pipeline named %r', ins_name, pipe_name)
         sys.exit(1)
@@ -430,11 +396,12 @@ def mode_run(args):
     obs_mode = obsres.mode
     _logger.info("observing mode: %r", obs_mode)
 
-    MyRecipeClass = my_pipe.recipes.get(obs_mode)
-    if MyRecipeClass is None:
+    recipe_fqn = MyRecipeClass = my_pipe.recipes.get(obs_mode)
+    if recipe_fqn is None:
         _logger.error('pipeline %r does not have recipe to process %r obs mode', 
                             pipe_name, obs_mode)
         sys.exit(1)
+    MyRecipeClass = import_object(recipe_fqn)
     _logger.debug('recipe class is %s', MyRecipeClass)
 
     logger_control = dict(logfile='processing.log',

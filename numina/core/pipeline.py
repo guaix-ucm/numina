@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,18 +17,16 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Pipeline loader.'''
+'''DRP loader.'''
 
 import logging
 import pkgutil
 import importlib
 
-import numina.pipelines as namespace
+import yaml
+import uuid
 
 _logger = logging.getLogger('numina')
-
-_pipelines = {}
-_instruments = {}
 
 def import_object(path):
     spl = path.split('.')
@@ -38,49 +36,26 @@ def import_object(path):
     Cls = getattr(mm, cls)
     return Cls
 
-class BasePipeline(object):
+class Pipeline(object):
     '''Base class for pipelines.'''
-    def __init__(self, name, version, recipes):
+    def __init__(self, name, recipes, version=1):
         self.name = name
-        self.version = version
         self.recipes = recipes
+        self.version = version
 
     def get_recipe(self, mode):
         return self.recipes[mode]
 
 class InstrumentConfiguration(object):
-    def __init__(self, name, values):
-        self.version = name
-        self.configuration = values
+    def __init__(self, values):
+        self.values = values
 
-class BaseInstrument(object):
-    name = 'Undefined'
-    modes = []
-    configurations = {'default': None}
-
-    def __init__(self, name, config_name='default'):
+class Instrument(object):
+    def __init__(self, name, configurations, modes, pipelines):
         self.name = name
-        self.config_name = config_name
-        self.config_version = '0.0.0'
-
-        cup = self.configurations.get(self.config_name)
-        if cup is not None:
-            self.config_version = cup.version
-            for key, val in cup.configuration.items():
-                # ignore the following
-                if key == 'instrument':
-                    if val != name:
-                        raise ValueError('instrument name in file and assigned differ')
-                elif key == 'name':
-                    if val != config_name:
-                        raise ValueError('config name in file and assigned differ')
-                elif key == 'pipeline':
-                    pass #ignore
-                else:
-                    setattr(self, key, val)
-        else:
-            raise ValueError('no configuration named %s', self.config_name)
-        
+        self.configurations = configurations
+        self.modes = modes
+        self.pipelines = pipelines
         
 class ObservingMode(object):
     def __init__(self):
@@ -96,66 +71,6 @@ class ObservingMode(object):
         self.status = ''
         self.date = ''
         self.reference = ''
-        
-def get_instruments():
-    return _instruments
-
-def get_pipeline(name):
-    '''Get a pipeline from the global register.
-    
-    :param name: Name of the pipeline
-    :raises: ValueError if the named pipeline does not exist
-    '''
-    return _pipelines[name]
-
-def get_recipe(name, mode):
-    '''Find the Recipe suited to process a given observing mode.''' 
-    try:
-        pipe = _pipelines[name]
-    except KeyError:
-        msg = 'No pipeline named %s' % name
-        raise ValueError(msg)
-    
-    try:
-        klass = pipe.get_recipe(mode)
-    except KeyError:
-        msg = 'No recipe for mode %s' % mode
-        raise ValueError(msg)
-        
-    return klass
-
-def init_pipeline_system():
-    '''Load all available pipelines.'''
-    
-    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
-        try:
-            loader = imp.find_module(name)
-            _mod = loader.load_module(name)
-        except StandardError as error:
-            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
-        
-    # Loaded all DRP modules
-    
-    # populate instruments list
-    for InsCls in BaseInstrument.__subclasses__():
-        ins = InsCls()
-        global _instruments
-        _instruments[ins.name] = ins 
-        
-        
-    for PipeCls in BasePipeline.__subclasses__():
-        pipe = PipeCls()
-        global _pipelines
-        _pipelines[pipe.name] = pipe
-        
-    return _instruments, _pipelines
-
-
-# Quick constructor and representer
-# for Observing Modes in YAML 
-
-import yaml
-import uuid
 
 def om_repr(dumper, data):
     return dumper.represent_mapping('!om', data.__dict__)
@@ -167,8 +82,129 @@ def om_cons(loader, node):
     om.uuid = uuid.UUID(om.uuid)
     return om
 
-
-
 yaml.add_representer(ObservingMode, om_repr)
 yaml.add_constructor('!om', om_cons)
+
+class LoadableDRP(object):
+    def __init__(self, instruments):
+        self.instruments = instruments
+
+def init_drp_system(namespace):
+    '''Load all available DRPs in package 'namespace'.'''
+
+    drp = {}
+
+    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+        try:
+            loader = imp.find_module(name)
+            mod = loader.load_module(name)
+            mod_plugin = getattr(mod, '__numina_drp__', None)
+            if mod_plugin:
+                drp.update(mod_plugin.instruments)
+            else:
+                _logger.warning('Module %s does not contain a valid DRP', mod)
+        except StandardError as error:
+            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
+
+    return drp
+def drp_load(package, resource):
+    ins_all = {}
+    for yld in yaml.load_all(pkgutil.get_data(package, resource)):
+        ins = load_instrument(yld)
+        ins_all[ins.name] = ins
+
+    return LoadableDRP(ins_all)
+
+def load_modes(node):
+    modes = list()
+    for child in node:
+        modes.append(load_mode(child))
+    return modes
+
+def load_mode(node):
+    m = ObservingMode()
+    m.__dict__ = node
+    return m
+
+def load_pipelines(node):
+    keys = ['default']
+    for key in keys:
+        if key not in node:
+            raise ValueError('Missing key %r in pipelines node', key)
+    pipelines = dict()
+    for key in node:
+        pipelines[key] = load_pipeline(key, node[key])
+    return pipelines
+
+def load_confs(node):
+    keys = ['default']
+    for key in keys:
+        if key not in node:
+            raise ValueError('Missing key %r in configurations node', key)
+    confs = dict()
+    for key in node:
+        confs[key] = load_conf(node[key])
+    return confs
+
+def load_pipeline(name, node):
+    keys = ['recipes', 'version']
+    for key in keys:
+        if key not in node:
+            raise ValueError('Missing key %r inside pipeline node', key)
+    recipes = node['recipes']
+    version = node['version']
+    return Pipeline(name, recipes, version)
+
+def load_conf(node):
+    keys = []
+    for key in keys:
+        if key not in node:
+            raise ValueError('Missing key %r inside configuration node', key)
+
+    return InstrumentConfiguration(node)
+
+def load_instrument(node):
+    # Verify keys...
+    keys = ['name','configurations', 'modes', 'pipelines']
+    
+    for key in keys:
+        if key not in node:
+            raise ValueError('Missing key %r in root node', key)
+    
+    name = node['name']
+    pipe_node = node['pipelines']
+    mode_node = node['modes']
+    conf_node = node['configurations']
+
+    trans = {'name': node['name']}
+    trans['pipelines'] = load_pipelines(pipe_node)
+    trans['modes'] = load_modes(mode_node)
+    trans['configurations'] = load_confs(conf_node)
+
+    return Instrument(**trans)
+
+def print_i(ins):
+    print ins.name 
+    print_c(i.configurations)
+    print_m(i.modes)
+    print_p(i.pipelines)
+
+def print_p(pipelines):
+    print 'Pipelines'
+    for p,n in pipelines.items():
+        print ' pipeline', p
+        print '   version', n.version
+        print '   recipes'
+        for m,r in n.recipes.items():
+            print '    ', m, '->', r
+
+def print_c(confs):
+    print 'Configurations'
+    for c in confs:
+        print ' conf', c, confs[c].values
+
+def print_m(modes):
+    print 'Modes'
+    for c in modes:
+        print ' mode', c.key
 
