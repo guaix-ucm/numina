@@ -30,6 +30,14 @@
 
 namespace Numina {
 
+template<typename T>
+inline T iround(double x) { return static_cast<T>(round(x));}
+
+template<> inline double iround(double x) { return x;}
+template<> inline float iround(double x) { return (float)x;}
+template<> inline long double iround(double x) { return (long double)x;}
+
+
 namespace Detail // implementation details
 {
 
