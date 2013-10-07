@@ -17,14 +17,115 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import numpy
+import numpy as np
+cimport numpy as cnp
+
+cimport cython
+from libcpp.vector cimport vector
+
+ctypedef fused datacube_t:
+    double[:,:,:]
+    float[:,:,:]
+    long[:,:,:]
+    int[:,:,:]
+
+ctypedef fused result_t:
+    double[:,:]
+    float[:,:]
+
+ctypedef char[:,:] mask_t
+
+DEF NFRAME = 100
+
+def process_fowler_17(arr):
+    ndtype = arr.dtype.newbyteorder('=')
+    arr = np.asarray(arr, dtype=ndtype)
+    fshape = (arr.shape[1], arr.shape[2])
+    ftype = 'float32'
+    
+    res = np.empty(fshape, dtype=ftype)
+    
+    process_fowler_16(arr, res)
+    return res
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def process_fowler_16(datacube_t arr, result_t res, mask_t badpix=None, 
+                double saturation=55000.0):
+    cdef:
+        size_t xr = arr.shape[2]
+        size_t yr = arr.shape[1]
+        size_t zr = arr.shape[0]
+        size_t x, y, z
+        size_t ll = 0
+        size_t h = zr // 2
+        result_t var
+        mask_t npix, mask
+        double rsl, vrr
+        char npx, msk, bp
+
+    cdef double m[NFRAME]
+    cdef vector[double]* vect = new vector[double](10)
+    vect.reserve(zr)
+    del vect
+
+    if badpix is None:
+        badpix = np.zeros((yr, xr), dtype='uint8')
+
+    res = np.empty((yr, xr))
+    var = np.empty_like(res)
+    npix = np.empty((yr, xr), dtype='uint8')
+    mask = badpix.copy()
+    # We are not checking than arr and res shapes are compatible!
+    
+    
+    for x in range(xr):
+        for y in range(yr):
+            ll = 0
+            bp = badpix[y, x]
+            if bp == 0:
+                for z in range(zr):
+                    m[z] = arr[z,y,x]
+                    if m[z] < saturation:
+                        ll += 1
+                    else:
+                        break
+
+                rsl = axis_fowler_5(m, NFRAME, h)
+                vrr = 0.0
+                npx = ll
+                msk = 0
+            else:
+                rsl = vrr = 0.0
+                npx = 0
+                msk = bp
+            res[y,x] = rsl
+            var[y,x] = vrr
+            npix[y,x] = ll
+            mask[y,x] = msk
+
+    return res, var, npix, mask
+
+# This is a pure C function, it could be defined elsewhere
+# and imported in cython
+cdef double axis_fowler_5(double* buff, size_t bsize, size_t h):
+    cdef size_t i
+    cdef double* buff_out = buff
+    for i in range(h):
+        buff_out[i] = buff[i + h] - buff[i]
+    
+    cdef double sum = 0
+    for i in range(h):
+        sum += buff_out[i]
+        
+    return sum / h   
 
 def fowler_array(fowlerdata, badpixels=None, dtype='float64',
                  saturation=65631, blank=0):
     '''Loop over the 3d array applying Fowler processing.'''
     
     
-    fowlerdata = numpy.asarray(fowlerdata)
+    fowlerdata = np.asarray(fowlerdata)
         
     if fowlerdata.ndim != 3:
         raise ValueError('fowlerdata must be 3D')
@@ -37,10 +138,10 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
         raise ValueError("invalid parameter, saturation <= 0")
     
     if badpixels is None:
-        badpixels = numpy.zeros((fowlerdata.shape[0], fowlerdata.shape[1]), 
+        badpixels = np.zeros((fowlerdata.shape[0], fowlerdata.shape[1]), 
                                 dtype='uint8')
 
-    fdtype = numpy.result_type(fowlerdata.dtype, dtype)
+    fdtype = np.result_type(fowlerdata.dtype, dtype)
     mdtype = 'uint8'
 
     outvalue = None
@@ -66,10 +167,10 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
         raise ValueError("invalid parameter, saturation <= 0")
 
     if badpixels is None:
-        badpixels = numpy.zeros((rampdata.shape[0], rampdata.shape[1]), 
+        badpixels = np.zeros((rampdata.shape[0], rampdata.shape[1]), 
                                 dtype='uint8')
 
-    fdtype = numpy.result_type(rampdata.dtype, dtype)
+    fdtype = np.result_type(rampdata.dtype, dtype)
     mdtype = 'uint8'
 
     outvalue = None
