@@ -4,6 +4,7 @@ from __future__ import print_function
 
 from setuptools import setup, Extension
 from setuptools import find_packages
+from Cython.Distutils import build_ext
 
 import sys
 
@@ -31,6 +32,10 @@ ext3 = Extension('numina.array._nirproc',
                  ['src/nirprocmodule.cc'],
                 include_dirs=[numpy_include])
 
+ext4 = Extension('numina.array._nirproc2', 
+                 ['src/nirproc.pyx'],
+                language='c++')
+
 # requires is not used by pip
 # but install_requires is not supported 
 # http://bugs.python.org/issue1635217
@@ -47,13 +52,14 @@ setup(name='numina',
       license='GPLv3',
       description='Numina reduction package',
       packages=find_packages('.'),
-      ext_modules=[ext1, ext2, ext3],
+      ext_modules=[ext1, ext2, ext3, ext4],
       entry_points={'console_scripts': ['numina = numina.user:main']},
       requires=REQUIRES,
       setup_requires=['numpy'],
       install_requires=IREQUIRES,
       use_2to3 = True,
       test_suite= "numina.tests",
+      cmdclass={'build_ext': build_ext},
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3.0",
