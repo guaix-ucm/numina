@@ -10,8 +10,7 @@ import sys
 try:
     import numpy
 except ImportError:
-    print('numpy is required to install numina')
-    sys.exit(1)
+    sys.exit('numpy is required to install numina')
 
 numpy_include = numpy.get_include()
 

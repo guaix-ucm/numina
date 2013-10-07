@@ -20,8 +20,10 @@
 
 from __future__ import division
 
-import numpy
 import math
+
+import numpy
+import numpy.ma as ma
 
 def _axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
     '''Apply Fowler processing to a series of data.'''
@@ -135,6 +137,51 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
 
     # Building final frame
     return tuple(it.operands[i] for i in range(2, 6))
+
+def fowler_array_alt(fowlerdata, badpixels=None, dtype='float64',
+                 saturation=65631, blank=0):
+    '''Loop over the 0 axis applying Fowler processing.'''
+
+    MASK_SATURATION = 3
+
+    fowlerdata = numpy.asarray(fowlerdata)
+        
+    if fowlerdata.ndim != 3:
+        raise ValueError('fowlerdata must be 3D')
+    
+    hsize = fowlerdata.shape[0] // 2
+    if 2 * hsize != fowlerdata.shape[0]:
+        raise ValueError('axis-0 in fowlerdata must be even')
+    
+    if saturation <= 0:
+        raise ValueError("invalid parameter, saturation <= 0")
+
+    fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
+
+    fdtype = numpy.result_type(fowlerdata.dtype, dtype)
+    mdtype = 'uint8'
+
+    if badpixels is None:
+        badpixels = numpy.zeros(fshape, dtype=mdtype)
+    res = numpy.empty(fshape, dtype=fdtype)
+    var = numpy.empty(fshape, dtype=fdtype)
+
+    full_saturated = fowlerdata >= saturation
+    sat_mask = numpy.logical_or(full_saturated[hsize:], full_saturated[:hsize])
+    bad_mask = badpixels != 0
+    good_mask = badpixels == 0
+                
+    final_mask = numpy.logical_or(sat_mask, bad_mask)
+    layer = ma.array(fowlerdata[hsize:] - fowlerdata[:hsize], mask=final_mask)
+                            
+    ma.mean(layer, axis=0, out=res)
+    ma.var(layer, axis=0, out=var)
+    npix = layer.count(axis=0).astype(mdtype)
+    mask = numpy.where(numpy.logical_and(npix==0, good_mask), MASK_SATURATION, badpixels)
+    res[mask != 0] = blank
+    var[mask != 0] = blank
+
+    return res, var, npix, mask
 
 def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
                  saturation=65631, nsig=4.0, blank=0):
