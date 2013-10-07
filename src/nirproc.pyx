@@ -64,10 +64,8 @@ def process_fowler_16(datacube_t arr, result_t res, mask_t badpix=None,
         double rsl, vrr
         char npx, msk, bp
 
-    cdef double m[NFRAME]
-    cdef vector[double]* vect = new vector[double](10)
+    cdef vector[double] vect
     vect.reserve(zr)
-    del vect
 
     if badpix is None:
         badpix = np.zeros((yr, xr), dtype='uint8')
@@ -81,44 +79,45 @@ def process_fowler_16(datacube_t arr, result_t res, mask_t badpix=None,
     
     for x in range(xr):
         for y in range(yr):
-            ll = 0
             bp = badpix[y, x]
             if bp == 0:
-                for z in range(zr):
-                    m[z] = arr[z,y,x]
-                    if m[z] < saturation:
-                        ll += 1
-                    else:
-                        break
+                for z in range(h):
+                    rsl = arr[z,y,x]
+                    vrr = arr[z+h,y,x]
+                    if rsl < saturation and vrr < saturation:
+                        vect.push_back(vrr-rsl)
 
-                rsl = axis_fowler_5(m, NFRAME, h)
-                vrr = 0.0
-                npx = ll
-                msk = 0
+                axis_fowler_6(vect, rsl, vrr, npx, msk)
             else:
                 rsl = vrr = 0.0
                 npx = 0
                 msk = bp
+
             res[y,x] = rsl
             var[y,x] = vrr
-            npix[y,x] = ll
+            npix[y,x] = npx
             mask[y,x] = msk
+            vect.clean()
 
     return res, var, npix, mask
 
-# This is a pure C function, it could be defined elsewhere
+# This is a pure C++ function, it could be defined elsewhere
 # and imported in cython
-cdef double axis_fowler_5(double* buff, size_t bsize, size_t h):
-    cdef size_t i
-    cdef double* buff_out = buff
-    for i in range(h):
-        buff_out[i] = buff[i + h] - buff[i]
-    
-    cdef double sum = 0
-    for i in range(h):
-        sum += buff_out[i]
+cdef double axis_fowler_6(vector[double] buff, double& res, double &var, char& npx, char& mask):
+    (&npx)[0] = buff.size()
+    if npx == 0:
+        #all is saturated
+        # Ugly workaround
+        (&res)[0] = 1.0
+        (&var)[0] = 2.0
+        (&mask)[0] = 3
+    else:
+        # Ugly workaround
+        (&res)[0] = 4.0
+        (&var)[0] = 1.0
+        (&mask)[0] = 0
         
-    return sum / h   
+    return 0.0
 
 def fowler_array(fowlerdata, badpixels=None, dtype='float64',
                  saturation=65631, blank=0):
