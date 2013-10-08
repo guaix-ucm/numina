@@ -21,7 +21,7 @@ import unittest
 
 import numpy
 
-from numina.array._nirproc2 import fowler_array
+from numina.array.nirproc import fowler_array
 
 MASK_GOOD = 0
 MASK_SATURATION = 3

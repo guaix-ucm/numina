@@ -23,34 +23,51 @@ from __future__ import division
 import math
 
 import numpy
-import numpy.ma as ma
 
-def _axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
-    '''Apply Fowler processing to a series of data.'''
-    MASK_SATURATION = 3 
-    MASK_GOOD = 0
-     
-    if badpix[0] != MASK_GOOD:
-        img[...] = blank
-        var[...] = blank
-        mask[...] = badpix[0]
+from numina.array._nirproc2 import _process_fowler_intl
+
+def fowler_array(fowlerdata, badpixels=None, dtype='float64',
+                 saturation=65631, blank=0):
+    '''Loop over the first axis applying Fowler processing.'''
+    
+    fowlerdata = numpy.asarray(fowlerdata)
+        
+    if fowlerdata.ndim != 3:
+        raise ValueError('fowlerdata must be 3D')
+    
+    hsize = fowlerdata.shape[0] // 2
+    if 2 * hsize != fowlerdata.shape[0]:
+        raise ValueError('axis-0 in fowlerdata must be even')
+    
+    if saturation <= 0:
+        raise ValueError("invalid parameter, saturation <= 0")
+    
+    # change byteorder
+    ndtype = fowlerdata.dtype.newbyteorder('=')
+    fowlerdata = numpy.asarray(fowlerdata, dtype=ndtype)
+    # type of the output
+    fdtype = numpy.result_type(fowlerdata.dtype, dtype)
+    # Type of the mask
+    mdtype = numpy.dtype('uint8')
+
+    fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
+
+    if badpixels is None:
+        badpixels = numpy.zeros(fshape, dtype=mdtype)
     else:
-        mm = numpy.asarray([(b - a) for a,b in zip(data[:hsize],data[hsize:]) if b < saturation and a < saturation])
-        npix = len(mm)
-        nmap[...] = npix
-        if npix == 0:
-            img[...] = blank
-            var[...] = blank
-            mask[...] = MASK_SATURATION
-        elif npix == 1:
-            img[...] = mm.mean()
-            var[...] = blank
-            mask[...] = MASK_GOOD
-        else:
-            img[...] = mm.mean()
-            var[...] = mm.var()
-            mask[...] = MASK_GOOD
+        if badpixels.shape != fshape:
+            raise ValueError('shape of badpixels is not compatible with shape of fowlerdata')
+        if badpixels.dtype != mdtype:
+            raise ValueError('dtype of badpixels must be uint8')
+            
+    result = numpy.empty(fshape, dtype=fdtype)
+    var = numpy.empty_like(result)
+    npix = numpy.empty(fshape, dtype=mdtype)
+    mask = badpixels.copy()
 
+    _process_fowler_intl(fowlerdata, badpixels, saturation, blank,
+        result, var, npix, mask)
+    return result, var, npix, mask
 
 def _axis_ramp(data, badpix, img, var, nmap, mask, crmask, 
               saturation, dt, gain, ron, nsig, blank=0):
@@ -79,109 +96,6 @@ def _axis_ramp(data, badpix, img, var, nmap, mask, crmask,
             # If there is a pixel in the list of CR, put it in the crmask
             if glt:                
                 crmask[...] = glt[0]
-
-def fowler_array(fowlerdata, badpixels=None, dtype='float64',
-                 saturation=65631, blank=0):
-    '''Loop over the 3d array applying Fowler processing.'''
-    
-    outvalue = None
-    outvar = None
-    npixmask, nmask = None, None
-    
-    fowlerdata = numpy.asarray(fowlerdata)
-        
-    if fowlerdata.ndim != 3:
-        raise ValueError('fowlerdata must be 3D')
-    
-    hsize = fowlerdata.shape[2] // 2
-    if 2 * hsize != fowlerdata.shape[2]:
-        raise ValueError('axis-2 in fowlerdata must be even')
-    
-    if saturation <= 0:
-        raise ValueError("invalid parameter, saturation <= 0")
-    
-    if badpixels is None:
-        badpixels = numpy.zeros((fowlerdata.shape[0], fowlerdata.shape[1]), 
-                                dtype='uint8')
-
-    fdtype = numpy.result_type(fowlerdata.dtype, dtype)
-    mdtype = 'uint8'
-
-    it = numpy.nditer([fowlerdata, badpixels, outvalue, outvar, 
-                        npixmask, nmask], 
-                flags=['reduce_ok', 'external_loop',
-                    'buffered', 'delay_bufalloc'],
-                    op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'], 
-                            ],
-                    order='A',
-                    op_dtypes=(fdtype, mdtype, fdtype, 
-                               fdtype, mdtype, mdtype),
-                    op_axes=[None,
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1],
-                            [0,1,-1], 
-                            [0,1,-1],
-                           ])
-
-    for i in range(2, 6):
-        it.operands[i][...] = 0
-    it.reset()
-
-    for x, badpix, img, var, nmap, mask in it:
-        _axis_fowler(x, badpix, img, var, nmap, mask, hsize, saturation, blank=blank)
-
-    # Building final frame
-    return tuple(it.operands[i] for i in range(2, 6))
-
-def fowler_array_alt(fowlerdata, badpixels=None, dtype='float64',
-                 saturation=65631, blank=0):
-    '''Loop over the 0 axis applying Fowler processing.'''
-
-    MASK_SATURATION = 3
-
-    fowlerdata = numpy.asarray(fowlerdata)
-        
-    if fowlerdata.ndim != 3:
-        raise ValueError('fowlerdata must be 3D')
-    
-    hsize = fowlerdata.shape[0] // 2
-    if 2 * hsize != fowlerdata.shape[0]:
-        raise ValueError('axis-0 in fowlerdata must be even')
-    
-    if saturation <= 0:
-        raise ValueError("invalid parameter, saturation <= 0")
-
-    fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
-
-    fdtype = numpy.result_type(fowlerdata.dtype, dtype)
-    mdtype = 'uint8'
-
-    if badpixels is None:
-        badpixels = numpy.zeros(fshape, dtype=mdtype)
-    res = numpy.empty(fshape, dtype=fdtype)
-    var = numpy.empty(fshape, dtype=fdtype)
-
-    full_saturated = fowlerdata >= saturation
-    sat_mask = numpy.logical_or(full_saturated[hsize:], full_saturated[:hsize])
-    bad_mask = badpixels != 0
-    good_mask = badpixels == 0
-                
-    final_mask = numpy.logical_or(sat_mask, bad_mask)
-    layer = ma.array(fowlerdata[hsize:] - fowlerdata[:hsize], mask=final_mask)
-                            
-    ma.mean(layer, axis=0, out=res)
-    ma.var(layer, axis=0, out=var)
-    npix = layer.count(axis=0).astype(mdtype)
-    mask = numpy.where(numpy.logical_and(npix==0, good_mask), MASK_SATURATION, badpixels)
-    res[mask != 0] = blank
-    var[mask != 0] = blank
-
-    return res, var, npix, mask
 
 def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
                  saturation=65631, nsig=4.0, blank=0):

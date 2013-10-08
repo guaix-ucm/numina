@@ -48,52 +48,9 @@ cdef extern from "nu_fowler.h" namespace "Numina":
 
     FowlerResult[double] axis_fowler(vector[double] buff, double blank)
 
-def fowler_array(fowlerdata, badpixels=None, dtype='float64',
-                 saturation=65631, blank=0):
-    '''Loop over the first axis applying Fowler processing.'''
-    
-    fowlerdata = np.asarray(fowlerdata)
-        
-    if fowlerdata.ndim != 3:
-        raise ValueError('fowlerdata must be 3D')
-    
-    hsize = fowlerdata.shape[0] // 2
-    if 2 * hsize != fowlerdata.shape[0]:
-        raise ValueError('axis-0 in fowlerdata must be even')
-    
-    if saturation <= 0:
-        raise ValueError("invalid parameter, saturation <= 0")
-    
-    # change byteorder
-    ndtype = fowlerdata.dtype.newbyteorder('=')
-    fowlerdata = np.asarray(fowlerdata, dtype=ndtype)
-    # type of the output
-    fdtype = np.result_type(fowlerdata.dtype, dtype)
-    # Type of the mask
-    mdtype = np.dtype('uint8')
-
-    fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
-
-    if badpixels is None:
-        badpixels = np.zeros(fshape, dtype=mdtype)
-    else:
-        if badpixels.shape != fshape:
-            raise ValueError('shape of badpixels is not compatible with shape of fowlerdata')
-        if badpixels.dtype != mdtype:
-            raise ValueError('dtype of badpixels must be uint8')
-            
-    result = np.empty(fshape, dtype=fdtype)
-    var = np.empty_like(result)
-    npix = np.empty(fshape, dtype=mdtype)
-    mask = badpixels.copy()
-
-    process_fowler_intl(fowlerdata, badpixels, saturation, blank,
-        result, var, npix, mask)
-    return result, var, npix, mask
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double blank,
+def _process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double blank,
         result_t res, 
         result_t var, 
         mask_t npix,
