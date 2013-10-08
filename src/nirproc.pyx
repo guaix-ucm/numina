@@ -35,7 +35,7 @@ ctypedef fused result_t:
 
 ctypedef char[:,:] mask_t
 
-cdef extern from "nu_fowler.h" namespace "NuminaAlt":
+cdef extern from "nu_fowler.h" namespace "Numina":
     cdef cppclass FowlerResult[T]:
         FowlerResult() except +
         T value

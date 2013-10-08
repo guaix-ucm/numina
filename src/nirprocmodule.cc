@@ -140,7 +140,7 @@ static void py_fowler_loop(int size, char** dataptr, npy_intp* strideptr, npy_in
 
             *rvalue = result.value;
             *rvariance = result.variance;
-            *dataptr[4] = result.map; 
+            *dataptr[4] = result.npix; 
             *dataptr[5] = result.mask;
           }
           internal.clear();

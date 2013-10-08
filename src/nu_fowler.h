@@ -34,8 +34,10 @@ template<typename Result>
 struct FowlerResult {
   Result value;
   Result variance;
-  char map;
+  char npix;
   char mask;
+  FowlerResult() : value(0), variance(0), npix(0), mask(0)
+  {}
 };
 
 template<typename Result, typename Iterator>
@@ -60,26 +62,11 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   // Probably this can be done better
   result.value = iround<Result>(accum / npoints);
   result.variance = iround<Result>(accum2) / npoints - result.value * result.value;
-  result.map = npoints;
+  result.npix = npoints;
   result.mask = 0;
 
   return result;
 }
-
-} // namespace Numina
-
-
-namespace NuminaAlt {
-
-template<typename Result>
-struct FowlerResult {
-  Result value;
-  Result variance;
-  char npix;
-  char mask;
-  FowlerResult() : value(0), variance(0), npix(0), mask(0)
-  {}
-};
 
 FowlerResult<double> axis_fowler(const std::vector<double>& buff) {
     FowlerResult<double> result;
@@ -101,6 +88,6 @@ FowlerResult<double> axis_fowler(const std::vector<double>& buff) {
     return result;
 }
 
-} // namespace NuminaAlt
+} // namespace Numina
 
 #endif /* NU_FOWLER_H */
