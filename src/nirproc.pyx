@@ -17,11 +17,11 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import numpy as np
-cimport numpy as cnp
-
 cimport cython
 from libcpp.vector cimport vector
+
+import numpy as np
+cimport numpy as np
 
 ctypedef fused datacube_t:
     double[:,:,:]
@@ -35,8 +35,6 @@ ctypedef fused result_t:
 
 ctypedef char[:,:] mask_t
 
-DEF NFRAME = 100
-
 cdef extern from "nu_fowler.h" namespace "NuminaAlt":
     cdef cppclass FowlerResult[T]:
         FowlerResult() except +
@@ -49,7 +47,7 @@ cdef extern from "nu_fowler.h" namespace "NuminaAlt":
 
 def fowler_array(fowlerdata, badpixels=None, dtype='float64',
                  saturation=65631, blank=0):
-    '''Loop over the 3d array applying Fowler processing.'''
+    '''Loop over the first axis applying Fowler processing.'''
     
     fowlerdata = np.asarray(fowlerdata)
         
@@ -66,7 +64,9 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
     # change byteorder
     ndtype = fowlerdata.dtype.newbyteorder('=')
     fowlerdata = np.asarray(fowlerdata, dtype=ndtype)
+    # type of the output
     fdtype = np.result_type(fowlerdata.dtype, dtype)
+    # Type of the mask
     mdtype = 'uint8'
 
     fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
@@ -81,7 +81,7 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
 
     process_fowler_intl(fowlerdata, badpixels, saturation, 
         result, var, npix, mask)
-    return result
+    return result, var, npix, mask
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -98,7 +98,7 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation,
         size_t x, y, z
         size_t h = zr // 2
         FowlerResult[double] fres
-        double rsl, vrr
+        double val1, val2
         char bp
 
     cdef vector[double] vect
@@ -109,10 +109,10 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation,
             bp = badpix[y, x]
             if bp == 0:
                 for z in range(h):
-                    rsl = arr[z,y,x]
-                    vrr = arr[z+h,y,x]
-                    if rsl < saturation and vrr < saturation:
-                        vect.push_back(vrr-rsl)
+                    val1 = arr[z,y,x]
+                    val2 = arr[z+h,y,x]
+                    if val1 < saturation and val2 < saturation:
+                        vect.push_back(val2 - val1)
 
                 fres = axis_fowler(vect)
             else:
