@@ -37,46 +37,73 @@ ctypedef char[:,:] mask_t
 
 DEF NFRAME = 100
 
-def process_fowler_17(arr):
-    ndtype = arr.dtype.newbyteorder('=')
-    arr = np.asarray(arr, dtype=ndtype)
-    fshape = (arr.shape[1], arr.shape[2])
-    ftype = 'float32'
+cdef extern from "nu_fowler.h" namespace "NuminaAlt":
+    cdef cppclass FowlerResult[T]:
+        FowlerResult() except +
+        T value
+        T variance
+        char npix
+        char mask
+
+    FowlerResult[double] axis_fowler(vector[double] buff)
+
+def fowler_array(fowlerdata, badpixels=None, dtype='float64',
+                 saturation=65631, blank=0):
+    '''Loop over the 3d array applying Fowler processing.'''
     
-    res = np.empty(fshape, dtype=ftype)
+    fowlerdata = np.asarray(fowlerdata)
+        
+    if fowlerdata.ndim != 3:
+        raise ValueError('fowlerdata must be 3D')
     
-    process_fowler_16(arr, res)
-    return res
+    hsize = fowlerdata.shape[0] // 2
+    if 2 * hsize != fowlerdata.shape[0]:
+        raise ValueError('axis-0 in fowlerdata must be even')
+    
+    if saturation <= 0:
+        raise ValueError("invalid parameter, saturation <= 0")
+    
+    # change byteorder
+    ndtype = fowlerdata.dtype.newbyteorder('=')
+    fowlerdata = np.asarray(fowlerdata, dtype=ndtype)
+    fdtype = np.result_type(fowlerdata.dtype, dtype)
+    mdtype = 'uint8'
+
+    fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
+
+    if badpixels is None:
+        badpixels = np.zeros(fshape, dtype=mdtype)
+
+    result = np.empty(fshape, dtype=fdtype)
+    var = np.empty_like(result)
+    npix = np.empty(fshape, dtype=mdtype)
+    mask = badpixels.copy()
+
+    process_fowler_intl(fowlerdata, badpixels, saturation, 
+        result, var, npix, mask)
+    return result
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def process_fowler_16(datacube_t arr, result_t res, mask_t badpix=None, 
-                double saturation=55000.0):
+def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, 
+        result_t res, 
+        result_t var, 
+        mask_t npix,
+        mask_t mask
+        ):
     cdef:
         size_t xr = arr.shape[2]
         size_t yr = arr.shape[1]
         size_t zr = arr.shape[0]
         size_t x, y, z
-        size_t ll = 0
         size_t h = zr // 2
-        result_t var
-        mask_t npix, mask
+        FowlerResult[double] fres
         double rsl, vrr
-        char npx, msk, bp
+        char bp
 
     cdef vector[double] vect
     vect.reserve(zr)
 
-    if badpix is None:
-        badpix = np.zeros((yr, xr), dtype='uint8')
-
-    res = np.empty((yr, xr))
-    var = np.empty_like(res)
-    npix = np.empty((yr, xr), dtype='uint8')
-    mask = badpix.copy()
-    # We are not checking than arr and res shapes are compatible!
-    
-    
     for x in range(xr):
         for y in range(yr):
             bp = badpix[y, x]
@@ -87,65 +114,20 @@ def process_fowler_16(datacube_t arr, result_t res, mask_t badpix=None,
                     if rsl < saturation and vrr < saturation:
                         vect.push_back(vrr-rsl)
 
-                axis_fowler_6(vect, rsl, vrr, npx, msk)
+                fres = axis_fowler(vect)
             else:
-                rsl = vrr = 0.0
-                npx = 0
-                msk = bp
+                fres.value = fres.variance = 0.0
+                fres.npix = 0
+                fres.mask = bp
 
-            res[y,x] = rsl
-            var[y,x] = vrr
-            npix[y,x] = npx
-            mask[y,x] = msk
+            res[y,x] = fres.value
+            var[y,x] = fres.variance
+            npix[y,x] = fres.npix
+            mask[y,x] = fres.mask
             vect.clean()
 
     return res, var, npix, mask
 
-# This is a pure C++ function, it could be defined elsewhere
-# and imported in cython
-cdef double axis_fowler_6(vector[double] buff, double& res, double &var, char& npx, char& mask):
-    (&npx)[0] = buff.size()
-    if npx == 0:
-        #all is saturated
-        # Ugly workaround
-        (&res)[0] = 1.0
-        (&var)[0] = 2.0
-        (&mask)[0] = 3
-    else:
-        # Ugly workaround
-        (&res)[0] = 4.0
-        (&var)[0] = 1.0
-        (&mask)[0] = 0
-        
-    return 0.0
-
-def fowler_array(fowlerdata, badpixels=None, dtype='float64',
-                 saturation=65631, blank=0):
-    '''Loop over the 3d array applying Fowler processing.'''
-    
-    
-    fowlerdata = np.asarray(fowlerdata)
-        
-    if fowlerdata.ndim != 3:
-        raise ValueError('fowlerdata must be 3D')
-    
-    hsize = fowlerdata.shape[2] // 2
-    if 2 * hsize != fowlerdata.shape[2]:
-        raise ValueError('axis-2 in fowlerdata must be even')
-    
-    if saturation <= 0:
-        raise ValueError("invalid parameter, saturation <= 0")
-    
-    if badpixels is None:
-        badpixels = np.zeros((fowlerdata.shape[0], fowlerdata.shape[1]), 
-                                dtype='uint8')
-
-    fdtype = np.result_type(fowlerdata.dtype, dtype)
-    mdtype = 'uint8'
-
-    outvalue = None
-    outvar = None
-    npixmask, nmask = None, None
 
 def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
                  saturation=65631, nsig=4.0, blank=0):

@@ -68,4 +68,39 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
 
 } // namespace Numina
 
+
+namespace NuminaAlt {
+
+template<typename Result>
+struct FowlerResult {
+  Result value;
+  Result variance;
+  char npix;
+  char mask;
+  FowlerResult() : value(0), variance(0), npix(0), mask(0)
+  {}
+};
+
+FowlerResult<double> axis_fowler(const std::vector<double>& buff) {
+    FowlerResult<double> result;
+    result.npix = buff.size();
+    double accum = 0;
+    double accum2 = 0;
+    if (result.npix == 0) {
+        result.mask = 3;
+    }
+    else {
+        for(size_t i = 0; i < buff.size(); ++i) {
+            accum += buff[i];
+            accum2 += buff[i] * buff[i];
+        }
+
+        result.value = accum / result.npix;
+        result.variance = accum2 / result.npix - result.value * result.value;
+    }
+    return result;
+}
+
+} // namespace NuminaAlt
+
 #endif /* NU_FOWLER_H */
