@@ -48,6 +48,16 @@ cdef extern from "nu_fowler.h" namespace "Numina":
 
     FowlerResult[double] axis_fowler(vector[double] buff, double blank)
 
+cdef extern from "nu_ramp.h" namespace "Numina":
+    cdef cppclass RampResult[T]:
+        RampResult() except +
+        T value
+        T variance
+        char npix
+        char mask
+
+    RampResult[double] axis_ramp(vector[double] buff, double blank)
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double blank,
@@ -109,7 +119,7 @@ def _process_ramp_intl(datacube_t arr, mask_t badpix, double saturation, double 
         size_t zr = arr.shape[0]
         size_t x, y, z
         size_t h = zr // 2
-        FowlerResult[double] fres
+        RampResult[double] fres
         double val1, val2
         char bp 
         vector[double] buff
@@ -120,13 +130,14 @@ def _process_ramp_intl(datacube_t arr, mask_t badpix, double saturation, double 
         for y in range(yr):
             bp = badpix[y, x]
             if bp == MASK_GOOD:
-                for z in range(h):
-                    val1 = arr[z,y,x]
-                    val2 = arr[z+h,y,x]
-                    if val1 < saturation and val2 < saturation:
-                        buff.push_back(val2 - val1)
+                for z in range(zr):
+                    val = arr[z,y,x]
+                    if val < saturation:
+                        buff.push_back(val)
+                    else:
+                        break
 
-                fres = axis_fowler(buff, blank)
+                fres = axis_ramp(buff, blank)
             else:
                 fres.value = fres.variance = blank
                 fres.npix = 0

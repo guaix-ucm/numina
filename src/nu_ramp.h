@@ -42,7 +42,7 @@ template<typename Result>
 struct RampResult {
   Result value;
   Result variance;
-  char map;
+  char npix;
   char mask;
   char crmask;
 };
@@ -68,7 +68,7 @@ slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
   // Photon limiting case
   variance2 = (6 * result.value * (nn * nn + 1)) / (5 * nn * dt * (nn * nn - 1) * gain);
   result.variance = variance1 + variance2;
-  result.map = nn;
+  result.npix = nn;
   return result;
 }
 
@@ -77,7 +77,7 @@ inline RampResult<T> rround(const RampResult<double>& x) {
   RampResult<T> res;
   res.value = static_cast<T>(round(x.value));
   res.variance = static_cast<T>(round(x.variance));
-  res.map = x.map;
+  res.npix = x.npix;
   res.mask = x.mask;
   res.crmask = x.crmask;
   return res;
@@ -90,7 +90,7 @@ template<> inline RampResult<float> rround(const RampResult<double>& x) {
   RampResult<float> res;
   res.value = static_cast<float>(x.value);
   res.variance = static_cast<float>(x.variance);
-  res.map = x.map;
+  res.npix = x.npix;
   res.mask = x.mask;
   res.crmask = x.crmask;
   return res;
@@ -100,7 +100,7 @@ template<> inline RampResult<long double> rround(const RampResult<double>& x) {
   RampResult<long double> res;
   res.value = static_cast<long double>(x.value);
   res.variance = static_cast<long double>(x.variance);
-  res.map = x.map;
+  res.npix = x.npix;
   res.mask = x.mask;
   res.crmask = x.crmask;
   return res;
@@ -139,7 +139,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
         RampResult<double> res = slope(begin + boff, begin + eoff + 1, dt, gain, ron);
         ramp_data.push_back(res.value);
         ramp_variances.push_back(1.0 / res.variance);
-        ramp_map.push_back(res.map);
+        ramp_map.push_back(res.npix);
         ramp_cmap.push_back(i-dbuff + 1);
       }
       init = i + 1;
@@ -150,7 +150,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
     RampResult<double> res =  slope(begin + boff, end, dt, gain, ron);
     ramp_data.push_back(res.value);
     ramp_variances.push_back(1.0 / res.variance);
-    ramp_map.push_back(res.map);
+    ramp_map.push_back(res.npix);
   }
   delete [] dbuff;
 
@@ -160,7 +160,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
   RampResult<Result> result;
   result.value = iround<Result>(hatmu);
   result.variance = iround<Result>(1 / hatmu_var);
-  result.map = std::accumulate(ramp_map.begin(), ramp_map.end(), 0);
+  result.npix = std::accumulate(ramp_map.begin(), ramp_map.end(), 0);
   result.mask = 0;
   if(!ramp_cmap.empty())
    result.crmask = ramp_cmap[0];
@@ -168,6 +168,27 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
    result.crmask = 0;
   return result;
 }
+
+  RampResult<double> axis_ramp(const std::vector<double>& buff, double blank) {
+    RampResult<double> result;
+    result.npix = buff.size();
+    double accum = 0;
+    double accum2 = 0;
+    if (result.npix == 0) {
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
+    }
+    else {
+        for(size_t i = 0; i < buff.size(); ++i) {
+            accum += buff[i];
+            accum2 += buff[i] * buff[i];
+        }
+
+        result.value = accum / result.npix;
+        result.variance = accum2 / result.npix - result.value * result.value;
+    }
+    return result;
+  }
 
 } // namespace Numina
 
