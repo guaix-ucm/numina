@@ -99,6 +99,7 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double
         mask_t npix,
         mask_t mask
         ):
+    '''Loop over the first axis applying Fowler processing.'''
     cdef:
         size_t xr = arr.shape[2]
         size_t yr = arr.shape[1]
@@ -107,10 +108,10 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double
         size_t h = zr // 2
         FowlerResult[double] fres
         double val1, val2
-        char bp
+        char bp 
+        vector[double] buff
 
-    cdef vector[double] vect
-    vect.reserve(zr)
+    buff.reserve(zr)
 
     for x in range(xr):
         for y in range(yr):
@@ -120,9 +121,9 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double
                     val1 = arr[z,y,x]
                     val2 = arr[z+h,y,x]
                     if val1 < saturation and val2 < saturation:
-                        vect.push_back(val2 - val1)
+                        buff.push_back(val2 - val1)
 
-                fres = axis_fowler(vect, blank)
+                fres = axis_fowler(buff, blank)
             else:
                 fres.value = fres.variance = blank
                 fres.npix = 0
@@ -132,7 +133,7 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double
             var[y,x] = fres.variance
             npix[y,x] = fres.npix
             mask[y,x] = fres.mask
-            vect.clear()
+            buff.clear()
 
     return res, var, npix, mask
 
@@ -165,5 +166,4 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     outvalue = None
     outvar = None
     npixmask, nmask, ncrs = None, None, None
-
 
