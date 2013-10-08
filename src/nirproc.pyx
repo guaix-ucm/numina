@@ -79,8 +79,6 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
         if badpixels.dtype != mdtype:
             raise ValueError('dtype of badpixels must be uint8')
             
-    assert badpixels.shape == fshape
-
     result = np.empty(fshape, dtype=fdtype)
     var = np.empty_like(result)
     npix = np.empty(fshape, dtype=mdtype)
