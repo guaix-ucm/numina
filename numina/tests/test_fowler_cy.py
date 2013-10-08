@@ -23,6 +23,9 @@ import numpy
 
 from numina.array._nirproc2 import fowler_array
 
+MASK_GOOD = 0
+MASK_SATURATION = 3
+
 class FowlerTestCase(unittest.TestCase):
     def setUp(self):
         self.fdata = numpy.empty((10, 1, 1))
@@ -31,7 +34,7 @@ class FowlerTestCase(unittest.TestCase):
         self.emptybp = numpy.zeros((rows, columns), dtype='uint8')
         self.data = numpy.arange(10, dtype='int32')
         self.data = numpy.tile(self.data, (columns, rows, 1)).T
-        self.blank = 0
+        self.blank = 1
         self.saturation = 65536
             
     def test_exception(self):
@@ -49,7 +52,6 @@ class FowlerTestCase(unittest.TestCase):
     def test_saturation0(self):        
         '''Test we count correctly saturated pixels in Fowler mode.'''
         
-        MASK_SATURATION = 3
     
         # No points 
         self.data[:] = 50000 #- 32768
@@ -77,7 +79,6 @@ class FowlerTestCase(unittest.TestCase):
     def test_saturation1(self):        
         '''Test we count correctly saturated pixels in Fowler mode.'''
         
-        MASK_GOOD = 0
             
         saturation = 50000
         self.data[7:, ...] = saturation 

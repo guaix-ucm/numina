@@ -28,6 +28,8 @@
 
 #include "operations.h"
 
+#define MASK_SATURATION 3
+
 namespace Numina {
 
 template<typename Result>
@@ -68,13 +70,14 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   return result;
 }
 
-FowlerResult<double> axis_fowler(const std::vector<double>& buff) {
+FowlerResult<double> axis_fowler(const std::vector<double>& buff, double blank) {
     FowlerResult<double> result;
     result.npix = buff.size();
     double accum = 0;
     double accum2 = 0;
     if (result.npix == 0) {
-        result.mask = 3;
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
     }
     else {
         for(size_t i = 0; i < buff.size(); ++i) {

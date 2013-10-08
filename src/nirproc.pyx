@@ -35,6 +35,9 @@ ctypedef fused result_t:
 
 ctypedef char[:,:] mask_t
 
+MASK_GOOD = 0
+MASK_SATURATION = 3
+
 cdef extern from "nu_fowler.h" namespace "Numina":
     cdef cppclass FowlerResult[T]:
         FowlerResult() except +
@@ -43,7 +46,7 @@ cdef extern from "nu_fowler.h" namespace "Numina":
         char npix
         char mask
 
-    FowlerResult[double] axis_fowler(vector[double] buff)
+    FowlerResult[double] axis_fowler(vector[double] buff, double blank)
 
 def fowler_array(fowlerdata, badpixels=None, dtype='float64',
                  saturation=65631, blank=0):
@@ -112,18 +115,14 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double
     for x in range(xr):
         for y in range(yr):
             bp = badpix[y, x]
-            if bp == 0:
+            if bp == MASK_GOOD:
                 for z in range(h):
                     val1 = arr[z,y,x]
                     val2 = arr[z+h,y,x]
                     if val1 < saturation and val2 < saturation:
                         vect.push_back(val2 - val1)
 
-                fres = axis_fowler(vect)
-            elif bp == 2:
-                fres.value = fres.variance = blank
-                fres.npix = 0
-                fres.mask = bp
+                fres = axis_fowler(vect, blank)
             else:
                 fres.value = fres.variance = blank
                 fres.npix = 0
