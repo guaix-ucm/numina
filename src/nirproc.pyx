@@ -67,7 +67,7 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
     # type of the output
     fdtype = np.result_type(fowlerdata.dtype, dtype)
     # Type of the mask
-    mdtype = 'uint8'
+    mdtype = np.dtype('uint8')
 
     fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
 
@@ -76,6 +76,9 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
     else:
         if badpixels.shape != fshape:
             raise ValueError('shape of badpixels is not compatible with shape of fowlerdata')
+        if badpixels.dtype != mdtype:
+            raise ValueError('dtype of badpixels must be uint8')
+            
     assert badpixels.shape == fshape
 
     result = np.empty(fshape, dtype=fdtype)

@@ -215,6 +215,10 @@ class FowlerTestCase(unittest.TestCase):
         self.assertRaises(ValueError, fowler_array, self.fdata, badpixels=numpy.empty((10, 10)))
         self.assertRaises(ValueError, fowler_array, self.fdata, badpixels=numpy.empty((1, 1, 1)))
 
+    def test_badpixel3(self):
+        '''Test we don't accept badpixel mask with incompatible dtype.'''
+        self.assertRaises(ValueError, fowler_array, self.fdata, badpixels=numpy.empty((1, 1), dtype='int'))
+
     def test_results1(self):
         '''Test we obtain correct values in Fowler mode'''
         
