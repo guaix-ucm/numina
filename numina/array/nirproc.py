@@ -25,6 +25,7 @@ import math
 import numpy
 
 from numina.array._nirproc2 import _process_fowler_intl
+from numina.array._nirproc2 import _process_ramp_intl
 
 def fowler_array(fowlerdata, badpixels=None, dtype='float64',
                  saturation=65631, blank=0):
@@ -100,10 +101,6 @@ def _axis_ramp(data, badpix, img, var, nmap, mask, crmask,
 def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
                  saturation=65631, nsig=4.0, blank=0):
 
-    outvalue = None
-    outvar = None
-    npixmask, nmask, ncrs = None, None, None
-
     if dt <= 0:
         raise ValueError("invalid parameter, dt <= 0.0")
 
@@ -119,47 +116,35 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     if saturation <= 0:
         raise ValueError("invalid parameter, saturation <= 0")
 
-    if badpixels is None:
-        badpixels = numpy.zeros((rampdata.shape[0], rampdata.shape[1]), 
-                                dtype='uint8')
+    rampdata = numpy.asarray(rampdata)
+    if rampdata.ndom != 3:
+        raise ValueError('rampdata must be 3D')
 
+    # change byteorder
+    ndtype = rampdata.dtype.newbyteorder('=')
+    rampdata = numpy.asarray(rampdata, dtype=ndtype)
+    # type of the output
     fdtype = numpy.result_type(rampdata.dtype, dtype)
-    mdtype = 'uint8'
+    # Type of the mask
+    mdtype = numpy.dtype('uint8')
+    fshape = (rampdata.shape[0], rampdata.shape[1]), 
 
-    it = numpy.nditer([rampdata, badpixels, outvalue, outvar, 
-                        npixmask, nmask, ncrs], 
-                flags=['reduce_ok', 'external_loop',
-                    'buffered', 'delay_bufalloc'],
-                    op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ],
-                    order='A',
-                    op_dtypes=(fdtype, mdtype, fdtype, 
-                               fdtype, mdtype, mdtype, mdtype),
-                    op_axes=[None,
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1],
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1]
-                           ])
-    for i in range(2, 7):
-        it.operands[i][...] = 0
-    it.reset()
+    if badpixels is None:
+        badpixels = numpy.zeros(fshape, dtype=mdtype)
+    else:
+        if badpixels.shape != fshape:
+            raise ValueError('shape of badpixels is not compatible with shape of rampdata')
+        if badpixels.dtype != mdtype:
+            raise ValueError('dtype of badpixels must be uint8')
+            
+    result = numpy.empty(fshape, dtype=fdtype)
+    var = numpy.empty_like(result)
+    npix = numpy.empty(fshape, dtype=mdtype)
+    mask = badpixels.copy()
 
-    for x, badpix, img, var, nmap, mask, crmask in it:
-        _axis_ramp(x, badpix, img, var, nmap, mask, crmask, 
-              saturation, dt, gain, ron, nsig, blank=blank)
-        
-
-    # Building final frame
-
-    return tuple(it.operands[i] for i in range(2, 7))
+    _process_ramp_intl(fowlerdata, badpixels, saturation, blank,
+        result, var, npix, mask)
+    return result, var, npix, mask
 
 def _ramp(data, saturation, dt, gain, ron, nsig):
     nsdata = data[data < saturation]

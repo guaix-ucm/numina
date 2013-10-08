@@ -94,33 +94,49 @@ def _process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, doubl
 
     return res, var, npix, mask
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _process_ramp_intl(datacube_t arr, mask_t badpix, double saturation, double blank,
+        result_t res, 
+        result_t var, 
+        mask_t npix,
+        mask_t mask
+        ):
+    '''Loop over the first axis applying Fowler processing.'''
+    cdef:
+        size_t xr = arr.shape[2]
+        size_t yr = arr.shape[1]
+        size_t zr = arr.shape[0]
+        size_t x, y, z
+        size_t h = zr // 2
+        FowlerResult[double] fres
+        double val1, val2
+        char bp 
+        vector[double] buff
 
-def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
-                 saturation=65631, nsig=4.0, blank=0):
+    buff.reserve(zr)
 
-    if dt <= 0:
-        raise ValueError("invalid parameter, dt <= 0.0")
+    for x in range(xr):
+        for y in range(yr):
+            bp = badpix[y, x]
+            if bp == MASK_GOOD:
+                for z in range(h):
+                    val1 = arr[z,y,x]
+                    val2 = arr[z+h,y,x]
+                    if val1 < saturation and val2 < saturation:
+                        buff.push_back(val2 - val1)
 
-    if gain <= 0:
-        raise ValueError("invalid parameter, gain <= 0.0")
+                fres = axis_fowler(buff, blank)
+            else:
+                fres.value = fres.variance = blank
+                fres.npix = 0
+                fres.mask = bp
 
-    if ron <= 0:
-        raise ValueError("invalid parameter, ron < 0.0")
+            res[y,x] = fres.value
+            var[y,x] = fres.variance
+            npix[y,x] = fres.npix
+            mask[y,x] = fres.mask
+            buff.clear()
 
-    if nsig <= 0:
-        raise ValueError("invalid parameter, nsig <= 0.0")
-
-    if saturation <= 0:
-        raise ValueError("invalid parameter, saturation <= 0")
-
-    if badpixels is None:
-        badpixels = np.zeros((rampdata.shape[0], rampdata.shape[1]), 
-                                dtype='uint8')
-
-    fdtype = np.result_type(rampdata.dtype, dtype)
-    mdtype = 'uint8'
-
-    outvalue = None
-    outvar = None
-    npixmask, nmask, ncrs = None, None, None
+    return res, var, npix, mask
 
