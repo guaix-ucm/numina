@@ -73,19 +73,23 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
 
     if badpixels is None:
         badpixels = np.zeros(fshape, dtype=mdtype)
+    else:
+        if badpixels.shape != fshape:
+            raise ValueError('shape of badpixels is not compatible with shape of fowlerdata')
+    assert badpixels.shape == fshape
 
     result = np.empty(fshape, dtype=fdtype)
     var = np.empty_like(result)
     npix = np.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    process_fowler_intl(fowlerdata, badpixels, saturation, 
+    process_fowler_intl(fowlerdata, badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, 
+def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation, double blank,
         result_t res, 
         result_t var, 
         mask_t npix,
@@ -115,8 +119,12 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation,
                         vect.push_back(val2 - val1)
 
                 fres = axis_fowler(vect)
+            elif bp == 2:
+                fres.value = fres.variance = blank
+                fres.npix = 0
+                fres.mask = bp
             else:
-                fres.value = fres.variance = 0.0
+                fres.value = fres.variance = blank
                 fres.npix = 0
                 fres.mask = bp
 
@@ -124,7 +132,7 @@ def process_fowler_intl(datacube_t arr, mask_t badpix, double saturation,
             var[y,x] = fres.variance
             npix[y,x] = fres.npix
             mask[y,x] = fres.mask
-            vect.clean()
+            vect.clear()
 
     return res, var, npix, mask
 
