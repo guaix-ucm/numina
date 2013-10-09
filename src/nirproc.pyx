@@ -48,6 +48,12 @@ cdef extern from "nu_fowler.h" namespace "Numina":
 
     FowlerResult[double] axis_fowler(vector[double] buff, double blank)
 
+cdef extern from "wgt.h":# namespace "Numina":
+    cdef cppclass HWeightsStore:
+        pass
+
+    HWeightsStore create(size_t n)
+
 cdef extern from "nu_ramp.h" namespace "Numina":
     cdef cppclass RampResult[T]:
         RampResult() except +
@@ -56,7 +62,8 @@ cdef extern from "nu_ramp.h" namespace "Numina":
         char npix
         char mask
 
-    RampResult[double] axis_ramp(vector[double] buff, double blank)
+    RampResult[double] axis_ramp(vector[double] buff, double dt, 
+        HWeightsStore wgts_store, double blank)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -120,11 +127,15 @@ def _process_ramp_intl(datacube_t arr, mask_t badpix, double saturation, double 
         size_t x, y, z
         size_t h = zr // 2
         RampResult[double] fres
-        double val1, val2
+        double val
         char bp 
+        double dt = 1.0
         vector[double] buff
+        # weights and internal values
+        HWeightsStore wgts
 
     buff.reserve(zr)
+    wgts = create(zr)
 
     for x in range(xr):
         for y in range(yr):
@@ -135,9 +146,10 @@ def _process_ramp_intl(datacube_t arr, mask_t badpix, double saturation, double 
                     if val < saturation:
                         buff.push_back(val)
                     else:
+                        # We stop collecting at saturation level
                         break
 
-                fres = axis_ramp(buff, blank)
+                fres = axis_ramp(buff, dt, wgts, blank)
             else:
                 fres.value = fres.variance = blank
                 fres.npix = 0

@@ -27,6 +27,7 @@
 #include <algorithm>
 
 #include "operations.h"
+#include "wgt.h"
 
 #define MASK_SATURATION 3
 
@@ -170,24 +171,32 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
   return result;
 }
 
-  RampResult<double> axis_ramp(const std::vector<double>& buff, double blank) {
+  RampResult<double> axis_ramp(const std::vector<double>& buff, double dt,
+    const HWeightsStore& wgts_store, double blank) {
+
+    // these must be arguments
+    double ron = 1.0;
+    double gain = 1.0;
+    double rg = ron / gain;
+
     RampResult<double> result;
     result.npix = buff.size();
-    double accum = 0;
-    double accum2 = 0;
-    if (result.npix == 0) {
-        result.value = result.variance = blank;
-        result.mask = MASK_SATURATION;
+
+    if (result.npix >= 2) {
+        const HWeights& hwgt = wgts_store.w[result.npix - 2];
+        double acc = 0;
+        for(size_t i=0; i < (size_t)result.npix; ++i) {
+          acc += buff[i] * hwgt.weights[i];
+        }
+        acc /= dt;
+        result.value = acc;
+        // analytic variance
+        result.variance= (rg * rg) / (hwgt.delt1 * dt) + acc * hwgt.delt2 / dt;
     }
     else {
-        for(size_t i = 0; i < buff.size(); ++i) {
-            accum += buff[i];
-            accum2 += buff[i] * buff[i];
-        }
-
-        result.value = accum / result.npix;
-        result.variance = accum2 / result.npix - result.value * result.value;
+        // returning crap
     }
+
     return result;
   }
 

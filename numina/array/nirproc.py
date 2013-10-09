@@ -127,7 +127,7 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     fdtype = numpy.result_type(rampdata.dtype, dtype)
     # Type of the mask
     mdtype = numpy.dtype('uint8')
-    fshape = (rampdata.shape[0], rampdata.shape[1]), 
+    fshape = (rampdata.shape[1], rampdata.shape[2])
 
     if badpixels is None:
         badpixels = numpy.zeros(fshape, dtype=mdtype)
@@ -142,7 +142,7 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_ramp_intl(fowlerdata, badpixels, saturation, blank,
+    _process_ramp_intl(rampdata, badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
 

@@ -46,7 +46,6 @@ template<typename Result, typename Iterator>
 FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
 
   typedef typename std::iterator_traits<Iterator>::value_type T;
-  typedef typename std::iterator_traits<Iterator>::pointer PT;
   Iterator i1 = begin;
   Iterator i2 = begin + hsize;
   Result accum = 0;
