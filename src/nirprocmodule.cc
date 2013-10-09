@@ -83,7 +83,7 @@ static void py_ramp_loop(int size, char** dataptr, npy_intp* strideptr, npy_intp
                  dt, gain, ron, nsig);
             *rvalue = result.value;
             *rvariance = result.variance;
-            *dataptr[4] = result.map; 
+            *dataptr[4] = result.npix; 
             *dataptr[5] = result.mask;
             *dataptr[6] = result.crmask;
           }

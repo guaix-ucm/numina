@@ -117,7 +117,7 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
         raise ValueError("invalid parameter, saturation <= 0")
 
     rampdata = numpy.asarray(rampdata)
-    if rampdata.ndom != 3:
+    if rampdata.ndim != 3:
         raise ValueError('rampdata must be 3D')
 
     # change byteorder

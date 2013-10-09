@@ -28,6 +28,7 @@
 
 #include "operations.h"
 
+#define MASK_SATURATION 3
 
 namespace Numina {
 
