@@ -27,8 +27,9 @@ import numpy
 from numina.array._nirproc import _process_fowler_intl
 from numina.array._nirproc import _process_ramp_intl
 
-def fowler_array(fowlerdata, gain=1.0, ron=1.0, badpixels=None, dtype='float64',
-                 saturation=65631, blank=0):
+def fowler_array(fowlerdata, teff0=1.0, gain=1.0, ron=1.0, tr=0.0, 
+                badpixels=None, dtype='float64',
+                saturation=65631, blank=0):
     '''Loop over the first axis applying Fowler processing.'''
     
     if gain <= 0:
@@ -37,6 +38,9 @@ def fowler_array(fowlerdata, gain=1.0, ron=1.0, badpixels=None, dtype='float64',
     if ron <= 0:
         raise ValueError("invalid parameter, ron < 0.0")
     
+    if tr <= 0:
+        raise ValueError("invalid parameter, tr < 0.0")
+
     if saturation <= 0:
         raise ValueError("invalid parameter, saturation <= 0")
 
@@ -45,8 +49,8 @@ def fowler_array(fowlerdata, gain=1.0, ron=1.0, badpixels=None, dtype='float64',
     if fowlerdata.ndim != 3:
         raise ValueError('fowlerdata must be 3D')
     
-    hsize = fowlerdata.shape[0] // 2
-    if 2 * hsize != fowlerdata.shape[0]:
+    npairs = fowlerdata.shape[0] // 2
+    if 2 * npairs != fowlerdata.shape[0]:
         raise ValueError('axis-0 in fowlerdata must be even')
     
     # change byteorder
@@ -72,7 +76,8 @@ def fowler_array(fowlerdata, gain=1.0, ron=1.0, badpixels=None, dtype='float64',
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_fowler_intl(fowlerdata, gain, ron, badpixels, saturation, blank,
+    _process_fowler_intl(fowlerdata, teff, gain, ron, tr, 
+        badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
 
