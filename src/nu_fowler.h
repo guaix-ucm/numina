@@ -69,11 +69,11 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   return result;
 }
 
-FowlerResult<double> axis_fowler(const std::vector<double>& buff, double blank) {
+FowlerResult<double> axis_fowler(const std::vector<double>& buff, double gain, double ron, double blank) {
     FowlerResult<double> result;
     result.npix = buff.size();
+    double rg = ron / gain;
     double accum = 0;
-    double accum2 = 0;
     if (result.npix == 0) {
         result.value = result.variance = blank;
         result.mask = MASK_SATURATION;
@@ -81,11 +81,10 @@ FowlerResult<double> axis_fowler(const std::vector<double>& buff, double blank) 
     else {
         for(size_t i = 0; i < buff.size(); ++i) {
             accum += buff[i];
-            accum2 += buff[i] * buff[i];
         }
 
         result.value = accum / result.npix;
-        result.variance = accum2 / result.npix - result.value * result.value;
+        result.variance = 2 * rg * rg / result.npix;
     }
     return result;
 }

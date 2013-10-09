@@ -209,7 +209,6 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
   RampResult<double> axis_ramp(const std::vector<double>& buff, double dt,
     double gain, double ron, const HWeightsStore& wgts_store, double blank) {
 
-    // these must be arguments
     double rg = ron / gain;
 
     RampResult<double> result;
