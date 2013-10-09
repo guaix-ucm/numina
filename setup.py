@@ -29,10 +29,6 @@ ext2 = Extension('numina.array._ufunc',
           include_dirs=[numpy_include])
 
 ext3 = Extension('numina.array._nirproc', 
-                 ['src/nirprocmodule.cc'],
-                include_dirs=[numpy_include])
-
-ext4 = Extension('numina.array._nirproc2', 
                  ['src/nirproc.pyx'],
                 language='c++')
 
@@ -52,7 +48,7 @@ setup(name='numina',
       license='GPLv3',
       description='Numina reduction package',
       packages=find_packages('.'),
-      ext_modules=[ext1, ext2, ext3, ext4],
+      ext_modules=[ext1, ext2, ext3],
       entry_points={'console_scripts': ['numina = numina.user:main']},
       requires=REQUIRES,
       setup_requires=['numpy'],

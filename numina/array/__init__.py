@@ -29,7 +29,7 @@ import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
-from numina.array._nirproc import ramp_array
+from numina.array.nirproc import ramp_array
 from numina.array.nirproc import fowler_array
 
 _logger = logging.getLogger("numina.array")

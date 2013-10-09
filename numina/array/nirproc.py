@@ -24,8 +24,8 @@ import math
 
 import numpy
 
-from numina.array._nirproc2 import _process_fowler_intl
-from numina.array._nirproc2 import _process_ramp_intl
+from numina.array._nirproc import _process_fowler_intl
+from numina.array._nirproc import _process_ramp_intl
 
 def fowler_array(fowlerdata, badpixels=None, dtype='float64',
                  saturation=65631, blank=0):
