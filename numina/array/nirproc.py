@@ -27,9 +27,9 @@ import numpy
 from numina.array._nirproc import _process_fowler_intl
 from numina.array._nirproc import _process_ramp_intl
 
-def fowler_array(fowlerdata, teff0=1.0, gain=1.0, ron=1.0, tr=0.0, 
+def fowler_array(fowlerdata, tint, tr=0, gain=1.0, ron=1.0, 
                 badpixels=None, dtype='float64',
-                saturation=65631, blank=0):
+                saturation=65631, blank=0, normalize=False):
     '''Loop over the first axis applying Fowler processing.'''
     
     if gain <= 0:
@@ -76,16 +76,17 @@ def fowler_array(fowlerdata, teff0=1.0, gain=1.0, ron=1.0, tr=0.0,
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_fowler_intl(fowlerdata, teff, gain, ron, tr, 
+    _process_fowler_intl(fowlerdata, tint, tr,  gain, ron, 
         badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
 
-def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
-                 saturation=65631, nsig=4.0, blank=0):
+def ramp_array(rampdata, tint, tr=0.0, gain=1.0, ron=1.0, 
+                badpixels=None, dtype='float64',
+                 saturation=65631, nsig=4.0, blank=0, normalize=False):
 
-    if dt <= 0:
-        raise ValueError("invalid parameter, dt <= 0.0")
+    if tint <= 0:
+        raise ValueError("invalid parameter, tint <= 0.0")
 
     if gain <= 0:
         raise ValueError("invalid parameter, gain <= 0.0")
@@ -125,7 +126,8 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_ramp_intl(rampdata, dt, gain, ron, badpixels, saturation, blank,
+    _process_ramp_intl(rampdata, tint, tr, gain, ron, badpixels, 
+        saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
 

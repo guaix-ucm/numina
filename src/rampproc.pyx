@@ -41,25 +41,26 @@ cdef extern from "nu_ramp.h" namespace "Numina":
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _process_ramp_intl(datacube_t arr, double dt, double gain, double ron, mask_t badpix, double saturation, double blank,
+def _process_ramp_intl(datacube_t arr, double tint, double tr, double gain, double ron, mask_t badpix, double saturation, double blank,
         result_t res, 
         result_t var, 
         mask_t npix,
         mask_t mask
         ):
-    '''Loop over the first axis applying Fowler processing.'''
     cdef:
         size_t xr = arr.shape[2]
         size_t yr = arr.shape[1]
         size_t zr = arr.shape[0]
         size_t x, y, z
-        size_t h = zr // 2
         RampResult[double] fres
         double val
+        double dt
         char bp 
         vector[double] buff
         # weights and internal values
         vector[HWeights] wgts
+
+    dt = tint / (zr - 1)
 
     buff.reserve(zr)
     wgts = create(zr)
