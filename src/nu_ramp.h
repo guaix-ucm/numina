@@ -27,7 +27,6 @@
 #include <algorithm>
 
 #include "operations.h"
-#include "wgt.h"
 
 #define MASK_SATURATION 3
 
@@ -171,19 +170,53 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
   return result;
 }
 
+  struct HWeights {
+    std::vector<double> weights;
+    size_t order;
+    double delt1;
+    double delt2;
+
+    HWeights(size_t nn=2) : 
+        weights(nn),
+        order(nn),
+        delt1(nn * (nn + 1) * (nn - 1) / 12.0),
+        delt2((6.0 * (nn * nn + 1)) / (5.0 * nn * (nn * nn - 1)))
+    {
+        const double bb = 0.5 * (nn - 1);
+
+        for(size_t i=0; i < nn / 2; ++i) {
+          weights[i] = (i  - bb) / delt1;
+          // the table is antisymetric
+          weights[nn-i-1] = -weights[i];
+        }
+        // The central element is 0.0
+        // if there is one
+        if (nn % 2 == 1) {
+          weights[nn / 2] = 0.0;
+        }
+    }
+  };
+
+  typedef std::vector<HWeights> HWeightsStore;
+
+  std::vector<HWeights> create(size_t N) {
+      std::vector<HWeights> w;
+      for(size_t i=0; i < N-1; ++i) 
+          w.push_back(HWeights(i+2));
+      return w;
+  }
+
   RampResult<double> axis_ramp(const std::vector<double>& buff, double dt,
-    const HWeightsStore& wgts_store, double blank) {
+    double gain, double ron, const HWeightsStore& wgts_store, double blank) {
 
     // these must be arguments
-    double ron = 1.0;
-    double gain = 1.0;
     double rg = ron / gain;
 
     RampResult<double> result;
     result.npix = buff.size();
 
     if (result.npix >= 2) {
-        const HWeights& hwgt = wgts_store.w[result.npix - 2];
+        const HWeights& hwgt = wgts_store[result.npix - 2];
         double acc = 0;
         for(size_t i=0; i < (size_t)result.npix; ++i) {
           acc += buff[i] * hwgt.weights[i];
@@ -194,7 +227,8 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
         result.variance= (rg * rg) / (hwgt.delt1 * dt) + acc * hwgt.delt2 / dt;
     }
     else {
-        // returning crap
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
     }
 
     return result;

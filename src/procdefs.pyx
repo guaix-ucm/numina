@@ -17,6 +17,18 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-include "procdefs.pyx"
-include "rampproc.pyx"
-include "fowlerproc.pyx"
+ctypedef fused datacube_t:
+    double[:,:,:]
+    float[:,:,:]
+    long[:,:,:]
+    int[:,:,:]
+
+ctypedef fused result_t:
+    double[:,:]
+    float[:,:]
+
+ctypedef char[:,:] mask_t
+
+MASK_GOOD = 0
+MASK_SATURATION = 3
+

@@ -70,34 +70,6 @@ def fowler_array(fowlerdata, badpixels=None, dtype='float64',
         result, var, npix, mask)
     return result, var, npix, mask
 
-def _axis_ramp(data, badpix, img, var, nmap, mask, crmask, 
-              saturation, dt, gain, ron, nsig, blank=0):
-    MASK_SATURATION = 3 
-    MASK_GOOD = 0
-
-    if badpix[0] != MASK_GOOD:
-        img[...] = blank
-        var[...] = blank
-        mask[...] = badpix[0]
-    else:
-        mm = data[data < saturation]
-
-        if len(mm) <= 1:
-            img[...] = blank
-            var[...] = blank
-            mask[...] = MASK_SATURATION
-        else:
-            v, vr, n, glt = _ramp(mm, saturation, dt, gain, ron, nsig)
-
-            img[...] = v
-
-            var[...] = vr
-            mask[...] = MASK_GOOD
-            nmap[...] = n
-            # If there is a pixel in the list of CR, put it in the crmask
-            if glt:                
-                crmask[...] = glt[0]
-
 def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
                  saturation=65631, nsig=4.0, blank=0):
 
@@ -142,7 +114,7 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_ramp_intl(rampdata, badpixels, saturation, blank,
+    _process_ramp_intl(rampdata, dt, gain, ron, badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
 
