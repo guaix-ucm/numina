@@ -31,9 +31,6 @@ cdef extern from "nu_ramp.h" namespace "Numina":
         char npix
         char mask
 
-    cdef cppclass HWeightsStore:
-        pass
-
     cdef cppclass HWeights:
         pass
 

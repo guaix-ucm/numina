@@ -225,6 +225,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
         result.value = acc;
         // analytic variance
         result.variance= (rg * rg) / (hwgt.delt1 * dt) + acc * hwgt.delt2 / dt;
+        result.mask = 0;
     }
     else {
         result.value = result.variance = blank;
