@@ -30,7 +30,61 @@ from numina.array._nirproc import _process_ramp_intl
 def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0, 
                 badpixels=None, dtype='float64',
                 saturation=65631, blank=0, normalize=False):
-    '''Loop over the first axis applying Fowler processing.'''
+    '''Loop over the first axis applying Fowler processing.
+    
+    *fowlerdata* is assumed to be a 3D numpy.ndarray containing the
+    result of a nIR observation in Fowler mode (Fowler and Gatley 1991).
+    The shape of the array must be of the form 2N_p x M x N, with N_p being
+    the number of pairs in Fowler mode.
+
+    The output signal is just the mean value of the differences between the 
+    last N_p values (S_i) and the first N_p values (R-i).
+
+    .. math::
+
+        S_F = \\frac{1}{N_p}\\sum\\limits_{i=0}^{N_p-1} S_i - R_i
+
+
+    If the source has a radiance F, then the measured signal is equivalent
+    to:
+
+    .. math::
+
+        S_F = F T_I - F T_S (N_p -1) = F T_E
+
+    being T_I the integration time (*tint*), the time since the first 
+    productive read to the last productive read for a given pixel and T_S the
+    time between samples (*ts*). T_E is the time between correlated reads
+    :math:`T_E = T_I - T_S (N_p - 1)`.
+
+    The variance of the signnal is the sum of two terms, one for the readout
+    noise:
+
+    .. math::
+
+        \\mathrm{var}(S_{F1}) =\\frac{2\sigma_R^2}{N_p}
+
+    and other for the photon noise:
+
+    .. math::
+
+        \\mathrm{var}(S_{F2}) = F T_E - F T_S \\frac{1}{3}(N_p-\\frac{1}{N_p}) = F T_I - F T_S (\\frac{4}{3} N_p -1 -  \\frac{1}{3N_p})
+
+
+    :param fowlerdata: Convertible to a 3D numpy.ndarray with first axis even
+    :param tint: Integration time.
+    :param ts: Time between samples.
+    :param gain: Detector gain.
+    :param ron: Detector readout noise in counts.
+    :param badpixels: An optional MxN mask of dtype 'uint8'.
+    :param dtype: The dtype of the float outputs.
+    :param saturation: The saturation level of the detector.
+    :param blank: Invalid values in output are substituted by *blank*.
+    :returns: A tuple of (signal, variance of the signal, numper of pixels used 
+        and badpixel mask.
+    :raises: ValueError
+    
+    '''
     
     if gain <= 0:
         raise ValueError("invalid parameter, gain <= 0.0")
