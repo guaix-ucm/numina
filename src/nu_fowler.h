@@ -71,7 +71,7 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
 
 FowlerResult<double> 
 axis_fowler(const std::vector<double>& buff, double teff, double gain, 
-    double ron, double tr, double blank) {
+    double ron, double ts, double blank) {
     FowlerResult<double> result;
     result.npix = buff.size();
     double rg = ron / gain;
@@ -87,7 +87,7 @@ axis_fowler(const std::vector<double>& buff, double teff, double gain,
 
         result.value = accum / result.npix;
         result.variance = 2 * rg * rg / result.npix + 
-            result.value / gain * (1 + tr / teff * (1 / result.npix - result.npix));
+            result.value / (gain * gain) * (1 + ts / (3 *teff) * (1 / result.npix - result.npix));
     }
     return result;
 }

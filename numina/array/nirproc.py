@@ -27,7 +27,7 @@ import numpy
 from numina.array._nirproc import _process_fowler_intl
 from numina.array._nirproc import _process_ramp_intl
 
-def fowler_array(fowlerdata, tint, tr=0, gain=1.0, ron=1.0, 
+def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0, 
                 badpixels=None, dtype='float64',
                 saturation=65631, blank=0, normalize=False):
     '''Loop over the first axis applying Fowler processing.'''
@@ -38,8 +38,8 @@ def fowler_array(fowlerdata, tint, tr=0, gain=1.0, ron=1.0,
     if ron <= 0:
         raise ValueError("invalid parameter, ron < 0.0")
     
-    if tr <= 0:
-        raise ValueError("invalid parameter, tr < 0.0")
+    if ts <= 0:
+        raise ValueError("invalid parameter, ts < 0.0")
 
     if saturation <= 0:
         raise ValueError("invalid parameter, saturation <= 0")
@@ -76,7 +76,7 @@ def fowler_array(fowlerdata, tint, tr=0, gain=1.0, ron=1.0,
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_fowler_intl(fowlerdata, tint, tr,  gain, ron, 
+    _process_fowler_intl(fowlerdata, tint, ts,  gain, ron, 
         badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask

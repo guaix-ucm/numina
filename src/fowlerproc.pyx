@@ -31,11 +31,11 @@ cdef extern from "nu_fowler.h" namespace "Numina":
         char npix
         char mask
 
-    FowlerResult[double] axis_fowler(vector[double] buff, double teff, double gain, double ron, double tr, double blank)
+    FowlerResult[double] axis_fowler(vector[double] buff, double teff, double gain, double ron, double ts, double blank)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _process_fowler_intl(datacube_t arr, double tint, double tr, double gain, double ron, mask_t badpix, double saturation, double blank,
+def _process_fowler_intl(datacube_t arr, double tint, double ts, double gain, double ron, mask_t badpix, double saturation, double blank,
         result_t res, 
         result_t var, 
         mask_t npix,
@@ -54,8 +54,8 @@ def _process_fowler_intl(datacube_t arr, double tint, double tr, double gain, do
         char bp 
         vector[double] buff
 
-    # integration time minus readout times number of pairs
-    teff = tint - np * tr
+    # integration time minus sample times number of pairs
+    teff = tint - (np - 1) * ts
     buff.reserve(zr)
 
     for x in range(xr):
@@ -68,7 +68,7 @@ def _process_fowler_intl(datacube_t arr, double tint, double tr, double gain, do
                     if val1 < saturation and val2 < saturation:
                         buff.push_back(val2 - val1)
 
-                fres = axis_fowler(buff, teff, gain, ron, tr, blank)
+                fres = axis_fowler(buff, teff, gain, ron, ts, blank)
             else:
                 fres.value = fres.variance = blank
                 fres.npix = 0
