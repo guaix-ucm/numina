@@ -140,7 +140,26 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
 
 def ramp_array(rampdata, ti, gain=1.0, ron=1.0, 
                 badpixels=None, dtype='float64',
-                 saturation=65631, nsig=4.0, blank=0, normalize=False):
+                 saturation=65631, blank=0, nsig=None, normalize=False):
+    '''Loop over the first axis applying ramp processing.
+
+    *rampdata* is assumed to be a 3D numpy.ndarray containing the
+    result of a nIR observation in folow-up-the-ramp mode.
+    The shape of the array must be of the form N_s x M x N, with N_s being
+    the number of samples.
+
+    :param fowlerdata: Convertible to a 3D numpy.ndarray
+    :param ti: Integration time.
+    :param gain: Detector gain.
+    :param ron: Detector readout noise in counts.
+    :param badpixels: An optional MxN mask of dtype 'uint8'.
+    :param dtype: The dtype of the float outputs.
+    :param saturation: The saturation level of the detector.
+    :param blank: Invalid values in output are substituted by *blank*.
+    :returns: A tuple of signal, variance of the signal, numper of pixels used 
+        and badpixel mask.
+    :raises: ValueError
+    '''
 
     if ti <= 0:
         raise ValueError("invalid parameter, ti <= 0.0")
@@ -188,6 +207,8 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
         result, var, npix, mask)
     return result, var, npix, mask
 
+# This is not used...
+# Old code used to detect cosmic rays in the ramp
 def _ramp(data, saturation, dt, gain, ron, nsig):
     nsdata = data[data < saturation]
 
