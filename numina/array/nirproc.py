@@ -27,7 +27,7 @@ import numpy
 from numina.array._nirproc import _process_fowler_intl
 from numina.array._nirproc import _process_ramp_intl
 
-def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0, 
+def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0, 
                 badpixels=None, dtype='float64',
                 saturation=65631, blank=0, normalize=False):
     '''Loop over the first axis applying Fowler processing.
@@ -52,7 +52,7 @@ def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0,
 
         S_F = F T_I - F T_S (N_p -1) = F T_E
 
-    being T_I the integration time (*tint*), the time since the first 
+    being T_I the integration time (*ti*), the time since the first 
     productive read to the last productive read for a given pixel and T_S the
     time between samples (*ts*). T_E is the time between correlated reads
     :math:`T_E = T_I - T_S (N_p - 1)`.
@@ -72,7 +72,7 @@ def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0,
 
 
     :param fowlerdata: Convertible to a 3D numpy.ndarray with first axis even
-    :param tint: Integration time.
+    :param ti: Integration time.
     :param ts: Time between samples.
     :param gain: Detector gain.
     :param ron: Detector readout noise in counts.
@@ -92,7 +92,10 @@ def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0,
     if ron <= 0:
         raise ValueError("invalid parameter, ron < 0.0")
     
-    if ts <= 0:
+    if ti < 0:
+        raise ValueError("invalid parameter, ti < 0.0")
+
+    if ts < 0:
         raise ValueError("invalid parameter, ts < 0.0")
 
     if saturation <= 0:
@@ -130,7 +133,7 @@ def fowler_array(fowlerdata, tint, ts=0, gain=1.0, ron=1.0,
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_fowler_intl(fowlerdata, tint, ts,  gain, ron, 
+    _process_fowler_intl(fowlerdata, ti, ts,  gain, ron, 
         badpixels, saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask
