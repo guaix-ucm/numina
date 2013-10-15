@@ -69,6 +69,9 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   return result;
 }
 
+typedef FowlerResult<double>  (*axis_fowler_func_t)(const std::vector<double>& buff, double teff, double gain, 
+    double ron, double ts, double blank);
+
 FowlerResult<double> 
 axis_fowler(const std::vector<double>& buff, double teff, double gain, 
     double ron, double ts, double blank) {
@@ -86,8 +89,32 @@ axis_fowler(const std::vector<double>& buff, double teff, double gain,
         }
 
         result.value = accum / result.npix;
-        result.variance = 2 * rg * rg / result.npix + 
-            result.value / (gain * gain) * (1 + ts / (3 *teff) * (1 / result.npix - result.npix));
+        result.variance = 2 * rg * rg / result.npix;
+        if(teff > 0) 
+          result.variance += result.value / (gain * gain) * (1 + ts / (3 *teff) * (1 / result.npix - result.npix));
+    }
+    return result;
+}
+
+/* A RON limited version of axis_fowler */
+FowlerResult<double> 
+axis_fowler_ron(const std::vector<double>& buff, double teff, double gain, 
+    double ron, double ts, double blank) {
+    FowlerResult<double> result;
+    result.npix = buff.size();
+    double rg = ron / gain;
+    double accum = 0;
+    if (result.npix == 0) {
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
+    }
+    else {
+        for(size_t i = 0; i < buff.size(); ++i) {
+            accum += buff[i];
+        }
+
+        result.value = accum / result.npix;
+        result.variance = 2 * rg * rg / result.npix;
     }
     return result;
 }
