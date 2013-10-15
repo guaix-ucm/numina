@@ -138,12 +138,12 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
         result, var, npix, mask)
     return result, var, npix, mask
 
-def ramp_array(rampdata, tint, tr=0.0, gain=1.0, ron=1.0, 
+def ramp_array(rampdata, ti, gain=1.0, ron=1.0, 
                 badpixels=None, dtype='float64',
                  saturation=65631, nsig=4.0, blank=0, normalize=False):
 
-    if tint <= 0:
-        raise ValueError("invalid parameter, tint <= 0.0")
+    if ti <= 0:
+        raise ValueError("invalid parameter, ti <= 0.0")
 
     if gain <= 0:
         raise ValueError("invalid parameter, gain <= 0.0")
@@ -183,7 +183,7 @@ def ramp_array(rampdata, tint, tr=0.0, gain=1.0, ron=1.0,
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_ramp_intl(rampdata, tint, tr, gain, ron, badpixels, 
+    _process_ramp_intl(rampdata, ti, gain, ron, badpixels, 
         saturation, blank,
         result, var, npix, mask)
     return result, var, npix, mask

@@ -41,7 +41,7 @@ cdef extern from "nu_ramp.h" namespace "Numina":
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _process_ramp_intl(datacube_t arr, double tint, double tr, double gain, double ron, mask_t badpix, double saturation, double blank,
+def _process_ramp_intl(datacube_t arr, double tint, double gain, double ron, mask_t badpix, double saturation, double blank,
         result_t res, 
         result_t var, 
         mask_t npix,

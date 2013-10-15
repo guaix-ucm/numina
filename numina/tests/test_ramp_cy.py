@@ -26,20 +26,20 @@ from numina.array.nirproc import ramp_array
 class FollowUpTheRampTestCase(unittest.TestCase):
     def setUp(self):
         self.ramp = numpy.empty((10, 1, 1))
-        self.sdt = 1.0
+        self.ti = 9.0
         self.sgain = 1.0
         self.sron = 1.0
     
     def test_exception(self):
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, -1.0, self.sron)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, 0, self.sron)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, -1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, nsig=0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, -1.0, self.sron)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, 0, self.sron)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, -1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, nsig=0)
         self.assertRaises(ValueError, ramp_array, self.ramp, -1.0, self.sgain, self.sron, nsig=-1.0)
         self.assertRaises(ValueError, ramp_array, self.ramp, 0.0, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, saturation=-100)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.sdt, self.sgain, self.sron, saturation=0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, saturation=-100)
+        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, saturation=0)
 
 class RampReadoutAxisTestCase(unittest.TestCase):
     
@@ -52,7 +52,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         assert self.data.shape == (10, 3,4)
 
         self.saturation = 65536
-        self.dt = 1.0
+        self.ti = 9.0
         self.gain = 1.0
         self.ron = 1.0
         self.nsig = 4.0
@@ -67,7 +67,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.data[:] = 50000 #- 32768
         saturation = 40000 #- 32767
         
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=saturation, 
                     nsig=self.nsig, 
                     blank=self.blank)
@@ -95,7 +95,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.data[7:,...] = saturation
         print self.data[:,1,1]
         
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=saturation, 
                     nsig=self.nsig, 
                     blank=self.blank)
@@ -123,7 +123,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         for dtype in inttypes:
             data = numpy.arange(10, dtype=dtype)
             data = numpy.tile(self.data, (columns, rows, 1)).T
-            res = ramp_array(data, self.dt, self.gain, self.ron)
+            res = ramp_array(data, self.ti, self.gain, self.ron)
             self.assertIs(res[0].dtype, ddtype)
             self.assertIs(res[1].dtype, ddtype)
             self.assertIs(res[2].dtype, mdtype)
@@ -132,7 +132,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         for dtype in floattypes:
             data = numpy.arange(10, dtype=dtype)
             data = numpy.tile(self.data, (columns, rows, 1)).T
-            res = ramp_array(data, self.dt, self.gain, self.ron)
+            res = ramp_array(data, self.ti, self.gain, self.ron)
             self.assertIs(res[0].dtype, ddtype)
             self.assertIs(res[1].dtype, ddtype)
             self.assertIs(res[2].dtype, mdtype)
@@ -142,7 +142,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         '''Test we ignore badpixels in RAMP mode.'''
         self.emptybp[...] = 1
 
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
                     nsig=self.nsig, 
                     badpixels=self.emptybp,
@@ -169,11 +169,11 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.data = numpy.tile(self.data, (columns, rows, 1)).T
         value = 1.0
         variance = 0.13454545454545455
+        print(self.data.shape)
 
         # Badpixels is [0,..., 0]
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
-                    nsig=self.nsig, 
                     badpixels=self.emptybp,
                     blank=self.blank)
 
@@ -191,7 +191,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, value)
 
         # Badpixels is None
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
                     nsig=self.nsig, 
                     badpixels=None,
@@ -213,7 +213,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, value)
 
         # Badpixels has default value
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
                     nsig=self.nsig, 
                     blank=self.blank)
@@ -236,7 +236,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
     def test_results1(self):
         '''Test we obtain correct values in RAMP mode'''
         
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
                     nsig=self.nsig, 
                     blank=self.blank)
@@ -262,7 +262,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
 
         self.emptybp[0,0] = 1
         
-        res = ramp_array(self.data, self.dt, self.gain, self.ron,
+        res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     dtype='float32',
                     saturation=self.saturation, 
                     badpixels=self.emptybp,
