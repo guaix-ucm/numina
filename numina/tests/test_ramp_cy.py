@@ -34,10 +34,8 @@ class FollowUpTheRampTestCase(unittest.TestCase):
         self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, -1.0, self.sron)
         self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, 0, self.sron)
         self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, -1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, nsig=0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, -1.0, self.sgain, self.sron, nsig=-1.0)
-        self.assertRaises(ValueError, ramp_array, self.ramp, 0.0, self.sgain, self.sron, nsig=-1.0)
+        self.assertRaises(ValueError, ramp_array, self.ramp, -1.0, self.sgain, self.sron)
+        self.assertRaises(ValueError, ramp_array, self.ramp, 0.0, self.sgain, self.sron)
         self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, saturation=-100)
         self.assertRaises(ValueError, ramp_array, self.ramp, self.ti, self.sgain, self.sron, saturation=0)
 
@@ -55,7 +53,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.ti = 9.0
         self.gain = 1.0
         self.ron = 1.0
-        self.nsig = 4.0
         self.blank = 0
 
     def test_saturation0(self):        
@@ -69,7 +66,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=saturation, 
-                    nsig=self.nsig, 
                     blank=self.blank)
 
         for nn in res[2].flat:
@@ -97,7 +93,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=saturation, 
-                    nsig=self.nsig, 
                     blank=self.blank)
 
         for nn in res[2].flat:
@@ -144,7 +139,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
 
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
-                    nsig=self.nsig, 
                     badpixels=self.emptybp,
                     blank=self.blank)
 
@@ -193,7 +187,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         # Badpixels is None
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
-                    nsig=self.nsig, 
                     badpixels=None,
                     blank=self.blank)
 
@@ -215,7 +208,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         # Badpixels has default value
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
-                    nsig=self.nsig, 
                     blank=self.blank)
 
         #for n in res[4].flat:
@@ -238,7 +230,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                     saturation=self.saturation, 
-                    nsig=self.nsig, 
                     blank=self.blank)
 
         for nn in res[2].flat:
@@ -266,7 +257,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
                     dtype='float32',
                     saturation=self.saturation, 
                     badpixels=self.emptybp,
-                    nsig=self.nsig, 
                     blank=self.blank)
 
         res0 = 12 * numpy.ones((3,4), dtype='float32')

@@ -170,9 +170,6 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
     if ron <= 0:
         raise ValueError("invalid parameter, ron < 0.0")
 
-    if nsig <= 0:
-        raise ValueError("invalid parameter, nsig <= 0.0")
-
     if saturation <= 0:
         raise ValueError("invalid parameter, saturation <= 0")
 
