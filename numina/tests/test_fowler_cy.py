@@ -102,8 +102,8 @@ class FowlerTestCase(unittest.TestCase):
         for n in res[3].flat:
             self.assertEqual(n, MASK_GOOD)
             
-        #for v in res[1].flat:
-        #    self.assertAlmostEqual(v, 0)
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, 2.0/2)
             
         for v in res[0].flat:
             self.assertAlmostEqual(v, 5)
@@ -152,8 +152,8 @@ class FowlerTestCase(unittest.TestCase):
         for n in res[3].flat:
             self.assertEqual(n, mask_val)
             
-        #for v in res[1].flat:
-        #    self.assertEqual(v, self.blank)
+        for v in res[1].flat:
+            self.assertEqual(v, self.blank)
             
         for v in res[0].flat:
             self.assertAlmostEqual(v, self.blank)
@@ -167,7 +167,6 @@ class FowlerTestCase(unittest.TestCase):
             self.data[i, ...] = values[i]
         arr = self.data[5:,0,0] - self.data[:5,0,0]
         mean = arr.mean()
-        var = arr.var()
 
         res = fowler_array(self.data, 
                     saturation=self.saturation,
@@ -180,8 +179,10 @@ class FowlerTestCase(unittest.TestCase):
         for n in res[3].flat:
             self.assertEqual(n, 0)
             
-#        for v in res[1].flat:
-#            self.assertAlmostEqual(v, var)
+        # We have ti = texp = ts =0
+        # So the noise is 2*sigma / N_p
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, 2.0 / 5)
             
         for v in res[0].flat:
             self.assertAlmostEqual(v, mean)
@@ -198,8 +199,8 @@ class FowlerTestCase(unittest.TestCase):
         for n in res[3].flat:
             self.assertEqual(n, 0)
             
-#        for v in res[1].flat:
-#            self.assertAlmostEqual(v, var)
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, 2.0/5)
             
         for v in res[0].flat:
             self.assertAlmostEqual(v, mean)
@@ -214,8 +215,8 @@ class FowlerTestCase(unittest.TestCase):
         for n in res[3].flat:
             self.assertEqual(n, 0)
             
-#        for v in res[1].flat:
-#            self.assertAlmostEqual(v, var)
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, 2.0/5)
             
         for v in res[0].flat:
             self.assertAlmostEqual(v, mean)
@@ -251,8 +252,8 @@ class FowlerTestCase(unittest.TestCase):
         for n in res[3].flat:
             self.assertEqual(n, 0)
             
-#        for v in res[1].flat:
-#            self.assertAlmostEqual(v, var)
+        for v in res[1].flat:
+            self.assertAlmostEqual(v, 2.0 / 5)
             
         for v in res[0].flat:
             self.assertAlmostEqual(v, mean)         
