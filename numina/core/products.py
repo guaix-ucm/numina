@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -23,6 +23,7 @@ Basic Data Products
 import pyfits
 
 from .dataframe import DataFrame
+from numina.qa import QA
 
 class ValidationError(Exception):
     pass
@@ -88,3 +89,11 @@ class FrameDataProduct(DataProduct):
         elif isinstance(obj, DataFrame):
             obj.filename = suggestion
         return obj
+
+
+class QualityAssuranceProduct(DataProduct):
+    def validate(self, obj):
+
+        if obj not in [QA.GOOD, QA.FAIR, QA.BAD, QA.UNKNOWN]:
+            raise ValidationError('%r is not a valid QualityAssuranceProduct' % obj)
+
