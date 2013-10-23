@@ -121,6 +121,14 @@ class RecipeResult(BaseRecipeResult):
             mm = getattr(self, k)
             self._products[k].type.suggest(mm, kwds[k])
 
+class RecipeResultAutoQA(RecipeResult):
+    '''RecipeResult with an automatic QA member.'''
+    def __new__(cls, *args, **kwds):
+        if 'qa' not in cls.__dict__:
+            cls.qa = Product(QualityAssuranceProduct(QA.UNKNOWN))
+
+        return super(RecipeResultAutoQA, cls).__new__(cls)
+
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):
         raise TypeError('result must be a RecipeResult')
