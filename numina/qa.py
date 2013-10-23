@@ -29,3 +29,9 @@ _level_names = {GOOD: 'GOOD',
                 BAD: 'BAD',
                 UNKNOWN: 'UNKNOWN'}
 
+# A base Enum
+class QA(object):
+    GOOD = 1
+    FAIR = 2
+    BAD = 3
+    UNKNOWN = 4
