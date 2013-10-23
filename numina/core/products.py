@@ -92,8 +92,10 @@ class FrameDataProduct(DataProduct):
 
 
 class QualityAssuranceProduct(DataProduct):
-    def validate(self, obj):
+    def __init__(self):
+        super(QualityAssuranceProduct, self).__init__(default=QA.UNKNOWN)
 
+    def validate(self, obj):
         if obj not in [QA.GOOD, QA.FAIR, QA.BAD, QA.UNKNOWN]:
             raise ValidationError('%r is not a valid QualityAssuranceProduct' % obj)
 

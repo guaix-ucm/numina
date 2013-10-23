@@ -20,7 +20,7 @@
 
 import inspect
 
-from .products import DataProduct
+from .products import DataProduct, QualityAssuranceProduct
 
 class Product(object):
     '''Product holder for RecipeResult.'''
@@ -125,7 +125,7 @@ class RecipeResultAutoQA(RecipeResult):
     '''RecipeResult with an automatic QA member.'''
     def __new__(cls, *args, **kwds):
         if 'qa' not in cls.__dict__:
-            cls.qa = Product(QualityAssuranceProduct(QA.UNKNOWN))
+            cls.qa = Product(QualityAssuranceProduct)
 
         return super(RecipeResultAutoQA, cls).__new__(cls)
 
