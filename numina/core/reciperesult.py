@@ -94,6 +94,12 @@ class RecipeResult(BaseRecipeResult):
                     prod.type.validate(val)
                 val = prod.type.store(val)
                 setattr(self, key, val)
+            elif prod.type.default:
+                val = prod.type.default
+                if prod.validate:
+                    prod.type.validate(val)
+                val = prod.type.store(val)
+                setattr(self, key, val)
             elif not prod.optional:
                 raise ValueError('required DataProduct %r not defined' % prod.type.__class__.__name__)
             else:
