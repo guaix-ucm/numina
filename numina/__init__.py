@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -21,7 +21,7 @@
 
 import logging
 
-__version__ = '0.9.1'
+__version__ = '0.10.0dev'
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(logging.NullHandler())

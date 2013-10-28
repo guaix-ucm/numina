@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -20,131 +20,149 @@
 
 from __future__ import division
 
-import numpy
 import math
 
-def _axis_fowler(data, badpix, img, var, nmap, mask, hsize, saturation, blank=0):
-    '''Apply Fowler processing to a series of data.'''
-    MASK_SATURATION = 3 
-    MASK_GOOD = 0
-     
-    if badpix[0] != MASK_GOOD:
-        img[...] = blank
-        var[...] = blank
-        mask[...] = badpix[0]
-    else:
-        mm = numpy.asarray([(b - a) for a,b in zip(data[:hsize],data[hsize:]) if b < saturation and a < saturation])
-        npix = len(mm)
-        nmap[...] = npix
-        if npix == 0:
-            img[...] = blank
-            var[...] = blank
-            mask[...] = MASK_SATURATION
-        elif npix == 1:
-            img[...] = mm.mean()
-            var[...] = blank
-            mask[...] = MASK_GOOD
-        else:
-            img[...] = mm.mean()
-            var[...] = mm.var()
-            mask[...] = MASK_GOOD
+import numpy
 
+from numina.array._nirproc import _process_fowler_intl
+from numina.array._nirproc import _process_ramp_intl
 
-def _axis_ramp(data, badpix, img, var, nmap, mask, crmask, 
-              saturation, dt, gain, ron, nsig, blank=0):
-    MASK_SATURATION = 3 
-    MASK_GOOD = 0
-
-    if badpix[0] != MASK_GOOD:
-        img[...] = blank
-        var[...] = blank
-        mask[...] = badpix[0]
-    else:
-        mm = data[data < saturation]
-
-        if len(mm) <= 1:
-            img[...] = blank
-            var[...] = blank
-            mask[...] = MASK_SATURATION
-        else:
-            v, vr, n, glt = _ramp(mm, saturation, dt, gain, ron, nsig)
-
-            img[...] = v
-
-            var[...] = vr
-            mask[...] = MASK_GOOD
-            nmap[...] = n
-            # If there is a pixel in the list of CR, put it in the crmask
-            if glt:                
-                crmask[...] = glt[0]
-
-def fowler_array(fowlerdata, badpixels=None, dtype='float64',
-                 saturation=65631, blank=0):
-    '''Loop over the 3d array applying Fowler processing.'''
+def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0, 
+                badpixels=None, dtype='float64',
+                saturation=65631, blank=0, normalize=False):
+    '''Loop over the first axis applying Fowler processing.
     
-    outvalue = None
-    outvar = None
-    npixmask, nmask = None, None
+    *fowlerdata* is assumed to be a 3D numpy.ndarray containing the
+    result of a nIR observation in Fowler mode (Fowler and Gatley 1991).
+    The shape of the array must be of the form 2N_p x M x N, with N_p being
+    the number of pairs in Fowler mode.
+
+    The output signal is just the mean value of the differences between the 
+    last N_p values (S_i) and the first N_p values (R-i).
+
+    .. math::
+
+        S_F = \\frac{1}{N_p}\\sum\\limits_{i=0}^{N_p-1} S_i - R_i
+
+
+    If the source has a radiance F, then the measured signal is equivalent
+    to:
+
+    .. math::
+
+        S_F = F T_I - F T_S (N_p -1) = F T_E
+
+    being T_I the integration time (*ti*), the time since the first 
+    productive read to the last productive read for a given pixel and T_S the
+    time between samples (*ts*). T_E is the time between correlated reads
+    :math:`T_E = T_I - T_S (N_p - 1)`.
+
+    The variance of the signnal is the sum of two terms, one for the readout
+    noise:
+
+    .. math::
+
+        \\mathrm{var}(S_{F1}) =\\frac{2\sigma_R^2}{N_p}
+
+    and other for the photon noise:
+
+    .. math::
+
+        \\mathrm{var}(S_{F2}) = F T_E - F T_S \\frac{1}{3}(N_p-\\frac{1}{N_p}) = F T_I - F T_S (\\frac{4}{3} N_p -1 -  \\frac{1}{3N_p})
+
+
+    :param fowlerdata: Convertible to a 3D numpy.ndarray with first axis even
+    :param ti: Integration time.
+    :param ts: Time between samples.
+    :param gain: Detector gain.
+    :param ron: Detector readout noise in counts.
+    :param badpixels: An optional MxN mask of dtype 'uint8'.
+    :param dtype: The dtype of the float outputs.
+    :param saturation: The saturation level of the detector.
+    :param blank: Invalid values in output are substituted by *blank*.
+    :returns: A tuple of (signal, variance of the signal, numper of pixels used 
+        and badpixel mask.
+    :raises: ValueError
     
+    '''
+    
+    if gain <= 0:
+        raise ValueError("invalid parameter, gain <= 0.0")
+
+    if ron <= 0:
+        raise ValueError("invalid parameter, ron < 0.0")
+    
+    if ti < 0:
+        raise ValueError("invalid parameter, ti < 0.0")
+
+    if ts < 0:
+        raise ValueError("invalid parameter, ts < 0.0")
+
+    if saturation <= 0:
+        raise ValueError("invalid parameter, saturation <= 0")
+
     fowlerdata = numpy.asarray(fowlerdata)
         
     if fowlerdata.ndim != 3:
         raise ValueError('fowlerdata must be 3D')
     
-    hsize = fowlerdata.shape[2] // 2
-    if 2 * hsize != fowlerdata.shape[2]:
-        raise ValueError('axis-2 in fowlerdata must be even')
+    npairs = fowlerdata.shape[0] // 2
+    if 2 * npairs != fowlerdata.shape[0]:
+        raise ValueError('axis-0 in fowlerdata must be even')
     
-    if saturation <= 0:
-        raise ValueError("invalid parameter, saturation <= 0")
-    
-    if badpixels is None:
-        badpixels = numpy.zeros((fowlerdata.shape[0], fowlerdata.shape[1]), 
-                                dtype='uint8')
-
+    # change byteorder
+    ndtype = fowlerdata.dtype.newbyteorder('=')
+    fowlerdata = numpy.asarray(fowlerdata, dtype=ndtype)
+    # type of the output
     fdtype = numpy.result_type(fowlerdata.dtype, dtype)
-    mdtype = 'uint8'
+    # Type of the mask
+    mdtype = numpy.dtype('uint8')
 
-    it = numpy.nditer([fowlerdata, badpixels, outvalue, outvar, 
-                        npixmask, nmask], 
-                flags=['reduce_ok', 'external_loop',
-                    'buffered', 'delay_bufalloc'],
-                    op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'], 
-                            ],
-                    order='A',
-                    op_dtypes=(fdtype, mdtype, fdtype, 
-                               fdtype, mdtype, mdtype),
-                    op_axes=[None,
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1],
-                            [0,1,-1], 
-                            [0,1,-1],
-                           ])
+    fshape = (fowlerdata.shape[1], fowlerdata.shape[2])
 
-    for i in range(2, 6):
-        it.operands[i][...] = 0
-    it.reset()
+    if badpixels is None:
+        badpixels = numpy.zeros(fshape, dtype=mdtype)
+    else:
+        if badpixels.shape != fshape:
+            raise ValueError('shape of badpixels is not compatible with shape of fowlerdata')
+        if badpixels.dtype != mdtype:
+            raise ValueError('dtype of badpixels must be uint8')
+            
+    result = numpy.empty(fshape, dtype=fdtype)
+    var = numpy.empty_like(result)
+    npix = numpy.empty(fshape, dtype=mdtype)
+    mask = badpixels.copy()
 
-    for x, badpix, img, var, nmap, mask in it:
-        _axis_fowler(x, badpix, img, var, nmap, mask, hsize, saturation, blank=blank)
+    _process_fowler_intl(fowlerdata, ti, ts,  gain, ron, 
+        badpixels, saturation, blank,
+        result, var, npix, mask)
+    return result, var, npix, mask
 
-    # Building final frame
-    return tuple(it.operands[i] for i in range(2, 6))
+def ramp_array(rampdata, ti, gain=1.0, ron=1.0, 
+                badpixels=None, dtype='float64',
+                 saturation=65631, blank=0, nsig=None, normalize=False):
+    '''Loop over the first axis applying ramp processing.
 
-def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
-                 saturation=65631, nsig=4.0, blank=0):
+    *rampdata* is assumed to be a 3D numpy.ndarray containing the
+    result of a nIR observation in folow-up-the-ramp mode.
+    The shape of the array must be of the form N_s x M x N, with N_s being
+    the number of samples.
 
-    outvalue = None
-    outvar = None
-    npixmask, nmask, ncrs = None, None, None
+    :param fowlerdata: Convertible to a 3D numpy.ndarray
+    :param ti: Integration time.
+    :param gain: Detector gain.
+    :param ron: Detector readout noise in counts.
+    :param badpixels: An optional MxN mask of dtype 'uint8'.
+    :param dtype: The dtype of the float outputs.
+    :param saturation: The saturation level of the detector.
+    :param blank: Invalid values in output are substituted by *blank*.
+    :returns: A tuple of signal, variance of the signal, numper of pixels used 
+        and badpixel mask.
+    :raises: ValueError
+    '''
 
-    if dt <= 0:
-        raise ValueError("invalid parameter, dt <= 0.0")
+    if ti <= 0:
+        raise ValueError("invalid parameter, ti <= 0.0")
 
     if gain <= 0:
         raise ValueError("invalid parameter, gain <= 0.0")
@@ -152,54 +170,42 @@ def ramp_array(rampdata, dt, gain, ron, badpixels=None, dtype='float64',
     if ron <= 0:
         raise ValueError("invalid parameter, ron < 0.0")
 
-    if nsig <= 0:
-        raise ValueError("invalid parameter, nsig <= 0.0")
-
     if saturation <= 0:
         raise ValueError("invalid parameter, saturation <= 0")
 
-    if badpixels is None:
-        badpixels = numpy.zeros((rampdata.shape[0], rampdata.shape[1]), 
-                                dtype='uint8')
+    rampdata = numpy.asarray(rampdata)
+    if rampdata.ndim != 3:
+        raise ValueError('rampdata must be 3D')
 
+    # change byteorder
+    ndtype = rampdata.dtype.newbyteorder('=')
+    rampdata = numpy.asarray(rampdata, dtype=ndtype)
+    # type of the output
     fdtype = numpy.result_type(rampdata.dtype, dtype)
-    mdtype = 'uint8'
+    # Type of the mask
+    mdtype = numpy.dtype('uint8')
+    fshape = (rampdata.shape[1], rampdata.shape[2])
 
-    it = numpy.nditer([rampdata, badpixels, outvalue, outvar, 
-                        npixmask, nmask, ncrs], 
-                flags=['reduce_ok', 'external_loop',
-                    'buffered', 'delay_bufalloc'],
-                    op_flags=[['readonly'], ['readonly', 'no_broadcast'], 
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ['readwrite', 'allocate'],
-                            ['readwrite', 'allocate'], 
-                            ],
-                    order='A',
-                    op_dtypes=(fdtype, mdtype, fdtype, 
-                               fdtype, mdtype, mdtype, mdtype),
-                    op_axes=[None,
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1],
-                            [0,1,-1], 
-                            [0,1,-1], 
-                            [0,1,-1]
-                           ])
-    for i in range(2, 7):
-        it.operands[i][...] = 0
-    it.reset()
+    if badpixels is None:
+        badpixels = numpy.zeros(fshape, dtype=mdtype)
+    else:
+        if badpixels.shape != fshape:
+            raise ValueError('shape of badpixels is not compatible with shape of rampdata')
+        if badpixels.dtype != mdtype:
+            raise ValueError('dtype of badpixels must be uint8')
+            
+    result = numpy.empty(fshape, dtype=fdtype)
+    var = numpy.empty_like(result)
+    npix = numpy.empty(fshape, dtype=mdtype)
+    mask = badpixels.copy()
 
-    for x, badpix, img, var, nmap, mask, crmask in it:
-        _axis_ramp(x, badpix, img, var, nmap, mask, crmask, 
-              saturation, dt, gain, ron, nsig, blank=blank)
-        
+    _process_ramp_intl(rampdata, ti, gain, ron, badpixels, 
+        saturation, blank,
+        result, var, npix, mask)
+    return result, var, npix, mask
 
-    # Building final frame
-
-    return tuple(it.operands[i] for i in range(2, 7))
-
+# This is not used...
+# Old code used to detect cosmic rays in the ramp
 def _ramp(data, saturation, dt, gain, ron, nsig):
     nsdata = data[data < saturation]
 

@@ -17,22 +17,18 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Interpolation in FITS header templates.'''
+ctypedef fused datacube_t:
+    double[:,:,:]
+    float[:,:,:]
+    long[:,:,:]
+    int[:,:,:]
 
-def isinterpolable(v):
-    if isinstance(v, basestring) and v[:2] == '%(' and v[-1] == ')':
-        return v[2:-1]
-    else:
-        return None
+ctypedef fused result_t:
+    double[:,:]
+    float[:,:]
 
-def interpolate(meta, v):
-    key = isinterpolable(v)
-    if key is not None:
-        ival = meta[key]
-        if callable(ival):
-            return ival()
-        else:
-            return ival
-    else:
-        return v
+ctypedef char[:,:] mask_t
+
+MASK_GOOD = 0
+MASK_SATURATION = 3
 

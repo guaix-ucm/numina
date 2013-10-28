@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 import scipy.stats.mvn as mvn
 
 from numina.array import subarray_match
@@ -31,6 +31,7 @@ class Profile:
         self.center = numpy.asarray(center)
         self.offset = self.center.astype('int')
         self.peak = self.center - self.offset
+        self.shape = None
 
     def array(self):
         y, x = numpy.indices(self.shape)
@@ -48,10 +49,10 @@ class GaussProfile(Profile):
         self.covar = numpy.asarray(covar)
         halfsize = numpy.round(scale * numpy.sqrt(self.covar.diagonal())).astype('int')
         self.selfcenter = self.peak +  halfsize
-        self._shape = tuple(2 * halfsize + 1)
+        self.shape = tuple(2 * halfsize + 1)
         self.density = self.mvnu(self.selfcenter, self.covar)
         vfun = numpy.vectorize(self.density)
-        self._kernel = numpy.fromfunction(vfun, self._shape)
+        self.kernel = numpy.fromfunction(vfun, self.shape)
         
     @classmethod
     def mvnu(self, means, covar):
@@ -63,16 +64,6 @@ class GaussProfile(Profile):
     
         return myfun
     
-    @property
-    def kernel(self):
-        '''An array representing the Gaussian kernel.'''
-        return self._kernel
-    
-    @property
-    def shape(self):
-        '''Shape of the Gaussian kernel.'''
-        return self._shape
-
 #class SlitProfile(Profile):
 #    ''' A rectangular slit'''
 #    def __init__(self, blc, urc):

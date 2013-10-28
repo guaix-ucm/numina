@@ -17,22 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Interpolation in FITS header templates.'''
-
-def isinterpolable(v):
-    if isinstance(v, basestring) and v[:2] == '%(' and v[-1] == ')':
-        return v[2:-1]
-    else:
-        return None
-
-def interpolate(meta, v):
-    key = isinterpolable(v)
-    if key is not None:
-        ival = meta[key]
-        if callable(ival):
-            return ival()
-        else:
-            return ival
-    else:
-        return v
-
+include "procdefs.pyx"
+include "rampproc.pyx"
+include "fowlerproc.pyx"

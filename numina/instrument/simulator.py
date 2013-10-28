@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 

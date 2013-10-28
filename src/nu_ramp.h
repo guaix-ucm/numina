@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Universidad Complutense de Madrid
+ * Copyright 2008-2013 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -28,57 +28,22 @@
 
 #include "operations.h"
 
+#define MASK_SATURATION 3
 
 namespace Numina {
-
-template<typename Iterator>
-Iterator kth_smallest(Iterator begin, Iterator end, size_t kth) {
-  typedef typename std::iterator_traits<Iterator>::value_type T;
-	size_t l = 0;
-	size_t m = (end - begin) - 1;
-
-	while (l < m) {
-		T x = *(begin + kth);
-		size_t i = l;
-		size_t j = m;
-		do {
-			while (*(begin + i) < x)
-				++i;
-			while (x < *(begin + j))
-				--j;
-			if (i <= j) {
-				std::swap(*(begin + i), *(begin + j));
-				++i;
-				--j;
-			}
-		} while (i <= j);
-		if (j < kth)
-			l = i;
-		if (kth < i)
-			m = j;
-	}
-
-	return begin + kth;
-}
 
 template<typename Iterator>
 Iterator median_1(Iterator begin, Iterator end) {
         size_t size = end - begin;
-	//std::nth_element(data, data + size / 2, data + size);
-	//median = *(data + size / 2);
-	const int midpt = size % 2 != 0 ? size / 2 : size / 2 - 1;
-	return kth_smallest(begin, end, midpt);
+	std::nth_element(begin, begin + size / 2, end);
+	return begin + size / 2;
 }
-
-} // namespace Numina
-
-namespace Numina {
 
 template<typename Result>
 struct RampResult {
   Result value;
   Result variance;
-  char map;
+  char npix;
   char mask;
   char crmask;
 };
@@ -104,23 +69,16 @@ slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
   // Photon limiting case
   variance2 = (6 * result.value * (nn * nn + 1)) / (5 * nn * dt * (nn * nn - 1) * gain);
   result.variance = variance1 + variance2;
-  result.map = nn;
+  result.npix = nn;
   return result;
 }
-
-template<typename T>
-inline T iround(double x) { return static_cast<T>(round(x));}
-
-template<> inline double iround(double x) { return x;}
-template<> inline float iround(double x) { return (float)x;}
-template<> inline long double iround(double x) { return (long double)x;}
 
 template<typename T>
 inline RampResult<T> rround(const RampResult<double>& x) { 
   RampResult<T> res;
   res.value = static_cast<T>(round(x.value));
   res.variance = static_cast<T>(round(x.variance));
-  res.map = x.map;
+  res.npix = x.npix;
   res.mask = x.mask;
   res.crmask = x.crmask;
   return res;
@@ -133,7 +91,7 @@ template<> inline RampResult<float> rround(const RampResult<double>& x) {
   RampResult<float> res;
   res.value = static_cast<float>(x.value);
   res.variance = static_cast<float>(x.variance);
-  res.map = x.map;
+  res.npix = x.npix;
   res.mask = x.mask;
   res.crmask = x.crmask;
   return res;
@@ -143,7 +101,7 @@ template<> inline RampResult<long double> rround(const RampResult<double>& x) {
   RampResult<long double> res;
   res.value = static_cast<long double>(x.value);
   res.variance = static_cast<long double>(x.variance);
-  res.map = x.map;
+  res.npix = x.npix;
   res.mask = x.mask;
   res.crmask = x.crmask;
   return res;
@@ -182,7 +140,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
         RampResult<double> res = slope(begin + boff, begin + eoff + 1, dt, gain, ron);
         ramp_data.push_back(res.value);
         ramp_variances.push_back(1.0 / res.variance);
-        ramp_map.push_back(res.map);
+        ramp_map.push_back(res.npix);
         ramp_cmap.push_back(i-dbuff + 1);
       }
       init = i + 1;
@@ -193,7 +151,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
     RampResult<double> res =  slope(begin + boff, end, dt, gain, ron);
     ramp_data.push_back(res.value);
     ramp_variances.push_back(1.0 / res.variance);
-    ramp_map.push_back(res.map);
+    ramp_map.push_back(res.npix);
   }
   delete [] dbuff;
 
@@ -203,7 +161,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
   RampResult<Result> result;
   result.value = iround<Result>(hatmu);
   result.variance = iround<Result>(1 / hatmu_var);
-  result.map = std::accumulate(ramp_map.begin(), ramp_map.end(), 0);
+  result.npix = std::accumulate(ramp_map.begin(), ramp_map.end(), 0);
   result.mask = 0;
   if(!ramp_cmap.empty())
    result.crmask = ramp_cmap[0];
@@ -211,6 +169,70 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
    result.crmask = 0;
   return result;
 }
+
+  struct HWeights {
+    std::vector<double> weights;
+    size_t order;
+    double delt1;
+    double delt2;
+
+    HWeights(size_t nn=2) : 
+        weights(nn),
+        order(nn),
+        delt1(nn * (nn + 1) * (nn - 1) / 12.0),
+        delt2((6.0 * (nn * nn + 1)) / (5.0 * nn * (nn * nn - 1)))
+    {
+        const double bb = 0.5 * (nn - 1);
+
+        for(size_t i=0; i < nn / 2; ++i) {
+          weights[i] = (i  - bb) / delt1;
+          // the table is antisymetric
+          weights[nn-i-1] = -weights[i];
+        }
+        // The central element is 0.0
+        // if there is one
+        if (nn % 2 == 1) {
+          weights[nn / 2] = 0.0;
+        }
+    }
+  };
+
+  typedef std::vector<HWeights> HWeightsStore;
+
+  std::vector<HWeights> create(size_t N) {
+      std::vector<HWeights> w;
+      for(size_t i=0; i < N-1; ++i) 
+          w.push_back(HWeights(i+2));
+      return w;
+  }
+
+  RampResult<double> axis_ramp(const std::vector<double>& buff, double dt,
+    double gain, double ron, const HWeightsStore& wgts_store, double blank) {
+
+    double rg = ron / gain;
+
+    RampResult<double> result;
+    result.npix = buff.size();
+
+    if (result.npix >= 2) {
+        const HWeights& hwgt = wgts_store[result.npix - 2];
+        double acc = 0;
+        for(size_t i=0; i < (size_t)result.npix; ++i) {
+          acc += buff[i] * hwgt.weights[i];
+        }
+        acc /= dt;
+        result.value = acc;
+        // analytic variance
+        result.variance= (rg * rg) / (hwgt.delt1 * dt) + acc * hwgt.delt2 / dt;
+        result.mask = 0;
+    }
+    else {
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
+    }
+
+    return result;
+  }
 
 } // namespace Numina
 

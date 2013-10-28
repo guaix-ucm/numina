@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -33,16 +33,6 @@ class RequirementError(Error):
     def __init__(self, txt):
         super(RequirementError, self).__init__(txt)
 
-class Names(object):
-    def __init__(self, **kwds):
-        for name, val in kwds.iteritems():
-            setattr(self, name, val)
-
-    __hash__ = None
-
-    def __contains__(self, key):
-        return key in self.__dict__
-
 class RequirementLookup(object):
     def lookup(self, req, source):
         if req.dest in source:
@@ -75,12 +65,7 @@ class RequirementParser(object):
                 raise RequirementError('%s not in %s' % (value, req.choices))
 
             # Build value
-            # FIXME: better create a DefaultType
-            # that leaves value unchanged
-            if req.type is not None:
-                mm = req.type.store(value)
-            else:
-                mm = value
+            mm = req.type.store(value)
             # validate
             if req.validate or validate:
                 if mm is not None and not req.optional:
@@ -110,64 +95,6 @@ class RequirementParser(object):
         
             print("%s%s [%s]" % (pad, dispname, req.description))
 
-class _RequirementParser(object):
-    
-    def __init__(self, requirements, lookupclass=RequirementLookup):
-        self.requirements = requirements
-        self.lc = lookupclass()
-
-    def parse(self, metadata):
-        parameters = {}
-        
-        for req in self.requirements:
-            if req.dest is None:
-                # FIXME: add warning or something here
-                continue
-            value = self.lc.lookup(req, metadata)
-            if req.choices and (value not in req.choices):
-                raise RequirementError('%s not in %s' % (value, req.choices))
-                
-            parameters[req.dest]= value 
-        return parameters
-
-    def parse2(self, metadata):
-        parameters = {}
-        
-        for req in self.requirements:
-            if req.dest is None:
-                # FIXME: add warning or something here
-                continue
-            value = self.lc.lookup(req, metadata)
-            if req.choices and (value not in req.choiches):
-                raise RequirementError('%s not in %s' % (value, req.choices))
-
-            # Build value
-            mm = req.type.store(value)
-                
-            parameters[req.dest] = mm
-        names = Names(**parameters)
-
-        return names
-
-    def print_requirements(self):
-        
-        for req in self.requirements:
-            if req.dest is None:
-                # FIXME: add warning or something here
-                continue
-            if req.hidden:
-                # I Do not want to print it
-                continue
-            dispname = req.dest
-    
-            if req.optional:
-                dispname = dispname + '(optional)'
-    
-            if req.default is not None:
-                dispname = dispname + '=' + str(req.default)
-        
-            print("%s [%s]" % (dispname, req.description))
-
 class Requirement(object):
     '''Requirements of Recipes
     
@@ -183,7 +110,7 @@ class Requirement(object):
         self.validate = validate
 
         if type is None:
-            self.type = None
+            self.type = DataProduct()
         elif inspect.isclass(type):
             self.type = type()
         else:

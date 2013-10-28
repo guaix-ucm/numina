@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -22,14 +22,15 @@ from __future__ import print_function
 import logging
 from itertools import imap, product
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
-from numina.array._nirproc import ramp_array, fowler_array
+from numina.array.nirproc import ramp_array
+from numina.array.nirproc import fowler_array
 
 _logger = logging.getLogger("numina.array")
 
@@ -235,22 +236,4 @@ def numberarray(x, shape):
     else:
         return x
 
-if __name__ == '__main__':
-    import _ufunc
-    from timeit import Timer
-    
-    
-    a = numpy.arange(10000)
-    
-    def test1():
-        _ufunc.test3(a)
-    
-    def test2():
-        numpy.median(a)
-
-    t = Timer("test1()", "from __main__ import test1")
-    print(t.timeit())
-    
-    t = Timer("test2()", "from __main__ import test2")
-    print(t.timeit())
 

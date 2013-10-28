@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -38,7 +38,7 @@ _logger = logging.getLogger('numina')
 
 def list_recipes():
     '''List all defined recipes'''
-    return BaseRecipe.__subclasses__() # pylint: disable-msgs=E1101
+    return BaseRecipe.__subclasses__()
     
 class BaseRecipe(object):
     '''Base class for all instrument recipes'''

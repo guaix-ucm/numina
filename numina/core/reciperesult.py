@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -20,7 +20,7 @@
 
 import inspect
 
-from .products import DataProduct
+from .products import DataProduct, QualityAssuranceProduct
 
 class Product(object):
     '''Product holder for RecipeResult.'''
@@ -30,6 +30,7 @@ class Product(object):
         self.validate = validate
         if inspect.isclass(product_type):
             product_type = product_type()
+        self.dest = dest
 
         if isinstance(product_type, Optional):
             self.type = product_type.product_type
@@ -93,6 +94,12 @@ class RecipeResult(BaseRecipeResult):
                     prod.type.validate(val)
                 val = prod.type.store(val)
                 setattr(self, key, val)
+            elif prod.type.default:
+                val = prod.type.default
+                if prod.validate:
+                    prod.type.validate(val)
+                val = prod.type.store(val)
+                setattr(self, key, val)
             elif not prod.optional:
                 raise ValueError('required DataProduct %r not defined' % prod.type.__class__.__name__)
             else:
@@ -113,6 +120,14 @@ class RecipeResult(BaseRecipeResult):
         for k in kwds:
             mm = getattr(self, k)
             self._products[k].type.suggest(mm, kwds[k])
+
+class RecipeResultAutoQA(RecipeResult):
+    '''RecipeResult with an automatic QA member.'''
+    def __new__(cls, *args, **kwds):
+        if 'qa' not in cls.__dict__:
+            cls.qa = Product(QualityAssuranceProduct)
+
+        return super(RecipeResultAutoQA, cls).__new__(cls)
 
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):

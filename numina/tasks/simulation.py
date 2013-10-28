@@ -14,25 +14,26 @@
 # GNU General Public License for more details.
 # 
 # You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# along with Numina. If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Interpolation in FITS header templates.'''
+class SimulationBase(object):
+    def __init__(self):
+        super(SimulationBase, self).__init__()
 
-def isinterpolable(v):
-    if isinstance(v, basestring) and v[:2] == '%(' and v[-1] == ')':
-        return v[2:-1]
-    else:
-        return None
+    command_line = ['--version']
 
-def interpolate(meta, v):
-    key = isinterpolable(v)
-    if key is not None:
-        ival = meta[key]
-        if callable(ival):
-            return ival()
-        else:
-            return ival
-    else:
-        return v
+    def simulate(self):
+        pass
 
+    def check(self):
+        pass
+
+def skip(decorated_class):
+    '''Decorate a Simulation class to skip it during tests.'''
+    if not issubclass(decorated_class, SimulationBase):
+        raise TypeError
+
+    decorated_class.skip = True
+
+    return decorated_class

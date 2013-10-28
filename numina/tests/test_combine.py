@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -20,7 +20,7 @@
 import unittest
 import itertools
 
-import numpy # pylint: disable-msgs=E1101
+import numpy
 
 from numina.array.combine import generic_combine
 from numina.array.combine import mean, median, minmax, quantileclip

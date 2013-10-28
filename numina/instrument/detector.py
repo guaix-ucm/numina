@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,20 +17,30 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from collections import namedtuple
 from datetime import datetime
 
 import numpy.random
 
 from numina.treedict import TreeDict
-from numina.array import numberarray
 from numina.exceptions import DetectorElapseError
 from numina.astrotime import datetime_to_mjd
 
 from .base import BaseConectable
 from .mapping import Mapper
 
-Amplifier = namedtuple('Amplifier', ['shape', 'gain', 'ron', 'wdepth'])
+class Channel(object):
+    def __init__(self, shape, gain, ron, bias, wdepth, saturation):
+        self.shape = shape
+        # Electronics  
+        self.gain = gain
+        self.ron = ron
+        self.bias = bias
+        self.wdepth = wdepth
+        self.saturation = saturation
+
+PIXEL_VALID = 0
+PIXEL_DEAD = 1
+PIXEL_HOT = 2
 
 class DAS(object):
     '''Data Acquisition System.'''
@@ -64,7 +74,7 @@ class DAS(object):
             data = self.detector.readout()
             alldata.append(data)
 
-        return self.mode.process(alldata, events)
+        return alldata, events
 
     @property
     def meta(self):
@@ -79,9 +89,12 @@ class ReadoutMode(object):
         self.reads = reads
         self.repeat = repeat
 
+    def process(self, images, events):
+        return numpy.dstack(images)
+
 class SingleReadoutMode(ReadoutMode):
     def __init__(self, repeat=1):
-        ReadoutMode.__init__(self, 'single', 'perline', 1, repeat)
+        super(SingleReadoutMode, self).__init__('single', 'perline', 1, repeat)
         
     def events(self, exposure):
         return [exposure]
@@ -92,7 +105,7 @@ class SingleReadoutMode(ReadoutMode):
 class CdsReadoutMode(ReadoutMode):
     '''Correlated double sampling readout mode.'''
     def __init__(self, repeat=1):
-        ReadoutMode.__init__(self, 'CDS', 'perline', 1, repeat)
+        super(CdsReadoutMode, self).__init__('CDS', 'perline', 1, repeat)
         
     def events(self, exposure):
         '''
@@ -102,13 +115,10 @@ class CdsReadoutMode(ReadoutMode):
         '''
         return [0.0, exposure]
     
-    def process(self, images, events):
-        return images[1] - images[0]
-    
 class FowlerReadoutMode(ReadoutMode):
     '''Fowler sampling readout mode.'''
     def __init__(self, reads, repeat=1, readout_time=0.0):
-        ReadoutMode.__init__(self, 'Fowler', 'perline', reads, repeat)
+        super(FowlerReadoutMode, self).__init__('Fowler', 'perline', reads, repeat)
         self.readout_time = readout_time
         
     def events(self, exposure):
@@ -124,50 +134,31 @@ class FowlerReadoutMode(ReadoutMode):
         vreads += [t + exposure for t in vreads]
         return vreads
     
-    def process(self, images, events):
-        # Subtracting correlated reads
-        nsamples = len(images) / 2
-        # nsamples has to be odd
-        reduced = numpy.array([images[nsamples + i] - images[i] 
-                               for i in range(nsamples)])
-        # Final mean
-        return reduced.mean(axis=0)
-
 class RampReadoutMode(ReadoutMode):
     '''"Up the ramp" sampling readout mode.'''
     def __init__(self, reads, repeat=1):
-        ReadoutMode.__init__(self, 'Ramp', 'perline', reads, repeat)
+        super(RampReadoutMode, self).__init__('Ramp', 'perline', reads, repeat)
         
     def events(self, exposure):
         dt = exposure / (self.reads - 1.)
         return [dt * i for i in range(self.reads)]
     
-    def process(self, images, events):
-        
-        def slope(y, xcenter, varx, time):
-            return ((y - y.mean()) * xcenter).sum() / varx * time
-        
-        events = numpy.asarray(events)
-        images = numpy.asarray(images)
-        meanx = events.mean()
-        sxx = events.var() * events.shape[0]
-        xcenter = events - meanx
-        images = numpy.dstack(images)
-        return numpy.apply_along_axis(slope, 2, images, xcenter, sxx, events[ - 1])
-
 class ArrayDetector(BaseConectable):
     '''A bidimensional detector.'''
-    def __init__(self, shape, amplifiers, 
-                 bias=100.0, 
+    def __init__(self, shape, channels, 
+                 dark=0.0,
+                 flat=1.0,
                  reset_value=0.0, reset_noise=0.0,
+                 bad_pixel_mask=None,
                  readout_time=0.0,
-                 outtype='int32'):
+                 out_dtype='uint16'):
         
         super(ArrayDetector, self).__init__()
-        
+        self.comp_dtype = 'int32'
+        self.out_dtype = out_dtype
+        self.out_dtype_info = numpy.iinfo(self.out_dtype)
         self.shape = shape
-        self.amplifiers = amplifiers
-        self.bias = bias
+        self.channels = channels
         self.reset_value = reset_value
         self.reset_noise = reset_noise
         self.reset_time = 0.0
@@ -175,23 +166,48 @@ class ArrayDetector(BaseConectable):
         self.readout_time = readout_time
         self._last_read = 0.0
         
-        self.buffer = numpy.zeros(self.shape)
-        self.outtype = outtype
+        self.buffer = numpy.zeros(self.shape, dtype=self.comp_dtype)
+
+        self.dark = dark * numpy.ones_like(self.buffer)
+        self.flat = flat * numpy.ones_like(self.buffer)
+
         self.mapper = Mapper(shape)
         
+        self.bad_pixel_mask = bad_pixel_mask
+        self.dead_pixel_value = self.out_dtype_info.min
+        self.hot_pixel_value = self.out_dtype_info.max
+
         self.meta = TreeDict()
+
+        # Empty nonlinearity
+        self.nonlinearity = lambda x: x
         
     def readout(self):
         '''Read the detector.'''
         data = self.buffer.copy()
         data[data < 0] = 0
-        data += numpy.random.poisson(self.dark * self.reset_time)
-        for amp in self.amplifiers:
-            if amp.ron > 0:
-                data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
+        # Light entering during readout!
+        source = self.mapper.sample(self.source)
+        source *= self.flat * self.readout_time
+        data += numpy.random.poisson((self.dark + source) * self.reset_time)
+        # until here
+        
+        for amp in self.channels:
             data[amp.shape] /= amp.gain
-        data += self.bias
-        data = data.astype(self.outtype)
+            data[amp.shape] = self.nonlinearity(data[amp.shape])
+            if amp.ron > 0:
+                data[amp.shape] = numpy.random.normal(data[amp.shape], amp.ron)
+            data[amp.shape] += amp.bias
+            numpy.clip(data[amp.shape], self.out_dtype_info.min, 
+                        self.out_dtype_info.max, out=data[amp.shape])
+
+        data = data.astype(self.out_dtype)
+
+        if self.bad_pixel_mask is not None:
+            # processing badpixels:
+            data = numpy.where(self.bad_pixel_mask == PIXEL_DEAD, self.dead_pixel_value, data)
+            data = numpy.where(self.bad_pixel_mask == PIXEL_HOT, self.hot_pixel_value, data)
+
         self._last_read += self.readout_time
 
         return data
@@ -218,106 +234,38 @@ class ArrayDetector(BaseConectable):
 
     def expose(self, dt):
         self._last_read += dt
-
+        source = self.mapper.sample(self.source)
+        source *= self.flat 
+        increase = numpy.random.poisson((self.dark + source) * dt)
+        self.buffer += increase
             
 class CCDDetector(ArrayDetector):
-    def __init__(self, shape, amplifiers, bias=100, dark=0.0):
-        ArrayDetector.__init__(self, shape, amplifiers, bias)
+    def __init__(self, shape, channels, dark=0.0, flat=1.0, bad_pixel_mask=None):
+        super(CCDDetector, self).__init__(shape, channels,
+                    dark=dark, flat=flat, 
+                    bad_pixel_mask=bad_pixel_mask)
 
-        self.dark = dark
-        
         self.meta['readmode'] = 'fast'
         self.meta['readscheme'] = 'perline'
 
-    def expose(self, dt, source=None):
-        now = datetime.now()
-        # Recording time of start of exposure
-        self.meta['exposed'] = dt
-        self.meta['dateobs'] = now.isoformat()
-        self.meta['mjdobs'] = datetime_to_mjd(now)
-
-        self._last_read += dt
-        
-        source = self.mapper.sample(self.source)
-        source *= self.flat
-        self.buffer += numpy.random.poisson((self.dark + source) * dt, 
-                               size=self.shape).astype('float')
-        
-        
     def readout(self):
         '''Read the CCD detector.'''
         self._last_read += self.readout_time
-        result = ArrayDetector.readout(self)
+        result = super(CCDDetector, self).readout()
         self.reset()
-        # result[result > self._well] = self._well
         return result
 
 class nIRDetector(ArrayDetector):
     '''A generic nIR bidimensional detector.'''
     
-    def __init__(self, shape, amplifiers, dark=0.0, 
-                 pedestal=0., flat=1.0, 
-                 resetval=1000, resetnoise=0.0):
-        ArrayDetector.__init__(self, shape, amplifiers, 
-                               pedestal)
-
-        self._dark = numberarray(dark, self.shape)
-        self._dark[self._dark < 0] = 0.0 
+    def __init__(self, shape, channels, dark=0.0, flat=1.0, 
+                bad_pixel_mask=None, resetval=0.0, resetnoise=0.0):
+        super(nIRDetector, self).__init__(shape, 
+                    channels, dark=dark, flat=flat,
+                    reset_value=resetval, 
+                    reset_noise=resetnoise,
+                    bad_pixel_mask=bad_pixel_mask)
         
-        self._flat = numberarray(flat, self.shape)
         self.readout_time = 0
         self.reset_time = 0        
 
-    def expose(self, dt, source=None):
-
-        self._last_read += dt
-        source = self.mapper.sample(self.source)
-        source *= self._flat 
-        self.buffer += numpy.random.poisson((self._dark + source) * dt).astype('float')
-    
-    def readout(self):
-        '''Read the detector.'''
-        data = self.buffer.copy()
-        data[data < 0] = 0
-        source = self.mapper.sample(self.source)
-        source *= self._flat * self.readout_time
-        data += numpy.random.poisson((self._dark + source) * self.reset_time)
-        for amp in self.amplifiers:
-            if amp.ron > 0:
-                data[amp.shape] = numpy.random.normal(self.buffer[amp.shape], amp.ron)
-            data[amp.shape] /= amp.gain
-        data += self.bias
-        data = data.astype(self.outtype)
-        self._last_read += self.readout_time
-        return data
-        
-
-        
-if __name__ == '__main__':
-    
-    
-    shape = (10, 10)
-    ampshape = (slice(0, 10), slice(0, 10))
-    a = Amplifier(ampshape, 2.1, 4.5, 65000)
-    det = CCDDetector(shape, [a], bias=100, dark=20.0)
-    
-    das1 = DAS(det)
-    
-    
-    #print d
-        
-    ndet = nIRDetector(shape, [a], dark=20.0, pedestal=100)
-    ndet.readout_time = 0.12
-    das2 = DAS(ndet)
-    mode = FowlerReadoutMode(5, 1, readout_time=ndet.readout_time)
-    das2.readmode(mode)
-    pp = das2.acquire(10)
-    for key in das2.meta:
-        if key == 'detector':
-            for k in das2.meta['detector']:
-                print 'detector.',k
-                
-        else:
-            print key, das2.meta[key]
-    print pp
-    

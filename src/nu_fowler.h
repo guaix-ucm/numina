@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Universidad Complutense de Madrid
+ * Copyright 2008-2013 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -28,21 +28,24 @@
 
 #include "operations.h"
 
+#define MASK_SATURATION 3
+
 namespace Numina {
 
 template<typename Result>
 struct FowlerResult {
   Result value;
   Result variance;
-  char map;
+  char npix;
   char mask;
+  FowlerResult() : value(0), variance(0), npix(0), mask(0)
+  {}
 };
 
 template<typename Result, typename Iterator>
 FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
 
   typedef typename std::iterator_traits<Iterator>::value_type T;
-  typedef typename std::iterator_traits<Iterator>::pointer PT;
   Iterator i1 = begin;
   Iterator i2 = begin + hsize;
   Result accum = 0;
@@ -60,10 +63,60 @@ FowlerResult<Result>  fowler(Iterator begin, Iterator end, int hsize) {
   // Probably this can be done better
   result.value = iround<Result>(accum / npoints);
   result.variance = iround<Result>(accum2) / npoints - result.value * result.value;
-  result.map = npoints;
+  result.npix = npoints;
   result.mask = 0;
 
   return result;
+}
+
+typedef FowlerResult<double>  (*axis_fowler_func_t)(const std::vector<double>& buff, double teff, double gain, 
+    double ron, double ts, double blank);
+
+FowlerResult<double> 
+axis_fowler(const std::vector<double>& buff, double teff, double gain, 
+    double ron, double ts, double blank) {
+    FowlerResult<double> result;
+    result.npix = buff.size();
+    double rg = ron / gain;
+    double accum = 0;
+    if (result.npix == 0) {
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
+    }
+    else {
+        for(size_t i = 0; i < buff.size(); ++i) {
+            accum += buff[i];
+        }
+
+        result.value = accum / result.npix;
+        result.variance = 2 * rg * rg / result.npix;
+        if(teff > 0) 
+          result.variance += result.value / (gain * gain) * (1 + ts / (3 *teff) * (1 / result.npix - result.npix));
+    }
+    return result;
+}
+
+/* A RON limited version of axis_fowler */
+FowlerResult<double> 
+axis_fowler_ron(const std::vector<double>& buff, double teff, double gain, 
+    double ron, double ts, double blank) {
+    FowlerResult<double> result;
+    result.npix = buff.size();
+    double rg = ron / gain;
+    double accum = 0;
+    if (result.npix == 0) {
+        result.value = result.variance = blank;
+        result.mask = MASK_SATURATION;
+    }
+    else {
+        for(size_t i = 0; i < buff.size(); ++i) {
+            accum += buff[i];
+        }
+
+        result.value = accum / result.npix;
+        result.variance = 2 * rg * rg / result.npix;
+    }
+    return result;
 }
 
 } // namespace Numina

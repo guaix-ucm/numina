@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -23,7 +23,7 @@
 import unittest
 import math
 
-import numpy as np # pylint: disable-msgs=E1101
+import numpy as np
 from scipy.special import erf
 
 from numina.instrument.profiles import GaussProfile

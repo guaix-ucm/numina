@@ -264,3 +264,10 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.imsurfit
    :synopsis: Image surface fitting
    :members:
+
+:mod:`numina.array.nirproc` --- nIR preprocessing
+======================================================
+
+.. automodule:: numina.array.nirproc
+   :synopsis: nIR preprocessing
+   :members:

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2012 Universidad Complutense de Madrid
+# Copyright 2008-2013 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -29,3 +29,9 @@ _level_names = {GOOD: 'GOOD',
                 BAD: 'BAD',
                 UNKNOWN: 'UNKNOWN'}
 
+# A base Enum
+class QA(object):
+    GOOD = 1
+    FAIR = 2
+    BAD = 3
+    UNKNOWN = 4
