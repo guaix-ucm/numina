@@ -33,7 +33,7 @@ Stable version
 --------------
 
 The latest stable version of Numina can be downloaded from  
-ftp://astrax.fis.ucm.es/pub/software/numina/
+https://pypi.python.org/pypi/numina
 
 To install numina, use the standard installation procedure:::
 
