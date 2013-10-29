@@ -4,7 +4,6 @@ from __future__ import print_function
 
 from setuptools import setup, Extension
 from setuptools import find_packages
-from Cython.Distutils import build_ext
 
 import sys
 
@@ -14,6 +13,22 @@ except ImportError:
     sys.exit('numpy is required to install numina')
 
 numpy_include = numpy.get_include()
+
+# try to handle gracefully Cython
+try:
+    from Cython.Distutils import build_ext
+    ext3 = Extension('numina.array._nirproc', 
+                 ['src/nirproc.pyx'],
+                include_dirs=[numpy_include],
+                language='c++')
+    cmdclass = {'build_ext': build_ext}
+except ImportError:
+    print('We do not have Cython, just using the generated files')
+    ext3 = Extension('numina.array._nirproc', 
+                 ['src/nirproc.cpp'],
+                include_dirs=[numpy_include])
+    cmdclass = {}
+
 
 ext1 = Extension('numina.array._combine',
                 ['src/combinemodule.cc',
@@ -27,10 +42,6 @@ ext2 = Extension('numina.array._ufunc',
                 ['src/ufunc.cc',
                  ],
           include_dirs=[numpy_include])
-
-ext3 = Extension('numina.array._nirproc', 
-                 ['src/nirproc.pyx'],
-                language='c++')
 
 # requires is not used by pip
 # but install_requires is not supported 
@@ -55,10 +66,13 @@ setup(name='numina',
       install_requires=IREQUIRES,
       use_2to3 = True,
       test_suite= "numina.tests",
-      cmdclass={'build_ext': build_ext},
+      cmdclass=cmdclass,
       classifiers=[
+                   "Programming Language :: C",
+                   "Programming Language :: Cython",
                    "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3.0",
+                   "Programming Language :: Python :: Implementation :: CPython",
                    'Development Status :: 3 - Alpha',
                    "Environment :: Other Environment",
                    "Intended Audience :: Science/Research",

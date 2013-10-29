@@ -1,3 +1,8 @@
+Version 0.10.1 (29 Oct 2013)
+Bugfix:
+ * Handle Cython is missing
+ * Cython in Mac does not get numoy_includes
+
 Version 0.10.0 (28 Oct 2013)
 Changes:
  * nIR detector modes (Ramp, Fowler, etc.)
