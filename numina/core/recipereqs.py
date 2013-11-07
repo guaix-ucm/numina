@@ -45,9 +45,9 @@ class RecipeRequirementsType(type):
         else:
             super().__setattr__(key, value)
 
-class RecipeRequirementsBase(object):
+class RecipeRequirements(object):
     '''RecipeRequirements base class'''
-    __metaclass__ = MyType
+    __metaclass__ = RecipeRequirementsType
     def __new__(cls, *args, **kwds):
         self = super(Base, cls).__new__(cls)
         for key, req in cls._requirements.items():
@@ -67,34 +67,6 @@ class RecipeRequirementsBase(object):
 
     def __init__(self, *args, **kwds):
         super().__init__()
-
-class RecipeRequirements(object):
-    def __new__(cls, *args, **kwds):
-        cls._requirements = {}
-        for name in dir(cls):
-            if not name.startswith('_'):
-                val = getattr(cls, name)
-                if isinstance(val, Requirement):
-                    cls._requirements[name] = val
-
-        return super(RecipeRequirements, cls).__new__(cls)
-
-    def __init__(self, *args, **kwds):
-        for key, req in self._requirements.iteritems():
-            if key in kwds:
-                # validate
-                val = kwds[key]
-                #if req.validate:
-                #    req.type.validate(val)
-                val = req.type.store(val)
-                setattr(self, key, val)
-            elif not req.optional:
-                raise ValueError(' %r not defined' % req.type.__class__.__name__)
-            else:
-                # optional product, skip
-                setattr(self, key, None)
-
-        super(RecipeRequirements, self).__init__(self, *args, **kwds)
 
 class requires(object):
     '''Decorator to add the list of required parameters to recipe'''
