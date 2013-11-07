@@ -23,6 +23,51 @@ Recipe requirements
 
 from .requirements import Requirement
 
+class RecipeRequirementsType(type):
+    '''Metaclass for RecipeRequirements.'''
+    def __new__(cls, classname, parents, attributes):
+        requirements = {}
+        filter_in = {}
+        filter_in['_requirements'] = requirements
+        for name,val in attributes.items():
+            if isinstance(val, Requirement):
+                requirements[name] = val
+            else:
+                filter_in[name] = val
+        return super(MyType, cls).__new__(cls, classname, parents, filter_in)
+
+    def __setattr__(cls, key, value):
+        cls._add_attr(key, value)
+
+    def _add_attr(cls, key, val):
+        if isinstance(val, Requirement):
+            cls._requirements[key] = val
+        else:
+            super().__setattr__(key, value)
+
+class RecipeRequirementsBase(object):
+    '''RecipeRequirements base class'''
+    __metaclass__ = MyType
+    def __new__(cls, *args, **kwds):
+        self = super(Base, cls).__new__(cls)
+        for key, req in cls._requirements.items():
+            if key in kwds:
+                # validate
+                val = kwds[key]
+                #if req.validate:
+                #    req.type.validate(val)
+                val = req.type.store(val)
+                setattr(self, key, val)
+            elif not req.optional:
+                raise ValueError(' %r of type %r not defined' % (key, req.type.__class__.__name__))
+            else:
+                # optional product, skip
+                setattr(self, key, None)
+        return self
+
+    def __init__(self, *args, **kwds):
+        super().__init__()
+
 class RecipeRequirements(object):
     def __new__(cls, *args, **kwds):
         cls._requirements = {}
