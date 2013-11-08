@@ -5,7 +5,7 @@ Changes:
 
 Version 0.10.1 (29 Oct 2013)
 Bugfix:
- * Handle gracefullyif Cython is missing
+ * Handle gracefully if Cython is missing
  * Cython in Mac does not get numpy_includes
 
 Version 0.10.0 (28 Oct 2013)
