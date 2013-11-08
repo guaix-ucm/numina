@@ -20,6 +20,7 @@
 
 import inspect
 
+from .metaclass import StoreType
 from .products import DataProduct, QualityAssuranceProduct
 
 class Product(object):
@@ -77,36 +78,18 @@ class ErrorRecipeResult(BaseRecipeResult):
         return "%s(errortype=%r, message='%s')" % (sclass, 
             self.errortype, self.message)
 
-class RecipeResultType(type):
-    '''Metaclass for RecipeRequirements.'''
-    def __new__(cls, classname, parents, attributes):
-        filter_out = {}
-        filter_in = {}
-        filter_in['__stored__'] = filter_out
-        for name, val in attributes.items():
-            if isinstance(val, Product):
-                filter_out[name] = val
-            else:
-                filter_in[name] = val
-        return super(RecipeResultType, cls).__new__(cls, classname, parents, filter_in)
-
-    def __setattr__(cls, key, value):
-        cls._add_attr(key, value)
-
-    def _add_attr(cls, key, val):
-        if isinstance(val, Product):
-            cls.__stored__[key] = val
-        else:
-            super(RecipeResultType, cls).__setattr__(key, value)
+class RecipeResultType(StoreType):
+    '''Metaclass for RecipeResult.'''
+    @classmethod
+    def exclude(cls, value):
+        return isinstance(value, Product)
 
 class RecipeResultAutoQAType(RecipeResultType):
-    '''Metaclass for RecipeRequirements with added QA'''
+    '''Metaclass for RecipeResult with added QA'''
     def __new__(cls, classname, parents, attributes):
         if 'qa' not in attributes:
             attributes['qa'] = Product(QualityAssuranceProduct)
         return super(RecipeResultAutoQAType, cls).__new__(cls, classname, parents, attributes)
-
-
 
 class RecipeResult(BaseRecipeResult):
     __metaclass__ = RecipeResultType

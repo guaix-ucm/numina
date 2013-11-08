@@ -21,29 +21,15 @@
 Recipe requirements
 '''
 
+from .metaclass import StoreType
 from .requirements import Requirement
 
-class RecipeRequirementsType(type):
+class RecipeRequirementsType(StoreType):
     '''Metaclass for RecipeRequirements.'''
-    def __new__(cls, classname, parents, attributes):
-        filter_out = {}
-        filter_in = {}
-        filter_in['__stored__'] = filter_out
-        for name, val in attributes.items():
-            if isinstance(val, Requirement):
-                filter_out[name] = val
-            else:
-                filter_in[name] = val
-        return super(RecipeRequirementsType, cls).__new__(cls, classname, parents, filter_in)
 
-    def __setattr__(cls, key, value):
-        cls._add_attr(key, value)
-
-    def _add_attr(cls, key, val):
-        if isinstance(val, Requirement):
-            cls.__stored__[key] = val
-        else:
-            super(RecipeRequirementsType, cls).__setattr__(key, value)
+    @classmethod
+    def exclude(cls, value):
+        return isinstance(value, Requirement)
 
 class RecipeRequirements(object):
     '''RecipeRequirements base class'''
