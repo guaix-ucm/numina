@@ -78,6 +78,9 @@ class EnumType(type):
     def __iter__(self):
         return self.__members__.itervalues()
 
+    def __contains__(self, item):
+        return isinstance(item, self.__enum_val__)
+
 class Enum(object):
     '''Base class for enumerated classes.'''
     __metaclass__ = EnumType
