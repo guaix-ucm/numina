@@ -1,7 +1,12 @@
+Version 0.10.2 (08 Nov 2013)
+Changes:
+ * RecipeRequires and RecipeResult use metaclasses
+   instead of hacking __new__
+
 Version 0.10.1 (29 Oct 2013)
 Bugfix:
- * Handle Cython is missing
- * Cython in Mac does not get numoy_includes
+ * Handle gracefullyif Cython is missing
+ * Cython in Mac does not get numpy_includes
 
 Version 0.10.0 (28 Oct 2013)
 Changes:
