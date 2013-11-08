@@ -28,7 +28,7 @@ from .requirements import RequirementParser, DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProduct, FrameDataProduct
 from numina.exceptions import RecipeError
-from .recipereqs import RecipeRequirements, requires, define_requirements
-from .reciperesult import RecipeResult, provides, Product, Optional
+from .recipereqs import RecipeRequirements, define_requirements
+from .reciperesult import RecipeResult, Product, Optional
 from .reciperesult import define_result
 from .oresult import obsres_from_dict
