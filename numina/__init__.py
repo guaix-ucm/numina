@@ -21,7 +21,7 @@
 
 import logging
 
-__version__ = '0.10.1'
+__version__ = '0.10.2'
 
 # Top level NullHandler
 logging.getLogger("numina").addHandler(logging.NullHandler())

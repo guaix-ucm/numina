@@ -20,6 +20,7 @@
 
 import inspect
 
+from .metaclass import StoreType
 from .products import DataProduct, QualityAssuranceProduct
 
 class Product(object):
@@ -59,6 +60,9 @@ class Optional(object):
 class BaseRecipeResult(object):
     def __new__(cls, *args, **kwds):
         return super(BaseRecipeResult, cls).__new__(cls)
+
+    def __init__(self, *args, **kwds):
+        super(BaseRecipeResult, self).__init__()
     
     def suggest_store(self, *args, **kwds):
         pass
@@ -74,19 +78,25 @@ class ErrorRecipeResult(BaseRecipeResult):
         return "%s(errortype=%r, message='%s')" % (sclass, 
             self.errortype, self.message)
 
+class RecipeResultType(StoreType):
+    '''Metaclass for RecipeResult.'''
+    @classmethod
+    def exclude(cls, value):
+        return isinstance(value, Product)
+
+class RecipeResultAutoQAType(RecipeResultType):
+    '''Metaclass for RecipeResult with added QA'''
+    def __new__(cls, classname, parents, attributes):
+        if 'qa' not in attributes:
+            attributes['qa'] = Product(QualityAssuranceProduct)
+        return super(RecipeResultAutoQAType, cls).__new__(cls, classname, parents, attributes)
+
 class RecipeResult(BaseRecipeResult):
+    __metaclass__ = RecipeResultType
 
     def __new__(cls, *args, **kwds):
-
-        cls._products = {}
-        for key, val in cls.__dict__.iteritems():
-            if isinstance(val, Product):
-                cls._products[key] = val
-
-        return super(RecipeResult, cls).__new__(cls)
-
-    def __init__(self, *args, **kwds):
-        for key, prod in self._products.iteritems():
+        self = super(RecipeRecipeResult, cls).__new__(cls)
+        for key, prod in self.__stored__.iteritems():
             if key in kwds:
                 # validate
                 val = kwds[key]
@@ -105,29 +115,26 @@ class RecipeResult(BaseRecipeResult):
             else:
                 # optional product, skip
                 setattr(self, key, None)
+        return self
 
+    def __init__(self, *args, **kwds):
         super(RecipeResult, self).__init__(self, *args, **kwds)
 
     def __repr__(self):
         sclass = type(self).__name__
         full = []
-        for key in self._products:
-            val = getattr(self, key)
+        for key, val in self.__stored__.iteritems():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
     def suggest_store(self, **kwds):
         for k in kwds:
             mm = getattr(self, k)
-            self._products[k].type.suggest(mm, kwds[k])
+            self.__stored__[k].type.suggest(mm, kwds[k])
 
 class RecipeResultAutoQA(RecipeResult):
     '''RecipeResult with an automatic QA member.'''
-    def __new__(cls, *args, **kwds):
-        if 'qa' not in cls.__dict__:
-            cls.qa = Product(QualityAssuranceProduct)
-
-        return super(RecipeResultAutoQA, cls).__new__(cls)
+    __metaclass__ = RecipeResultAutoQAType
 
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):
@@ -146,17 +153,15 @@ def transmit(result):
 class define_result(object):
     def __init__(self, resultClass):
         if not issubclass(resultClass, BaseRecipeResult):
-            raise TypeError
+            raise TypeError('%r does not derive from BaseRecipeResult' % resultClass)
 
         self.provides = []
         self.klass = resultClass
 
-        for k, v in resultClass.__dict__.iteritems():
-            if not k.startswith('_') and not inspect.isroutine(v):
-                val = getattr(resultClass, k)
-                val.dest = k
-                if isinstance(val, Product):
-                    self.provides.append(val)
+        for key, val in resultClass.__stored__.iteritems():
+            val.dest = key
+            if isinstance(val, Product):
+                self.provides.append(val)
 
     def __call__(self, klass):
         klass.__provides__ = self.provides
@@ -164,25 +169,3 @@ class define_result(object):
         klass.RecipeResult = self.klass
         return klass
 
-class provides(object):
-    '''Decorator to add the list of provided products to recipe'''
-    def __init__(self, *products, **kwds):
-        prods = kwds
-        basename = 'product%d'
-        for i, prod in enumerate(products):
-            prods[basename % i] = prod
-        self.products = {k: Product(v) for k, v in prods.iteritems()}
-
-    def __call__(self, klass):
-        if hasattr(klass, '__provides__'):
-            klass.__provides__.update(self.products)
-        else:
-            klass.__provides__ = self.products
-
-        a = type('%s_RecipeResult' % klass.__name__, 
-                        (RecipeResult,), 
-                        self.products)
-
-        klass.RecipeResult = a
-
-        return klass

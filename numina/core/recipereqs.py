@@ -21,21 +21,22 @@
 Recipe requirements
 '''
 
+from .metaclass import StoreType
 from .requirements import Requirement
 
+class RecipeRequirementsType(StoreType):
+    '''Metaclass for RecipeRequirements.'''
+
+    @classmethod
+    def exclude(cls, value):
+        return isinstance(value, Requirement)
+
 class RecipeRequirements(object):
+    '''RecipeRequirements base class'''
+    __metaclass__ = RecipeRequirementsType
     def __new__(cls, *args, **kwds):
-        cls._requirements = {}
-        for name in dir(cls):
-            if not name.startswith('_'):
-                val = getattr(cls, name)
-                if isinstance(val, Requirement):
-                    cls._requirements[name] = val
-
-        return super(RecipeRequirements, cls).__new__(cls)
-
-    def __init__(self, *args, **kwds):
-        for key, req in self._requirements.iteritems():
+        self = super(RecipeRequirements, cls).__new__(cls)
+        for key, req in cls.__stored__.items():
             if key in kwds:
                 # validate
                 val = kwds[key]
@@ -44,42 +45,31 @@ class RecipeRequirements(object):
                 val = req.type.store(val)
                 setattr(self, key, val)
             elif not req.optional:
-                raise ValueError(' %r not defined' % req.type.__class__.__name__)
+                raise ValueError(' %r of type %r not defined' % (key, req.type.__class__.__name__))
             else:
                 # optional product, skip
                 setattr(self, key, None)
+        return self
 
-        super(RecipeRequirements, self).__init__(self, *args, **kwds)
-
-class requires(object):
-    '''Decorator to add the list of required parameters to recipe'''
-    def __init__(self, *requirements):
-        self.requirements = requirements
-
-    def __call__(self, klass):
-        if hasattr(klass, '__requires__'):
-            klass.__requires__.extend(self.requirements)
-        else:
-            klass.__requires__ = list(self.requirements)
-        return klass
+    def __init__(self, *args, **kwds):
+        super(RecipeRequirements, self).__init__()
 
 class define_requirements(object):
     def __init__(self, requirementClass):
         if not issubclass(requirementClass, RecipeRequirements):
-            raise TypeError
+            raise TypeError('%r does not derive from RecipeRequirements' % requirementClass)
 
         self.klass = requirementClass
         self.requires = []
 
-        for i in dir(requirementClass):
-            if not i.startswith('_'):
-                val = getattr(requirementClass, i)
-                if isinstance(val, Requirement):
-                    if val.dest is None:
-                        val.dest = i
-                    self.requires.append(val)
+        for key, val in requirementClass.__stored__.items():
+            if isinstance(val, Requirement):
+                if val.dest is None:
+                    val.dest = key
+            self.requires.append(val)
 
     def __call__(self, klass):
         klass.__requires__ = self.requires
         klass.RecipeRequirements = self.klass
         return klass
+
