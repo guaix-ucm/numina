@@ -32,35 +32,29 @@ class _EnumVal(object):
         self.name = key
         self.value = val
 
-    def __str__(self):
-        return "%s.%s" % (self.__class__.__name__, self.name)
-
-    def __repr__(self):
-        return "<%s.%s: %s>" % (self.__class__.__name__, self.name, self.value)
-
 class EnumType(type):
     '''Metaclass for enumerated classes.'''
     def __new__(cls, classname, parents, attributes):
-
-        # Custom eval type
-        MyEnumVal = type(classname, (_EnumVal,), {})
-
         members = {}
         valid = {}
         for key, val in attributes.items():
             if not key.startswith('_') and \
                 not ismethod(val) and \
+                not ismethod(val) and \
+                not isinstance(val, classmethod) and \
                 not isfunction(val):
-                mm = MyEnumVal(key, val)
-                members[key] = mm
+                members[key] = val
             else:
                 valid[key] = val
         valid['__members__'] = members
-        valid['__enum_val__'] = MyEnumVal
         return super(EnumType, cls).__new__(cls, classname, parents, valid)
 
-    def __instancecheck__(self, instance):
-        return isinstance(instance, self.__enum_val__)
+    def __init__(cls, classname, parents, attributes):
+        for i,v in cls.__members__.items():
+            m = cls.__new__(cls)
+            m.__init__(i, v)
+            setattr(cls, i, m)
+            cls.__members__[i] = m
 
     def __call__(self, idx):
         for en in self.__members__.itervalues():
@@ -81,7 +75,36 @@ class EnumType(type):
     def __contains__(self, item):
         return isinstance(item, self.__enum_val__)
 
+    def __repr__(self):
+        return "<enum %r>" % (self.__name__)
+
 class Enum(object):
     '''Base class for enumerated classes.'''
     __metaclass__ = EnumType
+
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+        super(Enum, self).__init__()
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) or isinstance(self, other.__class__)) and (other.name == self.name) and (other.value == self.value)
+
+    def __le__(self, other):
+        raise TypeError('operation <= not defined for %r' % self.__class__)
+
+    def __lt__(self, other):
+        raise TypeError('operation < not defined for %r' % self.__class__)
+
+    def __ge__(self, other):
+        raise TypeError('operation >= not defined for %r' % self.__class__)
+
+    def __gt__(self, other):
+        raise TypeError('operation > not defined for %r' % self.__class__)
+
+    def __str__(self):
+        return "%s.%s" % (self.__class__.__name__, self.name)
+
+    def __repr__(self):
+        return "<%s.%s: %s>" % (self.__class__.__name__, self.name, self.value)
 
