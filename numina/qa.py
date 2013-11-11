@@ -19,18 +19,9 @@
 
 '''Quality asses for Numina-based applications.'''
 
-GOOD = 100
-FAIR = 90
-BAD = 70
-UNKNOWN = -1
+from numina.enum import Enum
 
-_level_names = {GOOD: 'GOOD',
-                FAIR: 'FAIR',
-                BAD: 'BAD',
-                UNKNOWN: 'UNKNOWN'}
-
-# A base Enum
-class QA(object):
+class QA(Enum):
     GOOD = 1
     FAIR = 2
     BAD = 3
