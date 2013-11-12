@@ -32,7 +32,9 @@ import logging
 
 from numina import __version__
 from numina.exceptions import RecipeError
-from .reciperesult import ErrorRecipeResult, RecipeResult
+from .reciperesult import ErrorRecipeResult
+from .reciperesult import RecipeResult as RecipeResultClass
+from .recipereqs import RecipeRequirements as RecipeRequirementsClass
 
 _logger = logging.getLogger('numina')
 
@@ -47,6 +49,8 @@ class BaseRecipe(object):
     
     __requires__ = {}
     __provides__ = {}
+    RecipeResult = RecipeResultClass
+    RecipeRequirements = RecipeRequirementsClass
 
     # Recipe own logger
     logger = _logger
@@ -107,3 +111,4 @@ class BaseRecipe(object):
 
         
         return result
+
