@@ -33,3 +33,15 @@ class AlwaysFailRecipe(BaseRecipe):
     def run(self, observation_result, requirements):
         raise TypeError('This Recipe always fails')
 
+class AlwaysSuccessRecipe(BaseRecipe):
+    '''A Recipe that always successes.'''
+
+    def __init__(self):
+        super(AlwaysSuccessRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, observation_result, requirements):
+        return self.RecipeResult()
+
