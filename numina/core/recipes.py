@@ -76,7 +76,6 @@ class BaseRecipe(object):
             self.instrument = kwds['instrument']
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
-        
 
     @abc.abstractmethod
     def run(self, observation_result, requirements):
@@ -89,10 +88,8 @@ class BaseRecipe(object):
         Process the result of the observing block with the
         Recipe.
         
-        :param observation_result: the result of a observing block
-        :param type: ObservationResult
-        :param requirements: requirements of the Recipe
-        :param type: RecipeRequirement
+        :param ri: the input appropriated for the Recipe
+        :param type: RecipeInput
         :param environ: a dictionary with custom parameters
         :rtype: a RecipeResult object or an error 
         
