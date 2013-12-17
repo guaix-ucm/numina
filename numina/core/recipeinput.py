@@ -17,6 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from numina.core import RequirementParser
 
 class RecipeInput(object):
     '''The input of a Recipe'''
@@ -26,6 +27,8 @@ class RecipeInput(object):
 
 class RecipeInputBuilder(object):
 
-    def build(self, observation_result, requirements):
-        return RecipeInput(observation_result, requirements)
+    def build(self, klass, observation_result, mreqs):
+        rp = RequirementParser(klass)
+        requires = rp.parse(mreqs, validate=False)
+        return RecipeInput(observation_result, requires)
 

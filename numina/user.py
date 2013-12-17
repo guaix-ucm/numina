@@ -43,6 +43,7 @@ from numina.core import FrameDataProduct, BaseRecipe, DataProduct
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.requirements import RequirementError
+from numina.core.recipeinput import RecipeInputBuilder
 from numina.core.products import ValidationError
 from numina.xdgdirs import xdg_config_home
 
@@ -404,6 +405,8 @@ def mode_run(args):
     MyRecipeClass = import_object(recipe_fqn)
     _logger.debug('recipe class is %s', MyRecipeClass)
 
+    _logger.debug('recipe input builder class is %s', RecipeInputBuilder)
+
     logger_control = dict(logfile='processing.log',
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             enabled=True)
@@ -427,9 +430,9 @@ def mode_run(args):
             task_control[key].update(task_control_loaded[key])
 
     _logger.debug('parsing requirements')
-    rp = RequirementParser(MyRecipeClass)
+    rib = RecipeInputBuilder()
     try:
-        requires = rp.parse(task_control['requirements'], validate=False)
+        ri = rib.build(MyRecipeClass, obsres, task_control['requirements'])
     except ValidationError as error:
         _logger.error('%s, exiting', error)
         sys.exit(1)
@@ -539,7 +542,6 @@ def mode_run(args):
         now1 = datetime.datetime.now()
         runinfo['time_start'] = now1.strftime(TIMEFMT)
         #
-        ri = RecipeInputBuilder().build(obsres, requires)
         result = recipe(ri)
         #
         now2 = datetime.datetime.now()
