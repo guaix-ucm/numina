@@ -82,7 +82,7 @@ class BaseRecipe(object):
     def run(self, observation_result, requirements):
         return
 
-    def __call__(self, observation_result, requirements, environ=None):
+    def __call__(self, ri, environ=None):
         '''
         Process ``observation_result`` with the Recipe.
         
@@ -98,6 +98,9 @@ class BaseRecipe(object):
         
         '''
 
+        observation_result = ri.observation_result
+        requirements = ri.requirements
+        
         if environ is not None:
             self.environ.update(environ)
 

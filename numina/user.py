@@ -538,7 +538,10 @@ def mode_run(args):
         _logger.info('running recipe')
         now1 = datetime.datetime.now()
         runinfo['time_start'] = now1.strftime(TIMEFMT)
-        result = recipe(obsres, requires)
+        #
+        ri = RecipeInputBuilder().build(obsres, requires)
+        result = recipe(ri)
+        #
         now2 = datetime.datetime.now()
         runinfo['time_end'] = now2.strftime(TIMEFMT)
         runinfo['time_running'] = now2 - now1
