@@ -80,7 +80,7 @@ class BaseRecipe(object):
 
     @abc.abstractmethod
     def run(self, observation_result, requirements):
-        return
+        return self.RecipeResult()
 
     def __call__(self, ri, environ=None):
         '''
