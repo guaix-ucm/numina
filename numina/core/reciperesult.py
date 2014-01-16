@@ -95,7 +95,7 @@ class RecipeResult(BaseRecipeResult):
     __metaclass__ = RecipeResultType
 
     def __new__(cls, *args, **kwds):
-        self = super(RecipeRecipeResult, cls).__new__(cls)
+        self = super(RecipeResult, cls).__new__(cls)
         for key, prod in self.__stored__.iteritems():
             if key in kwds:
                 # validate
