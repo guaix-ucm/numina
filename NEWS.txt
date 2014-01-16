@@ -1,3 +1,7 @@
+Version 0.10.3 (16 Jan 2014)
+Changes:
+ * Fix typo in reciperesult.py
+
 Version 0.10.2 (08 Nov 2013)
 Changes:
  * RecipeRequires and RecipeResult use metaclasses
