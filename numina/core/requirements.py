@@ -135,7 +135,7 @@ class ObservationResultRequirement(Requirement):
     '''The Recipe requires the result of an observation.'''
     def __init__(self):
         
-        super(ObservationResultRequirement, self).__init__("OB", type=ObservationResult)
+        super(ObservationResultRequirement, self).__init__("Observation Result", type=ObservationResult)
 
     def __repr__(self):
         sclass = type(self).__name__
