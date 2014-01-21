@@ -27,6 +27,7 @@ import inspect
 
 from numina.exceptions import Error
 from .products import DataProduct
+from .oresult import ObservationResult
 
 class RequirementError(Error):
     '''Error in the parameters of a recipe.'''
@@ -130,6 +131,16 @@ class Parameter(Requirement):
         super(Parameter, self).__init__(description, 
             value=value, optional=optional, type=type, dest=dest, hidden=hidden, choices=choices)
         
+class ObservationResultRequirement(Requirement):
+    '''The Recipe requires the result of an observation.'''
+    def __init__(self):
+        
+        super(ObservationResultRequirement, self).__init__("OB", type=ObservationResult)
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
+
 class DataProductRequirement(Requirement):
     def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
         
