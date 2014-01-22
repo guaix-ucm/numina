@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Numina'
-copyright = u'2010-2013, Sergio Pascual, Nicolás Cardiel'
+copyright = u'2010-2014, Sergio Pascual, Nicolás Cardiel'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -222,7 +222,7 @@ man_pages = [
 epub_title = u'Numina'
 epub_author = u'Sergio Pascual'
 epub_publisher = u'Sergio Pascual'
-epub_copyright = u'2010-2013, Sergio Pascual'
+epub_copyright = u'2010-2014, Sergio Pascual'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
