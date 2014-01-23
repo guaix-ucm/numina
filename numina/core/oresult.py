@@ -21,6 +21,8 @@
 Results of the Observing Blocks 
 '''
 
+import pyfits
+
 from dataframe import DataFrame
 
 class FrameInformation(object):
@@ -62,6 +64,8 @@ def dataframe_from_list(values):
     '''Build a DataFrame object from a list.'''
     if(isinstance(values, basestring)):
         return DataFrame(filename=values)
+    elif(isinstance(values, pyfits.HDUList)):
+        return DataFrame(frame=values)
     else:
         # FIXME: modify when format is changed
         # For this format
