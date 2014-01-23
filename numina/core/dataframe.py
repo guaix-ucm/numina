@@ -23,6 +23,8 @@ Basic Data Products
 
 import warnings
 
+import pyfits
+
 class DataFrame(object):
     def __init__(self, frame=None, filename=None, itype='UNKNOWN'):
         if frame is None and filename is None:
@@ -30,6 +32,12 @@ class DataFrame(object):
         self.frame = frame
         self.filename = filename
         self.itype = itype
+
+    def open(self):
+        if self.frame is None:
+            return pyfits.open(self.filename, memmap=True, mode='readonly')
+        else:
+            return self.frame
 
     def __getstate__(self):
         if self.frame is None and self.filename is None:
