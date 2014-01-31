@@ -126,7 +126,7 @@ class BaseRecipeSingle(object):
     logger = _logger
 
     def __init__(self, *args, **kwds):
-        super(BaseRecipe, self).__init__()
+        super(BaseRecipeSingle, self).__init__()
         self.__author__ = 'Unknown'
         self.__version__ = '0.0.0'
         # These two are maintained
@@ -166,7 +166,7 @@ class BaseRecipeSingle(object):
         '''
 
         try:
-            result = self.run(recipe_input)
+            result = self.run(ri)
         except Exception as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 
