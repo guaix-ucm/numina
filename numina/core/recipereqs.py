@@ -42,7 +42,8 @@ class RecipeRequirements(object):
                 val = kwds[key]
                 #if req.validate:
                 #    req.type.validate(val)
-                val = req.type.store(val)
+                if hasattr(req.type, 'store'):
+                    val = req.type.store(val)
                 setattr(self, key, val)
             elif not req.optional:
                 raise ValueError(' %r of type %r not defined' % (key, req.type.__class__.__name__))
