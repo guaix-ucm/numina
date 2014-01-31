@@ -28,6 +28,7 @@ import inspect
 from numina.exceptions import Error
 from .products import DataProduct
 from .oresult import ObservationResult
+from .pipeline import InstrumentConfiguration
 
 class RequirementError(Error):
     '''Error in the parameters of a recipe.'''
@@ -136,6 +137,16 @@ class ObservationResultRequirement(Requirement):
     def __init__(self):
         
         super(ObservationResultRequirement, self).__init__("Observation Result", type=ObservationResult)
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
+
+class InstrumentConfigurationRequirement(Requirement):
+    '''The Recipe requires the configuration of the instrument.'''
+    def __init__(self):
+        
+        super(InstrumentConfigurationRequirement, self).__init__("Instrument Configuration", type=InstrumentConfiguration)
 
     def __repr__(self):
         sclass = type(self).__name__
