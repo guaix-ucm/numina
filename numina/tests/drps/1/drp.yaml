@@ -1,0 +1,67 @@
+name: CLODIA
+configurations:
+  alt:
+    detector:
+      channels: FULL
+      shape:
+      - 2048
+      - 2048
+    keywords:
+      airmass: AIRMASS
+      exposure: EXPTIME
+      imagetype: IMGTYP
+      juliandate: MJD-OBS
+    pipeline: alt
+  default:
+    detector:
+      channels: FULL
+      shape:
+      - 2048
+      - 2048
+    keywords:
+      airmass: AIRMASS
+      exposure: EXPTIME
+      imagetype: IMGTYP
+      juliandate: MJD-OBS
+    pipeline: default
+modes:
+- date: 2013-11-12
+  description: A recipe that always fails
+  key: fail
+  name: Fail
+  reference: numina
+  status: DRAFT
+  summary: A recipe that always fails
+  url: http://somegtc_url.es/emir/obsmode1.html
+  uuid: a7cf7b82-e527-4d53-ad7a-3dae009a1b4e
+- date: 2014-02-01
+  description: A recipe that always success
+  key: success
+  name: Success
+  reference: numina
+  status: DRAFT
+  summary: A recipe that always success
+  url: http://somegtc_url.es/emir/obsmode1.html
+  uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
+- date: 2014-02-01
+  description: A recipe that always success, takes an Obs result
+  key: success_obs
+  name: Success Obs
+  reference: numina
+  status: DRAFT
+  summary: A recipe that always success
+  url: http://somegtc_url.es/emir/obsmode1.html
+  uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
+pipelines:
+  alt:
+    recipes:
+      fail: numina.core.utils.AlwaysFailRecipe
+      success: numina.core.utils.AlwaysSuccessRecipe
+      success_obs: numina.core.utils.OBSuccessRecipe
+    version: 1
+  default:
+    recipes:
+      fail: numina.core.utils.AlwaysFailRecipe
+      success: numina.core.utils.AlwaysSuccessRecipe
+      success_obs: numina.core.utils.OBSuccessRecipe
+    version: 1
