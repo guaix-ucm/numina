@@ -94,15 +94,12 @@ class BaseRecipe(object):
         :rtype: a RecipeResult object or an error 
         
         '''
-
-        observation_result = ri.observation_result
-        requirements = ri.requirements
         
         if environ is not None:
             self.environ.update(environ)
 
         try:
-            result = self.run(observation_result, requirements)
+            result = self.run(ri)
         except Exception as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 

@@ -30,5 +30,6 @@ class RecipeInputBuilder(object):
     def build(self, klass, observation_result, mreqs):
         rp = RequirementParser(klass)
         requires = rp.parse(mreqs, validate=False)
-        return RecipeInput(observation_result, requires)
+        #return RecipeInput(observation_result, requires)
+        return requires
 

@@ -21,6 +21,13 @@
 
 from .recipes import BaseRecipe
 
+from numina.core import BaseRecipe, RecipeRequirements, DataFrame
+from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import define_requirements, define_result
+from numina.core.requirements import ObservationResultRequirement
+
+
+
 class AlwaysFailRecipe(BaseRecipe):
     '''A Recipe that always fails.'''
 
@@ -30,7 +37,7 @@ class AlwaysFailRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, observation_result, requirements):
+    def run(self, requirements):
         raise TypeError('This Recipe always fails')
 
 class AlwaysSuccessRecipe(BaseRecipe):
@@ -42,6 +49,24 @@ class AlwaysSuccessRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    def run(self, observation_result, requirements):
+    def run(self, requirements):
         return self.RecipeResult()
+
+class OBSuccessRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+
+@define_requirements(OBSuccessRecipeRequirements)
+class OBSuccessRecipe(BaseRecipe):
+    '''A Recipe that always successes, it requires an OB'''
+
+    def __init__(self):
+        super(OBSuccessRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, requirements):
+        return self.RecipeResult()
+
+
 
