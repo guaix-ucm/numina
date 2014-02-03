@@ -26,7 +26,7 @@ from __future__ import print_function
 import inspect
 
 from numina.exceptions import Error
-from .products import DataProduct
+from .products import DataProduct, ValidationError
 from .oresult import ObservationResult
 from .pipeline import InstrumentConfiguration
 
@@ -45,6 +45,15 @@ class RequirementLookup(object):
             return req.default
         else:
             raise RequirementError('Requirement %r must be defined' % req.dest)
+
+def type_validate(tipo, valor):
+    '''Basic validation.'''
+    if hasattr(tipo, 'validate'):
+        tipo.validate(valor)
+
+    else:
+        if not isinstance(valor, tipo.__class__):
+            raise ValidationError("%r is not an instance of %r" % (valor, tipo))
 
 class RequirementParser(object):
     
@@ -67,11 +76,14 @@ class RequirementParser(object):
                 raise RequirementError('%s not in %s' % (value, req.choices))
 
             # Build value
-            mm = req.type.store(value)
+            if hasattr(req.type, 'store'):
+                mm = req.type.store(value)
+            else:
+                mm = value
             # validate
             if req.validate or validate:
-                if mm is not None and not req.optional:
-                    req.type.validate(mm)
+                if mm is not None or not req.optional:
+                    type_validate(req.type, mm)
                 
             parameters[req.dest] = mm
         names = self.rClass(**parameters)
@@ -136,7 +148,8 @@ class ObservationResultRequirement(Requirement):
     '''The Recipe requires the result of an observation.'''
     def __init__(self):
         
-        super(ObservationResultRequirement, self).__init__("Observation Result", type=ObservationResult)
+        super(ObservationResultRequirement, self).__init__("Observation Result", 
+            type=ObservationResult, validate=True)
 
     def __repr__(self):
         sclass = type(self).__name__
