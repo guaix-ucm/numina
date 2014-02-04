@@ -21,9 +21,6 @@
 
 from __future__ import print_function
 
-import os
-import pkgutil
-import logging
 import logging.config
 import sys
 import argparse
@@ -39,7 +36,7 @@ import yaml
 import numina.pipelines as namespace
 from numina import __version__
 from numina.core import RequirementParser, obsres_from_dict
-from numina.core import FrameDataProduct, BaseRecipe, DataProduct
+from numina.core import FrameDataProduct, DataProduct
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.requirements import RequirementError
@@ -83,7 +80,21 @@ _logconf = {'version': 1,
 }
 
 class ProcessingTask(object):
-    pass
+    def __init__(self, obsres=None):
+    
+        self.observation = {}
+        self.runinfo = {}
+        
+        if obsres:
+            self.observation['mode'] = obsres.mode
+            self.observation['observing_result'] = obsres.id
+            self.observation['instrument'] = obsres.instrument
+        else:
+            self.observation['mode'] = None
+            self.observation['observing_result'] = None
+            self.observation['instrument'] = None
+        #task.observation['instrument_configuration'] = ins_conf
+
 
 def fully_qualified_name(obj, sep='.'):
     if inspect.isclass(obj):
@@ -214,7 +225,7 @@ def print_instrument(instrument, modes=True):
     print('Instrument:', instrument.name)
     for ic in instrument.configurations:
         print(' has configuration',repr(ic))
-    for name, pl in instrument.pipelines.items():
+    for _, pl in instrument.pipelines.items():
         print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
     if modes and instrument.modes:
         print(' has observing modes:')
@@ -404,7 +415,7 @@ def mode_run(args):
 
             # The new configuration must not overwrite existing configurations
             if ins_conf not in my_ins.configurations:
-                 my_ins.configurations[ins_conf] = my_ins_conf
+                my_ins.configurations[ins_conf] = my_ins_conf
             else:
                 _logger.error('a configuration already exists %r, exiting', ins_conf)
             sys.exit(1)
@@ -475,7 +486,7 @@ def mode_run(args):
         sys.exit(1)
 
     for i in MyRecipeClass.__requires__:
-        _logger.info("%r is %r", i.dest, getattr(requires, i.dest))
+        _logger.info("%r is %r", i.dest, getattr('requires', i.dest))
 
     _logger.debug('parsing products')
     for req in MyRecipeClass.__provides__:
@@ -487,9 +498,10 @@ def mode_run(args):
     else:
         _logger.debug('custom logger file disabled')
 
-    _logger.debug('frames in observation result')
-    for v in obsres.frames:
-        _logger.debug('%r', v)
+    if obsres:
+        _logger.debug('frames in observation result')
+        for v in obsres.frames:
+            _logger.debug('%r', v)
 
     if args.workdir is None:
         args.workdir = os.path.join(args.basedir, '_work')
@@ -527,7 +539,6 @@ def mode_run(args):
     _logger.info('copying files from %r to %r', runinfo['data_dir'], runinfo['work_dir'])
     try:
         _logger.debug('copying files from Observation Result')
-        nframes = []
         for f in obsres.frames:
             complete = os.path.abspath(os.path.join(runinfo['data_dir'], f.filename))
             _logger.debug('copying %r to %r', f.filename, runinfo['work_dir'])
@@ -535,7 +546,7 @@ def mode_run(args):
         _logger.debug('copying files from Requirements')
         for i in MyRecipeClass.__requires__:
             if isinstance(i.type, FrameDataProduct):
-                value = getattr(requires, i.dest)
+                value = getattr('requires', i.dest)
                 if value is not None:
                     _logger.debug('copying %r to %r', value.filename, runinfo['work_dir'])
                     complete = os.path.abspath(os.path.join(runinfo['data_dir'], value.filename))
@@ -569,7 +580,7 @@ def mode_run(args):
 
         _logger.debug('cwd to workdir')
         csd = os.getcwd()
-        task = ProcessingTask()
+        task = ProcessingTask(obsres=obsres)
         os.chdir(runinfo['work_dir'])
 
         _logger.info('running recipe')
@@ -583,16 +594,9 @@ def mode_run(args):
         runinfo['time_running'] = now2 - now1
         _logger.info('result: %r', result)
 
-
-        observation = {}
-        #observation['mode'] = obsres.mode
-        observation['observing_result'] = obsres.id
-        #observation['instrument'] = obsres.instrument
-        #observation['instrument_configuration'] = ins_conf
-        
         task.result = result
         task.runinfo = runinfo
-        task.observation = observation
+        
         
         # back to were we start
         os.chdir(csd)
@@ -613,34 +617,113 @@ def mode_run(args):
     finally:
         _recipe_logger.removeHandler(fh)
 
+
+class WorkEnvironment(object):
+    def __init__(self, basedir, workdir=None, 
+                 resultsdir=None, datadir=None):
+
+        self.basedir = basedir
+        
+        if workdir is None:
+            workdir = os.path.join(basedir, '_work')
+
+        self.workdir = os.path.abspath(workdir)
+
+        if resultsdir is None:
+            resultsdir = os.path.join(basedir, '_results')
+
+        self.resultsdir = os.path.abspath(resultsdir)
+
+        if datadir is None:
+            datadir = os.path.join(basedir, '_data')
+
+        self.datadir = os.path.abspath(datadir)
+
+    def sane_work(self):
+        #_logger.debug('check datadir for pristine files: %r', self.datadir)
+    
+        make_sure_path_doesnot_exist(self.workdir)
+        #_logger.debug('check workdir for working: %r', self.workdir) 
+        make_sure_path_exists(self.workdir)
+
+        make_sure_path_doesnot_exist(self.resultsdir)
+        #_logger.debug('check resultsdir to store results %r', self.resultsdir)
+        make_sure_path_exists(self.resultsdir)
+
+    def copyfiles(self, obsres, reqs):
+
+        #_logger.info('copying files from %r to %r', self.datadir, self.workdir)
+        try:
+            if obsres:
+                self.copyfiles_stage1(obsres)
+                
+            self.copyfiles_stage2(reqs)
+            
+        except (OSError, IOError) as exception:
+            #_logger.error('%s', exception)
+            sys.exit(1)
+
+    def copyfiles_stage1(self, obsres):
+        #_logger.debug('copying files from observation result')
+        for f in obsres.frames:
+            #_logger.debug('copying %r to %r', f.filename, self.workdir)
+            complete = os.path.abspath(os.path.join(self.datadir, f.filename))
+            shutil.copy(complete, self.workdir)
+            
+    def copyfiles_stage2(self, reqs):
+        #_logger.debug('copying files from requirements')
+        for _, req in reqs.__class__.__stored__.items():
+            if isinstance(req.type, FrameDataProduct):
+                value = getattr(reqs, req.dest)
+                if value is not None:
+                    #_logger.debug('copying %r to %r', value.filename, self.workdir)
+                    complete = os.path.abspath(os.path.join(self.datadir, value.filename))
+                    shutil.copy(complete, self.workdir)
+                    
+            
 def mode_run_recipe(args):
-    '''Recipe execution mode of numina.'''
+    
+    we = WorkEnvironment(args.basedir, 
+            workdir=args.workdir,
+            resultsdir = args.resultsdir,    
+            datadir = args.datadir)
+
     _logger.debug('recipe fqn is %s', args.recipe)
     MyRecipeClass = import_object(args.recipe)
     _logger.debug('recipe class is %s', MyRecipeClass)
+    
+    # Loading observation result if exists
+    obsres = None
+    if args.obsresult is not None:
+        _logger.info("Loading observation result from %r", args.obsresult)
 
-    _logger.debug('recipe input builder class is %s', RecipeInputBuilder)
+        with open(args.obsresult) as fd:
+            obsres = obsres_from_dict(yaml.load(fd))
+
+        _logger.debug('frames in observation result')
+        for v in obsres.frames:
+            _logger.debug('%r', v)
+            
+    mode_run_recipe_explicit_mute(recipeclass=MyRecipeClass,
+        obsres=obsres, reqs=args.reqs,
+        workenv=we
+        )
+
+def mode_run_recipe_explicit(recipeclass, obsres, reqs, workenv):    
+    '''Recipe execution mode of numina.'''
+    
 
     logger_control = dict(logfile='processing.log',
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             enabled=True)
 
-    obname = args.obsresult
-    if obname is not None:
-        _logger.info("Loading observation result from %r", obname)
-
-        with open(obname) as fd:
-            obsres = obsres_from_dict(yaml.load(fd))
-    else:
-        obsres = None
-
     task_control = dict(requirements={}, products={}, logger=logger_control)
     task_control_loaded = {}
 
     # Read task_control from args.reqs
-    if args.reqs is not None:
-        _logger.info('reading task control from %s', args.reqs)
-        with open(args.reqs, 'r') as fd:
+    if reqs is not None:
+        _logger.info('reading task control from %s', reqs)
+        with open(reqs, 'r') as fd:
             task_control_loaded = yaml.load(fd)
             # backward compatibility with 'parameters' key
             if 'parameters' in task_control_loaded:
@@ -652,12 +735,15 @@ def mode_run_recipe(args):
         if key in task_control_loaded:
             task_control[key].update(task_control_loaded[key])
 
-    _logger.debug('parsing requirements')
+    
+    _logger.debug('recipe input builder class is %s', RecipeInputBuilder)
     rib = RecipeInputBuilder()
+    
     task_control['requirements']['obresult'] = obsres
-#    task_control['requirements']['obresult'] = 1
+    
+    _logger.debug('parsing requirements')
     try:
-        ri = rib.build(MyRecipeClass, obsres, task_control['requirements'])
+        ri = rib.build(recipeclass, obsres, task_control['requirements'])
     except ValidationError as error:
         _logger.error('%s, exiting', error)
         sys.exit(1)
@@ -665,12 +751,12 @@ def mode_run_recipe(args):
         _logger.error('%s, exiting', error)
         sys.exit(1)
 
-    for i in MyRecipeClass.__requires__:
-        #_logger.info("%r is %r", i.dest, getattr(requires, i.dest))
-        _logger.info("%r is %r", i.dest, getattr('requires', i.dest, None))
+    for i in recipeclass.__requires__:
+        _logger.info("recipe requires %r", i.type.__class__)
+        _logger.info("%r is %r", i.dest, getattr(ri, i.dest))
 
     _logger.debug('parsing products')
-    for req in MyRecipeClass.__provides__:
+    for req in recipeclass.__provides__:
         _logger.info('recipe provides %r', req)
 
     if logger_control['enabled']:
@@ -679,68 +765,25 @@ def mode_run_recipe(args):
     else:
         _logger.debug('custom logger file disabled')
 
-    _logger.debug('frames in observation result')
-    for v in obsres.frames:
-        _logger.debug('%r', v)
-
-    if args.workdir is None:
-        args.workdir = os.path.join(args.basedir, '_work')
-
-    args.workdir = os.path.abspath(args.workdir)
-
-    if args.resultsdir is None:
-        args.resultsdir = os.path.join(args.basedir, '_results')
-
-    args.resultsdir = os.path.abspath(args.resultsdir)
-
-    if args.datadir is None:
-        args.datadir = os.path.join(args.basedir, '_data')
-
-    args.datadir = os.path.abspath(args.datadir)
-
-    runinfo = {}
-    runinfo['runner'] = 'numina'
-    runinfo['runner_version'] = __version__
-    runinfo['data_dir'] = args.datadir
-    runinfo['work_dir'] = args.workdir
-    runinfo['results_dir'] = args.resultsdir
-    #runinfo['pipeline'] = pipe_name
-
-    _logger.debug('check datadir for pristine files: %r', runinfo['data_dir'])
+    task = ProcessingTask(obsres=obsres)
     
-    make_sure_path_doesnot_exist(runinfo['work_dir'])
-    _logger.debug('check workdir for working: %r', runinfo['work_dir']) 
-    make_sure_path_exists(runinfo['work_dir'])
-
-    make_sure_path_doesnot_exist(runinfo['results_dir'])
-    _logger.debug('check resultsdir to store results %r', runinfo['results_dir'])
-    make_sure_path_exists(runinfo['results_dir'])
-
-    _logger.info('copying files from %r to %r', runinfo['data_dir'], runinfo['work_dir'])
-    try:
-        _logger.debug('copying files from Observation Result')
-        nframes = []
-        for f in obsres.frames:
-            complete = os.path.abspath(os.path.join(runinfo['data_dir'], f.filename))
-            _logger.debug('copying %r to %r', f.filename, runinfo['work_dir'])
-            shutil.copy(complete, runinfo['work_dir'])
-        _logger.debug('copying files from Requirements')
-        for i in MyRecipeClass.__requires__:
-            if isinstance(i.type, FrameDataProduct):
-                value = getattr(requires, i.dest)
-                if value is not None:
-                    _logger.debug('copying %r to %r', value.filename, runinfo['work_dir'])
-                    complete = os.path.abspath(os.path.join(runinfo['data_dir'], value.filename))
-                    shutil.copy(complete, runinfo['work_dir'])
-    except (OSError, IOError) as exception:
-        _logger.error('%s', exception)
-        sys.exit(1)
-
+    task.runinfo = {}
+    task.runinfo['runner'] = 'numina'
+    task.runinfo['runner_version'] = __version__
+    task.runinfo['data_dir'] = workenv.datadir
+    task.runinfo['work_dir'] = workenv.workdir
+    task.runinfo['results_dir'] = workenv.resultsdir
+    #runinfo['pipeline'] = pipe_name
+    
+    workenv.sane_work()
+        
+    workenv.copyfiles(obsres, ri)
+    
     # Creating custom logger file
     _recipe_logger_name = 'numina.recipes'
     _recipe_logger = logging.getLogger(_recipe_logger_name)
     if logger_control['enabled']:
-        logfile = os.path.join(runinfo['results_dir'], logger_control['logfile'])
+        logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
         logformat = logger_control['format']
         fh = create_recipe_file_logger(_recipe_logger, logfile, logformat)
     else:
@@ -753,44 +796,35 @@ def mode_run_recipe(args):
     try:
         TIMEFMT = '%FT%T'
         _logger.info('creating the recipe')
-        recipe = MyRecipeClass()
+        recipe = recipeclass()
         #recipe.configure(instrument=my_ins)
-        runinfo['recipe'] = recipe.__class__.__name__
-        runinfo['recipe_full_name'] = fully_qualified_name(recipe.__class__)
-        runinfo['recipe_version'] = recipe.__version__
+        task.runinfo['recipe'] = recipe.__class__.__name__
+        task.runinfo['recipe_full_name'] = fully_qualified_name(recipe.__class__)
+        task.runinfo['recipe_version'] = recipe.__version__
 
         _logger.debug('cwd to workdir')
         csd = os.getcwd()
-        task = ProcessingTask()
-        os.chdir(runinfo['work_dir'])
+        
+        os.chdir(workenv.workdir)
 
         _logger.info('running recipe')
         now1 = datetime.datetime.now()
-        runinfo['time_start'] = now1.strftime(TIMEFMT)
+        task.runinfo['time_start'] = now1.strftime(TIMEFMT)
         #
         result = recipe(ri)
         #
         now2 = datetime.datetime.now()
-        runinfo['time_end'] = now2.strftime(TIMEFMT)
-        runinfo['time_running'] = now2 - now1
+        task.runinfo['time_end'] = now2.strftime(TIMEFMT)
+        task.runinfo['time_running'] = now2 - now1
         _logger.info('result: %r', result)
-
-
-        observation = {}
-        observation['mode'] = obsres.mode
-        observation['observing_result'] = obsres.id
-        observation['instrument'] = obsres.instrument
-        #observation['instrument_configuration'] = ins_conf
         
         task.result = result
-        task.runinfo = runinfo
-        task.observation = observation
         
         # back to were we start
         os.chdir(csd)
 
-        _logger.debug('cwd to resultdir: %r', runinfo['results_dir'])
-        os.chdir(runinfo['results_dir'])
+        _logger.debug('cwd to resultdir: %r', workenv.resultsdir)
+        os.chdir(workenv.resultsdir)
         _logger.info('storing result')
 
         result.suggest_store(**task_control['products'])
@@ -798,13 +832,101 @@ def mode_run_recipe(args):
         with open('result.txt', 'w+') as fd:
             yaml.dump(task.__dict__, fd)
         
-        _logger.debug('cwd to original path: %r', csd)
-        os.chdir(csd)
+
     except StandardError as error:
         _logger.error('finishing with errors: %s', error)
     finally:
+        _logger.debug('cwd to original path: %r', csd)
+        os.chdir(csd)
         _recipe_logger.removeHandler(fh)
 
+def mode_run_recipe_explicit_mute(recipeclass, obsres, reqs, workenv):    
+    '''Recipe execution mode of numina.'''
+    
+    logger_control = dict(logfile='processing.log',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            enabled=True)
+
+    task_control = dict(requirements={}, products={}, logger=logger_control)
+    task_control_loaded = {}
+
+    # Read task_control from args.reqs
+    if reqs is not None:
+
+        with open(reqs, 'r') as fd:
+            task_control_loaded = yaml.load(fd)
+            # backward compatibility with 'parameters' key
+            if 'parameters' in task_control_loaded:
+                if 'requirements' not in task_control_loaded:
+
+                    task_control_loaded['requirements'] = task_control_loaded['parameters']
+
+    for key in task_control:
+        if key in task_control_loaded:
+            task_control[key].update(task_control_loaded[key])
+
+    rib = RecipeInputBuilder()
+    task_control['requirements']['obresult'] = obsres
+    
+    try:
+        ri = rib.build(recipeclass, obsres, task_control['requirements'])
+    except ValidationError:
+        sys.exit(1)
+    except RequirementError:
+        sys.exit(1)
+
+    task = ProcessingTask(obsres=obsres)    
+    task.runinfo['runner'] = 'numina'
+    task.runinfo['runner_version'] = __version__
+    task.runinfo['data_dir'] = workenv.datadir
+    task.runinfo['work_dir'] = workenv.workdir
+    task.runinfo['results_dir'] = workenv.resultsdir
+    #runinfo['pipeline'] = pipe_name
+    task.runinfo['recipe'] = recipeclass.__name__
+    task.runinfo['recipe_full_name'] = fully_qualified_name(recipeclass)
+    
+    workenv.sane_work()    
+    workenv.copyfiles(obsres, ri)
+    
+    # Creating custom logger file
+    _recipe_logger_name = 'numina.recipes'
+    _recipe_logger = logging.getLogger(_recipe_logger_name)
+    if logger_control['enabled']:
+        logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
+        logformat = logger_control['format']
+        fh = create_recipe_file_logger(_recipe_logger, logfile, logformat)
+    else:
+        fh = logging.NullHandler()
+
+    _recipe_logger.addHandler(fh)
+
+    try:
+        TIMEFMT = '%FT%T'
+        recipe = recipeclass()
+        task.runinfo['recipe_version'] = recipe.__version__
+        csd = os.getcwd()
+        os.chdir(workenv.workdir)
+        now1 = datetime.datetime.now()
+        task.runinfo['time_start'] = now1.strftime(TIMEFMT)
+        #
+        task.result = recipe(ri)
+        #
+        now2 = datetime.datetime.now()
+        task.runinfo['time_end'] = now2.strftime(TIMEFMT)
+        task.runinfo['time_running'] = now2 - now1
+        
+        os.chdir(csd)
+        os.chdir(workenv.resultsdir)
+        result.suggest_store(**task_control['products'])
+
+        with open('result.txt', 'w+') as fd:
+            yaml.dump(task.__dict__, fd)
+        
+    except StandardError as error:
+        pass
+    finally:
+        os.chdir(csd)
+        _recipe_logger.removeHandler(fh)
 
 
 if __name__ == '__main__':
