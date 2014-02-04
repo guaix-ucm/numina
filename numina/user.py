@@ -917,7 +917,7 @@ def mode_run_recipe_explicit_mute(recipeclass, obsres, reqs, workenv):
         
         os.chdir(csd)
         os.chdir(workenv.resultsdir)
-        result.suggest_store(**task_control['products'])
+        task.result.suggest_store(**task_control['products'])
 
         with open('result.txt', 'w+') as fd:
             yaml.dump(task.__dict__, fd)
