@@ -49,7 +49,7 @@ class DataFrame(object):
         else:
             if self.filename:
                 filename = self.filename
-            elif self.frame[0].header.has_key('FILENAME'):
+            elif 'FILENAME' in self.frame[0].header:
                 filename = self.frame[0].header['FILENAME']
             else:
                 filename = 'result.fits'

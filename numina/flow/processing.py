@@ -52,7 +52,7 @@ class TagFits(object):
         self.comment = comment
         
     def check_if_processed(self, header):
-        return header.has_key(self.tag)
+        return self.tag in header
     
     def tag_as_processed(self, header):
         header.update(self.tag, time.asctime(), self.comment)
