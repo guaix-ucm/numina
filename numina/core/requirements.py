@@ -155,11 +155,18 @@ class ObservationResultRequirement(Requirement):
         sclass = type(self).__name__
         return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
 
+class InstrumentConfigurationType(object):
+    
+    def validate(self, value):
+        if not isinstance(value, InstrumentConfiguration):
+            raise ValidationError('%r is not an instance of InstrumentConfiguration')
+
 class InstrumentConfigurationRequirement(Requirement):
     '''The Recipe requires the configuration of the instrument.'''
     def __init__(self):
         
-        super(InstrumentConfigurationRequirement, self).__init__("Instrument Configuration", type=InstrumentConfiguration)
+        super(InstrumentConfigurationRequirement, self).__init__("Instrument Configuration", 
+            type=InstrumentConfigurationType, validate=True)
 
     def __repr__(self):
         sclass = type(self).__name__
