@@ -689,8 +689,9 @@ def mode_run_recipe(args):
             datadir = args.datadir)
 
     _logger.debug('recipe fqn is %s', args.recipe)
-    MyRecipeClass = import_object(args.recipe)
+    recipeclass = import_object(args.recipe)
     _logger.debug('recipe class is %s', MyRecipeClass)
+    recipe = recipeclass()
     
     # Loading observation result if exists
     obsres = None
@@ -704,9 +705,55 @@ def mode_run_recipe(args):
         for v in obsres.frames:
             _logger.debug('%r', v)
             
-    mode_run_recipe_explicit_mute(recipeclass=MyRecipeClass,
-        obsres=obsres, reqs=args.reqs,
-        workenv=we
+    # Logging and task control
+    logger_control = dict(logfile='processing.log',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            enabled=True)
+
+    task_control = dict(requirements={}, products={}, logger=logger_control)
+    task_control_loaded = {}
+
+    # Read task_control from args.reqs
+    if reqs is not None:
+        with open(reqs, 'r') as fd:
+            task_control_loaded = yaml.load(fd)
+            # backward compatibility with 'parameters' key
+            if 'parameters' in task_control_loaded:
+                if 'requirements' not in task_control_loaded:
+
+                    task_control_loaded['requirements'] = task_control_loaded['parameters']
+
+    for key in task_control:
+        if key in task_control_loaded:
+            task_control[key].update(task_control_loaded[key])
+
+    rib = RecipeInputBuilder()
+    task_control['requirements']['obresult'] = obsres
+    
+    try:
+        ri = rib.build(recipeclass, obsres, task_control['requirements'])
+        workenv.sane_work()    
+        workenv.copyfiles(obsres, ri)
+    except ValidationError:
+        sys.exit(1)
+    except RequirementError:
+        sys.exit(1)
+
+    task = ProcessingTask(obsres=obsres)    
+    #runinfo['pipeline'] = pipe_name
+    task.runinfo['recipe'] = recipeclass.__name__
+    task.runinfo['recipe_full_name'] = fully_qualified_name(recipeclass)
+    task.runinfo['runner'] = 'numina'
+    task.runinfo['runner_version'] = __version__
+    task.runinfo['data_dir'] = workenv.datadir
+    task.runinfo['work_dir'] = workenv.workdir
+    task.runinfo['results_dir'] = workenv.resultsdir
+    task.runinfo['recipe_version'] = recipe.__version__
+    
+
+    mode_run_recipe_explicit_mute(recipe=recipe,
+        task=task, reqs=ri,
+        workenv=we, task_control=task_control
         )
 
 def mode_run_recipe_explicit(recipeclass, obsres, reqs, workenv):    
@@ -840,57 +887,13 @@ def mode_run_recipe_explicit(recipeclass, obsres, reqs, workenv):
         os.chdir(csd)
         _recipe_logger.removeHandler(fh)
 
-def mode_run_recipe_explicit_mute(recipeclass, obsres, reqs, workenv):    
+def mode_run_recipe_explicit_mute(recipe, task, ri, workenv, task_control):    
     '''Recipe execution mode of numina.'''
-    
-    logger_control = dict(logfile='processing.log',
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            enabled=True)
-
-    task_control = dict(requirements={}, products={}, logger=logger_control)
-    task_control_loaded = {}
-
-    # Read task_control from args.reqs
-    if reqs is not None:
-
-        with open(reqs, 'r') as fd:
-            task_control_loaded = yaml.load(fd)
-            # backward compatibility with 'parameters' key
-            if 'parameters' in task_control_loaded:
-                if 'requirements' not in task_control_loaded:
-
-                    task_control_loaded['requirements'] = task_control_loaded['parameters']
-
-    for key in task_control:
-        if key in task_control_loaded:
-            task_control[key].update(task_control_loaded[key])
-
-    rib = RecipeInputBuilder()
-    task_control['requirements']['obresult'] = obsres
-    
-    try:
-        ri = rib.build(recipeclass, obsres, task_control['requirements'])
-    except ValidationError:
-        sys.exit(1)
-    except RequirementError:
-        sys.exit(1)
-
-    task = ProcessingTask(obsres=obsres)    
-    task.runinfo['runner'] = 'numina'
-    task.runinfo['runner_version'] = __version__
-    task.runinfo['data_dir'] = workenv.datadir
-    task.runinfo['work_dir'] = workenv.workdir
-    task.runinfo['results_dir'] = workenv.resultsdir
-    #runinfo['pipeline'] = pipe_name
-    task.runinfo['recipe'] = recipeclass.__name__
-    task.runinfo['recipe_full_name'] = fully_qualified_name(recipeclass)
-    
-    workenv.sane_work()    
-    workenv.copyfiles(obsres, ri)
     
     # Creating custom logger file
     _recipe_logger_name = 'numina.recipes'
     _recipe_logger = logging.getLogger(_recipe_logger_name)
+    logger_control = task_control['logger']
     if logger_control['enabled']:
         logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
         logformat = logger_control['format']
@@ -901,21 +904,8 @@ def mode_run_recipe_explicit_mute(recipeclass, obsres, reqs, workenv):
     _recipe_logger.addHandler(fh)
 
     try:
-        TIMEFMT = '%FT%T'
-        recipe = recipeclass()
-        task.runinfo['recipe_version'] = recipe.__version__
-        csd = os.getcwd()
-        os.chdir(workenv.workdir)
-        now1 = datetime.datetime.now()
-        task.runinfo['time_start'] = now1.strftime(TIMEFMT)
-        #
-        task.result = recipe(ri)
-        #
-        now2 = datetime.datetime.now()
-        task.runinfo['time_end'] = now2.strftime(TIMEFMT)
-        task.runinfo['time_running'] = now2 - now1
+        task = internal_work(recipe, recipe_input, task, workenv)
         
-        os.chdir(csd)
         os.chdir(workenv.resultsdir)
         task.result.suggest_store(**task_control['products'])
 
@@ -928,6 +918,22 @@ def mode_run_recipe_explicit_mute(recipeclass, obsres, reqs, workenv):
         os.chdir(csd)
         _recipe_logger.removeHandler(fh)
 
+
+def internal_work(recipe, recipe_input, task, workenv):
+    TIMEFMT = '%FT%T'
+    csd = os.getcwd()
+    os.chdir(workenv.workdir)
+    now1 = datetime.datetime.now()
+    task.runinfo['time_start'] = now1.strftime(TIMEFMT)
+    #
+    task.result = recipe(recipe_input)
+    #
+    now2 = datetime.datetime.now()
+    task.runinfo['time_end'] = now2.strftime(TIMEFMT)
+    task.runinfo['time_running'] = now2 - now1
+    os.chdir(csd)
+
+    return task
 
 if __name__ == '__main__':
     main()
