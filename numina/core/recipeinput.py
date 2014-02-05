@@ -19,16 +19,13 @@
 
 from numina.core import RequirementParser
 
-class RecipeInput(object):
-    '''The input of a Recipe'''
-    def __init__(self, observation_result, requirements):
-        self.observation_result = observation_result
-        self.requirements = requirements
-
 class RecipeInputBuilder(object):
 
-    def build(self, klass, observation_result, mreqs):
+    def build(self, workenv, klass, mreqs):
         rp = RequirementParser(klass)
         requires = rp.parse(mreqs, validate=False)
+        
+        workenv.sane_work()
+        workenv.copyfiles(mreqs['obresult'], requires)
+        
         return requires
-
