@@ -19,7 +19,7 @@
 
 import warnings
 
-import pyfits
+from astropy.io import fits
 
 from numina.array import resize_array 
 
@@ -46,7 +46,7 @@ def resize_hdu(hdu, newshape, region, window=None, fill=0.0, scale=1, conserve=T
     if window:
         hdu.header.update('OVALREGI', custom_region_to_str(window), 
                           'Valid region of original FITS')                  
-    newhdu = pyfits.PrimaryHDU(newdata, hdu.header)                
+    newhdu = fits.PrimaryHDU(newdata, hdu.header)                
     return newhdu
 
 def resize_fits(fitsfile, newfilename, newshape, region, window=None,
@@ -54,7 +54,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
     
     close_on_exit = False
     if isinstance(fitsfile, basestring):
-        hdulist = pyfits.open(fitsfile, mode='readonly')
+        hdulist = fits.open(fitsfile, mode='readonly')
         close_on_exit = True
     else:
         hdulist = fitsfile

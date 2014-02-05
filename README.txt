@@ -17,7 +17,7 @@ packages installed in order to work properly:
 
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
- - pyfits (http://www.stsci.edu/resources/software_hardware/pyfits)
+ - astropy (http://www.astropy.org/)
  - PyYaml (http://http://pyyaml.org/)
  
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)

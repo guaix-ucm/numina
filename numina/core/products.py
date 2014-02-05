@@ -20,7 +20,7 @@
 '''
 Basic Data Products
 '''
-import pyfits
+from astropy.io import fits
 
 from .dataframe import DataFrame
 from numina.qa import QA
@@ -66,7 +66,7 @@ class FrameDataProduct(DataProduct):
             # try - open
             # FIXME
             pass
-        elif isinstance(obj, pyfits.HDUList):
+        elif isinstance(obj, fits.HDUList):
             # is an HDUList
             pass
         elif isinstance(obj, DataFrame):
@@ -84,7 +84,7 @@ class FrameDataProduct(DataProduct):
             # try - open
             # FIXME
             pass
-        elif isinstance(obj, pyfits.HDUList):
+        elif isinstance(obj, fits.HDUList):
             obj[0].update('filename', suggestion) 
         elif isinstance(obj, DataFrame):
             obj.filename = suggestion

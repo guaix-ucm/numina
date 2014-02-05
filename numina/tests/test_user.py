@@ -20,16 +20,64 @@
 '''Unit test for CLI.'''
 
 import unittest
+from tempfile import mkstemp, mkdtemp
+import shutil
+import os
+
+import yaml
+import numpy as np
+from astropy.io import fits
+
 from numina.core import init_drp_system, import_object
-from numina.core import RequirementParser, obsres_from_dict
+from numina.core.oresult import ObservationResult
 from numina.core.reciperesult import ErrorRecipeResult
 from numina.core.recipeinput import RecipeInputBuilder
+from numina.core import obsres_from_dict
+from numina.user import main
+
+import numina.tests.drps as namespace
 
 class UserTestCase(unittest.TestCase):
     '''Test of the user CLI.'''
 
-    def test1(self):
-        import numina.tests.drps as namespace
+    def setUp(self):
+        self.workdir = mkdtemp()
+        
+    def tearDown(self):
+        shutil.rmtree(self.workdir)
+        
+        
+    def test0(self):
+        # create fits
+        
+        somefits = []
+        nimg = 10
+        for _ in range(nimg):
+            hdu = fits.PrimaryHDU(data=np.zeros((10,10), dtype='int16'))
+            hdul = fits.HDUList([hdu])
+            _, filename = mkstemp(dir=self.workdir, suffix='.fits')
+            hdul.writeto(filename, clobber=True)
+            somefits.append(filename)
+
+        #
+        # Create the recipe_input
+        obsres = ObservationResult()
+        obsres.frames = somefits
+        
+        _, obsresfile = mkstemp(dir=self.workdir)
+        yaml.dump(obsres.__dict__, open(obsresfile, 'wb'))
+        # create obs res
+        
+        val = main(['run-recipe', 'emir.recipes.aiv.SimpleBiasRecipe', 
+                    '--obs-res', 'dum1.txt', '--basedir', self.workdir])
+        
+        
+        print os.listdir(self.workdir + '/_results')
+        print open(self.workdir + '/_results/result.txt').read()
+        self.assertEqual(val, "dum1")
+
+    def otest1(self):
+        
         drps = init_drp_system(namespace)
         obsres = obsres_from_dict({'mode': 'success', 
             'instrument': 'CLODIA', 'frames': [], 'configuration': 'default',
@@ -52,7 +100,7 @@ class UserTestCase(unittest.TestCase):
         result = recipe(ri)
         self.assertIsInstance(result, MyRecipeClass.RecipeResult)
 
-    def test2(self):
+    def otest2(self):
         import numina.tests.drps as namespace
         drps = init_drp_system(namespace)
         obsres = obsres_from_dict({'mode': 'fail', 
@@ -76,7 +124,7 @@ class UserTestCase(unittest.TestCase):
         result = recipe(ri)
         self.assertIsInstance(result, ErrorRecipeResult)
 
-    def test3(self):
+    def otest3(self):
         import numina.tests.drps as namespace
         drps = init_drp_system(namespace)
         obsres = obsres_from_dict({'mode': 'success_obs', 
