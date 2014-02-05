@@ -21,7 +21,7 @@
 Results of the Observing Blocks 
 '''
 
-import pyfits
+from astropy.io import fits
 
 from dataframe import DataFrame
 
@@ -64,7 +64,7 @@ def dataframe_from_list(values):
     '''Build a DataFrame object from a list.'''
     if(isinstance(values, basestring)):
         return DataFrame(filename=values)
-    elif(isinstance(values, pyfits.HDUList)):
+    elif(isinstance(values, fits.HDUList)):
         return DataFrame(frame=values)
     else:
         # FIXME: modify when format is changed

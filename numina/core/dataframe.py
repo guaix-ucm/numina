@@ -23,7 +23,7 @@ Basic Data Products
 
 import warnings
 
-import pyfits
+from astropy.io import fits
 
 class DataFrame(object):
     def __init__(self, frame=None, filename=None, itype='UNKNOWN'):
@@ -35,7 +35,7 @@ class DataFrame(object):
 
     def open(self):
         if self.frame is None:
-            return pyfits.open(self.filename, memmap=True, mode='readonly')
+            return fits.open(self.filename, memmap=True, mode='readonly')
         else:
             return self.frame
 
