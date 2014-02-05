@@ -171,7 +171,7 @@ def load_instrument(node):
         if key not in node:
             raise ValueError('Missing key %r in root node', key)
     
-    name = node['name']
+    #name = node['name']
     pipe_node = node['pipelines']
     mode_node = node['modes']
     conf_node = node['configurations']
@@ -185,9 +185,9 @@ def load_instrument(node):
 
 def print_i(ins):
     print ins.name 
-    print_c(i.configurations)
-    print_m(i.modes)
-    print_p(i.pipelines)
+    print_c(ins.configurations)
+    print_m(ins.modes)
+    print_p(ins.pipelines)
 
 def print_p(pipelines):
     print 'Pipelines'
