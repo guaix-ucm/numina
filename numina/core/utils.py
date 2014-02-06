@@ -19,14 +19,9 @@
 
 '''Recipes for system checks.  '''
 
-from .recipes import BaseRecipe
-
-from numina.core import BaseRecipe, RecipeRequirements, DataFrame
-from numina.core import Requirement, Product, DataProductRequirement
-from numina.core import define_requirements, define_result
+from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import define_requirements
 from numina.core.requirements import ObservationResultRequirement
-
-
 
 class AlwaysFailRecipe(BaseRecipe):
     '''A Recipe that always fails.'''
@@ -67,6 +62,4 @@ class OBSuccessRecipe(BaseRecipe):
 
     def run(self, requirements):
         return self.RecipeResult()
-
-
 
