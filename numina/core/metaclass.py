@@ -34,12 +34,12 @@ class StoreType(type):
                 filter_in[name] = val
         return super(StoreType, cls).__new__(cls, classname, parents, filter_in)
 
-    def __setattr__(cls, key, value):
-        cls._add_attr(key, value)
+    def __setattr__(self, key, value):
+        self._add_attr(key, value)
 
-    def _add_attr(cls, key, val):
-        if cls.exclude(value):
-            cls.__stored__[key] = val
+    def _add_attr(self, key, value):
+        if self.exclude(value):
+            self.__stored__[key] = value
         else:
             super(StoreType, cls).__setattr__(key, value)
 
