@@ -78,13 +78,11 @@ class BaseRecipe(object):
             self.runinfo = kwds['runinfo']
 
     @abc.abstractmethod
-    def run(self, observation_result, requirements):
+    def run(self, recipe_input):
         return self.RecipeResult()
 
-    def __call__(self, ri, environ=None):
-        '''
-        Process ``observation_result`` with the Recipe.
-        
+    def __call__(self, recipe_input, environ=None):
+        '''        
         Process the result of the observing block with the
         Recipe.
         
@@ -99,7 +97,7 @@ class BaseRecipe(object):
             self.environ.update(environ)
 
         try:
-            result = self.run(ri)
+            result = self.run(recipe_input)
         except Exception as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 
@@ -108,68 +106,3 @@ class BaseRecipe(object):
 
         
         return result
-
-class BaseRecipeSingle(object):
-    '''Experimental base class for recipes'''
-
-    __metaclass__ = abc.ABCMeta
-    
-    __requires__ = {}
-    __provides__ = {}
-    RecipeResult = RecipeResultClass
-    RecipeRequirements = RecipeRequirementsClass
-
-    # Recipe own logger
-    logger = _logger
-
-    def __init__(self, *args, **kwds):
-        super(BaseRecipeSingle, self).__init__()
-        self.__author__ = 'Unknown'
-        self.__version__ = '0.0.0'
-        # These two are maintained
-        # for the moment
-        self.environ = {}
-        self.runinfo = {}
-        #
-        self.instrument = None
-        self.configure(**kwds)
-    
-    def configure(self, **kwds):
-        if 'author' in kwds:
-            self.__author__ = kwds['author']
-        if 'version' in kwds:
-            self.__version__ = kwds['version']
-        if 'instrument' in kwds:
-            self.instrument = kwds['instrument']
-        if 'runinfo' in kwds:
-            self.runinfo = kwds['runinfo']
-
-    @abc.abstractmethod
-    def run(self, recipe_input):
-        return self.RecipeResult()
-
-    def __call__(self, ri, environ=None):
-        '''
-        Process ``observation_result`` with the Recipe.
-        
-        Process the result of the observing block with the
-        Recipe.
-        
-        :param ri: the input appropriated for the Recipe
-        :param type: RecipeInput
-        :param environ: a dictionary with custom parameters
-        :rtype: a RecipeResult object or an error 
-        
-        '''
-
-        try:
-            result = self.run(ri)
-        except Exception as exc:
-            _logger.error("During recipe execution %s", exc)
-            return ErrorRecipeResult(exc.__class__.__name__, 
-                                     str(exc),
-                                     traceback.format_exc())
-
-        
-        return result
-
