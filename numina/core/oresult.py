@@ -25,15 +25,6 @@ from astropy.io import fits
 
 from dataframe import DataFrame
 
-class FrameInformation(object):
-    '''Information of a frame observed during a block.'''
-    def __init__(self):
-        self.label = None
-        self.itype = None
-
-    def __repr__(self):
-        return 'FrameInformation(label=%r, itype=%r)' % (self.label, self.itype)
-
 class ObservationResult(object):
     '''The result of a observing block.
     
@@ -42,23 +33,9 @@ class ObservationResult(object):
         self.id = 1
         self.mode = None
         self.instrument = None
-        self.frames = [] # list of FrameInformation
+        self.frames = [] 
         self.children = [] # other ObservationResult
         self.pipeline = 'default'
-        
-
-def frameinfo_from_list(values):
-    '''Build a FrameInformation object from a list.'''
-    frameinfo = FrameInformation()
-    if(isinstance(values, basestring)):
-        frameinfo.label = values
-        frameinfo.itype = 'UNKNOWN'
-    else:
-        # FIXME: modify when format is changed
-        # For this format        
-        frameinfo.label = values[0]
-        frameinfo.itype = values[1]
-    return frameinfo
 
 def dataframe_from_list(values):
     '''Build a DataFrame object from a list.'''
@@ -83,3 +60,27 @@ def obsres_from_dict(values):
     obsres.frames = [dataframe_from_list(val) for val in values['frames']]
     
     return obsres
+
+# We are not using these two for the moment
+
+def frameinfo_from_list(values):
+    '''Build a FrameInformation object from a list.'''
+    frameinfo = FrameInformation()
+    if(isinstance(values, basestring)):
+        frameinfo.label = values
+        frameinfo.itype = 'UNKNOWN'
+    else:
+        # FIXME: modify when format is changed
+        # For this format        
+        frameinfo.label = values[0]
+        frameinfo.itype = values[1]
+    return frameinfo
+
+class FrameInformation(object):
+    '''Information of a frame observed during a block.'''
+    def __init__(self):
+        self.label = None
+        self.itype = None
+
+    def __repr__(self):
+        return 'FrameInformation(label=%r, itype=%r)' % (self.label, self.itype)
