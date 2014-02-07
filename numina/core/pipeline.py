@@ -29,6 +29,7 @@ import uuid
 _logger = logging.getLogger('numina')
 
 def import_object(path):
+    '''Import an object given its fully qualified name.'''
     spl = path.split('.')
     cls = spl[-1]
     mods = '.'.join(spl[:-1])
@@ -47,10 +48,12 @@ class Pipeline(object):
         return self.recipes[mode]
 
 class InstrumentConfiguration(object):
+    '''Configuration of an Instrument.'''
     def __init__(self, values):
         self.values = values
 
 class Instrument(object):
+    '''Description of an Instrument.'''
     def __init__(self, name, configurations, modes, pipelines):
         self.name = name
         self.configurations = configurations
@@ -58,6 +61,7 @@ class Instrument(object):
         self.pipelines = pipelines
         
 class ObservingMode(object):
+    '''Observing modes of an Instrument.'''
     def __init__(self):
         self.name = ''
         self.uuid = ''
@@ -86,6 +90,7 @@ yaml.add_representer(ObservingMode, om_repr)
 yaml.add_constructor('!om', om_cons)
 
 class LoadableDRP(object):
+    '''Container for the loaded DRP.'''
     def __init__(self, instruments):
         self.instruments = instruments
 
@@ -107,7 +112,9 @@ def init_drp_system(namespace):
             _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
 
     return drp
+
 def drp_load(package, resource):
+    '''Load the DRPS from a resource file.'''
     ins_all = {}
     for yld in yaml.load_all(pkgutil.get_data(package, resource)):
         ins = load_instrument(yld)

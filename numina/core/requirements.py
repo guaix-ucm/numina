@@ -56,7 +56,7 @@ def type_validate(tipo, valor):
             raise ValidationError("%r is not an instance of %r" % (valor, tipo))
 
 class RequirementParser(object):
-    
+    '''RecipeRequirement builder.'''
     def __init__(self, recipe, lookupclass=RequirementLookup):
         if not inspect.isclass(recipe):
             recipe = recipe.__class__
@@ -65,6 +65,7 @@ class RequirementParser(object):
         self.lc = lookupclass()
 
     def parse(self, metadata, validate=False):
+        '''Build the RecipeRequirement object from available metadata.'''
         parameters = {}
         
         for req in self.requirements:
@@ -156,7 +157,7 @@ class ObservationResultRequirement(Requirement):
         return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
 
 class InstrumentConfigurationType(object):
-    
+    '''The type of InstrumentConfiguration.'''
     def validate(self, value):
         if not isinstance(value, InstrumentConfiguration):
             raise ValidationError('%r is not an instance of InstrumentConfiguration')
@@ -173,6 +174,7 @@ class InstrumentConfigurationRequirement(Requirement):
         return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
 
 class DataProductRequirement(Requirement):
+    '''The Recipe requires a data product of another recipe.'''
     def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
         
         super(DataProductRequirement, self).__init__(description, optional=optional, 
