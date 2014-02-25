@@ -43,6 +43,7 @@ from numina.core.requirements import RequirementError
 from numina.core.recipeinput import RecipeInputBuilder
 from numina.core.products import ValidationError
 from numina.xdgdirs import xdg_config_home
+from .store import store
 
 _logger = logging.getLogger("numina")
 
@@ -641,10 +642,11 @@ def run_create_logger(recipe, task, rinput, workenv, task_control):
         os.chdir(workenv.resultsdir)
         
         _logger.info('storing result')
-        task.result.suggest_store(**task_control['products'])
+        
+        guarda(task)
+                    
 
-        with open('result.txt', 'w+') as fd:
-            yaml.dump(task.__dict__, fd)
+
         
     except StandardError as error:
         _logger.error('finishing with errors: %s', error)
@@ -668,6 +670,34 @@ def internal_work(recipe, rinput, task):
     task.runinfo['time_end'] = now2.strftime(TIMEFMT)
     task.runinfo['time_running'] = now2 - now1
     return task
+
+def guarda(task):
+    # Store results we know about
+    # via store
+    # for the rest dump with yaml
+    
+    
+    result = task.result
+    #result.suggest_store(**task_control['products'])
+    saveres = {}
+    for key in result.__stored__:
+        val = getattr(result, key)
+        store(val, 'disk')
+        if hasattr(val, 'storage'):
+            if val.storage['stored']:
+                saveres[key] = val.storage['where']
+        else:
+            saveres[key] = val
+    
+    with open('result.txt', 'w+') as fd:
+        yaml.dump(saveres, fd)
+
+    # we put the results description here
+    task.result = 'result.txt'
+
+    # The rest goes here
+    with open('task.txt', 'w+') as fd:
+        yaml.dump(task.__dict__, fd)
 
 
 if __name__ == '__main__':
