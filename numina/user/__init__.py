@@ -36,12 +36,14 @@ import yaml
 import numina.pipelines as namespace
 from numina import __version__
 from numina.core import RequirementParser, obsres_from_dict
+from numina.core.reciperesult import ErrorRecipeResult 
 from numina.core import FrameDataProduct, DataProduct
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.requirements import RequirementError
 from numina.core.recipeinput import RecipeInputBuilder
 from numina.core.products import ValidationError
+from numina.core.pipeline import init_backends
 from numina.xdgdirs import xdg_config_home
 from .store import store
 
@@ -513,6 +515,14 @@ def mode_run_recipe(args):
 def mode_run_common(args, mode):
     '''Observing mode processing mode of numina.'''
     
+    
+    # Load store backends
+    backend_default = 'default'
+    
+    backends = init_backends(namespace)
+    
+    print(backends)    
+    
     # Directories with relevant data
     workenv = WorkEnvironment(args.basedir, 
         workdir=args.workdir,
@@ -644,10 +654,7 @@ def run_create_logger(recipe, task, rinput, workenv, task_control):
         _logger.info('storing result')
         
         guarda(task)
-                    
 
-
-        
     except StandardError as error:
         _logger.error('finishing with errors: %s', error)
     finally:
@@ -676,21 +683,32 @@ def guarda(task):
     # via store
     # for the rest dump with yaml
     
-    
     result = task.result
     #result.suggest_store(**task_control['products'])
-    saveres = {}
-    for key in result.__stored__:
-        val = getattr(result, key)
-        store(val, 'disk')
-        if hasattr(val, 'storage'):
-            if val.storage['stored']:
-                saveres[key] = val.storage['where']
-        else:
-            saveres[key] = val
     
-    with open('result.txt', 'w+') as fd:
-        yaml.dump(saveres, fd)
+    if isinstance(result, ErrorRecipeResult):
+        with open('result.txt', 'w+') as fd:
+            yaml.dump(result, fd)
+    else: 
+        saveres = {}
+        for key in result.__stored__:
+            val = getattr(result, key)
+            # FIXME: this is convoluted
+            # FIXME: a better impl will be welcomed
+            #result.__stored__[key].type.suggest(val, key)
+            _logger.debug('store %r', val)
+            store(val, 'disk')
+            # FIXME: this is a hack...
+            # FIXME: to remember where the results
+            # FIXME: are stored
+            if hasattr(val, 'storage'):
+                if val.storage['stored']:
+                    saveres[key] = val.storage['where']
+            else:
+                saveres[key] = val
+    
+        with open('result.txt', 'w+') as fd:
+            yaml.dump(saveres, fd)
 
     # we put the results description here
     task.result = 'result.txt'
@@ -703,3 +721,4 @@ def guarda(task):
 if __name__ == '__main__':
     main()
 
+#self.__stored__[k].type.suggest(mm, kwds[k])
