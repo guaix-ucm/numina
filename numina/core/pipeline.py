@@ -113,6 +113,44 @@ def init_drp_system(namespace):
 
     return drp
 
+def init_backends(namespace, backend='defaulat'):
+    '''Load all available DRPs in package 'namespace'.'''
+
+    backends = []
+
+    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+        try:
+            loader = imp.find_module(name)
+            mod = loader.load_module(name)
+            mod_plugin = getattr(mod, '__numina_store__', None)
+            
+            if mod_plugin:
+                _logger.debug('Loading backends from  %s.__numina_store__', name)
+                module = mod_plugin.get(backend, None)
+                if module:
+                    backends.append((module, True)) # Is module explicit or guessed
+                else:
+                    _logger.debug('No value for backend %s in %s', backend, name)
+            else:
+                _logger.debug('%s.__numina_store__ is undefined', name)
+                # Guessing a module name as a fallback
+                base = name.split('.')[-1]
+                module = '%s.store' % base
+                _logger.debug('Guess that a %s module is defined', module)
+                backends.append((module, False)) # Module not explicit, guessed
+                
+        except StandardError as error:
+            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
+            
+        for module, defined in backends:
+            try:
+                importlib.import_module(module)
+            except TypeError:
+                _logger.warning('TypeError exception importing %s module, ignoring', module)
+            except ImportError:
+                if defined: # Bother users only if they can fix the problem
+                    _logger.warning('ImportError exception importing %s module, ignoring', module)
+
 def drp_load(package, resource):
     '''Load the DRPS from a resource file.'''
     ins_all = {}
