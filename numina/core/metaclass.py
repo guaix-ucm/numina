@@ -31,7 +31,7 @@ class StoreType(type):
         for p in parents:
             stored = getattr(p, '__stored__', None)
             if stored:
-                fin['__stored__'].update(**stored)
+                filter_in['__stored__'].update(**stored)
 
         for name, val in attributes.items():
             if cls.exclude(val):
