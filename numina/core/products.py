@@ -22,19 +22,23 @@ Basic Data Products
 '''
 from astropy.io import fits
 
+from .pipeline import InstrumentConfiguration
 from .dataframe import DataFrame
-from numina.qa import QA
+from numina.qc import QC
 
 class ValidationError(Exception):
     pass
 
-class DataProduct(object):
+class DataType(object):
+    '''Base class for requirement types.'''
+    
+    def validate(self, obj):
+        return True
+
+class DataProduct(DataType):
 
     def __init__(self, default=None):
         self.default = default
-
-    def validate(self, obj):
-        return True
 
     def store(self, obj):
         return obj
@@ -90,12 +94,19 @@ class FrameDataProduct(DataProduct):
             obj.filename = suggestion
         return obj
 
+class InstrumentConfigurationType(DataType):
+    '''The type of InstrumentConfiguration.'''
+    
+    def validate(self, value):
+        if not isinstance(value, InstrumentConfiguration):
+            raise ValidationError('%r is not an instance of InstrumentConfiguration')
 
-class QualityAssuranceProduct(DataProduct):
+
+class QualityControlProduct(DataProduct):
     def __init__(self):
-        super(QualityAssuranceProduct, self).__init__(default=QA.UNKNOWN)
+        super(QualityControlProduct, self).__init__(default=QC.UNKNOWN)
 
     def validate(self, obj):
-        if obj not in [QA.GOOD, QA.FAIR, QA.BAD, QA.UNKNOWN]:
-            raise ValidationError('%r is not a valid QualityAssuranceProduct' % obj)
+        if obj not in [QC.GOOD, QC.PARTIAL, QC.BAD, QC.UNKNOWN]:
+            raise ValidationError('%r is not a valid QualityControlProduct' % obj)
 

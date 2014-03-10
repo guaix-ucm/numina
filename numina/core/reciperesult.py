@@ -21,7 +21,7 @@
 import inspect
 
 from .metaclass import StoreType
-from .products import DataProduct, QualityAssuranceProduct
+from .products import DataProduct, QualityControlProduct
 
 class Product(object):
     '''Product holder for RecipeResult.'''
@@ -84,12 +84,13 @@ class RecipeResultType(StoreType):
     def exclude(cls, value):
         return isinstance(value, Product)
 
-class RecipeResultAutoQAType(RecipeResultType):
-    '''Metaclass for RecipeResult with added QA'''
+class RecipeResultAutoQCType(RecipeResultType):
+    '''Metaclass for RecipeResult with added QC'''
     def __new__(cls, classname, parents, attributes):
-        if 'qa' not in attributes:
-            attributes['qa'] = Product(QualityAssuranceProduct)
-        return super(RecipeResultAutoQAType, cls).__new__(cls, classname, parents, attributes)
+        if 'qc' not in attributes:
+            attributes['qc'] = Product(QualityControlProduct)
+        return super(RecipeResultAutoQCType, cls).__new__(cls, classname, parents, attributes)
+
 
 class RecipeResult(BaseRecipeResult):
     __metaclass__ = RecipeResultType
@@ -132,9 +133,9 @@ class RecipeResult(BaseRecipeResult):
             mm = getattr(self, k)
             self.__stored__[k].type.suggest(mm, kwds[k])
 
-class RecipeResultAutoQA(RecipeResult):
-    '''RecipeResult with an automatic QA member.'''
-    __metaclass__ = RecipeResultAutoQAType
+class RecipeResultAutoQC(RecipeResult):
+    '''RecipeResult with an automatic QC member.'''
+    __metaclass__ = RecipeResultAutoQCType
 
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):

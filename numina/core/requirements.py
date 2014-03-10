@@ -26,9 +26,9 @@ from __future__ import print_function
 import inspect
 
 from numina.exceptions import Error
-from .products import DataProduct, ValidationError
+from .products import DataProduct, ValidationError, InstrumentConfigurationType
 from .oresult import ObservationResult
-from .pipeline import InstrumentConfiguration
+
 
 class RequirementError(Error):
     '''Error in the parameters of a recipe.'''
@@ -156,11 +156,6 @@ class ObservationResultRequirement(Requirement):
         sclass = type(self).__name__
         return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
 
-class InstrumentConfigurationType(object):
-    '''The type of InstrumentConfiguration.'''
-    def validate(self, value):
-        if not isinstance(value, InstrumentConfiguration):
-            raise ValidationError('%r is not an instance of InstrumentConfiguration')
 
 class InstrumentConfigurationRequirement(Requirement):
     '''The Recipe requires the configuration of the instrument.'''

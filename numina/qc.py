@@ -17,12 +17,13 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Quality asses for Numina-based applications.'''
+'''Quality control for Numina-based applications.'''
 
 from numina.enum import Enum
 
-class QA(Enum):
+class QC(Enum):
     GOOD = 1
-    FAIR = 2
+    PARTIAL = 2
     BAD = 3
     UNKNOWN = 4
+
