@@ -27,6 +27,12 @@ class StoreType(type):
         filter_out = {}
         filter_in = {}
         filter_in['__stored__'] = filter_out
+        # Handle stored values from parents
+        for p in parents:
+            stored = getattr(p, '__stored__', None)
+            if stored:
+                fin['__stored__'].update(**stored)
+
         for name, val in attributes.items():
             if cls.exclude(val):
                 filter_out[name] = val
