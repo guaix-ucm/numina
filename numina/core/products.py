@@ -20,28 +20,18 @@
 '''
 Basic Data Products
 '''
-from astropy.io import fits
 
+from astropy.io import fits
 from .pipeline import InstrumentConfiguration
+from .oresult import ObservationResult
 from .dataframe import DataFrame
 from numina.qc import QC
-
-class ValidationError(Exception):
-    pass
-
-class DataType(object):
-    '''Base class for requirement types.'''
-    
-    def validate(self, obj):
-        return True
+from .types import DataType
 
 class DataProduct(DataType):
 
-    def __init__(self, default=None):
-        self.default = default
-
-    def store(self, obj):
-        return obj
+    def __init__(self, ptype, default=None):
+        super(DataProduct, self).__init__(ptype, default=default)
 
     def suggest(self, obj, suggestion):
         return obj
@@ -51,6 +41,8 @@ class DataProduct(DataType):
         return "%s()" % (sclass, )
 
 class FrameDataProduct(DataProduct):
+    def __init__(self):
+        super(DataProduct, self).__init__(DataFrame)
 
     def store(self, obj):
 
@@ -64,7 +56,6 @@ class FrameDataProduct(DataProduct):
             return DataFrame(frame=obj)
 
     def validate(self, obj):
-
         if isinstance(obj, basestring):
             # check that this is a FITS file
             # try - open
@@ -75,9 +66,9 @@ class FrameDataProduct(DataProduct):
             pass
         elif isinstance(obj, DataFrame):
             #is a DataFrame
-            pass
+            return True
         else:
-            raise ValidationError('%r is not a valid FrameDataProduct' % obj)
+            raise TypeError('%r is not a valid FrameDataProduct' % obj)
 
     def suggest(self, obj, suggestion):
         if not isinstance(suggestion, basestring):
@@ -94,19 +85,28 @@ class FrameDataProduct(DataProduct):
             obj.filename = suggestion
         return obj
 
+class ObservationResultType(DataType):
+    '''The type of ObservationResult.'''
+    
+    def __init__(self):
+        super(ObservationResultType, self).__init__(ptype=ObservationResult)
+
 class InstrumentConfigurationType(DataType):
     '''The type of InstrumentConfiguration.'''
     
-    def validate(self, value):
-        if not isinstance(value, InstrumentConfiguration):
-            raise ValidationError('%r is not an instance of InstrumentConfiguration')
-
+    def __init__(self):
+        super(InstrumentConfigurationType, self).__init__(ptype=InstrumentConfiguration)
 
 class QualityControlProduct(DataProduct):
     def __init__(self):
-        super(QualityControlProduct, self).__init__(default=QC.UNKNOWN)
+        super(QualityControlProduct, self).__init__(ptype=QC, 
+            default=QC.UNKNOWN)
 
-    def validate(self, obj):
-        if obj not in [QC.GOOD, QC.PARTIAL, QC.BAD, QC.UNKNOWN]:
-            raise ValidationError('%r is not a valid QualityControlProduct' % obj)
+class NonLinearityPolynomial(list):
+    def __init__(self, *args, **kwds):
+        super(NonLinearityPolynomial, self).__init__(self, *args, **kwds)
+
+class NonLinearityProduct(DataProduct):
+    def __init__(self, default=[1.0, 0.0]):
+        super(NonLinearityProduct, self).__init__(ptype=NonLinearityPolynomial,                 default=default)
 

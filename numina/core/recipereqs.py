@@ -31,6 +31,12 @@ class RecipeRequirementsType(StoreType):
     def exclude(cls, value):
         return isinstance(value, Requirement)
 
+    @classmethod
+    def store(cls, name, value):
+        if value.dest is None:
+            value.dest = name
+        return value
+
 class RecipeRequirements(object):
     '''RecipeRequirements base class'''
     __metaclass__ = RecipeRequirementsType
@@ -38,18 +44,29 @@ class RecipeRequirements(object):
         self = super(RecipeRequirements, cls).__new__(cls)
         for key, req in cls.__stored__.items():
             if key in kwds:
-                # validate
                 val = kwds[key]
-                #if req.validate:
-                #    req.type.validate(val)
-                if hasattr(req.type, 'store'):
-                    val = req.type.store(val)
-                setattr(self, key, val)
-            elif not req.optional:
-                raise ValueError(' %r of type %r not defined' % (key, req.type.__class__.__name__))
             else:
-                # optional product, skip
-                setattr(self, key, None)
+                # Value not defined...
+                if req.default is not None:
+                    val = req.default
+                elif req.type.default is not None:
+                    val = req.type.default
+                elif req.optional:
+                    val = None
+                else:
+                    raise ValueError(' %r of type %r not defined' % (key, req.type))
+                
+            val = req.type.store(val)
+            
+            if req.choices and (val not in req.choiches):
+                raise ValueError('%s not in %s' % (val, req.choices))
+
+            if req.validate:
+                valid = req.type.validate(val)
+                if not valid:
+                    raise ValueError(' %r of type %r not valid' % (val, req.type.python_type))
+            setattr(self, key, val)
+            
         return self
 
     def __init__(self, *args, **kwds):
@@ -64,9 +81,6 @@ class define_requirements(object):
         self.requires = []
 
         for key, val in requirementClass.__stored__.items():
-            if isinstance(val, Requirement):
-                if val.dest is None:
-                    val.dest = key
             self.requires.append(val)
 
     def __call__(self, klass):

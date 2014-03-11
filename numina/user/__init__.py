@@ -40,9 +40,7 @@ from numina.core.reciperesult import ErrorRecipeResult
 from numina.core import FrameDataProduct, DataProduct
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
-from numina.core.requirements import RequirementError
 from numina.core.recipeinput import RecipeInputBuilder
-from numina.core.products import ValidationError
 from numina.core.pipeline import init_backends
 from numina.xdgdirs import xdg_config_home
 from .store import store
@@ -263,6 +261,22 @@ def print_recipe_template(recipe, name=None, insname=None, pipename=None, modena
     print('# enabled: true')
     print('---')
 
+def print_requirements(recipe, pad=''):
+
+    for req in recipe.__requires__:
+        if req.hidden:
+            # I Do not want to print it
+            continue
+        dispname = req.dest
+
+        if req.optional:
+            dispname = dispname + '(optional)'
+
+        if req.default is not None:
+            dispname = dispname + '=' + str(req.default)
+
+        print("%s%s [%s]" % (pad, dispname, req.description))
+
 def print_recipe(recipe, name=None, insname=None, pipename=None, modename=None):
     try:
         if name is None:
@@ -277,8 +291,7 @@ def print_recipe(recipe, name=None, insname=None, pipename=None, modename=None):
         if modename:
             print('  obs mode:', modename)
         print(' requirements:')
-        rp = RequirementParser(recipe)
-        rp.print_requirements(pad='  ')
+        print_requirements(recipe, pad='  ')
         print()
     except Exception as error:
         _logger.warning('problem %s with recipe %r', error, recipe)
@@ -591,10 +604,7 @@ def mode_run_common(args, mode):
     rib = RecipeInputBuilder()
     try:
         rinput = rib.build(workenv, recipeclass, task_control['requirements'])
-    except ValidationError as error:
-        _logger.error('%s, exiting', error)
-        sys.exit(1)
-    except RequirementError as error:
+    except ValueError as error:
         _logger.error('%s, exiting', error)
         sys.exit(1)
     except (OSError, IOError) as exception:

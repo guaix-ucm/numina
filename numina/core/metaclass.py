@@ -35,7 +35,7 @@ class StoreType(type):
 
         for name, val in attributes.items():
             if cls.exclude(val):
-                filter_out[name] = val
+                filter_out[name] = cls.store(name, val)
             else:
                 filter_in[name] = val
         return super(StoreType, cls).__new__(cls, classname, parents, filter_in)
@@ -53,3 +53,6 @@ class StoreType(type):
     def exclude(cls, value):
         return False
 
+    @classmethod
+    def store(cls, name, value):
+        return value

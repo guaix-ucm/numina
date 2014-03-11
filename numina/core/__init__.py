@@ -24,7 +24,8 @@ from .pipeline import Instrument, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode
 from .pipeline import import_object
 from .pipeline import drp_load, init_drp_system
-from .requirements import RequirementParser, DataProductRequirement
+from .requirements import DataProductRequirement
+from .load import RequirementParser
 from .requirements import Parameter, Requirement
 from .products import DataProduct, FrameDataProduct
 from numina.exceptions import RecipeError

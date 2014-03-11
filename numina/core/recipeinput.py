@@ -18,14 +18,17 @@
 # 
 
 from numina.core import RequirementParser
+from numina.core.load import dict_requirement_lookup
 
 class RecipeInputBuilder(object):
 
     def build(self, workenv, klass, mreqs):
-        rp = RequirementParser(klass)
-        requires = rp.parse(mreqs, validate=False)
+        lc = dict_requirement_lookup(mreqs)
+        rp = RequirementParser(klass, lookup=lc)
+        requires = rp.parse()
         
         workenv.sane_work()
         workenv.copyfiles(mreqs['obresult'], requires)
         
         return requires
+

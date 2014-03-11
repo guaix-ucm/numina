@@ -26,89 +26,11 @@ from __future__ import print_function
 import inspect
 
 from numina.exceptions import Error
-from .products import DataProduct, ValidationError, InstrumentConfigurationType
 from .oresult import ObservationResult
-
-
-class RequirementError(Error):
-    '''Error in the parameters of a recipe.'''
-    def __init__(self, txt):
-        super(RequirementError, self).__init__(txt)
-
-class RequirementLookup(object):
-    def lookup(self, req, source):
-        if req.dest in source:
-            return source[req.dest]
-        elif req.optional:
-            return None
-        elif req.default is not None:
-            return req.default
-        else:
-            raise RequirementError('Requirement %r must be defined' % req.dest)
-
-def type_validate(tipo, valor):
-    '''Basic validation.'''
-    if hasattr(tipo, 'validate'):
-        tipo.validate(valor)
-
-    else:
-        if not isinstance(valor, tipo.__class__):
-            raise ValidationError("%r is not an instance of %r" % (valor, tipo))
-
-class RequirementParser(object):
-    '''RecipeRequirement builder.'''
-    def __init__(self, recipe, lookupclass=RequirementLookup):
-        if not inspect.isclass(recipe):
-            recipe = recipe.__class__
-        self.requirements = recipe.__requires__
-        self.rClass = recipe.RecipeRequirements
-        self.lc = lookupclass()
-
-    def parse(self, metadata, validate=False):
-        '''Build the RecipeRequirement object from available metadata.'''
-        parameters = {}
-        
-        for req in self.requirements:
-            if req.dest is None:
-                # FIXME: add warning or something here
-                continue
-            value = self.lc.lookup(req, metadata)
-            if req.choices and (value not in req.choiches):
-                raise RequirementError('%s not in %s' % (value, req.choices))
-
-            # Build value
-            if hasattr(req.type, 'store'):
-                mm = req.type.store(value)
-            else:
-                mm = value
-            # validate
-            if req.validate or validate:
-                if mm is not None or not req.optional:
-                    type_validate(req.type, mm)
-                
-            parameters[req.dest] = mm
-        names = self.rClass(**parameters)
-
-        return names
-
-    def print_requirements(self, pad=''):
-        
-        for req in self.requirements:
-            if req.dest is None:
-                # FIXME: add warning or something here
-                continue
-            if req.hidden:
-                # I Do not want to print it
-                continue
-            dispname = req.dest
-    
-            if req.optional:
-                dispname = dispname + '(optional)'
-    
-            if req.default is not None:
-                dispname = dispname + '=' + str(req.default)
-        
-            print("%s%s [%s]" % (pad, dispname, req.description))
+from .types import NullType, PlainPythonType
+from .products import ObservationResultType
+from .products import InstrumentConfigurationType
+from .products import DataProduct
 
 class Requirement(object):
     '''Requirements of Recipes
@@ -116,67 +38,72 @@ class Requirement(object):
         :param optional: Make the Requirement optional
     
     '''
-    def __init__(self, description, value=None, optional=False, 
-                 validate=False, type=None,
-                 dest=None, hidden=False, choices=None):
-        self.default = value
+    def __init__(self, type_=None, description='', validate=False,
+                dest=None, optional=False, default=None, choices=None):
+        if type_ is None:
+            self.type = NullType()
+        elif inspect.isclass(type_):
+            self.type = type_()
+        else:
+            self.type = type_
+
+        self.validate = validate
         self.description = description
         self.optional = optional
-        self.validate = validate
-
-        if type is None:
-            self.type = DataProduct()
-        elif inspect.isclass(type):
-            self.type = type()
-        else:
-            self.type = type
         self.dest = dest
-        self.hidden = hidden
+        self.default = default
         self.choices = choices
-        
+        self.hidden = False
+
     def __repr__(self):
         sclass = type(self).__name__
         return "%s(dest=%r, description='%s', default=%s, optional=%s, type=%s, choices=%r)" % (sclass, 
             self.dest, self.description, self.default, self.optional, self.type, self.choices)
 
 class Parameter(Requirement):
-    def __init__(self, value, description, optional=False, type=None, choices=None, 
-                 dest=None, hidden=False):
-        super(Parameter, self).__init__(description, 
-            value=value, optional=optional, type=type, dest=dest, hidden=hidden, choices=choices)
+    def __init__(self, value, description, optional=False,
+                 dest=None, choices=None):
+        default = value
+        type_ = PlainPythonType(ref=value)
+
+        super(Parameter, self).__init__(type_, description, 
+            default=default, optional=optional, dest=dest, choices=choices)
         
+class DataProductRequirement(Requirement):
+    '''The Recipe requires a data product of another recipe.'''
+    def __init__(self, type_, description, default=None, validate=False, optional=False, dest=None, hidden=False):
+        
+        if inspect.isclass(type_):
+            cls = type_
+        else:
+            cls = type_.__class__
+
+        if not issubclass(cls, DataProduct):
+            raise TypeError('%s type must derive from DataProduct' % cls)
+        
+        super(DataProductRequirement, self).__init__(type_, description, 
+            default=default, optional=optional, dest=dest, validate=validate)
+
 class ObservationResultRequirement(Requirement):
     '''The Recipe requires the result of an observation.'''
     def __init__(self):
         
-        super(ObservationResultRequirement, self).__init__("Observation Result", 
-            type=ObservationResult, validate=True)
+        super(ObservationResultRequirement, self).__init__(
+            ObservationResultType, "Observation Result", 
+            validate=True)
 
     def __repr__(self):
         sclass = type(self).__name__
         return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
-
 
 class InstrumentConfigurationRequirement(Requirement):
     '''The Recipe requires the configuration of the instrument.'''
     def __init__(self):
         
-        super(InstrumentConfigurationRequirement, self).__init__("Instrument Configuration", 
-            type=InstrumentConfigurationType, validate=True)
+        super(InstrumentConfigurationRequirement, self).__init__(InstrumentConfigurationType, 
+            "Instrument Configuration", validate=True)
 
     def __repr__(self):
         sclass = type(self).__name__
         return "%s(dest=%r, description='%s')" % (sclass, self.dest, self.description)
 
-class DataProductRequirement(Requirement):
-    '''The Recipe requires a data product of another recipe.'''
-    def __init__(self, valueclass, description, optional=False, dest=None, hidden=False):
-        
-        super(DataProductRequirement, self).__init__(description, optional=optional, 
-                                                     type=valueclass, dest=dest, hidden=hidden)
-        if not inspect.isclass(valueclass):
-            valueclass = valueclass.__class__
-             
-        if not isinstance(self.type, DataProduct):
-            raise TypeError('valueclass must derive from DataProduct')
-        
