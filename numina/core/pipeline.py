@@ -113,7 +113,7 @@ def init_drp_system(namespace):
 
     return drp
 
-def init_backends(namespace, backend='defaulat'):
+def init_backends(namespace, backend='default'):
     '''Load all available DRPs in package 'namespace'.'''
 
     backends = []
