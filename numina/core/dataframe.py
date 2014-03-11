@@ -27,12 +27,11 @@ from astropy.io import fits
 
 class DataFrame(object):
     '''A handle to a image in disk or in memory.'''
-    def __init__(self, frame=None, filename=None, itype='UNKNOWN'):
+    def __init__(self, frame=None, filename=None):
         if frame is None and filename is None:
             raise ValueError('only one in frame and filename can be None') 
         self.frame = frame
         self.filename = filename
-        self.itype = itype
 
     def open(self):
         if self.frame is None:
@@ -40,34 +39,10 @@ class DataFrame(object):
         else:
             return self.frame
 
-    def __getstate__(self):
-        if self.frame is None and self.filename is None:
-            raise ValueError('only one in frame and filename can be None') 
-        # save fits file
-        if self.frame is None: 
-            # assume filename contains a FITS file
-            return {'filename': self.filename}
-        else:
-            if self.filename:
-                filename = self.filename
-            elif 'FILENAME' in self.frame[0].header:
-                filename = self.frame[0].header['FILENAME']
-            else:
-                filename = 'result.fits'
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
-                self.frame.writeto(filename, clobber=True)
-
-        return {'filename': filename, 'itype': self.itype}
-    
     @property
     def label(self):
         return self.filename
 
-    def __setstate__(self, state):
-        self.filename = state['filename']
-        self.itype = state['itype']
-        
     def __repr__(self):
         if self.frame is None:
             return "DataFrame(filename=%r)" % self.filename
@@ -75,3 +50,4 @@ class DataFrame(object):
             return "DataFrame(frame=%r)" % self.frame
         else:
             return "DataFrame(filename=%r, frame=%r)" % (self.filename, self.frame)
+
