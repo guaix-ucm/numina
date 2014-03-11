@@ -21,7 +21,6 @@
 Basic Data Products
 '''
 
-import warnings
 
 from astropy.io import fits
 

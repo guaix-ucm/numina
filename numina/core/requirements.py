@@ -25,8 +25,6 @@ from __future__ import print_function
 
 import inspect
 
-from numina.exceptions import Error
-from .oresult import ObservationResult
 from .types import NullType, PlainPythonType
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
