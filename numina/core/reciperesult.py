@@ -22,6 +22,7 @@ import inspect
 
 from .metaclass import StoreType
 from .products import DataProduct, QualityControlProduct
+from .types import ListOf
 
 class Product(object):
     '''Product holder for RecipeResult.'''
@@ -36,6 +37,8 @@ class Product(object):
         if isinstance(product_type, Optional):
             self.type = product_type.product_type
             self.optional = True
+        if isinstance(product_type, ListOf):
+            self.type = product_type
         elif isinstance(product_type, DataProduct):
             self.type = product_type
             self.optional = optional
