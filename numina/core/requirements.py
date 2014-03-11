@@ -68,6 +68,11 @@ class Parameter(Requirement):
 
         super(Parameter, self).__init__(type_, description, 
             default=default, optional=optional, dest=dest, choices=choices)
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s(dest=%r, description='%s', default=%s, optional=%s, type=%s, choices=%r)" % (sclass, 
+            self.dest, self.description, self.default, self.optional, 
+            self.type.python_type, self.choices)
         
 class DataProductRequirement(Requirement):
     '''The Recipe requires a data product of another recipe.'''

@@ -274,8 +274,9 @@ def print_requirements(recipe, pad=''):
 
         if req.default is not None:
             dispname = dispname + '=' + str(req.default)
+        typ = req.type.python_type.__name__
 
-        print("%s%s [%s]" % (pad, dispname, req.description))
+        print("%s%s type=%r [%s]" % (pad, dispname, typ, req.description))
 
 def print_recipe(recipe, name=None, insname=None, pipename=None, modename=None):
     try:
