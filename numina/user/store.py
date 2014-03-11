@@ -22,30 +22,32 @@
 from numina.generic import generic
 
 from numina.core import DataFrame
+from numina.core.types import ListOf
 import warnings
 
 @generic
 def store(obj, where):
-    pass
+    return obj
 
 @store.register(DataFrame)
 def store_df(obj, where):
     # save fits file
     if obj.frame is None:
         # assume filename contains a FITS file
-        return obj
+        return None
     else:
         if obj.filename:
             filename = obj.filename
         elif 'FILENAME' in obj.frame[0].header:
             filename = obj.frame[0].header['FILENAME']
         else:
-            filename = 'resultado.fits'
+            filename = where.get_next_fits_filename()
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             obj.frame.writeto(filename, clobber=True)
+        return filename
 
-    obj.storage = {}
-    obj.storage['stored'] = True
-    obj.storage['where'] = filename
-    return obj
+@store.register(list)
+def store_list(obj, where):
+    return [store(o, where) for o in obj]
+

@@ -689,11 +689,22 @@ def internal_work(recipe, rinput, task):
     task.runinfo['time_running'] = now2 - now1
     return task
 
+class DiskStorage(object):
+    def __init__(self):
+        self.idx = 1
+
+    def get_next_fits_filename(self):
+        fname = 'product_%03d.fits' % self.idx
+        self.idx = self.idx + 1
+        return fname
+
 def guarda(task):
     # Store results we know about
     # via store
     # for the rest dump with yaml
     
+    where = DiskStorage()
+
     result = task.result
     #result.suggest_store(**task_control['products'])
     
@@ -704,19 +715,13 @@ def guarda(task):
         saveres = {}
         for key in result.__stored__:
             val = getattr(result, key)
-            # FIXME: this is convoluted
-            # FIXME: a better impl will be welcomed
-            #result.__stored__[key].type.suggest(val, key)
-            _logger.debug('store %r', val)
-            store(val, 'disk')
+            _logger.debug('store %r of type %r', val, type(val))
+            stored = store(val, where)
             # FIXME: this is a hack...
             # FIXME: to remember where the results
             # FIXME: are stored
-            if hasattr(val, 'storage'):
-                if val.storage['stored']:
-                    saveres[key] = val.storage['where']
-            else:
-                saveres[key] = val
+            if stored:
+                saveres[key] = stored
     
         with open('result.txt', 'w+') as fd:
             yaml.dump(saveres, fd)
