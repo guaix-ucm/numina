@@ -17,13 +17,25 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from __future__ import print_function
+
 import logging
 import time
+
+from astropy.io import fits
 
 from .node import Node
 import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
+
+def promote_hdulist(hdulist, totype='float32'):
+    newdata = hdulist[0].data.astype(totype)
+    newheader = hdulist[0].header.copy()
+    hdu = fits.PrimaryHDU(newdata, header=newheader)
+    newhdulist = fits.HDUList([hdu])
+    return newhdulist
+
 
 class SimpleDataModel(object):
     '''Model of the Data being processed'''
@@ -74,6 +86,10 @@ class Corrector(Node):
             _logger.info('%s already processed by %s', img, self)
             return img
         else:
+            if img[0].data.dtype != 'float32':
+                # FIXME
+                print('change dtype to float32, old is ', img[0].data.dtype)
+                img = promote_hdulist(img)
             self._run(img)
             self.tagger.tag_as_processed(hdr)
         return img
