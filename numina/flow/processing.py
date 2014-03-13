@@ -306,7 +306,7 @@ class DivideByExposure(TagOptionalCorrector):
         if convert_to_s:
             etime = header['EXPTIME']
             _logger.debug('divide by exposure time %f, factor %f %s', etime, self.factor, img)
-            etime *= factor
+            etime *= self.factor
        
             img[0].data /= etime
             img[0].header['BUNIT'] = 'ADU/s'
