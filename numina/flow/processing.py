@@ -88,7 +88,7 @@ class Corrector(Node):
         else:
             if img[0].data.dtype != 'float32':
                 # FIXME
-                print('change dtype to float32, old is ', img[0].data.dtype)
+                _logger.info('change dtype to float32, old is %s', img[0].data.dtype)
                 img = promote_hdulist(img)
             self._run(img)
             self.tagger.tag_as_processed(hdr)
@@ -245,3 +245,32 @@ class FlatFieldCorrector(TagOptionalCorrector):
         data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
         
         return img
+
+class SkyCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from sky.'''
+    def __init__(self, skydata, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-SK','Sky removed with Numina')
+            
+        self.update_variance = False
+                
+        super(SkyCorrector, self).__init__(
+            datamodel=datamodel,
+            tagger=tagger, 
+            mark=mark, 
+            dtype=dtype)
+        
+        self.skydata = skydata
+                
+    def _run(self, img):
+        _logger.debug('correcting sky in %s', img)
+        
+        data = self.datamodel.get_data(img)
+        
+        data = array.correct_sky(data, self.skydata, dtype=self.dtype)
+        
+        return img
+
+

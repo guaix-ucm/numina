@@ -204,6 +204,11 @@ def correct_flatfield(data, flat, dtype='float32'):
     result = result.astype(dtype)
     return result
 
+def correct_sky(data, sky, dtype='float32'):
+    result = data - sky
+    result = result.astype(dtype)
+    return result
+
 def correct_nonlinearity(data, polynomial, dtype='float32'):
     result = numpy.polyval(polynomial, data)
     result = result.astype(dtype)
