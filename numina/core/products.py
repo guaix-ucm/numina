@@ -45,15 +45,19 @@ class FrameDataProduct(DataProduct):
         super(DataProduct, self).__init__(DataFrame)
 
     def store(self, obj):
-
+        # We accept None representing No Image
         if obj is None:
             return None
         elif isinstance(obj, basestring):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj
-        else:
+        elif isinstance(obj, fits.HDUList):
             return DataFrame(frame=obj)
+        elif isinstance(obj, fits.PrimaryHDU):
+            return DataFrame(frame=fits.HDUList([obj]))
+        else:
+            raise TypeError('object of type %r cannot be converted to DataFrame')
 
     def validate(self, obj):
         if isinstance(obj, basestring):
@@ -62,6 +66,9 @@ class FrameDataProduct(DataProduct):
             # FIXME
             pass
         elif isinstance(obj, fits.HDUList):
+            # is an HDUList
+            pass
+        elif isinstance(obj, fits.PrimaryHDU):
             # is an HDUList
             pass
         elif isinstance(obj, DataFrame):
@@ -110,3 +117,10 @@ class NonLinearityProduct(DataProduct):
     def __init__(self, default=[1.0, 0.0]):
         super(NonLinearityProduct, self).__init__(ptype=NonLinearityPolynomial,                 default=default)
 
+class Centroid2D(object):
+    '''Temptative Centroid Class.'''
+    def __init__(self):
+        self.centroid = [[0.0, 0.0], [0.0, 0.0]]
+        self.sigma = [[0.0, 0.0], [0.0, 0.0]]
+        self.flux = []
+        
