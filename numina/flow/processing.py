@@ -86,7 +86,7 @@ class Corrector(Node):
             _logger.info('%s already processed by %s', img, self)
             return img
         else:
-            if img[0].data.dtype != 'float32':
+            if img[0].data.dtype in ['<u2', '>u2', '=u2']:
                 # FIXME
                 _logger.info('change dtype to float32, old is %s', img[0].data.dtype)
                 img = promote_hdulist(img)
