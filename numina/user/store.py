@@ -21,6 +21,8 @@
 
 from numina.generic import generic
 
+import numpy
+
 from numina.core import DataFrame
 from numina.core.types import ListOf
 import warnings
@@ -50,4 +52,11 @@ def store_df(obj, where):
 @store.register(list)
 def store_list(obj, where):
     return [store(o, where) for o in obj]
+
+@store.register(numpy.ndarray)
+def _(obj, where):
+    # FIXME:
+    filename = where.get_next_fits_filename()
+    numpy.savetxt(filename, obj)
+    return filename
 
