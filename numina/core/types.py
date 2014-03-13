@@ -20,10 +20,11 @@
 import inspect
 
 class DataType(object):
-
+    
     def __init__(self, ptype, default=None):
-        self.python_type=ptype
+        self.python_type = ptype
         self.default = default
+        self.dialect = {}
 
     def store(self, obj):
         return obj
@@ -35,6 +36,7 @@ class NullType(DataType):
 
     def __init__(self):
         super(NullType, self).__init__(type(None))
+        self.dialect = None
 
     def store(self, obj):
         return None
@@ -47,6 +49,7 @@ class PlainPythonType(DataType):
         stype = type(ref)
         default = stype()
         super(PlainPythonType, self).__init__(stype, default=default)
+        self.dialect = stype
 
 class ListOf(DataType):
     def __init__(self, ref):
@@ -56,15 +59,33 @@ class ListOf(DataType):
         else:
             self.internal = ref
         super(ListOf, self).__init__(stype)
+        self.dialect = {}
 
     def store(self, obj):
-        print('store ListOf')
         result = [self.internal.store(o) for o in obj]
         return result
 
     def validate(self, obj):
-        print('validate ListOf')
         for o in obj:
             if not self.internal.validate(o):
                 return False
 
+
+import pkgutil
+import importlib
+import numina.ext as namespace
+
+def default_dialect_info(obj):
+    return {}
+
+for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+    try:
+        loader = imp.find_module(name)
+        mod = loader.load_module(name)
+        dialect_info = getattr(mod, 'dialect_info')
+        if dialect_info:
+            break
+    except StandardError as error:
+        print name, type(error), error
+else:
+    dialect_info = default_dialect_info

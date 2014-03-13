@@ -22,16 +22,18 @@ Basic Data Products
 '''
 
 from astropy.io import fits
+
+from numina.qc import QC
 from .pipeline import InstrumentConfiguration
 from .oresult import ObservationResult
 from .dataframe import DataFrame
-from numina.qc import QC
-from .types import DataType
+from .types import DataType, dialect_info
 
 class DataProduct(DataType):
 
     def __init__(self, ptype, default=None):
         super(DataProduct, self).__init__(ptype, default=default)
+        self.dialect = dialect_info(self)
 
     def suggest(self, obj, suggestion):
         return obj
@@ -42,7 +44,7 @@ class DataProduct(DataType):
 
 class FrameDataProduct(DataProduct):
     def __init__(self):
-        super(DataProduct, self).__init__(DataFrame)
+        super(FrameDataProduct, self).__init__(DataFrame)
 
     def store(self, obj):
         # We accept None representing No Image
@@ -73,7 +75,7 @@ class FrameDataProduct(DataProduct):
             pass
         elif isinstance(obj, DataFrame):
             #is a DataFrame
-            return True
+            pass
         else:
             raise TypeError('%r is not a valid FrameDataProduct' % obj)
 
