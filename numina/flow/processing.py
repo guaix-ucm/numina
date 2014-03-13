@@ -284,7 +284,7 @@ class DivideByExposure(TagOptionalCorrector):
             
         self.update_variance = False
                 
-        super(DivideByExpsoure, self).__init__(
+        super(DivideByExposure, self).__init__(
             datamodel=datamodel,
             tagger=tagger, 
             mark=mark, 
