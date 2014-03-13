@@ -1,16 +1,12 @@
 # 
-import sys
-
-sys.path.append('/home/spr/Scratch')
-
 import pkgutil
 
 #
-import Whatever
+import DF
 
 _eqtypes = {
-'numina.core.products.QualityControlProduct': 'DPK::Something',
-'numina.core.products.FrameDataProduct': 'DPK::SomethingElse'
+#'numina.core.products.QualityControlProduct': 'DPK::Something',
+'numina.core.products.FrameDataProduct': DF.TYPE_FRAME
 }
 
 def dialect_info(obj):
