@@ -274,3 +274,47 @@ class SkyCorrector(TagOptionalCorrector):
         return img
 
 
+class DivideByExposure(TagOptionalCorrector):
+    '''A Node that divides its input by exposure time.'''
+    def __init__(self, factor=1.0, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-EXP','Divided by exposure time.')
+            
+        self.update_variance = False
+                
+        super(DivideByExpsoure, self).__init__(
+            datamodel=datamodel,
+            tagger=tagger, 
+            mark=mark, 
+            dtype=dtype)
+        
+        self.factor = factor
+                
+    def _run(self, img):
+        header = self.datamodel.get_header(img)
+        bunit = header['BUNIT']
+        convert_to_s = False
+        if bunit:
+            if bunit.lower() == 'adu':
+                convert_to_s = True
+            elif bunit.lower() == 'adu/s':
+                convert_to_s = False
+            else:
+                _logger.warning('Unrecognized value for BUNIT %s', bunit)
+        if convert_to_s:
+            etime = header['EXPTIME']
+            _logger.debug('divide by exposure time %f, factor %f %s', etime, self.factor, img)
+            etime *= factor
+       
+            img[0].data /= etime
+            img[0].header['BUNIT'] = 'ADU/s'
+            try:
+                img['variance'].data /= etime**2
+                img['variance'].header['BUNIT'] = 'ADU/s'
+            except KeyError:
+                pass
+        
+        return img
+
