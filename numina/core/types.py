@@ -86,6 +86,8 @@ for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__
         if dialect_info:
             break
     except StandardError as error:
-        print name, type(error), error
+        #print name, type(error), error
+        pass
 else:
     dialect_info = default_dialect_info
+
