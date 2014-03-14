@@ -28,7 +28,7 @@ class RecipeRequirementsType(MapStoreType):
     '''Metaclass for RecipeRequirements.'''
 
     @classmethod
-    def exclude(cls, value):
+    def exclude(cls, name, value):
         return isinstance(value, Requirement)
 
     @classmethod

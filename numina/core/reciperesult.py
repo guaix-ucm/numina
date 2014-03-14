@@ -84,7 +84,7 @@ class ErrorRecipeResult(BaseRecipeResult):
 class RecipeResultType(MapStoreType):
     '''Metaclass for RecipeResult.'''
     @classmethod
-    def exclude(cls, value):
+    def exclude(cls, name, value):
         return isinstance(value, Product)
 
 class RecipeResultAutoQCType(RecipeResultType):
