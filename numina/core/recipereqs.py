@@ -21,10 +21,10 @@
 Recipe requirements
 '''
 
-from .metaclass import StoreType
+from .metaclass import MapStoreType
 from .requirements import Requirement
 
-class RecipeRequirementsType(StoreType):
+class RecipeRequirementsType(MapStoreType):
     '''Metaclass for RecipeRequirements.'''
 
     @classmethod

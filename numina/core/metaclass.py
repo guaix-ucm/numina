@@ -21,6 +21,8 @@
 Base metaclasses
 '''
 
+import collections
+
 class StoreType(type):
     '''Metaclass for storing members.'''
     def __new__(cls, classname, parents, attributes):
@@ -56,3 +58,19 @@ class StoreType(type):
     @classmethod
     def store(cls, name, value):
         return value
+
+
+class MapStoreType(StoreType, collections.Mapping):
+    '''Metaclass for storing members with map interface.'''
+    def __new__(cls, classname, parents, attributes):
+        return super(MapStoreType, cls).__new__(cls, classname, parents, attributes)
+    
+    def __getitem__(self, name):
+        return self.__stored__[name]
+
+    def __iter__(self):
+        return iter(self.__stored__)
+
+    def __len__(self):
+        return len(self.__stored__)
+

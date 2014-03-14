@@ -20,7 +20,7 @@
 
 import inspect
 
-from .metaclass import StoreType
+from .metaclass import MapStoreType
 from .products import DataProduct, QualityControlProduct
 from .types import ListOf
 
@@ -81,7 +81,7 @@ class ErrorRecipeResult(BaseRecipeResult):
         return "%s(errortype=%r, message='%s')" % (sclass, 
             self.errortype, self.message)
 
-class RecipeResultType(StoreType):
+class RecipeResultType(MapStoreType):
     '''Metaclass for RecipeResult.'''
     @classmethod
     def exclude(cls, value):
