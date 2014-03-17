@@ -42,7 +42,7 @@ class RecipeRequirements(object):
     __metaclass__ = RecipeRequirementsType
     def __new__(cls, *args, **kwds):
         self = super(RecipeRequirements, cls).__new__(cls)
-        for key, req in cls.__stored__.items():
+        for key, req in cls.iteritems():
             if key in kwds:
                 val = kwds[key]
             else:
@@ -80,7 +80,7 @@ class define_requirements(object):
         self.klass = requirementClass
         self.requires = []
 
-        for key, val in requirementClass.__stored__.items():
+        for key, val in requirementClass.iteritems():
             self.requires.append(val)
 
     def __call__(self, klass):

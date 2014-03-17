@@ -146,7 +146,7 @@ class WorkEnvironment(object):
             
     def copyfiles_stage2(self, reqs):
         _logger.debug('copying files from requirements')
-        for _, req in reqs.__class__.__stored__.items():
+        for _, req in reqs.__class__.items():
             if isinstance(req.type, FrameDataProduct):
                 value = getattr(reqs, req.dest)
                 if value is not None:
@@ -713,7 +713,7 @@ def guarda(task):
             yaml.dump(result, fd)
     else: 
         saveres = {}
-        for key in result.__stored__:
+        for key in result.__class__:
             val = getattr(result, key)
             _logger.debug('store %r of type %r', val, type(val))
             stored = store(val, where)

@@ -100,7 +100,7 @@ class RecipeResult(BaseRecipeResult):
 
     def __new__(cls, *args, **kwds):
         self = super(RecipeResult, cls).__new__(cls)
-        for key, prod in self.__stored__.iteritems():
+        for key, prod in cls.iteritems():
             if key in kwds:
                 # validate
                 val = kwds[key]
@@ -127,14 +127,14 @@ class RecipeResult(BaseRecipeResult):
     def __repr__(self):
         sclass = type(self).__name__
         full = []
-        for key, val in self.__stored__.iteritems():
+        for key, val in self.__class__.iteritems():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
     def suggest_store(self, **kwds):
         for k in kwds:
             mm = getattr(self, k)
-            self.__stored__[k].type.suggest(mm, kwds[k])
+            self.__class__[k].type.suggest(mm, kwds[k])
 
 class RecipeResultAutoQC(RecipeResult):
     '''RecipeResult with an automatic QC member.'''
@@ -162,7 +162,7 @@ class define_result(object):
         self.provides = []
         self.klass = resultClass
 
-        for key, val in resultClass.__stored__.iteritems():
+        for key, val in resultClass.iteritems():
             val.dest = key
             if isinstance(val, Product):
                 self.provides.append(val)
