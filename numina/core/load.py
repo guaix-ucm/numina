@@ -41,7 +41,6 @@ class RequirementParser(object):
     def __init__(self, recipe, lookup):
         if not inspect.isclass(recipe):
             recipe = recipe.__class__
-        self.requirements = recipe.__requires__
         self.rClass = recipe.RecipeRequirements
         self.lc = lookup
 
@@ -49,7 +48,7 @@ class RequirementParser(object):
         '''Build the RecipeRequirement object from available metadata.'''
         parameters = {}
         
-        for req in self.requirements:
+        for req in self.rClass.values():
             value = self.lc(req)
             if not isinstance(value, NoneFind):
                 parameters[req.dest] = value
@@ -59,7 +58,7 @@ class RequirementParser(object):
 
     def print_requirements(self, pad=''):
         
-        for req in self.requirements:
+        for req in self.rClass.values():
             if req.hidden:
                 # I Do not want to print it
                 continue

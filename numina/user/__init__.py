@@ -226,7 +226,7 @@ def print_recipe_template(recipe, name=None, insname=None, pipename=None, modena
     # Create a dictionary with tamplates
     requires = {}
     optional = {}
-    for req in recipe.__requires__:
+    for req in recipe.RecipeRequirements.values():
         if req.dest is None:
             # FIXME: add warning or something here
             continue
@@ -263,7 +263,7 @@ def print_recipe_template(recipe, name=None, insname=None, pipename=None, modena
 
 def print_requirements(recipe, pad=''):
 
-    for req in recipe.__requires__:
+    for req in recipe.RecipeRequirements.values():
         if req.hidden:
             # I Do not want to print it
             continue
@@ -613,12 +613,12 @@ def mode_run_common(args, mode):
         sys.exit(1)
 
     _logger.debug('parsing requirements')
-    for i in recipeclass.__requires__:
-        _logger.info("recipe requires %r", i.type.__class__)
-        _logger.info("%r is %r", i.dest, getattr(rinput, i.dest))
+    for key, val in recipeclass.RecipeRequirements.iteritems():
+        _logger.info("recipe requires %r", val.type.__class__)
+        _logger.info("%r is %r", val.dest, getattr(rinput, val.dest))
 
     _logger.debug('parsing products')
-    for req in recipeclass.__provides__:
+    for req in recipeclass.RecipeResult.values():
         _logger.info('recipe provides %r', req)
 
     task = ProcessingTask(obsres=obsres, insconf=ins_conf)    

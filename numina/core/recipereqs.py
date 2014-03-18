@@ -78,13 +78,8 @@ class define_requirements(object):
             raise TypeError('%r does not derive from RecipeRequirements' % requirementClass)
 
         self.klass = requirementClass
-        self.requires = []
-
-        for key, val in requirementClass.iteritems():
-            self.requires.append(val)
 
     def __call__(self, klass):
-        klass.__requires__ = self.requires
         klass.RecipeRequirements = self.klass
         return klass
 
