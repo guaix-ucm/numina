@@ -159,17 +159,9 @@ class define_result(object):
         if not issubclass(resultClass, BaseRecipeResult):
             raise TypeError('%r does not derive from BaseRecipeResult' % resultClass)
 
-        self.provides = []
         self.klass = resultClass
 
-        for key, val in resultClass.iteritems():
-            val.dest = key
-            if isinstance(val, Product):
-                self.provides.append(val)
-
     def __call__(self, klass):
-        klass.__provides__ = self.provides
-
         klass.RecipeResult = self.klass
         return klass
 

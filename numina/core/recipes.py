@@ -48,7 +48,6 @@ class BaseRecipe(object):
     __metaclass__ = abc.ABCMeta
     
     __requires__ = {}
-    __provides__ = {}
     RecipeResult = RecipeResultClass
     RecipeRequirements = RecipeRequirementsClass
 

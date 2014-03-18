@@ -253,7 +253,7 @@ def print_recipe_template(recipe, name=None, insname=None, pipename=None, modena
         print('# end of optional requirements')
     print(yaml.dump(final), end='')
     print('#products:')
-    for prod in recipe.__provides__:
+    for prod in recipe.RecipeResult.values():
         print('# %s: %s' % print_io(prod))
     print('#logger:')
     print('# logfile: processing.log')
