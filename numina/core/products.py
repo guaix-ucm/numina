@@ -23,7 +23,7 @@ Basic Data Products
 
 from astropy.io import fits
 
-from numina.qc import QC
+from .qc import QC
 from .pipeline import InstrumentConfiguration
 from .oresult import ObservationResult
 from .dataframe import DataFrame

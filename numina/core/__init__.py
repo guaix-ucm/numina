@@ -33,3 +33,4 @@ from .recipereqs import RecipeRequirements, define_requirements
 from .reciperesult import RecipeResult, Product, Optional
 from .reciperesult import define_result
 from .oresult import obsres_from_dict
+from .qc import QC
