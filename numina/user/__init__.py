@@ -42,7 +42,8 @@ from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.recipeinput import RecipeInputBuilder
 from numina.core.pipeline import init_backends
-from numina.xdgdirs import xdg_config_home
+
+from .xdgdirs import xdg_config_home
 from .store import store
 
 _logger = logging.getLogger("numina")
