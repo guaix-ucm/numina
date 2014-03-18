@@ -227,9 +227,6 @@ def print_recipe_template(recipe, name=None, insname=None, pipename=None, modena
     requires = {}
     optional = {}
     for req in recipe.RecipeRequirements.values():
-        if req.dest is None:
-            # FIXME: add warning or something here
-            continue
         if req.hidden:
             # I Do not want to print it
             continue
