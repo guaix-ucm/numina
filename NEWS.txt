@@ -1,11 +1,11 @@
-
+Version 0.11.0 (02 Apr 2014)
 Changes:
  * Ported to astropy (0.3)
  * Added new filters (DivideByExposure, SkyCorrector)
  * Provide custom extension to data types (required to interoperate with GTC)
- * New EnumType that mimicks Enum forom Python 3.4
- * QA is now QC and it's an Enum
- * Testing recipes AlwaysFailRecipe and AlwaysSuccessRecipe
+ * New EnumType that mimicks Enum from Python 3.4
+ * numina.QA is now numina.core.QC and it's an Enum
+ * Testing recipes AlwaysFailRecipe and AlwaysSuccessRecipe added
  * Extended Requirements (ObservationResultRequirement)
  * Recipes take only one input (of type RecipeRequirement)
  * RecipeResult and RecipeRequirement has a dictionary interface
