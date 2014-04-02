@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -21,34 +21,52 @@
 Recipe requirements
 '''
 
-from .metaclass import StoreType
+from .metaclass import MapStoreType
 from .requirements import Requirement
 
-class RecipeRequirementsType(StoreType):
+class RecipeRequirementsType(MapStoreType):
     '''Metaclass for RecipeRequirements.'''
 
     @classmethod
-    def exclude(cls, value):
+    def exclude(cls, name, value):
         return isinstance(value, Requirement)
+
+    @classmethod
+    def store(cls, name, value):
+        if value.dest is None:
+            value.dest = name
+        return value
 
 class RecipeRequirements(object):
     '''RecipeRequirements base class'''
     __metaclass__ = RecipeRequirementsType
     def __new__(cls, *args, **kwds):
         self = super(RecipeRequirements, cls).__new__(cls)
-        for key, req in cls.__stored__.items():
+        for key, req in cls.iteritems():
             if key in kwds:
-                # validate
                 val = kwds[key]
-                #if req.validate:
-                #    req.type.validate(val)
-                val = req.type.store(val)
-                setattr(self, key, val)
-            elif not req.optional:
-                raise ValueError(' %r of type %r not defined' % (key, req.type.__class__.__name__))
             else:
-                # optional product, skip
-                setattr(self, key, None)
+                # Value not defined...
+                if req.default is not None:
+                    val = req.default
+                elif req.type.default is not None:
+                    val = req.type.default
+                elif req.optional:
+                    val = None
+                else:
+                    raise ValueError(' %r of type %r not defined' % (key, req.type))
+                
+            val = req.type.store(val)
+            
+            if req.choices and (val not in req.choiches):
+                raise ValueError('%s not in %s' % (val, req.choices))
+
+            if req.validate:
+                valid = req.type.validate(val)
+                if not valid:
+                    raise ValueError(' %r of type %r not valid' % (val, req.type.python_type))
+            setattr(self, key, val)
+            
         return self
 
     def __init__(self, *args, **kwds):
@@ -60,16 +78,8 @@ class define_requirements(object):
             raise TypeError('%r does not derive from RecipeRequirements' % requirementClass)
 
         self.klass = requirementClass
-        self.requires = []
-
-        for key, val in requirementClass.__stored__.items():
-            if isinstance(val, Requirement):
-                if val.dest is None:
-                    val.dest = key
-            self.requires.append(val)
 
     def __call__(self, klass):
-        klass.__requires__ = self.requires
         klass.RecipeRequirements = self.klass
         return klass
 

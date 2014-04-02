@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -32,7 +32,9 @@ import logging
 
 from numina import __version__
 from numina.exceptions import RecipeError
-from .reciperesult import ErrorRecipeResult, RecipeResult
+from .reciperesult import ErrorRecipeResult
+from .reciperesult import RecipeResult as RecipeResultClass
+from .recipereqs import RecipeRequirements as RecipeRequirementsClass
 
 _logger = logging.getLogger('numina')
 
@@ -45,8 +47,8 @@ class BaseRecipe(object):
 
     __metaclass__ = abc.ABCMeta
     
-    __requires__ = {}
-    __provides__ = {}
+    RecipeResult = RecipeResultClass
+    RecipeRequirements = RecipeRequirementsClass
 
     # Recipe own logger
     logger = _logger
@@ -72,33 +74,28 @@ class BaseRecipe(object):
             self.instrument = kwds['instrument']
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
-        
 
     @abc.abstractmethod
-    def run(self, observation_result, requirements):
-        return
+    def run(self, recipe_input):
+        return self.RecipeResult()
 
-    def __call__(self, observation_result, requirements, environ=None):
-        '''
-        Process ``observation_result`` with the Recipe.
-        
+    def __call__(self, recipe_input, environ=None):
+        '''        
         Process the result of the observing block with the
         Recipe.
         
-        :param observation_result: the result of a observing block
-        :param type: ObservationResult
-        :param requirements: requirements of the Recipe
-        :param type: RecipeRequirement
+        :param ri: the input appropriated for the Recipe
+        :param type: RecipeInput
         :param environ: a dictionary with custom parameters
         :rtype: a RecipeResult object or an error 
         
         '''
-
+        
         if environ is not None:
             self.environ.update(environ)
 
         try:
-            result = self.run(observation_result, requirements)
+            result = self.run(recipe_input)
         except Exception as exc:
             _logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(exc.__class__.__name__, 

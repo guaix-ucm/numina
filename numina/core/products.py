@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -20,24 +20,20 @@
 '''
 Basic Data Products
 '''
-import pyfits
 
+from astropy.io import fits
+
+from .qc import QC
+from .pipeline import InstrumentConfiguration
+from .oresult import ObservationResult
 from .dataframe import DataFrame
-from numina.qa import QA
+from .types import DataType, dialect_info
 
-class ValidationError(Exception):
-    pass
+class DataProduct(DataType):
 
-class DataProduct(object):
-
-    def __init__(self, default=None):
-        self.default = default
-
-    def validate(self, obj):
-        return True
-
-    def store(self, obj):
-        return obj
+    def __init__(self, ptype, default=None):
+        super(DataProduct, self).__init__(ptype, default=default)
+        self.dialect = dialect_info(self)
 
     def suggest(self, obj, suggestion):
         return obj
@@ -47,33 +43,41 @@ class DataProduct(object):
         return "%s()" % (sclass, )
 
 class FrameDataProduct(DataProduct):
+    def __init__(self):
+        super(FrameDataProduct, self).__init__(DataFrame)
 
     def store(self, obj):
-
+        # We accept None representing No Image
         if obj is None:
             return None
         elif isinstance(obj, basestring):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj
-        else:
+        elif isinstance(obj, fits.HDUList):
             return DataFrame(frame=obj)
+        elif isinstance(obj, fits.PrimaryHDU):
+            return DataFrame(frame=fits.HDUList([obj]))
+        else:
+            raise TypeError('object of type %r cannot be converted to DataFrame')
 
     def validate(self, obj):
-
         if isinstance(obj, basestring):
             # check that this is a FITS file
             # try - open
             # FIXME
             pass
-        elif isinstance(obj, pyfits.HDUList):
+        elif isinstance(obj, fits.HDUList):
+            # is an HDUList
+            pass
+        elif isinstance(obj, fits.PrimaryHDU):
             # is an HDUList
             pass
         elif isinstance(obj, DataFrame):
             #is a DataFrame
             pass
         else:
-            raise ValidationError('%r is not a valid FrameDataProduct' % obj)
+            raise TypeError('%r is not a valid FrameDataProduct' % obj)
 
     def suggest(self, obj, suggestion):
         if not isinstance(suggestion, basestring):
@@ -84,18 +88,41 @@ class FrameDataProduct(DataProduct):
             # try - open
             # FIXME
             pass
-        elif isinstance(obj, pyfits.HDUList):
+        elif isinstance(obj, fits.HDUList):
             obj[0].update('filename', suggestion) 
         elif isinstance(obj, DataFrame):
             obj.filename = suggestion
         return obj
 
-
-class QualityAssuranceProduct(DataProduct):
+class ObservationResultType(DataType):
+    '''The type of ObservationResult.'''
+    
     def __init__(self):
-        super(QualityAssuranceProduct, self).__init__(default=QA.UNKNOWN)
+        super(ObservationResultType, self).__init__(ptype=ObservationResult)
 
-    def validate(self, obj):
-        if obj not in [QA.GOOD, QA.FAIR, QA.BAD, QA.UNKNOWN]:
-            raise ValidationError('%r is not a valid QualityAssuranceProduct' % obj)
+class InstrumentConfigurationType(DataType):
+    '''The type of InstrumentConfiguration.'''
+    
+    def __init__(self):
+        super(InstrumentConfigurationType, self).__init__(ptype=InstrumentConfiguration)
 
+class QualityControlProduct(DataProduct):
+    def __init__(self):
+        super(QualityControlProduct, self).__init__(ptype=QC, 
+            default=QC.UNKNOWN)
+
+class NonLinearityPolynomial(list):
+    def __init__(self, *args, **kwds):
+        super(NonLinearityPolynomial, self).__init__(self, *args, **kwds)
+
+class NonLinearityProduct(DataProduct):
+    def __init__(self, default=[1.0, 0.0]):
+        super(NonLinearityProduct, self).__init__(ptype=NonLinearityPolynomial,                 default=default)
+
+class Centroid2D(object):
+    '''Temptative Centroid Class.'''
+    def __init__(self):
+        self.centroid = [[0.0, 0.0], [0.0, 0.0]]
+        self.sigma = [[0.0, 0.0], [0.0, 0.0]]
+        self.flux = []
+        

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -201,6 +201,11 @@ def correct_dark(data, dark, dtype='float32'):
 
 def correct_flatfield(data, flat, dtype='float32'):
     result = data / flat
+    result = result.astype(dtype)
+    return result
+
+def correct_sky(data, sky, dtype='float32'):
+    result = data - sky
     result = result.astype(dtype)
     return result
 

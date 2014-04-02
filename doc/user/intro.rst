@@ -17,7 +17,7 @@ packages installed in order to work properly:
 
  - `numpy <http://numpy.scipy.org/>`_ 
  - `scipy <http://www.scipy.org>`_
- - `pyfits <http://www.stsci.edu/resources/software_hardware/pyfits>`_
+ - `astropy <http://www.astropy.org>`_
  - `PyYaml <http://http://pyyaml.org/>`_
 
 Additional packages are optionally required:

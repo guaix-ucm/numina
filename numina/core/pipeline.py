@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2013 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -29,6 +29,7 @@ import uuid
 _logger = logging.getLogger('numina')
 
 def import_object(path):
+    '''Import an object given its fully qualified name.'''
     spl = path.split('.')
     cls = spl[-1]
     mods = '.'.join(spl[:-1])
@@ -47,10 +48,12 @@ class Pipeline(object):
         return self.recipes[mode]
 
 class InstrumentConfiguration(object):
+    '''Configuration of an Instrument.'''
     def __init__(self, values):
         self.values = values
 
 class Instrument(object):
+    '''Description of an Instrument.'''
     def __init__(self, name, configurations, modes, pipelines):
         self.name = name
         self.configurations = configurations
@@ -58,6 +61,7 @@ class Instrument(object):
         self.pipelines = pipelines
         
 class ObservingMode(object):
+    '''Observing modes of an Instrument.'''
     def __init__(self):
         self.name = ''
         self.uuid = ''
@@ -86,6 +90,7 @@ yaml.add_representer(ObservingMode, om_repr)
 yaml.add_constructor('!om', om_cons)
 
 class LoadableDRP(object):
+    '''Container for the loaded DRP.'''
     def __init__(self, instruments):
         self.instruments = instruments
 
@@ -107,7 +112,47 @@ def init_drp_system(namespace):
             _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
 
     return drp
+
+def init_backends(namespace, backend='default'):
+    '''Load all available DRPs in package 'namespace'.'''
+
+    backends = []
+
+    for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
+        try:
+            loader = imp.find_module(name)
+            mod = loader.load_module(name)
+            mod_plugin = getattr(mod, '__numina_store__', None)
+            
+            if mod_plugin:
+                _logger.debug('Loading backends from  %s.__numina_store__', name)
+                module = mod_plugin.get(backend, None)
+                if module:
+                    backends.append((module, True)) # Is module explicit or guessed
+                else:
+                    _logger.debug('No value for backend %s in %s', backend, name)
+            else:
+                _logger.debug('%s.__numina_store__ is undefined', name)
+                # Guessing a module name as a fallback
+                base = name.split('.')[-1]
+                module = '%s.store' % base
+                _logger.debug('Guess that a %s module is defined', module)
+                backends.append((module, False)) # Module not explicit, guessed
+                
+        except StandardError as error:
+            _logger.warning('Problem importing %s, error of type %s with message "%s"', name, type(error), error)
+            
+        for module, defined in backends:
+            try:
+                importlib.import_module(module)
+            except TypeError:
+                _logger.warning('TypeError exception importing %s module, ignoring', module)
+            except ImportError:
+                if defined: # Bother users only if they can fix the problem
+                    _logger.warning('ImportError exception importing %s module, ignoring', module)
+
 def drp_load(package, resource):
+    '''Load the DRPS from a resource file.'''
     ins_all = {}
     for yld in yaml.load_all(pkgutil.get_data(package, resource)):
         ins = load_instrument(yld)
@@ -171,7 +216,7 @@ def load_instrument(node):
         if key not in node:
             raise ValueError('Missing key %r in root node', key)
     
-    name = node['name']
+    #name = node['name']
     pipe_node = node['pipelines']
     mode_node = node['modes']
     conf_node = node['configurations']
@@ -185,9 +230,9 @@ def load_instrument(node):
 
 def print_i(ins):
     print ins.name 
-    print_c(i.configurations)
-    print_m(i.modes)
-    print_p(i.pipelines)
+    print_c(ins.configurations)
+    print_m(ins.modes)
+    print_p(ins.pipelines)
 
 def print_p(pipelines):
     print 'Pipelines'

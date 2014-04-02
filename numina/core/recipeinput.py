@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,21 +17,18 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-'''Quality asses for Numina-based applications.'''
+from numina.core import RequirementParser
+from numina.core.load import dict_requirement_lookup
 
-GOOD = 100
-FAIR = 90
-BAD = 70
-UNKNOWN = -1
+class RecipeInputBuilder(object):
 
-_level_names = {GOOD: 'GOOD',
-                FAIR: 'FAIR',
-                BAD: 'BAD',
-                UNKNOWN: 'UNKNOWN'}
+    def build(self, workenv, klass, mreqs):
+        lc = dict_requirement_lookup(mreqs)
+        rp = RequirementParser(klass, lookup=lc)
+        requires = rp.parse()
+        
+        workenv.sane_work()
+        workenv.copyfiles(mreqs['obresult'], requires)
+        
+        return requires
 
-# A base Enum
-class QA(object):
-    GOOD = 1
-    FAIR = 2
-    BAD = 3
-    UNKNOWN = 4

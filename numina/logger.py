@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -22,7 +22,7 @@
 
 import logging
 
-import pyfits
+from astropy.io import fits
 
 from numina.core import DataFrame
 
@@ -42,7 +42,7 @@ def log_to_history(logger):
     def log_to_history_decorator(method):
 
         def l2h_method(self, block):
-            history_header = pyfits.Header()
+            history_header = fits.Header()
 
             fh =  FITSHistoryHandler(history_header)
             fh.setLevel(logging.INFO)

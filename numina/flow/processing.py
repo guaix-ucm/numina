@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -17,13 +17,25 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from __future__ import print_function
+
 import logging
 import time
+
+from astropy.io import fits
 
 from .node import Node
 import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
+
+def promote_hdulist(hdulist, totype='float32'):
+    newdata = hdulist[0].data.astype(totype)
+    newheader = hdulist[0].header.copy()
+    hdu = fits.PrimaryHDU(newdata, header=newheader)
+    newhdulist = fits.HDUList([hdu])
+    return newhdulist
+
 
 class SimpleDataModel(object):
     '''Model of the Data being processed'''
@@ -52,7 +64,7 @@ class TagFits(object):
         self.comment = comment
         
     def check_if_processed(self, header):
-        return header.has_key(self.tag)
+        return self.tag in header
     
     def tag_as_processed(self, header):
         header.update(self.tag, time.asctime(), self.comment)
@@ -74,6 +86,10 @@ class Corrector(Node):
             _logger.info('%s already processed by %s', img, self)
             return img
         else:
+            if img[0].data.dtype in ['<u2', '>u2', '=u2']:
+                # FIXME
+                _logger.info('change dtype to float32, old is %s', img[0].data.dtype)
+                img = promote_hdulist(img)
             self._run(img)
             self.tagger.tag_as_processed(hdr)
         return img
@@ -139,8 +155,8 @@ class BiasCorrector(TagOptionalCorrector):
 
 class DarkCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from dark current.'''
-    def __init__(self, darkmap, darkvar=None, datamodel=None, mark=True, 
-                 tagger=None, dtype='float32'):
+    def __init__(self, darkmap, darkvar=None, scale=False, datamodel=None, 
+                mark=True, tagger=None, dtype='float32'):
                 
         if tagger is None:
             tagger = TagFits('NUM-DK','Dark removed with Numina')
@@ -149,6 +165,8 @@ class DarkCorrector(TagOptionalCorrector):
         
         if darkvar:
             self.update_variance = True
+
+        self.scale = scale
         
         super(DarkCorrector, self).__init__(datamodel=datamodel,
                                             tagger=tagger, 
@@ -159,14 +177,19 @@ class DarkCorrector(TagOptionalCorrector):
     
     def _run(self, img):
         _logger.debug('correcting dark in %s', img)
-        data = self.datamodel.get_data(img)
+        etime = 1.0
+        if self.scale:
+            header = self.datamodel.get_header(img)
+            etime = header['EXPTIME']
+            _logger.debug('scaling dark by %f', etime)
 
+        data = self.datamodel.get_data(img)
         
-        data -= self.darkmap
+        data -= self.darkmap * etime
         
         if self.update_variance:
             variance = self.datamodel.get_variance(img)
-            variance += self.darkvar 
+            variance += self.darkvar * etime * etime
         
         return img
 
@@ -222,3 +245,76 @@ class FlatFieldCorrector(TagOptionalCorrector):
         data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
         
         return img
+
+class SkyCorrector(TagOptionalCorrector):
+    '''A Node that corrects a frame from sky.'''
+    def __init__(self, skydata, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-SK','Sky removed with Numina')
+            
+        self.update_variance = False
+                
+        super(SkyCorrector, self).__init__(
+            datamodel=datamodel,
+            tagger=tagger, 
+            mark=mark, 
+            dtype=dtype)
+        
+        self.skydata = skydata
+                
+    def _run(self, img):
+        _logger.debug('correcting sky in %s', img)
+        
+        data = self.datamodel.get_data(img)
+        
+        data = array.correct_sky(data, self.skydata, dtype=self.dtype)
+        
+        return img
+
+
+class DivideByExposure(TagOptionalCorrector):
+    '''A Node that divides its input by exposure time.'''
+    def __init__(self, factor=1.0, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-EXP','Divided by exposure time.')
+            
+        self.update_variance = False
+                
+        super(DivideByExposure, self).__init__(
+            datamodel=datamodel,
+            tagger=tagger, 
+            mark=mark, 
+            dtype=dtype)
+        
+        self.factor = factor
+                
+    def _run(self, img):
+        header = self.datamodel.get_header(img)
+        bunit = header['BUNIT']
+        convert_to_s = False
+        if bunit:
+            if bunit.lower() == 'adu':
+                convert_to_s = True
+            elif bunit.lower() == 'adu/s':
+                convert_to_s = False
+            else:
+                _logger.warning('Unrecognized value for BUNIT %s', bunit)
+        if convert_to_s:
+            etime = header['EXPTIME']
+            _logger.debug('divide by exposure time %f, factor %f %s', etime, self.factor, img)
+            etime *= self.factor
+       
+            img[0].data /= etime
+            img[0].header['BUNIT'] = 'ADU/s'
+            try:
+                img['variance'].data /= etime**2
+                img['variance'].header['BUNIT'] = 'ADU/s'
+            except KeyError:
+                pass
+        
+        return img
+

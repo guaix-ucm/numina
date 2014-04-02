@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2013 Universidad Complutense de Madrid
+# Copyright 2008-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
 # 
@@ -20,8 +20,9 @@
 
 import inspect
 
-from .metaclass import StoreType
-from .products import DataProduct, QualityAssuranceProduct
+from .metaclass import MapStoreType
+from .products import DataProduct, QualityControlProduct
+from .types import ListOf
 
 class Product(object):
     '''Product holder for RecipeResult.'''
@@ -36,6 +37,8 @@ class Product(object):
         if isinstance(product_type, Optional):
             self.type = product_type.product_type
             self.optional = True
+        if isinstance(product_type, ListOf):
+            self.type = product_type
         elif isinstance(product_type, DataProduct):
             self.type = product_type
             self.optional = optional
@@ -78,25 +81,32 @@ class ErrorRecipeResult(BaseRecipeResult):
         return "%s(errortype=%r, message='%s')" % (sclass, 
             self.errortype, self.message)
 
-class RecipeResultType(StoreType):
+class RecipeResultType(MapStoreType):
     '''Metaclass for RecipeResult.'''
     @classmethod
-    def exclude(cls, value):
+    def exclude(cls, name, value):
         return isinstance(value, Product)
 
-class RecipeResultAutoQAType(RecipeResultType):
-    '''Metaclass for RecipeResult with added QA'''
+    @classmethod
+    def store(cls, name, value):
+        if value.dest is None:
+            value.dest = name
+        return value
+
+class RecipeResultAutoQCType(RecipeResultType):
+    '''Metaclass for RecipeResult with added QC'''
     def __new__(cls, classname, parents, attributes):
-        if 'qa' not in attributes:
-            attributes['qa'] = Product(QualityAssuranceProduct)
-        return super(RecipeResultAutoQAType, cls).__new__(cls, classname, parents, attributes)
+        if 'qc' not in attributes:
+            attributes['qc'] = Product(QualityControlProduct)
+        return super(RecipeResultAutoQCType, cls).__new__(cls, classname, parents, attributes)
+
 
 class RecipeResult(BaseRecipeResult):
     __metaclass__ = RecipeResultType
 
     def __new__(cls, *args, **kwds):
         self = super(RecipeResult, cls).__new__(cls)
-        for key, prod in self.__stored__.iteritems():
+        for key, prod in cls.iteritems():
             if key in kwds:
                 # validate
                 val = kwds[key]
@@ -123,18 +133,18 @@ class RecipeResult(BaseRecipeResult):
     def __repr__(self):
         sclass = type(self).__name__
         full = []
-        for key, val in self.__stored__.iteritems():
+        for key, val in self.__class__.iteritems():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
     def suggest_store(self, **kwds):
         for k in kwds:
             mm = getattr(self, k)
-            self.__stored__[k].type.suggest(mm, kwds[k])
+            self.__class__[k].type.suggest(mm, kwds[k])
 
-class RecipeResultAutoQA(RecipeResult):
-    '''RecipeResult with an automatic QA member.'''
-    __metaclass__ = RecipeResultAutoQAType
+class RecipeResultAutoQC(RecipeResult):
+    '''RecipeResult with an automatic QC member.'''
+    __metaclass__ = RecipeResultAutoQCType
 
 def transmit(result):
     if not isinstance(result, BaseRecipeResult):
@@ -155,17 +165,9 @@ class define_result(object):
         if not issubclass(resultClass, BaseRecipeResult):
             raise TypeError('%r does not derive from BaseRecipeResult' % resultClass)
 
-        self.provides = []
         self.klass = resultClass
 
-        for key, val in resultClass.__stored__.iteritems():
-            val.dest = key
-            if isinstance(val, Product):
-                self.provides.append(val)
-
     def __call__(self, klass):
-        klass.__provides__ = self.provides
-
         klass.RecipeResult = self.klass
         return klass
 
