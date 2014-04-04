@@ -72,11 +72,12 @@ class ListOf(DataType):
 
 
 import pkgutil
-import importlib
 import numina.ext as namespace
 
 def default_dialect_info(obj):
-    return {}
+    key = obj.__module__ + '.' + obj.__class__.__name__
+    result = {'base': {'fqn': key, 'python': obj.python_type}}
+    return result
 
 for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
     try:
