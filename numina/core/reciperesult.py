@@ -110,15 +110,16 @@ class RecipeResult(BaseRecipeResult):
             if key in kwds:
                 # validate
                 val = kwds[key]
-                if prod.validate:
-                    prod.type.validate(val)
                 val = prod.type.store(val)
+                if prod.validate:
+                    prod.type.validate(val)  
                 setattr(self, key, val)
             elif prod.type.default:
                 val = prod.type.default
+                val = prod.type.store(val)
                 if prod.validate:
                     prod.type.validate(val)
-                val = prod.type.store(val)
+                
                 setattr(self, key, val)
             elif not prod.optional:
                 raise ValueError('required DataProduct %r not defined' % prod.type.__class__.__name__)
