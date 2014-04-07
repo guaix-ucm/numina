@@ -22,28 +22,40 @@ import inspect
 
 from .metaclass import MapStoreType
 from .products import DataProduct, QualityControlProduct
+from .types import NullType, PlainPythonType
 from .types import ListOf
 
 class Product(object):
     '''Product holder for RecipeResult.'''
-    def __init__(self, product_type, optional=False, validate=True, 
-            dest=None, *args, **kwds):
+    def __init__(self, product_type, description='', validate=False, 
+            dest=None, optional=False, default=None, *args, **kwds):
 
-        self.validate = validate
-        if inspect.isclass(product_type):
-            product_type = product_type()
-        self.dest = dest
-
-        if isinstance(product_type, Optional):
-            self.type = product_type.product_type
+        self.type = product_type
+        if isinstance(self.type, Optional):
+            self.type = self.type.product_type
             self.optional = True
-        if isinstance(product_type, ListOf):
-            self.type = product_type
-        elif isinstance(product_type, DataProduct):
-            self.type = product_type
-            self.optional = optional
+
+        if self.type is None:
+            self.type = NullType()
+        elif self.type in [bool, str, int, float, complex]:
+            self.type = PlainPythonType(ref=product_type())
+        elif isinstance(self.type, ListOf):
+            self.type = self.type
         else:
-            raise TypeError('product_type must be of class DataProduct')
+            if inspect.isclass(self.type):
+                self.type = self.type()
+                
+            if isinstance(self.type, DataProduct):
+                pass
+            else:
+                raise TypeError('product_type must be of class DataProduct')
+        
+        self.validate = validate
+        self.description = description
+#        self.optional = optional
+        self.dest = dest
+        #self.default = default
+        
 
     def __repr__(self):
         return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
