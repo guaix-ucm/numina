@@ -690,9 +690,9 @@ def internal_work(recipe, rinput, task):
 class DiskStorage(object):
     def __init__(self):
         self.idx = 1
-
-    def get_next_fits_filename(self):
-        fname = 'product_%03d.fits' % self.idx
+    
+    def get_next_basename(self, ext):
+        fname = 'product_%03d%s' % (self.idx, ext)
         self.idx = self.idx + 1
         return fname
 
