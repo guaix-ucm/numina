@@ -85,14 +85,17 @@ def centering_centroid(data, center, box, nloop=10, toldist=1e-3, maxdist=10):
         # if we are to far away from the initial point, break
         dst = distance.euclidean(ocenter, ncenter)
         if dst > maxdist:
-            return center, 'maximum distance (%i) from origin reached' % maxdist 
+            msg = 'maximum distance (%i) from origin reached' % maxdist 
+            return center, msg
         
         # check convergence
         dst = distance.euclidean(ncenter, center)
         if dst < toldist:
-            return ncenter, 'converged in iteration %i' % i
+            msg = 'converged in iteration %i' % i
+            return ncenter, msg
         else:
             center = ncenter
         
-    return ncenter, 'not converged in %i iterations' % nloop
+    msg = 'not converged in %i iterations' % nloop
+    return ncenter, msg
 
