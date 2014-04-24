@@ -29,12 +29,26 @@ import numina.array as array
 
 _logger = logging.getLogger('numina.processing')
 
+
 def promote_hdulist(hdulist, totype='float32'):
-    newdata = hdulist[0].data.astype(totype)
-    newheader = hdulist[0].header.copy()
-    hdu = fits.PrimaryHDU(newdata, header=newheader)
-    newhdulist = fits.HDUList([hdu])
+    nn = [promote_hdu(hdu, totype=totype) for hdu in hdulist]
+    newhdulist = fits.HDUList(nn)
     return newhdulist
+
+def promote_hdu(hdu, totype='float32'):
+    newdata = hdu.data.astype(totype)
+    newheader = hdu.header.copy()
+    if isinstance(hdu, fits.PrimaryHDU):
+        hdu = fits.PrimaryHDU(newdata, header=newheader)
+        return hdu
+    elif isinstance(hdu, fits.ImageHDU):
+        hdu = fits.ImageHDU(newdata, header=newheader)
+        return hdu
+    else:
+        # do nothing
+        pass
+    return hdu
+
 
 
 class SimpleDataModel(object):
