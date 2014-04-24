@@ -59,7 +59,7 @@ class FrameDataProduct(DataProduct):
         elif isinstance(obj, fits.PrimaryHDU):
             return DataFrame(frame=fits.HDUList([obj]))
         else:
-            raise TypeError('object of type %r cannot be converted to DataFrame')
+            raise TypeError('object of type %r cannot be converted to DataFrame' % obj)
 
     def validate(self, obj):
         if isinstance(obj, basestring):
