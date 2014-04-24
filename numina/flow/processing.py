@@ -90,10 +90,22 @@ class Corrector(Node):
                 # FIXME
                 _logger.info('change dtype to float32, old is %s', img[0].data.dtype)
                 img = promote_hdulist(img)
-            self._run(img)
+            img = self._run(img)
             self.tagger.tag_as_processed(hdr)
         return img
     
+    def get_imgid(self, img):
+        
+        imgid = img.filename()
+        
+        # More heuristics here...
+        # get FILENAME keyword, for example...
+        
+        if not imgid:
+            imgid = repr(img)
+            
+        return imgid
+
 class TagOptionalCorrector(Corrector):
     def __init__(self, datamodel, tagger, mark=True, dtype='float32'):
         if not mark:
@@ -122,9 +134,7 @@ class BiasCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from bias.'''
     def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True, 
                  tagger=None, dtype='float32'):
-        
-        
-        
+                
         if tagger is None:
             tagger = TagFits('NUM-BS','Bias removed with Numina')
             
@@ -137,19 +147,28 @@ class BiasCorrector(TagOptionalCorrector):
                                             tagger=tagger, 
                                             mark=mark, 
                                             dtype=dtype)
+        self.bias_stats = biasmap.mean()
         self.biasmap = biasmap
         self.biasvar = biasvar
 
     def _run(self, img):
-        _logger.debug('correcting bias in %s', img)
-        data = self.datamodel.get_data(img)
-
         
+        imgid = self.get_imgid(img)
+                
+        _logger.debug('correcting bias in %s', imgid)
+        _logger.debug('bias mean is %f', self.bias_stats)
+        
+        data = self.datamodel.get_data(img)        
         data -= self.biasmap
+        # FIXME
+        img[0].data = data
         
         if self.update_variance:
+            _logger.debug('update variance with bias')
             variance = self.datamodel.get_variance(img)
-            variance += self.biasvar 
+            variance += self.biasvar
+            # FIXME
+            img[1].data = variance 
         
         return img
 
@@ -172,11 +191,17 @@ class DarkCorrector(TagOptionalCorrector):
                                             tagger=tagger, 
                                             mark=mark, 
                                             dtype=dtype)
+        
+        self.dark_stats = darkmap.mean()
         self.darkmap = darkmap
         self.darkvar = darkvar
     
     def _run(self, img):
-        _logger.debug('correcting dark in %s', img)
+        imgid = self.get_imgid(img)
+                
+        _logger.debug('correcting dark in %s', imgid)
+        _logger.debug('dark mean is %f', self.dark_stats)
+        
         etime = 1.0
         if self.scale:
             header = self.datamodel.get_header(img)
@@ -186,11 +211,15 @@ class DarkCorrector(TagOptionalCorrector):
         data = self.datamodel.get_data(img)
         
         data -= self.darkmap * etime
+        # FIXME
+        img[0].data = data
         
         if self.update_variance:
             variance = self.datamodel.get_variance(img)
             variance += self.darkvar * etime * etime
-        
+            # FIXME
+            img[1].data = variance
+ 
         return img
 
 class NonLinearityCorrector(TagOptionalCorrector):
@@ -216,7 +245,8 @@ class NonLinearityCorrector(TagOptionalCorrector):
         data = self.datamodel.get_data(img)
         
         data = array.correct_nonlinearity(data, self.polynomial, dtype=self.dtype)
-        
+        # FIXME
+        img[0].data = data
         return img
         
 class FlatFieldCorrector(TagOptionalCorrector):
@@ -236,14 +266,20 @@ class FlatFieldCorrector(TagOptionalCorrector):
             dtype=dtype)
         
         self.flatdata = flatdata
-                
+        self.flat_stats = flatdata.mean()
+        
     def _run(self, img):
-        _logger.debug('correcting flat-field in %s', img)
+        
+        imgid = self.get_imgid(img)
+                
+        _logger.debug('correcting flat in %s', imgid)
+        _logger.debug('flat mean is %f', self.flat_stats)
+        
         
         data = self.datamodel.get_data(img)
-        
         data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
-        
+        # FIXME
+        img[0].data = data        
         return img
 
 class SkyCorrector(TagOptionalCorrector):
@@ -263,13 +299,20 @@ class SkyCorrector(TagOptionalCorrector):
             dtype=dtype)
         
         self.skydata = skydata
+        self.calib_stats = skydata.mean() 
                 
     def _run(self, img):
-        _logger.debug('correcting sky in %s', img)
+        imgid = self.get_imgid(img)
+                
+        _logger.debug('correcting sky in %s', imgid)
+        _logger.debug('sky mean is %f', self.calib_stats)
         
         data = self.datamodel.get_data(img)
         
         data = array.correct_sky(data, self.skydata, dtype=self.dtype)
+        
+        # FIXME
+        img[0].data = data
         
         return img
 
