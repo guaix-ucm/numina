@@ -20,6 +20,7 @@
 '''
 Basic Data Products
 '''
+import numpy
 
 from astropy.io import fits
 
@@ -93,6 +94,14 @@ class FrameDataProduct(DataProduct):
         elif isinstance(obj, DataFrame):
             obj.filename = suggestion
         return obj
+
+class ArrayType(DataProduct):
+    def __init__(self, default=None):
+        super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
+
+    def store(self, obj):
+        result = numpy.array(obj)
+        return result
 
 class ObservationResultType(DataType):
     '''The type of ObservationResult.'''
