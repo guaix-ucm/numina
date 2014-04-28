@@ -99,7 +99,20 @@ class ArrayType(DataProduct):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
+
     def store(self, obj):
+        
+        if isinstance(obj, basestring):
+            try:
+                # If obj is a string, try to open it as a file
+                result = numpy.loadtxt(obj)
+                return result
+            except IOError:
+                return self.store_as_array(obj)
+        else:
+            return self.store_as_array(obj)
+        
+    def store_as_array(self, obj):
         result = numpy.array(obj)
         return result
 
