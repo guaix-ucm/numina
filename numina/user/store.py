@@ -24,7 +24,6 @@ from numina.generic import generic
 import numpy
 
 from numina.core import DataFrame
-from numina.core.types import ListOf
 import warnings
 
 @generic
@@ -43,7 +42,7 @@ def store_df(obj, where):
         elif 'FILENAME' in obj.frame[0].header:
             filename = obj.frame[0].header['FILENAME']
         else:
-            filename = where.get_next_fits_filename()
+            filename = where.get_next_basename('.fits')
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             obj.frame.writeto(filename, clobber=True)
@@ -56,7 +55,7 @@ def store_list(obj, where):
 @store.register(numpy.ndarray)
 def _(obj, where):
     # FIXME:
-    filename = where.get_next_fits_filename()
+    filename = where.get_next_basename('.txt')
     numpy.savetxt(filename, obj)
     return filename
 

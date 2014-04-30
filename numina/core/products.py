@@ -20,6 +20,7 @@
 '''
 Basic Data Products
 '''
+import numpy
 
 from astropy.io import fits
 
@@ -59,7 +60,7 @@ class FrameDataProduct(DataProduct):
         elif isinstance(obj, fits.PrimaryHDU):
             return DataFrame(frame=fits.HDUList([obj]))
         else:
-            raise TypeError('object of type %r cannot be converted to DataFrame')
+            raise TypeError('object of type %r cannot be converted to DataFrame' % obj)
 
     def validate(self, obj):
         if isinstance(obj, basestring):
@@ -93,6 +94,18 @@ class FrameDataProduct(DataProduct):
         elif isinstance(obj, DataFrame):
             obj.filename = suggestion
         return obj
+
+class ArrayType(DataProduct):
+    def __init__(self, default=None):
+        super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
+
+
+    def store(self, obj):
+        return self.store_as_array(obj)
+        
+    def store_as_array(self, obj):
+        result = numpy.array(obj)
+        return result
 
 class ObservationResultType(DataType):
     '''The type of ObservationResult.'''
