@@ -101,16 +101,7 @@ class ArrayType(DataProduct):
 
 
     def store(self, obj):
-        
-        if isinstance(obj, basestring):
-            try:
-                # If obj is a string, try to open it as a file
-                result = numpy.loadtxt(obj)
-                return result
-            except IOError:
-                return self.store_as_array(obj)
-        else:
-            return self.store_as_array(obj)
+        return self.store_as_array(obj)
         
     def store_as_array(self, obj):
         result = numpy.array(obj)
