@@ -349,6 +349,7 @@ class DivideByExposure(TagOptionalCorrector):
         
                 
     def _run(self, img):
+        imgid = self.get_imgid(img)
         header = self.datamodel.get_header(img)
         bunit = header['BUNIT']
         convert_to_s = False
@@ -361,7 +362,7 @@ class DivideByExposure(TagOptionalCorrector):
                 _logger.warning('Unrecognized value for BUNIT %s', bunit)
         if convert_to_s:
             etime = header['EXPTIME']
-            _logger.debug('divide by exposure time %f', etime, img)
+            _logger.debug('divide %s by exposure time %f', imgid, etime)
        
             img[0].data /= etime
             img[0].header['BUNIT'] = 'ADU/s'
