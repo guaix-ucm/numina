@@ -19,6 +19,8 @@
 
 '''Mode estimators.'''
 
+import math
+
 import numpy as np
 
 # HSM method
