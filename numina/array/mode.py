@@ -1,4 +1,6 @@
 #
+# -*- coding: utf8 -*-
+#
 # Copyright 2014 Universidad Complutense de Madrid
 # 
 # This file is part of Numina
@@ -75,4 +77,7 @@ def mode_half_sample(a, is_sorted=False):
         ar = w.argmin()
         return mode_half_sample(sdata[ar:ar+N], is_sorted=True)
 
+def mode_sex(a):
+    '''Estimate the mode as sextractor'''
+    return 2.5 * np.median(a) - 1.5 * np.mean(a)
 
