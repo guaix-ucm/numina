@@ -21,17 +21,27 @@
 
 from __future__ import division
 
-import logging
 import math
 
 import numpy
 from scipy.spatial import distance
 
+# This is defined somewhere else
+def wc_to_pix_1d(w):
+    return int(math.floor(w+0.5))
+
+def wcs_to_pix(w):
+    return [wc_to_pix_1d(w1) for w1 in w[::-1]]
+
+def wcs_to_pix_np(w):
+    wnp = numpy.asarray(w)
+    mm = numpy.floor(wnp + 0.5)
+    return mm[::-1].astype('int')
 
 def img_box(center, shape, box):
 
     def slice_create(c, s, b):
-        cc = int(math.floor(c + 0.5))
+        cc = wc_to_pix_1d(c)
         l = max(0, cc - b)
         h = min(s, cc + b +1)
         return slice(l, h, None)
@@ -40,39 +50,78 @@ def img_box(center, shape, box):
 
 # returns y,x
 def _centering_centroid_loop(data, center, box):
-    sl = img_box(center, data.shape, box)
     
+    # extract raster image
+    sl = img_box(center, data.shape, box)
     raster = data[sl]
     
+    # Background estimation for recentering
     background = raster.min()
     
     braster = raster - background
-
     threshold = braster.mean()
-    
     mask = braster >= threshold
     if not numpy.any(mask):
-        return center
+        return center, background
         
     rr = numpy.where(mask, braster, 0)
 
-    #r_std = rr.std()
-    #r_mean = rr.mean()
-    #if r_std > 0:
-    #    snr = r_mean / r_std
+    # only valid points
+    br = braster[mask]
     
+    r_std = br.std()
+    r_mean = br.mean()
+    if r_std > 0:
+        _snr = r_mean / r_std
+        
     fi, ci = numpy.indices(braster.shape)
     
     norm = rr.sum()
+    # All points in thresholded raster are 0.0
     if norm <= 0.0:
-        #_logger.warning('all points in thresholded raster are 0.0')
-        return center
+        return center, background
         
     fm = (rr * fi).sum() / norm
     cm = (rr * ci).sum() / norm
     
-    return fm + sl[0].start, cm + sl[1].start
+    return (fm + sl[0].start, cm + sl[1].start), background
     
+
+def _centering_centroid_loop_xy(data, center_xy, box):
+    center_yx = center_xy[::-1]
+    
+    ncenter_yx, back = _centering_centroid_loop(data, center_yx, box)
+    ncenter_xy = ncenter_yx[::-1]
+    return ncenter_xy, back
+    
+
+def centering_centroid_xy(data, xi, yi, box, nloop=10, toldist=1e-3, maxdist=10.0):
+    
+    # Store original center
+    cxy = (xi, yi)
+    origin = (xi, yi)
+    # initial background
+    back = 0.0
+    
+    for i in range(nloop):
+        
+        nxy, back = _centering_centroid_loop_xy(data, cxy, box)
+        #_logger.debug('new center is %s', ncenter)
+        # if we are to far away from the initial point, break
+        dst = distance.euclidean(origin, nxy)
+        if dst > maxdist:
+            return cxy[0], cxy[1], back, 'maximum distance (%5.2f) from origin reached' % maxdist 
+        
+        # check convergence
+        dst = distance.euclidean(nxy, cxy)
+        if dst < toldist:
+            return nxy[0], nxy[1], back, 'converged in iteration %i' % i
+        else:
+            cxy = nxy
+        
+    return nxy[0], nxy[1], back, 'not converged in %i iterations' % nloop
+
+
 # returns y,x
 def centering_centroid(data, center, box, nloop=10, toldist=1e-3, maxdist=10):
     
