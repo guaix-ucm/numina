@@ -41,9 +41,10 @@ def wcs_to_pix_np(w):
 def img_box(center, shape, box):
 
     def slice_create(c, s, b):
-        cc = wc_to_pix_1d(c)
-        l = max(0, cc - b)
-        h = min(s, cc + b +1)
+        do = wc_to_pix_1d(c - b)
+        up = wc_to_pix_1d(c + b)
+        l = max(0, do)
+        h = min(s, up +1)
         return slice(l, h, None)
 
     return tuple(slice_create(*args) for args in zip(center, shape, box))
