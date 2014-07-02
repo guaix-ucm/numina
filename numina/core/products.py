@@ -130,7 +130,8 @@ class NonLinearityPolynomial(list):
 
 class NonLinearityProduct(DataProduct):
     def __init__(self, default=[1.0, 0.0]):
-        super(NonLinearityProduct, self).__init__(ptype=NonLinearityPolynomial,                 default=default)
+        super(NonLinearityProduct, self).__init__(ptype=NonLinearityPolynomial, 
+                                                  default=default)
 
 class Centroid2D(object):
     '''Temptative Centroid Class.'''
