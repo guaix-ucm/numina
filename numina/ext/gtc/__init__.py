@@ -2,7 +2,13 @@
 import pkgutil
 
 #
-import DF
+try:
+    import DF
+except ImportError:
+    import types
+    # FIXME: workaround
+    DF = types.ModuleType('DF')
+    DF.TYPE_FRAME = None
 
 _eqtypes = {
 #'numina.core.products.QualityControlProduct': 'DPK::Something',
