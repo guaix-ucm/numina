@@ -533,8 +533,6 @@ def mode_run_common(args, mode):
     
     backends = init_backends(namespace)
     
-    print(backends)    
-    
     # Directories with relevant data
     workenv = WorkEnvironment(args.basedir, 
         workdir=args.workdir,
