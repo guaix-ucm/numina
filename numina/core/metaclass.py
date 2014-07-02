@@ -46,7 +46,7 @@ class StoreType(type):
         self._add_attr(key, value)
 
     def _add_attr(self, key, value):
-        if self.exclude(name, value):
+        if self.exclude(key, value):
             self.__stored__[key] = value
         else:
             super(StoreType, cls).__setattr__(key, value)
@@ -125,7 +125,7 @@ class MapStoreType(StoreType):
     __hash__ = None
 
     def __eq__(self, other):
-        if not isinstance(other, Mapping):
+        if not isinstance(other, collections.Mapping):
             return NotImplemented
         return dict(self.items()) == dict(other.items())
 
