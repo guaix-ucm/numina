@@ -30,6 +30,9 @@ from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType, dialect_info
 
+class ValidationError(Exception):
+    pass
+
 class DataProduct(DataType):
 
     def __init__(self, ptype, default=None):
