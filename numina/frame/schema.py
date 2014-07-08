@@ -23,7 +23,7 @@ This module is a simplification of the FITS Schema defined
 by Erik Bray here: 
 http://embray.github.io/PyFITS/schema/users_guide/users_schema.html
 
-If this schema implemenatation reaches pyfits/astropy stable, we will use it 
+If this schema implementation reaches pyfits/astropy stable, we will use it 
 instead of ours, with schema definitions being the same.
 
 '''
@@ -60,13 +60,23 @@ def _from_ipt(value):
         raise SchemaDefinitionError(value)
 
 class SchemaKeyword(object):
-    def __init__(self, name, mandatory=False, value=None):
+    def __init__(self, name, mandatory=False, valid=True, 
+                 value=None):
         self.name = name
         self.mandatory = mandatory
+        self.valid = valid
+        if self.mandatory and not self.valid:
+            print self.mandatory, self.valid
+            raise SchemaDefinitionError(
+                "keyword 'cannot be 'mandatory' and "
+                "'not valid'"
+                )
+        self.choose = False
+        self.valcheck = False
+        self.value = None
+        self.type_ = None
         if value is not None:
-            self.value, self.type_ = _from_ipt(value)    
-            self.choose = False
-            self.valcheck = False
+            self.value, self.type_ = _from_ipt(value)
             if self.value is not None:
                 self.valcheck = True
                 if isinstance(self.value, list):
@@ -77,35 +87,49 @@ class SchemaKeyword(object):
         sname = 'schema'
         # check the keyword is defined
         val = header.get(self.name)
+
         if val is None:
             if self.mandatory:
                 raise SchemaValidationError(sname,
-                   'mandatory keyword %r missing from header' % self.name)
-            else:
-                # Non mandatory and non defined, nothing to do
-                return True
-        # Check type
-        if not isinstance(val, self.type_):
-            raise SchemaValidationError(sname,
-                'keyword %r is required to have a value of type %r; got '
-                'a value of type %r instead' %
-                 (self.name, self.type_.__name__, type(val).__name__))
-        # Check value
-        if self.choose:
-            if val not in self.value:
-                raise SchemaValidationError(sname,
-                  'keyword %r is required to have one of the values %r; '
-                  'got %r instead' %
-                  (self.name, self.value, val))
-            else:
-                return True
-        elif self.valcheck:
-            if val != self.value:
-                raise SchemaValidationError(sname,
-                  'keyword %r is required to have the value %r; got '
-                  '%r instead' % (self.name, self.value, val))
+                  'mandatory keyword %r missing from header' % self.name)
+            
+            # In the rest of cases
+            return True
         else:
-            pass
+            if not self.valid:
+                raise SchemaValidationError(sname,
+                  'invalid keyword %r present in header' % self.name)
+
+        # Cases here
+        # val is not None and key id mandatory or valid
+
+
+        if not self.type_:
+            # We dont have type information
+            # Nothing more to do
+            return True
+        else:
+            if not isinstance(val, self.type_):
+                raise SchemaValidationError(sname,
+                    'keyword %r is required to have a value of type %r; got '
+                    'a value of type %r instead' %
+                    (self.name, self.type_.__name__, type(val).__name__))
+            # Check value
+            if self.choose:
+                if val not in self.value:
+                    raise SchemaValidationError(sname,
+                      'keyword %r is required to have one of the values %r; '
+                      'got %r instead' %
+                      (self.name, self.value, val))
+                else:
+                    return True
+            elif self.valcheck:
+                if val != self.value:
+                    raise SchemaValidationError(sname,
+                      'keyword %r is required to have the value %r; got '
+                      '%r instead' % (self.name, self.value, val))
+            else:
+                pass
 
         return True
     
@@ -122,7 +146,9 @@ class Schema(object):
         kw = sc['keywords']
         for k,v in kw.items():
             mandatory = v.get('mandatory', False)
+            valid = v.get('valid', True)
             value = v.get('value', None)
-            sk = SchemaKeyword(k, mandatory, value)
+            sk = SchemaKeyword(k, mandatory=mandatory, 
+                valid=valid, value=value)
             self.kwl.append(sk)
         
