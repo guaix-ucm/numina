@@ -120,24 +120,18 @@ class RecipeResult(BaseRecipeResult):
         self = super(RecipeResult, cls).__new__(cls)
         for key, prod in cls.iteritems():
             if key in kwds:
-                # validate
                 val = kwds[key]
-                val = prod.type.store(val)
-                if prod.validate:
-                    prod.type.validate(val)  
-                setattr(self, key, val)
+                nval = prod.type.store(val)
             elif prod.type.default:
                 val = prod.type.default
-                val = prod.type.store(val)
-                if prod.validate:
-                    prod.type.validate(val)
-                
-                setattr(self, key, val)
-            elif not prod.optional:
-                raise ValueError('required DataProduct %r not defined' % prod.type.__class__.__name__)
+                nval = prod.type.store(val)
+            elif prod.optional:
+                nval = None
             else:
-                # optional product, skip
-                setattr(self, key, None)
+                raise ValueError('required DataProduct %r not defined' %
+                                 prod.type.__class__.__name__)
+                
+            setattr(self, key, nval)                
         return self
 
     def __init__(self, *args, **kwds):
