@@ -65,23 +65,19 @@ class FrameDataProduct(DataProduct):
         else:
             raise TypeError('object of type %r cannot be converted to DataFrame' % obj)
 
-    def validate(self, obj):
-        if isinstance(obj, basestring):
-            # check that this is a FITS file
-            # try - open
-            # FIXME
-            pass
-        elif isinstance(obj, fits.HDUList):
-            # is an HDUList
-            pass
-        elif isinstance(obj, fits.PrimaryHDU):
-            # is an HDUList
-            pass
-        elif isinstance(obj, DataFrame):
-            #is a DataFrame
-            pass
+    def validate(self, value):
+        # obj can be None or a DataFrame
+        if value is None:
+            return True
         else:
-            raise TypeError('%r is not a valid FrameDataProduct' % obj)
+            try:
+                with value.open() as hdulist:
+                    self.validate_hdulist(hdulist)
+            except StandardError as err:
+                raise ValidationError(err)
+
+    def validate_hdulist(self, hdulist):
+        pass
 
     def suggest(self, obj, suggestion):
         if not isinstance(suggestion, basestring):
