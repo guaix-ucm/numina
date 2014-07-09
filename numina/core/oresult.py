@@ -29,9 +29,9 @@ class ObservationResult(object):
     '''The result of a observing block.
     
     '''
-    def __init__(self):
+    def __init__(self, mode=None):
         self.id = 1
-        self.mode = None
+        self.mode = mode
         self.instrument = None
         self.frames = [] 
         self.children = [] # other ObservationResult
