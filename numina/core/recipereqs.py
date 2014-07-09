@@ -68,6 +68,14 @@ class RecipeRequirements(object):
     def __init__(self, *args, **kwds):
         super(RecipeRequirements, self).__init__()
 
+    def validate(self):
+        '''Validate myself.'''
+
+        # By default, validate each value
+        for key, req in self.__class__.items():
+            val = getattr(self, key)
+            req.type.validate(val)
+
 class define_requirements(object):
     def __init__(self, requirementClass):
         if not issubclass(requirementClass, RecipeRequirements):
