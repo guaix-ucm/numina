@@ -56,16 +56,12 @@ class RecipeRequirements(object):
                 else:
                     raise ValueError(' %r of type %r not defined' % (key, req.type))
                 
-            val = req.type.store(val)
+            nval = req.type.store(val)
             
-            if req.choices and (val not in req.choiches):
-                raise ValueError('%s not in %s' % (val, req.choices))
+            if req.choices and (nval not in req.choiches):
+                raise ValueError('%s not in %s' % (nval, req.choices))
 
-            if req.validate:
-                valid = req.type.validate(val)
-                if not valid:
-                    raise ValueError(' %r of type %r not valid' % (val, req.type.python_type))
-            setattr(self, key, val)
+            setattr(self, key, nval)
             
         return self
 
