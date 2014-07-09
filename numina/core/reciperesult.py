@@ -155,6 +155,14 @@ class RecipeResult(BaseRecipeResult):
             mm = getattr(self, k)
             self.__class__[k].type.suggest(mm, kwds[k])
 
+    def validate(self):
+        '''Validate myself.'''
+
+        # By default, validate each value
+        for key, req in self.__class__.items():
+            val = getattr(self, key)
+            req.type.validate(val)
+
 class RecipeResultAutoQC(RecipeResult):
     '''RecipeResult with an automatic QC member.'''
     __metaclass__ = RecipeResultAutoQCType
