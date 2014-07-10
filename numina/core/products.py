@@ -20,6 +20,9 @@
 '''
 Basic Data Products
 '''
+
+import sys
+
 import numpy
 
 from astropy.io import fits
@@ -111,6 +114,19 @@ class ObservationResultType(DataType):
     
     def __init__(self):
         super(ObservationResultType, self).__init__(ptype=ObservationResult)
+        
+    def validate(self, obj):
+        print "I am an ObservationResult"
+        print 'valid id'
+        print 'valid obsmode'
+        print 'valid instrument'
+        
+        imgtype = FrameDataProduct()
+        for f in obj.frames:
+            print 'valid frame', f
+            imgtype.validate(f)
+        print 'valid pipeline'
+        return True
 
 class InstrumentConfigurationType(DataType):
     '''The type of InstrumentConfiguration.'''
