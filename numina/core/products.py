@@ -77,7 +77,7 @@ class FrameDataProduct(DataProduct):
                 with value.open() as hdulist:
                     self.validate_hdulist(hdulist)
             except StandardError as err:
-                raise ValidationError(err)
+                raise ValidationError, err, sys.exc_info()[2]
 
     def validate_hdulist(self, hdulist):
         pass
