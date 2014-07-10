@@ -28,10 +28,11 @@ import numpy
 from astropy.io import fits
 
 from .qc import QC
-from .pipeline import InstrumentConfiguration
+from .pipeline import InstrumentConfiguration, import_object
 from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType, dialect_info
+from numina.frame.schema import Schema
 
 class ValidationError(Exception):
     pass
@@ -49,9 +50,20 @@ class DataProduct(DataType):
         sclass = type(self).__name__
         return "%s()" % (sclass, )
 
+_base_schema = {
+    'keywords': {
+        'INSTRUME': {'valid': True},
+        'READMODE': {'valid': True},
+        'EXPTIME': {'value': float},
+        'NUMINAID': {'value': int}
+        }
+    }
+
+
 class FrameDataProduct(DataProduct):
     def __init__(self):
         super(FrameDataProduct, self).__init__(DataFrame)
+        self.headerschema = Schema(_base_schema)
 
     def store(self, obj):
         # We accept None representing No Image
@@ -109,6 +121,26 @@ class ArrayType(DataProduct):
         result = numpy.array(obj)
         return result
 
+# FIXME: this is hack, thus should be provided by DRPS
+def gimme_validator_for(instrument, mode):
+    validators = {'EMIR': 
+            {'IMAGE_BIAS': 'emir.dataproducts.RawBias',
+             'IMAGE_DARK': 'emir.dataproducts.RawDark',
+            'INTENSITY_FLAT_FIELD': 'emir.dataproducts.RawIntensityFlat'
+             }
+           }
+    
+    if instrument not in validators:
+        return FrameDataProduct
+    else:
+        modes = validators[instrument]
+        if mode not in modes:
+            return FrameDataProduct
+        else:
+            fqn = modes[mode]
+            return import_object(fqn)
+    return FrameDataProduct
+
 class ObservationResultType(DataType):
     '''The type of ObservationResult.'''
     
@@ -117,15 +149,13 @@ class ObservationResultType(DataType):
         
     def validate(self, obj):
         print "I am an ObservationResult"
-        print 'valid id'
-        print 'valid obsmode'
-        print 'valid instrument'
-        
-        imgtype = FrameDataProduct()
+        print 'ins', obj.instrument, 'mode', obj.mode
+        RawType = gimme_validator_for(obj.instrument, obj.mode)
+        print 'raw frames for this modes should be %s' % RawType 
+        imgtype = RawType()
+        print 'valid frames'
         for f in obj.frames:
-            print 'valid frame', f
             imgtype.validate(f)
-        print 'valid pipeline'
         return True
 
 class InstrumentConfigurationType(DataType):
