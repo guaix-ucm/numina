@@ -76,6 +76,14 @@ class RecipeRequirements(object):
             val = getattr(self, key)
             req.type.validate(val)
 
+        self._run_checks()
+
+    def _run_checks(self):
+        checkers = getattr(self, '__checkers__', [])
+
+        for check in checkers:
+            check.check(self)
+
 class define_requirements(object):
     def __init__(self, requirementClass):
         if not issubclass(requirementClass, RecipeRequirements):
