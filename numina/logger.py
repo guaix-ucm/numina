@@ -36,12 +36,12 @@ class FITSHistoryHandler(logging.Handler):
         msg = self.format(record)
         self.header.add_history(msg)
 
-def log_to_history(logger):
+def log_to_history(logger, name):
     '''Decorate function, adding a logger handler stored in FITS.'''
 
     def log_to_history_decorator(method):
 
-        def l2h_method(self, block):
+        def l2h_method(self, ri):
             history_header = fits.Header()
 
             fh =  FITSHistoryHandler(history_header)
@@ -49,15 +49,16 @@ def log_to_history(logger):
             logger.addHandler(fh)
 
             try:
-                result = method(self, block)
-                if 'products' in result:
-                    for r in result['products']:
-                        if isinstance(r, DataFrame):
-                            hdr = r.image[0].header
-                            hdr.ascardlist().extend(history_header.ascardlist())
+                result = method(self, ri)
+                field = getattr(result, name, None)
+                if field:
+                    with field.open() as hdulist:
+                        hdr = hdulist[0].header
+                        hdr.ascardlist().extend(history_header.ascardlist())
                 return result 
             finally:
                 logger.removeHandler(fh)
         return l2h_method
 
     return log_to_history_decorator
+
