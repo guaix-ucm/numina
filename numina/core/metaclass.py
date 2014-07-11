@@ -53,7 +53,7 @@ class StoreType(type):
         if self.exclude(key, value):
             self.__stored__[key] = value
         else:
-            super(StoreType, cls).__setattr__(key, value)
+            super(StoreType, self).__setattr__(key, value)
 
     @classmethod
     def exclude(cls, name, value):
