@@ -19,6 +19,8 @@
 
 import inspect
 
+from .validation import ValidationError
+
 class DataType(object):
     
     def __init__(self, ptype, default=None):
@@ -30,7 +32,9 @@ class DataType(object):
         return obj
     
     def validate(self, obj):
-        return isinstance(obj, self.python_type)
+        if not isinstance(obj, self.python_type):
+            raise ValidationError
+        return True
 
 class NullType(DataType):
 
@@ -42,7 +46,9 @@ class NullType(DataType):
         return None
 
     def validate(self, obj):
-        return obj is None
+        if obj is not None:
+            raise ValidationError
+        return True
 
 class PlainPythonType(DataType):
     def __init__(self, ref=None):
@@ -51,14 +57,14 @@ class PlainPythonType(DataType):
         super(PlainPythonType, self).__init__(stype, default=default)
         self.dialect = stype
 
-class ListOf(DataType):
+class ListOfType(DataType):
     def __init__(self, ref):
         stype = list
         if inspect.isclass(ref):
             self.internal = ref()
         else:
             self.internal = ref
-        super(ListOf, self).__init__(stype)
+        super(ListOfType, self).__init__(stype)
         self.dialect = {}
 
     def store(self, obj):
@@ -67,28 +73,7 @@ class ListOf(DataType):
 
     def validate(self, obj):
         for o in obj:
-            if not self.internal.validate(o):
-                return False
+            self.internal.validate(o)
+        return True
 
-
-import pkgutil
-import numina.ext as namespace
-
-def default_dialect_info(obj):
-    key = obj.__module__ + '.' + obj.__class__.__name__
-    result = {'base': {'fqn': key, 'python': obj.python_type}}
-    return result
-
-for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__, namespace.__name__ + '.'):
-    try:
-        loader = imp.find_module(name)
-        mod = loader.load_module(name)
-        dialect_info = getattr(mod, 'dialect_info')
-        if dialect_info:
-            break
-    except StandardError as error:
-        #print name, type(error), error
-        pass
-else:
-    dialect_info = default_dialect_info
 

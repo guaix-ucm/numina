@@ -17,19 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
-from .dataholders import EntryHolder
-from .datadescriptors import DataProductType
+class ValidationError(Exception):
+    pass
 
-class Product(EntryHolder):
-    '''Product holder for RecipeResult.'''
-    def __init__(self, ptype, description='', validate=False, 
-            dest=None, optional=False, default=None, *args, **kwds):
-        super(Product, self).__init__(ptype, description, dest, optional, default)
-        
-        self.validate = validate
-                
-        if not isinstance(self.type, DataProductType):
-            raise TypeError('tipo must be of class DataProduct')
-
-    def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)

@@ -27,10 +27,15 @@ from .pipeline import drp_load, init_drp_system
 from .requirements import DataProductRequirement
 from .load import RequirementParser
 from .requirements import Parameter, Requirement
-from .products import DataProduct, FrameDataProduct
+from .datadescriptors import DataProductType, DataFrameType
+from .oresult import ObservationResult
 from numina.exceptions import RecipeError
 from .recipereqs import RecipeRequirements, define_requirements
-from .reciperesult import RecipeResult, Product, Optional
+from .reciperesult import RecipeResult
+from .products import Product
 from .reciperesult import define_result
 from .oresult import obsres_from_dict
 from .qc import QC
+
+FrameDataProduct = DataFrameType
+DataProduct = DataProductType

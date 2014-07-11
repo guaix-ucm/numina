@@ -18,59 +18,7 @@
 # 
 
 
-import inspect
-
-from .metaclass import MapStoreType
-from .products import DataProduct, QualityControlProduct
-from .types import NullType, PlainPythonType
-from .types import ListOf
-
-class Product(object):
-    '''Product holder for RecipeResult.'''
-    def __init__(self, product_type, description='', validate=False, 
-            dest=None, optional=False, default=None, *args, **kwds):
-
-        self.type = product_type
-        if isinstance(self.type, Optional):
-            self.type = self.type.product_type
-            self.optional = True
-
-        if self.type is None:
-            self.type = NullType()
-        elif self.type in [bool, str, int, float, complex]:
-            self.type = PlainPythonType(ref=product_type())
-        elif isinstance(self.type, ListOf):
-            self.type = self.type
-        else:
-            if inspect.isclass(self.type):
-                self.type = self.type()
-                
-            if isinstance(self.type, DataProduct):
-                pass
-            else:
-                raise TypeError('product_type must be of class DataProduct')
-        
-        self.validate = validate
-        self.description = description
-#        self.optional = optional
-        self.dest = dest
-        #self.default = default
-        
-
-    def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
-
-
-class Optional(object):
-    def __init__(self, product_type):
-
-        if inspect.isclass(product_type):
-            product_type = product_type()
-
-        if isinstance(product_type, DataProduct):
-            self.type = product_type
-        else:
-            raise TypeError('product_type must be of class DataProduct')
+from .metaclass import RecipeResultType, RecipeResultAutoQCType
 
 class BaseRecipeResult(object):
     def __new__(cls, *args, **kwds):
@@ -92,27 +40,6 @@ class ErrorRecipeResult(BaseRecipeResult):
         sclass = type(self).__name__
         return "%s(errortype=%r, message='%s')" % (sclass, 
             self.errortype, self.message)
-
-class RecipeResultType(MapStoreType):
-    '''Metaclass for RecipeResult.'''
-    @classmethod
-    def exclude(cls, name, value):
-        return isinstance(value, Product)
-    
-    @classmethod
-    def store(cls, name, value):
-        if value.dest is None:
-            value.dest = name
-        nname = value.dest
-        return nname, value
-
-class RecipeResultAutoQCType(RecipeResultType):
-    '''Metaclass for RecipeResult with added QC'''
-    def __new__(cls, classname, parents, attributes):
-        if 'qc' not in attributes:
-            attributes['qc'] = Product(QualityControlProduct)
-        return super(RecipeResultAutoQCType, cls).__new__(cls, classname, parents, attributes)
-
 
 class RecipeResult(BaseRecipeResult):
     __metaclass__ = RecipeResultType
@@ -162,21 +89,9 @@ class RecipeResultAutoQC(RecipeResult):
     '''RecipeResult with an automatic QC member.'''
     __metaclass__ = RecipeResultAutoQCType
 
-def transmit(result):
-    if not isinstance(result, BaseRecipeResult):
-        raise TypeError('result must be a RecipeResult')
-    if isinstance(result, RecipeResult):
-        pass # transmit as valid'
-    elif isinstance(result, ErrorRecipeResult):
-        res = {'error': {'type': result.errortype,
-                         'message': result.message,
-                         'traceback': result.traceback}
-                         }
-        return res
-    else:
-        raise TypeError('Unknown subclass of RecipeResult')
 
 class define_result(object):
+    '''Recipe decorator.'''
     def __init__(self, resultClass):
         if not issubclass(resultClass, BaseRecipeResult):
             raise TypeError('%r does not derive from BaseRecipeResult' % resultClass)

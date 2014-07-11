@@ -21,22 +21,8 @@
 Recipe requirements
 '''
 
-from .metaclass import MapStoreType
-from .requirements import Requirement
+from .metaclass import RecipeRequirementsType
 
-class RecipeRequirementsType(MapStoreType):
-    '''Metaclass for RecipeRequirements.'''
-
-    @classmethod
-    def exclude(cls, name, value):
-        return isinstance(value, Requirement)
-
-    @classmethod
-    def store(cls, name, value):
-        if value.dest is None:
-            value.dest = name
-        nname = value.dest
-        return nname, value
 
 class RecipeRequirements(object):
     '''RecipeRequirements base class'''
@@ -86,6 +72,7 @@ class RecipeRequirements(object):
             check.check(self)
 
 class define_requirements(object):
+    '''Recipe decorator.'''
     def __init__(self, requirementClass):
         if not issubclass(requirementClass, RecipeRequirements):
             raise TypeError('%r does not derive from RecipeRequirements' % requirementClass)

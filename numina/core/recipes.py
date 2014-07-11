@@ -30,8 +30,6 @@ import abc
 import traceback
 import logging
 
-from numina import __version__
-from numina.exceptions import RecipeError
 from .reciperesult import ErrorRecipeResult
 from .reciperesult import RecipeResult as RecipeResultClass
 from .recipereqs import RecipeRequirements as RecipeRequirementsClass

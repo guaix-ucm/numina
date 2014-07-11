@@ -22,6 +22,9 @@ Base metaclasses
 '''
 
 import collections
+from .products import Product
+from .requirements import Requirement
+from .datadescriptors import QualityControlProduct
 
 class StoreType(type):
     '''Metaclass for storing members.'''
@@ -132,3 +135,33 @@ class MapStoreType(StoreType):
 
     def __ne__(self, other):
         return not (self == other)
+
+class RecipeInOuttType(MapStoreType):    
+    @classmethod
+    def store(cls, name, value):
+        if value.dest is None:
+            value.dest = name
+        nname = value.dest
+        return nname, value
+
+class RecipeRequirementsType(RecipeInOuttType):
+    '''Metaclass for RecipeRequirements.'''
+
+    @classmethod
+    def exclude(cls, name, value):
+        return isinstance(value, Requirement)
+    
+class RecipeResultType(RecipeInOuttType):
+    '''Metaclass for RecipeResult.'''
+    @classmethod
+    def exclude(cls, name, value):
+        return isinstance(value, Product)
+
+class RecipeResultAutoQCType(RecipeResultType):
+    '''Metaclass for RecipeResult with added QC'''
+    def __new__(cls, classname, parents, attributes):
+        if 'qc' not in attributes:
+            attributes['qc'] = Product(QualityControlProduct)
+        return super(RecipeResultAutoQCType, cls).__new__(cls, classname, parents, attributes)
+
+
