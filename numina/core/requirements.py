@@ -22,9 +22,9 @@ Recipe requirement holders
 '''
 
 
-from .datadescriptors import DataProductType
-from .datadescriptors import ObservationResultType
-from .datadescriptors import InstrumentConfigurationType
+from .products import DataProductType
+from .products import ObservationResultType
+from .products import InstrumentConfigurationType
 
 from .dataholders import EntryHolder
 
@@ -32,10 +32,9 @@ class Requirement(EntryHolder):
     '''Requirement holder holder for RecipeRequirement.'''
     def __init__(self, rtype, description, validate=False,
                 dest=None, optional=False, default=None, choices=None):
-        super(Requirement, self).__init__(rtype, description, dest, optional, default)
+        super(Requirement, self).__init__(rtype, description, dest, optional, default, choices)
 
         self.validate = validate
-        self.choices = choices
         self.hidden = False
 
     def __repr__(self):

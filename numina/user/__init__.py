@@ -36,7 +36,7 @@ import yaml
 import numina.pipelines as namespace
 from numina import __version__
 from numina.core import RequirementParser, obsres_from_dict
-from numina.core.reciperesult import ErrorRecipeResult 
+from numina.core import ErrorRecipeResult 
 from numina.core import FrameDataProduct, DataProduct
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object

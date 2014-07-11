@@ -30,7 +30,7 @@ from astropy.io import fits
 
 from numina.core import init_drp_system, import_object
 from numina.core.oresult import ObservationResult
-from numina.core.reciperesult import ErrorRecipeResult
+from numina.core import ErrorRecipeResult
 from numina.core.recipeinput import RecipeInputBuilder
 from numina.core import obsres_from_dict
 from numina.user import main

@@ -30,9 +30,9 @@ import abc
 import traceback
 import logging
 
-from .reciperesult import ErrorRecipeResult
-from .reciperesult import RecipeResult as RecipeResultClass
-from .recipereqs import RecipeRequirements as RecipeRequirementsClass
+from .recipeinout import ErrorRecipeResult
+from .recipeinout import RecipeResult as RecipeResultClass
+from .recipeinout import RecipeRequirements as RecipeRequirementsClass
 
 _logger = logging.getLogger('numina')
 

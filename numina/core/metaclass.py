@@ -22,9 +22,9 @@ Base metaclasses
 '''
 
 import collections
-from .products import Product
+from .dataholders import Product
 from .requirements import Requirement
-from .datadescriptors import QualityControlProduct
+from .products import QualityControlProduct
 
 class StoreType(type):
     '''Metaclass for storing members.'''

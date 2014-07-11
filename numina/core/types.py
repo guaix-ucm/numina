@@ -33,7 +33,7 @@ class DataType(object):
     
     def validate(self, obj):
         if not isinstance(obj, self.python_type):
-            raise ValidationError
+            raise ValidationError(obj, self.python_type)
         return True
 
 class NullType(DataType):
