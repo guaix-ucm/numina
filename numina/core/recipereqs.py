@@ -35,7 +35,8 @@ class RecipeRequirementsType(MapStoreType):
     def store(cls, name, value):
         if value.dest is None:
             value.dest = name
-        return value
+        nname = value.dest
+        return nname, value
 
 class RecipeRequirements(object):
     '''RecipeRequirements base class'''

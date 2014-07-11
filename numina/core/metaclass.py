@@ -37,7 +37,8 @@ class StoreType(type):
 
         for name, val in attributes.items():
             if cls.exclude(name, val):
-                filter_out[name] = cls.store(name, val)
+                nname, nval = cls.store(name, val)
+                filter_out[nname] = nval
             else:
                 filter_in[name] = val
         return super(StoreType, cls).__new__(cls, classname, parents, filter_in)
@@ -57,7 +58,7 @@ class StoreType(type):
 
     @classmethod
     def store(cls, name, value):
-        return value
+        return name, value
 
 # FIXME: this does not work due to this
 # http://comments.gmane.org/gmane.comp.python.devel/142467

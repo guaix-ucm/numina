@@ -98,12 +98,13 @@ class RecipeResultType(MapStoreType):
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Product)
-
+    
     @classmethod
     def store(cls, name, value):
         if value.dest is None:
             value.dest = name
-        return value
+        nname = value.dest
+        return nname, value
 
 class RecipeResultAutoQCType(RecipeResultType):
     '''Metaclass for RecipeResult with added QC'''
