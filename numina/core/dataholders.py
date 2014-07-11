@@ -28,7 +28,8 @@ from .types import ListOfType
 #from .datadescriptors import DataProductType
 
 class EntryHolder(object):
-    def __init__(self, tipo, description, destination, optional, default, choices):
+    def __init__(self, tipo, description, destination, optional, 
+                default, choices=None, validation=True):
         if tipo is None:
             self.type = NullType()
         elif tipo in [bool, str, int, float, complex]:
@@ -45,17 +46,23 @@ class EntryHolder(object):
         self.dest = destination
         self.default = default
         self.choices = choices
+        self.validation = validation
+    
+    def validate(self, val):
+        if self.validation:
+            return self.type.validate(val)
+        return True
 
 class Product(EntryHolder):
     '''Product holder for RecipeResult.'''
-    def __init__(self, ptype, description='', validate=False, 
+    def __init__(self, ptype, description='', validation=True, 
             dest=None, optional=False, default=None, *args, **kwds):
-        super(Product, self).__init__(ptype, description, dest, optional, default, None)
+        super(Product, self).__init__(ptype, description, dest, optional, 
+                    default, choices=None, validation=validation)
         
-        self.validate = validate
-                
 #        if not isinstance(self.type, DataProductType):
 #            raise TypeError('type must be of class DataProduct')
 
     def __repr__(self):
         return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
+

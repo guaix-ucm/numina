@@ -63,9 +63,9 @@ class RecipeInOut(object):
         # By default, validate each value
         for key, req in self.__class__.items():
             val = getattr(self, key)
-            req.type.validate(val)
+            req.validate(val)
 
-        # Run checks defined in __checks__
+        # Run checks defined in __checkers__
         self._run_checks()
 
     def _run_checks(self):

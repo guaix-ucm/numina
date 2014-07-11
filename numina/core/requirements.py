@@ -29,11 +29,10 @@ from .dataholders import EntryHolder
 
 class Requirement(EntryHolder):
     '''Requirement holder holder for RecipeRequirement.'''
-    def __init__(self, rtype, description, validate=False,
+    def __init__(self, rtype, description, validation=True,
                 dest=None, optional=False, default=None, choices=None):
-        super(Requirement, self).__init__(rtype, description, dest, optional, default, choices)
+        super(Requirement, self).__init__(rtype, description, dest, optional, default, choices=choices, validation=validation)
 
-        self.validate = validate
         self.hidden = False
 
     def __repr__(self):
@@ -45,18 +44,21 @@ class Requirement(EntryHolder):
 
 class Parameter(Requirement):
     '''The Recipe requires a plain Python type.'''
-    def __init__(self, value, description, dest=None, optional=False, choices=None):
+    def __init__(self, value, description, dest=None, optional=False, 
+            choices=None, validation=True):
         rtype = type(value)
         super(Parameter, self).__init__(rtype, description, 
-            dest=dest, optional=optional, default=value, choices=choices)
+            dest=dest, optional=optional, default=value, choices=choices,
+            validation=validation)
 
         
 class DataProductRequirement(Requirement):
     '''The Recipe requires a data product of another recipe.'''
-    def __init__(self, rtype, description, validate=False,
+    def __init__(self, rtype, description, validation=True,
                 dest=None, optional=False, default=None):
         super(DataProductRequirement, self).__init__(rtype, description, 
-            dest=dest, optional=optional, default=default)
+            dest=dest, optional=optional, default=default,
+            validation=validation)
 
         if not isinstance(self.type, DataProductType):
             raise TypeError('%s type must derive from DataProduct' % self.type)
@@ -78,7 +80,7 @@ class InstrumentConfigurationRequirement(Requirement):
     def __init__(self):
         
         super(InstrumentConfigurationRequirement, self).__init__(InstrumentConfigurationType, 
-            "Instrument Configuration")
+            "Instrument Configuration", validation=False)
 
     def __repr__(self):
         sclass = type(self).__name__
