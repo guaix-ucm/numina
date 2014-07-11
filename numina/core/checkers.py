@@ -52,3 +52,14 @@ class KeyChecker(object):
             raise TypeError('Errorororor')
         return True
 
+
+class keycheck(object):
+    '''Recipe decorator.'''
+    def __init__(self, only=None, keys=None):
+        self.checker = KeyChecker(only=only, keys=keys)
+
+    def __call__(self, klass):
+        __checkers__ = getattr(klass, '__checkers__', []) 
+        __checkers__.append(self.checker)
+        klass.__checkers__ =  __checkers__
+        return klass
