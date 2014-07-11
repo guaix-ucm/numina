@@ -30,13 +30,13 @@ from .requirements import Parameter, Requirement
 from .products import DataProductType, DataFrameType
 from .oresult import ObservationResult
 from numina.exceptions import RecipeError
+from numina.exceptions import ValidationError
 from .recipeinout import RecipeRequirements, define_requirements
 from .recipeinout import RecipeResult, define_result
 from .recipeinout import ErrorRecipeResult, BaseRecipeResult
 from .dataholders import Product
 from .oresult import obsres_from_dict
 from .qc import QC
-from .validation import ValidationError
 
 FrameDataProduct = DataFrameType
 DataProduct = DataProductType

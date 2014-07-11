@@ -21,7 +21,6 @@
 Recipe requirement holders
 '''
 
-
 from .products import DataProductType
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType

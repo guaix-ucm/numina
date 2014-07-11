@@ -84,3 +84,4 @@ class FrameInformation(object):
 
     def __repr__(self):
         return 'FrameInformation(label=%r, itype=%r)' % (self.label, self.itype)
+

@@ -65,6 +65,7 @@ class RecipeInOut(object):
             val = getattr(self, key)
             req.type.validate(val)
 
+        # Run checks defined in __checks__
         self._run_checks()
 
     def _run_checks(self):
@@ -121,9 +122,9 @@ class RecipeResultAutoQC(RecipeResult):
 class define_result(object):
     '''Recipe decorator.'''
     def __init__(self, resultClass):
-        if not issubclass(resultClass, BaseRecipeResult):
-            raise TypeError('%r does not derive from BaseRecipeResult' % resultClass)
-
+        if not issubclass(resultClass, RecipeResult):
+            msg = '%r does not derive from RecipeResult' % resultClass
+            raise TypeError(msg)
         self.klass = resultClass
 
     def __call__(self, klass):
@@ -134,8 +135,8 @@ class define_requirements(object):
     '''Recipe decorator.'''
     def __init__(self, requirementClass):
         if not issubclass(requirementClass, RecipeRequirements):
-            raise TypeError('%r does not derive from RecipeRequirements' % requirementClass)
-
+            msg = '%r does not derive from RecipeRequirements' % requirementClass
+            raise TypeError(msg)
         self.klass = requirementClass
 
     def __call__(self, klass):

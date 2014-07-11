@@ -21,21 +21,21 @@
 
 class Error(Exception):
     """Base class for exceptions in the numina package."""
-    def __init__(self, txt):
-        super(Error, self).__init__(txt)
+    pass
 
 class RecipeError(Error):
     '''A non recoverable problem during recipe execution.'''
-    def __init__(self, txt):
-        super(RecipeError, self).__init__(txt)
+    pass
 
 class DetectorElapseError(Error):
     '''Error in the clocking of a Detector.'''
-    def __init__(self, txt):
-        super(DetectorElapseError, self).__init__(txt)
+    pass
 
 class DetectorReadoutError(Error):
     '''Error in the readout of a Detector.'''
-    def __init__(self, txt):
-        super(DetectorReadoutError, self).__init__(txt)
+    pass
+
+class ValidationError(Exception):
+    '''Error during validation of Recipe inputs and outputs.'''
+    pass
 

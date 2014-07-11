@@ -19,7 +19,7 @@
 
 import inspect
 
-from .validation import ValidationError
+from numina.exceptions import ValidationError
 
 class DataType(object):
     
@@ -75,5 +75,4 @@ class ListOfType(DataType):
         for o in obj:
             self.internal.validate(o)
         return True
-
 

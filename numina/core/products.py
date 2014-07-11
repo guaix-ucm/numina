@@ -19,7 +19,6 @@
 
 import sys
 
-
 import numpy
 from astropy.io import fits
 
@@ -31,8 +30,7 @@ from .dataframe import DataFrame
 from .types import DataType
 from .typedialect import dialect_info
 from numina.frame.schema import Schema
-from .validation import ValidationError
-
+from numina.exceptions import ValidationError
 
 class DataProductType(DataType):
     def __init__(self, ptype, default=None):
@@ -139,8 +137,12 @@ def _gimme_validator_for(instrument, mode):
 class ObservationResultType(DataType):
     '''The type of ObservationResult.'''
     
-    def __init__(self):
+    def __init__(self, rawtype=None):
         super(ObservationResultType, self).__init__(ptype=ObservationResult)
+        if rawtype:
+            self.rawtype = rawtype
+        else:
+            self.rawtype = DataFrameType
         
     def validate(self, obj):
         RawType = _gimme_validator_for(obj.instrument, obj.mode) 

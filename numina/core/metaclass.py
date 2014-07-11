@@ -136,7 +136,7 @@ class MapStoreType(StoreType):
     def __ne__(self, other):
         return not (self == other)
 
-class RecipeInOuttType(MapStoreType):    
+class RecipeInOutType(MapStoreType):    
     @classmethod
     def store(cls, name, value):
         if value.dest is None:
@@ -144,14 +144,14 @@ class RecipeInOuttType(MapStoreType):
         nname = value.dest
         return nname, value
 
-class RecipeRequirementsType(RecipeInOuttType):
+class RecipeRequirementsType(RecipeInOutType):
     '''Metaclass for RecipeRequirements.'''
 
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
     
-class RecipeResultType(RecipeInOuttType):
+class RecipeResultType(RecipeInOutType):
     '''Metaclass for RecipeResult.'''
     @classmethod
     def exclude(cls, name, value):
@@ -163,5 +163,4 @@ class RecipeResultAutoQCType(RecipeResultType):
         if 'qc' not in attributes:
             attributes['qc'] = Product(QualityControlProduct)
         return super(RecipeResultAutoQCType, cls).__new__(cls, classname, parents, attributes)
-
 
