@@ -76,20 +76,16 @@ class BaseRecipe(object):
     def run(self, recipe_input):
         return self.RecipeResult()
 
-    def __call__(self, recipe_input, environ=None):
+    def __call__(self, recipe_input):
         '''        
         Process the result of the observing block with the
         Recipe.
         
         :param ri: the input appropriated for the Recipe
         :param type: RecipeInput
-        :param environ: a dictionary with custom parameters
         :rtype: a RecipeResult object or an error 
         
         '''
-        
-        if environ is not None:
-            self.environ.update(environ)
 
         try:
             result = self.run(recipe_input)
