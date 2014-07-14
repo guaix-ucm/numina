@@ -54,7 +54,18 @@ class KeyChecker(object):
 
 
 class keycheck(object):
-    '''Recipe decorator.'''
+    '''Decorate a RecipeRequirement to check the observation result.
+    
+        ::
+        
+        from numina.core.checkers import keyckeck
+        
+        @keyckeck(only=['darkframe'], keys=['key1', 'key'])
+        class Req(RecipeRequirement):
+            obresult = ObservationResultRequirement()
+            darkframe = Product(MasterDark)
+    
+    '''
     def __init__(self, only=None, keys=None):
         self.checker = KeyChecker(only=only, keys=keys)
 
