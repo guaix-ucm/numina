@@ -136,7 +136,17 @@ class MapStoreType(StoreType):
     def __ne__(self, other):
         return not (self == other)
 
-class RecipeInOutType(MapStoreType):    
+class RecipeInOutType(MapStoreType):
+    def __new__(cls, classname, parents, attributes): 
+        # Handle checkers defined in base class
+        checkers = attributes.get('__checkers__', [])
+        for p in parents:
+            c = getattr(p, '__checkers__', [])
+            checkers.extend(c)
+        attributes['__checkers__'] = checkers
+        obj = super(RecipeInOutType, cls).__new__(cls, classname, parents, attributes)
+        return obj
+        
     @classmethod
     def store(cls, name, value):
         if value.dest is None:
@@ -146,7 +156,6 @@ class RecipeInOutType(MapStoreType):
 
 class RecipeRequirementsType(RecipeInOutType):
     '''Metaclass for RecipeRequirements.'''
-
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
