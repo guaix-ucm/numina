@@ -81,8 +81,8 @@ class BaseRecipe(object):
         Process the result of the observing block with the
         Recipe.
         
-        :param ri: the input appropriated for the Recipe
-        :param type: RecipeInput
+        :param recipe_input: the input appropriated for the Recipe
+        :param type: RecipeRequirement
         :rtype: a RecipeResult object or an error 
         
         '''
