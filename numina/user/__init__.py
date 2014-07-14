@@ -37,7 +37,7 @@ import numina.pipelines as namespace
 from numina import __version__
 from numina.core import RequirementParser, obsres_from_dict
 from numina.core import ErrorRecipeResult 
-from numina.core import FrameDataProduct, DataProduct
+from numina.core import DataFrameType, DataProductType
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.recipeinput import RecipeInputBuilder
@@ -148,7 +148,7 @@ class WorkEnvironment(object):
     def copyfiles_stage2(self, reqs):
         _logger.debug('copying files from requirements')
         for _, req in reqs.__class__.items():
-            if isinstance(req.type, FrameDataProduct):
+            if isinstance(req.type, DataFrameType):
                 value = getattr(reqs, req.dest)
                 if value is not None:
                     _logger.debug('copying %r to %r', value.filename, self.workdir)
@@ -217,9 +217,9 @@ def print_recipe_template(recipe, name=None, insname=None, pipename=None, modena
         dispname = req.dest
         if getattr(req, 'default', None) is not None:
             return (dispname, req.default)
-        elif isinstance(req.type, FrameDataProduct):
+        elif isinstance(req.type, DataFrameType):
             return (dispname, dispname + '.fits')
-        elif isinstance(req.type, DataProduct):
+        elif isinstance(req.type, DataProductType):
             return (dispname, getattr(req.type, 'default', None))
         else:
             return (dispname, None)
