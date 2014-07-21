@@ -662,8 +662,8 @@ def run_create_logger(recipe, task, rinput, workenv, task_control):
         
         guarda(task)
 
-    except StandardError as error:
-        _logger.error('finishing with errors: %s', error)
+#    except StandardError as error:
+#        _logger.error('finishing with errors: %s', error)
     finally:
         _logger.debug('cwd to original path: %r', csd)
         os.chdir(csd)
@@ -676,7 +676,8 @@ def internal_work(recipe, rinput, task):
     now1 = datetime.datetime.now()
     task.runinfo['time_start'] = now1.strftime(TIMEFMT)
     #
-    result = recipe(rinput)
+    
+    result = recipe.run(rinput)
     _logger.info('result: %r', result)
     task.result = result
     #
