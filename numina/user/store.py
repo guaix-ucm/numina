@@ -1,18 +1,18 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -26,9 +26,11 @@ import numpy
 from numina.core import DataFrame
 import warnings
 
+
 @generic
 def store(obj, where):
     return obj
+
 
 @store.register(DataFrame)
 def store_df(obj, where):
@@ -48,9 +50,11 @@ def store_df(obj, where):
             obj.frame.writeto(filename, clobber=True)
         return filename
 
+
 @store.register(list)
 def store_list(obj, where):
     return [store(o, where) for o in obj]
+
 
 @store.register(numpy.ndarray)
 def _(obj, where):
@@ -58,4 +62,3 @@ def _(obj, where):
     filename = where.get_next_basename('.txt')
     numpy.savetxt(filename, obj)
     return filename
-
