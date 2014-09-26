@@ -1,21 +1,21 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''
 Recipe requirements
@@ -23,6 +23,7 @@ Recipe requirements
 
 from .metaclass import RecipeRequirementsType, RecipeResultType
 from .metaclass import RecipeResultAutoQCType
+
 
 class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
@@ -41,19 +42,21 @@ class RecipeInOut(object):
                     val = None
                     store_val = False
                 else:
-                    raise ValueError('Required %r of type %r not defined' % (key, prod.type))
-                
+                    fmt = 'Required %r of type %r not defined'
+                    msg = fmt % (key, prod.type)
+                    raise ValueError(msg)
+
             if store_val:
                 nval = prod.type.store(val)
             else:
                 nval = val
-                
+
             if prod.choices and (nval not in prod.choices):
                 raise ValueError('%s not in %s' % (nval, prod.choices))
-                
-            setattr(self, key, nval)                
+
+            setattr(self, key, nval)
         return self
-    
+
     def __init__(self, *args, **kwds):
         super(RecipeInOut, self).__init__()
 
@@ -74,9 +77,11 @@ class RecipeInOut(object):
         for check in checkers:
             check.check(self)
 
+
 class RecipeRequirements(RecipeInOut):
     '''RecipeRequirements base class'''
     __metaclass__ = RecipeRequirementsType
+
 
 class BaseRecipeResult(object):
     def __new__(cls, *args, **kwds):
@@ -84,9 +89,10 @@ class BaseRecipeResult(object):
 
     def __init__(self, *args, **kwds):
         super(BaseRecipeResult, self).__init__()
-    
+
     def suggest_store(self, *args, **kwds):
         pass
+
 
 class ErrorRecipeResult(BaseRecipeResult):
     def __init__(self, errortype, message, traceback):
@@ -96,8 +102,9 @@ class ErrorRecipeResult(BaseRecipeResult):
 
     def __repr__(self):
         sclass = type(self).__name__
-        return "%s(errortype=%r, message='%s')" % (sclass, 
-            self.errortype, self.message)
+        fmt = "%s(errortype=%r, message='%s')"
+        return fmt % (sclass, self.errortype, self.message)
+
 
 class RecipeResult(RecipeInOut, BaseRecipeResult):
     __metaclass__ = RecipeResultType
@@ -113,6 +120,7 @@ class RecipeResult(RecipeInOut, BaseRecipeResult):
         for k in kwds:
             mm = getattr(self, k)
             self.__class__[k].type.suggest(mm, kwds[k])
+
 
 class RecipeResultAutoQC(RecipeResult):
     '''RecipeResult with an automatic QC member.'''
@@ -131,11 +139,13 @@ class define_result(object):
         klass.RecipeResult = self.klass
         return klass
 
+
 class define_requirements(object):
     '''Recipe decorator.'''
     def __init__(self, requirementClass):
         if not issubclass(requirementClass, RecipeRequirements):
-            msg = '%r does not derive from RecipeRequirements' % requirementClass
+            fmt = '%r does not derive from RecipeRequirements'
+            msg = fmt % requirementClass
             raise TypeError(msg)
         self.klass = requirementClass
 
