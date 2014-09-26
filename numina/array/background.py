@@ -1,21 +1,21 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 ''' Background estimation
 
@@ -25,30 +25,32 @@ import numpy
 import scipy.ndimage as ndimage
 import scipy.ndimage.filters as ndfilter
 
+
 def _interpolation(z, sx, sy, mx, my):
     # Spline to original size
-    x,y = numpy.ogrid[-1:1:complex(0, mx),-1:1:complex(0, my)]
-    newx,newy = numpy.mgrid[-1:1:complex(0, sx),-1:1:complex(0, sy)]
+    x, y = numpy.ogrid[-1:1:complex(0, mx), -1:1:complex(0, my)]
+    newx, newy = numpy.mgrid[-1:1:complex(0, sx), -1:1:complex(0, sy)]
 
-    x0 = x[0,0]
-    y0 = y[0,0]
-    dx = x[1,0] - x0
-    dy = y[0,1] - y0
+    x0 = x[0, 0]
+    y0 = y[0, 0]
+    dx = x[1, 0] - x0
+    dy = y[0, 1] - y0
     ivals = (newx - x0)/dx
     jvals = (newy - y0)/dy
     coords = numpy.array([ivals, jvals])
     newf = ndimage.map_coordinates(z, coords)
     return newf
 
+
 def background_estimator(bdata):
-    '''Estimate the background in a 2D array''' 
+    '''Estimate the background in a 2D array'''
 
     crowded = False
 
     std = numpy.std(bdata)
     std0 = std
     mean = bdata.mean()
-    while True: 
+    while True:
         prep = len(bdata)
         numpy.clip(bdata, mean - 3 * std, mean + 3 * std, out=bdata)
         if prep == len(bdata):
@@ -57,7 +59,7 @@ def background_estimator(bdata):
             break
         std = numpy.std(bdata)
         mean = bdata.mean()
-        
+
     if crowded:
         median = numpy.median(bdata)
         mean = bdata.mean()
@@ -65,6 +67,7 @@ def background_estimator(bdata):
         return 2.5 * median - 1.5 * mean, std
 
     return bdata.mean(), bdata.std()
+
 
 def create_background_map(data, bsx, bsy):
     '''Create a background map with a given mesh size'''
@@ -92,10 +95,10 @@ def create_background_map(data, bsx, bsy):
 
     # Interpolate to the original size
     new = _interpolation(z, sx, sy, mx, my)
-    
+
     # Interpolate the rms
     z = numpy.array(rms)
     z.shape = (mx, my)
     nrms = _interpolation(z, sx, sy, mx, my)
-    
+
     return new, nrms

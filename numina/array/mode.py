@@ -2,22 +2,22 @@
 # -*- coding: utf8 -*-
 #
 # Copyright 2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''Mode estimators.'''
 
@@ -25,16 +25,17 @@ import math
 
 import numpy as np
 
+
 # HSM method
 # http://www.davidbickel.com/
 def mode_half_sample(a, is_sorted=False):
     '''
     Estimate the mode using the Half Sample mode.
 
-    A method to estimate the mode, as described in 
-    D. R. Bickel and R. Frühwirth (contributed equally), 
-    "On a fast, robust estimator of the mode: Comparisons to other 
-    robust estimators with applications," 
+    A method to estimate the mode, as described in
+    D. R. Bickel and R. Frühwirth (contributed equally),
+    "On a fast, robust estimator of the mode: Comparisons to other
+    robust estimators with applications,"
     Computational Statistics and Data Analysis 50, 3500-3530 (2006).
 
 
@@ -57,7 +58,7 @@ def mode_half_sample(a, is_sorted=False):
         sdata = np.sort(a)
     else:
         sdata = a
-        
+
     n = len(sdata)
     if n == 1:
         return sdata[0]
@@ -77,7 +78,7 @@ def mode_half_sample(a, is_sorted=False):
         ar = w.argmin()
         return mode_half_sample(sdata[ar:ar+N], is_sorted=True)
 
+
 def mode_sex(a):
     '''Estimate the mode as sextractor'''
     return 2.5 * np.median(a) - 1.5 * np.mean(a)
-
