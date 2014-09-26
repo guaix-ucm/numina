@@ -43,10 +43,6 @@ def blockgen1d(block, size):
         >>> blockgen1d(512, 1024)
         [slice(0, 512, None), slice(512, 1024, None)]
 
-        >>> blockgen1d(500, 1024)
-        [slice(0, 256, None), slice(256, 512, None), slice(512, 768, None), \
-        slice(768, 1024, None)]
-
     '''
     def numblock(block, x):
         '''Compute recursively the numeric intervals
