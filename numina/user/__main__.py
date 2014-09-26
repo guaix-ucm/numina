@@ -19,6 +19,8 @@
 
 '''User command line interface of Numina.'''
 
-from . import main
+if __name__ == '__main__':
 
-main()
+    from . import main
+
+    main()
