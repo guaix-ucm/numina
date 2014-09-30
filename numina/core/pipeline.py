@@ -133,7 +133,7 @@ def init_drp_system(unused):
 
     drp = {}
 
-    for entry in pkg_resources.iter_entry_points(group='numina.pipeline'):
+    for entry in pkg_resources.iter_entry_points(group='numina.pipeline.1'):
         drp_loader = entry.load()
         mod = drp_loader()
         if mod:
@@ -316,3 +316,16 @@ def print_m(modes):
     print 'Modes'
     for c in modes:
         print ' mode', c.key
+
+
+def init_backends(unused, backend='default'):
+    '''Load storage modes'.'''
+
+    backends = []
+
+    for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
+        store = entry.load()
+        backends.append((store, True))
+
+    return backends
+
