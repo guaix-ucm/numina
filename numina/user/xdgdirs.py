@@ -43,3 +43,8 @@ xdg_config_home = os.environ.get(
     'XDG_CONFIG_HOME',
     os.path.join(_home, '.config')
     )
+
+xdg_cache_home = os.environ.get(
+    'XDG_CACHE_HOME',
+    os.path.join(_home, '.cache')
+    )
