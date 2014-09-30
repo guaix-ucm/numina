@@ -23,7 +23,3 @@ from numina import enum
 def test_enum():
     assert 1 == 1
 
-def test_needsfiles(tmpdir):
-    print (tmpdir)
-    assert 0
-
