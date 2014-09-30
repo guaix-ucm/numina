@@ -328,4 +328,3 @@ def init_backends(unused, backend='default'):
         backends.append((store, True))
 
     return backends
-

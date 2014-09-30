@@ -22,4 +22,3 @@ from numina import enum
 
 def test_enum():
     assert 1 == 1
-
