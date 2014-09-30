@@ -23,6 +23,7 @@ import logging
 import pkgutil
 import importlib
 
+import pkg_resources
 import yaml
 import uuid
 
@@ -103,7 +104,7 @@ class LoadableDRP(object):
         self.instruments = instruments
 
 
-def init_drp_system(namespace):
+def init_drp_system_s(namespace):
     '''Load all available DRPs in package 'namespace'.'''
 
     drp = {}
@@ -123,6 +124,22 @@ def init_drp_system(namespace):
                             'error of type %s with message "%s"',
                             name, type(error), error
                             )
+
+    return drp
+
+
+def init_drp_system(unused):
+    '''Load all available DRPs in 'numina.pipeline' entry_point.'''
+
+    drp = {}
+
+    for entry in pkg_resources.iter_entry_points(group='numina.pipeline'):
+        drp_loader = entry.load()
+        mod = drp_loader()
+        if mod:
+            drp.update(mod.instruments)
+        else:
+            _logger.warning('Module %s does not contain a valid DRP', mod)
 
     return drp
 
