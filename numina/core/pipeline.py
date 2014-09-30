@@ -128,7 +128,7 @@ def init_drp_system_s(namespace):
     return drp
 
 
-def init_drp_system(unused):
+def init_drp_system():
     '''Load all available DRPs in 'numina.pipeline' entry_point.'''
 
     drp = {}
@@ -318,7 +318,7 @@ def print_m(modes):
         print ' mode', c.key
 
 
-def init_backends(unused, backend='default'):
+def init_backends(backend='default'):
     '''Load storage modes'.'''
 
     backends = []

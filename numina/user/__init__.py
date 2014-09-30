@@ -33,7 +33,6 @@ import inspect
 
 import yaml
 
-import numina.pipelines as namespace
 from numina import __version__
 from numina.core import RequirementParser, obsres_from_dict
 from numina.core import ErrorRecipeResult
@@ -563,7 +562,7 @@ def main(args=None):
     _logger = logging.getLogger("numina")
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    args.drps = init_drp_system(namespace)
+    args.drps = init_drp_system()
 
     args.command(args)
 
@@ -666,7 +665,7 @@ def mode_run_common(args, mode):
     # Load store backends
     backend_default = 'default'
 
-    backends = init_backends(namespace)
+    backends = init_backends()
 
     # Directories with relevant data
     workenv = WorkEnvironment(
