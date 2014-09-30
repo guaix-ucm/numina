@@ -26,6 +26,21 @@ from astropy.io import fits
 from .dataframe import DataFrame
 
 
+# A translation of the entries of oblocks
+# Notice that this is different to ObservationResult
+# that contains the results of the reductions
+class ObservingBlock(object):
+    def __init__(self, obid, instrument, mode, files, children, parent):
+        self.id = obid
+        self.instrument = instrument
+        self.mode = mode
+        # only one of files and children can
+        # be different from []
+        self.files = files
+        self.children = children
+        self.parent = parent
+
+
 class ObservationResult(object):
     '''The result of a observing block.
 
@@ -35,8 +50,16 @@ class ObservationResult(object):
         self.mode = mode
         self.instrument = None
         self.frames = []
+        self.parent = None
         self.children = []  # other ObservationResult
         self.pipeline = 'default'
+        self.prodid = None
+        self.tags = {}
+
+    def update_with_product(self, prod):
+        self.tags = prod.tags
+        self.files = [prod.content]
+        self.prodid = prod.id
 
 
 def dataframe_from_list(values):

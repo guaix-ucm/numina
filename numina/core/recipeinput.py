@@ -32,3 +32,76 @@ class RecipeInputBuilder(object):
         workenv.copyfiles(mreqs['obresult'], requires)
 
         return requires
+
+import logging
+
+from numina.core import ObservationResult
+from numina.core.oresult import ObservingBlock
+from numina.core.products import ObservationResultType
+from numina.core.products import InstrumentConfigurationType
+from numina.core import FrameDataProduct
+from numina.core.dal import NoResultFound
+
+_logger = logging.getLogger('numina.ri')
+
+
+class RecipeInputBuilderGTC(object):
+    '''Recipe Input Builder with GTC interface'''
+    def __init__(self, recipeClass, dal):
+        self.dal = dal
+        self.recipeClass = recipeClass
+
+    def buildRI(self, ob):
+        RecipeRequirementsClass = self.recipeClass.RecipeRequirements
+
+        result = {}
+        pipeline = 'default'
+
+        # We have to decide if the ob input
+        # is a plain description (ObservingBlock)
+        # or if it contains the nested results (Obsres)
+        #
+        # it has to contain the tags corresponding to the observing modes...
+        if isinstance(ob, ObservingBlock):
+            # We have to build an Obsres
+            obsres = self.dal.obsres_from_oblock_id(ob.id)
+        elif isinstance(ob, ObservationResult):
+            # We have one
+            obsres = ob
+        else:
+            raise ValueError('ob input is neither a ObservingBlock'
+                             ' nor a ObservationResult')
+
+        tags = getattr(obsres, 'tags', {})
+
+        for key, req in RecipeRequirementsClass.items():
+
+            if isinstance(req.type, ObservationResultType):
+                result[key] = obsres
+            elif isinstance(req.type, InstrumentConfigurationType):
+                # Not sure how to handle this, or if it is needed...
+                result[key] = {}
+            elif isinstance(req.type, FrameDataProduct):
+                try:
+                    prod = self.dal.search_prod_req_tags(
+                        req, obsres.instrument,
+                        tags, pipeline
+                        )
+
+                    result[key] = prod.content
+                except NoResultFound:
+                    _logger.debug('No value found for %s', key)
+            else:
+                # Still not clear what to do with the other types
+                try:
+                    param = self.dal.search_param_req(
+                        req, obsres.instrument,
+                        obsres.mode, pipeline
+                        )
+                    result[key] = param.content
+                except NoResultFound:
+                    _logger.debug('No value found for %s', key)
+
+        print result
+
+        return RecipeRequirementsClass(**result)
