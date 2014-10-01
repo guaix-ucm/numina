@@ -45,31 +45,31 @@ def _compute_value(power, wg):
 
 
 def _compute_weight(powers, wg):
-        '''Return the weight corresponding to given powers.'''
-        # split
-        pow1 = (powers[0], 0)
-        pow2 = (0, powers[1])
+    '''Return the weight corresponding to given powers.'''
+    # split
+    pow1 = (powers[0], 0)
+    pow2 = (0, powers[1])
 
-        cal1 = _compute_value(pow1, wg)
-        cal2 = _compute_value(pow2, wg)
+    cal1 = _compute_value(pow1, wg)
+    cal2 = _compute_value(pow2, wg)
 
-        return cal1 * cal2
+    return cal1 * cal2
 
 
 def imsurfit(data, order, output_fit=False):
     '''Fit a bidimensional polynomial to an image.
 
-        :param data: a bidimensional array
-        :param integer order: order of the polynomial
-        :param bool output_fit: return the fitted image
-        :returns: a tuple with an array with the coefficients
-        of the polynomial terms
+    :param data: a bidimensional array
+    :param integer order: order of the polynomial
+    :param bool output_fit: return the fitted image
+    :returns: a tuple with an array with the coefficients
+    of the polynomial terms
 
-        >>> import numpy
-        >>> xx, yy = numpy.mgrid[-1:1:100j,-1:1:100j]
-        >>> z = 456.0 + 0.3 * xx - 0.9* yy
-        >>> imsurfit(z, order=1) #doctest: +NORMALIZE_WHITESPACE
-        (array([  4.56000000e+02,   3.00000000e-01,  -9.00000000e-01]),)
+    >>> import numpy
+    >>> xx, yy = numpy.mgrid[-1:1:100j,-1:1:100j]
+    >>> z = 456.0 + 0.3 * xx - 0.9* yy
+    >>> imsurfit(z, order=1) #doctest: +NORMALIZE_WHITESPACE
+    (array([  4.56000000e+02,   3.00000000e-01,  -9.00000000e-01]),)
 
     '''
 
