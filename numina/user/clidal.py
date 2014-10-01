@@ -19,13 +19,13 @@
 
 import logging
 
-from .absdal import AbsDAL
-from . import NoResultFound
-from .stored import StoredProduct
-from .stored import StoredParameter
+from numina.core.dal import AbsDAL
+from numina.core.dal import NoResultFound
+from numina.core.dal import StoredProduct
+from numina.core.dal import StoredParameter
+from numina.core.dal import ObservingBlock
 from numina.core import init_drp_system
 from numina.core import import_object
-from numina.core.oresult import ObservingBlock
 
 _logger = logging.getLogger("numina.simpledal")
 
