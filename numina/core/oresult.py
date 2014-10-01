@@ -26,21 +26,6 @@ from astropy.io import fits
 from .dataframe import DataFrame
 
 
-# A translation of the entries of oblocks
-# Notice that this is different to ObservationResult
-# that contains the results of the reductions
-class ObservingBlock(object):
-    def __init__(self, id, instrument, mode, files, children, parent):
-        self.id = id
-        self.instrument = instrument
-        self.mode = mode
-        # only one of files and children can
-        # be different from []
-        self.files = files
-        self.children = children
-        self.parent = parent
-
-
 class ObservationResult(object):
     '''The result of a observing block.
 
@@ -86,30 +71,3 @@ def obsres_from_dict(values):
     obsres.frames = [dataframe_from_list(val) for val in values['frames']]
 
     return obsres
-
-# We are not using these two for the moment
-
-
-def frameinfo_from_list(values):
-    '''Build a FrameInformation object from a list.'''
-    frameinfo = FrameInformation()
-    if(isinstance(values, basestring)):
-        frameinfo.label = values
-        frameinfo.itype = 'UNKNOWN'
-    else:
-        # FIXME: modify when format is changed
-        # For this format
-        frameinfo.label = values[0]
-        frameinfo.itype = values[1]
-    return frameinfo
-
-
-class FrameInformation(object):
-    '''Information of a frame observed during a block.'''
-    def __init__(self):
-        self.label = None
-        self.itype = None
-
-    def __repr__(self):
-        fmt = 'FrameInformation(label=%r, itype=%r)'
-        return fmt % (self.label, self.itype)

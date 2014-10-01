@@ -28,3 +28,18 @@ class StoredProduct(object):
 class StoredParameter(object):
     def __init__(self, content):
         self.content = content
+
+
+# A translation of the entries of oblocks
+# Notice that this is different to ObservationResult
+# that contains the results of the reductions
+class ObservingBlock(object):
+    def __init__(self, id, instrument, mode, files, children, parent):
+        self.id = id
+        self.instrument = instrument
+        self.mode = mode
+        # only one of files and children can
+        # be different from []
+        self.files = files
+        self.children = children
+        self.parent = parent

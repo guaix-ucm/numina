@@ -22,3 +22,4 @@ from .daliface import DALInterface
 from .daliface import NoResultFound
 from .stored import StoredParameter
 from .stored import StoredProduct
+from .stored import ObservingBlock
