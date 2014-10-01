@@ -17,8 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from .absdal import AbsDAL
-from .daliface import DALInterface
-from .daliface import NoResultFound
-from .stored import StoredParameter
-from .stored import StoredProduct
+
+class StoredProduct(object):
+    def __init__(self, id, content, tags, **kwds):
+        self.id = id
+        self.content = content
+        self.tags = tags
+
+
+class StoredParameter(object):
+    def __init__(self, content):
+        self.content = content
