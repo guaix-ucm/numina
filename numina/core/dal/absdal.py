@@ -51,9 +51,11 @@ class AbsDAL(DALInterface):
         # This implementation does not depend
         # on the details of the DAL...
         ob = self.search_oblock_from_id(child_id)
-        prod = self.search_prod_obsid(instrument, child_id)
+        prod = self.search_prod_obsid(instrument, child_id, 'default')
 
-        h = ObservationResult(child_id, ob.instrument, ob.mode)
+        h = ObservationResult(ob.mode)
+        h.id = child_id
+        h.instrument = ob.instrument
         h.parent = ob.parent
         h.update_with_product(prod)
         return h
