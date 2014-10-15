@@ -36,7 +36,7 @@ class RecipeInputBuilder(object):
 import logging
 
 from numina.core import ObservationResult
-from numina.core.oresult import ObservingBlock
+from numina.core.dal import ObservingBlock
 from numina.core.products import ObservationResultType
 from numina.core.products import InstrumentConfigurationType
 from numina.core import FrameDataProduct
