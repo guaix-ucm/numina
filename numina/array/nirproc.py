@@ -1,21 +1,21 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 
 from __future__ import division
@@ -27,17 +27,18 @@ import numpy
 from numina.array._nirproc import _process_fowler_intl
 from numina.array._nirproc import _process_ramp_intl
 
-def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0, 
-                badpixels=None, dtype='float64',
-                saturation=65631, blank=0, normalize=False):
+
+def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
+                 badpixels=None, dtype='float64',
+                 saturation=65631, blank=0, normalize=False):
     '''Loop over the first axis applying Fowler processing.
-    
+
     *fowlerdata* is assumed to be a 3D numpy.ndarray containing the
     result of a nIR observation in Fowler mode (Fowler and Gatley 1991).
     The shape of the array must be of the form 2N_p x M x N, with N_p being
     the number of pairs in Fowler mode.
 
-    The output signal is just the mean value of the differences between the 
+    The output signal is just the mean value of the differences between the
     last N_p values (S_i) and the first N_p values (R-i).
 
     .. math::
@@ -52,7 +53,7 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
 
         S_F = F T_I - F T_S (N_p -1) = F T_E
 
-    being T_I the integration time (*ti*), the time since the first 
+    being T_I the integration time (*ti*), the time since the first
     productive read to the last productive read for a given pixel and T_S the
     time between samples (*ts*). T_E is the time between correlated reads
     :math:`T_E = T_I - T_S (N_p - 1)`.
@@ -68,7 +69,8 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
 
     .. math::
 
-        \\mathrm{var}(S_{F2}) = F T_E - F T_S \\frac{1}{3}(N_p-\\frac{1}{N_p}) = F T_I - F T_S (\\frac{4}{3} N_p -1 -  \\frac{1}{3N_p})
+        \\mathrm{var}(S_{F2}) = F T_E - F T_S \\frac{1}{3}(N_p-\\frac{1}{N_p})
+        = F T_I - F T_S (\\frac{4}{3} N_p -1 -  \\frac{1}{3N_p})
 
 
     :param fowlerdata: Convertible to a 3D numpy.ndarray with first axis even
@@ -80,18 +82,18 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
     :param dtype: The dtype of the float outputs.
     :param saturation: The saturation level of the detector.
     :param blank: Invalid values in output are substituted by *blank*.
-    :returns: A tuple of (signal, variance of the signal, numper of pixels used 
+    :returns: A tuple of (signal, variance of the signal, numper of pixels used
         and badpixel mask.
     :raises: ValueError
-    
+
     '''
-    
+
     if gain <= 0:
         raise ValueError("invalid parameter, gain <= 0.0")
 
     if ron <= 0:
         raise ValueError("invalid parameter, ron < 0.0")
-    
+
     if ti < 0:
         raise ValueError("invalid parameter, ti < 0.0")
 
@@ -102,14 +104,14 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
         raise ValueError("invalid parameter, saturation <= 0")
 
     fowlerdata = numpy.asarray(fowlerdata)
-        
+
     if fowlerdata.ndim != 3:
         raise ValueError('fowlerdata must be 3D')
-    
+
     npairs = fowlerdata.shape[0] // 2
     if 2 * npairs != fowlerdata.shape[0]:
         raise ValueError('axis-0 in fowlerdata must be even')
-    
+
     # change byteorder
     ndtype = fowlerdata.dtype.newbyteorder('=')
     fowlerdata = numpy.asarray(fowlerdata, dtype=ndtype)
@@ -124,23 +126,25 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
         badpixels = numpy.zeros(fshape, dtype=mdtype)
     else:
         if badpixels.shape != fshape:
-            raise ValueError('shape of badpixels is not compatible with shape of fowlerdata')
+            raise ValueError('shape of badpixels is not '
+                             'compatible with shape of fowlerdata')
         if badpixels.dtype != mdtype:
             raise ValueError('dtype of badpixels must be uint8')
-            
+
     result = numpy.empty(fshape, dtype=fdtype)
     var = numpy.empty_like(result)
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_fowler_intl(fowlerdata, ti, ts,  gain, ron, 
-        badpixels, saturation, blank,
-        result, var, npix, mask)
+    _process_fowler_intl(fowlerdata, ti, ts,  gain, ron,
+                         badpixels, saturation, blank,
+                         result, var, npix, mask)
     return result, var, npix, mask
 
-def ramp_array(rampdata, ti, gain=1.0, ron=1.0, 
-                badpixels=None, dtype='float64',
-                 saturation=65631, blank=0, nsig=None, normalize=False):
+
+def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
+               badpixels=None, dtype='float64',
+               saturation=65631, blank=0, nsig=None, normalize=False):
     '''Loop over the first axis applying ramp processing.
 
     *rampdata* is assumed to be a 3D numpy.ndarray containing the
@@ -156,7 +160,7 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
     :param dtype: The dtype of the float outputs.
     :param saturation: The saturation level of the detector.
     :param blank: Invalid values in output are substituted by *blank*.
-    :returns: A tuple of signal, variance of the signal, numper of pixels used 
+    :returns: A tuple of signal, variance of the signal, numper of pixels used
         and badpixel mask.
     :raises: ValueError
     '''
@@ -190,19 +194,20 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
         badpixels = numpy.zeros(fshape, dtype=mdtype)
     else:
         if badpixels.shape != fshape:
-            raise ValueError('shape of badpixels is not compatible with shape of rampdata')
+            msg = 'shape of badpixels is not compatible with shape of rampdata'
+            raise ValueError(msg)
         if badpixels.dtype != mdtype:
             raise ValueError('dtype of badpixels must be uint8')
-            
+
     result = numpy.empty(fshape, dtype=fdtype)
     var = numpy.empty_like(result)
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_ramp_intl(rampdata, ti, gain, ron, badpixels, 
-        saturation, blank,
-        result, var, npix, mask)
+    _process_ramp_intl(rampdata, ti, gain, ron, badpixels,
+                       saturation, blank, result, var, npix, mask)
     return result, var, npix, mask
+
 
 # This is not used...
 # Old code used to detect cosmic rays in the ramp
@@ -211,11 +216,13 @@ def _ramp(data, saturation, dt, gain, ron, nsig):
 
 # Finding glitches in the pixels
     intervals, glitches = _rglitches(nsdata, gain=gain, ron=ron, nsig=nsig)
-    vals = numpy.asarray([_slope(nsdata[intls], dt=dt, gain=gain, ron=ron) for intls in intervals if len(nsdata[intls]) >= 2])
-    weights = (1.0 / vals[:,1])
-    average = numpy.average(vals[:,0], weights=weights)
+    vals = numpy.asarray([_slope(nsdata[intls], dt=dt, gain=gain, ron=ron)
+                          for intls in intervals if len(nsdata[intls]) >= 2])
+    weights = (1.0 / vals[:, 1])
+    average = numpy.average(vals[:, 0], weights=weights)
     variance = 1.0 / weights.sum()
-    return average, variance, vals[:,2].sum(), glitches
+    return average, variance, vals[:, 2].sum(), glitches
+
 
 def _rglitches(nsdata, gain, ron, nsig):
     diffs = nsdata[1:] - nsdata[:-1]
@@ -244,13 +251,13 @@ def _slope(nsdata, dt, gain, ron):
     nn = len(nsdata)
     delt = dt * nn * (nn + 1) * (nn - 1) / 12
     ww = numpy.arange(1, nn + 1) - (nn + 1) / 2
-    
+
     final = (ww * nsdata).sum() / delt
-    
+
     # Readout limited case
     delt2 = dt * delt
-    variance1 = (ron / gain)**2 / delt2
+    var1 = (ron / gain)**2 / delt2
     # Photon limiting case
-    variance2 = (6 * final * (nn * nn + 1)) / (5 * nn * dt * (nn * nn - 1) * gain)
-    variance = variance1 + variance2
+    var2 = (6 * final * (nn * nn + 1)) / (5 * nn * dt * (nn * nn - 1) * gain)
+    variance = var1 + var2
     return final, variance, nn

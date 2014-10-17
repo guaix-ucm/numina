@@ -1,3 +1,7 @@
+Version 0.12.2 (17 Oct 2014)
+ Fixes:
+  * PEP8 fixes in the code
+
 Version 0.12.1 (30 Apr 2014)
  Fixes:
   * Include Cython-generated code in distribution

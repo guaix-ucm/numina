@@ -1,21 +1,21 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 
 '''Extra logging handlers for the numina logging system.'''
@@ -25,6 +25,7 @@ import logging
 from astropy.io import fits
 
 from numina.core import DataFrame
+
 
 class FITSHistoryHandler(logging.Handler):
     '''Logging handler using HISTORY FITS cards'''
@@ -36,26 +37,27 @@ class FITSHistoryHandler(logging.Handler):
         msg = self.format(record)
         self.header.add_history(msg)
 
-def log_to_history(logger):
+
+def log_to_history(logger, name):
     '''Decorate function, adding a logger handler stored in FITS.'''
 
     def log_to_history_decorator(method):
 
-        def l2h_method(self, block):
+        def l2h_method(self, ri):
             history_header = fits.Header()
 
-            fh =  FITSHistoryHandler(history_header)
+            fh = FITSHistoryHandler(history_header)
             fh.setLevel(logging.INFO)
             logger.addHandler(fh)
 
             try:
-                result = method(self, block)
-                if 'products' in result:
-                    for r in result['products']:
-                        if isinstance(r, DataFrame):
-                            hdr = r.image[0].header
-                            hdr.ascardlist().extend(history_header.ascardlist())
-                return result 
+                result = method(self, ri)
+                field = getattr(result, name, None)
+                if field:
+                    with field.open() as hdulist:
+                        hdr = hdulist[0].header
+                        hdr.ascardlist().extend(history_header.ascardlist())
+                return result
             finally:
                 logger.removeHandler(fh)
         return l2h_method

@@ -1,18 +1,18 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
@@ -34,9 +34,10 @@ PIXEL_VALID = 0
 
 #
 HIGH_SIGMA = 200
-LOW_SIGMA = -200 
+LOW_SIGMA = -200
 
 _logger = logging.getLogger('numina.cosmetics')
+
 
 def update_mask(mask, gmask, newmask, value):
     f1_mask = mask[gmask]
@@ -46,34 +47,38 @@ def update_mask(mask, gmask, newmask, value):
     smask = mask != PIXEL_VALID
     return mask, gmask, smask
 
-def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0, 
-                siglev=2.0, posthook=None):
+
+def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
+              siglev=2.0, posthook=None):
     '''Find cosmetic defects in a detector using two flat field images.
-    
+
     Two arrays representing flat fields of different exposure times are
     required. Cosmetic defects are selected as points that deviate
     significantly of the expected normal distribution of pixels in
     the ratio between `flat2` and `flat1`.
-    
+
     The median of the ratio array is computed and subtracted to it.
-    
+
     The standard deviation of the distribution of pixels is computed
     obtaining the percentiles nearest the pixel values corresponding to
     `nsig` in the normal CDF. The standar deviation is then the distance
     between the pixel values divided by two times `nsig`.
     The ratio image is then normalized with this standard deviation.
-    
+
     The values in the ratio above `uppercut` are flagged as hot pixels,
-    and those below '-lowercut` are flagged as dead pixels in the output mask. 
-    
+    and those below '-lowercut` are flagged as dead pixels in the output mask.
+
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
-    :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
-    :parameter uppercut: values above this sigma level are flagged as hot pixels.
+    :parameter lowercut: values bellow this sigma level are
+    flagged as dead pixels.
+    :parameter uppercut: values above this sigma level are
+    flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
-    :returns: the normalized ratio of the flats, the updated mask and standard deviation
-    
+    :returns: the normalized ratio of the flats, the updated mask and
+    standard deviation
+
     '''
 
     # check inputs
@@ -93,7 +98,7 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
 
     # check if there are zeros in flat1 and flat2
     zero_mask = numpy.logical_or(flat1[gmask] <= 0, flat2[gmask] <= 0)
-    
+
     # if there is something in zero mask
     # we update the mask
     if numpy.any(zero_mask):
@@ -145,69 +150,74 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
 
     return ratio, mask, sig
 
+
 # IRAF task
-def ccdmask(flat1, flat2=None, mask=None, 
-                lowercut=6.0, uppercut=6.0, siglev=1.0, 
-                mode='region', nmed=(7, 7), nsig=(15, 15)):
+def ccdmask(flat1, flat2=None, mask=None,
+            lowercut=6.0, uppercut=6.0, siglev=1.0,
+            mode='region', nmed=(7, 7), nsig=(15, 15)):
     '''Find cosmetic defects in a detector using two flat field images.
-    
+
     Two arrays representing flat fields of different exposure times are
     required. Cosmetic defects are selected as points that deviate
     significantly of the expected normal distribution of pixels in
     the ratio between `flat2` and `flat1`. The median of the ratio
     is computed and subtracted. Then, the standard deviation is estimated
-    computing the percentiles 
-    nearest to the pixel values corresponding to`siglev` in the normal CDF. 
-    The standard deviation is then the distance between the pixel values 
-    divided by two times `siglev`. The ratio image is then normalized with 
+    computing the percentiles
+    nearest to the pixel values corresponding to`siglev` in the normal CDF.
+    The standard deviation is then the distance between the pixel values
+    divided by two times `siglev`. The ratio image is then normalized with
     this standard deviation.
-    
+
     The behavior of the function depends on the value of the parameter
     `mode`. If the value is 'region' (the default), both the median
     and the sigma are computed in boxes. If the value is 'full', these
     values are computed using the full array.
-    
+
     The size of the boxes in 'region' mode is given by `nmed` for
     the median computation and `nsig` for the standard deviation.
-    
-    The values in the normalized ratio array above `uppercut` are flagged as hot pixels,
-    and those below '-lowercut` are flagged as dead pixels in the output mask. 
-    
+
+    The values in the normalized ratio array above `uppercut`
+    are flagged as hot pixels, and those below '-lowercut` are
+    flagged as dead pixels in the output mask.
+
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
 
-    :parameter lowercut: values below this sigma level are flagged as dead pixels.
-    :parameter uppercut: values above this sigma level are flagged as hot pixels.
+    :parameter lowercut: values below this sigma level are flagged
+    as dead pixels.
+    :parameter uppercut: values above this sigma level are flagged
+    as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
     :parameter mode: either 'full' or 'region'
     :parameter nmed: region used to compute the median
     :parameter nsig: region used to estimate the standard deviation
-    :returns: the normalized ratio of the flats, the updated mask and standard deviation
-    
+    :returns: the normalized ratio of the flats, the updated mask and
+    standard deviation
+
     .. note::
-    
+
         This function is based on the description of the task
         ccdmask of IRAF
-    
+
     .. seealso::
-    
+
         :py:func:`cosmetics`
             Operates much like this function but computes
-            median and sigma in the hole image instead of in boxes          
-    
-    
+            median and sigma in the hole image instead of in boxes
+
+
     '''
     # check inputs
-    
+
     if mode not in ['full', 'region']:
         raise ValueError("mode must be either 'full' or 'region'")
-    
+
     for vname in ['lowercut', 'uppercut']:
         val = locals()[vname]
         if val <= 0:
             raise ValueError('%s must be > 0' % vname)
-    
+
     if mode == 'region':
         for vname in ['nsig', 'nmed']:
             val = locals()[vname]
@@ -215,7 +225,8 @@ def ccdmask(flat1, flat2=None, mask=None,
                 raise ValueError('%s members must be > 0' % vname)
 
         if reduce(operator.mul, nsig) < 100:
-            raise ValueError('nsig size >= 100 required to have enough points for statistics')
+            raise ValueError('nsig size >= 100 required to '
+                             'have enough points for statistics')
 
     if flat2 is None:
         # we have to swap flat1 and flat2, and
@@ -244,7 +255,7 @@ def ccdmask(flat1, flat2=None, mask=None,
     if numpy.any(zero_mask):
         mask, gmask, smask = update_mask(mask, gmask, zero_mask, PIXEL_DEAD)
         invalid[mask == PIXEL_DEAD] = LOW_SIGMA
-  
+
     # ratio of flats
     ratio[gmask] = flat2[gmask] / flat1[gmask]
     ratio[smask] = invalid[smask]
@@ -268,7 +279,7 @@ def ccdmask(flat1, flat2=None, mask=None,
     # in several blocks of shape nsig
     # we estimate sigma
     sigma = numpy.zeros_like(ratio)
-    
+
     if mode == 'region':
         mshape = max_blk_coverage(blk=nsig, shape=ratio.shape)
         _logger.info('estimating sigma in boxes of %r', nsig)
@@ -279,7 +290,7 @@ def ccdmask(flat1, flat2=None, mask=None,
         _logger.info('estimating sigma in full array')
         # slice(None) is equivalent to [:]
         block_gen = itertools.repeat(slice(None), 1)
-        
+
     for blk in block_gen:
         # mask for this region
         m = mask[blk] == PIXEL_VALID
@@ -298,15 +309,15 @@ def ccdmask(flat1, flat2=None, mask=None,
         sigma[blk] = sig
 
     # fill regions of sigma not computed
-    fill0 = ratio.shape[0] - mshape[0]    
-    fill1 = ratio.shape[1] - mshape[1]    
+    fill0 = ratio.shape[0] - mshape[0]
+    fill1 = ratio.shape[1] - mshape[1]
     if fill0 > 0:
         _logger.info('filling %d rows in sigma image', fill0)
-        sigma[:, mshape[0]:] = sigma[:,mshape[0] - fill0: mshape[0]]
+        sigma[:, mshape[0]:] = sigma[:, mshape[0] - fill0:mshape[0]]
 
     if fill1 > 0:
         _logger.info('filling %d columns in sigma image', fill1)
-        sigma[mshape[1]:, :] = sigma[mshape[1] - fill1: mshape[1], :]
+        sigma[mshape[1]:, :] = sigma[mshape[1] - fill1:mshape[1], :]
 
     invalid_sigma = sigma <= 0.0
     if numpy.any(invalid_sigma):

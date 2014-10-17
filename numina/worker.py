@@ -1,21 +1,21 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 
 import Queue
@@ -26,6 +26,7 @@ import sys
 from numina.extraiter import iterqueue
 
 _logger = logging.getLogger('worker')
+
 
 class WorkerPool(object):
     def __init__(self, qin=None):
@@ -51,7 +52,6 @@ class WorkerPool(object):
         self.pool.append(nt)
         nt.start()
 
-
     def stop(self):
         for _idx, nt in enumerate(self.pool):
             self.qin.put(None)
@@ -61,6 +61,7 @@ class WorkerPool(object):
 
     def enqueue(self, data):
         self.qin.put_nowait(data)
+
 
 class Worker(object):
     def __init__(self, node, qin, qout, qerr):

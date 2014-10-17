@@ -1,27 +1,31 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''
 Base metaclasses
 '''
 
 import collections
+from .dataholders import Product
+from .requirements import Requirement
+from .products import QualityControlProduct
+
 
 class StoreType(type):
     '''Metaclass for storing members.'''
@@ -37,19 +41,21 @@ class StoreType(type):
 
         for name, val in attributes.items():
             if cls.exclude(name, val):
-                filter_out[name] = cls.store(name, val)
+                nname, nval = cls.store(name, val)
+                filter_out[nname] = nval
             else:
                 filter_in[name] = val
-        return super(StoreType, cls).__new__(cls, classname, parents, filter_in)
+        return super(StoreType, cls).__new__(
+            cls, classname, parents, filter_in)
 
     def __setattr__(self, key, value):
         self._add_attr(key, value)
 
     def _add_attr(self, key, value):
-        if self.exclude(name, value):
+        if self.exclude(key, value):
             self.__stored__[key] = value
         else:
-            super(StoreType, cls).__setattr__(key, value)
+            super(StoreType, self).__setattr__(key, value)
 
     @classmethod
     def exclude(cls, name, value):
@@ -57,18 +63,20 @@ class StoreType(type):
 
     @classmethod
     def store(cls, name, value):
-        return value
+        return name, value
 
 # FIXME: this does not work due to this
 # http://comments.gmane.org/gmane.comp.python.devel/142467
-#class MapStoreType(StoreType, collections.Mapping)
-# Manual impl instead 
+# class MapStoreType(StoreType, collections.Mapping)
+# Using manual implementation instead
+
 
 class MapStoreType(StoreType):
     '''Metaclass for storing members with map interface.'''
     def __new__(cls, classname, parents, attributes):
-        return super(MapStoreType, cls).__new__(cls, classname, parents, attributes)
-    
+        return super(MapStoreType, cls).__new__(
+            cls, classname, parents, attributes)
+
     def __getitem__(self, name):
         return self.__stored__[name]
 
@@ -125,9 +133,53 @@ class MapStoreType(StoreType):
     __hash__ = None
 
     def __eq__(self, other):
-        if not isinstance(other, Mapping):
+        if not isinstance(other, collections.Mapping):
             return NotImplemented
         return dict(self.items()) == dict(other.items())
 
     def __ne__(self, other):
         return not (self == other)
+
+
+class RecipeInOutType(MapStoreType):
+    def __new__(cls, classname, parents, attributes):
+        # Handle checkers defined in base class
+        checkers = attributes.get('__checkers__', [])
+        for p in parents:
+            c = getattr(p, '__checkers__', [])
+            checkers.extend(c)
+        attributes['__checkers__'] = checkers
+        obj = super(RecipeInOutType, cls).__new__(
+            cls, classname, parents, attributes)
+        return obj
+
+    @classmethod
+    def store(cls, name, value):
+        if value.dest is None:
+            value.dest = name
+        nname = value.dest
+        return nname, value
+
+
+class RecipeRequirementsType(RecipeInOutType):
+    '''Metaclass for RecipeRequirements.'''
+    @classmethod
+    def exclude(cls, name, value):
+        return isinstance(value, Requirement)
+
+
+class RecipeResultType(RecipeInOutType):
+    '''Metaclass for RecipeResult.'''
+    @classmethod
+    def exclude(cls, name, value):
+        return isinstance(value, Product)
+
+
+class RecipeResultAutoQCType(RecipeResultType):
+    '''Metaclass for RecipeResult with added QC'''
+    def __new__(cls, classname, parents, attributes):
+        if 'qc' not in attributes:
+            attributes['qc'] = Product(QualityControlProduct)
+        return super(RecipeResultAutoQCType, cls).__new__(
+            cls, classname, parents, attributes
+            )

@@ -1,25 +1,26 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''Serialize objects using JSON.'''
 
 import json
+
 
 def to_json(obj):
     if hasattr(obj, '__getstate__'):
@@ -33,6 +34,7 @@ def to_json(obj):
             '__module__': obj.__class__.__module__,
             '__value__': dparam,
             }
+
 
 def obj_is_serialized_class(obj):
     '''Check if obj represents a serialized class.'''
@@ -48,9 +50,9 @@ def from_json(obj):
         _mod = __import__(modname, globals(), locals(), [clsname], -1)
         cls = getattr(_mod, clsname)
         result = super(type(cls), cls).__new__(cls)
-        
+
         dparam = deunicode_json(obj['__value__'])
-        
+
         if hasattr(result, '__setstate__'):
             result.__setstate__(dparam)
         else:
@@ -59,6 +61,7 @@ def from_json(obj):
     elif isinstance(obj, dict):
         return deunicode_json(obj)
     return obj
+
 
 def deunicode_json(obj):
     '''Convert unicode strings into plain strings recursively.'''
@@ -82,7 +85,7 @@ def deunicode_json(obj):
             except ValueError:
                 val = str(val)
         return val
-    
+
     return obj
 
 

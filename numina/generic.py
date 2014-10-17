@@ -1,23 +1,24 @@
 #
 # Copyright 2008-2014 Universidad Complutense de Madrid
-# 
+#
 # This file is part of Numina
-# 
+#
 # Numina is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # Numina is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 
 '''Very simple generic function implementation.'''
+
 
 class GenericFunction(object):
     '''A generic function representation.'''
@@ -27,15 +28,15 @@ class GenericFunction(object):
 
     def register(self, cls):
         '''Register a new type class with a generic function.
-                
+
         >>> @generic
         ... def store(obj, where):
         ...     print 'object not storable'
         ...
-        
+
         Classes managed by generic must be new type
-        
-        >>> class B(object): 
+
+        >>> class B(object):
         ...     pass
         ...
         >>> @store.register(B)
@@ -45,7 +46,7 @@ class GenericFunction(object):
         >>> b = B()
         >>> store(b, 'somewhere')
         Storing a B object in somewhere
-        
+
         '''
 
         def decorator(f):
@@ -56,12 +57,12 @@ class GenericFunction(object):
 
     def unregister(self, cls):
         '''Remove a registered class within a generic function.
-        
+
         >>> @generic
         ... def store(obj, where):
         ...     print 'object not storable'
-        ... 
-        >>> class B(object): 
+        ...
+        >>> class B(object):
         ...     pass
         ...
         >>> @store.register(B)
@@ -72,12 +73,11 @@ class GenericFunction(object):
         >>> b = B()
         >>> store(b, 'somewhere')
         object not storable
-        
+
         '''
 
         if cls in self._internal_map:
             del self._internal_map[cls]
-
 
     def __call__(self, *args):
         obj = args[0]
@@ -91,25 +91,26 @@ class GenericFunction(object):
                 return func(*args)
         else:
             return self._default_impl(*args)
-            
+
     def is_registered(self, cls):
         if cls in self._internal_map:
             return True
         return False
 
+
 def generic(function):
-    '''Decorate a function, making it the default implementation of a generic function.
-    
+    '''Create the default implementation of a generic function.
+
     >>> @generic
     ... def store(obj, where):
     ...     print 'object not storable'
-    ... 
+    ...
     >>> store('something', 'somewhere')
     object not storable
-    
+
     Classes managed by generic must be new type
-    
-    >>> class B(object): 
+
+    >>> class B(object):
     ...     pass
     ...
     >>> @store.register(B)
@@ -119,9 +120,9 @@ def generic(function):
     >>> b = B()
     >>> store(b, 'somewhere')
     Storing a B object in somewhere
-    
+
     generic follows inheritance diagram
-    
+
     >>> class C(B):
     ...    pass
     ...
@@ -130,5 +131,3 @@ def generic(function):
     Storing a B object in somewhere
     '''
     return GenericFunction(function)
-
-

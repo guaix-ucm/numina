@@ -18,7 +18,7 @@ packages installed in order to work properly:
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
  - astropy (http://www.astropy.org/)
- - PyYaml (http://http://pyyaml.org/)
+ - PyYaml (http://pyyaml.org/)
  
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
 
