@@ -21,6 +21,7 @@
 
 
 from numina.core.utils import AlwaysSuccessRecipe
+from numina.core.recipeinput import RecipeInputBuilderGTC
 from .stored import StoredProduct, StoredParameter
 from .stored import ObservingBlock
 from .absdal import AbsDAL
@@ -38,6 +39,10 @@ class MockDAL(AbsDAL):
     def search_recipe_from_ob(self, ob, pipeline):
 
         return AlwaysSuccessRecipe
+
+    def search_rib_from_ob(self, ob, pipeline):
+        # returns RecipeInputBuilder
+        return RecipeInputBuilderGTC
 
     def search_prod_type_tags(self, ins, type, tags, pipeline):
         '''Returns the first coincidence...'''
