@@ -20,12 +20,13 @@
 import numpy as np
 from astropy.modeling import FittableModel, Parameter, format_input
 
+
 def sum_of_gaussian_factory(N):
-    '''Return a model class of the sum of N gaussians and a constant background.'''
+    '''Return a model of the sum of N gaussians and a constant background.'''
 
     name = "SumNGauss%d" % N
     attr = {}
-    
+
     # parameters
     for i in range(N):
         key = "amplitude_%d" % i
@@ -34,27 +35,31 @@ def sum_of_gaussian_factory(N):
         attr[key] = Parameter(key)
         key = "stddev_%d" % i
         attr[key] = Parameter(key)
-        
+
     attr['background'] = Parameter('background', default=0.0)
-    
+
     def fit_eval(self, x, *args):
         result = x * 0 + args[-1]
         for i in range(N):
-            result += args[3*i] * np.exp(- 0.5 * (x - args[3*i+1]) ** 2 / args[3*i+2] ** 2)
+            result += args[3 * i] * \
+                np.exp(- 0.5 * (x - args[3 * i + 1])
+                       ** 2 / args[3 * i + 2] ** 2)
         return result
-    
+
     attr['eval'] = fit_eval
-    
+
     def deriv(self, x, *args):
-        #d_result = [1.0] * (3 * N+1)
-        d_result = np.ones(((3 * N+1), len(x)))
-        
+        d_result = np.ones(((3 * N + 1), len(x)))
+
         for i in range(N):
-            d_result[3 * i] = np.exp(-0.5 / args[3*i+2] ** 2 * (x - args[3*i+1]) ** 2)
-            d_result[3 * i + 1] = args[3*i] * d_result[3*i] * (x - args[3*i+1]) / args[3*i+2] ** 2
-            d_result[3 * i + 2] = args[3*i] * d_result[3*i] * (x - args[3*i+1]) ** 2 / args[3*i+2] ** 3
+            d_result[3 * i] = (np.exp(-0.5 / args[3 * i + 2] ** 2 *
+                                      (x - args[3 * i + 1]) ** 2))
+            d_result[3 * i + 1] = args[3 * i] * d_result[3 * i] * \
+                (x - args[3 * i + 1]) / args[3 * i + 2] ** 2
+            d_result[3 * i + 2] = args[3 * i] * d_result[3 * i] * \
+                (x - args[3 * i + 1]) ** 2 / args[3 * i + 2] ** 3
         return d_result
-    
+
     attr['fit_deriv'] = deriv
 
     @format_input
@@ -62,6 +67,6 @@ def sum_of_gaussian_factory(N):
         return self.eval(x, *self.param_sets)
 
     attr['__call__'] = __call__
-    
+
     klass = type(name, (FittableModel, ), attr)
     return klass
