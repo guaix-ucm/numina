@@ -32,14 +32,14 @@ def norm_pdf_t(x):
 
 
 def gauss_box_model(x, amplitude=1.0, location=0.0, s=1.0, d=0.5):
-    '''Integrate a gaussian profile.'''
+    '''Integrate a Gaussian profile.'''
     m2 = (x + d - location) / s
     m1 = (x - d - location) / s
     return amplitude * (norm.cdf(m2) - norm.cdf(m1))
 
 
 def gauss_box_model_deriv(x, amplitude=1.0, location=0.0, s=1.0, d=0.5):
-    '''Integrate a gaussian profile.'''
+    '''Integrate a Gaussian profile.'''
     z2 = (x + d - location) / s
     z1 = (x - d - location) / s
 

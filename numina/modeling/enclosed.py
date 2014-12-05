@@ -22,7 +22,7 @@ from astropy.modeling import FittableModel, Parameter, format_input
 
 
 class EnclosedGaussian(FittableModel):
-    '''Enclosed gaussian model'''
+    '''Enclosed Gaussian model'''
     amplitude = Parameter()
     stddev = Parameter()
 

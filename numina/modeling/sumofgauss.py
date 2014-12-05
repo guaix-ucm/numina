@@ -22,7 +22,7 @@ from astropy.modeling import FittableModel, Parameter, format_input
 
 
 def sum_of_gaussian_factory(N):
-    '''Return a model of the sum of N gaussians and a constant background.'''
+    '''Return a model of the sum of N Gaussians and a constant background.'''
 
     name = "SumNGauss%d" % N
     attr = {}
