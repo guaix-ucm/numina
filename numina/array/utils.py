@@ -41,11 +41,11 @@ def wcs_to_pix_np(w):
     return mm[::-1].astype('int')
 
 
-def slice_create(c, b, start=0, stop=None):
-    '''Return an slice with a simetric region around c.'''
+def slice_create(center, block, start=0, stop=None):
+    '''Return an slice with a symmetric region around center.'''
 
-    do = wc_to_pix_1d(c - b)
-    up = wc_to_pix_1d(c + b)
+    do = wc_to_pix_1d(center - block)
+    up = wc_to_pix_1d(center + block)
 
     l = max(start, do)
 
@@ -56,15 +56,18 @@ def slice_create(c, b, start=0, stop=None):
 
     return slice(l, h, 1)
 
+
 def expand_slice(s, a, b, start=0, stop=None):
     '''Expand a slice on the start/stop limits'''
     n1 = max(s.start - a, start)
     n2 = s.stop + b
     if stop is not None:
         n2 = min(n2, stop)
-                        
+
     return slice(n1, n2, 1)
+
 
 def expand_region(tuple_of_s, a, b, start=0, stop=None):
     '''Apply expend_slice on a tuple of slices'''
-    return tuple(expand_slice(s, a, b, start=start, stop=stop) for s in tuple_of_s)
+    return tuple(expand_slice(s, a, b, start=start, stop=stop)
+                 for s in tuple_of_s)
