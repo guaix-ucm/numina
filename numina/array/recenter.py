@@ -21,44 +21,17 @@
 
 from __future__ import division
 
-import math
-
 import numpy
 from scipy.spatial import distance
 
-
-# This is defined somewhere else
-def wc_to_pix_1d(w):
-    return int(math.floor(w+0.5))
-
-
-def wcs_to_pix(w):
-    return [wc_to_pix_1d(w1) for w1 in w[::-1]]
-
-
-def wcs_to_pix_np(w):
-    wnp = numpy.asarray(w)
-    mm = numpy.floor(wnp + 0.5)
-    return mm[::-1].astype('int')
-
-
-def img_box(center, shape, box):
-
-    def slice_create(c, s, b):
-        do = wc_to_pix_1d(c - b)
-        up = wc_to_pix_1d(c + b)
-        l = max(0, do)
-        h = min(s, up + 1)
-        return slice(l, h, None)
-
-    return tuple(slice_create(*args) for args in zip(center, shape, box))
+from .utils import image_box
 
 
 # returns y,x
 def _centering_centroid_loop(data, center, box):
 
     # extract raster image
-    sl = img_box(center, data.shape, box)
+    sl = image_box(center, data.shape, box)
     raster = data[sl]
 
     # Background estimation for recentering
