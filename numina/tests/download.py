@@ -43,10 +43,12 @@ def download_cache(url, cache, bsize=BLOCK):
     hh.update(url)
     urldigest = hh.hexdigest()
     update_cache = False
+    # print 'urldigest', urldigest
+    # print cache._cache
     if cache.url_is_cached(urldigest):
         # Retrieve from cache
         etag = cache.retrieve(urldigest)
-#        print 'is in cache, etag is', etag
+        # print 'is in cache, etag is', etag
         req = urllib2.Request(url)
         req.add_header('If-None-Match', etag)
     else:
@@ -73,5 +75,7 @@ def download_cache(url, cache, bsize=BLOCK):
     if update_cache:
         # print 'updating cache'
         cache.update(urldigest, fd.name, etag)
+        cache.update_map()
 
     return fd
+

@@ -35,18 +35,22 @@ class DiskCache(object):
         if not os.path.isdir(self.cache_dir):
             # print 'create', self.cache_dir
             os.mkdir(self.cache_dir)
+            open(self.index_map, 'a').close()
 
         try:
-            print self.index_map
-            with open(self.index_map) as pk:
+            # print self.index_map
+            with open(self.index_map, 'r') as pk:
                 try:
                     self._cache = pickle.load(pk)
                 except EOFError:
+                    # print 'eoferror'
                     self._cache = {}
         except IOError:  # File does not exist?
+            open(self.index_map, 'a').close()
             self._cache = {}
 
-#        print 'loaded cache'
+        # print 'loaded cache'
+        # print self._cache
 
     def update_map(self):
         with open(self.index_map, 'w+') as pk:
