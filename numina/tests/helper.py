@@ -21,4 +21,3 @@ import pytest
 
 # pytest marker to mark tests which get data from the web
 remote = pytest.mark.remote
-

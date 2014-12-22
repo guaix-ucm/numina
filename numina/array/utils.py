@@ -60,7 +60,7 @@ def slice_create(center, block, start=0, stop=None):
 def image_box(center, shape, box):
     '''Create a region of size box, around a center in a image of shape.'''
     return tuple(slice_create(c, b, stop=s)
-                 for c,s,b in zip(center, shape, box))
+                 for c, s, b in zip(center, shape, box))
 
 
 def expand_slice(s, a, b, start=0, stop=None):

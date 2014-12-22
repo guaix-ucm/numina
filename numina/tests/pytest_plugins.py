@@ -19,6 +19,7 @@
 
 import pytest
 
+
 def pytest_addoption(parser):
     parser.addoption("--remote-data", action="store_true",
                      help="run tests with online data")
@@ -26,10 +27,14 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     # register an additional marker
-    config.addinivalue_line("markers",
-        "remote: mark test to run with online data")
+    config.addinivalue_line(
+        "markers",
+        "remote: mark test to run with online data"
+        )
 
 
 def pytest_runtest_setup(item):
-    if 'remote' in item.keywords and not item.config.getoption("--remote-data"):
+    if ('remote' in item.keywords and
+            not item.config.getoption("--remote-data")):
+
         pytest.skip("need --remote-data option to run")

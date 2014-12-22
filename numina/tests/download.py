@@ -78,4 +78,3 @@ def download_cache(url, cache, bsize=BLOCK):
         cache.update_map()
 
     return fd
-
