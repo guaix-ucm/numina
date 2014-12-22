@@ -21,7 +21,7 @@ import pytest
 
 
 def pytest_addoption(parser):
-    parser.addoption("--remote-data", action="store_true",
+    parser.addoption("--remote-data", action="store_true", default=False,
                      help="run tests with online data")
 
 
