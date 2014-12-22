@@ -29,6 +29,7 @@ import abc
 import traceback
 import logging
 
+from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeRequirements as RecipeRequirementsClass
@@ -106,3 +107,10 @@ class BaseRecipe(object):
                 traceback.format_exc()
                 )
         return result
+
+    def set_base_headers(self, hdr):
+        '''Set metadata in FITS headers.'''
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        return hdr
