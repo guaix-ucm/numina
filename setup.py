@@ -62,6 +62,7 @@ setup(name='numina',
       setup_requires=['numpy'],
       install_requires=REQUIRES,
       use_2to3 = True,
+      zip_safe=False,
       test_suite= "numina.tests",
       cmdclass=cmdclass,
       classifiers=[
