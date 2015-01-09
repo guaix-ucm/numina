@@ -24,6 +24,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal, assert_allclose
 from astropy.modeling.models import Gaussian2D
 
+from ...constants import FWHM_G
 from ..fwhm import compute_fwhm_2d_simple
 from ..fwhm import compute_fwhm_1d_simple
 
@@ -38,8 +39,8 @@ def test_fwhm_2d_simple():
     y, x = np.mgrid[:250, :250]
     img = g2d_model(x, y)
     _peak, fwhmx, fwhmy = compute_fwhm_2d_simple(img, xcenter, ycenter)
-    assert_allclose(fwhmx, 2.3548200450309493 * xsig, rtol=1e-3)
-    assert_allclose(fwhmy, 2.3548200450309493 * ysig, rtol=1e-3)
+    assert_allclose(fwhmx, FWHM_G * xsig, rtol=1e-3)
+    assert_allclose(fwhmy, FWHM_G * ysig, rtol=1e-3)
 
 
 def test_fwhm_1d_simple():
@@ -62,7 +63,7 @@ def test_fwhm_1d_simple():
     Fr_ref = np.exp(-0.5 * ((rad - center) / sigma)**2)
 
     peak, fwhm = compute_fwhm_1d_simple(Fr_ref, center)
-    assert_allclose(fwhm, 2.3548200450309493 * sigma, rtol=1e-4)
+    assert_allclose(fwhm, FWHM_G * sigma, rtol=1e-4)
 
     # Test with a gaussian, not starting in 0
     rad = np.arange(10, 260, 1.0)
@@ -71,4 +72,4 @@ def test_fwhm_1d_simple():
     Fr_ref = np.exp(-0.5 * ((rad - center) / sigma)**2)
 
     peak, fwhm = compute_fwhm_1d_simple(Fr_ref, center, rad)
-    assert_allclose(fwhm, 2.3548200450309493 * sigma, rtol=1e-4)
+    assert_allclose(fwhm, FWHM_G * sigma, rtol=1e-4)
