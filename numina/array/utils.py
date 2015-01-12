@@ -63,6 +63,15 @@ def image_box(center, shape, box):
                  for c, s, b in zip(center, shape, box))
 
 
+def image_box2d(x, y, shape, box):
+    return image_box((y, x), shape, box)
+
+
+def extent(sl):
+    result = [sl[1].start-0.5, sl[1].stop-0.5, sl[0].start-0.5, sl[0].stop-0.5]
+    return result
+
+
 def expand_slice(s, a, b, start=0, stop=None):
     '''Expand a slice on the start/stop limits'''
     n1 = max(s.start - a, start)
