@@ -22,12 +22,9 @@
 from __future__ import division
 
 import numpy as np
+import scipy.interpolate as itpl
 
-from numina.array.utils import (image_box, wc_to_pix_1d)
-
-
-def image_box2d(x, y, shape, box):
-    return image_box((y, x), shape, box)
+from numina.array.utils import wc_to_pix_1d
 
 
 def compute_fwhm_2d_simple(img, xc, yc):
@@ -45,6 +42,30 @@ def compute_fwhm_2d_simple(img, xc, yc):
 
     fwhm_x, _codex, _msgx = compute_fwhm_1d(X, res11 - 0.5 * peak, xc, xpix)
     fwhm_y, _codey, _msgy = compute_fwhm_1d(Y, res22 - 0.5 * peak, yc, ypix)
+
+    return peak, fwhm_x, fwhm_y
+
+
+def compute_fwhm_2d_spline(img, xc, yc):
+
+    Y = np.arange(0.0, img.shape[1], 1.0)
+    X = np.arange(0.0, img.shape[0], 1.0)
+
+    xpix = wc_to_pix_1d(xc)
+    ypix = wc_to_pix_1d(yc)
+    # The image is already cropped
+
+    bb = itpl.RectBivariateSpline(X, Y, img)
+    # We assume that the peak is in the center...
+    peak = bb(xc, yc)[0, 0]
+
+    U = X
+    V = bb.ev(U, [yc for _ in U]) - 0.5 * peak
+    fwhm_x, _codex, _msgx = compute_fwhm_1d(U, V, yc, ypix)
+
+    U = Y
+    V = bb.ev([xc for _ in U], U) - 0.5 * peak
+    fwhm_y, _codey, _msgy = compute_fwhm_1d(U, V, xc, xpix)
 
     return peak, fwhm_x, fwhm_y
 
