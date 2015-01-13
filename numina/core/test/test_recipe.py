@@ -19,36 +19,45 @@
 
 '''Unit test for RecipeBase.'''
 
-import unittest
-import collections
+from ..recipes import RecipeType
+from ..recipeinout import RecipeRequirements, RecipeResult
+from ..requirements import ObservationResultRequirement
+from ..dataholders import Product
 
-from numina.core import BaseRecipe
+def test_metaclass_empty_base():
+    
+    class TestRecipe(object):
+        __metaclass__ = RecipeType
 
+    assert hasattr(TestRecipe, 'RecipeRequirements')
+    
+    assert hasattr(TestRecipe, 'RecipeResult')
+    
+    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+    
+    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+    
+    assert TestRecipe.RecipeRequirements.__name__ == 'RecipeRequirements'
+    
+    assert TestRecipe.RecipeResult.__name__ == 'RecipeResult'
+    
+def test_metaclass():
 
-class Test(BaseRecipe):
-    '''Minimal class that implements RecipeBase.'''
-    def __init__(self, param, runinfo):
-        super(Test, self).__init__(param, runinfo)
+    class TestRecipe(object):
+        __metaclass__ = RecipeType
+        
+        obsresult = ObservationResultRequirement()
+        someresult = Product(int, 'Some integer')
 
-    def run(self):
-        return {}
+    assert hasattr(TestRecipe, 'RecipeRequirements')
+    
+    assert hasattr(TestRecipe, 'RecipeResult')
+    
+    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+    
+    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+    
+    assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
+    
+    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
 
-
-class RecipeTestCase(unittest.TestCase):
-    '''Test of the Recipebase class.'''
-    def setUp(self):
-        '''Set up TestCase.'''
-        self.rc = Test({}, {})
-
-    def test1(self):
-        self.assertTrue(isinstance(self.rc, collections.Callable))
-
-
-def test_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(RecipeTestCase))
-    return suite
-
-if __name__ == '__main__':
-    # unittest.main(defaultTest='test_suite')
-    unittest.TextTestRunner(verbosity=2).run(test_suite())

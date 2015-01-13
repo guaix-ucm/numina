@@ -114,3 +114,108 @@ class BaseRecipe(object):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
+
+from .recipeinout import RecipeResult, RecipeRequirements
+from .dataholders import Product
+from .requirements import Requirement
+
+class RecipeType(type):
+    '''Metaclass for Recipe.'''
+    def __new__(cls, classname, parents, attributes):
+        filter_reqs = {}
+        filter_prods = {}
+        filter_attr = {}
+
+        for name, val in attributes.items():
+            if isinstance(val, Requirement):
+                filter_reqs[name] = val
+            elif isinstance(val, Product):
+                filter_prods[name] = val
+            else:
+                filter_attr[name] = val
+
+        if filter_reqs:
+            reqs_name = '%sRequirements' % classname
+            ReqsClass= type(reqs_name, (RecipeRequirements,), filter_reqs)
+        else:
+            ReqsClass = RecipeRequirements
+
+        if filter_prods:
+            result_name = '%sResult' % classname
+            ResultClass = type(result_name, (RecipeResult,), filter_prods)
+        else:
+            ResultClass = RecipeResult
+
+        filter_attr['RecipeResult'] = ResultClass
+        filter_attr['RecipeRequirements'] = ReqsClass
+        return super(RecipeType, cls).__new__(
+            cls, classname, parents, filter_attr)
+
+class BaseRecipeAlt(object):
+    '''Base class for all instrument recipes'''
+
+    __metaclass__ = RecipeType
+
+    # Recipe own logger
+    logger = _logger
+
+    def __init__(self, *args, **kwds):
+        super(BaseRecipeAlt, self).__init__()
+        self.__author__ = 'Unknown'
+        self.__version__ = '0.0.0'
+        # These two are maintained
+        # for the moment
+        self.environ = {}
+        self.runinfo = {}
+        #
+        self.instrument = None
+        self.configure(**kwds)
+
+    def configure(self, **kwds):
+        if 'author' in kwds:
+            self.__author__ = kwds['author']
+        if 'version' in kwds:
+            self.__version__ = kwds['version']
+        if 'instrument' in kwds:
+            self.instrument = kwds['instrument']
+        if 'runinfo' in kwds:
+            self.runinfo = kwds['runinfo']
+
+    @classmethod
+    def create_result(cls, *args, **kwds):
+        '''
+        Pass the result arguments to the RecipeResult constructor
+        '''
+        return cls.RecipeResult(*args, **kwds)
+
+    def run(self, recipe_input):
+        raise NotImplementedError
+    
+    def __call__(self, recipe_input):
+        '''
+        Process the result of the observing block with the
+        Recipe.
+
+        :param recipe_input: the input appropriated for the Recipe
+        :param type: RecipeRequirement
+        :rtype: a RecipeResult object or an error
+
+        '''
+
+        try:
+            result = self.run(recipe_input)
+        except Exception as exc:
+            _logger.error("During recipe execution %s", exc)
+            return ErrorRecipeResult(
+                exc.__class__.__name__,
+                str(exc),
+                traceback.format_exc()
+                )
+        return result
+
+    def set_base_headers(self, hdr):
+        '''Set metadata in FITS headers.'''
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        return hdr
