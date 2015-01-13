@@ -17,12 +17,17 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 '''Unit test for RecipeBase.'''
 
 from ..recipes import RecipeType
+from ..recipes import BaseRecipeAutoQC
 from ..recipeinout import RecipeRequirements, RecipeResult
+from ..recipeinout import RecipeResultAutoQC
 from ..requirements import ObservationResultRequirement
 from ..dataholders import Product
+from ..products import QualityControlProduct
+
 
 def test_metaclass_empty_base():
     
@@ -61,3 +66,31 @@ def test_metaclass():
     
     assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
 
+def test_recipe_with_autoqc():
+
+    class TestRecipe(BaseRecipeAutoQC):
+        
+        obsresult = ObservationResultRequirement()
+        
+        someresult = Product(int, 'Some integer')
+
+    assert hasattr(TestRecipe, 'RecipeRequirements')
+    
+    assert hasattr(TestRecipe, 'RecipeResult')
+    
+    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+    
+    assert issubclass(TestRecipe.RecipeResult, RecipeResultAutoQC)
+    
+    assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
+    
+    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+    
+    assert 'qc' in TestRecipe.RecipeResult
+    
+    for prod in TestRecipe.RecipeResult.values():
+        assert isinstance(prod, Product)
+    
+    qc = TestRecipe.RecipeResult['qc']
+    
+    assert isinstance(qc.type, QualityControlProduct)
