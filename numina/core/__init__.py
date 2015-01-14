@@ -18,6 +18,7 @@
 #
 
 from .recipes import BaseRecipe
+from .recipes import BaseRecipeAutoQC
 from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import Instrument, Pipeline, InstrumentConfiguration
