@@ -46,7 +46,7 @@ def test_metaclass_empty_base():
 
     assert TestRecipe.RecipeResult.__name__ == 'RecipeResult'
 
-    
+
 def test_metaclass():
 
     class TestRecipe(object):
