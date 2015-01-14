@@ -24,8 +24,6 @@ import logging
 
 from astropy.io import fits
 
-from numina.core import DataFrame
-
 
 class FITSHistoryHandler(logging.Handler):
     '''Logging handler using HISTORY FITS cards'''
