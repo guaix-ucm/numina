@@ -41,6 +41,7 @@ def list_recipes():
     '''List all defined recipes'''
     return BaseRecipe.__subclasses__()
 
+
 class _BaseRecipeMethods(object):
     '''Base class for all instrument recipes'''
 
@@ -144,7 +145,7 @@ class RecipeType(type):
                 filter_attr[name] = val
 
         ReqsClass = cls.create_req_class(classname, filter_reqs)
-        
+
         ResultClass = cls.create_prod_class(classname, filter_prods)
 
         filter_attr['RecipeResult'] = ResultClass
@@ -156,7 +157,7 @@ class RecipeType(type):
     def create_req_class(cls, classname, attributes):
         if attributes:
             reqs_name = '%sRequirements' % classname
-            ReqsClass= type(reqs_name, (RecipeRequirements,), attributes)
+            ReqsClass = type(reqs_name, (RecipeRequirements,), attributes)
         else:
             ReqsClass = RecipeRequirements
         return ReqsClass

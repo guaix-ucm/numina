@@ -30,67 +30,67 @@ from ..products import QualityControlProduct
 
 
 def test_metaclass_empty_base():
-    
+
     class TestRecipe(object):
         __metaclass__ = RecipeType
 
     assert hasattr(TestRecipe, 'RecipeRequirements')
-    
+
     assert hasattr(TestRecipe, 'RecipeResult')
-    
+
     assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
-    
+
     assert issubclass(TestRecipe.RecipeResult, RecipeResult)
-    
+
     assert TestRecipe.RecipeRequirements.__name__ == 'RecipeRequirements'
-    
+
     assert TestRecipe.RecipeResult.__name__ == 'RecipeResult'
+
     
 def test_metaclass():
 
     class TestRecipe(object):
         __metaclass__ = RecipeType
-        
+
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 
     assert hasattr(TestRecipe, 'RecipeRequirements')
-    
+
     assert hasattr(TestRecipe, 'RecipeResult')
-    
+
     assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
-    
+
     assert issubclass(TestRecipe.RecipeResult, RecipeResult)
-    
+
     assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
-    
+
     assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+
 
 def test_recipe_with_autoqc():
 
     class TestRecipe(BaseRecipeAutoQC):
-        
         obsresult = ObservationResultRequirement()
-        
         someresult = Product(int, 'Some integer')
 
     assert hasattr(TestRecipe, 'RecipeRequirements')
-    
+
     assert hasattr(TestRecipe, 'RecipeResult')
-    
+
     assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
-    
+
     assert issubclass(TestRecipe.RecipeResult, RecipeResultAutoQC)
-    
+
     assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
-    
+
     assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
-    
+
     assert 'qc' in TestRecipe.RecipeResult
-    
+
     for prod in TestRecipe.RecipeResult.values():
         assert isinstance(prod, Product)
-    
+
     qc = TestRecipe.RecipeResult['qc']
-    
+
     assert isinstance(qc.type, QualityControlProduct)
