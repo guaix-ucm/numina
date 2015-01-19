@@ -20,8 +20,18 @@
 import pytest
 
 
+@pytest.fixture
+def numinatmpdir(tmpdir):
+    '''return a temporary directory path object
+    for numina, derived from tmpdir
+    '''
+    tmpdir.mkdir('_work')
+    tmpdir.mkdir('_data')
+    return tmpdir
+
+
 def pytest_addoption(parser):
-    parser.addoption("--remote-data", action="store_true", default=False,
+    parser.addoption("--run-remote", action="store_true", default=False,
                      help="run tests with online data")
 
 
@@ -35,6 +45,6 @@ def pytest_configure(config):
 
 def pytest_runtest_setup(item):
     if ('remote' in item.keywords and
-            not item.config.getoption("--remote-data")):
+            not item.config.getoption("--run-remote")):
 
-        pytest.skip("need --remote-data option to run")
+        pytest.skip("need --run-remote option to run")
