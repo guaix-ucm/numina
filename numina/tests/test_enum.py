@@ -17,8 +17,26 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numina import enum
+from ..enum import Enum
 
 
 def test_enum():
-    assert 1 == 1
+    
+    class Color(Enum):
+        red = 1
+        green = 2
+        blue = 3
+    
+    assert Color.red is Color.red
+    
+    for i in Color:
+        assert i
+        
+    class OtherColor(Enum):
+        red = 1
+        green = 2
+        blue = 3
+    
+    # The same name in different classes can't be compared
+    assert Color.red != OtherColor.red
+
