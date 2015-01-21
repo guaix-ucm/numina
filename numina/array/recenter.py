@@ -21,17 +21,44 @@
 
 from __future__ import division
 
+import math
+
 import numpy
 from scipy.spatial import distance
 
-from .utils import image_box
+
+# This is defined somewhere else
+def wc_to_pix_1d(w):
+    return int(math.floor(w+0.5))
+
+
+def wcs_to_pix(w):
+    return [wc_to_pix_1d(w1) for w1 in w[::-1]]
+
+
+def wcs_to_pix_np(w):
+    wnp = numpy.asarray(w)
+    mm = numpy.floor(wnp + 0.5)
+    return mm[::-1].astype('int')
+
+
+def img_box(center, shape, box):
+
+    def slice_create(c, s, b):
+        do = wc_to_pix_1d(c - b)
+        up = wc_to_pix_1d(c + b)
+        l = max(0, do)
+        h = min(s, up + 1)
+        return slice(l, h, None)
+
+    return tuple(slice_create(*args) for args in zip(center, shape, box))
 
 
 # returns y,x
 def _centering_centroid_loop(data, center, box):
 
     # extract raster image
-    sl = image_box(center, data.shape, box)
+    sl = img_box(center, data.shape, box)
     raster = data[sl]
 
     # Background estimation for recentering
@@ -76,6 +103,17 @@ def _centering_centroid_loop_xy(data, center_xy, box):
 
 def centering_centroid(data, xi, yi, box, nloop=10,
                        toldist=1e-3, maxdist=10.0):
+    '''
+        returns x, y, background, status, messsage
+        
+        status is 
+          * 0: not recentering
+          * 1: recentering successful
+          * 2: maximum distance reached
+          * 3: not converged
+    '''
+    
+
 
     # Store original center
     cxy = (xi, yi)
@@ -84,7 +122,7 @@ def centering_centroid(data, xi, yi, box, nloop=10,
     back = 0.0
 
     if nloop == 0:
-        return xi, yi, 0.0, 'not recentering'
+        return xi, yi, 0.0, 0, 'not recentering'
 
     for i in range(nloop):
         nxy, back = _centering_centroid_loop_xy(data, cxy, box)
@@ -93,13 +131,13 @@ def centering_centroid(data, xi, yi, box, nloop=10,
         dst = distance.euclidean(origin, nxy)
         if dst > maxdist:
             msg = 'maximum distance (%5.2f) from origin reached' % maxdist
-            return cxy[0], cxy[1], back, msg
+            return cxy[0], cxy[1], back, 2, msg
 
         # check convergence
         dst = distance.euclidean(nxy, cxy)
         if dst < toldist:
-            return nxy[0], nxy[1], back, 'converged in iteration %i' % i
+            return nxy[0], nxy[1], back, 1, 'converged in iteration %i' % i
         else:
             cxy = nxy
 
-    return nxy[0], nxy[1], back, 'not converged in %i iterations' % nloop
+    return nxy[0], nxy[1], back, 3, 'not converged in %i iterations' % nloop
