@@ -27,17 +27,11 @@
 .. automodule:: numina.core.products
    :members:
 
-:mod:`numina.core.recipereqs` --- 
+:mod:`numina.core.recipeinout` --- 
 ==================================================
 
-.. automodule:: numina.core.recipereqs
-   :synopsis:  Base classes for Recipe Requirements
-
-:mod:`numina.core.reciperesult` --- 
-==================================================
-
-.. automodule:: numina.core.reciperesult
-   :synopsis:  Base classes for Recipe Results
+.. automodule:: numina.core.recipeinout
+   :synopsis:  Base classes for Recipe Requirements and Results
 
 :mod:`numina.core.recipes` --- 
 ==================================================

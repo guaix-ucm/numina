@@ -1,7 +1,7 @@
 
-:mod:`numina.xdgdirs` --- 
+:mod:`numina.user.xdgdirs` --- 
 ==========================================
 
-.. automodule:: numina.xdgdirs
+.. automodule:: numina.user.xdgdirs
    :synopsis: TBD
    :members:

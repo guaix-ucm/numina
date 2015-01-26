@@ -6,9 +6,3 @@
    :synopsis: Frame manipulation
    :members:
 
-:mod:`numina.frame.aperture` --- 
-==========================================
-
-.. automodule:: numina.frame.aperture
-   :synopsis: Frame manipulation
-   :members:

@@ -1,9 +1,9 @@
 
-:mod:`numina.qa` --- Quality Assess for Numina 
-==============================================
+:mod:`numina.core.qc` --- Quality Control for Numina 
+=======================================================
 
-.. automodule:: numina.qa
-   :synopsis:  Quality Assess for Numina
+.. automodule:: numina.core.qc
+   :synopsis:  Quality Control for Numina
 
 
 This moudle defines functions and classes which implement
@@ -12,7 +12,7 @@ quality asses for Numina-based applications.
 QA Levels
 ---------
 
-The numeric values of the QA levels are given in this table.
+The numeric values of the QC levels are given in this table.
 
 +--------------+---------------+
 | Level        | Numeric value |
