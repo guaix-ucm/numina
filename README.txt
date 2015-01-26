@@ -17,15 +17,16 @@ packages installed in order to work properly:
 
  - numpy (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
- - astropy (http://www.astropy.org/)
+ - astropy >= 0.4 (http://www.astropy.org/)
  - PyYaml (http://pyyaml.org/)
  
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
 
 Additional packages are optionally required:
- - sphinx (http://sphinx.pocoo.org) to build the documentation
+ - sphinx (http://sphinx-doc.org) to build the documentation
+ - pytest (http://pytest.org) for testing
 
-Webpage: https://guaix.fis.ucm.es/projects/emir
+Webpage: https://guaix.fis.ucm.es/projects/numina
 Maintainer: sergiopr@fis.ucm.es
 
 
@@ -62,8 +63,8 @@ And then installed following the standard procedure:::
 
 Building the documentation
 ---------------------------
-The Numina documentation is base on `sphinx`_. With the package installed, the 
-html documentation can be built from the `doc` directory::
+The Numina documentation is based on `sphinx`_. With the package installed,
+the html documentation can be built from the `doc` directory::
 
   $ cd doc
   $ make html
