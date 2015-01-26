@@ -19,4 +19,4 @@
 
 '''Numina version.'''
 
-version = '0.13.dev'
+version = '0.13.0'
