@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,22 +21,21 @@ from ..enum import Enum
 
 
 def test_enum():
-    
+
     class Color(Enum):
         red = 1
         green = 2
         blue = 3
-    
+
     assert Color.red is Color.red
-    
+
     for i in Color:
         assert i
-        
+
     class OtherColor(Enum):
         red = 1
         green = 2
         blue = 3
-    
+
     # The same name in different classes can't be compared
     assert Color.red != OtherColor.red
-
