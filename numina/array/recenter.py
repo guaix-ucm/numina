@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2014 Universidad Complutense de Madrid
+# Copyright 2013-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -103,6 +103,15 @@ def _centering_centroid_loop_xy(data, center_xy, box):
 
 def centering_centroid(data, xi, yi, box, nloop=10,
                        toldist=1e-3, maxdist=10.0):
+    '''
+        returns x, y, background, status, message
+
+        status is:
+          * 0: not recentering
+          * 1: recentering successful
+          * 2: maximum distance reached
+          * 3: not converged
+    '''
 
     # Store original center
     cxy = (xi, yi)
@@ -111,7 +120,7 @@ def centering_centroid(data, xi, yi, box, nloop=10,
     back = 0.0
 
     if nloop == 0:
-        return xi, yi, 0.0, 'not recentering'
+        return xi, yi, 0.0, 0, 'not recentering'
 
     for i in range(nloop):
         nxy, back = _centering_centroid_loop_xy(data, cxy, box)
@@ -120,13 +129,13 @@ def centering_centroid(data, xi, yi, box, nloop=10,
         dst = distance.euclidean(origin, nxy)
         if dst > maxdist:
             msg = 'maximum distance (%5.2f) from origin reached' % maxdist
-            return cxy[0], cxy[1], back, msg
+            return cxy[0], cxy[1], back, 2, msg
 
         # check convergence
         dst = distance.euclidean(nxy, cxy)
         if dst < toldist:
-            return nxy[0], nxy[1], back, 'converged in iteration %i' % i
+            return nxy[0], nxy[1], back, 1, 'converged in iteration %i' % i
         else:
             cxy = nxy
 
-    return nxy[0], nxy[1], back, 'not converged in %i iterations' % nloop
+    return nxy[0], nxy[1], back, 3, 'not converged in %i iterations' % nloop

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -129,9 +129,6 @@ class MapStoreType(StoreType):
         "D.values() -> list of D's values"
         return [self[key] for key in self]
 
-    # Mappings are not hashable by default, but subclasses can change this
-    __hash__ = None
-
     def __eq__(self, other):
         if not isinstance(other, collections.Mapping):
             return NotImplemented
@@ -139,6 +136,9 @@ class MapStoreType(StoreType):
 
     def __ne__(self, other):
         return not (self == other)
+
+# Register as a mapping
+collections.Mapping.register(MapStoreType)  # @UndefinedVariable
 
 
 class RecipeInOutType(MapStoreType):

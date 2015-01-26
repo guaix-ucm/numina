@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,13 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Numina data processing system.'''
+'''Constants for the numina package.'''
 
-import logging
+# Factor to obtain FWHM in Gaussian profile from sigma
+FWHM_G = 2.3548200450309493
 
-from .version import version
-
-__version__ = version
-
-# Top level NullHandler
-logging.getLogger("numina").addHandler(logging.NullHandler())
+# Square root of two pi
+M_SQRT_2_PI = 2.5066282746310005024157652848110452530069867406099383166299

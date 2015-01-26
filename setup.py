@@ -43,11 +43,7 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-# requires is not used by pip
-# but install_requires is not supported 
-# http://bugs.python.org/issue1635217
-REQUIRES = ['setuptools', 'numpy (>=1.6)', 'astropy', 'scipy', 'PyYaml']
-IREQUIRES = ['setuptools', 'numpy>=1.6', 'astropy', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'numpy>=1.6', 'astropy>=0.4', 'scipy', 'PyYaml']
 
 from numina import __version__
 
@@ -63,17 +59,17 @@ setup(name='numina',
                    },
       ext_modules=[ext1, ext2, ext3],
       entry_points={'console_scripts': ['numina = numina.user:main']},
-      requires=REQUIRES,
       setup_requires=['numpy'],
-      install_requires=IREQUIRES,
-      use_2to3 = True,
+      install_requires=REQUIRES,
+      use_2to3=True,
+      zip_safe=False,
       test_suite= "numina.tests",
       cmdclass=cmdclass,
       classifiers=[
                    "Programming Language :: C",
                    "Programming Language :: Cython",
                    "Programming Language :: Python :: 2.7",
-                   "Programming Language :: Python :: 3.0",
+                   "Programming Language :: Python :: 3.4",
                    "Programming Language :: Python :: Implementation :: CPython",
                    'Development Status :: 3 - Alpha',
                    "Environment :: Other Environment",

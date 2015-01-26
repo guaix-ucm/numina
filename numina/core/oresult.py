@@ -35,8 +35,16 @@ class ObservationResult(object):
         self.mode = mode
         self.instrument = None
         self.frames = []
+        self.parent = None
         self.children = []  # other ObservationResult
         self.pipeline = 'default'
+        self.prodid = None
+        self.tags = {}
+
+    def update_with_product(self, prod):
+        self.tags = prod.tags
+        self.files = [prod.content]
+        self.prodid = prod.id
 
 
 def dataframe_from_list(values):
@@ -63,30 +71,3 @@ def obsres_from_dict(values):
     obsres.frames = [dataframe_from_list(val) for val in values['frames']]
 
     return obsres
-
-# We are not using these two for the moment
-
-
-def frameinfo_from_list(values):
-    '''Build a FrameInformation object from a list.'''
-    frameinfo = FrameInformation()
-    if(isinstance(values, basestring)):
-        frameinfo.label = values
-        frameinfo.itype = 'UNKNOWN'
-    else:
-        # FIXME: modify when format is changed
-        # For this format
-        frameinfo.label = values[0]
-        frameinfo.itype = values[1]
-    return frameinfo
-
-
-class FrameInformation(object):
-    '''Information of a frame observed during a block.'''
-    def __init__(self):
-        self.label = None
-        self.itype = None
-
-    def __repr__(self):
-        fmt = 'FrameInformation(label=%r, itype=%r)'
-        return fmt % (self.label, self.itype)

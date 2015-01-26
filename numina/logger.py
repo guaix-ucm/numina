@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,8 +23,6 @@
 import logging
 
 from astropy.io import fits
-
-from numina.core import DataFrame
 
 
 class FITSHistoryHandler(logging.Handler):

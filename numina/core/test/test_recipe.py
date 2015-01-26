@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,38 +17,80 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 '''Unit test for RecipeBase.'''
 
-import unittest
-import collections
-
-from numina.core import BaseRecipe
-
-
-class Test(BaseRecipe):
-    '''Minimal class that implements RecipeBase.'''
-    def __init__(self, param, runinfo):
-        super(Test, self).__init__(param, runinfo)
-
-    def run(self):
-        return {}
+from ..recipes import RecipeType
+from ..recipes import BaseRecipeAutoQC
+from ..recipeinout import RecipeRequirements, RecipeResult
+from ..recipeinout import RecipeResultAutoQC
+from ..requirements import ObservationResultRequirement
+from ..dataholders import Product
+from ..products import QualityControlProduct
 
 
-class RecipeTestCase(unittest.TestCase):
-    '''Test of the Recipebase class.'''
-    def setUp(self):
-        '''Set up TestCase.'''
-        self.rc = Test({}, {})
+def test_metaclass_empty_base():
 
-    def test1(self):
-        self.assertTrue(isinstance(self.rc, collections.Callable))
+    class TestRecipe(object):
+        __metaclass__ = RecipeType
+
+    assert hasattr(TestRecipe, 'RecipeRequirements')
+
+    assert hasattr(TestRecipe, 'RecipeResult')
+
+    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+
+    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+
+    assert TestRecipe.RecipeRequirements.__name__ == 'RecipeRequirements'
+
+    assert TestRecipe.RecipeResult.__name__ == 'RecipeResult'
 
 
-def test_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(RecipeTestCase))
-    return suite
+def test_metaclass():
 
-if __name__ == '__main__':
-    # unittest.main(defaultTest='test_suite')
-    unittest.TextTestRunner(verbosity=2).run(test_suite())
+    class TestRecipe(object):
+        __metaclass__ = RecipeType
+
+        obsresult = ObservationResultRequirement()
+        someresult = Product(int, 'Some integer')
+
+    assert hasattr(TestRecipe, 'RecipeRequirements')
+
+    assert hasattr(TestRecipe, 'RecipeResult')
+
+    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+
+    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+
+    assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
+
+    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+
+
+def test_recipe_with_autoqc():
+
+    class TestRecipe(BaseRecipeAutoQC):
+        obsresult = ObservationResultRequirement()
+        someresult = Product(int, 'Some integer')
+
+    assert hasattr(TestRecipe, 'RecipeRequirements')
+
+    assert hasattr(TestRecipe, 'RecipeResult')
+
+    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+
+    assert issubclass(TestRecipe.RecipeResult, RecipeResultAutoQC)
+
+    assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
+
+    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+
+    assert 'qc' in TestRecipe.RecipeResult
+
+    for prod in TestRecipe.RecipeResult.values():
+        assert isinstance(prod, Product)
+
+    qc = TestRecipe.RecipeResult['qc']
+
+    assert isinstance(qc.type, QualityControlProduct)

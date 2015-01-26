@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2014 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,13 +17,9 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Numina data processing system.'''
-
-import logging
-
-from .version import version
-
-__version__ = version
-
-# Top level NullHandler
-logging.getLogger("numina").addHandler(logging.NullHandler())
+from .absdal import AbsDAL
+from .daliface import DALInterface
+from .daliface import NoResultFound
+from .stored import StoredParameter
+from .stored import StoredProduct
+from .stored import ObservingBlock

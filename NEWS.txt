@@ -1,4 +1,16 @@
+Version 0.13.0 (26 Jan 2015)
+----------------------------
+ Changes:
+  * Initial DAL implementation
+  * Ported to use py.test
+  * Ported to astropy 0.4
+  * New method to create automatically Requirements
+    and Products
+  * New recentering routine
+  * New routine for FHWM computation
+
 Version 0.12.2 (17 Oct 2014)
+----------------------------
  Fixes:
   * PEP8 fixes in the code
 

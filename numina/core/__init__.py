@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,6 +18,7 @@
 #
 
 from .recipes import BaseRecipe
+from .recipes import BaseRecipeAutoQC
 from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import Instrument, Pipeline, InstrumentConfiguration

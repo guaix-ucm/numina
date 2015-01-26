@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2014 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,13 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Numina data processing system.'''
-
-import logging
-
-from .version import version
-
-__version__ = version
-
-# Top level NullHandler
-logging.getLogger("numina").addHandler(logging.NullHandler())
+from .enclosed import EnclosedGaussian
+from .gaussbox import GaussBox
+from .sumofgauss import sum_of_gaussian_factory

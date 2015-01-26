@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,13 +17,18 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Numina data processing system.'''
+'''Global cache for testing.'''
 
-import logging
 
-from .version import version
+from .diskcache import NuminaDiskCache
+from .download import download_cache as base_download
+from .download import BLOCK
 
-__version__ = version
 
-# Top level NullHandler
-logging.getLogger("numina").addHandler(logging.NullHandler())
+# Initialize global cache
+testcache = NuminaDiskCache()
+testcache.load()
+
+
+def download_cache(url, bsize=BLOCK):
+    return base_download(url, testcache, bsize=bsize)

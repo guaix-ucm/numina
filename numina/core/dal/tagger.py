@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2014 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,13 +17,12 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Numina data processing system.'''
 
-import logging
+def tagger(instrument, mode):
+    '''Return a tagger function
 
-from .version import version
-
-__version__ = version
-
-# Top level NullHandler
-logging.getLogger("numina").addHandler(logging.NullHandler())
+    It takes a Observation result and
+    returns a dictionary with tags
+    specific for each mode
+    '''
+    return lambda x: {}
