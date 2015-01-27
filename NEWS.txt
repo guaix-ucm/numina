@@ -1,3 +1,8 @@
+Version 0.13.1 (27 Jan 2015)
+----------------------------
+ Fixes:
+  * Portability, code compiles with clang (#113)
+
 Version 0.13.0 (26 Jan 2015)
 ----------------------------
  Changes:
