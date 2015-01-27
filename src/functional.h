@@ -21,6 +21,8 @@
 #ifndef NU_FUNCTIONAL_H
 #define NU_FUNCTIONAL_H
 
+#include <functional>
+
 namespace Numina {
 
 template<class F1, class F2, class F3>

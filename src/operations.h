@@ -24,7 +24,7 @@
 #include <iterator>
 #include <algorithm>
 #include <numeric>
-#include <ext/functional>
+#include <functional>
 
 #include "zip_iterator.h"
 
@@ -277,6 +277,34 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
   return std::make_pair(pbegin, pend);
 }
 
+// Compares two std::pair-like objects. Returns true
+// if the first component of the first is less than the first component
+// of the second std::pair
+template<typename T, typename U>
+struct LessPair1st : public std::binary_function<T,U,bool> {
+  bool operator()(const T& a, const U& b) const {
+    return a.first < b.first;
+  }
+};
+
+// Checks if first component of a std::pair
+// is inside the range (low, high)
+// equivalent to return (low < x.first) && (high > x.first);
+template<typename T>
+class RangePair1st : public std::unary_function<T,bool> {
+public:
+  RangePair1st(double low, double high) : m_low(low), m_high(high)
+  {}
+
+  bool operator()(const T& x) const {
+    return (m_low < x.first) && (m_high > x.first);
+  }
+
+private:
+  double m_low;
+  double m_high;
+};
+
 template<typename Iterator1, typename Iterator2>
 std::pair<double, double>
 average_central_tendency_clip(Iterator1 begin, Iterator1 end, Iterator2 weights,
@@ -294,12 +322,8 @@ average_central_tendency_clip(Iterator1 begin, Iterator1 end, Iterator2 weights,
   _ZIter ned = make_zip_iterator(end, weights + n_elem);
 
   _ZIterPair result = reject_min_max(beg, ned, low, high,
-      // Compares two std::pair objects. Returns true
-      // if the first component of the first is less than the first component
-      // of the second std::pair
-      compose(std::less<typename std::iterator_traits<Iterator1>::value_type>(), __gnu_cxx::select1st<
-          typename _ZIter::value_type>(), __gnu_cxx::select1st<
-          typename _ZIter::value_type>()));
+      LessPair1st<typename _ZIter::value_type, typename _ZIter::value_type>()
+   );
 
   _IterPair itp_beg = result.first.get_iterator_pair();
   _IterPair itp_end = result.second.get_iterator_pair();
