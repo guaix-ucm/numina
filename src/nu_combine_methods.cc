@@ -19,7 +19,7 @@
  */
 
 #include <memory>
-#include <ext/functional>
+#include <functional>
 #include <cmath>
 
 #include "nu_combine_defs.h"
@@ -29,7 +29,8 @@
 
 using Numina::ZipIterator;
 using Numina::make_zip_iterator;
-using Numina::compose;
+using Numina::LessPair1st;
+using Numina::RangePair1st;
 using Numina::average_central_tendency;
 using Numina::average_central_tendency_clip;
 using Numina::median_central_tendency;
@@ -90,12 +91,8 @@ int NU_minmax_function(double *data, double *weights,
 
   ZIterPair result = reject_min_max(make_zip_iterator(data, weights),
       make_zip_iterator(data + size, weights + size), nmin, nmax,
-      // Compares two std::pair objects. Returns true
-      // if the first component of the first is less than the first component
-      // of the second std::pair
-      compose(std::less<double>(), __gnu_cxx::select1st<
-          ZIter::value_type>(), __gnu_cxx::select1st<
-          ZIter::value_type>()));
+      LessPair1st<typename ZIter::value_type, typename ZIter::value_type>()
+  );
 
   *out[2] = result.second - result.first;
   IterPair beg = result.first.get_iterator_pair();
@@ -130,19 +127,7 @@ int NU_sigmaclip_function(double *data, double *weights,
 
       const double low = c_mean - c_std * slow;
       const double high = c_mean + c_std * shigh;
-      ned = partition(beg, ned,
-          // Checks if first component of a std::pair
-          // is inside the range (low, high)
-          // equivalent to return (low < x.first) && (high > x.first);
-          __gnu_cxx::compose2(std::logical_and<bool>(),
-              __gnu_cxx::compose1(
-                  std::bind1st(std::less<double>(), low),
-                  __gnu_cxx::select1st<ZIter::value_type>()),
-              __gnu_cxx::compose1(
-                  std::bind1st(std::greater<double>(), high),
-                  __gnu_cxx::select1st<ZIter::value_type>())
-            )
-          );
+      ned = partition(beg, ned, RangePair1st<ZIter::value_type>(low, high));
 
       nc_size = std::distance(beg, ned);
       // We stop when std == 0, all the points would be reject otherwise
