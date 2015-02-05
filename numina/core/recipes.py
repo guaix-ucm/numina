@@ -37,11 +37,6 @@ from .recipeinout import RecipeRequirements as RecipeRequirementsClass
 _logger = logging.getLogger('numina')
 
 
-def list_recipes():
-    '''List all defined recipes'''
-    return BaseRecipe.__subclasses__()
-
-
 class _BaseRecipeMethods(object):
     '''Base class for all instrument recipes'''
 
