@@ -78,7 +78,7 @@ class RecipeTypeAutoQC(RecipeType):
             result_name = '%sResult' % classname
             ResultClass = type(result_name, (RecipeResultAutoQC,), attributes)
         else:
-            ResultClass = RecipeResult
+            ResultClass = RecipeResultAutoQC
 
         return ResultClass
 
