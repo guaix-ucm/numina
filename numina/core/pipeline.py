@@ -20,22 +20,11 @@
 '''DRP loader.'''
 
 import logging
-import importlib
 
 import pkg_resources
 
 
 _logger = logging.getLogger('numina')
-
-
-def import_object(path):
-    '''Import an object given its fully qualified name.'''
-    spl = path.split('.')
-    cls = spl[-1]
-    mods = '.'.join(spl[:-1])
-    mm = importlib.import_module(mods)
-    Cls = getattr(mm, cls)
-    return Cls
 
 
 class Pipeline(object):

@@ -24,7 +24,7 @@ from astropy.io import fits
 
 from .qc import QC
 from .pipeline import InstrumentConfiguration
-from .pipeline import import_object
+from .objimport import import_object
 from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType

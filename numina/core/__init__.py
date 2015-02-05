@@ -23,7 +23,7 @@ from .recipes import list_recipes
 from .dataframe import DataFrame
 from .pipeline import Instrument, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode
-from .pipeline import import_object
+from .objimport import import_object
 from .pipeline import init_drp_system
 from .pipelineload import drp_load
 from .requirements import DataProductRequirement
