@@ -19,7 +19,6 @@
 
 '''Metaclasses for Recipes.'''
 
-from .recipes import BaseRecipeMethods
 from .recipeinout import RecipeResult, RecipeRequirements
 from .recipeinout import RecipeResultAutoQC
 from .dataholders import Product
@@ -45,49 +44,36 @@ class RecipeType(type):
 
         ResultClass = cls.create_prod_class(classname, filter_prods)
 
+        filter_attr['Result'] = ResultClass
+        filter_attr['Requirements'] = ReqsClass
+        # TODO: Remove these in the future
         filter_attr['RecipeResult'] = ResultClass
         filter_attr['RecipeRequirements'] = ReqsClass
         return super(RecipeType, cls).__new__(
             cls, classname, parents, filter_attr)
 
     @classmethod
-    def create_req_class(cls, classname, attributes):
+    def create_gen_class(cls, classname, baseclass, attributes):
         if attributes:
-            reqs_name = '%sRequirements' % classname
-            ReqsClass = type(reqs_name, (RecipeRequirements,), attributes)
+            klass = type(classname, (baseclass,), attributes)
         else:
-            ReqsClass = RecipeRequirements
-        return ReqsClass
+            klass = baseclass
+        return klass
+
+    @classmethod
+    def create_req_class(cls, classname, attributes):
+        return cls.create_gen_class('%sRequirements' % classname,
+                                    RecipeRequirements, attributes)
 
     @classmethod
     def create_prod_class(cls, classname, attributes):
-        if attributes:
-            result_name = '%sResult' % classname
-            ResultClass = type(result_name, (RecipeResult,), attributes)
-        else:
-            ResultClass = RecipeResult
-
-        return ResultClass
+        return cls.create_gen_class('%sResult' % classname,
+                                    RecipeResult, attributes)
 
 
 class RecipeTypeAutoQC(RecipeType):
     '''Metaclass for Recipe with RecipeResultAutoQC.'''
     @classmethod
     def create_prod_class(cls, classname, attributes):
-        if attributes:
-            result_name = '%sResult' % classname
-            ResultClass = type(result_name, (RecipeResultAutoQC,), attributes)
-        else:
-            ResultClass = RecipeResultAutoQC
-
-        return ResultClass
-
-
-class BaseRecipeAlt(BaseRecipeMethods):
-    '''Base class for instrument recipes'''
-    __metaclass__ = RecipeType
-
-
-class BaseRecipeAutoQC(BaseRecipeMethods):
-    '''Base class for instrument recipes'''
-    __metaclass__ = RecipeTypeAutoQC
+        return cls.create_gen_class('%sResult' % classname,
+                                    RecipeResultAutoQC, attributes)

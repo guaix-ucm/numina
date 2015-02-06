@@ -33,6 +33,9 @@ from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeRequirements as RecipeRequirementsClass
+from .metarecipes import RecipeType
+from .metarecipes import RecipeTypeAutoQC
+
 
 _logger = logging.getLogger('numina')
 
@@ -116,3 +119,13 @@ class BaseRecipe(BaseRecipeMethods):
     @abc.abstractmethod
     def run(self, recipe_input):
         return self.create_result()
+
+
+class BaseRecipeAlt(BaseRecipeMethods):
+    '''Base class for instrument recipes'''
+    __metaclass__ = RecipeType
+
+
+class BaseRecipeAutoQC(BaseRecipeMethods):
+    '''Base class for instrument recipes'''
+    __metaclass__ = RecipeTypeAutoQC

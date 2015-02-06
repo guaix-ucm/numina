@@ -20,7 +20,7 @@
 
 '''Unit test for RecipeBase.'''
 
-from ..recipes import RecipeType
+from ..metarecipes import RecipeType
 from ..recipes import BaseRecipeAutoQC
 from ..recipeinout import RecipeRequirements, RecipeResult
 from ..recipeinout import RecipeResultAutoQC
@@ -37,6 +37,10 @@ def test_metaclass_empty_base():
     assert hasattr(TestRecipe, 'RecipeRequirements')
 
     assert hasattr(TestRecipe, 'RecipeResult')
+
+    assert hasattr(TestRecipe, 'Requirements')
+
+    assert hasattr(TestRecipe, 'Result')
 
     assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
 
@@ -56,12 +60,14 @@ def test_metaclass():
         someresult = Product(int, 'Some integer')
 
     assert hasattr(TestRecipe, 'RecipeRequirements')
+    assert hasattr(TestRecipe, 'Requirements')
 
     assert hasattr(TestRecipe, 'RecipeResult')
+    assert hasattr(TestRecipe, 'Result')
 
-    assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
+    assert issubclass(TestRecipe.Requirements, RecipeRequirements)
 
-    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+    assert issubclass(TestRecipe.Result, RecipeResult)
 
     assert TestRecipe.RecipeRequirements.__name__ == 'TestRecipeRequirements'
 
@@ -77,6 +83,10 @@ def test_recipe_with_autoqc():
     assert hasattr(TestRecipe, 'RecipeRequirements')
 
     assert hasattr(TestRecipe, 'RecipeResult')
+
+    assert hasattr(TestRecipe, 'Requirements')
+
+    assert hasattr(TestRecipe, 'Result')
 
     assert issubclass(TestRecipe.RecipeRequirements, RecipeRequirements)
 

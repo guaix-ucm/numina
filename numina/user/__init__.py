@@ -261,7 +261,7 @@ def print_recipe_template(recipe, name=None, insname=None,
     # Create a dictionary with tamplates
     requires = {}
     optional = {}
-    for req in recipe.RecipeRequirements.values():
+    for req in recipe.Requirements.values():
         if req.hidden:
             # I Do not want to print it
             continue
@@ -285,7 +285,7 @@ def print_recipe_template(recipe, name=None, insname=None,
         print('# end of optional requirements')
     print(yaml.dump(final), end='')
     print('#products:')
-    for prod in recipe.RecipeResult.values():
+    for prod in recipe.Result.values():
         print('# %s: %s' % print_io(prod))
     print('#logger:')
     print('# logfile: processing.log')
@@ -296,7 +296,7 @@ def print_recipe_template(recipe, name=None, insname=None,
 
 def print_requirements(recipe, pad=''):
 
-    for req in recipe.RecipeRequirements.values():
+    for req in recipe.Requirements.values():
         if req.hidden:
             # I Do not want to print it
             continue
@@ -750,12 +750,12 @@ def mode_run_common(args, mode):
         sys.exit(1)
 
     _logger.debug('parsing requirements')
-    for key, val in recipeclass.RecipeRequirements.iteritems():
+    for key, val in recipeclass.Requirements.iteritems():
         _logger.info("recipe requires %r", val.type.__class__)
         _logger.info("%r is %r", val.dest, getattr(rinput, val.dest))
 
     _logger.debug('parsing products')
-    for req in recipeclass.RecipeResult.values():
+    for req in recipeclass.Result.values():
         _logger.info('recipe provides %r', req)
 
     task = ProcessingTask(obsres=obsres, insconf=ins_conf)
