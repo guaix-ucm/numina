@@ -136,6 +136,8 @@ class define_result(object):
         self.klass = resultClass
 
     def __call__(self, klass):
+        klass.Result = self.klass
+        # TODO: remove this name in the future
         klass.RecipeResult = self.klass
         return klass
 
@@ -150,5 +152,7 @@ class define_requirements(object):
         self.klass = requirementClass
 
     def __call__(self, klass):
+        klass.Requirements = self.klass
+        # TODO: remove this name in the future
         klass.RecipeRequirements = self.klass
         return klass
