@@ -29,7 +29,7 @@ class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
         self = super(RecipeInOut, cls).__new__(cls)
         for key, prod in cls.iteritems():
-            store_val = True
+            convert_val = True
             if key in kwds:
                 val = kwds[key]
             else:
@@ -40,14 +40,14 @@ class RecipeInOut(object):
                     val = prod.type.default
                 elif prod.optional:
                     val = None
-                    store_val = False
+                    convert_val = False
                 else:
                     fmt = 'Required %r of type %r not defined'
                     msg = fmt % (key, prod.type)
                     raise ValueError(msg)
 
-            if store_val:
-                nval = prod.type.store(val)
+            if convert_val:
+                nval = prod.type.convert(val)
             else:
                 nval = val
 
@@ -90,7 +90,7 @@ class BaseRecipeResult(object):
     def __init__(self, *args, **kwds):
         super(BaseRecipeResult, self).__init__()
 
-    def suggest_store(self, *args, **kwds):
+    def suggest_convert(self, *args, **kwds):
         pass
 
 
@@ -116,7 +116,7 @@ class RecipeResult(RecipeInOut, BaseRecipeResult):
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
-    def suggest_store(self, **kwds):
+    def suggest_convert(self, **kwds):
         for k in kwds:
             mm = getattr(self, k)
             self.__class__[k].type.suggest(mm, kwds[k])

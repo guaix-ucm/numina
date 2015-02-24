@@ -60,7 +60,7 @@ class DataFrameType(DataProductType):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
 
-    def store(self, obj):
+    def convert(self, obj):
         # We accept None representing No Image
         if obj is None:
             return None
@@ -111,10 +111,10 @@ class ArrayType(DataProductType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
-    def store(self, obj):
-        return self.store_as_array(obj)
+    def convert(self, obj):
+        return self.convert_to__array(obj)
 
-    def store_as_array(self, obj):
+    def convert_to_array(self, obj):
         result = numpy.array(obj)
         return result
 
