@@ -71,6 +71,14 @@ class BaseRecipeMethods(object):
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
 
+
+    @classmethod
+    def create_requirements(cls, *args, **kwds):
+        '''
+        Pass the result arguments to the RecipeRequirements constructor
+        '''
+        return cls.RecipeRequirements(*args, **kwds)
+
     @classmethod
     def create_result(cls, *args, **kwds):
         '''
