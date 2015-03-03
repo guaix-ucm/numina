@@ -29,32 +29,16 @@ class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
         self = super(RecipeInOut, cls).__new__(cls)
         for key, prod in cls.iteritems():
-            convert_val = True
             if key in kwds:
-                val = kwds[key]
+                val = prod.convert(kwds[key])
             else:
                 # Value not defined
-                if prod.default is not None:
-                    val = prod.default
-                elif prod.type.default is not None:
-                    val = prod.type.default
-                elif prod.optional:
-                    val = None
-                    convert_val = False
-                else:
-                    fmt = 'Required %r of type %r not defined'
-                    msg = fmt % (key, prod.type)
-                    raise ValueError(msg)
+                val = prod.default_value()
 
-            if convert_val:
-                nval = prod.type.convert(val)
-            else:
-                nval = val
+            if prod.choices and (val not in prod.choices):
+                raise ValueError('%s not in %s' % (val, prod.choices))
 
-            if prod.choices and (nval not in prod.choices):
-                raise ValueError('%s not in %s' % (nval, prod.choices))
-
-            setattr(self, key, nval)
+            setattr(self, key, val)
         return self
 
     def __init__(self, *args, **kwds):
