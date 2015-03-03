@@ -32,6 +32,9 @@ class DataType(object):
     def convert(self, obj):
         return obj
 
+    def convert(self, obj):
+        return obj
+
     def validate(self, obj):
         if not isinstance(obj, self.python_type):
             raise ValidationError(obj, self.python_type)
