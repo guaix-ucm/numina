@@ -43,6 +43,30 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
+
+from setuptools.command.test import test as TestCommand
+
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = []
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(self.pytest_args)
+        sys.exit(errno)
+
+cmdclass['test'] = PyTest
+
 REQUIRES = ['setuptools', 'six', 'numpy>=1.6', 'astropy>=0.4', 'scipy', 'PyYaml']
 
 from numina import __version__
@@ -62,7 +86,8 @@ setup(name='numina',
       setup_requires=['numpy'],
       install_requires=REQUIRES,
       zip_safe=False,
-      test_suite= "numina.tests",
+      use2to3=False,
+      tests_require=['pytest'],
       cmdclass=cmdclass,
       classifiers=[
                    "Programming Language :: C",
