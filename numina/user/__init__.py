@@ -43,7 +43,9 @@ from numina.core.recipeinput import RecipeInputBuilder
 from numina.core.pipeline import init_backends
 
 from .xdgdirs import xdg_config_home
-from .store import store
+from .dump import dump
+import basedump
+from .helpers import ProcessingTask, WorkEnvironment, DiskStorage
 
 _logger = logging.getLogger("numina")
 
@@ -96,109 +98,12 @@ _logconf = {
     }
 
 
-class ProcessingTask(object):
-    def __init__(self, obsres=None, insconf=None):
-
-        self.observation = {}
-        self.runinfo = {}
-
-        if obsres:
-            self.observation['mode'] = obsres.mode
-            self.observation['observing_result'] = obsres.id
-            self.observation['instrument'] = obsres.instrument
-        else:
-            self.observation['mode'] = None
-            self.observation['observing_result'] = None
-            self.observation['instrument'] = None
-
-        if insconf:
-            self.observation['instrument_configuration'] = insconf
-
-
-class WorkEnvironment(object):
-    def __init__(self, basedir, workdir=None,
-                 resultsdir=None, datadir=None):
-
-        self.basedir = basedir
-
-        if workdir is None:
-            workdir = os.path.join(basedir, '_work')
-
-        self.workdir = os.path.abspath(workdir)
-
-        if resultsdir is None:
-            resultsdir = os.path.join(basedir, '_results')
-
-        self.resultsdir = os.path.abspath(resultsdir)
-
-        if datadir is None:
-            datadir = os.path.join(basedir, '_data')
-
-        self.datadir = os.path.abspath(datadir)
-
-    def sane_work(self):
-        make_sure_path_doesnot_exist(self.workdir)
-        _logger.debug('check workdir for working: %r', self.workdir)
-        make_sure_path_exists(self.workdir)
-
-        make_sure_path_doesnot_exist(self.resultsdir)
-        _logger.debug('check resultsdir to store results %r', self.resultsdir)
-        make_sure_path_exists(self.resultsdir)
-
-    def copyfiles(self, obsres, reqs):
-
-        _logger.info('copying files from %r to %r', self.datadir, self.workdir)
-
-        if obsres:
-            self.copyfiles_stage1(obsres)
-
-        self.copyfiles_stage2(reqs)
-
-    def copyfiles_stage1(self, obsres):
-        _logger.debug('copying files from observation result')
-        for f in obsres.frames:
-            _logger.debug('copying %r to %r', f.filename, self.workdir)
-            complete = os.path.abspath(os.path.join(self.datadir, f.filename))
-            shutil.copy(complete, self.workdir)
-
-    def copyfiles_stage2(self, reqs):
-        _logger.debug('copying files from requirements')
-        for _, req in reqs.__class__.items():
-            if isinstance(req.type, DataFrameType):
-                value = getattr(reqs, req.dest)
-                if value is not None:
-                    _logger.debug(
-                        'copying %r to %r',
-                        value.filename,
-                        self.workdir
-                        )
-                    complete = os.path.abspath(
-                        os.path.join(self.datadir, value.filename)
-                        )
-                    shutil.copy(complete, self.workdir)
-
 
 def fully_qualified_name(obj, sep='.'):
     if inspect.isclass(obj):
         return obj.__module__ + sep + obj.__name__
     else:
         return obj.__module__ + sep + obj.__class__.__name__
-
-
-def make_sure_path_doesnot_exist(path):
-    try:
-        shutil.rmtree(path)
-    except (OSError, IOError) as exception:
-        if exception.errno != errno.ENOENT:
-            raise
-
-
-def make_sure_path_exists(path):
-    try:
-        os.makedirs(path)
-    except (OSError, IOError) as exception:
-        if exception.errno != errno.EEXIST:
-            raise
 
 
 def create_recipe_file_logger(logger, logfile, logformat):
@@ -830,16 +735,6 @@ def internal_work(recipe, rinput, task):
     return task
 
 
-class DiskStorage(object):
-    def __init__(self):
-        self.idx = 1
-
-    def get_next_basename(self, ext):
-        fname = 'product_%03d%s' % (self.idx, ext)
-        self.idx = self.idx + 1
-        return fname
-
-
 def guarda(task):
     # Store results we know about
     # via store
@@ -847,33 +742,12 @@ def guarda(task):
 
     where = DiskStorage()
 
-    result = task.result
+    where.result = 'result.yaml'
+    where.task = 'task.yaml'
+
     # result.suggest_store(**task_control['products'])
 
-    if isinstance(result, ErrorRecipeResult):
-        with open('result.txt', 'w+') as fd:
-            yaml.dump(result, fd)
-    else:
-        saveres = {}
-        for key in result.__class__:
-            val = getattr(result, key)
-            _logger.debug('store %r of type %r', val, type(val))
-            stored = store(val, where)
-            # FIXME: this is a hack...
-            # FIXME: to remember where the results
-            # FIXME: are stored
-            if stored:
-                saveres[key] = stored
-
-        with open('result.txt', 'w+') as fd:
-            yaml.dump(saveres, fd)
-
-    # we put the results description here
-    task.result = 'result.txt'
-
-    # The rest goes here
-    with open('task.txt', 'w+') as fd:
-        yaml.dump(task.__dict__, fd)
+    dump(task, task, where)
 
 
 if __name__ == '__main__':
