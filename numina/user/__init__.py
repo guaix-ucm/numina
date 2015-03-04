@@ -28,9 +28,9 @@ import os
 import errno
 import shutil
 import datetime
-import ConfigParser as configparser
 import inspect
 
+from six.moves import configparser
 import yaml
 
 from numina import __version__

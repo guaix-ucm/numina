@@ -70,7 +70,6 @@ class SchemaKeyword(object):
         self.mandatory = mandatory
         self.valid = valid
         if self.mandatory and not self.valid:
-            print self.mandatory, self.valid
             raise SchemaDefinitionError(
                 "keyword 'cannot be 'mandatory' and "
                 "'not valid'"

@@ -29,6 +29,8 @@ import abc
 import traceback
 import logging
 
+from six import with_metaclass
+
 from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
@@ -119,21 +121,19 @@ class BaseRecipeMethods(object):
         return hdr
 
 
-class BaseRecipe(BaseRecipeMethods):
+class BaseRecipe(with_metaclass(abc.ABCMeta, BaseRecipeMethods)):
     '''Base class for all instrument recipes'''
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def run(self, recipe_input):
         return self.create_result()
 
 
-class BaseRecipeAlt(BaseRecipeMethods):
+class BaseRecipeAlt(with_metaclass(RecipeType, BaseRecipeMethods)):
     '''Base class for instrument recipes'''
-    __metaclass__ = RecipeType
+    pass
 
 
-class BaseRecipeAutoQC(BaseRecipeMethods):
+class BaseRecipeAutoQC(with_metaclass(RecipeTypeAutoQC, BaseRecipeMethods)):
     '''Base class for instrument recipes'''
-    __metaclass__ = RecipeTypeAutoQC
+    pass

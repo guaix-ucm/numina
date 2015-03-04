@@ -21,6 +21,8 @@
 Recipe requirements
 '''
 
+from six import with_metaclass
+
 from .metaclass import RecipeRequirementsType, RecipeResultType
 from .metaclass import RecipeResultAutoQCType
 
@@ -62,9 +64,9 @@ class RecipeInOut(object):
             check.check(self)
 
 
-class RecipeRequirements(RecipeInOut):
+class RecipeRequirements(with_metaclass(RecipeRequirementsType, RecipeInOut)):
     '''RecipeRequirements base class'''
-    __metaclass__ = RecipeRequirementsType
+    pass
 
 
 class BaseRecipeResult(object):
@@ -90,8 +92,7 @@ class ErrorRecipeResult(BaseRecipeResult):
         return fmt % (sclass, self.errortype, self.message)
 
 
-class RecipeResult(RecipeInOut, BaseRecipeResult):
-    __metaclass__ = RecipeResultType
+class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResult)):
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -106,9 +107,9 @@ class RecipeResult(RecipeInOut, BaseRecipeResult):
             self.__class__[k].type.suggest(mm, kwds[k])
 
 
-class RecipeResultAutoQC(RecipeResult):
+class RecipeResultAutoQC(with_metaclass(RecipeResultAutoQCType, RecipeResult)):
     '''RecipeResult with an automatic QC member.'''
-    __metaclass__ = RecipeResultAutoQCType
+    pass
 
 
 class define_result(object):

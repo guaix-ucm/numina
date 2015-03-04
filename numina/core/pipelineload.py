@@ -21,7 +21,7 @@
 
 import pkgutil
 import uuid
-
+import six
 import yaml
 
 from .pipeline import ObservingMode
@@ -132,30 +132,30 @@ def load_instrument(node):
 
 
 def print_i(ins):
-    print ins.name
+    six.print_(ins.name)
     print_c(ins.configurations)
     print_m(ins.modes)
     print_p(ins.pipelines)
 
 
 def print_p(pipelines):
-    print 'Pipelines'
+    six.print_('Pipelines')
     for p, n in pipelines.items():
-        print ' pipeline', p
-        print '   version', n.version
-        print '   recipes'
+        six.print_(' pipeline', p)
+        six.print_('   version', n.version)
+        six.print_('   recipes')
         for m, r in n.recipes.items():
-            print '    ', m, '->', r
+            six.print_('    ', m, '->', r)
 
 
 def print_c(confs):
-    print 'Configurations'
+    six.print_('Configurations')
     for c in confs:
-        print ' conf', c, confs[c].values
+        six.print_(' conf', c, confs[c].values)
 
 
 def print_m(modes):
-    print 'Modes'
+    six.print_('Modes')
     for c in modes:
-        print ' mode', c.key
+        six.print_(' mode', c.key)
 

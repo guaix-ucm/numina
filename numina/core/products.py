@@ -19,6 +19,7 @@
 
 import sys
 
+import six
 import numpy
 from astropy.io import fits
 
@@ -86,7 +87,7 @@ class DataFrameType(DataProductType):
                     self.validate_hdulist(hdulist)
             except StandardError:
                 _type, exc, tb = sys.exc_info()
-                raise ValidationError, exc, tb
+                six.reraise(ValidationError, exc, tb)
 
     def validate_hdulist(self, hdulist):
         pass

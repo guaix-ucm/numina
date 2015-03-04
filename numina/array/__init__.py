@@ -20,7 +20,12 @@
 from __future__ import print_function
 
 import logging
-from itertools import imap, product
+from itertools import product
+
+try:
+    from itertools import imap
+except ImportError:
+    imap = map
 
 import numpy
 from scipy import asarray, zeros_like, minimum, maximum

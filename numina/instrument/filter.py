@@ -19,9 +19,6 @@
 
 from .base import BaseConectable
 
-# Classes are new style
-__metaclass__ = type
-
 
 class Filter(BaseConectable):
     def __init__(self, name, code, trans):

@@ -20,6 +20,8 @@
 
 '''Unit test for RecipeBase.'''
 
+from six import with_metaclass
+
 from ..metarecipes import RecipeType
 from ..recipes import BaseRecipeAutoQC
 from ..recipeinout import RecipeRequirements, RecipeResult
@@ -31,8 +33,8 @@ from ..products import QualityControlProduct
 
 def test_metaclass_empty_base():
 
-    class TestRecipe(object):
-        __metaclass__ = RecipeType
+    class TestRecipe(with_metaclass(RecipeType, object)):
+        pass
 
     assert hasattr(TestRecipe, 'RecipeRequirements')
 
@@ -53,8 +55,8 @@ def test_metaclass_empty_base():
 
 def test_metaclass():
 
-    class TestRecipe(object):
-        __metaclass__ = RecipeType
+    class TestRecipe(with_metaclass(RecipeType, object)):
+        pass   
 
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')

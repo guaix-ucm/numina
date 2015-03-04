@@ -17,9 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pickle
 import os
 import shutil
+
+from six.moves import cPickle as pickle
 
 from numina.user.xdgdirs import xdg_cache_home
 
@@ -39,7 +40,7 @@ class DiskCache(object):
 
         try:
             # print self.index_map
-            with open(self.index_map, 'r') as pk:
+            with open(self.index_map, 'rb') as pk:
                 try:
                     self._cache = pickle.load(pk)
                 except EOFError:

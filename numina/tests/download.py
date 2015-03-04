@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import urllib2
+from six.moves import urllib_request
 import hashlib
 
 from tempfile import NamedTemporaryFile
@@ -26,8 +26,8 @@ BLOCK = 2048
 
 
 def download(url, bsize=BLOCK):
-    req = urllib2.Request(url)
-    source = urllib2.urlopen(req)
+    req = urllib_request.Request(url)
+    source = urllib_request.urlopen(req)
     #
     with NamedTemporaryFile(delete=False) as fd:
         block = source.read(bsize)
@@ -49,16 +49,16 @@ def download_cache(url, cache, bsize=BLOCK):
         # Retrieve from cache
         etag = cache.retrieve(urldigest)
         # print 'is in cache, etag is', etag
-        req = urllib2.Request(url)
+        req = urllib_request.Request(url)
         req.add_header('If-None-Match', etag)
     else:
         # print 'resource not in cache'
-        req = urllib2.Request(url)
+        req = urllib_request.Request(url)
     try:
-        source = urllib2.urlopen(req)
+        source = urllib_request.urlopen(req)
         update_cache = True
         etag = source.headers.dict['etag']
-    except urllib2.HTTPError as err:
+    except urllib_request.HTTPError as err:
         if err.code == 304:
             update_cache = False
             source = open(cache.cached_filename(urldigest))

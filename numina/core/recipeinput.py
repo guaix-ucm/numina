@@ -102,6 +102,4 @@ class RecipeInputBuilderGTC(object):
                 except NoResultFound:
                     _logger.debug('No value found for %s', key)
 
-        print result
-
         return RecipeRequirementsClass(**result)
