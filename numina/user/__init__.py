@@ -40,7 +40,7 @@ from numina.core import DataFrameType, DataProductType
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.recipeinput import RecipeInputBuilder
-from numina.core.pipeline import init_backends
+from numina.core.pipeline import init_dump_backends
 
 from .xdgdirs import xdg_config_home
 from .dump import dump
@@ -567,10 +567,8 @@ def mode_run_recipe(args):
 def mode_run_common(args, mode):
     '''Observing mode processing mode of numina.'''
 
-    # Load store backends
-    backend_default = 'default'
-
-    backends = init_backends()
+    # Load dump backends
+    init_dump_backends()
 
     # Directories with relevant data
     workenv = WorkEnvironment(

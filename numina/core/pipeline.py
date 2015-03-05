@@ -92,13 +92,12 @@ def init_drp_system():
     return drp
 
 
-def init_backends(backend='default'):
-    '''Load storage modes'.'''
+def init_dump_backends(backend='default'):
+    '''Load storage backends.'''
 
     backends = []
 
     for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
-        store = entry.load()
-        backends.append((store, True))
+        dump_loader = entry.load()
+        dump_loader()
 
-    return backends
