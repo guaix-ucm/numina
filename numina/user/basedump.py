@@ -17,10 +17,6 @@ from numina.core import DataFrame
 from .helpers import ProcessingTask
 from .dump import dump
 
-# These should go to megara
-from megaradrp.products import TraceMapType as TraceMap
-from megaradrp.products import MasterBias
-
 
 @dump.register(ProcessingTask)
 def _(tag, obj, where):
@@ -72,11 +68,6 @@ def _(tag, obj, where):
 def _(tag, obj, where):    
     return dump.registry[numpy.ndarray](tag, obj, where)
 
-from emir.dataproducts import ArrayType
-
-@dump.register(ArrayType)
-def _(tag, obj, where):    
-    return dump.registry[numpy.ndarray](tag, obj, where)
 
 @dump.register(DataFrameType)
 def _(tag, obj, where):    
@@ -102,17 +93,6 @@ def _(tag, obj, where):
             warnings.simplefilter('ignore')
             obj.frame.writeto(filename, clobber=True)
         return filename
-
-
-@dump.register(TraceMap)
-def _(tag, obj, where):
-
-    filename = where.destination + '.yaml'
-
-    with open(filename, 'w') as fd:
-        yaml.dump(fd, obj)
-
-    return filename
 
 
 @dump.register(numpy.ndarray)
