@@ -7,7 +7,6 @@ import yaml
 
 from numina.core import Product
 from numina.core import RecipeResult
-from numina.core import RecipeRequirements
 from numina.core import ErrorRecipeResult
 from numina.core import DataFrameType, DataProductType
 from numina.core.types import PlainPythonType
@@ -29,7 +28,7 @@ def _(tag, obj, where):
 @dump.register(ErrorRecipeResult)
 def _(tag, obj, where):
     with open(where.result, 'w+') as fd:
-        yaml.dump(result, fd)
+        yaml.dump(where.result, fd)
 
     return where.result
 
