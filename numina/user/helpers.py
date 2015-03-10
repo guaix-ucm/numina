@@ -40,7 +40,6 @@ from numina.core import DataFrameType, DataProductType
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.recipeinput import RecipeInputBuilder
-from numina.core.pipeline import init_backends
 
 from .xdgdirs import xdg_config_home
 from .store import store
