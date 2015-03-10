@@ -21,28 +21,13 @@
 
 from __future__ import print_function
 
-import logging.config
-import sys
-import argparse
+import logging
 import os
 import errno
 import shutil
-import datetime
-import inspect
 
-from six.moves import configparser
-import yaml
+from numina.core.products import DataFrameType
 
-from numina import __version__
-from numina.core import RequirementParser, obsres_from_dict
-from numina.core import ErrorRecipeResult
-from numina.core import DataFrameType, DataProductType
-from numina.core import InstrumentConfiguration
-from numina.core import init_drp_system, import_object
-from numina.core.recipeinput import RecipeInputBuilder
-
-from .xdgdirs import xdg_config_home
-from .store import store
 
 _logger = logging.getLogger("numina")
 
