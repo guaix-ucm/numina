@@ -20,6 +20,7 @@
 '''Import objects by name'''
 
 import importlib
+import inspect
 
 
 def import_object(path):
@@ -30,3 +31,13 @@ def import_object(path):
     mm = importlib.import_module(mods)
     Cls = getattr(mm, cls)
     return Cls
+
+
+def fully_qualified_name(obj, sep='.'):
+    if inspect.isclass(obj):
+        return obj.__module__ + sep + obj.__name__
+    else:
+        return obj.__module__ + sep + obj.__class__.__name__
+
+
+
