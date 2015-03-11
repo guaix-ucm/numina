@@ -122,12 +122,13 @@ def load_instrument(node):
     pipe_node = node['pipelines']
     mode_node = node['modes']
     conf_node = node['configurations']
+    tag_node = node.get('taggers', {})
 
     trans = {'name': node['name']}
     trans['pipelines'] = load_pipelines(pipe_node)
     trans['modes'] = load_modes(mode_node)
     trans['configurations'] = load_confs(conf_node)
-
+    trans['taggers'] = tag_node
     return Instrument(**trans)
 
 

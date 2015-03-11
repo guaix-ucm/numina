@@ -46,11 +46,16 @@ class InstrumentConfiguration(object):
 
 class Instrument(object):
     '''Description of an Instrument.'''
-    def __init__(self, name, configurations, modes, pipelines):
+    def __init__(self, name, configurations, modes, pipelines, taggers=None):
         self.name = name
         self.configurations = configurations
         self.modes = modes
         self.pipelines = pipelines
+        #
+        if taggers is None:
+            self.taggers = {}
+        else:
+            self.taggers = taggers
 
 
 class ObservingMode(object):
@@ -100,4 +105,5 @@ def init_dump_backends(backend='default'):
     for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
         dump_loader = entry.load()
         dump_loader()
+
 
