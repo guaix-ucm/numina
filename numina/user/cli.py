@@ -39,6 +39,7 @@ from numina.core import ErrorRecipeResult
 from numina.core import DataFrameType, DataProductType
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
+from numina.core import fully_qualified_name
 from numina.core.recipeinput import RecipeInputBuilder
 from numina.store import init_store_backends
 from numina.store import dump
@@ -96,13 +97,6 @@ _logconf = {
         }
     }
 
-
-
-def fully_qualified_name(obj, sep='.'):
-    if inspect.isclass(obj):
-        return obj.__module__ + sep + obj.__name__
-    else:
-        return obj.__module__ + sep + obj.__class__.__name__
 
 
 def create_recipe_file_logger(logger, logfile, logformat):
