@@ -68,11 +68,10 @@ class ObservingMode(object):
         self.instrument = ''
         self.summary = ''
         self.description = ''
-        self.recipe = ''
-        self.recipe_class = None
         self.status = ''
         self.date = ''
         self.reference = ''
+        self.tagger = None
 
 
 class LoadableDRP(object):
