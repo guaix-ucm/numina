@@ -100,10 +100,8 @@ def init_drp_system():
 def init_dump_backends(backend='default'):
     '''Load storage backends.'''
 
-    backends = []
-
     for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
         dump_loader = entry.load()
-        dump_loader()
+        # dump_loader()
 
 
