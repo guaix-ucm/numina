@@ -82,7 +82,14 @@ setup(name='numina',
       package_data={'numina.tests.drps.1': ['drp.yaml'],
                    },
       ext_modules=[ext1, ext2, ext3],
-      entry_points={'console_scripts': ['numina = numina.user.cli:main']},
+      entry_points={
+        'console_scripts': [
+            'numina = numina.user.cli:main',
+            ],
+        'numina.storage.1': [
+            'numina_default = numina.store.default:load_cli_storage',
+            ],
+      },
       setup_requires=['numpy'],
       install_requires=REQUIRES,
       zip_safe=False,

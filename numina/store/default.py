@@ -108,3 +108,6 @@ def _(tag, obj, where):
 def _(tag, obj, where):
     return [dump(tag, o, where) for o in obj]
 
+
+def load_cli_storage():
+    return 0
