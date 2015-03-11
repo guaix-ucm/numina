@@ -90,7 +90,8 @@ class RecipeInputBuilderGTC(object):
 
                     result[key] = prod.content
                 except NoResultFound:
-                    _logger.debug('No value found for %s', key)
+                    _logger.debug('No value found for %s with tags %s',
+                                  key, tags)
             else:
                 # Still not clear what to do with the other types
                 try:
