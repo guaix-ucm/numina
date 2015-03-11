@@ -12,10 +12,11 @@ from numina.core import DataFrameType, DataProductType
 from numina.core.types import PlainPythonType
 from numina.core.products import ArrayType
 from numina.core import DataFrame
+from numina.user.helpers import ProcessingTask
 
-from .helpers import ProcessingTask
 from .dump import dump
 
+'''Register basic types with dump.'''
 
 @dump.register(ProcessingTask)
 def _(tag, obj, where):

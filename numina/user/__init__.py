@@ -40,11 +40,10 @@ from numina.core import DataFrameType, DataProductType
 from numina.core import InstrumentConfiguration
 from numina.core import init_drp_system, import_object
 from numina.core.recipeinput import RecipeInputBuilder
-from numina.core.pipeline import init_dump_backends
+from numina.store import init_store_backends
+from numina.store import dump
 
 from .xdgdirs import xdg_config_home
-from .dump import dump
-import basedump
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorage
 
 _logger = logging.getLogger("numina")
@@ -567,8 +566,8 @@ def mode_run_recipe(args):
 def mode_run_common(args, mode):
     '''Observing mode processing mode of numina.'''
 
-    # Load dump backends
-    init_dump_backends()
+    # Load store backends
+    init_store_backends()
 
     # Directories with relevant data
     workenv = WorkEnvironment(
@@ -735,15 +734,12 @@ def internal_work(recipe, rinput, task):
 
 def guarda(task):
     # Store results we know about
-    # via store
-    # for the rest dump with yaml
+    # via store.dump
 
     where = DiskStorage()
 
     where.result = 'result.yaml'
     where.task = 'task.yaml'
-
-    # result.suggest_store(**task_control['products'])
 
     dump(task, task, where)
 
@@ -751,4 +747,3 @@ def guarda(task):
 if __name__ == '__main__':
     main()
 
-# self.__stored__[k].type.suggest(mm, kwds[k])
