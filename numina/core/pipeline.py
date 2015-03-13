@@ -46,16 +46,14 @@ class InstrumentConfiguration(object):
 
 class Instrument(object):
     '''Description of an Instrument.'''
-    def __init__(self, name, configurations, modes, pipelines, taggers=None):
+    def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations
         self.modes = modes
         self.pipelines = pipelines
-        #
-        if taggers is None:
-            self.taggers = {}
-        else:
-            self.taggers = taggers
+        self.products = products
+        if products is None:
+            self.products = []
 
 
 class ObservingMode(object):
