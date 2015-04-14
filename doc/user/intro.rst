@@ -20,8 +20,14 @@ packages installed in order to work properly:
  - `astropy <http://www.astropy.org>`_
  - `PyYaml <http://http://pyyaml.org/>`_
 
+.. warning::
+
+   Numina does not support astropy 1.0 yet.
+   Astropy version 0.4.x will be installed.
+
 Additional packages are optionally required:
  - `sphinx`_  to build the documentation
+ - `pytest`_  for testing
 
 Webpage: https://guaix.fis.ucm.es/projects/emir
 
@@ -31,7 +37,7 @@ Stable version
 --------------
 
 The latest stable version of Numina can be downloaded from  
-ftp://astrax.fis.ucm.es/pub/software/numina/
+https://pypi.python.org/pypi/numina/
 
 To install numina, use the standard installation procedure:::
 
@@ -72,3 +78,4 @@ if you type `make`
   
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _sphinx: http://sphinx.pocoo.org
+.. _pytest: http://pytest.org/latest/
