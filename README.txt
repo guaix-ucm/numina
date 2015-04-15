@@ -2,6 +2,8 @@
 Numina
 ======
 
+|docs|
+
 This is Numina, the data reduction package used by the following GTC
 instruments: EMIR, FRIDA, MEGARA and MIRADAS.
 
@@ -76,4 +78,8 @@ if you type `make`
   
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _sphinx: http://sphinx.pocoo.org
+
+.. |docs| image:: https://readthedocs.org/projects/numina/badge/?version=latest
+    :alt: Documentation Status
+    :target: https://readthedocs.org/projects/numina/?badge=latest
 
