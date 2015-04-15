@@ -1,3 +1,9 @@
+Version 0.13.2 (       2015)
+----------------------------
+ Changes:
+  * Support only astropy 0.4.x
+  * Add Solaris 10 documentation
+
 Version 0.13.1 (27 Jan 2015)
 ----------------------------
  Fixes:
@@ -20,10 +26,12 @@ Version 0.12.2 (17 Oct 2014)
   * PEP8 fixes in the code
 
 Version 0.12.1 (30 Apr 2014)
+----------------------------
  Fixes:
   * Include Cython-generated code in distribution
 
 Version 0.12.0 (30 Apr 2014)
+----------------------------
  Changes:
   * Initial implementation of FITS Schema
   * Allow plain python types in Product
@@ -34,6 +42,7 @@ Version 0.12.0 (30 Apr 2014)
   * Data was not copied back in processing nodes
 
 Version 0.11.0 (02 Apr 2014)
+----------------------------
 Changes:
  * Ported to astropy (0.3)
  * Added new filters (DivideByExposure, SkyCorrector)
@@ -47,25 +56,30 @@ Changes:
  * Attributes __requires__  and __provides__ of Recipes removed
 
 Version 0.10.3 (16 Jan 2014)
+----------------------------
 Changes:
  * Fix typo in reciperesult.py
 
 Version 0.10.2 (08 Nov 2013)
+----------------------------
 Changes:
  * RecipeRequires and RecipeResult use metaclasses
    instead of hacking __new__
 
 Version 0.10.1 (29 Oct 2013)
+----------------------------
 Bugfix:
  * Handle gracefully if Cython is missing
  * Cython in Mac does not get numpy_includes
 
 Version 0.10.0 (28 Oct 2013)
+----------------------------
 Changes:
  * nIR detector modes (Ramp, Fowler, etc.)
  * Instrument load improved
 
 Version 0.9.1 (05 Dec 2012)
+----------------------------
 Bugfix:
  * Error importing ConfigParserError
 
