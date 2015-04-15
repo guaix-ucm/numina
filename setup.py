@@ -67,7 +67,7 @@ class PyTest(TestCommand):
 
 cmdclass['test'] = PyTest
 
-REQUIRES = ['setuptools', 'six', 'numpy>=1.6', 'astropy>=0.4', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'six', 'numpy>=1.6', 'astropy>=0.4, <0.5', 'scipy', 'PyYaml']
 
 from numina import __version__
 
