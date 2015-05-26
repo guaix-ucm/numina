@@ -2,7 +2,7 @@
 Numina
 ======
 
-|docs|
+|docs| |zenodo|
 
 This is Numina, the data reduction package used by the following GTC
 instruments: EMIR, FRIDA, MEGARA and MIRADAS.
@@ -83,3 +83,5 @@ if you type `make`
     :alt: Documentation Status
     :target: https://readthedocs.org/projects/numina/?badge=latest
 
+.. |zenodo| image:: https://zenodo.org/badge/13088/guaix-ucm/numina.svg
+   :target: http://dx.doi.org/10.5281/zenodo.17986
