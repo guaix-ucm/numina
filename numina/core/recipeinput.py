@@ -39,7 +39,7 @@ from numina.core import ObservationResult
 from numina.core.dal import ObservingBlock
 from numina.core.products import ObservationResultType
 from numina.core.products import InstrumentConfigurationType
-from numina.core import FrameDataProduct
+from numina.core import DataProduct
 from numina.core.dal import NoResultFound
 
 _logger = logging.getLogger('numina.ri')
@@ -81,7 +81,7 @@ class RecipeInputBuilderGTC(object):
             elif isinstance(req.type, InstrumentConfigurationType):
                 # Not sure how to handle this, or if it is needed...
                 result[key] = {}
-            elif isinstance(req.type, FrameDataProduct):
+            elif isinstance(req.type, DataProduct):
                 try:
                     prod = self.dal.search_prod_req_tags(
                         req, obsres.instrument,
@@ -90,7 +90,8 @@ class RecipeInputBuilderGTC(object):
 
                     result[key] = prod.content
                 except NoResultFound:
-                    _logger.debug('No value found for %s', key)
+                    _logger.debug('No value found for %s with tags %s',
+                                  key, tags)
             else:
                 # Still not clear what to do with the other types
                 try:
@@ -101,7 +102,5 @@ class RecipeInputBuilderGTC(object):
                     result[key] = param.content
                 except NoResultFound:
                     _logger.debug('No value found for %s', key)
-
-        print result
 
         return RecipeRequirementsClass(**result)

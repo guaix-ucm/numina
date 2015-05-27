@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,10 +17,23 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+'''Store backends loader.'''
 
-if __name__ == '__main__':
+import logging
 
-    from .cli import main
+import pkg_resources
 
-    main()
+
+_logger = logging.getLogger('numina')
+
+
+def init_store_backends(backend='default'):
+    '''Load storage backends.'''
+
+    for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
+        store_loader = entry.load()
+        store_loader()
+
+
+init_dump_backends = init_store_backends
+

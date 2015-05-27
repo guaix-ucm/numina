@@ -29,7 +29,10 @@ class DataType(object):
         self.default = default
         self.dialect = {}
 
-    def store(self, obj):
+    def convert(self, obj):
+        return obj
+
+    def convert(self, obj):
         return obj
 
     def validate(self, obj):
@@ -44,7 +47,7 @@ class NullType(DataType):
         super(NullType, self).__init__(type(None))
         self.dialect = None
 
-    def store(self, obj):
+    def convert(self, obj):
         return None
 
     def validate(self, obj):
@@ -71,8 +74,8 @@ class ListOfType(DataType):
         super(ListOfType, self).__init__(stype)
         self.dialect = {}
 
-    def store(self, obj):
-        result = [self.internal.store(o) for o in obj]
+    def convert(self, obj):
+        result = [self.internal.convert(o) for o in obj]
         return result
 
     def validate(self, obj):

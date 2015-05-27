@@ -20,12 +20,13 @@
 import abc
 import logging
 
+from six import with_metaclass
+
 _logger = logging.getLogger('numina.node')
 
 
-class Node(object):
+class Node(with_metaclass(abc.ABCMeta, object)):
     '''An elemental operation in a Flow.'''
-    __metaclass__ = abc.ABCMeta
 
     def __init__(self, ninputs=1, noutputs=1):
         super(Node, self).__init__()

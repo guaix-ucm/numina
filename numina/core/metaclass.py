@@ -134,8 +134,15 @@ class MapStoreType(StoreType):
             return NotImplemented
         return dict(self.items()) == dict(other.items())
 
+    # https://docs.python.org/3.1/reference/datamodel.html#object.__hash__
+    __hash__ = StoreType.__hash__
+
     def __ne__(self, other):
         return not (self == other)
+
+    def __nonzero__(self):
+        # Added dure to http://bugs.python.org/issue23572
+        return True
 
 # Register as a mapping
 collections.Mapping.register(MapStoreType)  # @UndefinedVariable

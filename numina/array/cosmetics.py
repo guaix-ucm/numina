@@ -21,6 +21,8 @@ import logging
 import operator
 import itertools
 
+from six.moves import reduce
+
 import numpy
 import scipy.stats
 import scipy.ndimage

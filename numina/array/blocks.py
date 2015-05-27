@@ -20,7 +20,15 @@
 from __future__ import division
 
 import logging
-from itertools import imap, product
+from itertools import product
+
+import six
+from six.moves import range
+
+if six.PY2:
+    from itertools import imap
+else:
+    imap = map
 
 from numpy.lib.stride_tricks import as_strided as ast
 
@@ -137,7 +145,7 @@ def blk_1d_short(blk, shape):
     :return: a generator that yields the slices
     '''
     maxpix, _ = blk_coverage_1d(blk, shape)
-    for i in xrange(0, maxpix, blk):
+    for i in range(0, maxpix, blk):
         yield slice(i, i + blk)
 
 
@@ -189,7 +197,7 @@ def blk_1d(blk, shape):
 
     '''
     maxpix, rem = blk_coverage_1d(blk, shape)
-    for i in xrange(0, maxpix, blk):
+    for i in range(0, maxpix, blk):
         yield slice(i, i + blk)
 
     if rem != 0:
@@ -249,15 +257,16 @@ def block_view(A, block=(3, 3)):
 
 if __name__ == '__main__':
     from numpy import arange
+    import six
     A = arange(144).reshape(12, 12)
-    print block_view(A)[0, 0]
+    six.print_(block_view(A)[0, 0])
     # [[ 0  1  2]
     # [12 13 14]
     # [24 25 26]]
-    print block_view(A, (2, 6))[0, 0]
+    six.print_(block_view(A, (2, 6))[0, 0])
     # [[ 0  1  2  3  4  5]
     # [12 13 14 15 16 17]]
-    print block_view(A, (3, 12))[0, 0]
+    six.print_(block_view(A, (3, 12))[0, 0])
     # [[ 0  1  2  3  4  5  6  7  8  9 10 11]
     # [12 13 14 15 16 17 18 19 20 21 22 23]
     # [24 25 26 27 28 29 30 31 32 33 34 35]]

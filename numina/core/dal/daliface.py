@@ -21,13 +21,13 @@
 
 from abc import ABCMeta, abstractmethod
 
+from six import with_metaclass
 
 class NoResultFound(Exception):
     pass
 
 
-class DALInterface(object):
-    __metaclass__ = ABCMeta
+class DALInterface(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def search_oblock_from_id(self, objid):

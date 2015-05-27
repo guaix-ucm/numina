@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,10 +17,27 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+'''Import objects by name'''
 
-if __name__ == '__main__':
+import importlib
+import inspect
 
-    from .cli import main
 
-    main()
+def import_object(path):
+    '''Import an object given its fully qualified name.'''
+    spl = path.split('.')
+    cls = spl[-1]
+    mods = '.'.join(spl[:-1])
+    mm = importlib.import_module(mods)
+    Cls = getattr(mm, cls)
+    return Cls
+
+
+def fully_qualified_name(obj, sep='.'):
+    if inspect.isclass(obj):
+        return obj.__module__ + sep + obj.__name__
+    else:
+        return obj.__module__ + sep + obj.__class__.__name__
+
+
+

@@ -19,12 +19,13 @@
 
 import sys
 
+import six
 import numpy
 from astropy.io import fits
 
 from .qc import QC
 from .pipeline import InstrumentConfiguration
-from .pipeline import import_object
+from .objimport import import_object
 from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType
@@ -60,7 +61,7 @@ class DataFrameType(DataProductType):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
 
-    def store(self, obj):
+    def convert(self, obj):
         # We accept None representing No Image
         if obj is None:
             return None
@@ -86,7 +87,7 @@ class DataFrameType(DataProductType):
                     self.validate_hdulist(hdulist)
             except StandardError:
                 _type, exc, tb = sys.exc_info()
-                raise ValidationError, exc, tb
+                six.reraise(ValidationError, exc, tb)
 
     def validate_hdulist(self, hdulist):
         pass
@@ -111,10 +112,10 @@ class ArrayType(DataProductType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
-    def store(self, obj):
-        return self.store_as_array(obj)
+    def convert(self, obj):
+        return self.convert_to__array(obj)
 
-    def store_as_array(self, obj):
+    def convert_to_array(self, obj):
         result = numpy.array(obj)
         return result
 
