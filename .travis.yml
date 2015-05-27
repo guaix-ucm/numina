@@ -4,9 +4,9 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 PyYAML"
+      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
     - python: "3.4"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 PyYAML"
+      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
 
 install:
   # See:
@@ -15,7 +15,7 @@ install:
   # OK, this used to *fix* the build, but now it *breaks* the build.
   # If you're reading this, good luck out there. I'm not sure what to tell you.
   - conda update --yes conda
-  - conda create -n testenv --yes $DEPS pip nose setuptools python=$TRAVIS_PYTHON_VERSION
+  - conda create -n testenv --yes $DEPS pip nose setuptools pyyaml PyYAML python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
   # for debugging...
   - echo $PATH
