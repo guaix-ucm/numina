@@ -18,20 +18,17 @@
 #
 
 import numpy as np
-from astropy.modeling import FittableModel, Parameter, format_input
+from astropy.modeling import Fittable1DModel, Parameter
 
 
-class EnclosedGaussian(FittableModel):
+class EnclosedGaussian(Fittable1DModel):
     '''Enclosed Gaussian model'''
+
     amplitude = Parameter()
     stddev = Parameter()
 
-    def __init__(self, amplitude, stddev, **kwargs):
-        super(EnclosedGaussian, self).__init__(
-            amplitude=amplitude, stddev=stddev, **kwargs)
-
     @staticmethod
-    def eval(x, amplitude, stddev):
+    def evaluate(x, amplitude, stddev):
         return amplitude * (1 - np.exp(-0.5 * (x / stddev)**2))
 
     @staticmethod
@@ -42,6 +39,3 @@ class EnclosedGaussian(FittableModel):
         d_stddev = -amplitude * t * z / stddev
         return [d_amplitude, d_stddev]
 
-    @format_input
-    def __call__(self, x):
-        return self.eval(x, *self.param_sets)
