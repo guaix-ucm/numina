@@ -22,7 +22,7 @@ install:
   - which python
   - conda info
   - conda list
-  - pip install PyYAML
+  - python -c 'import yaml; print yaml'
   - python setup.py install
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
@@ -33,4 +33,6 @@ before_install:
   - ./miniconda.sh -b -p /home/travis/mc
   - export PATH=/home/travis/mc/bin:$PATH
 
-script: py.test -vv numina
+script: 
+  - python -c 'import yaml; print yaml'
+  - py.test -vv numina
