@@ -22,6 +22,7 @@ install:
   - which python
   - conda info
   - conda list
+  - pip install PyYAML
   - python setup.py install
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
