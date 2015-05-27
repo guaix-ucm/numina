@@ -4,9 +4,9 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 pyyaml PyYAML"
+      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 PyYAML"
     - python: "3.4"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 pyyaml"
+      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 PyYAML"
 
 install:
   # See:
@@ -32,4 +32,4 @@ before_install:
   - ./miniconda.sh -b -p /home/travis/mc
   - export PATH=/home/travis/mc/bin:$PATH
 
-script: py.test -vv
+script: py.test -vv numina
