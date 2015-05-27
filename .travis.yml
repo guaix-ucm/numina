@@ -2,5 +2,8 @@ language: python
 python:
  - "2.7"
  - "3.4"
+install:
+ # Build in place so we can run tests
+ - python setup.py build_ext --inplace
 script:
- - py.test
+ - py.test -vv
