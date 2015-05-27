@@ -22,7 +22,6 @@ install:
   - which python
   - conda info
   - conda list
-  - python -c 'import yaml; print yaml'
   - python setup.py install
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
@@ -34,5 +33,4 @@ before_install:
   - export PATH=/home/travis/mc/bin:$PATH
 
 script: 
-  - python -c 'import yaml; print yaml'
   - py.test -vv numina
