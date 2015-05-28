@@ -49,10 +49,25 @@ class EntryHolder(object):
         self.choices = choices
         self.validation = validation
 
+    def convert(self, val):
+        return self.type.convert(val)
+
     def validate(self, val):
         if self.validation:
             return self.type.validate(val)
         return True
+
+    def default_value(self):
+        if self.default is not None:
+            return self.convert(self.default)
+        if self.type.default is not None:
+            return self.type.default
+        if self.optional:
+            return None
+        else:
+            fmt = 'Required %r of type %r not defined'
+            msg = fmt % (self.dest, self.type)
+            raise ValueError(msg)
 
 
 class Product(EntryHolder):

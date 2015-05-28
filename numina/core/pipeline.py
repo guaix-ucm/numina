@@ -20,24 +20,11 @@
 '''DRP loader.'''
 
 import logging
-import pkgutil
-import importlib
 
 import pkg_resources
-import yaml
-import uuid
+
 
 _logger = logging.getLogger('numina')
-
-
-def import_object(path):
-    '''Import an object given its fully qualified name.'''
-    spl = path.split('.')
-    cls = spl[-1]
-    mods = '.'.join(spl[:-1])
-    mm = importlib.import_module(mods)
-    Cls = getattr(mm, cls)
-    return Cls
 
 
 class Pipeline(object):
@@ -59,11 +46,14 @@ class InstrumentConfiguration(object):
 
 class Instrument(object):
     '''Description of an Instrument.'''
-    def __init__(self, name, configurations, modes, pipelines):
+    def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations
         self.modes = modes
         self.pipelines = pipelines
+        self.products = products
+        if products is None:
+            self.products = []
 
 
 class ObservingMode(object):
@@ -76,26 +66,10 @@ class ObservingMode(object):
         self.instrument = ''
         self.summary = ''
         self.description = ''
-        self.recipe = ''
-        self.recipe_class = None
         self.status = ''
         self.date = ''
         self.reference = ''
-
-
-def om_repr(dumper, data):
-    return dumper.represent_mapping('!om', data.__dict__)
-
-
-def om_cons(loader, node):
-    om = ObservingMode()
-    value = loader.construct_mapping(node)
-    om.__dict__ = value
-    om.uuid = uuid.UUID(om.uuid)
-    return om
-
-yaml.add_representer(ObservingMode, om_repr)
-yaml.add_constructor('!om', om_cons)
+        self.tagger = None
 
 
 class LoadableDRP(object):
@@ -120,127 +94,12 @@ def init_drp_system():
     return drp
 
 
-def drp_load(package, resource):
-    '''Load the DRPS from a resource file.'''
-    ins_all = {}
-    for yld in yaml.load_all(pkgutil.get_data(package, resource)):
-        ins = load_instrument(yld)
-        ins_all[ins.name] = ins
-
-    return LoadableDRP(ins_all)
-
-
-def load_modes(node):
-    modes = list()
-    for child in node:
-        modes.append(load_mode(child))
-    return modes
-
-
-def load_mode(node):
-    m = ObservingMode()
-    m.__dict__ = node
-    return m
-
-
-def load_pipelines(node):
-    keys = ['default']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in pipelines node', key)
-    pipelines = dict()
-    for key in node:
-        pipelines[key] = load_pipeline(key, node[key])
-    return pipelines
-
-
-def load_confs(node):
-    keys = ['default']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in configurations node', key)
-    confs = dict()
-    for key in node:
-        confs[key] = load_conf(node[key])
-    return confs
-
-
-def load_pipeline(name, node):
-    keys = ['recipes', 'version']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r inside pipeline node', key)
-    recipes = node['recipes']
-    version = node['version']
-    return Pipeline(name, recipes, version)
-
-
-def load_conf(node):
-    keys = []
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r inside configuration node', key)
-
-    return InstrumentConfiguration(node)
-
-
-def load_instrument(node):
-    # Verify keys...
-    keys = ['name', 'configurations', 'modes', 'pipelines']
-
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in root node', key)
-
-    # name = node['name']
-    pipe_node = node['pipelines']
-    mode_node = node['modes']
-    conf_node = node['configurations']
-
-    trans = {'name': node['name']}
-    trans['pipelines'] = load_pipelines(pipe_node)
-    trans['modes'] = load_modes(mode_node)
-    trans['configurations'] = load_confs(conf_node)
-
-    return Instrument(**trans)
-
-
-def print_i(ins):
-    print ins.name
-    print_c(ins.configurations)
-    print_m(ins.modes)
-    print_p(ins.pipelines)
-
-
-def print_p(pipelines):
-    print 'Pipelines'
-    for p, n in pipelines.items():
-        print ' pipeline', p
-        print '   version', n.version
-        print '   recipes'
-        for m, r in n.recipes.items():
-            print '    ', m, '->', r
-
-
-def print_c(confs):
-    print 'Configurations'
-    for c in confs:
-        print ' conf', c, confs[c].values
-
-
-def print_m(modes):
-    print 'Modes'
-    for c in modes:
-        print ' mode', c.key
-
-
-def init_backends(backend='default'):
-    '''Load storage modes'.'''
-
-    backends = []
+def init_store_backends(backend='default'):
+    '''Load storage backends.'''
 
     for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
-        store = entry.load()
-        backends.append((store, True))
+        store_loader = entry.load()
+        store_loader()
 
-    return backends
+
+init_dump_backends = init_store_backends

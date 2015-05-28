@@ -22,11 +22,8 @@ import scipy.stats.mvn as mvn
 
 from numina.array import subarray_match
 
-# Classes are new style
-__metaclass__ = type
 
-
-class Profile:
+class Profile(object):
     '''Base class for profiles'''
     def __init__(self, center):
         self.center = numpy.asarray(center)

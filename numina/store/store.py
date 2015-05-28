@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+'''Legacy dump/load implementation.'''
 
 from numina.generic import generic
 

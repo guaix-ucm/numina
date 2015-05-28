@@ -21,6 +21,8 @@
 Recipe requirements
 '''
 
+from six import with_metaclass
+
 from .metaclass import RecipeRequirementsType, RecipeResultType
 from .metaclass import RecipeResultAutoQCType
 
@@ -29,32 +31,16 @@ class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
         self = super(RecipeInOut, cls).__new__(cls)
         for key, prod in cls.iteritems():
-            store_val = True
             if key in kwds:
-                val = kwds[key]
+                val = prod.convert(kwds[key])
             else:
                 # Value not defined
-                if prod.default is not None:
-                    val = prod.default
-                elif prod.type.default is not None:
-                    val = prod.type.default
-                elif prod.optional:
-                    val = None
-                    store_val = False
-                else:
-                    fmt = 'Required %r of type %r not defined'
-                    msg = fmt % (key, prod.type)
-                    raise ValueError(msg)
+                val = prod.default_value()
 
-            if store_val:
-                nval = prod.type.store(val)
-            else:
-                nval = val
+            if prod.choices and (val not in prod.choices):
+                raise ValueError('%s not in %s' % (val, prod.choices))
 
-            if prod.choices and (nval not in prod.choices):
-                raise ValueError('%s not in %s' % (nval, prod.choices))
-
-            setattr(self, key, nval)
+            setattr(self, key, val)
         return self
 
     def __init__(self, *args, **kwds):
@@ -78,9 +64,9 @@ class RecipeInOut(object):
             check.check(self)
 
 
-class RecipeRequirements(RecipeInOut):
+class RecipeRequirements(with_metaclass(RecipeRequirementsType, RecipeInOut)):
     '''RecipeRequirements base class'''
-    __metaclass__ = RecipeRequirementsType
+    pass
 
 
 class BaseRecipeResult(object):
@@ -90,7 +76,7 @@ class BaseRecipeResult(object):
     def __init__(self, *args, **kwds):
         super(BaseRecipeResult, self).__init__()
 
-    def suggest_store(self, *args, **kwds):
+    def suggest_convert(self, *args, **kwds):
         pass
 
 
@@ -106,8 +92,7 @@ class ErrorRecipeResult(BaseRecipeResult):
         return fmt % (sclass, self.errortype, self.message)
 
 
-class RecipeResult(RecipeInOut, BaseRecipeResult):
-    __metaclass__ = RecipeResultType
+class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResult)):
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -116,15 +101,15 @@ class RecipeResult(RecipeInOut, BaseRecipeResult):
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
-    def suggest_store(self, **kwds):
+    def suggest_convert(self, **kwds):
         for k in kwds:
             mm = getattr(self, k)
             self.__class__[k].type.suggest(mm, kwds[k])
 
 
-class RecipeResultAutoQC(RecipeResult):
+class RecipeResultAutoQC(with_metaclass(RecipeResultAutoQCType, RecipeResult)):
     '''RecipeResult with an automatic QC member.'''
-    __metaclass__ = RecipeResultAutoQCType
+    pass
 
 
 class define_result(object):
@@ -136,6 +121,8 @@ class define_result(object):
         self.klass = resultClass
 
     def __call__(self, klass):
+        klass.Result = self.klass
+        # TODO: remove this name in the future
         klass.RecipeResult = self.klass
         return klass
 
@@ -150,5 +137,7 @@ class define_requirements(object):
         self.klass = requirementClass
 
     def __call__(self, klass):
+        klass.Requirements = self.klass
+        # TODO: remove this name in the future
         klass.RecipeRequirements = self.klass
         return klass

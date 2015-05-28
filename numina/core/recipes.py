@@ -29,20 +29,20 @@ import abc
 import traceback
 import logging
 
+from six import with_metaclass
+
 from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeRequirements as RecipeRequirementsClass
+from .metarecipes import RecipeType
+from .metarecipes import RecipeTypeAutoQC
+
 
 _logger = logging.getLogger('numina')
 
 
-def list_recipes():
-    '''List all defined recipes'''
-    return BaseRecipe.__subclasses__()
-
-
-class _BaseRecipeMethods(object):
+class BaseRecipeMethods(object):
     '''Base class for all instrument recipes'''
 
     RecipeResult = RecipeResultClass
@@ -52,7 +52,7 @@ class _BaseRecipeMethods(object):
     logger = _logger
 
     def __init__(self, *args, **kwds):
-        super(_BaseRecipeMethods, self).__init__()
+        super(BaseRecipeMethods, self).__init__()
         self.__author__ = 'Unknown'
         self.__version__ = '0.0.0'
         # These two are maintained
@@ -73,6 +73,14 @@ class _BaseRecipeMethods(object):
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
 
+
+    @classmethod
+    def create_requirements(cls, *args, **kwds):
+        '''
+        Pass the result arguments to the RecipeRequirements constructor
+        '''
+        return cls.RecipeRequirements(*args, **kwds)
+
     @classmethod
     def create_result(cls, *args, **kwds):
         '''
@@ -81,7 +89,7 @@ class _BaseRecipeMethods(object):
         return cls.RecipeResult(*args, **kwds)
 
     def run(self, recipe_input):
-        return self.RecipeResult()
+        return self.create_result()
 
     def __call__(self, recipe_input):
         '''
@@ -113,84 +121,19 @@ class _BaseRecipeMethods(object):
         return hdr
 
 
-class BaseRecipe(_BaseRecipeMethods):
+class BaseRecipe(with_metaclass(abc.ABCMeta, BaseRecipeMethods)):
     '''Base class for all instrument recipes'''
-
-    __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def run(self, recipe_input):
-        return self.RecipeResult()
+        return self.create_result()
 
 
-from .recipeinout import RecipeResult, RecipeRequirements
-from .recipeinout import RecipeResultAutoQC
-from .dataholders import Product
-from .requirements import Requirement
-
-
-class RecipeType(type):
-    '''Metaclass for Recipe.'''
-    def __new__(cls, classname, parents, attributes):
-        filter_reqs = {}
-        filter_prods = {}
-        filter_attr = {}
-
-        for name, val in attributes.items():
-            if isinstance(val, Requirement):
-                filter_reqs[name] = val
-            elif isinstance(val, Product):
-                filter_prods[name] = val
-            else:
-                filter_attr[name] = val
-
-        ReqsClass = cls.create_req_class(classname, filter_reqs)
-
-        ResultClass = cls.create_prod_class(classname, filter_prods)
-
-        filter_attr['RecipeResult'] = ResultClass
-        filter_attr['RecipeRequirements'] = ReqsClass
-        return super(RecipeType, cls).__new__(
-            cls, classname, parents, filter_attr)
-
-    @classmethod
-    def create_req_class(cls, classname, attributes):
-        if attributes:
-            reqs_name = '%sRequirements' % classname
-            ReqsClass = type(reqs_name, (RecipeRequirements,), attributes)
-        else:
-            ReqsClass = RecipeRequirements
-        return ReqsClass
-
-    @classmethod
-    def create_prod_class(cls, classname, attributes):
-        if attributes:
-            result_name = '%sResult' % classname
-            ResultClass = type(result_name, (RecipeResult,), attributes)
-        else:
-            ResultClass = RecipeResult
-
-        return ResultClass
-
-
-class RecipeTypeAutoQC(RecipeType):
-    '''Metaclass for Recipe with RecipeResultAutoQC.'''
-    @classmethod
-    def create_prod_class(cls, classname, attributes):
-        if attributes:
-            result_name = '%sResult' % classname
-            ResultClass = type(result_name, (RecipeResultAutoQC,), attributes)
-        else:
-            ResultClass = RecipeResult
-
-        return ResultClass
-
-
-class BaseRecipeAlt(_BaseRecipeMethods):
+class BaseRecipeAlt(with_metaclass(RecipeType, BaseRecipeMethods)):
     '''Base class for instrument recipes'''
-    __metaclass__ = RecipeType
+    pass
 
 
-class BaseRecipeAutoQC(_BaseRecipeMethods):
+class BaseRecipeAutoQC(with_metaclass(RecipeTypeAutoQC, BaseRecipeMethods)):
     '''Base class for instrument recipes'''
-    __metaclass__ = RecipeTypeAutoQC
+    pass

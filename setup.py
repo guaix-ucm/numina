@@ -43,7 +43,7 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-REQUIRES = ['setuptools', 'numpy>=1.6', 'astropy>=1.0', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'six', 'numpy>=1.6', 'astropy>=1.0', 'scipy', 'PyYaml']
 
 from numina import __version__
 
@@ -58,12 +58,19 @@ setup(name='numina',
       package_data={'numina.tests.drps.1': ['drp.yaml'],
                    },
       ext_modules=[ext1, ext2, ext3],
-      entry_points={'console_scripts': ['numina = numina.user:main']},
+      entry_points={
+        'console_scripts': [
+            'numina = numina.user.cli:main',
+            ],
+        'numina.storage.1': [
+            'numina_default = numina.store.default:load_cli_storage',
+            ],
+      },
       setup_requires=['numpy'],
       install_requires=REQUIRES,
-      use_2to3=True,
       zip_safe=False,
-      test_suite= "numina.tests",
+      use2to3=False,
+      tests_require=['pytest'],
       cmdclass=cmdclass,
       classifiers=[
                    "Programming Language :: C",
