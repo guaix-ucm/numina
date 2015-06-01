@@ -19,8 +19,8 @@
 
 '''Numina itertools.'''
 
-from itertools import izip
-import Queue
+from six.moves import zip as izip
+from six.moves import queue as Queue
 
 
 def braid(*iterables):

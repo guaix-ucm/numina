@@ -61,13 +61,13 @@ class TreeDict(collections.MutableMapping):
 if __name__ == '__main__':
     a = TreeDict()
     a['instrument.name'] = 'iname'
-    print a['instrument.name']
+    assert(a['instrument.name'] == 'iname')
 
     de = TreeDict()
     de['val1'] = 'cal1'
     de['val2'] = 2394
-    print de['val1']
+    assert(de['val1'] == 'cal1')
 
     a['instrument.detector'] = de
-    print a['instrument']['detector']['val2']
-    print a['instrument.detector.val2']
+    assert(a['instrument']['detector']['val2'] == 'cal1')
+    assert(a['instrument.detector.val2'] == 'cal1')

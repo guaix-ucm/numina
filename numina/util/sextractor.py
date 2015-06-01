@@ -148,14 +148,14 @@ Example of use:
 
 # ======================================================================
 
-import __builtin__
+from six.moves import builtins as __builtin__
 
 import os
 import subprocess
 import re
 import copy
 
-from sexcatalog import *
+from .sexcatalog import *
 
 
 # ======================================================================
