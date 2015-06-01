@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,6 +18,7 @@
 #
 
 from six.moves import urllib_request
+from six.moves import urllib_error
 import hashlib
 
 from tempfile import NamedTemporaryFile
@@ -58,7 +59,7 @@ def download_cache(url, cache, bsize=BLOCK):
         source = urllib_request.urlopen(req)
         update_cache = True
         etag = source.headers.dict['etag']
-    except urllib_request.HTTPError as err:
+    except urllib_error.HTTPError as err:
         if err.code == 304:
             update_cache = False
             source = open(cache.cached_filename(urldigest))
