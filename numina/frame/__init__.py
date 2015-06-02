@@ -18,7 +18,7 @@
 #
 
 import warnings
-
+import six
 from astropy.io import fits
 
 from numina.array import resize_array
@@ -59,7 +59,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
                 scale=1, fill=0.0, clobber=True, conserve=True):
 
     close_on_exit = False
-    if isinstance(fitsfile, basestring):
+    if isinstance(fitsfile, six.string_types):
         hdulist = fits.open(fitsfile, mode='readonly')
         close_on_exit = True
     else:

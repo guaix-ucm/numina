@@ -22,9 +22,11 @@ from __future__ import print_function
 import logging
 from itertools import product
 
-try:
+import six
+
+if six.PY2:
     from itertools import imap
-except ImportError:
+else:
     imap = map
 
 import numpy
