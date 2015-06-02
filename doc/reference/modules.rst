@@ -20,6 +20,5 @@ Numina modules
    treedict
    user
    util
-   worker
    xdgdirs
    

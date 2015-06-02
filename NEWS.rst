@@ -1,3 +1,12 @@
+Version 0.14.x
+================
+
+Changes
+-------
+* Remove 'worker' module
+
+
+
 Version 0.13.2 (22 Apr 2015)
 ----------------------------
  Changes:
