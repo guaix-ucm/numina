@@ -58,16 +58,3 @@ class TreeDict(collections.MutableMapping):
         else:
             return data[key]
 
-if __name__ == '__main__':
-    a = TreeDict()
-    a['instrument.name'] = 'iname'
-    print a['instrument.name']
-
-    de = TreeDict()
-    de['val1'] = 'cal1'
-    de['val2'] = 2394
-    print de['val1']
-
-    a['instrument.detector'] = de
-    print a['instrument']['detector']['val2']
-    print a['instrument.detector.val2']
