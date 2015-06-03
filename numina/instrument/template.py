@@ -19,9 +19,11 @@
 
 '''Interpolation in FITS header templates.'''
 
+import six
+
 
 def isinterpolable(v):
-    if isinstance(v, basestring) and v[:2] == '%(' and v[-1] == ')':
+    if isinstance(v, six.string_types) and v[:2] == '%(' and v[-1] == ')':
         return v[2:-1]
     else:
         return None
@@ -31,7 +33,7 @@ def interpolate(meta, v):
     key = isinterpolable(v)
     if key is not None:
         ival = meta[key]
-        if callable(ival):
+        if six.callable(ival):
             return ival()
         else:
             return ival

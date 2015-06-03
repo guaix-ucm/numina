@@ -18,6 +18,7 @@
 #
 
 import unittest
+import six
 
 from numina.generic import generic
 
@@ -31,7 +32,7 @@ class GenericTestCase(unittest.TestCase):
         def testfunc(obj):
             return obj
 
-        self.assertTrue(callable(testfunc))
+        self.assertTrue(six.callable(testfunc))
 
     def test_register(self):
         '''Test if register adds new types.'''
