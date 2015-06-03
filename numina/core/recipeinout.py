@@ -30,7 +30,7 @@ from .metaclass import RecipeResultAutoQCType
 class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
         self = super(RecipeInOut, cls).__new__(cls)
-        for key, prod in cls.iteritems():
+        for key, prod in cls.items():
             if key in kwds:
                 val = prod.convert(kwds[key])
             else:
@@ -97,7 +97,7 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResul
     def __repr__(self):
         sclass = type(self).__name__
         full = []
-        for key, val in self.__class__.iteritems():
+        for key, val in self.__class__.items():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 

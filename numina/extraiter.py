@@ -20,7 +20,7 @@
 '''Numina itertools.'''
 
 from six.moves import zip as izip
-from six.moves.queue import Queue, Empty
+from six.moves import queue
 
 
 def braid(*iterables):
@@ -49,7 +49,7 @@ def iterqueue(qu):
 
     Example usage:
 
-    >>> qu = Queue()
+    >>> qu = queue.Queue()
     >>> qu.put(1)
     >>> qu.put(2)
     >>> qu.put(3)
@@ -63,5 +63,5 @@ def iterqueue(qu):
     try:
         while True:
             yield qu.get_nowait()
-    except Empty:
+    except queue.Empty:
         raise StopIteration

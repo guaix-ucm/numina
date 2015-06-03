@@ -21,6 +21,7 @@
 Results of the Observing Blocks
 '''
 
+import six
 from astropy.io import fits
 
 from .dataframe import DataFrame
@@ -49,7 +50,7 @@ class ObservationResult(object):
 
 def dataframe_from_list(values):
     '''Build a DataFrame object from a list.'''
-    if(isinstance(values, basestring)):
+    if(isinstance(values, six.string_types)):
         return DataFrame(filename=values)
     elif(isinstance(values, fits.HDUList)):
         return DataFrame(frame=values)

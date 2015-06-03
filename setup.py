@@ -69,7 +69,6 @@ setup(name='numina',
       setup_requires=['numpy'],
       install_requires=REQUIRES,
       zip_safe=False,
-      use2to3=False,
       tests_require=['pytest'],
       cmdclass=cmdclass,
       classifiers=[

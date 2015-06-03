@@ -65,7 +65,7 @@ class DataFrameType(DataProductType):
         # We accept None representing No Image
         if obj is None:
             return None
-        elif isinstance(obj, basestring):
+        elif isinstance(obj, six.string_types):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj
@@ -93,10 +93,10 @@ class DataFrameType(DataProductType):
         pass
 
     def suggest(self, obj, suggestion):
-        if not isinstance(suggestion, basestring):
+        if not isinstance(suggestion, six.string_types):
             raise TypeError('suggestion must be a string, not %r' % suggestion)
             return obj
-        if isinstance(obj, basestring):
+        if isinstance(obj, six.string_types):
             # check that this is a FITS file
             # try - open
             # FIXME
