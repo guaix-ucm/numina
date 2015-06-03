@@ -85,7 +85,7 @@ class DataFrameType(DataProductType):
             try:
                 with value.open() as hdulist:
                     self.validate_hdulist(hdulist)
-            except StandardError:
+            except Exception:
                 _type, exc, tb = sys.exc_info()
                 six.reraise(ValidationError, exc, tb)
 
