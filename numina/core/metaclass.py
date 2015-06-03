@@ -145,7 +145,7 @@ class MapStoreType(StoreType):
     def __ne__(self, other):
         return not (self == other)
 
-    def __nonzero__(self):
+    def __bool__(self):
         # Added due to http://bugs.python.org/issue23572
         return True
 
