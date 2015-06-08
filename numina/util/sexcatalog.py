@@ -695,7 +695,7 @@ class SExtractorfile:
                         'not a SExtractor text catalog (invalid header)'
                         )
                 name = columns[2]
-                if not(name in SExtractorfile._SE_keys.keys()):
+                if name not in SExtractorfile._SE_keys:
                     raise WrongSExtractorfileException(
                         'not a SExtractor text catalog (unknown keyword %s)'
                         % name
@@ -720,13 +720,13 @@ class SExtractorfile:
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         rr = self.readline()
         if not(rr):
             raise StopIteration
         return rr
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self._file
 
     def keys(self):
@@ -735,7 +735,7 @@ class SExtractorfile:
 
     def getcolumns(self):
         "Return the list of available parameters."
-        return self.keys()
+        return list(self.keys())
 
     def readline(self):
         """

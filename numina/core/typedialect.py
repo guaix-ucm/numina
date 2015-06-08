@@ -35,7 +35,7 @@ for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__,
         dialect_info = getattr(mod, 'dialect_info')
         if dialect_info:
             break
-    except StandardError as error:
+    except Exception as error:
         # print name, type(error), error
         pass
 else:

@@ -21,6 +21,8 @@
 
 import json
 
+import six
+
 
 def to_json(obj):
     if hasattr(obj, '__getstate__'):
@@ -67,7 +69,7 @@ def deunicode_json(obj):
     '''Convert unicode strings into plain strings recursively.'''
     if isinstance(obj, dict):
         newobj = {}
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
             newobj[str(key)] = deunicode_json(value)
         return newobj
     elif isinstance(obj, list):
@@ -75,7 +77,7 @@ def deunicode_json(obj):
         for i in obj:
             newobj.append(deunicode_json(i))
         return newobj
-    elif isinstance(obj, unicode):
+    elif isinstance(obj, six.text_type):
         val = str(obj)
         if val.isdigit():
             val = int(val)

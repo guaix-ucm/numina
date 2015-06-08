@@ -21,8 +21,6 @@
 Base metaclasses
 '''
 
-import six
-
 import collections
 from .dataholders import Product
 from .requirements import Requirement
@@ -134,10 +132,7 @@ class MapStoreType(StoreType):
     def __eq__(self, other):
         if not isinstance(other, collections.Mapping):
             return NotImplemented
-        if six.PY2:
-            return dict(self.items()) == dict(other.items())
-        else:
-            return dict(list(self.items())) == dict(list(other.items()))
+        return dict(self.items()) == dict(other.items())
 
     # https://docs.python.org/3.1/reference/datamodel.html#object.__hash__
     __hash__ = StoreType.__hash__
@@ -145,7 +140,7 @@ class MapStoreType(StoreType):
     def __ne__(self, other):
         return not (self == other)
 
-    def __nonzero__(self):
+    def __bool__(self):
         # Added due to http://bugs.python.org/issue23572
         return True
 
