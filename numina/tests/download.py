@@ -47,16 +47,16 @@ def download_cache(url, cache, bsize=BLOCK):
     hh.update(six.b(url))
     urldigest = hh.hexdigest()
     update_cache = False
-    # print 'urldigest', urldigest
-    # print cache._cache
+    print('urldigest', urldigest)
+    print(cache._cache)
     if cache.url_is_cached(urldigest):
         # Retrieve from cache
         etag = cache.retrieve(urldigest)
-        # print 'is in cache, etag is', etag
+        print('is in cache, etag is', etag)
         req = urllib_request.Request(url)
         req.add_header('If-None-Match', etag)
     else:
-        # print 'resource not in cache'
+        print('resource not in cache')
         req = urllib_request.Request(url)
     try:
         source = urllib_request.urlopen(req)
@@ -65,12 +65,14 @@ def download_cache(url, cache, bsize=BLOCK):
     except urllib_error.HTTPError as err:
         if err.code == 304:
             update_cache = False
-            source = open(cache.cached_filename(urldigest))
+            source = open(cache.cached_filename(urldigest), mode='rb')
         else:
             raise
 
     #
     with NamedTemporaryFile(delete=False) as fd:
+        print('fd is', fd)
+        print('source is', source)
         block = source.read(bsize)
         while block:
             fd.write(block)
