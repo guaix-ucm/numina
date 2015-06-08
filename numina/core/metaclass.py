@@ -144,6 +144,11 @@ class MapStoreType(StoreType):
         # Added due to http://bugs.python.org/issue23572
         return True
 
+    def __nonzero__(self):
+        # Added due to http://bugs.python.org/issue23572
+        return True
+
+
 # Register as a mapping
 collections.Mapping.register(MapStoreType)  # @UndefinedVariable
 

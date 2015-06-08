@@ -71,7 +71,10 @@ class EnumType(type):
         return self.__members__[name]
 
     def __getattr__(self, name):
-        return self.__members__[name]
+        try:
+            return self.__members__[name]
+        except KeyError:
+            raise AttributeError(name)
 
     def __iter__(self):
         return six.itervalues(self.__members__)

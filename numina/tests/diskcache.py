@@ -20,6 +20,7 @@
 import os
 import shutil
 
+import six
 from six.moves import cPickle as pickle
 
 from numina.user.xdgdirs import xdg_cache_home
@@ -29,7 +30,11 @@ class DiskCache(object):
     def __init__(self, cache_dir):
         self._cache = {}
         self.cache_dir = cache_dir
-        self.INDEX_MAP = 'index.map'
+        # Pickle format is different in Py2/Py3
+        if six.PY2:
+            self.INDEX_MAP = 'index.map'
+        else:
+            self.INDEX_MAP = 'index3.map'
         self.index_map = os.path.join(self.cache_dir, self.INDEX_MAP)
 
     def load(self):
@@ -54,7 +59,7 @@ class DiskCache(object):
         # print self._cache
 
     def update_map(self):
-        with open(self.index_map, 'w+') as pk:
+        with open(self.index_map, 'wb+') as pk:
             pickle.dump(self._cache, pk)
 
     def url_is_cached(self, urldigest):

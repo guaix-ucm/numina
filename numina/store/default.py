@@ -56,7 +56,7 @@ def _(tag, obj, where):
 
 
 @dump.register(DataProductType)
-def _(tag, obj, where):    
+def _(tag, obj, where):
     return obj
 
 
@@ -65,7 +65,7 @@ def _(tag, obj, where):
     return obj
 
 @dump.register(ArrayType)
-def _(tag, obj, where):    
+def _(tag, obj, where):
     return dump.registry[numpy.ndarray](tag, obj, where)
 
 
