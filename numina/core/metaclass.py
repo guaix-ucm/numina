@@ -21,8 +21,6 @@
 Base metaclasses
 '''
 
-import six
-
 import collections
 from .dataholders import Product
 from .requirements import Requirement
