@@ -17,11 +17,13 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import hashlib
+from tempfile import NamedTemporaryFile
+
+import six
 from six.moves import urllib_request
 from six.moves import urllib_error
-import hashlib
 
-from tempfile import NamedTemporaryFile
 
 BLOCK = 2048
 
@@ -30,6 +32,7 @@ def download(url, bsize=BLOCK):
     req = urllib_request.Request(url)
     source = urllib_request.urlopen(req)
     #
+    assert False
     with NamedTemporaryFile(delete=False) as fd:
         block = source.read(bsize)
         while block:
@@ -41,7 +44,7 @@ def download(url, bsize=BLOCK):
 
 def download_cache(url, cache, bsize=BLOCK):
     hh = hashlib.md5()
-    hh.update(url)
+    hh.update(six.b(url))
     urldigest = hh.hexdigest()
     update_cache = False
     # print 'urldigest', urldigest
@@ -58,7 +61,7 @@ def download_cache(url, cache, bsize=BLOCK):
     try:
         source = urllib_request.urlopen(req)
         update_cache = True
-        etag = source.headers.dict['etag']
+        etag = source.headers['etag']
     except urllib_error.HTTPError as err:
         if err.code == 304:
             update_cache = False
