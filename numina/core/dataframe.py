@@ -34,7 +34,7 @@ class DataFrame(object):
 
     def open(self):
         if self.frame is None:
-            return fits.open(self.filename, memmap=True, mode='readonly')
+            return fits.open(self.filename, mode='readonly')
         else:
             return self.frame
 
