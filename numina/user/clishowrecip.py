@@ -32,6 +32,31 @@ from numina.core import import_object
 
 _logger = logging.getLogger("numina")
 
+def add(subparsers):
+    parser_show_rec = subparsers.add_parser(
+        'show-recipes',
+        help='show information of recipes'
+        )
+
+    parser_show_rec.set_defaults(command=show_recipes, template=False)
+
+    parser_show_rec.add_argument(
+        '-i', '--instrument',
+        help='filter recipes by instrument'
+        )
+    parser_show_rec.add_argument(
+        '-t', '--template', action='store_true',
+        help='generate requirements YAML template'
+        )
+
+#    parser_show_rec.add_argument('--output', type=argparse.FileType('wb', 0))
+
+    parser_show_rec.add_argument(
+        'name', nargs='*', default=None,
+        help='filter recipes by name'
+        )
+
+    return parser_show_rec
 
 def show_recipes(args):
     this_recipe_print = print_recipe

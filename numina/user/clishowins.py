@@ -22,6 +22,29 @@
 from __future__ import print_function
 
 
+def add(subparsers):
+    parser_show_ins = subparsers.add_parser(
+        'show-instruments',
+        help='show registered instruments'
+        )
+
+    parser_show_ins.set_defaults(command=show_instruments,
+                                 verbose=0, what='om')
+    parser_show_ins.add_argument(
+        '-o', '--observing-modes',
+        action='store_true', dest='om',
+        help='list observing modes of each instrument')
+
+#    parser_show_ins.add_argument('--verbose', '-v', action='count')
+
+    parser_show_ins.add_argument(
+        'name', nargs='*', default=None,
+        help='filter instruments by name'
+        )
+
+    return parser_show_ins
+
+
 def show_instruments(args):
     for theins in args.drps.values():
         if not args.name or (theins.name in args.name):
