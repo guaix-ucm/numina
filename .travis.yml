@@ -5,8 +5,6 @@ matrix:
   include:
     - python: "2.7"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
-    - python: "3.3"
-      env: DEPS="numpy=1.7 scipy=0.12 astropy=1.0"
     - python: "3.4"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
 
