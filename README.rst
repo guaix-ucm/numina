@@ -14,12 +14,14 @@ details.
 Requirements
 ------------
 
-Python 2.7 is required. Numina requires the following 
+Python 2.7 or 3.3 (or greater) is required. Numina requires the following 
 packages installed in order to work properly:
 
- - numpy (http://numpy.scipy.org/) 
+ - setuptools (http://pythonhosted.org/setuptools/)
+ - six >= 1.7 (https://pythonhosted.org/six/)
+ - numpy >= 1.6 (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
- - astropy >= 0.4 (http://www.astropy.org/)
+ - astropy >= 1.0 (http://www.astropy.org/)
  - PyYaml (http://pyyaml.org/)
  
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
@@ -56,7 +58,7 @@ Development version
 
 The development version can be checked out with:::
 
-    $ hg clone https://guaix.fis.ucm.es/hg/numina
+    $ git clone https://github.com/guaix-ucm/numina.git
 
 And then installed following the standard procedure:::
 
