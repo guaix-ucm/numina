@@ -14,7 +14,7 @@ details.
 Requirements
 ------------
 
-Python 2.7 or 3.4 is required. Numina requires the following 
+Python 2.7 or 3.3 (or greater) is required. Numina requires the following 
 packages installed in order to work properly:
 
  - setuptools (http://pythonhosted.org/setuptools/)
