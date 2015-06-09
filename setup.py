@@ -43,7 +43,7 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-REQUIRES = ['setuptools', 'six', 'numpy>=1.6', 'astropy>=1.0', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.0', 'scipy', 'PyYaml']
 
 from numina import __version__
 
@@ -75,6 +75,7 @@ setup(name='numina',
                    "Programming Language :: C",
                    "Programming Language :: Cython",
                    "Programming Language :: Python :: 2.7",
+                   "Programming Language :: Python :: 3.3",
                    "Programming Language :: Python :: 3.4",
                    "Programming Language :: Python :: Implementation :: CPython",
                    'Development Status :: 3 - Alpha',

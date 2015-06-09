@@ -5,6 +5,8 @@ matrix:
   include:
     - python: "2.7"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
+    - python: "3.3"
+      env: DEPS="numpy=1.7 scipy=0.12 astropy=1.0"
     - python: "3.4"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
 
@@ -15,7 +17,7 @@ install:
   # OK, this used to *fix* the build, but now it *breaks* the build.
   # If you're reading this, good luck out there. I'm not sure what to tell you.
   - conda update --yes conda
-  - conda create -n testenv --yes $DEPS pip pytest setuptools six pyyaml python=$TRAVIS_PYTHON_VERSION
+  - conda create -n testenv --yes $DEPS pip pytest setuptools six>=1.7 pyyaml python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
   # for debugging...
   - echo $PATH
