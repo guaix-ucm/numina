@@ -35,7 +35,7 @@ from numina.core.recipeinput import RecipeInputBuilder
 from numina.store import init_store_backends
 from numina.store import dump
 
-from .helpers import ProcessingTask, WorkEnvironment, DiskStorage
+from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 
 _logger = logging.getLogger("numina")
 
@@ -61,11 +61,11 @@ def load_control(rfile):
 
 
 def create_recipe_file_logger(logger, logfile, logformat):
-    _logger.debug('creating file logger %r from Recipe logger', logfile)
-    _recipe_formatter = logging.Formatter(logformat)
+    '''Redirect Recipe log messages to a file.'''
+    recipe_formatter = logging.Formatter(logformat)
     fh = logging.FileHandler(logfile, mode='w')
     fh.setLevel(logging.DEBUG)
-    fh.setFormatter(_recipe_formatter)
+    fh.setFormatter(recipe_formatter)
     return fh
 
 
@@ -261,51 +261,49 @@ def mode_run_common(args, mode):
     task.runinfo['results_dir'] = workenv.resultsdir
     task.runinfo['recipe_version'] = recipe.__version__
 
-    run_create_logger(
+    completed_task = run_recipe(
         recipe=recipe,
         task=task, rinput=rinput,
         workenv=workenv, task_control=task_control
         )
 
+    where = DiskStorageDefault(resultsdir=workenv.resultsdir)
 
-def run_create_logger(recipe, task, rinput, workenv, task_control):
+    store_results(completed_task, where)
+
+def run_recipe(recipe, task, rinput, workenv, task_control):
     '''Recipe execution mode of numina.'''
 
     # Creating custom logger file
-    _recipe_logger_name = 'numina.recipes'
-    _recipe_logger = logging.getLogger(_recipe_logger_name)
+    DEFAULT_RECIPE_LOGGER = 'numina.recipes'
+    recipe_logger = logging.getLogger(DEFAULT_RECIPE_LOGGER)
+
     logger_control = task_control['logger']
     if logger_control['enabled']:
         logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
         logformat = logger_control['format']
-        fh = create_recipe_file_logger(_recipe_logger, logfile, logformat)
+        _logger.debug('creating file logger %r from Recipe logger', logfile)
+        fh = create_recipe_file_logger(recipe_logger, logfile, logformat)
     else:
         fh = logging.NullHandler()
 
-    _recipe_logger.addHandler(fh)
+    recipe_logger.addHandler(fh)
 
     try:
         csd = os.getcwd()
         _logger.debug('cwd to workdir')
         os.chdir(workenv.workdir)
-        task = internal_work(recipe, rinput, task)
+        completed_task = run_recipe_timed(recipe, rinput, task)
 
-        _logger.debug('cwd to resultdir: %r', workenv.resultsdir)
-        os.chdir(workenv.resultsdir)
+        return completed_task
 
-        _logger.info('storing result')
-
-        guarda(task)
-
-#    except StandardError as error:
-#        _logger.error('finishing with errors: %s', error)
     finally:
         _logger.debug('cwd to original path: %r', csd)
         os.chdir(csd)
-        _recipe_logger.removeHandler(fh)
+        recipe_logger.removeHandler(fh)
 
 
-def internal_work(recipe, rinput, task):
+def run_recipe_timed(recipe, rinput, task):
     TIMEFMT = '%FT%T'
     _logger.info('running recipe')
     now1 = datetime.datetime.now()
@@ -322,14 +320,19 @@ def internal_work(recipe, rinput, task):
     return task
 
 
-def guarda(task):
-    # Store results we know about
-    # via store.dump
 
-    where = DiskStorage()
+def store_results(completed_task, where):
+    '''Store the values of the completed task'''
 
-    where.result = 'result.yaml'
-    where.task = 'task.yaml'
+    try:
+        csd = os.getcwd()
+        _logger.debug('cwd to resultdir: %r', where.resultsdir)
+        os.chdir(where.resultsdir)
 
-    dump(task, task, where)
+        _logger.info('storing result')
+        dump(task, task, where)
+
+    finally:
+        _logger.debug('cwd to original path: %r', csd)
+        os.chdir(csd)
 
