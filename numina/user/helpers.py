@@ -139,3 +139,11 @@ class DiskStorage(object):
         self.idx = self.idx + 1
         return fname
 
+
+class DiskStorageDefault(DiskStorage):
+    def __init__(self, resultsdir):
+        super(DiskStorageDefault).__init__()
+        self.result = 'result.yaml'
+        self.task = 'task.yaml'
+        self.resultsdir = resultsdir
+
