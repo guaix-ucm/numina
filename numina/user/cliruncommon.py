@@ -19,9 +19,6 @@
 
 '''User command line interface of Numina.'''
 
-from __future__ import print_function
-
-
 import sys
 import os
 import logging
@@ -41,6 +38,27 @@ from numina.store import dump
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorage
 
 _logger = logging.getLogger("numina")
+
+
+def load_control(rfile):
+    # Load recipe control and recipe parameters from file
+    task_control = dict(requirements={}, products={}, logger=logger_control)
+    task_control_loaded = {}
+
+    # Read task_control from args.reqs
+    _logger.info('reading task control from %s', rfile)
+    with open(rfile, 'r') as fd:
+        task_control_loaded = yaml.load(fd)
+
+    # Here, check dialect of task_control_loaded
+
+    # Populate task_control
+    for key in task_control:
+        if key in task_control_loaded:
+            task_control[key].update(task_control_loaded[key])
+
+    return task_control
+
 
 def create_recipe_file_logger(logger, logfile, logformat):
     _logger.debug('creating file logger %r from Recipe logger', logfile)
