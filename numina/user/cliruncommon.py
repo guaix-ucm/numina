@@ -32,8 +32,6 @@ from numina.core import InstrumentConfiguration
 from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core.recipeinput import RecipeInputBuilder
-from numina.store import init_store_backends
-from numina.store import dump
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 
@@ -58,15 +56,6 @@ def load_control(rfile):
             task_control[key].update(task_control_loaded[key])
 
     return task_control
-
-
-def create_recipe_file_logger(logger, logfile, logformat):
-    '''Redirect Recipe log messages to a file.'''
-    recipe_formatter = logging.Formatter(logformat)
-    fh = logging.FileHandler(logfile, mode='w')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(recipe_formatter)
-    return fh
 
 
 def load_from_obsres(obsres, args):
@@ -155,9 +144,6 @@ def load_from_obsres(obsres, args):
 
 def mode_run_common(args, mode):
     '''Observing mode processing mode of numina.'''
-
-    # Load store backends
-    init_store_backends()
 
     # Directories with relevant data
     workenv = WorkEnvironment(
@@ -269,7 +255,17 @@ def mode_run_common(args, mode):
 
     where = DiskStorageDefault(resultsdir=workenv.resultsdir)
 
-    store_results(completed_task, where)
+    where.store(completed_task)
+
+
+def create_recipe_file_logger(logger, logfile, logformat):
+    '''Redirect Recipe log messages to a file.'''
+    recipe_formatter = logging.Formatter(logformat)
+    fh = logging.FileHandler(logfile, mode='w')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(recipe_formatter)
+    return fh
+
 
 def run_recipe(recipe, task, rinput, workenv, task_control):
     '''Recipe execution mode of numina.'''
@@ -304,6 +300,7 @@ def run_recipe(recipe, task, rinput, workenv, task_control):
 
 
 def run_recipe_timed(recipe, rinput, task):
+    '''Run the recipe and count the time it takes.'''
     TIMEFMT = '%FT%T'
     _logger.info('running recipe')
     now1 = datetime.datetime.now()
@@ -318,21 +315,4 @@ def run_recipe_timed(recipe, rinput, task):
     task.runinfo['time_end'] = now2.strftime(TIMEFMT)
     task.runinfo['time_running'] = now2 - now1
     return task
-
-
-
-def store_results(completed_task, where):
-    '''Store the values of the completed task'''
-
-    try:
-        csd = os.getcwd()
-        _logger.debug('cwd to resultdir: %r', where.resultsdir)
-        os.chdir(where.resultsdir)
-
-        _logger.info('storing result')
-        dump(task, task, where)
-
-    finally:
-        _logger.debug('cwd to original path: %r', csd)
-        os.chdir(csd)
 
