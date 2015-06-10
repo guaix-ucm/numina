@@ -19,11 +19,10 @@
 
 '''User command line interface of Numina.'''
 
-from __future__ import print_function
-
 import logging.config
 import argparse
 import os
+from importlib import import_module
 
 from six.moves import configparser
 
@@ -72,13 +71,14 @@ def main(args=None):
         description='These are valid commands you can ask numina to do.'
         )
 
-    import importlib
+    # Init subcommands
     cmds = ['clishowins', 'clishowom', 'clishowrecip',
             'clirun', 'clirunrec']
     for cmd in cmds:
-        cmd_mod = importlib.import_module('.'+cmd, 'numina.user')
-        add = getattr(cmd_mod, 'add')
-        add(subparsers)
+        cmd_mod = import_module('.'+cmd, 'numina.user')
+        add = getattr(cmd_mod, 'add', None)
+        if add is not None:
+            add(subparsers)
 
     args = parser.parse_args(args)
 
