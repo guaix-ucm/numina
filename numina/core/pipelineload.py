@@ -38,7 +38,7 @@ def om_repr(dumper, data):
 def om_cons(loader, node):
     om = ObservingMode()
     value = loader.construct_mapping(node)
-    om.__dict__ = value
+    om.__dict__.update(value)
     om.uuid = uuid.UUID(om.uuid)
     return om
 
@@ -64,9 +64,9 @@ def load_modes(node):
 
 
 def load_mode(node):
-    m = ObservingMode()
-    m.__dict__ = node
-    return m
+    obs_mode = ObservingMode()
+    obs_mode.__dict__.update(node)
+    return obs_mode
 
 
 def load_pipelines(node):
@@ -74,7 +74,7 @@ def load_pipelines(node):
     for key in keys:
         if key not in node:
             raise ValueError('Missing key %r in pipelines node', key)
-    pipelines = dict()
+    pipelines = {}
     for key in node:
         pipelines[key] = load_pipeline(key, node[key])
     return pipelines
@@ -85,7 +85,7 @@ def load_confs(node):
     for key in keys:
         if key not in node:
             raise ValueError('Missing key %r in configurations node', key)
-    confs = dict()
+    confs = {}
     for key in node:
         confs[key] = load_conf(node[key])
     return confs

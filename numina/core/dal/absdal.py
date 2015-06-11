@@ -38,7 +38,7 @@ class AbsDAL(DALInterface):
         h.mode = ob.mode
         h.parent = ob.parent
         h.tags = {}
-        h.files = ob.files
+        h.images = ob.images
         h.children = ch
 
         tags_for_this_mode = tagger(ob.instrument, ob.mode)

@@ -35,7 +35,7 @@ class ObservationResult(object):
         self.id = 1
         self.mode = mode
         self.instrument = None
-        self.frames = []
+        self.images = []
         self.parent = None
         self.children = []  # other ObservationResult
         self.pipeline = 'default'
@@ -44,7 +44,7 @@ class ObservationResult(object):
 
     def update_with_product(self, prod):
         self.tags = prod.tags
-        self.files = [prod.content]
+        self.images = [prod.content]
         self.prodid = prod.id
 
 
@@ -55,13 +55,12 @@ def dataframe_from_list(values):
     elif(isinstance(values, fits.HDUList)):
         return DataFrame(frame=values)
     else:
-        # FIXME: modify when format is changed
-        # For this format
-        return DataFrame(filename=values[0], itype=values[1])
+        return None
 
 
 def obsres_from_dict(values):
     '''Build a ObservationResult object from a dictionary.'''
+
     obsres = ObservationResult()
 
     obsres.id = values.get('id', 1)
@@ -69,6 +68,6 @@ def obsres_from_dict(values):
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
-    obsres.frames = [dataframe_from_list(val) for val in values['frames']]
+    obsres.images = [dataframe_from_list(val) for val in values['images']]
 
     return obsres

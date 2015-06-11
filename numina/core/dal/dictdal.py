@@ -39,7 +39,7 @@ def product_label(drp, klass):
             return p['alias']
     else:
         return klass.__name__
-        
+
 
 def tags_are_valid(subset, superset):
     for key, val in subset.items():
@@ -47,19 +47,21 @@ def tags_are_valid(subset, superset):
             return False
     return True
 
-class DictDAL(AbsDAL):
-    def __init__(self, base):
-        super(DictDAL, self).__init__()
+
+class BaseDictDAL(AbsDAL):
+    def __init__(self, ob_table, prod_table, req_table):
+        super(BaseDictDAL, self).__init__()
 
         self.args_drps = init_drp_system()
         init_store_backends()
         # Check that the structure de base is correct
-        self._base = base
+        self.ob_table = ob_table
+        self.prod_table = prod_table
+        self.req_table= req_table
 
     def search_oblock_from_id(self, obsid):
-        ob_table = self._base['oblocks']
         try:
-            ob = ob_table[obsid]
+            ob = self.ob_table[obsid]
             return ObservingBlock(**ob)
         except KeyError:
             raise NoResultFound("oblock with id %d not found", obsid)
@@ -86,8 +88,7 @@ class DictDAL(AbsDAL):
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         '''Returns the first coincidence...'''
-        products = self._base['products']
-        ins_prod = products[ins]
+        ins_prod = self.prod_table[ins]
 
         # search results of these OBs
         for prod in ins_prod.values():
@@ -102,15 +103,12 @@ class DictDAL(AbsDAL):
 
     def search_prod_type_tags(self, tipo, ins, tags, pipeline):
         '''Returns the first coincidence...'''
-        reqs = self._base['requirements']
-        products = reqs['products']
-        ins_prod = products
 
         klass = tipo.__class__
         label = product_label(self.args_drps[ins], klass)
 
         # search results of these OBs
-        for prod in ins_prod:
+        for prod in self.prod_table[ins]:
             pk = prod['type'] 
             pt = prod['tags']
             if pk == label and tags_are_valid(pt, tags):
@@ -124,11 +122,8 @@ class DictDAL(AbsDAL):
             raise NoResultFound(msg)
     
     def search_param_req(self, req, instrument, mode, pipeline):
-        reqs = self._base['requirements']
-        
-        parameters = reqs['parameters']
 
-        for p in parameters:
+        for p in self.req_table['parameters']:
             if p['key'] == req.dest and p['mode'] == mode:
                 content = StoredParameter(p['value'])
                 return content
@@ -136,30 +131,38 @@ class DictDAL(AbsDAL):
             raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)            
 
     def obsres_from_oblock_id(self, obsid):
-        este = self._base['oblocks']
-        h = ObservationResult(obsid)
-        h.instrument = este['instrument']
-        h.mode = este['mode']
-        h.parent = None
-        h.tags = {}
-        h.files = este['frames']
-        h.children = []
+        este = self.ob_table[obsid]
+        obsres = ObservationResult(obsid)
+        obsres.instrument = este['instrument']
+        obsres.mode = este['mode']
+        obsres.parent = None
+        obsres.tags = {}
+        obsres.images = este['images']
+        obsres.children = []
 
-        this_drp = self.args_drps[h.instrument]
+        this_drp = self.args_drps[obsres.instrument]
         tagger_fqn = None
         for mode in this_drp.modes:
-            if mode.key == h.mode:
+            if mode.key == obsres.mode:
                 tagger_fqn = mode.tagger
                 break
         else:
-            raise ValueError('no mode for %s' % h.mode)
+            raise ValueError('no mode for %s' % obsres.mode)
 
         if tagger_fqn is None:
             master_tags = {}
         else:
             tagger_for_this_mode = import_object(tagger_fqn)
-            master_tags = tagger_for_this_mode(h)
+            master_tags = tagger_for_this_mode(obsres)
 
-        h.tags = master_tags
-        return h
+        obsres.tags = master_tags
+        return obsres
 
+class DictDAL(BaseDictDAL):
+    def __init__(self, base):
+
+        # Check that the structure of 'base' is correct
+        super(DictDAL, self).__init__(base['oblocks'],
+                                      base['products'],
+                                      base['requirements']
+                                     )

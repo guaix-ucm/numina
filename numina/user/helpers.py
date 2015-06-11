@@ -154,7 +154,7 @@ class DiskStorageDefault(DiskStorage):
 
 
     def store(self, completed_task):
-    '''Store the values of the completed task'''
+        '''Store the values of the completed task'''
 
         try:
             csd = os.getcwd()
