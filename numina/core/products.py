@@ -120,6 +120,12 @@ class ArrayType(DataProductType):
         return result
 
 
+class ArrayNType(ArrayType):
+    def __init__(self, dimensions, default=None):
+        super(ArrayNType, self).__init__(default=default)
+        self.N = dimensions
+
+
 # FIXME: this is hack, thus should be provided by DRPS
 def _gimme_validator_for(instrument, mode):
     validators = {
