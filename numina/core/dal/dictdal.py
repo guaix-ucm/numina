@@ -23,6 +23,7 @@ from numina.core import import_object
 from numina.core import ObservationResult
 from numina.core import init_drp_system
 from numina.core import fully_qualified_name
+from numina.core import obsres_from_dict
 from numina.core.dal import AbsDAL
 from numina.core.dal import NoResultFound
 from numina.core.dal import ObservingBlock
@@ -132,13 +133,7 @@ class BaseDictDAL(AbsDAL):
 
     def obsres_from_oblock_id(self, obsid):
         este = self.ob_table[obsid]
-        obsres = ObservationResult(obsid)
-        obsres.instrument = este['instrument']
-        obsres.mode = este['mode']
-        obsres.parent = None
-        obsres.tags = {}
-        obsres.images = este['images']
-        obsres.children = []
+        obsres = obsres_from_dict(este)
 
         this_drp = self.args_drps[obsres.instrument]
         tagger_fqn = None
