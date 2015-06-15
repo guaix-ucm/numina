@@ -161,8 +161,8 @@ def mode_run_common(args, mode):
         with open(args.obsresult) as fd:
             obsres = obsres_from_dict(yaml.load(fd))
 
-        _logger.debug('frames in observation result')
-        for v in obsres.frames:
+        _logger.debug('images in observation result')
+        for v in obsres.images:
             _logger.debug('%r', v)
 
     if mode == 'obs':
