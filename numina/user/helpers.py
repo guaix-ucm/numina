@@ -92,7 +92,7 @@ class WorkEnvironment(object):
 
     def copyfiles_stage1(self, obsres):
         _logger.debug('copying files from observation result')
-        for f in obsres.frames:
+        for f in obsres.images:
             _logger.debug('copying %r to %r', f.filename, self.workdir)
             complete = os.path.abspath(os.path.join(self.datadir, f.filename))
             shutil.copy(complete, self.workdir)
@@ -146,7 +146,7 @@ from numina.store import dump
 
 class DiskStorageDefault(DiskStorage):
     def __init__(self, resultsdir):
-        super(DiskStorageDefault).__init__()
+        super(DiskStorageDefault, self).__init__()
         self.result = 'result.yaml'
         self.task = 'task.yaml'
         self.resultsdir = resultsdir
@@ -162,7 +162,7 @@ class DiskStorageDefault(DiskStorage):
             os.chdir(self.resultsdir)
 
             _logger.info('storing result')
-            dump(task, task, self)
+            dump(completed_task, completed_task, self)
 
         finally:
             _logger.debug('cwd to original path: %r', csd)
