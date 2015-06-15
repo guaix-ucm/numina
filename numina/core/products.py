@@ -113,7 +113,7 @@ class ArrayType(DataProductType):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
     def convert(self, obj):
-        return self.convert_to__array(obj)
+        return self.convert_to_array(obj)
 
     def convert_to_array(self, obj):
         result = numpy.array(obj)
