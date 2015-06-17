@@ -76,9 +76,6 @@ class BaseRecipeResult(object):
     def __init__(self, *args, **kwds):
         super(BaseRecipeResult, self).__init__()
 
-    def suggest_convert(self, *args, **kwds):
-        pass
-
 
 class ErrorRecipeResult(BaseRecipeResult):
     def __init__(self, errortype, message, traceback):
@@ -100,11 +97,6 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResul
         for key, val in self.__class__.items():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
-
-    def suggest_convert(self, **kwds):
-        for k in kwds:
-            mm = getattr(self, k)
-            self.__class__[k].type.suggest(mm, kwds[k])
 
 
 class RecipeResultAutoQC(with_metaclass(RecipeResultAutoQCType, RecipeResult)):
