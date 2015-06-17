@@ -115,19 +115,23 @@ class BaseDictDAL(AbsDAL):
             if pk == label and tags_are_valid(pt, tags):
                 # this is a valid product
                 # We have found the result, no more checks
-                prod['id'] = 1
-                prod['content'] = load(tipo, prod['content'])
-                return StoredProduct(**prod)
+                # Make a copy
+                rprod = dict(prod)
+                rprod['content'] = load(tipo, prod['content'])
+                return StoredProduct(**rprod)
         else:
             msg = 'type %s compatible with tags %r not found' % (klass, tags)
             raise NoResultFound(msg)
     
     def search_param_req(self, req, instrument, mode, pipeline):
 
-        for p in self.req_table['parameters']:
-            if p['key'] == req.dest and p['mode'] == mode:
-                content = StoredParameter(p['value'])
-                return content
+        req_table_ins = self.req_table.get(instrument, {})
+        req_table_insi_pipe = req_table_ins.get(pipeline, {})
+        mode_keys = req_table_insi_pipe.get(mode, {})
+        if req.dest in mode_keys:
+            value = mode_keys[req.dest]
+            content = StoredParameter(value)
+            return content
         else:
             raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)            
 
@@ -142,7 +146,7 @@ class BaseDictDAL(AbsDAL):
                 tagger_fqn = mode.tagger
                 break
         else:
-            raise ValueError('no mode for %s' % obsres.mode)
+            raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
 
         if tagger_fqn is None:
             master_tags = {}
@@ -159,5 +163,5 @@ class DictDAL(BaseDictDAL):
         # Check that the structure of 'base' is correct
         super(DictDAL, self).__init__(base['oblocks'],
                                       base['products'],
-                                      base['requirements']
+                                      base['parameters']
                                      )
