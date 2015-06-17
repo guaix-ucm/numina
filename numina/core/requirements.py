@@ -21,7 +21,7 @@
 Recipe requirement holders
 '''
 
-from .products import DataProductType
+from .products import DataProductTag
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
 
@@ -70,9 +70,9 @@ class DataProductRequirement(Requirement):
             default=default, validation=validation
             )
 
-        if not isinstance(self.type, DataProductType):
+        if not isinstance(self.type, DataProductTag):
             raise TypeError(
-                '%s type must derive from DataProduct' % self.type
+                '%s type must derive from DataProductTag' % self.type
                 )
 
 
