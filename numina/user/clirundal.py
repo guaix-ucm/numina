@@ -48,8 +48,10 @@ class Dict2DAL(BaseDictDAL):
         super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
         self.basedir = basedir
 
-def process_format_version_0(loaded_data):
-    return 0
+def process_format_version_0(loaded_obs, loaded_data):
+    from .clidal import ComandLineDAL
+
+    return ComandLineDAL(loaded_obs, loaded_data)
 
 def process_format_version_1(loaded_obs, loaded_data):
     return Dict2DAL(loaded_obs, loaded_data)
@@ -165,7 +167,7 @@ def mode_run_common(args, mode):
     control_format = loaded_data.get('version', 0)
 
     if control_format == 0:
-        dal = process_format_version_0(loaded_data)
+        dal = process_format_version_0(loaded_obs, loaded_data)
     elif control_format == 1:
         dal = process_format_version_1(loaded_obs, loaded_data)
     else:
@@ -226,6 +228,13 @@ def mode_run_common(args, mode):
     task.runinfo['work_dir'] = workenv.workdir
     task.runinfo['results_dir'] = workenv.resultsdir
     task.runinfo['recipe_version'] = recipe.__version__
+
+    # Copy files
+    for i in rinput.__class__:
+        print('final',i, getattr(rinput, i))
+    workenv.sane_work()
+    workenv.copyfiles_stage1(obsres)
+    workenv.copyfiles_stage2(rinput)
 
     completed_task = run_recipe(
         recipe=recipe,
