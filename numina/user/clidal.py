@@ -25,22 +25,56 @@ from numina.core.dal import StoredProduct
 from numina.core.dal import StoredParameter
 from numina.core.dal import ObservingBlock
 from numina.core import init_drp_system
+from numina.store import init_store_backends
 from numina.core import import_object
+from numina.core import obsres_from_dict
 
 _logger = logging.getLogger("numina.simpledal")
 
 
 class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
-    def __init__(self, reqs):
+    def __init__(self, ob_table, reqs):
         self.args_drps = init_drp_system()
+        self.ob_table = ob_table
+        init_store_backends()
         self._reqs = reqs
 
-    def search_oblock_from_id(self, objid):
-        ob = ObservingBlock(-1, 'null', 'null', [], [], None)
-        return ob
+    def search_rib_from_ob(self, obsres, pipeline):
+        return None
 
-    def search_recipe_from_ob(self, ob):
+    # FIXME: this very similiar to the impl in base class
+    def obsres_from_oblock_id(self, obsid):
+        este = self.ob_table[obsid]
+        obsres = obsres_from_dict(este)
+
+        this_drp = self.args_drps[obsres.instrument]
+        tagger_fqn = None
+        for mode in this_drp.modes:
+            if mode.key == obsres.mode:
+                tagger_fqn = mode.tagger
+                break
+        else:
+            raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
+
+        if tagger_fqn is None:
+            master_tags = {}
+        else:
+            tagger_for_this_mode = import_object(tagger_fqn)
+            master_tags = tagger_for_this_mode(obsres)
+
+        obsres.tags = master_tags
+        return obsres
+
+
+    def search_oblock_from_id(self, obsid):
+        try:
+            ob = self.ob_table[obsid]
+            return ObservingBlock(**ob)
+        except KeyError:
+            raise NoResultFound("oblock with id %d not found", obsid)
+
+    def search_recipe_from_ob(self, ob, pipeline):
 
         class Args():
             pass
@@ -96,66 +130,9 @@ def load_from_obsres(obsres, args):
     ins_name = obsres.instrument
     _logger.info("instrument name: %s", ins_name)
     my_ins = args.drps.get(ins_name)
-    if my_ins is None:
-        _logger.error('instrument %r does not exist', ins_name)
-        sys.exit(1)
 
-    _logger.debug('instrument is %s', my_ins)
-    # Load configuration from the command line
-    if args.insconf is not None:
-        _logger.debug("configuration from CLI is %r", args.insconf)
-        ins_conf = args.insconf
-    else:
-        ins_conf = obsres.configuration
-
-    _logger.info('loading instrument configuration %r', ins_conf)
-    my_ins_conf = my_ins.configurations.get(ins_conf)
-
-    if my_ins_conf:
-        _logger.debug('instrument configuration object is %r', my_ins_conf)
-    else:
-        # Trying to open a file
-        try:
-            with open(ins_conf) as fd:
-                values = yaml.load(fd)
-            if values is None:
-                _logger.warning('%r is empty', ins_conf)
-                values = {}
-            else:
-                # FIXME this file should be validated
-                _logger.warning('loading no validated '
-                                'instrument configuration')
-                _logger.warning('you were warned')
-
-            ins_conf = values.get('name', ins_conf)
-            my_ins_conf = InstrumentConfiguration(ins_conf, values)
-
-            # The new configuration must not overwrite existing configurations
-            if ins_conf not in my_ins.configurations:
-                my_ins.configurations[ins_conf] = my_ins_conf
-            else:
-                _logger.error('a configuration already '
-                              'exists %r, exiting', ins_conf)
-            sys.exit(1)
-
-        except IOError:
-            _logger.error('instrument configuration %r '
-                          'does not exist', ins_conf)
-            sys.exit(1)
-
-    # Loading the pipeline
-    if args.pipe_name is not None:
-        _logger.debug("pipeline from CLI is %r", args.pipe_name)
-        pipe_name = args.pipe_name
-    else:
-        pipe_name = obsres.pipeline
-        _logger.debug("pipeline from ObsResult is %r", pipe_name)
-
+    pipe_name = 'default'
     my_pipe = my_ins.pipelines.get(pipe_name)
-    if my_pipe is None:
-        _logger.error('instrument %r does not have '
-                      'pipeline named %r', ins_name, pipe_name)
-        sys.exit(1)
 
     _logger.info('loading pipeline %r', pipe_name)
     _logger.debug('pipeline object is %s', my_pipe)
@@ -164,9 +141,4 @@ def load_from_obsres(obsres, args):
     _logger.info("observing mode: %r", obs_mode)
 
     recipe_fqn = my_pipe.recipes.get(obs_mode)
-    if recipe_fqn is None:
-        _logger.error('pipeline %r does not have '
-                      'recipe to process %r obs mode',
-                      pipe_name, obs_mode)
-        sys.exit(1)
-    return recipe_fqn, pipe_name, my_ins_conf, ins_conf
+    return recipe_fqn, pipe_name, None, None
