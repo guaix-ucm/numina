@@ -21,7 +21,8 @@
 
 import os
 
-from .cliruncommon import mode_run_common
+#from .cliruncommon import mode_run_common
+from .clirundal import mode_run_common
 
 
 def add(subparsers):
