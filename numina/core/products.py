@@ -29,22 +29,18 @@ from .objimport import import_object
 from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType
-from .typedialect import dialect_info
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
 
 
-class DataProductType(DataType):
+class DataProductTag(object):
+    pass
+
+
+class DataProductType(DataType, DataProductTag):
     def __init__(self, ptype, default=None):
         super(DataProductType, self).__init__(ptype, default=default)
-        self.dialect = dialect_info(self)
 
-    def suggest(self, obj, suggestion):
-        return obj
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        return "%s()" % (sclass, )
 
 _base_schema = {
     'keywords': {
@@ -56,7 +52,7 @@ _base_schema = {
     }
 
 
-class DataFrameType(DataProductType):
+class DataFrameType(DataType):
     def __init__(self):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
@@ -92,23 +88,8 @@ class DataFrameType(DataProductType):
     def validate_hdulist(self, hdulist):
         pass
 
-    def suggest(self, obj, suggestion):
-        if not isinstance(suggestion, six.string_types):
-            raise TypeError('suggestion must be a string, not %r' % suggestion)
-            return obj
-        if isinstance(obj, six.string_types):
-            # check that this is a FITS file
-            # try - open
-            # FIXME
-            pass
-        elif isinstance(obj, fits.HDUList):
-            obj[0].update('filename', suggestion)
-        elif isinstance(obj, DataFrame):
-            obj.filename = suggestion
-        return obj
 
-
-class ArrayType(DataProductType):
+class ArrayType(DataType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
