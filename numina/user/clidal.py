@@ -81,9 +81,8 @@ class ComandLineDAL(AbsDAL):
         args = Args()
         args.drps = self.args_drps
         args.insconf = None
-        args.pipe_name = 'default'
-        res = load_from_obsres(ob, args)
-        recipe_fqn, _pipe_name, _my_ins_conf, _ins_conf = res
+        args.pipe_name = pipeline
+        recipe_fqn = load_from_obsres(ob, args)
 
         recipeclass = import_object(recipe_fqn)
 
@@ -131,14 +130,17 @@ def load_from_obsres(obsres, args):
     _logger.info("instrument name: %s", ins_name)
     my_ins = args.drps.get(ins_name)
 
-    pipe_name = 'default'
+    pipe_name = args.pipe_name
+    _logger.info('loading pipeline %r', pipe_name)
     my_pipe = my_ins.pipelines.get(pipe_name)
 
-    _logger.info('loading pipeline %r', pipe_name)
+    if my_pipe is None:
+        raise ValueError('no pipeline named %r'% pipe_name)
+
     _logger.debug('pipeline object is %s', my_pipe)
 
     obs_mode = obsres.mode
     _logger.info("observing mode: %r", obs_mode)
 
     recipe_fqn = my_pipe.recipes.get(obs_mode)
-    return recipe_fqn, pipe_name, None, None
+    return recipe_fqn
