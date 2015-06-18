@@ -58,90 +58,6 @@ def process_format_version_1(loaded_obs, loaded_data):
 
 #----------------------------------------
 
-def load_from_obsres(obsres, args):
-    _logger.info("Identifier of the observation result: %d", obsres.id)
-    ins_name = obsres.instrument
-    _logger.info("instrument name: %s", ins_name)
-    my_ins = args.drps.get(ins_name)
-    if my_ins is None:
-        _logger.error('instrument %r does not exist', ins_name)
-        sys.exit(1)
-
-    _logger.debug('instrument is %s', my_ins)
-    # Load configuration from the command line
-    if args.insconf is not None:
-        _logger.debug("configuration from CLI is %r", args.insconf)
-        ins_conf = args.insconf
-    else:
-        ins_conf = obsres.configuration
-
-    _logger.info('loading instrument configuration %r', ins_conf)
-    my_ins_conf = my_ins.configurations.get(ins_conf)
-
-    if my_ins_conf:
-        _logger.debug('instrument configuration object is %r', my_ins_conf)
-    else:
-        # Trying to open a file
-        try:
-            with open(ins_conf) as fd:
-                values = yaml.load(fd)
-            if values is None:
-                _logger.warning('%r is empty', ins_conf)
-                values = {}
-            else:
-                # FIXME this file should be validated
-                _logger.warning('loading unvalidated instrument configuration')
-                _logger.warning('you were warned')
-
-            ins_conf = values.get('name', ins_conf)
-            my_ins_conf = InstrumentConfiguration(ins_conf, values)
-
-            # The new configuration must not overwrite existing configurations
-            if ins_conf not in my_ins.configurations:
-                my_ins.configurations[ins_conf] = my_ins_conf
-            else:
-                _logger.error('a configuration already exists %r, exiting',
-                              ins_conf)
-            sys.exit(1)
-
-        except IOError:
-            _logger.error('instrument configuration %r does not exist',
-                          ins_conf)
-            sys.exit(1)
-
-    # Loading the pipeline
-    if args.pipe_name is not None:
-        _logger.debug("pipeline from CLI is %r", args.pipe_name)
-        pipe_name = args.pipe_name
-    else:
-        pipe_name = obsres.pipeline
-        _logger.debug("pipeline from ObsResult is %r", pipe_name)
-
-    my_pipe = my_ins.pipelines.get(pipe_name)
-    if my_pipe is None:
-        _logger.error(
-            'instrument %r does not have pipeline named %r',
-            ins_name,
-            pipe_name
-            )
-        sys.exit(1)
-
-    _logger.info('loading pipeline %r', pipe_name)
-    _logger.debug('pipeline object is %s', my_pipe)
-
-    obs_mode = obsres.mode
-    _logger.info("observing mode: %r", obs_mode)
-
-    recipe_fqn = my_pipe.recipes.get(obs_mode)
-    if recipe_fqn is None:
-        _logger.error(
-            'pipeline %r does not have recipe to process %r obs mode',
-            pipe_name, obs_mode
-            )
-        sys.exit(1)
-    return recipe_fqn, pipe_name, my_ins_conf, ins_conf
-
-
 def mode_run_common(args, mode):
     '''Observing mode processing mode of numina.'''
 
@@ -153,11 +69,14 @@ def mode_run_common(args, mode):
         datadir=args.datadir
         )
 
+
     # Loading observation result if exists
     loaded_obs = {}
     _logger.info("Loading observation results from %r", args.obsresult)
+    loaded_ids = []
     with open(args.obsresult) as fd:
         for doc in yaml.load_all(fd):
+            loaded_ids.append(doc['id'])
             loaded_obs[doc['id']] = doc
 
     _logger.info('reading control from %s', args.reqs)
@@ -174,13 +93,16 @@ def mode_run_common(args, mode):
         print('Unsupported format', control_format, 'in', arg.reqs)
         sys.exit(1)
 
+    _logger.info('control format version %d', control_format)
     # Start processing
 
     cwd = os.getcwd()
     os.chdir(workenv.datadir)
     
-    pipe_name = 'default'
-    obsres = dal.obsres_from_oblock_id(1)
+    _logger.debug("pipeline from CLI is %r", args.pipe_name)
+    pipe_name = args.pipe_name
+    # Only the first, for the moment
+    obsres = dal.obsres_from_oblock_id(loaded_ids[0])
     
     recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
     _logger.debug('recipe class is %s', recipeclass)
@@ -230,8 +152,7 @@ def mode_run_common(args, mode):
     task.runinfo['recipe_version'] = recipe.__version__
 
     # Copy files
-    for i in rinput.__class__:
-        print('final',i, getattr(rinput, i))
+    _logger.debug('copy files to work directory')
     workenv.sane_work()
     workenv.copyfiles_stage1(obsres)
     workenv.copyfiles_stage2(rinput)
