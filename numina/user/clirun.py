@@ -48,7 +48,7 @@ def add(subparsers):
         )
     parser_run.add_argument(
         '-p', '--pipeline', dest='pipe_name',
-        help='name of a pipeline'
+        default='default', help='name of a pipeline'
         )
     parser_run.add_argument(
         '--basedir', action="store", dest="basedir",
