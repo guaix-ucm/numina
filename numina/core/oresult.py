@@ -21,6 +21,8 @@
 Results of the Observing Blocks
 '''
 
+import warnings
+
 import six
 from astropy.io import fits
 
@@ -63,11 +65,17 @@ def obsres_from_dict(values):
 
     obsres = ObservationResult()
 
+    ikey = 'images'
+    # Workaround
+    if 'frames' in values:
+        warnings.warn('Using deprecated key "frames" in obsres')
+        ikey = 'frames'
+
     obsres.id = values.get('id', 1)
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
-    obsres.images = [dataframe_from_list(val) for val in values['images']]
+    obsres.images = [dataframe_from_list(val) for val in values[ikey]]
 
     return obsres
