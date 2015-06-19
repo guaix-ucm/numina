@@ -20,6 +20,7 @@ Numina Reference
 .. toctree::
    :maxdepth: 2
 
+   creation
    modules
 
    
