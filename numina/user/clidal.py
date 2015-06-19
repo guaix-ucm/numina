@@ -31,6 +31,9 @@ from numina.core import obsres_from_dict
 
 _logger = logging.getLogger("numina.simpledal")
 
+def process_format_version_0(loaded_obs, loaded_data):
+    return ComandLineDAL(loaded_obs, loaded_data)
+
 
 class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
@@ -74,16 +77,24 @@ class ComandLineDAL(AbsDAL):
         except KeyError:
             raise NoResultFound("oblock with id %d not found", obsid)
 
-    def search_recipe_from_ob(self, ob, pipeline):
+    def search_recipe_from_ob(self, obsres, pipeline):
 
-        class Args():
-            pass
-        args = Args()
-        args.drps = self.args_drps
-        args.insconf = None
-        args.pipe_name = pipeline
-        recipe_fqn = load_from_obsres(ob, args)
+        _logger.info("Identifier of the observation result: %d", obsres.id)
 
+        _logger.info("instrument name: %s", obsres.instrument)
+        my_ins = self.args_drps.get(obsres.instrument)
+
+        if my_ins is None:
+            raise ValueError('no instrument named %r'% obsres.instrument)
+
+        my_pipe = my_ins.pipelines.get(pipeline)
+
+        if my_pipe is None:
+            raise ValueError('no pipeline named %r'% pipe_name)
+
+        _logger.info("observing mode: %r", obsres.mode)
+
+        recipe_fqn = my_pipe.recipes.get(obsres.mode)
         recipeclass = import_object(recipe_fqn)
 
         return recipeclass
@@ -117,30 +128,3 @@ class ComandLineDAL(AbsDAL):
         except KeyError:
             raise NoResultFound("key %s not found", key)
         return content
-
-import sys
-import yaml
-from numina.core import InstrumentConfiguration
-
-
-# FIXME: This function must not call exit at all
-def load_from_obsres(obsres, args):
-    _logger.info("Identifier of the observation result: %d", obsres.id)
-    ins_name = obsres.instrument
-    _logger.info("instrument name: %s", ins_name)
-    my_ins = args.drps.get(ins_name)
-
-    pipe_name = args.pipe_name
-    _logger.info('loading pipeline %r', pipe_name)
-    my_pipe = my_ins.pipelines.get(pipe_name)
-
-    if my_pipe is None:
-        raise ValueError('no pipeline named %r'% pipe_name)
-
-    _logger.debug('pipeline object is %s', my_pipe)
-
-    obs_mode = obsres.mode
-    _logger.info("observing mode: %r", obs_mode)
-
-    recipe_fqn = my_pipe.recipes.get(obs_mode)
-    return recipe_fqn
