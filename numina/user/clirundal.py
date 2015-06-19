@@ -35,22 +35,18 @@ from numina.core.recipeinput import RecipeInputBuilderCLI
 from numina.core.dal.dictdal import DictDAL, BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
+from .clidal import process_format_version_0
+
 
 _logger = logging.getLogger("numina")
 
 
 class Dict2DAL(BaseDictDAL):
-    def __init__(self, obtable, base, basedir='_data'):
+    def __init__(self, obtable, base):
 
         prod_table = base['products']
         req_table= base['requirements']
         super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
-        self.basedir = basedir
-
-def process_format_version_0(loaded_obs, loaded_data):
-    from .clidal import ComandLineDAL
-
-    return ComandLineDAL(loaded_obs, loaded_data)
 
 def process_format_version_1(loaded_obs, loaded_data):
     return Dict2DAL(loaded_obs, loaded_data)
