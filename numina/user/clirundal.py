@@ -31,14 +31,13 @@ from numina.core import obsres_from_dict
 from numina.core import InstrumentConfiguration
 from numina.core import import_object
 from numina.core import fully_qualified_name
-from numina.core.recipeinput import RecipeInputBuilder
+from numina.core.recipeinput import RecipeInputBuilderCLI
+from numina.core.dal.dictdal import DictDAL, BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 
 _logger = logging.getLogger("numina")
 
-from numina.core.dal.dictdal import DictDAL, BaseDictDAL
-from numina.core.recipeinput import RecipeInputBuilderCLI as RecipeInputBuilder
 
 class Dict2DAL(BaseDictDAL):
     def __init__(self, obtable, base, basedir='_data'):
@@ -107,8 +106,8 @@ def mode_run_common(args, mode):
     recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
     _logger.debug('recipe class is %s', recipeclass)
 
-    _logger.debug('recipe input builder class is %s', RecipeInputBuilder)
-    ri_builder = RecipeInputBuilder(recipeclass, dal)
+    _logger.debug('recipe input builder class is %s', RecipeInputBuilderCLI)
+    ri_builder = RecipeInputBuilderCLI(recipeclass, dal)
     _logger.debug('create RecipeInputBuilder %s', ri_builder)
 
     _logger.debug('build recipe input object')
