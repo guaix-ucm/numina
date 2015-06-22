@@ -19,3 +19,4 @@ classes contained in the package, see the :ref:`reference`.
 
    pipelines
    environ
+   product
