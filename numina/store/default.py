@@ -108,6 +108,8 @@ def _(tag, obj, where):
 def _(tag, obj, where):
     return [dump(tag, o, where) for o in obj]
 
+# FIXME: this is very convoluted
+from .defaultl import load_cli_storage as other
 
 def load_cli_storage():
-    return 0
+    return other()

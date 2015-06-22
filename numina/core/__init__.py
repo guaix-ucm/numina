@@ -40,5 +40,3 @@ from .dataholders import Product
 from .oresult import obsres_from_dict
 from .qc import QC
 
-FrameDataProduct = DataFrameType
-DataProduct = DataProductType

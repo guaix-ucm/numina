@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,10 +17,21 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
 
-if __name__ == '__main__':
+'''Unit test for types'''
 
-    from .cli import main
+from ..types import NullType
 
-    main()
+def test_null_type():
+    '''Test NullType.'''
+
+    nullt = NullType()
+
+    values = [None, 1, 1.0, [1,2,3], {'a': 1, 'b': 2}]
+
+    for val in values:
+        assert nullt.convert(val) is None
+
+    for val in values:
+        assert nullt.validate(nullt.convert(val))
+

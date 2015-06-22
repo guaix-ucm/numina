@@ -1,8 +1,5 @@
 
-.. _creation:
-
-##############################
-Numina Pipeline Creation Guide
+Numina Pipeline Environment
 ##############################
 
 This guide is intended as an introductory overview of pipeline creation
@@ -31,58 +28,33 @@ spectroscopy and auxiliary calibrations. These Recipes constitute the
 users shall download the software and run it in their own computers, with
 reduction parameters and calibrations provided by the instrument team.
 
-Users of the DRP may use the simple Numina CLI or the higher level,
-database-driven Pontifex. Users of the DFP shall interact with the software
+Users of the DRP will use the simple Numina CLI.
+Users of the DFP shall interact with the software
 through the GTC Inspector.
 
-Recipe Requirements
--------------------
+Recipe Requirements and Products
+---------------------------------
 Recipes based on Numina have a list of requirements needed to 
 properly configure the Recipe.
-The Recipe announces its requirements with the following syntax 
-(the syntax is subject to changes).
+Recipes also provide a list of products created by the recipe.
+
+The Recipe announces its requirements and producst with the following syntax.
 
 .. code-block:: python
 
-    class SomeRecipeRequirements(RecipeRequirements):
+    class SomeRecipe(RecipeBase):        
+
         master_dark = DataProductRequirement(MasterDark, 'Master dark image') 
         some_numeric_value = Parameter(0.45, 'Some numeric value'),
 
-    @define_requirements(SomeRecipeRequirements)
-    class SomeRecipe(RecipeBase):        
-        ...
+        master_flat = Product(MasterDark) 
 
 When the reduction is run from the command line using Numina CLI, the program 
-checks that the required values are provided or have default vales. 
-When the reduction is run automatically using Pontifex, the program searches 
-the operation database for the most appropriated data products 
-(in this case, a MasterDark frame).
+checks that the required values are provided or have default values. 
 
 When the Recipe is properly configured, it is executed with a observing block 
 data structure as input. When run using Numina CLI, the data structure is 
-created from a text file. When run with Pontifex, the data structure is 
-created from the contents of the database.
-
-Recipe Products
---------------- 
-Recipes based on Numina provide a list of products created by the recipe.
-The Recipe announces the required parameters with the following syntax 
-(the syntax is subject to changes).
-
-.. code-block:: python
-
-    class SomeRecipeRequirements(RecipeRequirements):
-        master_dark = DataProductRequirement(MasterDark, 'Master dark image') 
-        some_numeric_value = Parameter(0.45, 'Some numeric value'),
-
-    class SomeRecipeResult(RecipeResult):
-        master_flat = Product(MasterDark) 
-        
-    @define_requirements(SomeRecipeRequirements)
-    @define_result(SomeRecipeResult)
-    class SomeRecipe(RecipeBase):        
-        ...
-
+created from a text file.
 
 Format of the input files
 -------------------------
@@ -111,14 +83,8 @@ mode: required, string
 children: not required, list of integers, defaults to empty list
     Identifications of nested observing blocks
 
-frames: required, list of frame-info
-    List of frames
-
-Additionally, the frame-info is defined as follows:
-
-frame-info: list of 2 strings
-    A list of two strings, first is the FITS file of the frame, 
-    second is the type of frame
+images: required, list of file names
+    List of raw images
 
 .. code-block:: yaml
 
@@ -126,57 +92,52 @@ frame-info: list of 2 strings
    instrument: EMIR
    mode: nb_image
    children: []
-   frames:
-   - [r0121.fits, TARGET]
-   - [r0122.fits, TARGET]
-   - [r0123.fits, TARGET]
-   - [r0124.fits, SKY]
-   - [r0125.fits, SKY]
-   - [r0126.fits, SKY]
-   - [r0127.fits, TARGET]
-   - [r0128.fits, TARGET]
-   - [r0129.fits, TARGET]
-   - [r0130.fits, SKY]
-   - [r0131.fits, SKY]
-   - [r0132.fits, SKY]
+   images:
+   - r0121.fits
+   - r0122.fits
+   - r0123.fits
+   - r0124.fits
+   - r0125.fits
+   - r0126.fits
+   - r0127.fits
+   - r0128.fits
+   - r0129.fits
+   - r0130.fits
+   - r0131.fits
+   - r0132.fits
 
-Format of the instrument file
-'''''''''''''''''''''''''''''
-.. warning::
-   The instrument file is not needed in numina 0.9 and later. 
-
-.. deprecated:: 0.9.0
-
-This file contains configuration parameters for the recipes that
-are related to the instrument. This information is not likely
-to change in a short time basis. 
-
-The contents of the file are serialized as a dictionary with the
-following keys:
-
-name: required, string
-    Name of the instrument
-
-pipeline: required, string
-    Name of the pipeline that will process the data taken with the 
-    instrument
-
-keywords: optional, dictionary, defaults to {}
-    A dictionary of keys and FITS keywords
-
-
-The file may contain additional keys.
-
+Format of the requirement file (version 1)
+''''''''''''''''''''''''''''''''''''''''''
 .. code-block:: yaml
 
-    name: EMIR
-    pipeline: emir
-    keywords: {airmass: AIRMASS, exposure: EXPTIME, imagetype: IMGTYP, juliandate: MJD-OBS}
-    detector:
-      shape: [2048, 2048]
+    version: 1
+    products:
+      EMIR:
+       - {id: 1, content: 'file1.fits', type: 'MasterFlat', tags: {'filter': 'J'}, ob: 200} 
+       - {id: 4, content: 'file4.fits', type: 'MasterBias', tags: {'readmode': 'cds'}, ob: 400}
+      MEGARA:
+       - {id: 1, content: 'file1.fits', type: 'MasterFlat', tags: {'vph': 'LR1'}, ob: 1200}
+       - {id: 2, content: 'file2.yml', type: 'TraceMap', tags: {'vph': 'LR2', 'readmode': 'fast'}, ob: 1203}
+    requirements:
+      EMIR:
+        default:
+           TEST6: 
+              pinhole_nominal_positions: [ [0, 1], [0 , 1]]
+              box_half_size: 5
+           TEST9:
+              median_filter_size: 5
+    MEGARA:
+        default: 
+           mos_image: {}
 
-Format of the requirement file
+
+Format of the requirement file 
 ''''''''''''''''''''''''''''''
+.. warning::
+   This section documents a deprecated format
+
+.. deprecated:: 0.14.0
+
 This file contains configuration parameters for the recipes that
 are not related to the particular instrument used.
 
@@ -185,14 +146,6 @@ following keys:
 
 requirements: required, dictionary
     A dictionary of parameter names and values.
-
-parameters: deprecated, dictionary
-    A dictionary of parameter names and values.
-
-    Used only if requirements is not present.
-
-products: optional, dictionary
-    A dictionary with names for the products
 
 logger: optional, dictionary
     A dictionary used to configure the custom file logger
@@ -209,8 +162,6 @@ logger: optional, dictionary
      window:
      - [800, 1500]
      - [800, 1500]
-   products:
-     flatframe: 'master_intensity_flat.fits'
    logger:
      logfile: processing.log
      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
