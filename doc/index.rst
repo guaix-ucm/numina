@@ -14,6 +14,7 @@ Numina reference guide: :ref:`reference`.
    :maxdepth: 1
 
    user/index
+   creation/creation
    reference/index
    glossary
 
