@@ -21,12 +21,20 @@ try:
                  ['src/nirproc.pyx'],
                 include_dirs=[numpy_include],
                 language='c++')
+    ext4 = Extension('numina.array.trace._traces',
+                     ['numina/array/trace/traces.pyx',
+                      'numina/array/trace/Trace.cpp'],
+                     language='c++')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
     print('We do not have Cython, just using the generated files')
     ext3 = Extension('numina.array._nirproc', 
                  ['src/nirproc.cpp'],
                 include_dirs=[numpy_include])
+    ext4 = Extension('numina.array.trace._traces',
+                     ['numina/array/trace/traces.cpp',
+                      'numina/array/trace/Trace.cpp'],
+                     language='c++')
     cmdclass = {}
 
 
@@ -57,7 +65,7 @@ setup(name='numina',
       packages=find_packages('.'),
       package_data={'numina.tests.drps.1': ['drp.yaml'],
                    },
-      ext_modules=[ext1, ext2, ext3],
+      ext_modules=[ext1, ext2, ext3, ext4],
       entry_points={
         'console_scripts': [
             'numina = numina.user.cli:main',
