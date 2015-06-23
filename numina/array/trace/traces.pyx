@@ -46,6 +46,9 @@ cdef extern from "Trace.h" namespace "Numina":
 
 
 cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
+    '''Find local maximum points.'''
+
+    # TODO: this can be a pure C++ function
     
     cdef vector[int] result
     cdef size_t i
@@ -67,7 +70,8 @@ cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
 
 @cython.boundscheck(False)
 cdef vector[double] fit_para_equal_spaced(FType[:] dd) nogil:
-    
+    '''Fit (-1, 0, 1) (dd0, dd1, dd2) to a 2nd degree polynomial.'''
+
     cdef vector[double] result
     cdef double A, B, C
     C = dd[1]
@@ -85,6 +89,7 @@ cdef vector[double] interp_max_3(FType[:] dd) nogil:
         
     With X=[-1,0,1]
     '''
+
     cdef vector[double] result
     cdef vector[double] params
     cdef double A,B,C
@@ -211,6 +216,29 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
 def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1, 
                      size_t hs=1, size_t tol=2, double background=150.0,
                      double maxdis=2.0):
+    '''Trace peak in array starting in (x,y).
+
+    Trace a peak feature in an array starting in position (x,y).
+
+    Parameters
+    ----------
+    arr : array
+         A 2D array
+    x : float
+        x coordinate of the initial position
+    y : float
+        y coordinate of the initial position
+    p : float
+        Intensity of the initial position
+    step : int, optional
+           Number of pixels to move (left and rigth)
+           in each iteration
+
+    Returns
+    -------
+    ndarray
+        A nx3 array, with x,y,p of each point in the trace
+    '''
     
     cdef InternalTrace trace 
     # Initial values    
