@@ -24,6 +24,7 @@ try:
     ext4 = Extension('numina.array.trace._traces',
                      ['numina/array/trace/traces.pyx',
                       'numina/array/trace/Trace.cpp'],
+                     include_dirs=[numpy_include],
                      language='c++')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
@@ -34,6 +35,7 @@ except ImportError:
     ext4 = Extension('numina.array.trace._traces',
                      ['numina/array/trace/traces.cpp',
                       'numina/array/trace/Trace.cpp'],
+                     include_dirs=[numpy_include],
                      language='c++')
     cmdclass = {}
 
