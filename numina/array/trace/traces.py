@@ -58,9 +58,9 @@ def trace(arr, x, y, p, axis=0, background=0.0,
         arr2 = arr
 
     if axis == 0:
-        arr3 = arr
+        arr3 = arr2
     elif axis == 1:
-        arr3 = arr.t
+        arr3 = arr2.t
     else:
         raise ValueError("'axis' must be 0 or 1")
 
