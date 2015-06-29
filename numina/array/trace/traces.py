@@ -105,8 +105,9 @@ def axis_to_dispaxis(axis):
     return dispaxis
 
 
-class FittedTrace(object):
-    def __init__(self, start, stop, axis, ttype, coeff):
+class GeometricTrace(object):
+    def __init__(self, id, start, stop, axis, ttype, coeff):
+        self.id = id
         self.start = start
         self.stop = stop
         self.axis = axis
@@ -114,8 +115,24 @@ class FittedTrace(object):
         self.dispaxis = axis_to_dispaxis(axis)
             
 
-class PolyTrace(object):
-    def __init__(self, start, stop, axis, coeff):
-        super(PolyTrace, self).__init__(start, stop, axis,
+class PolyTrace(GeometricTrace):
+    def __init__(self, id, start, stop, axis, coeff):
+        super(PolyTrace, self).__init__(id, start, stop, axis,
                                        'poly', coeff)
 
+
+class Tracemap(object):
+    def __init__(self, instrument, traces):
+        super(Tracemap, self).__init__(instrument, traces)
+        self.instrument = instrument
+        self.traces = traces
+
+
+class Aperture(object):
+    def __init__(self, id, bbox, axis, border_up, border_down):
+        self.id = id
+        self.bbox
+        self.axis = axis
+        self.dispaxis = axis_to_dispaxis(axis)
+        self.border_up = border_up
+        self.border_down = border_down
