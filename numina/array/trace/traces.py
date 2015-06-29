@@ -72,3 +72,50 @@ def trace(arr, x, y, p, axis=0, background=0.0,
         return result[:,::-1]
 
     return result
+
+def fit_trace_polynomial(trace, deg, axis=0):
+    '''
+    Fit a trace information table to a polynomial.
+
+    Parameters
+    ----------
+    trace 
+           A 2D array, 2 columns and n rows
+    deg : int
+           Degree of polynomial
+    axis : {0, 1}
+           Spatial axis of the array (0 is Y, 1 is X).
+    '''
+
+    dispaxis = axis_to_dispaxis(axis)
+
+    # FIT to a polynomial
+    pfit = numpy.polyfit(trace[:,0], trace[:,1], deg)
+    start = trace[0,0]
+    stop = trace[-1,0],
+    return PolyTrace(start, stop, axis, pfit)
+
+def axis_to_dispaxis(axis):
+    if axis == 0:
+        dispaxis = 'X'
+    elif axis == 1:
+        dispaxis = 'Y'
+    else:
+        raise ValueError("'axis' must be 0 or 1")
+    return dispaxis
+
+
+class FittedTrace(object):
+    def __init__(self, start, stop, axis, ttype, coeff):
+        self.start = start
+        self.stop = stop
+        self.axis = axis
+        self.type = ttype
+        self.dispaxis = axis_to_dispaxis(axis)
+            
+
+class PolyTrace(object):
+    def __init__(self, start, stop, axis, coeff):
+        super(PolyTrace, self).__init__(start, stop, axis,
+                                       'poly', coeff)
+
