@@ -49,3 +49,40 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
         bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
         extract_simple_intl(arr3, xx, bb1, bb2, out[idx])
     return out
+
+def extract_simple_rss_apers(arr, apers, axis=0, out=None):
+
+    # If arr is not in native byte order, the C-extension won't work
+    if arr.dtype.byteorder != '=':
+        arr2 = arr.byteswap().newbyteorder()
+    else:
+        arr2 = arr
+
+    if axis == 0:
+        arr3 = arr2
+        i1, i2 = 0, 2
+    elif axis == 1:
+        arr3 = arr2.t
+        i1, i2 = 2, 4
+    else:
+        raise ValueError("'axis' must be 0 or 1")
+
+    if out is None:
+        out = numpy.zeros(len(apers), arr3.shape[1]), dtype='float')
+
+    for idx, aper in enumerate(apers):
+        if aper.axis != axis:
+            raise ValueError("array 'axis' and aperture 'axis' are different")
+
+        u1, u2 = aper.box[i1:i2]
+        uu = numpy.arange(u1, u2 + 1)
+
+        # Borders contains a list of function objects
+        b1, b2 = aper.borders
+        bb1 = b1(uu)
+        bb1[bb1 < -0.5] = -0.5
+        bb2 = b2(uu)
+        bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
+        extract_simple_intl(arr3, uu, bb1, bb2, out[idx])
+
+    return out
