@@ -131,8 +131,9 @@ class Tracemap(object):
 class Aperture(object):
     def __init__(self, id, bbox, axis, border_up, border_down):
         self.id = id
-        self.bbox
+        self.bbox = bbox
         self.axis = axis
         self.dispaxis = axis_to_dispaxis(axis)
         self.border_up = border_up
         self.border_down = border_down
+
