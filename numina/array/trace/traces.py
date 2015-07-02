@@ -18,7 +18,7 @@
 #
 
 
-from ._trace import tracing
+from ._traces import tracing
 
 def trace(arr, x, y, p, axis=0, background=0.0,
           step=1, hs=1, tol=2, maxdis=2.0):

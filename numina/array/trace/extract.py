@@ -68,7 +68,7 @@ def extract_simple_rss_apers(arr, apers, axis=0, out=None):
         raise ValueError("'axis' must be 0 or 1")
 
     if out is None:
-        out = numpy.zeros(len(apers), arr3.shape[1]), dtype='float')
+        out = numpy.zeros((len(apers), arr3.shape[1]), dtype='float')
 
     for idx, aper in enumerate(apers):
         if aper.axis != axis:
