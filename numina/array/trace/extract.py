@@ -32,7 +32,7 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
     if axis == 0:
         arr3 = arr2
     elif axis == 1:
-        arr3 = arr2.t
+        arr3 = arr2.T
     else:
         raise ValueError("'axis' must be 0 or 1")
 
@@ -62,7 +62,7 @@ def extract_simple_rss_apers(arr, apers, axis=0, out=None):
         arr3 = arr2
         i1, i2 = 0, 2
     elif axis == 1:
-        arr3 = arr2.t
+        arr3 = arr2.T
         i1, i2 = 2, 4
     else:
         raise ValueError("'axis' must be 0 or 1")
@@ -74,7 +74,7 @@ def extract_simple_rss_apers(arr, apers, axis=0, out=None):
         if aper.axis != axis:
             raise ValueError("array 'axis' and aperture 'axis' are different")
 
-        u1, u2 = aper.box[i1:i2]
+        u1, u2 = aper.bbox[i1:i2]
         uu = numpy.arange(u1, u2 + 1)
 
         # Borders contains a list of function objects
