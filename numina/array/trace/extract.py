@@ -20,6 +20,18 @@
 import numpy
 
 from ._extract import extract_simple_intl
+from .traces import axis_to_dispaxis
+
+
+class Aperture(object):
+    '''Spectroscopic aperture.'''
+    def __init__(self, bbox, borders, axis=0, id=None):
+        self.bbox = bbox
+        self.borders = borders
+        self.id = id
+        self.axis = axis
+        self.dispaxis = axis_to_dispaxis(axis)
+
 
 def extract_simple_rss(arr, borders, axis=0, out=None):
     
@@ -49,6 +61,7 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
         bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
         extract_simple_intl(arr3, xx, bb1, bb2, out[idx])
     return out
+
 
 def extract_simple_rss_apers(arr, apers, axis=0, out=None):
 
