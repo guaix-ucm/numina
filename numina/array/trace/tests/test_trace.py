@@ -28,10 +28,32 @@ from numpy.testing import assert_allclose
 from  ..traces import trace
 
 
+def test_trace_simple():
+    '''Trace doesn't work with a flat peak'''
+    arr = np.zeros((100, 100))
+
+    arr[47,45:55] = 10.0
+    arr[48,45:55] = 100.0
+    arr[49,45:55] = 12.0
+
+    result = np.empty((12, 3))
+    result[:,0] = np.arange(44, 56)
+    result[:,1] = 48.00561797752809
+    result[[0, 4, 11], 1] = 48.0
+    result[:,2] = 100.00280898876404
+    result[[0, 11], 2] = 0.0
+    result[4, 2] = 100.0
+
+    mm = trace(arr, 48.0, 48.0)
+
+    assert mm.shape == (12, 3)
+    assert_allclose(mm, result)
+
+
 @pytest.mark.xfail(reason='bug 27')
 def test_trace_bug_27():
     '''Trace doesn't work with a flat peak'''
     arr = np.zeros((100, 100))
     arr[47:52,12:90] = 100.0
     mm = trace(arr, 50, 50)
-    assert mm.shape[0] >= (90-12)
+    assert mm.shape[0] >= 1
