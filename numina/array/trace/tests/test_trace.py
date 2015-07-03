@@ -25,8 +25,17 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from  ..traces import trace
+from ..traces import trace
+from ..traces import axis_to_dispaxis
 
+def test_axis_to_dispaxis():
+
+    assert axis_to_dispaxis(0) == 1
+    assert axis_to_dispaxis(1) == 0
+
+    with pytest.raises(ValueError):
+        axis_to_dispaxis(2)
+        
 
 def test_trace_simple():
     '''Trace doesn't work with a flat peak'''
