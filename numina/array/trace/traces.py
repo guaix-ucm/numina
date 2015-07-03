@@ -96,11 +96,13 @@ def fit_trace_polynomial(trace, deg, axis=0):
     stop = trace[-1,0],
     return PolyTrace(start, stop, axis, pfit)
 
+
 def axis_to_dispaxis(axis):
+    '''Obtain the dispersion axis from the spatial axis.'''
     if axis == 0:
-        dispaxis = 'X'
+        dispaxis = 1
     elif axis == 1:
-        dispaxis = 'Y'
+        dispaxis = 0
     else:
         raise ValueError("'axis' must be 0 or 1")
     return dispaxis
