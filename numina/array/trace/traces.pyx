@@ -97,8 +97,12 @@ cdef vector[double] interp_max_3(FType[:] dd) nogil:
     A = params[0]
     B = params[1]
     C = params[2]
-    result.push_back(-B / (2*A))
-    result.push_back(C - B * B / (4*A))
+    if A == 0:
+        result.push_back(0.0)
+        result.push_back(C)
+    else:
+        result.push_back(-B / (2*A))
+        result.push_back(C - B * B / (4*A))
     return result
 
 cdef int wc_to_pix(double x) nogil:
@@ -154,30 +158,31 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
     for _ in range(buffsize):
         pbuff.push_back(0.0)
     
-    #print 'Buffer size', buffsize
     
     while (col - step > hs) and (col + step + hs < axis_size):
-        #print 'we are in column', col
+        #printf("--------- %i\n", tolcounter)
+        #printf("col dir step  %i  %i %i\n", col, direction, step)
+
         col += direction * step
-#        printf("--------------------col %i\n", col, prediction)
-        #print 'we go to column', col
-        #print 'we predict the peak will be in coordinate', prediction
         prediction = trace.predict(col)
 
         pred_pix = wc_to_pix(prediction)
         pred_off = pred_pix-regw 
-        #printf("col %i pred %f pix %i\n", col, prediction, pred_pix)
+        # printf("col %i pred %f pix %i\n", col, prediction, pred_pix)
         # extract a region around the expected peak
         # and collapse it
         colapse_mean(arr[pred_pix-regw:pred_pix+regw + 1,col-hs:col+hs+1], pbuff)
 
+        # printf("cut region %i %i %i %i\n", pred_pix-regw,pred_pix+regw,col-hs,col+hs)
+
         # Find the peaks
         peaks = local_max(&pbuff[0], buffsize, background=background)
         
+        # printf("npeaks %i\n", peaks.size())
+
         # find nearest peak to prediction
         dis = 40000.0 # a large number
         ipeak = -1
-        #printf("npeaks %i\n", peaks.size())
         for i in range(peaks.size()):
             ndis = fabs(peaks[i] + pred_off - prediction)
             if ndis < dis:
@@ -189,6 +194,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
             # peak is not found
             if tolcounter > 0:
                 # Try again
+                # printf("%i tries remaining\n", tolcounter)
                 tolcounter -= 1
                 continue
             else:
@@ -198,11 +204,8 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
 
         # Reset counter
         tolcounter = tol 
-        #printf("peak %f\n", peaks[ipeak] + pred_off)
-        #printf("col %i pred %f\n", col, prediction)
 
         nearp = peaks[ipeak] + pred_pix - regw
-        
 
         # fit the peak with three points
         result = interp_max_3(arr[nearp-1:nearp+2, col])
