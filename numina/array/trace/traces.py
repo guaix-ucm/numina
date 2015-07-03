@@ -49,7 +49,8 @@ def trace(arr, x, y, axis=0, background=0.0,
         A nx3 array, with x,y,p of each point in the trace
     '''
 
-    value = arr[wcs_to_pix([x, y])]
+    i,j = wcs_to_pix([x, y])
+    value = arr[i,j]
 
     # If arr is not in native byte order, the C-extension won't work
 
