@@ -67,7 +67,7 @@ REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.0', 'scipy', 'Py
 
 # In versions >= 2.7 and < 3.4, we require singledispatch
 # In 3.4 onwards, its in stdlib
-if 0x2070000 <= sys.hexversion < 0x3040000:
+if sys.hexversion < 0x3040000:
     REQUIRES += ['singledispatch']
 
 from numina import __version__
