@@ -23,6 +23,7 @@ packages installed in order to work properly:
  - scipy (http://www.scipy.org)
  - astropy >= 1.0 (http://www.astropy.org/)
  - PyYaml (http://pyyaml.org/)
+ - singledispatch (only if Python < 3.4, https://pypi.python.org/pypi/singledispatch)
  
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
 
