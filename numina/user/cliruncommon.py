@@ -58,11 +58,11 @@ def load_control(rfile):
     return task_control
 
 
-def load_from_obsres(obsres, args):
+def load_from_obsres(obsres, drps, args):
     _logger.info("Identifier of the observation result: %d", obsres.id)
     ins_name = obsres.instrument
     _logger.info("instrument name: %s", ins_name)
-    my_ins = args.drps.get(ins_name)
+    my_ins = drps.get(ins_name)
     if my_ins is None:
         _logger.error('instrument %r does not exist', ins_name)
         sys.exit(1)
@@ -166,7 +166,8 @@ def mode_run_common(args, mode):
             _logger.debug('%r', v)
 
     if mode == 'obs':
-        values = load_from_obsres(obsres, args)
+        drps = init_drp_system()
+        values = load_from_obsres(obsres, drps, args)
         recipe_fqn, pipe_name, my_ins_conf, ins_conf = values
     elif mode == 'rec':
         my_ins_conf = None

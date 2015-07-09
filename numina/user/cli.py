@@ -95,7 +95,5 @@ def main(args=None):
 
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    args.drps = init_drp_system()
-
     args.command(args)
 

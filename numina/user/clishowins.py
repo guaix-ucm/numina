@@ -46,7 +46,8 @@ def add(subparsers):
 
 
 def show_instruments(args):
-    for theins in args.drps.values():
+    drps = init_drp_system()
+    for theins in drps.values():
         if not args.name or (theins.name in args.name):
             print_instrument(theins, modes=args.om)
 

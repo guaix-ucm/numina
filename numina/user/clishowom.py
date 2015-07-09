@@ -48,7 +48,10 @@ def add(subparsers):
 
 
 def show_observingmodes(args):
-    for theins in args.drps.values():
+
+    drps = init_drp_system()
+
+    for theins in drps.values():
         if not args.instrument or (args.instrument == theins.name):
             for mode in theins.modes:
                 if not args.name or (mode.key in args.name):

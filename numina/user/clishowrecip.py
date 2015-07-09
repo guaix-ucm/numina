@@ -63,7 +63,9 @@ def show_recipes(args):
     if args.template:
         this_recipe_print = print_recipe_template
 
-    for theins in args.drps.values():
+    drps = init_drp_system()
+
+    for theins in drps.values():
         # Per instrument
         if not args.instrument or (args.instrument == theins.name):
             for pipe in theins.pipelines.values():
