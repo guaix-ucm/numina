@@ -165,3 +165,9 @@ class QualityControlProduct(DataProductType):
             ptype=QC,
             default=QC.UNKNOWN
             )
+
+
+class LinesCatalog(DataProductType):
+    def __init__(self):
+        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
+
