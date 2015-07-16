@@ -1,6 +1,9 @@
 
+import numpy
+
 from numina.core import DataFrameType
 from numina.core import DataFrame
+from numina.core.products import LinesCatalog
 
 from .load import load
 
