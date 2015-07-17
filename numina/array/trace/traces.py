@@ -22,7 +22,7 @@ from ..utils import wcs_to_pix
 from ._traces import tracing
 
 def trace(arr, x, y, axis=0, background=0.0,
-          step=1, hs=1, tol=2, maxdis=2.0):
+          step=4, hs=1, tol=2, maxdis=2.0):
     '''Trace peak in array starting in (x,y).
 
     Trace a peak feature in an array starting in position (x,y).
