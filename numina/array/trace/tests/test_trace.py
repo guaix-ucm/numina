@@ -53,7 +53,7 @@ def test_trace_simple():
     result[[0, 11], 2] = 0.0
     result[4, 2] = 100.0
 
-    mm = trace(arr, 48.0, 48.0)
+    mm = trace(arr, 48.0, 48.0, step=1)
 
     assert mm.shape == (12, 3)
     assert_allclose(mm, result)
