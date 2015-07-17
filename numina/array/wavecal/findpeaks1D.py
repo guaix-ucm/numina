@@ -4,16 +4,20 @@
 from __future__ import division
 from __future__ import print_function
 
+import logging
+
 import six
 from six.moves import input
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+_logger = logging.getLogger('numina.array.wavecal')
+
 #------------------------------------------------------------------------------
 
-def findPeaks_spectrum(sx, nwinwidth, data_threshold = 0, 
-                       LDEBUG = False, LPLOT = False):
+def findPeaks_spectrum(sx, nwinwidth, data_threshold=0, 
+                       LDEBUG=False, LPLOT=False):
     """Find peaks in the 1d-numpy array sx.
 
     Note that nwinwidth must be an odd number. The function imposes that the
@@ -46,13 +50,11 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold = 0,
     sx_shape = sx.shape
     nmed = nwinwidth//2
 
-    if LDEBUG:
-        print('findPeaks_spectrum> sx shape......:',sx_shape)
-        print('findPeaks_spectrum> nwinwidth.....:',nwinwidth)
-        print('findPeaks_spectrum> nmed..........:',nmed)
-        print('findPeaks_spectrum> data_threshold:',data_threshold)
-        print('findPeaks_spectrum> the first and last', nmed, \
-              'pixels will be ignored')
+    _logger.debug('sx shape %s', sx_shape)
+    _logger.debug('nwinwidth %d',nwinwidth)
+    _logger.debug('nmed %d:',nmed)
+    _logger.debug('data_threshold %s',data_threshold)
+    _logger.debug('the first and last %d pixels will be ignored', nmed)
 
     ipeaks = []
 
@@ -88,11 +90,8 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold = 0,
         else:
             i += 1
 
-    if LDEBUG:
-        npeaks = len(ipeaks)
-        print('findPeaks_spectrum> number of peaks found:',npeaks)
-        for val in zip(range(npeaks), ipeaks):
-            print(val)
+    npeaks = len(ipeaks)
+    _logger.debug('number of peaks found %i',npeaks)
 
     if LPLOT:
         fig = plt.figure()

@@ -4,6 +4,8 @@
 from __future__ import division
 from __future__ import print_function
 
+import logging
+
 import six
 from six.moves import input
 
@@ -15,6 +17,8 @@ import itertools
 import scipy.misc
 
 #------------------------------------------------------------------------------
+
+_logger = logging.getLogger('numina.array.wavecal')
 
 def fitTheilSen(x, y):
     """Compute a robust linear fit using the Theil-Sen method.
@@ -308,13 +312,10 @@ def gen_triplets_master(wv_master, LDEBUG = False, LPLOT = False):
     # Verify that the number of triplets coincides with the expected value.
     ntriplets_master = len(triplets_master_list)
     if ntriplets_master == scipy.misc.comb(nlines_master, 3, exact=True):
-        if LDEBUG:
-            print('>>> Total number of lines in master table:', 
-                  nlines_master)
-            print('>>> Number of triplets in master table...:', 
-                  ntriplets_master)
+        _logger.debug('Lines in master table %d', nlines_master)
+        _logger.debug('Triplets in master table %d', ntriplets_master)
     else:
-        sys.exit('FATAL ERROR: invalid number of combinations')
+        raise ValueError('Invalid number of combinations')
 
     # For each triplet, compute the relative position of the central line.
     ratios_master = np.zeros(ntriplets_master)
