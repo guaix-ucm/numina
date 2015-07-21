@@ -49,6 +49,16 @@ class ObservationResult(object):
         self.images = [prod.content]
         self.prodid = prod.id
 
+    @property
+    def frames(self):
+        warnings.warn('Using deprecated key "frames" in obsres')
+        return self.images
+
+    @frames.setter
+    def frames(self, value):
+        warnings.warn('Using deprecated key "frames" in obsres')
+        self.images = value
+
 
 def dataframe_from_list(values):
     '''Build a DataFrame object from a list.'''
