@@ -40,3 +40,6 @@ from .dataholders import Product
 from .oresult import obsres_from_dict
 from .qc import QC
 
+# FIXME: these two are deprecated
+FrameDataProduct = DataFrameType
+DataProduct = DataProductType
