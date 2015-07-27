@@ -50,7 +50,7 @@ def update_mask(mask, gmask, newmask, value):
     return mask, gmask, smask
 
 
-def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
+def cosmetics(flat1, flat2, mask, lowercut=6.0, uppercut=6.0,
               siglev=2.0, posthook=None):
     '''Find cosmetic defects in a detector using two flat field images.
 
@@ -142,9 +142,14 @@ def cosmetics(flat1, flat2, mask, lowercut=4.0, uppercut=4.0,
     f1_ratio = ratio[gmask]
     f1_mask = mask[gmask]
     _logger.info('flagging points over %4.2f sigma as hot pixels', uppercut)
-    f1_mask[f1_ratio >= uppercut] = PIXEL_HOT
-    _logger.info('tagging points under %4.2f sigma as dead pixels', lowercut)
-    f1_mask[f1_ratio <= -lowercut] = PIXEL_DEAD
+    umask = (f1_ratio >= uppercut)
+    f1_mask[umask] = PIXEL_HOT
+    _logger.info('flagged %d hot pixels', numpy.count_nonzero(umask))
+
+    _logger.info('flagging points under %4.2f sigma as dead pixels', lowercut)
+    lmask = (f1_ratio <= -lowercut)
+    f1_mask[lmask] = PIXEL_DEAD
+    _logger.info('flagged %d dead pixels', numpy.count_nonzero(lmask))
     mask[gmask] = f1_mask
 
     if posthook is not None:
