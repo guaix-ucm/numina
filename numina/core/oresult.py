@@ -37,7 +37,7 @@ class ObservationResult(object):
         self.id = 1
         self.mode = mode
         self.instrument = None
-        self.images = []
+        self.frames = []
         self.parent = None
         self.children = []  # other ObservationResult
         self.pipeline = 'default'
@@ -46,18 +46,16 @@ class ObservationResult(object):
 
     def update_with_product(self, prod):
         self.tags = prod.tags
-        self.images = [prod.content]
+        self.frames = [prod.content]
         self.prodid = prod.id
 
     @property
-    def frames(self):
-        warnings.warn('Using deprecated key "frames" in obsres')
-        return self.images
+    def images(self):
+        return self.frames
 
-    @frames.setter
-    def frames(self, value):
-        warnings.warn('Using deprecated key "frames" in obsres')
-        self.images = value
+    @images.setter
+    def images_s(self, value):
+        self.frames = value
 
 
 def dataframe_from_list(values):
@@ -86,6 +84,6 @@ def obsres_from_dict(values):
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
-    obsres.images = [dataframe_from_list(val) for val in values[ikey]]
+    obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
 
     return obsres
