@@ -260,7 +260,7 @@ generate_triplets_conse_lines(ntriplets_arc, xpos_arc, error_xpos_arc, times_sig
             if key in ['error_crval1_search','crval1_search','cdelt1_search','itriplet_search','error_cdelt1_search']:
                 assert np.allclose(out1[key][aux],result1[key][aux])
             else: #'clabel_search'
-                assert out1[key][aux] == result1[key][aux]
+                assert str(out1[key][aux]) == str(result1[key][aux])
     print ("TEST: __generate_triplets_conse_lines.... OK")
 
 
