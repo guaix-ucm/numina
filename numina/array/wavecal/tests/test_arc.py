@@ -55,7 +55,7 @@ out1, out2, out3, out4, out5 =  select_data_for_fit(wv_master,xpos_arc,solution)
     assert np.allclose(out3,result3)
     assert np.allclose(out4,result4)
     assert np.allclose(out5,result5)
-    print "TEST: test__select_data_for_fit.... OK"
+    print ("TEST: test__select_data_for_fit.... OK")
 
 #
 def test__gen_triplets_master():
@@ -110,7 +110,7 @@ gen_triplets_master(lst)
     assert out1 == result1
     assert np.allclose(out2,result2)
     assert out3 == result3
-    print "TEST: test__gen_triplets_master.... OK"
+    print ("TEST: test__gen_triplets_master.... OK")
 
 #
 def test__findPeaks_spectrum():
@@ -138,7 +138,7 @@ findPeaks_spectrum(sx, nwinwidth, data_threshold)
     out1 =  findPeaks_spectrum(sx, nwinwidth, data_threshold)
 
     assert np.allclose(out1,result1)
-    print "TEST: test__findPeaks_spectrum.... OK"
+    print ("TEST: test__findPeaks_spectrum.... OK")
 #
 
 def test__refinePeaks_spectrum():
@@ -169,7 +169,7 @@ refinePeaks_spectrum(sx, ipeaks, nwinwidth, method)
     out1 =  refinePeaks_spectrum(sx, ipeaks, nwinwidth, method)
 
     assert np.allclose(out1,result1)
-    print "TEST: __refinePeaks_spectrum.... OK"
+    print ("TEST: __refinePeaks_spectrum.... OK")
 
 
 def test__segregate_solutions():
@@ -208,7 +208,7 @@ segregate_solutions(ntriplets_arc, itriplet_search, cdelt1_search_norm, crval1_s
                 assert np.allclose(out1[key][aux],result1[key][aux])
             else:
                 assert (out1[key][aux]==result1[key][aux]).all()
-    print "TEST: test__segregate_solutions.... OK"
+    print ("TEST: test__segregate_solutions.... OK")
 
 
 def test__generate_triplets_conse_lines():
@@ -261,7 +261,7 @@ generate_triplets_conse_lines(ntriplets_arc, xpos_arc, error_xpos_arc, times_sig
                 assert np.allclose(out1[key][aux],result1[key][aux])
             else: #'clabel_search'
                 assert out1[key][aux] == result1[key][aux]
-    print "TEST: __generate_triplets_conse_lines.... OK"
+    print ("TEST: __generate_triplets_conse_lines.... OK")
 
 
 def test__costFunction():
@@ -307,7 +307,7 @@ costFunction(ntriplets_arc, frac_triplets_for_sum, itriplet_search, cdelt1_searc
     out1 =  costFunction(ntriplets_arc, frac_triplets_for_sum, itriplet_search, cdelt1_search_norm, crval1_search_norm, ntriplets_layered_list, cdelt1_layered_list, crval1_layered_list)
 
     assert np.allclose(out1,result1)
-    print "TEST: __costFunction.... OK"
+    print ("TEST: __costFunction.... OK")
 
 
 def test__remove_duplicated_lines():
@@ -368,7 +368,7 @@ remove_duplicated_lines(nlines_arc, solution)
         for key in solution[elem].keys():
             assert solution[elem][key] == result1[elem][key]
 
-    print "TEST: test__remove_duplicated_lines.... OK"
+    print ("TEST: test__remove_duplicated_lines.... OK")
 
 
 def test__arccalibration_direct():
@@ -427,7 +427,7 @@ arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,triplets_m
         for key in solution[elem].keys():
             assert solution[elem][key] == result[elem][key]
 
-    print "TEST: test__arccalibration_direct.... OK"
+    print ("TEST: test__arccalibration_direct.... OK")
 
 
 
