@@ -17,9 +17,9 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Base metaclasses
-'''
+"""
 
 import collections
 from .dataholders import Product
@@ -173,22 +173,22 @@ class RecipeInOutType(MapStoreType):
         return nname, value
 
 
-class RecipeRequirementsType(RecipeInOutType):
-    '''Metaclass for RecipeRequirements.'''
+class RecipeInputType(RecipeInOutType):
+    """Metaclass for RecipeInput."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
 
 
 class RecipeResultType(RecipeInOutType):
-    '''Metaclass for RecipeResult.'''
+    """Metaclass for RecipeResult."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Product)
 
 
 class RecipeResultAutoQCType(RecipeResultType):
-    '''Metaclass for RecipeResult with added QC'''
+    """Metaclass for RecipeResult with added QC"""
     def __new__(cls, classname, parents, attributes):
         if 'qc' not in attributes:
             attributes['qc'] = Product(QualityControlProduct)

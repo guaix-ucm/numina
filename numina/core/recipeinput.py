@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -53,7 +53,7 @@ class RecipeInputBuilderGTC(object):
         self.recipeClass = recipeClass
 
     def buildRI(self, ob):
-        RecipeRequirementsClass = self.recipeClass.RecipeRequirements
+        RecipeInputClass = self.recipeClass.RecipeInput
 
         result = {}
         pipeline = 'default'
@@ -75,7 +75,7 @@ class RecipeInputBuilderGTC(object):
 
         tags = getattr(obsres, 'tags', {})
 
-        for key, req in RecipeRequirementsClass.items():
+        for key, req in RecipeInputClass.items():
 
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
@@ -104,7 +104,7 @@ class RecipeInputBuilderGTC(object):
                 except NoResultFound:
                     _logger.debug('No value found for %s', key)
 
-        return RecipeRequirementsClass(**result)
+        return RecipeInputClass(**result)
 
 
 class RecipeInputBuilderCLI(object):
@@ -114,7 +114,7 @@ class RecipeInputBuilderCLI(object):
         self.recipeClass = recipeClass
 
     def buildRI(self, ob):
-        RecipeRequirementsClass = self.recipeClass.RecipeRequirements
+        RecipeInputClass = self.recipeClass.RecipeInput
 
         result = {}
         pipeline = 'default'
@@ -136,7 +136,7 @@ class RecipeInputBuilderCLI(object):
 
         tags = getattr(obsres, 'tags', {})
 
-        for key, req in RecipeRequirementsClass.items():
+        for key, req in RecipeInputClass.items():
 
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
@@ -169,4 +169,4 @@ class RecipeInputBuilderCLI(object):
                 except NoResultFound:
                     _logger.debug('No value found for %s', key)
 
-        return RecipeRequirementsClass(**result)
+        return RecipeInputClass(**result)

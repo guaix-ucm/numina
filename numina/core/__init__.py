@@ -33,7 +33,7 @@ from .products import DataProductType, DataFrameType
 from .oresult import ObservationResult
 from numina.exceptions import RecipeError
 from numina.exceptions import ValidationError
-from .recipeinout import RecipeRequirements, define_requirements
+from .recipeinout import RecipeInput, define_requirements, define_input
 from .recipeinout import RecipeResult, define_result
 from .recipeinout import ErrorRecipeResult, BaseRecipeResult
 from .dataholders import Product

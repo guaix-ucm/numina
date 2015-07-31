@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,13 +17,13 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
-Recipe requirements
-'''
+"""
+Recipe Input
+"""
 
 from six import with_metaclass
 
-from .metaclass import RecipeRequirementsType, RecipeResultType
+from .metaclass import RecipeInputType, RecipeResultType
 from .metaclass import RecipeResultAutoQCType
 
 
@@ -64,8 +64,8 @@ class RecipeInOut(object):
             check.check(self)
 
 
-class RecipeRequirements(with_metaclass(RecipeRequirementsType, RecipeInOut)):
-    '''RecipeRequirements base class'''
+class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
+    """RecipeInput base class"""
     pass
 
 
@@ -119,17 +119,20 @@ class define_result(object):
         return klass
 
 
-class define_requirements(object):
+class define_input(object):
     '''Recipe decorator.'''
-    def __init__(self, requirementClass):
-        if not issubclass(requirementClass, RecipeRequirements):
-            fmt = '%r does not derive from RecipeRequirements'
-            msg = fmt % requirementClass
+    def __init__(self, inputClass):
+        if not issubclass(inputClass, RecipeInput):
+            fmt = '%r does not derive from RecipeInput'
+            msg = fmt % inputClass
             raise TypeError(msg)
-        self.klass = requirementClass
+        self.klass = inputClass
 
     def __call__(self, klass):
-        klass.Requirements = self.klass
+        klass.Input = self.klass
         # TODO: remove this name in the future
-        klass.RecipeRequirements = self.klass
+        klass.RecipeInput = self.klass
         return klass
+
+
+define_requirements = define_input

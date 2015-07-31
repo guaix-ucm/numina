@@ -17,13 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Basic tools and classes used to generate recipe modules.
+"""
+Basic tools and classes used to generate recipe modules.
 
 A recipe is a class that complies with the *reduction recipe API*:
 
  * The class must derive from :class:`numina.core.BaseRecipe`.
 
-'''
+"""
 
 import abc
 import traceback
@@ -34,22 +35,17 @@ from six import with_metaclass
 from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
-from .recipeinout import RecipeRequirements as RecipeRequirementsClass
+from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .metarecipes import RecipeTypeAutoQC
-
-
-_logger = logging.getLogger('numina')
 
 
 class BaseRecipeMethods(object):
     '''Base class for all instrument recipes'''
 
     RecipeResult = RecipeResultClass
-    RecipeRequirements = RecipeRequirementsClass
+    RecipeInput = RecipeInputClass
 
-    # Recipe own logger
-    logger = _logger
 
     def __init__(self, *args, **kwds):
         super(BaseRecipeMethods, self).__init__()
@@ -63,6 +59,10 @@ class BaseRecipeMethods(object):
         self.instrument = None
         self.configure(**kwds)
 
+        # Recipe own logger
+        self.logger = logging.getLogger('numina')
+
+
     def configure(self, **kwds):
         if 'author' in kwds:
             self.__author__ = kwds['author']
@@ -75,11 +75,11 @@ class BaseRecipeMethods(object):
 
 
     @classmethod
-    def create_requirements(cls, *args, **kwds):
+    def create_input(cls, *args, **kwds):
         '''
-        Pass the result arguments to the RecipeRequirements constructor
+        Pass the result arguments to the RecipeInput constructor
         '''
-        return cls.RecipeRequirements(*args, **kwds)
+        return cls.RecipeInput(*args, **kwds)
 
     @classmethod
     def create_result(cls, *args, **kwds):
@@ -105,7 +105,7 @@ class BaseRecipeMethods(object):
         try:
             result = self.run(recipe_input)
         except Exception as exc:
-            _logger.error("During recipe execution %s", exc)
+            self.logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(
                 exc.__class__.__name__,
                 str(exc),

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,9 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+
+"""
 Recipe requirements
-'''
+"""
 
 from __future__ import print_function
 
@@ -40,15 +41,15 @@ def dict_requirement_lookup(source):
 
 
 class RequirementParser(object):
-    '''RecipeRequirement builder.'''
+    """RecipeInput builder."""
     def __init__(self, recipe, lookup):
         if not inspect.isclass(recipe):
             recipe = recipe.__class__
-        self.rClass = recipe.RecipeRequirements
+        self.rClass = recipe.RecipeInput
         self.lc = lookup
 
     def parse(self):
-        '''Build the RecipeRequirement object from available metadata.'''
+        '''Build the RecipeInput object from available metadata.'''
         parameters = {}
 
         for req in self.rClass.values():
