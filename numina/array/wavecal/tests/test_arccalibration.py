@@ -17,11 +17,100 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
 """Tests for wavecalibration routines"""
 
-
 import numpy as np
+
+def test__select_data_for_fit():
+    from numina.array.wavecal.arccalibration import select_data_for_fit
+    import timeit
+    cad = """
+import os
+import numpy as np
+from numina.array.wavecal.arccalibration import select_data_for_fit
+
+wv_master = np.array([3719.414, 3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119])
+xpos_arc = np.array([479.80265378,900.87172336,1029.97190349,1088.24934745,2032.73591163,2319.3003487,2647.40139802,2796.56881705,3031.96484489,3467.49240452,3874.34750735])
+solution = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+out1, out2, out3, out4, out5 =  select_data_for_fit(wv_master,xpos_arc,solution)
+"""
+    print ("__select_data_for_fit: {0}".format(timeit.timeit(cad, number=100)))
+
+    result1 = 10
+    result2 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    result3 = [900.87172336,1029.97190349,1088.24934745,2032.73591163,2319.3003487,2647.40139802,2796.56881705,3031.96484489,3467.49240452,3874.34750735]
+    result4 = [ 3803.108,3828.371,3839.724,4019.131,4071.996,4131.762,4158.584,4200.653,4277.558,4348.119]
+    result5 = [ 2.71028128,1.53826748,1.51543978,1.0607126, 1.,1.,1.,1.09576064,1.57363445,2.73684352]
+
+    wv_master = np.array([3719.414, 3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119])
+    xpos_arc = np.array([479.80265378,900.87172336,1029.97190349,1088.24934745,2032.73591163,2319.3003487,2647.40139802,2796.56881705,3031.96484489,3467.49240452,3874.34750735])
+    solution = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    out1, out2, out3, out4, out5 = select_data_for_fit(wv_master,xpos_arc,solution)
+
+    assert out1 == result1
+    assert np.allclose(out2,result2)
+    assert np.allclose(out3,result3)
+    assert np.allclose(out4,result4)
+    assert np.allclose(out5,result5)
+    print ("TEST: test__select_data_for_fit.... OK")
+
+#
+def test__gen_triplets_master():
+    import timeit
+    from numina.array.wavecal.arccalibration import gen_triplets_master
+    cad = """
+import os
+import numpy as np
+from numina.array.wavecal.arccalibration import gen_triplets_master
+
+lst = np.array([3719.414, 3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119])
+gen_triplets_master(lst)
+"""
+
+    print ("__gen_triplets_master: {0}".format(timeit.timeit(cad, number=100)))
+
+
+    lst = np.array([3719.414, 3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119])
+    result1 = 165
+    result2 = np.array([ 0.02184328,0.02527455,0.0304957,0.03438084,0.03742036,0.04635319,
+                        0.04660031,0.05324692,0.05951457,0.06354752,0.06718397,0.07106809,
+                        0.07686807,0.07717568,0.0921053,0.09395362,0.10300555,0.111412,
+                        0.11694588,0.12397103,0.13312126,0.13617566,0.14995055,0.16068975,
+                        0.16950047,0.17330385,0.17391359,0.18396938,0.19057313,0.19136161,
+                        0.19521306,0.20296934,0.20456454,0.21555369,0.21644702,0.221959,
+                        0.22640933,0.23737457,0.24809755,0.25000052,0.26423555,0.27394858,
+                        0.27924342,0.2907444,0.29123192,0.29176812,0.30902599,0.31358489,
+                        0.31841355,0.34122559,0.34235595,0.35288899,0.35359827,0.36353293,
+                        0.36702402,0.37908829,0.38933968,0.39636448,0.401412, 0.40976032,
+                        0.42122571,0.42388476,0.42467836,0.43583294,0.45531247,0.4568731,
+                        0.46453749,0.4659409,0.46873677,0.46936456,0.47251639,0.4767212,
+                        0.49336252,0.49707006,0.51240726,0.52151004,0.53050243,0.53698866,
+                        0.53962241,0.54236877,0.54339257,0.55175873,0.56080674,0.56265132,
+                        0.56673622,0.5744313,0.57768773,0.58372711,0.60302269,0.60770066,
+                        0.61432759,0.62048126,0.62280281,0.6258793,0.62718949,0.6277152,
+                        0.62875959,0.63170436,0.63533289,0.64353931,0.65223638,0.65440983,
+                        0.65586881,0.65729612,0.66700622,0.67301429,0.67386773,0.67542249,
+                        0.67637123,0.68246237,0.68994429,0.69023421,0.69270524,0.6956529,
+                        0.69853111,0.70241113,0.70993814,0.71627404,0.7268545,0.72826688,
+                        0.72844509,0.72942564,0.73265467,0.73513481,0.73778137,0.73878426,
+                        0.74445809,0.74923807,0.75641675,0.76544484,0.76813789,0.76824297,
+                        0.77240046,0.78300667,0.78552105,0.78683996,0.79534855,0.80283717,
+                        0.80300668,0.80339398,0.8076628,0.80912867,0.81494942,0.81814918,
+                        0.82435124,0.82670893,0.82879068,0.83790705,0.85006325,0.85505932,
+                        0.8568466,0.86120831,0.86221298,0.86423998,0.87053289,0.88344245,
+                        0.88699695,0.88776771,0.89417802,0.90563544,0.9125819,0.91588158,
+                        0.91877364,0.92454624,0.9389257 ])
+    result3 = [(2, 3, 10), (2, 3, 9), (2, 3, 8), (2, 3, 7), (2, 3, 6), (1, 2, 10), (2, 3, 5), (1, 2, 9), (2, 3, 4), (1, 2, 8), (1, 3, 10), (1, 2, 7), (1, 2, 6), (1, 3, 9), (1, 3, 8), (1, 2, 5), (1, 3, 7), (1, 3, 6), (1, 2, 4), (6, 7, 10), (0, 1, 10), (1, 3, 5), (0, 1, 9), (4, 5, 10), (1, 3, 4), (0, 2, 10), (0, 1, 8), (6, 7, 9), (0, 1, 7), (0, 3, 10), (0, 2, 9), (0, 1, 6), (4, 5, 9), (0, 3, 9), (5, 6, 10), (7, 8, 10), (0, 2, 8), (0, 1, 5), (0, 2, 7), (0, 3, 8), (0, 2, 6), (0, 3, 7), (0, 1, 4), (5, 6, 9), (4, 5, 8), (0, 3, 6), (0, 2, 5), (5, 7, 10), (6, 8, 10), (0, 3, 5), (4, 6, 10), (3, 4, 10), (7, 8, 9), (0, 2, 4), (2, 4, 10), (4, 5, 7), (6, 7, 8), (1, 4, 10), (0, 3, 4), (3, 4, 9), (5, 7, 9), (4, 7, 10), (2, 4, 9), (4, 6, 9), (1, 4, 9), (3, 5, 10), (5, 6, 8), (5, 8, 10), (2, 5, 10), (4, 5, 6), (6, 8, 9), (0, 4, 10), (1, 5, 10), (3, 4, 8), (2, 4, 8), (8, 9, 10), (3, 5, 9), (0, 4, 9), (4, 7, 9), (2, 5, 9), (1, 4, 8), (4, 8, 10), (0, 5, 10), (3, 4, 7), (1, 5, 9), (3, 6, 10), (2, 4, 7), (2, 6, 10), (1, 6, 10), (1, 4, 7), (3, 4, 6), (4, 6, 8), (0, 4, 8), (5, 8, 9), (3, 7, 10), (7, 9, 10), (2, 4, 6), (0, 5, 9), (2, 7, 10), (3, 5, 8), (1, 7, 10), (2, 5, 8), (0, 6, 10), (1, 4, 6), (3, 6, 9), (5, 7, 8), (6, 9, 10), (2, 6, 9), (1, 5, 8), (0, 4, 7), (1, 2, 3), (5, 6, 7), (1, 6, 9), (0, 1, 3), (0, 7, 10), (4, 8, 9), (3, 8, 10), (2, 8, 10), (0, 4, 6), (3, 7, 9), (3, 5, 7), (1, 8, 10), (0, 5, 8), (2, 7, 9), (2, 5, 7), (0, 6, 9), (5, 9, 10), (1, 7, 9), (1, 5, 7), (0, 8, 10), (0, 1, 2), (4, 7, 8), (3, 4, 5), (2, 4, 5), (4, 9, 10), (0, 7, 9), (3, 5, 6), (0, 5, 7), (2, 5, 6), (1, 4, 5), (4, 6, 7), (3, 6, 8), (2, 6, 8), (1, 5, 6), (3, 8, 9), (1, 6, 8), (2, 8, 9), (1, 8, 9), (0, 4, 5), (0, 5, 6), (0, 6, 8), (3, 9, 10), (0, 8, 9), (2, 9, 10), (1, 9, 10), (3, 7, 8), (2, 7, 8), (0, 9, 10), (1, 7, 8), (0, 2, 3), (0, 7, 8), (3, 6, 7), (2, 6, 7), (1, 6, 7), (0, 6, 7)]
+
+
+    out1, out2, out3 =  gen_triplets_master(lst)
+
+    assert out1 == result1
+    assert np.allclose(out2,result2)
+    assert out3 == result3
+    print ("TEST: test__gen_triplets_master.... OK")
 
 
 def test__arccalibration_direct():
@@ -68,7 +157,17 @@ arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,triplets_m
     times_sigma_polfilt = 10.0
     times_sigma_inclusion = 5.0
 
-    result = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+    result = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0},
+              {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1},
+              {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2},
+              {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3},
+              {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4},
+              {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5},
+              {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6},
+              {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7},
+              {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8},
+              {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9},
+              {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
 
     solution = arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,
                           triplets_master_sorted_list,xpeaks_refined,naxis1,
@@ -76,8 +175,19 @@ arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,triplets_m
                           frac_triplets_for_sum,times_sigma_TheilSen,poly_degree,
                           times_sigma_polfilt,times_sigma_inclusion)
 
-    for idx, elem in enumerate(solution):
-        for key in elem.keys():
-            assert elem[key] == result[idx][key]
+    for elem in range(len(solution)):
+        for key in solution[elem].keys():
+            print ("Elem: %s" %elem)
+            print ("Key: %s" %key)
+            print ("Solution: %s" %solution[elem][key])
+            print ("Result: %s" %result[elem][key])
+            print ("*" *10)
+            assert solution[elem][key] == result[elem][key]
 
     print ("TEST: test__arccalibration_direct.... OK")
+
+
+if __name__ == '__main__':
+    test__select_data_for_fit()
+    test__gen_triplets_master()
+    test__arccalibration_direct()
