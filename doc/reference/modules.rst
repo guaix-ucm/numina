@@ -10,11 +10,9 @@ Numina modules
    core
    flow
    exceptions
-   extraiter
    frame
    generic
    logger
-   instrument
    serialize
    qa
    treedict
