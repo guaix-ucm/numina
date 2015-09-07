@@ -1,23 +1,32 @@
-# Version 29 May 2015
-#------------------------------------------------------------------------------
+#
+# Copyright 2015 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# Numina is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Numina is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
+"""Peak finding routines from wavecal"""
 
 from __future__ import division
-from __future__ import print_function
 
-import logging
-
-import six
-from six.moves import input
-
-import matplotlib.pyplot as plt
 import numpy as np
-
-_logger = logging.getLogger('numina.array.wavecal')
 
 #------------------------------------------------------------------------------
 
-def findPeaks_spectrum(sx, nwinwidth, data_threshold=0, 
-                       LDEBUG=False, LPLOT=False):
+def findPeaks_spectrum(sx, nwinwidth, data_threshold=0):
     """Find peaks in the 1d-numpy array sx.
 
     Note that nwinwidth must be an odd number. The function imposes that the
@@ -33,10 +42,6 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold=0,
         odd.
     data_threshold : float
         Minimum signal in the peak (optional).
-    LDEBUG : bool
-        If True the function prints out additional information.
-    LPLOT : bool
-        If True the function plots the spectrum and the peaks.
 
     Returns
     -------
@@ -49,12 +54,6 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold=0,
 
     sx_shape = sx.shape
     nmed = nwinwidth//2
-
-    _logger.debug('sx shape %s', sx_shape)
-    _logger.debug('nwinwidth %d',nwinwidth)
-    _logger.debug('nmed %d:',nmed)
-    _logger.debug('data_threshold %s',data_threshold)
-    _logger.debug('the first and last %d pixels will be ignored', nmed)
 
     ipeaks = []
 
@@ -70,7 +69,8 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold=0,
             j = 0
             loop = True
             while loop:
-                if sx[i-nmed+j] > sx[i-nmed+j+1]: lpeakgood = False
+                if sx[i-nmed+j] > sx[i-nmed+j+1]:
+                    lpeakgood = False
                 j += 1
                 loop = (j < nmed) and lpeakgood
 
@@ -91,23 +91,12 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold=0,
             i += 1
 
     npeaks = len(ipeaks)
-    _logger.debug('number of peaks found %i',npeaks)
-
-    if LPLOT:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.plot(list(six.moves.range(sx_shape[0])), sx, 'k-')
-        ax.set_xlabel('array index')
-        ax.set_ylabel('spectrum intensity')
-        ax.set_title('function findPeaks_spectrum')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
 
     return np.array(ipeaks, dtype=np.int)
 
 #------------------------------------------------------------------------------
 
-def refinePeaks_spectrum(sx, ipeaks, nwinwidth, method=2, LDEBUG=False):
+def refinePeaks_spectrum(sx, ipeaks, nwinwidth, method=2):
     """Refine the peak location previously found by findPeaks_spectrum()
 
     Parameters
@@ -122,8 +111,6 @@ def refinePeaks_spectrum(sx, ipeaks, nwinwidth, method=2, LDEBUG=False):
         Indicates which function will be employed to refine the peak location.
         method  = 1 -> fit to 2nd order polynomial
         method != 1 -> fit to gaussian
-    LDEBUG : bool
-        If True the function plots and prints out additional information.
 
     Returns
     -------
@@ -155,34 +142,6 @@ def refinePeaks_spectrum(sx, ipeaks, nwinwidth, method=2, LDEBUG=False):
             refined_peak = x0+jmax
 
         xfpeaks[iline] = refined_peak
-
-        if LDEBUG:
-            plt.figure()
-            xmin = x_fit.min()-1
-            xmax = x_fit.max()+1
-            ymin = 0
-            ymax = y_fit.max()*1.10
-            plt.axis([xmin,xmax,ymin,ymax])
-            plt.xlabel('channel (around initial integer peak)')
-            plt.ylabel('Normalized no. of counts')
-            plt.title('Fit to line at channel '+str(jmax))
-            plt.plot(x_fit,y_fit,"bo")
-            n_plot = 1000
-            x_plot = np.zeros(n_plot)
-            y_plot = np.zeros(n_plot)
-            for j in range(n_plot):
-                x_plot[j] = -nmed+float(j)/float(n_plot-1)*2*nmed
-                if method == 1:
-                    y_plot[j] = poly[2]+ \
-                                poly[1]*x_plot[j]+ \
-                                poly[0]*x_plot[j]*x_plot[j]
-                else:
-                    y_plot[j] = A*np.exp(-(x_plot[j]-x0)**2/(2*sigma**2))
-            plt.plot(x_plot,y_plot,color="red")
-            plt.show(block=False)
-            print('refined_peak:',refined_peak)
-            answer = input('Press <CR> to continue...')
-            plt.close()
 
     return xfpeaks
 
