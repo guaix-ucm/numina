@@ -43,7 +43,8 @@ def _vecS2(k, data):
     return ap
 
 
-# http://tcs-trddc.com/trddc_website/pdf/srl/palshikar_sapdts_2009.pdf
+# Extracted from here
+# http://www.researchgate.net/publication/228853276_Simple_Algorithms_for_Peak_Detection_in_Time-Series
 def _generic_peak_filtering(method, y, x=None, k=3, h=1.0, background=0.0,
                             xmin=None, xmax=None):
     '''Helper class for filtered peak finding.'''
