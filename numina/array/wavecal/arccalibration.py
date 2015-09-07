@@ -1,24 +1,54 @@
-# Version 29 May 2015
-#------------------------------------------------------------------------------
+#
+# Copyright 2015 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# Numina is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Numina is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import division
 from __future__ import print_function
 
 import logging
+import itertools
 
 import six
-from six.moves import input
-
-import sys
-import matplotlib.pyplot as plt
 import numpy as np
 from numpy.polynomial import polynomial
-import itertools
 import scipy.misc
 
 #------------------------------------------------------------------------------
 
-_logger = logging.getLogger('numina.array.wavecal')
+def my_round(x, d=0):
+    """Round as in Python2"""
+
+
+    # Python 2 and 3 round behaviour is different
+    # In Python 2
+    # round(4.5) == 5
+    # round(3.5) == 4
+
+    # In Python 3
+    # round(4.5) == 4
+    # round(3.5) == 4
+
+    # See http://stackoverflow.com/questions/10825926/python-3-x-rounding-behavior
+
+    import math
+    p = 10 ** d
+    return float(math.floor((x * p) + math.copysign(0.5, x)))/p
+
 
 def fitTheilSen(x, y):
     """Compute a robust linear fit using the Theil-Sen method.
@@ -49,7 +79,7 @@ def fitTheilSen(x, y):
         n = x.size
         if n == y.size:
             if n < 5:
-                sys.exit('FATAL ERROR #3: in fitTheilSen')
+                raise ValueError('FATAL ERROR #3: in fitTheilSen')
             result = []  # python list
             if (n % 2) == 0:
                 iextra = 0
@@ -65,9 +95,9 @@ def fitTheilSen(x, y):
             intercept = np.median(result)
             return intercept, slope
         else:
-            sys.exit('FATAL ERROR #2: in fitTheilSen')
+            raise ValueError('FATAL ERROR #2: in fitTheilSen')
     else:
-        sys.exit('FATAL ERROR #1: in fitTheilSen')
+        raise ValueError('FATAL ERROR #1: in fitTheilSen')
 
 #------------------------------------------------------------------------------
 
@@ -85,7 +115,7 @@ def sigmaG(x):
     Returns
     -------
     sigmag : float
-        Robust estimator of the standar deviation
+        Robust estimator of the standard deviation
     """
 
     q25, q75 = np.percentile(x,[25.0, 75.0])
@@ -124,7 +154,7 @@ def select_data_for_fit(wv_master, xpos_arc, solution):
     nlines_arc = len(solution)
 
     if nlines_arc != xpos_arc.size:
-        sys.exit('FATAL ERROR in select_data_for_fit: invalid nlines_arc')
+        raise ValueError('FATAL ERROR in select_data_for_fit: invalid nlines_arc')
 
     nfit = 0
     ifit = []
@@ -148,8 +178,8 @@ def fit_solution(wv_master,
                  naxis1_arc,
                  poly_degree,
                  weighted,
-                 LDEBUG = False,
-                 LPLOT = False):
+                 LDEBUG=False,
+                 LPLOT=False):
     """Fit polynomial to arc calibration solution.
 
     Parameters
@@ -189,7 +219,7 @@ def fit_solution(wv_master,
     nlines_arc = len(solution)
 
     if nlines_arc != xpos_arc.size:
-        sys.exit('FATAL ERROR in fit_solution: invalid nlines_arc')
+        raise ValueError('FATAL ERROR in fit_solution: invalid nlines_arc')
 
     # Select information from valid lines.
     nfit, ifit, xfit, yfit, wfit = \
@@ -211,19 +241,16 @@ def fit_solution(wv_master,
             elif solution[i]['type'] == 'P':
                 list_P.append(i)
             else:
-                sys.exit('FATAL ERROR in fit_solution: unexpected "type"')
+                raise ValueError('FATAL ERROR in fit_solution: unexpected "type"')
 
     # Obtain approximate linear fit using the robust Theil-Sen method.
     intercept, slope = fitTheilSen(xfit, yfit)
     cdelt1_approx = slope
     crval1_approx = intercept + cdelt1_approx
-    if LDEBUG:
-        print('>>> Approximate CRVAL1:',crval1_approx)
-        print('>>> Approximate CDELT1:',cdelt1_approx)
 
     # Polynomial fit.
     if weighted:
-        coeff = polynomial.polyfit(xfit, yfit, poly_degree, w=1/wfit)
+        coeff = polynomial.polyfit(xfit, yfit, poly_degree, w=1.0/wfit)
     else:
         coeff = polynomial.polyfit(xfit, yfit, poly_degree)
 
@@ -231,47 +258,11 @@ def fit_solution(wv_master,
     poly = polynomial.Polynomial(coeff)
     ypol = poly(xpol)-(crval1_approx+(xpol-1)*cdelt1_approx)
 
-    if LPLOT:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        # identified lines
-        xp = np.copy(xfit)
-        yp = yfit-(crval1_approx+(xp-1)*cdelt1_approx)
-        ax.plot(xp, yp, 'go', label="identified lines")
-        # polynomial fit
-        ax.plot(xpol,ypol,'c-', label="polynomial fit")
-        # unidentified lines
-        if len(list_unidentified) > 0:
-            ymin = np.concatenate((yp,ypol)).min()
-            ymax = np.concatenate((yp,ypol)).max()
-            for i in list_unidentified:
-                xp = np.array([xpos_arc[i], xpos_arc[i]])
-                yp = np.array([ymin, ymax])
-                if i == list_unidentified[0]:
-                    ax.plot(xp,yp,'r--',label='unidentified lines')
-                else:
-                    ax.plot(xp,yp,'r--')
-        # R, T and P lines
-        for val in zip(["R","T","P"],[list_R, list_T, list_P]):
-            list_X = val[1]
-            if len(list_X) > 0:
-                xp = np.array([])
-                yp = np.array([])
-                for i in list_X:
-                    xp = np.append(xp, xpos_arc[i])
-                    yp = np.append(yp, wv_master[solution[i]['id']])
-                yp -= crval1_approx+(xp-1)*cdelt1_approx
-                ax.plot(xp, yp, 'rx', markersize = 15,
-                        label='removed line ('+val[0]+')')
-        ax.legend(loc="lower right")
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
     return coeff, crval1_approx, cdelt1_approx
 
 #------------------------------------------------------------------------------
 
-def gen_triplets_master(wv_master, LDEBUG = False, LPLOT = False):
+def gen_triplets_master(wv_master, LDEBUG=False, LPLOT=False):
     """Compute information associated to triplets in master table
 
     Parameters
@@ -296,6 +287,8 @@ def gen_triplets_master(wv_master, LDEBUG = False, LPLOT = False):
         with `ratios_master_sorted`.
        
     """
+
+    _logger = logging.getLogger('numina.array.wavecal')
 
     nlines_master = wv_master.size
 
@@ -333,26 +326,11 @@ def gen_triplets_master(wv_master, LDEBUG = False, LPLOT = False):
     triplets_master_sorted_list = \
       [triplets_master_list[i] for i in isort_ratios_master]
 
-    if LPLOT:
-        # Compute and plot histogram with position ratios
-        bins_in = np.linspace(0.0, 1.0, 41)
-        hist, bins_out = np.histogram(ratios_master, bins=bins_in)
-        #
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        width_hist = 0.8*(bins_out[1]-bins_out[0])
-        center = (bins_out[:-1]+bins_out[1:])/2
-        ax.bar(center, hist, align='center', width=width_hist)
-        ax.set_xlabel('distance ratio in each triplet')
-        ax.set_ylabel('Number of triplets')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
 
 #------------------------------------------------------------------------------
 
-def gen_doublets_master(wv_master, LDEBUG = False):
+def gen_doublets_master(wv_master, LDEBUG=False):
     """Compute information associated to doublets in master table
 
     Parameters
@@ -386,14 +364,9 @@ def gen_doublets_master(wv_master, LDEBUG = False):
 
     # Verify that the number of doublets coincides with the expected value.
     ndoublets_master = len(doublets_master_list)
-    if ndoublets_master == scipy.misc.comb(nlines_master, 2, exact=True):
-        if LDEBUG:
-            print('>>> Total number of lines in master table:', 
-                  nlines_master)
-            print('>>> Number of doublets in master table...:', 
-                  ndoublets_master)
-    else:
-        sys.exit('FATAL ERROR: invalid number of combinations')
+    if ndoublets_master != scipy.misc.comb(nlines_master, 2, exact=True):
+
+        raise ValueError('FATAL ERROR: invalid number of combinations')
 
     return ndoublets_master, doublets_master_list
 
@@ -410,8 +383,8 @@ def arccalibration(wv_master,
                    poly_degree,
                    times_sigma_polfilt,
                    times_sigma_inclusion,
-                   LDEBUG = False,
-                   LPLOT = False):
+                   LDEBUG=False,
+                   LPLOT=False):
     """Performs line identification for arc calibration.
 
     This function is a wrapper of two functions, which are responsible of 
@@ -498,8 +471,8 @@ def arccalibration_direct_doublets(wv_master,
                                    wv_end_search,
                                    error_xpos_arc,
                                    frac_doublets_for_sum,
-                                   LDEBUG = False,
-                                   LPLOT = False):
+                                   LDEBUG=False,
+                                   LPLOT=False):
     """Performs line identification for arc calibration using line doublets.
 
     This function assumes that a previous call to the function responsible for
@@ -559,12 +532,10 @@ def arccalibration_direct_doublets(wv_master,
     error_cdelt1_search = np.array([])
     idoublet_search = np.array([])
     clabel_search = np.array([])
+    clabel_search2 = []
     deltaw_search = np.array([])  # special array for doublets
 
     ndoublets_arc = nlines_arc - 1
-    if LDEBUG:
-        print('>>> Total number of arc lines............:', nlines_arc)
-        print('>>> Total number of arc doublets.........:', ndoublets_arc)
 
     for i in range(ndoublets_arc):
         i1, i2 = i, i+1
@@ -596,8 +567,8 @@ def arccalibration_direct_doublets(wv_master,
                                                     error_cdelt1_temp)
                     # Store additional information about the doublets
                     idoublet_search = np.append(idoublet_search, i)
-                    clabel_search = np.append(clabel_search, 
-                      str(j1)+','+str(j2))
+                    clabel_search.append((j1, j2))
+                    #clabel_search = np.append(clabel_search, (j1, j2))
                     # Store absolute difference in wavelength
                     deltaw_search = np.append(deltaw_search, w2-w1)
 
@@ -610,128 +581,6 @@ def arccalibration_direct_doublets(wv_master,
     crval1_search_norm = (crval1_search-wv_ini_search)
     crval1_search_norm /= (wv_end_search-wv_ini_search)
     error_crval1_search_norm = error_crval1_search/(wv_end_search-wv_ini_search)
-
-    # Intermediate plots
-    if LPLOT:
-        # CDELT1 vs CRVAL1 diagram (original coordinates)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('cdelt1 (Angstroms/pixel)')
-        ax.set_ylabel('crval1 (Angstroms)')
-        ax.scatter(cdelt1_search, crval1_search, s=200, alpha=0.1)
-        xmin = 0.0
-        xmax = cdelt1_max
-        dx = xmax-xmin
-        xmin -= dx/20
-        xmax += dx/20
-        ax.set_xlim([xmin,xmax])
-        ymin = wv_ini_search
-        ymax = wv_end_search
-        dy = ymax-ymin
-        ymin -= dy/20
-        ymax += dy/20
-        ax.set_ylim([ymin,ymax])
-        xp_limits = np.array([0., cdelt1_max])
-        yp_limits = wv_end_search-float(naxis1_arc-1)*xp_limits
-        xp_limits = np.concatenate((xp_limits,[xp_limits[0],xp_limits[0]]))
-        yp_limits = np.concatenate((yp_limits,[yp_limits[1],yp_limits[0]]))
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1)
-        xmin = -0.05
-        xmax =  1.05
-        ymin = -0.05
-        ymax =  1.05
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        xp_limits = np.array([0.,1.,0.,0.])
-        yp_limits = np.array([1.,0.,0.,1.])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with color depending on deltaw_search
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=deltaw_search)
-        xmin = -0.05
-        xmax =  1.05
-        ymin = -0.05
-        ymax =  1.05
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        xp_limits = np.array([0.,1.,0.,0.])
-        yp_limits = np.array([1.,0.,0.,1.])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with different color for each arc doublet and overplotting 
-        # the arc doublet number
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=idoublet_search)
-        for i in range(len(idoublet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
-                    str(int(idoublet_search[i])), fontsize=6)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # including doublet numbers
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=idoublet_search)
-        for i in range(len(clabel_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
-                    clabel_search[i], fontsize=6)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with error bars (note that errors in this plot are highly
-        # correlated)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.errorbar(cdelt1_search_norm, crval1_search_norm, 
-                    xerr=error_cdelt1_search_norm,
-                    yerr=error_crval1_search_norm,
-                    fmt='none')
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
 
     #---
     # Segregate the different solutions (normalized to [0,1]) by doublet. In
@@ -761,15 +610,10 @@ def arccalibration_direct_doublets(wv_master,
         idoublet_dum = idoublet_search[ldum]
         idoublet_layered_list.append(idoublet_dum)
         #
-        clabel_dum = clabel_search[ldum]
+        clabel_dum = [i for (i, v) in zip(clabel_search, ldum) if v]
         clabel_layered_list.append(clabel_dum)
     
-    if LDEBUG:
-        print('>>> List with no. of solutions/doublet...:',
-              ndoublets_layered_list)
-        print('>>> Total number of potential solutions..:',
-              sum(ndoublets_layered_list))
-        input('press <RETURN> to continue...')
+
 
     #---
     # Computation of the cost function.
@@ -780,7 +624,7 @@ def arccalibration_direct_doublets(wv_master,
     # and obtain the sum of distances considering only a fraction of them
     # (after sorting them in ascending order).
     ndoublets_for_sum = \
-      max(1, int(round(frac_doublets_for_sum*float(ndoublets_arc))))
+      max(1, int(my_round(frac_doublets_for_sum*float(ndoublets_arc))))
     funcost_search = np.zeros(len(idoublet_search))
     for k in range(len(idoublet_search)):
         idoublet_local = idoublet_search[k]
@@ -797,13 +641,7 @@ def arccalibration_direct_doublets(wv_master,
                     y1 = crval1_layered_list[i]
                     ey1 = error_crval1_layered_list[i]
                     dist2 = (x0-x1)**2 + (y0-y1)**2
-                    # erroneous use of error in distance
-                    '''
-                    error_dist2 = 4*(x0-x1)**2*(ex0**2+ex1**2) + \
-                                  4*(y0-y1)**2*(ey0**2+ey1**2)
-                    error_dist2 = np.sqrt(error_dist2)
-                    dist2 /= error_dist2
-                    '''
+
                     dist_to_layers = np.append(dist_to_layers, dist2.min())
                 else:
                     dist_to_layers = np.append(dist_to_layers, np.inf)
@@ -812,8 +650,6 @@ def arccalibration_direct_doublets(wv_master,
 
     # Normalize the cost function
     funcost_min = funcost_search.min()
-    if LDEBUG:
-        print('funcost_min:',funcost_min)
     funcost_search /= funcost_min
 
     # Segregate the cost function by arc doublet.
@@ -822,68 +658,6 @@ def arccalibration_direct_doublets(wv_master,
         ldum = (idoublet_search == i)
         funcost_dum = funcost_search[ldum]
         funcost_layered_list.append(funcost_dum)
-    if LDEBUG:
-        for i in range(ndoublets_arc):
-            jdum = funcost_layered_list[i].argmin()
-            print('>>>',i,funcost_layered_list[i][jdum],
-                  clabel_layered_list[i][jdum],
-                  cdelt1_layered_list[i][jdum], 
-                  crval1_layered_list[i][jdum])
-        input('press <RETURN> to continue...')
-
-    # Intermediate plots
-    if LPLOT:
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with symbol size proportional to the inverse of the cost function
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, 
-                   s=2000/funcost_search, c=idoublet_search, alpha=0.2)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with symbol size proportional to the inverse of the cost function
-        # and overplotting doublet number
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, 
-                   s=2000/funcost_search, c=idoublet_search, alpha=0.2)
-        for i in range(len(idoublet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
-                    str(int(idoublet_search[i])), fontsize=6)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        for i in range(ndoublets_arc):
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            ax.set_xlabel('normalized cdelt1')
-            ax.set_ylabel('normalized crval1')
-            xdum = cdelt1_layered_list[i]
-            ydum = crval1_layered_list[i]
-            sdum = 2000/funcost_layered_list[i]
-            ax.scatter(xdum, ydum, s=sdum, alpha=0.8)
-            ax.set_xlim([xmin,xmax])
-            ax.set_ylim([ymin,ymax])
-            ax.set_title('Arc doublet number '+str(i))
-            ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-            plt.show(block=False)
-            print('Number of points in last plot:', xdum.size)
-            input('press <RETURN> to continue...')
 
     return None
 
@@ -904,8 +678,8 @@ def arccalibration_direct(wv_master,
                           poly_degree,
                           times_sigma_polfilt,
                           times_sigma_inclusion,
-                          LDEBUG = False,
-                          LPLOT = False):
+                          LDEBUG=False,
+                          LPLOT=False):
     """Performs line identification for arc calibration using line triplets.
 
     This function assumes that a previous call to the function responsible for
@@ -984,12 +758,9 @@ def arccalibration_direct(wv_master,
     error_crval1_search = np.array([])
     error_cdelt1_search = np.array([])
     itriplet_search = np.array([])
-    clabel_search = np.array([])
+    clabel_search = []
 
     ntriplets_arc = nlines_arc - 2
-    if LDEBUG:
-        print('>>> Total number of arc lines............:', nlines_arc)
-        print('>>> Total number of arc triplets.........:', ntriplets_arc)
 
     for i in range(ntriplets_arc):
         i1, i2, i3 = i, i+1, i+2
@@ -1012,9 +783,6 @@ def arccalibration_direct(wv_master,
         if j_loc_max > ntriplets_master:
             j_loc_max = ntriplets_master
 
-        if LDEBUG:
-            print(i, ratio_arc_min, ratio_arc, ratio_arc_max, 
-                  j_loc_min, j_loc_max)
 
         for j_loc in range(j_loc_min, j_loc_max):
             j1, j2, j3 = triplets_master_sorted_list[j_loc]
@@ -1037,10 +805,10 @@ def arccalibration_direct(wv_master,
                                                     error_cdelt1_temp)
                     # Store additional information about the triplets
                     itriplet_search = np.append(itriplet_search, i)
-                    clabel_search = np.append(clabel_search, 
-                      str(j1)+','+str(j2)+','+str(j3))
-    
+                    clabel_search.append((j1, j2, j3))
 
+
+    #assert 1 == 0
     # Normalize the values of CDELT1 and CRVAL1 to the interval [0,1] in each
     # case.
     cdelt1_max = (wv_end_search-wv_ini_search)/float(naxis1_arc-1)
@@ -1051,105 +819,6 @@ def arccalibration_direct(wv_master,
     crval1_search_norm /= (wv_end_search-wv_ini_search)
     error_crval1_search_norm = error_crval1_search/(wv_ini_search-wv_end_search)
 
-    # Intermediate plots
-    if LPLOT:
-        # CDELT1 vs CRVAL1 diagram (original coordinates)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('cdelt1 (Angstroms/pixel)')
-        ax.set_ylabel('crval1 (Angstroms)')
-        ax.scatter(cdelt1_search, crval1_search, s=200, alpha=0.1)
-        xmin = 0.0
-        xmax = cdelt1_max
-        dx = xmax-xmin
-        xmin -= dx/20
-        xmax += dx/20
-        ax.set_xlim([xmin,xmax])
-        ymin = wv_ini_search
-        ymax = wv_end_search
-        dy = ymax-ymin
-        ymin -= dy/20
-        ymax += dy/20
-        ax.set_ylim([ymin,ymax])
-        xp_limits = np.array([0., cdelt1_max])
-        yp_limits = wv_end_search-float(naxis1_arc-1)*xp_limits
-        xp_limits = np.concatenate((xp_limits,[xp_limits[0],xp_limits[0]]))
-        yp_limits = np.concatenate((yp_limits,[yp_limits[1],yp_limits[0]]))
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1)
-        xmin = -0.05
-        xmax =  1.05
-        ymin = -0.05
-        ymax =  1.05
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        xp_limits = np.array([0.,1.,0.,0.])
-        yp_limits = np.array([1.,0.,0.,1.])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with different color for each arc triplet and overplotting 
-        # the arc triplet number
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=itriplet_search)
-        for i in range(len(itriplet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
-                    str(int(itriplet_search[i])), fontsize=6)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # including triplet numbers
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=itriplet_search)
-        for i in range(len(clabel_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
-                    clabel_search[i], fontsize=6)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with error bars (note that errors in this plot are highly
-        # correlated)
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.errorbar(cdelt1_search_norm, crval1_search_norm, 
-                    xerr=error_cdelt1_search_norm,
-                    yerr=error_crval1_search_norm,
-                    fmt='none')
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        input('press <RETURN> to continue...')
 
 
     #---
@@ -1180,15 +849,12 @@ def arccalibration_direct(wv_master,
         itriplet_dum = itriplet_search[ldum]
         itriplet_layered_list.append(itriplet_dum)
         #
-        clabel_dum = clabel_search[ldum]
+        # This can be done also
+        # with itertools.compress
+        # A list with only those where ldum is True
+        clabel_dum = [i for (i, v) in zip(clabel_search, ldum) if v]
         clabel_layered_list.append(clabel_dum)
-    
-    if LDEBUG:
-        print('>>> List with no. of solutions/triplet...:',
-              ntriplets_layered_list)
-        print('>>> Total number of potential solutions..:',
-              sum(ntriplets_layered_list))
-        input('press <RETURN> to continue...')
+
 
     #---
     # Computation of the cost function.
@@ -1199,7 +865,8 @@ def arccalibration_direct(wv_master,
     # and obtain the sum of distances considering only a fraction of them
     # (after sorting them in ascending order).
     ntriplets_for_sum = \
-      max(1, int(round(frac_triplets_for_sum*float(ntriplets_arc))))
+      max(1, int(my_round(frac_triplets_for_sum*float(ntriplets_arc))))
+
     funcost_search = np.zeros(len(itriplet_search))
     for k in range(len(itriplet_search)):
         itriplet_local = itriplet_search[k]
@@ -1216,23 +883,17 @@ def arccalibration_direct(wv_master,
                     y1 = crval1_layered_list[i]
                     ey1 = error_crval1_layered_list[i]
                     dist2 = (x0-x1)**2 + (y0-y1)**2
-                    # erroneous use of error in distance
-                    '''
-                    error_dist2 = 4*(x0-x1)**2*(ex0**2+ex1**2) + \
-                                  4*(y0-y1)**2*(ey0**2+ey1**2)
-                    error_dist2 = np.sqrt(error_dist2)
-                    dist2 /= error_dist2
-                    '''
+
                     dist_to_layers = np.append(dist_to_layers, dist2.min())
                 else:
                     dist_to_layers = np.append(dist_to_layers, np.inf)
         dist_to_layers.sort() # in-place sort
         funcost_search[k] = dist_to_layers[list(six.moves.range(ntriplets_for_sum))].sum()
 
+
     # Normalize the cost function
     funcost_min = funcost_search.min()
-    if LDEBUG:
-        print('funcost_min:',funcost_min)
+
     funcost_search /= funcost_min
 
     # Segregate the cost function by arc triplet.
@@ -1241,68 +902,6 @@ def arccalibration_direct(wv_master,
         ldum = (itriplet_search == i)
         funcost_dum = funcost_search[ldum]
         funcost_layered_list.append(funcost_dum)
-    if LDEBUG:
-        for i in range(ntriplets_arc):
-            jdum = funcost_layered_list[i].argmin()
-            print('>>>',i,funcost_layered_list[i][jdum],
-                  clabel_layered_list[i][jdum],
-                  cdelt1_layered_list[i][jdum], 
-                  crval1_layered_list[i][jdum])
-        input('press <RETURN> to continue...')
-
-    # Intermediate plots
-    if LPLOT:
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with symbol size proportional to the inverse of the cost function
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, 
-                   s=2000/funcost_search, c=itriplet_search, alpha=0.2)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with symbol size proportional to the inverse of the cost function
-        # and overplotting triplet number
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, 
-                   s=2000/funcost_search, c=itriplet_search, alpha=0.2)
-        for i in range(len(itriplet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
-                    str(int(itriplet_search[i])), fontsize=6)
-        ax.set_xlim([xmin,xmax])
-        ax.set_ylim([ymin,ymax])
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.show(block=False)
-        print('Number of points in last plot:', len(cdelt1_search))
-        input('press <RETURN> to continue...')
-
-        # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        for i in range(ntriplets_arc):
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-            ax.set_xlabel('normalized cdelt1')
-            ax.set_ylabel('normalized crval1')
-            xdum = cdelt1_layered_list[i]
-            ydum = crval1_layered_list[i]
-            sdum = 2000/funcost_layered_list[i]
-            ax.scatter(xdum, ydum, s=sdum, alpha=0.8)
-            ax.set_xlim([xmin,xmax])
-            ax.set_ylim([ymin,ymax])
-            ax.set_title('Arc triplet number '+str(i))
-            ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-            plt.show(block=False)
-            print('Number of points in last plot:', xdum.size)
-            input('press <RETURN> to continue...')
 
     #---
     # Line identification: several scenarios are considered.
@@ -1332,8 +931,7 @@ def arccalibration_direct(wv_master,
     # functions.
     for i in range(ntriplets_arc):
         jdum = funcost_layered_list[i].argmin()
-        k1,k2,k3 = \
-          [int(cval) for cval in clabel_layered_list[i][jdum].split(',')]
+        k1, k2, k3 = clabel_layered_list[i][jdum]
         funcost_dum = funcost_layered_list[i][jdum]
         if i == 0:
             diagonal_ids = [[k1],[k2],[k3]]
@@ -1346,10 +944,6 @@ def arccalibration_direct(wv_master,
             diagonal_funcost[i+1].append(funcost_dum)
             diagonal_funcost.append([funcost_dum])
     
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, diagonal_ids[i],diagonal_funcost[i])
-        input('press <RETURN> to continue...')
 
     # The solutions are stored in a list of dictionaries. The dictionaries
     # contain the following elements:
@@ -1373,10 +967,6 @@ def arccalibration_direct(wv_master,
             solution[i]['id'] = j1
             solution[i]['funcost'] = min(diagonal_funcost[i])
     
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     # Type B lines.
     for i in range(2,nlines_arc-2):
@@ -1402,10 +992,6 @@ def arccalibration_direct(wv_master,
                     solution[i]['id'] = j2
                     solution[i]['funcost'] = min(f2,f3)
 
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     # Type C lines.
     for i in range(2,nlines_arc-2):
@@ -1425,10 +1011,6 @@ def arccalibration_direct(wv_master,
                     solution[i]['id'] = j3
                     solution[i]['funcost'] = f3
     
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     # Type D lines.
     for i in [1,nlines_arc-2]:
@@ -1439,11 +1021,7 @@ def arccalibration_direct(wv_master,
             solution[i]['type'] = 'D'
             solution[i]['id'] = j1
             solution[i]['funcost'] = min(f1,f2)
-    
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
+
 
     # Type E lines.
     i = 0
@@ -1459,10 +1037,7 @@ def arccalibration_direct(wv_master,
         solution[i]['id'] = diagonal_ids[i][0]
         solution[i]['funcost'] = diagonal_funcost[i][0]
     
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
+
 
     #---
     # Check that the solutions do not contain duplicated values. If they are
@@ -1491,76 +1066,53 @@ def arccalibration_direct(wv_master,
                                 solution[i1]['lineok'] = False
                                 solution[i1]['type'] = 'R'
     
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     #---
     # Filter out points with a large deviation from a robust linear fit. The
     # filtered lines are labelled as type='T'.
-    if LDEBUG:
-        print('>>> Theil-Sen filtering...')
+
     nfit, ifit, xfit, yfit, wfit = \
       select_data_for_fit(wv_master, xpos_arc, solution)
     intercept, slope = fitTheilSen(xfit, yfit)
     rfit = abs(yfit - (intercept + slope*xfit))
-    if LDEBUG:
-        print('rfit:',rfit)
+
     sigma_rfit = sigmaG(rfit)
-    if LDEBUG:
-        print('sigmaG:',sigma_rfit)
+
     for i in range(nfit):
         if rfit[i] > times_sigma_TheilSen*sigma_rfit:
             solution[ifit[i]]['lineok'] = False
             solution[ifit[i]]['type'] = 'T'
-    
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     #---
     # Filter out points that deviates from a polynomial fit. The filtered lines
     # are labelled as type='P'.
-    if LDEBUG:
-        print('>>> Polynomial filtering...')
+
     nfit, ifit, xfit, yfit, wfit = \
       select_data_for_fit(wv_master, xpos_arc, solution)
     coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree, w=1/wfit)
     poly = polynomial.Polynomial(coeff_fit)
     rfit = abs(yfit - poly(xfit))
-    if LDEBUG:
-        print('rfit:',rfit)
+
     sigma_rfit = sigmaG(rfit)
-    if LDEBUG:
-        print('sigmaG:',sigma_rfit)
+
     for i in range(nfit):
         if rfit[i] > times_sigma_polfilt*sigma_rfit:
             solution[ifit[i]]['lineok'] = False
             solution[ifit[i]]['type'] = 'P'
-    
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     #---
     # Include unidentified lines by using the prediction of the polynomial fit
     # to the current set of identified lines. The included lines are labelled
     # as type='I'.
-    if LDEBUG:
-        print('>>> Polynomial prediction of unknown lines...')
+
     nfit, ifit, xfit, yfit, wfit = \
       select_data_for_fit(wv_master, xpos_arc, solution)
     coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree, w=1/wfit)
     poly = polynomial.Polynomial(coeff_fit)
     rfit = abs(yfit - poly(xfit))
-    if LDEBUG:
-        print('rfit:',rfit)
+
     sigma_rfit = sigmaG(rfit)
-    if LDEBUG:
-        print('sigmaG:',sigma_rfit)
+
 
     list_id_already_found = []
     list_funcost_already_found = []
@@ -1588,8 +1140,7 @@ def arccalibration_direct(wv_master,
                 else:
                     ifound = isort
                     dlambda = dlambda2
-            if LDEBUG:
-                print(i,zfit,ifound,dlambda)
+
             if ifound not in list_id_already_found:  # unused line
                 if dlambda < times_sigma_inclusion*sigma_rfit:
                     list_id_already_found.append(ifound)
@@ -1597,13 +1148,5 @@ def arccalibration_direct(wv_master,
                     solution[i]['type'] = 'I'
                     solution[i]['id'] = ifound
                     solution[i]['funcost'] = max(list_funcost_already_found)
-    if LDEBUG:
-        input('press <RETURN> to continue...')
-
-    if LDEBUG:
-        for i in range(nlines_arc):
-            print(i, solution[i])
-        input('press <RETURN> to continue...')
 
     return solution
-
