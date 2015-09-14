@@ -1,3 +1,5 @@
+import sys
+
 import numpy
 import pytest
 
@@ -7,7 +9,24 @@ from ..peakdet import generate_kernel
 from ..peakdet import find_peaks_index1
 from ..peakdet import find_peaks_index2
 from ..peakdet import refine_peaks1, refine_peaks2, refine_peaks3
+from .._kernels import kernel_peak_function
 
+@pytest.mark.skipif(sys.version_info < (3,0),
+                    reason="requires python3")
+def test_pycapsule():
+    m = kernel_peak_function(20)
+    # This seems to be the only way to check that something is a PyCapsule
+    sm = type(m).__name__
+    assert sm == 'PyCapsule'
+
+
+@pytest.mark.skipif(sys.version_info >= (3,0),
+                    reason="requires python2")
+def test_pycobject():
+    m = kernel_peak_function(20)
+    # This seems to be the only way to check that something is a PyCapsule
+    sm = type(m).__name__
+    assert sm == 'PyCObject'
 
 @pytest.mark.parametrize("window", [3, 5, 7, 9])
 def test_generate_kernel(benchmark, window):
