@@ -52,6 +52,7 @@ cdef void _destructor_cap(object cap):
 if PY_MAJOR_VERSION < 3:
     def kernel_peak_function(double threshold=0.0):
 
+        cdef object result
         cdef double *data
 
         data = <double*>malloc(sizeof(double))
@@ -60,15 +61,17 @@ if PY_MAJOR_VERSION < 3:
 
         data[0] = threshold
 
-        return PyCObject_FromVoidPtrAndDesc(&_kernel_function,
-                                            data,
-                                            &_destructor_cobj)
+        result = PyCObject_FromVoidPtrAndDesc(&_kernel_function,
+                                              data,
+                                              &_destructor_cobj)
+
+        return result
 
 if PY_MAJOR_VERSION >= 3:
 
     def kernel_peak_function(double threshold=0.0):
 
-        cdef object cap
+        cdef object result
         cdef double *data
 
         data = <double*>malloc(sizeof(double))
@@ -77,11 +80,11 @@ if PY_MAJOR_VERSION >= 3:
 
         data[0] = threshold
 
-        cap = PyCapsule_New(&_kernel_function,
-                            NULL, # if we set a name here, generic_f doesn't work
-                            _destructor_cap)
+        result = PyCapsule_New(&_kernel_function,
+                               NULL, # if we set a name here, generic_f doesn't work
+                               _destructor_cap)
 
-        PyCapsule_SetContext(cap, data)
+        PyCapsule_SetContext(result, data)
 
-        return cap
+        return result
 
