@@ -158,3 +158,24 @@ def refine_peaks3(arr, ipeaks, window):
 
     xc = ipeaks + 0.5 * (window-1) * uc
     return xc, yc
+
+
+def refine_peaks4(arr, ipeaks, window):
+
+    step = window // 2
+
+    winoff = numpy.arange(-step, step+1)
+    peakwin = ipeaks[:, numpy.newaxis] + winoff
+
+    ycols = arr[peakwin]
+    coff2 = numpy.polyfit(winoff, ycols.T, 2)
+
+    # Higher order goes first
+    uc = -0.5 * coff2[1] / coff2[0]
+
+    # Evaluate yc
+    yc = coff2[2] + uc * (coff2[1] + coff2[0] * uc)
+    #
+
+    xc = ipeaks +  uc
+    return xc, yc
