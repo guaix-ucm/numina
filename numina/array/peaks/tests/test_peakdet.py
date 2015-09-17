@@ -9,6 +9,7 @@ from ..peakdet import generate_kernel
 from ..peakdet import find_peaks_index1
 from ..peakdet import find_peaks_index2
 from ..peakdet import refine_peaks1, refine_peaks2, refine_peaks3
+from ..peakdet import refine_peaks3b
 from ..peakdet import refine_peaks4
 from .._kernels import kernel_peak_function
 
@@ -197,6 +198,17 @@ def test_peak_refine_v3(benchmark, spectrum):
     pposx, pposy = benchmark(refine_peaks3, spectrum, peakin, 5)
 
     assert numpy.allclose(peakref, pposx)
+
+
+def test_peak_refine_v3b(benchmark, spectrum):
+
+    peakin = findPeaks_spectrum(spectrum, 5, 0.5e-15)
+    peakref = refinePeaks_spectrum(spectrum, peakin, 5, method=1)
+    rposx, rposy = refine_peaks3(spectrum, peakin, 5)
+    pposx, pposy = benchmark(refine_peaks3b, spectrum, peakin, 5)
+
+    assert numpy.allclose(rposx, pposx)
+    assert numpy.allclose(rposy, pposy)
 
 
 def test_peak_refine_v4(benchmark, spectrum):
