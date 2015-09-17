@@ -160,6 +160,33 @@ def refine_peaks3(arr, ipeaks, window):
     return xc, yc
 
 
+def refine_peaks3b(arr, ipeaks, window):
+
+    step = window // 2
+
+    winoff = numpy.arange(-step, step+1)
+    peakwin = ipeaks[:, numpy.newaxis] + winoff
+
+    # Divide between peak value
+    ycols = arr[peakwin]
+    ypeak = ycols[:,step]
+    ycols = ycols / ypeak[:, numpy.newaxis]
+
+    ww = generate_kernel(window)
+
+    coff2 = numpy.dot(ww, ycols.T)
+
+    uc = -0.5 * coff2[1] / coff2[2]
+
+    # Evaluate yc
+    vc = coff2[0] + uc * (coff2[1] + coff2[2] * uc)
+    yc = ypeak * vc
+    #
+
+    xc = ipeaks + 0.5 * (window-1) * uc
+    return xc, yc
+
+
 def refine_peaks4(arr, ipeaks, window):
 
     step = window // 2
@@ -179,3 +206,5 @@ def refine_peaks4(arr, ipeaks, window):
 
     xc = ipeaks +  uc
     return xc, yc
+
+
