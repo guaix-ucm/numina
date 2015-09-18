@@ -2,10 +2,9 @@ import numpy
 import pytest
 import sys
 
-from ..peakdet import get_peak_indexes
-from ..peakdet import accurated_peaks_spectrum
+from numina.array.peaks import peakdet
+
 from .._kernels import kernel_peak_function
-from ..peakdet import generate_kernel
 
 
 @pytest.mark.skipif(sys.version_info < (3,0),reason="requires python3")
@@ -25,7 +24,7 @@ def test_pycobject():
 
 @pytest.mark.parametrize("window", [3, 5, 7, 9])
 def test_generate_kernel(benchmark, window):
-    result = benchmark(generate_kernel, window)
+    result = benchmark(peakdet.generate_weights, window)
 
     assert result.shape == (3, window)
 
@@ -33,7 +32,7 @@ def test_generate_kernel(benchmark, window):
 def test_peak_finding_v2(benchmark, spectrum):
     # Reference
     peakin = [ 478, 899, 1028, 1086, 2031, 2317, 2645, 2795, 3030, 3466, 3872]
-    result = benchmark(get_peak_indexes, spectrum, 5, 278.040081456)
+    result = benchmark(peakdet.get_peak_indexes, spectrum, 5, 278.040081456)
 
     assert numpy.allclose(peakin, result)
 
@@ -41,13 +40,11 @@ def test_peak_finding_v2(benchmark, spectrum):
 def test_peak_refine_no_loop(benchmark, spectrum):
     y_results = [12173.29394431,13836.87760174,16195.39569704,14005.5855603,23886.19685264,28189.30599361,71913.00598368,54225.26907113,41031.12155186,241241.71427945,235431.61691958]
     resultado_nuevo = [477.85626527, 898.93671683, 1027.96507433, 1086.20599208, 2030.76951558, 2317.26107361,2645.32659386, 2794.60128342, 3029.93485482, 3465.52062997, 3872.3456723]
-    peakin = get_peak_indexes(spectrum, 5, 278.040081456)
-    peakpos = benchmark(accurated_peaks_spectrum, spectrum, peakin, 5)
+    peakin = peakdet.get_peak_indexes(spectrum, 5, 278.040081456)
+    peakpos = benchmark(peakdet.accurated_peaks_spectrum, spectrum, peakin, 5)
 
     assert numpy.allclose(peakpos[1], y_results)
     assert numpy.allclose(peakpos[0], resultado_nuevo)
-
-
 
 
 @pytest.fixture(scope="module")
