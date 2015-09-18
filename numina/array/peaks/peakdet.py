@@ -17,9 +17,9 @@ def get_peak_indexes(original_data, window_width=5, threshold=0.0):
 
 def generate_kernel(window_width):
     """Auxiliary kernel."""
-    xm = numpy.linspace(-1, 1, window_width)
-    xv = numpy.vander(xm, N=3, increasing=True)
-    return numpy.dot(inv(numpy.dot(xv.T, xv)), xv.T)
+    evenly_spaced = numpy.linspace(-1, 1, window_width)
+    pow_matrix = numpy.vander(evenly_spaced, N=3, increasing=True)
+    return numpy.dot(inv(numpy.dot(pow_matrix.T, pow_matrix)), pow_matrix.T)
 
 
 WW = {}
@@ -49,3 +49,4 @@ def accurated_peaks_spectrum(original_data, ipeaks, window_width):
     xc = ipeaks + 0.5 * (window_width-1) * uc
 
     return xc, yc
+
