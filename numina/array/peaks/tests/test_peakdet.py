@@ -24,10 +24,24 @@ def test_pycobject():
 
 
 @pytest.mark.parametrize("window", [3, 5, 7, 9])
-def test_generate_kernel(benchmark, window):
+def test_return_weights(benchmark, window):
+    result = benchmark(peakdet.return_weights, window)
+
+    assert result.shape == (3, window)
+
+
+@pytest.mark.parametrize("window", [3, 5, 7, 9])
+def test_generate_weights(benchmark, window):
     result = benchmark(peakdet.generate_weights, window)
 
     assert result.shape == (3, window)
+
+
+@pytest.mark.parametrize("window", [3, 5, 7, 9])
+def test_weights_equal(window):
+    result1 = peakdet.generate_weights(window)
+    result2 = peakdet.return_weights(window)
+    assert numpy.allclose(result1, result2)
 
 
 @pytest.fixture(scope='module')

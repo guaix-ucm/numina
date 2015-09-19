@@ -28,10 +28,22 @@ from numpy.linalg import inv
 from scipy.ndimage.filters import generic_filter
 from ._kernels import kernel_peak_function
 
+
 WW = {}
 WW[3] = numpy.array([[1.11022302e-16, 1.00000000e+00, 1.11022302e-16],
                      [-5.00000000e-01, 0.00000000e+00, 5.00000000e-01],
                      [5.00000000e-01, -1.00000000e+00, 5.00000000e-01]])
+WW[5] = numpy.array([[-0.08571429, 0.34285714, 0.48571429, 0.34285714, -0.08571429],
+                     [-0.4, -0.2, 0, 0.2, 0.4],
+                     [0.57142857, -0.28571429, -0.57142857, -0.28571429, 0.57142857]])
+
+WW[7] = numpy.array([[-9.52380952e-02, 1.42857143e-01, 2.85714286e-01, 3.33333333e-01, 2.85714286e-01, 1.42857143e-01, -9.52380952e-02],
+                     [-3.21428571e-01, -2.14285714e-01, -1.07142857e-01, -6.79728382e-18, 1.07142857e-01, 2.14285714e-01, 3.21428571e-01],
+                     [5.35714286e-01, 5.55111512e-17, -3.21428571e-01, -4.28571429e-01, -3.21428571e-01, -2.22044605e-16, 5.35714286e-01]])
+
+WW[9] = numpy.array([[-0.09090909, 0.06060606, 0.16883117, 0.23376623, 0.25541126, 0.23376623, 0.16883117, 0.06060606, -0.09090909],
+                     [-0.26666667, -0.2, -0.13333333, -0.06666667, 0, 0.06666667, 0.13333333, 0.2, 0.26666667],
+                     [0.48484848, 0.12121212, -0.13852814, -0.29437229, -0.34632035, -0.29437229, -0.13852814, 0.12121212, 0.48484848]])
 
 
 def find_peaks_indexes(arr, window_width=5, threshold=0.0):
@@ -66,7 +78,7 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
     return result
 
 
-def generate_weights(window_width):
+def return_weights(window_width):
     """
 
     :param window_width: Int, odd number
@@ -78,11 +90,24 @@ def generate_weights(window_width):
     try:
         return WW[window_width]
     except KeyError:
-        evenly_spaced = numpy.linspace(-1, 1, window_width)
-        pow_matrix = numpy.vander(evenly_spaced, N=3, increasing=True)
-        final_ww = numpy.dot(inv(numpy.dot(pow_matrix.T, pow_matrix)), pow_matrix.T)
+        final_ww = generate_weights(window_width)
         WW[window_width] = final_ww
         return final_ww
+
+
+def generate_weights(window_width):
+    """
+
+    :param window_width: Int, odd number
+    Width of the window (greater or equal than 3) to seek for the peaks.
+    :return: ndarray
+    Matrix needed to interpolate 'window_width' points
+    """
+
+    evenly_spaced = numpy.linspace(-1, 1, window_width)
+    pow_matrix = numpy.vander(evenly_spaced, N=3, increasing=True)
+    final_ww = numpy.dot(inv(numpy.dot(pow_matrix.T, pow_matrix)), pow_matrix.T)
+    return final_ww
 
 
 def refine_peaks(arr, ipeaks, window_width):
@@ -111,7 +136,7 @@ def refine_peaks(arr, ipeaks, window_width):
     peakwin = ipeaks[:, numpy.newaxis] + winoff
     ycols = arr[peakwin]
 
-    ww = generate_weights(window_width)
+    ww = return_weights(window_width)
 
     coff2 = numpy.dot(ww, ycols.T)
 
