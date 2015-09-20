@@ -2,17 +2,7 @@
 Numina
 ======
 
-|docs| |zenodo|
-
-This is Numina, the data reduction package used by the following GTC
-instruments: EMIR, FRIDA, MEGARA and MIRADAS.
-
-Numina is distributed under GNU GPL, either version 3 of the License, 
-or (at your option) any later version. See the file LICENSE.txt for 
-details.
-
-Project status
---------------
+|zenodo| |docs| 
 
 .. image:: https://travis-ci.org/guaix-ucm/numina.svg?branch=master
     :target: https://travis-ci.org/guaix-ucm/numina
@@ -23,6 +13,13 @@ Project status
 .. image:: https://readthedocs.org/projects/numina/badge/?version=latest
     :target: http://numina.readthedocs.org/en/latest/?badge=latest
     :alt: Documentation Status
+
+This is Numina, the data reduction package used by the following GTC
+instruments: EMIR, FRIDA, MEGARA and MIRADAS.
+
+Numina is distributed under GNU GPL, either version 3 of the License, 
+or (at your option) any later version. See the file LICENSE.txt for 
+details.
 
 Requirements
 ------------
