@@ -2,7 +2,13 @@
 Numina
 ======
 
-|docs| |zenodo|
+|zenodo| |docs| 
+
+.. image:: https://travis-ci.org/guaix-ucm/numina.svg?branch=master
+    :target: https://travis-ci.org/guaix-ucm/numina
+
+.. image:: https://coveralls.io/repos/guaix-ucm/numina/badge.svg?branch=master&service=github 
+    :target: https://coveralls.io/github/guaix-ucm/numina?branch=master 
 
 This is Numina, the data reduction package used by the following GTC
 instruments: EMIR, FRIDA, MEGARA and MIRADAS.
