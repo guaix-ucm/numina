@@ -7,6 +7,8 @@ matrix:
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
     - python: "3.4"
       env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
+    - python: "2.7"
+      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0" COVERAGE=true
 
 install:
   # See:
@@ -22,6 +24,7 @@ install:
   - which python
   - conda info
   - conda list
+  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - python setup.py install
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
@@ -34,3 +37,6 @@ before_install:
 
 script: 
   - py.test -vv numina
+  - if [[ $COVERAGE == true ]]; then coverage run --source numina -m py.test; fi
+after_success:
+  - if [[ $COVERAGE == true ]]; then coveralls; fi
