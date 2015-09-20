@@ -10,10 +10,6 @@ Numina
 .. image:: https://coveralls.io/repos/guaix-ucm/numina/badge.svg?branch=master&service=github 
     :target: https://coveralls.io/github/guaix-ucm/numina?branch=master 
 
-.. image:: https://readthedocs.org/projects/numina/badge/?version=latest
-    :target: http://numina.readthedocs.org/en/latest/?badge=latest
-    :alt: Documentation Status
-
 This is Numina, the data reduction package used by the following GTC
 instruments: EMIR, FRIDA, MEGARA and MIRADAS.
 
