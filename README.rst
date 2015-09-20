@@ -11,6 +11,19 @@ Numina is distributed under GNU GPL, either version 3 of the License,
 or (at your option) any later version. See the file LICENSE.txt for 
 details.
 
+Project status
+--------------
+
+.. image:: https://travis-ci.org/guaix-ucm/numina.svg?branch=master
+    :target: https://travis-ci.org/guaix-ucm/numina
+
+.. image:: https://coveralls.io/repos/guaix-ucm/numina/badge.svg?branch=master&service=github 
+    :target: https://coveralls.io/github/guaix-ucm/numina?branch=master 
+
+.. image:: https://readthedocs.org/projects/numina/badge/?version=latest
+    :target: http://numina.readthedocs.org/en/latest/?badge=latest
+    :alt: Documentation Status
+
 Requirements
 ------------
 
