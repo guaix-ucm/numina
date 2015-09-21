@@ -26,7 +26,9 @@ def get_peak_indexes(original_data, window_width=5, threshold=0.0):
     kernel_peak2 = kernel_peak_function(threshold)
     out = generic_filter(original_data, kernel_peak2, window_width)
     result, =  numpy.nonzero(out)
-
+    numero_maximo = numpy.amax(original_data) - (window_width // 2)
+    numero_minimo = window_width // 2
+    result = result[(result >= numero_minimo) & (result <= numero_maximo)]
     return result
 
 
