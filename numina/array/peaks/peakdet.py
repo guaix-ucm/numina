@@ -53,6 +53,12 @@ WW[9] = numpy.array([[-0.09090909, 0.06060606, 0.16883117, 0.23376623, 0.2554112
                      [0.48484848, 0.12121212, -0.13852814, -0.29437229, -0.34632035,
                       -0.29437229, -0.13852814, 0.12121212, 0.48484848]])
 
+def filter_array_margins(arr, ipeaks, window_width=5):
+
+    max_number = numpy.amax(arr) - (window_width // 2)
+    min_number = window_width // 2
+    return ipeaks[(ipeaks >= min_number) & (ipeaks <= max_number)]
+
 
 def find_peaks_indexes(arr, window_width=5, threshold=0.0):
     """Find indexes of peaks in a 1d array.
@@ -82,10 +88,8 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
     kernel_peak = kernel_peak_function(threshold)
     out = generic_filter(arr, kernel_peak, window_width)
     result, =  numpy.nonzero(out)
-    numero_maximo = numpy.amax(arr) - (window_width // 2)
-    numero_minimo = window_width // 2
-    result = result[(result >= numero_minimo) & (result <= numero_maximo)]
-    return result
+
+    return filter_array_margins(arr, result, window_width)
 
 
 def return_weights(window_width):
@@ -141,6 +145,8 @@ def refine_peaks(arr, ipeaks, window_width):
     """
 
     step = window_width // 2
+
+    ipeaks = filter_array_margins(arr, ipeaks, window_width)
 
     winoff = numpy.arange(-step, step+1)
     peakwin = ipeaks[:, numpy.newaxis] + winoff
