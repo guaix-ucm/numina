@@ -172,14 +172,7 @@ def select_data_for_fit(wv_master, xpos_arc, solution):
 
 #------------------------------------------------------------------------------
 
-def fit_solution(wv_master,
-                 xpos_arc,
-                 solution,
-                 naxis1_arc,
-                 poly_degree,
-                 weighted,
-                 LDEBUG=False,
-                 LPLOT=False):
+def fit_solution(wv_master,xpos_arc,solution,naxis1_arc,poly_degree,weighted,LDEBUG=False,LPLOT=False):
     """Fit polynomial to arc calibration solution.
 
     Parameters
@@ -222,8 +215,7 @@ def fit_solution(wv_master,
         raise ValueError('FATAL ERROR in fit_solution: invalid nlines_arc')
 
     # Select information from valid lines.
-    nfit, ifit, xfit, yfit, wfit = \
-      select_data_for_fit(wv_master, xpos_arc, solution)
+    nfit, ifit, xfit, yfit, wfit = select_data_for_fit(wv_master, xpos_arc, solution)
 
     # Select list of filtered out and unidentified lines
     list_R = []

@@ -30,6 +30,9 @@ try:
                      ['numina/array/trace/extract.pyx'],
                      include_dirs=[numpy_include],
                      language='c++')
+    ext6 = Extension('numina.array.peaks._kernels',
+                     ['numina/array/peaks/kernels.pyx'],
+                     language='c')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
     print('We do not have Cython, just using the generated files')
@@ -45,6 +48,9 @@ except ImportError:
                      ['numina/array/trace/extract.cpp'],
                      include_dirs=[numpy_include],
                      language='c++')
+    ext6 = Extension('numina.array.peaks._kernels',
+                     ['numina/array/peaks/kernels.c'],
+                     language='c')
     cmdclass = {}
 
 
@@ -66,7 +72,7 @@ REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.0', 'scipy', 'Py
 # Some packages are required only in some versions of Python
 
 # In versions >= 2.7 and < 3.4, we require singledispatch
-# In 3.4 onwards, its in stdlib
+# In 3.4 onwards, it's in stdlib
 if sys.hexversion < 0x3040000:
     REQUIRES += ['singledispatch']
 
@@ -82,7 +88,7 @@ setup(name='numina',
       packages=find_packages('.'),
       package_data={'numina.tests.drps.1': ['drp.yaml'],
                    },
-      ext_modules=[ext1, ext2, ext3, ext4, ext5],
+      ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6],
       entry_points={
         'console_scripts': [
             'numina = numina.user.cli:main',
@@ -94,7 +100,7 @@ setup(name='numina',
       setup_requires=['numpy'],
       install_requires=REQUIRES,
       zip_safe=False,
-      tests_require=['pytest'],
+      tests_require=['pytest', 'pytest-benchmark'],
       cmdclass=cmdclass,
       classifiers=[
                    "Programming Language :: C",

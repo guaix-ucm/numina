@@ -19,6 +19,7 @@ install:
   - conda update --yes conda
   - conda create -n testenv --yes $DEPS pip pytest setuptools Cython six>=1.7 pyyaml python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
+  - pip install pytest-benchmark
   # for debugging...
   - echo $PATH
   - which python
