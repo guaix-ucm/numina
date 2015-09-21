@@ -753,13 +753,11 @@ def test_peak_refine(benchmark, spectrum):
     assert numpy.allclose(peakpos[0], resultado_nuevo)
 
 
-@pytest.mark.xfail(reason='bug#58')
+@pytest.mark.xfail(raises=ValueError)
 def test_peak_finding_window_odd(spectrum):
-    with pytest.raises(ValueError):
-        peakdet.find_peaks_indexes(spectrum, 4)
+    peakdet.find_peaks_indexes(spectrum, 4)
 
 
-@pytest.mark.xfail(reason='bug#58')
+@pytest.mark.xfail(raises=ValueError)
 def test_peak_finding_window_small(spectrum):
-    with pytest.raises(ValueError):
-        peakdet.find_peaks_indexes(spectrum, 2)
+    peakdet.find_peaks_indexes(spectrum, 1)
