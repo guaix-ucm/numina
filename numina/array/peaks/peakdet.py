@@ -105,7 +105,6 @@ def return_weights(window_width):
     Matrix needed to interpolate 'window_width' points
     """
     window_width = 5 if ((window_width<3) or (window_width % 2 == 0)) else window_width
-    print (window_width)
 
     try:
         return WW[window_width]
