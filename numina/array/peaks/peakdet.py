@@ -55,7 +55,7 @@ WW[9] = numpy.array([[-0.09090909, 0.06060606, 0.16883117, 0.23376623, 0.2554112
 
 def filter_array_margins(arr, ipeaks, window_width=5):
 
-    window_width = 5 if ((window_width<3) or (window_width % 2 != 0)) else window_width
+    window_width = 5 if ((window_width<3) or (window_width % 2 == 0)) else window_width
 
     max_number = numpy.amax(arr) - (window_width // 2)
     min_number = window_width // 2
@@ -87,7 +87,7 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
 
     """
 
-    window_width = 5 if ((window_width<3) or (window_width % 2 != 0)) else window_width
+    window_width = 5 if ((window_width<3) or (window_width % 2 == 0)) else window_width
 
     kernel_peak = kernel_peak_function(threshold)
     out = generic_filter(arr, kernel_peak, window_width)
@@ -104,7 +104,8 @@ def return_weights(window_width):
     :return: ndarray
     Matrix needed to interpolate 'window_width' points
     """
-    window_width = 5 if ((window_width<3) or (window_width % 2 != 0)) else window_width
+    window_width = 5 if ((window_width<3) or (window_width % 2 == 0)) else window_width
+    print (window_width)
 
     try:
         return WW[window_width]
@@ -123,7 +124,7 @@ def generate_weights(window_width):
     Matrix needed to interpolate 'window_width' points
     """
 
-    window_width = 5 if ((window_width<3) or (window_width % 2 != 0)) else window_width
+    window_width = 5 if ((window_width<3) or (window_width % 2 == 0)) else window_width
 
     evenly_spaced = numpy.linspace(-1, 1, window_width)
     pow_matrix = numpy.vander(evenly_spaced, N=3, increasing=True)
@@ -150,7 +151,7 @@ def refine_peaks(arr, ipeaks, window_width):
         interpolated Y-coordinates
 
     """
-    window_width = 5 if ((window_width<3) or (window_width % 2 != 0)) else window_width
+    window_width = 5 if ((window_width<3) or (window_width % 2 == 0)) else window_width
     step = window_width // 2
 
     ipeaks = filter_array_margins(arr, ipeaks, window_width)
