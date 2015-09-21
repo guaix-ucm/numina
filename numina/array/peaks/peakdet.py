@@ -82,7 +82,7 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
     kernel_peak = kernel_peak_function(threshold)
     out = generic_filter(arr, kernel_peak, window_width)
     result, =  numpy.nonzero(out)
-    numero_maximo = numpy.amax(original_data) - (window_width // 2)
+    numero_maximo = numpy.amax(arr) - (window_width // 2)
     numero_minimo = window_width // 2
     result = result[(result >= numero_minimo) & (result <= numero_maximo)]
     return result
