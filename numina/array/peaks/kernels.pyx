@@ -27,13 +27,13 @@ cdef int _kernel_function(double* buffer, int filter_size,
         return_value[0] = 0.0
         return 1
 
-    for i in range(nmed, filter_size):
-        if buffer[i] < buffer[i+1]:
+    for i in range(nmed, filter_size-1):
+        if buffer[i] <= buffer[i+1]:
             return_value[0] = 0.0
             return 1
 
     for i in range(0, nmed):
-        if buffer[i] > buffer[i+1]:
+        if buffer[i] >= buffer[i+1]:
             return_value[0] = 0.0
             return 1
 
