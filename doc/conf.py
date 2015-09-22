@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Numina'
-copyright = u'2010-2015, Sergio Pascual, Nicolás Cardiel'
+copyright = u'2010-2015, Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sanchez'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -91,7 +91,7 @@ modindex_common_prefix = ['numina.']
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = 'classic'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -178,8 +178,7 @@ htmlhelp_basename = 'Numinadoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Numina.tex', u'Numina Documentation',
-   u'Sergio Pascual, Nicolás Cardiel', 'manual'),
+  ('index', 'Numina.tex', u'Numina Documentation',u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -212,17 +211,16 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'numina', u'Numina Documentation',
-     [u'Sergio Pascual', u'Nicolás Cardiel'], 1)
+     [u'Sergio Pascual', u'Nicolás Cardiel', u'Pablo Picazo-Sanchez'], 1)
 ]
 
 
 # -- Options for Epub output ---------------------------------------------------
-
 # Bibliographic Dublin Core info.
 epub_title = u'Numina'
-epub_author = u'Sergio Pascual'
-epub_publisher = u'Sergio Pascual'
-epub_copyright = u'2010-2014, Sergio Pascual'
+epub_author = u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
+epub_publisher = u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
+epub_copyright = u'2010-2014, Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

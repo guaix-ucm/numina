@@ -22,11 +22,8 @@
 import numpy
 
 from numina.array._combine import generic_combine as internal_generic_combine
-from numina.array._combine import (sigmaclip_method,
-                                   quantileclip_method,
-                                   minmax_method)
+from numina.array._combine import sigmaclip_method,quantileclip_method,minmax_method
 from numina.array._combine import mean_method, median_method
-from numina.array._combine import CombineError
 
 
 def mean(arrays, masks=None, dtype=None, out=None,
@@ -165,8 +162,7 @@ def quantileclip(arrays, masks=None, dtype=None, out=None,
     :param masks: a list of mask arrays, True values are masked
     :param dtype: data type of the output
     :param out: optional output, with one more axis than the input arrays
-    :param fclip: fraction of points removed on both ends.
-    Maximum is 0.4 (80% of points rejected)
+    :param fclip: fraction of points removed on both ends. Maximum is 0.4 (80% of points rejected)
     :return: mean, variance of the mean and number of points stored
     '''
     return generic_combine(quantileclip_method(fclip), arrays,

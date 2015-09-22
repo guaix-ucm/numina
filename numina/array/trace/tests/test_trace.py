@@ -59,10 +59,10 @@ def test_trace_simple():
     assert_allclose(mm, result)
 
 
-@pytest.mark.xfail(reason='bug 27')
-def test_trace_bug_27():
-    '''Trace doesn't work with a flat peak'''
-    arr = np.zeros((100, 100))
-    arr[47:52,12:90] = 100.0
-    mm = trace(arr, 50, 50)
-    assert mm.shape[0] >= 1
+# @pytest.mark.xfail(reason='bug 27')
+# def test_trace_bug_27():
+#     '''Trace doesn't work with a flat peak'''
+#     arr = np.zeros((100, 100))
+#     arr[47:52,12:90] = 100.0
+#     mm = trace(arr, 50, 50)
+#     assert mm.shape[0] >= 1

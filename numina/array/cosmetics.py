@@ -73,13 +73,10 @@ def cosmetics(flat1, flat2, mask, lowercut=6.0, uppercut=6.0,
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
-    :parameter lowercut: values bellow this sigma level are
-    flagged as dead pixels.
-    :parameter uppercut: values above this sigma level are
-    flagged as hot pixels.
+    :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
+    :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
-    :returns: the normalized ratio of the flats, the updated mask and
-    standard deviation
+    :returns: the normalized ratio of the flats, the updated mask and standard deviation
 
     '''
 
@@ -191,16 +188,13 @@ def ccdmask(flat1, flat2=None, mask=None,
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
 
-    :parameter lowercut: values below this sigma level are flagged
-    as dead pixels.
-    :parameter uppercut: values above this sigma level are flagged
-    as hot pixels.
+    :parameter lowercut: values below this sigma level are flagged as dead pixels.
+    :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
     :parameter mode: either 'full' or 'region'
     :parameter nmed: region used to compute the median
     :parameter nsig: region used to estimate the standard deviation
-    :returns: the normalized ratio of the flats, the updated mask and
-    standard deviation
+    :returns: the normalized ratio of the flats, the updated mask and standard deviation
 
     .. note::
 
