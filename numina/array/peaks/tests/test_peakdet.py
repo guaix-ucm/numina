@@ -761,3 +761,30 @@ def test_peak_finding_window_odd(spectrum):
 @pytest.mark.xfail(raises=ValueError)
 def test_peak_finding_window_small(spectrum):
     peakdet.find_peaks_indexes(spectrum, 1)
+
+
+
+@pytest.mark.parametrize("peaks", [[20, 10, 0, 0, 0, 0, 0, 21],[20, 0, 0, 0, 0, 0, 0, 20],[20, 10, 0, 0, 0, 0, 0, 0],[0, 0, 0, 0, 0, 0, 0, 20]])
+def test_peak_index(benchmark, peaks):
+    peaks_result = []
+    result = benchmark(peakdet.find_peaks_indexes, numpy.array(peaks), 3, 0.0)
+    assert numpy.allclose(peaks_result, result)
+
+
+def test_peak_index_2_indexes(benchmark):
+    peaks_result = [3,5]
+    test = numpy.array([10, 0, 0, 10, 0, 10, 0, 0])
+    result = benchmark(peakdet.find_peaks_indexes, test, 3, 0.0)
+    assert numpy.allclose(peaks_result, result)
+
+@pytest.mark.parametrize("peaks", [[0, 10, 0, 0, 10, 0, 0, 0],[0, 10, 0, 0, 10, 0, 0, 10]])
+def test_peak_index_2_indexes_param(benchmark, peaks):
+    peaks_result = [1,4]
+    result = benchmark(peakdet.find_peaks_indexes, numpy.array(peaks), 3, 0.0)
+    assert numpy.allclose(peaks_result, result)
+
+def test_peak_index_1_index(benchmark):
+    peaks_result = [2]
+    test = numpy.array([0, 10, 20, 10, 0, 0, 0, 0])
+    result = benchmark(peakdet.find_peaks_indexes, test, 3, 0.0)
+    assert numpy.allclose(peaks_result, result)
