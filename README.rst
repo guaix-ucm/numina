@@ -88,9 +88,9 @@ if you type `make`
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _sphinx: http://sphinx.pocoo.org
 
-.. |docs| image:: https://readthedocs.org/projects/numina/badge/?version=documentation
+.. |docs| image:: https://readthedocs.org/projects/numina/badge/?version=latest
     :alt: Documentation Status
-    :target: http://numina.readthedocs.org/en/documentation/?badge=documentation
+    :target: http://numina.readthedocs.org/en/latest/?badge=latest
 
 .. |zenodo| image:: https://zenodo.org/badge/13088/guaix-ucm/numina.svg
    :target: http://dx.doi.org/10.5281/zenodo.17986
