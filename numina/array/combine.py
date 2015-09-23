@@ -24,6 +24,7 @@ import numpy
 from numina.array._combine import generic_combine as internal_generic_combine
 from numina.array._combine import sigmaclip_method,quantileclip_method,minmax_method
 from numina.array._combine import mean_method, median_method
+from numina.array._combine import CombineError
 
 
 def mean(arrays, masks=None, dtype=None, out=None,
