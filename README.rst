@@ -73,7 +73,7 @@ And then installed following the standard procedure:::
     $ python setup.py install
 
 Building the documentation
----------------------------
+--------------------------
 The Numina documentation is based on `sphinx`_. With the package installed,
 the html documentation can be built from the `doc` directory::
 
@@ -90,7 +90,7 @@ if you type `make`
 
 .. |docs| image:: https://readthedocs.org/projects/numina/badge/?version=latest
     :alt: Documentation Status
-    :target: https://readthedocs.org/projects/numina/?badge=latest
+    :target: https://numina.readthedocs.org/en/latest/?badge=latest
 
 .. |zenodo| image:: https://zenodo.org/badge/13088/guaix-ucm/numina.svg
    :target: http://dx.doi.org/10.5281/zenodo.17986
