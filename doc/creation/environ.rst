@@ -1,6 +1,6 @@
 
 Numina Pipeline Environment
-##############################
+###########################
 
 This guide is intended as an introductory overview of pipeline creation
 with Numina. For detailed reference documentation of the functions and
@@ -33,7 +33,7 @@ Users of the DFP shall interact with the software
 through the GTC Inspector.
 
 Recipe Requirements and Products
----------------------------------
+--------------------------------
 Recipes based on Numina have a list of requirements needed to 
 properly configure the Recipe.
 Recipes also provide a list of products created by the recipe.
