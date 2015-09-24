@@ -92,5 +92,9 @@ if you type `make`
     :alt: Documentation Status
     :target: https://readthedocs.org/projects/numina/?badge=latest
 
+.. |docs| image:: https://readthedocs.org/projects/numina/badge/?version=latest
+    :alt: Documentation Status
+    :target: http://numina.readthedocs.org/en/latest/?badge=latest
+
 .. |zenodo| image:: https://zenodo.org/badge/13088/guaix-ucm/numina.svg
    :target: http://dx.doi.org/10.5281/zenodo.17986
