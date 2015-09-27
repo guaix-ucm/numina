@@ -136,3 +136,31 @@ class define_input(object):
 
 
 define_requirements = define_input
+
+
+class add_requirement(object):
+    def __init__(self, **kwds):
+
+        self.ext = {}
+        for key, val in kwds.items():
+            # FIXME validate these inputs
+            self.ext[key] = val
+
+    def __call__(self, klass):
+        Class = klass.RecipeInput
+        Class.__stored__.update(self.ext)
+        return klass
+
+
+class add_product(object):
+    def __init__(self, **kwds):
+        # FIXME validate these inputs
+        self.ext = {}
+        for key, val in kwds.items():
+            # FIXME validate these inputs
+            self.ext[key] = val
+
+    def __call__(self, klass):
+        Class = klass.RecipeResult
+        Class.__stored__.update(self.ext)
+        return klass
