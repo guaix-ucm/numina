@@ -129,6 +129,7 @@ class BaseRecipeMethods(object):
     @classmethod
     def buildRI(cls, ob, dal, pipeline='default'):
         RecipeInputClass = cls.RecipeInput
+        _logger = logging.getLogger('numina.ri')
 
         result = {}
 
