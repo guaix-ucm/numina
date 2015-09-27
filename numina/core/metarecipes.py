@@ -25,7 +25,7 @@ from .requirements import Requirement
 
 
 class RecipeType(type):
-    '''Metaclass for Recipe.'''
+    """Metaclass for Recipe."""
     def __new__(cls, classname, parents, attributes):
         filter_reqs = {}
         filter_prods = {}

@@ -96,6 +96,14 @@ class BaseRecipeMethods(object):
         '''
         return cls.RecipeResult(*args, **kwds)
 
+    @classmethod
+    def requirements(cls):
+        return cls.RecipeInput.stored()
+
+    @classmethod
+    def products(cls):
+        return cls.RecipeResult.stored()
+
     def run(self, recipe_input):
         return self.create_result()
 
@@ -152,7 +160,7 @@ class BaseRecipeMethods(object):
 
         tags = getattr(obsres, 'tags', {})
 
-        for key, req in RecipeInputClass.items():
+        for key, req in cls.requirements().items():
 
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres

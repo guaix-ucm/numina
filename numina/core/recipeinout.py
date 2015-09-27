@@ -29,7 +29,7 @@ from .metaclass import RecipeInputType, RecipeResultType
 class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
         self = super(RecipeInOut, cls).__new__(cls)
-        for key, prod in cls.items():
+        for key, prod in cls.stored().items():
             if key in kwds:
                 val = prod.convert(kwds[key])
             else:

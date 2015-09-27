@@ -97,11 +97,12 @@ def test_recipe_with_autoqc():
 
     assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
 
-    assert 'qc' in TestRecipe.RecipeResult
+    assert 'qc' in TestRecipe.RecipeResult.stored()
+    assert 'qc' in TestRecipe.products()
 
-    for prod in TestRecipe.RecipeResult.values():
+    for prod in TestRecipe.RecipeResult.stored().values():
         assert isinstance(prod, Product)
 
-    qc = TestRecipe.RecipeResult['qc']
+    qc = TestRecipe.RecipeResult.stored()['qc']
 
     assert isinstance(qc.type, QualityControlProduct)
