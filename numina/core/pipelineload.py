@@ -47,9 +47,16 @@ yaml.add_constructor('!om', om_cons)
 
 
 def drp_load(package, resource):
-    '''Load the DRPS from a resource file.'''
+    """Load the DRPS from a resource file."""
+    data = pkgutil.get_data(package, resource)
+    return drp_load_data(data)
+
+
+
+def drp_load_data(data):
+    """Load the DRPS from data."""
     ins_all = {}
-    for yld in yaml.load_all(pkgutil.get_data(package, resource)):
+    for yld in yaml.load_all(data):
         ins = load_instrument(yld)
         ins_all[ins.name] = ins
 
