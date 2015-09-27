@@ -185,13 +185,3 @@ class RecipeResultType(RecipeInOutType):
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Product)
-
-
-class RecipeResultAutoQCType(RecipeResultType):
-    """Metaclass for RecipeResult with added QC"""
-    def __new__(cls, classname, parents, attributes):
-        if 'qc' not in attributes:
-            attributes['qc'] = Product(QualityControlProduct)
-        return super(RecipeResultAutoQCType, cls).__new__(
-            cls, classname, parents, attributes
-            )

@@ -20,7 +20,6 @@
 """Metaclasses for Recipes."""
 
 from .recipeinout import RecipeResult, RecipeInput
-from .recipeinout import RecipeResultAutoQC
 from .dataholders import Product
 from .requirements import Requirement
 
@@ -72,11 +71,3 @@ class RecipeType(type):
     def create_prod_class(cls, classname, attributes):
         return cls.create_gen_class('%sResult' % classname,
                                     RecipeResult, attributes)
-
-
-class RecipeTypeAutoQC(RecipeType):
-    """Metaclass for Recipe with RecipeResultAutoQC."""
-    @classmethod
-    def create_prod_class(cls, classname, attributes):
-        return cls.create_gen_class('%sResult' % classname,
-                                    RecipeResultAutoQC, attributes)

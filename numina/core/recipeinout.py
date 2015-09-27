@@ -24,7 +24,6 @@ Recipe Input
 from six import with_metaclass
 
 from .metaclass import RecipeInputType, RecipeResultType
-from .metaclass import RecipeResultAutoQCType
 
 
 class RecipeInOut(object):
@@ -97,11 +96,6 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResul
         for key, val in self.__class__.items():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
-
-
-class RecipeResultAutoQC(with_metaclass(RecipeResultAutoQCType, RecipeResult)):
-    '''RecipeResult with an automatic QC member.'''
-    pass
 
 
 class define_result(object):

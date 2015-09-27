@@ -38,7 +38,6 @@ from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .recipeinout import add_product
 from .metarecipes import RecipeType
-from .metarecipes import RecipeTypeAutoQC
 from .oresult import ObservationResult
 from .dal.stored import ObservingBlock
 from .dal.daliface import NoResultFound

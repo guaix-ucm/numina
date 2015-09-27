@@ -25,7 +25,6 @@ from six import with_metaclass
 from ..metarecipes import RecipeType
 from ..recipes import BaseRecipeAutoQC
 from ..recipeinout import RecipeInput, RecipeResult
-from ..recipeinout import RecipeResultAutoQC
 from ..requirements import ObservationResultRequirement
 from ..dataholders import Product
 from ..products import QualityControlProduct
