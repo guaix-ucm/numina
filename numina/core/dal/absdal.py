@@ -19,7 +19,7 @@
 
 '''DAL base class'''
 
-from numina.core import ObservationResult
+from ..oresult import ObservationResult
 from .daliface import DALInterface
 from .tagger import tagger
 

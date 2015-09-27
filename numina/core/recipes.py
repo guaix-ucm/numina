@@ -38,6 +38,12 @@ from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .metarecipes import RecipeTypeAutoQC
+from .oresult import ObservationResult
+from .dal.stored import ObservingBlock
+from .dal.daliface import NoResultFound
+from .products import ObservationResultType
+from .products import InstrumentConfigurationType
+from .products import DataProductTag
 
 
 class BaseRecipeMethods(object):
@@ -119,6 +125,60 @@ class BaseRecipeMethods(object):
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
+
+    @classmethod
+    def buildRI(cls, ob, dal, pipeline='default'):
+        RecipeInputClass = cls.RecipeInput
+
+        result = {}
+
+        # We have to decide if the ob input
+        # is a plain description (ObservingBlock)
+        # or if it contains the nested results (Obsres)
+        #
+        # it has to contain the tags corresponding to the observing modes...
+        if isinstance(ob, ObservingBlock):
+            # We have to build an Obsres
+            obsres = dal.obsres_from_oblock_id(ob.id)
+        elif isinstance(ob, ObservationResult):
+            # We have one
+            obsres = ob
+        else:
+            raise ValueError('ob input is neither a ObservingBlock'
+                             ' nor a ObservationResult')
+
+        tags = getattr(obsres, 'tags', {})
+
+        for key, req in RecipeInputClass.items():
+
+            if isinstance(req.type, ObservationResultType):
+                result[key] = obsres
+            elif isinstance(req.type, InstrumentConfigurationType):
+                # Not sure how to handle this, or if it is needed...
+                result[key] = {}
+            elif isinstance(req.type, DataProductTag):
+                try:
+                    prod = dal.search_prod_req_tags(
+                        req, obsres.instrument,
+                        tags, pipeline
+                        )
+
+                    result[key] = prod.content
+                except NoResultFound:
+                    _logger.debug('No value found for %s with tags %s',
+                                  key, tags)
+            else:
+                # Still not clear what to do with the other types
+                try:
+                    param = dal.search_param_req(
+                        req, obsres.instrument,
+                        obsres.mode, pipeline
+                        )
+                    result[key] = param.content
+                except NoResultFound:
+                    _logger.debug('No value found for %s', key)
+
+        return cls.create_input(**result)
 
 
 class BaseRecipe(with_metaclass(abc.ABCMeta, BaseRecipeMethods)):
