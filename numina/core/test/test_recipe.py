@@ -92,7 +92,7 @@ def test_recipe_with_autoqc():
 
     assert issubclass(TestRecipe.RecipeInput, RecipeInput)
 
-    assert issubclass(TestRecipe.RecipeResult, RecipeResultAutoQC)
+    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
 
     assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
 

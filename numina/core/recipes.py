@@ -36,6 +36,7 @@ from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
+from .recipeinout import add_product
 from .metarecipes import RecipeType
 from .metarecipes import RecipeTypeAutoQC
 from .oresult import ObservationResult
@@ -44,6 +45,8 @@ from .dal.daliface import NoResultFound
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
 from .products import DataProductTag
+from .dataholders import Product
+from .products import QualityControlProduct
 
 
 class BaseRecipeMethods(object):
@@ -195,6 +198,7 @@ class BaseRecipeAlt(with_metaclass(RecipeType, BaseRecipeMethods)):
     pass
 
 
-class BaseRecipeAutoQC(with_metaclass(RecipeTypeAutoQC, BaseRecipeMethods)):
-    '''Base class for instrument recipes'''
+@add_product(qc=Product(QualityControlProduct, dest='qc'))
+class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipeMethods)):
+    """Base class for instrument recipes"""
     pass
