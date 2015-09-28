@@ -17,10 +17,9 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''DAL for dictionary-based database of products.'''
+"""DAL for dictionary-based database of products."""
 
 from numina.core import import_object
-from numina.core import ObservationResult
 from numina.core import init_drp_system
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
@@ -32,6 +31,7 @@ from numina.core.recipeinput import RecipeInputBuilderGTC
 
 from numina.store import load
 from numina.store import init_store_backends
+
 
 def product_label(drp, klass):
     fqn = fully_qualified_name(klass)
@@ -69,8 +69,8 @@ class BaseDictDAL(AbsDAL):
 
     def search_recipe(self, ins, mode, pipeline):
         recipe_fqn = self.search_recipe_fqn(ins, mode, pipeline)
-        Klass = import_object(recipe_fqn)
-        return Klass
+        klass = import_object(recipe_fqn)
+        return klass
 
     def search_recipe_fqn(self, ins, mode, pipename):
         drp = self.args_drps[ins]
@@ -103,7 +103,7 @@ class BaseDictDAL(AbsDAL):
         return self.search_prod_type_tags(req.type, ins, tags, pipeline)
 
     def search_prod_type_tags(self, tipo, ins, tags, pipeline):
-        '''Returns the first coincidence...'''
+        """Returns the first coincidence..."""
 
         klass = tipo.__class__
         label = product_label(self.args_drps[ins], klass)
@@ -140,22 +140,22 @@ class BaseDictDAL(AbsDAL):
         obsres = obsres_from_dict(este)
 
         this_drp = self.args_drps[obsres.instrument]
-        tagger_fqn = None
+        tagger = None
         for mode in this_drp.modes:
             if mode.key == obsres.mode:
-                tagger_fqn = mode.tagger
+                tagger = mode.tagger
                 break
         else:
             raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
 
-        if tagger_fqn is None:
+        if tagger is None:
             master_tags = {}
         else:
-            tagger_for_this_mode = import_object(tagger_fqn)
-            master_tags = tagger_for_this_mode(obsres)
+            master_tags = tagger(obsres)
 
         obsres.tags = master_tags
         return obsres
+
 
 class DictDAL(BaseDictDAL):
     def __init__(self, base):

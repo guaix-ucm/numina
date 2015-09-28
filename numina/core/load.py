@@ -52,7 +52,7 @@ class RequirementParser(object):
         '''Build the RecipeInput object from available metadata.'''
         parameters = {}
 
-        for req in self.rClass.values():
+        for req in self.rClass.stored().values():
             value = self.lc(req)
             if not isinstance(value, NoneFind):
                 parameters[req.dest] = value
@@ -62,7 +62,7 @@ class RequirementParser(object):
 
     def print_requirements(self, pad=''):
 
-        for req in self.rClass.values():
+        for req in self.rClass.stored().values():
             if req.hidden:
                 # I Do not want to print it
                 continue

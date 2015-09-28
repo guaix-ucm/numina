@@ -46,29 +46,26 @@ class ComandLineDAL(AbsDAL):
     def search_rib_from_ob(self, obsres, pipeline):
         return None
 
-    # FIXME: this very similiar to the impl in base class
     def obsres_from_oblock_id(self, obsid):
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
 
         this_drp = self.args_drps[obsres.instrument]
-        tagger_fqn = None
+        tagger = None
         for mode in this_drp.modes:
             if mode.key == obsres.mode:
-                tagger_fqn = mode.tagger
+                tagger = mode.tagger
                 break
         else:
             raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
 
-        if tagger_fqn is None:
+        if tagger is None:
             master_tags = {}
         else:
-            tagger_for_this_mode = import_object(tagger_fqn)
-            master_tags = tagger_for_this_mode(obsres)
+            master_tags = tagger(obsres)
 
         obsres.tags = master_tags
         return obsres
-
 
     def search_oblock_from_id(self, obsid):
         try:
@@ -90,7 +87,7 @@ class ComandLineDAL(AbsDAL):
         my_pipe = my_ins.pipelines.get(pipeline)
 
         if my_pipe is None:
-            raise ValueError('no pipeline named %r'% pipe_name)
+            raise ValueError('no pipeline named %r'% pipeline)
 
         _logger.info("observing mode: %r", obsres.mode)
 
@@ -117,7 +114,7 @@ class ComandLineDAL(AbsDAL):
 
         return StoredProduct(id=-1, content=content, tags={})
 
-    def search_prod_obsid(self, ins, obsid):
+    def search_prod_obsid(self, ins, obsid, pipeline):
         return StoredProduct(id=-1, content='null.fits', tags={})
 
     def search_param_req(self, req, instrument, mode, pipeline):

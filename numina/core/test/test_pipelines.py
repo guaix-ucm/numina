@@ -47,9 +47,14 @@ def test_fake_pipeline_alt(monkeypatch):
             - description: A recipe that always fails
               key: fail
               name: Fail
+              tagger:
+                 - KEY1
+                 - KEY2
             - description: Bias
               key: bias
               name: Bias
+              tagger:
+                 - KEY3
         pipelines:
             default:
                 recipes:
@@ -73,3 +78,5 @@ def test_fake_pipeline_alt(monkeypatch):
     m = init_drp_system()
     for k, v in m.items():
         assert_valid_instrument(v)
+        for m in v.modes:
+            assert m.tagger is not None
