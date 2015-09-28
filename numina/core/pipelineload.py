@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -230,11 +230,4 @@ def get_tags_from_full_ob(ob, reqtags=None):
                 raise ValueError(msg)
 
     return alltags
-
-
-def tagger_empty(obsres):
-    return get_tags_from_full_ob(obsres, reqtags=[])
-
-def tagger_vph(obsres):
-    return get_tags_from_full_ob(obsres, reqtags=['vph'])
 
