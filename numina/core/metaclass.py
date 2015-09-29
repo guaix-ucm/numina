@@ -17,14 +17,13 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Base metaclasses
-'''
+"""
 
 import collections
 from .dataholders import Product
 from .requirements import Requirement
-from .products import QualityControlProduct
 
 
 class StoreType(type):
@@ -41,7 +40,7 @@ class StoreType(type):
 
         for name, val in attributes.items():
             if cls.exclude(name, val):
-                nname, nval = cls.store(name, val)
+                nname, nval = cls.transform(name, val)
                 filter_out[nname] = nval
             else:
                 filter_in[name] = val
@@ -62,98 +61,14 @@ class StoreType(type):
         return False
 
     @classmethod
-    def store(cls, name, value):
+    def transform(cls, name, value):
         return name, value
 
-# FIXME: this does not work due to this
-# http://comments.gmane.org/gmane.comp.python.devel/142467
-# class MapStoreType(StoreType, collections.Mapping)
-# Using manual implementation instead
+    def stored(cls):
+        return getattr(cls, '__stored__')
 
 
-class MapStoreType(StoreType):
-    '''Metaclass for storing members with map interface.'''
-    def __new__(cls, classname, parents, attributes):
-        return super(MapStoreType, cls).__new__(
-            cls, classname, parents, attributes)
-
-    def __getitem__(self, name):
-        return self.__stored__[name]
-
-    def __iter__(self):
-        return iter(self.__stored__)
-
-    def __len__(self):
-        return len(self.__stored__)
-
-    # These methods are implemented from the previous
-    # Copied over from collections
-    def get(self, key, default=None):
-        'D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None.'
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def __contains__(self, key):
-        try:
-            self[key]
-        except KeyError:
-            return False
-        else:
-            return True
-
-    def iterkeys(self):
-        'D.iterkeys() -> an iterator over the keys of D'
-        return iter(self)
-
-    def itervalues(self):
-        'D.itervalues() -> an iterator over the values of D'
-        for key in self:
-            yield self[key]
-
-    def iteritems(self):
-        'D.iteritems() -> an iterator over the (key, value) items of D'
-        for key in self:
-            yield (key, self[key])
-
-    def keys(self):
-        "D.keys() -> list of D's keys"
-        return list(self)
-
-    def items(self):
-        "D.items() -> list of D's (key, value) pairs, as 2-tuples"
-        return [(key, self[key]) for key in self]
-
-    def values(self):
-        "D.values() -> list of D's values"
-        return [self[key] for key in self]
-
-    def __eq__(self, other):
-        if not isinstance(other, collections.Mapping):
-            return NotImplemented
-        return dict(self.items()) == dict(other.items())
-
-    # https://docs.python.org/3.1/reference/datamodel.html#object.__hash__
-    __hash__ = StoreType.__hash__
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __bool__(self):
-        # Added due to http://bugs.python.org/issue23572
-        return True
-
-    def __nonzero__(self):
-        # Added due to http://bugs.python.org/issue23572
-        return True
-
-
-# Register as a mapping
-collections.Mapping.register(MapStoreType)  # @UndefinedVariable
-
-
-class RecipeInOutType(MapStoreType):
+class RecipeInOutType(StoreType):
     def __new__(cls, classname, parents, attributes):
         # Handle checkers defined in base class
         checkers = attributes.get('__checkers__', [])
@@ -166,32 +81,22 @@ class RecipeInOutType(MapStoreType):
         return obj
 
     @classmethod
-    def store(cls, name, value):
+    def transform(cls, name, value):
         if value.dest is None:
             value.dest = name
         nname = value.dest
         return nname, value
 
 
-class RecipeRequirementsType(RecipeInOutType):
-    '''Metaclass for RecipeRequirements.'''
+class RecipeInputType(RecipeInOutType):
+    """Metaclass for RecipeInput."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
 
 
 class RecipeResultType(RecipeInOutType):
-    '''Metaclass for RecipeResult.'''
+    """Metaclass for RecipeResult."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Product)
-
-
-class RecipeResultAutoQCType(RecipeResultType):
-    '''Metaclass for RecipeResult with added QC'''
-    def __new__(cls, classname, parents, attributes):
-        if 'qc' not in attributes:
-            attributes['qc'] = Product(QualityControlProduct)
-        return super(RecipeResultAutoQCType, cls).__new__(
-            cls, classname, parents, attributes
-            )

@@ -94,6 +94,16 @@ def init_drp_system():
     return drp
 
 
+def query_drp(name):
+    """Load a DRPs in 'numina.pipeline' entry_point by name"""
+
+    for entry in pkg_resources.iter_entry_points(group='numina.pipeline.1'):
+        if entry.name == name:
+            drp_loader = entry.load()
+            mod = drp_loader()
+            return mod
+
+
 def init_store_backends(backend='default'):
     '''Load storage backends.'''
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,20 +17,19 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
-Recipe requirements
-'''
+"""
+Recipe Input
+"""
 
 from six import with_metaclass
 
-from .metaclass import RecipeRequirementsType, RecipeResultType
-from .metaclass import RecipeResultAutoQCType
+from .metaclass import RecipeInputType, RecipeResultType
 
 
 class RecipeInOut(object):
     def __new__(cls, *args, **kwds):
         self = super(RecipeInOut, cls).__new__(cls)
-        for key, prod in cls.items():
+        for key, prod in cls.stored().items():
             if key in kwds:
                 val = prod.convert(kwds[key])
             else:
@@ -64,8 +63,8 @@ class RecipeInOut(object):
             check.check(self)
 
 
-class RecipeRequirements(with_metaclass(RecipeRequirementsType, RecipeInOut)):
-    '''RecipeRequirements base class'''
+class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
+    """RecipeInput base class"""
     pass
 
 
@@ -99,11 +98,6 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResul
         return '%s(%s)' % (sclass, ', '.join(full))
 
 
-class RecipeResultAutoQC(with_metaclass(RecipeResultAutoQCType, RecipeResult)):
-    '''RecipeResult with an automatic QC member.'''
-    pass
-
-
 class define_result(object):
     '''Recipe decorator.'''
     def __init__(self, resultClass):
@@ -119,17 +113,48 @@ class define_result(object):
         return klass
 
 
-class define_requirements(object):
+class define_input(object):
     '''Recipe decorator.'''
-    def __init__(self, requirementClass):
-        if not issubclass(requirementClass, RecipeRequirements):
-            fmt = '%r does not derive from RecipeRequirements'
-            msg = fmt % requirementClass
+    def __init__(self, inputClass):
+        if not issubclass(inputClass, RecipeInput):
+            fmt = '%r does not derive from RecipeInput'
+            msg = fmt % inputClass
             raise TypeError(msg)
-        self.klass = requirementClass
+        self.klass = inputClass
 
     def __call__(self, klass):
-        klass.Requirements = self.klass
+        klass.Input = self.klass
         # TODO: remove this name in the future
-        klass.RecipeRequirements = self.klass
+        klass.RecipeInput = self.klass
+        return klass
+
+
+define_requirements = define_input
+
+
+class add_requirement(object):
+    def __init__(self, **kwds):
+
+        self.ext = {}
+        for key, val in kwds.items():
+            # FIXME validate these inputs
+            self.ext[key] = val
+
+    def __call__(self, klass):
+        Class = klass.RecipeInput
+        Class.__stored__.update(self.ext)
+        return klass
+
+
+class add_product(object):
+    def __init__(self, **kwds):
+        # FIXME validate these inputs
+        self.ext = {}
+        for key, val in kwds.items():
+            # FIXME validate these inputs
+            self.ext[key] = val
+
+    def __call__(self, klass):
+        Class = klass.RecipeResult
+        Class.__stored__.update(self.ext)
         return klass

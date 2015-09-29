@@ -17,16 +17,15 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Metaclasses for Recipes.'''
+"""Metaclasses for Recipes."""
 
-from .recipeinout import RecipeResult, RecipeRequirements
-from .recipeinout import RecipeResultAutoQC
+from .recipeinout import RecipeResult, RecipeInput
 from .dataholders import Product
 from .requirements import Requirement
 
 
 class RecipeType(type):
-    '''Metaclass for Recipe.'''
+    """Metaclass for Recipe."""
     def __new__(cls, classname, parents, attributes):
         filter_reqs = {}
         filter_prods = {}
@@ -40,15 +39,18 @@ class RecipeType(type):
             else:
                 filter_attr[name] = val
 
-        ReqsClass = cls.create_req_class(classname, filter_reqs)
+        ReqsClass = cls.create_inpt_class(classname, filter_reqs)
 
         ResultClass = cls.create_prod_class(classname, filter_prods)
 
         filter_attr['Result'] = ResultClass
-        filter_attr['Requirements'] = ReqsClass
+        filter_attr['Input'] = ReqsClass
         # TODO: Remove these in the future
         filter_attr['RecipeResult'] = ResultClass
-        filter_attr['RecipeRequirements'] = ReqsClass
+        filter_attr['RecipeInput'] = ReqsClass
+        # Compatibility, just in case
+        filter_attr['RecipeRequirements'] = ResultClass
+
         return super(RecipeType, cls).__new__(
             cls, classname, parents, filter_attr)
 
@@ -61,19 +63,11 @@ class RecipeType(type):
         return klass
 
     @classmethod
-    def create_req_class(cls, classname, attributes):
-        return cls.create_gen_class('%sRequirements' % classname,
-                                    RecipeRequirements, attributes)
+    def create_inpt_class(cls, classname, attributes):
+        return cls.create_gen_class('%sInput' % classname,
+                                    RecipeInput, attributes)
 
     @classmethod
     def create_prod_class(cls, classname, attributes):
         return cls.create_gen_class('%sResult' % classname,
                                     RecipeResult, attributes)
-
-
-class RecipeTypeAutoQC(RecipeType):
-    '''Metaclass for Recipe with RecipeResultAutoQC.'''
-    @classmethod
-    def create_prod_class(cls, classname, attributes):
-        return cls.create_gen_class('%sResult' % classname,
-                                    RecipeResultAutoQC, attributes)

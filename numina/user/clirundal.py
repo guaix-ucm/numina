@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 import sys
 import os
@@ -27,12 +27,9 @@ import datetime
 import yaml
 
 from numina import __version__
-from numina.core import obsres_from_dict
-from numina.core import InstrumentConfiguration
-from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core.recipeinput import RecipeInputBuilderCLI
-from numina.core.dal.dictdal import DictDAL, BaseDictDAL
+from numina.core.dal.dictdal import BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 from .clidal import process_format_version_0
@@ -85,7 +82,7 @@ def mode_run_common(args, mode):
     elif control_format == 1:
         dal = process_format_version_1(loaded_obs, loaded_data)
     else:
-        print('Unsupported format', control_format, 'in', arg.reqs)
+        print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
 
     _logger.info('control format version %d', control_format)

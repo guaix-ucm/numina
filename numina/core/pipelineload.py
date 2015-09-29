@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,6 +24,7 @@ import uuid
 import six
 import yaml
 
+from .objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import LoadableDRP
@@ -47,9 +48,16 @@ yaml.add_constructor('!om', om_cons)
 
 
 def drp_load(package, resource):
-    '''Load the DRPS from a resource file.'''
+    """Load the DRPS from a resource file."""
+    data = pkgutil.get_data(package, resource)
+    return drp_load_data(data)
+
+
+
+def drp_load_data(data):
+    """Load the DRPS from data."""
     ins_all = {}
-    for yld in yaml.load_all(pkgutil.get_data(package, resource)):
+    for yld in yaml.load_all(data):
         ins = load_instrument(yld)
         ins_all[ins.name] = ins
 
@@ -65,7 +73,26 @@ def load_modes(node):
 
 def load_mode(node):
     obs_mode = ObservingMode()
+    # handle tagger:
     obs_mode.__dict__.update(node)
+
+    ntagger = node.get('tagger')
+
+    if ntagger is None:
+        pass
+    elif isinstance(ntagger, list):
+
+        def full_tagger(obsres):
+            return get_tags_from_full_ob(obsres, reqtags=ntagger)
+
+        obs_mode.tagger = full_tagger
+    elif isinstance(ntagger, str):
+        # load function
+        obs_mode.tagger = import_object(ntagger)
+
+    else:
+        raise TypeError('tagger must be None, a list or a string')
+
     return obs_mode
 
 
@@ -159,4 +186,48 @@ def print_m(modes):
     six.print_('Modes')
     for c in modes:
         six.print_(' mode', c.key)
+
+
+def get_tags_from_full_ob(ob, reqtags=None):
+    # each instrument should have one
+    # perhaps each mode...
+    files = ob.images
+    cfiles = ob.children
+    alltags = {}
+
+    if reqtags is None:
+        reqtags = []
+
+    # Init alltags...
+    # Open first image
+    if files:
+        for fname in files[:1]:
+            with fname.open() as fd:
+                header = fd[0].header
+                for t in reqtags:
+                    alltags[t] = header[t]
+    else:
+
+        for prod in cfiles[:1]:
+            prodtags = prod.tags
+            for t in reqtags:
+                alltags[t] = prodtags[t]
+
+    for fname in files:
+        with fname.open() as fd:
+            header = fd[0].header
+
+            for t in reqtags:
+                if alltags[t] != header[t]:
+                    msg = 'wrong tag %s in file %s' % (t, fname)
+                    raise ValueError(msg)
+
+    for prod in cfiles:
+        prodtags = prod.tags
+        for t in reqtags:
+            if alltags[t] != prodtags[t]:
+                msg = 'wrong tag %s in product %s' % (t, prod)
+                raise ValueError(msg)
+
+    return alltags
 

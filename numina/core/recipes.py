@@ -17,13 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Basic tools and classes used to generate recipe modules.
+"""
+Basic tools and classes used to generate recipe modules.
 
 A recipe is a class that complies with the *reduction recipe API*:
 
  * The class must derive from :class:`numina.core.BaseRecipe`.
 
-'''
+"""
 
 import abc
 import traceback
@@ -34,27 +35,28 @@ from six import with_metaclass
 from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
-from .recipeinout import RecipeRequirements as RecipeRequirementsClass
+from .recipeinout import RecipeInput as RecipeInputClass
+from .recipeinout import add_product
 from .metarecipes import RecipeType
-from .metarecipes import RecipeTypeAutoQC
-
-
-_logger = logging.getLogger('numina')
+from .oresult import ObservationResult
+from .dal.stored import ObservingBlock
+from .products import ObservationResultType
+from .products import InstrumentConfigurationType
+from .products import DataProductTag
+from .dataholders import Product
+from .products import QualityControlProduct
 
 
 class BaseRecipeMethods(object):
-    '''Base class for all instrument recipes'''
+    """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
-    RecipeRequirements = RecipeRequirementsClass
-
-    # Recipe own logger
-    logger = _logger
+    RecipeInput = RecipeInputClass
 
     def __init__(self, *args, **kwds):
         super(BaseRecipeMethods, self).__init__()
         self.__author__ = 'Unknown'
-        self.__version__ = '0.0.0'
+        self.__version__ = 1
         # These two are maintained
         # for the moment
         self.environ = {}
@@ -62,6 +64,9 @@ class BaseRecipeMethods(object):
         #
         self.instrument = None
         self.configure(**kwds)
+
+        # Recipe own logger
+        self.logger = logging.getLogger('numina')
 
     def configure(self, **kwds):
         if 'author' in kwds:
@@ -75,11 +80,11 @@ class BaseRecipeMethods(object):
 
 
     @classmethod
-    def create_requirements(cls, *args, **kwds):
+    def create_input(cls, *args, **kwds):
         '''
-        Pass the result arguments to the RecipeRequirements constructor
+        Pass the result arguments to the RecipeInput constructor
         '''
-        return cls.RecipeRequirements(*args, **kwds)
+        return cls.RecipeInput(*args, **kwds)
 
     @classmethod
     def create_result(cls, *args, **kwds):
@@ -87,6 +92,14 @@ class BaseRecipeMethods(object):
         Pass the result arguments to the RecipeResult constructor
         '''
         return cls.RecipeResult(*args, **kwds)
+
+    @classmethod
+    def requirements(cls):
+        return cls.RecipeInput.stored()
+
+    @classmethod
+    def products(cls):
+        return cls.RecipeResult.stored()
 
     def run(self, recipe_input):
         return self.create_result()
@@ -105,7 +118,7 @@ class BaseRecipeMethods(object):
         try:
             result = self.run(recipe_input)
         except Exception as exc:
-            _logger.error("During recipe execution %s", exc)
+            self.logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(
                 exc.__class__.__name__,
                 str(exc),
@@ -120,9 +133,57 @@ class BaseRecipeMethods(object):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
 
+    @classmethod
+    def buildRI(cls, ob, dal, pipeline='default'):
+        """Build a RecipeInput object."""
+
+        result = {}
+        # We have to decide if the ob input
+        # is a plain description (ObservingBlock)
+        # or if it contains the nested results (Obsres)
+        #
+        # it has to contain the tags corresponding to the observing modes...
+        if isinstance(ob, ObservingBlock):
+            # We have to build an Obsres
+            obsres = dal.obsres_from_oblock_id(ob.id)
+        elif isinstance(ob, ObservationResult):
+            # We have one
+            obsres = ob
+        else:
+            raise ValueError('ob input is neither a ObservingBlock'
+                             ' nor a ObservationResult')
+
+        tags = getattr(obsres, 'tags', {})
+
+        for key, req in cls.requirements().items():
+
+            if isinstance(req.type, ObservationResultType):
+                result[key] = obsres
+            elif isinstance(req.type, InstrumentConfigurationType):
+                # Not sure how to handle this, or if it is needed...
+                result[key] = {}
+            elif isinstance(req.type, DataProductTag):
+
+                prod = dal.search_prod_req_tags(
+                    req, obsres.instrument,
+                    tags, pipeline
+                    )
+
+                result[key] = prod.content
+            else:
+                # Still not clear what to do with the other types
+
+                param = dal.search_param_req(
+                    req, obsres.instrument,
+                    obsres.mode, pipeline
+                    )
+                result[key] = param.content
+
+        return cls.create_input(**result)
+
 
 class BaseRecipe(with_metaclass(abc.ABCMeta, BaseRecipeMethods)):
-    '''Base class for all instrument recipes'''
+    """Base class for all instrument recipes"""
 
     @abc.abstractmethod
     def run(self, recipe_input):
@@ -130,10 +191,11 @@ class BaseRecipe(with_metaclass(abc.ABCMeta, BaseRecipeMethods)):
 
 
 class BaseRecipeAlt(with_metaclass(RecipeType, BaseRecipeMethods)):
-    '''Base class for instrument recipes'''
+    """Base class for instrument recipes"""
     pass
 
 
-class BaseRecipeAutoQC(with_metaclass(RecipeTypeAutoQC, BaseRecipeMethods)):
-    '''Base class for instrument recipes'''
+@add_product(qc=Product(QualityControlProduct, dest='qc'))
+class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipeMethods)):
+    """Base class for instrument recipes"""
     pass

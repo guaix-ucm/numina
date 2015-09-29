@@ -19,33 +19,11 @@
 
 '''DAL base class'''
 
-from numina.core import ObservationResult
+from ..oresult import ObservationResult
 from .daliface import DALInterface
-from .tagger import tagger
 
 
 class AbsDAL(DALInterface):
-
-    def obsres_from_oblock_id(self, obsid):
-        # This implementation does not depend
-        # on the details of the DAL...
-        ob = self.search_oblock_from_id(obsid)
-        ch = [self.obsres_from_proc_oblock_id(ob.instrument, cid)
-              for cid in ob.children]
-
-        h = ObservationResult(obsid)
-        h.instrument = ob.instrument
-        h.mode = ob.mode
-        h.parent = ob.parent
-        h.tags = {}
-        h.images = ob.images
-        h.children = ch
-
-        tags_for_this_mode = tagger(ob.instrument, ob.mode)
-
-        master_tags = tags_for_this_mode(h)
-        h.tags = master_tags
-        return h
 
     def obsres_from_proc_oblock_id(self, instrument, child_id):
         # This implementation does not depend

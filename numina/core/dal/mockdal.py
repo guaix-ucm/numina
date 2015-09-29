@@ -54,7 +54,7 @@ class MockDAL(AbsDAL):
     # Implemented in base class
     # def obsres_from_proc_oblock_id(self, instrument, child_id)
 
-    def search_prod_obsid(self, ins, obsid):
+    def search_prod_obsid(self, ins, obsid, pipeline):
         return StoredProduct(id=100, content='null.fits',
                              tags={'readmode': 'a'})
 
