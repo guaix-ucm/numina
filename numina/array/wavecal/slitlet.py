@@ -1,18 +1,17 @@
-# Version 29 May 2015
-#------------------------------------------------------------------------------
 
 from __future__ import division
 from __future__ import print_function
 
-import sys
-
-import six
-from six.moves import input
 import numpy as np
 from numpy.polynomial import polynomial
-import matplotlib.pyplot as plt
 
-from .zscale import zscale
+try:
+    import matplotlib.pyplot as plt
+    HAVE_PLOTS = True
+except ImportError:
+    HAVE_PLOTS = False
+
+from  numina.visualization import ZScaleInterval
 
 #------------------------------------------------------------------------------
 
@@ -157,7 +156,7 @@ class Slitlet(object):
             deltaysp = yspmax-yspmin
             fluxsp /= deltaysp
 
-        if LDEBUG:
+        if LDEBUG and HAVE_PLOTS:
             # plot image with bounding box, boundaries, etc.
             naxis2, naxis1 = image2d.shape
             fig = plt.figure()
@@ -166,7 +165,10 @@ class Slitlet(object):
             ax.set_xlim([0.5,float(naxis1)+0.5])
             ax.set_ylim([0.5,float(naxis2)+0.5])
             # plot image
-            z1, z2 = zscale(image2d)
+
+
+            zscale = ZScaleInterval()
+            z1, z2 = zscale.get_limits(image2d)
             im = plt.imshow(image2d, cmap='hot', aspect='auto',
                             vmin = z1, vmax = z2,
                             interpolation = 'nearest', origin = 'low',

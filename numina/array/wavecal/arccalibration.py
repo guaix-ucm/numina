@@ -12,33 +12,8 @@ import itertools
 import scipy.misc
 
 from ..robustfit import fit_theil_sen
-
+from .statsummary import sigmaG
 # -----------------------------------------------------------------------------
-
-
-def sigmag(x):
-    """Compute a robust estimator of the standard deviation.
-
-    See Eq. 3.36 (page 84) in Statistics, Data Mining, and Machine
-    in Astronomy, by Ivezic, Connolly, VanderPlas & Gray.
-
-    Parameters
-    ----------
-    x : 1d numpy array, float
-        Array of input values which standard deviation is requested.
-
-    Returns
-    -------
-    sigmag : float
-        Robust estimator of the standard deviation.
-    """
-
-    q25, q75 = np.percentile(x, [25.0, 75.0])
-    sigmag = 0.7413*(q75-q25)
-    return sigmag
-
-# -----------------------------------------------------------------------------
-
 
 def select_data_for_fit(wv_master, xpos_arc, solution):
     """Select information from valid arc lines to facilitate posterior fits.
@@ -1096,7 +1071,7 @@ def arccalibration_direct(wv_master,
     rfit = abs(yfit - (intercept + slope*xfit))
     if ldebug:
         print('rfit:', rfit)
-    sigma_rfit = sigmag(rfit)
+    sigma_rfit = sigmaG(rfit)
     if ldebug:
         print('sigmag:',sigma_rfit)
     nremoved = 0
@@ -1128,7 +1103,7 @@ def arccalibration_direct(wv_master,
     rfit = abs(yfit - poly(xfit))
     if ldebug:
         print('rfit:',rfit)
-    sigma_rfit = sigmag(rfit)
+    sigma_rfit = sigmaG(rfit)
     if ldebug:
         print('sigmag:',sigma_rfit)
     nremoved = 0
@@ -1161,7 +1136,7 @@ def arccalibration_direct(wv_master,
     rfit = abs(yfit - poly(xfit))
     if ldebug:
         print('rfit:',rfit)
-    sigma_rfit = sigmag(rfit)
+    sigma_rfit = sigmaG(rfit)
     if ldebug:
         print('sigmag:',sigma_rfit)
 

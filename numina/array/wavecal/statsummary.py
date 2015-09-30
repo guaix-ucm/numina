@@ -8,7 +8,7 @@ import numpy as np
 
 #------------------------------------------------------------------------------
 
-def sigmaG(x, LDEBUG = False):
+def sigmaG(x):
     """Compute a robust estimator of the standard deviation
 
     See Eq. 3.36 (page 84) in Statistics, Data Mining, and Machine
@@ -27,18 +27,15 @@ def sigmaG(x, LDEBUG = False):
         Robust estimator of the standar deviation
     """
 
-    q25, q75 = np.percentile(x,[25.0, 75.0])
-    sigmag = 0.7413*(q75-q25)
-
-    if LDEBUG:
-        print('>>> Robust standard deviation:',sigmag)
+    q25, q75 = np.percentile(x, [25.0, 75.0])
+    sigmag = 0.7413 * (q75 - q25)
 
     return sigmag
 
 
 #------------------------------------------------------------------------------
 
-def statsummary(x, LDEBUG = False):
+def statsummary(x, LDEBUG=False):
     """Compute basic statistical parameters
 
     Parameters
