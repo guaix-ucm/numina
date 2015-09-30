@@ -1,7 +1,11 @@
 from __future__ import division
 from __future__ import print_function
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    HAVE_PLOTS = True
+except ImportError:
+    HAVE_PLOTS = False
 import numpy as np
 from numpy.polynomial import polynomial
 import itertools
@@ -230,7 +234,7 @@ def fit_solution(wv_master,
     poly = polynomial.Polynomial(coeff)
     ypol = poly(xpol)-(crval1_approx+(xpol-1)*cdelt1_approx)
 
-    if lplot:
+    if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         # identified lines
@@ -351,7 +355,7 @@ def gen_triplets_master(wv_master, ldebug=False, lplot=False, lpause=False):
     triplets_master_sorted_list = \
       [triplets_master_list[i] for i in isort_ratios_master]
 
-    if lplot:
+    if lplot and HAVE_PLOTS:
         # Compute and plot histogram with position ratios
         bins_in = np.linspace(0.0, 1.0, 41)
         hist, bins_out = np.histogram(ratios_master, bins=bins_in)
@@ -627,7 +631,7 @@ def arccalibration_direct(wv_master,
     # Maximum allowed value for CDELT1
     cdelt1_max = (wv_end_search-wv_ini_search)/float(naxis1_arc-1)
 
-    if lplot:
+    if lplot and HAVE_PLOTS:
         # CDELT1 vs CRVAL1 diagram (original coordinates)
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -666,7 +670,7 @@ def arccalibration_direct(wv_master,
     error_crval1_search_norm = error_crval1_search/(wv_ini_search-wv_end_search)
 
     # Intermediate plots
-    if lplot:
+    if lplot and HAVE_PLOTS:
         # CDELT1 vs CRVAL1 diagram (original coordinates)
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -865,7 +869,7 @@ def arccalibration_direct(wv_master,
             raw_input('press <RETURN> to continue...')
 
     # Intermediate plots
-    if lplot:
+    if lplot and HAVE_PLOTS:
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with symbol size proportional to the inverse of the cost function
         fig = plt.figure()
