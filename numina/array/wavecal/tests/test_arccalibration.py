@@ -400,9 +400,9 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, 
                    ldebug=ldebug, lplot=lplot, lpause=lpause)
 
     if wv_ini_search is None:
-        wv_ini_search = wv_ini_master
+        wv_ini_search = wv_ini_master-0.1*(wv_end_master-wv_ini_master)
     if wv_end_search is None:
-        wv_end_search = wv_end_master
+        wv_end_search = wv_end_master+0.1*(wv_end_master-wv_ini_master)
 
     solution = arccalibration_direct(wv_master,
                                     ntriplets_master,
@@ -447,16 +447,22 @@ def test__execute_notebook_example(ldebug=False, lplot=False, lpause=False):
     print("TEST: test__execute_notebook_example... OK")
 
 
-@pytest.mark.xfail
+#@pytest.mark.xfail
 def test__execute_simple_case(ldebug=False, lplot=False, lpause=False):
     """Test the explanation of the ipython notebook example."""
     coeff, crval1_approx, cdelt1_approx = \
-        execute_arccalibration(nlines_master=15, wv_ini_arc=3000, wv_end_arc=7000,
-                               prob_line_master_in_arc=1.0, fraction_unknown_lines=0.0,
+        execute_arccalibration(nlines_master=15,
+                               error_xpos_arc=0.3,
+                               wv_ini_arc=3000, wv_end_arc=7000,
+                               prob_line_master_in_arc=1.0,
+                               fraction_unknown_lines=0.0,
                                frac_triplets_for_sum=0.5,
                                ldebug=ldebug, lplot=lplot, lpause=lpause)
 
-    assert 1 == 1
+    coeff_expected = np.array([2.99467778e+03, 3.89781863e+00, 1.22960881e-05])
+    assert np.allclose(coeff, coeff_expected)
+    assert np.allclose(crval1_approx, 2995.4384155)
+    assert np.allclose(cdelt1_approx, 3.91231531392)
 
     print("TEST: test__execute_simple_case... OK")
 
