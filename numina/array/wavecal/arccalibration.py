@@ -599,7 +599,7 @@ def arccalibration_direct(wv_master,
 
         # each triplet from the master list provides a potential solution
         # for CRVAL1 and CDELT1
-        for j_loc in range(j_loc_min, j_loc_max):
+        for j_loc in range(j_loc_min, j_loc_max+1):
             j1, j2, j3 = triplets_master_sorted_list[j_loc]
             # initial solutions for CDELT1, CRVAL1 and CRVALN
             cdelt1_temp = (wv_master[j3]-wv_master[j1])/dist13
