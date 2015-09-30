@@ -818,8 +818,12 @@ def arccalibration_direct(wv_master,
     # Compute the distance (in normalized coordinates) to those closest
     # solutions, and obtain the sum of distances considering only a fraction
     # of them (after sorting them in ascending order).
+    #
+    # Note: in the next instruction the int(???+0.5) function is used
+    # instead of round() because different results are obtained when
+    # using python 2.7 vs. 3.4
     ntriplets_for_sum = \
-      max(1, int(round(frac_triplets_for_sum*float(ntriplets_arc))))
+      max(1, int(frac_triplets_for_sum*float(ntriplets_arc)+0.5))
     funcost_search = np.zeros(len(itriplet_search))
     for k in range(len(itriplet_search)):
         itriplet_local = itriplet_search[k]
