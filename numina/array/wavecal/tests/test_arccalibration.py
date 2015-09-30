@@ -8,7 +8,11 @@ from ..arccalibration import fit_solution
 import pytest
 import numpy as np
 from numpy.polynomial import polynomial
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+    HAVE_PLOTS = True
+except ImportError:
+    HAVE_PLOTS = False
 
 
 # -----------------------------------------------------------------------------
@@ -221,7 +225,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     if sum(xpos_arc == xpos_arc_copy) != len(xpos_arc):
         raise ValueError('FATAL ERROR: arc line switch after introducing noise')
 
-    if lplot:
+    if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_xlim([1,naxis1_arc])
@@ -243,7 +247,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     coeff_original = polynomial.polyfit(xpos_arc, wv_arc, poly_degree)
     poly_original = polynomial.Polynomial(coeff_original)
 
-    if lplot:
+    if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_xlim([1,naxis1_arc])
@@ -317,7 +321,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         if lpause:
             raw_input('press <RETURN> to continue...')
 
-    if lplot:
+    if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_ylim([0.0,3.0])
@@ -401,20 +405,20 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, 
         wv_end_search = wv_end_master
 
     solution = arccalibration_direct(wv_master,
-                                                    ntriplets_master,
-                                                    ratios_master_sorted,
-                                                    triplets_master_sorted_list,
-                                                    xpos_arc,
-                                                    naxis1_arc,
-                                                    wv_ini_search, wv_end_search,
-                                                    error_xpos_arc,
-                                                    times_sigma_r,
-                                                    frac_triplets_for_sum,
-                                                    times_sigma_theil_sen,
-                                                    poly_degree_wfit,
-                                                    times_sigma_polfilt,
-                                                    times_sigma_inclusion,
-                                                    ldebug, lplot, lpause)
+                                    ntriplets_master,
+                                    ratios_master_sorted,
+                                    triplets_master_sorted_list,
+                                    xpos_arc,
+                                    naxis1_arc,
+                                    wv_ini_search, wv_end_search,
+                                    error_xpos_arc,
+                                    times_sigma_r,
+                                    frac_triplets_for_sum,
+                                    times_sigma_theil_sen,
+                                    poly_degree_wfit,
+                                    times_sigma_polfilt,
+                                    times_sigma_inclusion,
+                                    ldebug, lplot, lpause)
 
     coeff, crval1_approx, cdelt1_approx = fit_solution(wv_master,
                                                        xpos_arc,
