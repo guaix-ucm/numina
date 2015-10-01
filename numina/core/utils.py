@@ -19,17 +19,16 @@
 
 """Recipes for system checks. """
 
-from numina.core import BaseRecipe, RecipeInput
-from numina.core import define_input
+from numina.core import BaseRecipe
 from numina.core.requirements import ObservationResultRequirement
 
 
 class AlwaysFailRecipe(BaseRecipe):
-    '''A Recipe that always fails.'''
+    """A Recipe that always fails."""
 
     def __init__(self):
         super(AlwaysFailRecipe, self).__init__(
-            version="0.1.0"
+            version="1"
         )
 
     def run(self, requirements):
@@ -37,29 +36,26 @@ class AlwaysFailRecipe(BaseRecipe):
 
 
 class AlwaysSuccessRecipe(BaseRecipe):
-    '''A Recipe that always successes.'''
+    """A Recipe that always successes."""
 
     def __init__(self):
         super(AlwaysSuccessRecipe, self).__init__(
-            version="0.1.0"
+            version=1
         )
 
-    def run(self, requirements):
-        return self.RecipeResult()
+    def run(self, recipe_input):
+        return self.create_result()
 
 
-class OBSuccessRecipeInput(RecipeInput):
-    obresult = ObservationResultRequirement()
-
-
-@define_input(OBSuccessRecipeInput)
 class OBSuccessRecipe(BaseRecipe):
-    '''A Recipe that always successes, it requires an OB'''
+    """A Recipe that always successes, it requires an OB"""
+
+    obresult = ObservationResultRequirement()
 
     def __init__(self):
         super(OBSuccessRecipe, self).__init__(
-            version="0.1.0"
+            version=1
         )
 
-    def run(self, requirements):
-        return self.RecipeResult()
+    def run(self, recipe_input):
+        return self.create_result()
