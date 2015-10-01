@@ -59,7 +59,6 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold=0):
 
     if sx_shape[0] < nwinwidth:
         raise ValueError('findPeaks_spectrum> ERROR: invalid nwinwidth')
-        return np.array(ipeaks)
 
     i = nmed
     while i < sx_shape[0]-nmed:
