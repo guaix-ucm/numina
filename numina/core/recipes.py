@@ -47,14 +47,14 @@ from .dataholders import Product
 from .products import QualityControlProduct
 
 
-class BaseRecipeMethods(object):
+class BaseRecipe(object):
     """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
 
     def __init__(self, *args, **kwds):
-        super(BaseRecipeMethods, self).__init__()
+        super(BaseRecipe, self).__init__()
         self.__author__ = 'Unknown'
         self.__version__ = 1
         # These two are maintained
@@ -182,20 +182,12 @@ class BaseRecipeMethods(object):
         return cls.create_input(**result)
 
 
-class BaseRecipe(with_metaclass(abc.ABCMeta, BaseRecipeMethods)):
-    """Base class for all instrument recipes"""
-
-    @abc.abstractmethod
-    def run(self, recipe_input):
-        return self.create_result()
-
-
-class BaseRecipeAlt(with_metaclass(RecipeType, BaseRecipeMethods)):
+class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""
     pass
 
 
 @add_product(qc=Product(QualityControlProduct, dest='qc'))
-class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipeMethods)):
+class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""
     pass
