@@ -13,7 +13,7 @@ Install Virtualenv
 ------------------
 To install globally with pip (if you have pip 1.3 or greater installed globally)::
 
-  $ [sudo] pip install virtualenv
+  $ sudo yum install python-virtualenv
 
 For other ways of installing the package, check `virtualenv_install`_ webpage.
 

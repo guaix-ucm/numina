@@ -12,8 +12,8 @@ for details.
 Requirements
 ------------
 
-Python >= 2.7 is required. Additionally the following
-packages are required in order to work properly:
+Python >= 2.7 is required. Additionally the following packages are required
+in order to work properly:
 
  - `setuptools <http://pythonhosted.org/setuptools/>`_
  - `six <http://pythonhosted.org/six/>`_
@@ -21,7 +21,8 @@ packages are required in order to work properly:
  - `scipy <http://www.scipy.org>`_
  - `astropy <http://www.astropy.org>`_
  - `PyYaml <http://http://pyyaml.org/>`_
- - `singledispatch <https://pypi.python.org/pypi/singledispatch>`_ (only if Python < 3.4)
+ - `singledispatch <https://pypi.python.org/pypi/singledispatch>`_
+ (only if Python < 3.4)
 
 Additional packages are optionally required:
  - `sphinx`_  to build the documentation
@@ -62,7 +63,7 @@ And then installed following the standard procedure::
     $ python setup.py install
 
 Building the documentation
----------------------------
+--------------------------
 The Numina documentation is base on `sphinx`_. With the package installed, the 
 html documentation can be built from the `doc` directory::
 

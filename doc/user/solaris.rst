@@ -8,7 +8,7 @@ Numina Deployment in Solaris 10
 Solaris 10 is the Operative System (OS) under a substantial part
 of the GTC Control System runs. The installation of the
 Python stack in this OS is not trivial, so in the following a description
-of the required steps is done.
+of the required steps is provided.
 
 
 Basic Tools Installation
@@ -43,7 +43,7 @@ Numpy can be installed without any linear algebra library, but scipy can't.
 systems of simultaneous linear equations, least-squares solutions of linear
 systems of equations, eigenvalue problems, and singular value problems.
 
-ATLAS need to be built with LAPACK support, so both libraries can be found at
+ATLAS needs to be built with LAPACK support, so both libraries can be found at
 `source code of ATLAS
 <http://sourceforge.net/projects/math-atlas/files/Stable/>`_
 and
