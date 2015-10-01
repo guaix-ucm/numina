@@ -18,14 +18,16 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../'))
 
-# -- General configuration -----------------------------------------------------
+# -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+# needs_sphinx = '1.0'
 
-# Add any Sphinx extension module names here, as strings. They can be extensions
-# coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.pngmath']
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
+              'sphinx.ext.intersphinx', 'sphinx.ext.todo',
+              'sphinx.ext.coverage', 'sphinx.ext.pngmath']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['numina_templates']
@@ -41,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Numina'
-copyright = u'2010-2015, Sergio Pascual, Nicolás Cardiel'
+copyright = u'2010-2015, Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sanchez'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -178,8 +180,7 @@ htmlhelp_basename = 'Numinadoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'Numina.tex', u'Numina Documentation',
-   u'Sergio Pascual, Nicolás Cardiel', 'manual'),
+  ('index', 'Numina.tex', u'Numina Documentation',u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -212,17 +213,16 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'numina', u'Numina Documentation',
-     [u'Sergio Pascual', u'Nicolás Cardiel'], 1)
+     [u'Sergio Pascual', u'Nicolás Cardiel', u'Pablo Picazo-Sanchez'], 1)
 ]
 
 
 # -- Options for Epub output ---------------------------------------------------
-
 # Bibliographic Dublin Core info.
 epub_title = u'Numina'
-epub_author = u'Sergio Pascual'
-epub_publisher = u'Sergio Pascual'
-epub_copyright = u'2010-2014, Sergio Pascual'
+epub_author = u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
+epub_publisher = u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
+epub_copyright = u'2010-2014, Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

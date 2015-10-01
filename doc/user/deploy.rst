@@ -9,66 +9,52 @@ It's a great way to quickly test new libraries without cluttering your
 global site-packages or run multiple projects on the same machine which 
 depend on a particular library but not the same version of the library.
 
-Install virtualenv
+Install Virtualenv
 ------------------
-I install it with the package system of my OS, so that it ends in my
-global site-packages.
-
-With Fedora/EL is just::
+To install globally with pip (if you have pip 1.3 or greater installed globally)::
 
   $ sudo yum install python-virtualenv
 
-For other ways of installing the package, check `virtualenv`_ webpage.
+For other ways of installing the package, check `virtualenv_install`_ webpage.
 
 
-Create virtual environment
+Create Virtual Environment
 --------------------------
-Create the virtual environment enabling the packages already installed
-in the global site-packages via the OS package system. Some requirements
-(in particullar numpy and scipy) are difficult to build: they require
-compiling and external C and FORTRAN libraries to be installed. Hopefully
-you have already installed numpy and scipy.
+We urge reader to read the `virtualenv_usage`_ webpage to use and create
+new virtual environments.
 
-So the command is::
+As an example, a new virtual environment named numina is created where no
+packages but pip and setuptools are installed::
 
-  $ virtualenv --system-site-packages myenv
+  $ virtualenv numina
 
-If you need to create the virtualenv without global packages, drop the
-system-site-packages flag and add :option:`--no-site-packages`.
 
-Activate the environment
--------------------------
-Once the environment is created, you need to activate it. Just change
-directory into it and load with your command line interpreter the 
-script bin/activate.
+Activate the Environment
+------------------------
+Once the environment is created, you need to activate it. Just go to `bin/` folder
+created under numina and  load with your command line interpreter the
+script bin/activate::
 
-With bash::
-
-  $ cd myenv
-  $ . bin/activate
-  (myenv) $
-
-With csh/tcsh::
-
-  $ cd myenv
-  $ source bin/activate.csh
-  (myenv) $
+  $ cd numina/bin
+  $ source activate
+  (numina) $
 
 Notice that the prompt changes once you are activate the environment. To 
-deactivate it just type deactivate::
+deactivate it just type `deactivate`::
 
-  (myenv) $ deactivate
+  (numina) $ deactivate
   $ 
 
-Install Numina
----------------
-
+Numina Installation
+-------------------
 Numina is registered in the Python Package Index. That means (among 
-other things) that can be installed inside the environment with one command.::
+other things) that can be installed inside the environment with one command::
 
-  (myenv) $ pip install numina
+  (numina) $ pip install numina
   
 The requirements of numina will be downloaded and installed inside
-the virtual environment.
+the virtual environment automatically.
 
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenv: https://virtualenv.pypa.io/
+.. _virtualenv_install: https://virtualenv.pypa.io/en/latest/installation.html
+.. _virtualenv_usage: https://virtualenv.pypa.io/en/latest/userguide.html

@@ -42,8 +42,7 @@ def blockgen1d(block, size):
     interval (0, size) by 2 until its size is lesser or equal than block
 
     :param block: an integer maximum block size
-    :param size: original size of the interval,
-    it corresponds to a 0:size slice
+    :param size: original size of the interval, it corresponds to a 0:size slice
     :return: a list of slices
 
     Example:
@@ -54,6 +53,7 @@ def blockgen1d(block, size):
     '''
     def numblock(block, x):
         '''Compute recursively the numeric intervals
+
         '''
         a, b = x
         if b - a <= block:
