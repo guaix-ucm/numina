@@ -59,7 +59,6 @@ def test_trace_simple():
     assert_allclose(mm, result)
 
 
-@pytest.mark.xfail(reason='bug 27')
 def test_trace_bug_27():
     '''Trace doesn't work with a flat peak'''
     arr = np.zeros((100, 100))
