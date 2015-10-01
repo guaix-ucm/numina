@@ -11,84 +11,9 @@ from numpy.polynomial import polynomial
 import itertools
 import scipy.misc
 
+from ..robustfit import fit_theil_sen
+from .statsummary import sigmaG
 # -----------------------------------------------------------------------------
-
-
-def fit_theil_sen(x, y):
-    """Compute a robust linear fit using the Theil-Sen method.
-
-    See http://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator for details.
-    This function "pairs up sample points by the rank of their x-coordinates
-    (the point with the smallest coordinate being paired with the first point
-    above the median coordinate, etc.) and computes the median of the slopes of
-    the lines determined by these pairs of points".
-
-    Parameters
-    ----------
-    x : 1d numpy array, float
-        X coordinate.
-    y : 1d numpy array, float
-        Y coordinate.
-
-    Returns
-    -------
-    intercept : float
-        Intercept of the linear fit.
-    slope : float
-        Slope of the linear fit.
-
-    """
-
-    if x.ndim == y.ndim == 1:
-        n = x.size
-        if n == y.size:
-            if n < 5:
-                raise ValueError('n=' + str(n) +' is < 5')
-            result = []  # python list
-            if (n % 2) == 0:
-                iextra = 0
-            else:
-                iextra = 1
-            for i in range(n//2):
-                ii = i + n//2 + iextra
-                deltax = x[ii]-x[i]
-                deltay = y[ii]-y[i]
-                result.append(deltay/deltax)
-            slope = np.median(result)
-            result = y - slope*x  # numpy array
-            intercept = np.median(result)
-            return intercept, slope
-        else:
-            raise ValueError('Invalid input sizes')
-    else:
-        raise ValueError('Invalid input dimensions')
-
-# -----------------------------------------------------------------------------
-
-
-def sigmag(x):
-    """Compute a robust estimator of the standard deviation.
-
-    See Eq. 3.36 (page 84) in Statistics, Data Mining, and Machine
-    in Astronomy, by Ivezic, Connolly, VanderPlas & Gray.
-
-    Parameters
-    ----------
-    x : 1d numpy array, float
-        Array of input values which standard deviation is requested.
-
-    Returns
-    -------
-    sigmag : float
-        Robust estimator of the standard deviation.
-    """
-
-    q25, q75 = np.percentile(x, [25.0, 75.0])
-    sigmag = 0.7413*(q75-q25)
-    return sigmag
-
-# -----------------------------------------------------------------------------
-
 
 def select_data_for_fit(wv_master, xpos_arc, solution):
     """Select information from valid arc lines to facilitate posterior fits.
@@ -1146,7 +1071,7 @@ def arccalibration_direct(wv_master,
     rfit = abs(yfit - (intercept + slope*xfit))
     if ldebug:
         print('rfit:', rfit)
-    sigma_rfit = sigmag(rfit)
+    sigma_rfit = sigmaG(rfit)
     if ldebug:
         print('sigmag:',sigma_rfit)
     nremoved = 0
@@ -1178,7 +1103,7 @@ def arccalibration_direct(wv_master,
     rfit = abs(yfit - poly(xfit))
     if ldebug:
         print('rfit:',rfit)
-    sigma_rfit = sigmag(rfit)
+    sigma_rfit = sigmaG(rfit)
     if ldebug:
         print('sigmag:',sigma_rfit)
     nremoved = 0
@@ -1211,7 +1136,7 @@ def arccalibration_direct(wv_master,
     rfit = abs(yfit - poly(xfit))
     if ldebug:
         print('rfit:',rfit)
-    sigma_rfit = sigmag(rfit)
+    sigma_rfit = sigmaG(rfit)
     if ldebug:
         print('sigmag:',sigma_rfit)
 
