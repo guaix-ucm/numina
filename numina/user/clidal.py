@@ -38,7 +38,7 @@ def process_format_version_0(loaded_obs, loaded_data):
 class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
     def __init__(self, ob_table, reqs):
-        self.args_drps = init_drp_system()
+        self.args_drps = init_drp_system(ob_table)
         self.ob_table = ob_table
         init_store_backends()
         self._reqs = reqs
