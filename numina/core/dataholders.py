@@ -33,7 +33,7 @@ class EntryHolder(object):
                  default, choices=None, validation=True):
         if tipo is None:
             self.type = NullType()
-        elif tipo in [bool, str, int, float, complex]:
+        elif tipo in [bool, str, int, float, complex, list]:
             self.type = PlainPythonType(ref=tipo())
         elif isinstance(tipo, ListOfType):
             self.type = tipo
