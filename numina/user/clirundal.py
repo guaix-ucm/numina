@@ -124,12 +124,12 @@ def mode_run_common(args, mode):
     # Build the recipe input data structure
     # and copy needed files to workdir
     _logger.debug('parsing requirements')
-    for key, val in recipeclass.Requirements.iteritems():
+    for key, val in recipeclass.requirements().iteritems():
         _logger.info("recipe requires %r", val.type.__class__)
         _logger.info("%r is %r", val.dest, getattr(rinput, val.dest))
 
     _logger.debug('parsing products')
-    for req in recipeclass.Result.values():
+    for req in recipeclass.products().values():
         _logger.info('recipe provides %r', req)
 
     task = ProcessingTask(obsres=obsres, insconf={})
