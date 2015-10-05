@@ -20,7 +20,7 @@
 '''User command line interface of Numina.'''
 
 from __future__ import print_function
-
+from numina.core import init_drp_system
 
 def add(subparsers):
     parser_show_ins = subparsers.add_parser(
