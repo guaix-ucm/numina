@@ -80,3 +80,70 @@ def test_fake_pipeline_alt(monkeypatch):
         assert_valid_instrument(v)
         for m in v.modes:
             assert m.tagger is not None
+
+
+
+
+def test_pica(monkeypatch):
+
+    drpdata = """
+        name: FAKE
+        configurations:
+            default: {}
+        modes:
+            - description: A recipe that always fails
+              key: fail
+              name: Fail
+              tagger:
+                 - KEY1
+                 - KEY2
+            - description: Bias
+              key: bias
+              name: Bias
+              tagger:
+                 - KEY3
+        pipelines:
+            default:
+                recipes:
+                    bias: fake.recipes.BiasRecipe
+                    fail: numina.core.utils.AlwaysFailRecipe
+                version: 1
+    """
+
+    drp_to_test = """
+    id: 4
+    mode: bias
+    instrument: FAKE
+    images:
+     - ThAr_LR-U.fits
+    """
+
+
+    def mockreturn(group=None):
+        ep = pkg_resources.EntryPoint('fake', 'fake.loader')
+
+        def fake_loader():
+            return drp_load_data(drpdata)
+
+        monkeypatch.setattr(ep, 'load', lambda: fake_loader)
+        return [ep]
+
+    monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
+
+    # Loading observation result if exists
+    import yaml
+    loaded_obs = {}
+    loaded_ids = []
+    for doc in yaml.load_all(drp_to_test):
+        loaded_ids.append(doc['id'])
+        loaded_obs[doc['id']] = doc
+
+    m = init_drp_system(loaded_obs)
+    for k, v in m.items():
+        assert_valid_instrument(v)
+        for m in v.modes:
+            assert m.tagger is not None
+
+
+if __name__ == "__main__":
+    print "Hola"

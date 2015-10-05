@@ -53,7 +53,7 @@ class BaseDictDAL(AbsDAL):
     def __init__(self, ob_table, prod_table, req_table):
         super(BaseDictDAL, self).__init__()
 
-        self.args_drps = init_drp_system()
+        self.args_drps = init_drp_system(ob_table)
         init_store_backends()
         # Check that the structure de base is correct
         self.ob_table = ob_table
