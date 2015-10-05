@@ -105,10 +105,11 @@ def test_show_instrument(capsys, drpmocker):
     assert out == expected
 
 
+@pytest.mark.xfail(reason="instruments can be output in any order")
 def test_show_2_instruments(capsys, drpmocker):
     """Test that two instruments are shown"""
 
-    # FIXME: probably recipes can be output in any order
+    # FIXME: probably instruments can be output in any order
     drpmocker.add_drp('fake', drpdata)
     drpmocker.add_drp('fake2', drpdata2)
 
