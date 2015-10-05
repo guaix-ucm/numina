@@ -97,7 +97,7 @@ def print_recipe_template(recipe, name=None, insname=None,
     # Create a dictionary with templates
     requires = {}
     optional = {}
-    for req in recipe.Requirements.values():
+    for req in recipe.requirements.values():
         if req.hidden:
             # I Do not want to print it
             continue
@@ -121,7 +121,7 @@ def print_recipe_template(recipe, name=None, insname=None,
         print('# end of optional requirements')
     print(yaml.dump(final), end='')
     print('#products:')
-    for prod in recipe.Result.values():
+    for prod in recipe.products().values():
         print('# %s: %s' % print_io(prod))
     print('#logger:')
     print('# logfile: processing.log')
@@ -132,7 +132,7 @@ def print_recipe_template(recipe, name=None, insname=None,
 
 def print_requirements(recipe, pad=''):
 
-    for req in recipe.Requirements.values():
+    for req in recipe.requirements().values():
         if req.hidden:
             # I Do not want to print it
             continue

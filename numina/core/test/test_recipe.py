@@ -39,10 +39,6 @@ def test_metaclass_empty_base():
 
     assert hasattr(TestRecipe, 'RecipeResult')
 
-    assert hasattr(TestRecipe, 'Input')
-
-    assert hasattr(TestRecipe, 'Result')
-
     assert issubclass(TestRecipe.RecipeInput, RecipeInput)
 
     assert issubclass(TestRecipe.RecipeResult, RecipeResult)
@@ -61,14 +57,8 @@ def test_metaclass():
         someresult = Product(int, 'Some integer')
 
     assert hasattr(TestRecipe, 'RecipeInput')
-    assert hasattr(TestRecipe, 'Input')
 
     assert hasattr(TestRecipe, 'RecipeResult')
-    assert hasattr(TestRecipe, 'Result')
-
-    assert issubclass(TestRecipe.Input, RecipeInput)
-
-    assert issubclass(TestRecipe.Result, RecipeResult)
 
     assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
 
@@ -84,10 +74,6 @@ def test_recipe_with_autoqc():
     assert hasattr(TestRecipe, 'RecipeInput')
 
     assert hasattr(TestRecipe, 'RecipeResult')
-
-    assert hasattr(TestRecipe, 'Input')
-
-    assert hasattr(TestRecipe, 'Result')
 
     assert issubclass(TestRecipe.RecipeInput, RecipeInput)
 
