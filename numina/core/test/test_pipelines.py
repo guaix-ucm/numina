@@ -97,7 +97,3 @@ def test_fake_pipeline_alt(monkeypatch):
         assert_valid_instrument(v)
         for m in v.modes:
             assert m.tagger is not None
-
-
-if __name__ == "__main__":
-    print "Hola"
