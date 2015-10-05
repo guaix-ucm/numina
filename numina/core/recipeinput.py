@@ -114,8 +114,6 @@ class RecipeInputBuilderCLI(object):
         self.recipeClass = recipeClass
 
     def buildRI(self, ob):
-        RecipeInputClass = self.recipeClass.RecipeInput
-
         result = {}
         pipeline = 'default'
 
@@ -136,7 +134,7 @@ class RecipeInputBuilderCLI(object):
 
         tags = getattr(obsres, 'tags', {})
 
-        for key, req in RecipeInputClass.items():
+        for key, req in self.recipeClass.requirements().items():
 
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
@@ -169,4 +167,4 @@ class RecipeInputBuilderCLI(object):
                 except NoResultFound:
                     _logger.debug('No value found for %s', key)
 
-        return RecipeInputClass(**result)
+        return self.recipeClass.create_input(**result)
