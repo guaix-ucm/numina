@@ -134,7 +134,7 @@ class BaseRecipe(object):
         return hdr
 
     @classmethod
-    def buildRI(cls, ob, dal, pipeline='default'):
+    def build_recipe_input(cls, ob, dal, pipeline='default'):
         """Build a RecipeInput object."""
 
         result = {}
@@ -181,6 +181,8 @@ class BaseRecipe(object):
 
         return cls.create_input(**result)
 
+    # An alias required by GTC
+    buildRI = build_recipe_input
 
 class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""
