@@ -26,7 +26,6 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
-import abc
 import traceback
 import logging
 
