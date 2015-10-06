@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,7 +28,6 @@ import yaml
 
 from numina import __version__
 from numina.core import fully_qualified_name
-from numina.core.recipeinput import RecipeInputBuilderCLI
 from numina.core.dal.dictdal import BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
@@ -45,13 +44,24 @@ class Dict2DAL(BaseDictDAL):
         req_table= base['requirements']
         super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
 
+
 def process_format_version_1(loaded_obs, loaded_data):
     return Dict2DAL(loaded_obs, loaded_data)
 
-#----------------------------------------
 
 def mode_run_common(args, mode):
-    '''Observing mode processing mode of numina.'''
+    # FIXME: implement 'recipe' run mode
+    if mode == 'rec':
+        print('Mode not implemented yet')
+        return 1
+    elif mode == 'obs':
+        return mode_run_common_obs(args)
+    else:
+        raise ValueError('Not valid run mode {0}'.format(mode))
+
+
+def mode_run_common_obs(args):
+    """Observing mode processing mode of numina."""
 
     # Directories with relevant data
     workenv = WorkEnvironment(
@@ -99,12 +109,8 @@ def mode_run_common(args, mode):
     recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
     _logger.debug('recipe class is %s', recipeclass)
 
-    _logger.debug('recipe input builder class is %s', RecipeInputBuilderCLI)
-    ri_builder = RecipeInputBuilderCLI(recipeclass, dal)
-    _logger.debug('create RecipeInputBuilder %s', ri_builder)
-
-    _logger.debug('build recipe input object')
-    rinput = ri_builder.buildRI(obsres)
+    # FIXME: pass the correct pipeline
+    rinput = recipeclass.build_recipe_input(obsres, dal, pipeline='default')
 
     os.chdir(cwd)
 
