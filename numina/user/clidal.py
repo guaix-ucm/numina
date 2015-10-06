@@ -81,7 +81,6 @@ class ComandLineDAL(AbsDAL):
 
         _logger.info("instrument name: %s", obsres.instrument)
         my_ins = self.drps.query_by_name(obsres.instrument)
-        print(my_ins)
         if my_ins is None:
             raise ValueError('no instrument named %r'% obsres.instrument)
 
