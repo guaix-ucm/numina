@@ -21,16 +21,16 @@
 
 from __future__ import print_function
 
-import logging
+import warnings
 
 import yaml
 
 from numina import __version__
 from numina.core import DataFrameType, DataProductType
 from numina.core import import_object
-from numina.core import init_drp_system
+from numina.core.pipeline import DrpSystem
+from numina.user.clishowins import print_no_instrument
 
-_logger = logging.getLogger("numina")
 
 def add(subparsers):
     parser_show_rec = subparsers.add_parser(
@@ -58,16 +58,27 @@ def add(subparsers):
 
     return parser_show_rec
 
+
 def show_recipes(args):
-    this_recipe_print = print_recipe
+
+    drpsys = DrpSystem()
+
+    # Query instruments
+    if args.instrument:
+        name = args.instrument
+        res = [(name, drpsys.query_by_name(name))]
+    else:
+        res = drpsys.query_all().items()
+
+    # Function to print
     if args.template:
         this_recipe_print = print_recipe_template
+    else:
+        this_recipe_print = print_recipe
 
-    drps = init_drp_system()
-
-    for theins in drps.values():
+    for name, theins in res:
         # Per instrument
-        if not args.instrument or (args.instrument == theins.name):
+        if theins:
             for pipe in theins.pipelines.values():
                 for mode, recipe_fqn in pipe.recipes.items():
                     if not args.name or (recipe_fqn in args.name):
@@ -78,6 +89,8 @@ def show_recipes(args):
                             pipename=pipe.name,
                             modename=mode
                             )
+        else:
+            print_no_instrument(name)
 
 
 def print_recipe_template(recipe, name=None, insname=None,
@@ -97,7 +110,7 @@ def print_recipe_template(recipe, name=None, insname=None,
     # Create a dictionary with templates
     requires = {}
     optional = {}
-    for req in recipe.requirements.values():
+    for req in recipe.requirements().values():
         if req.hidden:
             # I Do not want to print it
             continue
@@ -168,5 +181,4 @@ def print_recipe(recipe, name=None, insname=None,
         print_requirements(recipe, pad='  ')
         print()
     except Exception as error:
-        _logger.warning('problem %s with recipe %r', error, recipe)
-
+        warnings.warn('problem {0} with recipe {1!r}'.format(error, recipe))

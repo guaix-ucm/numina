@@ -1,5 +1,5 @@
 
-from numina.core import init_drp_system
+from numina.core.pipeline import DrpSystem
 from numina.core.pipeline import LoadableDRP, Instrument, Pipeline
 from numina.core.pipelineload import drp_load_data
 import pkg_resources
@@ -32,8 +32,8 @@ def test_fake_pipeline(monkeypatch):
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
 
-    m = init_drp_system()
-    for k, v in m.items():
+    alldrps = DrpSystem().query_all()
+    for k, v in alldrps.items():
         assert_valid_instrument(v)
 
 
@@ -75,8 +75,8 @@ def test_fake_pipeline_alt(monkeypatch):
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
 
-    m = init_drp_system()
-    for k, v in m.items():
+    alldrps = DrpSystem().query_all()
+    for k, v in alldrps.items():
         assert_valid_instrument(v)
         for m in v.modes:
             assert m.tagger is not None

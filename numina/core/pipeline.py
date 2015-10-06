@@ -17,18 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''DRP loader.'''
+"""DRP loader and related classes"""
 
-import logging
-
+import warnings
 import pkg_resources
 
 
-_logger = logging.getLogger('numina')
-
-
 class Pipeline(object):
-    '''Base class for pipelines.'''
+    """Base class for pipelines."""
     def __init__(self, name, recipes, version=1):
         self.name = name
         self.recipes = recipes
@@ -39,13 +35,13 @@ class Pipeline(object):
 
 
 class InstrumentConfiguration(object):
-    '''Configuration of an Instrument.'''
+    """Configuration of an Instrument."""
     def __init__(self, values):
         self.values = values
 
 
 class Instrument(object):
-    '''Description of an Instrument.'''
+    """Description of an Instrument."""
     def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations
@@ -57,7 +53,7 @@ class Instrument(object):
 
 
 class ObservingMode(object):
-    '''Observing modes of an Instrument.'''
+    """Observing modes of an Instrument."""
     def __init__(self):
         self.name = ''
         self.uuid = ''
@@ -73,39 +69,69 @@ class ObservingMode(object):
 
 
 class LoadableDRP(object):
-    '''Container for the loaded DRP.'''
+    """Container for the loaded DRP."""
     def __init__(self, instruments):
         self.instruments = instruments
 
 
-def init_drp_system():
-    '''Load all available DRPs in 'numina.pipeline' entry_point.'''
+class DrpSystem(object):
+    """Load DRPs from the system."""
 
-    drp = {}
+    ENTRY = 'numina.pipeline.1'
 
-    for entry in pkg_resources.iter_entry_points(group='numina.pipeline.1'):
-        drp_loader = entry.load()
-        mod = drp_loader()
-        if mod:
-            drp.update(mod.instruments)
+    def __init__(self):
+
+        # Store queried DRPs
+        self._drp_cache = {}
+
+    def query_by_name(self, name):
+        """Cached version of 'query_drp_system'"""
+        if name in self._drp_cache:
+            return self._drp_cache[name]
         else:
-            _logger.warning('Module %s does not contain a valid DRP', mod)
+            drp = self._query_by_name(name)
+            if drp is None:
+                return drp
+            else:
+                self._drp_cache[name] = drp
+                return drp
 
-    return drp
+    def _query_by_name(self, name):
+        """Load a DRPs in 'numina.pipeline' entry_point by name"""
 
+        for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
+            if entry.name == name:
+                drp_loader = entry.load()
+                mod = drp_loader()
 
-def query_drp(name):
-    """Load a DRPs in 'numina.pipeline' entry_point by name"""
+                if mod:
+                    return mod.instruments[name]
+                else:
+                    warnings.warn('Module {0} does not contain a valid DRP'.format(mod), RuntimeWarning)
+        else:
+            return None
 
-    for entry in pkg_resources.iter_entry_points(group='numina.pipeline.1'):
-        if entry.name == name:
+    def query_all(self):
+        """Return all available DRPs in 'numina.pipeline' entry_point."""
+
+        drp = {}
+
+        for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
             drp_loader = entry.load()
             mod = drp_loader()
-            return mod
+            if mod:
+                drp.update(mod.instruments)
+            else:
+                warnings.warn('Module {0} does not contain a valid DRP'.format(mod), RuntimeWarning)
+
+        # Update cache
+        self._drp_cache = drp
+
+        return drp
 
 
 def init_store_backends(backend='default'):
-    '''Load storage backends.'''
+    """Load storage backends."""
 
     for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
         store_loader = entry.load()

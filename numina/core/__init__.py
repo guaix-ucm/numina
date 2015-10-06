@@ -24,7 +24,6 @@ from .pipeline import Instrument, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode
 from .objimport import import_object
 from .objimport import fully_qualified_name
-from .pipeline import init_drp_system
 from .pipelineload import drp_load
 from .requirements import DataProductRequirement
 from .requirements import Parameter, Requirement
