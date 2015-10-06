@@ -28,7 +28,7 @@ import yaml
 from numina import __version__
 from numina.core import DataFrameType, DataProductType
 from numina.core import import_object
-
+from numina.core import init_drp_system
 
 _logger = logging.getLogger("numina")
 
