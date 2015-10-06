@@ -78,21 +78,25 @@ class LoadableDRP(object):
         self.instruments = instruments
 
 
-def init_drp_system():
+def init_drp_system(ob_table):
     '''Load all available DRPs in 'numina.pipeline' entry_point.'''
 
     drp = {}
 
     for entry in pkg_resources.iter_entry_points(group='numina.pipeline.1'):
-        drp_loader = entry.load()
-        mod = drp_loader()
-        if mod:
-            drp.update(mod.instruments)
-        else:
-            _logger.warning('Module %s does not contain a valid DRP', mod)
-
+            for elem in ob_table:
+                for key in ob_table[elem]:
+                    try:
+                        if ob_table[elem][key].lower() == entry.name:
+                            drp_loader = entry.load()
+                            mod = drp_loader()
+                            if mod:
+                                drp.update(mod.instruments)
+                            else:
+                                _logger.warning('Module %s does not contain a valid DRP', mod)
+                    except:
+                        pass
     return drp
-
 
 def query_drp(name):
     """Load a DRPs in 'numina.pipeline' entry_point by name"""
