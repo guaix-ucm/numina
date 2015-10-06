@@ -27,7 +27,6 @@ from numina.core.dal import AbsDAL
 from numina.core.dal import NoResultFound
 from numina.core.dal import ObservingBlock
 from numina.core.dal import StoredProduct, StoredParameter
-from numina.core.recipeinput import RecipeInputBuilderGTC
 
 from numina.store import load
 from numina.store import init_store_backends
@@ -83,9 +82,6 @@ class BaseDictDAL(AbsDAL):
         ins = ob.instrument
         mode = ob.mode
         return self.search_recipe(ins, mode, pipeline)
-
-    def search_rib_from_ob(self, obsres, pipeline):
-        return RecipeInputBuilderGTC
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         '''Returns the first coincidence...'''
