@@ -69,7 +69,6 @@ def test_show_instrument(capsys, drpmocker):
     assert out == expected
 
 
-@pytest.mark.xfail(reason="instruments can be output in any order")
 def test_show_2_instruments(capsys, drpmocker):
     """Test that two instruments are shown"""
 
@@ -77,18 +76,20 @@ def test_show_2_instruments(capsys, drpmocker):
     drpmocker.add_drp('fake', drpdata)
     drpmocker.add_drp('fake2', drpdata2)
 
-    expected = ("Instrument: FAKE2\n"
-                " has configuration 'default'\n"
-                " has pipeline 'default', version 1\n"
-                "Instrument: FAKE\n"
-                " has configuration 'default'\n"
-                " has pipeline 'default', version 1\n"
-                )
+    expected = ["Instrument: FAKE2",
+                " has configuration 'default'",
+                " has pipeline 'default', version 1",
+                "Instrument: FAKE",
+                " has configuration 'default'",
+                " has pipeline 'default', version 1",
+                ""
+                ]
 
     main(['show-instruments'])
 
     out, err = capsys.readouterr()
-    assert out == expected
+    out = out.split("\n")
+    assert out.sort() == expected.sort()
 
 
 @pytest.mark.usefixtures("drpmocker")

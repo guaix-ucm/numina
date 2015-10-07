@@ -24,8 +24,62 @@ import numpy as np
 from numina.array.wavecal.arccalibration import select_data_for_fit
 from numina.array.wavecal.arccalibration import gen_triplets_master
 from numina.array.wavecal.arccalibration import arccalibration_direct
+from numina.array.wavecal.arccalibration import fit_solution
+from numina.array.wavecal.arccalibration import generate_triplets
+from numina.array.wavecal.arccalibration import segregate_solutions
+from numina.array.wavecal.arccalibration import cost_function
+from numina.array.wavecal.arccalibration import line_identification
+from numina.array.wavecal.arccalibration import create_solution
+from numina.array.wavecal.arccalibration import eliminate_duplicated
+from numina.array.wavecal.arccalibration import filterTlines
+from numina.array.wavecal.arccalibration import filterPlines
+from numina.array.wavecal.arccalibration import unidentified_lines
 
 import pytest
+
+def test__fit_solution(benchmark):
+    xpos_arc = np.array([57.44273096,110.78482061,168.53716769,195.4526101,223.12392626
+                        ,248.35958438,309.40926859,385.01932674,408.41698474,446.01819194
+                        ,456.89211403,486.24413101,574.37628244,588.18684753,614.73795651
+                        ,678.44219251,686.39558972,772.76291666,804.33827992,871.81922467
+                        ,907.09872511,957.50431088,1008.61034135,1019.59354694])
+
+    wv_master = np.array([ 3009.8509848,3059.61642447,3081.20209465,3081.40760108,3123.56235698
+                        ,3124.86606261,3131.2225497,3146.9205302,3155.38968089,3186.05606624
+                        ,3221.20380744,3223.72725136,3236.21012979,3344.27868591,3347.46817858
+                        ,3360.19001941,3503.18523552,3514.58026932,3640.53442512,3642.91862146
+                        ,3709.36246928,3716.70795029,3729.24781162,3731.58519121,3743.81183693
+                        ,3816.00524896,3835.26605413,3850.15420922,3852.22281336,3864.96262722
+                        ,3924.18547765,3962.43268285,3975.46869518,3984.7328162,4054.10895536
+                        ,4073.11637599,4105.49508458,4160.83990688,4186.98408089,4213.74617144
+                        ,4217.54884972,4238.40545978,4304.7333989,4370.60513265,4393.64455769
+                        ,4430.47829873,4440.4094712,4469.95762253,4480.34413844,4522.43604499
+                        ,4595.21595229,4657.88901648,4665.91557179,4751.17748556,4782.60685178
+                        ,4848.55625307,4883.95460694,4885.39679677,4984.3974946,4987.38698405
+                        ,4995.23118177,5005.90604978,5039.59675971,5095.13976912,5108.14651227
+                        ,5143.50591227,5179.58232287,5258.56415897,5260.23982542,5276.9372742
+                        ,5281.43836041,5307.97621409,5351.35418181,5359.80043969,5520.55944196
+                        ,5538.63459551,5581.39413441,5606.05058599,5610.7994123,5642.74102223
+                        ,5711.29137908,5770.85276443,5786.47572288,5798.33119557,5815.78592885
+                        ,5869.18869431,5951.3267235,6003.05942824,6041.56055259,6066.49142019
+                        ,6097.43690827,6102.84523885,6117.78174211,6270.70814421,6338.67415956
+                        ,6346.11243727,6399.57813438,6406.41399283,6475.55049734,6478.35423211
+                        ,6479.21585406,6494.4717844,6555.366719,6568.73550331,6584.04110788
+                        ,6585.72070775,6594.46971382,6614.64228043,6626.55172793,6650.99390744
+                        ,6677.96690011,6709.31191805,6711.60880377,6712.63744112,6753.11299424
+                        ,6793.92209317,6824.36053972,6908.75608458,6945.41244219,6949.09350467])
+
+    solution = np.array([{'lineok': True, 'funcost': 2.9381659264686282, 'type': 'E', 'id': 34}, {'lineok': True, 'funcost': 2.5375672335963904, 'type': 'D', 'id': 36}, {'lineok': True, 'funcost': 1.4210761376153089, 'type': 'A', 'id': 37}, {'lineok': True, 'funcost': 1.1423046689702476, 'type': 'A', 'id': 38}, {'lineok': True, 'funcost': 1.1423046689702476, 'type': 'B', 'id': 39}, {'lineok': True, 'funcost': 1.1423046689702476, 'type': 'C', 'id': 41}, {'lineok': False, 'funcost': None, 'type': None, 'id': None}, {'lineok': True, 'funcost': 1.0, 'type': 'C', 'id': 43}, {'lineok': True, 'funcost': 1.0, 'type': 'B', 'id': 44}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 45}, {'lineok': True, 'funcost': 1.0031581664318563, 'type': 'B', 'id': 46}, {'lineok': True, 'funcost': 1.0031581664318563, 'type': 'C', 'id': 47}, {'lineok': False, 'funcost': 22.431141463423998, 'type': 'T', 'id': 71}, {'lineok': False, 'funcost': None, 'type': None, 'id': None}, {'lineok': True, 'funcost': 1.6267102855305942, 'type': 'C', 'id': 50}, {'lineok': True, 'funcost': 1.6267102855305942, 'type': 'B', 'id': 51}, {'lineok': True, 'funcost': 1.6267102855305942, 'type': 'A', 'id': 52}, {'lineok': True, 'funcost': 1.1172400889579708, 'type': 'A', 'id': 53}, {'lineok': True, 'funcost': 1.1172400889579708, 'type': 'A', 'id': 54}, {'lineok': True, 'funcost': 1.1172400889579708, 'type': 'B', 'id': 55}, {'lineok': True, 'funcost': 1.566418634536179, 'type': 'C', 'id': 56}, {'lineok': False, 'funcost': None, 'type': None, 'id': None}, {'lineok': True, 'funcost': 2.9381659264686282, 'type': 'I', 'id': 58}, {'lineok': True, 'funcost': 2.9381659264686282, 'type': 'I', 'id': 60}])
+    poly_degree_wfit = 2
+    weighted=False
+
+    coeff, crval1_approx, cdelt1_approx = benchmark(fit_solution, wv_master, xpos_arc, solution, poly_degree_wfit, weighted)
+
+    coeff_expected = np.array([3.99875794e+03, 9.59950578e-01, 1.72739867e-05])
+    assert np.allclose(coeff, coeff_expected)
+    assert np.allclose(crval1_approx, 3996.42717772)
+    assert np.allclose(cdelt1_approx, 0.978303317095)
+
 
 def test__select_data_for_fit(benchmark):
     result1 = 10
@@ -34,12 +88,6 @@ def test__select_data_for_fit(benchmark):
                3031.96484489, 3467.49240452, 3874.34750735]
     result4 = [3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119]
     result5 = [2.71028128, 1.53826748, 1.51543978, 1.0607126, 1., 1., 1., 1.09576064, 1.57363445, 2.73684352]
-
-    wv_master = np.array(
-        [3719.414, 3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119])
-    xpos_arc = np.array(
-        [479.80265378, 900.87172336, 1029.97190349, 1088.24934745, 2032.73591163, 2319.3003487, 2647.40139802,
-         2796.56881705, 3031.96484489, 3467.49240452, 3874.34750735])
     solution = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0},
                 {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1},
                 {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2},
@@ -220,6 +268,158 @@ def test__arccalibration_direct(benchmark):
             assert solution[elem][key] == result[elem][key]
 
 
+def test__generate_triplets(benchmark):
+    error_xpos_arc = 2.0
+    times_sigma_r = 3.0
+    ntriplets_arc = 9
+    ratios_master_sorted = np.array([ 0.02184328,0.02527455,0.0304957,0.03438084,0.03742036,0.04635319,0.04660031,0.05324692,0.05951457,0.06354752,0.06718397,0.07106809,0.07686807,0.07717568,0.0921053,0.09395362,0.10300555,0.111412,0.11694588,0.12397103,0.13312126,0.13617566,0.14995055,0.16068975,0.16950047,0.17330385,0.17391359,0.18396938,0.19057313,0.19136161,0.19521306,0.20296934,0.20456454,0.21555369,0.21644702,0.221959,0.22640933,0.23737457,0.24809755,0.25000052,0.26423555,0.27394858,0.27924342,0.2907444,0.29123192,0.29176812,0.30902599,0.31358489,0.31841355,0.34122559,0.34235595,0.35288899,0.35359827,0.36353293,0.36702402,0.37908829,0.38933968,0.39636448,0.401412,0.40976032,0.42122571,0.42388476,0.42467836,0.43583294,0.45531247,0.4568731,0.46453749,0.4659409,0.46873677,0.46936456,0.47251639,0.4767212,0.49336252,0.49707006,0.51240726,0.52151004,0.53050243,0.53698866,0.53962241,0.54236877,0.54339257,0.55175873,0.56080674,0.56265132,0.56673622,0.5744313,0.57768773,0.58372711,0.60302269,0.60770066,0.61432759,0.62048126,0.62280281,0.6258793,0.62718949,0.6277152,0.62875959,0.63170436,0.63533289,0.64353931,0.65223638,0.65440983,0.65586881,0.65729612,0.66700622,0.67301429,0.67386773,0.67542249,0.67637123,0.68246237,0.68994429,0.69023421,0.69270524,0.6956529,0.69853111,0.70241113,0.70993814,0.71627404,0.7268545,0.72826688,0.72844509,0.72942564,0.73265467,0.73513481,0.73778137,0.73878426,0.74445809,0.74923807,0.75641675,0.76544484,0.76813789,0.76824297,0.77240046,0.78300667,0.78552105,0.78683996,0.79534855,0.80283717,0.80300668,0.80339398,0.8076628,0.80912867,0.81494942,0.81814918,0.82435124,0.82670893,0.82879068,0.83790705,0.85006325,0.85505932,0.8568466,0.86120831,0.86221298,0.86423998,0.87053289,0.88344245,0.88699695,0.88776771,0.89417802,0.90563544,0.9125819,0.91588158,0.91877364,0.92454624,0.9389257 ])
+    ntriplets_master = 165
+    triplets_master_sorted_list = [(2, 3, 10), (2, 3, 9), (2, 3, 8), (2, 3, 7), (2, 3, 6), (1, 2, 10), (2, 3, 5), (1, 2, 9), (2, 3, 4), (1, 2, 8), (1, 3, 10), (1, 2, 7), (1, 2, 6), (1, 3, 9), (1, 3, 8), (1, 2, 5), (1, 3, 7), (1, 3, 6), (1, 2, 4), (6, 7, 10), (0, 1, 10), (1, 3, 5), (0, 1, 9), (4, 5, 10), (1, 3, 4), (0, 2, 10), (0, 1, 8), (6, 7, 9), (0, 1, 7), (0, 3, 10), (0, 2, 9), (0, 1, 6), (4, 5, 9), (0, 3, 9), (5, 6, 10), (7, 8, 10), (0, 2, 8), (0, 1, 5), (0, 2, 7), (0, 3, 8), (0, 2, 6), (0, 3, 7), (0, 1, 4), (5, 6, 9), (4, 5, 8), (0, 3, 6), (0, 2, 5), (5, 7, 10), (6, 8, 10), (0, 3, 5), (4, 6, 10), (3, 4, 10), (7, 8, 9), (0, 2, 4), (2, 4, 10), (4, 5, 7), (6, 7, 8), (1, 4, 10), (0, 3, 4), (3, 4, 9), (5, 7, 9), (4, 7, 10), (2, 4, 9), (4, 6, 9), (1, 4, 9), (3, 5, 10), (5, 6, 8), (5, 8, 10), (2, 5, 10), (4, 5, 6), (6, 8, 9), (0, 4, 10), (1, 5, 10), (3, 4, 8), (2, 4, 8), (8, 9, 10), (3, 5, 9), (0, 4, 9), (4, 7, 9), (2, 5, 9), (1, 4, 8), (4, 8, 10), (0, 5, 10), (3, 4, 7), (1, 5, 9), (3, 6, 10), (2, 4, 7), (2, 6, 10), (1, 6, 10), (1, 4, 7), (3, 4, 6), (4, 6, 8), (0, 4, 8), (5, 8, 9), (3, 7, 10), (7, 9, 10), (2, 4, 6), (0, 5, 9), (2, 7, 10), (3, 5, 8), (1, 7, 10), (2, 5, 8), (0, 6, 10), (1, 4, 6), (3, 6, 9), (5, 7, 8), (6, 9, 10), (2, 6, 9), (1, 5, 8), (0, 4, 7), (1, 2, 3), (5, 6, 7), (1, 6, 9), (0, 1, 3), (0, 7, 10), (4, 8, 9), (3, 8, 10), (2, 8, 10), (0, 4, 6), (3, 7, 9), (3, 5, 7), (1, 8, 10), (0, 5, 8), (2, 7, 9), (2, 5, 7), (0, 6, 9), (5, 9, 10), (1, 7, 9), (1, 5, 7), (0, 8, 10), (0, 1, 2), (4, 7, 8), (3, 4, 5), (2, 4, 5), (4, 9, 10), (0, 7, 9), (3, 5, 6), (0, 5, 7), (2, 5, 6), (1, 4, 5), (4, 6, 7), (3, 6, 8), (2, 6, 8), (1, 5, 6), (3, 8, 9), (1, 6, 8), (2, 8, 9), (1, 8, 9), (0, 4, 5), (0, 5, 6), (0, 6, 8), (3, 9, 10), (0, 8, 9), (2, 9, 10), (1, 9, 10), (3, 7, 8), (2, 7, 8), (0, 9, 10), (1, 7, 8), (0, 2, 3), (0, 7, 8), (3, 6, 7), (2, 6, 7), (1, 6, 7), (0, 6, 7)]
+    naxis1_arc = 4096
+    wv_end_search = 4500
+    wv_ini_search = 3500
+
+    crvall_search_result = np.array([ 3624.89498025,3627.29664333,3632.89199981,3623.28454061,3858.99871411,3635.7875291,3617.05045178,3647.19178965,3625.3392893,3651.64102104,3657.78359128,3663.17597849,3670.7200489 ])
+    error_crval1_search_result = np.array([ 0.99814711,3.06023549,0.6964969,0.44948083,0.74883357,0.95819279,1.00502737,1.9888239,1.21296718,2.86837453,3.70072294,2.29344155,2.06741194])
+    itriplet_search_result = np.array([0,1,2,3,3,3,3,4,5,5,6,7,8])
+    clabel_search_result = [(0, 1, 2), (1, 2, 3), (2, 3, 4), (0, 1, 2), (4, 7, 8), (3, 4, 5), (2, 4, 5), (4, 5, 6), (1, 2, 3), (5, 6, 7), (6, 7, 8), (7, 8, 9), (8, 9, 10)]
+    cdelt1_search_norm_result = np.array([ 0.81098483,0.80021572,0.77900901,0.36243739,0.60381949,0.77263561,0.81040052,0.75036578,0.31416808,0.74293167,0.73358154,0.72616098,0.71686336])
+    error_cdelt1_search_norm_result = np.array([ 0.00416928,0.01207909,0.0021973,0.00083273,0.00138732,0.00177519,0.00186195,0.00345286,0.00186185,0.00440282,0.00539542,0.00306129,0.00240698])
+    results = benchmark(generate_triplets,ntriplets_arc, xpos_arc, error_xpos_arc, times_sigma_r,ratios_master_sorted, ntriplets_master,triplets_master_sorted_list, wv_master, naxis1_arc,wv_ini_search, wv_end_search)
+
+    assert np.allclose(crvall_search_result, results[0])
+    assert np.allclose(error_crval1_search_result, results[1])
+    assert np.allclose(itriplet_search_result, results[2])
+    assert np.allclose(clabel_search_result, results[3])
+    assert np.allclose(cdelt1_search_norm_result, results[4])
+    assert np.allclose(error_cdelt1_search_norm_result, results[5])
+
+
+def test__segregate_solutions(benchmark):
+    ntriplets_arc = 9
+    cdelt1_search_norm = np.array([ 0.81098483,0.80021572,0.77900901,0.36243739,0.60381949,0.77263561,0.81040052,0.75036578,0.31416808,0.74293167,0.73358154,0.72616098,0.71686336])
+
+    clabel_search = [(0, 1, 2), (1, 2, 3), (2, 3, 4), (0, 1, 2), (4, 7, 8), (3, 4, 5), (2, 4, 5), (4, 5, 6), (1, 2, 3), (5, 6, 7), (6, 7, 8), (7, 8, 9), (8, 9, 10)]
+
+    ntriplets_layered_list_result = [1, 1, 1, 4, 1, 2, 1, 1, 1]
+    cdelt1_layered_list_result = [np.array([ 0.81098483]), np.array([ 0.80021572]), np.array([ 0.77900901]), np.array([ 0.36243739,  0.60381949,  0.77263561,  0.81040052]), np.array([ 0.75036578]), np.array([ 0.31416808,  0.74293167]), np.array([ 0.73358154]), np.array([ 0.72616098]), np.array([ 0.71686336])]
+    crval1_layered_list_result = [np.array([ 0.12489498]), np.array([ 0.12729664]), np.array([ 0.132892]), np.array([ 0.12328454,  0.35899871,  0.13578753,  0.11705045]), np.array([ 0.14719179]), np.array([ 0.12533929,  0.15164102]), np.array([ 0.15778359]), np.array([ 0.16317598]), np.array([ 0.17072005])]
+    clabel_layered_list_result = [[(0, 1, 2)], [(1, 2, 3)], [(2, 3, 4)], [(0, 1, 2), (4, 7, 8), (3, 4, 5), (2, 4, 5)], [(4, 5, 6)], [(1, 2, 3), (5, 6, 7)], [(6, 7, 8)], [(7, 8, 9)], [(8, 9, 10)]]
+    results = benchmark(segregate_solutions, ntriplets_arc, itriplet_search, cdelt1_search_norm,error_cdelt1_search_norm, crval1_search_norm,error_crval1_search_norm, clabel_search)
+
+
+    assert np.allclose(ntriplets_layered_list_result, results[0])
+
+    assert len(cdelt1_layered_list_result) == len(results[1])
+    for elem in range(len(cdelt1_layered_list_result)):
+        assert np.allclose(cdelt1_layered_list_result[elem], results[1][elem])
+    assert len(crval1_layered_list_result) == len(results[2])
+    for elem in range(len(crval1_layered_list_result)):
+        assert np.allclose(crval1_layered_list_result[elem], results[2][elem])
+    assert len(clabel_layered_list_result) == len(results[3])
+    for elem in range(len(clabel_layered_list_result)):
+        assert np.allclose(clabel_layered_list_result[elem], results[3][elem])
+
+
+def test__cost_function(benchmark):
+    ntriplets_arc = 9
+    itriplet_search = np.array( [ 0, 1, 2, 3, 3, 3, 3, 4, 5, 5, 6, 7, 8])
+    cdelt1_search_norm = np.array([ 0.81098482919,0.800215718013,0.779009012748,0.362437392561,0.60381949184,0.772635608955,0.810400522799,0.750365776527,0.314168083467,0.742931669522,0.733581538475,0.72616098032,0.716863364966])
+    crval1_search_norm = np.array( [ 0.124894980252,0.12729664333,0.132891999812, 0.123284540615,0.358998714112,0.135787529105,0.117050451777,0.147191789652,0.125339289304,0.151641021037,0.157783591277,0.16317597849,0.170720048905])
+    ntriplets_layered_list = [1, 1, 1, 4, 1, 2, 1, 1, 1]
+    cdelt1_layered_list = [np.array([0.81098482919045956]), np.array([0.80021571801288927]), np.array([0.77900901274763745]), np.array([0.36243739256078988, 0.60381949184008299, 0.77263560895472405, 0.81040052279910924]), np.array([0.75036577652708636]), np.array([0.3141680834666627, 0.74293166952182976]), np.array([0.73358153847503893]), np.array([0.72616098032008025]), np.array([0.71686336496647218])]
+    crval1_layered_list = [np.array([0.1248949802524362]), np.array([0.12729664332976789]), np.array([0.13289199981183991]), np.array([0.12328454061477259, 0.35899871411175627, 0.13578752910482489, 0.11705045177706688]), np.array([0.14719178965245647]), np.array([0.12533928930427554, 0.15164102103666754]), np.array([0.15778359127693375]), np.array([0.16317597848991636]), np.array([0.17072004890489462])]
+    frac_triplets_for_sum = 0.5
+
+    funcost_layered_list = [np.array([ 3.86439246]), np.array([ 2.71028128]), np.array([ 1.53826748]), np.array([ 198.47263166,  103.00157997,    1.51543978,    4.21534537]), np.array([ 1.0607126]), np.array([ 252.68471095,1.]), np.array([ 1.09576064]), np.array([ 1.57363445]), np.array([ 2.73684352])]
+
+    results = benchmark(cost_function,frac_triplets_for_sum, ntriplets_arc, itriplet_search, cdelt1_search_norm, crval1_search_norm, ntriplets_layered_list, cdelt1_layered_list, crval1_layered_list)
+
+    assert len(funcost_layered_list) == len(results)
+    for elem in range(len(funcost_layered_list)):
+        assert np.allclose(funcost_layered_list[elem], results[elem])
+
+
+def test__line_identification(benchmark):
+    ntriplets_arc = 9
+    funcost_layered_list = [np.array([ 3.86439246]), np.array([ 2.71028128]), np.array([ 1.53826748]), np.array([ 198.47263166,  103.00157997,    1.51543978,    4.21534537]), np.array([ 1.0607126]), np.array([ 252.68471095,1.]), np.array([ 1.09576064]), np.array([ 1.57363445]), np.array([ 2.73684352])]
+    clabel_layered_list = [[(0, 1, 2)], [(1, 2, 3)], [(2, 3, 4)], [(0, 1, 2), (4, 7, 8), (3, 4, 5), (2, 4, 5)], [(4, 5, 6)], [(1, 2, 3), (5, 6, 7)], [(6, 7, 8)], [(7, 8, 9)], [(8, 9, 10)]]
+
+    diagonal_funcost_result = [[3.8643924558710081], [3.8643924558710081, 2.7102812846180808], [3.8643924558710081, 2.7102812846180808, 1.5382674829877947], [2.7102812846180808, 1.5382674829877947, 1.5154397771500536], [1.5382674829877947, 1.5154397771500536, 1.0607125972899634], [1.5154397771500536, 1.0607125972899634, 1.0], [1.0607125972899634, 1.0, 1.0957606427833742], [1.0, 1.0957606427833742, 1.5736344502886463], [1.0957606427833742, 1.5736344502886463, 2.7368435208772128], [1.5736344502886463, 2.7368435208772128], [2.7368435208772128]]
+    diagonal_ids_result = [[0], [1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9], [10]]
+
+    results = benchmark(line_identification,ntriplets_arc, funcost_layered_list,clabel_layered_list)
+
+    assert len(diagonal_funcost_result) == len(results[0])
+    for elem in range(len(diagonal_funcost_result)):
+        assert np.allclose(diagonal_funcost_result[elem], results[0][elem])
+
+    assert len(diagonal_ids_result) == len(results[1])
+    for elem in range(len(diagonal_ids_result)):
+        assert np.allclose(diagonal_ids_result[elem], results[1][elem])
+
+
+def test__create_solution(benchmark):
+    nlines_arc = 11
+    diagonal_funcost = [[3.8643924558710081], [3.8643924558710081, 2.7102812846180808], [3.8643924558710081, 2.7102812846180808, 1.5382674829877947], [2.7102812846180808, 1.5382674829877947, 1.5154397771500536], [1.5382674829877947, 1.5154397771500536, 1.0607125972899634], [1.5154397771500536, 1.0607125972899634, 1.0], [1.0607125972899634, 1.0, 1.0957606427833742], [1.0, 1.0957606427833742, 1.5736344502886463], [1.0957606427833742, 1.5736344502886463, 2.7368435208772128], [1.5736344502886463, 2.7368435208772128], [2.7368435208772128]]
+    diagonal_ids = [[0], [1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5], [6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9], [10]]
+
+    solution_result = [{'lineok': True, 'funcost': 3.8643924558710081, 'type': 'E', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    results = benchmark(create_solution,nlines_arc, diagonal_ids, diagonal_funcost)
+
+    assert results == solution_result
+
+
+def test__eliminate_duplicated(benchmark):
+    nlines_arc = 11
+    solution = [{'lineok': True, 'funcost': 3.8643924558710081, 'type': 'E', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    solution_result = [{'lineok': True, 'funcost': 3.8643924558710081, 'type': 'E', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    results = benchmark(eliminate_duplicated, nlines_arc, solution)
+
+    assert results == solution_result
+
+
+def test__filterTlines(benchmark):
+    solution = [{'lineok': True, 'funcost': 3.8643924558710081, 'type': 'E', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+    times_sigma_theil_sen = 10.0
+
+    solution_result = [{'lineok': True, 'funcost': 3.8643924558710081, 'type': 'E', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    results = benchmark(filterTlines, wv_master, xpos_arc, solution, times_sigma_theil_sen)
+
+    assert results == solution_result
+
+
+def test__filterPlines(benchmark):
+    xpos_arc = np.array([479.80265378,900.87172336,1029.97190349,1088.24934745,2032.73591163,2319.3003487,2647.40139802,2796.56881705,3031.96484489,3467.49240452,3874.34750735])
+    solution = [{'lineok': True, 'funcost': 3.8643924558710081, 'type': 'E', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+    poly_degree_wfit = 2
+    times_sigma_polfilt = 10.0
+
+    solution_result = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    results = benchmark(filterPlines, wv_master, xpos_arc, solution, poly_degree_wfit, times_sigma_polfilt)
+
+    assert results == solution_result
+
+
+def test__unidentified_lines(benchmark):
+    solution = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+    poly_degree_wfit = 2
+    nlines_arc = 11
+    nlines_master = 11
+    times_sigma_inclusion = 5.0
+
+    solution_result = [{'lineok': False, 'funcost': 3.8643924558710081, 'type': 'P', 'id': 0}, {'lineok': True, 'funcost': 2.7102812846180808, 'type': 'D', 'id': 1}, {'lineok': True, 'funcost': 1.5382674829877947, 'type': 'A', 'id': 2}, {'lineok': True, 'funcost': 1.5154397771500536, 'type': 'A', 'id': 3}, {'lineok': True, 'funcost': 1.0607125972899634, 'type': 'A', 'id': 4}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 5}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 6}, {'lineok': True, 'funcost': 1.0, 'type': 'A', 'id': 7}, {'lineok': True, 'funcost': 1.0957606427833742, 'type': 'A', 'id': 8}, {'lineok': True, 'funcost': 1.5736344502886463, 'type': 'D', 'id': 9}, {'lineok': True, 'funcost': 2.7368435208772128, 'type': 'E', 'id': 10}]
+
+    results = benchmark(unidentified_lines, wv_master, xpos_arc, solution, poly_degree_wfit, nlines_arc, nlines_master, times_sigma_inclusion)
+
+    assert results == solution_result
+
+
 # These are the values used for the plots
 cdelt1_search = np.array([0.19804269,0.19541287,0.19023419,0.0885073,0.14745287,0.1886778,0.19790001,0.18323951,0.07671992,0.1814241,0.17914079,0.17732869,0.17505821])
 cdelt1_search_norm = np.array([ 0.81098483,0.80021572,0.77900901,0.36243739,0.60381949,0.77263561,0.81040052,0.75036578,0.31416808,0.74293167,0.73358154,0.72616098,0.71686336])
@@ -238,6 +438,10 @@ clabel_search = np.array(['0,1,2', '1,2,3', '2,3,4', '0,1,2', '4,7,8', '3,4,5', 
 
 funcost_search = np.array([3.86439246,2.71028128,1.53826748,198.47263166,103.00157997,1.51543978,4.21534537,1.0607126,252.68471095,1.,1.09576064,1.57363445,2.73684352])
 funcost_layered_list = np.array([np.array([ 3.86439246]), np.array([ 2.71028128]), np.array([ 1.53826748]), np.array([ 198.47263166,  103.00157997,    1.51543978,    4.21534537]), np.array([ 1.0607126]), np.array([ 252.68471095,    1.        ]), np.array([ 1.09576064]), np.array([ 1.57363445]), np.array([ 2.73684352])])
+
+wv_master = np.array([3719.414, 3803.108, 3828.371, 3839.724, 4019.131, 4071.996, 4131.762, 4158.584, 4200.653, 4277.558, 4348.119])
+
+xpos_arc = np.array([479.80265378,900.87172336,1029.97190349,1088.24934745,2032.73591163,2319.3003487,2647.40139802,2796.56881705,3031.96484489,3467.49240452,3874.34750735])
 
 xmin = -0.05
 xmax =  1.05
