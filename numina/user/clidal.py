@@ -24,12 +24,13 @@ from numina.core.dal import NoResultFound
 from numina.core.dal import StoredProduct
 from numina.core.dal import StoredParameter
 from numina.core.dal import ObservingBlock
-from numina.core import init_drp_system
+from numina.core.pipeline import DrpSystem
 from numina.store import init_store_backends
 from numina.core import import_object
 from numina.core import obsres_from_dict
 
 _logger = logging.getLogger("numina.simpledal")
+
 
 def process_format_version_0(loaded_obs, loaded_data):
     return ComandLineDAL(loaded_obs, loaded_data)
@@ -38,10 +39,10 @@ def process_format_version_0(loaded_obs, loaded_data):
 class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
     def __init__(self, ob_table, reqs):
-        self.args_drps = init_drp_system()
         self.ob_table = ob_table
         init_store_backends()
         self._reqs = reqs
+        self.drps = DrpSystem()
 
     def search_rib_from_ob(self, obsres, pipeline):
         return None
@@ -50,14 +51,14 @@ class ComandLineDAL(AbsDAL):
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
 
-        this_drp = self.args_drps[obsres.instrument]
+        this_drp = self.drps.query_by_name(obsres.instrument)
         tagger = None
         for mode in this_drp.modes:
             if mode.key == obsres.mode:
                 tagger = mode.tagger
                 break
         else:
-            raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
+            raise ValueError('no mode for {0}.mode in instrument {0}.instrument'.format(obsres))
 
         if tagger is None:
             master_tags = {}
@@ -79,8 +80,7 @@ class ComandLineDAL(AbsDAL):
         _logger.info("Identifier of the observation result: %d", obsres.id)
 
         _logger.info("instrument name: %s", obsres.instrument)
-        my_ins = self.args_drps.get(obsres.instrument)
-
+        my_ins = self.drps.query_by_name(obsres.instrument)
         if my_ins is None:
             raise ValueError('no instrument named %r'% obsres.instrument)
 

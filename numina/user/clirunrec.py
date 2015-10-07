@@ -21,7 +21,7 @@
 
 import os
 
-from .cliruncommon import mode_run_common
+from .clirundal import mode_run_common
 
 def add(subparsers):
     parser_run_recipe = subparsers.add_parser(

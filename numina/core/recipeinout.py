@@ -107,8 +107,6 @@ class define_result(object):
         self.klass = resultClass
 
     def __call__(self, klass):
-        klass.Result = self.klass
-        # TODO: remove this name in the future
         klass.RecipeResult = self.klass
         return klass
 
@@ -123,8 +121,6 @@ class define_input(object):
         self.klass = inputClass
 
     def __call__(self, klass):
-        klass.Input = self.klass
-        # TODO: remove this name in the future
         klass.RecipeInput = self.klass
         return klass
 

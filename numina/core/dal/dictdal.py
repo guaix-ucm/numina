@@ -20,15 +20,13 @@
 """DAL for dictionary-based database of products."""
 
 from numina.core import import_object
-from numina.core import init_drp_system
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
 from numina.core.dal import AbsDAL
 from numina.core.dal import NoResultFound
 from numina.core.dal import ObservingBlock
 from numina.core.dal import StoredProduct, StoredParameter
-from numina.core.recipeinput import RecipeInputBuilderGTC
-
+from numina.core.pipeline import DrpSystem
 from numina.store import load
 from numina.store import init_store_backends
 
@@ -53,12 +51,12 @@ class BaseDictDAL(AbsDAL):
     def __init__(self, ob_table, prod_table, req_table):
         super(BaseDictDAL, self).__init__()
 
-        self.args_drps = init_drp_system()
         init_store_backends()
         # Check that the structure de base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
         self.req_table= req_table
+        self.drps = DrpSystem()
 
     def search_oblock_from_id(self, obsid):
         try:
@@ -73,7 +71,9 @@ class BaseDictDAL(AbsDAL):
         return klass
 
     def search_recipe_fqn(self, ins, mode, pipename):
-        drp = self.args_drps[ins]
+
+        drp = self.drps.query_by_name(ins)
+
         this_pipeline = drp.pipelines[pipename]
         recipes = this_pipeline.recipes
         recipe_fqn = recipes[mode]
@@ -83,9 +83,6 @@ class BaseDictDAL(AbsDAL):
         ins = ob.instrument
         mode = ob.mode
         return self.search_recipe(ins, mode, pipeline)
-
-    def search_rib_from_ob(self, obsres, pipeline):
-        return RecipeInputBuilderGTC
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         '''Returns the first coincidence...'''
@@ -106,7 +103,8 @@ class BaseDictDAL(AbsDAL):
         """Returns the first coincidence..."""
 
         klass = tipo.__class__
-        label = product_label(self.args_drps[ins], klass)
+        drp = self.drps.query_by_name(ins)
+        label = product_label(drp, klass)
 
         # search results of these OBs
         for prod in self.prod_table[ins]:
@@ -139,7 +137,7 @@ class BaseDictDAL(AbsDAL):
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
 
-        this_drp = self.args_drps[obsres.instrument]
+        this_drp = self.drps.query_by_name(obsres.instrument)
         tagger = None
         for mode in this_drp.modes:
             if mode.key == obsres.mode:

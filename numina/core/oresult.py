@@ -73,11 +73,10 @@ def obsres_from_dict(values):
 
     obsres = ObservationResult()
 
-    ikey = 'images'
+    ikey = 'frames'
     # Workaround
-    if 'frames' in values:
-        warnings.warn('Using deprecated key "frames" in obsres')
-        ikey = 'frames'
+    if 'images' in values:
+        ikey = 'images'
 
     obsres.id = values.get('id', 1)
     obsres.mode = values['mode']

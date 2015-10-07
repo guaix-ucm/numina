@@ -46,11 +46,6 @@ class DALInterface(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def search_rib_from_ob(self, ob, pipeline):
-        # returns RecipeInputBuilder
-        pass
-
-    @abstractmethod
     def obsres_from_proc_oblock_id(self, instrument, child_id):
         pass
 

@@ -26,7 +26,6 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
-import abc
 import traceback
 import logging
 
@@ -40,6 +39,7 @@ from .recipeinout import add_product
 from .metarecipes import RecipeType
 from .oresult import ObservationResult
 from .dal.stored import ObservingBlock
+from .dal.daliface import NoResultFound
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
 from .products import DataProductTag
@@ -134,7 +134,7 @@ class BaseRecipe(object):
         return hdr
 
     @classmethod
-    def buildRI(cls, ob, dal, pipeline='default'):
+    def build_recipe_input(cls, ob, dal, pipeline='default'):
         """Build a RecipeInput object."""
 
         result = {}
@@ -163,24 +163,30 @@ class BaseRecipe(object):
                 # Not sure how to handle this, or if it is needed...
                 result[key] = {}
             elif isinstance(req.type, DataProductTag):
-
-                prod = dal.search_prod_req_tags(
-                    req, obsres.instrument,
-                    tags, pipeline
-                    )
-
-                result[key] = prod.content
+                try:
+                    prod = dal.search_prod_req_tags(
+                        req, obsres.instrument,
+                        tags, pipeline
+                        )
+                    result[key] = prod.content
+                except NoResultFound:
+                    pass
             else:
                 # Still not clear what to do with the other types
+                try:
+                    param = dal.search_param_req(
+                        req, obsres.instrument,
+                        obsres.mode, pipeline
+                        )
+                    result[key] = param.content
+                except NoResultFound:
+                    pass
 
-                param = dal.search_param_req(
-                    req, obsres.instrument,
-                    obsres.mode, pipeline
-                    )
-                result[key] = param.content
 
         return cls.create_input(**result)
 
+    # An alias required by GTC
+    buildRI = build_recipe_input
 
 class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""

@@ -17,11 +17,12 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 from __future__ import print_function
+from numina.core.pipeline import DrpSystem
+from numina.user.clishowins import print_no_instrument
 
-from numina.core import init_drp_system
 
 def add(subparsers):
     parser_show_mode = subparsers.add_parser(
@@ -50,17 +51,24 @@ def add(subparsers):
 
 def show_observingmodes(args):
 
-    drps = init_drp_system()
+    drpsys = DrpSystem()
 
-    for theins in drps.values():
-        if not args.instrument or (args.instrument == theins.name):
+    if args.instrument:
+        name = args.instrument
+        res = [(name, drpsys.query_by_name(name))]
+    else:
+        res = drpsys.query_all().items()
+
+    for name, theins in res:
+        if theins:
             for mode in theins.modes:
                 if not args.name or (mode.key in args.name):
                     print_obsmode(mode, theins)
+        else:
+            print_no_instrument(name)
 
 
 def print_obsmode(obsmode, instrument, ins=False):
     print('Observing Mode: {0.name!r} ({0.key})'.format(obsmode))
     print(' summary:', obsmode.summary)
     print(' instrument:', instrument.name)
-

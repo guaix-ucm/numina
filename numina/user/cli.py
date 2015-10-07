@@ -27,7 +27,6 @@ from importlib import import_module
 from six.moves import configparser
 
 from numina import __version__
-from numina.core import init_drp_system
 
 from .xdgdirs import xdg_config_home
 from .logconf import numina_cli_logconf

@@ -43,13 +43,9 @@ class RecipeType(type):
 
         ResultClass = cls.create_prod_class(classname, filter_prods)
 
-        filter_attr['Result'] = ResultClass
-        filter_attr['Input'] = ReqsClass
         # TODO: Remove these in the future
         filter_attr['RecipeResult'] = ResultClass
         filter_attr['RecipeInput'] = ReqsClass
-        # Compatibility, just in case
-        filter_attr['RecipeRequirements'] = ResultClass
 
         return super(RecipeType, cls).__new__(
             cls, classname, parents, filter_attr)

@@ -17,10 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina, show-instruments functionallity."""
 
 from __future__ import print_function
-
+from numina.core.pipeline import DrpSystem
 
 def add(subparsers):
     parser_show_ins = subparsers.add_parser(
@@ -46,11 +46,19 @@ def add(subparsers):
 
 
 def show_instruments(args):
-    drps = init_drp_system()
-    for theins in drps.values():
-        if not args.name or (theins.name in args.name):
-            print_instrument(theins, modes=args.om)
+    mm = DrpSystem()
 
+    if args.name:
+        for name in args.name:
+            drp = mm.query_by_name(name)
+            if drp:
+                print_instrument(drp, modes=args.om)
+            else:
+                print_no_instrument(name)
+    else:
+        drps = mm.query_all()
+        for drp in drps.values():
+            print_instrument(drp, modes=args.om)
 
 def print_instrument(instrument, modes=True):
     print('Instrument:', instrument.name)
@@ -62,4 +70,9 @@ def print_instrument(instrument, modes=True):
         print(' has observing modes:')
         for mode in instrument.modes:
             print("  {0.name!r} ({0.key})".format(mode))
+
+
+def print_no_instrument(name):
+    print('No instrument named:', name)
+
 
