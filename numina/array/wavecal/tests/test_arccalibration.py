@@ -388,7 +388,7 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, 
     wv_master = simulate_master_table(my_seed, wv_ini_master, wv_end_master, nlines_master,
                                       ldebug=ldebug, lpause=lpause)
     ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-      gen_triplets_master(wv_master, ldebug=ldebug, lplot=lplot, lpause=lpause)
+      gen_triplets_master(wv_master)
 
     nlines_arc, xpos_arc, crval1_arc, cdelt1_arc, \
       c0_arc, c1_arc, c2_arc, ipos_wv_arc, coeff_original = \
@@ -417,18 +417,13 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, 
                                     times_sigma_theil_sen,
                                     poly_degree_wfit,
                                     times_sigma_polfilt,
-                                    times_sigma_inclusion,
-                                    ldebug, lplot, lpause)
+                                    times_sigma_inclusion)
 
     coeff, crval1_approx, cdelt1_approx = fit_solution(wv_master,
                                                        xpos_arc,
                                                        solution,
-                                                       naxis1_arc,
                                                        poly_degree_wfit,
-                                                       weighted=False,
-                                                       ldebug=ldebug,
-                                                       lplot=lplot,
-                                                       lpause=lpause)
+                                                       weighted=False)
     return coeff, crval1_approx, cdelt1_approx
 
 # -----------------------------------------------------------------------------

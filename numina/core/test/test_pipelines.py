@@ -63,10 +63,9 @@ def test_fake_pipeline_alt(drpmocker):
                 version: 1
     """
 
-    drpmocker.add_drp('FAKE', drpdata)
 
-    mydrp = DrpSystem().query_by_name('FAKE')
-    assert mydrp is not None
+    def mockreturn(group=None):
+        ep = pkg_resources.EntryPoint('fake', 'fake.loader')
 
     assert_valid_instrument(mydrp)
     for m in mydrp.modes:
@@ -75,51 +74,8 @@ def test_fake_pipeline_alt(drpmocker):
 
 def test_fake_pipeline_alt2(drpmocker):
 
-    drpdata = """
-        name: FAKE
-        configurations:
-            default: {}
-        modes:
-            - description: A recipe that always fails
-              key: fail
-              name: Fail
-              tagger:
-                 - KEY1
-                 - KEY2
-            - description: Bias
-              key: bias
-              name: Bias
-              tagger:
-                 - KEY3
-        pipelines:
-            default:
-                recipes:
-                    bias: fake.recipes.BiasRecipe
-                    fail: numina.core.utils.AlwaysFailRecipe
-                version: 1
-    """
-
-    ob_to_test = """
-    id: 4
-    mode: bias
-    instrument: FAKE
-    images:
-     - ThAr_LR-U.fits
-    """
-
-    drpmocker.add_drp('FAKE', drpdata)
-
-    import yaml
-    from numina.core.oresult import obsres_from_dict
-
-    oblock = obsres_from_dict(yaml.load(ob_to_test))
-
-    drp = DrpSystem().query_by_name(oblock.instrument)
-
-    assert drp is not None
-
-    assert_valid_instrument(drp)
-    for m in drp.modes:
-        assert m.tagger is not None
-
-    assert drp.pipelines[oblock.pipeline].get_recipe(oblock.mode) == 'fake.recipes.BiasRecipe'
+    m = init_drp_system()
+    for k, v in m.items():
+        assert_valid_instrument(v)
+        for m in v.modes:
+            assert m.tagger is not None
