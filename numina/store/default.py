@@ -1,3 +1,22 @@
+#
+# Copyright 2008-2015 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# Numina is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Numina is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from __future__ import print_function
 
 import warnings
@@ -26,6 +45,7 @@ def _(tag, obj, where):
         yaml.dump(tag.__dict__, fd)
     return where.task
 
+
 @dump.register(ErrorRecipeResult)
 def _(tag, obj, where):
     with open(where.result, 'w+') as fd:
@@ -33,14 +53,13 @@ def _(tag, obj, where):
 
     return where.result
 
+
 @dump.register(RecipeResult)
 def _(tag, obj, where):
 
     saveres = {}
-    for key in obj.__class__:
-        pc = obj.__class__[key]
+    for key, pc in obj.stored().items():
         val = getattr(obj, key)
-        #_logger.debug('dump %r of type %r', val, type(val))
         saveres[key] = dump(pc, val, where)
 
     with open(where.result, 'w+') as fd:
@@ -63,6 +82,7 @@ def _(tag, obj, where):
 @dump.register(PlainPythonType)
 def _(tag, obj, where):    
     return obj
+
 
 @dump.register(ArrayType)
 def _(tag, obj, where):
@@ -108,8 +128,10 @@ def _(tag, obj, where):
 def _(tag, obj, where):
     return [dump(tag, o, where) for o in obj]
 
+
 # FIXME: this is very convoluted
 from .defaultl import load_cli_storage as other
+
 
 def load_cli_storage():
     return other()
