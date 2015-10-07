@@ -48,6 +48,7 @@ class StoreType(type):
             cls, classname, parents, filter_in)
 
     def __setattr__(self, key, value):
+        """Define __setattr__ in 'classes' created with this metaclass."""
         self._add_attr(key, value)
 
     def _add_attr(self, key, value):
@@ -63,10 +64,6 @@ class StoreType(type):
     @classmethod
     def transform(cls, name, value):
         return name, value
-
-    def stored(cls):
-        return getattr(cls, '__stored__')
-
 
 class RecipeInOutType(StoreType):
     def __new__(cls, classname, parents, attributes):

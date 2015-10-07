@@ -45,12 +45,25 @@ class RecipeInOut(object):
     def __init__(self, *args, **kwds):
         super(RecipeInOut, self).__init__()
 
-    def validate(self):
-        '''Validate myself.'''
+    @classmethod
+    def stored(cls):
+        return cls.__stored__
 
-        # By default, validate each value
-        for key, req in self.__class__.items():
-            val = getattr(self, key)
+    def attrs(self):
+        res = {}
+        for key in self.stored():
+            res[key] = getattr(self, key)
+        return res
+
+    def validate(self):
+        """Validate myself."""
+
+        # Probably this is equal to __dict__
+        att = self.attrs()
+
+        strd = self.stored()
+        for key, req in self.stored().items():
+            val = att[key]
             req.validate(val)
 
         # Run checks defined in __checkers__
@@ -78,6 +91,7 @@ class BaseRecipeResult(object):
 
 class ErrorRecipeResult(BaseRecipeResult):
     def __init__(self, errortype, message, traceback):
+        super(ErrorRecipeResult, self).__init__()
         self.errortype = errortype
         self.message = message
         self.traceback = traceback
@@ -93,13 +107,13 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResul
     def __repr__(self):
         sclass = type(self).__name__
         full = []
-        for key, val in self.__class__.items():
+        for key, val in self.stored().items():
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
 
 class define_result(object):
-    '''Recipe decorator.'''
+    """Recipe decorator."""
     def __init__(self, resultClass):
         if not issubclass(resultClass, RecipeResult):
             msg = '%r does not derive from RecipeResult' % resultClass
@@ -112,7 +126,7 @@ class define_result(object):
 
 
 class define_input(object):
-    '''Recipe decorator.'''
+    """Recipe decorator."""
     def __init__(self, inputClass):
         if not issubclass(inputClass, RecipeInput):
             fmt = '%r does not derive from RecipeInput'
@@ -144,7 +158,7 @@ class add_requirement(object):
 
 class add_product(object):
     def __init__(self, **kwds):
-        # FIXME validate these inputs
+
         self.ext = {}
         for key, val in kwds.items():
             # FIXME validate these inputs
