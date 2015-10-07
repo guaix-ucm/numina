@@ -89,7 +89,7 @@ def test_show_2_instruments(capsys, drpmocker):
 
     out, err = capsys.readouterr()
     out = out.split("\n")
-    assert out == expected
+    assert out.sort() == expected.sort()
 
 
 @pytest.mark.usefixtures("drpmocker")
