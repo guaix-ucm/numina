@@ -21,9 +21,44 @@
 Base metaclasses
 """
 
-import collections
 from .dataholders import Product
 from .requirements import Requirement
+import weakref
+
+
+class StoreTypeAlt(type):
+    """Metaclass for storing members."""
+    def __new__(cls, classname, parents, attributes):
+
+        newattr = {}
+        __stored__ = weakref.WeakValueDictionary()
+        for p in parents:
+            stored = getattr(p, '__stored__', None)
+            if stored:
+                __stored__.update(stored)
+
+        newattr.update(attributes)
+
+        for name, val in newattr.items():
+            if cls.exclude(name, val):
+                nname, nval = cls.transform(name, val)
+                __stored__[nname] = nval
+
+        newattr['__stored__'] = __stored__
+
+        return super(StoreTypeAlt, cls).__new__(cls, classname, parents, newattr)
+
+    def __setattr__(self, name, value):
+        # This is difficult to control safely...
+        super(StoreTypeAlt, self).__setattr__(name, value)
+
+    @classmethod
+    def exclude(cls, name, value):
+        return False
+
+    @classmethod
+    def transform(cls, name, value):
+        return name, value
 
 
 class StoreType(type):
