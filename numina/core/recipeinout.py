@@ -81,6 +81,53 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     pass
 
 
+import weakref
+from .dataholders import EntryHolder
+
+
+class RecipeInputAlt(object):
+    #__metaclass__ = Meta
+    def __new__(cls, *args, **kwds):
+
+        # This could be in a metaclass instead
+        # Created at __new__ time
+        if not hasattr(cls, '__stored__'):
+            cls.__stored__ = weakref.WeakValueDictionary()
+            for key, req in cls.__dict__.items():
+                if isinstance(req, EntryHolder):
+                    if req.dest is None:
+                        req.dest = key
+                    cls.__stored__[key] = req
+
+        return super(RecipeInputAlt, cls).__new__(cls)
+
+    def __init__(self, *args, **kwds):
+        cls = self.__class__
+        # Used to hold set values
+        self._ps = {}
+
+        for key, req in cls.__stored__.items():
+            if key in kwds:
+                setattr(self, key, kwds[key])
+            else:
+                # Value not defined
+                setattr(self, key, req.default_value())
+
+    @classmethod
+    def stored(cls):
+        return cls.__stored__
+
+    def attrs(self):
+        return self._ps
+
+    def k__repr__(self):
+        sclass = type(self).__name__
+        full = []
+        for key, val in self.stored().items():
+            full.append('%s=%r' % (key, val))
+        return '%s(%s)' % (sclass, ', '.join(full))
+
+
 class BaseRecipeResult(object):
     def __new__(cls, *args, **kwds):
         return super(BaseRecipeResult, cls).__new__(cls)
