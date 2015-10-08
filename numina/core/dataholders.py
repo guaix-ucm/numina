@@ -31,6 +31,9 @@ from .types import ListOfType
 class EntryHolder(object):
     def __init__(self, tipo, description, destination, optional,
                  default, choices=None, validation=True):
+
+        super(EntryHolder, self).__init__()
+
         if tipo is None:
             self.type = NullType()
         elif tipo in [bool, str, int, float, complex, list]:
@@ -49,6 +52,23 @@ class EntryHolder(object):
         self.choices = choices
         self.validation = validation
 
+    def __get__(self, instance, owner):
+        """Getter of the descriptor protocol."""
+        if instance is None:
+            return self
+        else:
+            if self.dest in instance._ps:
+                return instance._ps[self.dest]
+            else:
+                return 'Undefined'
+
+    def __set__(self, instance, value):
+        """Setter of the descriptor protocol."""
+        cval = self.convert(value)
+        if self.choices and (cval not in self.choices):
+            raise ValueError('{} not in {}'.format(cval, self.choices))
+        instance._ps[self.dest] = cval
+
     def convert(self, val):
         return self.type.convert(val)
 
@@ -65,8 +85,8 @@ class EntryHolder(object):
         if self.optional:
             return None
         else:
-            fmt = 'Required %r of type %r not defined'
-            msg = fmt % (self.dest, self.type)
+            fmt = 'Required {0!r} of type {1!r} not defined'
+            msg = fmt.format(self.dest, self.type)
             raise ValueError(msg)
 
 
