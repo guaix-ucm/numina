@@ -24,16 +24,13 @@ import pkg_resources
 import numina.core.pipelineload as pload
 
 
-def create_mock_entry_point(monkeypatch, entry_name, drpdata):
+def create_mock_entry_point(monkeypatch, entry_name, drploader):
 
     loader = "%s.loader" % entry_name
 
     ep = pkg_resources.EntryPoint(entry_name, loader)
 
-    def fake_loader():
-        return pload.drp_load_data(drpdata)
-
-    monkeypatch.setattr(ep, 'load', lambda: fake_loader)
+    monkeypatch.setattr(ep, 'load', lambda: drploader)
 
     return ep
 
@@ -49,6 +46,17 @@ class DRPMocker(object):
 
         self.monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
 
-    def add_drp(self, name, data):
-        ep = create_mock_entry_point(self.monkeypatch, name, data)
+    def add_drp(self, name, loader):
+
+        if callable(loader):
+            ep = create_mock_entry_point(self.monkeypatch, name, loader)
+        else:
+            # Assume loader is data instead
+            drpdata = loader
+
+            def drploader():
+                return pload.drp_load_data(drpdata)
+
+            ep = create_mock_entry_point(self.monkeypatch, name, drploader)
+
         self._eps.append(ep)
