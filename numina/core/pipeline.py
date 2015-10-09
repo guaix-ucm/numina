@@ -68,12 +68,6 @@ class ObservingMode(object):
         self.tagger = None
 
 
-class LoadableDRP(object):
-    """Container for the loaded DRP."""
-    def __init__(self, instruments):
-        self.instruments = instruments
-
-
 class DrpSystem(object):
     """Load DRPs from the system."""
 
@@ -102,32 +96,32 @@ class DrpSystem(object):
         for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
             if entry.name == name:
                 drp_loader = entry.load()
-                mod = drp_loader()
+                drpins = drp_loader()
 
-                if mod:
-                    return mod.instruments[name]
+                if drpins:
+                    return drpins
                 else:
-                    warnings.warn('Module {0} does not contain a valid DRP'.format(mod), RuntimeWarning)
+                    warnings.warn('Module {0} does not contain a valid DRP'.format(drpins), RuntimeWarning)
         else:
             return None
 
     def query_all(self):
         """Return all available DRPs in 'numina.pipeline' entry_point."""
 
-        drp = {}
+        drps = {}
 
         for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
             drp_loader = entry.load()
-            mod = drp_loader()
-            if mod:
-                drp.update(mod.instruments)
+            drpins = drp_loader()
+            if drpins:
+                drps[drpins.name] = drpins
             else:
-                warnings.warn('Module {0} does not contain a valid DRP'.format(mod), RuntimeWarning)
+                warnings.warn('Module {0} does not contain a valid DRP'.format(drpins), RuntimeWarning)
 
         # Update cache
-        self._drp_cache = drp
+        self._drp_cache = drps
 
-        return drp
+        return drps
 
 
 def init_store_backends(backend='default'):

@@ -1,8 +1,8 @@
 
-from numina.core.pipeline import DrpSystem
-from numina.core.pipeline import LoadableDRP, Instrument, Pipeline
-from numina.core.pipelineload import drp_load_data
 import pkg_resources
+
+from numina.core.pipeline import DrpSystem
+from numina.core.pipeline import Instrument, Pipeline
 
 
 def assert_valid_instrument(instrument):
@@ -24,7 +24,7 @@ def test_fake_pipeline(monkeypatch):
             modes = None
             pipelines = {'default': Pipeline('default', {}, 1)}
             fake = Instrument('FAKE', confs, modes, pipelines)
-            return LoadableDRP({'fake': fake})
+            return fake
 
         ep = pkg_resources.EntryPoint('fake', 'fake.loader')
         monkeypatch.setattr(ep, 'load', lambda: fake_loader)
