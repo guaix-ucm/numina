@@ -79,7 +79,7 @@ def test_drpsys_faulty_instrument(drpmocker, recwarn):
     """Test that only one DRP is returned."""
 
     def faulty_loader():
-        pass
+        return 3
 
     drpmocker.add_drp('FAULTY', faulty_loader)
 
@@ -93,12 +93,12 @@ def test_drpsys_faulty_instrument(drpmocker, recwarn):
 
     w = recwarn.pop(RuntimeWarning)
 
-    expected = 'Object None does not contain a valid DRP'
+    expected = 'Object 3 does not contain a valid DRP'
     assert str(w.message) == expected
 
 
 @pytest.mark.parametrize("entryn",
-                         [('other',), ('fake1',)],
+                         ['other', 'fake1'],
                          ids=['different', 'lowercase']
                          )
 def test_drpsys_not_valid_name(drpmocker, recwarn, entryn):
@@ -106,7 +106,7 @@ def test_drpsys_not_valid_name(drpmocker, recwarn, entryn):
     # I like better the "with pytest.warn" mechanism
     # but I don't have yet pytest 2.8
 
-    drpmocker.add_drp(entryn, drpdata1)
+    drpmocker.add_drp(entryn, drpdata2)
 
     drpsys = DrpSystem()
 
@@ -118,7 +118,7 @@ def test_drpsys_not_valid_name(drpmocker, recwarn, entryn):
 
     w = recwarn.pop(RuntimeWarning)
 
-    expected = 'Entry name "{}" and DRP name "{}" differ'.format(entryn, 'FAKE1')
+    expected = 'Entry name "{}" and DRP name "{}" differ'.format(entryn, 'FAKE2')
     assert str(w.message) == expected
 
 
@@ -201,7 +201,7 @@ def test_ins_check_not_valid_data(recwarn):
 
     drpsys = DrpSystem()
 
-    result = drpsys.instrumentdrp_check(None, 'name')
+    result = drpsys.instrumentdrp_check("astring", 'noname')
 
     assert result is False
 
@@ -209,11 +209,11 @@ def test_ins_check_not_valid_data(recwarn):
 
     w = recwarn.pop(RuntimeWarning)
 
-    assert str(w.message) == 'Object None does not contain a valid DRP'
+    assert str(w.message) == "Object 'astring' does not contain a valid DRP"
 
 
 @pytest.mark.parametrize("entryn",
-                         [('other',), ('fake1',)],
+                         ['other', 'fake1'],
                          ids=['different', 'lowercase']
                          )
 def test_ins_check_not_valid_name(recwarn, entryn):
