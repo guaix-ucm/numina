@@ -98,10 +98,10 @@ class DrpSystem(object):
                 drp_loader = entry.load()
                 drpins = drp_loader()
 
-                if drpins:
+                if self.instrumentdrp_check(drpins, entry.name):
                     return drpins
                 else:
-                    warnings.warn('Module {0} does not contain a valid DRP'.format(drpins), RuntimeWarning)
+                    return None
         else:
             return None
 
@@ -113,15 +113,26 @@ class DrpSystem(object):
         for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
             drp_loader = entry.load()
             drpins = drp_loader()
-            if drpins:
+            if self.instrumentdrp_check(drpins, entry.name):
                 drps[drpins.name] = drpins
-            else:
-                warnings.warn('Module {0} does not contain a valid DRP'.format(drpins), RuntimeWarning)
 
         # Update cache
         self._drp_cache = drps
 
         return drps
+
+    def instrumentdrp_check(self, drpins, entryname):
+        if isinstance(drpins, InstrumentDRP):
+            if drpins.name == entryname:
+                return True
+            else:
+                msg = 'Entry name {} and DRP name {} differ'.format(entryname, drpins.name)
+                warnings.warn(msg, RuntimeWarning)
+                return False
+        else:
+            msg = 'Object {} does not contain a valid DRP'.format(drpins)
+            warnings.warn(msg, RuntimeWarning)
+            return False
 
 
 def init_store_backends(backend='default'):
