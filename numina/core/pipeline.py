@@ -40,8 +40,8 @@ class InstrumentConfiguration(object):
         self.values = values
 
 
-class Instrument(object):
-    """Description of an Instrument."""
+class InstrumentDRP(object):
+    """Description of an Instrument Data Reduction Pipeline"""
     def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations
@@ -66,12 +66,6 @@ class ObservingMode(object):
         self.date = ''
         self.reference = ''
         self.tagger = None
-
-
-class LoadableDRP(object):
-    """Container for the loaded DRP."""
-    def __init__(self, instruments):
-        self.instruments = instruments
 
 
 class DrpSystem(object):
@@ -102,32 +96,43 @@ class DrpSystem(object):
         for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
             if entry.name == name:
                 drp_loader = entry.load()
-                mod = drp_loader()
+                drpins = drp_loader()
 
-                if mod:
-                    return mod.instruments[name]
+                if self.instrumentdrp_check(drpins, entry.name):
+                    return drpins
                 else:
-                    warnings.warn('Module {0} does not contain a valid DRP'.format(mod), RuntimeWarning)
+                    return None
         else:
             return None
 
     def query_all(self):
         """Return all available DRPs in 'numina.pipeline' entry_point."""
 
-        drp = {}
+        drps = {}
 
         for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
             drp_loader = entry.load()
-            mod = drp_loader()
-            if mod:
-                drp.update(mod.instruments)
-            else:
-                warnings.warn('Module {0} does not contain a valid DRP'.format(mod), RuntimeWarning)
+            drpins = drp_loader()
+            if self.instrumentdrp_check(drpins, entry.name):
+                drps[drpins.name] = drpins
 
         # Update cache
-        self._drp_cache = drp
+        self._drp_cache = drps
 
-        return drp
+        return drps
+
+    def instrumentdrp_check(self, drpins, entryname):
+        if isinstance(drpins, InstrumentDRP):
+            if drpins.name == entryname:
+                return True
+            else:
+                msg = 'Entry name "{}" and DRP name "{}" differ'.format(entryname, drpins.name)
+                warnings.warn(msg, RuntimeWarning)
+                return False
+        else:
+            msg = 'Object {0!r} does not contain a valid DRP'.format(drpins)
+            warnings.warn(msg, RuntimeWarning)
+            return False
 
 
 def init_store_backends(backend='default'):

@@ -27,8 +27,7 @@ import yaml
 from .objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
-from .pipeline import LoadableDRP
-from .pipeline import Instrument
+from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
 
 
@@ -56,12 +55,9 @@ def drp_load(package, resource):
 
 def drp_load_data(data):
     """Load the DRPS from data."""
-    ins_all = {}
-    for yld in yaml.load_all(data):
-        ins = load_instrument(yld)
-        ins_all[ins.name] = ins
-
-    return LoadableDRP(ins_all)
+    drpdict = yaml.load(data)
+    ins = load_instrument(drpdict)
+    return ins
 
 
 def load_modes(node):
@@ -156,7 +152,7 @@ def load_instrument(node):
     trans['modes'] = load_modes(mode_node)
     trans['configurations'] = load_confs(conf_node)
     trans['products'] = prod_node
-    return Instrument(**trans)
+    return InstrumentDRP(**trans)
 
 
 def print_i(ins):
