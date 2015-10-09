@@ -1,7 +1,8 @@
 
 import pytest
 
-from ..pipeline import DrpSystem
+from ..pipeline import DrpSystem, InstrumentDRP
+from ..pipelineload import drp_load_data
 
 drpdata1 = """
     name: FAKE1
@@ -61,7 +62,7 @@ def test_drpsys_one_instrument(drpmocker):
 
     ldrp = drpsys.query_by_name('FAKE1')
 
-    assert ldrp is not None
+    assert isinstance(ldrp, InstrumentDRP)
     assert ldrp.name == 'FAKE1'
 
     ldrp2 = drpsys.query_by_name('OTHER')
@@ -74,6 +75,53 @@ def test_drpsys_one_instrument(drpmocker):
     assert alldrps['FAKE1'].name == ldrp.name
 
 
+def test_drpsys_faulty_instrument(drpmocker, recwarn):
+    """Test that only one DRP is returned."""
+
+    def faulty_loader():
+        pass
+
+    drpmocker.add_drp('FAULTY', faulty_loader)
+
+    drpsys = DrpSystem()
+
+    ldrp = drpsys.query_by_name('FAULTY')
+
+    assert ldrp is None
+
+    assert len(recwarn.list) == 1
+
+    w = recwarn.pop(RuntimeWarning)
+
+    expected = 'Object None does not contain a valid DRP'
+    assert str(w.message) == expected
+
+
+@pytest.mark.parametrize("entryn",
+                         [('other',), ('fake1',)],
+                         ids=['different', 'lowercase']
+                         )
+def test_drpsys_not_valid_name(drpmocker, recwarn, entryn):
+
+    # I like better the "with pytest.warn" mechanism
+    # but I don't have yet pytest 2.8
+
+    drpmocker.add_drp(entryn, drpdata1)
+
+    drpsys = DrpSystem()
+
+    ldrp = drpsys.query_by_name(entryn)
+
+    assert ldrp is None
+
+    assert len(recwarn.list) == 1
+
+    w = recwarn.pop(RuntimeWarning)
+
+    expected = 'Entry name "{}" and DRP name "{}" differ'.format(entryn, 'FAKE1')
+    assert str(w.message) == expected
+
+
 def test_drpsys_2_instruments(drpmocker):
     """Test that two DRPs are returned"""
 
@@ -84,12 +132,12 @@ def test_drpsys_2_instruments(drpmocker):
 
     ldrp1 = drpsys.query_by_name('FAKE1')
 
-    assert ldrp1 is not None
+    assert isinstance(ldrp1, InstrumentDRP)
     assert ldrp1.name == 'FAKE1'
 
     ldrp2 = drpsys.query_by_name('FAKE2')
 
-    assert ldrp2 is not None
+    assert isinstance(ldrp2, InstrumentDRP)
     assert ldrp2.name == 'FAKE2'
 
     ldrp3 = drpsys.query_by_name('OTHER')
@@ -124,3 +172,66 @@ def test_drpsys_no_instrument():
 
     alldrps = drpsys.query_all()
     assert len(alldrps) == 0
+
+
+def test_drpsys_from_cache(drpmocker):
+    """Test that only one DRP is returned."""
+
+    drpmocker.add_drp('FAKE1', drpdata1)
+
+    drpsys = DrpSystem()
+
+    ldrp1 = drpsys.query_by_name('FAKE1')
+
+    assert isinstance(ldrp1, InstrumentDRP)
+    assert ldrp1.name == 'FAKE1'
+
+    ldrp2 = drpsys.query_by_name('FAKE1')
+
+    assert isinstance(ldrp2, InstrumentDRP)
+    assert ldrp2.name == 'FAKE1'
+
+    assert ldrp1 is ldrp2
+
+
+def test_ins_check_not_valid_data(recwarn):
+
+    # I like better the "with pytest.warn" mechanism
+    # but I don't have yet pytest 2.8
+
+    drpsys = DrpSystem()
+
+    result = drpsys.instrumentdrp_check(None, 'name')
+
+    assert result is False
+
+    assert len(recwarn.list) == 1
+
+    w = recwarn.pop(RuntimeWarning)
+
+    assert str(w.message) == 'Object None does not contain a valid DRP'
+
+
+@pytest.mark.parametrize("entryn",
+                         [('other',), ('fake1',)],
+                         ids=['different', 'lowercase']
+                         )
+def test_ins_check_not_valid_name(recwarn, entryn):
+
+    # I like better the "with pytest.warn" mechanism
+    # but I don't have yet pytest 2.8
+
+    ldrp1 = drp_load_data(drpdata1)
+
+    drpsys = DrpSystem()
+
+    result = drpsys.instrumentdrp_check(ldrp1, entryn)
+
+    assert result is False
+
+    assert len(recwarn.list) == 1
+
+    w = recwarn.pop(RuntimeWarning)
+
+    expected = 'Entry name "{}" and DRP name "{}" differ'.format(entryn, ldrp1.name)
+    assert str(w.message) == expected
