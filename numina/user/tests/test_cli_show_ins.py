@@ -6,7 +6,7 @@ from ..cli import main
 
 
 drpdata = """
-    name: FAKE
+    name: FAKE1
     configurations:
         default: {}
     modes:
@@ -55,10 +55,10 @@ drpdata2 = """
 
 
 def test_show_instrument(capsys, drpmocker):
-    """Test that one instrumenst is shown"""
-    drpmocker.add_drp('fake', drpdata)
+    """Test that one instrument is shown"""
+    drpmocker.add_drp('FAKE1', drpdata)
 
-    expected = ("Instrument: FAKE\n"
+    expected = ("Instrument: FAKE1\n"
                 " has configuration 'default'\n"
                 " has pipeline 'default', version 1\n"
                 )
@@ -73,13 +73,13 @@ def test_show_2_instruments(capsys, drpmocker):
     """Test that two instruments are shown"""
 
     # FIXME: probably instruments can be output in any order
-    drpmocker.add_drp('fake', drpdata)
-    drpmocker.add_drp('fake2', drpdata2)
+    drpmocker.add_drp('FAKE1', drpdata)
+    drpmocker.add_drp('FAKE2', drpdata2)
 
     expected = ["Instrument: FAKE2",
                 " has configuration 'default'",
                 " has pipeline 'default', version 1",
-                "Instrument: FAKE",
+                "Instrument: FAKE1",
                 " has configuration 'default'",
                 " has pipeline 'default', version 1",
                 ""
