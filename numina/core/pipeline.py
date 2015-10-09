@@ -40,8 +40,8 @@ class InstrumentConfiguration(object):
         self.values = values
 
 
-class Instrument(object):
-    """Description of an Instrument."""
+class InstrumentDRP(object):
+    """Description of an Instrument Data Reduction Pipeline"""
     def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations

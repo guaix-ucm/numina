@@ -27,7 +27,7 @@ import yaml
 from .objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
-from .pipeline import Instrument
+from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
 
 
@@ -152,7 +152,7 @@ def load_instrument(node):
     trans['modes'] = load_modes(mode_node)
     trans['configurations'] = load_confs(conf_node)
     trans['products'] = prod_node
-    return Instrument(**trans)
+    return InstrumentDRP(**trans)
 
 
 def print_i(ins):

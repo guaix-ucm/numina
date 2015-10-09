@@ -20,7 +20,7 @@
 from .recipes import BaseRecipe
 from .recipes import BaseRecipeAutoQC
 from .dataframe import DataFrame
-from .pipeline import Instrument, Pipeline, InstrumentConfiguration
+from .pipeline import InstrumentDRP, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode
 from .objimport import import_object
 from .objimport import fully_qualified_name

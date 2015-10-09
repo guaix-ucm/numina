@@ -2,11 +2,11 @@
 import pkg_resources
 
 from numina.core.pipeline import DrpSystem
-from numina.core.pipeline import Instrument, Pipeline
+from numina.core.pipeline import InstrumentDRP, Pipeline
 
 
 def assert_valid_instrument(instrument):
-    assert isinstance(instrument, Instrument)
+    assert isinstance(instrument, InstrumentDRP)
 
     pipes = instrument.pipelines
     assert 'default' in pipes
@@ -23,7 +23,7 @@ def test_fake_pipeline(monkeypatch):
             confs = None
             modes = None
             pipelines = {'default': Pipeline('default', {}, 1)}
-            fake = Instrument('FAKE', confs, modes, pipelines)
+            fake = InstrumentDRP('FAKE', confs, modes, pipelines)
             return fake
 
         ep = pkg_resources.EntryPoint('fake', 'fake.loader')
