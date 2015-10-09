@@ -126,11 +126,11 @@ class DrpSystem(object):
             if drpins.name == entryname:
                 return True
             else:
-                msg = 'Entry name {} and DRP name {} differ'.format(entryname, drpins.name)
+                msg = 'Entry name "{}" and DRP name "{}" differ'.format(entryname, drpins.name)
                 warnings.warn(msg, RuntimeWarning)
                 return False
         else:
-            msg = 'Object {} does not contain a valid DRP'.format(drpins)
+            msg = 'Object {0!r} does not contain a valid DRP'.format(drpins)
             warnings.warn(msg, RuntimeWarning)
             return False
 
