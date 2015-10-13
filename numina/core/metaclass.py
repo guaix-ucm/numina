@@ -51,7 +51,8 @@ class StoreType(type):
 
     def _add_attr(self, key, value):
         if self.exclude(key, value):
-            self.__numina_stored__[key] = value
+            nkey, nvalue = self.transform(key, value)
+            self.__numina_stored__[nkey] = nvalue
 
         super(StoreType, self).__setattr__(key, value)
 
