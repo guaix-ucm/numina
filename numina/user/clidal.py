@@ -25,7 +25,7 @@ from numina.dal import StoredProduct
 from numina.dal import StoredParameter
 from numina.dal import ObservingBlock
 from numina.core.pipeline import DrpSystem
-from numina.store import init_store_backends
+from numina.core.pipeline import init_store_backends
 from numina.core import import_object
 from numina.core import obsres_from_dict
 

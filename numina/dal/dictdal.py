@@ -23,8 +23,8 @@ from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
 from numina.core.pipeline import DrpSystem
+from numina.core.pipeline import init_store_backends
 from numina.store import load
-from numina.store import init_store_backends
 from numina.exceptions import NoResultFound
 from .absdal import AbsDAL
 from .stored import ObservingBlock

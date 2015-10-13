@@ -140,7 +140,7 @@ class DiskStorage(object):
         return fname
 
 
-from numina.store import init_store_backends
+from numina.core.pipeline import init_store_backends
 from numina.store import dump
 
 
@@ -167,4 +167,3 @@ class DiskStorageDefault(DiskStorage):
         finally:
             _logger.debug('cwd to original path: %r', csd)
             os.chdir(csd)
-
