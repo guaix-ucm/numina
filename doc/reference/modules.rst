@@ -13,7 +13,6 @@ Numina modules
    frame
    generic
    logger
-   serialize
    qa
    treedict
    user
