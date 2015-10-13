@@ -27,6 +27,7 @@ from .requirements import Requirement
 class RecipeType(type):
     """Metaclass for Recipe."""
     def __new__(cls, classname, parents, attributes):
+
         filter_reqs = {}
         filter_prods = {}
         filter_attr = {}
@@ -39,9 +40,25 @@ class RecipeType(type):
             else:
                 filter_attr[name] = val
 
-        ReqsClass = cls.create_inpt_class(classname, filter_reqs)
+        # Find base class for RecipeResult in parents
+        for parent in parents:
+            if hasattr(parent, 'RecipeResult'):
+                BaseRecipeResult = parent.RecipeResult
+                break
+        else:
+            BaseRecipeResult = RecipeResult
 
-        ResultClass = cls.create_prod_class(classname, filter_prods)
+        # Find base class for RecipeInput in parents
+        for parent in parents:
+            if hasattr(parent, 'RecipeInputt'):
+                BaseRecipeInput = parent.RecipeInput
+                break
+        else:
+            BaseRecipeInput = RecipeInput
+
+        ReqsClass = cls.create_inpt_class(classname, BaseRecipeInput, filter_reqs)
+
+        ResultClass = cls.create_prod_class(classname, BaseRecipeResult, filter_prods)
 
         filter_attr['RecipeResult'] = ResultClass
         filter_attr['RecipeInput'] = ReqsClass
@@ -58,11 +75,11 @@ class RecipeType(type):
         return klass
 
     @classmethod
-    def create_inpt_class(cls, classname, attributes):
+    def create_inpt_class(cls, classname, base, attributes):
         return cls.create_gen_class('%sInput' % classname,
                                     RecipeInput, attributes)
 
     @classmethod
-    def create_prod_class(cls, classname, attributes):
+    def create_prod_class(cls, classname, base, attributes):
         return cls.create_gen_class('%sResult' % classname,
-                                    RecipeResult, attributes)
+                                    base, attributes)
