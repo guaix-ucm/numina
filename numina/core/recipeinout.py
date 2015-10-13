@@ -27,43 +27,47 @@ from .metaclass import RecipeInputType, RecipeResultType
 
 
 class RecipeInOut(object):
-    def __new__(cls, *args, **kwds):
-        self = super(RecipeInOut, cls).__new__(cls)
-        for key, prod in cls.stored().items():
-            if key in kwds:
-                val = prod.convert(kwds[key])
-            else:
-                # Value not defined
-                val = prod.default_value()
-
-            if prod.choices and (val not in prod.choices):
-                raise ValueError('%s not in %s' % (val, prod.choices))
-
-            setattr(self, key, val)
-        return self
 
     def __init__(self, *args, **kwds):
         super(RecipeInOut, self).__init__()
+        # Used to hold set values
+        self._numina_desc_val = {}
+
+        for key, val in kwds.items():
+            setattr(self, key, kwds[key])
+
+        self._finalize()
+
+    def _finalize(self):
+        """Access all the instance descriptors
+
+        This wil trigger an exception if a required
+        parameter is not set
+        """
+        all_msg_errors = []
+
+        for key in self.stored():
+            try:
+                getattr(self, key)
+            except ValueError as err:
+                all_msg_errors.append(err.message)
+
+        # Raises a list of all the missing entries
+        if all_msg_errors:
+            raise ValueError(all_msg_errors)
+
+    def attrs(self):
+        return self._numina_desc_val
 
     @classmethod
     def stored(cls):
-        return cls.__stored__
-
-    def attrs(self):
-        res = {}
-        for key in self.stored():
-            res[key] = getattr(self, key)
-        return res
+        return cls.__numina_stored__
 
     def validate(self):
         """Validate myself."""
 
-        # Probably this is equal to __dict__
-        att = self.attrs()
-
-        strd = self.stored()
         for key, req in self.stored().items():
-            val = att[key]
+            val = getattr(self, key)
             req.validate(val)
 
         # Run checks defined in __checkers__
@@ -152,7 +156,8 @@ class add_requirement(object):
 
     def __call__(self, klass):
         Class = klass.RecipeInput
-        Class.__stored__.update(self.ext)
+        for key, val in self.ext.items():
+            setattr(Class, key, val)
         return klass
 
 
@@ -166,5 +171,6 @@ class add_product(object):
 
     def __call__(self, klass):
         Class = klass.RecipeResult
-        Class.__stored__.update(self.ext)
+        for key, val in self.ext.items():
+            setattr(Class, key, val)
         return klass

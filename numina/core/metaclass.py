@@ -21,31 +21,29 @@
 Base metaclasses
 """
 
-import collections
 from .dataholders import Product
 from .requirements import Requirement
+import weakref
 
 
 class StoreType(type):
-    '''Metaclass for storing members.'''
+    """Metaclass for storing members."""
     def __new__(cls, classname, parents, attributes):
-        filter_out = {}
-        filter_in = {}
-        filter_in['__stored__'] = filter_out
-        # Handle stored values from parents
+
+        n_stored = weakref.WeakValueDictionary()
         for p in parents:
-            stored = getattr(p, '__stored__', None)
+            stored = getattr(p, '__numina_stored__', None)
             if stored:
-                filter_in['__stored__'].update(stored)
+                n_stored.update(stored)
 
         for name, val in attributes.items():
             if cls.exclude(name, val):
                 nname, nval = cls.transform(name, val)
-                filter_out[nname] = nval
-            else:
-                filter_in[name] = val
-        return super(StoreType, cls).__new__(
-            cls, classname, parents, filter_in)
+                n_stored[nname] = nval
+
+        attributes['__numina_stored__'] = n_stored
+
+        return super(StoreType, cls).__new__(cls, classname, parents, attributes)
 
     def __setattr__(self, key, value):
         """Define __setattr__ in 'classes' created with this metaclass."""
@@ -53,9 +51,10 @@ class StoreType(type):
 
     def _add_attr(self, key, value):
         if self.exclude(key, value):
-            self.__stored__[key] = value
-        else:
-            super(StoreType, self).__setattr__(key, value)
+            nkey, nvalue = self.transform(key, value)
+            self.__numina_stored__[nkey] = nvalue
+
+        super(StoreType, self).__setattr__(key, value)
 
     @classmethod
     def exclude(cls, name, value):
@@ -64,6 +63,7 @@ class StoreType(type):
     @classmethod
     def transform(cls, name, value):
         return name, value
+
 
 class RecipeInOutType(StoreType):
     def __new__(cls, classname, parents, attributes):
