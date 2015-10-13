@@ -87,6 +87,8 @@ setup(name='numina',
       description='Numina reduction package',
       packages=find_packages('.'),
       package_data={'numina.tests.drps.1': ['drp.yaml'],
+                    'numina.core.tests': ['drpfake1.yaml',
+                                          'drpfake2.yaml']
                    },
       ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6],
       entry_points={

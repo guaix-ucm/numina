@@ -1,0 +1,21 @@
+name: FAKE2
+configurations:
+    default: {}
+modes:
+    - description: A recipe that always fails
+      key: fail
+      name: Fail
+      tagger:
+         - KEY1
+         - KEY2
+    - description: Bias
+      key: bias
+      name: Bias
+      tagger:
+         - KEY3
+pipelines:
+    default:
+        recipes:
+            bias: fake.recipes.BiasRecipe
+            fail: numina.core.utils.AlwaysFailRecipe
+        version: 1
