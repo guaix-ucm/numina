@@ -188,12 +188,13 @@ class BaseRecipe(object):
     # An alias required by GTC
     buildRI = build_recipe_input
 
+
 class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""
     pass
 
 
-@add_product(qc=Product(QualityControlProduct, dest='qc'))
 class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""
-    pass
+
+    qc = Product(QualityControlProduct, dest='qc')
