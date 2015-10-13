@@ -43,7 +43,6 @@ class RecipeType(type):
 
         ResultClass = cls.create_prod_class(classname, filter_prods)
 
-        # TODO: Remove these in the future
         filter_attr['RecipeResult'] = ResultClass
         filter_attr['RecipeInput'] = ReqsClass
 

@@ -17,15 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Recipe requirements
-'''
+"""
 
 import inspect
 
 from .types import NullType, PlainPythonType
 from .types import ListOfType
-# from .datadescriptors import DataProductType
 
 
 class EntryHolder(object):
@@ -57,17 +56,17 @@ class EntryHolder(object):
         if instance is None:
             return self
         else:
-            if self.dest in instance._ps:
-                return instance._ps[self.dest]
-            else:
-                return 'Undefined'
+            if self.dest not in instance._numina_desc_val:
+                instance._numina_desc_val[self.dest] = self.default_value()
+
+            return instance._numina_desc_val[self.dest]
 
     def __set__(self, instance, value):
         """Setter of the descriptor protocol."""
         cval = self.convert(value)
         if self.choices and (cval not in self.choices):
             raise ValueError('{} not in {}'.format(cval, self.choices))
-        instance._ps[self.dest] = cval
+        instance._numina_desc_val[self.dest] = cval
 
     def convert(self, val):
         return self.type.convert(val)
@@ -85,7 +84,7 @@ class EntryHolder(object):
         if self.optional:
             return None
         else:
-            fmt = 'Required {0!r} of type {1!r} not defined'
+            fmt = 'Required {0!r} of type {1!r} is not defined'
             msg = fmt.format(self.dest, self.type)
             raise ValueError(msg)
 
