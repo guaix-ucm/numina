@@ -35,11 +35,10 @@ from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
-from .recipeinout import add_product
 from .metarecipes import RecipeType
 from .oresult import ObservationResult
-from .dal.stored import ObservingBlock
-from .dal.daliface import NoResultFound
+from ..dal.stored import ObservingBlock
+from ..exceptions import NoResultFound
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
 from .products import DataProductTag

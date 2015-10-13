@@ -19,7 +19,7 @@
 
 '''DAL base class'''
 
-from ..oresult import ObservationResult
+from ..core.oresult import ObservationResult
 from .daliface import DALInterface
 
 

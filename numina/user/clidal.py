@@ -1,5 +1,5 @@
 
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,11 +19,11 @@
 
 import logging
 
-from numina.core.dal import AbsDAL
-from numina.core.dal import NoResultFound
-from numina.core.dal import StoredProduct
-from numina.core.dal import StoredParameter
-from numina.core.dal import ObservingBlock
+from numina.exceptions import NoResultFound
+from numina.dal import AbsDAL
+from numina.dal import StoredProduct
+from numina.dal import StoredParameter
+from numina.dal import ObservingBlock
 from numina.core.pipeline import DrpSystem
 from numina.store import init_store_backends
 from numina.core import import_object
@@ -73,7 +73,7 @@ class ComandLineDAL(AbsDAL):
             ob = self.ob_table[obsid]
             return ObservingBlock(**ob)
         except KeyError:
-            raise NoResultFound("oblock with id %d not found", obsid)
+            raise NoResultFound("oblock with id %d not found" % obsid)
 
     def search_recipe_from_ob(self, obsres, pipeline):
 
@@ -82,12 +82,12 @@ class ComandLineDAL(AbsDAL):
         _logger.info("instrument name: %s", obsres.instrument)
         my_ins = self.drps.query_by_name(obsres.instrument)
         if my_ins is None:
-            raise ValueError('no instrument named %r'% obsres.instrument)
+            raise ValueError('no instrument named %r' % obsres.instrument)
 
         my_pipe = my_ins.pipelines.get(pipeline)
 
         if my_pipe is None:
-            raise ValueError('no pipeline named %r'% pipeline)
+            raise ValueError('no pipeline named %r' % pipeline)
 
         _logger.info("observing mode: %r", obsres.mode)
 
@@ -110,7 +110,7 @@ class ComandLineDAL(AbsDAL):
         try:
             content = self._reqs['requirements'][key]
         except KeyError:
-            raise NoResultFound("key %s not found", key)
+            raise NoResultFound("key %s not found" % key)
 
         return StoredProduct(id=-1, content=content, tags={})
 
@@ -123,5 +123,5 @@ class ComandLineDAL(AbsDAL):
             param = self._reqs['requirements'][key]
             content = StoredParameter(param)
         except KeyError:
-            raise NoResultFound("key %s not found", key)
+            raise NoResultFound("key %s not found" % key)
         return content
