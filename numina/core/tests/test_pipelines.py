@@ -1,5 +1,6 @@
 
 import pkg_resources
+import pkgutil
 
 from numina.core.pipeline import DrpSystem
 from numina.core.pipeline import InstrumentDRP, Pipeline
@@ -39,33 +40,11 @@ def test_fake_pipeline(monkeypatch):
 
 def test_fake_pipeline_alt(drpmocker):
 
-    drpdata = """
-        name: FAKE
-        configurations:
-            default: {}
-        modes:
-            - description: A recipe that always fails
-              key: fail
-              name: Fail
-              tagger:
-                 - KEY1
-                 - KEY2
-            - description: Bias
-              key: bias
-              name: Bias
-              tagger:
-                 - KEY3
-        pipelines:
-            default:
-                recipes:
-                    bias: fake.recipes.BiasRecipe
-                    fail: numina.core.utils.AlwaysFailRecipe
-                version: 1
-    """
+    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
 
-    drpmocker.add_drp('FAKE', drpdata)
+    drpmocker.add_drp('FAKE1', drpdata1)
 
-    mydrp = DrpSystem().query_by_name('FAKE')
+    mydrp = DrpSystem().query_by_name('FAKE1')
     assert mydrp is not None
 
     assert_valid_instrument(mydrp)
@@ -75,39 +54,17 @@ def test_fake_pipeline_alt(drpmocker):
 
 def test_fake_pipeline_alt2(drpmocker):
 
-    drpdata = """
-        name: FAKE
-        configurations:
-            default: {}
-        modes:
-            - description: A recipe that always fails
-              key: fail
-              name: Fail
-              tagger:
-                 - KEY1
-                 - KEY2
-            - description: Bias
-              key: bias
-              name: Bias
-              tagger:
-                 - KEY3
-        pipelines:
-            default:
-                recipes:
-                    bias: fake.recipes.BiasRecipe
-                    fail: numina.core.utils.AlwaysFailRecipe
-                version: 1
-    """
+    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
 
     ob_to_test = """
     id: 4
     mode: bias
-    instrument: FAKE
+    instrument: FAKE1
     images:
      - ThAr_LR-U.fits
     """
 
-    drpmocker.add_drp('FAKE', drpdata)
+    drpmocker.add_drp('FAKE1', drpdata1)
 
     import yaml
     from numina.core.oresult import obsres_from_dict

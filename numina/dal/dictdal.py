@@ -22,13 +22,13 @@
 from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
-from numina.core.dal import AbsDAL
-from numina.core.dal import NoResultFound
-from numina.core.dal import ObservingBlock
-from numina.core.dal import StoredProduct, StoredParameter
 from numina.core.pipeline import DrpSystem
+from numina.core.pipeline import init_store_backends
 from numina.store import load
-from numina.store import init_store_backends
+from numina.exceptions import NoResultFound
+from .absdal import AbsDAL
+from .stored import ObservingBlock
+from .stored import StoredProduct, StoredParameter
 
 
 def product_label(drp, klass):
@@ -63,7 +63,7 @@ class BaseDictDAL(AbsDAL):
             ob = self.ob_table[obsid]
             return ObservingBlock(**ob)
         except KeyError:
-            raise NoResultFound("oblock with id %d not found", obsid)
+            raise NoResultFound("oblock with id %d not found" % obsid)
 
     def search_recipe(self, ins, mode, pipeline):
         recipe_fqn = self.search_recipe_fqn(ins, mode, pipeline)

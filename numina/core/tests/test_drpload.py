@@ -1,59 +1,14 @@
 
 import pytest
+import pkgutil
 
 from ..pipeline import DrpSystem
-
-drpdata1 = """
-    name: FAKE1
-    configurations:
-        default: {}
-    modes:
-        - description: A recipe that always fails
-          key: fail
-          name: Fail
-          tagger:
-             - KEY1
-             - KEY2
-        - description: Bias
-          key: bias
-          name: Bias
-          tagger:
-             - KEY3
-    pipelines:
-        default:
-            recipes:
-                bias: fake.recipes.BiasRecipe
-                fail: numina.core.utils.AlwaysFailRecipe
-            version: 1
-"""
-
-drpdata2 = """
-    name: FAKE2
-    configurations:
-        default: {}
-    modes:
-        - description: A recipe that always fails
-          key: fail
-          name: Fail
-          tagger:
-             - KEY1
-             - KEY2
-        - description: Bias
-          key: bias
-          name: Bias
-          tagger:
-             - KEY3
-    pipelines:
-        default:
-            recipes:
-                bias: fake.recipes.BiasRecipe
-                fail: numina.core.utils.AlwaysFailRecipe
-            version: 1
-"""
 
 
 def test_drpsys_one_instrument(drpmocker):
     """Test that only one DRP is returned."""
+
+    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
 
     drpmocker.add_drp('FAKE1', drpdata1)
 
@@ -77,6 +32,8 @@ def test_drpsys_one_instrument(drpmocker):
 def test_drpsys_2_instruments(drpmocker):
     """Test that two DRPs are returned"""
 
+    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
+    drpdata2 = pkgutil.get_data('numina.core.tests', 'drpfake2.yaml')
     drpmocker.add_drp('FAKE1', drpdata1)
     drpmocker.add_drp('FAKE2', drpdata2)
 

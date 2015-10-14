@@ -23,9 +23,6 @@ from abc import ABCMeta, abstractmethod
 
 from six import with_metaclass
 
-class NoResultFound(Exception):
-    pass
-
 
 class DALInterface(with_metaclass(ABCMeta, object)):
 

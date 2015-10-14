@@ -28,7 +28,7 @@ import yaml
 
 from numina import __version__
 from numina.core import fully_qualified_name
-from numina.core.dal.dictdal import BaseDictDAL
+from numina.dal.dictdal import BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 from .clidal import process_format_version_0

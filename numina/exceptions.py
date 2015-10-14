@@ -43,3 +43,8 @@ class DetectorReadoutError(Error):
 class ValidationError(Exception):
     '''Error during validation of Recipe inputs and outputs.'''
     pass
+
+
+class NoResultFound(Exception):
+    """No result found in a DAL query."""
+    pass

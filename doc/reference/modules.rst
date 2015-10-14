@@ -11,9 +11,7 @@ Numina modules
    flow
    exceptions
    frame
-   generic
    logger
-   serialize
    qa
    treedict
    user
