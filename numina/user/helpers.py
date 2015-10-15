@@ -99,7 +99,7 @@ class WorkEnvironment(object):
 
     def copyfiles_stage2(self, reqs):
         _logger.debug('copying files from requirements')
-        for _, req in reqs.__stored__.items():
+        for _, req in reqs.stored().items():
             if isinstance(req.type, DataFrameType):
                 value = getattr(reqs, req.dest)
                 if value is not None:
