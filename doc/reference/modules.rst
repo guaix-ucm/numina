@@ -6,7 +6,6 @@ Numina modules
 .. toctree::
 
    array
-   astrotime
    core
    flow
    exceptions
