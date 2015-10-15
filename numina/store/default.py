@@ -17,6 +17,8 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Register basic types with dump."""
+
 from __future__ import print_function
 
 import warnings
@@ -35,7 +37,6 @@ from numina.user.helpers import ProcessingTask
 
 from .dump import dump
 
-'''Register basic types with dump.'''
 
 @dump.register(ProcessingTask)
 def _(tag, obj, where):
