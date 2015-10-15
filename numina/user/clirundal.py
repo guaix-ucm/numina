@@ -130,9 +130,8 @@ def mode_run_common_obs(args):
     # Build the recipe input data structure
     # and copy needed files to workdir
     _logger.debug('parsing requirements')
-    for key, val in recipeclass.requirements().iteritems():
-        _logger.info("recipe requires %r", val.type.__class__)
-        _logger.info("%r is %r", val.dest, getattr(rinput, val.dest))
+    for key in recipeclass.requirements().values():
+        _logger.info("recipe requires %r", key)
 
     _logger.debug('parsing products')
     for req in recipeclass.products().values():

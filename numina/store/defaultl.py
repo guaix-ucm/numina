@@ -26,7 +26,7 @@ def _(tag, obj):
 def _l(tag, obj):
 
     with open(obj, 'r') as fd:
-        linecat = numpy.genfromtxt(fd)
+        linecat = numpy.loadtxt(fd)
     return linecat
 
 def load_cli_storage():
