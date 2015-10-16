@@ -26,25 +26,14 @@ import warnings
 import numpy
 import yaml
 
-from numina.core import Product
 from numina.core import RecipeResult
 from numina.core import ErrorRecipeResult
 from numina.core import DataFrameType, DataProductType
 from numina.core.types import PlainPythonType
 from numina.core.products import ArrayType
 from numina.core import DataFrame
-from numina.user.helpers import ProcessingTask
 
 from .dump import dump
-
-
-@dump.register(ProcessingTask)
-def _(tag, obj, where):
-    result = tag.result
-    tag.result = dump(result, result, where)
-    with open(where.task, 'w+') as fd:
-        yaml.dump(tag.__dict__, fd)
-    return where.task
 
 
 @dump.register(ErrorRecipeResult)
@@ -61,18 +50,13 @@ def _(tag, obj, where):
     saveres = {}
     for key, pc in obj.stored().items():
         val = getattr(obj, key)
-        saveres[key] = dump(pc, val, where)
+        where.destination = pc.dest
+        saveres[key] = dump(pc.type, val, where)
 
     with open(where.result, 'w+') as fd:
         yaml.dump(saveres, fd)
 
     return where.result
-
-
-@dump.register(Product)
-def _(tag, obj, where):
-    where.destination = tag.dest
-    return dump(tag.type, obj, where)
 
 
 @dump.register(DataProductType)
@@ -87,16 +71,15 @@ def _(tag, obj, where):
 
 @dump.register(ArrayType)
 def _(tag, obj, where):
-    return dump.registry[numpy.ndarray](tag, obj, where)
+    return dump_numpy_array(obj, where)
 
 
 @dump.register(DataFrameType)
-def _(tag, obj, where):    
-    return dump.registry[DataFrame](tag, obj, where)
-
-
-@dump.register(DataFrame)
 def _(tag, obj, where):
+    return dump_dataframe(obj, where)
+
+
+def dump_dataframe(obj, where):
     # save fits file
     if obj.frame is None:
         # assume filename contains a FITS file
@@ -116,13 +99,17 @@ def _(tag, obj, where):
         return filename
 
 
-@dump.register(numpy.ndarray)
-def _(tag, obj, where):
+def dump_numpy_array(obj, where):
     # FIXME:
     #filename = where.get_next_basename('.txt')
     filename = where.destination + '.txt'
     numpy.savetxt(filename, obj)
     return filename
+
+
+dump.register(numpy.ndarray, dump_numpy_array)
+
+dump.register(DataFrame, dump_dataframe)
 
 
 @dump.register(list)
