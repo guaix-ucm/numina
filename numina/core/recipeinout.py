@@ -25,7 +25,8 @@ from six import with_metaclass
 import yaml
 
 from .metaclass import RecipeInputType, RecipeResultType
-from numina.store.dump import dump
+import numina.store.dump
+
 
 class RecipeInOut(object):
 
@@ -106,7 +107,7 @@ class ErrorRecipeResult(BaseRecipeResult):
         fmt = "%s(errortype=%r, message='%s')"
         return fmt % (sclass, self.errortype, self.message)
 
-    def store(self, where):
+    def store_to(self, where):
         with open(where.result, 'w+') as fd:
             yaml.dump(where.result, fd)
 
@@ -122,13 +123,13 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResul
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
-    def store(self, where):
+    def store_to(self, where):
 
         saveres = {}
-        for key, pc in self.stored().items():
+        for key, prod in self.stored().items():
             val = getattr(self, key)
-            where.destination = pc.dest
-            saveres[key] = dump(pc.type, val, where)
+            where.destination = prod.dest
+            saveres[key] = numina.store.dump.dump(pc.type, val, where)
 
         with open(where.result, 'w+') as fd:
             yaml.dump(saveres, fd)

@@ -29,7 +29,6 @@ import shutil
 import yaml
 
 from numina.core.pipeline import init_store_backends
-from numina.store import dump
 from numina.core.products import DataFrameType
 
 _logger = logging.getLogger("numina")
@@ -56,9 +55,12 @@ class ProcessingTask(object):
 
     def store(self, where):
 
-        sresult = self.result.store(where)
+        # save to disk the RecipeResult part
+        # and return the file used to save it
+        sresult = self.result.store_to(where)
         self.result = sresult
 
+        # save to disk the rest
         with open(where.task, 'w+') as fd:
             yaml.dump(self.__dict__, fd)
         return where.task
