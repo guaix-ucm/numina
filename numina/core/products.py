@@ -1,4 +1,3 @@
-#
 # Copyright 2008-2014 Universidad Complutense de Madrid
 #
 # This file is part of Numina
@@ -31,6 +30,8 @@ from .dataframe import DataFrame
 from .types import DataType
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
+import warnings
+
 
 
 class DataProductTag(object):
@@ -88,6 +89,14 @@ class DataFrameType(DataType):
     def validate_hdulist(self, hdulist):
         pass
 
+    def __numina_dump__(self, obj, where):
+        return dump_dataframe(obj, where)
+
+    def __numina_load__(self, obj):
+        if obj is None:
+            return None
+        else:
+            return DataFrame(filename=obj)
 
 class ArrayType(DataType):
     def __init__(self, default=None):
@@ -99,6 +108,9 @@ class ArrayType(DataType):
     def convert_to_array(self, obj):
         result = numpy.array(obj)
         return result
+
+    def __numina_dump__(self, obj, where):
+        return dump_numpy_array(obj, where)
 
 
 class ArrayNType(ArrayType):
@@ -171,3 +183,35 @@ class LinesCatalog(DataProductType):
     def __init__(self):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
 
+    def __numina_load__(self, obj):
+        with open(obj, 'r') as fd:
+            linecat = numpy.loadtxt(fd)
+        return linecat
+
+
+def dump_dataframe(obj, where):
+    # save fits file
+    if obj.frame is None:
+        # assume filename contains a FITS file
+        return None
+    else:
+        if obj.filename:
+            filename = obj.filename
+        elif 'FILENAME' in obj.frame[0].header:
+            filename = obj.frame[0].header['FILENAME']
+        elif hasattr(where, 'destination'):
+            filename = where.destination + '.fits'
+        else:
+            filename = where.get_next_basename('.fits')
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            obj.frame.writeto(filename, clobber=True)
+        return filename
+
+
+def dump_numpy_array(obj, where):
+    # FIXME:
+    #filename = where.get_next_basename('.txt')
+    filename = where.destination + '.txt'
+    numpy.savetxt(filename, obj)
+    return filename

@@ -50,3 +50,9 @@ class DataFrame(object):
         else:
             fmt = "DataFrame(filename=%r, frame=%r)"
             return fmt % (self.filename, self.frame)
+
+    def __numina_load__(self, obj):
+        if obj is None:
+            return None
+        else:
+            return DataFrame(filename=obj)

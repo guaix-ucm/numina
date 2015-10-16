@@ -25,7 +25,6 @@ from numina.dal import StoredProduct
 from numina.dal import StoredParameter
 from numina.dal import ObservingBlock
 from numina.core.pipeline import DrpSystem
-from numina.core.pipeline import init_store_backends
 from numina.core import import_object
 from numina.core import obsres_from_dict
 
@@ -40,7 +39,6 @@ class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
     def __init__(self, ob_table, reqs):
         self.ob_table = ob_table
-        init_store_backends()
         self._reqs = reqs
         self.drps = DrpSystem()
 

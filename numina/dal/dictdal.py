@@ -23,7 +23,6 @@ from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
 from numina.core.pipeline import DrpSystem
-from numina.core.pipeline import init_store_backends
 from numina.store import load
 from numina.exceptions import NoResultFound
 from .absdal import AbsDAL
@@ -51,7 +50,6 @@ class BaseDictDAL(AbsDAL):
     def __init__(self, ob_table, prod_table, req_table):
         super(BaseDictDAL, self).__init__()
 
-        init_store_backends()
         # Check that the structure de base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table

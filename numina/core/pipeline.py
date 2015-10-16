@@ -133,14 +133,3 @@ class DrpSystem(object):
             msg = 'Object {0!r} does not contain a valid DRP'.format(drpins)
             warnings.warn(msg, RuntimeWarning)
             return False
-
-
-def init_store_backends(backend='default'):
-    """Load storage backends."""
-
-    for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
-        store_loader = entry.load()
-        store_loader()
-
-
-init_dump_backends = init_store_backends
