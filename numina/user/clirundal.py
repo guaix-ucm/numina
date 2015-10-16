@@ -132,7 +132,7 @@ def mode_run_common_obs(args):
         _logger.info('recipe provides %r', req)
 
     runinfo = {'pipeline':pipe_name,
-               'recipeclass':recipeclass,
+               'recipeclass':recipeclass.__name__,
                'workenv':workenv,
                'recipe_version':recipe.__version__
                }

@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 from __future__ import print_function
 
@@ -26,33 +26,20 @@ import os
 import errno
 import shutil
 
-from numina import __version__
-from numina.core import fully_qualified_name
+import yaml
+
+from numina.core.pipeline import init_store_backends
 from numina.core.products import DataFrameType
-
-
 
 _logger = logging.getLogger("numina")
 
 
 class ProcessingTask(object):
-
-    def __init__(self, obsres=None, runinfo={}, insconf=None):
+    def __init__(self, obsres=None, insconf=None):
 
         self.observation = {}
-
         self.runinfo = {}
-
-        if runinfo:
-            self.runinfo['pipeline'] = runinfo['pipeline']
-            self.runinfo['recipe'] = runinfo['recipeclass'].__name__
-            self.runinfo['recipe_full_name'] = fully_qualified_name(runinfo['recipeclass'])
-            self.runinfo['runner'] = 'numina'
-            self.runinfo['runner_version'] = __version__
-            self.runinfo['data_dir'] = runinfo['workenv'].datadir
-            self.runinfo['work_dir'] = runinfo['workenv'].workdir
-            self.runinfo['results_dir'] = runinfo['workenv'].resultsdir
-            self.runinfo['recipe_version'] = runinfo['recipe_version']
+        self.result = None
 
         if obsres:
             self.observation['mode'] = obsres.mode
@@ -65,6 +52,18 @@ class ProcessingTask(object):
 
         if insconf:
             self.observation['instrument_configuration'] = insconf
+
+    def store(self, where):
+
+        # save to disk the RecipeResult part
+        # and return the file used to save it
+        sresult = self.result.store_to(where)
+        self.result = sresult
+
+        # save to disk the rest
+        with open(where.task, 'w+') as fd:
+            yaml.dump(self.__dict__, fd)
+        return where.task
 
 
 class WorkEnvironment(object):
@@ -119,10 +118,14 @@ class WorkEnvironment(object):
             if isinstance(req.type, DataFrameType):
                 value = getattr(reqs, req.dest)
                 if value is not None:
-                    _logger.debug('copying %r to %r',value.filename,
-                                  self.workdir)
-                    complete = os.path.abspath(os.path.join(self.datadir,
-                                                            value.filename))
+                    _logger.debug(
+                        'copying %r to %r',
+                        value.filename,
+                        self.workdir
+                        )
+                    complete = os.path.abspath(
+                        os.path.join(self.datadir, value.filename)
+                        )
                     shutil.copy(complete, self.workdir)
 
 
@@ -152,10 +155,6 @@ class DiskStorage(object):
         return fname
 
 
-from numina.core.pipeline import init_store_backends
-from numina.store import dump
-
-
 class DiskStorageDefault(DiskStorage):
     def __init__(self, resultsdir):
         super(DiskStorageDefault, self).__init__()
@@ -164,9 +163,8 @@ class DiskStorageDefault(DiskStorage):
         self.resultsdir = resultsdir
         init_store_backends()
 
-
     def store(self, completed_task):
-        '''Store the values of the completed task'''
+        """Store the values of the completed task."""
 
         try:
             csd = os.getcwd()
@@ -175,7 +173,6 @@ class DiskStorageDefault(DiskStorage):
 
             _logger.info('storing result')
             completed_task.store(self)
-            #dump(completed_task, completed_task, self)
 
         finally:
             _logger.debug('cwd to original path: %r', csd)

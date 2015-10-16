@@ -22,12 +22,6 @@ def _(tag, obj):
     else:
         return DataFrame(filename=obj)
 
-@load.register(LinesCatalog)
-def _l(tag, obj):
-
-    with open(obj, 'r') as fd:
-        linecat = numpy.loadtxt(fd)
-    return linecat
 
 def load_cli_storage():
     return 0
