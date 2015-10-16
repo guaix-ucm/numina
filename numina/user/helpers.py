@@ -56,10 +56,9 @@ class ProcessingTask(object):
 
     def store(self, where):
 
-        sresult = dump(self.result,
-                       self.result,
-                       where)
+        sresult = self.result.store(where)
         self.result = sresult
+
         with open(where.task, 'w+') as fd:
             yaml.dump(self.__dict__, fd)
         return where.task
