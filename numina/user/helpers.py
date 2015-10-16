@@ -144,22 +144,19 @@ def make_sure_path_exists(path):
             raise
 
 
-class DiskStorage(object):
-    def __init__(self):
+
+class DiskStorageDefault(object):
+    def __init__(self, resultsdir):
+        super(DiskStorageDefault, self).__init__()
+        self.result = 'result.yaml'
+        self.task = 'task.yaml'
+        self.resultsdir = resultsdir
         self.idx = 1
 
     def get_next_basename(self, ext):
         fname = 'product_%03d%s' % (self.idx, ext)
         self.idx = self.idx + 1
         return fname
-
-
-class DiskStorageDefault(DiskStorage):
-    def __init__(self, resultsdir):
-        super(DiskStorageDefault, self).__init__()
-        self.result = 'result.yaml'
-        self.task = 'task.yaml'
-        self.resultsdir = resultsdir
 
     def store(self, completed_task):
         """Store the values of the completed task."""
