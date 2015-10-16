@@ -9,5 +9,9 @@ except ImportError:
 
 @singledispatch
 def load(tag, obj):
+
+    if hasattr(tag, '__numina_load__'):
+        return tag.__numina_load__(obj)
+
     return obj
 
