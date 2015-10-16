@@ -84,11 +84,9 @@ class DrpSystem(object):
             return self._drp_cache[name]
         else:
             drp = self._query_by_name(name)
-            if drp is None:
-                return drp
-            else:
+            if drp:
                 self._drp_cache[name] = drp
-                return drp
+            return drp
 
     def _query_by_name(self, name):
         """Load a DRPs in 'numina.pipeline' entry_point by name"""

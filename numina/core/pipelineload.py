@@ -155,33 +155,33 @@ def load_instrument(node):
     return InstrumentDRP(**trans)
 
 
-def print_i(ins):
-    six.print_(ins.name)
-    print_c(ins.configurations)
-    print_m(ins.modes)
-    print_p(ins.pipelines)
+# def print_i(ins):
+#     six.print_(ins.name)
+#     print_c(ins.configurations)
+#     print_m(ins.modes)
+#     print_p(ins.pipelines)
 
 
-def print_p(pipelines):
-    six.print_('Pipelines')
-    for p, n in pipelines.items():
-        six.print_(' pipeline', p)
-        six.print_('   version', n.version)
-        six.print_('   recipes')
-        for m, r in n.recipes.items():
-            six.print_('    ', m, '->', r)
+# def print_p(pipelines):
+#     six.print_('Pipelines')
+#     for p, n in pipelines.items():
+#         six.print_(' pipeline', p)
+#         six.print_('   version', n.version)
+#         six.print_('   recipes')
+#         for m, r in n.recipes.items():
+#             six.print_('    ', m, '->', r)
 
 
-def print_c(confs):
-    six.print_('Configurations')
-    for c in confs:
-        six.print_(' conf', c, confs[c].values)
+# def print_c(confs):
+#     six.print_('Configurations')
+#     for c in confs:
+#         six.print_(' conf', c, confs[c].values)
 
 
-def print_m(modes):
-    six.print_('Modes')
-    for c in modes:
-        six.print_(' mode', c.key)
+# def print_m(modes):
+#     six.print_('Modes')
+#     for c in modes:
+#         six.print_(' mode', c.key)
 
 
 def get_tags_from_full_ob(ob, reqtags=None):
