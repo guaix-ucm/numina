@@ -31,6 +31,8 @@ from .dataframe import DataFrame
 from .types import DataType
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
+from numina.store.default import dump_numpy_array
+from numina.store.default import dump_dataframe
 
 
 class DataProductTag(object):
@@ -88,6 +90,9 @@ class DataFrameType(DataType):
     def validate_hdulist(self, hdulist):
         pass
 
+    def __numina_dump__(self, obj, where):
+        return dump_dataframe(obj, where)
+
 
 class ArrayType(DataType):
     def __init__(self, default=None):
@@ -99,6 +104,9 @@ class ArrayType(DataType):
     def convert_to_array(self, obj):
         result = numpy.array(obj)
         return result
+
+    def __numina_dump__(self, obj, where):
+        return dump_numpy_array(obj, where)
 
 
 class ArrayNType(ArrayType):

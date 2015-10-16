@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 from __future__ import print_function
 
@@ -26,8 +26,10 @@ import os
 import errno
 import shutil
 
-from numina.core.products import DataFrameType
+import yaml
 
+from numina.core.pipeline import init_store_backends
+from numina.core.products import DataFrameType
 
 _logger = logging.getLogger("numina")
 
@@ -37,6 +39,7 @@ class ProcessingTask(object):
 
         self.observation = {}
         self.runinfo = {}
+        self.result = None
 
         if obsres:
             self.observation['mode'] = obsres.mode
@@ -49,6 +52,18 @@ class ProcessingTask(object):
 
         if insconf:
             self.observation['instrument_configuration'] = insconf
+
+    def store(self, where):
+
+        # save to disk the RecipeResult part
+        # and return the file used to save it
+        sresult = self.result.store_to(where)
+        self.result = sresult
+
+        # save to disk the rest
+        with open(where.task, 'w+') as fd:
+            yaml.dump(self.__dict__, fd)
+        return where.task
 
 
 class WorkEnvironment(object):
@@ -140,10 +155,6 @@ class DiskStorage(object):
         return fname
 
 
-from numina.core.pipeline import init_store_backends
-from numina.store import dump
-
-
 class DiskStorageDefault(DiskStorage):
     def __init__(self, resultsdir):
         super(DiskStorageDefault, self).__init__()
@@ -152,9 +163,8 @@ class DiskStorageDefault(DiskStorage):
         self.resultsdir = resultsdir
         init_store_backends()
 
-
     def store(self, completed_task):
-        '''Store the values of the completed task'''
+        """Store the values of the completed task."""
 
         try:
             csd = os.getcwd()
@@ -162,7 +172,7 @@ class DiskStorageDefault(DiskStorage):
             os.chdir(self.resultsdir)
 
             _logger.info('storing result')
-            dump(completed_task, completed_task, self)
+            completed_task.store(self)
 
         finally:
             _logger.debug('cwd to original path: %r', csd)

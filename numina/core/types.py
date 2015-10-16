@@ -38,6 +38,9 @@ class DataType(object):
             raise ValidationError(obj, self.python_type)
         return True
 
+    def __numina_dump__(self, obj, where):
+        return obj
+
     def __repr__(self):
         sclass = type(self).__name__
         return "%s()" % (sclass, )
