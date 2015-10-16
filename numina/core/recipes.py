@@ -163,20 +163,16 @@ class BaseRecipe(object):
                 result[key] = {}
             elif isinstance(req.type, DataProductTag):
                 try:
-                    prod = dal.search_prod_req_tags(
-                        req, obsres.instrument,
-                        tags, pipeline
-                        )
+                    prod = dal.search_prod_req_tags(req, obsres.instrument,
+                                                    tags, pipeline)
                     result[key] = prod.content
                 except NoResultFound:
                     pass
             else:
                 # Still not clear what to do with the other types
                 try:
-                    param = dal.search_param_req(
-                        req, obsres.instrument,
-                        obsres.mode, pipeline
-                        )
+                    param = dal.search_param_req(req, obsres.instrument,
+                                                 obsres.mode, pipeline)
                     result[key] = param.content
                 except NoResultFound:
                     pass
