@@ -92,6 +92,11 @@ class DataFrameType(DataType):
     def __numina_dump__(self, obj, where):
         return dump_dataframe(obj, where)
 
+    def __numina_load__(self, obj):
+        if obj is None:
+            return None
+        else:
+            return DataFrame(filename=obj)
 
 class ArrayType(DataType):
     def __init__(self, default=None):

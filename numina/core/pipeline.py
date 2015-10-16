@@ -137,10 +137,10 @@ class DrpSystem(object):
 
 def init_store_backends(backend='default'):
     """Load storage backends."""
-
-    for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
-        store_loader = entry.load()
-        store_loader()
+    pass
+    # for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
+    #     store_loader = entry.load()
+    #     store_loader()
 
 
 init_dump_backends = init_store_backends
