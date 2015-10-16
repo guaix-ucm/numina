@@ -28,7 +28,6 @@ import shutil
 
 import yaml
 
-from numina.core.pipeline import init_store_backends
 from numina.core.products import DataFrameType
 
 _logger = logging.getLogger("numina")
@@ -161,7 +160,6 @@ class DiskStorageDefault(DiskStorage):
         self.result = 'result.yaml'
         self.task = 'task.yaml'
         self.resultsdir = resultsdir
-        init_store_backends()
 
     def store(self, completed_task):
         """Store the values of the completed task."""
