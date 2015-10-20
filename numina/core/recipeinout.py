@@ -40,6 +40,13 @@ class RecipeInOut(object):
 
         self._finalize()
 
+    def __repr__(self):
+        sclass = type(self).__name__
+        full = []
+        for key, val in self.stored().items():
+            full.append('%s=%r' % (key, val))
+        return '%s(%s)' % (sclass, ', '.join(full))
+
     def _finalize(self):
         """Access all the instance descriptors
 
@@ -87,15 +94,7 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     pass
 
 
-class BaseRecipeResult(object):
-    def __new__(cls, *args, **kwds):
-        return super(BaseRecipeResult, cls).__new__(cls)
-
-    def __init__(self, *args, **kwds):
-        super(BaseRecipeResult, self).__init__()
-
-
-class ErrorRecipeResult(BaseRecipeResult):
+class ErrorRecipeResult(object):
     def __init__(self, errortype, message, traceback):
         super(ErrorRecipeResult, self).__init__()
         self.errortype = errortype
@@ -114,14 +113,7 @@ class ErrorRecipeResult(BaseRecipeResult):
         return where.result
 
 
-class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResult)):
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        full = []
-        for key, val in self.stored().items():
-            full.append('%s=%r' % (key, val))
-        return '%s(%s)' % (sclass, ', '.join(full))
+class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
 
     def store_to(self, where):
 

@@ -46,7 +46,7 @@ from .dataholders import Product
 from .products import QualityControlProduct
 
 
-class BaseRecipe(object):
+class BaseRecipe(with_metaclass(RecipeType,object)):
     """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
@@ -103,27 +103,27 @@ class BaseRecipe(object):
     def run(self, recipe_input):
         return self.create_result()
 
-    def __call__(self, recipe_input):
-        '''
-        Process the result of the observing block with the
-        Recipe.
-
-        :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeRequirement
-        :rtype: a RecipeResult object or an error
-
-        '''
-
-        try:
-            result = self.run(recipe_input)
-        except Exception as exc:
-            self.logger.error("During recipe execution %s", exc)
-            return ErrorRecipeResult(
-                exc.__class__.__name__,
-                str(exc),
-                traceback.format_exc()
-                )
-        return result
+    # def __call__(self, recipe_input):
+    #     '''
+    #     Process the result of the observing block with the
+    #     Recipe.
+    #
+    #     :param recipe_input: the input appropriated for the Recipe
+    #     :param type: RecipeRequirement
+    #     :rtype: a RecipeResult object or an error
+    #
+    #     '''
+    #
+    #     try:
+    #         result = self.run(recipe_input)
+    #     except Exception as exc:
+    #         self.logger.error("During recipe execution %s", exc)
+    #         return ErrorRecipeResult(
+    #             exc.__class__.__name__,
+    #             str(exc),
+    #             traceback.format_exc()
+    #             )
+    #     return result
 
     def set_base_headers(self, hdr):
         '''Set metadata in FITS headers.'''
@@ -184,12 +184,8 @@ class BaseRecipe(object):
     buildRI = build_recipe_input
 
 
-class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
-    """Base class for instrument recipes"""
-    pass
 
-
-class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
+class BaseRecipeAutoQC(BaseRecipe):
     """Base class for instrument recipes"""
 
     qc = Product(QualityControlProduct, dest='qc')
