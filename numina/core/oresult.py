@@ -55,7 +55,7 @@ class ObservationResult(object):
         return self.frames
 
     @images.setter
-    def images(self, value):
+    def images_s(self, value):
         self.frames = value
 
 
@@ -85,8 +85,8 @@ def obsres_from_dict(values):
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
     try:
-        obsres.images = [dataframe_from_list(val) for val in values[ikey]]
+        obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
     except:
-        obsres.images = []
+        obsres.frames = []
 
     return obsres
