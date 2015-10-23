@@ -26,13 +26,11 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
-import traceback
 import logging
 
 from six import with_metaclass
 
 from .. import __version__
-from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
@@ -46,7 +44,7 @@ from .dataholders import Product
 from .products import QualityControlProduct
 
 
-class BaseRecipe(with_metaclass(RecipeType,object)):
+class BaseRecipe(with_metaclass(RecipeType, object)):
     """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
@@ -76,7 +74,6 @@ class BaseRecipe(with_metaclass(RecipeType,object)):
             self.instrument = kwds['instrument']
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
-
 
     @classmethod
     def create_input(cls, *args, **kwds):
@@ -177,12 +174,10 @@ class BaseRecipe(with_metaclass(RecipeType,object)):
                 except NoResultFound:
                     pass
 
-
         return cls.create_input(**result)
 
     # An alias required by GTC
     buildRI = build_recipe_input
-
 
 
 class BaseRecipeAutoQC(BaseRecipe):

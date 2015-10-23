@@ -1,15 +1,17 @@
 from __future__ import division
 from __future__ import print_function
 
-from ..arccalibration import gen_triplets_master
-from ..arccalibration import arccalibration_direct
-from ..arccalibration import fit_solution
-                             
 import pytest
 import numpy as np
 from numpy.polynomial import polynomial
+
+from ..arccalibration import gen_triplets_master
+from ..arccalibration import arccalibration_direct
+from ..arccalibration import fit_solution
+
 try:
     import matplotlib.pyplot as plt
+
     HAVE_PLOTS = True
 except ImportError:
     HAVE_PLOTS = False
@@ -65,6 +67,7 @@ def simulate_master_table(my_seed, wv_ini_master, wv_end_master, nlines_master,
             raw_input('press <RETURN> to continue...')
 
     return wv_master
+
 
 # -----------------------------------------------------------------------------
 
@@ -152,27 +155,28 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         raise ValueError('wv_ini_arc=' + str(wv_ini_arc) +
                          ' must be <= wv_end_arc=' + str(wv_end_arc))
 
-    #---
+    # ---
 
     nlines_master = wv_master.size
 
     crval1_arc = wv_ini_arc
-    cdelt1_arc = (wv_end_arc-wv_ini_arc)/float(naxis1_arc-1)
+    cdelt1_arc = (wv_end_arc - wv_ini_arc) / float(naxis1_arc - 1)
     crpix1_arc = 1.0
     if ldebug:
-        print('>>> CRVAL1, CDELT1, CRPIX1....:', crval1_arc, cdelt1_arc, crpix1_arc)
+        print('>>> CRVAL1, CDELT1, CRPIX1....:', crval1_arc, cdelt1_arc,
+              crpix1_arc)
 
-    #---
+    # ---
     # The arc lines constitute a subset of the master lines in the considered
     # wavelength range.
     i1_master = np.searchsorted(wv_master, wv_ini_arc)
     i2_master = np.searchsorted(wv_master, wv_end_arc)
-    nlines_temp = i2_master-i1_master
-    nlines_arc_ini = int(round(nlines_temp*prob_line_master_in_arc))
-    ipos_wv_arc_ini = np.random.choice(range(i1_master,i2_master),
-                                       size = nlines_arc_ini,
-                                       replace = False)
-    ipos_wv_arc_ini.sort() # in-place sort
+    nlines_temp = i2_master - i1_master
+    nlines_arc_ini = int(round(nlines_temp * prob_line_master_in_arc))
+    ipos_wv_arc_ini = np.random.choice(range(i1_master, i2_master),
+                                       size=nlines_arc_ini,
+                                       replace=False)
+    ipos_wv_arc_ini.sort()  # in-place sort
     wv_arc_ini = wv_master[ipos_wv_arc_ini]
     if ldebug:
         print('>>> Number of master lines in arc region.:', nlines_temp)
@@ -183,16 +187,17 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     ipos_wv_arc = np.copy(ipos_wv_arc_ini[0:1])
     wv_arc = np.copy(wv_arc_ini[0:1])
     i_last = 0
-    for i in range(1,nlines_arc_ini):
-        delta_xpos = (wv_arc_ini[i]-wv_arc_ini[i_last])/cdelt1_arc
+    for i in range(1, nlines_arc_ini):
+        delta_xpos = (wv_arc_ini[i] - wv_arc_ini[i_last]) / cdelt1_arc
         if delta_xpos > delta_xpos_min_arc:
             ipos_wv_arc = np.append(ipos_wv_arc, ipos_wv_arc_ini[i])
             wv_arc = np.append(wv_arc, wv_arc_ini[i])
             i_last = i
         else:
             if ldebug:
-                print('--> skipping line #',i,'. Too close to line #',i_last)
-    nlines_arc = len (wv_arc)
+                print('--> skipping line #', i, '. Too close to line #',
+                      i_last)
+    nlines_arc = len(wv_arc)
     if ldebug:
         print('>>> Intermediate number of arc lines.....:', nlines_arc)
         print('>>> Intermediate selection of master list lines for arc:')
@@ -201,18 +206,20 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     # Generate pixel location of the arc lines.
     if delta_lambda == 0.0:
         # linear solution
-        xpos_arc = (wv_arc - crval1_arc)/cdelt1_arc + 1.0
+        xpos_arc = (wv_arc - crval1_arc) / cdelt1_arc + 1.0
         c0_arc = wv_ini_arc
         c1_arc = cdelt1_arc
         c2_arc = 0.0
     else:
         # polynomial solution
         c0_arc = wv_ini_arc
-        c1_arc = (wv_end_arc-wv_ini_arc-4*delta_lambda)/float(naxis1_arc-1)
-        c2_arc = 4*delta_lambda/float(naxis1_arc-1)**2
-        xpos_arc = (-c1_arc+np.sqrt(c1_arc**2-4*c2_arc*(c0_arc-wv_arc)))
-        xpos_arc /= 2*c2_arc
-        xpos_arc += 1 # convert from 0,...,(NAXIS1-1) to 1,...,NAXIS1
+        c1_arc = (wv_end_arc - wv_ini_arc - 4 * delta_lambda) / float(
+            naxis1_arc - 1)
+        c2_arc = 4 * delta_lambda / float(naxis1_arc - 1) ** 2
+        xpos_arc = (
+        -c1_arc + np.sqrt(c1_arc ** 2 - 4 * c2_arc * (c0_arc - wv_arc)))
+        xpos_arc /= 2 * c2_arc
+        xpos_arc += 1  # convert from 0,...,(NAXIS1-1) to 1,...,NAXIS1
 
     # Introduce noise in arc line positions.
     if error_xpos_arc > 0:
@@ -221,22 +228,23 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
                                      size=nlines_arc)
     # Check that the order of the lines has not been modified.
     xpos_arc_copy = np.copy(xpos_arc)
-    xpos_arc_copy.sort() # in-place sort
+    xpos_arc_copy.sort()  # in-place sort
     if sum(xpos_arc == xpos_arc_copy) != len(xpos_arc):
-        raise ValueError('FATAL ERROR: arc line switch after introducing noise')
+        raise ValueError(
+            'FATAL ERROR: arc line switch after introducing noise')
 
     if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlim([1,naxis1_arc])
-        ax.set_ylim([wv_ini_arc,wv_end_arc])
+        ax.set_xlim([1, naxis1_arc])
+        ax.set_ylim([wv_ini_arc, wv_end_arc])
         ax.plot(xpos_arc, wv_arc, 'ro')
-        xp = np.array([1,naxis1_arc])
-        yp = np.array([wv_ini_arc,wv_end_arc])
-        ax.plot(xp,yp,'b-')
-        xp = np.arange(1,naxis1_arc+1)
-        yp = c0_arc+c1_arc*(xp-1)+c2_arc*(xp-1)**2
-        ax.plot(xp,yp,'g:')
+        xp = np.array([1, naxis1_arc])
+        yp = np.array([wv_ini_arc, wv_end_arc])
+        ax.plot(xp, yp, 'b-')
+        xp = np.arange(1, naxis1_arc + 1)
+        yp = c0_arc + c1_arc * (xp - 1) + c2_arc * (xp - 1) ** 2
+        ax.plot(xp, yp, 'g:')
         ax.set_xlabel('pixel position in arc spectrum')
         ax.set_ylabel('wavelength (Angstrom)')
         plt.show(block=False)
@@ -250,34 +258,34 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlim([1,naxis1_arc])
+        ax.set_xlim([1, naxis1_arc])
         if delta_lambda == 0.0:
             if error_xpos_arc > 0:
-                ax.set_ylim([-4*error_xpos_arc*cdelt1_arc,
-                              4*error_xpos_arc*cdelt1_arc])
+                ax.set_ylim([-4 * error_xpos_arc * cdelt1_arc,
+                             4 * error_xpos_arc * cdelt1_arc])
             else:
-                ax.set_ylim([-1.1,1.1])
+                ax.set_ylim([-1.1, 1.1])
         else:
-            ax.set_ylim([-delta_lambda*1.5,delta_lambda*1.5])
-        yp = wv_arc - (crval1_arc+(xpos_arc-1)*cdelt1_arc)
+            ax.set_ylim([-delta_lambda * 1.5, delta_lambda * 1.5])
+        yp = wv_arc - (crval1_arc + (xpos_arc - 1) * cdelt1_arc)
         ax.plot(xpos_arc, yp, 'ro')
-        xp = np.array([1,naxis1_arc])
-        yp = np.array([0,0])
-        ax.plot(xp,yp,'b-')
-        xp = np.arange(1,naxis1_arc+1)
-        yp = c0_arc+c1_arc*(xp-1)+c2_arc*(xp-1)**2
-        yp -= crval1_arc+cdelt1_arc*(xp-1)
-        ax.plot(xp,yp,'g:')
+        xp = np.array([1, naxis1_arc])
+        yp = np.array([0, 0])
+        ax.plot(xp, yp, 'b-')
+        xp = np.arange(1, naxis1_arc + 1)
+        yp = c0_arc + c1_arc * (xp - 1) + c2_arc * (xp - 1) ** 2
+        yp -= crval1_arc + cdelt1_arc * (xp - 1)
+        ax.plot(xp, yp, 'g:')
         yp = poly_original(xp)
-        yp -= crval1_arc+cdelt1_arc*(xp-1)
-        ax.plot(xp,yp,'m-')
+        yp -= crval1_arc + cdelt1_arc * (xp - 1)
+        ax.plot(xp, yp, 'm-')
         ax.set_xlabel('pixel position in arc spectrum')
         ax.set_ylabel('residuals (Angstrom)')
         plt.show(block=False)
         if lpause:
             raw_input('press <RETURN> to continue...')
 
-    #---
+    # ---
     # Include unknown lines (lines that do not appear in the master table).
     nunknown_lines = int(round(fraction_unknown_lines * float(nlines_arc)))
     if ldebug:
@@ -288,31 +296,31 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
             iiter += 1
             if iiter > 1000:
                 raise ValueError('iiter > 1000 while adding unknown lines')
-            xpos_dum = np.random.uniform(low = 1.0,
-                                         high = float(naxis1_arc),
-                                         size = 1)
+            xpos_dum = np.random.uniform(low=1.0,
+                                         high=float(naxis1_arc),
+                                         size=1)
             isort = np.searchsorted(xpos_arc, xpos_dum)
             newlineok = False
             if isort == 0:
-                dxpos1 = abs(xpos_arc[isort]-xpos_dum)
+                dxpos1 = abs(xpos_arc[isort] - xpos_dum)
                 if dxpos1 > delta_xpos_min_arc:
                     newlineok = True
             elif isort == nlines_arc:
-                dxpos2 = abs(xpos_arc[isort-1]-xpos_dum)
+                dxpos2 = abs(xpos_arc[isort - 1] - xpos_dum)
                 if dxpos2 > delta_xpos_min_arc:
                     newlineok = True
             else:
-                dxpos1 = abs(xpos_arc[isort]-xpos_dum)
-                dxpos2 = abs(xpos_arc[isort-1]-xpos_dum)
+                dxpos1 = abs(xpos_arc[isort] - xpos_dum)
+                dxpos2 = abs(xpos_arc[isort - 1] - xpos_dum)
                 if (dxpos1 > delta_xpos_min_arc) and \
-                   (dxpos2 > delta_xpos_min_arc):
+                        (dxpos2 > delta_xpos_min_arc):
                     newlineok = True
             if newlineok:
                 xpos_arc = np.insert(xpos_arc, isort, xpos_dum)
                 ipos_wv_arc = np.insert(ipos_wv_arc, isort, -1)
                 nlines_arc += 1
                 if ldebug:
-                    print('--> adding unknown line at pixel:',xpos_dum)
+                    print('--> adding unknown line at pixel:', xpos_dum)
                 break
     if ldebug:
         print('>>> Final number of arc lines............:', nlines_arc)
@@ -324,7 +332,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     if lplot and HAVE_PLOTS:
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_ylim([0.0,3.0])
+        ax.set_ylim([0.0, 3.0])
         ax.vlines(wv_master, 0.0, 1.0)
         ax.vlines(wv_arc, 1.0, 2.0, colors='r', linestyle=':')
         ax.vlines(wv_ini_arc, 0.0, 3.0, colors='m', linewidth=3.0)
@@ -332,8 +340,8 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         ax.set_xlabel('wavelength')
         axbis = ax.twiny()
         axbis.vlines(xpos_arc, 2.0, 3.0, colors='g')
-        xmin_xpos_master = (wv_ini_master - crval1_arc)/cdelt1_arc + 1.0
-        xmax_xpos_master = (wv_end_master - crval1_arc)/cdelt1_arc + 1.0
+        xmin_xpos_master = (wv_ini_master - crval1_arc) / cdelt1_arc + 1.0
+        xmax_xpos_master = (wv_end_master - crval1_arc) / cdelt1_arc + 1.0
         axbis.set_xlim([xmin_xpos_master, xmax_xpos_master])
         axbis.set_xlabel('pixel position in arc spectrum')
         plt.show(block=False)
@@ -347,9 +355,11 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
 
 # -----------------------------------------------------------------------------
 
-def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, nlines_master=120,
+def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000,
+                           nlines_master=120,
                            wv_ini_arc=4000, wv_end_arc=5000, naxis1_arc=1024,
-                           prob_line_master_in_arc=0.80, delta_xpos_min_arc=4.0,
+                           prob_line_master_in_arc=0.80,
+                           delta_xpos_min_arc=4.0,
                            delta_lambda=5.0, error_xpos_arc=0.3,
                            poly_degree=2, fraction_unknown_lines=0.20,
                            wv_ini_search=None, wv_end_search=None,
@@ -385,39 +395,40 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, 
         Approximate CDELT1 value.
     """
 
-    wv_master = simulate_master_table(my_seed, wv_ini_master, wv_end_master, nlines_master,
+    wv_master = simulate_master_table(my_seed, wv_ini_master, wv_end_master,
+                                      nlines_master,
                                       ldebug=ldebug, lpause=lpause)
     ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-      gen_triplets_master(wv_master)
+        gen_triplets_master(wv_master)
 
     nlines_arc, xpos_arc, crval1_arc, cdelt1_arc, \
-      c0_arc, c1_arc, c2_arc, ipos_wv_arc, coeff_original = \
-      simulate_arc(wv_ini_master, wv_end_master, wv_master,
-                   wv_ini_arc, wv_end_arc, naxis1_arc,
-                   prob_line_master_in_arc,
-                   delta_xpos_min_arc, delta_lambda, error_xpos_arc,
-                   poly_degree, fraction_unknown_lines,
-                   ldebug=ldebug, lplot=lplot, lpause=lpause)
+    c0_arc, c1_arc, c2_arc, ipos_wv_arc, coeff_original = \
+        simulate_arc(wv_ini_master, wv_end_master, wv_master,
+                     wv_ini_arc, wv_end_arc, naxis1_arc,
+                     prob_line_master_in_arc,
+                     delta_xpos_min_arc, delta_lambda, error_xpos_arc,
+                     poly_degree, fraction_unknown_lines,
+                     ldebug=ldebug, lplot=lplot, lpause=lpause)
 
     if wv_ini_search is None:
-        wv_ini_search = wv_ini_master-0.1*(wv_end_master-wv_ini_master)
+        wv_ini_search = wv_ini_master - 0.1 * (wv_end_master - wv_ini_master)
     if wv_end_search is None:
-        wv_end_search = wv_end_master+0.1*(wv_end_master-wv_ini_master)
+        wv_end_search = wv_end_master + 0.1 * (wv_end_master - wv_ini_master)
 
     solution = arccalibration_direct(wv_master,
-                                    ntriplets_master,
-                                    ratios_master_sorted,
-                                    triplets_master_sorted_list,
-                                    xpos_arc,
-                                    naxis1_arc,
-                                    wv_ini_search, wv_end_search,
-                                    error_xpos_arc,
-                                    times_sigma_r,
-                                    frac_triplets_for_sum,
-                                    times_sigma_theil_sen,
-                                    poly_degree_wfit,
-                                    times_sigma_polfilt,
-                                    times_sigma_inclusion)
+                                     ntriplets_master,
+                                     ratios_master_sorted,
+                                     triplets_master_sorted_list,
+                                     xpos_arc,
+                                     naxis1_arc,
+                                     wv_ini_search, wv_end_search,
+                                     error_xpos_arc,
+                                     times_sigma_r,
+                                     frac_triplets_for_sum,
+                                     times_sigma_theil_sen,
+                                     poly_degree_wfit,
+                                     times_sigma_polfilt,
+                                     times_sigma_inclusion)
 
     coeff, crval1_approx, cdelt1_approx = fit_solution(wv_master,
                                                        xpos_arc,
@@ -425,6 +436,7 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000, 
                                                        poly_degree_wfit,
                                                        weighted=False)
     return coeff, crval1_approx, cdelt1_approx
+
 
 # -----------------------------------------------------------------------------
 
@@ -442,7 +454,7 @@ def test__execute_notebook_example(ldebug=False, lplot=False, lpause=False):
     print("TEST: test__execute_notebook_example... OK")
 
 
-#@pytest.mark.xfail
+# @pytest.mark.xfail
 def test__execute_simple_case(ldebug=False, lplot=False, lpause=False):
     """Test the explanation of the ipython notebook example."""
     coeff, crval1_approx, cdelt1_approx = \
@@ -461,9 +473,10 @@ def test__execute_simple_case(ldebug=False, lplot=False, lpause=False):
 
     print("TEST: test__execute_simple_case... OK")
 
+
 # -----------------------------------------------------------------------------
 
 
 if __name__ == '__main__':
-    #test__execute_notebook_example(ldebug=True, lplot=True, lpause=True)
+    # test__execute_notebook_example(ldebug=True, lplot=True, lpause=True)
     test__execute_simple_case(ldebug=True, lplot=False, lpause=False)

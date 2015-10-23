@@ -21,6 +21,7 @@
 
 import numpy
 
+
 def fit_theil_sen(x, y):
     """Compute a robust linear fit using the Theil-Sen method.
 
@@ -65,7 +66,8 @@ def fit_theil_sen(x, y):
         yy = y1[numpy.newaxis, :]
     elif y1.ndim == 2:
         if n != y1.shape[0]:
-            raise ValueError('Y-array size in the fitting direction is different to the X-array size')
+            raise ValueError(
+                'Y-array size in the fitting direction is different to the X-array size')
         nfits = y1.shape[1]
         yy = y1.T
     else:
@@ -75,13 +77,13 @@ def fit_theil_sen(x, y):
     iextra = nmed if (n % 2) == 0 else nmed + 1
 
     deltx = xx[iextra:] - xx[:nmed]
-    delty = yy[:,iextra:] - yy[:,:nmed]
+    delty = yy[:, iextra:] - yy[:, :nmed]
     allslopes = delty / deltx
     slopes = numpy.median(allslopes, axis=1)
-    allinters = yy - slopes[:,numpy.newaxis] * x
+    allinters = yy - slopes[:, numpy.newaxis] * x
     inters = numpy.median(allinters, axis=1)
 
-    if nfits == 1: # return numbers
+    if nfits == 1:  # return numbers
         return inters[0], slopes[0]
     else:
         return inters, slopes
