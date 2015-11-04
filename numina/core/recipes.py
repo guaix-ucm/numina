@@ -177,7 +177,6 @@ class BaseRecipe(object):
                 except NoResultFound:
                     pass
 
-
         return cls.create_input(**result)
 
     # An alias required by GTC

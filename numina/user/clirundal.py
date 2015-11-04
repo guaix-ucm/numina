@@ -103,8 +103,7 @@ def mode_run_common_obs(args):
     recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
     _logger.debug('recipe class is %s', recipeclass)
 
-    # FIXME: pass the correct pipeline
-    rinput = recipeclass.build_recipe_input(obsres, dal, pipeline='default')
+    rinput = recipeclass.build_recipe_input(obsres, dal, pipeline=pipe_name)
 
     os.chdir(cwd)
 

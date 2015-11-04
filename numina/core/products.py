@@ -98,6 +98,7 @@ class DataFrameType(DataType):
         else:
             return DataFrame(filename=obj)
 
+
 class ArrayType(DataType):
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
@@ -111,6 +112,20 @@ class ArrayType(DataType):
 
     def __numina_dump__(self, obj, where):
         return dump_numpy_array(obj, where)
+
+    def __numina_load__(self, obj):
+        if isinstance(obj, six.string_types):
+            # if is a string, it may be a pathname, try to load it
+
+            # heuristics, by extension
+            if obj.endswith('.csv'):
+                # try to open as a CSV file
+                res = numpy.loadtxt(obj, delimiter=',')
+            else:
+                res = numpy.loadtxt(obj)
+        else:
+            res = obj
+        return res
 
 
 class ArrayNType(ArrayType):

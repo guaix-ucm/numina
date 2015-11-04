@@ -32,7 +32,6 @@ def download(url, bsize=BLOCK):
     req = urllib_request.Request(url)
     source = urllib_request.urlopen(req)
     #
-    assert False
     with NamedTemporaryFile(delete=False) as fd:
         block = source.read(bsize)
         while block:
