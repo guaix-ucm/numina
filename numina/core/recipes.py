@@ -46,7 +46,7 @@ from .dataholders import Product
 from .products import QualityControlProduct
 
 
-class BaseRecipe(object):
+class BaseRecipe(with_metaclass(RecipeType, object)):
     """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
@@ -181,11 +181,6 @@ class BaseRecipe(object):
 
     # An alias required by GTC
     buildRI = build_recipe_input
-
-
-class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
-    """Base class for instrument recipes"""
-    pass
 
 
 class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
