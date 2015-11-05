@@ -24,7 +24,7 @@ from six import with_metaclass
 
 from ..metarecipes import RecipeType
 from ..recipes import BaseRecipeAutoQC
-from ..recipes import BaseRecipePlain
+from ..recipes import BaseRecipe
 from ..recipeinout import RecipeInput, RecipeResult
 from ..requirements import ObservationResultRequirement
 from ..dataholders import Product
@@ -97,7 +97,7 @@ def test_recipe_with_autoqc():
 
 def test_recipe_without_autoqc():
 
-    class TestRecipe(BaseRecipePlain):
+    class TestRecipe(BaseRecipe):
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 
@@ -118,4 +118,3 @@ def test_recipe_without_autoqc():
 
     for prod in TestRecipe.RecipeResult.stored().values():
         assert isinstance(prod, Product)
-
