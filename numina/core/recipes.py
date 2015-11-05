@@ -29,28 +29,25 @@ A recipe is a class that complies with the *reduction recipe API*:
 import traceback
 import logging
 
-from six import with_metaclass
+import six
 
 from .. import __version__
-from .recipeinout import ErrorRecipeResult
-from .recipeinout import RecipeResult as RecipeResultClass
-from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult
 from ..dal.stored import ObservingBlock
 from ..exceptions import NoResultFound
-from .products import ObservationResultType
-from .products import InstrumentConfigurationType
-from .products import DataProductTag
 from .dataholders import Product
-from .products import QualityControlProduct
+
+import numina.core.recipeinout as rio
+import numina.core.products as prods
 
 
+@six.add_metaclass(RecipeType)
 class BaseRecipe(object):
     """Base class for all instrument recipes"""
 
-    RecipeResult = RecipeResultClass
-    RecipeInput = RecipeInputClass
+    RecipeResult = rio.RecipeResult
+    RecipeInput = rio.RecipeInput
 
     def __init__(self, *args, **kwds):
         super(BaseRecipe, self).__init__()
@@ -109,7 +106,7 @@ class BaseRecipe(object):
         Recipe.
 
         :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeRequirement
+        :param type: RecipeInput
         :rtype: a RecipeResult object or an error
 
         '''
@@ -118,7 +115,7 @@ class BaseRecipe(object):
             result = self.run(recipe_input)
         except Exception as exc:
             self.logger.error("During recipe execution %s", exc)
-            return ErrorRecipeResult(
+            return rio.ErrorRecipeResult(
                 exc.__class__.__name__,
                 str(exc),
                 traceback.format_exc()
@@ -156,12 +153,12 @@ class BaseRecipe(object):
 
         for key, req in cls.requirements().items():
 
-            if isinstance(req.type, ObservationResultType):
+            if isinstance(req.type, prods.ObservationResultType):
                 result[key] = obsres
-            elif isinstance(req.type, InstrumentConfigurationType):
+            elif isinstance(req.type, prods.InstrumentConfigurationType):
                 # Not sure how to handle this, or if it is needed...
                 result[key] = {}
-            elif isinstance(req.type, DataProductTag):
+            elif isinstance(req.type, prods.DataProductTag):
                 try:
                     prod = dal.search_prod_req_tags(req, obsres.instrument,
                                                     tags, pipeline)
@@ -183,12 +180,7 @@ class BaseRecipe(object):
     buildRI = build_recipe_input
 
 
-class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
-    """Base class for instrument recipes"""
-    pass
-
-
-class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
+class BaseRecipeAutoQC(BaseRecipe):
     """Base class for instrument recipes"""
 
-    qc = Product(QualityControlProduct, dest='qc')
+    qc = Product(prods.QualityControlProduct, dest='qc')
