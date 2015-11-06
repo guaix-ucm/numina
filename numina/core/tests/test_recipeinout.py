@@ -42,7 +42,7 @@ def test_ErrorRecipeResult__repr__(tmpdir):
 
     BB = ErrorRecipeResult("errortype","message","traceback", str(tmpdir)+"/errors.yaml")
     # where = DiskStorageDefault(str(tmpdir))
-    print tmpdir
+    print (tmpdir)
     # where.store(BB)
     BB.store()
 
