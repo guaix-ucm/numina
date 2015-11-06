@@ -21,44 +21,16 @@
 
 from __future__ import division
 
-import math
-
 import numpy
 from scipy.spatial import distance
 
-
-# This is defined somewhere else
-def wc_to_pix_1d(w):
-    return int(math.floor(w+0.5))
-
-
-def wcs_to_pix(w):
-    return [wc_to_pix_1d(w1) for w1 in w[::-1]]
-
-
-def wcs_to_pix_np(w):
-    wnp = numpy.asarray(w)
-    mm = numpy.floor(wnp + 0.5)
-    return mm[::-1].astype('int')
-
-
-def img_box(center, shape, box):
-
-    def slice_create(c, s, b):
-        do = wc_to_pix_1d(c - b)
-        up = wc_to_pix_1d(c + b)
-        l = max(0, do)
-        h = min(s, up + 1)
-        return slice(l, h, None)
-
-    return tuple(slice_create(*args) for args in zip(center, shape, box))
+from numina.array.utils import image_box
 
 
 # returns y,x
 def _centering_centroid_loop(data, center, box):
-
     # extract raster image
-    sl = img_box(center, data.shape, box)
+    sl = image_box(center, data.shape, box)
     raster = data[sl]
 
     # Background estimation for recentering
@@ -71,21 +43,12 @@ def _centering_centroid_loop(data, center, box):
         return center, background
 
     rr = numpy.where(mask, braster, 0)
-
-    # only valid points
-    br = braster[mask]
-
-    r_std = br.std()
-    r_mean = br.mean()
-    if r_std > 0:
-        _snr = r_mean / r_std
-
-    fi, ci = numpy.indices(braster.shape)
-
     norm = rr.sum()
     # All points in thresholded raster are 0.0
     if norm <= 0.0:
         return center, background
+
+    fi, ci = numpy.indices(braster.shape)
 
     fm = (rr * fi).sum() / norm
     cm = (rr * ci).sum() / norm
@@ -101,8 +64,8 @@ def _centering_centroid_loop_xy(data, center_xy, box):
     return ncenter_xy, back
 
 
-def centering_centroid(data, xi, yi, box, nloop=10,
-                       toldist=1e-3, maxdist=10.0):
+def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3,
+                       maxdist=10.0):
     '''
         returns x, y, background, status, message
 

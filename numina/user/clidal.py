@@ -1,4 +1,3 @@
-
 # Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
@@ -38,6 +37,7 @@ def process_format_version_0(loaded_obs, loaded_data):
 
 class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
+
     def __init__(self, ob_table, reqs):
         self.ob_table = ob_table
         self._reqs = reqs
@@ -57,7 +57,9 @@ class ComandLineDAL(AbsDAL):
                 tagger = mode.tagger
                 break
         else:
-            raise ValueError('no mode for {0}.mode in instrument {0}.instrument'.format(obsres))
+            raise ValueError(
+                'no mode for {0}.mode in instrument {0}.instrument'.format(
+                    obsres))
 
         if tagger is None:
             master_tags = {}

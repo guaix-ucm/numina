@@ -40,6 +40,13 @@ class RecipeInOut(object):
 
         self._finalize()
 
+    def __repr__(self):
+        sclass = type(self).__name__
+        full = []
+        for key, val in self.stored().items():
+            full.append('%s=%r' % (key, val))
+        return '%s(%s)' % (sclass, ', '.join(full))
+
     def _finalize(self):
         """Access all the instance descriptors
 
@@ -87,25 +94,24 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     pass
 
 
-class BaseRecipeResult(object):
-    def __new__(cls, *args, **kwds):
-        return super(BaseRecipeResult, cls).__new__(cls)
-
-    def __init__(self, *args, **kwds):
-        super(BaseRecipeResult, self).__init__()
-
-
-class ErrorRecipeResult(BaseRecipeResult):
-    def __init__(self, errortype, message, traceback):
-        super(ErrorRecipeResult, self).__init__()
+class ErrorRecipeResult(object):
+    def __init__(self, errortype, message, traceback, _error=""):
         self.errortype = errortype
         self.message = message
         self.traceback = traceback
+        self.file = "errors.yaml" if not _error else _error
 
     def __repr__(self):
-        sclass = type(self).__name__
-        fmt = "%s(errortype=%r, message='%s')"
-        return fmt % (sclass, self.errortype, self.message)
+        fmt = "ErrorRecipeResult(errortype=%r, message='%s', traceback='%s')"
+        return fmt % (self.errortype, self.message, self.traceback)
+
+    def store(self):
+        try:
+            with open(self.file, 'a') as fd:
+                yaml.dump(repr(self), fd)
+        except IOError:
+            with open(self.file, 'w+') as fd:
+                yaml.dump(repr(self), fd)
 
     def store_to(self, where):
         with open(where.result, 'w+') as fd:
@@ -114,14 +120,7 @@ class ErrorRecipeResult(BaseRecipeResult):
         return where.result
 
 
-class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResult)):
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        full = []
-        for key, val in self.stored().items():
-            full.append('%s=%r' % (key, val))
-        return '%s(%s)' % (sclass, ', '.join(full))
+class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
 
     def store_to(self, where):
 

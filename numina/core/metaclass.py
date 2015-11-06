@@ -62,37 +62,20 @@ class StoreType(type):
 
     @classmethod
     def transform(cls, name, value):
-        return name, value
-
-
-class RecipeInOutType(StoreType):
-    def __new__(cls, classname, parents, attributes):
-        # Handle checkers defined in base class
-        checkers = attributes.get('__checkers__', [])
-        for p in parents:
-            c = getattr(p, '__checkers__', [])
-            checkers.extend(c)
-        attributes['__checkers__'] = checkers
-        obj = super(RecipeInOutType, cls).__new__(
-            cls, classname, parents, attributes)
-        return obj
-
-    @classmethod
-    def transform(cls, name, value):
         if value.dest is None:
             value.dest = name
         nname = value.dest
         return nname, value
 
 
-class RecipeInputType(RecipeInOutType):
+class RecipeInputType(StoreType):
     """Metaclass for RecipeInput."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
 
 
-class RecipeResultType(RecipeInOutType):
+class RecipeResultType(StoreType):
     """Metaclass for RecipeResult."""
     @classmethod
     def exclude(cls, name, value):
