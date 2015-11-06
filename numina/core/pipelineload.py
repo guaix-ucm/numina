@@ -20,8 +20,6 @@
 '''Build a LoadableDRP from a yaml file'''
 
 import pkgutil
-import uuid
-import six
 import yaml
 
 from .objimport import import_object
@@ -29,28 +27,13 @@ from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
-
-
-def om_repr(dumper, data):
-    return dumper.represent_mapping('!om', data.__dict__)
-
-
-def om_cons(loader, node):
-    om = ObservingMode()
-    value = loader.construct_mapping(node)
-    om.__dict__.update(value)
-    om.uuid = uuid.UUID(om.uuid)
-    return om
-
-yaml.add_representer(ObservingMode, om_repr)
-yaml.add_constructor('!om', om_cons)
+from .taggers import get_tags_from_full_ob
 
 
 def drp_load(package, resource):
     """Load the DRPS from a resource file."""
     data = pkgutil.get_data(package, resource)
     return drp_load_data(data)
-
 
 
 def drp_load_data(data):
@@ -153,77 +136,3 @@ def load_instrument(node):
     trans['configurations'] = load_confs(conf_node)
     trans['products'] = prod_node
     return InstrumentDRP(**trans)
-
-
-# def print_i(ins):
-#     six.print_(ins.name)
-#     print_c(ins.configurations)
-#     print_m(ins.modes)
-#     print_p(ins.pipelines)
-
-
-# def print_p(pipelines):
-#     six.print_('Pipelines')
-#     for p, n in pipelines.items():
-#         six.print_(' pipeline', p)
-#         six.print_('   version', n.version)
-#         six.print_('   recipes')
-#         for m, r in n.recipes.items():
-#             six.print_('    ', m, '->', r)
-
-
-# def print_c(confs):
-#     six.print_('Configurations')
-#     for c in confs:
-#         six.print_(' conf', c, confs[c].values)
-
-
-# def print_m(modes):
-#     six.print_('Modes')
-#     for c in modes:
-#         six.print_(' mode', c.key)
-
-
-def get_tags_from_full_ob(ob, reqtags=None):
-    # each instrument should have one
-    # perhaps each mode...
-    files = ob.images
-    cfiles = ob.children
-    alltags = {}
-
-    if reqtags is None:
-        reqtags = []
-
-    # Init alltags...
-    # Open first image
-    if files:
-        for fname in files[:1]:
-            with fname.open() as fd:
-                header = fd[0].header
-                for t in reqtags:
-                    alltags[t] = header[t]
-    else:
-
-        for prod in cfiles[:1]:
-            prodtags = prod.tags
-            for t in reqtags:
-                alltags[t] = prodtags[t]
-
-    for fname in files:
-        with fname.open() as fd:
-            header = fd[0].header
-
-            for t in reqtags:
-                if alltags[t] != header[t]:
-                    msg = 'wrong tag %s in file %s' % (t, fname)
-                    raise ValueError(msg)
-
-    for prod in cfiles:
-        prodtags = prod.tags
-        for t in reqtags:
-            if alltags[t] != prodtags[t]:
-                msg = 'wrong tag %s in product %s' % (t, prod)
-                raise ValueError(msg)
-
-    return alltags
-

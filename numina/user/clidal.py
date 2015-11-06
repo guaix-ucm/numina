@@ -26,6 +26,7 @@ from numina.dal import ObservingBlock
 from numina.core.pipeline import DrpSystem
 from numina.core import import_object
 from numina.core import obsres_from_dict
+import numina.store as storage
 
 _logger = logging.getLogger("numina.simpledal")
 
@@ -103,12 +104,13 @@ class ComandLineDAL(AbsDAL):
         return StoredProduct(id=100, content='null.fits', tags={})
 
     def search_prod_req_tags(self, req, ins, tags, pipeline):
-        '''Returns the first coincidence...'''
+        """Returns the first coincidence..."""
         _logger.debug('search for instrument %s, req %s with tags %s',
                       ins, req, tags)
         key = req.dest
         try:
-            content = self._reqs['requirements'][key]
+            product = self._reqs['requirements'][key]
+            content = storage.load(req.type, product)
         except KeyError:
             raise NoResultFound("key %s not found" % key)
 
@@ -119,9 +121,12 @@ class ComandLineDAL(AbsDAL):
 
     def search_param_req(self, req, instrument, mode, pipeline):
         key = req.dest
+        _logger.debug('search for instrument %s, req %s',
+                      instrument, req)
         try:
             param = self._reqs['requirements'][key]
-            content = StoredParameter(param)
+            content = storage.load(req.type, param)
+
         except KeyError:
             raise NoResultFound("key %s not found" % key)
-        return content
+        return StoredParameter(content)

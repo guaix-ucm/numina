@@ -26,11 +26,13 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
+import traceback
 import logging
 
 from six import with_metaclass
 
 from .. import __version__
+from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
@@ -75,6 +77,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
 
+
     @classmethod
     def create_input(cls, *args, **kwds):
         '''
@@ -100,27 +103,27 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     def run(self, recipe_input):
         return self.create_result()
 
-    # def __call__(self, recipe_input):
-    #     '''
-    #     Process the result of the observing block with the
-    #     Recipe.
-    #
-    #     :param recipe_input: the input appropriated for the Recipe
-    #     :param type: RecipeRequirement
-    #     :rtype: a RecipeResult object or an error
-    #
-    #     '''
-    #
-    #     try:
-    #         result = self.run(recipe_input)
-    #     except Exception as exc:
-    #         self.logger.error("During recipe execution %s", exc)
-    #         return ErrorRecipeResult(
-    #             exc.__class__.__name__,
-    #             str(exc),
-    #             traceback.format_exc()
-    #             )
-    #     return result
+    def __call__(self, recipe_input):
+        '''
+        Process the result of the observing block with the
+        Recipe.
+
+        :param recipe_input: the input appropriated for the Recipe
+        :param type: RecipeInput
+        :rtype: a RecipeResult object or an error
+
+        '''
+
+        try:
+            result = self.run(recipe_input)
+        except Exception as exc:
+            self.logger.error("During recipe execution %s", exc)
+            return ErrorRecipeResult(
+                exc.__class__.__name__,
+                str(exc),
+                traceback.format_exc()
+                )
+        return result
 
     def set_base_headers(self, hdr):
         '''Set metadata in FITS headers.'''
@@ -153,6 +156,20 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
         for key, req in cls.requirements().items():
 
+            # First check if the requirement is embedded
+            # in the observation result
+            # it can happen in GTC
+
+            # Using NoResultFound instead of None
+            # None can be a valid result
+            val = getattr(obsres, key, NoResultFound)
+
+            if val is not NoResultFound:
+                result[key] = val
+                continue
+
+            # Then, continue checking the rest
+
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
             elif isinstance(req.type, InstrumentConfigurationType):
@@ -180,7 +197,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     buildRI = build_recipe_input
 
 
-class BaseRecipeAutoQC(BaseRecipe):
+class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
     """Base class for instrument recipes"""
 
     qc = Product(QualityControlProduct, dest='qc')
