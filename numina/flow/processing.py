@@ -143,11 +143,19 @@ class BadPixelCorrector(TagOptionalCorrector):
 
         super(BadPixelCorrector, self).__init__(datamodel, tagger,
                                                 mark, dtype=dtype)
+
         self.bpm = badpixelmask
 
     def _run(self, img):
-        _logger.debug('correcting bad pixel mask in %s', img)
-        img.data = array.fixpix(img.data, self.bpm)
+
+        imgid = self.get_imgid(img)
+
+        _logger.debug('correcting bad pixel mask in %s', imgid)
+
+        data = self.datamodel.get_data(img)
+        #newdata = array.fixpix(data, self.bpm)
+        # FIXME: this breaks datamodel abstraction
+        #img[0].data = newdata
         return img
 
 
