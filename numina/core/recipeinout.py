@@ -95,16 +95,23 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
 
 
 class ErrorRecipeResult(object):
-    def __init__(self, errortype, message, traceback):
-        super(ErrorRecipeResult, self).__init__()
+    def __init__(self, errortype, message, traceback, _error=""):
         self.errortype = errortype
         self.message = message
         self.traceback = traceback
+        self.file = "errors.yaml" if not _error else _error
 
     def __repr__(self):
-        sclass = type(self).__name__
-        fmt = "%s(errortype=%r, message='%s')"
-        return fmt % (sclass, self.errortype, self.message)
+        fmt = "ErrorRecipeResult(errortype=%r, message='%s', traceback='%s')"
+        return fmt % (self.errortype, self.message, self.traceback)
+
+    def store(self):
+        try:
+            with open(self.file, 'a') as fd:
+                yaml.dump(repr(self), fd)
+        except IOError:
+            with open(self.file, 'w+') as fd:
+                yaml.dump(repr(self), fd)
 
     def store_to(self, where):
         with open(where.result, 'w+') as fd:
