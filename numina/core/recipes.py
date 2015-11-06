@@ -109,7 +109,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         Recipe.
 
         :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeRequirement
+        :param type: RecipeInput
         :rtype: a RecipeResult object or an error
 
         '''
@@ -155,6 +155,20 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         tags = getattr(obsres, 'tags', {})
 
         for key, req in cls.requirements().items():
+
+            # First check if the requirement is embedded
+            # in the observation result
+            # it can happen in GTC
+
+            # Using NoResultFound instead of None
+            # None can be a valid result
+            val = getattr(obsres, key, NoResultFound)
+
+            if val is not NoResultFound:
+                result[key] = val
+                continue
+
+            # Then, continue checking the rest
 
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
