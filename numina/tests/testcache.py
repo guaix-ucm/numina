@@ -48,10 +48,12 @@ def user_cache_dir(appname=None):
         else:
             if appname in os.environ['XDG_CACHE_HOME']:
                 path = os.environ['XDG_CACHE_HOME'].split(appname)[0]
+            else:
+                path = os.getenv('XDG_CACHE_HOME', os.path.expanduser('~/.cache'))
         if appname:
             path = os.path.join(path, appname)
     if not os.path.exists(os.path.join(path, 'astropy')):
-        os.mkdir(os.path.join(path, 'astropy'))
+        os.makedirs(os.path.join(path, 'astropy'))
     return path
 
 
