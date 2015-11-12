@@ -25,7 +25,6 @@ from .pipeline import ObservingMode
 from .objimport import import_object
 from .objimport import fully_qualified_name
 from .pipelineload import drp_load
-from .requirements import DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProductType, DataFrameType
 from .oresult import ObservationResult
