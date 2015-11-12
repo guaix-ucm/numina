@@ -44,7 +44,7 @@ The Recipe announces its requirements and producst with the following syntax.
 
     class SomeRecipe(RecipeBase):        
 
-        master_dark = DataProductRequirement(MasterDark, 'Master dark image') 
+        master_dark = Requirement(MasterDark, 'Master dark image')
         some_numeric_value = Parameter(0.45, 'Some numeric value'),
 
         master_flat = Product(MasterDark) 
