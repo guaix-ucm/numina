@@ -16,6 +16,6 @@ contained in the package, see the :ref:`reference`.
 
 .. toctree::
 
-   pipelines
-   environ
-   product
+   concepts
+   example
+   datatypes

@@ -1,6 +1,6 @@
-***************************
-Numina Pipeline Environment
-***************************
+***********************
+Numina Pipeline Example
+***********************
 
 This guide is intended as an introductory overview of pipeline creation
 with Numina. For detailed reference documentation of the functions and
