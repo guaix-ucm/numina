@@ -21,10 +21,8 @@
 Recipe requirement holders
 '''
 
-from .products import DataProductTag
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
-
 from .dataholders import EntryHolder
 
 
@@ -59,21 +57,6 @@ class Parameter(Requirement):
             optional=optional, default=value,
             choices=choices, validation=validation
             )
-
-
-class DataProductRequirement(Requirement):
-    '''The Recipe requires a data product of another recipe.'''
-    def __init__(self, rtype, description, validation=True,
-                 dest=None, optional=False, default=None):
-        super(DataProductRequirement, self).__init__(
-            rtype, description, dest=dest, optional=optional,
-            default=default, validation=validation
-            )
-
-        if not isinstance(self.type, DataProductTag):
-            raise TypeError(
-                '%s type must derive from DataProductTag' % self.type
-                )
 
 
 class ObservationResultRequirement(Requirement):
