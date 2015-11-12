@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,9 +17,9 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Recipe requirement holders
-'''
+"""
 
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
@@ -27,7 +27,7 @@ from .dataholders import EntryHolder
 
 
 class Requirement(EntryHolder):
-    '''Requirement holder holder for RecipeRequirement.'''
+    """Requirement holder holder for RecipeRequirement."""
     def __init__(self, rtype, description, validation=True,
                  dest=None, optional=False, default=None, choices=None):
         super(Requirement, self).__init__(
@@ -48,7 +48,7 @@ class Requirement(EntryHolder):
 
 
 class Parameter(Requirement):
-    '''The Recipe requires a plain Python type.'''
+    """The Recipe requires a plain Python type."""
     def __init__(self, value, description, dest=None, optional=False,
                  choices=None, validation=True):
         rtype = type(value)
@@ -60,7 +60,7 @@ class Parameter(Requirement):
 
 
 class ObservationResultRequirement(Requirement):
-    '''The Recipe requires the result of an observation.'''
+    """The Recipe requires the result of an observation."""
     def __init__(self):
 
         super(ObservationResultRequirement, self).__init__(
@@ -75,7 +75,7 @@ class ObservationResultRequirement(Requirement):
 
 
 class InstrumentConfigurationRequirement(Requirement):
-    '''The Recipe requires the configuration of the instrument.'''
+    """The Recipe requires the configuration of the instrument."""
     def __init__(self):
 
         super(InstrumentConfigurationRequirement, self).__init__(
