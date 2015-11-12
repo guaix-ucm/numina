@@ -18,13 +18,10 @@
 #
 
 import os
-
 import pytest
 
 from .testcache import user_cache_dir
 
-
-@pytest.mark.xfail(reason='issue #98')
 def test_user_cache_dir_linux_home(monkeypatch, tmpdir):
 
     home = tmpdir.mkdir('hometest')
@@ -34,16 +31,19 @@ def test_user_cache_dir_linux_home(monkeypatch, tmpdir):
     monkeypatch.setattr(os, 'environ', modenviron)
 
     cachedir = os.path.join(home.strpath, '.cache')
-    expected = os.path.join(cachedir, 'numina', 'astropy')
+    expected = os.path.join(cachedir, 'numina')
+
+    if not os.path.exists(expected):
+        os.makedirs(expected)
 
     assert user_cache_dir("numina") == expected
+    assert os.path.exists(os.path.join(expected,'astropy'))
 
 
-@pytest.mark.xfail(reason="issue #99")
 def test_user_cache_dir_linux_xdg(monkeypatch, tmpdir):
 
     home = tmpdir.mkdir('hometest')
-    cache = tmpdir.mkdir('cache')
+    cache = tmpdir.mkdir('.cache')
 
     modenviron = {'HOME': home.strpath,
                   'XDG_CACHE_HOME': cache.strpath
@@ -52,6 +52,7 @@ def test_user_cache_dir_linux_xdg(monkeypatch, tmpdir):
     monkeypatch.setattr(os, 'environ', modenviron)
 
     cachedir = cache.strpath
-    expected = os.path.join(cachedir, 'numina', 'astropy')
+    expected = os.path.join(cachedir, 'numina')
 
     assert user_cache_dir("numina") == expected
+    assert os.path.exists(os.path.join(expected,'astropy'))
