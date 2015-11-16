@@ -5,8 +5,7 @@ import numpy as np
 from numpy.polynomial import polynomial
 
 try:
-    import matplotlib.pyplot as plt
-
+    import matplotlib
     HAVE_PLOTS = True
 except ImportError:
     HAVE_PLOTS = False
@@ -156,6 +155,9 @@ class Slitlet(object):
             fluxsp /= deltaysp
 
         if LDEBUG and HAVE_PLOTS:
+            # Required to delay the backend initialization (issue #102)
+            import matplotlib.pyplot as plt
+
             # plot image with bounding box, boundaries, etc.
             naxis2, naxis1 = image2d.shape
             fig = plt.figure()
