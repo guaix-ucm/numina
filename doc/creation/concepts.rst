@@ -129,10 +129,10 @@ pipeline called *default*. It may have other pipelines for specific purposes.
 
 Products, Requirements and Data Types
 #####################################
-A recipe announces its required inputs as Requirements and its outputs as
-Products.
+A recipe announces its required inputs as :class:`~numina.core.requirements.Requirement` and its outputs as
+:class:`~numina.core.dataholders.Product`.
 
-Both products and requirements have a name and a type. Types can be plain
+Both Products and Requirements have a name and a type. Types can be plain
 Python types or defined by the developer.
 
 Format of the input files
@@ -144,7 +144,7 @@ serialization language.
 Format of the Observation Result file
 *************************************
 This file contains the result of a observation. It represents a
-:class:`numina.recipes.oblock.ObservationResult` object.
+:class:`~numina.core.oresult.ObservationResult` object.
 
 The contents of the object are serialized as a dictionary with the
 following keys:
@@ -162,7 +162,7 @@ mode: required, string
 children: not required, list of integers, defaults to empty list
     Identifications of nested observing blocks
 
-images: required, list of file names
+frames: required, list of file names
     List of raw images
 
 .. code-block:: yaml
@@ -171,7 +171,7 @@ images: required, list of file names
    instrument: EMIR
    mode: nb_image
    children: []
-   images:
+   frames:
    - r0121.fits
    - r0122.fits
    - r0123.fits

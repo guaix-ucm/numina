@@ -1,6 +1,6 @@
 
 :mod:`numina.core` --- Core classes for Pipelines
-==================================================
+=================================================
 
 
 :mod:`numina.core.dataframe` --- 
@@ -38,10 +38,17 @@
 .. automodule:: numina.core.recipes
    :synopsis:  Base classes for Recipes
 
+
+:mod:`numina.core.dataholders` ---
+==================================================
+
+.. automodule:: numina.core.dataholders
+   :members:
+
+
 :mod:`numina.core.requirements` --- 
 ==================================================
 
 .. automodule:: numina.core.requirements
    :members:
-
 
