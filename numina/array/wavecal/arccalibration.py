@@ -22,12 +22,6 @@
 from __future__ import division
 from __future__ import print_function
 
-try:
-    import matplotlib.pyplot as plt
-
-    HAVE_PLOTS = True
-except ImportError:
-    HAVE_PLOTS = False
 import numpy as np
 from numpy.polynomial import polynomial
 import itertools
