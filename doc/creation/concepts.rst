@@ -8,36 +8,124 @@ Instrument
 
 Observing Modes
 ###############
-Each instrument has a list of predefined types of observations that can be
-carried out with it. Some types of observations provide calibrations needed by
-other types of observations.
+Each Instrument has a list of predefined types of observations that can be
+carried out with it. Each Observing Mode is defined by:
 
-.. digraph:: foo
+  * The configuration of the Telescope
+  * The configuration of the Instrument
+  * The type of processing required by the images obtained durinf the observation
 
-   "Observation Mode" -> "Pipeline 1";
-   "Observation Mode" -> "Pipeline 2";
-   "Observation Mode" -> "...";
-   "Observation Mode" -> "Pipeline N";
+Some of the observing modes of a Instrument are **Scientific**, that is, modes devoted
+to obtain data to perform scientific analysis. Other modes are devoted to **Calibration**;
+these modes produce data required to correct the scientific images from the effects
+of the Instrument, the Telescope and the atmosphere.
+
+Recipes
+#######
+A recipe is a method to process the images obtained in a particular observing
+mode. Recipes in general require (as inputs) the list of raw images obtained
+during the observation. Recipes can require other inputs (calibrations), and
+those inputs can be the outputs of other recipes.
+
+Images obtained in a particular mode are processed by one recipe.
+
+.. graphviz::
+
+    digraph G {
+        rankdir=LR;
+        subgraph cluster_0 {
+            style=filled;
+            color=lightgrey;
+            node [style=filled,color=white];
+            edge[style=invis]
+            a0 -> a1 -> a2 -> a3;
+            #label = "Observing\nModes";
+        }
+
+        subgraph cluster_1 {
+            node [style=filled];
+            edge[style=invis]
+            b0 -> b1 -> b2 -> b3;
+            #label = "Recipes";
+        }
+
+        a0 -> b0 [rank=same];
+        a1 -> b1 [rank=same];
+        a2 -> b2 [rank=same];
+        a3 -> b3 [rank=same];
+
+        a0 [label="Mode 1"];
+        a1 [label="Mode 2"];
+        a2 [label="..."];
+        a3 [label="Mode N"];
+        b0 [label="Recipe 1"];
+        b1 [label="Recipe 2"];
+        b2 [label="..."];
+        b3 [label="Recipe N"];
+
+    }
+
 
 Pipelines
 #########
 A pipeline represents a particular mapping between the observing modes and the
 reduction algorithms that process each mode. Each instrument has at least one
-pipeline.
+pipeline called *default*. It may have other pipelines for specific purposes.
 
-.. digraph:: foo
 
-   "Pipeline" -> "Recipe 1";
-   "Pipeline" -> "Recipe 2";
-   "Pipeline" -> "....";
-   "Pipeline" -> "Recipe N";
+.. graphviz::
 
-Recipes
-#######
-A recipe is a method to process the images obtained in a particular observing
-mode. Recipes in general require (as inputs) the list of raw images obtained 
-during the observation. Recipes can require other inputs (calibrations), and 
-those inputs can be the outputs of other recipes.
+    digraph G {
+        subgraph cluster_0 {
+            style=filled;
+            color=lightgrey;
+            node [style=filled,color=white];
+            edge[style=invis]
+            a0 -> a1 -> a2 -> a3;
+            label = "Observing\nModes";
+        }
+
+        subgraph cluster_1 {
+            node [style=filled];
+            edge[style=invis]
+            b0 -> b1 -> b2 -> b3;
+            label = "pipeline: \"default\"";
+            color=blue
+        }
+
+        subgraph cluster_2 {
+            node [style=filled];
+            edge[style=invis]
+            b11 -> b12 -> b13 -> b14;
+            label = "pipeline: \"test\"";
+            color=blue
+        }
+
+        a0 -> b0;
+        a1 -> b1;
+        a2 -> b2;
+        a3 -> b3;
+        a0 -> b11;
+        a1 -> b12;
+        a2 -> b13;
+        a3 -> b14;
+
+        a0 [label="Mode 1"];
+        a1 [label="Mode 2"];
+        a2 [label="..."];
+        a3 [label="Mode N"];
+        b0 [label="Recipe 1"];
+        b1 [label="Recipe 2"];
+        b2 [label="..."];
+        b3 [label="Recipe N"];
+        b11 [label="Recipe 11"];
+        b12 [label="Recipe 12"];
+        b13 [label="..."];
+        b14 [label="Recipe M"];
+    }
+
+
+
 
 Products, Requirements and Data Types
 #####################################
