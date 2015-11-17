@@ -21,7 +21,14 @@
    :synopsis: TBD
    :members:
 
-:mod:`numina.core.products` --- 
+:mod:`numina.core.pipelineload` ---
+==================================================
+
+.. automodule:: numina.core.pipelineload
+   :synopsis: TBD
+   :members:
+
+:mod:`numina.core.products` ---
 ==================================================
 
 .. automodule:: numina.core.products
@@ -37,6 +44,7 @@
 ==================================================
 .. automodule:: numina.core.recipes
    :synopsis:  Base classes for Recipes
+   :members:
 
 
 :mod:`numina.core.dataholders` ---
