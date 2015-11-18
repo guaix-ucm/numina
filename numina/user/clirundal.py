@@ -39,7 +39,12 @@ class Dict2DAL(BaseDictDAL):
     def __init__(self, obtable, base):
 
         prod_table = base['products']
-        req_table= base['requirements']
+
+        if 'parameters' in base:
+            req_table= base['parameters']
+        else:
+            req_table= base['requirements']
+
         super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
 
 
