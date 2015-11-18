@@ -7,7 +7,8 @@
 ==================================================
 .. automodule:: numina.core.dataframe
    :synopsis:  Base DataFrame
-   
+   :members:
+
 :mod:`numina.core.oresult` --- Observation Result
 ==================================================
    
@@ -39,6 +40,7 @@
 
 .. automodule:: numina.core.recipeinout
    :synopsis:  Base classes for Recipe Requirements and Results
+   :members:
 
 :mod:`numina.core.recipes` --- 
 ==================================================

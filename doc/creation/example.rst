@@ -229,14 +229,14 @@ The recipe will receive the result of the observation and return a master bias i
    type of the requirement is :class:`~numina.core.products.ObservationResultType`, representing
    the result of the observation.
 3. This recipe only produces one result. Each product is an object of
-   class :class:`~numina.core.entryholders.Product`. The actual type of the product is given by
-   :class:`~numina.core.DataFrameType`, representing an image.
+   class :class:`~numina.core.dataholders.Product`. The actual type of the product is given by
+   :class:`~numina.core.products.DataFrameType`, representing an image.
 4. Each recipe must provide a `run` method. The method has only one argument that collects
    the values of all inputs declared by the recipe. In this case, `rinput` will have a member
    `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult`
 
 5. The recipe must return an object that collects all the declared products of the recipe, of type
-   :class:`~numina.core.RecipeResult`. This is acomplished internally by the method `create_result`
+   :class:`~numina.core.recipeinout.RecipeResult`. This is acomplished internally by the method `create_result`
    It will raise an exception at run time if all the declared products are not provided.
 
 
@@ -269,11 +269,11 @@ observation result and a master bias image, as flat-field images require bias su
    class :class:`~numina.core.requirements.Requirement` or its specialized subclasses. The actual
    type of the requirement is :class:`~numina.core.products.ObservationResultType`, representing
    the result of the observation.
-2. And it also requires a master bias image, the type in this case is :class:`~numina.core.DataFrameType`,
+2. And it also requires a master bias image, the type in this case is :class:`~numina.core.products.DataFrameType`,
    representing an image.
 3. In this case, `rinput` will have two members
    `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult` and
-   `rinput.master_bias` of type :class:`~numina.core.DataFrame`
+   `rinput.master_bias` of type :class:`~numina.core.dataframe.DataFrame`
 4. The arguments of `create_result` must be passed with the same name used in the product definition.
 
 And finally, the recipe for reduction of `Image` mode  (inside `image.py`). This recipe will have three requirements, the corresponding
@@ -305,12 +305,12 @@ observation result and a master bias and master flat images
 
 1. In this case, `rinput` will have three members
    `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult`,
-   `rinput.master_bias` of type :class:`~numina.core.DataFrame` and
-   `rinput.master_flat` of type :class:`~numina.core.DataFrame`
+   `rinput.master_bias` of type :class:`~numina.core.dataframe.DataFrame` and
+   `rinput.master_flat` of type :class:`~numina.core.dataframe.DataFrame`
 
 .. note::
 
-   It is not striclty required that the requirements and products names are
+   It is not strictly required that the requirements and products names are
    consistent between recipes, altough is highly recomended
 
 Now we must update `drp.yaml` to insert the full name of the recipes (package and class), as follows
@@ -343,3 +343,102 @@ Now we must update `drp.yaml` to insert the full name of the recipes (package an
           bias: clodiadrp.recipes.bias.Bias
           flat: clodiadrp.recipes.flat.Flat
           image: clodiadrp.recipes.image.Image
+
+
+Specialized data products
+*************************
+
+There is some information that is missing of our current setup. The products of some recipes are the inputs of others.
+The master bias created by `Bias` is the input that `Flat` and `Image` require. To represent this we use specialized
+data products. We start by adding a new module `products`::
+
+    clodiadrp
+    |-- clodiadrp
+    |   |-- __init__.py
+    |   |-- loader.py
+    |   |-- products.py
+    |   |-- drp.yaml
+    |   |-- recipes
+    |   |   |-- __init__.py
+    |   |   |-- bias.py
+    |   |   |-- flat.py
+    |   |   |-- image.py
+    |-- setup.py
+
+We have two types of images that are products of recipes that can be required by other recipes: **master bias**
+and **master flat**. We represent this by creating two new types derived
+from :class:`~numina.core.products.DataFrameType`, becasue the new types are images
+and :class:`~numina.core.products.DataProductTag`, because the new types are products that must be handled specially
+by Numina CLI and GTC Control system.
+
+.. code-block:: python
+
+    from numina.core.products import DataFrameType, DataProductTag
+
+    class MasterBias(DataFrameType, DataProductTag):
+        pass
+
+
+    class MasterFlat(DataFrameType, DataProductTag):
+        pass
+
+Now we must modify our recipes as follows. First `Bias`
+
+.. code-block:: python
+
+    from numina.core import Product, Requirement
+    from numina.core.products import ObservationResultType
+    from numina.core.recipes import BaseRecipe
+    from clodiadrp.products import MasterBias   (1)
+
+    class Bias(BaseRecipe):
+
+        obresult = Requirement(ObservationResultType)
+        master_bias = Product(MasterBias)        (2)
+
+        ...                                       (3)
+
+1. We import the new type `MasterBias`
+2. And declare that our recipe produces `MasterBias` images.
+3. `run` remains unchanged.
+
+Then `Flat`:
+
+.. code-block:: python
+
+    from numina.core import Product, Requirement
+    from numina.core.products import ObservationResultType
+    from numina.core.recipes import BaseRecipe
+    from clodiadrp.products import MasterBias, MasterFlat
+
+    class Flat(BaseRecipe):
+
+        obresult = Requirement(ObservationResultType)
+        master_bias = Requirement(MasterBias)         (1)
+        master_flat = Product(MasterFlat)             (2)
+
+        ...
+
+1. We use now `MasterBias` as a requirement. This guaranties that the images provided
+   here are those created by `Bias` and no other.
+2. We declare that our recipe produces `MasterFlat` images.
+
+And finally `Image`:
+
+
+.. code-block:: python
+
+    from numina.core import Product, Requirement
+    from numina.core import DataFrameType
+    from numina.core.products import ObservationResultType
+    from numina.core.recipes import BaseRecipe
+    from clodiadrp.products import MasterBias, MasterFlat
+
+    class Image(BaseRecipe):
+
+        obresult = Requirement(ObservationResultType)
+        master_bias = Requirement(MasterBias)
+        master_flat = Requirement(MasterFlat)
+        final = Product(DataFrameType)
+
+        ...

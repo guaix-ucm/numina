@@ -18,7 +18,7 @@
 #
 
 """
-Recipe Input
+Recipe inpus and outputs
 """
 
 from six import with_metaclass
@@ -95,6 +95,7 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
 
 
 class ErrorRecipeResult(object):
+    """The error result of a Recipe."""
     def __init__(self, errortype, message, traceback, _error=""):
         self.errortype = errortype
         self.message = message
@@ -121,6 +122,7 @@ class ErrorRecipeResult(object):
 
 
 class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
+    """The result of a Recipe."""
 
     def store_to(self, where):
 

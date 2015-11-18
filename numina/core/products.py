@@ -35,6 +35,7 @@ import warnings
 
 
 class DataProductTag(object):
+    """A type that is a data product."""
     pass
 
 
@@ -54,11 +55,13 @@ _base_schema = {
 
 
 class DataFrameType(DataType):
+    """A type of DataFrame."""
     def __init__(self):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
 
     def convert(self, obj):
+        """Convert"""
         # We accept None representing No Image
         if obj is None:
             return None
@@ -75,6 +78,7 @@ class DataFrameType(DataType):
             raise TypeError(msg)
 
     def validate(self, value):
+        """validate"""
         # obj can be None or a DataFrame
         if value is None:
             return True
@@ -100,6 +104,7 @@ class DataFrameType(DataType):
 
 
 class ArrayType(DataType):
+    """A type of array."""
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
@@ -157,7 +162,7 @@ def _gimme_validator_for(instrument, mode):
 
 
 class ObservationResultType(DataType):
-    '''The type of ObservationResult.'''
+    """The type of ObservationResult."""
 
     def __init__(self, rawtype=None):
         super(ObservationResultType, self).__init__(ptype=ObservationResult)
@@ -175,7 +180,7 @@ class ObservationResultType(DataType):
 
 
 class InstrumentConfigurationType(DataType):
-    '''The type of InstrumentConfiguration.'''
+    """The type of InstrumentConfiguration."""
 
     def __init__(self):
         super(InstrumentConfigurationType, self).__init__(
