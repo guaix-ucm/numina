@@ -182,7 +182,7 @@ At this stage, the file layout is as follows::
 Recipes Creation
 ****************
 We haven't created any reduction recipe yet. As a matter of orgnization, we suggest to create
-a dedicated subpackge porrecipes `clodiadrp.recipes` and a module for each recipe. The file layout is::
+a dedicated subpackge for recipes `clodiadrp.recipes` and a module for each recipe. The file layout is::
 
     clodiadrp
     |-- clodiadrp
@@ -197,46 +197,149 @@ a dedicated subpackge porrecipes `clodiadrp.recipes` and a module for each recip
     |-- setup.py
 
 
-All new Recipes must inherit from :class:`~numina.core.recipes.BaseRecipe` so following with the example,
-we want to create a new recipe in the folder *recipes* of clodiadrp: *clodiadrp.recipes.name_of_recipe*
-with the following code:
+Recipes must provide three things: a description of the inputs of the recipe, a description of the products of the recipe and a method
+execute the processing. All Recipes must inherit from :class:`~numina.core.recipes.BaseRecipe`, so recipes will be classes.
+
+We start with a simple `Bias` recipe. Its purpose is to process images taken in *Bias* mode, that is, a series of pedestal images.
+The recipe will receive the result of the observation and return a master bias image.
 
 .. code-block:: python
 
-    from numina.core import Product, DataFrameType
+    from numina.core import Product, Requirement
+    from numina.core import DataFrameType
+    from numina.core.products import ObservationResultType
     from numina.core.recipes import BaseRecipe
-    import numpy as np
-    from astropy.io import fits
 
-    class name_of_recipe(BaseRecipe):
+    class Bias(BaseRecipe):                            (1)
 
-        output_image = Product(DataFrameType)
+        obresult = Requirement(ObservationResultType)  (2)
+        master_bias = Product(DataFrameType)           (3)
 
-        def run(self, rinput):
+        def run(self, rinput):                         (4)
 
-            n = np.arange(50.0)
-            hdu = fits.PrimaryHDU(n)
+            # Here the raw images are processed
+            # and a final image myframe is created
 
-            result = self.create_result(output_image=hdu)
+            result = self.create_result(master_bias=myframe)  (5)
             return result
 
-Directory structure
-*******************
+1. Each recipe must be a class derived from :class:`~numina.core.recipes.BaseRecipe`
+2. This recipe only requires the result of the observation. Each requirement is an object of
+   class :class:`~numina.core.requirements.Requirement` or its specialized subclasses. The actual
+   type of the requirement is :class:`~numina.core.products.ObservationResultType`, representing
+   the result of the observation.
+3. This recipe only produces one result. Each product is an object of
+   class :class:`~numina.core.entryholders.Product`. The actual type of the product is given by
+   :class:`~numina.core.DataFrameType`, representing an image.
+4. Each recipe must provide a `run` method. The method has only one argument that collects
+   the values of all inputs declared by the recipe. In this case, `rinput` will have a member
+   `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult`
 
-At the end, our files in the example should follow the next directory
-structure::
-
-    setup.py
-    clodiadrp
-    |-- recipes
-    |   |-- __init__.py
-    |   |-- name_of_recipe.py
-    |-- products
-    |   |-- __init__.py
-    |-- loader.py
-    |-- drp.yaml
-
-
+5. The recipe must return an object that collects all the declared products of the recipe, of type
+   :class:`~numina.core.RecipeResult`. This is acomplished internally by the method `create_result`
+   It will raise an exception at run time if all the declared products are not provided.
 
 
+We can create now the `Flat` recipe (inside `flat.py`). This recipe will have two requirements, the corresponding
+observation result and a master bias image, as flat-field images require bias subtraction.
 
+.. code-block:: python
+
+    from numina.core import Product, Requirement
+    from numina.core import DataFrameType
+    from numina.core.products import ObservationResultType
+    from numina.core.recipes import BaseRecipe
+
+    class Flat(BaseRecipe):
+
+        obresult = Requirement(ObservationResultType)  (1)
+        master_bias = Requirement(DataFrameType)       (2)
+        master_flat = Product(DataFrameType)
+
+        def run(self, rinput):                          (3)
+
+            # Here the raw images are processed
+            # and a final image myframe is created
+
+            result = self.create_result(master_flat=myframe)  (4)
+            return result
+
+
+1. This recipe still requires the result of the observation. Each requirement is an object of
+   class :class:`~numina.core.requirements.Requirement` or its specialized subclasses. The actual
+   type of the requirement is :class:`~numina.core.products.ObservationResultType`, representing
+   the result of the observation.
+2. And it also requires a master bias image, the type in this case is :class:`~numina.core.DataFrameType`,
+   representing an image.
+3. In this case, `rinput` will have two members
+   `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult` and
+   `rinput.master_bias` of type :class:`~numina.core.DataFrame`
+4. The arguments of `create_result` must be passed with the same name used in the product definition.
+
+And finally, the recipe for reduction of `Image` mode  (inside `image.py`). This recipe will have three requirements, the corresponding
+observation result and a master bias and master flat images
+
+.. code-block:: python
+
+    from numina.core import Product, Requirement
+    from numina.core import DataFrameType
+    from numina.core.products import ObservationResultType
+    from numina.core.recipes import BaseRecipe
+
+    class Image(BaseRecipe):
+
+        obresult = Requirement(ObservationResultType)
+        master_bias = Requirement(DataFrameType)
+        master_flat = Requirement(DataFrameType)
+        final = Product(DataFrameType)
+
+        def run(self, rinput):                          (1)
+
+            # Here the raw images are processed
+            # and a final image myframe is created
+
+            result = self.create_result(final=myframe)
+            return result
+
+
+
+1. In this case, `rinput` will have three members
+   `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult`,
+   `rinput.master_bias` of type :class:`~numina.core.DataFrame` and
+   `rinput.master_flat` of type :class:`~numina.core.DataFrame`
+
+.. note::
+
+   It is not striclty required that the requirements and products names are
+   consistent between recipes, altough is highly recomended
+
+Now we must update `drp.yaml` to insert the full name of the recipes (package and class), as follows
+
+.. code-block:: yaml
+
+    name: CLODIA
+    configurations:
+      default: {}
+    modes:
+     -key: bias
+      name: Bias
+      summary: Bias mode
+      description: >
+        Full description of the Bias mode
+     -key: flat
+      name: Flat
+      summary: Flat mode
+      description: >
+        Full description of the Flat mode
+     -key: image
+      name: Image
+      summary: Image mode
+      description: >
+        Full description of the Image mode
+    pipelines:
+      default:
+        version: 1
+        recipes:
+          bias: clodiadrp.recipes.bias.Bias
+          flat: clodiadrp.recipes.flat.Flat
+          image: clodiadrp.recipes.image.Image
