@@ -10,7 +10,7 @@ from ..arccalibration import arccalibration_direct
 from ..arccalibration import fit_solution
 
 try:
-    import matplotlib.pyplot as plt
+    import matplotlib
 
     HAVE_PLOTS = True
 except ImportError:
@@ -234,6 +234,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
             'FATAL ERROR: arc line switch after introducing noise')
 
     if lplot and HAVE_PLOTS:
+        import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_xlim([1, naxis1_arc])
@@ -256,6 +257,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     poly_original = polynomial.Polynomial(coeff_original)
 
     if lplot and HAVE_PLOTS:
+        import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_xlim([1, naxis1_arc])
@@ -330,6 +332,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
             raw_input('press <RETURN> to continue...')
 
     if lplot and HAVE_PLOTS:
+        import matplotlib.pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.set_ylim([0.0, 3.0])
