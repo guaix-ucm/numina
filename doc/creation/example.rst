@@ -1,4 +1,3 @@
-
 ***********************
 Numina Pipeline Example
 ***********************
@@ -69,7 +68,7 @@ In the following we will continue with the same example as previously.
 Configuration File
 ******************
 
-The configuration file contains basic informatio such as
+The configuration file contains basic information such as:
 
   * the list of modes of the instrument
   * the list of recipes of the instrument
@@ -112,7 +111,7 @@ Create a new yaml file in the root folder named *drp.yaml*.
 
 The entry `modes` contains a list of the observing modes of the instrument. There are three: Bias, Flat and Image.
 Each entry contains information about the mode. A *name*, a short *summary* and a multi-line *description*.
-The field *key* is used to map the observing modes to the recipes under *recipes* below, so *key*
+The field *key* is used to map the observing modes and the *recipes*, so *key*
 has to be unique and equal to only one value in each `recipes` block under `pipelines`.
 
 The entry `pipelines` contains only one pipeline, called *default* by convention. The `pipeline` contains
@@ -142,8 +141,8 @@ following information:
 
 Create entry point
 ******************
-Once we have created the *loader.py* file, the only thing we have to do to
-make CLODIA visible to Numina/GCS is to modify the *setup.py* file to add an
+Once we have created the *loader.py* file, the only thing we have to do is to
+make CLODIA visible to Numina/GCS. To do so, just modify the *setup.py* file to add an
 entry point.
 
 .. code-block:: python
@@ -158,8 +157,8 @@ entry point.
 
 Both the Numina CLI tool and GCS check this particular entry point. They call the function provided
 by the entry point. The function :func:`~numina.core.pipelineload.drp_load` reads and parses the YAML file and
-creates an object of class :class:`~numina.core.pipeline.InstrumentDRP`. These objects are used by Numina CLI and GCS
-to discover the available Instrument Reduction Pipelines.
+creates an object of class :class:`~numina.core.pipeline.InstrumentDRP` for each recipes it founds.
+These objects are used by Numina CLI and GCS to discover the available Instrument Reduction Pipelines.
 
 At this stage, the file layout is as follows::
 
@@ -181,8 +180,8 @@ At this stage, the file layout is as follows::
 
 Recipes Creation
 ****************
-We haven't created any reduction recipe yet. As a matter of orgnization, we suggest to create
-a dedicated subpackge for recipes `clodiadrp.recipes` and a module for each recipe. The file layout is::
+We haven't created any reduction recipe yet. As a matter of organization, we suggest to create
+a dedicated subpackage for recipes `clodiadrp.recipes` and a module for each recipe. The file layout is::
 
     clodiadrp
     |-- clodiadrp
@@ -197,10 +196,10 @@ a dedicated subpackge for recipes `clodiadrp.recipes` and a module for each reci
     |-- setup.py
 
 
-Recipes must provide three things: a description of the inputs of the recipe, a description of the products of the recipe and a method
-execute the processing. All Recipes must inherit from :class:`~numina.core.recipes.BaseRecipe`, so recipes will be classes.
+Recipes must provide three things: 1) a description of the inputs of the recipe; 2) a description of the products of the recipe and 3) a *run* method
+which is in charge of executing the proccessing. Additionally, all Recipes must inherit from :class:`~numina.core.recipes.BaseRecipe`.
 
-We start with a simple `Bias` recipe. Its purpose is to process images taken in *Bias* mode, that is, a series of pedestal images.
+We start with a simple `Bias` recipe. Its purpose is to process images previously taken in *Bias* mode, that is, a series of pedestal images.
 The recipe will receive the result of the observation and return a master bias image.
 
 .. code-block:: python
@@ -224,24 +223,24 @@ The recipe will receive the result of the observation and return a master bias i
             return result
 
 1. Each recipe must be a class derived from :class:`~numina.core.recipes.BaseRecipe`
-2. This recipe only requires the result of the observation. Each requirement is an object of
-   class :class:`~numina.core.requirements.Requirement` or its specialized subclasses. The actual
+2. This recipe only requires the result of the observation. Each requirement is an object of the
+   :class:`~numina.core.requirements.Requirement` class or any subclass of it. The
    type of the requirement is :class:`~numina.core.products.ObservationResultType`, representing
    the result of the observation.
 3. This recipe only produces one result. Each product is an object of
-   class :class:`~numina.core.dataholders.Product`. The actual type of the product is given by
+   :class:`~numina.core.dataholders.Product` class. The type of the product is given by
    :class:`~numina.core.products.DataFrameType`, representing an image.
 4. Each recipe must provide a `run` method. The method has only one argument that collects
-   the values of all inputs declared by the recipe. In this case, `rinput` will have a member
-   `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult`
+   the values of all inputs declared by the recipe. In this case, `rinput` has a member
+   named `obresult` and can be accessed through `rinput.obresult` which belongs to :class:`~numina.core.oresult.ObservationResult` class.
 
-5. The recipe must return an object that collects all the declared products of the recipe, of type
-   :class:`~numina.core.recipeinout.RecipeResult`. This is acomplished internally by the method `create_result`
-   It will raise an exception at run time if all the declared products are not provided.
+5. The recipe must return an object that collects all the declared products of the recipe, of
+   :class:`~numina.core.recipeinout.RecipeResult` class. This is accomplished internally by the `create_result` method.
+   It will raise a run time exception if any of the declared products are not provided.
 
 
-We can create now the `Flat` recipe (inside `flat.py`). This recipe will have two requirements, the corresponding
-observation result and a master bias image, as flat-field images require bias subtraction.
+We can now create the `Flat` recipe (inside `flat.py`). This recipe has two requirements, the
+observation result and a master bias image (flat-field images require bias subtraction).
 
 .. code-block:: python
 
@@ -265,19 +264,17 @@ observation result and a master bias image, as flat-field images require bias su
             return result
 
 
-1. This recipe still requires the result of the observation. Each requirement is an object of
-   class :class:`~numina.core.requirements.Requirement` or its specialized subclasses. The actual
+1. This recipe only requires the result of the observation. Each requirement is an object of the
+   :class:`~numina.core.requirements.Requirement` class or any subclass of it. The
    type of the requirement is :class:`~numina.core.products.ObservationResultType`, representing
    the result of the observation.
-2. And it also requires a master bias image, the type in this case is :class:`~numina.core.products.DataFrameType`,
-   representing an image.
-3. In this case, `rinput` will have two members
-   `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult` and
-   `rinput.master_bias` of type :class:`~numina.core.dataframe.DataFrame`
-4. The arguments of `create_result` must be passed with the same name used in the product definition.
+2. It also requires a master bias image which belongs to :class:`~numina.core.products.DataFrameType` class (represents an image).
+3. In this case, `rinput` has two members: 1) `rinput.obresult` of :class:`~numina.core.oresult.ObservationResult` class and
+   2) a `rinput.master_bias` of :class:`~numina.core.dataframe.DataFrame` class
+4. The arguments of `create_result` must be the same names used in the product definition.
 
-And finally, the recipe for reduction of `Image` mode  (inside `image.py`). This recipe will have three requirements, the corresponding
-observation result and a master bias and master flat images
+Finally, the recipe for `Image` mode reduction (inside `image.py`) has three requirements, the
+observation result, a master bias and a master flat images
 
 .. code-block:: python
 
@@ -304,14 +301,14 @@ observation result and a master bias and master flat images
 
 
 1. In this case, `rinput` will have three members
-   `rinput.obresult` of type :class:`~numina.core.oresult.ObservationResult`,
-   `rinput.master_bias` of type :class:`~numina.core.dataframe.DataFrame` and
-   `rinput.master_flat` of type :class:`~numina.core.dataframe.DataFrame`
+   `rinput.obresult` of :class:`~numina.core.oresult.ObservationResult` class,
+   `rinput.master_bias` of :class:`~numina.core.dataframe.DataFrame` class and
+   `rinput.master_flat` of :class:`~numina.core.dataframe.DataFrame` class.
 
 .. note::
 
    It is not strictly required that the requirements and products names are
-   consistent between recipes, altough is highly recomended
+   consistent between recipes, although it is highly recommended.
 
 Now we must update `drp.yaml` to insert the full name of the recipes (package and class), as follows
 
@@ -349,7 +346,7 @@ Specialized data products
 *************************
 
 There is some information that is missing of our current setup. The products of some recipes are the inputs of others.
-The master bias created by `Bias` is the input that `Flat` and `Image` require. To represent this we use specialized
+The master bias created by `Bias` is the input that `Flat` and `Image` require. To represent this situation we use specialized
 data products. We start by adding a new module `products`::
 
     clodiadrp
@@ -367,9 +364,8 @@ data products. We start by adding a new module `products`::
 
 We have two types of images that are products of recipes that can be required by other recipes: **master bias**
 and **master flat**. We represent this by creating two new types derived
-from :class:`~numina.core.products.DataFrameType`, becasue the new types are images
-and :class:`~numina.core.products.DataProductTag`, because the new types are products that must be handled specially
-by Numina CLI and GTC Control system.
+from :class:`~numina.core.products.DataFrameType`  (becasue the new types are images)
+and :class:`~numina.core.products.DataProductTag`  (because the new types are products that must be handled by both Numina CLI and GTC Control system) classes.
 
 .. code-block:: python
 
@@ -398,9 +394,9 @@ Now we must modify our recipes as follows. First `Bias`
 
         ...                                       (3)
 
-1. We import the new type `MasterBias`
-2. And declare that our recipe produces `MasterBias` images.
-3. `run` remains unchanged.
+1. Import the new type `MasterBias`.
+2. Declare that our recipe produces `MasterBias` images.
+3. `run` method remains unchanged.
 
 Then `Flat`:
 
@@ -417,11 +413,12 @@ Then `Flat`:
         master_bias = Requirement(MasterBias)         (1)
         master_flat = Product(MasterFlat)             (2)
 
-        ...
+        ...                                       (3)
 
-1. We use now `MasterBias` as a requirement. This guaranties that the images provided
+1. `MasterBias` is used as a requirement. This guaranties that the images provided
    here are those created by `Bias` and no other.
-2. We declare that our recipe produces `MasterFlat` images.
+2. Declare that our recipe produces `MasterFlat` images.
+3. `run` method remains unchanged.
 
 And finally `Image`:
 
@@ -437,8 +434,14 @@ And finally `Image`:
     class Image(BaseRecipe):
 
         obresult = Requirement(ObservationResultType)
-        master_bias = Requirement(MasterBias)
-        master_flat = Requirement(MasterFlat)
-        final = Product(DataFrameType)
+        master_bias = Requirement(MasterBias)       (1)
+        master_flat = Requirement(MasterFlat)       (2)
+        final = Product(DataFrameType)              (3)
 
-        ...
+        ...                                       (4)
+1. `MasterBias` is used as a requirement. This guaranties that the images provided
+   here are those created by `Bias` and no other.
+2. `MasterFlat` is used as a requirement. This guaranties that the images provided
+   here are those created by `Flat` and no other.
+3. Declare that our recipe produces `Image` images.
+4. `run` method remains unchanged.
