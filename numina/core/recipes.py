@@ -46,7 +46,7 @@ from .dataholders import Product
 from .products import QualityControlProduct
 
 
-class BaseRecipe(object):
+class BaseRecipe(with_metaclass(RecipeType, object)):
     """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
@@ -109,7 +109,7 @@ class BaseRecipe(object):
         Recipe.
 
         :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeRequirement
+        :param type: RecipeInput
         :rtype: a RecipeResult object or an error
 
         '''
@@ -156,6 +156,20 @@ class BaseRecipe(object):
 
         for key, req in cls.requirements().items():
 
+            # First check if the requirement is embedded
+            # in the observation result
+            # it can happen in GTC
+
+            # Using NoResultFound instead of None
+            # None can be a valid result
+            val = getattr(obsres, key, NoResultFound)
+
+            if val is not NoResultFound:
+                result[key] = val
+                continue
+
+            # Then, continue checking the rest
+
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
             elif isinstance(req.type, InstrumentConfigurationType):
@@ -163,34 +177,24 @@ class BaseRecipe(object):
                 result[key] = {}
             elif isinstance(req.type, DataProductTag):
                 try:
-                    prod = dal.search_prod_req_tags(
-                        req, obsres.instrument,
-                        tags, pipeline
-                        )
+                    prod = dal.search_prod_req_tags(req, obsres.instrument,
+                                                    tags, pipeline)
                     result[key] = prod.content
                 except NoResultFound:
                     pass
             else:
                 # Still not clear what to do with the other types
                 try:
-                    param = dal.search_param_req(
-                        req, obsres.instrument,
-                        obsres.mode, pipeline
-                        )
+                    param = dal.search_param_req(req, obsres.instrument,
+                                                 obsres.mode, pipeline)
                     result[key] = param.content
                 except NoResultFound:
                     pass
-
 
         return cls.create_input(**result)
 
     # An alias required by GTC
     buildRI = build_recipe_input
-
-
-class BaseRecipePlain(with_metaclass(RecipeType, BaseRecipe)):
-    """Base class for instrument recipes"""
-    pass
 
 
 class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):

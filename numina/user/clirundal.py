@@ -26,8 +26,6 @@ import datetime
 
 import yaml
 
-from numina import __version__
-from numina.core import fully_qualified_name
 from numina.dal.dictdal import BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
@@ -41,7 +39,12 @@ class Dict2DAL(BaseDictDAL):
     def __init__(self, obtable, base):
 
         prod_table = base['products']
-        req_table= base['requirements']
+
+        if 'parameters' in base:
+            req_table= base['parameters']
+        else:
+            req_table= base['requirements']
+
         super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
 
 
@@ -64,12 +67,8 @@ def mode_run_common_obs(args):
     """Observing mode processing mode of numina."""
 
     # Directories with relevant data
-    workenv = WorkEnvironment(
-        args.basedir,
-        workdir=args.workdir,
-        resultsdir=args.resultsdir,
-        datadir=args.datadir
-        )
+    workenv = WorkEnvironment(args.basedir,workdir=args.workdir,
+                              resultsdir=args.resultsdir,datadir=args.datadir)
 
 
     # Loading observation result if exists
@@ -109,8 +108,7 @@ def mode_run_common_obs(args):
     recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
     _logger.debug('recipe class is %s', recipeclass)
 
-    # FIXME: pass the correct pipeline
-    rinput = recipeclass.build_recipe_input(obsres, dal, pipeline='default')
+    rinput = recipeclass.build_recipe_input(obsres, dal, pipeline=pipe_name)
 
     os.chdir(cwd)
 
@@ -137,16 +135,14 @@ def mode_run_common_obs(args):
     for req in recipeclass.products().values():
         _logger.info('recipe provides %r', req)
 
-    task = ProcessingTask(obsres=obsres, insconf={})
-    task.runinfo['pipeline'] = pipe_name
-    task.runinfo['recipe'] = recipeclass.__name__
-    task.runinfo['recipe_full_name'] = fully_qualified_name(recipeclass)
-    task.runinfo['runner'] = 'numina'
-    task.runinfo['runner_version'] = __version__
-    task.runinfo['data_dir'] = workenv.datadir
-    task.runinfo['work_dir'] = workenv.workdir
-    task.runinfo['results_dir'] = workenv.resultsdir
-    task.runinfo['recipe_version'] = recipe.__version__
+    runinfo = {'pipeline':pipe_name,
+               'recipeclass':recipeclass,
+               'workenv':workenv,
+               'recipe_version':recipe.__version__,
+               'instrument_configuration': None
+               }
+
+    task = ProcessingTask(obsres, runinfo)
 
     # Copy files
     _logger.debug('copy files to work directory')
@@ -154,16 +150,12 @@ def mode_run_common_obs(args):
     workenv.copyfiles_stage1(obsres)
     workenv.copyfiles_stage2(rinput)
 
-    completed_task = run_recipe(
-        recipe=recipe,
-        task=task, rinput=rinput,
-        workenv=workenv, task_control=task_control
-        )
+    completed_task = run_recipe(recipe=recipe,task=task, rinput=rinput,
+                                workenv=workenv, task_control=task_control)
 
     where = DiskStorageDefault(resultsdir=workenv.resultsdir)
 
     where.store(completed_task)
-
 
 def create_recipe_file_logger(logger, logfile, logformat):
     '''Redirect Recipe log messages to a file.'''

@@ -22,11 +22,6 @@
 from __future__ import division
 from __future__ import print_function
 
-try:
-    import matplotlib.pyplot as plt
-    HAVE_PLOTS = True
-except ImportError:
-    HAVE_PLOTS = False
 import numpy as np
 from numpy.polynomial import polynomial
 import itertools
@@ -34,6 +29,8 @@ import scipy.misc
 
 from ..robustfit import fit_theil_sen
 from .statsummary import sigmaG
+
+
 # -----------------------------------------------------------------------------
 
 def select_data_for_fit(wv_master, xpos_arc, solution):
@@ -160,11 +157,12 @@ def fit_solution(wv_master, xpos_arc, solution, poly_degree_wfit, weighted):
 
     # Polynomial fit.
     if weighted:
-        coeff = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1/wfit)
+        coeff = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1 / wfit)
     else:
         coeff = polynomial.polyfit(xfit, yfit, poly_degree_wfit)
 
     return coeff, crval1_approx, cdelt1_approx
+
 
 # -----------------------------------------------------------------------------
 
@@ -201,7 +199,7 @@ def gen_triplets_master(wv_master):
 
     nlines_master = wv_master.size
 
-    #---
+    # ---
     # Generate all the possible triplets with the numbers of the lines in the
     # master table. Each triplet is defined as a tuple of three numbers
     # corresponding to the three line indices in the master table. The
@@ -219,16 +217,19 @@ def gen_triplets_master(wv_master):
 
     for index, value in enumerate(triplets_master_list):
         i1, i2, i3 = value
-        ratios_master[index] = (wv_master[i2]-wv_master[i1])/(wv_master[i3]-wv_master[i1])
+        ratios_master[index] = (wv_master[i2] - wv_master[i1]) / (
+        wv_master[i3] - wv_master[i1])
 
     # Compute the array of indices that index the above ratios in sorted order.
     isort_ratios_master = np.argsort(ratios_master)
 
     # Simultaneous sort of position ratios and triplets.
     ratios_master_sorted = ratios_master[isort_ratios_master]
-    triplets_master_sorted_list = [triplets_master_list[i] for i in isort_ratios_master]
+    triplets_master_sorted_list = [triplets_master_list[i] for i in
+                                   isort_ratios_master]
 
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
+
 
 # -----------------------------------------------------------------------------
 
@@ -236,7 +237,8 @@ def gen_triplets_master(wv_master):
 def arccalibration(wv_master, xpos_arc, naxis1_arc, wv_ini_search,
                    wv_end_search, error_xpos_arc, times_sigma_r,
                    frac_triplets_for_sum, times_sigma_theil_sen,
-                   poly_degree_wfit, times_sigma_polfilt,times_sigma_inclusion,
+                   poly_degree_wfit, times_sigma_polfilt,
+                   times_sigma_inclusion,
                    ldebug=False, lplot=False, lpause=False):
     """Performs line identification for arc calibration.
 
@@ -306,8 +308,10 @@ def arccalibration(wv_master, xpos_arc, naxis1_arc, wv_ini_search,
                                      wv_end_search, error_xpos_arc,
                                      times_sigma_r, frac_triplets_for_sum,
                                      times_sigma_theil_sen, poly_degree_wfit,
-                                     times_sigma_polfilt,times_sigma_inclusion)
+                                     times_sigma_polfilt,
+                                     times_sigma_inclusion)
     return solution
+
 
 # -----------------------------------------------------------------------------
 
@@ -318,7 +322,6 @@ def generate_triplets(ntriplets_arc, xpos_arc, error_xpos_arc, times_sigma_r,
                       ratios_master_sorted, ntriplets_master,
                       triplets_master_sorted_list, wv_master, naxis1_arc,
                       wv_ini_search, wv_end_search):
-
     # ---
     # Generate triplets with consecutive arc lines. For each triplet,
     # compatible triplets from the master table are sought. Each compatible
@@ -336,41 +339,43 @@ def generate_triplets(ntriplets_arc, xpos_arc, error_xpos_arc, times_sigma_r,
     # Loop in all the arc line triplets. Note that only triplets built from
     # consecutive arc lines are considered.
     for i in range(ntriplets_arc):
-        i1, i2, i3 = i, i+1, i+2
+        i1, i2, i3 = i, i + 1, i + 2
 
-        dist12 = xpos_arc[i2]-xpos_arc[i1]
-        dist13 = xpos_arc[i3]-xpos_arc[i1]
-        ratio_arc = dist12/dist13
+        dist12 = xpos_arc[i2] - xpos_arc[i1]
+        dist13 = xpos_arc[i3] - xpos_arc[i1]
+        ratio_arc = dist12 / dist13
 
-        pol_r = ratio_arc*(ratio_arc-1)+1
-        error_ratio_arc = np.sqrt(2)*error_xpos_arc/dist13*np.sqrt(pol_r)
+        pol_r = ratio_arc * (ratio_arc - 1) + 1
+        error_ratio_arc = np.sqrt(2) * error_xpos_arc / dist13 * np.sqrt(pol_r)
 
-        ratio_arc_min = max(0.0, ratio_arc-times_sigma_r*error_ratio_arc)
-        ratio_arc_max = min(1.0, ratio_arc+times_sigma_r*error_ratio_arc)
+        ratio_arc_min = max(0.0, ratio_arc - times_sigma_r * error_ratio_arc)
+        ratio_arc_max = min(1.0, ratio_arc + times_sigma_r * error_ratio_arc)
 
         # determine compatible triplets from the master list
-        j_loc_min = np.searchsorted(ratios_master_sorted, ratio_arc_min)-1
-        j_loc_max = np.searchsorted(ratios_master_sorted, ratio_arc_max)+1
+        j_loc_min = np.searchsorted(ratios_master_sorted, ratio_arc_min) - 1
+        j_loc_max = np.searchsorted(ratios_master_sorted, ratio_arc_max) + 1
 
-        j_loc_min = 0 if j_loc_min<0 else j_loc_min
-        j_loc_max = ntriplets_master if j_loc_max>ntriplets_master else \
+        j_loc_min = 0 if j_loc_min < 0 else j_loc_min
+        j_loc_max = ntriplets_master if j_loc_max > ntriplets_master else \
             j_loc_max
 
 
         # each triplet from the master list provides a potential solution
         # for CRVAL1 and CDELT1
-        for j_loc in range(j_loc_min, j_loc_max+1):
+        for j_loc in range(j_loc_min, j_loc_max + 1):
             j1, j2, j3 = triplets_master_sorted_list[j_loc]
             # initial solutions for CDELT1, CRVAL1 and CRVALN
-            cdelt1_temp = (wv_master[j3]-wv_master[j1])/dist13
-            crval1_temp = wv_master[j2]-(xpos_arc[i2]-1)*cdelt1_temp
-            crvaln_temp = crval1_temp + float(naxis1_arc-1)*cdelt1_temp
+            cdelt1_temp = (wv_master[j3] - wv_master[j1]) / dist13
+            crval1_temp = wv_master[j2] - (xpos_arc[i2] - 1) * cdelt1_temp
+            crvaln_temp = crval1_temp + float(naxis1_arc - 1) * cdelt1_temp
             # check that CRVAL1 and CRVALN are within the valid limits
             if wv_ini_search <= crval1_temp <= wv_end_search:
                 if wv_ini_search <= crvaln_temp <= wv_end_search:
                     # Compute errors
-                    error_crval1_temp = cdelt1_temp*error_xpos_arc* np.sqrt(1+2*((xpos_arc[i2]-1)**2)/(dist13**2))
-                    error_cdelt1_temp = np.sqrt(2)*cdelt1_temp* error_xpos_arc/dist13
+                    error_crval1_temp = cdelt1_temp * error_xpos_arc * np.sqrt(
+                        1 + 2 * ((xpos_arc[i2] - 1) ** 2) / (dist13 ** 2))
+                    error_cdelt1_temp = np.sqrt(
+                        2) * cdelt1_temp * error_xpos_arc / dist13
                     # Store values and errors
                     crval1_search.append(crval1_temp)
                     cdelt1_search.append(cdelt1_temp)
@@ -381,17 +386,16 @@ def generate_triplets(ntriplets_arc, xpos_arc, error_xpos_arc, times_sigma_r,
                     clabel_search.append((j1, j2, j3))
 
     # Maximum allowed value for CDELT1
-    cdelt1_max = (wv_end_search-wv_ini_search)/float(naxis1_arc-1)
+    cdelt1_max = (wv_end_search - wv_ini_search) / float(naxis1_arc - 1)
     # Normalize the values of CDELT1 and CRVAL1 to the interval [0,1] in each
     # case.
 
-    cdelt1_search_norm = np.array(cdelt1_search)/cdelt1_max
-    error_cdelt1_search_norm = np.array(error_cdelt1_search)/cdelt1_max
+    cdelt1_search_norm = np.array(cdelt1_search) / cdelt1_max
+    error_cdelt1_search_norm = np.array(error_cdelt1_search) / cdelt1_max
 
     return np.array(crval1_search), np.array(error_crval1_search), \
            np.array(itriplet_search), clabel_search, cdelt1_search_norm, \
            error_cdelt1_search_norm
-
 
 
 def segregate_solutions(ntriplets_arc, itriplet_search, cdelt1_search_norm,
@@ -453,7 +457,8 @@ def cost_function(frac_triplets_for_sum, ntriplets_arc, itriplet_search,
     # instead of round() because different results are obtained when
     # using python 2.7 vs. 3.4
 
-    ntriplets_for_sum = max(1, int(frac_triplets_for_sum*ntriplets_arc+0.5))
+    ntriplets_for_sum = max(1,
+                            int(frac_triplets_for_sum * ntriplets_arc + 0.5))
     funcost_search = np.zeros(len(itriplet_search))
 
     for k in range(len(itriplet_search)):
@@ -466,12 +471,12 @@ def cost_function(frac_triplets_for_sum, ntriplets_arc, itriplet_search,
                 if ntriplets_layered_list[i] > 0:
                     x1 = cdelt1_layered_list[i]
                     y1 = crval1_layered_list[i]
-                    dist2 = (x0-x1)**2 + (y0-y1)**2
+                    dist2 = (x0 - x1) ** 2 + (y0 - y1) ** 2
                     dist_to_layers.append(np.amin(dist2))
                 else:
                     dist_to_layers.append(np.inf)
         dist_to_layers = np.array(dist_to_layers)
-        dist_to_layers.sort() # in-place sort
+        dist_to_layers.sort()  # in-place sort
         funcost_search[k] = dist_to_layers[range(ntriplets_for_sum)].sum()
 
     # Normalize the cost function
@@ -484,6 +489,7 @@ def cost_function(frac_triplets_for_sum, ntriplets_arc, itriplet_search,
         funcost_layered_list.append(funcost_search[ldum])
 
     return funcost_layered_list
+
 
 def line_identification(ntriplets_arc, funcost_layered_list,
                         clabel_layered_list):
@@ -522,18 +528,17 @@ def line_identification(ntriplets_arc, funcost_layered_list,
         k1, k2, k3 = clabel_layered_list[i][jdum]
         funcost_dum = funcost_layered_list[i][jdum]
         if i == 0:
-            diagonal_ids = [[k1],[k2],[k3]]
-            diagonal_funcost = [[funcost_dum],[funcost_dum], [funcost_dum]]
+            diagonal_ids = [[k1], [k2], [k3]]
+            diagonal_funcost = [[funcost_dum], [funcost_dum], [funcost_dum]]
         else:
             diagonal_ids[i].append(k1)
-            diagonal_ids[i+1].append(k2)
+            diagonal_ids[i + 1].append(k2)
             diagonal_ids.append([k3])
             diagonal_funcost[i].append(funcost_dum)
-            diagonal_funcost[i+1].append(funcost_dum)
+            diagonal_funcost[i + 1].append(funcost_dum)
             diagonal_funcost.append([funcost_dum])
 
     return diagonal_funcost, diagonal_ids
-
 
 
 def create_solution(nlines_arc, diagonal_ids, diagonal_funcost):
@@ -553,8 +558,8 @@ def create_solution(nlines_arc, diagonal_ids, diagonal_funcost):
                          'funcost': None})
 
     # Type A lines.
-    for i in range(2,nlines_arc-2):
-        j1,j2,j3 = diagonal_ids[i]
+    for i in range(2, nlines_arc - 2):
+        j1, j2, j3 = diagonal_ids[i]
         if j1 == j2 == j3:
             solution[i]['lineok'] = True
             solution[i]['type'] = 'A'
@@ -562,73 +567,72 @@ def create_solution(nlines_arc, diagonal_ids, diagonal_funcost):
             solution[i]['funcost'] = min(diagonal_funcost[i])
 
     # Type B lines.
-    for i in range(2,nlines_arc-2):
+    for i in range(2, nlines_arc - 2):
         if not solution[i]['lineok']:
-            j1,j2,j3 = diagonal_ids[i]
-            f1,f2,f3 = diagonal_funcost[i]
+            j1, j2, j3 = diagonal_ids[i]
+            f1, f2, f3 = diagonal_funcost[i]
             if j1 == j2:
-                if max(f1,f2) < f3:
+                if max(f1, f2) < f3:
                     solution[i]['lineok'] = True
                     solution[i]['type'] = 'B'
                     solution[i]['id'] = j1
-                    solution[i]['funcost'] = min(f1,f2)
+                    solution[i]['funcost'] = min(f1, f2)
             elif j1 == j3:
-                if max(f1,f3) < f2:
+                if max(f1, f3) < f2:
                     solution[i]['lineok'] = True
                     solution[i]['type'] = 'B'
                     solution[i]['id'] = j1
-                    solution[i]['funcost'] = min(f1,f3)
+                    solution[i]['funcost'] = min(f1, f3)
             elif j2 == j3:
-                if max(f2,f3) < f1:
+                if max(f2, f3) < f1:
                     solution[i]['lineok'] = True
                     solution[i]['type'] = 'B'
                     solution[i]['id'] = j2
-                    solution[i]['funcost'] = min(f2,f3)
+                    solution[i]['funcost'] = min(f2, f3)
 
     # Type C lines.
-    for i in range(2,nlines_arc-2):
+    for i in range(2, nlines_arc - 2):
         if not solution[i]['lineok']:
-            j1,j2,j3 = diagonal_ids[i]
-            f1,f2,f3 = diagonal_funcost[i]
-            if solution[i-1]['type'] == 'B':
-                if min(f2,f3) > f1:
+            j1, j2, j3 = diagonal_ids[i]
+            f1, f2, f3 = diagonal_funcost[i]
+            if solution[i - 1]['type'] == 'B':
+                if min(f2, f3) > f1:
                     solution[i]['lineok'] = True
                     solution[i]['type'] = 'C'
                     solution[i]['id'] = j1
                     solution[i]['funcost'] = f1
-            elif solution[i+1]['type'] == 'B':
-                if min(f1,f2) > f3:
+            elif solution[i + 1]['type'] == 'B':
+                if min(f1, f2) > f3:
                     solution[i]['lineok'] = True
                     solution[i]['type'] = 'C'
                     solution[i]['id'] = j3
                     solution[i]['funcost'] = f3
 
     # Type D lines.
-    for i in [1,nlines_arc-2]:
-        j1,j2 = diagonal_ids[i]
+    for i in [1, nlines_arc - 2]:
+        j1, j2 = diagonal_ids[i]
         if j1 == j2:
-            f1,f2 = diagonal_funcost[i]
+            f1, f2 = diagonal_funcost[i]
             solution[i]['lineok'] = True
             solution[i]['type'] = 'D'
             solution[i]['id'] = j1
-            solution[i]['funcost'] = min(f1,f2)
+            solution[i]['funcost'] = min(f1, f2)
 
     # Type E lines.
     i = 0
-    if solution[i+1]['lineok'] and solution[i+2]['lineok']:
+    if solution[i + 1]['lineok'] and solution[i + 2]['lineok']:
         solution[i]['lineok'] = True
         solution[i]['type'] = 'E'
         solution[i]['id'] = diagonal_ids[i][0]
         solution[i]['funcost'] = diagonal_funcost[i][0]
-    i = nlines_arc-1
-    if solution[i-2]['lineok'] and solution[i-1]['lineok']:
+    i = nlines_arc - 1
+    if solution[i - 2]['lineok'] and solution[i - 1]['lineok']:
         solution[i]['lineok'] = True
         solution[i]['type'] = 'E'
         solution[i]['id'] = diagonal_ids[i][0]
         solution[i]['funcost'] = diagonal_funcost[i][0]
 
     return solution
-
 
 
 def eliminate_duplicated(nlines_arc, solution):
@@ -646,7 +650,7 @@ def eliminate_duplicated(nlines_arc, solution):
         for i1 in range(nlines_arc):
             if solution[i1]['lineok']:
                 j1 = solution[i1]['id']
-                for i2 in range(i1+1,nlines_arc):
+                for i2 in range(i1 + 1, nlines_arc):
                     if solution[i2]['lineok']:
                         j2 = solution[i2]['id']
                         if j1 == j2:
@@ -664,7 +668,7 @@ def eliminate_duplicated(nlines_arc, solution):
     return solution
 
 
-def filterTlines (wv_master, xpos_arc, solution, times_sigma_theil_sen):
+def filterTlines(wv_master, xpos_arc, solution, times_sigma_theil_sen):
     # ---
     # Filter out points with a large deviation from a robust linear fit. The
     # filtered lines are labelled as type='T'.
@@ -672,18 +676,19 @@ def filterTlines (wv_master, xpos_arc, solution, times_sigma_theil_sen):
     nfit, ifit, xfit, yfit, wfit = select_data_for_fit(wv_master, xpos_arc,
                                                        solution)
     intercept, slope = fit_theil_sen(xfit, yfit)
-    rfit = abs(yfit - (intercept + slope*xfit))
+    rfit = abs(yfit - (intercept + slope * xfit))
 
     sigma_rfit = sigmaG(rfit)
     for i in range(nfit):
-        if rfit[i] > times_sigma_theil_sen*sigma_rfit:
+        if rfit[i] > times_sigma_theil_sen * sigma_rfit:
             solution[ifit[i]]['lineok'] = False
             solution[ifit[i]]['type'] = 'T'
 
     return solution
 
 
-def filterPlines(wv_master, xpos_arc, solution, poly_degree_wfit, times_sigma_polfilt):
+def filterPlines(wv_master, xpos_arc, solution, poly_degree_wfit,
+                 times_sigma_polfilt):
     # ---
     # Filter out points that deviates from a polynomial fit. The filtered lines
     # are labelled as type='P'.
@@ -691,20 +696,21 @@ def filterPlines(wv_master, xpos_arc, solution, poly_degree_wfit, times_sigma_po
     nfit, ifit, xfit, yfit, wfit = select_data_for_fit(wv_master, xpos_arc,
                                                        solution)
 
-    coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1/wfit)
+    coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1 / wfit)
     poly = polynomial.Polynomial(coeff_fit)
     rfit = abs(yfit - poly(xfit))
     sigma_rfit = sigmaG(rfit)
 
     for i in range(nfit):
-        if rfit[i] > times_sigma_polfilt*sigma_rfit:
+        if rfit[i] > times_sigma_polfilt * sigma_rfit:
             solution[ifit[i]]['lineok'] = False
             solution[ifit[i]]['type'] = 'P'
 
     return solution
 
 
-def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit, nlines_arc, nlines_master, times_sigma_inclusion):
+def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit,
+                       nlines_arc, nlines_master, times_sigma_inclusion):
     # ---
     # Include unidentified lines by using the prediction of the polynomial fit
     # to the current set of identified lines. The included lines are labelled
@@ -712,11 +718,10 @@ def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit, nlines_a
 
     nfit, ifit, xfit, yfit, wfit = select_data_for_fit(wv_master, xpos_arc,
                                                        solution)
-    coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1/wfit)
+    coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1 / wfit)
     poly = polynomial.Polynomial(coeff_fit)
     rfit = abs(yfit - poly(xfit))
     sigma_rfit = sigmaG(rfit)
-
 
     list_id_already_found = []
     list_funcost_already_found = []
@@ -728,17 +733,17 @@ def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit, nlines_a
     nnewlines = 0
     for i in range(nlines_arc):
         if not solution[i]['lineok']:
-            zfit = poly(xpos_arc[i]) # predicted wavelength
+            zfit = poly(xpos_arc[i])  # predicted wavelength
             isort = np.searchsorted(wv_master, zfit)
             if isort == 0:
                 ifound = 0
-                dlambda = wv_master[ifound]-zfit
+                dlambda = wv_master[ifound] - zfit
             elif isort == nlines_master:
                 ifound = isort - 1
                 dlambda = zfit - wv_master[ifound]
             else:
-                dlambda1 = zfit-wv_master[isort-1]
-                dlambda2 = wv_master[isort]-zfit
+                dlambda1 = zfit - wv_master[isort - 1]
+                dlambda2 = wv_master[isort] - zfit
                 if dlambda1 < dlambda2:
                     ifound = isort - 1
                     dlambda = dlambda1
@@ -747,7 +752,7 @@ def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit, nlines_a
                     dlambda = dlambda2
 
             if ifound not in list_id_already_found:  # unused line
-                if dlambda < times_sigma_inclusion*sigma_rfit:
+                if dlambda < times_sigma_inclusion * sigma_rfit:
                     list_id_already_found.append(ifound)
                     solution[i]['lineok'] = True
                     solution[i]['type'] = 'I'
@@ -758,10 +763,10 @@ def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit, nlines_a
     return solution
 
 
-def arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,
-                          triplets_master_sorted_list,xpos_arc,naxis1_arc,
-                          wv_ini_search, wv_end_search,error_xpos_arc,
-                          times_sigma_r,frac_triplets_for_sum,
+def arccalibration_direct(wv_master, ntriplets_master, ratios_master_sorted,
+                          triplets_master_sorted_list, xpos_arc, naxis1_arc,
+                          wv_ini_search, wv_end_search, error_xpos_arc,
+                          times_sigma_r, frac_triplets_for_sum,
                           times_sigma_theil_sen, poly_degree_wfit,
                           times_sigma_polfilt, times_sigma_inclusion):
     """Performs line identification for arc calibration using line triplets.
@@ -848,11 +853,10 @@ def arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,
     cdelt1_search_norm = results[4]
     error_cdelt1_search_norm = results[5]
 
-
-    crval1_search_norm = (crval1_search-wv_ini_search)
-    crval1_search_norm /= (wv_end_search-wv_ini_search)
-    error_crval1_search_norm = error_crval1_search/(wv_ini_search-wv_end_search)
-
+    crval1_search_norm = (crval1_search - wv_ini_search)
+    crval1_search_norm /= (wv_end_search - wv_ini_search)
+    error_crval1_search_norm = error_crval1_search / (
+    wv_ini_search - wv_end_search)
 
     results = segregate_solutions(ntriplets_arc, itriplet_search,
                                   cdelt1_search_norm, error_cdelt1_search_norm,
@@ -865,7 +869,7 @@ def arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,
     clabel_layered_list = results[3]
 
     funcost_layered_list = cost_function(frac_triplets_for_sum, ntriplets_arc,
-                                         itriplet_search,cdelt1_search_norm,
+                                         itriplet_search, cdelt1_search_norm,
                                          crval1_search_norm,
                                          ntriplets_layered_list,
                                          cdelt1_layered_list,
@@ -892,4 +896,3 @@ def arccalibration_direct(wv_master,ntriplets_master,ratios_master_sorted,
                                   times_sigma_inclusion)
 
     return solution
-

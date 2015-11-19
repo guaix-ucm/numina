@@ -22,8 +22,10 @@ Recipe Input
 """
 
 from six import with_metaclass
+import yaml
 
 from .metaclass import RecipeInputType, RecipeResultType
+import numina.store.dump
 
 
 class RecipeInOut(object):
@@ -37,6 +39,13 @@ class RecipeInOut(object):
             setattr(self, key, kwds[key])
 
         self._finalize()
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        full = []
+        for key, val in self.stored().items():
+            full.append('%s=%r' % (key, val))
+        return '%s(%s)' % (sclass, ', '.join(full))
 
     def _finalize(self):
         """Access all the instance descriptors
@@ -85,35 +94,46 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     pass
 
 
-class BaseRecipeResult(object):
-    def __new__(cls, *args, **kwds):
-        return super(BaseRecipeResult, cls).__new__(cls)
-
-    def __init__(self, *args, **kwds):
-        super(BaseRecipeResult, self).__init__()
-
-
-class ErrorRecipeResult(BaseRecipeResult):
-    def __init__(self, errortype, message, traceback):
-        super(ErrorRecipeResult, self).__init__()
+class ErrorRecipeResult(object):
+    def __init__(self, errortype, message, traceback, _error=""):
         self.errortype = errortype
         self.message = message
         self.traceback = traceback
+        self.file = "errors.yaml" if not _error else _error
 
     def __repr__(self):
-        sclass = type(self).__name__
-        fmt = "%s(errortype=%r, message='%s')"
-        return fmt % (sclass, self.errortype, self.message)
+        fmt = "ErrorRecipeResult(errortype=%r, message='%s', traceback='%s')"
+        return fmt % (self.errortype, self.message, self.traceback)
+
+    def store(self):
+        try:
+            with open(self.file, 'a') as fd:
+                yaml.dump(repr(self), fd)
+        except IOError:
+            with open(self.file, 'w+') as fd:
+                yaml.dump(repr(self), fd)
+
+    def store_to(self, where):
+        with open(where.result, 'w+') as fd:
+            yaml.dump(where.result, fd)
+
+        return where.result
 
 
-class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut, BaseRecipeResult)):
+class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
 
-    def __repr__(self):
-        sclass = type(self).__name__
-        full = []
-        for key, val in self.stored().items():
-            full.append('%s=%r' % (key, val))
-        return '%s(%s)' % (sclass, ', '.join(full))
+    def store_to(self, where):
+
+        saveres = {}
+        for key, prod in self.stored().items():
+            val = getattr(self, key)
+            where.destination = prod.dest
+            saveres[key] = numina.store.dump(prod.type, val, where)
+
+        with open(where.result, 'w+') as fd:
+            yaml.dump(saveres, fd)
+
+        return where.result
 
 
 class define_result(object):
@@ -144,33 +164,3 @@ class define_input(object):
 
 
 define_requirements = define_input
-
-
-class add_requirement(object):
-    def __init__(self, **kwds):
-
-        self.ext = {}
-        for key, val in kwds.items():
-            # FIXME validate these inputs
-            self.ext[key] = val
-
-    def __call__(self, klass):
-        Class = klass.RecipeInput
-        for key, val in self.ext.items():
-            setattr(Class, key, val)
-        return klass
-
-
-class add_product(object):
-    def __init__(self, **kwds):
-
-        self.ext = {}
-        for key, val in kwds.items():
-            # FIXME validate these inputs
-            self.ext[key] = val
-
-    def __call__(self, klass):
-        Class = klass.RecipeResult
-        for key, val in self.ext.items():
-            setattr(Class, key, val)
-        return klass

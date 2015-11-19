@@ -49,6 +49,7 @@ class ObservationResult(object):
         self.frames = [prod.content]
         self.prodid = prod.id
 
+    #TODO: Delete this property or at least, use frame
     @property
     def images(self):
         return self.frames
@@ -83,6 +84,9 @@ def obsres_from_dict(values):
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
-    obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
+    try:
+        obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
+    except:
+        obsres.frames = []
 
     return obsres

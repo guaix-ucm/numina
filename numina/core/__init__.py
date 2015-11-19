@@ -25,7 +25,6 @@ from .pipeline import ObservingMode
 from .objimport import import_object
 from .objimport import fully_qualified_name
 from .pipelineload import drp_load
-from .requirements import DataProductRequirement
 from .requirements import Parameter, Requirement
 from .products import DataProductType, DataFrameType
 from .oresult import ObservationResult
@@ -33,7 +32,7 @@ from numina.exceptions import RecipeError # Do not remove, part of the API
 from numina.exceptions import ValidationError # Do not remove, part of the API
 from .recipeinout import RecipeInput, define_requirements, define_input
 from .recipeinout import RecipeResult, define_result
-from .recipeinout import ErrorRecipeResult, BaseRecipeResult
+from .recipeinout import ErrorRecipeResult
 from .dataholders import Product
 from .oresult import obsres_from_dict
 from .qc import QC

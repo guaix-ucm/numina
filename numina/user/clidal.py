@@ -1,4 +1,3 @@
-
 # Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
@@ -25,9 +24,9 @@ from numina.dal import StoredProduct
 from numina.dal import StoredParameter
 from numina.dal import ObservingBlock
 from numina.core.pipeline import DrpSystem
-from numina.core.pipeline import init_store_backends
 from numina.core import import_object
 from numina.core import obsres_from_dict
+import numina.store as storage
 
 _logger = logging.getLogger("numina.simpledal")
 
@@ -38,9 +37,9 @@ def process_format_version_0(loaded_obs, loaded_data):
 
 class ComandLineDAL(AbsDAL):
     '''A DAL to use with the command line interface'''
+
     def __init__(self, ob_table, reqs):
         self.ob_table = ob_table
-        init_store_backends()
         self._reqs = reqs
         self.drps = DrpSystem()
 
@@ -58,7 +57,9 @@ class ComandLineDAL(AbsDAL):
                 tagger = mode.tagger
                 break
         else:
-            raise ValueError('no mode for {0}.mode in instrument {0}.instrument'.format(obsres))
+            raise ValueError(
+                'no mode for {0}.mode in instrument {0}.instrument'.format(
+                    obsres))
 
         if tagger is None:
             master_tags = {}
@@ -103,12 +104,13 @@ class ComandLineDAL(AbsDAL):
         return StoredProduct(id=100, content='null.fits', tags={})
 
     def search_prod_req_tags(self, req, ins, tags, pipeline):
-        '''Returns the first coincidence...'''
+        """Returns the first coincidence..."""
         _logger.debug('search for instrument %s, req %s with tags %s',
                       ins, req, tags)
         key = req.dest
         try:
-            content = self._reqs['requirements'][key]
+            product = self._reqs['requirements'][key]
+            content = storage.load(req.type, product)
         except KeyError:
             raise NoResultFound("key %s not found" % key)
 
@@ -119,9 +121,12 @@ class ComandLineDAL(AbsDAL):
 
     def search_param_req(self, req, instrument, mode, pipeline):
         key = req.dest
+        _logger.debug('search for instrument %s, req %s',
+                      instrument, req)
         try:
             param = self._reqs['requirements'][key]
-            content = StoredParameter(param)
+            content = storage.load(req.type, param)
+
         except KeyError:
             raise NoResultFound("key %s not found" % key)
-        return content
+        return StoredParameter(content)
