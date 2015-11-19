@@ -130,7 +130,7 @@ def generate_weights(window_width):
         raise ValueError('Window width must be an odd number and >=3')
 
     evenly_spaced = numpy.linspace(-1, 1, window_width)
-    pow_matrix = numpy.vander(evenly_spaced, N=3, increasing=True)
+    pow_matrix = numpy.fliplr(numpy.vander(evenly_spaced, N=3))
     final_ww = dot(inv(dot(pow_matrix.T, pow_matrix)), pow_matrix.T)
     return final_ww
 

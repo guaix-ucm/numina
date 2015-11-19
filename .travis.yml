@@ -4,11 +4,23 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0 singledispatch" COVERAGE=true
+      env: DEPS="scipy=0.13.2 singledispatch" COVERAGE=true ASTRO=true COND="numpy=1.7 astropy=1.0"
+    - python: "2.7"
+      env: DEPS="scipy=0.14.0 singledispatch" ASTRO=true COND="numpy=1.8 astropy=1.0"
+    - python: "2.7"
+      env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4 singledispatch" ASTRO=false
+    - python: "2.7"
+      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5 singledispatch" ASTRO=false
     - python: "3.4"
-      env: DEPS="numpy=1.9 scipy=0.15 astropy=1.0"
+      env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4" ASTRO=false
+    - python: "3.4"
+      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5" ASTRO=false
+    - python: "3.5"
+      env: DEPS="numpy=1.9 scipy=0.16.0 astropy=1.0.4" ASTRO=false
+    - python: "3.5"
+      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5" ASTRO=false
 
-
+# conda install scipy==0.13.1
 install:
   # See:
   # https://groups.google.com/a/continuum.io/forum/#!topic/conda/RSFENqovnro
@@ -18,13 +30,14 @@ install:
   - conda update --yes conda
   - conda create -n testenv --yes $DEPS pip pytest setuptools Cython six>=1.7 pyyaml python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
+  - if [[ $ASTRO == true ]]; then conda install -n testenv --yes -c astropy-ci-extras $COND; fi
   - pip install pytest-benchmark
+  - pip list
   # for debugging...
-  - echo $PATH
-  - which python
-  - conda info
+  - pip list
   - conda list
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
+  - pip list
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
@@ -39,3 +52,4 @@ script:
   - if [[ $COVERAGE == true ]]; then coverage run --source numina -m py.test; fi
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi
+
