@@ -6,6 +6,19 @@ import pytest
 
 from ..dump import dump
 
+
+def test_dump_base():
+
+    class A(object):
+        pass
+
+    tag = A()
+    obj = 0
+    where = ""
+
+    assert obj == dump(tag, obj, where)
+
+
 def test_dump_method():
 
     class A(object):

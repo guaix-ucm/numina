@@ -6,6 +6,18 @@ import pytest
 
 from ..load import load
 
+
+def test_load_base():
+
+    class A(object):
+        pass
+
+    tag = A()
+    obj = 0
+
+    assert obj == load(tag, obj)
+
+
 def test_load_method():
 
     class A(object):
