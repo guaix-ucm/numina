@@ -89,10 +89,10 @@ class DataFrameType(DataType):
     def validate_hdulist(self, hdulist):
         pass
 
-    def __numina_dump__(self, obj, where):
+    def _datatype_dump(self, obj, where):
         return dump_dataframe(obj, where)
 
-    def __numina_load__(self, obj):
+    def _datatype_load(self, obj):
         if obj is None:
             return None
         else:
@@ -110,10 +110,10 @@ class ArrayType(DataType):
         result = numpy.array(obj)
         return result
 
-    def __numina_dump__(self, obj, where):
+    def _datatype_dump(self, obj, where):
         return dump_numpy_array(obj, where)
 
-    def __numina_load__(self, obj):
+    def _datatype_load(self, obj):
         if isinstance(obj, six.string_types):
             # if is a string, it may be a pathname, try to load it
 
