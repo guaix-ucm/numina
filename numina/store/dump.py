@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
+import warnings
 
 try:
     from functools import singledispatch
@@ -33,9 +33,14 @@ from numina.core.products import dump_dataframe,dump_numpy_array
 def dump(tag, obj, where):
 
     if hasattr(tag, '__numina_dump__'):
+        msg = "Usage of '__numina_dump__' is deprecated, use '_datatype_dump' instead"
+        warnings.warn(msg, DeprecationWarning)
         return tag.__numina_dump__(obj, where)
-    else:
-        return obj
+
+    if hasattr(tag, '_datatype_dump'):
+        return tag._datatype_dump(obj, where)
+
+    return obj
 
 # It's not clear if I need to register these three
 # functions

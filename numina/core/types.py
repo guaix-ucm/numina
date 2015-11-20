@@ -38,7 +38,7 @@ class DataType(object):
             raise ValidationError(obj, self.python_type)
         return True
 
-    def __numina_dump__(self, obj, where):
+    def _datatype_dump(self, obj, where):
         return obj
 
     def __repr__(self):
