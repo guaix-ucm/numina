@@ -22,7 +22,7 @@ import warnings
 try:
     from functools import singledispatch
 except ImportError:
-    from singledispatch import singledispatch
+    from pkgutil import simplegeneric as singledispatch
 
 import numpy
 
