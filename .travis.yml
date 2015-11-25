@@ -4,13 +4,13 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="scipy=0.13.2 singledispatch" COVERAGE=true ASTRO=true COND="numpy=1.7 astropy=1.0"
+      env: DEPS="scipy=0.13.2" COVERAGE=true ASTRO=true COND="numpy=1.7 astropy=1.0"
     - python: "2.7"
-      env: DEPS="scipy=0.14.0 singledispatch" ASTRO=true COND="numpy=1.8 astropy=1.0"
+      env: DEPS="scipy=0.14.0" ASTRO=true COND="numpy=1.8 astropy=1.0"
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4 singledispatch" ASTRO=false
+      env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4" ASTRO=false
     - python: "2.7"
-      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5 singledispatch" ASTRO=false
+      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5" ASTRO=false
     - python: "3.4"
       env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4" ASTRO=false
     - python: "3.4"
