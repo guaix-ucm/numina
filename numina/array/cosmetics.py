@@ -18,16 +18,16 @@
 #
 
 import logging
-import operator
 import itertools
-
-from six.moves import reduce
 
 import numpy
 import scipy.stats
 import scipy.ndimage
-
 from numina.array.blocks import max_blk_coverage, blk_nd_short
+
+from six.moves import reduce
+
+
 
 # Values stored in integer masks
 PIXEL_HOT = 2
@@ -50,115 +50,9 @@ def update_mask(mask, gmask, newmask, value):
     return mask, gmask, smask
 
 
-def cosmetics(flat1, flat2, mask, lowercut=6.0, uppercut=6.0,
-              siglev=2.0, posthook=None):
-    '''Find cosmetic defects in a detector using two flat field images.
-
-    Two arrays representing flat fields of different exposure times are
-    required. Cosmetic defects are selected as points that deviate
-    significantly of the expected normal distribution of pixels in
-    the ratio between `flat2` and `flat1`.
-
-    The median of the ratio array is computed and subtracted to it.
-
-    The standard deviation of the distribution of pixels is computed
-    obtaining the percentiles nearest the pixel values corresponding to
-    `nsig` in the normal CDF. The standar deviation is then the distance
-    between the pixel values divided by two times `nsig`.
-    The ratio image is then normalized with this standard deviation.
-
-    The values in the ratio above `uppercut` are flagged as hot pixels,
-    and those below '-lowercut` are flagged as dead pixels in the output mask.
-
-    :parameter flat1: an array representing a flat illuminated exposure.
-    :parameter flat2: an array representing a flat illuminated exposure.
-    :parameter mask: an integer array representing initial mask.
-    :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
-    :parameter uppercut: values above this sigma level are flagged as hot pixels.
-    :parameter siglev: level to estimate the standard deviation.
-    :returns: the normalized ratio of the flats, the updated mask and standard deviation
-
-    '''
-
-    # check inputs
-
-    for vname in ['lowercut', 'uppercut', 'siglev']:
-        val = locals()[vname]
-        if val <= 0:
-            raise ValueError('%s must be > 0' % vname)
-
-    ratio = numpy.zeros_like(flat1)
-    invalid = numpy.zeros_like(flat1)
-
-    gmask = mask == PIXEL_VALID
-    _logger.info('valid points in input mask %d', numpy.count_nonzero(gmask))
-    smask = mask != PIXEL_VALID
-    _logger.info('invalid points in input mask %d', numpy.count_nonzero(smask))
-
-    # check if there are zeros in flat1 and flat2
-    zero_mask = numpy.logical_or(flat1[gmask] <= 0, flat2[gmask] <= 0)
-
-    # if there is something in zero mask
-    # we update the mask
-    if numpy.any(zero_mask):
-        mask, gmask, smask = update_mask(mask, gmask, zero_mask, PIXEL_DEAD)
-        invalid[mask == PIXEL_DEAD] = LOW_SIGMA
-
-    # ratio of flats
-    ratio[gmask] = flat2[gmask] / flat1[gmask]
-    ratio[smask] = invalid[smask]
-
-    _logger.info('computing median using all the image')
-    ratio_med = numpy.median(ratio[gmask])
-    _logger.info('median value is %f', ratio_med)
-    # subtracting the median map
-    ratio[gmask] -= ratio_med
-
-    # Quantiles that contain nsig sigma in normal distribution
-    _logger.debug('estimating sigma using level=%f', siglev)
-    qns = 100 * scipy.stats.norm.cdf(siglev)
-    pns = 100 - qns
-    _logger.debug('percentiles at nsig=%f', siglev)
-    _logger.debug('low %f%% high %f%%', pns, qns)
-
-    valid = ratio[gmask]
-    ls = scipy.stats.scoreatpercentile(valid.flat, pns)
-    hs = scipy.stats.scoreatpercentile(valid.flat, qns)
-
-    _logger.debug('score at percentiles')
-    _logger.debug('low %f high %f', ls, hs)
-
-    # sigma estimation
-    sig = (hs - ls) / (2 * siglev)
-    _logger.info('sigma estimation is %f ', sig)
-
-    # normalized points
-    ratio_base = ratio[gmask]
-    ratio[gmask] /= sig
-
-    f1_ratio = ratio[gmask]
-    f1_mask = mask[gmask]
-    _logger.info('flagging points over %4.2f sigma as hot pixels', uppercut)
-    umask = (f1_ratio >= uppercut)
-    f1_mask[umask] = PIXEL_HOT
-    _logger.info('flagged %d hot pixels', numpy.count_nonzero(umask))
-
-    _logger.info('flagging points under %4.2f sigma as dead pixels', lowercut)
-    lmask = (f1_ratio <= -lowercut)
-    f1_mask[lmask] = PIXEL_DEAD
-    _logger.info('flagged %d dead pixels', numpy.count_nonzero(lmask))
-    mask[gmask] = f1_mask
-
-    if posthook is not None:
-        posthook(ratio_base, 0.0, sig)
-
-    return ratio, mask, sig
-
-
 # IRAF task
-def ccdmask(flat1, flat2=None, mask=None,
-            lowercut=6.0, uppercut=6.0, siglev=1.0,
-            mode='region', nmed=(7, 7), nsig=(15, 15)):
+def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
+            siglev=1.0, mode='region', nmed=(7, 7), nsig=(15, 15)):
     '''Find cosmetic defects in a detector using two flat field images.
 
     Two arrays representing flat fields of different exposure times are
@@ -209,25 +103,6 @@ def ccdmask(flat1, flat2=None, mask=None,
 
 
     '''
-    # check inputs
-
-    if mode not in ['full', 'region']:
-        raise ValueError("mode must be either 'full' or 'region'")
-
-    for vname in ['lowercut', 'uppercut']:
-        val = locals()[vname]
-        if val <= 0:
-            raise ValueError('%s must be > 0' % vname)
-
-    if mode == 'region':
-        for vname in ['nsig', 'nmed']:
-            val = locals()[vname]
-            if any(s <= 0 for s in val):
-                raise ValueError('%s members must be > 0' % vname)
-
-        if reduce(operator.mul, nsig) < 100:
-            raise ValueError('nsig size >= 100 required to '
-                             'have enough points for statistics')
 
     if flat2 is None:
         # we have to swap flat1 and flat2, and
@@ -320,11 +195,11 @@ def ccdmask(flat1, flat2=None, mask=None,
         _logger.info('filling %d columns in sigma image', fill1)
         sigma[mshape[1]:, :] = sigma[mshape[1] - fill1:mshape[1], :]
 
-    invalid_sigma = sigma <= 0.0
-    if numpy.any(invalid_sigma):
-        _logger.info('updating mask with points where sigma <=0')
-        mask, gmask, smask = update_mask(mask, gmask, invalid_sigma, PIXEL_HOT)
-        invalid[mask == PIXEL_HOT] = HIGH_SIGMA
+    # invalid_sigma = sigma <= 0.0
+    # if numpy.any(invalid_sigma):
+    #     _logger.info('updating mask with points where sigma <=0')
+    #     mask, gmask, smask = update_mask(mask, gmask, invalid_sigma, PIXEL_HOT)
+    #     invalid[mask == PIXEL_HOT] = HIGH_SIGMA
 
     ratio[gmask] /= sigma[gmask]
 
@@ -335,3 +210,83 @@ def ccdmask(flat1, flat2=None, mask=None,
     mask[gmask] = f1_mask
 
     return ratio, mask, sigma
+
+
+def robust_std(valid, central, siglev):
+    import scipy.stats
+    qns = 100 * scipy.stats.norm.cdf(siglev)
+    pns = 100 - qns
+
+    ls = scipy.stats.scoreatpercentile(valid.flat - central, pns)
+    hs = scipy.stats.scoreatpercentile(valid.flat - central, qns)
+
+    # sigma estimation
+    sig = (hs - ls) / (2 * siglev)
+
+    return sig
+
+
+def comp_ratio(img1, img2, mask):
+    mask = mask == 1
+    mask1 = img1 <= 0
+    mask2 = img2 <= 0
+    mask3 = mask1 | mask2 | mask
+    with numpy.errstate(divide='ignore', invalid='ignore'):
+        ratio = img1 / img2
+    ratio[mask3] = 0.0
+    return ratio, mask3
+
+
+
+def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev=2.0):
+    '''Find cosmetic defects in a detector using two flat field images.
+
+    Two arrays representing flat fields of different exposure times are
+    required. Cosmetic defects are selected as points that deviate
+    significantly of the expected normal distribution of pixels in
+    the ratio between `flat2` and `flat1`.
+
+    The median of the ratio array is computed and subtracted to it.
+
+    The standard deviation of the distribution of pixels is computed
+    obtaining the percentiles nearest the pixel values corresponding to
+    `nsig` in the normal CDF. The standar deviation is then the distance
+    between the pixel values divided by two times `nsig`.
+    The ratio image is then normalized with this standard deviation.
+
+    The values in the ratio above `uppercut` are flagged as hot pixels,
+    and those below '-lowercut` are flagged as dead pixels in the output mask.
+
+    :parameter flat1: an array representing a flat illuminated exposure.
+    :parameter flat2: an array representing a flat illuminated exposure.
+    :parameter mask: an integer array representing initial mask.
+    :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
+    :parameter uppercut: values above this sigma level are flagged as hot pixels.
+    :parameter siglev: level to estimate the standard deviation.
+    :returns:the updated mask
+    '''
+    if flat2 is None:
+        flat1, flat2 = flat2, flat1
+        flat1 = numpy.ones_like(flat2)
+
+    if type(mask) is not numpy.ndarray:
+        mask=numpy.zeros(flat1.shape,dtype='int')
+
+    ratio, mask = comp_ratio(flat1, flat2, mask)
+    fratio1 = ratio[~mask]
+    central = numpy.median(fratio1)
+    std = robust_std(fratio1, central, siglev)
+    mask_u = ratio > central + uppercut * std
+    mask_d = ratio < central - lowercut * std
+    mask_final = mask_u | mask_d | mask
+    return mask_final
+
+
+
+if __name__ == "__main__":
+    flat1 = numpy.zeros((2, 2))
+    flat1[0] = 1
+    flat2 = flat1
+    mascara = cosmetics(flat1,flat2)
+    print mascara
+    print mascara.sum()
