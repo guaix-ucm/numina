@@ -288,5 +288,5 @@ if __name__ == "__main__":
     flat1[0] = 1
     flat2 = flat1
     mascara = cosmetics(flat1,flat2)
-    print mascara
-    print mascara.sum()
+    print (mascara)
+    print (mascara.sum())
