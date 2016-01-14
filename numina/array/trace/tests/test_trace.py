@@ -47,10 +47,11 @@ def test_trace_simple():
 
     result = np.empty((12, 3))
     result[:,0] = np.arange(44, 56)
-    result[:,1] = 48.00561797752809
-    result[[0, 4, 11], 1] = 48.0
+    result[:,1] = 48.0056179775
+    result[4, 1] = 48.0
     result[:,2] = 100.00280898876404
-    result[[0, 11], 2] = 0.0
+    result[[0, 11], 2] = 33.33426966
+    result[[1,10], 2] = 66.66853933
     result[4, 2] = 100.0
 
     mm = trace(arr, 48.0, 48.0, step=1)
