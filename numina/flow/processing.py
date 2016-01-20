@@ -53,6 +53,7 @@ def promote_hdu(hdu, totype='float32'):
 
 class SimpleDataModel(object):
     '''Model of the Data being processed'''
+
     def get_data(self, img):
         return img['primary'].data
 
@@ -64,7 +65,6 @@ class SimpleDataModel(object):
 
 
 class NoTag(object):
-
     def check_if_processed(self, img):
         return False
 
@@ -86,6 +86,7 @@ class TagFits(object):
 
 class Corrector(Node):
     '''A Node that corrects a frame from instrumental signatures.'''
+
     def __init__(self, datamodel, tagger, dtype='float32'):
         super(Corrector, self).__init__()
         self.tagger = tagger
@@ -134,44 +135,44 @@ class TagOptionalCorrector(Corrector):
 
 class BadPixelCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from bad pixels.'''
+
     def __init__(self, badpixelmask, mark=True, tagger=None,
                  datamodel=None, dtype='float32'):
-
         if tagger is None:
-            tagger = TagFits('NUM-BPM',
-                             'Badpixel removed with Numina')
+            tagger = TagFits('NUM-BPM', 'Badpixel removed with Numina')
 
-        super(BadPixelCorrector, self).__init__(datamodel, tagger,
-                                                mark, dtype=dtype)
+        super(BadPixelCorrector, self).__init__(datamodel, tagger, mark, dtype)
 
         self.bpm = badpixelmask
 
     def _run(self, img):
-
+        # import numpy
+        import scipy.signal
         imgid = self.get_imgid(img)
 
         _logger.debug('correcting bad pixel mask in %s', imgid)
 
-        data = self.datamodel.get_data(img)
-        #newdata = array.fixpix(data, self.bpm)
+        # data = self.datamodel.get_data(img)
+        # newdata = array.fixpix(data, self.bpm)
         # FIXME: this breaks datamodel abstraction
-        #img[0].data = newdata
+        # img[0].data = newdata
+        # img[0].data[self.bpm.astype(bool)] = numpy.median(img[0].data[~self.bpm.astype(bool)])
+        img_sm = scipy.signal.medfilt(img[0].data, 3)
+        img[0].data[self.bpm.astype(bool)] = img_sm[self.bpm.astype(bool)]
+        # img[0].data[self.bpm.astype(bool)] = 46
         return img
 
 
 class BiasCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from bias.'''
+
     def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
 
         if tagger is None:
-            tagger = TagFits('NUM-BS',
-                             'Bias removed with Numina')
+            tagger = TagFits('NUM-BS','Bias removed with Numina')
 
-        self.update_variance = False
-
-        if biasvar:
-            self.update_variance = True
+        self.update_variance = True if biasvar else False
 
         super(BiasCorrector, self).__init__(datamodel=datamodel,
                                             tagger=tagger,
@@ -205,7 +206,8 @@ class BiasCorrector(TagOptionalCorrector):
 
 class DarkCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from dark current.'''
-    def __init__(self, darkmap, darkvar=None, scale=False, datamodel=None,
+
+    def __init__(self, darkmap, darkvar=None, datamodel=None,
                  mark=True, tagger=None, dtype='float32'):
 
         if tagger is None:
@@ -217,8 +219,6 @@ class DarkCorrector(TagOptionalCorrector):
         if darkvar:
             self.update_variance = True
 
-        self.scale = scale
-
         super(DarkCorrector, self).__init__(datamodel=datamodel,
                                             tagger=tagger,
                                             mark=mark,
@@ -229,16 +229,14 @@ class DarkCorrector(TagOptionalCorrector):
         self.darkvar = darkvar
 
     def _run(self, img):
-        imgid = self.get_imgid(img)
 
-        _logger.debug('correcting dark in %s', imgid)
-        _logger.debug('dark mean is %f', self.dark_stats)
-
-        etime = 1.0
-        if self.scale:
-            header = self.datamodel.get_header(img)
+        header = self.datamodel.get_header(img)
+        if 'EXPTIME' in header.keys():
             etime = header['EXPTIME']
-            _logger.debug('scaling dark by %f', etime)
+        elif 'EXPOSED' in header.keys():
+            etime = header['EXPOSED']
+        else:
+            etime = 1.0
 
         data = self.datamodel.get_data(img)
 
@@ -257,9 +255,9 @@ class DarkCorrector(TagOptionalCorrector):
 
 class NonLinearityCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from non-linearity.'''
+
     def __init__(self, polynomial, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
-
         if tagger is None:
             tagger = TagFits('NUM-LIN',
                              'Non-linearity corrected with Numina')
@@ -269,7 +267,7 @@ class NonLinearityCorrector(TagOptionalCorrector):
         super(NonLinearityCorrector, self).__init__(
             datamodel=datamodel, tagger=tagger,
             mark=mark, dtype=dtype
-            )
+        )
 
         self.polynomial = polynomial
 
@@ -287,9 +285,9 @@ class NonLinearityCorrector(TagOptionalCorrector):
 
 class FlatFieldCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from flat-field.'''
+
     def __init__(self, flatdata, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
-
         if tagger is None:
             tagger = TagFits('NUM-FF', 'Flat-field removed with Numina')
 
@@ -319,9 +317,9 @@ class FlatFieldCorrector(TagOptionalCorrector):
 
 class SkyCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from sky.'''
+
     def __init__(self, skydata, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
-
         if tagger is None:
             tagger = TagFits('NUM-SK', 'Sky removed with Numina')
 
@@ -354,6 +352,7 @@ class SkyCorrector(TagOptionalCorrector):
 
 class DivideByExposure(TagOptionalCorrector):
     '''A Node that divides its input by exposure time.'''
+
     def __init__(self, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
 
@@ -367,7 +366,7 @@ class DivideByExposure(TagOptionalCorrector):
             tagger=tagger,
             mark=mark,
             dtype=dtype
-            )
+        )
 
     def _run(self, img):
         imgid = self.get_imgid(img)
@@ -388,7 +387,7 @@ class DivideByExposure(TagOptionalCorrector):
             img[0].data /= etime
             img[0].header['BUNIT'] = 'ADU/s'
             try:
-                img['variance'].data /= etime**2
+                img['variance'].data /= etime ** 2
                 img['variance'].header['BUNIT'] = 'ADU/s'
             except KeyError:
                 pass

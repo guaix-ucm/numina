@@ -30,7 +30,7 @@ from six.moves import reduce
 
 
 # Values stored in integer masks
-PIXEL_HOT = 2
+PIXEL_HOT = 1
 PIXEL_DEAD = 1
 PIXEL_VALID = 0
 
