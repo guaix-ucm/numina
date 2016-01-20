@@ -207,7 +207,7 @@ class BiasCorrector(TagOptionalCorrector):
 class DarkCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from dark current.'''
 
-    def __init__(self, darkmap, darkvar=None, scale=False, datamodel=None,
+    def __init__(self, darkmap, darkvar=None, datamodel=None,
                  mark=True, tagger=None, dtype='float32'):
 
         if tagger is None:
@@ -219,8 +219,6 @@ class DarkCorrector(TagOptionalCorrector):
         if darkvar:
             self.update_variance = True
 
-        self.scale = scale
-
         super(DarkCorrector, self).__init__(datamodel=datamodel,
                                             tagger=tagger,
                                             mark=mark,
@@ -231,16 +229,14 @@ class DarkCorrector(TagOptionalCorrector):
         self.darkvar = darkvar
 
     def _run(self, img):
-        imgid = self.get_imgid(img)
 
-        _logger.debug('correcting dark in %s', imgid)
-        _logger.debug('dark mean is %f', self.dark_stats)
-
-        etime = 1.0
-        if self.scale:
-            header = self.datamodel.get_header(img)
+        header = self.datamodel.get_header(img)
+        if 'EXPTIME' in header.keys():
             etime = header['EXPTIME']
-            _logger.debug('scaling dark by %f', etime)
+        elif 'EXPOSED' in header.keys():
+            etime = header['EXPOSED']
+        else:
+            etime = 1.0
 
         data = self.datamodel.get_data(img)
 
