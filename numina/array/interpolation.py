@@ -153,34 +153,34 @@ class SteffenInterpolator(object):
         p[1:] = (s[:-1]*h[1:] + s[1:] * h[:-1]) / (h[1:] + h[:-1])
         return p
 
-    def _eval(self, v, in_bounds):
+    def _eval(self, v, in_bounds, der):
         """Eval polynomial inside bounds."""
         result = np.zeros_like(v, dtype='float')
         x_indices = np.searchsorted(self._x, v, side='rigth')
         ids = x_indices[in_bounds] - 1
         u = v[in_bounds] - self._x[ids]
-        result[in_bounds] = self._poly_eval(u, ids)
+        result[in_bounds] = self._poly_eval(u, ids, der)
         return result
 
-    def _extrapolate(self, result, v, below_bounds, above_bounds):
+    def _extrapolate(self, result, v, below_bounds, above_bounds, der):
         """Extrapolate result based on extrapolation mode."""
         if self.extrapolate_mode == 'const':
             fill_b = fill_a = self.fill_value
         elif self.extrapolate_mode == 'border':
-            fill_b = self._d[0]
-            fill_a = self._d[-1]
+            fill_b = self._poly_eval(0, 0, der)
+            fill_a = self._poly_eval(0, -1, der)
         elif self.extrapolate_mode == 'extrapolate':
             u = v[above_bounds] - self._x[-2]
-            fill_a = self._poly_eval(u, -2)
+            fill_a = self._poly_eval(u, -2, der)
             u = v[below_bounds] - self._x[0]
-            fill_b = self._poly_eval(u, 0)
+            fill_b = self._poly_eval(u, 0, der)
         else:
             raise ValueError("extrapolation method doesn't exist")
 
         result[below_bounds] = fill_b
         result[above_bounds] = fill_a
 
-    def __call__(self, x_new):
+    def __call__(self, x_new, der=0):
         """
         Evaluate the Steffen interpolant
 
@@ -189,6 +189,9 @@ class SteffenInterpolator(object):
         x_new : array-like
               Points to evaluate the interpolant at.
 
+        der : int, optional
+              Degree of the derivative. 0 is the plain interpolant.
+              For der >= 4, the return value is 0
         Returns
         -------
         y : array-like
@@ -201,10 +204,10 @@ class SteffenInterpolator(object):
         below_bounds, above_bounds = self._check_bounds(v)
         in_bounds = np.logical_and(~below_bounds, ~above_bounds)
 
-        result = self._eval(v, in_bounds)
+        result = self._eval(v, in_bounds, der)
 
         if self.extrapolate:
-            self._extrapolate(result, v, below_bounds, above_bounds)
+            self._extrapolate(result, v, below_bounds, above_bounds, der)
         return result
 
     def _poly_eval(self, u, ids, der=0):
@@ -218,7 +221,7 @@ class SteffenInterpolator(object):
         elif der == 3:
             return self._poly_eval_3(u, ids)
         elif der >= 4:
-            return self._poly_eval_3(u, ids)
+            return self._poly_eval_4(u, ids)
         else:
             raise ValueError("der={} is impossible".format(der))
 
