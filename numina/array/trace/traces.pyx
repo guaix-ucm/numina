@@ -25,6 +25,7 @@ cimport numpy
 
 from libc.math cimport floor, ceil
 from libc.math cimport fabs
+from libc.math cimport log as logc
 # from libc.stdio cimport printf
 from libcpp.vector cimport vector
 
@@ -82,6 +83,7 @@ cdef vector[double] fit_para_equal_spaced(FType[:] dd) nogil:
     result.push_back(B)
     result.push_back(C)
     return result
+
 
 @cython.boundscheck(False)
 cdef vector[double] fit_para_equal_spaced_alt(double y0, double y1, double y2) nogil:
@@ -144,8 +146,33 @@ cdef vector[double] interp_max_3_alt(double y0, double y1, double y2) nogil:
         result.push_back(C - B * B / (4*A))
     return result
 
+
+@cython.boundscheck(False)
+cdef vector[double] interp_max_3_alt_log(double y0, double y1, double y2) nogil:
+    '''Parabola that passes through 3 points
+
+    With X=[-1,0,1]
+    '''
+
+    cdef vector[double] result
+    cdef vector[double] params
+    cdef double A,B,C
+    params = fit_para_equal_spaced_alt(logc(y0), logc(y1), logc(y2))
+    A = params[0]
+    B = params[1]
+    C = params[2]
+    if A == 0:
+        result.push_back(0.0)
+        result.push_back(C)
+    else:
+        result.push_back(-B / (2*A))
+        result.push_back(C - B * B / (4*A))
+    return result
+
+
 cdef int wc_to_pix(double x) nogil:
     return <int>floor(x + 0.5)
+
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
@@ -161,6 +188,7 @@ cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
         out[i] = accum / J
     
     return 0
+
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
@@ -248,7 +276,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
         nearp = peaks[ipeak] + pred_off
 
         # fit the peak with three points
-        result = interp_max_3_alt(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
+        result = interp_max_3_alt_log(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
 
         if (result[0] > 0.5) or (result[0] < -0.5):
             # ignore the correction if it's larger than 0.5 pixel
@@ -257,6 +285,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
             trace.push_back(col, result[0] + nearp, result[1])
 
     return trace
+
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
@@ -300,7 +329,6 @@ def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
                       direction=+1)
 
     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
-    
     for i in range(trace.xtrace.size()):
         result[i,0] = trace.xtrace[i]
         result[i,1] = trace.ytrace[i]
