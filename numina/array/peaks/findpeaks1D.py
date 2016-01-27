@@ -23,7 +23,7 @@
 from __future__ import division
 
 import numpy as np
-
+import warnings
 #------------------------------------------------------------------------------
 
 def findPeaks_spectrum(sx, nwinwidth, data_threshold=0):
@@ -51,6 +51,8 @@ def findPeaks_spectrum(sx, nwinwidth, data_threshold=0):
         zero.
         
     """
+    warnings.simplefilter("once")
+    warnings.warn("Deprecated. Use numina.array.peaks.peakdet.find_peaks_indexes instead", DeprecationWarning)
 
     sx_shape = sx.shape
     nmed = nwinwidth//2
@@ -117,6 +119,9 @@ def refinePeaks_spectrum(sx, ipeaks, nwinwidth, method=2):
         X-coordinates in which the refined peaks have been found.
  
     """
+    warnings.simplefilter("once")
+    warnings.warn("Deprecated. Use numina.array.peaks.peakdet.refine_peaks instead", DeprecationWarning)
+
     nmed = nwinwidth//2
 
     xfpeaks = np.zeros(len(ipeaks))
