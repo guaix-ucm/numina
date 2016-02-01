@@ -69,24 +69,10 @@ cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
             
     return result
 
-@cython.boundscheck(False)
-cdef vector[double] fit_para_equal_spaced(FType[:] dd) nogil:
-    '''Fit (-1, 0, 1) (dd0, dd1, dd2) to a 2nd degree polynomial.'''
-
-    cdef vector[double] result
-    cdef double A, B, C
-    C = dd[1]
-    B = 0.5 * (dd[2] - dd[0])
-    A = 0.5 * (dd[0] + dd[2] - 2 * dd[1])
-    
-    result.push_back(A)
-    result.push_back(B)
-    result.push_back(C)
-    return result
 
 
 @cython.boundscheck(False)
-cdef vector[double] fit_para_equal_spaced_alt(double y0, double y1, double y2) nogil:
+cdef vector[double] fit_para_equal_spaced(double y0, double y1, double y2) nogil:
     '''Fit (-1, 0, 1) (dd0, dd1, dd2) to a 2nd degree polynomial.'''
 
     cdef vector[double] result
@@ -101,31 +87,10 @@ cdef vector[double] fit_para_equal_spaced_alt(double y0, double y1, double y2) n
     return result
 
 
-@cython.boundscheck(False)
-cdef vector[double] interp_max_3(FType[:] dd) nogil:
-    '''Parabola that passes through 3 points
-        
-    With X=[-1,0,1]
-    '''
-
-    cdef vector[double] result
-    cdef vector[double] params
-    cdef double A,B,C
-    params = fit_para_equal_spaced(dd)
-    A = params[0]
-    B = params[1]
-    C = params[2]
-    if A == 0:
-        result.push_back(0.0)
-        result.push_back(C)
-    else:
-        result.push_back(-B / (2*A))
-        result.push_back(C - B * B / (4*A))
-    return result
 
 
 @cython.boundscheck(False)
-cdef vector[double] interp_max_3_alt(double y0, double y1, double y2) nogil:
+cdef vector[double] interp_max_3(double y0, double y1, double y2) nogil:
     '''Parabola that passes through 3 points
 
     With X=[-1,0,1]
@@ -134,30 +99,7 @@ cdef vector[double] interp_max_3_alt(double y0, double y1, double y2) nogil:
     cdef vector[double] result
     cdef vector[double] params
     cdef double A,B,C
-    params = fit_para_equal_spaced_alt(y0, y1, y2)
-    A = params[0]
-    B = params[1]
-    C = params[2]
-    if A == 0:
-        result.push_back(0.0)
-        result.push_back(C)
-    else:
-        result.push_back(-B / (2*A))
-        result.push_back(C - B * B / (4*A))
-    return result
-
-
-@cython.boundscheck(False)
-cdef vector[double] interp_max_3_alt_log(double y0, double y1, double y2) nogil:
-    '''Parabola that passes through 3 points
-
-    With X=[-1,0,1]
-    '''
-
-    cdef vector[double] result
-    cdef vector[double] params
-    cdef double A,B,C
-    params = fit_para_equal_spaced_alt(logc(y0), logc(y1), logc(y2))
+    params = fit_para_equal_spaced(y0, y1, y2)
     A = params[0]
     B = params[1]
     C = params[2]
@@ -196,7 +138,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
                              InternalTrace& trace, double x, double y,
                              size_t step=1, size_t hs=1, size_t tol=2,
                              double maxdis=2.0, double background=150.0,
-                             int direction=-1) nogil:
+                             int direction=-1, bint gauss = 1) nogil:
 
     cdef int col = wc_to_pix(x)
     cdef int row = wc_to_pix(y)
@@ -276,7 +218,10 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
         nearp = peaks[ipeak] + pred_off
 
         # fit the peak with three points
-        result = interp_max_3_alt_log(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
+        if gauss:
+            result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
+        else:
+            result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
 
         if (result[0] > 0.5) or (result[0] < -0.5):
             # ignore the correction if it's larger than 0.5 pixel
@@ -291,7 +236,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
 @cython.boundscheck(False)
 def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1, 
                      size_t hs=1, size_t tol=2, double background=150.0,
-                     double maxdis=2.0):
+                     double maxdis=2.0, bint gauss = 1):
     '''Trace peak in array starting in (x,y).
 
     Trace a peak feature in an array starting in position (x,y).
@@ -322,11 +267,11 @@ def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
 
     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,
                       maxdis=maxdis, background=background,
-                      direction=-1)
+                      direction=-1, gauss=gauss)
     trace.reverse()
     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,
                       maxdis=maxdis, background=background,
-                      direction=+1)
+                      direction=+1, gauss=gauss)
 
     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
     for i in range(trace.xtrace.size()):
