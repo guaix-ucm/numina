@@ -91,9 +91,6 @@ setup(name='numina',
         'console_scripts': [
             'numina = numina.user.cli:main',
             ],
-        'numina.storage.1': [
-            'numina_default = numina.store.default:load_cli_storage',
-            ],
       },
       setup_requires=['numpy'],
       install_requires=REQUIRES,
