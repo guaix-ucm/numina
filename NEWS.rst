@@ -1,10 +1,16 @@
-Version 0.14.x
-================
+Version 0.14 (4 Feb 2016)
+=========================
 
 Changes
 -------
 * Remove 'worker' module
-
+* Rework 'store' module
+* Changed the format of 'control.yaml'
+* Removed dependency on 'singledispatch'
+* Added wavecalibration module
+* RecipeRequirement is now RecipeInput (GCS compatibility)
+* RecipeInputBuilder is a method of Recipe (GCS compatibility)
+* MIgrated to astropy 1.0
 
 
 Version 0.13.2 (22 Apr 2015)
@@ -88,7 +94,7 @@ Changes:
  * Instrument load improved
 
 Version 0.9.1 (05 Dec 2012)
-----------------------------
+---------------------------
 Bugfix:
  * Error importing ConfigParserError
 
@@ -183,7 +189,7 @@ Changes:
  * Bug fixes to work with Pyemir and Pontifex
 
 Version 0.4.2 (07 Oct 2011)
---------------------------
+---------------------------
 
 Changes:
  * Fixed error with object mask creation
@@ -274,7 +280,7 @@ Simulation tools moved to numina
 
 
 Version 0.1.0
---------------
+-------------
 
 (08 February 2010, from /pyemir/trunk revision 627)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.1.0/
@@ -291,7 +297,7 @@ https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.6/
 Internal release
 
 Version 0.0.5
---------------
+-------------
 
 (27 January 2010, from /pyemir/trunk revision 596)
 https://guaix.fis.ucm.es/svn-private/emir/pyemir/tags/0.0.5/
