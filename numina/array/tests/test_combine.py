@@ -20,6 +20,7 @@
 import unittest
 import itertools
 
+from six.moves import range
 import numpy
 
 from numina.array.combine import generic_combine
@@ -194,7 +195,6 @@ class CombineTestCase(unittest.TestCase):
         # Checking
         for cal, precal in zip(out[0].flat, rres.flat):
             self.assertAlmostEqual(cal, precal)
-        print list(out[1].flat)
         for cal, precal in zip(out[1].flat, rvar):
             self.assertAlmostEqual(cal, precal)
         for cal, precal in zip(out[2].flat, itertools.repeat(5)):
@@ -233,8 +233,8 @@ class MinMaxTestCase(unittest.TestCase):
 
     def testBasic1(self):
         '''Test value if points rejected are less than the images.'''
-        for nmin in xrange(0, self.nimages):
-            for nmax in xrange(0, self.nimages - nmin):
+        for nmin in range(0, self.nimages):
+            for nmax in range(0, self.nimages - nmin):
                 minmax(self.data, out=self.out, nmin=nmin, nmax=nmax)
             for v in self.out[0].flat:
                 self.assertEqual(v, 1)
@@ -245,7 +245,7 @@ class MinMaxTestCase(unittest.TestCase):
 
     def testBasic2(self):
         '''Test value if points rejected are equal to the images.'''
-        for nmin in xrange(0, self.nimages):
+        for nmin in range(0, self.nimages):
             nmax = self.nimages - nmin
             minmax(self.data, out=self.out, nmin=nmin, nmax=nmax)
             for v in self.out[0].flat:
@@ -258,7 +258,7 @@ class MinMaxTestCase(unittest.TestCase):
     @unittest.skip("requires fixing generic_combine routine")
     def testBasic3(self):
         '''Test ValueError is raised if points rejected are more than images'''
-        for nmin in xrange(0, self.nimages):
+        for nmin in range(0, self.nimages):
             nmax = self.nimages - nmin + 1
 
             self.assertRaises(ValueError, minmax, self.data,

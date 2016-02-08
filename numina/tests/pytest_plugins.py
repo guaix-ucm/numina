@@ -22,6 +22,7 @@ import tarfile
 
 import pytest
 
+from .drpmocker import DRPMocker
 from .testcache import download_cache
 
 
@@ -62,6 +63,12 @@ def numinatpldir(tmpdir, request):
     os.chdir('tpl')
 
     return tmpdir
+
+
+@pytest.fixture
+def drpmocker(monkeypatch):
+    """A fixture that mocks the loading of DRPs"""
+    return DRPMocker(monkeypatch)
 
 
 def pytest_addoption(parser):

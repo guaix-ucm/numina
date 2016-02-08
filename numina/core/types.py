@@ -20,6 +20,7 @@
 import inspect
 
 from numina.exceptions import ValidationError
+from .typedialect import dialect_info
 
 
 class DataType(object):
@@ -27,15 +28,22 @@ class DataType(object):
     def __init__(self, ptype, default=None):
         self.python_type = ptype
         self.default = default
-        self.dialect = {}
+        self.dialect = dialect_info(self)
 
-    def store(self, obj):
+    def convert(self, obj):
         return obj
 
     def validate(self, obj):
         if not isinstance(obj, self.python_type):
             raise ValidationError(obj, self.python_type)
         return True
+
+    def _datatype_dump(self, obj, where):
+        return obj
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s()" % (sclass, )
 
 
 class NullType(DataType):
@@ -44,7 +52,7 @@ class NullType(DataType):
         super(NullType, self).__init__(type(None))
         self.dialect = None
 
-    def store(self, obj):
+    def convert(self, obj):
         return None
 
     def validate(self, obj):
@@ -71,8 +79,8 @@ class ListOfType(DataType):
         super(ListOfType, self).__init__(stype)
         self.dialect = {}
 
-    def store(self, obj):
-        result = [self.internal.store(o) for o in obj]
+    def convert(self, obj):
+        result = [self.internal.convert(o) for o in obj]
         return result
 
     def validate(self, obj):

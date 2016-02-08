@@ -95,9 +95,7 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         MASK_GOOD = 0
 
         saturation = 50000
-        print self.data.shape
         self.data[7:, ...] = saturation
-        print self.data[:, 1, 1]
 
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
                          saturation=saturation,
@@ -171,7 +169,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
         self.data = numpy.tile(self.data, (columns, rows, 1)).T
         value = 1.0
         variance = 0.13454545454545455
-        print(self.data.shape)
 
         # Badpixels is [0,..., 0]
         res = ramp_array(self.data, self.ti, self.gain, self.ron,
@@ -179,7 +176,6 @@ class RampReadoutAxisTestCase(unittest.TestCase):
                          badpixels=self.emptybp,
                          blank=self.blank)
 
-        print res[3]
         for n in res[3].flat:
             self.assertEqual(n, 0)
 

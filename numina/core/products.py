@@ -1,4 +1,3 @@
-#
 # Copyright 2008-2014 Universidad Complutense de Madrid
 #
 # This file is part of Numina
@@ -19,31 +18,31 @@
 
 import sys
 
+import six
 import numpy
 from astropy.io import fits
 
 from .qc import QC
 from .pipeline import InstrumentConfiguration
-from .pipeline import import_object
+from .objimport import import_object
 from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType
-from .typedialect import dialect_info
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
+import warnings
 
 
-class DataProductType(DataType):
+
+class DataProductTag(object):
+    """A type that is a data product."""
+    pass
+
+
+class DataProductType(DataType, DataProductTag):
     def __init__(self, ptype, default=None):
         super(DataProductType, self).__init__(ptype, default=default)
-        self.dialect = dialect_info(self)
 
-    def suggest(self, obj, suggestion):
-        return obj
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        return "%s()" % (sclass, )
 
 _base_schema = {
     'keywords': {
@@ -55,16 +54,18 @@ _base_schema = {
     }
 
 
-class DataFrameType(DataProductType):
+class DataFrameType(DataType):
+    """A type of DataFrame."""
     def __init__(self):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
 
-    def store(self, obj):
+    def convert(self, obj):
+        """Convert"""
         # We accept None representing No Image
         if obj is None:
             return None
-        elif isinstance(obj, basestring):
+        elif isinstance(obj, six.string_types):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj
@@ -77,6 +78,7 @@ class DataFrameType(DataProductType):
             raise TypeError(msg)
 
     def validate(self, value):
+        """validate"""
         # obj can be None or a DataFrame
         if value is None:
             return True
@@ -84,39 +86,57 @@ class DataFrameType(DataProductType):
             try:
                 with value.open() as hdulist:
                     self.validate_hdulist(hdulist)
-            except StandardError:
+            except Exception:
                 _type, exc, tb = sys.exc_info()
-                raise ValidationError, exc, tb
+                six.reraise(ValidationError, exc, tb)
 
     def validate_hdulist(self, hdulist):
         pass
 
-    def suggest(self, obj, suggestion):
-        if not isinstance(suggestion, basestring):
-            raise TypeError('suggestion must be a string, not %r' % suggestion)
-            return obj
-        if isinstance(obj, basestring):
-            # check that this is a FITS file
-            # try - open
-            # FIXME
-            pass
-        elif isinstance(obj, fits.HDUList):
-            obj[0].update('filename', suggestion)
-        elif isinstance(obj, DataFrame):
-            obj.filename = suggestion
-        return obj
+    def _datatype_dump(self, obj, where):
+        return dump_dataframe(obj, where)
+
+    def _datatype_load(self, obj):
+        if obj is None:
+            return None
+        else:
+            return DataFrame(filename=obj)
 
 
-class ArrayType(DataProductType):
+class ArrayType(DataType):
+    """A type of array."""
     def __init__(self, default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
 
-    def store(self, obj):
-        return self.store_as_array(obj)
+    def convert(self, obj):
+        return self.convert_to_array(obj)
 
-    def store_as_array(self, obj):
+    def convert_to_array(self, obj):
         result = numpy.array(obj)
         return result
+
+    def _datatype_dump(self, obj, where):
+        return dump_numpy_array(obj, where)
+
+    def _datatype_load(self, obj):
+        if isinstance(obj, six.string_types):
+            # if is a string, it may be a pathname, try to load it
+
+            # heuristics, by extension
+            if obj.endswith('.csv'):
+                # try to open as a CSV file
+                res = numpy.loadtxt(obj, delimiter=',')
+            else:
+                res = numpy.loadtxt(obj)
+        else:
+            res = obj
+        return res
+
+
+class ArrayNType(ArrayType):
+    def __init__(self, dimensions, default=None):
+        super(ArrayNType, self).__init__(default=default)
+        self.N = dimensions
 
 
 # FIXME: this is hack, thus should be provided by DRPS
@@ -142,7 +162,7 @@ def _gimme_validator_for(instrument, mode):
 
 
 class ObservationResultType(DataType):
-    '''The type of ObservationResult.'''
+    """The type of ObservationResult."""
 
     def __init__(self, rawtype=None):
         super(ObservationResultType, self).__init__(ptype=ObservationResult)
@@ -160,7 +180,7 @@ class ObservationResultType(DataType):
 
 
 class InstrumentConfigurationType(DataType):
-    '''The type of InstrumentConfiguration.'''
+    """The type of InstrumentConfiguration."""
 
     def __init__(self):
         super(InstrumentConfigurationType, self).__init__(
@@ -177,3 +197,41 @@ class QualityControlProduct(DataProductType):
             ptype=QC,
             default=QC.UNKNOWN
             )
+
+
+class LinesCatalog(DataProductType):
+    def __init__(self):
+        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
+
+    def __numina_load__(self, obj):
+        with open(obj, 'r') as fd:
+            linecat = numpy.loadtxt(fd)
+        return linecat
+
+
+def dump_dataframe(obj, where):
+    # save fits file
+    if obj.frame is None:
+        # assume filename contains a FITS file
+        return None
+    else:
+        if obj.filename:
+            filename = obj.filename
+        elif 'FILENAME' in obj.frame[0].header:
+            filename = obj.frame[0].header['FILENAME']
+        elif hasattr(where, 'destination'):
+            filename = where.destination + '.fits'
+        else:
+            filename = where.get_next_basename('.fits')
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            obj.frame.writeto(filename, clobber=True)
+        return filename
+
+
+def dump_numpy_array(obj, where):
+    # FIXME:
+    #filename = where.get_next_basename('.txt')
+    filename = where.destination + '.txt'
+    numpy.savetxt(filename, obj)
+    return filename

@@ -1,5 +1,13 @@
-include *.txt
+include LICENSE.txt
+include README.rst
+include NEWS.rst
+include AUTHORS.rst
 include src/*.h
 include src/*.pyx
+include src/*.cc
 include src/nirproc.cpp
+include numina/array/peaks/kernels.c
+include numina/array/trace/*.cpp
+include numina/array/trace/*.h
+
 recursive-include doc *

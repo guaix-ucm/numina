@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2015 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,20 +17,18 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipes for system checks.  '''
+"""Recipes for system checks. """
 
-from numina.core import BaseRecipe, RecipeRequirements
-from numina.core import define_requirements
+from numina.core import BaseRecipe
 from numina.core.requirements import ObservationResultRequirement
 
 
 class AlwaysFailRecipe(BaseRecipe):
-    '''A Recipe that always fails.'''
+    """A Recipe that always fails."""
 
     def __init__(self):
         super(AlwaysFailRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
+            version="1"
         )
 
     def run(self, requirements):
@@ -38,31 +36,26 @@ class AlwaysFailRecipe(BaseRecipe):
 
 
 class AlwaysSuccessRecipe(BaseRecipe):
-    '''A Recipe that always successes.'''
+    """A Recipe that always successes."""
 
     def __init__(self):
         super(AlwaysSuccessRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
+            version=1
         )
 
-    def run(self, requirements):
-        return self.RecipeResult()
+    def run(self, recipe_input):
+        return self.create_result()
 
 
-class OBSuccessRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-
-
-@define_requirements(OBSuccessRecipeRequirements)
 class OBSuccessRecipe(BaseRecipe):
-    '''A Recipe that always successes, it requires an OB'''
+    """A Recipe that always successes, it requires an OB"""
+
+    obresult = ObservationResultRequirement()
 
     def __init__(self):
         super(OBSuccessRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
+            version=1
         )
 
-    def run(self, requirements):
-        return self.RecipeResult()
+    def run(self, recipe_input):
+        return self.create_result()

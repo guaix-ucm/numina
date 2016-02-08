@@ -19,25 +19,24 @@
 
 from .recipes import BaseRecipe
 from .recipes import BaseRecipeAutoQC
-from .recipes import list_recipes
 from .dataframe import DataFrame
-from .pipeline import Instrument, Pipeline, InstrumentConfiguration
+from .pipeline import InstrumentDRP, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode
-from .pipeline import import_object
-from .pipeline import drp_load, init_drp_system
-from .requirements import DataProductRequirement
-from .load import RequirementParser
+from .objimport import import_object
+from .objimport import fully_qualified_name
+from .pipelineload import drp_load
 from .requirements import Parameter, Requirement
 from .products import DataProductType, DataFrameType
 from .oresult import ObservationResult
-from numina.exceptions import RecipeError
-from numina.exceptions import ValidationError
-from .recipeinout import RecipeRequirements, define_requirements
+from numina.exceptions import RecipeError # Do not remove, part of the API
+from numina.exceptions import ValidationError # Do not remove, part of the API
+from .recipeinout import RecipeInput, define_requirements, define_input
 from .recipeinout import RecipeResult, define_result
-from .recipeinout import ErrorRecipeResult, BaseRecipeResult
+from .recipeinout import ErrorRecipeResult
 from .dataholders import Product
 from .oresult import obsres_from_dict
 from .qc import QC
 
+# FIXME: these two are deprecated
 FrameDataProduct = DataFrameType
 DataProduct = DataProductType

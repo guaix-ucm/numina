@@ -20,7 +20,14 @@
 from __future__ import print_function
 
 import logging
-from itertools import imap, product
+from itertools import product
+
+import six
+
+if six.PY2:
+    from itertools import imap
+else:
+    imap = map
 
 import numpy
 from scipy import asarray, zeros_like, minimum, maximum

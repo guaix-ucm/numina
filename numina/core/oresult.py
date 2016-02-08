@@ -21,6 +21,9 @@
 Results of the Observing Blocks
 '''
 
+import warnings
+
+import six
 from astropy.io import fits
 
 from .dataframe import DataFrame
@@ -43,31 +46,47 @@ class ObservationResult(object):
 
     def update_with_product(self, prod):
         self.tags = prod.tags
-        self.files = [prod.content]
+        self.frames = [prod.content]
         self.prodid = prod.id
+
+    #TODO: Delete this property or at least, use frame
+    @property
+    def images(self):
+        return self.frames
+
+    @images.setter
+    def images_s(self, value):
+        self.frames = value
 
 
 def dataframe_from_list(values):
     '''Build a DataFrame object from a list.'''
-    if(isinstance(values, basestring)):
+    if(isinstance(values, six.string_types)):
         return DataFrame(filename=values)
     elif(isinstance(values, fits.HDUList)):
         return DataFrame(frame=values)
     else:
-        # FIXME: modify when format is changed
-        # For this format
-        return DataFrame(filename=values[0], itype=values[1])
+        return None
 
 
 def obsres_from_dict(values):
     '''Build a ObservationResult object from a dictionary.'''
+
     obsres = ObservationResult()
+
+    ikey = 'frames'
+    # Workaround
+    if 'images' in values:
+        ikey = 'images'
 
     obsres.id = values.get('id', 1)
     obsres.mode = values['mode']
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
-    obsres.frames = [dataframe_from_list(val) for val in values['frames']]
+    try:
+        obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
+    except:
+        obsres.frames = []
 
     return obsres

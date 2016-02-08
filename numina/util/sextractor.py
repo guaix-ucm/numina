@@ -148,14 +148,16 @@ Example of use:
 
 # ======================================================================
 
-import __builtin__
+from __future__ import print_function
+
+from six.moves import builtins as __builtin__
 
 import os
 import subprocess
 import re
 import copy
 
-from sexcatalog import *
+from .sexcatalog import *
 
 
 # ======================================================================
@@ -407,7 +409,7 @@ class SExtractor:
 
         self.config = (
             dict([(k, copy.deepcopy(SExtractor._SE_config[k]["value"]))
-                  for k in SExtractor._SE_config.keys()]))
+                  for k in SExtractor._SE_config]))
 
         # print self.config
 
@@ -501,7 +503,7 @@ class SExtractor:
 
         parameters_f = __builtin__.open(self.config['PARAMETERS_NAME'], 'w')
         for parameter in self.config['PARAMETERS_LIST']:
-            print >>parameters_f, parameter
+            print(parameter, file=parameters_f)
 
         parameters_f.close()
 
@@ -524,9 +526,7 @@ class SExtractor:
             else:
                 value = str(self.config[key])
 
-            print >>main_f, ("%-16s       %-16s # %s" %
-                             (key, value,
-                              SExtractor._SE_config[key]['comment']))
+            print(("%-16s       %-16s # %s" % (key, value, SExtractor._SE_config[key]['comment'])), file=main_f)
 
         main_f.close()
 

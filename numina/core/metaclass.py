@@ -17,169 +17,66 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Base metaclasses
-'''
+"""
 
-import collections
 from .dataholders import Product
 from .requirements import Requirement
-from .products import QualityControlProduct
+import weakref
 
 
 class StoreType(type):
-    '''Metaclass for storing members.'''
+    """Metaclass for storing members."""
     def __new__(cls, classname, parents, attributes):
-        filter_out = {}
-        filter_in = {}
-        filter_in['__stored__'] = filter_out
-        # Handle stored values from parents
+
+        n_stored = weakref.WeakValueDictionary()
         for p in parents:
-            stored = getattr(p, '__stored__', None)
+            stored = getattr(p, '__numina_stored__', None)
             if stored:
-                filter_in['__stored__'].update(stored)
+                n_stored.update(stored)
 
         for name, val in attributes.items():
             if cls.exclude(name, val):
-                nname, nval = cls.store(name, val)
-                filter_out[nname] = nval
-            else:
-                filter_in[name] = val
-        return super(StoreType, cls).__new__(
-            cls, classname, parents, filter_in)
+                nname, nval = cls.transform(name, val)
+                n_stored[nname] = nval
+
+        attributes['__numina_stored__'] = n_stored
+
+        return super(StoreType, cls).__new__(cls, classname, parents, attributes)
 
     def __setattr__(self, key, value):
+        """Define __setattr__ in 'classes' created with this metaclass."""
         self._add_attr(key, value)
 
     def _add_attr(self, key, value):
         if self.exclude(key, value):
-            self.__stored__[key] = value
-        else:
-            super(StoreType, self).__setattr__(key, value)
+            nkey, nvalue = self.transform(key, value)
+            self.__numina_stored__[nkey] = nvalue
+
+        super(StoreType, self).__setattr__(key, value)
 
     @classmethod
     def exclude(cls, name, value):
         return False
 
     @classmethod
-    def store(cls, name, value):
-        return name, value
-
-# FIXME: this does not work due to this
-# http://comments.gmane.org/gmane.comp.python.devel/142467
-# class MapStoreType(StoreType, collections.Mapping)
-# Using manual implementation instead
-
-
-class MapStoreType(StoreType):
-    '''Metaclass for storing members with map interface.'''
-    def __new__(cls, classname, parents, attributes):
-        return super(MapStoreType, cls).__new__(
-            cls, classname, parents, attributes)
-
-    def __getitem__(self, name):
-        return self.__stored__[name]
-
-    def __iter__(self):
-        return iter(self.__stored__)
-
-    def __len__(self):
-        return len(self.__stored__)
-
-    # These methods are implemented from the previous
-    # Copied over from collections
-    def get(self, key, default=None):
-        'D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None.'
-        try:
-            return self[key]
-        except KeyError:
-            return default
-
-    def __contains__(self, key):
-        try:
-            self[key]
-        except KeyError:
-            return False
-        else:
-            return True
-
-    def iterkeys(self):
-        'D.iterkeys() -> an iterator over the keys of D'
-        return iter(self)
-
-    def itervalues(self):
-        'D.itervalues() -> an iterator over the values of D'
-        for key in self:
-            yield self[key]
-
-    def iteritems(self):
-        'D.iteritems() -> an iterator over the (key, value) items of D'
-        for key in self:
-            yield (key, self[key])
-
-    def keys(self):
-        "D.keys() -> list of D's keys"
-        return list(self)
-
-    def items(self):
-        "D.items() -> list of D's (key, value) pairs, as 2-tuples"
-        return [(key, self[key]) for key in self]
-
-    def values(self):
-        "D.values() -> list of D's values"
-        return [self[key] for key in self]
-
-    def __eq__(self, other):
-        if not isinstance(other, collections.Mapping):
-            return NotImplemented
-        return dict(self.items()) == dict(other.items())
-
-    def __ne__(self, other):
-        return not (self == other)
-
-# Register as a mapping
-collections.Mapping.register(MapStoreType)  # @UndefinedVariable
-
-
-class RecipeInOutType(MapStoreType):
-    def __new__(cls, classname, parents, attributes):
-        # Handle checkers defined in base class
-        checkers = attributes.get('__checkers__', [])
-        for p in parents:
-            c = getattr(p, '__checkers__', [])
-            checkers.extend(c)
-        attributes['__checkers__'] = checkers
-        obj = super(RecipeInOutType, cls).__new__(
-            cls, classname, parents, attributes)
-        return obj
-
-    @classmethod
-    def store(cls, name, value):
+    def transform(cls, name, value):
         if value.dest is None:
             value.dest = name
         nname = value.dest
         return nname, value
 
 
-class RecipeRequirementsType(RecipeInOutType):
-    '''Metaclass for RecipeRequirements.'''
+class RecipeInputType(StoreType):
+    """Metaclass for RecipeInput."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
 
 
-class RecipeResultType(RecipeInOutType):
-    '''Metaclass for RecipeResult.'''
+class RecipeResultType(StoreType):
+    """Metaclass for RecipeResult."""
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Product)
-
-
-class RecipeResultAutoQCType(RecipeResultType):
-    '''Metaclass for RecipeResult with added QC'''
-    def __new__(cls, classname, parents, attributes):
-        if 'qc' not in attributes:
-            attributes['qc'] = Product(QualityControlProduct)
-        return super(RecipeResultAutoQCType, cls).__new__(
-            cls, classname, parents, attributes
-            )

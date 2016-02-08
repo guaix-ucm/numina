@@ -1,22 +1,24 @@
 
 .. _solaris10:
 
-=================================
+===============================
 Numina Deployment in Solaris 10
-=================================
+===============================
 
-Solaris 10 is the operative system under a substantial part
+Solaris 10 is the Operative System (OS) under a substantial part
 of the GTC Control System runs. The installation of the
-Python stack in this SO is not trivial, so we describe here
-the required steps.
+Python stack in this OS is not trivial, so in the following a description
+of the required steps is provided.
 
 
-Install basic tools
--------------------
-First we install the GNU compiler collection. We will need
-compilers for C, C++ and Fortran. The `opencsw`_ project
+Basic Tools Installation
+------------------------
+Firstly a GNU compiler collection should be installed (compilers for C,
+C++ and Fortran). The `opencsw`_ project
 provides precompiled binaries of these programs.
-Refer to the `project's documentation <http://www.opencsw.org/manual/for-administrators/getting-started.html#getting-started>`_ to setup opencsw in the system and then install with:
+Refer to the
+`project's documentation <http://www.opencsw.org/manual/for-administrators/getting-started.html#getting-started>`_
+to setup opencsw in the system and then install with:
 
 ::
 
@@ -24,7 +26,7 @@ Refer to the `project's documentation <http://www.opencsw.org/manual/for-adminis
   /opt/csw/bin/pkgutil -i CSWgcc4g++
   /opt/csw/bin/pkgutil -i CSWgcc4gfortran
 
-The Pyhton program and developer tools can be installed also from opencsw
+Additionally, both the Pyhton program and the developer tools can also be installed from opencsw
 
 ::
 
@@ -32,8 +34,8 @@ The Pyhton program and developer tools can be installed also from opencsw
   /opt/csw/bin/pkgutil -i CSWpython27-dev
 
 
-Install ATLAS and LAPACK
---------------------------
+ATLAS and LAPACK Installation
+-----------------------------
 `ATLAS`_ is a linear algebra library.
 Numpy can be installed without any linear algebra library, but scipy can't.
 
@@ -41,14 +43,15 @@ Numpy can be installed without any linear algebra library, but scipy can't.
 systems of simultaneous linear equations, least-squares solutions of linear
 systems of equations, eigenvalue problems, and singular value problems.
 
-We need to build ATLAS with LAPACK support, so we download both the
+ATLAS needs to be built with LAPACK support, so both libraries can be found at
 `source code of ATLAS
 <http://sourceforge.net/projects/math-atlas/files/Stable/>`_
-and the 
+and
 `source code of LAPACK
 <http://www.netlib.org/lapack/#_previous_release>`_.
 
-Once we have the source code of ATLAS and LAPACK, we follow the
+Once the source code of ATLAS and LAPACK are downloaded, the instructions
+to build them can be found at
 `build documentation <http://math-atlas.sourceforge.net/atlas_install/>`_
 which basically requires to setup a different directory to run
 the ``configure`` command in it and then ``make install``.
@@ -66,12 +69,12 @@ The install step may require root privileges. The libraries and headers will
 be installed under some prefix (in our case, ``/opt/atlas/include`` and
 ``/opt/atlas/lib``).
 
-Install numpy
---------------
+Numpy Installation
+------------------
 Download the latest numpy source code from `numpy's webpage <http://www.scipy.org/install.html#individual-binary-and-source-packages>`_.
 
 Numpy source distribution contains a file called ``site.cfg``
-that describes the different types of linear algebra libraries present in
+which describes the different types of linear algebra libraries present in
 the system.
 Copy ``site.cfg.example`` to ``site.cfg`` and edit
 the section containing the ATLAS libraries. Everything in the file should
@@ -83,18 +86,17 @@ be commented except the following
   library_dirs = /opt/atlas/lib
   include_dirs = /opt/atlas/include
 
-The paths should point to the version of ATLAS installed in the
-system.
+The paths should point to the version of ATLAS installed in the system.
 
-Other packages (such as scipy) will use also a ``site.cfg`` file. To avoid
-editing the same file again, we can copy ``site.cfg`` to ``.numpy-site.cfg`` in
+Other packages (such as scipy) will also use a ``site.cfg`` file. To avoid
+editing the same file again, copy ``site.cfg`` to ``.numpy-site.cfg`` in
 the ``$HOME`` directory.
 
 ::
 
  cp site.cfg $HOME/.numpy-site.cfg
 
-After this configuration step, numpy should build.
+After this configuration step, numpy should be built.
 
 ::
 
@@ -105,8 +107,8 @@ The last step may require root privileges. Notice that you can use
 ``--user`` instead of ``--prefix`` for local packages.
 
 
-Install scipy
---------------
+Scipy Installation
+------------------
 As of this writing, the last released version of scipy is 0.15.1 and it
 doesn't work in Solaris 10 `due to a bug <https://github.com/scipy/scipy/issues/4704>`_  [1]_.
 
@@ -132,11 +134,11 @@ During the build step, local ``.numpy-site.cfg`` will be read so the
 path to the ATLAS libraries will be used.
 
 The prefix used to install scipy must be the same than the used with numpy.
-In general all the python packages must be installed under the same prefix.
+In general all python packages must be installed under the same prefix.
 
 
-Install pip
-------------
+Pip Installation
+----------------
 
 To install pip, download `get-pip.py
 <https://bootstrap.pypa.io/get-pip.py>`_.
@@ -150,8 +152,8 @@ Then run the following:
 Refer to https://pip.pypa.io/en/latest/installing.html#install-pip
 to more detailed documentation.
 
-Install numina
----------------
+Numina Installation
+-------------------
 Finally, numina can be installed directly using ``pip``. Remember to set
 the same prefix used previously with numpy and scipy.
 

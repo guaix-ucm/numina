@@ -17,8 +17,15 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Exceptions for the numina package.'''
+"""Exceptions for the numina package."""
 
+
+# Check if the GTC environment is available
+try:
+    import gtc.SSL.GCSTypes
+    GCS_ENVIRONMENT = True
+except ImportError:
+    GCS_ENVIRONMENT = False
 
 class Error(Exception):
     """Base class for exceptions in the numina package."""
@@ -43,3 +50,15 @@ class DetectorReadoutError(Error):
 class ValidationError(Exception):
     '''Error during validation of Recipe inputs and outputs.'''
     pass
+
+
+class NoResultFound(Exception):
+    """No result found in a DAL query."""
+    pass
+
+
+# If we are in the GCS environment, use its exceptions
+# where applies
+
+if GCS_ENVIRONMENT:
+    NoResultFound = gtc.SSL.GCSTypes.NotFound

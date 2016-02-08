@@ -21,6 +21,6 @@
 
 if __name__ == '__main__':
 
-    from . import main
+    from .cli import main
 
     main()

@@ -78,7 +78,7 @@ def compute_fwhm_1d_simple(Y, xc, X=None):
 def compute_fw_at_frac_max_1d_simple(Y, xc, X=None, f=0.5):
     '''Compute the full width at fraction f of the maximum'''
     if X is None:
-        X = range(Y.shape[0])
+        X = np.arange(Y.shape[0])
 
     xpix = wc_to_pix_1d(xc - X[0])
     peak = Y[xpix]

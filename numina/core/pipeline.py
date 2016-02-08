@@ -17,31 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''DRP loader.'''
+"""DRP loader and related classes"""
 
-import logging
-import pkgutil
-import importlib
-
+import warnings
 import pkg_resources
-import yaml
-import uuid
-
-_logger = logging.getLogger('numina')
-
-
-def import_object(path):
-    '''Import an object given its fully qualified name.'''
-    spl = path.split('.')
-    cls = spl[-1]
-    mods = '.'.join(spl[:-1])
-    mm = importlib.import_module(mods)
-    Cls = getattr(mm, cls)
-    return Cls
 
 
 class Pipeline(object):
-    '''Base class for pipelines.'''
+    """Base class for pipelines."""
     def __init__(self, name, recipes, version=1):
         self.name = name
         self.recipes = recipes
@@ -52,22 +35,25 @@ class Pipeline(object):
 
 
 class InstrumentConfiguration(object):
-    '''Configuration of an Instrument.'''
+    """Configuration of an Instrument."""
     def __init__(self, values):
         self.values = values
 
 
-class Instrument(object):
-    '''Description of an Instrument.'''
-    def __init__(self, name, configurations, modes, pipelines):
+class InstrumentDRP(object):
+    """Description of an Instrument Data Reduction Pipeline"""
+    def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations
         self.modes = modes
         self.pipelines = pipelines
+        self.products = products
+        if products is None:
+            self.products = []
 
 
 class ObservingMode(object):
-    '''Observing modes of an Instrument.'''
+    """Observing modes of an Instrument."""
     def __init__(self):
         self.name = ''
         self.uuid = ''
@@ -76,171 +62,72 @@ class ObservingMode(object):
         self.instrument = ''
         self.summary = ''
         self.description = ''
-        self.recipe = ''
-        self.recipe_class = None
         self.status = ''
         self.date = ''
         self.reference = ''
+        self.tagger = None
 
 
-def om_repr(dumper, data):
-    return dumper.represent_mapping('!om', data.__dict__)
+class DrpSystem(object):
+    """Load DRPs from the system."""
 
+    ENTRY = 'numina.pipeline.1'
 
-def om_cons(loader, node):
-    om = ObservingMode()
-    value = loader.construct_mapping(node)
-    om.__dict__ = value
-    om.uuid = uuid.UUID(om.uuid)
-    return om
+    def __init__(self):
 
-yaml.add_representer(ObservingMode, om_repr)
-yaml.add_constructor('!om', om_cons)
+        # Store queried DRPs
+        self._drp_cache = {}
 
-
-class LoadableDRP(object):
-    '''Container for the loaded DRP.'''
-    def __init__(self, instruments):
-        self.instruments = instruments
-
-
-def init_drp_system():
-    '''Load all available DRPs in 'numina.pipeline' entry_point.'''
-
-    drp = {}
-
-    for entry in pkg_resources.iter_entry_points(group='numina.pipeline.1'):
-        drp_loader = entry.load()
-        mod = drp_loader()
-        if mod:
-            drp.update(mod.instruments)
+    def query_by_name(self, name):
+        """Cached version of 'query_drp_system'"""
+        if name in self._drp_cache:
+            return self._drp_cache[name]
         else:
-            _logger.warning('Module %s does not contain a valid DRP', mod)
+            drp = self._query_by_name(name)
+            if drp:
+                self._drp_cache[name] = drp
+            return drp
 
-    return drp
+    def _query_by_name(self, name):
+        """Load a DRPs in 'numina.pipeline' entry_point by name"""
 
+        for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
+            if entry.name == name:
+                drp_loader = entry.load()
+                drpins = drp_loader()
 
-def drp_load(package, resource):
-    '''Load the DRPS from a resource file.'''
-    ins_all = {}
-    for yld in yaml.load_all(pkgutil.get_data(package, resource)):
-        ins = load_instrument(yld)
-        ins_all[ins.name] = ins
+                if self.instrumentdrp_check(drpins, entry.name):
+                    return drpins
+                else:
+                    return None
+        else:
+            return None
 
-    return LoadableDRP(ins_all)
+    def query_all(self):
+        """Return all available DRPs in 'numina.pipeline' entry_point."""
 
+        drps = {}
 
-def load_modes(node):
-    modes = list()
-    for child in node:
-        modes.append(load_mode(child))
-    return modes
+        for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
+            drp_loader = entry.load()
+            drpins = drp_loader()
+            if self.instrumentdrp_check(drpins, entry.name):
+                drps[drpins.name] = drpins
 
+        # Update cache
+        self._drp_cache = drps
 
-def load_mode(node):
-    m = ObservingMode()
-    m.__dict__ = node
-    return m
+        return drps
 
-
-def load_pipelines(node):
-    keys = ['default']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in pipelines node', key)
-    pipelines = dict()
-    for key in node:
-        pipelines[key] = load_pipeline(key, node[key])
-    return pipelines
-
-
-def load_confs(node):
-    keys = ['default']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in configurations node', key)
-    confs = dict()
-    for key in node:
-        confs[key] = load_conf(node[key])
-    return confs
-
-
-def load_pipeline(name, node):
-    keys = ['recipes', 'version']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r inside pipeline node', key)
-    recipes = node['recipes']
-    version = node['version']
-    return Pipeline(name, recipes, version)
-
-
-def load_conf(node):
-    keys = []
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r inside configuration node', key)
-
-    return InstrumentConfiguration(node)
-
-
-def load_instrument(node):
-    # Verify keys...
-    keys = ['name', 'configurations', 'modes', 'pipelines']
-
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in root node', key)
-
-    # name = node['name']
-    pipe_node = node['pipelines']
-    mode_node = node['modes']
-    conf_node = node['configurations']
-
-    trans = {'name': node['name']}
-    trans['pipelines'] = load_pipelines(pipe_node)
-    trans['modes'] = load_modes(mode_node)
-    trans['configurations'] = load_confs(conf_node)
-
-    return Instrument(**trans)
-
-
-def print_i(ins):
-    print ins.name
-    print_c(ins.configurations)
-    print_m(ins.modes)
-    print_p(ins.pipelines)
-
-
-def print_p(pipelines):
-    print 'Pipelines'
-    for p, n in pipelines.items():
-        print ' pipeline', p
-        print '   version', n.version
-        print '   recipes'
-        for m, r in n.recipes.items():
-            print '    ', m, '->', r
-
-
-def print_c(confs):
-    print 'Configurations'
-    for c in confs:
-        print ' conf', c, confs[c].values
-
-
-def print_m(modes):
-    print 'Modes'
-    for c in modes:
-        print ' mode', c.key
-
-
-def init_backends(backend='default'):
-    '''Load storage modes'.'''
-
-    backends = []
-
-    for entry in pkg_resources.iter_entry_points(group='numina.storage.1'):
-        store = entry.load()
-        backends.append((store, True))
-
-    return backends
+    def instrumentdrp_check(self, drpins, entryname):
+        if isinstance(drpins, InstrumentDRP):
+            if drpins.name == entryname:
+                return True
+            else:
+                msg = 'Entry name "{}" and DRP name "{}" differ'.format(entryname, drpins.name)
+                warnings.warn(msg, RuntimeWarning)
+                return False
+        else:
+            msg = 'Object {0!r} does not contain a valid DRP'.format(drpins)
+            warnings.warn(msg, RuntimeWarning)
+            return False

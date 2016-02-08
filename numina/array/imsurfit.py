@@ -62,8 +62,7 @@ def imsurfit(data, order, output_fit=False):
     :param data: a bidimensional array
     :param integer order: order of the polynomial
     :param bool output_fit: return the fitted image
-    :returns: a tuple with an array with the coefficients
-    of the polynomial terms
+    :returns: a tuple with an array with the coefficients of the polynomial terms
 
     >>> import numpy
     >>> xx, yy = numpy.mgrid[-1:1:100j,-1:1:100j]

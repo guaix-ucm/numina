@@ -18,7 +18,7 @@
 #
 
 import numpy as np
-from astropy.modeling import FittableModel, Parameter, format_input
+from astropy.modeling import Fittable1DModel, Parameter
 
 
 def sum_of_gaussian_factory(N):
@@ -46,7 +46,7 @@ def sum_of_gaussian_factory(N):
                        ** 2 / args[3 * i + 2] ** 2)
         return result
 
-    attr['eval'] = fit_eval
+    attr['evaluate'] = fit_eval
 
     def deriv(self, x, *args):
         d_result = np.ones(((3 * N + 1), len(x)))
@@ -62,11 +62,5 @@ def sum_of_gaussian_factory(N):
 
     attr['fit_deriv'] = deriv
 
-    @format_input
-    def __call__(self, x):
-        return self.eval(x, *self.param_sets)
-
-    attr['__call__'] = __call__
-
-    klass = type(name, (FittableModel, ), attr)
+    klass = type(name, (Fittable1DModel, ), attr)
     return klass

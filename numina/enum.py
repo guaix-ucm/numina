@@ -26,6 +26,9 @@ Python 3.4. Some aspects are not implemented, such as methods in enum classes.
 
 from inspect import ismethod, isfunction
 
+import six
+from six import with_metaclass
+
 
 class _EnumVal(object):
     '''Base class for enumerated values.'''
@@ -58,7 +61,7 @@ class EnumType(type):
             cls.__members__[i] = m
 
     def __call__(self, idx):
-        for en in self.__members__.itervalues():
+        for en in six.itervalues(self.__members__):
             if en.value == idx:
                 return en
         else:
@@ -68,10 +71,13 @@ class EnumType(type):
         return self.__members__[name]
 
     def __getattr__(self, name):
-        return self.__members__[name]
+        try:
+            return self.__members__[name]
+        except KeyError:
+            raise AttributeError(name)
 
     def __iter__(self):
-        return self.__members__.itervalues()
+        return six.itervalues(self.__members__)
 
     def __contains__(self, item):
         return isinstance(item, self.__enum_val__)
@@ -80,9 +86,8 @@ class EnumType(type):
         return "<enum %r>" % (self.__name__)
 
 
-class Enum(object):
+class Enum(with_metaclass(EnumType, object)):
     '''Base class for enumerated classes.'''
-    __metaclass__ = EnumType
 
     def __init__(self, name, value):
         self.name = name

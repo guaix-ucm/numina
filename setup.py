@@ -18,15 +18,39 @@ numpy_include = numpy.get_include()
 try:
     from Cython.Distutils import build_ext
     ext3 = Extension('numina.array._nirproc', 
-                 ['src/nirproc.pyx'],
-                include_dirs=[numpy_include],
-                language='c++')
+                    ['src/nirproc.pyx'],
+                    include_dirs=[numpy_include],
+                    language='c++')
+    ext4 = Extension('numina.array.trace._traces',
+                     ['numina/array/trace/traces.pyx',
+                      'numina/array/trace/Trace.cpp'],
+                     include_dirs=[numpy_include],
+                     language='c++')
+    ext5 = Extension('numina.array.trace._extract',
+                     ['numina/array/trace/extract.pyx'],
+                     include_dirs=[numpy_include],
+                     language='c++')
+    ext6 = Extension('numina.array.peaks._kernels',
+                     ['numina/array/peaks/kernels.pyx'],
+                     language='c')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
     print('We do not have Cython, just using the generated files')
     ext3 = Extension('numina.array._nirproc', 
                  ['src/nirproc.cpp'],
                 include_dirs=[numpy_include])
+    ext4 = Extension('numina.array.trace._traces',
+                     ['numina/array/trace/traces.cpp',
+                      'numina/array/trace/Trace.cpp'],
+                     include_dirs=[numpy_include],
+                     language='c++')
+    ext5 = Extension('numina.array.trace._extract',
+                     ['numina/array/trace/extract.cpp'],
+                     include_dirs=[numpy_include],
+                     language='c++')
+    ext6 = Extension('numina.array.peaks._kernels',
+                     ['numina/array/peaks/kernels.c'],
+                     language='c')
     cmdclass = {}
 
 
@@ -43,7 +67,9 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-REQUIRES = ['setuptools', 'numpy>=1.6', 'astropy>=0.4, <0.5', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.0', 'scipy', 'PyYaml']
+
+# Some packages are required only in some versions of Python
 
 from numina import __version__
 
@@ -55,20 +81,27 @@ setup(name='numina',
       license='GPLv3',
       description='Numina reduction package',
       packages=find_packages('.'),
-      package_data={'numina.tests.drps.1': ['drp.yaml'],
+      package_data={'numina.core.tests': ['drpfake1.yaml',
+                                          'drpfake2.yaml',
+                                          'drpclodia.yaml',
+                                         ],
                    },
-      ext_modules=[ext1, ext2, ext3],
-      entry_points={'console_scripts': ['numina = numina.user:main']},
+      ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6],
+      entry_points={
+        'console_scripts': [
+            'numina = numina.user.cli:main',
+            ],
+      },
       setup_requires=['numpy'],
       install_requires=REQUIRES,
-      use_2to3=True,
       zip_safe=False,
-      test_suite= "numina.tests",
+      tests_require=['pytest', 'pytest-benchmark'],
       cmdclass=cmdclass,
       classifiers=[
                    "Programming Language :: C",
                    "Programming Language :: Cython",
                    "Programming Language :: Python :: 2.7",
+                   "Programming Language :: Python :: 3.3",
                    "Programming Language :: Python :: 3.4",
                    "Programming Language :: Python :: Implementation :: CPython",
                    'Development Status :: 3 - Alpha',
@@ -78,5 +111,5 @@ setup(name='numina',
                    "Operating System :: OS Independent",
                    "Topic :: Scientific/Engineering :: Astronomy",
                    ],
-      long_description=open('README.txt').read()
+      long_description=open('README.rst').read()
       )

@@ -17,44 +17,45 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Basic tools and classes used to generate recipe modules.
+"""
+Basic tools and classes used to generate recipe modules.
 
 A recipe is a class that complies with the *reduction recipe API*:
 
  * The class must derive from :class:`numina.core.BaseRecipe`.
 
-'''
+"""
 
-import abc
 import traceback
 import logging
+
+from six import with_metaclass
 
 from .. import __version__
 from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
-from .recipeinout import RecipeRequirements as RecipeRequirementsClass
+from .recipeinout import RecipeInput as RecipeInputClass
+from .metarecipes import RecipeType
+from .oresult import ObservationResult
+from ..dal.stored import ObservingBlock
+from ..exceptions import NoResultFound
+from .products import ObservationResultType
+from .products import InstrumentConfigurationType
+from .products import DataProductTag
+from .dataholders import Product
+from .products import QualityControlProduct
 
-_logger = logging.getLogger('numina')
 
-
-def list_recipes():
-    '''List all defined recipes'''
-    return BaseRecipe.__subclasses__()
-
-
-class _BaseRecipeMethods(object):
-    '''Base class for all instrument recipes'''
+class BaseRecipe(with_metaclass(RecipeType, object)):
+    """Base class for all instrument recipes"""
 
     RecipeResult = RecipeResultClass
-    RecipeRequirements = RecipeRequirementsClass
-
-    # Recipe own logger
-    logger = _logger
+    RecipeInput = RecipeInputClass
 
     def __init__(self, *args, **kwds):
-        super(_BaseRecipeMethods, self).__init__()
+        super(BaseRecipe, self).__init__()
         self.__author__ = 'Unknown'
-        self.__version__ = '0.0.0'
+        self.__version__ = 1
         # These two are maintained
         # for the moment
         self.environ = {}
@@ -62,6 +63,9 @@ class _BaseRecipeMethods(object):
         #
         self.instrument = None
         self.configure(**kwds)
+
+        # Recipe own logger
+        self.logger = logging.getLogger('numina')
 
     def configure(self, **kwds):
         if 'author' in kwds:
@@ -73,6 +77,14 @@ class _BaseRecipeMethods(object):
         if 'runinfo' in kwds:
             self.runinfo = kwds['runinfo']
 
+
+    @classmethod
+    def create_input(cls, *args, **kwds):
+        '''
+        Pass the result arguments to the RecipeInput constructor
+        '''
+        return cls.RecipeInput(*args, **kwds)
+
     @classmethod
     def create_result(cls, *args, **kwds):
         '''
@@ -80,8 +92,16 @@ class _BaseRecipeMethods(object):
         '''
         return cls.RecipeResult(*args, **kwds)
 
+    @classmethod
+    def requirements(cls):
+        return cls.RecipeInput.stored()
+
+    @classmethod
+    def products(cls):
+        return cls.RecipeResult.stored()
+
     def run(self, recipe_input):
-        return self.RecipeResult()
+        return self.create_result()
 
     def __call__(self, recipe_input):
         '''
@@ -89,7 +109,7 @@ class _BaseRecipeMethods(object):
         Recipe.
 
         :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeRequirement
+        :param type: RecipeInput
         :rtype: a RecipeResult object or an error
 
         '''
@@ -97,7 +117,7 @@ class _BaseRecipeMethods(object):
         try:
             result = self.run(recipe_input)
         except Exception as exc:
-            _logger.error("During recipe execution %s", exc)
+            self.logger.error("During recipe execution %s", exc)
             return ErrorRecipeResult(
                 exc.__class__.__name__,
                 str(exc),
@@ -112,85 +132,72 @@ class _BaseRecipeMethods(object):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
 
+    @classmethod
+    def build_recipe_input(cls, ob, dal, pipeline='default'):
+        """Build a RecipeInput object."""
 
-class BaseRecipe(_BaseRecipeMethods):
-    '''Base class for all instrument recipes'''
+        result = {}
+        # We have to decide if the ob input
+        # is a plain description (ObservingBlock)
+        # or if it contains the nested results (Obsres)
+        #
+        # it has to contain the tags corresponding to the observing modes...
+        if isinstance(ob, ObservingBlock):
+            # We have to build an Obsres
+            obsres = dal.obsres_from_oblock_id(ob.id)
+        elif isinstance(ob, ObservationResult):
+            # We have one
+            obsres = ob
+        else:
+            raise ValueError('ob input is neither a ObservingBlock'
+                             ' nor a ObservationResult')
 
-    __metaclass__ = abc.ABCMeta
+        tags = getattr(obsres, 'tags', {})
 
-    @abc.abstractmethod
-    def run(self, recipe_input):
-        return self.RecipeResult()
+        for key, req in cls.requirements().items():
 
+            # First check if the requirement is embedded
+            # in the observation result
+            # it can happen in GTC
 
-from .recipeinout import RecipeResult, RecipeRequirements
-from .recipeinout import RecipeResultAutoQC
-from .dataholders import Product
-from .requirements import Requirement
+            # Using NoResultFound instead of None
+            # None can be a valid result
+            val = getattr(obsres, key, NoResultFound)
 
+            if val is not NoResultFound:
+                result[key] = val
+                continue
 
-class RecipeType(type):
-    '''Metaclass for Recipe.'''
-    def __new__(cls, classname, parents, attributes):
-        filter_reqs = {}
-        filter_prods = {}
-        filter_attr = {}
+            # Then, continue checking the rest
 
-        for name, val in attributes.items():
-            if isinstance(val, Requirement):
-                filter_reqs[name] = val
-            elif isinstance(val, Product):
-                filter_prods[name] = val
+            if isinstance(req.type, ObservationResultType):
+                result[key] = obsres
+            elif isinstance(req.type, InstrumentConfigurationType):
+                # Not sure how to handle this, or if it is needed...
+                result[key] = {}
+            elif isinstance(req.type, DataProductTag):
+                try:
+                    prod = dal.search_prod_req_tags(req, obsres.instrument,
+                                                    tags, pipeline)
+                    result[key] = prod.content
+                except NoResultFound:
+                    pass
             else:
-                filter_attr[name] = val
+                # Still not clear what to do with the other types
+                try:
+                    param = dal.search_param_req(req, obsres.instrument,
+                                                 obsres.mode, pipeline)
+                    result[key] = param.content
+                except NoResultFound:
+                    pass
 
-        ReqsClass = cls.create_req_class(classname, filter_reqs)
+        return cls.create_input(**result)
 
-        ResultClass = cls.create_prod_class(classname, filter_prods)
-
-        filter_attr['RecipeResult'] = ResultClass
-        filter_attr['RecipeRequirements'] = ReqsClass
-        return super(RecipeType, cls).__new__(
-            cls, classname, parents, filter_attr)
-
-    @classmethod
-    def create_req_class(cls, classname, attributes):
-        if attributes:
-            reqs_name = '%sRequirements' % classname
-            ReqsClass = type(reqs_name, (RecipeRequirements,), attributes)
-        else:
-            ReqsClass = RecipeRequirements
-        return ReqsClass
-
-    @classmethod
-    def create_prod_class(cls, classname, attributes):
-        if attributes:
-            result_name = '%sResult' % classname
-            ResultClass = type(result_name, (RecipeResult,), attributes)
-        else:
-            ResultClass = RecipeResult
-
-        return ResultClass
+    # An alias required by GTC
+    buildRI = build_recipe_input
 
 
-class RecipeTypeAutoQC(RecipeType):
-    '''Metaclass for Recipe with RecipeResultAutoQC.'''
-    @classmethod
-    def create_prod_class(cls, classname, attributes):
-        if attributes:
-            result_name = '%sResult' % classname
-            ResultClass = type(result_name, (RecipeResultAutoQC,), attributes)
-        else:
-            ResultClass = RecipeResult
+class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
+    """Base class for instrument recipes"""
 
-        return ResultClass
-
-
-class BaseRecipeAlt(_BaseRecipeMethods):
-    '''Base class for instrument recipes'''
-    __metaclass__ = RecipeType
-
-
-class BaseRecipeAutoQC(_BaseRecipeMethods):
-    '''Base class for instrument recipes'''
-    __metaclass__ = RecipeTypeAutoQC
+    qc = Product(QualityControlProduct, dest='qc')
