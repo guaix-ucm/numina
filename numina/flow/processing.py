@@ -81,7 +81,7 @@ class TagFits(object):
         return self.tag in header
 
     def tag_as_processed(self, header):
-        header.update(self.tag, time.asctime(), self.comment)
+        header[self.tag]= (time.asctime(), self.comment)
 
 
 class Corrector(Node):

@@ -46,11 +46,11 @@ def resize_hdu(hdu, newshape, region, window=None, fill=0.0,
     basedata = hdu.data
     newdata = resize_array(basedata, newshape, region, window=window,
                            fill=fill, scale=scale, conserve=conserve)
-    hdu.header.update('NVALREGI', custom_region_to_str(region),
-                      'Valid region of resized FITS')
+    hdu.header['NVALREGI'] = (custom_region_to_str(region),
+                              'Valid region of resized FITS')
     if window:
-        hdu.header.update('OVALREGI', custom_region_to_str(window),
-                          'Valid region of original FITS')
+        hdu.header['OVALREGI'] = (custom_region_to_str(window),
+                                  'Valid region of original FITS')
     newhdu = fits.PrimaryHDU(newdata, hdu.header)
     return newhdu
 
