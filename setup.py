@@ -95,7 +95,7 @@ setup(name='numina',
       setup_requires=['numpy'],
       install_requires=REQUIRES,
       zip_safe=False,
-      tests_require=['pytest', 'pytest-benchmark'],
+      tests_require=['pytest'],
       cmdclass=cmdclass,
       classifiers=[
                    "Programming Language :: C",

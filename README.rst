@@ -35,6 +35,8 @@ The documentation of the project is generated using Sphinx (http://sphinx.pocoo.
 Additional packages are optionally required:
  - sphinx (http://sphinx-doc.org) to build the documentation
  - pytest (http://pytest.org) for testing
+ - pytest-benchmark (https://github.com/ionelmc/pytest-benchmark/) for 
+   benchmarks of certain algorithms
 
 Webpage: https://guaix.fis.ucm.es/projects/numina
 Maintainer: sergiopr@fis.ucm.es
