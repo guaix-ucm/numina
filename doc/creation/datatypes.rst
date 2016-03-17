@@ -1,12 +1,12 @@
-
+**************
 DRP Data Types
-###############
+**************
 
 Custom data types can be used as Requirements and Products by Recipes. 
 New data types can be derived as follows.
 
 Create a new DataType
-----------------------
+#####################
 
 New Data Types must derive from `numina.core.DataType` or
 one of its subclasses. In the constructor, we must declare the base type
@@ -31,7 +31,7 @@ trace of a spectrum. The information will be stored in Python `dict`.
 
 
 Construction of objects
------------------------
+#######################
 
 The input of a recipe is created by inspecting the Recipe Requirements. 
 The Recipe Loader is in charge of finding an appropriated value for each
@@ -41,7 +41,7 @@ input object unchanged.
 
 
 Loading and Storage with the command line Recipe Loader
---------------------------------------------------------
+#######################################################
 Each Recipe Loader can implement its own mechanism to store and load Data
 Products. The Command Line Recipe Loader uses text files in YAML format.
 
