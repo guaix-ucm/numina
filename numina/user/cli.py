@@ -17,14 +17,16 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
+import logging
 import logging.config
 import argparse
 import os
 from importlib import import_module
 
 from six.moves import configparser
+import pkg_resources
 
 from numina import __version__
 
@@ -35,7 +37,7 @@ _logger = logging.getLogger("numina")
 
 
 def main(args=None):
-    '''Entry point for the Numina CLI.'''
+    """Entry point for the Numina CLI."""
 
     # Configuration args from a text file
     config = configparser.SafeConfigParser()
@@ -78,6 +80,15 @@ def main(args=None):
         add = getattr(cmd_mod, 'add', None)
         if add is not None:
             add(subparsers)
+
+    # Load plugin commands
+    for entry in pkg_resources.iter_entry_points(group='numina_plugins'):
+        reg_fun = entry.load()
+        try:
+            reg_fun(subparsers)
+        except StandardError:
+            # Error loading plugin
+            pass
 
     args = parser.parse_args(args)
 
