@@ -17,10 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 if __name__ == '__main__':
 
-    from .cli import main
+    from numina.user.cli import main
 
     main()
