@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,7 +24,7 @@ from numina.core.pipeline import DrpSystem
 from numina.user.clishowins import print_no_instrument
 
 
-def add(subparsers):
+def register(subparsers):
     parser_show_mode = subparsers.add_parser(
         'show-modes',
         help='show information of observing modes'

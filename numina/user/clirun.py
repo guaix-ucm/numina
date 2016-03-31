@@ -24,7 +24,7 @@ import os
 from .clirundal import mode_run_common
 
 
-def add(subparsers):
+def register(subparsers):
     parser_run = subparsers.add_parser(
         'run',
         help='process a observation result'

@@ -77,9 +77,9 @@ def main(args=None):
             'clirun', 'clirunrec']
     for cmd in cmds:
         cmd_mod = import_module('.'+cmd, 'numina.user')
-        add = getattr(cmd_mod, 'add', None)
-        if add is not None:
-            add(subparsers)
+        register = getattr(cmd_mod, 'register', None)
+        if register is not None:
+            register(subparsers)
 
     # Load plugin commands
     for entry in pkg_resources.iter_entry_points(group='numina_plugins'):
