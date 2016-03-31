@@ -8,17 +8,17 @@ matrix:
     - python: "2.7"
       env: DEPS="scipy=0.14.0" ASTRO=true COND="numpy=1.8 astropy=1.0"
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4" ASTRO=false
+      env: DEPS="numpy=1.9 scipy=0.17.0 astropy=1.0.4" ASTRO=false
     - python: "2.7"
-      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5" ASTRO=false
+      env: DEPS="numpy=1.10 scipy=0.17.0 astropy=1.0.5" ASTRO=false
     - python: "3.4"
-      env: DEPS="numpy=1.9 scipy=0.14.0 astropy=1.0.4" ASTRO=false
+      env: DEPS="numpy=1.9 scipy=0.17.0 astropy=1.0.4" ASTRO=false
     - python: "3.4"
-      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5" ASTRO=false
+      env: DEPS="numpy=1.10 scipy=0.17.0 astropy=1.1.2" ASTRO=false
     - python: "3.5"
-      env: DEPS="numpy=1.9 scipy=0.16.0 astropy=1.0.4" ASTRO=false
+      env: DEPS="numpy=1.9 scipy=0.17.0 astropy=1.0.4" ASTRO=false
     - python: "3.5"
-      env: DEPS="numpy=1.10 scipy=0.16.0 astropy=1.0.5" ASTRO=false
+      env: DEPS="numpy=1.10 scipy=0.17.0 astropy=1.0.5" ASTRO=false
 
 # conda install scipy==0.13.1
 install:
@@ -30,7 +30,7 @@ install:
   - conda update --yes conda
   - conda create -n testenv --yes $DEPS pip pytest setuptools Cython six>=1.7 pyyaml python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
-  - if [[ $ASTRO == true ]]; then conda install -n testenv --yes -c astropy-ci-extras $COND; fi
+  - if [[ $ASTRO == true ]]; then conda install -n testenv --yes -c astropy-ci-extras $COND; else conda install -n testenv --yes libgfortran;fi
   - pip install pytest-benchmark
   - pip list
   # for debugging...
@@ -42,7 +42,7 @@ install:
   - python setup.py build_ext --inplace
 
 before_install:
-  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi
   - chmod +x miniconda.sh
   - ./miniconda.sh -b -p /home/travis/mc
   - export PATH=/home/travis/mc/bin:$PATH
