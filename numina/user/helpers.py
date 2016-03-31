@@ -174,8 +174,9 @@ class DiskStorageDefault(object):
     def store(self, completed_task):
         """Store the values of the completed task."""
 
+        csd = os.getcwd()
+
         try:
-            csd = os.getcwd()
             _logger.debug('cwd to resultdir: %r', self.resultsdir)
             os.chdir(self.resultsdir)
 
