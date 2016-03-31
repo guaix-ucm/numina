@@ -37,6 +37,8 @@ def promote_hdulist(hdulist, totype='float32'):
 
 
 def promote_hdu(hdu, totype='float32'):
+    if hdu.data is None:
+        return hdu
     newdata = hdu.data.astype(totype)
     newheader = hdu.header.copy()
     if isinstance(hdu, fits.PrimaryHDU):
