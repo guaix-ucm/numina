@@ -24,7 +24,7 @@ from numina.core.pipeline import DrpSystem
 from numina.user.clishowins import print_no_instrument
 
 
-def register(subparsers):
+def register(subparsers, config):
     parser_show_mode = subparsers.add_parser(
         'show-modes',
         help='show information of observing modes'

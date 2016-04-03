@@ -23,7 +23,8 @@ import os
 
 from .clirundal import mode_run_common
 
-def register(subparsers):
+
+def register(subparsers, config):
     parser_run_recipe = subparsers.add_parser(
         'run-recipe',
         help='run a recipe'

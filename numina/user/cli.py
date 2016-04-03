@@ -25,7 +25,7 @@ import argparse
 import os
 from importlib import import_module
 
-from six.moves import configparser
+import six.moves.configparser as configparser
 import pkg_resources
 
 from numina import __version__
@@ -46,9 +46,11 @@ def main(args=None):
     config.add_section('numina')
     config.set('numina', 'format', 'yaml')
 
-    # Custom values, site wide and local
-    config.read(['.numina/numina.cfg',
-                 os.path.join(xdg_config_home, 'numina/numina.cfg')])
+    # Custom values
+    config.read([
+        os.path.join(xdg_config_home, 'numina/numina.cfg'),
+        '.numina.cfg'
+    ])
 
     parser = argparse.ArgumentParser(
         description='Command line interface of Numina',
@@ -76,19 +78,18 @@ def main(args=None):
     cmds = ['clishowins', 'clishowom', 'clishowrecip',
             'clirun', 'clirunrec']
     for cmd in cmds:
-        cmd_mod = import_module('.'+cmd, 'numina.user')
+        cmd_mod = import_module('.%s' % (cmd, ), 'numina.user')
         register = getattr(cmd_mod, 'register', None)
         if register is not None:
-            register(subparsers)
+            register(subparsers, config)
 
     # Load plugin commands
-    for entry in pkg_resources.iter_entry_points(group='numina_plugins'):
-        reg_fun = entry.load()
+    for entry in pkg_resources.iter_entry_points(group='numina_plugins.1'):
+        register = entry.load()
         try:
-            reg_fun(subparsers)
-        except StandardError:
-            # Error loading plugin
-            pass
+            register(subparsers, config)
+        except StandardError as error:
+            print(error)
 
     args = parser.parse_args(args)
 

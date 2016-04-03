@@ -22,7 +22,8 @@
 from __future__ import print_function
 from numina.core.pipeline import DrpSystem
 
-def register(subparsers):
+
+def register(subparsers, config):
     parser_show_ins = subparsers.add_parser(
         'show-instruments',
         help='show registered instruments'

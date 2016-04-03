@@ -32,7 +32,7 @@ from numina.core.pipeline import DrpSystem
 from numina.user.clishowins import print_no_instrument
 
 
-def register(subparsers):
+def register(subparsers, config):
     parser_show_rec = subparsers.add_parser(
         'show-recipes',
         help='show information of recipes'
