@@ -28,6 +28,7 @@ from ..recipes import BaseRecipe
 from ..recipeinout import RecipeInput, RecipeResult
 from ..requirements import ObservationResultRequirement
 from ..dataholders import Product
+from ..requirements import Requirement
 from ..products import QualityControlProduct
 
 
@@ -119,3 +120,26 @@ def test_recipe_without_autoqc():
     for prod in TestRecipe.RecipeResult.stored().values():
         assert isinstance(prod, Product)
 
+
+def test_recipe_io_inheritance():
+
+    class TestBaseRecipe(BaseRecipe):
+        obresult = ObservationResultRequirement()
+        someresult1 = Product(int, 'Some integer')
+
+    class TestRecipe(TestBaseRecipe):
+        other = Requirement(int, description='Other')
+        someresult2 = Product(int, 'Some integer')
+
+    assert issubclass(TestRecipe.RecipeInput, TestBaseRecipe.RecipeInput)
+
+    assert issubclass(TestRecipe.RecipeResult, TestBaseRecipe.RecipeResult)
+
+    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+
+    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+
+    assert 'obresult' in TestRecipe.requirements()
+    assert 'other' in TestRecipe.requirements()
+    assert 'someresult1' in TestRecipe.products()
+    assert 'someresult2' in TestRecipe.products()
