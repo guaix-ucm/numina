@@ -44,6 +44,7 @@ class ProcessingTask(object):
         self.result = None
 
         if insconf:
+            self.runinfo['taskid'] = insconf['taskid']
             self.runinfo['pipeline'] = insconf['pipeline']
             self.runinfo['recipe'] = insconf['recipeclass'].__name__
             self.runinfo['recipe_full_name'] = fully_qualified_name(insconf['recipeclass'])
@@ -71,8 +72,12 @@ class ProcessingTask(object):
     def store(self, where):
 
         # save to disk the RecipeResult part and return the file to save it
-        sresult = self.result.store_to(where)
-        self.result = sresult
+        saveres = self.result.store_to(where)
+
+        with open(where.result, 'w+') as fd:
+            yaml.dump(saveres, fd)
+
+        self.result = where.result
 
         with open(where.task, 'w+') as fd:
             yaml.dump(self.__dict__, fd)
