@@ -41,5 +41,6 @@ class ObservingBlock(object):
         # only one of files and children can
         # be different from []
         self.images = images
+        self.frames = self.images
         self.children = children
         self.parent = parent
