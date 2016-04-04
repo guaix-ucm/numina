@@ -135,12 +135,14 @@ def mode_run_common_obs(args):
     for req in recipeclass.products().values():
         _logger.info('recipe provides %r', req)
 
-    runinfo = {'pipeline':pipe_name,
-               'recipeclass':recipeclass,
-               'workenv':workenv,
-               'recipe_version':recipe.__version__,
-               'instrument_configuration': None
-               }
+    runinfo = {
+        'taskid': 1,
+        'pipeline': pipe_name,
+        'recipeclass': recipeclass,
+        'workenv': workenv,
+        'recipe_version': recipe.__version__,
+        'instrument_configuration': None
+    }
 
     task = ProcessingTask(obsres, runinfo)
 
