@@ -41,8 +41,13 @@ class DRPMocker(object):
         self.monkeypatch = monkeypatch
         self._eps = []
 
-        def mockreturn(group=None):
-            return self._eps
+        basevalue = pkg_resources.iter_entry_points
+        # Use the mocker only for 'numina.pipeline.1'
+        def mockreturn(group, name=None):
+            if group == 'numina.pipeline.1':
+                return self._eps
+            else:
+                return basevalue(group=group, name=name)
 
         self.monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
 
