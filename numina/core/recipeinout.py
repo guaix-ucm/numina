@@ -132,10 +132,7 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
             where.destination = prod.dest
             saveres[key] = numina.store.dump(prod.type, val, where)
 
-        with open(where.result, 'w+') as fd:
-            yaml.dump(saveres, fd)
-
-        return where.result
+        return saveres
 
 
 class define_result(object):
