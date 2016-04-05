@@ -34,7 +34,7 @@ class StoredParameter(object):
 # Notice that this is different to ObservationResult
 # that contains the results of the reductions
 class ObservingBlock(object):
-    def __init__(self, id, instrument, mode, images, children, parent):
+    def __init__(self, id, instrument, mode, images, children, parent, facts=None):
         self.id = id
         self.instrument = instrument
         self.mode = mode
@@ -44,3 +44,4 @@ class ObservingBlock(object):
         self.frames = self.images
         self.children = children
         self.parent = parent
+        self.facts = facts
