@@ -31,6 +31,7 @@ from numina.dal.dictdal import BaseDictDAL
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 from .clidal import process_format_version_0
 
+DEFAULT_RECIPE_LOGGER = 'numina.recipes'
 
 _logger = logging.getLogger("numina")
 
@@ -41,9 +42,9 @@ class Dict2DAL(BaseDictDAL):
         prod_table = base['products']
 
         if 'parameters' in base:
-            req_table= base['parameters']
+            req_table = base['parameters']
         else:
-            req_table= base['requirements']
+            req_table = base['requirements']
 
         super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
 
@@ -67,9 +68,11 @@ def mode_run_common_obs(args):
     """Observing mode processing mode of numina."""
 
     # Directories with relevant data
-    workenv = WorkEnvironment(args.basedir,workdir=args.workdir,
-                              resultsdir=args.resultsdir,datadir=args.datadir)
-
+    workenv = WorkEnvironment(args.basedir,
+                              workdir=args.workdir,
+                              resultsdir=args.resultsdir,
+                              datadir=args.datadir
+                              )
 
     # Loading observation result if exists
     loaded_obs = {}
@@ -163,15 +166,16 @@ def mode_run_common_obs(args):
     workenv.copyfiles_stage1(obsres)
     workenv.copyfiles_stage2(rinput)
 
-    completed_task = run_recipe(recipe=recipe,task=task, rinput=rinput,
+    completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
                                 workenv=workenv, task_control=task_control)
 
     where = DiskStorageDefault(resultsdir=workenv.resultsdir)
 
     where.store(completed_task)
 
+
 def create_recipe_file_logger(logger, logfile, logformat):
-    '''Redirect Recipe log messages to a file.'''
+    """Redirect Recipe log messages to a file."""
     recipe_formatter = logging.Formatter(logformat)
     fh = logging.FileHandler(logfile, mode='w')
     fh.setLevel(logging.DEBUG)
@@ -180,10 +184,9 @@ def create_recipe_file_logger(logger, logfile, logformat):
 
 
 def run_recipe(recipe, task, rinput, workenv, task_control):
-    '''Recipe execution mode of numina.'''
+    """Recipe execution mode of numina."""
 
     # Creating custom logger file
-    DEFAULT_RECIPE_LOGGER = 'numina.recipes'
     recipe_logger = logging.getLogger(DEFAULT_RECIPE_LOGGER)
 
     logger_control = task_control['logger']
@@ -197,8 +200,8 @@ def run_recipe(recipe, task, rinput, workenv, task_control):
 
     recipe_logger.addHandler(fh)
 
+    csd = os.getcwd()
     try:
-        csd = os.getcwd()
         _logger.debug('cwd to workdir')
         os.chdir(workenv.workdir)
         completed_task = run_recipe_timed(recipe, rinput, task)
@@ -212,7 +215,7 @@ def run_recipe(recipe, task, rinput, workenv, task_control):
 
 
 def run_recipe_timed(recipe, rinput, task):
-    '''Run the recipe and count the time it takes.'''
+    """Run the recipe and count the time it takes."""
     TIMEFMT = '%FT%T'
     _logger.info('running recipe')
     now1 = datetime.datetime.now()
@@ -227,4 +230,3 @@ def run_recipe_timed(recipe, rinput, task):
     task.runinfo['time_end'] = now2.strftime(TIMEFMT)
     task.runinfo['time_running'] = now2 - now1
     return task
-
