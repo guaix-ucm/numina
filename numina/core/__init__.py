@@ -18,7 +18,6 @@
 #
 
 from .recipes import BaseRecipe
-from .recipes import BaseRecipeAutoQC
 from .dataframe import DataFrame
 from .pipeline import InstrumentDRP, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode

@@ -23,7 +23,6 @@
 from six import with_metaclass
 
 from ..metarecipes import RecipeType
-from ..recipes import BaseRecipeAutoQC
 from ..recipes import BaseRecipe
 from ..recipeinout import RecipeInput, RecipeResult
 from ..requirements import ObservationResultRequirement
@@ -69,7 +68,10 @@ def test_metaclass():
 
 def test_recipe_with_autoqc():
 
-    class TestRecipe(BaseRecipeAutoQC):
+    class TestRecipeAutoQC(BaseRecipe):
+        qc = Product(QualityControlProduct, dest='qc')
+
+    class TestRecipe(TestRecipeAutoQC):
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 
