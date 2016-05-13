@@ -36,17 +36,33 @@ def process_format_version_0(loaded_obs, loaded_data):
 
 
 class ComandLineDAL(AbsDAL):
-    '''A DAL to use with the command line interface'''
+    """A DAL to use with the command line interface"""
 
     def __init__(self, ob_table, reqs):
         self.ob_table = ob_table
         self._reqs = reqs
         self.drps = DrpSystem()
 
+    def search_instrument_configuration_from_ob(self, ob):
+        ins = ob.instrument
+        name = ob.configuration
+        return self.search_instrument_configuration(ins, name)
+
+    def search_instrument_configuration(self, ins, name):
+
+        drp = self.drps.query_by_name(ins)
+
+        try:
+            this_configuration = drp.configurations[name]
+        except KeyError:
+            raise KeyError('Instrument configuration "{}" missing'.format(name))
+
+        return this_configuration
+
     def search_rib_from_ob(self, obsres, pipeline):
         return None
 
-    def obsres_from_oblock_id(self, obsid):
+    def obsres_from_oblock_id(self, obsid, configuration=None):
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
 
@@ -67,6 +83,15 @@ class ComandLineDAL(AbsDAL):
             master_tags = tagger(obsres)
 
         obsres.tags = master_tags
+
+        # Insert Instrument configuration
+        if configuration:
+            # override instrument configuration
+            obsres.configuration = self.search_instrument_configuration(obsres.instrument, configuration)
+        else:
+            # Insert Instrument configuration
+            obsres.configuration = self.search_instrument_configuration_from_ob(obsres)
+
         return obsres
 
     def search_oblock_from_id(self, obsid):

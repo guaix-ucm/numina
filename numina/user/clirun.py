@@ -42,7 +42,7 @@ def register(subparsers, config):
         )
     parser_run.add_argument(
         '-i', '--instrument', dest='insconf',
-        default="default",
+        default=None,
         help='name of an instrument configuration'
         )
     parser_run.add_argument(

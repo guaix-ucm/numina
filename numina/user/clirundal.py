@@ -102,12 +102,15 @@ def mode_run_common_obs(args):
 
     cwd = os.getcwd()
     os.chdir(workenv.datadir)
-    
+
+    # Only the first, for the moment
+    if args.insconf:
+        _logger.debug("instrument configuration from CLI is %r", args.insconf)
+
+    obsres = dal.obsres_from_oblock_id(loaded_ids[0], configuration=args.insconf)
+
     _logger.debug("pipeline from CLI is %r", args.pipe_name)
     pipe_name = args.pipe_name
-    # Only the first, for the moment
-    obsres = dal.obsres_from_oblock_id(loaded_ids[0])
-    
     recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
     _logger.debug('recipe class is %s', recipeclass)
 
@@ -155,7 +158,7 @@ def mode_run_common_obs(args):
         'recipeclass': recipeclass,
         'workenv': workenv,
         'recipe_version': recipe.__version__,
-        'instrument_configuration': None
+        'instrument_configuration': args.insconf
     }
 
     task = ProcessingTask(obsres, runinfo)

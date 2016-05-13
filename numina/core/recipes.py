@@ -28,6 +28,7 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 import traceback
 import logging
+import warnings
 
 from six import with_metaclass
 
@@ -42,8 +43,7 @@ from ..exceptions import NoResultFound
 from .products import ObservationResultType
 from .products import InstrumentConfigurationType
 from .products import DataProductTag
-from .dataholders import Product
-from .products import QualityControlProduct
+from .pipeline import InstrumentConfiguration
 
 
 class BaseRecipe(with_metaclass(RecipeType, object)):
@@ -173,8 +173,12 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
             if isinstance(req.type, ObservationResultType):
                 result[key] = obsres
             elif isinstance(req.type, InstrumentConfigurationType):
-                # Not sure how to handle this, or if it is needed...
-                result[key] = {}
+                if not isinstance(obsres.configuration, InstrumentConfiguration):
+                    warnings.warn(RuntimeWarning, 'instrument configuration not configured')
+                    result[key] = {}
+                else:
+                    result[key] = obsres.configuration
+
             elif isinstance(req.type, DataProductTag):
                 try:
                     prod = dal.search_prod_req_tags(req, obsres.instrument,

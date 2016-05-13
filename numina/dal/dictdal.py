@@ -56,6 +56,22 @@ class BaseDictDAL(AbsDAL):
         self.req_table= req_table
         self.drps = DrpSystem()
 
+    def search_instrument_configuration_from_ob(self, ob):
+        ins = ob.instrument
+        name = ob.configuration
+        return self.search_instrument_configuration(ins, name)
+
+    def search_instrument_configuration(self, ins, name):
+
+        drp = self.drps.query_by_name(ins)
+
+        try:
+            this_configuration = drp.configurations[name]
+        except KeyError:
+            raise KeyError('Instrument configuration "{}" missing'.format(name))
+
+        return this_configuration
+
     def search_oblock_from_id(self, obsid):
         try:
             ob = self.ob_table[obsid]
@@ -131,7 +147,10 @@ class BaseDictDAL(AbsDAL):
         else:
             raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)            
 
-    def obsres_from_oblock_id(self, obsid):
+    def obsres_from_oblock_id(self, obsid, configuration=None):
+        """"
+        Override instrument configuration if configuration is not None
+        """
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
 
@@ -150,6 +169,14 @@ class BaseDictDAL(AbsDAL):
             master_tags = tagger(obsres)
 
         obsres.tags = master_tags
+
+        if configuration:
+            # override instrument configuration
+            obsres.configuration = self.search_instrument_configuration(obsres.instrument, configuration)
+        else:
+            # Insert Instrument configuration
+            obsres.configuration = self.search_instrument_configuration_from_ob(obsres)
+
         return obsres
 
 
