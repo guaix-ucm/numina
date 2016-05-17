@@ -36,7 +36,8 @@ class Pipeline(object):
 
 class InstrumentConfiguration(object):
     """Configuration of an Instrument."""
-    def __init__(self, values):
+    def __init__(self, name, values):
+        self.name = name
         self.values = values
 
 

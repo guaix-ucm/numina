@@ -30,27 +30,34 @@ from .pipeline import InstrumentConfiguration
 from .taggers import get_tags_from_full_ob
 
 
-def drp_load(package, resource):
+def check_section(node, section, keys=None):
+    """Validate keys in a section"""
+    if keys:
+        for key in keys:
+            if key not in node:
+                raise ValueError('Missing key %r inside %r node', key, section)
+
+
+def drp_load(package, resource, confclass=None):
     """Load the DRPS from a resource file."""
     data = pkgutil.get_data(package, resource)
-    return drp_load_data(data)
+    return drp_load_data(data, confclass=confclass)
 
 
-def drp_load_data(data):
+def drp_load_data(data, confclass=None):
     """Load the DRPS from data."""
     drpdict = yaml.load(data)
-    ins = load_instrument(drpdict)
+    ins = load_instrument(drpdict, confclass=confclass)
     return ins
 
 
 def load_modes(node):
-    modes = list()
-    for child in node:
-        modes.append(load_mode(child))
-    return modes
+    """Load all observing modes"""
+    return [load_mode(child) for child in node]
 
 
 def load_mode(node):
+    """Load one observing mdode"""
     obs_mode = ObservingMode()
     # handle tagger:
     obs_mode.__dict__.update(node)
@@ -77,31 +84,32 @@ def load_mode(node):
 
 def load_pipelines(node):
     keys = ['default']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in pipelines node', key)
+    check_section(node, 'pipelines', keys=keys)
+
     pipelines = {}
     for key in node:
         pipelines[key] = load_pipeline(key, node[key])
     return pipelines
 
 
-def load_confs(node):
+def load_confs(node, confclass=None):
     keys = ['default']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in configurations node', key)
+    check_section(node, 'configurations', keys=keys)
+
+    if confclass is None:
+        confclass = InstrumentConfiguration
+
     confs = {}
     for key in node:
-        confs[key] = load_conf(node[key])
+        confs[key] = confclass(key, node[key])
     return confs
 
 
 def load_pipeline(name, node):
+
     keys = ['recipes', 'version']
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r inside pipeline node', key)
+    check_section(node, 'pipeline', keys=keys)
+
     recipes = node['recipes']
     version = node['version']
     return Pipeline(name, recipes, version)
@@ -116,13 +124,11 @@ def load_conf(node):
     return InstrumentConfiguration(node)
 
 
-def load_instrument(node):
+def load_instrument(node, confclass=None):
     # Verify keys...
     keys = ['name', 'configurations', 'modes', 'pipelines']
+    check_section(node, 'root', keys=keys)
 
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r in root node', key)
 
     # name = node['name']
     pipe_node = node['pipelines']
@@ -133,6 +139,6 @@ def load_instrument(node):
     trans = {'name': node['name']}
     trans['pipelines'] = load_pipelines(pipe_node)
     trans['modes'] = load_modes(mode_node)
-    trans['configurations'] = load_confs(conf_node)
+    trans['configurations'] = load_confs(conf_node, confclass=confclass)
     trans['products'] = prod_node
     return InstrumentDRP(**trans)
