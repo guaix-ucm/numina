@@ -26,6 +26,7 @@ cimport numpy
 from libc.math cimport floor, ceil
 from libc.math cimport fabs
 from libc.math cimport log as logc
+from libc.math cimport exp as expc
 # from libc.stdio cimport printf
 from libcpp.vector cimport vector
 
@@ -166,8 +167,8 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
     # Init pbuff
     for _ in range(buffsize):
         pbuff.push_back(0.0)
-    
-    
+
+
     while (col - step > hs) and (col + step + hs < axis_size):
         # printf("--------- %i\n", tolcounter)
         # printf("col %i dir %i step %i\n", col, direction, step)
@@ -220,6 +221,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
         # fit the peak with three points
         if gauss:
             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
+            result[1] = expc(result[1])
         else:
             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
 
@@ -262,7 +264,7 @@ def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
     '''
     
     cdef InternalTrace trace 
-    # Initial values    
+    # Initial values
     trace.push_back(x, y, p)
 
     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,
