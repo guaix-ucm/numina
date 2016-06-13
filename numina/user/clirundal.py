@@ -67,21 +67,16 @@ def mode_run_common(args, mode):
 def mode_run_common_obs(args):
     """Observing mode processing mode of numina."""
 
-    # Directories with relevant data
-    workenv = WorkEnvironment(args.basedir,
-                              workdir=args.workdir,
-                              resultsdir=args.resultsdir,
-                              datadir=args.datadir
-                              )
-
     # Loading observation result if exists
     loaded_obs = {}
-    _logger.info("Loading observation results from %r", args.obsresult)
     loaded_ids = []
-    with open(args.obsresult) as fd:
-        for doc in yaml.load_all(fd):
-            loaded_ids.append(doc['id'])
-            loaded_obs[doc['id']] = doc
+    for obfile in args.obsresult:
+        _logger.info("Loading observation results from %r", obfile)
+
+        with open(obfile) as fd:
+            for doc in yaml.load_all(fd):
+                loaded_ids.append(doc['id'])
+                loaded_obs[doc['id']] = doc
 
     _logger.info('reading control from %s', args.reqs)
     with open(args.reqs, 'r') as fd:
@@ -100,81 +95,90 @@ def mode_run_common_obs(args):
     _logger.info('control format version %d', control_format)
     # Start processing
 
-    cwd = os.getcwd()
-    os.chdir(workenv.datadir)
+    for obid in loaded_ids:
+        # Directories with relevant data
+        workenv = WorkEnvironment(obid,
+                                  args.basedir,
+                                  workdir=args.workdir,
+                                  resultsdir=args.resultsdir,
+                                  datadir=args.datadir
+                                  )
 
-    # Only the first, for the moment
-    if args.insconf:
-        _logger.debug("instrument configuration from CLI is %r", args.insconf)
+        cwd = os.getcwd()
+        os.chdir(workenv.datadir)
 
-    obsres = dal.obsres_from_oblock_id(loaded_ids[0], configuration=args.insconf)
+        # Only the first, for the moment
+        if args.insconf:
+            _logger.debug("instrument configuration from CLI is %r", args.insconf)
 
-    _logger.debug("pipeline from CLI is %r", args.pipe_name)
-    pipe_name = args.pipe_name
-    recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
-    _logger.debug('recipe class is %s', recipeclass)
+        obsres = dal.obsres_from_oblock_id(obid, configuration=args.insconf)
 
-    rinput = recipeclass.build_recipe_input(obsres, dal, pipeline=pipe_name)
-    _logger.debug('recipe input created')
+        _logger.debug("pipeline from CLI is %r", args.pipe_name)
+        pipe_name = args.pipe_name
+        recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
+        _logger.debug('recipe class is %s', recipeclass)
 
-    # Show the actual inputs
-    _logger.debug('parsing requirements')
-    for key in recipeclass.requirements():
-        v = getattr(rinput, key)
-        _logger.info("recipe requires %r value is %s", key, v)
+        rinput = recipeclass.build_recipe_input(obsres, dal, pipeline=pipe_name)
+        _logger.debug('recipe input created')
 
-    _logger.debug('parsing products')
-    for req in recipeclass.products().values():
-        _logger.info('recipe provides %s, %s', req.type, req.description)
+        # Show the actual inputs
+        _logger.debug('parsing requirements')
+        for key in recipeclass.requirements():
+            v = getattr(rinput, key)
+            _logger.info("recipe requires %r value is %s", key, v)
 
-    os.chdir(cwd)
+        _logger.debug('parsing products')
+        for req in recipeclass.products().values():
+            _logger.info('recipe provides %s, %s', req.type, req.description)
 
-    recipe = recipeclass()
-    _logger.debug('recipe created')
+        os.chdir(cwd)
 
-    # Logging and task control
-    logger_control = dict(
-        logfile='processing.log',
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        enabled=True
-        )
+        recipe = recipeclass()
+        _logger.debug('recipe created')
 
-    # Load recipe control and recipe parameters from file
-    task_control = dict(requirements={}, products={}, logger=logger_control)
+        # Logging and task control
+        logger_control = dict(
+            logfile='processing.log',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            enabled=True
+            )
 
-    # Build the recipe input data structure
-    # and copy needed files to workdir
-    _logger.debug('parsing requirements')
-    for key in recipeclass.requirements().values():
-        _logger.info("recipe requires %r", key)
+        # Load recipe control and recipe parameters from file
+        task_control = dict(requirements={}, products={}, logger=logger_control)
 
-    _logger.debug('parsing products')
-    for req in recipeclass.products().values():
-        _logger.info('recipe provides %r', req)
+        # Build the recipe input data structure
+        # and copy needed files to workdir
+        _logger.debug('parsing requirements')
+        for key in recipeclass.requirements().values():
+            _logger.info("recipe requires %r", key)
 
-    runinfo = {
-        'taskid': loaded_ids[0],
-        'pipeline': pipe_name,
-        'recipeclass': recipeclass,
-        'workenv': workenv,
-        'recipe_version': recipe.__version__,
-        'instrument_configuration': args.insconf
-    }
+        _logger.debug('parsing products')
+        for req in recipeclass.products().values():
+            _logger.info('recipe provides %r', req)
 
-    task = ProcessingTask(obsres, runinfo)
+        runinfo = {
+            'taskid': obid,
+            'pipeline': pipe_name,
+            'recipeclass': recipeclass,
+            'workenv': workenv,
+            'recipe_version': recipe.__version__,
+            'instrument_configuration': args.insconf
+        }
 
-    # Copy files
-    _logger.debug('copy files to work directory')
-    workenv.sane_work()
-    workenv.copyfiles_stage1(obsres)
-    workenv.copyfiles_stage2(rinput)
+        task = ProcessingTask(obsres, runinfo)
 
-    completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
-                                workenv=workenv, task_control=task_control)
+        # Copy files
+        _logger.debug('copy files to work directory')
+        workenv.sane_work()
+        workenv.copyfiles_stage1(obsres)
+        workenv.copyfiles_stage2(rinput)
 
-    where = DiskStorageDefault(resultsdir=workenv.resultsdir)
+        completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
+                                    workenv=workenv, task_control=task_control)
 
-    where.store(completed_task)
+        where = DiskStorageDefault(resultsdir=workenv.resultsdir)
+
+        where.store(completed_task)
 
 
 def create_recipe_file_logger(logger, logfile, logformat):

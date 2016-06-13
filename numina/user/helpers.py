@@ -85,23 +85,23 @@ class ProcessingTask(object):
 
 
 class WorkEnvironment(object):
-    def __init__(self, basedir, workdir=None,
+    def __init__(self, obsid, basedir, workdir=None,
                  resultsdir=None, datadir=None):
 
         self.basedir = basedir
 
         if workdir is None:
-            workdir = os.path.join(basedir, '_work')
+            workdir = os.path.join(basedir, 'obsid%d_work' % obsid)
 
         self.workdir = os.path.abspath(workdir)
 
         if resultsdir is None:
-            resultsdir = os.path.join(basedir, '_results')
+            resultsdir = os.path.join(basedir, 'obsid%d_results' % obsid)
 
         self.resultsdir = os.path.abspath(resultsdir)
 
         if datadir is None:
-            datadir = os.path.join(basedir, '_data')
+            datadir = os.path.join(basedir, 'data')
 
         self.datadir = os.path.abspath(datadir)
 
