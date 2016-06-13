@@ -341,8 +341,8 @@ def generate_triplets(ntriplets_arc, xpos_arc, error_xpos_arc, times_sigma_r,
     for i in range(ntriplets_arc):
         i1, i2, i3 = i, i + 1, i + 2
 
-        dist12 = xpos_arc[i2] - xpos_arc[i1]
-        dist13 = xpos_arc[i3] - xpos_arc[i1]
+        dist12 = abs(xpos_arc[i2] - xpos_arc[i1])
+        dist13 = abs(xpos_arc[i3] - xpos_arc[i1])
         ratio_arc = dist12 / dist13
 
         pol_r = ratio_arc * (ratio_arc - 1) + 1
@@ -369,6 +369,7 @@ def generate_triplets(ntriplets_arc, xpos_arc, error_xpos_arc, times_sigma_r,
             crval1_temp = wv_master[j2] - (xpos_arc[i2] - 1) * cdelt1_temp
             crvaln_temp = crval1_temp + float(naxis1_arc - 1) * cdelt1_temp
             # check that CRVAL1 and CRVALN are within the valid limits
+
             if wv_ini_search <= crval1_temp <= wv_end_search:
                 if wv_ini_search <= crvaln_temp <= wv_end_search:
                     # Compute errors
@@ -523,20 +524,22 @@ def line_identification(ntriplets_arc, funcost_layered_list,
     # print ("funcost_layered_list: ", funcost_layered_list)
     # print ("clabel_layered_list: ", clabel_layered_list)
 
+    diagonal_ids = [[], []]
+    diagonal_funcost = [[], []]
     for i in range(ntriplets_arc):
-        jdum = funcost_layered_list[i].argmin()
-        k1, k2, k3 = clabel_layered_list[i][jdum]
-        funcost_dum = funcost_layered_list[i][jdum]
-        if i == 0:
-            diagonal_ids = [[k1], [k2], [k3]]
-            diagonal_funcost = [[funcost_dum], [funcost_dum], [funcost_dum]]
+        if len(funcost_layered_list[i]) == 0:
+            k1 = k2 = k3 = None
+            funcost_dum = 1.0
         else:
-            diagonal_ids[i].append(k1)
-            diagonal_ids[i + 1].append(k2)
-            diagonal_ids.append([k3])
-            diagonal_funcost[i].append(funcost_dum)
-            diagonal_funcost[i + 1].append(funcost_dum)
-            diagonal_funcost.append([funcost_dum])
+            jdum = funcost_layered_list[i].argmin()
+            k1, k2, k3 = clabel_layered_list[i][jdum]
+            funcost_dum = funcost_layered_list[i][jdum]
+        diagonal_ids[i].append(k1)
+        diagonal_ids[i + 1].append(k2)
+        diagonal_ids.append([k3])
+        diagonal_funcost[i].append(funcost_dum)
+        diagonal_funcost[i + 1].append(funcost_dum)
+        diagonal_funcost.append([funcost_dum])
 
     return diagonal_funcost, diagonal_ids
 
@@ -718,7 +721,10 @@ def unidentified_lines(wv_master, xpos_arc, solution, poly_degree_wfit,
 
     nfit, ifit, xfit, yfit, wfit = select_data_for_fit(wv_master, xpos_arc,
                                                        solution)
-    coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=1 / wfit)
+    if len(xfit) == 0:
+        return solution
+
+    coeff_fit = polynomial.polyfit(xfit, yfit, poly_degree_wfit, w=(1.0 / wfit))
     poly = polynomial.Polynomial(coeff_fit)
     rfit = abs(yfit - poly(xfit))
     sigma_rfit = sigmaG(rfit)
