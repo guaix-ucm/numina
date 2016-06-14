@@ -89,7 +89,7 @@ class TagFits(object):
 class Corrector(Node):
     '''A Node that corrects a frame from instrumental signatures.'''
 
-    def __init__(self, datamodel, tagger, dtype='float32'):
+    def __init__(self, datamodel, tagger=None, dtype='float32'):
         super(Corrector, self).__init__()
         if tagger is None:
             self.tagger = NoTag()
