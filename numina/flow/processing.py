@@ -91,7 +91,10 @@ class Corrector(Node):
 
     def __init__(self, datamodel, tagger, dtype='float32'):
         super(Corrector, self).__init__()
-        self.tagger = tagger
+        if tagger is None:
+            self.tagger = NoTag()
+        else:
+            self.tagger = tagger
         if not datamodel:
             self.datamodel = SimpleDataModel()
         else:
