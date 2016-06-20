@@ -33,6 +33,10 @@ try:
     ext6 = Extension('numina.array.peaks._kernels',
                      ['numina/array/peaks/kernels.pyx'],
                      language='c')
+    ext7 = Extension('numina.array._bpm',
+                     ['numina/array/bpm.pyx'],
+                     include_dirs=[numpy_include],
+                     language='c++')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
     print('We do not have Cython, just using the generated files')
@@ -51,6 +55,10 @@ except ImportError:
     ext6 = Extension('numina.array.peaks._kernels',
                      ['numina/array/peaks/kernels.c'],
                      language='c')
+    ext7 = Extension('numina.array._bpm',
+                     ['numina/array/bpm.cpp'],
+                     include_dirs=[numpy_include],
+                     language='c++')
     cmdclass = {}
 
 
@@ -86,7 +94,7 @@ setup(name='numina',
                                           'drpclodia.yaml',
                                          ],
                    },
-      ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6],
+      ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7],
       entry_points={
         'console_scripts': [
             'numina = numina.user.cli:main',
