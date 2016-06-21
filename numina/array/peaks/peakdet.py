@@ -161,7 +161,7 @@ def refine_peaks(arr, ipeaks, window_width):
 
     ipeaks = filter_array_margins(arr, ipeaks, window_width)
 
-    winoff = numpy.arange(-step, step+1)
+    winoff = numpy.arange(-step, step+1, dtype='int')
     peakwin = ipeaks[:, numpy.newaxis] + winoff
     ycols = arr[peakwin]
 
