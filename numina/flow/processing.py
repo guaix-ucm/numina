@@ -151,20 +151,19 @@ class BadPixelCorrector(TagOptionalCorrector):
         self.bpm = badpixelmask
 
     def _run(self, img):
+
         # import numpy
         import scipy.signal
+        import numina.array.bpm as bpm
         imgid = self.get_imgid(img)
 
         _logger.debug('correcting bad pixel mask in %s', imgid)
 
-        # data = self.datamodel.get_data(img)
+        data = self.datamodel.get_data(img)
+        newdata = bpm.process_bpm_median(data, self.bpm, hwin=2, wwin=2, fill=0)
         # newdata = array.fixpix(data, self.bpm)
         # FIXME: this breaks datamodel abstraction
-        # img[0].data = newdata
-        # img[0].data[self.bpm.astype(bool)] = numpy.median(img[0].data[~self.bpm.astype(bool)])
-        img_sm = scipy.signal.medfilt(img[0].data, 3)
-        img[0].data[self.bpm.astype(bool)] = img_sm[self.bpm.astype(bool)]
-        # img[0].data[self.bpm.astype(bool)] = 46
+        img[0].data = newdata
         return img
 
 
