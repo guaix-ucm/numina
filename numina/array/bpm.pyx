@@ -24,32 +24,32 @@ from cpython.pycapsule cimport PyCapsule_GetPointer
 from cpython.pycapsule cimport PyCapsule_GetContext
 from cython.operator cimport dereference as deref
 cimport cython
+from cpython cimport bool
 
 import numpy as np
 cimport numpy as np
 
+
 ctypedef fused image_t:
-    double[:,:]
-    float[:,:]
-    long[:,:]
-    int[:,:]
-
-ctypedef fused result_t:
-    double[:,:]
-    float[:,:]
-
-ctypedef fused mask_t:
-    int[:,:]
-    char[:,:]
+    np.float64_t
+    np.float32_t
+    np.int64_t
+    np.int32_t
+    np.int16_t
+    np.int8_t
+    np.uint64_t
+    np.uint32_t
+    np.uint16_t
+    np.uint8_t
 
 # FIXME: this definition should come from the headers in src
 ctypedef int (*CombineFunc)(double*, double*, size_t, double*[3], void*)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _process_bpm_intl(object method, image_t arr, mask_t badpix, result_t res,
+def _process_bpm_intl(object method, image_t[:,:] arr, np.uint8_t[:,:] badpix, np.double_t[:,:] res,
                       size_t hwin=2, size_t wwin=2, double fill=0.0):
-    '''Loop over the mask over a window.'''
+    '''Loop over the mask over a window, border is filled with 'fill' value.'''
     cdef:
         size_t xr = arr.shape[1]
         size_t yr = arr.shape[0]
@@ -62,7 +62,6 @@ def _process_bpm_intl(object method, image_t arr, mask_t badpix, result_t res,
         double* pvalues[3]
         CombineFunc function
         void *vdata
-        int counter
 
     buff1 = <double *>malloc((2*hwin+1) * (2*wwin+1) * sizeof(double))
     buff2 = <double *>malloc((2*hwin+1) * (2*wwin+1) * sizeof(double))
@@ -85,7 +84,7 @@ def _process_bpm_intl(object method, image_t arr, mask_t badpix, result_t res,
 
             if bp == 0:
                 # Skip over good pixels
-                res[y,x] = arr[y, x]
+                res[y,x] = <np.double_t>arr[y, x]
             else:
                 # For bad pixels, use a window
                 for xx in range(x-wwin, x+wwin+1):
@@ -100,12 +99,14 @@ def _process_bpm_intl(object method, image_t arr, mask_t badpix, result_t res,
                             bsize += 1
                         else:
                             continue
-                # Compute something using buff1, buff2
-                status = function(buff1, buff2, bsize-1, pvalues, vdata)
-                # FIXME: this must have a casting
-                res[y,x] = deref(pvalues[0])
+                # Compute value using buff1, buff2
+
+                status = function(buff1, buff2, bsize, pvalues, vdata)
+
+                res[y,x] = <np.double_t>deref(pvalues[0])
                 # reset buffer
                 bsize = 0
+
     # dealocate buffer on exit
     free(buff1)
     free(buff2)

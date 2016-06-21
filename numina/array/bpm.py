@@ -27,21 +27,26 @@ import numpy
 from numina.array._bpm import _process_bpm_intl
 
 
-def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0, out=None):
+def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
 
-    if out is None:
-        out = numpy.empty_like(arr)
     # FIXME: we are not considering variance extension
-    _process_bpm_intl(method, arr, mask, out, hwin=hwin, wwin=wwin, fill=fill)
+    # If arr is not in native byte order, the cython extension won't work
+    if arr.dtype.byteorder != '=':
+        narr = arr.byteswap().newbyteorder()
+    else:
+        narr = arr
+    out = numpy.empty_like(narr, dtype='double')
+
+    # Casting, Cython doesn't support well type bool
+    cmask = numpy.where(mask > 0, 1, 0).astype('uint8')
+
+    _process_bpm_intl(method, narr, cmask, out, hwin=hwin, wwin=wwin, fill=fill)
     return out
 
 
-def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0, out=None):
+def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
     import numina.array.combine
 
-    method = numina.array.combine.median_method
-    if out is None:
-        out = numpy.empty_like(arr)
+    method = numina.array.combine.median_method()
 
-    _process_bpm_intl(method, arr, mask, out, hwin=hwin, wwin=wwin, fill=fill)
-    return out
+    return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill)
