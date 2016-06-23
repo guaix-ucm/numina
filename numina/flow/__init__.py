@@ -56,7 +56,12 @@ class SerialFlow(Node):
     def _run(self, img):
         for nd in self.nodeseq:
             out = nd(img)
+            #import matplotlib.pyplot as plt
+            #plt.imshow(img[0].data[1000:1050, 1000:1050])
+            #plt.show()
             img = out
+            #plt.imshow(img[0].data[1000:1050, 1000:1050])
+            #plt.show()
         return out
 
 

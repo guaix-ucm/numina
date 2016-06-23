@@ -20,10 +20,13 @@
 from __future__ import print_function
 
 import logging
+import warnings
 import time
+import datetime
 
 from astropy.io import fits
 
+from .datamodel import DataModel
 from .node import Node
 import numina.array as array
 
@@ -53,20 +56,12 @@ def promote_hdu(hdu, totype='float32'):
     return hdu
 
 
-class SimpleDataModel(object):
-    '''Model of the Data being processed'''
-
-    def get_data(self, img):
-        return img['primary'].data
-
-    def get_header(self, img):
-        return img['primary'].header
-
-    def get_variance(self, img):
-        return img['variance'].data
+class SimpleDataModel(DataModel):
+    """Model of the Data being processed"""
+    pass
 
 
-class NoTag(object):
+class NoTag_(object):
     def check_if_processed(self, img):
         return False
 
@@ -74,7 +69,7 @@ class NoTag(object):
         pass
 
 
-class TagFits(object):
+class TagFits_(object):
     def __init__(self, tag, comment):
         self.tag = tag
         self.comment = comment
@@ -89,12 +84,8 @@ class TagFits(object):
 class Corrector(Node):
     '''A Node that corrects a frame from instrumental signatures.'''
 
-    def __init__(self, datamodel, tagger=None, dtype='float32'):
+    def __init__(self, datamodel=None, dtype='float32'):
         super(Corrector, self).__init__()
-        if tagger is None:
-            self.tagger = NoTag()
-        else:
-            self.tagger = tagger
         if not datamodel:
             self.datamodel = SimpleDataModel()
         else:
@@ -102,58 +93,37 @@ class Corrector(Node):
         self.dtype = dtype
 
     def __call__(self, img):
-        hdr = self.datamodel.get_header(img)
-        if self.tagger.check_if_processed(hdr):
-            _logger.info('%s already processed by %s', img, self)
-            return img
+        if img[0].data.dtype in ['<u2', '>u2', '=u2']:
+            # FIXME: this is a GCS problem
+            _logger.info('change dtype to float32, old is %s',
+                         img[0].data.dtype)
+            img = promote_hdulist(img)
+        if hasattr(self, 'run'):
+            img = self.run(img)
         else:
-            if img[0].data.dtype in ['<u2', '>u2', '=u2']:
-                # FIXME
-                _logger.info('change dtype to float32, old is %s',
-                             img[0].data.dtype)
-                img = promote_hdulist(img)
+            warnings.warn("use method 'run' instead of '_run'", DeprecationWarning)
             img = self._run(img)
-            self.tagger.tag_as_processed(hdr)
+
         return img
 
     def get_imgid(self, img):
-
-        imgid = img.filename()
-
-        # More heuristics here...
-        # get FILENAME keyword, for example...
-
-        if not imgid:
-            imgid = repr(img)
-
-        return imgid
+        self.datamodel.get_imgid(img)
 
 
-class TagOptionalCorrector(Corrector):
-    def __init__(self, datamodel, tagger, mark=True, dtype='float32'):
-        if not mark:
-            tagger = NoTag()
-
-        super(TagOptionalCorrector, self).__init__(datamodel=datamodel,
-                                                   tagger=tagger, dtype=dtype)
+TagOptionalCorrector = Corrector
 
 
-class BadPixelCorrector(TagOptionalCorrector):
+class BadPixelCorrector(Corrector):
     '''A Node that corrects a frame from bad pixels.'''
 
-    def __init__(self, badpixelmask, mark=True, tagger=None,
-                 datamodel=None, dtype='float32'):
-        if tagger is None:
-            tagger = TagFits('NUM-BPM', 'Badpixel removed with Numina')
+    def __init__(self, badpixelmask, datamodel=None, dtype='float32'):
 
-        super(BadPixelCorrector, self).__init__(datamodel, tagger, mark, dtype)
+        super(BadPixelCorrector, self).__init__(datamodel, dtype)
 
         self.bpm = badpixelmask
+        self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
-
-        # import numpy
-        import scipy.signal
+    def run(self, img):
         import numina.array.bpm as bpm
         imgid = self.get_imgid(img)
 
@@ -163,30 +133,29 @@ class BadPixelCorrector(TagOptionalCorrector):
         newdata = bpm.process_bpm_median(data, self.bpm, hwin=2, wwin=2, fill=0)
         # newdata = array.fixpix(data, self.bpm)
         # FIXME: this breaks datamodel abstraction
-        img[0].data = newdata
+        img['primary'].data = newdata
+        hdr = img['primary'].header
+        hdr['NUM-BPM'] = self.calibid
+        hdr['history'] = 'BPM correction with {}'.format(self.calibid)
+        hdr['history'] = 'BPM correction time {}'.format(datetime.datetime.utcnow().isoformat())
         return img
 
 
-class BiasCorrector(TagOptionalCorrector):
+class BiasCorrector(Corrector):
     '''A Node that corrects a frame from bias.'''
 
     def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
 
-        if tagger is None:
-            tagger = TagFits('NUM-BS','Bias removed with Numina')
-
         self.update_variance = True if biasvar else False
 
-        super(BiasCorrector, self).__init__(datamodel=datamodel,
-                                            tagger=tagger,
-                                            mark=mark,
-                                            dtype=dtype)
+        super(BiasCorrector, self).__init__(datamodel=datamodel, dtype=dtype)
         self.bias_stats = biasmap.mean()
         self.biasmap = biasmap
         self.biasvar = biasvar
+        self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
+    def run(self, img):
 
         imgid = self.get_imgid(img)
 
@@ -204,19 +173,18 @@ class BiasCorrector(TagOptionalCorrector):
             variance += self.biasvar
             # FIXME
             img[1].data = variance
-
+        hdr = img['primary'].header
+        hdr['NUM-BS'] = self.calibid
+        hdr['history'] = 'Bias correction with {}'.format(self.calibid)
+        hdr['history'] = 'Bias image mean is {}'.format(self.bias_stats)
+        hdr['history'] = 'Bias correction time {}'.format(datetime.datetime.utcnow().isoformat())
         return img
 
 
-class DarkCorrector(TagOptionalCorrector):
-    '''A Node that corrects a frame from dark current.'''
+class DarkCorrector(Corrector):
+    """A Node that corrects a frame from dark current."""
 
-    def __init__(self, darkmap, darkvar=None, datamodel=None,
-                 mark=True, tagger=None, dtype='float32'):
-
-        if tagger is None:
-            tagger = TagFits('NUM-DK',
-                             'Dark removed with Numina')
+    def __init__(self, darkmap, darkvar=None, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
@@ -224,23 +192,16 @@ class DarkCorrector(TagOptionalCorrector):
             self.update_variance = True
 
         super(DarkCorrector, self).__init__(datamodel=datamodel,
-                                            tagger=tagger,
-                                            mark=mark,
                                             dtype=dtype)
 
         self.dark_stats = darkmap.mean()
         self.darkmap = darkmap
         self.darkvar = darkvar
+        self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
+    def run(self, img):
 
-        header = self.datamodel.get_header(img)
-        if 'EXPTIME' in header.keys():
-            etime = header['EXPTIME']
-        elif 'EXPOSED' in header.keys():
-            etime = header['EXPOSED']
-        else:
-            etime = 1.0
+        etime = self.datamodel.get_darktime(img)
 
         data = self.datamodel.get_data(img)
 
@@ -253,29 +214,29 @@ class DarkCorrector(TagOptionalCorrector):
             variance += self.darkvar * etime * etime
             # FIXME
             img[1].data = variance
-
+        hdr = img['primary'].header
+        hdr['NUM-DK'] = self.calibid
+        hdr['history'] = 'Dark correction with {}'.format(self.calibid)
+        hdr['history'] = 'Dark correction time {}'.format(datetime.datetime.utcnow().isoformat())
         return img
 
 
-class NonLinearityCorrector(TagOptionalCorrector):
+class NonLinearityCorrector(Corrector):
     '''A Node that corrects a frame from non-linearity.'''
 
-    def __init__(self, polynomial, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-        if tagger is None:
-            tagger = TagFits('NUM-LIN',
-                             'Non-linearity corrected with Numina')
+    def __init__(self, polynomial, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
         super(NonLinearityCorrector, self).__init__(
-            datamodel=datamodel, tagger=tagger,
-            mark=mark, dtype=dtype
+            datamodel=datamodel, dtype=dtype
         )
 
         self.polynomial = polynomial
+        self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
+
+    def run(self, img):
         _logger.debug('correcting non linearity in %s', img)
 
         data = self.datamodel.get_data(img)
@@ -284,29 +245,29 @@ class NonLinearityCorrector(TagOptionalCorrector):
                                           dtype=self.dtype)
         # FIXME
         img[0].data = data
+        hdr = self.datamodel.get_header(img)
+        hdr['NUM-LIN'] = self.calibid
+        hdr['history'] = 'Non-linearity correction with {}'.format(self.calibid)
+        hdr['history'] = 'Non-linearity correction time {}'.format(datetime.datetime.utcnow().isoformat())
         return img
 
 
-class FlatFieldCorrector(TagOptionalCorrector):
-    '''A Node that corrects a frame from flat-field.'''
+class FlatFieldCorrector(Corrector):
+    """A Node that corrects a frame from flat-field."""
 
-    def __init__(self, flatdata, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-        if tagger is None:
-            tagger = TagFits('NUM-FF', 'Flat-field removed with Numina')
+    def __init__(self, flatdata, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
         super(FlatFieldCorrector, self).__init__(
             datamodel=datamodel,
-            tagger=tagger,
-            mark=mark,
             dtype=dtype)
 
         self.flatdata = flatdata
         self.flat_stats = flatdata.mean()
+        self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
+    def run(self, img):
         imgid = self.get_imgid(img)
 
         _logger.debug('correcting flat in %s', imgid)
@@ -316,29 +277,30 @@ class FlatFieldCorrector(TagOptionalCorrector):
         data = array.correct_flatfield(data, self.flatdata, dtype=self.dtype)
         # FIXME
         img[0].data = data
+        hdr = img['primary'].header
+        hdr['NUM-FF'] = self.calibid
+        hdr['history'] = 'Flat-field correction with {}'.format(self.calibid)
+        hdr['history'] = 'Flat-field correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = 'Flat-field correction mean {}'.format(self.flat_stats)
         return img
 
 
-class SkyCorrector(TagOptionalCorrector):
+class SkyCorrector(Corrector):
     '''A Node that corrects a frame from sky.'''
 
-    def __init__(self, skydata, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-        if tagger is None:
-            tagger = TagFits('NUM-SK', 'Sky removed with Numina')
+    def __init__(self, skydata, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
         super(SkyCorrector, self).__init__(
             datamodel=datamodel,
-            tagger=tagger,
-            mark=mark,
             dtype=dtype)
 
         self.skydata = skydata
         self.calib_stats = skydata.mean()
+        self.calibid = 'ID-of-calib-image'
 
-    def _run(self, img):
+    def run(self, img):
         imgid = self.get_imgid(img)
 
         _logger.debug('correcting sky in %s', imgid)
@@ -350,32 +312,30 @@ class SkyCorrector(TagOptionalCorrector):
 
         # FIXME
         img[0].data = data
-
+        hdr = img['primary'].header
+        hdr['NUM-SK'] = self.calibid
+        hdr['history'] = 'Sky subtraction with {}'.format(self.calibid)
+        hdr['history'] = 'Sky subtraction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = 'Sky subtraction mean {}'.format(self.calib_stats)
         return img
 
 
-class DivideByExposure(TagOptionalCorrector):
-    '''A Node that divides its input by exposure time.'''
+class DivideByExposure(Corrector):
+    """A Node that divides its input by exposure time."""
 
-    def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        if tagger is None:
-            tagger = TagFits('NUM-EXP', 'Divided by exposure time.')
+    def __init__(self, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
         super(DivideByExposure, self).__init__(
             datamodel=datamodel,
-            tagger=tagger,
-            mark=mark,
             dtype=dtype
         )
 
-    def _run(self, img):
+    def run(self, img):
         imgid = self.get_imgid(img)
-        header = self.datamodel.get_header(img)
-        bunit = header['BUNIT']
+        hdr = self.datamodel.get_header(img)
+        bunit = hdr['BUNIT']
         convert_to_s = False
         if bunit:
             if bunit.lower() == 'adu':
@@ -385,7 +345,7 @@ class DivideByExposure(TagOptionalCorrector):
             else:
                 _logger.warning('Unrecognized value for BUNIT %s', bunit)
         if convert_to_s:
-            etime = header['EXPTIME']
+            etime = self.datamodel.get_exptime(img)
             _logger.debug('divide %s by exposure time %f', imgid, etime)
 
             img[0].data /= etime
@@ -396,4 +356,7 @@ class DivideByExposure(TagOptionalCorrector):
             except KeyError:
                 pass
 
+            hdr['NUM-EXP'] = etime
+            hdr['history'] = 'Divided by exposure {}'.format(etime)
+            hdr['history'] = 'Divided by exposure {}'.format(datetime.datetime.utcnow().isoformat())
         return img
