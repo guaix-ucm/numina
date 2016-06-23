@@ -72,6 +72,13 @@ def main(args=None):
         help="make lots of noise"
         )
 
+    parser.add_argument(
+        '--standalone',
+        action="store_true",
+        dest="standalone", default=False,
+        help="do not activate GTC compatibility code"
+        )
+
     subparsers = parser.add_subparsers(
         title='Targets',
         description='These are valid commands you can ask numina to do.'
@@ -97,6 +104,10 @@ def main(args=None):
     args, unknowns = parser.parse_known_args(args)
     extra_args = process_unknown_arguments(unknowns)
     # logger file
+    if args.standalone:
+        import numina.ext.gtc
+        numina.ext.gtc.ignore_gtc_check()
+
     if args.logging is not None:
         logging.config.fileConfig(args.logging)
     else:

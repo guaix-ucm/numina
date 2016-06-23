@@ -18,15 +18,19 @@
 #
 
 
-import pkgutil
+"""Module to check and activate GTC compatibility code"""
+
+_ignore_gtc_check = False
 
 try:
     import DF
+    _run_in_gtc = True
 except ImportError:
     import types
     # FIXME: workaround
     DF = types.ModuleType('DF')
     DF.TYPE_FRAME = None
+    _run_in_gtc = False
 
 _eqtypes = {'numina.core.products.FrameDataProduct': DF.TYPE_FRAME}
 
@@ -40,3 +44,15 @@ def dialect_info(obj):
 
 def register(more):
     _eqtypes.update(more)
+
+
+def ignore_gtc_check(value=True):
+    global _ignore_gtc_check
+    _ignore_gtc_check = value
+
+
+def check_gtc():
+    if _ignore_gtc_check:
+        return False
+    else:
+        return _run_in_gtc
