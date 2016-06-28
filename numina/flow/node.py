@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2014 Universidad Complutense de Madrid
+# Copyright 2010-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -26,7 +26,7 @@ _logger = logging.getLogger('numina.node')
 
 
 class Node(with_metaclass(abc.ABCMeta, object)):
-    '''An elemental operation in a Flow.'''
+    """An elemental operation in a Flow."""
 
     def __init__(self, ninputs=1, noutputs=1):
         super(Node, self).__init__()
@@ -42,12 +42,12 @@ class Node(with_metaclass(abc.ABCMeta, object)):
         return self._nout
 
     @abc.abstractmethod
-    def _run(self, img):
+    def run(self, img):
         raise NotImplementedError
 
     def __call__(self, img):
         _args = self.obtain_tuple(img)
-        return self._run(img)
+        return self.run(img)
 
     def obtain_tuple(self, arg):
         if isinstance(arg, tuple):
@@ -55,38 +55,38 @@ class Node(with_metaclass(abc.ABCMeta, object)):
         return (arg,)
 
     def execute(self, arg):
-        return self._run(arg)
+        return self.run(arg)
 
 
 class AdaptorNode(Node):
-    '''A :class:`Node` that runs a function.'''
+    """A :class:`Node` that runs a function."""
     def __init__(self, work, ninputs=1, noutputs=1):
         '''work is a function object'''
         super(AdaptorNode, self).__init__(ninputs, noutputs)
         self.work = work
 
-    def _run(self, img):
+    def run(self, img):
         return self.work(img)
 
 
 class IdNode(Node):
-    '''A Node that returns its inputs.'''
+    """A Node that returns its inputs."""
     def __init__(self):
-        '''Identity'''
+        """Identity"""
         super(IdNode, self).__init__()
 
-    def _run(self, img):
+    def run(self, img):
         return img
 
 
 class OutputSelector(Node):
-    '''A Node that returns part of the results.'''
+    """A Node that returns part of the results."""
     def __init__(self, ninputs, indexes):
         noutputs = len(indexes)
         super(OutputSelector, self).__init__(ninputs, noutputs)
         self.indexes = indexes
 
-    def _run(self, arg):
+    def run(self, arg):
         res = tuple(ar for idx, ar in enumerate(arg) if idx in self.indexes)
         if len(res) == 1:
             return res[0]

@@ -102,7 +102,7 @@ class Corrector(Node):
             img = self.run(img)
         else:
             warnings.warn("use method 'run' instead of '_run'", DeprecationWarning)
-            img = self._run(img)
+            img = self.run(img)
 
         return img
 
