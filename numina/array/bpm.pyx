@@ -89,7 +89,7 @@ def _process_bpm_intl(object method, image_t[:,:] arr, np.uint8_t[:,:] badpix, n
                 # For bad pixels, use a window
                 for xx in range(x-wwin, x+wwin+1):
                     for yy in range(y-hwin, y+hwin+1):
-                        if xx < 0 or yy < 0 or xx >= xr or yy > yr:
+                        if xx < 0 or yy < 0 or xx >= xr or yy >= yr:
                             buff1[bsize] = fill
                             buff2[bsize] = 1.0
                             bsize += 1
