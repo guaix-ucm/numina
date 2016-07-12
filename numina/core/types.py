@@ -70,7 +70,7 @@ class PlainPythonType(DataType):
 
 
 class ListOfType(DataType):
-    def __init__(self, ref):
+    def __init__(self, ref, index=0):
         stype = list
         if inspect.isclass(ref):
             self.internal = ref()
@@ -78,6 +78,7 @@ class ListOfType(DataType):
             self.internal = ref
         super(ListOfType, self).__init__(stype)
         self.dialect = {}
+        self.index = index
 
     def convert(self, obj):
         result = [self.internal.convert(o) for o in obj]
@@ -87,3 +88,13 @@ class ListOfType(DataType):
         for o in obj:
             self.internal.validate(o)
         return True
+
+    def _datatype_dump(self, objs, where):
+        result = []
+        old_dest = where.destination
+        for idx, obj in enumerate(objs, start=self.index):
+            where.destination = old_dest + str(idx)
+            res = self.internal._datatype_dump(obj, where)
+            result.append(res)
+        where.destination = old_dest
+        return result
