@@ -112,7 +112,7 @@ def combine_shape(shapes, offsets):
 def resize_array(data, finalshape, region, window=None,
                  scale=1, fill=0, conserve=True):
 
-    if window:
+    if window is not None:
         data = data[window]
 
     if scale == 1:
