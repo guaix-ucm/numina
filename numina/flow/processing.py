@@ -303,20 +303,23 @@ class SkyCorrector(Corrector):
     def run(self, img):
         imgid = self.get_imgid(img)
 
-        _logger.debug('correcting sky in %s', imgid)
-        _logger.debug('sky mean is %f', self.calib_stats)
+        if self.datamodel.do_sky_correction():
+            _logger.debug('correcting sky in %s', imgid)
+            _logger.debug('sky mean is %f', self.calib_stats)
 
-        data = self.datamodel.get_data(img)
+            data = self.datamodel.get_data(img)
 
-        data = array.correct_sky(data, self.skydata, dtype=self.dtype)
+            data = array.correct_sky(data, self.skydata, dtype=self.dtype)
 
-        # FIXME
-        img[0].data = data
-        hdr = img['primary'].header
-        hdr['NUM-SK'] = self.calibid
-        hdr['history'] = 'Sky subtraction with {}'.format(self.calibid)
-        hdr['history'] = 'Sky subtraction time {}'.format(datetime.datetime.utcnow().isoformat())
-        hdr['history'] = 'Sky subtraction mean {}'.format(self.calib_stats)
+            # FIXME
+            img[0].data = data
+            hdr = img['primary'].header
+            hdr['NUM-SK'] = self.calibid
+            hdr['history'] = 'Sky subtraction with {}'.format(self.calibid)
+            hdr['history'] = 'Sky subtraction time {}'.format(datetime.datetime.utcnow().isoformat())
+            hdr['history'] = 'Sky subtraction mean {}'.format(self.calib_stats)
+        else:
+            _logger.debug('skip sky correction')
         return img
 
 

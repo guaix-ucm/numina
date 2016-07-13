@@ -57,3 +57,6 @@ class DataModel(object):
         else:
             etime = 1.0
         return etime
+
+    def do_sky_correction(self, img):
+        return True
