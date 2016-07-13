@@ -211,6 +211,8 @@ class LinesCatalog(DataProductType):
 
 def dump_dataframe(obj, where):
     # save fits file
+    if obj is None:
+        return None
     if obj.frame is None:
         # assume filename contains a FITS file
         return None
