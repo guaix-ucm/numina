@@ -303,7 +303,7 @@ class SkyCorrector(Corrector):
     def run(self, img):
         imgid = self.get_imgid(img)
 
-        if self.datamodel.do_sky_correction():
+        if self.datamodel.do_sky_correction(img):
             _logger.debug('correcting sky in %s', imgid)
             _logger.debug('sky mean is %f', self.calib_stats)
 
