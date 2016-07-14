@@ -63,12 +63,13 @@ def filter_array_margins(arr, ipeaks, window_width=5):
     return ipeaks[(ipeaks >= min_number) & (ipeaks <= max_number)]
 
 
-def find_peaks_indexes(arr, window_width=5, threshold=0.0):
+def find_peaks_indexes(arr, window_width=5, threshold=0.0, fpeak=0):
     """Find indexes of peaks in a 1d array.
 
     Note that window_width must be an odd number. The function imposes that the
     fluxes in the window_width /2 points to the left (and right) of the peak
-    decrease monotonously as one moves away from the peak.
+    decrease monotonously as one moves away from the peak, except that
+    it allows fpeak constant values around the peak.
 
     Parameters
     ----------
@@ -79,6 +80,8 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
         odd.
     threshold : float
         Minimum signal in the peak (optional).
+    fpeak: int
+        Number of equal values around the peak
 
     Returns
     -------
@@ -91,7 +94,10 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
     if (window_width<3) or (window_width % 2 == 0):
         raise ValueError('Window width must be an odd number and >=3')
 
-    kernel_peak = kernel_peak_function(threshold)
+    if (fpeak<0 or fpeak + 1 >= window_width):
+        raise ValueError('fpeak must be in the range 0- window_width - 2')
+
+    kernel_peak = kernel_peak_function(threshold, fpeak)
     out = generic_filter(arr, kernel_peak, window_width, mode="reflect")
     result, =  numpy.nonzero(out)
 

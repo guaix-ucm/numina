@@ -20,16 +20,15 @@ if PY_MAJOR_VERSION < 3:
 # Kernel function is the same
 cdef int _kernel_function(double* buffer, int filter_size,
                           double* return_value, void* cb):
-    cdef double* th_data = <double*> cb
+    cdef double* data = <double*> cb
     cdef int nmed = filter_size / 2
     cdef int i = 0
     cdef int start = 0
     cdef int mcount = 0
-    # Hard coded for the moment
-    # This allows a peak with 2 equal pixels
-    cdef int limit = 1
+    cdef double th = data[0]
+    cdef int limit = <int>data[1]
 
-    if buffer[nmed] < th_data[0]:
+    if buffer[nmed] < th:
         return_value[0] = 0.0
         return 1
 
@@ -84,16 +83,18 @@ cdef void _destructor_cap(object cap):
 
 
 if PY_MAJOR_VERSION < 3:
-    def kernel_peak_function(double threshold=0.0):
+    def kernel_peak_function(double threshold=0.0, int fpeak=1):
 
         cdef object result
         cdef double *data
 
-        data = <double*>malloc(sizeof(double))
+        data = <double*>malloc(2 * sizeof(double))
         if data is NULL:
             raise MemoryError()
 
         data[0] = threshold
+        # A value of 1 allows a peak with 2 equal pixels
+        data[1] = fpeak
 
         result = PyCObject_FromVoidPtrAndDesc(&_kernel_function,
                                               data,
@@ -103,16 +104,18 @@ if PY_MAJOR_VERSION < 3:
 
 
 if PY_MAJOR_VERSION >= 3:
-    def kernel_peak_function(double threshold=0.0):
+    def kernel_peak_function(double threshold=0.0, int fpeak=1):
 
         cdef object result
         cdef double *data
 
-        data = <double*>malloc(sizeof(double))
+        data = <double*>malloc(2 * sizeof(double))
         if data is NULL:
             raise MemoryError()
 
         data[0] = threshold
+        # A value of 1 allows a peak with 2 equal pixels
+        data[1] = fpeak
 
         result = PyCapsule_New(&_kernel_function,
                                NULL, # if we set a name here, generic_f doesn't work
