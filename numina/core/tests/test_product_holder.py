@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,41 +20,31 @@
 
 '''Unit test for types'''
 
-from ..types import NullType, DataType
-
-def test_null_type():
-    '''Test NullType.'''
-
-    nullt = NullType()
-
-    values = [None, 1, 1.0, [1,2,3], {'a': 1, 'b': 2}]
-
-    for val in values:
-        assert nullt.convert(val) is None
-
-    for val in values:
-        assert nullt.validate(nullt.convert(val))
+from ..types import DataType
+from ..dataholders import Product
+from ..recipeinout import RecipeResult
 
 
-def test_convert_in_out():
+def test_product_out():
 
     class AVal(object):
-        pass
+        def __init__(self, val):
+            self.val = val
 
     class A(DataType):
 
+        def __init__(self):
+            super(A, self).__init__(ptype=AVal)
+
         def convert(self, obj):
-            return 1
-
-    a = A(ptype=AVal)
-    assert a.convert_in(None) == 1
-    assert a.convert_out(None) == 1
-
-    class B(A):
+            return AVal(val=1)
 
         def convert_out(self, obj):
-            return 2
+            return AVal(val=2)
 
-    b = B(ptype=AVal)
-    assert b.convert_in(None) == 1
-    assert b.convert_out(None) == 2
+    class RR(RecipeResult):
+        prod = Product(A)
+
+    rr = RR(prod=100)
+
+    assert rr.prod.val == 2

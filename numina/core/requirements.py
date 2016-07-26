@@ -39,6 +39,9 @@ class Requirement(EntryHolder):
 
         self.hidden = False
 
+    def convert(self, val):
+        return self.type.convert_in(val)
+
     def __repr__(self):
         sclass = type(self).__name__
         fmt = ("%s(dest=%r, description='%s', "

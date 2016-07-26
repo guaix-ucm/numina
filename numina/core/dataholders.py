@@ -103,3 +103,6 @@ class Product(EntryHolder):
 
     def __repr__(self):
         return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
+
+    def convert(self, val):
+        return self.type.convert_out(val)
