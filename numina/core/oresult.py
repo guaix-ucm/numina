@@ -30,9 +30,9 @@ from .dataframe import DataFrame
 
 
 class ObservationResult(object):
-    '''The result of a observing block.
+    """The result of a observing block.
 
-    '''
+    """
     def __init__(self, mode=None):
         self.id = 1
         self.mode = mode
@@ -41,6 +41,7 @@ class ObservationResult(object):
         self.parent = None
         self.children = []  # other ObservationResult
         self.pipeline = 'default'
+        self.configuration = 'default'
         self.prodid = None
         self.tags = {}
 
