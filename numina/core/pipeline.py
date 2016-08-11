@@ -64,3 +64,4 @@ class ObservingMode(object):
         self.date = ''
         self.reference = ''
         self.tagger = None
+        self.validator = None

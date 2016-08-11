@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -59,9 +59,12 @@ def load_modes(node):
 def load_mode(node):
     """Load one observing mdode"""
     obs_mode = ObservingMode()
-    # handle tagger:
     obs_mode.__dict__.update(node)
 
+    # handle validator
+    load_mode_validator(obs_mode, node)
+    
+    # handle tagger:
     ntagger = node.get('tagger')
 
     if ntagger is None:
@@ -78,6 +81,22 @@ def load_mode(node):
 
     else:
         raise TypeError('tagger must be None, a list or a string')
+
+    return obs_mode
+
+
+def load_mode_validator(obs_mode, node):
+    """Load observing mode validator"""
+
+    nval = node.get('validator')
+
+    if nval is None:
+        pass
+    elif isinstance(nval, str):
+        # load function
+        obs_mode.validator = import_object(nval)
+    else:
+        raise TypeError('validator must be None or a string')
 
     return obs_mode
 

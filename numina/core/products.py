@@ -139,26 +139,23 @@ class ArrayNType(ArrayType):
         self.N = dimensions
 
 
-# FIXME: this is hack, thus should be provided by DRPS
-def _gimme_validator_for(instrument, mode):
-    validators = {
-        'EMIR': {
-            'IMAGE_BIAS': 'emir.dataproducts.RawBias',
-            'IMAGE_DARK': 'emir.dataproducts.RawDark',
-            'INTENSITY_FLAT_FIELD': 'emir.dataproducts.RawIntensityFlat'
-            }
-        }
+# FIXME: this is hack, this should be provided by DRPS
+def _obtain_validator_for(instrument, mode_key):
+    # This should be set globally and not loaded
+    # every time
+    from numina.core.pipeline import DrpSystem
+    drps = DrpSystem()
 
-    if instrument not in validators:
-        return DataFrameType
-    else:
-        modes = validators[instrument]
-        if mode not in modes:
-            return DataFrameType
-        else:
-            fqn = modes[mode]
-            return import_object(fqn)
-    return DataFrameType
+    lol = drps.query_by_name(instrument)
+
+    for mode in lol.modes:
+        if mode.key == mode_key:
+            if mode.validator:
+                return mode.validator
+            else:
+                break
+
+    return lambda obj: True
 
 
 class ObservationResultType(DataType):
@@ -172,11 +169,9 @@ class ObservationResultType(DataType):
             self.rawtype = DataFrameType
 
     def validate(self, obj):
-        RawType = _gimme_validator_for(obj.instrument, obj.mode)
-        imgtype = RawType()
-        for f in obj.frames:
-            imgtype.validate(f)
-        return True
+        super(ObservationResultType, self).validate(obj)
+        validator = _obtain_validator_for(obj.instrument, obj.mode)
+        return validator(obj)
 
 
 class InstrumentConfigurationType(DataType):
