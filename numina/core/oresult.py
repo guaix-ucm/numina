@@ -56,7 +56,7 @@ class ObservationResult(object):
         return self.frames
 
     @images.setter
-    def images_s(self, value):
+    def images(self, value):
         self.frames = value
 
 
