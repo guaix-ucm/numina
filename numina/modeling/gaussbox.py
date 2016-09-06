@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,7 +21,7 @@ from __future__ import division
 
 from scipy.stats import norm
 import numpy as np
-from astropy.modeling.models import custom_model_1d
+from astropy.modeling.models import custom_model
 import math
 
 M_SQRT_2_PI = math.sqrt(2 * math.pi)
@@ -55,5 +55,5 @@ def gauss_box_model_deriv(x, amplitude=1.0, location=0.0, s=1.0, d=0.5):
     return (da, dl, ds, dd)
 
 
-GaussBox = custom_model_1d(
+GaussBox = custom_model(
     gauss_box_model, func_fit_deriv=gauss_box_model_deriv)
