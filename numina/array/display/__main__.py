@@ -96,9 +96,10 @@ if __name__ == "__main__":
 
         naxis1 = image_header['naxis1']
         naxis2 = image_header['naxis2']
-        grism = image_header['grism']
-        spfilter = image_header['filter']
-        rotang = image_header['rotang']
+        # ToDo: remove the following commented lines
+        # grism = image_header['grism']
+        # spfilter = image_header['filter']
+        # rotang = image_header['rotang']
 
         if image2d.shape != (naxis2, naxis1):
             raise ValueError("Unexpected error with NAXIS1, NAXIS2")
@@ -130,10 +131,13 @@ if __name__ == "__main__":
                 ns2 = naxis2
 
         # display full image
+        title = file
+        # ToDo: remove the following commented lines
+        # title += "\ngrism=" + grism +
+        #          ", filter=" + spfilter +
+        #          ", rotang=" + str(round(rotang, 2)
         ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
-                     title=file + "\ngrism=" + grism +
-                           ", filter=" + spfilter +
-                           ", rotang=" + str(round(rotang, 2)),
+                     title=title,
                      z1z2=z1z2,
                      image_bbox=(nc1, nc2, ns1, ns2), debugplot=debugplot)
         if pdf is not None:
