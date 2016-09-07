@@ -46,7 +46,7 @@ def register(subparsers, config):
     return parser_show_ins
 
 
-def show_instruments(args):
+def show_instruments(args, extra_args):
     mm = DrpSystem()
 
     if args.name:

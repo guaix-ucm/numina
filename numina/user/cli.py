@@ -91,8 +91,8 @@ def main(args=None):
         except StandardError as error:
             print(error)
 
-    args = parser.parse_args(args)
-
+    args, unknowns = parser.parse_known_args(args)
+    extra_args = process_unknown_arguments(unknowns)
     # logger file
     if args.logging is not None:
         logging.config.fileConfig(args.logging)
@@ -106,5 +106,25 @@ def main(args=None):
 
     _logger.info('Numina simple recipe runner version %s', __version__)
 
-    args.command(args)
+    args.command(args, extra_args)
 
+
+def process_unknown_arguments(unknowns):
+    """Process arguments unknown to the parser"""
+
+    result = argparse.Namespace()
+    result.extra_control = {}
+    # It would be interesting to use argparse internal
+    # machinery for this
+    for unknown in unknowns:
+        # Check prefixes
+        prefix = '--parameter-'
+        if unknown.startswith(prefix):
+            # process '='
+            values = unknown.split('=')
+            if len(values) == 2:
+                key = values[0][len(prefix):]
+                val = values[1]
+                if key:
+                    result.extra_control[key] = val
+    return result

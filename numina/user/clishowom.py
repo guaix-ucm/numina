@@ -49,7 +49,7 @@ def register(subparsers, config):
     return parser_show_mode
 
 
-def show_observingmodes(args):
+def show_observingmodes(args, extra_args):
 
     drpsys = DrpSystem()
 

@@ -37,7 +37,7 @@ _logger = logging.getLogger("numina")
 
 
 class Dict2DAL(BaseDictDAL):
-    def __init__(self, obtable, base):
+    def __init__(self, obtable, base, extra_data=None):
 
         prod_table = base['products']
 
@@ -46,25 +46,25 @@ class Dict2DAL(BaseDictDAL):
         else:
             req_table = base['requirements']
 
-        super(Dict2DAL, self).__init__(obtable, prod_table, req_table)
+        super(Dict2DAL, self).__init__(obtable, prod_table, req_table, extra_data)
 
 
-def process_format_version_1(loaded_obs, loaded_data):
-    return Dict2DAL(loaded_obs, loaded_data)
+def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
+    return Dict2DAL(loaded_obs, loaded_data, loaded_data_extra)
 
 
-def mode_run_common(args, mode):
+def mode_run_common(args, extra_args, mode):
     # FIXME: implement 'recipe' run mode
     if mode == 'rec':
         print('Mode not implemented yet')
         return 1
     elif mode == 'obs':
-        return mode_run_common_obs(args)
+        return mode_run_common_obs(args, extra_args)
     else:
         raise ValueError('Not valid run mode {0}'.format(mode))
 
 
-def mode_run_common_obs(args):
+def mode_run_common_obs(args, extra_args):
     """Observing mode processing mode of numina."""
 
     # Loading observation result if exists
@@ -82,17 +82,22 @@ def mode_run_common_obs(args):
     with open(args.reqs, 'r') as fd:
         loaded_data = yaml.load(fd)
 
-    control_format = loaded_data.get('version', 0)
+    if extra_args.extra_control:
+        _logger.info('extra control %s', extra_args.extra_control)
+        loaded_data_extra = parse_as_yaml(extra_args.extra_control)
+    else:
+        loaded_data_extra = None
 
+    control_format = loaded_data.get('version', 0)
+    _logger.info('control format version %d', control_format)
     if control_format == 0:
-        dal = process_format_version_0(loaded_obs, loaded_data)
+        dal = process_format_version_0(loaded_obs, loaded_data, loaded_data_extra)
     elif control_format == 1:
-        dal = process_format_version_1(loaded_obs, loaded_data)
+        dal = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
 
-    _logger.info('control format version %d', control_format)
     # Start processing
 
     for obid in loaded_ids:
@@ -125,7 +130,7 @@ def mode_run_common_obs(args):
         _logger.debug('parsing requirements')
         for key in recipeclass.requirements():
             v = getattr(rinput, key)
-            _logger.info("recipe requires %r value is %s", key, v)
+            _logger.info("recipe requires %r value is %s", key, str(v)[:10])
 
         _logger.debug('parsing products')
         for req in recipeclass.products().values():
@@ -237,3 +242,13 @@ def run_recipe_timed(recipe, rinput, task):
     task.runinfo['time_end'] = now2.strftime(TIMEFMT)
     task.runinfo['time_running'] = now2 - now1
     return task
+
+
+def parse_as_yaml(strdict):
+    """Parse a dictionary of strings as if yaml reads it"""
+    interm = ""
+    for key, val in strdict.items():
+        interm = "%s: %s, %s" % (key, val, interm)
+    fin = '{%s}' % interm
+
+    return yaml.load(fin)

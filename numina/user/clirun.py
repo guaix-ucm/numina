@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 import os
 
@@ -77,5 +77,6 @@ def register(subparsers, config):
 
     return parser_run
 
-def mode_run_obsmode(args):
-    mode_run_common(args, mode='obs')
+
+def mode_run_obsmode(args, extra_args):
+    mode_run_common(args, extra_args, mode='obs')
