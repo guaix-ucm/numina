@@ -23,7 +23,7 @@ from __future__ import print_function
 import numpy as np
 from numpy.polynomial import Polynomial
 
-from .pause_debugplot import pause_debugplot
+from ..display.pause_debugplot import pause_debugplot
 from .r_utilities import LinearModelYvsX
 
 

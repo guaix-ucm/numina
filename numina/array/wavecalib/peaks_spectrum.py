@@ -23,7 +23,7 @@ from __future__ import print_function
 import numpy as np
 from numpy.polynomial import Polynomial
 
-from .pause_debugplot import pause_debugplot
+from ..display.pause_debugplot import pause_debugplot
 
 def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     """Find peaks in array.

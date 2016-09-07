@@ -30,10 +30,10 @@ from scipy import ndimage
 from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_dict
 from .arccalibration import SolutionArcCalibration
-from .pause_debugplot import pause_debugplot
+from ..display.pause_debugplot import pause_debugplot
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
-from .ximplot import ximplot
+from ..display.ximplot import ximplot
 
 def wvcal_spectrum(filename, ns1, ns2,
                    nwin_background,

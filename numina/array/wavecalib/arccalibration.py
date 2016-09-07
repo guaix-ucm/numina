@@ -27,8 +27,8 @@ import numpy as np
 from numpy.polynomial import Polynomial
 import scipy.misc
 
+from ..display.pause_debugplot import pause_debugplot
 from .fit_theil_sen import fit_theil_sen
-from .pause_debugplot import pause_debugplot
 from .polfit_residuals import polfit_residuals_with_cook_rejection
 
 
