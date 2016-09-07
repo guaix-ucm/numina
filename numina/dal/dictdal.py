@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -47,13 +47,14 @@ def tags_are_valid(subset, superset):
 
 
 class BaseDictDAL(AbsDAL):
-    def __init__(self, ob_table, prod_table, req_table):
+    def __init__(self, ob_table, prod_table, req_table, extra_data=None):
         super(BaseDictDAL, self).__init__()
 
         # Check that the structure de base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
-        self.req_table= req_table
+        self.req_table = req_table
+        self.extra_data = extra_data if extra_data else {}
         self.drps = DrpSystem()
 
     def search_instrument_configuration_from_ob(self, ob):
@@ -99,7 +100,7 @@ class BaseDictDAL(AbsDAL):
         return self.search_recipe(ins, mode, pipeline)
 
     def search_prod_obsid(self, ins, obsid, pipeline):
-        '''Returns the first coincidence...'''
+        """Returns the first coincidence..."""
         ins_prod = self.prod_table[ins]
 
         # search results of these OBs
@@ -111,7 +112,12 @@ class BaseDictDAL(AbsDAL):
             raise NoResultFound('result for ob %i not found' % obsid)
 
     def search_prod_req_tags(self, req, ins, tags, pipeline):
-        return self.search_prod_type_tags(req.type, ins, tags, pipeline)
+        if req.dest in self.extra_data:
+            val = self.extra_data[req.dest]
+            content = load(req.type, val)
+            return StoredProduct(id=0, tags={}, content=content)
+        else:
+            return self.search_prod_type_tags(req.type, ins, tags, pipeline)
 
     def search_prod_type_tags(self, tipo, ins, tags, pipeline):
         """Returns the first coincidence..."""
@@ -136,11 +142,14 @@ class BaseDictDAL(AbsDAL):
             raise NoResultFound(msg)
     
     def search_param_req(self, req, instrument, mode, pipeline):
-
         req_table_ins = self.req_table.get(instrument, {})
         req_table_insi_pipe = req_table_ins.get(pipeline, {})
         mode_keys = req_table_insi_pipe.get(mode, {})
-        if req.dest in mode_keys:
+        if req.dest in self.extra_data:
+            value = self.extra_data[req.dest]
+            content = StoredParameter(value)
+            return content
+        elif req.dest in mode_keys:
             value = mode_keys[req.dest]
             content = StoredParameter(value)
             return content
@@ -155,7 +164,7 @@ class BaseDictDAL(AbsDAL):
         obsres = obsres_from_dict(este)
 
         this_drp = self.drps.query_by_name(obsres.instrument)
-        tagger = None
+
         for mode in this_drp.modes:
             if mode.key == obsres.mode:
                 tagger = mode.tagger
@@ -187,4 +196,4 @@ class DictDAL(BaseDictDAL):
         super(DictDAL, self).__init__(base['oblocks'],
                                       base['products'],
                                       base['parameters']
-                                     )
+                                      )
