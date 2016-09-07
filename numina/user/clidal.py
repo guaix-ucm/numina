@@ -31,16 +31,18 @@ import numina.store as storage
 _logger = logging.getLogger("numina.simpledal")
 
 
-def process_format_version_0(loaded_obs, loaded_data):
-    return ComandLineDAL(loaded_obs, loaded_data)
+def process_format_version_0(loaded_obs, loaded_data, loaded_data_extra=None):
+    return CommandLineDAL(loaded_obs, loaded_data, loaded_data_extra)
 
 
-class ComandLineDAL(AbsDAL):
+class CommandLineDAL(AbsDAL):
     """A DAL to use with the command line interface"""
 
-    def __init__(self, ob_table, reqs):
+    def __init__(self, ob_table, reqs, extra_reqs=None):
         self.ob_table = ob_table
         self._reqs = reqs
+        if extra_reqs:
+            self._reqs['requirements'].update(extra_reqs)
         self.drps = DrpSystem()
 
     def search_instrument_configuration_from_ob(self, ob):
