@@ -100,6 +100,8 @@ if __name__ == "__main__":
         # grism = image_header['grism']
         # spfilter = image_header['filter']
         # rotang = image_header['rotang']
+        # ToDo: include additional command line parameter to display
+        #       the value of a set of FITS keywords in the plot title.
 
         if image2d.shape != (naxis2, naxis1):
             raise ValueError("Unexpected error with NAXIS1, NAXIS2")
