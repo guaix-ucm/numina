@@ -32,21 +32,62 @@ from .fit_theil_sen import fit_theil_sen
 from .polfit_residuals import polfit_residuals_with_cook_rejection
 
 
-class SolutionArcCalibration:
+class WavecalFeature:
+    """Store information concerning a particular line identification.
+
+    Parameters
+    ----------
+    line_ok : bool
+        True if the line has been properly identified.
+    line_type : char
+        Type of line identification (A, B, C, D, E, R, T, P, K, I, X).
+        See documentation embedded within the arccalibration_direct
+        function for details.
+    line_id : int
+        Number of identified line within the master list.
+    xpos : float
+        Pixel coordinate of the peal of the line.
+    wv : float
+        Wavelength of the identified line in the master list.
+
+    """
+
+    def __init__(self, line_ok, line_type, line_id, funcost, xpos, wv):
+        self.lineok = line_ok
+        self.type = line_type
+        self.id = line_id
+        self.funcost = funcost
+        self.xpos = xpos
+        self.wv = wv
+
+    def __str__(self):
+        output = "<WavecalFeature instance>\n" + \
+                 "lineok......: " + str(self.lineok) + "\n" + \
+                 "type........: " + str(self.type) + "\n" + \
+                 "id..........: " + str(self.id) + "\n" + \
+                 "funcost.....: " + str(self.funcost) + "\n" + \
+                 "xpos........: " + str(self.xpos) + "\n" + \
+                 "wv..........: " + str(self.wv) + "\n"
+
+        return output
+
+
+class SolutionArcCalibration(object):
     """Auxiliary class to store the arc calibration solution.
 
     Note that this class only stores the information concerning the
     arc lines that have been properly identified. The information
     about all the lines (including those initially found but at the
-    end discarded) is stored in the list of dictionaries
-    'list_of_dict'.
+    end discarded) is stored in the list of WavecalFeature instances
+    'list_of_wvfeatures'.
 
     Parameters
     ----------
-    list_of_dict : list (of dictionaries)
-        A list of size equal to the number of arc lines, which
-        elements are dictionaries containing all the relevant
-        information concerning the line identification.
+    list_of_wvfeatures : list (of WavecalFeature instances)
+        A list of size equal to the number of identified lines, which
+        elements are instances of the class WavecalFeature, containing
+        all the relevant information concerning the line
+        identification.
     coeff : 1d numpy array (float)
         Coefficients of the wavelength calibration polynomial.
     crpix1_linear : float
@@ -99,25 +140,25 @@ class SolutionArcCalibration:
 
     """
 
-    def __init__(self, list_of_dict,
+    def __init__(self, list_of_wvfeatures,
                  coeff, crpix1_linear, crval1_linear,
                  crmin1_linear, crmax1_linear, cdelt1_linear):
         # protections
-        nlines_arc_total = len(list_of_dict)
+        nlines_arc_total = len(list_of_wvfeatures)
         if nlines_arc_total == 0:
             raise ValueError("Number of arc lines is zero!")
 
         # initialize members
-        self.xpos = np.array([tmp_dict['xpos'] for tmp_dict
-                              in list_of_dict if tmp_dict['lineok']])
-        self.wv = np.array([tmp_dict['wv'] for tmp_dict
-                            in list_of_dict if tmp_dict['lineok']])
-        self.funcost = np.array([tmp_dict['funcost'] for tmp_dict
-                                 in list_of_dict if tmp_dict['lineok']])
-        self.type = np.array([tmp_dict['type'] for tmp_dict
-                              in list_of_dict if tmp_dict['lineok']])
-        self.id = np.array([tmp_dict['id'] for tmp_dict
-                            in list_of_dict if tmp_dict['lineok']])
+        self.xpos = np.array([wvfeature.xpos for wvfeature
+                              in list_of_wvfeatures if wvfeature.lineok])
+        self.wv = np.array([wvfeature.wv for wvfeature
+                            in list_of_wvfeatures if wvfeature.lineok])
+        self.funcost = np.array([wvfeature.funcost for wvfeature
+                                 in list_of_wvfeatures if wvfeature.lineok])
+        self.type = np.array([wvfeature.type for wvfeature
+                              in list_of_wvfeatures if wvfeature.lineok])
+        self.id = np.array([wvfeature.id for wvfeature
+                            in list_of_wvfeatures if wvfeature.lineok])
 
         self.nlines_arc = self.xpos.size
         self.coeff = coeff
@@ -174,14 +215,16 @@ def robust_std(x):
     return sigma_g
 
 
-def select_data_for_fit(list_of_dict):
+def select_data_for_fit(list_of_wvfeatures):
     """Select information from valid arc lines to facilitate posterior fits.
 
     Parameters
     ----------
-    list_of_dict : list (of dictionaries)
-        Arc calibration solution, providing the status of each arc
-        line.
+    list_of_wvfeatures : list (of WavecalFeature instances)
+        A list of size equal to the number of identified lines, which
+        elements are instances of the class WavecalFeature, containing
+        all the relevant information concerning the line
+        identification.
 
     Returns
     -------
@@ -200,7 +243,7 @@ def select_data_for_fit(list_of_dict):
 
     """
 
-    nlines_arc = len(list_of_dict)
+    nlines_arc = len(list_of_wvfeatures)
 
     nfit = 0
     ifit = []
@@ -208,31 +251,32 @@ def select_data_for_fit(list_of_dict):
     yfit = np.array([])
     wfit = np.array([])
     for i in range(nlines_arc):
-        if list_of_dict[i]['lineok']:
+        if list_of_wvfeatures[i].lineok:
             ifit.append(i)
-            xfit = np.append(xfit, [list_of_dict[i]['xpos']])
-            yfit = np.append(yfit, [list_of_dict[i]['wv']])
-            wfit = np.append(wfit, [list_of_dict[i]['funcost']])
+            xfit = np.append(xfit, [list_of_wvfeatures[i].xpos])
+            yfit = np.append(yfit, [list_of_wvfeatures[i].wv])
+            wfit = np.append(wfit, [list_of_wvfeatures[i].funcost])
             nfit += 1
 
     return nfit, ifit, xfit, yfit, wfit
 
 
-def fit_list_of_dict(list_of_dict,
-                     naxis1_arc,
-                     crpix1,
-                     poly_degree_wfit,
-                     weighted=False,
-                     debugplot=0,
-                     plot_title=None):
-    """Fit polynomial to arc calibration list_of_dict.
+def fit_list_of_wvfeatures(list_of_wvfeatures,
+                           naxis1_arc,
+                           crpix1,
+                           poly_degree_wfit,
+                           weighted=False,
+                           debugplot=0,
+                           plot_title=None):
+    """Fit polynomial to arc calibration list_of_wvfeatures.
 
     Parameters
     ----------
-    list_of_dict : list (of dictionaries)
-        A list of size equal to the number of arc lines, which
-        elements are dictionaries containing all the relevant
-        information concerning the line identification.
+    list_of_wvfeatures : list (of WavecalFeature instances)
+        A list of size equal to the number of identified lines, which
+        elements are instances of the class WavecalFeature, containing
+        all the relevant information concerning the line
+        identification.
     naxis1_arc : int
         NAXIS1 of arc spectrum.
     crpix1 : float
@@ -279,10 +323,10 @@ def fit_list_of_dict(list_of_dict,
 
     """
 
-    nlines_arc = len(list_of_dict)
+    nlines_arc = len(list_of_wvfeatures)
 
     # select information from valid lines.
-    nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_dict)
+    nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
 
     # select list of filtered out and unidentified lines
     list_r = []
@@ -291,16 +335,16 @@ def fit_list_of_dict(list_of_dict,
     list_k = []
     list_unidentified = []
     for i in range(nlines_arc):
-        if not list_of_dict[i]['lineok']:
-            if list_of_dict[i]['type'] is None:
+        if not list_of_wvfeatures[i].lineok:
+            if list_of_wvfeatures[i].type is None:
                 list_unidentified.append(i)
-            elif list_of_dict[i]['type'] == 'R':
+            elif list_of_wvfeatures[i].type == 'R':
                 list_r.append(i)
-            elif list_of_dict[i]['type'] == 'T':
+            elif list_of_wvfeatures[i].type == 'T':
                 list_t.append(i)
-            elif list_of_dict[i]['type'] == 'P':
+            elif list_of_wvfeatures[i].type == 'P':
                 list_p.append(i)
-            elif list_of_dict[i]['type'] == 'K':
+            elif list_of_wvfeatures[i].type == 'K':
                 list_k.append(i)
             else:
                 raise ValueError('Unexpected "type"')
@@ -358,8 +402,8 @@ def fit_list_of_dict(list_of_dict,
                 xxp = np.array([])
                 yyp = np.array([])
                 for i in list_x:
-                    xxp = np.append(xxp, [list_of_dict[i]['xpos']])
-                    yyp = np.append(yyp, [list_of_dict[i]['wv']])
+                    xxp = np.append(xxp, [list_of_wvfeatures[i].xpos])
+                    yyp = np.append(yyp, [list_of_wvfeatures[i].wv])
                 yyres = yyp - poly(xxp)
                 ax2.plot(xxp, yyres, marker='x', markersize=15, c=val[2],
                          linewidth=0)
@@ -371,7 +415,8 @@ def fit_list_of_dict(list_of_dict,
         ax.set_ylabel('differences with\nlinear solution (Angstrom)')
         ax.plot(xp, yp, 'go', label="identified")
         for i in range(nfit):
-            ax.text(xp[i], yp[i], list_of_dict[ifit[i]]['type'], fontsize=15)
+            ax.text(xp[i], yp[i], list_of_wvfeatures[ifit[i]].type,
+                    fontsize=15)
         # polynomial fit
         ax.plot(xpol, ypol, 'c-', label="fit")
         # unidentified lines
@@ -379,8 +424,8 @@ def fit_list_of_dict(list_of_dict,
             ymin = np.concatenate((yp, ypol)).min()
             ymax = np.concatenate((yp, ypol)).max()
             for i in list_unidentified:
-                xxp = np.array([list_of_dict[i]['xpos'],
-                                list_of_dict[i]['xpos']])
+                xxp = np.array([list_of_wvfeatures[i].xpos,
+                                list_of_wvfeatures[i].xpos])
                 yyp = np.array([ymin, ymax])
                 if i == list_unidentified[0]:
                     ax.plot(xxp, yyp, 'r--', label='unidentified')
@@ -395,8 +440,8 @@ def fit_list_of_dict(list_of_dict,
                 xxp = np.array([])
                 yyp = np.array([])
                 for i in list_x:
-                    xxp = np.append(xxp, [list_of_dict[i]['xpos']])
-                    yyp = np.append(yyp, [list_of_dict[i]['wv']])
+                    xxp = np.append(xxp, [list_of_wvfeatures[i].xpos])
+                    yyp = np.append(yyp, [list_of_wvfeatures[i].wv])
                 yyp -= crval1_linear + (xxp - crpix1) * cdelt1_linear
                 ax.plot(xxp, yyp, marker='x', markersize=15, c=val[2],
                         linewidth=0, label='removed')
@@ -528,7 +573,7 @@ def gen_triplets_master(wv_master, debugplot=0):
     triplets_master_sorted_list = [triplets_master_list[i]
                                    for i in isort_ratios_master]
 
-    if debugplot % 10 != 0:
+    if debugplot in [21, 22]:
         # compute and plot histogram with position ratios
         bins_in = np.linspace(0.0, 1.0, 41)
         hist, bins_out = np.histogram(ratios_master, bins=bins_in)
@@ -627,17 +672,18 @@ def arccalibration(wv_master,
 
     Returns
     -------
-    list_of_dict : list of dictionaries
-        A list of size equal to the number of arc lines, which elements
-        are dictionaries containing all the relevant information
-        concerning the line identification.
+    list_of_wvfeatures : list (of WavecalFeature instances)
+        A list of size equal to the number of identified lines, which
+        elements are instances of the class WavecalFeature, containing
+        all the relevant information concerning the line
+        identification.
 
     """
 
     ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
       gen_triplets_master(wv_master=wv_master, debugplot=debugplot)
 
-    list_of_dict = arccalibration_direct(
+    list_of_wvfeatures = arccalibration_direct(
         wv_master=wv_master,
         ntriplets_master=ntriplets_master,
         ratios_master_sorted=ratios_master_sorted,
@@ -657,7 +703,7 @@ def arccalibration(wv_master,
         times_sigma_inclusion=times_sigma_inclusion,
         debugplot=debugplot)
 
-    return list_of_dict
+    return list_of_wvfeatures
 
 
 def arccalibration_direct(wv_master,
@@ -746,10 +792,11 @@ def arccalibration_direct(wv_master,
 
     Returns
     -------
-    list_of_dict : list of dictionaries
-        A list of size equal to the number of arc lines, which elements
-        are dictionaries containing all the relevant information
-        concerning the line identification.
+    list_of_wvfeatures : list (of WavecalFeature instances)
+        A list of size equal to the number of identified lines, which
+        elements are instances of the class WavecalFeature, containing
+        all the relevant information concerning the line
+        identification.
 
     """
 
@@ -1198,89 +1245,90 @@ def arccalibration_direct(wv_master,
     # - id: index of the line in the master table
     # - funcost: cost function associated the the line identification
 
-    # initialize list_of_dict
-    list_of_dict = []
+    # initialize list_of_wvfeatures
+    list_of_wvfeatures = []
     for i in range(nlines_arc):
-        list_of_dict.append({'lineok': False,
-                             'type': None,
-                             'id': None,
-                             'funcost': None,
-                             'xpos': xpos_arc[i],
-                             'wv': None})
+        tmp_feature = WavecalFeature(line_ok=False,
+                                     line_type=None,
+                                     line_id=None,
+                                     funcost=None,
+                                     xpos=xpos_arc[i],
+                                     wv=None)
+        list_of_wvfeatures.append(tmp_feature)
 
     # type A lines
     for i in range(2, nlines_arc - 2):
         j1, j2, j3 = diagonal_ids[i]
         if j1 == j2 == j3 and j1 is not None:
-            list_of_dict[i]['lineok'] = True
-            list_of_dict[i]['type'] = 'A'
-            list_of_dict[i]['id'] = j1
-            list_of_dict[i]['funcost'] = min(diagonal_funcost[i])
-            list_of_dict[i]['wv'] = wv_master[j1]
+            list_of_wvfeatures[i].lineok = True
+            list_of_wvfeatures[i].type = 'A'
+            list_of_wvfeatures[i].id = j1
+            list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
+            list_of_wvfeatures[i].wv = wv_master[j1]
     
     if debugplot >= 10:
         print('\n* Including Type A lines:')
         for i in range(nlines_arc):
-            print(i, list_of_dict[i])
+            print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
 
     # type B lines
     for i in range(2, nlines_arc - 2):
-        if not list_of_dict[i]['lineok']:
+        if not list_of_wvfeatures[i].lineok:
             j1, j2, j3 = diagonal_ids[i]
             f1, f2, f3 = diagonal_funcost[i]
             if j1 == j2 and j1 is not None:
                 if max(f1, f2) < f3:
-                    list_of_dict[i]['lineok'] = True
-                    list_of_dict[i]['type'] = 'B'
-                    list_of_dict[i]['id'] = j1
-                    list_of_dict[i]['funcost'] = min(f1, f2)
-                    list_of_dict[i]['wv'] = wv_master[j1]
+                    list_of_wvfeatures[i].lineok = True
+                    list_of_wvfeatures[i].type = 'B'
+                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].funcost = min(f1, f2)
+                    list_of_wvfeatures[i].wv = wv_master[j1]
             elif j1 == j3 and j1 is not None:
                 if max(f1, f3) < f2:
-                    list_of_dict[i]['lineok'] = True
-                    list_of_dict[i]['type'] = 'B'
-                    list_of_dict[i]['id'] = j1
-                    list_of_dict[i]['funcost'] = min(f1, f3)
-                    list_of_dict[i]['wv'] = wv_master[j1]
+                    list_of_wvfeatures[i].lineok = True
+                    list_of_wvfeatures[i].type = 'B'
+                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].funcost = min(f1, f3)
+                    list_of_wvfeatures[i].wv = wv_master[j1]
             elif j2 == j3 and j2 is not None:
                 if max(f2, f3) < f1:
-                    list_of_dict[i]['lineok'] = True
-                    list_of_dict[i]['type'] = 'B'
-                    list_of_dict[i]['id'] = j2
-                    list_of_dict[i]['funcost'] = min(f2, f3)
-                    list_of_dict[i]['wv'] = wv_master[j2]
+                    list_of_wvfeatures[i].lineok = True
+                    list_of_wvfeatures[i].type = 'B'
+                    list_of_wvfeatures[i].id = j2
+                    list_of_wvfeatures[i].funcost = min(f2, f3)
+                    list_of_wvfeatures[i].wv = wv_master[j2]
 
     if debugplot >= 10:
         print('\n* Including Type B lines:')
         for i in range(nlines_arc):
-            print(i, list_of_dict[i])
+            print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
 
     # type C lines
     for i in range(2, nlines_arc - 2):
-        if not list_of_dict[i]['lineok']:
+        if not list_of_wvfeatures[i].lineok:
             j1, j2, j3 = diagonal_ids[i]
             f1, f2, f3 = diagonal_funcost[i]
-            if list_of_dict[i-1]['type'] == 'B':
+            if list_of_wvfeatures[i-1].type == 'B':
                 if min(f2, f3) > f1:
-                    list_of_dict[i]['lineok'] = True
-                    list_of_dict[i]['type'] = 'C'
-                    list_of_dict[i]['id'] = j1
-                    list_of_dict[i]['funcost'] = f1
-                    list_of_dict[i]['wv'] = wv_master[j1]
-            elif list_of_dict[i+1]['type'] == 'B':
+                    list_of_wvfeatures[i].lineok = True
+                    list_of_wvfeatures[i].type = 'C'
+                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].funcost = f1
+                    list_of_wvfeatures[i].wv = wv_master[j1]
+            elif list_of_wvfeatures[i+1].type == 'B':
                 if min(f1, f2) > f3:
-                    list_of_dict[i]['lineok'] = True
-                    list_of_dict[i]['type'] = 'C'
-                    list_of_dict[i]['id'] = j3
-                    list_of_dict[i]['funcost'] = f3
-                    list_of_dict[i]['wv'] = wv_master[j3]
+                    list_of_wvfeatures[i].lineok = True
+                    list_of_wvfeatures[i].type = 'C'
+                    list_of_wvfeatures[i].id = j3
+                    list_of_wvfeatures[i].funcost = f3
+                    list_of_wvfeatures[i].wv = wv_master[j3]
 
     if debugplot >= 10:
         print('\n* Including Type C lines:')
         for i in range(nlines_arc):
-            print(i, list_of_dict[i])
+            print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
 
     # type D lines
@@ -1288,46 +1336,46 @@ def arccalibration_direct(wv_master,
         j1, j2 = diagonal_ids[i]
         if j1 == j2 and j1 is not None:
             f1, f2 = diagonal_funcost[i]
-            list_of_dict[i]['lineok'] = True
-            list_of_dict[i]['type'] = 'D'
-            list_of_dict[i]['id'] = j1
-            list_of_dict[i]['funcost'] = min(f1, f2)
-            list_of_dict[i]['wv'] = wv_master[j1]
+            list_of_wvfeatures[i].lineok = True
+            list_of_wvfeatures[i].type = 'D'
+            list_of_wvfeatures[i].id = j1
+            list_of_wvfeatures[i].funcost = min(f1, f2)
+            list_of_wvfeatures[i].wv = wv_master[j1]
 
     if debugplot >= 10:
         print('\n* Including Type D lines:')
         for i in range(nlines_arc):
-            print(i, list_of_dict[i])
+            print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
 
     # type E lines
     i = 0
-    if list_of_dict[i+1]['lineok'] and list_of_dict[i+2]['lineok']:
+    if list_of_wvfeatures[i+1].lineok and list_of_wvfeatures[i+2].lineok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
-            list_of_dict[i]['lineok'] = True
-            list_of_dict[i]['type'] = 'E'
-            list_of_dict[i]['id'] = diagonal_ids[i][0]
-            list_of_dict[i]['funcost'] = diagonal_funcost[i][0]
-            list_of_dict[i]['wv'] = wv_master[j1]
+            list_of_wvfeatures[i].lineok = True
+            list_of_wvfeatures[i].type = 'E'
+            list_of_wvfeatures[i].id = diagonal_ids[i][0]
+            list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
+            list_of_wvfeatures[i].wv = wv_master[j1]
     i = nlines_arc-1
-    if list_of_dict[i-2]['lineok'] and list_of_dict[i-1]['lineok']:
+    if list_of_wvfeatures[i-2].lineok and list_of_wvfeatures[i-1].lineok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
-            list_of_dict[i]['lineok'] = True
-            list_of_dict[i]['type'] = 'E'
-            list_of_dict[i]['id'] = diagonal_ids[i][0]
-            list_of_dict[i]['funcost'] = diagonal_funcost[i][0]
-            list_of_dict[i]['wv'] = wv_master[j1]
+            list_of_wvfeatures[i].lineok = True
+            list_of_wvfeatures[i].type = 'E'
+            list_of_wvfeatures[i].id = diagonal_ids[i][0]
+            list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
+            list_of_wvfeatures[i].wv = wv_master[j1]
 
     if debugplot >= 10:
         print('\n* Including Type E lines:')
         for i in range(nlines_arc):
-            print(i, list_of_dict[i])
+            print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
-        fit_list_of_dict(list_of_dict, naxis1_arc, crpix1,
-                         poly_degree_wfit,
-                         weighted=False, debugplot=debugplot)
+        fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
+                               poly_degree_wfit,
+                               weighted=False, debugplot=debugplot)
 
     # ---
     # Check that the solutions do not contain duplicated values. If
@@ -1342,35 +1390,35 @@ def arccalibration_direct(wv_master,
     while lduplicated:
         lduplicated = False
         for i1 in range(nlines_arc):
-            if list_of_dict[i1]['lineok']:
-                j1 = list_of_dict[i1]['id']
+            if list_of_wvfeatures[i1].lineok:
+                j1 = list_of_wvfeatures[i1].id
                 for i2 in range(i1+1, nlines_arc):
-                    if list_of_dict[i2]['lineok']:
-                        j2 = list_of_dict[i2]['id']
+                    if list_of_wvfeatures[i2].lineok:
+                        j2 = list_of_wvfeatures[i2].id
                         if j1 == j2:
                             lduplicated = True
                             nduplicated += 1
-                            f1 = list_of_dict[i1]['funcost']
-                            f2 = list_of_dict[i2]['funcost']
+                            f1 = list_of_wvfeatures[i1].funcost
+                            f2 = list_of_wvfeatures[i2].funcost
                             if f1 < f2:
-                                list_of_dict[i2]['lineok'] = False
-                                list_of_dict[i2]['type'] = 'R'
+                                list_of_wvfeatures[i2].lineok = False
+                                list_of_wvfeatures[i2].type = 'R'
                                 # do not uncomment the next line:
-                                # list_of_dict[i2]['wv'] = None
+                                # list_of_wvfeatures[i2].wv = None
                             else:
-                                list_of_dict[i1]['lineok'] = False
-                                list_of_dict[i1]['type'] = 'R'
+                                list_of_wvfeatures[i1].lineok = False
+                                list_of_wvfeatures[i1].type = 'R'
                                 # do not uncomment the next line:
-                                # list_of_dict[i1]['wv'] = None
+                                # list_of_wvfeatures[i1].wv = None
 
     if debugplot >= 10:
         if nduplicated > 0:
             print('\n* Removing Type R lines:')
             for i in range(nlines_arc):
-                print(i, list_of_dict[i])
-            fit_list_of_dict(list_of_dict, naxis1_arc, crpix1,
-                             poly_degree_wfit,
-                             weighted=False, debugplot=debugplot)
+                print(i, list_of_wvfeatures[i])
+            fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
+                                   poly_degree_wfit,
+                                   weighted=False, debugplot=debugplot)
         else:
             print('\n* No duplicated Type R lines have been found')
 
@@ -1379,7 +1427,7 @@ def arccalibration_direct(wv_master,
     # fit. The filtered lines are labelled as type='T'.
     if debugplot >= 10:
         print('\n>>> Theil-Sen filtering...')
-    nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_dict)
+    nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
     if nfit < 5:
         nremoved = 0
         if debugplot >= 10:
@@ -1402,20 +1450,20 @@ def arccalibration_direct(wv_master,
         nremoved = 0
         for i in range(nfit):
             if abs(rfit[i]) > times_sigma_theil_sen * sigma_rfit:
-                list_of_dict[ifit[i]]['lineok'] = False
-                list_of_dict[ifit[i]]['type'] = 'T'
+                list_of_wvfeatures[ifit[i]].lineok = False
+                list_of_wvfeatures[ifit[i]].type = 'T'
                 # do not uncomment the next line:
-                # list_of_dict[ifit[i]]['wv'] = None
+                # list_of_wvfeatures[ifit[i]].wv = None
                 nremoved += 1
     
     if debugplot >= 10:
         if nremoved > 0:
             print('\n* Removing Type T lines:')
             for i in range(nlines_arc):
-                print(i, list_of_dict[i])
-            fit_list_of_dict(list_of_dict, naxis1_arc, crpix1,
-                             poly_degree_wfit,
-                             weighted=False, debugplot=debugplot)
+                print(i, list_of_wvfeatures[i])
+            fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
+                                   poly_degree_wfit,
+                                   weighted=False, debugplot=debugplot)
         else:
             print('\nNo Type T lines have been found and removed')
 
@@ -1425,7 +1473,7 @@ def arccalibration_direct(wv_master,
     if times_sigma_polfilt > 0:
         if debugplot >= 10:
             print('\n>>> Polynomial filtering...')
-        nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_dict)
+        nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
             print("nfit=", nfit)
             raise ValueError("Insufficient number of points for fit.")
@@ -1445,20 +1493,20 @@ def arccalibration_direct(wv_master,
         nremoved = 0
         for i in range(nfit):
             if abs(rfit[i]) > times_sigma_polfilt * sigma_rfit:
-                list_of_dict[ifit[i]]['lineok'] = False
-                list_of_dict[ifit[i]]['type'] = 'P'
+                list_of_wvfeatures[ifit[i]].lineok = False
+                list_of_wvfeatures[ifit[i]].type = 'P'
                 # do not uncomment the next line:
-                # list_of_dict[ifit[i]]['wv'] = None
+                # list_of_wvfeatures[ifit[i]].wv = None
                 nremoved += 1
 
         if debugplot >= 10:
             if nremoved > 0:
                 print('\n* Removing Type P lines:')
                 for i in range(nlines_arc):
-                    print(i, list_of_dict[i])
-                fit_list_of_dict(list_of_dict, naxis1_arc, crpix1,
-                                 poly_degree_wfit,
-                                 weighted=False, debugplot=debugplot)
+                    print(i, list_of_wvfeatures[i])
+                fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
+                                       poly_degree_wfit,
+                                       weighted=False, debugplot=debugplot)
             else:
                 print('\nNo type P lines have been found and removed')
     else:
@@ -1471,7 +1519,7 @@ def arccalibration_direct(wv_master,
     if times_sigma_cook > 0:
         if debugplot >= 10:
             print('\n>>> Removing outliers using Cook distance...')
-        nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_dict)
+        nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         # There must be enough points to compute reasonable Cook distances
         if nfit <= poly_degree_wfit + 3:
             nremoved = 0
@@ -1485,33 +1533,32 @@ def arccalibration_direct(wv_master,
             nremoved = 0
             for i in range(nfit):
                 if abs(reject[i]):
-                    list_of_dict[ifit[i]]['lineok'] = False
-                    list_of_dict[ifit[i]]['type'] = 'K'
+                    list_of_wvfeatures[ifit[i]].lineok = False
+                    list_of_wvfeatures[ifit[i]].type = 'K'
                     # do not uncomment the next line:
-                    # list_of_dict[ifit[i]]['wv'] = None
+                    # list_of_wvfeatures[ifit[i]].wv = None
                     nremoved += 1
 
         if debugplot >= 10:
             if nremoved > 0:
                 print('\n* Removing Type K lines:')
                 for i in range(nlines_arc):
-                    print(i, list_of_dict[i])
-                fit_list_of_dict(list_of_dict, naxis1_arc, crpix1,
-                                 poly_degree_wfit,
-                                 weighted=False, debugplot=debugplot)
+                    print(i, list_of_wvfeatures[i])
+                fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
+                                       poly_degree_wfit,
+                                       weighted=False, debugplot=debugplot)
             else:
                 print('\nNo type K lines have been found and removed')
     else:
         if debugplot >= 10:
             print('\n=> Skipping outlier detection using Cook distance!')
 
-
     # ---
     # If all the arc lines have been identified, compute the final
     # fit and exit
-    lineok = np.array([tmp_dict['lineok'] for tmp_dict in list_of_dict])
+    lineok = np.array([wvfeature.lineok for wvfeature in list_of_wvfeatures])
     if np.all(lineok):
-        return list_of_dict
+        return list_of_wvfeatures
 
     # ---
     # Include unidentified lines by using the prediction of the
@@ -1522,7 +1569,7 @@ def arccalibration_direct(wv_master,
     while loop_include_new_lines:
         if debugplot >= 10:
             print('\n>>> Polynomial prediction of unknown lines...')
-        nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_dict)
+        nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
             raise ValueError("Insufficient number of points for fit.")
         poly = Polynomial.fit(x=xfit, y=yfit, deg=poly_degree_wfit)
@@ -1538,13 +1585,14 @@ def arccalibration_direct(wv_master,
         list_id_already_found = []
         list_funcost_already_found = []
         for i in range(nlines_arc):
-            if list_of_dict[i]['lineok']:
-                list_id_already_found.append(list_of_dict[i]['id'])
-                list_funcost_already_found.append(list_of_dict[i]['funcost'])
+            if list_of_wvfeatures[i].lineok:
+                list_id_already_found.append(list_of_wvfeatures[i].id)
+                list_funcost_already_found.append(
+                    list_of_wvfeatures[i].funcost)
 
         nnewlines = 0
         for i in range(nlines_arc):
-            if not list_of_dict[i]['lineok']:
+            if not list_of_wvfeatures[i].lineok:
                 zfit = poly(xpos_arc[i])  # predicted wavelength
                 isort = np.searchsorted(wv_master, zfit)
                 if isort == 0:
@@ -1567,14 +1615,14 @@ def arccalibration_direct(wv_master,
                 if ifound not in list_id_already_found:  # unused line
                     if dlambda < times_sigma_inclusion * sigma_rfit:
                         list_id_already_found.append(ifound)
-                        list_of_dict[i]['lineok'] = True
-                        list_of_dict[i]['type'] = 'I'
-                        list_of_dict[i]['id'] = ifound
+                        list_of_wvfeatures[i].lineok = True
+                        list_of_wvfeatures[i].type = 'I'
+                        list_of_wvfeatures[i].id = ifound
                         # assign the worse cost function value
-                        list_of_dict[i]['funcost'] = max(
+                        list_of_wvfeatures[i].funcost = max(
                             list_funcost_already_found
                         )
-                        list_of_dict[i]['wv'] = wv_master[ifound]
+                        list_of_wvfeatures[i].wv = wv_master[ifound]
                         nnewlines += 1
 
         if debugplot >= 10:
@@ -1582,10 +1630,10 @@ def arccalibration_direct(wv_master,
                 new_lines_included = True
                 print('\n* Including Type I lines:')
                 for i in range(nlines_arc):
-                    print(i, list_of_dict[i])
-                fit_list_of_dict(list_of_dict, naxis1_arc, crpix1,
-                                 poly_degree_wfit,
-                                 weighted=False, debugplot=debugplot)
+                    print(i, list_of_wvfeatures[i])
+                fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
+                                       poly_degree_wfit,
+                                       weighted=False, debugplot=debugplot)
             else:
                 if new_lines_included:
                     print("\nNo additional Type I lines have been found " +
@@ -1596,4 +1644,4 @@ def arccalibration_direct(wv_master,
         if nnewlines == 0:
             loop_include_new_lines = False
 
-    return list_of_dict
+    return list_of_wvfeatures

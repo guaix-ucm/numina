@@ -28,7 +28,7 @@ import numpy as np
 from scipy import ndimage
 
 from .arccalibration import arccalibration
-from .arccalibration import fit_list_of_dict
+from .arccalibration import fit_list_of_wvfeatures
 from .arccalibration import SolutionArcCalibration
 from ..display.pause_debugplot import pause_debugplot
 from .peaks_spectrum import find_peaks_spectrum
@@ -184,7 +184,7 @@ def wvcal_spectrum(filename, ns1, ns2,
 
         # wavelength calibration
         xchannel = fxpeaks + 1.0
-        list_of_dict = arccalibration(
+        list_of_wvfeatures = arccalibration(
             wv_master=wv_master,
             xpos_arc=xchannel,
             naxis1_arc=naxis1,
@@ -205,21 +205,21 @@ def wvcal_spectrum(filename, ns1, ns2,
         title = filename + "[" + str(ns1) + ":" + str(ns2) + "]" + \
                      "\n" + wv_master_file
         coeff, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear = \
-            fit_list_of_dict(
-                list_of_dict=list_of_dict,
+            fit_list_of_wvfeatures(
+                list_of_wvfeatures=list_of_wvfeatures,
                 naxis1_arc=naxis1,
                 crpix1=1.0,
                 poly_degree_wfit=poly_degree_wfit,
                 weighted=False,
-                debugplot=12,
+                debugplot=debugplot,
                 plot_title=title
             )
 
         # note that the class SolutionArcCalibration only stores the
-        # information in 'list_of_dict' corresponding to lines that
-        # have been properly identified
+        # information in 'list_of_wvfeatures' corresponding to lines
+        # that have been properly identified
         solution_wv = SolutionArcCalibration(
-            list_of_dict=list_of_dict,
+            list_of_wvfeatures=list_of_wvfeatures,
             coeff=coeff,
             crpix1_linear=1.0,
             crval1_linear=crval1_linear,
