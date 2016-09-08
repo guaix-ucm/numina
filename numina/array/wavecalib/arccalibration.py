@@ -61,13 +61,17 @@ class WavecalFeature:
         self.wv = wv
 
     def __str__(self):
-        output = "<WavecalFeature instance>\n" + \
-                 "lineok......: " + str(self.lineok) + "\n" + \
-                 "type........: " + str(self.type) + "\n" + \
-                 "id..........: " + str(self.id) + "\n" + \
-                 "funcost.....: " + str(self.funcost) + "\n" + \
-                 "xpos........: " + str(self.xpos) + "\n" + \
-                 "wv..........: " + str(self.wv) + "\n"
+        if self.lineok:
+            slineok = 'True '
+        else:
+            slineok = 'False'
+        output = "<WavecalFeature instance>  " + \
+                 "lineok: " + slineok + "  " + \
+                 "type: " + str(self.type) + "  " + \
+                 "id: " + str(self.id) + "  " + \
+                 "xpos: " + str(self.xpos) + "  " + \
+                 "wv: " + str(self.wv) + "  " + \
+                 "funcost: " + str(self.funcost)
 
         return output
 
