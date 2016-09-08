@@ -19,10 +19,13 @@
 
 """User command line interface of Numina."""
 
+from __future__ import print_function
+
 import logging
 import logging.config
 import argparse
 import os
+import sys
 from importlib import import_module
 
 import six.moves.configparser as configparser
@@ -85,11 +88,11 @@ def main(args=None):
 
     # Load plugin commands
     for entry in pkg_resources.iter_entry_points(group='numina_plugins.1'):
-        register = entry.load()
         try:
+            register = entry.load()
             register(subparsers, config)
         except StandardError as error:
-            print(error)
+            print(error, file=sys.stderr)
 
     args, unknowns = parser.parse_known_args(args)
     extra_args = process_unknown_arguments(unknowns)
