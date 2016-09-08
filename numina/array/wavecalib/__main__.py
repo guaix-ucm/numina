@@ -253,10 +253,9 @@ def wvcal_spectrum(filename, ns1, ns2,
                          " values")
 
 
-if __name__ == "__main__":
-
+def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='wavecalib')
     parser.add_argument("filename",
                         help="FITS image containing the spectra")
     parser.add_argument("ns1",
@@ -284,7 +283,7 @@ if __name__ == "__main__":
                         help="Save spectrum (yes/no)" +
                         " (default=no)",
                         default="no")
-    args = parser.parse_args()
+    args = parser.parse_args(args=args)
 
     ns1 = int(args.ns1)
     ns2 = int(args.ns2)
@@ -307,3 +306,8 @@ if __name__ == "__main__":
         input("\nPress RETURN to QUIT...")
     except SyntaxError:
         pass
+
+
+if __name__ == "__main__":
+
+    main()

@@ -236,23 +236,25 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         return ax
 
 
-if __name__ == "__main__":
+def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='ximshow')
     parser.add_argument("filename",
                         help="FITS file or txt file with list of FITS files")
     parser.add_argument("--z1z2",
                         help="tuple z1,z2")
     parser.add_argument("--bbox",
-                        help="bounding box tuple nc1,nc2,ns1,ns2")
+                        help="bounding box tuple: nc1,nc2,ns1,ns2")
+    parser.add_argument("--keystitle",
+                        help="tuple of FITS keywords: key1,key2,...")
     parser.add_argument("--pdffile",
                         help="ouput PDF file name")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                              " (default=12)",
                         default=12)
-    args = parser.parse_args()
+    args = parser.parse_args(args)
 
     # read z1, z2
     if args.z1z2 is None:
@@ -304,12 +306,18 @@ if __name__ == "__main__":
 
         naxis1 = image_header['naxis1']
         naxis2 = image_header['naxis2']
+
         # ToDo: remove the following commented lines
         # grism = image_header['grism']
         # spfilter = image_header['filter']
         # rotang = image_header['rotang']
         # ToDo: include additional command line parameter to display
         #       the value of a set of FITS keywords in the plot title.
+        if args.keystitle is not None:
+            keystitle = args.keystitle.split(",")
+            for key in keystitle:
+                keyval = image_header[key]
+                print("key=", key, keyval)
 
         if image2d.shape != (naxis2, naxis1):
             raise ValueError("Unexpected error with NAXIS1, NAXIS2")
@@ -362,3 +370,8 @@ if __name__ == "__main__":
 
     if len(list_fits_files) > 1:
         pause_debugplot(12, optional_prompt="Press RETURN to STOP")
+
+
+if __name__ == "__main__":
+
+    main()
