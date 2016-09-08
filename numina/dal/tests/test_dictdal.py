@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,18 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""DRP system wide initialization"""
+from ..dictdal import BaseDictDAL
 
 
-from .drpsystem import DrpSystem
+def test_constructor():
 
-_system_drps = None
-
-
-def get_system_drps():
-    global _system_drps
-    if _system_drps is None:
-        _system_drps = DrpSystem()
-        _system_drps.load()
-
-    return _system_drps
+    base = BaseDictDAL(None, {}, {}, {})
+    assert base is not None

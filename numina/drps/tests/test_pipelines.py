@@ -2,7 +2,7 @@
 import pkg_resources
 import pkgutil
 
-from numina.core.pipeline import DrpSystem
+from numina.drps.drpsystem import DrpSystem
 from numina.core.pipeline import InstrumentDRP, Pipeline
 
 
@@ -33,18 +33,19 @@ def test_fake_pipeline(monkeypatch):
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
 
-    alldrps = DrpSystem().query_all()
+
+    alldrps = DrpSystem().load().query_all()
     for k, v in alldrps.items():
         assert_valid_instrument(v)
 
 
 def test_fake_pipeline_alt(drpmocker):
 
-    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
+    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
 
-    drpmocker.add_drp('FAKE1', drpdata1)
+    drpmocker.add_drp('TEST1', drpdata1)
 
-    mydrp = DrpSystem().query_by_name('FAKE1')
+    mydrp = DrpSystem().load().query_by_name('TEST1')
     assert mydrp is not None
 
     assert_valid_instrument(mydrp)
@@ -54,24 +55,24 @@ def test_fake_pipeline_alt(drpmocker):
 
 def test_fake_pipeline_alt2(drpmocker):
 
-    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
+    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
 
     ob_to_test = """
     id: 4
     mode: bias
-    instrument: FAKE1
+    instrument: TEST1
     images:
      - ThAr_LR-U.fits
     """
 
-    drpmocker.add_drp('FAKE1', drpdata1)
+    drpmocker.add_drp('TEST1', drpdata1)
 
     import yaml
     from numina.core.oresult import obsres_from_dict
 
     oblock = obsres_from_dict(yaml.load(ob_to_test))
 
-    drp = DrpSystem().query_by_name(oblock.instrument)
+    drp = DrpSystem().load().query_by_name(oblock.instrument)
 
     assert drp is not None
 
@@ -79,4 +80,4 @@ def test_fake_pipeline_alt2(drpmocker):
     for m in drp.modes:
         assert m.tagger is not None
 
-    assert drp.pipelines[oblock.pipeline].get_recipe(oblock.mode) == 'fake.recipes.BiasRecipe'
+    assert drp.pipelines[oblock.pipeline].get_recipe(oblock.mode) == 'test.recipes.BiasRecipe'

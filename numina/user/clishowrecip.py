@@ -26,9 +26,9 @@ import warnings
 import yaml
 
 from numina import __version__
+import numina.drps
 from numina.core import DataFrameType, DataProductType
 from numina.core import import_object
-from numina.core.pipeline import DrpSystem
 from numina.user.clishowins import print_no_instrument
 
 
@@ -61,7 +61,7 @@ def register(subparsers, config):
 
 def show_recipes(args):
 
-    drpsys = DrpSystem()
+    drpsys = numina.drps.get_system_drps()
 
     # Query instruments
     if args.instrument:

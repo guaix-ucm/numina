@@ -20,7 +20,8 @@
 """User command line interface of Numina."""
 
 from __future__ import print_function
-from numina.core.pipeline import DrpSystem
+
+import numina.drps
 from numina.user.clishowins import print_no_instrument
 
 
@@ -51,7 +52,7 @@ def register(subparsers, config):
 
 def show_observingmodes(args, extra_args):
 
-    drpsys = DrpSystem()
+    drpsys = numina.drps.get_system_drps()
 
     if args.instrument:
         name = args.instrument

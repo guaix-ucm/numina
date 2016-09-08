@@ -1,4 +1,4 @@
-name: FAKE1
+name: TEST1
 configurations:
   default: {}
 modes:
@@ -16,6 +16,6 @@ modes:
 pipelines:
   default:
       recipes:
-          bias: fake.recipes.BiasRecipe
+          bias: test.recipes.BiasRecipe
           fail: numina.core.utils.AlwaysFailRecipe
       version: 1

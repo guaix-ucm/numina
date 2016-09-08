@@ -22,7 +22,6 @@
 from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
-from numina.core.pipeline import DrpSystem
 from numina.store import load
 from numina.exceptions import NoResultFound
 from .absdal import AbsDAL
@@ -47,7 +46,7 @@ def tags_are_valid(subset, superset):
 
 
 class BaseDictDAL(AbsDAL):
-    def __init__(self, ob_table, prod_table, req_table, extra_data=None):
+    def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
         super(BaseDictDAL, self).__init__()
 
         # Check that the structure de base is correct
@@ -55,7 +54,7 @@ class BaseDictDAL(AbsDAL):
         self.prod_table = prod_table
         self.req_table = req_table
         self.extra_data = extra_data if extra_data else {}
-        self.drps = DrpSystem()
+        self.drps = drps
 
     def search_instrument_configuration_from_ob(self, ob):
         ins = ob.instrument
@@ -190,10 +189,12 @@ class BaseDictDAL(AbsDAL):
 
 
 class DictDAL(BaseDictDAL):
-    def __init__(self, base):
+    def __init__(self, drps, base):
 
         # Check that the structure of 'base' is correct
-        super(DictDAL, self).__init__(base['oblocks'],
-                                      base['products'],
-                                      base['parameters']
-                                      )
+        super(DictDAL, self).__init__(
+            drps,
+            base['oblocks'],
+            base['products'],
+            base['parameters']
+        )

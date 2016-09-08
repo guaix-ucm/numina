@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -26,6 +26,7 @@ import datetime
 
 import yaml
 
+import numina.drps
 from numina.dal.dictdal import BaseDictDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
@@ -37,7 +38,7 @@ _logger = logging.getLogger("numina")
 
 
 class Dict2DAL(BaseDictDAL):
-    def __init__(self, obtable, base, extra_data=None):
+    def __init__(self, drps, obtable, base, extra_data=None):
 
         prod_table = base['products']
 
@@ -46,11 +47,12 @@ class Dict2DAL(BaseDictDAL):
         else:
             req_table = base['requirements']
 
-        super(Dict2DAL, self).__init__(obtable, prod_table, req_table, extra_data)
+        super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
 
 
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
-    return Dict2DAL(loaded_obs, loaded_data, loaded_data_extra)
+    drps = numina.drps.get_system_drps()
+    return Dict2DAL(drps, loaded_obs, loaded_data, loaded_data_extra)
 
 
 def mode_run_common(args, extra_args, mode):

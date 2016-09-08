@@ -20,7 +20,8 @@
 """User command line interface of Numina, show-instruments functionallity."""
 
 from __future__ import print_function
-from numina.core.pipeline import DrpSystem
+
+import numina.drps
 
 
 def register(subparsers, config):
@@ -47,7 +48,8 @@ def register(subparsers, config):
 
 
 def show_instruments(args, extra_args):
-    mm = DrpSystem()
+
+    mm = numina.drps.get_system_drps()
 
     if args.name:
         for name in args.name:

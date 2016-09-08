@@ -2,77 +2,80 @@
 import pytest
 import pkgutil
 
-from ..pipeline import DrpSystem
+from numina.drps.drpsystem import DrpSystem
 
 
 def test_drpsys_one_instrument(drpmocker):
     """Test that only one DRP is returned."""
 
-    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
+    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
 
-    drpmocker.add_drp('FAKE1', drpdata1)
+    drpmocker.add_drp('TEST1', drpdata1)
 
     drpsys = DrpSystem()
+    drpsys.load()
 
-    ldrp = drpsys.query_by_name('FAKE1')
+    ldrp = drpsys.query_by_name('TEST1')
 
     assert ldrp is not None
-    assert ldrp.name == 'FAKE1'
+    assert ldrp.name == 'TEST1'
 
     ldrp2 = drpsys.query_by_name('OTHER')
     assert ldrp2 is None
 
     alldrps = drpsys.query_all()
     assert len(alldrps) == 1
-    assert 'FAKE1' in alldrps
+    assert 'TEST1' in alldrps
     # FIXME: We should check that both are equal, not just the name
-    assert alldrps['FAKE1'].name == ldrp.name
+    assert alldrps['TEST1'].name == ldrp.name
 
 
 def test_drpsys_2_instruments(drpmocker):
     """Test that two DRPs are returned"""
 
-    drpdata1 = pkgutil.get_data('numina.core.tests', 'drpfake1.yaml')
-    drpdata2 = pkgutil.get_data('numina.core.tests', 'drpfake2.yaml')
-    drpmocker.add_drp('FAKE1', drpdata1)
-    drpmocker.add_drp('FAKE2', drpdata2)
+    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
+    drpdata2 = pkgutil.get_data('numina.drps.tests', 'drptest2.yaml')
+    drpmocker.add_drp('TEST1', drpdata1)
+    drpmocker.add_drp('TEST2', drpdata2)
 
     drpsys = DrpSystem()
+    drpsys.load()
 
-    ldrp1 = drpsys.query_by_name('FAKE1')
+    ldrp1 = drpsys.query_by_name('TEST1')
 
     assert ldrp1 is not None
-    assert ldrp1.name == 'FAKE1'
+    assert ldrp1.name == 'TEST1'
 
-    ldrp2 = drpsys.query_by_name('FAKE2')
+    ldrp2 = drpsys.query_by_name('TEST2')
 
     assert ldrp2 is not None
-    assert ldrp2.name == 'FAKE2'
+    assert ldrp2.name == 'TEST2'
 
     ldrp3 = drpsys.query_by_name('OTHER')
     assert ldrp3 is None
 
     alldrps = drpsys.query_all()
     assert len(alldrps) == 2
-    assert 'FAKE1' in alldrps
+    assert 'TEST1' in alldrps
     # FIXME: We should check that both are equal, not just the name
-    assert alldrps['FAKE1'].name == ldrp1.name
+    assert alldrps['TEST1'].name == ldrp1.name
 
-    assert 'FAKE2' in alldrps
+    assert 'TEST2' in alldrps
     # FIXME: We should check that both are equal, not just the name
-    assert alldrps['FAKE2'].name == ldrp2.name
+    assert alldrps['TEST2'].name == ldrp2.name
 
 
 @pytest.mark.usefixtures("drpmocker")
 def test_drpsys_no_instrument():
 
     drpsys = DrpSystem()
+    drpsys.load()
 
-    ldrp1 = drpsys.query_by_name('FAKE1')
+    ldrp1 = drpsys.query_by_name('TEST1')
 
     assert ldrp1 is None
 
-    ldrp2 = drpsys.query_by_name('FAKE2')
+    ldrp2 = drpsys.query_by_name('TEST2')
 
     assert ldrp2 is None
 

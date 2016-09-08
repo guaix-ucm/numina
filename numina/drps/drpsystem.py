@@ -17,18 +17,31 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""DRP system wide initialization"""
+"""DRP system-wide loader"""
 
 
-from .drpsystem import DrpSystem
+import pkg_resources
 
-_system_drps = None
+from .drpbase import DrpGeneric
 
 
-def get_system_drps():
-    global _system_drps
-    if _system_drps is None:
-        _system_drps = DrpSystem()
-        _system_drps.load()
+class DrpSystem(DrpGeneric):
+    """Load DRPs from the system."""
 
-    return _system_drps
+    def __init__(self, entry_point='numina.pipeline.1'):
+        self.entry = entry_point
+        super(DrpSystem, self).__init__()
+
+    def load(self):
+        """Load all available DRPs in 'entry_point'."""
+
+        drps = {}
+
+        for entry in pkg_resources.iter_entry_points(group=self.entry):
+            drp_loader = entry.load()
+            drpins = drp_loader()
+            if self.instrumentdrp_check(drpins, entry.name):
+                drps[drpins.name] = drpins
+
+        self.drps = drps
+        return self

@@ -18,12 +18,12 @@
 
 import logging
 
+import numina.drps
 from numina.exceptions import NoResultFound
 from numina.dal import AbsDAL
 from numina.dal import StoredProduct
 from numina.dal import StoredParameter
 from numina.dal import ObservingBlock
-from numina.core.pipeline import DrpSystem
 from numina.core import import_object
 from numina.core import obsres_from_dict
 import numina.store as storage
@@ -32,18 +32,19 @@ _logger = logging.getLogger("numina.simpledal")
 
 
 def process_format_version_0(loaded_obs, loaded_data, loaded_data_extra=None):
-    return CommandLineDAL(loaded_obs, loaded_data, loaded_data_extra)
+    drps = numina.drps.get_system_drps()
+    return CommandLineDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
 
 
 class CommandLineDAL(AbsDAL):
     """A DAL to use with the command line interface"""
 
-    def __init__(self, ob_table, reqs, extra_reqs=None):
+    def __init__(self, drps, ob_table, reqs, extra_reqs=None):
         self.ob_table = ob_table
         self._reqs = reqs
         if extra_reqs:
             self._reqs['requirements'].update(extra_reqs)
-        self.drps = DrpSystem()
+        self.drps = drps
 
     def search_instrument_configuration_from_ob(self, ob):
         ins = ob.instrument

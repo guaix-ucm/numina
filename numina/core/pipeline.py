@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,10 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""DRP loader and related classes"""
-
-import warnings
-import pkg_resources
+"""DRP related classes"""
 
 
 class Pipeline(object):
@@ -67,68 +64,3 @@ class ObservingMode(object):
         self.date = ''
         self.reference = ''
         self.tagger = None
-
-
-class DrpSystem(object):
-    """Load DRPs from the system."""
-
-    ENTRY = 'numina.pipeline.1'
-
-    def __init__(self):
-
-        # Store queried DRPs
-        self._drp_cache = {}
-
-    def query_by_name(self, name):
-        """Cached version of 'query_drp_system'"""
-        if name in self._drp_cache:
-            return self._drp_cache[name]
-        else:
-            drp = self._query_by_name(name)
-            if drp:
-                self._drp_cache[name] = drp
-            return drp
-
-    def _query_by_name(self, name):
-        """Load a DRPs in 'numina.pipeline' entry_point by name"""
-
-        for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
-            if entry.name == name:
-                drp_loader = entry.load()
-                drpins = drp_loader()
-
-                if self.instrumentdrp_check(drpins, entry.name):
-                    return drpins
-                else:
-                    return None
-        else:
-            return None
-
-    def query_all(self):
-        """Return all available DRPs in 'numina.pipeline' entry_point."""
-
-        drps = {}
-
-        for entry in pkg_resources.iter_entry_points(group=DrpSystem.ENTRY):
-            drp_loader = entry.load()
-            drpins = drp_loader()
-            if self.instrumentdrp_check(drpins, entry.name):
-                drps[drpins.name] = drpins
-
-        # Update cache
-        self._drp_cache = drps
-
-        return drps
-
-    def instrumentdrp_check(self, drpins, entryname):
-        if isinstance(drpins, InstrumentDRP):
-            if drpins.name == entryname:
-                return True
-            else:
-                msg = 'Entry name "{}" and DRP name "{}" differ'.format(entryname, drpins.name)
-                warnings.warn(msg, RuntimeWarning)
-                return False
-        else:
-            msg = 'Object {0!r} does not contain a valid DRP'.format(drpins)
-            warnings.warn(msg, RuntimeWarning)
-            return False

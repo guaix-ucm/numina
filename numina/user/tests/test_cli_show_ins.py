@@ -1,64 +1,30 @@
 
+import pkgutil
 
-import pytest
+import numina.drps
 
 from ..cli import main
 
 
-drpdata = """
-    name: FAKE1
-    configurations:
-        default: {}
-    modes:
-        - description: A recipe that always fails
-          key: fail
-          name: Fail
-          tagger:
-             - KEY1
-             - KEY2
-        - description: Bias
-          key: bias
-          name: Bias
-          tagger:
-             - KEY3
-    pipelines:
-        default:
-            recipes:
-                bias: fake.recipes.BiasRecipe
-                fail: numina.core.utils.AlwaysFailRecipe
-            version: 1
-"""
-
-drpdata2 = """
-    name: FAKE2
-    configurations:
-        default: {}
-    modes:
-        - description: A recipe that always fails
-          key: fail
-          name: Fail
-          tagger:
-             - KEY1
-             - KEY2
-        - description: Bias
-          key: bias
-          name: Bias
-          tagger:
-             - KEY3
-    pipelines:
-        default:
-            recipes:
-                bias: fake.recipes.BiasRecipe
-                fail: numina.core.utils.AlwaysFailRecipe
-            version: 1
-"""
+drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
+drpdata2 = pkgutil.get_data('numina.drps.tests', 'drptest2.yaml')
 
 
-def test_show_instrument(capsys, drpmocker):
+def test_show_instrument(capsys, monkeypatch):
     """Test that one instrument is shown"""
-    drpmocker.add_drp('FAKE1', drpdata)
 
-    expected = ("Instrument: FAKE1\n"
+    def mockreturn():
+        import numina.drps.drpbase
+        import numina.core.pipelineload as pload
+        drps = {}
+
+        drp1 = pload.drp_load_data(drpdata1)
+        drps[drp1.name] = drp1
+        return numina.drps.drpbase.DrpGeneric(drps)
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
+    expected = ("Instrument: TEST1\n"
                 " has configuration 'default'\n"
                 " has pipeline 'default', version 1\n"
                 )
@@ -69,17 +35,26 @@ def test_show_instrument(capsys, drpmocker):
     assert out == expected
 
 
-def test_show_2_instruments(capsys, drpmocker):
+def test_show_2_instruments(capsys, monkeypatch):
     """Test that two instruments are shown"""
 
-    # FIXME: probably instruments can be output in any order
-    drpmocker.add_drp('FAKE1', drpdata)
-    drpmocker.add_drp('FAKE2', drpdata2)
+    def mockreturn():
+        import numina.drps.drpbase
+        import numina.core.pipelineload as pload
+        drps = {}
 
-    expected = ["Instrument: FAKE2",
+        drp1 = pload.drp_load_data(drpdata1)
+        drp2 = pload.drp_load_data(drpdata2)
+        drps[drp1.name] = drp1
+        drps[drp2.name] = drp2
+        return numina.drps.drpbase.DrpGeneric(drps)
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
+    expected = ["Instrument: TEST2",
                 " has configuration 'default'",
                 " has pipeline 'default', version 1",
-                "Instrument: FAKE1",
+                "Instrument: TEST1",
                 " has configuration 'default'",
                 " has pipeline 'default', version 1",
                 ""
@@ -89,15 +64,24 @@ def test_show_2_instruments(capsys, drpmocker):
 
     out, err = capsys.readouterr()
     out = out.split("\n")
-    assert out.sort() == expected.sort()
+    out.sort()
+    expected.sort()
+    assert out == expected
 
 
-@pytest.mark.usefixtures("drpmocker")
-def test_show_no_instrument(capsys):
+def test_show_no_instrument(capsys, monkeypatch):
     """Test that no instruments are shown"""
+
+    def mockreturn():
+        import numina.drps.drpbase
+        return numina.drps.drpbase.DrpGeneric()
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
     expected = ""
 
     main(['show-instruments'])
 
     out, err = capsys.readouterr()
+
     assert out == expected
