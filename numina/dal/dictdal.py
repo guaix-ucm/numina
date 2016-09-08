@@ -65,6 +65,8 @@ class BaseDictDAL(AbsDAL):
 
         drp = self.drps.query_by_name(ins)
 
+        if drp is None:
+            raise KeyError('Instrument "{}" not found'.format(ins))
         try:
             this_configuration = drp.configurations[name]
         except KeyError:
@@ -103,7 +105,7 @@ class BaseDictDAL(AbsDAL):
         ins_prod = self.prod_table[ins]
 
         # search results of these OBs
-        for prod in ins_prod.values():
+        for prod in ins_prod:
             if prod['ob'] == obsid:
                 # We have found the result, no more checks
                 return StoredProduct(**prod)
