@@ -7,7 +7,7 @@ from numpy.polynomial import polynomial
 
 from ..arccalibration import gen_triplets_master
 from ..arccalibration import arccalibration_direct
-from ..arccalibration import fit_list_of_dict
+from ..arccalibration import fit_list_of_wvfeatures
 
 try:
     import matplotlib
@@ -412,7 +412,7 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000,
     if wv_end_search is None:
         wv_end_search = wv_end_master + 0.1 * (wv_end_master - wv_ini_master)
 
-    list_of_dict = arccalibration_direct(
+    list_of_wvfeatures = arccalibration_direct(
         wv_master=wv_master,
         ntriplets_master=ntriplets_master,
         ratios_master_sorted=ratios_master_sorted,
@@ -431,15 +431,15 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000,
         times_sigma_cook=times_sigma_cook,
         times_sigma_inclusion=times_sigma_inclusion)
 
-    coeff, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear = \
-        fit_list_of_dict(
-            list_of_dict=list_of_dict,
+    solution_wv = \
+        fit_list_of_wvfeatures(
+            list_of_wvfeatures=list_of_wvfeatures,
             naxis1_arc=naxis1_arc,
             crpix1=crpix1,
             poly_degree_wfit=poly_degree_wfit
         )
 
-    return coeff, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear
+    return solution_wv
 
 
 # -----------------------------------------------------------------------------
@@ -447,15 +447,14 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000,
 
 def test__execute_notebook_example(ldebug=False, lplot=False):
     """Test the explanation of the ipython notebook example."""
-    coeff, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear = \
-        execute_arccalibration(ldebug=ldebug, lplot=lplot)
+    solution_wv = execute_arccalibration(ldebug=ldebug, lplot=lplot)
 
     coeff_expected = np.array([3.99875794e+03, 9.59950578e-01, 1.72739867e-05])
-    assert np.allclose(coeff, coeff_expected)
-    assert np.allclose(crval1_linear, 3999.7179085283897)  # 3996.42717772)
-    assert np.allclose(crmin1_linear, 3999.7179085283897)
-    assert np.allclose(crmax1_linear, 4999.8604201544294)
-    assert np.allclose(cdelt1_linear, 0.97765641410170068)  # 0.978303317095)
+    assert np.allclose(solution_wv.coeff, coeff_expected)
+    assert np.allclose(solution_wv.crval1_linear, 3999.7179085283897)  # 3996.42717772)
+    assert np.allclose(solution_wv.crmin1_linear, 3999.7179085283897)
+    assert np.allclose(solution_wv.crmax1_linear, 4999.8604201544294)
+    assert np.allclose(solution_wv.cdelt1_linear, 0.97765641410170068)  # 0.978303317095)
 
     print("TEST: test__execute_notebook_example... OK")
 
@@ -463,21 +462,20 @@ def test__execute_notebook_example(ldebug=False, lplot=False):
 # @pytest.mark.xfail
 def test__execute_simple_case(ldebug=False, lplot=False):
     """Test the explanation of the ipython notebook example."""
-    coeff, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear = \
-        execute_arccalibration(nlines_master=15,
-                               error_xpos_arc=0.3,
-                               wv_ini_arc=3000, wv_end_arc=7000,
-                               prob_line_master_in_arc=1.0,
-                               fraction_unknown_lines=0.0,
-                               frac_triplets_for_sum=0.5,
-                               ldebug=ldebug, lplot=lplot)
+    solution_wv = execute_arccalibration(nlines_master=15,
+                                         error_xpos_arc=0.3,
+                                         wv_ini_arc=3000, wv_end_arc=7000,
+                                         prob_line_master_in_arc=1.0,
+                                         fraction_unknown_lines=0.0,
+                                         frac_triplets_for_sum=0.5,
+                                         ldebug=ldebug, lplot=lplot)
 
     coeff_expected = np.array([2.99467778e+03, 3.89781863e+00, 1.22960881e-05])
-    assert np.allclose(coeff, coeff_expected)
-    assert np.allclose(crval1_linear, 2998.5756138701254)  # 2995.4384155)
-    assert np.allclose(crmin1_linear, 2998.5756138701254)
-    assert np.allclose(crmax1_linear, 6998.9374406492443)
-    assert np.allclose(cdelt1_linear, 3.9104221180636549)  # 3.91231531392)
+    assert np.allclose(solution_wv.coeff, coeff_expected)
+    assert np.allclose(solution_wv.crval1_linear, 2998.5756138701254)  # 2995.4384155)
+    assert np.allclose(solution_wv.crmin1_linear, 2998.5756138701254)
+    assert np.allclose(solution_wv.crmax1_linear, 6998.9374406492443)
+    assert np.allclose(solution_wv.cdelt1_linear, 3.9104221180636549)  # 3.91231531392)
 
     print("TEST: test__execute_simple_case... OK")
 
