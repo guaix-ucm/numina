@@ -150,15 +150,15 @@ int NU_quantileclip_function(double *data, double *weights,
   size_t nclip = static_cast<size_t>(floor(n_elem_to_clip));
   size_t mclip = static_cast<size_t>(ceil(n_elem_to_clip));
 
-  if (size - 2 * mclip <= 0) {
+  if (size - mclip - mclip <= 0) {
     // We reject more points that we have locally
     *out[0] = 0.0;
     *out[1] = 0.0;
-    *out[2] = size - 2 * mclip;
+    *out[2] = size - mclip - mclip;
     return 1;
   }
 
-  *out[2] = size - 2 * n_elem_to_clip;
+  *out[2] = size - nclip - mclip;
 
   if (nclip == mclip) {
     // No interpolation
@@ -170,8 +170,8 @@ int NU_quantileclip_function(double *data, double *weights,
     // Interpolation
     ValuePair r1 = average_central_tendency_clip(data, data + size, weights, nclip, nclip);
     ValuePair r2 = average_central_tendency_clip(data, data + size, weights, mclip, mclip);
-    *out[0] = r1.first + (n_elem_to_clip - nclip) * (r2.first - r1.first);
-    *out[1] = r1.second + (n_elem_to_clip - nclip) * (r2.second - r1.second);
+    *out[0] = r1.first + mclip * (r2.first - r1.first);
+    *out[1] = r1.second + mclip * (r2.second - r1.second);
   }
 
   return 1;
