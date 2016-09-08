@@ -32,7 +32,7 @@ from .fit_theil_sen import fit_theil_sen
 from .polfit_residuals import polfit_residuals_with_cook_rejection
 
 
-class WavecalFeature:
+class WavecalFeature(object):
     """Store information concerning a particular line identification.
 
     Parameters
@@ -310,20 +310,12 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
 
     Returns
     -------
-    coeff : 1d numpy array, float
-        Coefficients of the polynomial fit
-    crval1_linear : float
-        CRVAL1 value corresponding to the linear wavelength
-        calibration.
-    crmin1_linear : float
-        CRVAL value at pixel number 1 corresponding to the linear
-        wavelength calibration.
-    crmax1_linear : float
-        CRVAL value at pixel number NAXIS1 corresponding to the linear
-        wavelength calibration.
-    cdelt1_linear: float
-        CDELT1 value corresponding to the linear wavelength
-        calibration.
+    solution_wv : SolutionArcCalibration instance
+        Instance of class SolutionArcCalibration, containing the
+        information concerning the arc lines that have been properly
+        identified. The information about all the lines (including
+        those initially found but at the end discarded) is stored in
+        the list of WavecalFeature instances 'list_of_wvfeatures'.
 
     """
 
@@ -340,7 +332,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     list_unidentified = []
     for i in range(nlines_arc):
         if not list_of_wvfeatures[i].lineok:
-            if list_of_wvfeatures[i].type is None:
+            if list_of_wvfeatures[i].type == 'X':
                 list_unidentified.append(i)
             elif list_of_wvfeatures[i].type == 'R':
                 list_r.append(i)
@@ -377,6 +369,19 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     if debugplot >= 10:
         print('>>> CRVAL1 linear scale:', crval1_linear)
         print('>>> CDELT1 linear scale:', cdelt1_linear)
+
+    # generate solution (note that the class SolutionArcCalibration
+    # only sotres the information in list_of_wvfeatures corresponding
+    # to lines that have been properly identified
+    solution_wv = SolutionArcCalibration(
+        list_of_wvfeatures=list_of_wvfeatures,
+        coeff=coeff,
+        crpix1_linear=crpix1,
+        crval1_linear=crval1_linear,
+        crmin1_linear=crmin1_linear,
+        crmax1_linear=crmax1_linear,
+        cdelt1_linear=cdelt1_linear
+    )
 
     if debugplot % 10 != 0:
         # polynomial fit
@@ -496,7 +501,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         plt.pause(0.001)
         pause_debugplot(debugplot)
 
-    return coeff, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear
+    return solution_wv
 
 
 def gen_triplets_master(wv_master, debugplot=0):
@@ -1241,11 +1246,12 @@ def arccalibration_direct(wv_master,
             print(i, diagonal_ids[i], diagonal_funcost[i])
         pause_debugplot(debugplot)
 
-    # The solutions are stored in a list of dictionaries.
-    # The dictionaries contain the following elements:
+    # The solutions are stored in a list of WavecalFeature instances.
+    # Each WavecalFeature contains the following elements:
     # - lineok: bool, indicates whether the line has been properly
     #   identified
-    # - type: 'A','B','C','D','E',...
+    # - type: 'A','B','C','D','E',..., 'X'. Note that 'X' indicates
+    #   that the line is still undefined.
     # - id: index of the line in the master table
     # - funcost: cost function associated the the line identification
 
@@ -1253,11 +1259,11 @@ def arccalibration_direct(wv_master,
     list_of_wvfeatures = []
     for i in range(nlines_arc):
         tmp_feature = WavecalFeature(line_ok=False,
-                                     line_type=None,
-                                     line_id=None,
-                                     funcost=None,
+                                     line_type='X',
+                                     line_id=-1,
+                                     funcost=np.inf,
                                      xpos=xpos_arc[i],
-                                     wv=None)
+                                     wv=0.0)
         list_of_wvfeatures.append(tmp_feature)
 
     # type A lines
