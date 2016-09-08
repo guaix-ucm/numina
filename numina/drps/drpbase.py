@@ -58,12 +58,14 @@ class DrpGeneric(DrpBase):
         self.drps = drps
 
     def query_by_name(self, name):
-        """Query DRPs in internal storage by name"""
+        """Query DRPs in internal storage by name
 
-        if name in self._drps:
-            return self._drps[name]
-        else:
-            return None
+        Raises
+        ======
+        KeyError
+           If the instrument DRP given by name is not present.
+        """
+        return self._drps[name]
 
     def query_all(self):
         """Return all available DRPs in internal storage"""
