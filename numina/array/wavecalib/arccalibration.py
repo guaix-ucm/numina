@@ -29,7 +29,7 @@ import scipy.misc
 
 from ..display.pause_debugplot import pause_debugplot
 from .fit_theil_sen import fit_theil_sen
-from .polfit_residuals import polfit_residuals_with_cook_rejection
+from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 
 
 class WavecalFeature(object):

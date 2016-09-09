@@ -24,7 +24,7 @@ import numpy as np
 from numpy.polynomial import Polynomial
 
 from ..display.pause_debugplot import pause_debugplot
-from .r_utilities import LinearModelYvsX
+from ..rutilities import LinearModelYvsX
 
 
 def polfit_residuals(
