@@ -247,7 +247,8 @@ def main(args=None):
     parser.add_argument("--bbox",
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle",
-                        help="tuple of FITS keywords: key1,key2,...keyn.'format'")
+                        help="tuple of FITS keywords.format: " +
+                             "key1,key2,...keyn.'format'")
     parser.add_argument("--pdffile",
                         help="ouput PDF file name")
     parser.add_argument("--debugplot",
@@ -316,10 +317,7 @@ def main(args=None):
             tuple_of_keyval = ()
             for key in keysnames.split(","):
                 keyval = image_header[key]
-                print("keyval=", keyval)
                 tuple_of_keyval += (keyval,)
-            print("keysformat=", keysformat)
-            print("tuple_of_keyval=", tuple_of_keyval)
             title += "\n" + str(keysformat % tuple_of_keyval)
 
         if image2d.shape != (naxis2, naxis1):
