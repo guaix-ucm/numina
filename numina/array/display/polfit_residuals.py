@@ -24,7 +24,6 @@ import numpy as np
 from numpy.polynomial import Polynomial
 
 from ..display.pause_debugplot import pause_debugplot
-from ..rutilities import LinearModelYvsX
 
 
 def polfit_residuals(
@@ -32,7 +31,7 @@ def polfit_residuals(
         color = 'b', size=75,
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
-        use_r=None,
+        use_r=False,
         debugplot=0):
     """Polynomial fit with display of residuals and additional work with R.
 
@@ -138,6 +137,7 @@ def polfit_residuals(
 
     # polynomial fits using R
     if use_r:
+        from ..rutilities import LinearModelYvsX
         print("\n>>> Total number of points:", nfitted)
         # using orthogonal polynomials
         for delta_deg in [2, 1, 0]:
