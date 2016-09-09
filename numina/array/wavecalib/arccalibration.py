@@ -186,10 +186,10 @@ class SolutionArcCalibration(object):
 
         for i in range(self.nlines_arc):
             output += "xpos: {0:9.3f},  ".format(self.xpos[i])
-            output += "wv: " + "{0:10.3f},  ".format(self.wv[i])
-            output += "type: " + "{0:1s},  ".format(self.type[i])
-            output += "id: " + "{0:3d},  ".format(self.id[i])
-            output += "funcost: " + "{0:g},  ".format(self.funcost[i])
+            output += "wv: {0:10.3f},  ".format(self.wv[i])
+            output += "type: {0:1s},  ".format(self.type[i])
+            output += "id: {0:3d},  ".format(self.id[i])
+            output += "funcost: {0:g},  ".format(self.funcost[i])
             output += "\n"
 
         # return string with all the information

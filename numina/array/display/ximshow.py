@@ -247,7 +247,7 @@ def main(args=None):
     parser.add_argument("--bbox",
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle",
-                        help="tuple of FITS keywords: key1,key2,...")
+                        help="tuple of FITS keywords: key1,key2,...keyn.'format'")
     parser.add_argument("--pdffile",
                         help="ouput PDF file name")
     parser.add_argument("--debugplot",
@@ -307,17 +307,20 @@ def main(args=None):
         naxis1 = image_header['naxis1']
         naxis2 = image_header['naxis2']
 
-        # ToDo: remove the following commented lines
-        # grism = image_header['grism']
-        # spfilter = image_header['filter']
-        # rotang = image_header['rotang']
-        # ToDo: include additional command line parameter to display
-        #       the value of a set of FITS keywords in the plot title.
+        # title for plot
+        title = myfile
         if args.keystitle is not None:
-            keystitle = args.keystitle.split(",")
-            for key in keystitle:
+            keystitle = args.keystitle
+            keysformat = ".".join(keystitle.split(".")[1:])
+            keysnames = keystitle.split(".")[0]
+            tuple_of_keyval = ()
+            for key in keysnames.split(","):
                 keyval = image_header[key]
-                print("key=", key, keyval)
+                print("keyval=", keyval)
+                tuple_of_keyval += (keyval,)
+            print("keysformat=", keysformat)
+            print("tuple_of_keyval=", tuple_of_keyval)
+            title += "\n" + str(keysformat % tuple_of_keyval)
 
         if image2d.shape != (naxis2, naxis1):
             raise ValueError("Unexpected error with NAXIS1, NAXIS2")
@@ -349,9 +352,9 @@ def main(args=None):
                 ns2 = naxis2
 
         # display full image
-        title = myfile
+        #title = myfile
         # ToDo: remove the following commented lines
-        # title += "\ngrism=" + grism +
+        #title += "\ngrism=" + grism +
         #          ", filter=" + spfilter +
         #          ", rotang=" + str(round(rotang, 2)
         ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
