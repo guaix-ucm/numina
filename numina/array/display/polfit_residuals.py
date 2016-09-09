@@ -20,6 +20,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import numpy as np
 from numpy.polynomial import Polynomial
 
@@ -28,7 +29,7 @@ from ..display.pause_debugplot import pause_debugplot
 
 def polfit_residuals(
         x, y, deg, reject=None,
-        color = 'b', size=75,
+        color='b', size=75,
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=False,
@@ -289,7 +290,7 @@ def polfit_residuals(
 
 def polfit_residuals_with_sigma_rejection(
         x, y, deg, times_sigma_reject,
-        color = 'b', size=75,
+        color='b', size=75,
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
@@ -590,7 +591,7 @@ def polfit_residuals_with_cook_rejection(
                         debugplot=0)
                     yres_cook_fitted = yres_cook[np.logical_not(reject)]
                     cook_distance[i] = \
-                        np.sum(yres_cook_fitted*yres_cook_fitted)/\
+                        np.sum(yres_cook_fitted*yres_cook_fitted) / \
                         (2*residual_variance)
                 else:
                     cook_distance[i] = np.inf
@@ -644,3 +645,52 @@ def polfit_residuals_with_cook_rejection(
 
     # return result
     return poly, yres, reject
+
+
+def main(args=None):
+
+    # parse command-line options
+    parser = argparse.ArgumentParser(prog='polfit_residuals')
+    parser.add_argument("filename",
+                        help="ASCII file with data in columns")
+    parser.add_argument("cols",
+                        help="tuple col1,col2")
+    parser.add_argument("polydeg",
+                        help="polynomial degree")
+    parser.add_argument("--times_sigma_reject",
+                        help="Times sigma to reject points" +
+                             " (default=None)",
+                        default=None)
+    parser.add_argument("--times_sigma_cook",
+                        help="Times sigma to reject points" +
+                             " (default=None)",
+                        default=None)
+    args = parser.parse_args(args)
+
+    # ASCII file
+    filename = args.filename
+
+    # columns to be plotted (first column will be number 1 and not 0)
+    tmp_str = args.cols.split(",")
+    col1, col2 = int(tmp_str[0]), int(tmp_str[1])
+    col1 -= 1
+    col2 -= 1
+
+    # polynomial degree
+    polydeg = int(args.polydeg)
+
+    # read ASCII file
+    bigtable = np.genfromtxt(filename)
+    x = bigtable[:, col1]
+    y = bigtable[:, col2]
+
+    # plot fit and residuals
+    polfit_residuals(
+        x, y, polydeg,
+        reject=None,
+        color='b', size=75,
+        debugplot=12)
+
+
+if __name__ == '__main__':
+    main()
