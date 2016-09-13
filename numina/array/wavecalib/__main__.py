@@ -125,6 +125,7 @@ def wvcal_spectrum(filename, ns1, ns2,
         ixpeaks = find_peaks_spectrum(sp_mean,
                                       nwinwidth=nwinwidth_initial,
                                       threshold=threshold)
+
         # refined location of the peaks (float values)
         nwinwidth_refined = 5
         fxpeaks, sxpeaks = refine_peaks_spectrum(sp_mean, ixpeaks,
@@ -224,9 +225,9 @@ def wvcal_spectrum(filename, ns1, ns2,
         ymax += dy/20.
         ax.set_ylim([ymin, ymax])
         # plot wavelength of each identified line
-        for xpos, wv in zip(solution_wv.xpos, solution_wv.wv):
+        for xpos, reference in zip(solution_wv.xpos, solution_wv.reference):
             ax.text(xpos, sp_mean[int(xpos+0.5)-1],
-                    str(wv), fontsize=8,
+                    str(reference), fontsize=8,
                     horizontalalignment='center')
         # show plot
         import matplotlib

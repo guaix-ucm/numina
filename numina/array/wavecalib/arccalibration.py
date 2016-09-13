@@ -139,8 +139,10 @@ class SolutionArcCalibration(object):
         Flux of the line.
     fwhm : float
         FWHM of the line.
-    wv : 1d numpy array (float)
-        Wavelength of all the arc lines.
+    reference : 1d numpy array (float)
+        Wavelength of the identified lines in the master list.
+    wavelength : 1d numpy array (float)
+        Wavelength of the identified lines from fitted polynomial.
     funcost : 1d numpy array (float)
         Cost function corresponding to each identified arc line.
     category : char
@@ -187,8 +189,8 @@ class SolutionArcCalibration(object):
                               in list_of_wvfeatures if wvfeature.line_ok])
         self.fwhm = np.array([wvfeature.fwhm for wvfeature
                               in list_of_wvfeatures if wvfeature.line_ok])
-        self.wv = np.array([wvfeature.wv for wvfeature
-                            in list_of_wvfeatures if wvfeature.line_ok])
+        self.reference = np.array([wvfeature.wv for wvfeature
+                                   in list_of_wvfeatures if wvfeature.line_ok])
         self.funcost = np.array([wvfeature.funcost for wvfeature
                                  in list_of_wvfeatures if wvfeature.line_ok])
         self.category = np.array([wvfeature.category for wvfeature
@@ -204,6 +206,11 @@ class SolutionArcCalibration(object):
         self.crmin1_linear = crmin1_linear
         self.crmax1_linear = crmax1_linear
         self.cdelt1_linear = cdelt1_linear
+
+        # use fitted polynomial to predict wavelengths at the line
+        # locations given by xpos
+        poly = Polynomial(coeff)
+        self.wavelength = poly(self.xpos)
 
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
@@ -223,7 +230,8 @@ class SolutionArcCalibration(object):
             output += "ypos: {0:9.3f},  ".format(self.ypos[i])
             output += "flux: {0:g},  ".format(self.flux[i])
             output += "fwhm: {0:g},  ".format(self.fwhm[i])
-            output += "wv: {0:10.3f},  ".format(self.wv[i])
+            output += "reference: {0:10.3f},  ".format(self.reference[i])
+            output += "wavelength: {0:10.3f},  ".format(self.wavelength[i])
             output += "category: {0:1s},  ".format(self.category[i])
             output += "id: {0:3d},  ".format(self.id[i])
             output += "funcost: {0:g},  ".format(self.funcost[i])
