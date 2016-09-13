@@ -23,21 +23,69 @@ from numina.exceptions import ValidationError
 from .typedialect import dialect_info
 
 
-class DataType(object):
+class BaseDataType(object):
 
-    def __init__(self, ptype, default=None):
-        self.python_type = ptype
-        self.default = default
-        self.dialect = dialect_info(self)
+    def __init__(self):
+        pass
 
     def convert(self, obj):
-        return obj
+        raise NotImplementedError
 
     def convert_in(self, obj):
         return self.convert(obj)
 
     def convert_out(self, obj):
         return self.convert(obj)
+
+    def validate(self, obj):
+        raise NotImplementedError
+
+    def _datatype_dump(self, obj, where):
+        raise NotImplementedError
+
+    def _datatype_load(self, where):
+        raise NotImplementedError
+
+    @classmethod
+    def isproduct(cls):
+        return False
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s()" % (sclass, )
+
+
+class AutoDataType(BaseDataType):
+    """Data type for types that are its own python type"""
+    def __init__(self):
+        super(AutoDataType, self).__init__()
+
+    def convert(self, obj):
+        return obj
+
+    def validate(self, obj):
+        if not isinstance(obj, self.__class__):
+            raise ValidationError(obj, self.__class__)
+        return True
+
+    def _datatype_dump(self, obj, where):
+        return obj
+
+    def __repr__(self):
+        sclass = type(self).__name__
+        return "%s()" % (sclass, )
+
+
+class DataType(BaseDataType):
+
+    def __init__(self, ptype, default=None):
+        super(DataType, self).__init__()
+        self.python_type = ptype
+        self.default = default
+        self.dialect = dialect_info(self)
+
+    def convert(self, obj):
+        return obj
 
     def validate(self, obj):
         if not isinstance(obj, self.python_type):
