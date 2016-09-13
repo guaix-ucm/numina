@@ -66,11 +66,11 @@ class BaseDictDAL(AbsDAL):
         drp = self.drps.query_by_name(ins)
 
         if drp is None:
-            raise KeyError('Instrument "{}" not found'.format(ins))
+            raise NoResultFound('Instrument "{}" not found'.format(ins))
         try:
             this_configuration = drp.configurations[name]
         except KeyError:
-            raise KeyError('Instrument configuration "{}" missing'.format(name))
+            raise NoResultFound('Instrument configuration "{}" missing'.format(name))
 
         return this_configuration
 
@@ -90,9 +90,20 @@ class BaseDictDAL(AbsDAL):
 
         drp = self.drps.query_by_name(ins)
 
-        this_pipeline = drp.pipelines[pipename]
+        if drp is None:
+            raise NoResultFound('result not found')
+
+        try:
+            this_pipeline = drp.pipelines[pipename]
+        except KeyError:
+            raise NoResultFound('result not found')
+
         recipes = this_pipeline.recipes
-        recipe_fqn = recipes[mode]
+        try:
+            recipe_fqn = recipes[mode]
+        except KeyError:
+            raise NoResultFound('result not found')
+
         return recipe_fqn
 
     def search_recipe_from_ob(self, ob, pipeline):

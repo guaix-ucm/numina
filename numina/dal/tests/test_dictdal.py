@@ -40,6 +40,7 @@ def create_drp_test(names):
 
     return numina.drps.drpbase.DrpGeneric(drps)
 
+
 @pytest.fixture
 def basedictdal():
 
@@ -69,10 +70,10 @@ def test_search_instrument_configuration(basedictdal):
 
     assert isinstance(res, numina.core.pipeline.InstrumentConfiguration)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_instrument_configuration('TEST1', 'missing')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_instrument_configuration('TEST2', 'default')
 
 
@@ -80,8 +81,8 @@ def test_search_instrument_configuration_from_ob(basedictdal):
 
     ob = numina.core.ObservationResult(mode=None)
 
-    with pytest.raises(KeyError):
-        res = basedictdal.search_instrument_configuration_from_ob(ob)
+    with pytest.raises(NoResultFound):
+        basedictdal.search_instrument_configuration_from_ob(ob)
 
     ob = numina.core.ObservationResult(mode='TEST1')
     ob.instrument = 'TEST1'
@@ -94,7 +95,7 @@ def test_search_instrument_configuration_from_ob(basedictdal):
     ob.instrument = 'TEST1'
     ob.configuration = 'missing'
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_instrument_configuration_from_ob(ob)
 
 
@@ -114,13 +115,13 @@ def test_search_oblock(basedictdal):
 def test_search_recipe(basedictdal):
     from numina.core.utils import AlwaysFailRecipe
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_recipe('FAIL', 'mode1', 'default')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_recipe('TEST1', 'mode1', 'default')
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_recipe('TEST1', 'fail', 'invalid')
 
     res = basedictdal.search_recipe('TEST1', 'fail', 'default')

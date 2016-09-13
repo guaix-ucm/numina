@@ -2,20 +2,22 @@ name: TEST2
 configurations:
     default: {}
 modes:
-    - description: A recipe that always fails
-      key: fail
-      name: Fail
-      tagger:
-         - KEY1
-         - KEY2
-    - description: Bias
-      key: bias
-      name: Bias
+    - description: A recipe that always success
+      key: success
+      name: Success
+      summary: Summary of success recipe
       tagger:
          - KEY3
+         - KEY4
+    - description: A recipe about Dark
+      key: dark
+      name: Dark
+      summary: Dark recipe
+      tagger:
+         - KEY5
 pipelines:
     default:
         recipes:
-            bias: test.recipes.BiasRecipe
-            fail: numina.core.utils.AlwaysFailRecipe
+            dark: test.recipes.DarkRecipe
+            success: numina.core.utils.SuccessRecipe
         version: 1

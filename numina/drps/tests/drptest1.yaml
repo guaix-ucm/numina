@@ -5,12 +5,14 @@ modes:
   - description: A recipe that always fails
     key: fail
     name: Fail
+    summary: Summary of fail recipe
     tagger:
        - KEY1
        - KEY2
   - description: Bias
     key: bias
     name: Bias
+    summary: Summary of Bias recipe
     tagger:
        - KEY3
 pipelines:
