@@ -94,6 +94,8 @@ class SolutionArcCalibration(object):
         identification.
     coeff : 1d numpy array (float)
         Coefficients of the wavelength calibration polynomial.
+    residual_std : float
+        Residual standard deviation of the fit.
     crpix1_linear : float
         CRPIX1 value employed in the linear wavelength calibration.
     crval1_linear : float
@@ -120,13 +122,15 @@ class SolutionArcCalibration(object):
     funcost : 1d numpy array (float)
         Cost function corresponding to each identified arc line.
     type : char
-        Type of arc line identification (A, B, C, D, E, R, T, P, K, I).
-        See documentation embedded within the arccalibration_direct
+        Type of arc line identification (A, B, C, D, E, R, T, P, K, I,
+        X). See documentation embedded within the arccalibration_direct
         function for details.
     id : 1d numpy array (integer)
         Number of identified arc line within the wv_master array.
     coeff : 1d numpy array (float)
         Coefficients of the wavelength calibration polynomial.
+    residual_std : float
+        Residual standard deviation of the fit.
     crpix1_linear : float
         CRPIX1 value employed in the linear wavelength calibration.
     crval1_linear : float
@@ -145,7 +149,7 @@ class SolutionArcCalibration(object):
     """
 
     def __init__(self, list_of_wvfeatures,
-                 coeff, crpix1_linear, crval1_linear,
+                 coeff, residual_std, crpix1_linear, crval1_linear,
                  crmin1_linear, crmax1_linear, cdelt1_linear):
         # protections
         nlines_arc_total = len(list_of_wvfeatures)
@@ -166,6 +170,7 @@ class SolutionArcCalibration(object):
 
         self.nlines_arc = self.xpos.size
         self.coeff = coeff
+        self.residual_std = residual_std
         self.crpix1_linear = crpix1_linear
         self.crval1_linear = crval1_linear
         self.crmin1_linear = crmin1_linear
@@ -178,10 +183,11 @@ class SolutionArcCalibration(object):
         output = "<SolutionArcCalibration instance>\n" + \
                  "Number arc lines: " + str(self.nlines_arc) + "\n" + \
                  "Coeff...........: " + str(self.coeff) + "\n" + \
-                 "CRPIX1_linear...: " + str(self.crpix1_linear) + "\n" \
-                 "CRVAL1_linear...: " + str(self.crval1_linear) + "\n" \
-                 "CDELT1_linear...: " + str(self.cdelt1_linear) + "\n" \
-                 "CRMIN1_linear...: " + str(self.crmin1_linear) + "\n" \
+                 "Residual std....: " + str(self.residual_std) + "\n" + \
+                 "CRPIX1_linear...: " + str(self.crpix1_linear) + "\n" + \
+                 "CRVAL1_linear...: " + str(self.crval1_linear) + "\n" + \
+                 "CDELT1_linear...: " + str(self.cdelt1_linear) + "\n" + \
+                 "CRMIN1_linear...: " + str(self.crmin1_linear) + "\n" + \
                  "CRMAX1_linear...: " + str(self.crmax1_linear) + "\n"
 
         for i in range(self.nlines_arc):
@@ -305,7 +311,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         10 : debug, no plots
         11 : debug, plots without pauses
         12 : debug, plots with pauses
-    plot_title : string
+    plot_title : string or None
         Title for residuals plot.
 
     Returns
@@ -353,12 +359,15 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
 
     if xfit.size <= poly_degree_wfit:
         raise ValueError("Insufficient number of points for fit.")
-    poly = Polynomial.fit(x=xfit, y=yfit, deg=poly_degree_wfit, w=weights)
+    poly, stats_list = Polynomial.fit(x=xfit, y=yfit, deg=poly_degree_wfit,
+                          full=True, w=weights)
     poly = Polynomial.cast(poly)
     coeff = poly.coef
+    residual_std = np.sqrt(stats_list[0]/(len(xfit)-2))[0]
 
     if debugplot >= 10:
         print('>>> Fitted coefficients:\n', coeff)
+        print('>>> Residual std.......:', residual_std)
 
     # obtain CRVAL1 and CDELT1 for a linear wavelength scale from the
     # last polynomial fit
@@ -376,6 +385,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     solution_wv = SolutionArcCalibration(
         list_of_wvfeatures=list_of_wvfeatures,
         coeff=coeff,
+        residual_std=residual_std,
         crpix1_linear=crpix1,
         crval1_linear=crval1_linear,
         crmin1_linear=crmin1_linear,
@@ -491,7 +501,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                 transform=ax.transAxes,
                 horizontalalignment="right",
                 verticalalignment="bottom")
-        ax2.text(0.98, 0.05, "r.m.s.: " + str(round(np.std(yres), 4)),
+        ax2.text(0.98, 0.05, "r.m.s.: " + str(round(residual_std, 4)),
                  fontsize=12,
                  transform=ax2.transAxes,
                  horizontalalignment="right",
@@ -548,12 +558,10 @@ def gen_triplets_master(wv_master, debugplot=0):
     # table. The collection of tuples is stored in an ordinary python
     # list.
     iter_comb_triplets = itertools.combinations(range(nlines_master), 3)
-    triplets_master_list = []
-    for val in iter_comb_triplets:
-        triplets_master_list.append(val)
+    triplets_master_list = [val for val in iter_comb_triplets]
 
-    # verify that the number of triplets coincides with the expected
-    # value
+    # Verify that the number of triplets coincides with the expected
+    # value.
     ntriplets_master = len(triplets_master_list)
     if ntriplets_master == scipy.misc.comb(nlines_master, 3, exact=True):
         if debugplot >= 10:
@@ -564,20 +572,20 @@ def gen_triplets_master(wv_master, debugplot=0):
     else:
         raise ValueError('Invalid number of combinations')
 
-    # for each triplet, compute the relative position of the central
-    # line
+    # For each triplet, compute the relative position of the central
+    # line.
     ratios_master = np.zeros(ntriplets_master)
-    for i_tupla in range(ntriplets_master):
-        i1, i2, i3 = triplets_master_list[i_tupla]
-        delta1 = wv_master[i2]-wv_master[i1]
-        delta2 = wv_master[i3]-wv_master[i1]
-        ratios_master[i_tupla] = delta1/delta2
+    for index, value in enumerate(triplets_master_list):
+        i1, i2, i3 = value
+        delta1 = wv_master[i2] - wv_master[i1]
+        delta2 = wv_master[i3] - wv_master[i1]
+        ratios_master[index] = delta1 / delta2
 
-    # compute the array of indices that index the above ratios in
-    # sorted order
+    # Compute the array of indices that index the above ratios in
+    # sorted order.
     isort_ratios_master = np.argsort(ratios_master)
 
-    # simultaneous sort of position ratios and triplets
+    # Simultaneous sort of position ratios and triplets.
     ratios_master_sorted = ratios_master[isort_ratios_master]
     triplets_master_sorted_list = [triplets_master_list[i]
                                    for i in isort_ratios_master]
@@ -724,14 +732,14 @@ def arccalibration_direct(wv_master,
                           crpix1,
                           wv_ini_search, 
                           wv_end_search,
-                          error_xpos_arc,
-                          times_sigma_r,
-                          frac_triplets_for_sum,
-                          times_sigma_theil_sen,
-                          poly_degree_wfit,
-                          times_sigma_polfilt,
-                          times_sigma_cook,
-                          times_sigma_inclusion,
+                          error_xpos_arc=1.0,
+                          times_sigma_r=3.0,
+                          frac_triplets_for_sum=0.50,
+                          times_sigma_theil_sen=10.0,
+                          poly_degree_wfit=3,
+                          times_sigma_polfilt=10.0,
+                          times_sigma_cook=10.0,
+                          times_sigma_inclusion=5.0,
                           debugplot=0):
     """Performs line identification for arc calibration using line triplets.
 
