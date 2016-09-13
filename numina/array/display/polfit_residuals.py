@@ -679,17 +679,39 @@ def main(args=None):
     # polynomial degree
     polydeg = int(args.polydeg)
 
+    # times_sigma_reject
+    if args.times_sigma_reject is None:
+        times_sigma_reject = None
+    else:
+        times_sigma_reject = float(args.times_sigma_reject)
+
+    # times_sigma_cook
+    if args.times_sigma_cook is None:
+        times_sigma_cook = None
+    else:
+        times_sigma_cook = float(args.times_sigma_cook)
+
+    # check
+    if times_sigma_reject is not None and times_sigma_cook is not None:
+        raise ValueError("ERROR: times_sigma_reject and times_sigma_cook" +
+                         " cannot be employed simultaneously")
+
     # read ASCII file
     bigtable = np.genfromtxt(filename)
     x = bigtable[:, col1]
     y = bigtable[:, col2]
 
     # plot fit and residuals
-    polfit_residuals(
-        x, y, polydeg,
-        reject=None,
-        color='b', size=75,
-        debugplot=12)
+    if times_sigma_reject is None and times_sigma_cook is None:
+        polfit_residuals(x, y, polydeg, debugplot=12)
+    elif times_sigma_reject is not None:
+        polfit_residuals_with_sigma_rejection(
+            x, y, polydeg, times_sigma_reject, debugplot=12
+        )
+    elif times_sigma_cook is not None:
+        polfit_residuals_with_cook_rejection(
+            x, y, polydeg, times_sigma_cook, debugplot=12
+        )
 
 
 if __name__ == '__main__':
