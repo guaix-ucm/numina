@@ -29,11 +29,12 @@ from scipy import ndimage
 
 from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_wvfeatures
-from .arccalibration import SolutionArcCalibration
+from .arccalibration import robust_std
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplot import ximplot
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
+
 
 def wvcal_spectrum(filename, ns1, ns2,
                    nwin_background,
@@ -86,7 +87,6 @@ def wvcal_spectrum(filename, ns1, ns2,
 
     # read FITS file
     hdulist = fits.open(filename)
-    image_header = hdulist[0].header
     image2d = hdulist[0].data
     naxis2, naxis1 = image2d.shape
     hdulist.close()
@@ -114,8 +114,8 @@ def wvcal_spectrum(filename, ns1, ns2,
             hdu.writeto("xxx.fits", clobber=True)
 
         # initial location of the peaks (integer values)
-        q25, q50, q75 = np.percentile(sp_mean, q=[25.0, 50.0, 75.0])
-        sigma_g = 0.7413 * (q75 - q25)  # robust standard deviation
+        q50 = np.percentile(sp_mean, q=50)
+        sigma_g = robust_std(sp_mean)
         threshold = q50 + times_sigma_threshold * sigma_g
         if debugplot >= 10:
             print("median....:", q50)
@@ -141,7 +141,7 @@ def wvcal_spectrum(filename, ns1, ns2,
         # display median spectrum and peaks
         if debugplot % 10 != 0:
             title = filename
-            ax = ximplot(sp_mean, title=title, plot_bbox=(1,naxis1),
+            ax = ximplot(sp_mean, title=title, plot_bbox=(1, naxis1),
                          show=False)
             ymin = sp_mean.min()
             ymax = sp_mean.max()
@@ -202,8 +202,8 @@ def wvcal_spectrum(filename, ns1, ns2,
             debugplot=debugplot
         )
 
-        title = filename + "[" + str(ns1) + ":" + str(ns2) + "]" + \
-                     "\n" + wv_master_file
+        title = filename + "[" + str(ns1) + ":" + str(ns2) + "]"
+        title += "\n" + wv_master_file
         solution_wv = fit_list_of_wvfeatures(
             list_of_wvfeatures=list_of_wvfeatures,
             naxis1_arc=naxis1,
@@ -278,7 +278,7 @@ def main(args=None):
     times_sigma_threshold = float(args.times_sigma_threshold)
     debugplot = int(args.debugplot)
     reverse = (args.reverse == "yes")
-    poly_degree_wfit=int(args.degree)
+    poly_degree_wfit = int(args.degree)
     savesp = (args.savesp == "yes")
 
     wvcal_spectrum(args.filename, ns1, ns2,
