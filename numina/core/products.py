@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -36,10 +36,13 @@ import warnings
 
 class DataProductTag(object):
     """A type that is a data product."""
-    pass
+
+    @classmethod
+    def isproduct(cls):
+        return True
 
 
-class DataProductType(DataType, DataProductTag):
+class DataProductType(DataProductTag, DataType):
     def __init__(self, ptype, default=None):
         super(DataProductType, self).__init__(ptype, default=default)
 
@@ -139,12 +142,9 @@ class ArrayNType(ArrayType):
         self.N = dimensions
 
 
-# FIXME: this is hack, this should be provided by DRPS
 def _obtain_validator_for(instrument, mode_key):
-    # This should be set globally and not loaded
-    # every time
-    from numina.core.pipeline import DrpSystem
-    drps = DrpSystem()
+    import numina.drps
+    drps = numina.drps.get_system_drps()
 
     lol = drps.query_by_name(instrument)
 
