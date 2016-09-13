@@ -133,6 +133,12 @@ class SolutionArcCalibration(object):
         Total number of identified arc lines.
     xpos : 1d numpy array (float)
         Pixel coordinate of the peak of all the arc lines.
+    ypos : float
+        Pixel y-coordinate of the peak of the line.
+    flux : float
+        Flux of the line.
+    fwhm : float
+        FWHM of the line.
     wv : 1d numpy array (float)
         Wavelength of all the arc lines.
     funcost : 1d numpy array (float)
@@ -175,6 +181,12 @@ class SolutionArcCalibration(object):
         # initialize members
         self.xpos = np.array([wvfeature.xpos for wvfeature
                               in list_of_wvfeatures if wvfeature.line_ok])
+        self.ypos = np.array([wvfeature.ypos for wvfeature
+                              in list_of_wvfeatures if wvfeature.line_ok])
+        self.flux = np.array([wvfeature.flux for wvfeature
+                              in list_of_wvfeatures if wvfeature.line_ok])
+        self.fwhm = np.array([wvfeature.fwhm for wvfeature
+                              in list_of_wvfeatures if wvfeature.line_ok])
         self.wv = np.array([wvfeature.wv for wvfeature
                             in list_of_wvfeatures if wvfeature.line_ok])
         self.funcost = np.array([wvfeature.funcost for wvfeature
@@ -208,6 +220,9 @@ class SolutionArcCalibration(object):
 
         for i in range(self.nlines_arc):
             output += "xpos: {0:9.3f},  ".format(self.xpos[i])
+            output += "ypos: {0:9.3f},  ".format(self.ypos[i])
+            output += "flux: {0:g},  ".format(self.flux[i])
+            output += "fwhm: {0:g},  ".format(self.fwhm[i])
             output += "wv: {0:10.3f},  ".format(self.wv[i])
             output += "category: {0:1s},  ".format(self.category[i])
             output += "id: {0:3d},  ".format(self.id[i])
