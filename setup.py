@@ -75,7 +75,7 @@ ext2 = Extension('numina.array._ufunc',
                  ],
           include_dirs=[numpy_include])
 
-REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.0', 'scipy', 'PyYaml']
+REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.0', 'scipy', 'PyYaml', 'matplotlib']
 
 # Some packages are required only in some versions of Python
 
