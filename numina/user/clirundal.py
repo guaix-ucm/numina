@@ -80,9 +80,13 @@ def mode_run_common_obs(args, extra_args):
                 loaded_ids.append(doc['id'])
                 loaded_obs[doc['id']] = doc
 
-    _logger.info('reading control from %s', args.reqs)
-    with open(args.reqs, 'r') as fd:
-        loaded_data = yaml.load(fd)
+    if args.reqs:
+        _logger.info('reading control from %s', args.reqs)
+        with open(args.reqs, 'r') as fd:
+            loaded_data = yaml.load(fd)
+    else:
+        _logger.info('no control file')
+        loaded_data = {}
 
     if extra_args.extra_control:
         _logger.info('extra control %s', extra_args.extra_control)
