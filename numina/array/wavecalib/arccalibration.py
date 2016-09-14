@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -133,11 +133,11 @@ class SolutionArcCalibration(object):
         Total number of identified arc lines.
     xpos : 1d numpy array (float)
         Pixel coordinate of the peak of all the arc lines.
-    ypos : float
+    ypos : 1d numpy array (float)
         Pixel y-coordinate of the peak of the line.
-    flux : float
+    flux : 1d numpy array (float)
         Flux of the line.
-    fwhm : float
+    fwhm : 1d numpy array (float)
         FWHM of the line.
     reference : 1d numpy array (float)
         Wavelength of the identified lines in the master list.
@@ -145,7 +145,7 @@ class SolutionArcCalibration(object):
         Wavelength of the identified lines from fitted polynomial.
     funcost : 1d numpy array (float)
         Cost function corresponding to each identified arc line.
-    category : char
+    category : 1d numpy array (char)
         Line identification type (A, B, C, D, E, R, T, P, K, I, X).
         See documentation embedded within the arccalibration_direct
         function for details.
@@ -172,6 +172,13 @@ class SolutionArcCalibration(object):
 
     """
 
+    # Define here all the class members that are numpy arrays. These
+    # members will be exported/read as/from dictionaries of native
+    # python types when necessary. For that purpose, the auxiliary
+    # class methods __getstate__() and __setstate__() are employed.
+    _KEYS = ['xpos', 'ypos', 'flux', 'fwhm', 'reference', 'wavelength',
+             'funcost', 'category', 'id', 'coeff']
+
     def __init__(self, list_of_wvfeatures,
                  coeff, residual_std, crpix1_linear, crval1_linear,
                  crmin1_linear, crmax1_linear, cdelt1_linear):
@@ -194,7 +201,7 @@ class SolutionArcCalibration(object):
         self.funcost = np.array([wvfeature.funcost for wvfeature
                                  in list_of_wvfeatures if wvfeature.line_ok])
         self.category = np.array([wvfeature.category for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
+                                  in list_of_wvfeatures if wvfeature.line_ok])
         self.id = np.array([wvfeature.id for wvfeature
                             in list_of_wvfeatures if wvfeature.line_ok])
 
@@ -239,6 +246,17 @@ class SolutionArcCalibration(object):
 
         # return string with all the information
         return output
+
+    def __getstate__(self):
+        result = self.__dict__.copy()
+        for key in self._KEYS:
+            result[key] = result[key].tolist()
+        return result
+
+    def __setstate__(self, state):
+        for key in self._KEYS:
+            state[key] = np.array(state[key])
+        self.__dict__ = state
 
 
 def robust_std(x):
