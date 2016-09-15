@@ -1,24 +1,21 @@
 language: python
+cache: pip
 sudo: false
 
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="scipy=0.13.2" COVERAGE=true ASTRO=true COND="numpy=1.7 astropy=1.0"
+      env: DEPS="scipy" COVERAGE=true ASTRO=true COND="numpy astropy=1.2"
     - python: "2.7"
-      env: DEPS="scipy=0.14.0" ASTRO=true COND="numpy=1.8 astropy=1.0"
+      env: DEPS="numpy scipy astropy=1.1.2" ASTRO=false
     - python: "2.7"
-      env: DEPS="numpy=1.9 scipy=0.17.0 astropy=1.0.4" ASTRO=false
-    - python: "2.7"
-      env: DEPS="numpy=1.10 scipy=0.17.0 astropy=1.0.5" ASTRO=false
-    - python: "3.4"
-      env: DEPS="numpy=1.9 scipy=0.17.0 astropy=1.0.4" ASTRO=false
-    - python: "3.4"
-      env: DEPS="numpy=1.10 scipy=0.17.0 astropy=1.1.2" ASTRO=false
+      env: DEPS="numpy scipy astropy=1.2.1" ASTRO=false
     - python: "3.5"
-      env: DEPS="numpy=1.9 scipy=0.17.0 astropy=1.0.4" ASTRO=false
+      env: DEPS="numpy scipy astropy=1.1.2" ASTRO=false
     - python: "3.5"
-      env: DEPS="numpy=1.10 scipy=0.17.0 astropy=1.0.5" ASTRO=false
+      env: DEPS="numpy scipy astropy=1.2.1" ASTRO=false
+    - python: "3.5"
+      env: DEPS="numpy scipy astropy=1.2.1" ASTRO=true
 
 before_install:
   - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi
@@ -36,10 +33,7 @@ install:
   - conda create -n testenv --yes $DEPS pip pytest setuptools Cython six>=1.7 pyyaml matplotlib python=$TRAVIS_PYTHON_VERSION
   - source activate testenv
   - if [[ $ASTRO == true ]]; then conda install -n testenv --yes -c astropy-ci-extras $COND; else conda install -n testenv --yes libgfortran;fi
-  - pip install pytest-benchmark
-  - pip list
   # for debugging...
-  - pip list
   - conda list
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
