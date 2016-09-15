@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,26 +17,11 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pkgutil
-import numina.ext as namespace
-
 
 def default_dialect_info(obj):
     key = obj.__module__ + '.' + obj.__class__.__name__
-    result = {'base': {'fqn': key, 'python': obj.python_type}}
+    result = {'base': {'fqn': key, 'python': obj.internal_type}}
     return result
 
 
-for imp, name, _is_pkg in pkgutil.walk_packages(namespace.__path__,
-                                                namespace.__name__ + '.'):
-    try:
-        loader = imp.find_module(name)
-        mod = loader.load_module(name)
-        dialect_info = getattr(mod, 'dialect_info')
-        if dialect_info:
-            break
-    except Exception as error:
-        # print name, type(error), error
-        pass
-else:
-    dialect_info = default_dialect_info
+dialect_info = default_dialect_info

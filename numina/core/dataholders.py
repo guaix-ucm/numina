@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -79,8 +79,8 @@ class EntryHolder(object):
     def default_value(self):
         if self.default is not None:
             return self.convert(self.default)
-        if self.type.default is not None:
-            return self.type.default
+        if self.type.internal_default is not None:
+            return self.type.internal_default
         if self.optional:
             return None
         else:

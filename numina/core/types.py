@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,13 +23,15 @@ from numina.exceptions import ValidationError
 from .typedialect import dialect_info
 
 
-class BaseDataType(object):
+class DataType(object):
 
-    def __init__(self):
-        pass
+    def __init__(self, ptype, default=None):
+        self.internal_type = ptype
+        self.internal_dialect = dialect_info(self)
+        self.internal_default = default
 
     def convert(self, obj):
-        raise NotImplementedError
+        return obj
 
     def convert_in(self, obj):
         return self.convert(obj)
@@ -38,10 +40,12 @@ class BaseDataType(object):
         return self.convert(obj)
 
     def validate(self, obj):
-        raise NotImplementedError
+        if not isinstance(obj, self.internal_type):
+            raise ValidationError(obj, self.internal_type)
+        return True
 
     def _datatype_dump(self, obj, where):
-        raise NotImplementedError
+        raise obj
 
     def _datatype_load(self, where):
         raise NotImplementedError
@@ -55,49 +59,10 @@ class BaseDataType(object):
         return "%s()" % (sclass, )
 
 
-class AutoDataType(BaseDataType):
+class AutoDataType(DataType):
     """Data type for types that are its own python type"""
     def __init__(self):
-        super(AutoDataType, self).__init__()
-
-    def convert(self, obj):
-        return obj
-
-    def validate(self, obj):
-        if not isinstance(obj, self.__class__):
-            raise ValidationError(obj, self.__class__)
-        return True
-
-    def _datatype_dump(self, obj, where):
-        return obj
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        return "%s()" % (sclass, )
-
-
-class DataType(BaseDataType):
-
-    def __init__(self, ptype, default=None):
-        super(DataType, self).__init__()
-        self.python_type = ptype
-        self.default = default
-        self.dialect = dialect_info(self)
-
-    def convert(self, obj):
-        return obj
-
-    def validate(self, obj):
-        if not isinstance(obj, self.python_type):
-            raise ValidationError(obj, self.python_type)
-        return True
-
-    def _datatype_dump(self, obj, where):
-        return obj
-
-    def __repr__(self):
-        sclass = type(self).__name__
-        return "%s()" % (sclass, )
+        super(AutoDataType, self).__init__(ptype=self.__class__)
 
 
 class NullType(DataType):
