@@ -26,7 +26,8 @@ import numpy as np
 import os.path
 
 from .pause_debugplot import pause_debugplot
-from .zscale import zscale
+from numina.visualization import ZScaleInterval
+#from .zscale import zscale
 
 
 dum_str = ''  # global variable in function keypress
@@ -124,7 +125,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         global dum_str
         global dum_par
         if event.key == "/":
-            new_vmin, new_vmax = zscale(image2d)
+            new_vmin, new_vmax = ZScaleInterval().get_limits(image2d)
             print("Setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
@@ -210,7 +211,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     if z1z2 is None:
-        z1, z2 = zscale(image2d)
+        z1, z2 = ZScaleInterval().get_limits(image2d)
     else:
         z1, z2 = z1z2
     im_show = plt.imshow(image2d, cmap=cmap, aspect='auto',
