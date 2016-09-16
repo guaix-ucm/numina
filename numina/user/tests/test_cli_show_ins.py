@@ -1,6 +1,8 @@
 
 import pkgutil
 
+import pytest
+
 import numina.drps
 import numina.drps.drpbase
 import numina.core.pipelineload as pload
@@ -11,100 +13,59 @@ from ..cli import main
 drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
 drpdata2 = pkgutil.get_data('numina.drps.tests', 'drptest2.yaml')
 
-
-def test_show_instrument(capsys, monkeypatch):
-    """Test that one instrument is shown"""
-
-    def mockreturn():
-        drps = {}
-        drp1 = pload.drp_load_data(drpdata1)
-        drps[drp1.name] = drp1
-        return numina.drps.drpbase.DrpGeneric(drps)
-
-    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
-
-    expected = ("Instrument: TEST1\n"
-                " has configuration 'default'\n"
-                " has pipeline 'default', version 1\n"
-                )
-
-    main(['show-instruments'])
-
-    out, err = capsys.readouterr()
-    assert out == expected
+expecte0 = [""]
 
 
-def test_show_2_instruments(capsys, monkeypatch):
-    """Test that two instruments are shown"""
-
-    def mockreturn():
-        drps = {}
-        drp1 = pload.drp_load_data(drpdata1)
-        drp2 = pload.drp_load_data(drpdata2)
-        drps[drp1.name] = drp1
-        drps[drp2.name] = drp2
-        return numina.drps.drpbase.DrpGeneric(drps)
-
-    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
-
-    expected = ["Instrument: TEST2",
-                " has configuration 'default'",
-                " has pipeline 'default', version 1",
-                "Instrument: TEST1",
-                " has configuration 'default'",
-                " has pipeline 'default', version 1",
-                ""
-                ]
-
-    main(['show-instruments'])
-
-    out, err = capsys.readouterr()
-    out = out.split("\n")
-    out.sort()
-    expected.sort()
-    assert out == expected
+expecte1 = ["Instrument: TEST1",
+            " has configuration 'default'",
+            " has pipeline 'default', version 1",
+            ""
+            ]
 
 
-def test_show_no_instrument(capsys, monkeypatch):
+expecte2 = ["Instrument: TEST2",
+            " has configuration 'default'",
+            " has pipeline 'default', version 1",
+            "Instrument: TEST1",
+            " has configuration 'default'",
+            " has pipeline 'default', version 1",
+            ""
+            ]
+
+
+def mockreturn0():
+    return numina.drps.drpbase.DrpGeneric()
+
+
+def mockreturn1():
+    drps = {}
+    drp1 = pload.drp_load_data(drpdata1)
+    drps[drp1.name] = drp1
+    return numina.drps.drpbase.DrpGeneric(drps)
+
+
+def mockreturn2():
+    drps = {}
+    drp1 = pload.drp_load_data(drpdata1)
+    drp2 = pload.drp_load_data(drpdata2)
+    drps[drp1.name] = drp1
+    drps[drp2.name] = drp2
+    return numina.drps.drpbase.DrpGeneric(drps)
+
+
+@pytest.mark.parametrize("drpsfunc, expected",
+                         [(mockreturn0, expecte0),
+                          (mockreturn1, expecte1),
+                          (mockreturn2, expecte2)
+                          ]
+                         )
+def test_show_instrument(capsys, monkeypatch, drpsfunc, expected):
     """Test that no instruments are shown"""
 
-    def mockreturn():
-        return numina.drps.drpbase.DrpGeneric()
-
-    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
-
-    expected = ""
+    monkeypatch.setattr(numina.drps, "get_system_drps", drpsfunc)
 
     main(['show-instruments'])
 
-    out, err = capsys.readouterr()
-
-    assert out == expected
-
-
-def test_show_2_instruments_select(capsys, monkeypatch):
-    """Test that two instruments are shown"""
-
-    def mockreturn():
-        drps = {}
-        drp1 = pload.drp_load_data(drpdata1)
-        drp2 = pload.drp_load_data(drpdata2)
-        drps[drp1.name] = drp1
-        drps[drp2.name] = drp2
-        return numina.drps.drpbase.DrpGeneric(drps)
-
-    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
-
-    expected = ["Instrument: TEST2",
-                " has configuration 'default'",
-                " has pipeline 'default', version 1",
-                "Instrument: TEST1",
-                " has configuration 'default'",
-                " has pipeline 'default', version 1",
-                ""
-                ]
-
-    main(['show-instruments'])
 
     out, err = capsys.readouterr()
     out = out.split("\n")
@@ -113,40 +74,11 @@ def test_show_2_instruments_select(capsys, monkeypatch):
     assert out == expected
 
 
-def test_show_2_instruments_select_no(capsys, monkeypatch):
+@pytest.mark.parametrize("drpsfunc", [mockreturn0, mockreturn1, mockreturn2])
+def test_show_no_instruments_i(capsys, monkeypatch, drpsfunc):
     """Test that two instruments are shown"""
 
-    def mockreturn():
-        drps = {}
-        drp1 = pload.drp_load_data(drpdata1)
-        drp2 = pload.drp_load_data(drpdata2)
-        drps[drp1.name] = drp1
-        drps[drp2.name] = drp2
-        return numina.drps.drpbase.DrpGeneric(drps)
-
-    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
-
-    expected = ["No instrument named: TEST3",
-                ""
-                ]
-
-    main(['show-instruments', '-i', 'TEST3'])
-
-    out, err = capsys.readouterr()
-    out = out.split("\n")
-    out.sort()
-    expected.sort()
-    assert out == expected
-
-
-def test_show_no_instruments_select_no(capsys, monkeypatch):
-    """Test that two instruments are shown"""
-
-    def mockreturn():
-        drps = {}
-        return numina.drps.drpbase.DrpGeneric(drps)
-
-    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+    monkeypatch.setattr(numina.drps, "get_system_drps", drpsfunc)
 
     expected = ["No instrument named: TEST3",
                 ""
