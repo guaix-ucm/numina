@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -53,10 +53,15 @@ WW[9] = numpy.array([[-0.09090909, 0.06060606, 0.16883117, 0.23376623, 0.2554112
                      [0.48484848, 0.12121212, -0.13852814, -0.29437229, -0.34632035,
                       -0.29437229, -0.13852814, 0.12121212, 0.48484848]])
 
-def filter_array_margins(arr, ipeaks, window_width=5):
 
+def _check_window_width(window_width):
+    """Check `window_width` is odd and >=3"""
     if (window_width<3) or (window_width % 2 == 0):
         raise ValueError('Window width must be an odd number and >=3')
+
+
+def filter_array_margins(arr, ipeaks, window_width=5):
+    _check_window_width(window_width)
 
     max_number = (len(arr)-1) - (window_width // 2)
     min_number = window_width // 2
@@ -91,8 +96,7 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0, fpeak=0):
 
     """
 
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+    _check_window_width(window_width)
 
     if (fpeak<0 or fpeak + 1 >= window_width):
         raise ValueError('fpeak must be in the range 0- window_width - 2')
@@ -112,8 +116,8 @@ def return_weights(window_width):
     :return: ndarray
     Matrix needed to interpolate 'window_width' points
     """
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+
+    _check_window_width(window_width)
 
     try:
         return WW[window_width]
@@ -132,8 +136,7 @@ def generate_weights(window_width):
     Matrix needed to interpolate 'window_width' points
     """
 
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+    _check_window_width(window_width)
 
     evenly_spaced = numpy.linspace(-1, 1, window_width)
     pow_matrix = numpy.fliplr(numpy.vander(evenly_spaced, N=3))
@@ -160,8 +163,7 @@ def refine_peaks(arr, ipeaks, window_width):
         interpolated Y-coordinates
 
     """
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+    _check_window_width(window_width)
 
     step = window_width // 2
 
