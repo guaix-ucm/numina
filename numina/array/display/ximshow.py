@@ -27,7 +27,6 @@ import os.path
 
 from .pause_debugplot import pause_debugplot
 from numina.visualization import ZScaleInterval
-#from .zscale import zscale
 
 
 dum_str = ''  # global variable in function keypress
@@ -334,7 +333,6 @@ def main(args=None):
             nc2 = naxis1
             ns1 = 1
             ns2 = naxis2
-            bbox = (1, naxis1, 1, naxis2)
         else:
             tmp_bbox = args.bbox.split(",")
             nc1 = int(tmp_bbox[0])
@@ -351,11 +349,6 @@ def main(args=None):
                 ns2 = naxis2
 
         # display full image
-        #title = myfile
-        # ToDo: remove the following commented lines
-        #title += "\ngrism=" + grism +
-        #          ", filter=" + spfilter +
-        #          ", rotang=" + str(round(rotang, 2)
         ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
                      title=title,
                      z1z2=z1z2,
