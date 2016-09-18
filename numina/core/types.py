@@ -45,7 +45,7 @@ class DataType(object):
         return True
 
     def _datatype_dump(self, obj, where):
-        raise obj
+        return obj
 
     def _datatype_load(self, where):
         raise NotImplementedError
