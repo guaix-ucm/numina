@@ -23,9 +23,10 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
-import os.path
 
 from .pause_debugplot import pause_debugplot
+from .list_fits_files_from_txt import list_fits_files_from_txt
+
 from numina.visualization import ZScaleInterval
 
 
@@ -36,7 +37,7 @@ dum_par = ''  # global variable in function keypress
 def ximshow(image2d, title=None, cbar_label=None, show=True,
             z1z2=None, cmap="hot", image_bbox=(0, 0, 0, 0),
             debugplot=None):
-    """Auxiliary function to display 2d images.
+    """Auxiliary function to display a numpy 2d array.
 
     Parameters
     ----------
@@ -236,6 +237,125 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         return ax
 
 
+def ximshow_file(singlefile,
+                 args_z1z2=None, args_bbox=None,
+                 args_keystitle=None, args_pdffile=None,
+                 args_debugplot=None):
+    """Function to execute ximshow() as called from command line.
+
+    Parameters
+    ----------
+    singlefile : string
+        Name of the FITS file to be displayed.
+    args_z1z2 : string or None
+        String providing the image cuts tuple: z1, z2
+    args_bbox : string or None
+        String providing the bounding box tuple: nc1, nc2, ns1, ns2
+    args_keystitle : string or None
+        Tuple of FITS keywords.format: key1,key2,...,keyn.format
+    args_pdffile : string or None
+        Output PDF file name.
+    args_debugplot : string or None
+        Determines whether intermediate computations and/or plots
+        are displayed:
+        00 : no debug, no plots
+        01 : no debug, plots without pauses
+        02 : no debug, plots with pauses
+        10 : debug, no plots
+        11 : debug, plots without pauses
+        12 : debug, plots with pauses
+
+    """
+
+    # read z1, z2
+    if args_z1z2 is None:
+        z1z2 = None
+    else:
+        tmp_str = args_z1z2.split(",")
+        z1z2 = float(tmp_str[0]), float(tmp_str[1])
+
+    # read pdffile
+    pdffile = args_pdffile
+    if pdffile is not None:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(pdffile)
+    else:
+        import matplotlib
+        matplotlib.use('Qt4Agg')
+        import matplotlib.pyplot as plt
+        pdf = None
+
+    # read debugplot value
+    debugplot = int(args_debugplot)
+
+    # read input FITS file
+    hdulist = fits.open(singlefile)
+    image_header = hdulist[0].header
+    image2d = hdulist[0].data
+    hdulist.close()
+
+    naxis1 = image_header['naxis1']
+    naxis2 = image_header['naxis2']
+
+    # title for plot
+    title = singlefile
+    if args_keystitle is not None:
+        keystitle = args_keystitle
+        keysformat = ".".join(keystitle.split(".")[1:])
+        keysnames = keystitle.split(".")[0]
+        tuple_of_keyval = ()
+        for key in keysnames.split(","):
+            keyval = image_header[key]
+            tuple_of_keyval += (keyval,)
+        title += "\n" + str(keysformat % tuple_of_keyval)
+
+    if image2d.shape != (naxis2, naxis1):
+        raise ValueError("Unexpected error with NAXIS1, NAXIS2")
+    else:
+        print('>>> File..:', singlefile)
+        print('>>> NAXIS1:', naxis1)
+        print('>>> NAXIS2:', naxis2)
+
+    # read bounding box
+    if args_bbox is None:
+        nc1 = 1
+        nc2 = naxis1
+        ns1 = 1
+        ns2 = naxis2
+    else:
+        tmp_bbox = args_bbox.split(",")
+        nc1 = int(tmp_bbox[0])
+        nc2 = int(tmp_bbox[1])
+        ns1 = int(tmp_bbox[2])
+        ns2 = int(tmp_bbox[3])
+        if nc1 < 1:
+            nc1 = 1
+        if nc2 > naxis1:
+            nc2 = naxis1
+        if ns1 < 1:
+            ns1 = 1
+        if ns2 > naxis2:
+            ns2 = naxis2
+
+    # display full image
+    ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
+                 title=title,
+                 z1z2=z1z2,
+                 image_bbox=(nc1, nc2, ns1, ns2), debugplot=debugplot)
+    ax.grid(False)
+
+    if pdf is not None:
+        pdf.savefig()
+    else:
+        import matplotlib.pyplot as plt
+        plt.show(block=False)
+        plt.pause(0.001)
+        pause_debugplot(debugplot)
+
+    if pdf is not None:
+        pdf.close()
+
+
 def main(args=None):
 
     # parse command-line options
@@ -257,111 +377,15 @@ def main(args=None):
                         default=12)
     args = parser.parse_args(args)
 
-    # read z1, z2
-    if args.z1z2 is None:
-        z1z2 = None
-    else:
-        tmp_str = args.z1z2.split(",")
-        z1z2 = float(tmp_str[0]), float(tmp_str[1])
+    list_fits_files = list_fits_files_from_txt(args.filename)
 
-    # read pdffile
-    pdffile = args.pdffile
-    if pdffile is not None:
-        from matplotlib.backends.backend_pdf import PdfPages
-        pdf = PdfPages(pdffile)
-    else:
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
-        pdf = None
-
-    # read debugplot value
-    debugplot = int(args.debugplot)
-
-    # check for input file
-    filename = args.filename
-    if not os.path.isfile(filename):
-        raise ValueError("File " + filename + " not found!")
-
-    # if input file is a txt file, assume it is a list of FITS files
-    if filename[-4:] == ".txt":
-        with open(filename) as f:
-            file_content = f.read().splitlines()
-        list_fits_files = []
-        for line in file_content:
-            if len(line) > 0:
-                if line[0] != '#':
-                    tmpfile = line.split()[0]
-                    if not os.path.isfile(tmpfile):
-                        raise ValueError("File " + tmpfile + " not found!")
-                    list_fits_files.append(tmpfile)
-    else:
-        list_fits_files = [filename]
-
-    for ifile, myfile in enumerate(list_fits_files):
-        # read input FITS file
-        hdulist = fits.open(myfile)
-        image_header = hdulist[0].header
-        image2d = hdulist[0].data
-        hdulist.close()
-
-        naxis1 = image_header['naxis1']
-        naxis2 = image_header['naxis2']
-
-        # title for plot
-        title = myfile
-        if args.keystitle is not None:
-            keystitle = args.keystitle
-            keysformat = ".".join(keystitle.split(".")[1:])
-            keysnames = keystitle.split(".")[0]
-            tuple_of_keyval = ()
-            for key in keysnames.split(","):
-                keyval = image_header[key]
-                tuple_of_keyval += (keyval,)
-            title += "\n" + str(keysformat % tuple_of_keyval)
-
-        if image2d.shape != (naxis2, naxis1):
-            raise ValueError("Unexpected error with NAXIS1, NAXIS2")
-        else:
-            print('>>> File..:', myfile)
-            print('>>> NAXIS1:', naxis1)
-            print('>>> NAXIS2:', naxis2)
-
-        # read bounding box
-        if args.bbox is None:
-            nc1 = 1
-            nc2 = naxis1
-            ns1 = 1
-            ns2 = naxis2
-        else:
-            tmp_bbox = args.bbox.split(",")
-            nc1 = int(tmp_bbox[0])
-            nc2 = int(tmp_bbox[1])
-            ns1 = int(tmp_bbox[2])
-            ns2 = int(tmp_bbox[3])
-            if nc1 < 1:
-                nc1 = 1
-            if nc2 > naxis1:
-                nc2 = naxis1
-            if ns1 < 1:
-                ns1 = 1
-            if ns2 > naxis2:
-                ns2 = naxis2
-
-        # display full image
-        ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
-                     title=title,
-                     z1z2=z1z2,
-                     image_bbox=(nc1, nc2, ns1, ns2), debugplot=debugplot)
-        if pdf is not None:
-            pdf.savefig()
-        else:
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(debugplot)
-
-    if pdf is not None:
-        pdf.close()
+    for myfile in list_fits_files:
+        ximshow_file(singlefile=myfile,
+                     args_z1z2=args.z1z2,
+                     args_bbox=args.bbox,
+                     args_keystitle=args.keystitle,
+                     args_pdffile=args.pdffile,
+                     args_debugplot=args.debugplot)
 
     if len(list_fits_files) > 1:
         pause_debugplot(12, optional_prompt="Press RETURN to STOP")
