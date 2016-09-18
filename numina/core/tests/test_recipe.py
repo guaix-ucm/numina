@@ -145,3 +145,38 @@ def test_recipe_io_inheritance():
     assert 'other' in TestRecipe.requirements()
     assert 'someresult1' in TestRecipe.products()
     assert 'someresult2' in TestRecipe.products()
+
+
+def test_recipe_io_baseclass():
+
+    class MyRecipeInput(RecipeInput):
+        def myfunction(self):
+            return 1
+
+    class MyRecipeResult(RecipeResult):
+        def myfunction(self):
+            return 2
+
+    class TestRecipe(BaseRecipe):
+
+        RecipeInput = MyRecipeInput
+
+        RecipeResult = MyRecipeResult
+
+        other = Requirement(int, description='Other')
+        someresult2 = Product(int, 'Some integer')
+
+    assert issubclass(TestRecipe.RecipeInput, MyRecipeInput)
+
+    assert issubclass(TestRecipe.RecipeResult, MyRecipeResult)
+
+    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+
+    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+
+    assert 'other' in TestRecipe.requirements()
+    assert 'someresult2' in TestRecipe.products()
+
+    assert TestRecipe.RecipeInput().myfunction() == 1
+    assert TestRecipe.RecipeResult().myfunction() == 2
+

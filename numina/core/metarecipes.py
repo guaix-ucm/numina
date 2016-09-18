@@ -42,24 +42,10 @@ class RecipeType(type):
             else:
                 filter_attr[name] = val
 
-        # Find base class for RecipeResult in parents
-        for parent in parents:
-            if hasattr(parent, _RECIPE_RESULT_NAME):
-                BaseRecipeResult = parent.RecipeResult
-                break
-        else:
-            BaseRecipeResult = RecipeResult
-
-        # Find base class for RecipeInput in parents
-        for parent in parents:
-            if hasattr(parent, _RECIPE_INPUT_NAME):
-                BaseRecipeInput = parent.RecipeInput
-                break
-        else:
-            BaseRecipeInput = RecipeInput
+        BaseRecipeResult = cls.get_base_class(RecipeResult, parents, attributes, _RECIPE_RESULT_NAME)
+        BaseRecipeInput = cls.get_base_class(RecipeInput, parents, attributes, _RECIPE_INPUT_NAME)
 
         ReqsClass = cls.create_inpt_class(classname, BaseRecipeInput, filter_reqs)
-
         ResultClass = cls.create_prod_class(classname, BaseRecipeResult, filter_prods)
 
         filter_attr[_RECIPE_RESULT_NAME] = ResultClass
@@ -75,6 +61,18 @@ class RecipeType(type):
         else:
             klass = baseclass
         return klass
+
+    @classmethod
+    def get_base_class(cls, default, parents, attributes, name):
+        # Find base class for RecipeResult in parents
+        if name in attributes:
+            return attributes[name]
+        else:
+            for parent in parents:
+                if hasattr(parent, name):
+                    return getattr(parent, name)
+            else:
+                return default
 
     @classmethod
     def create_inpt_class(cls, classname, base, attributes):
