@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -82,7 +82,7 @@ class TagFits_(object):
 
 
 class Corrector(Node):
-    '''A Node that corrects a frame from instrumental signatures.'''
+    """A Node that corrects a frame from instrumental signatures."""
 
     def __init__(self, datamodel=None, dtype='float32'):
         super(Corrector, self).__init__()
@@ -114,7 +114,7 @@ TagOptionalCorrector = Corrector
 
 
 class BadPixelCorrector(Corrector):
-    '''A Node that corrects a frame from bad pixels.'''
+    """A Node that corrects a frame from bad pixels."""
 
     def __init__(self, badpixelmask, datamodel=None, dtype='float32'):
 
@@ -142,7 +142,7 @@ class BadPixelCorrector(Corrector):
 
 
 class BiasCorrector(Corrector):
-    '''A Node that corrects a frame from bias.'''
+    """A Node that corrects a frame from bias."""
 
     def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
@@ -184,7 +184,7 @@ class BiasCorrector(Corrector):
 class DarkCorrector(Corrector):
     """A Node that corrects a frame from dark current."""
 
-    def __init__(self, darkmap, darkvar=None, datamodel=None, dtype='float32'):
+    def __init__(self, darkmap, darkvar=None, calibid=None, datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
@@ -197,7 +197,10 @@ class DarkCorrector(Corrector):
         self.dark_stats = darkmap.mean()
         self.darkmap = darkmap
         self.darkvar = darkvar
-        self.calibid = 'ID-of-calib-image'
+        if calibid is None:
+            self.calibid = 'calibid-unknown'
+        else:
+            self.calibid = calibid
 
     def run(self, img):
 
@@ -222,7 +225,7 @@ class DarkCorrector(Corrector):
 
 
 class NonLinearityCorrector(Corrector):
-    '''A Node that corrects a frame from non-linearity.'''
+    """A Node that corrects a frame from non-linearity."""
 
     def __init__(self, polynomial, datamodel=None, dtype='float32'):
 
@@ -286,7 +289,7 @@ class FlatFieldCorrector(Corrector):
 
 
 class SkyCorrector(Corrector):
-    '''A Node that corrects a frame from sky.'''
+    """A Node that corrects a frame from sky."""
 
     def __init__(self, skydata, datamodel=None, dtype='float32'):
 
