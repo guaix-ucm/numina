@@ -106,6 +106,46 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
             raise ValueError("image2d.shape=" + str(image2d.shape) +
                              " does not correspond to bounding box size")
 
+    def get_current_zoom(ax):
+        """Return subimage corresponding to current zoom.
+
+        Parameters
+        ----------
+        ax : axes
+            Images axes.
+
+        Returns
+        -------
+        subimage : numpy array (floats)
+            Subimage.
+
+        """
+
+        xmin, xmax = ax.get_xlim()
+        ymin, ymax = ax.get_ylim()
+        ixmin = int(xmin + 0.5)
+        ixmax = int(xmax + 0.5)
+        iymin = int(ymin + 0.5)
+        iymax = int(ymax + 0.5)
+        if ixmin < 0:
+            ixmin = 0
+        if ixmin > naxis1_:
+            ixmin = naxis1_ - 1
+        if ixmax < 0:
+            ixmax = 0
+        if ixmax > naxis1_:
+            ixmax = naxis1_ - 1
+        if iymin < 0:
+            iymin = 0
+        if iymin > naxis2_:
+            iymin = naxis2_ - 1
+        if iymax < 0:
+            iymax = 0
+        if iymax > naxis2_:
+            iymax = naxis2_ - 1
+        return image2d[iymin:(iymax+1), ixmin:(ixmax+1)]
+
+
     def keypress(event):
         """Deal with keyboard events, allowing the update of vmin and vmax.
 
@@ -124,8 +164,30 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
 
         global dum_str
         global dum_par
-        if event.key == "/":
-            new_vmin, new_vmax = ZScaleInterval().get_limits(image2d)
+        if event.key == "?":
+            print("""
+Home/Reset......................: h or r or home
+Back............................: c or left arrow or backspace
+Forward.........................: v or right arrow
+Pan/Zoom........................: p
+Zoom-to-rect....................: o
+Save............................: ctrl + s
+Toggle fullscreen...............: ctrl + f
+Close plot......................: ctrl + w
+Set zscale......................: /
+Set bg=min and fg=max values....: ,
+Set foreground by keyboard......: m
+Set background by keyboard......: n
+Constrain pan/zoom to x axis....: hold x when panning/zooming with mouse
+Constrain pan/zoom to y axis....: hold y when panning/zooming with mouse
+Preserve aspect ratio...........: hold CONTROL when panning/zooming with mouse
+Toggle grid.....................: g when mouse is over an axes
+Toggle x axis scale (log/linear): L or k when mouse is over an axes
+Toggle y axis scale (log/linear): l when mouse is over an axes
+            """)
+        elif event.key == "/":
+            subimage2d = get_current_zoom(ax)
+            new_vmin, new_vmax = ZScaleInterval().get_limits(subimage2d)
             print("Setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
@@ -135,8 +197,9 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
             plt.show(block=False)
             plt.pause(0.001)
         elif event.key == ",":
-            new_vmin = image2d.min()
-            new_vmax = image2d.max()
+            subimage2d = get_current_zoom(ax)
+            new_vmin = subimage2d.min()
+            new_vmax = subimage2d.max()
             print("Setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
