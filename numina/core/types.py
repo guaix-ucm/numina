@@ -47,8 +47,8 @@ class DataType(object):
     def _datatype_dump(self, obj, where):
         return obj
 
-    def _datatype_load(self, where):
-        raise NotImplementedError
+    def _datatype_load(self, obj):
+        return obj
 
     @classmethod
     def isproduct(cls):
