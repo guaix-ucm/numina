@@ -214,7 +214,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             plt.pause(0.001)
         elif event.key == ".":
             subimage2d = get_current_zoom(ax)
-            print("\n* Statistical summary:")
+            print("\n")
             summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
             print("Type (blindly!) vmin <return>")

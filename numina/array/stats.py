@@ -74,9 +74,11 @@ def summary(x, debug=False):
 
     Returns
     -------
-    result : tuple, floats
-        Minimum, percentile 25, percentile 50, mean, percentile 75, maximum,
-        standard deviation, and robust standard deviation.
+    result : dictionary of floats
+        Minimum, percentile 25, percentile 50 (median), mean,
+        percentile 75, maximum, standard deviation, robust standard
+        deviation, percentile 15.866 (equivalent to -1 sigma in a normal
+        distribution) and percentile 84.134 (+1 sigma).
 
     """
 
@@ -88,28 +90,35 @@ def summary(x, debug=False):
         raise ValueError('x.dim=' + str(x.ndim) + ' must be 1')
 
     # compute basic statistics
-    result = (np.min(x),
-              np.percentile(x, 25),
-              np.percentile(x, 50),
-              np.mean(x),
-              np.percentile(x, 75),
-              np.max(x),
-              np.std(x),
-              robust_std(x),
-              np.percentile(x, 15.86553),
-              np.percentile(x, 84.13447))
+    result = {
+        'minimum' : np.min(x),
+        'percentile25' : np.percentile(x, 25),
+        'median' : np.percentile(x, 50),
+        'mean' : np.mean(x),
+        'percentile75': np.percentile(x, 75),
+        'maximum' : np.max(x),
+        'std': np.std(x),
+        'robust_std' : robust_std(x),
+        'percentile15': np.percentile(x, 15.86553),
+        'percentile84': np.percentile(x, 84.13447)
+    }
 
     if debug:
-        print('>>> Minimum..................:', result[0])
-        print('>>> 1st Quartile.............:', result[1])
-        print('>>> Median...................:', result[2])
-        print('>>> Mean.....................:', result[3])
-        print('>>> 3rd Quartile.............:', result[4])
-        print('>>> Maximum..................:', result[5])
-        print('>>> Standard deviation.......:', result[6])
-        print('>>> Robust standard deviation:', result[7])
-        print('>>> 0.1586553 percentile.....:', result[8])
-        print('>>> 0.8413447 percentile.....:', result[9])
+        print('>>> =======================================')
+        print('>>> STATISTICAL SUMMARY:')
+        print('>>> ---------------------------------------')
+        print('>>> Minimum..................:', result['minimum'])
+        print('>>> 1st Quartile.............:', result['percentile25'])
+        print('>>> Median...................:', result['median'])
+        print('>>> Mean.....................:', result['mean'])
+        print('>>> 3rd Quartile.............:', result['percentile75'])
+        print('>>> Maximum..................:', result['maximum'])
+        print('>>> ---------------------------------------')
+        print('>>> Standard deviation.......:', result['std'])
+        print('>>> Robust standard deviation:', result['robust_std'])
+        print('>>> 0.1586553 percentile.....:', result['percentile15'])
+        print('>>> 0.8413447 percentile.....:', result['percentile84'])
+        print('>>> =======================================')
 
     return result
 
