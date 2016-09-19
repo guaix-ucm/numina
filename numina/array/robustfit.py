@@ -33,9 +33,9 @@ def fit_theil_sen(x, y):
 
     Parameters
     ----------
-    x : 1d numpy array, float
+    x : array_like, shape (M,)
         X coordinate array.
-    y : 1d or 2d numpy array, float
+    y : array_like, shape (M,) or (M,K)
         Y coordinate array. If the array is two dimensional, each column of
         the array is independently fitted sharing the same x-coordinates. In
         this last case, the returned intercepts and slopes are also 1d numpy
@@ -43,10 +43,15 @@ def fit_theil_sen(x, y):
 
     Returns
     -------
-    intercept : float or 1d numpy array
-        Intercept(s) of the linear fit(s).
-    slope : float or 1d numpy array
-        Slope(s) of the linear fit(s).
+    coef : ndarray, shape (2,) or (2, K)
+           Intercept and slope of the linear fit. If y was 2-D, the
+           coefficients in column k of coef represent the linear fit
+           to the data in y's k-th column.
+
+    Raises
+    ------
+    ValueError:
+        If the number of points to fit is < 5
 
     """
 
@@ -60,7 +65,6 @@ def fit_theil_sen(x, y):
         raise ValueError('Input arrays have unexpected dimensions')
 
     if y1.ndim == 1:
-        nfits = 1
         if len(y1) != n:
             raise ValueError('X and Y arrays have different sizes')
         yy = y1[numpy.newaxis, :]
@@ -68,7 +72,6 @@ def fit_theil_sen(x, y):
         if n != y1.shape[0]:
             raise ValueError(
                 'Y-array size in the fitting direction is different to the X-array size')
-        nfits = y1.shape[1]
         yy = y1.T
     else:
         raise ValueError('Input arrays have unexpected dimensions')
@@ -83,7 +86,5 @@ def fit_theil_sen(x, y):
     allinters = yy - slopes[:, numpy.newaxis] * x
     inters = numpy.median(allinters, axis=1)
 
-    if nfits == 1:  # return numbers
-        return inters[0], slopes[0]
-    else:
-        return inters, slopes
+    coeff = numpy.array([inters, slopes])
+    return numpy.squeeze(coeff)

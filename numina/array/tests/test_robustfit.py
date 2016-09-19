@@ -76,3 +76,29 @@ def test_theil_sen_values1d(n):
 
     assert numpy.allclose(slope, cslope)
     assert numpy.allclose(intercept, cin)
+
+
+def test_theil_sen_out_shape():
+
+    n = 10
+    x = numpy.arange(n)
+    slope = 2.0
+    intercept = 17
+    y = slope * x + intercept
+
+    res = fit_theil_sen(x, y)
+    assert res.shape == (2,)
+
+
+def test_theil_sen_out_shape2():
+
+    n = 10
+    m = 12
+    x = numpy.arange(n)
+    slope = 2.0
+    intercept = 17
+    xx = numpy.tile(x, (m, 1)).transpose()
+    y = slope * xx + intercept
+
+    res = fit_theil_sen(x, y)
+    assert res.shape == (2, m)
