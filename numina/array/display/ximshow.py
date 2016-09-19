@@ -154,7 +154,6 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
                   ixmin+1, ixmax+1, iymin+1, iymax+1)
         return image2d[iymin:(iymax+1), ixmin:(ixmax+1)]
 
-
     def keypress(event):
         """Deal with keyboard events, allowing the update of vmin and vmax.
 
@@ -376,16 +375,18 @@ def ximshow_file(singlefile,
         import matplotlib
         matplotlib.use('Qt4Agg')
         import matplotlib.pyplot as plt
-        if args_geometry is None:
-            geometry = None
-        else:
-            tmp_str = args_geometry.split(",")
-            x_geom = int(tmp_str[0])
-            y_geom = int(tmp_str[1])
-            dx_geom = int(tmp_str[2])
-            dy_geom = int(tmp_str[3])
-            geometry = x_geom, y_geom, dx_geom, dy_geom
         pdf = None
+
+    # read geometry
+    if args_geometry is None:
+        geometry = None
+    else:
+        tmp_str = args_geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry = x_geom, y_geom, dx_geom, dy_geom
 
     # read debugplot value
     debugplot = int(args_debugplot)
@@ -440,7 +441,6 @@ def ximshow_file(singlefile,
             ns2 = naxis2
 
     # display image
-    #ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
     ax = ximshow(image2d=image2d, show=False,
                  title=title,
                  z1z2=z1z2,
