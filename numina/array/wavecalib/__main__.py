@@ -29,9 +29,9 @@ from scipy import ndimage
 
 from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_wvfeatures
-from .arccalibration import robust_std
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplot import ximplot
+from ..stats import robust_std
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 

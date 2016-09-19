@@ -23,11 +23,12 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
-import os.path
 
 from .pause_debugplot import pause_debugplot
+from .list_fits_files_from_txt import list_fits_files_from_txt
+from ..stats import summary
+
 from numina.visualization import ZScaleInterval
-#from .zscale import zscale
 
 
 dum_str = ''  # global variable in function keypress
@@ -36,8 +37,8 @@ dum_par = ''  # global variable in function keypress
 
 def ximshow(image2d, title=None, cbar_label=None, show=True,
             z1z2=None, cmap="hot", image_bbox=(0, 0, 0, 0),
-            debugplot=None):
-    """Auxiliary function to display 2d images.
+            geometry=None, debugplot=None):
+    """Auxiliary function to display a numpy 2d array.
 
     Parameters
     ----------
@@ -51,7 +52,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         If True, the function shows the displayed image. Otherwise
         the function just invoke the plt.imshow() function and
         plt.show() is expected to be executed outside.
-    z1z2 : tuple of floats
+    z1z2 : tuple of floats, string or None
         Background and foreground values. If None, zcuts are employed.
     cmap : string
         Color map to be employed.
@@ -61,6 +62,8 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         the bounding box of the image is read from this tuple,
         assuming (nc1,nc2,ns1,ns2). In this case, the coordinates
         indicate pixels.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt4 backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -97,14 +100,59 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
     image_coord = (nc1 == 0 and nc2 == 0 and ns1 == 0 and ns2 == 0)
 
     naxis2_, naxis1_ = image2d.shape
-    if not image_coord:
-        # check that image shape corresponds to bounding box size
-        if naxis1_ != nc2 - nc1 + 1:
-            raise ValueError("image2d.shape=" + str(image2d.shape) +
-                             " does not correspond to bounding box size")
-        if naxis2_ != ns2 - ns1 + 1:
-            raise ValueError("image2d.shape=" + str(image2d.shape) +
-                             " does not correspond to bounding box size")
+
+    # if not image_coord:
+    #     # check that image shape corresponds to bounding box size
+    #     if naxis1_ != nc2 - nc1 + 1:
+    #         raise ValueError("image2d.shape=" + str(image2d.shape) +
+    #                          " does not correspond to bounding box size")
+    #     if naxis2_ != ns2 - ns1 + 1:
+    #         raise ValueError("image2d.shape=" + str(image2d.shape) +
+    #                          " does not correspond to bounding box size")
+
+    def get_current_zoom(ax_image, debug=False):
+        """Return subimage corresponding to current zoom.
+
+        Parameters
+        ----------
+        ax_image : axes
+            Image axes.
+        debug : bool
+            If True, the image corners are printed.
+
+        Returns
+        -------
+        subimage : numpy array (floats)
+            Subimage.
+
+        """
+
+        xmin_image, xmax_image = ax_image.get_xlim()
+        ymin_image, ymax_image = ax_image.get_ylim()
+        ixmin = int(xmin_image + 0.5)
+        ixmax = int(xmax_image + 0.5)
+        iymin = int(ymin_image + 0.5)
+        iymax = int(ymax_image + 0.5)
+        if ixmin < nc1 - 1:
+            ixmin = nc1 - 1
+        if ixmin > nc2 - 1:
+            ixmin = nc2 - 1
+        if ixmax < nc1 - 1:
+            ixmax = nc1 - 1
+        if ixmax > nc2 - 1:
+            ixmax = nc2 - 1
+        if iymin < ns1 - 1:
+            iymin = ns1 - 1
+        if iymin > ns2 - 1:
+            iymin = ns2 - 1
+        if iymax < ns1 - 1:
+            iymax = ns1 - 1
+        if iymax > ns2 - 1:
+            iymax = ns2 - 1
+        if debug:
+            print("\n>>> xmin, xmax, ymin, ymax (pixels):",
+                  ixmin+1, ixmax+1, iymin+1, iymax+1)
+        return image2d[iymin:(iymax+1), ixmin:(ixmax+1)]
 
     def keypress(event):
         """Deal with keyboard events, allowing the update of vmin and vmax.
@@ -124,9 +172,34 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
 
         global dum_str
         global dum_par
-        if event.key == "/":
-            new_vmin, new_vmax = ZScaleInterval().get_limits(image2d)
-            print("Setting cuts to vmin=" + str(new_vmin) +
+        if event.key == "?":
+            print("""
+Keyword events
+==============
+Home/Reset......................: h or r or home
+Back............................: c or left arrow or backspace
+Forward.........................: v or right arrow
+Pan/Zoom........................: p
+Zoom-to-rect....................: o
+Save............................: ctrl + s
+Toggle fullscreen...............: ctrl + f
+Close plot......................: ctrl + w
+Set zscale......................: /
+Set bg=min and fg=max values....: ,
+Display statistical summary.....: .
+Set foreground by keyboard......: m
+Set background by keyboard......: n
+Constrain pan/zoom to x axis....: hold x when panning/zooming with mouse
+Constrain pan/zoom to y axis....: hold y when panning/zooming with mouse
+Preserve aspect ratio...........: hold CONTROL when panning/zooming with mouse
+Toggle grid.....................: g when mouse is over an axes
+Toggle x axis scale (log/linear): L or k when mouse is over an axes
+Toggle y axis scale (log/linear): l when mouse is over an axes
+            """)
+        elif event.key == "/":
+            subimage2d = get_current_zoom(ax, debug=True)
+            new_vmin, new_vmax = ZScaleInterval().get_limits(subimage2d)
+            print(">>> setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
@@ -135,9 +208,10 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
             plt.show(block=False)
             plt.pause(0.001)
         elif event.key == ",":
-            new_vmin = image2d.min()
-            new_vmax = image2d.max()
-            print("Setting cuts to vmin=" + str(new_vmin) +
+            subimage2d = get_current_zoom(ax, debug=True)
+            new_vmin = subimage2d.min()
+            new_vmax = subimage2d.max()
+            print(">>> setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
@@ -145,6 +219,9 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
             dum_par = ''
             plt.show(block=False)
             plt.pause(0.001)
+        elif event.key == ".":
+            subimage2d = get_current_zoom(ax, debug=True)
+            summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
             print("Type (blindly!) vmin <return>")
             dum_str = ''
@@ -189,8 +266,6 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
                 dum_str += event.key
 
     # display image
-    # plt.ion()
-    # plt.pause(0.001)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)
@@ -210,11 +285,18 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         ax.set_ylabel('image pixel in the Y direction')
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
+    ax.grid(False)
     if z1z2 is None:
-        z1, z2 = ZScaleInterval().get_limits(image2d)
+        z1, z2 = ZScaleInterval().get_limits(
+            image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
+        )
+    elif z1z2 == "minmax":
+        z1 = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2].min()
+        z2 = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2].max()
     else:
         z1, z2 = z1z2
-    im_show = plt.imshow(image2d, cmap=cmap, aspect='auto',
+    im_show = plt.imshow(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2],
+                         cmap=cmap, aspect='auto',
                          vmin=z1, vmax=z2,
                          interpolation='nearest', origin='low',
                          extent=[xmin, xmax, ymin, ymax])
@@ -224,6 +306,12 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
                  orientation="horizontal")
     if title is not None:
         ax.set_title(title)
+
+    # set the geometry
+    if geometry is not None:
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
     # connect keypress event with function responsible for
     # updating vmin and vmax
     fig.canvas.mpl_connect('key_press_event', keypress)
@@ -237,36 +325,51 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         return ax
 
 
-def main(args=None):
+def ximshow_file(singlefile,
+                 args_z1z2=None, args_bbox=None,
+                 args_keystitle=None, args_geometry=None,
+                 args_pdffile=None,
+                 args_debugplot=None):
+    """Function to execute ximshow() as called from command line.
 
-    # parse command-line options
-    parser = argparse.ArgumentParser(prog='ximshow')
-    parser.add_argument("filename",
-                        help="FITS file or txt file with list of FITS files")
-    parser.add_argument("--z1z2",
-                        help="tuple z1,z2")
-    parser.add_argument("--bbox",
-                        help="bounding box tuple: nc1,nc2,ns1,ns2")
-    parser.add_argument("--keystitle",
-                        help="tuple of FITS keywords.format: " +
-                             "key1,key2,...keyn.'format'")
-    parser.add_argument("--pdffile",
-                        help="ouput PDF file name")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                             " (default=12)",
-                        default=12)
-    args = parser.parse_args(args)
+    Parameters
+    ----------
+    singlefile : string
+        Name of the FITS file to be displayed.
+    args_z1z2 : string or None
+        String providing the image cuts tuple: z1, z2, minmax of None
+    args_bbox : string or None
+        String providing the bounding box tuple: nc1, nc2, ns1, ns2
+    args_keystitle : string or None
+        Tuple of FITS keywords.format: key1,key2,...,keyn.format
+    args_geometry : string or None
+        Tuple x,y,dx,dy to define the Qt4 backend geometry. This
+        information is ignored if args_pdffile is not None.
+    args_pdffile : string or None
+        Output PDF file name.
+    args_debugplot : string or None
+        Determines whether intermediate computations and/or plots
+        are displayed:
+        00 : no debug, no plots
+        01 : no debug, plots without pauses
+        02 : no debug, plots with pauses
+        10 : debug, no plots
+        11 : debug, plots without pauses
+        12 : debug, plots with pauses
+
+    """
 
     # read z1, z2
-    if args.z1z2 is None:
+    if args_z1z2 is None:
         z1z2 = None
+    elif args_z1z2 == "minmax":
+        z1z2 = "minmax"
     else:
-        tmp_str = args.z1z2.split(",")
+        tmp_str = args_z1z2.split(",")
         z1z2 = float(tmp_str[0]), float(tmp_str[1])
 
     # read pdffile
-    pdffile = args.pdffile
+    pdffile = args_pdffile
     if pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
         pdf = PdfPages(pdffile)
@@ -276,99 +379,122 @@ def main(args=None):
         import matplotlib.pyplot as plt
         pdf = None
 
-    # read debugplot value
-    debugplot = int(args.debugplot)
-
-    # check for input file
-    filename = args.filename
-    if not os.path.isfile(filename):
-        raise ValueError("File " + filename + " not found!")
-
-    # if input file is a txt file, assume it is a list of FITS files
-    if filename[-4:] == ".txt":
-        with open(filename) as f:
-            file_content = f.read().splitlines()
-        list_fits_files = []
-        for line in file_content:
-            if len(line) > 0:
-                if line[0] != '#':
-                    tmpfile = line.split()[0]
-                    if not os.path.isfile(tmpfile):
-                        raise ValueError("File " + tmpfile + " not found!")
-                    list_fits_files.append(tmpfile)
+    # read geometry
+    if args_geometry is None:
+        geometry = None
     else:
-        list_fits_files = [filename]
+        tmp_str = args_geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry = x_geom, y_geom, dx_geom, dy_geom
 
-    for ifile, myfile in enumerate(list_fits_files):
-        # read input FITS file
-        hdulist = fits.open(myfile)
-        image_header = hdulist[0].header
-        image2d = hdulist[0].data
-        hdulist.close()
+    # read debugplot value
+    debugplot = int(args_debugplot)
 
-        naxis1 = image_header['naxis1']
-        naxis2 = image_header['naxis2']
+    # read input FITS file
+    hdulist = fits.open(singlefile)
+    image_header = hdulist[0].header
+    image2d = hdulist[0].data
+    hdulist.close()
 
-        # title for plot
-        title = myfile
-        if args.keystitle is not None:
-            keystitle = args.keystitle
-            keysformat = ".".join(keystitle.split(".")[1:])
-            keysnames = keystitle.split(".")[0]
-            tuple_of_keyval = ()
-            for key in keysnames.split(","):
-                keyval = image_header[key]
-                tuple_of_keyval += (keyval,)
-            title += "\n" + str(keysformat % tuple_of_keyval)
+    naxis1 = image_header['naxis1']
+    naxis2 = image_header['naxis2']
 
-        if image2d.shape != (naxis2, naxis1):
-            raise ValueError("Unexpected error with NAXIS1, NAXIS2")
-        else:
-            print('>>> File..:', myfile)
-            print('>>> NAXIS1:', naxis1)
-            print('>>> NAXIS2:', naxis2)
+    # title for plot
+    title = singlefile
+    if args_keystitle is not None:
+        keystitle = args_keystitle
+        keysformat = ".".join(keystitle.split(".")[1:])
+        keysnames = keystitle.split(".")[0]
+        tuple_of_keyval = ()
+        for key in keysnames.split(","):
+            keyval = image_header[key]
+            tuple_of_keyval += (keyval,)
+        title += "\n" + str(keysformat % tuple_of_keyval)
 
-        # read bounding box
-        if args.bbox is None:
+    if image2d.shape != (naxis2, naxis1):
+        raise ValueError("Unexpected error with NAXIS1, NAXIS2")
+    else:
+        print('>>> File..:', singlefile)
+        print('>>> NAXIS1:', naxis1)
+        print('>>> NAXIS2:', naxis2)
+
+    # read bounding box
+    if args_bbox is None:
+        nc1 = 1
+        nc2 = naxis1
+        ns1 = 1
+        ns2 = naxis2
+    else:
+        tmp_bbox = args_bbox.split(",")
+        nc1 = int(tmp_bbox[0])
+        nc2 = int(tmp_bbox[1])
+        ns1 = int(tmp_bbox[2])
+        ns2 = int(tmp_bbox[3])
+        if nc1 < 1:
             nc1 = 1
+        if nc2 > naxis1:
             nc2 = naxis1
+        if ns1 < 1:
             ns1 = 1
+        if ns2 > naxis2:
             ns2 = naxis2
-            bbox = (1, naxis1, 1, naxis2)
-        else:
-            tmp_bbox = args.bbox.split(",")
-            nc1 = int(tmp_bbox[0])
-            nc2 = int(tmp_bbox[1])
-            ns1 = int(tmp_bbox[2])
-            ns2 = int(tmp_bbox[3])
-            if nc1 < 1:
-                nc1 = 1
-            if nc2 > naxis1:
-                nc2 = naxis1
-            if ns1 < 1:
-                ns1 = 1
-            if ns2 > naxis2:
-                ns2 = naxis2
 
-        # display full image
-        #title = myfile
-        # ToDo: remove the following commented lines
-        #title += "\ngrism=" + grism +
-        #          ", filter=" + spfilter +
-        #          ", rotang=" + str(round(rotang, 2)
-        ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
-                     title=title,
-                     z1z2=z1z2,
-                     image_bbox=(nc1, nc2, ns1, ns2), debugplot=debugplot)
-        if pdf is not None:
-            pdf.savefig()
-        else:
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(debugplot)
+    # display image
+    ax = ximshow(image2d=image2d, show=False,
+                 title=title,
+                 z1z2=z1z2,
+                 image_bbox=(nc1, nc2, ns1, ns2),
+                 geometry=geometry,
+                 debugplot=debugplot)
+
+    if pdf is not None:
+        pdf.savefig()
+    else:
+        import matplotlib.pyplot as plt
+        plt.show(block=False)
+        plt.pause(0.001)
+        pause_debugplot(debugplot)
 
     if pdf is not None:
         pdf.close()
+
+
+def main(args=None):
+
+    # parse command-line options
+    parser = argparse.ArgumentParser(prog='ximshow')
+    parser.add_argument("filename",
+                        help="FITS file or txt file with list of FITS files")
+    parser.add_argument("--z1z2",
+                        help="tuple z1,z2, minmax or None (use zscale)")
+    parser.add_argument("--bbox",
+                        help="bounding box tuple: nc1,nc2,ns1,ns2")
+    parser.add_argument("--keystitle",
+                        help="tuple of FITS keywords.format: " +
+                             "key1,key2,...keyn.'format'")
+    parser.add_argument("--geometry",
+                        help="tuple x,y,dx,dy")
+    parser.add_argument("--pdffile",
+                        help="ouput PDF file name")
+    parser.add_argument("--debugplot",
+                        help="Integer indicating plotting/debugging" +
+                             " (default=12)",
+                        default=12)
+    args = parser.parse_args(args)
+
+    list_fits_files = list_fits_files_from_txt(args.filename)
+
+    for myfile in list_fits_files:
+        ximshow_file(singlefile=myfile,
+                     args_z1z2=args.z1z2,
+                     args_bbox=args.bbox,
+                     args_keystitle=args.keystitle,
+                     args_geometry=args.geometry,
+                     args_pdffile=args.pdffile,
+                     args_debugplot=args.debugplot)
 
     if len(list_fits_files) > 1:
         pause_debugplot(12, optional_prompt="Press RETURN to STOP")
