@@ -129,8 +129,6 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
 
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
-        print("TEST:", xmin, xmax, ymin, ymax)
-        #raw_input("STOP HERE")
         ixmin = int(xmin + 0.5)
         ixmax = int(xmax + 0.5)
         iymin = int(ymin + 0.5)
@@ -152,7 +150,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         if iymax > ns2 - 1:
             iymax = ns2 - 1
         if debug:
-            print(">>> xmin, xmax, ymin, ymax (pixels):",
+            print("\n>>> xmin, xmax, ymin, ymax (pixels):",
                   ixmin+1, ixmax+1, iymin+1, iymax+1)
         return image2d[iymin:(iymax+1), ixmin:(ixmax+1)]
 
@@ -200,9 +198,9 @@ Toggle x axis scale (log/linear): L or k when mouse is over an axes
 Toggle y axis scale (log/linear): l when mouse is over an axes
             """)
         elif event.key == "/":
-            subimage2d = get_current_zoom(ax)
+            subimage2d = get_current_zoom(ax, debug=True)
             new_vmin, new_vmax = ZScaleInterval().get_limits(subimage2d)
-            print("Setting cuts to vmin=" + str(new_vmin) +
+            print(">>> setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
@@ -211,10 +209,10 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             plt.show(block=False)
             plt.pause(0.001)
         elif event.key == ",":
-            subimage2d = get_current_zoom(ax)
+            subimage2d = get_current_zoom(ax, debug=True)
             new_vmin = subimage2d.min()
             new_vmax = subimage2d.max()
-            print("Setting cuts to vmin=" + str(new_vmin) +
+            print(">>> setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
@@ -223,8 +221,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             plt.show(block=False)
             plt.pause(0.001)
         elif event.key == ".":
-            subimage2d = get_current_zoom(ax)
-            print("\n")
+            subimage2d = get_current_zoom(ax, debug=True)
             summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
             print("Type (blindly!) vmin <return>")
