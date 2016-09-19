@@ -26,6 +26,7 @@ import numpy as np
 
 from .pause_debugplot import pause_debugplot
 from .list_fits_files_from_txt import list_fits_files_from_txt
+from ..stats import summary
 
 from numina.visualization import ZScaleInterval
 
@@ -178,6 +179,7 @@ Toggle fullscreen...............: ctrl + f
 Close plot......................: ctrl + w
 Set zscale......................: /
 Set bg=min and fg=max values....: ,
+Display statistical summary.....: .
 Set foreground by keyboard......: m
 Set background by keyboard......: n
 Constrain pan/zoom to x axis....: hold x when panning/zooming with mouse
@@ -210,6 +212,10 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             dum_par = ''
             plt.show(block=False)
             plt.pause(0.001)
+        elif event.key == ".":
+            subimage2d = get_current_zoom(ax)
+            print("\n* Statistical summary:")
+            summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
             print("Type (blindly!) vmin <return>")
             dum_str = ''
