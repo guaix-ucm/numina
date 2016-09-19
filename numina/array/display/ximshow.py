@@ -52,7 +52,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         If True, the function shows the displayed image. Otherwise
         the function just invoke the plt.imshow() function and
         plt.show() is expected to be executed outside.
-    z1z2 : tuple of floats
+    z1z2 : tuple of floats, string or None
         Background and foreground values. If None, zcuts are employed.
     cmap : string
         Color map to be employed.
@@ -287,10 +287,15 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     if z1z2 is None:
-        z1, z2 = ZScaleInterval().get_limits(image2d[ns1 - 1:ns2, nc1 - 1:nc2])
+        z1, z2 = ZScaleInterval().get_limits(
+            image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
+        )
+    elif z1z2 == "minmax":
+        z1 = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2].min()
+        z2 = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2].max()
     else:
         z1, z2 = z1z2
-    im_show = plt.imshow(image2d[ns1 - 1:ns2, nc1 - 1:nc2],
+    im_show = plt.imshow(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2],
                          cmap=cmap, aspect='auto',
                          vmin=z1, vmax=z2,
                          interpolation='nearest', origin='low',
@@ -331,7 +336,7 @@ def ximshow_file(singlefile,
     singlefile : string
         Name of the FITS file to be displayed.
     args_z1z2 : string or None
-        String providing the image cuts tuple: z1, z2
+        String providing the image cuts tuple: z1, z2, minmax of None
     args_bbox : string or None
         String providing the bounding box tuple: nc1, nc2, ns1, ns2
     args_keystitle : string or None
@@ -356,6 +361,8 @@ def ximshow_file(singlefile,
     # read z1, z2
     if args_z1z2 is None:
         z1z2 = None
+    elif args_z1z2 == "minmax":
+        z1z2 = "minmax"
     else:
         tmp_str = args_z1z2.split(",")
         z1z2 = float(tmp_str[0]), float(tmp_str[1])
@@ -461,7 +468,7 @@ def main(args=None):
     parser.add_argument("filename",
                         help="FITS file or txt file with list of FITS files")
     parser.add_argument("--z1z2",
-                        help="tuple z1,z2")
+                        help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle",
