@@ -21,7 +21,6 @@ from __future__ import print_function
 
 import logging
 import warnings
-import time
 import datetime
 
 from astropy.io import fits
@@ -61,36 +60,17 @@ class SimpleDataModel(DataModel):
     pass
 
 
-class NoTag_(object):
-    def check_if_processed(self, img):
-        return False
-
-    def tag_as_processed(self, img):
-        pass
-
-
-class TagFits_(object):
-    def __init__(self, tag, comment):
-        self.tag = tag
-        self.comment = comment
-
-    def check_if_processed(self, header):
-        return self.tag in header
-
-    def tag_as_processed(self, header):
-        header[self.tag]= (time.asctime(), self.comment)
-
-
 class Corrector(Node):
     """A Node that corrects a frame from instrumental signatures."""
 
-    def __init__(self, datamodel=None, dtype='float32'):
+    def __init__(self, datamodel=None, calibid='calibid-unknown', dtype='float32'):
         super(Corrector, self).__init__()
         if not datamodel:
             self.datamodel = SimpleDataModel()
         else:
             self.datamodel = datamodel
         self.dtype = dtype
+        self.calibid = calibid
 
     def __call__(self, img):
         if img[0].data.dtype in ['<u2', '>u2', '=u2']:
@@ -116,12 +96,11 @@ TagOptionalCorrector = Corrector
 class BadPixelCorrector(Corrector):
     """A Node that corrects a frame from bad pixels."""
 
-    def __init__(self, badpixelmask, datamodel=None, dtype='float32'):
+    def __init__(self, badpixelmask, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
-        super(BadPixelCorrector, self).__init__(datamodel, dtype)
+        super(BadPixelCorrector, self).__init__(datamodel, calibid, dtype)
 
         self.bpm = badpixelmask
-        self.calibid = 'ID-of-calib-image'
 
     def run(self, img):
         import numina.array.bpm as bpm
@@ -144,16 +123,14 @@ class BadPixelCorrector(Corrector):
 class BiasCorrector(Corrector):
     """A Node that corrects a frame from bias."""
 
-    def __init__(self, biasmap, biasvar=None, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
+    def __init__(self, biasmap, biasvar=None, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = True if biasvar else False
 
-        super(BiasCorrector, self).__init__(datamodel=datamodel, dtype=dtype)
+        super(BiasCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
         self.bias_stats = biasmap.mean()
         self.biasmap = biasmap
         self.biasvar = biasvar
-        self.calibid = 'ID-of-calib-image'
 
     def run(self, img):
 
@@ -184,7 +161,7 @@ class BiasCorrector(Corrector):
 class DarkCorrector(Corrector):
     """A Node that corrects a frame from dark current."""
 
-    def __init__(self, darkmap, darkvar=None, calibid=None, datamodel=None, dtype='float32'):
+    def __init__(self, darkmap, darkvar=None, calibid='calibid-unknown', datamodel=None, dtype='float32'):
 
         self.update_variance = False
 
@@ -192,15 +169,12 @@ class DarkCorrector(Corrector):
             self.update_variance = True
 
         super(DarkCorrector, self).__init__(datamodel=datamodel,
+                                            calibid=calibid,
                                             dtype=dtype)
 
         self.dark_stats = darkmap.mean()
         self.darkmap = darkmap
         self.darkvar = darkvar
-        if calibid is None:
-            self.calibid = 'calibid-unknown'
-        else:
-            self.calibid = calibid
 
     def run(self, img):
 
@@ -227,17 +201,15 @@ class DarkCorrector(Corrector):
 class NonLinearityCorrector(Corrector):
     """A Node that corrects a frame from non-linearity."""
 
-    def __init__(self, polynomial, datamodel=None, dtype='float32'):
+    def __init__(self, polynomial, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = False
 
         super(NonLinearityCorrector, self).__init__(
-            datamodel=datamodel, dtype=dtype
+            datamodel=datamodel, calibid=calibid, dtype=dtype
         )
 
         self.polynomial = polynomial
-        self.calibid = 'ID-of-calib-image'
-
 
     def run(self, img):
         _logger.debug('correcting non linearity in %s', img)
@@ -258,17 +230,17 @@ class NonLinearityCorrector(Corrector):
 class FlatFieldCorrector(Corrector):
     """A Node that corrects a frame from flat-field."""
 
-    def __init__(self, flatdata, datamodel=None, dtype='float32'):
+    def __init__(self, flatdata, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = False
 
         super(FlatFieldCorrector, self).__init__(
             datamodel=datamodel,
+            calibid=calibid,
             dtype=dtype)
 
         self.flatdata = flatdata
         self.flat_stats = flatdata.mean()
-        self.calibid = 'ID-of-calib-image'
 
     def run(self, img):
         imgid = self.get_imgid(img)
@@ -291,17 +263,17 @@ class FlatFieldCorrector(Corrector):
 class SkyCorrector(Corrector):
     """A Node that corrects a frame from sky."""
 
-    def __init__(self, skydata, datamodel=None, dtype='float32'):
+    def __init__(self, skydata, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = False
 
         super(SkyCorrector, self).__init__(
             datamodel=datamodel,
+            calibid=calibid,
             dtype=dtype)
 
         self.skydata = skydata
         self.calib_stats = skydata.mean()
-        self.calibid = 'ID-of-calib-image'
 
     def run(self, img):
         imgid = self.get_imgid(img)
@@ -329,12 +301,13 @@ class SkyCorrector(Corrector):
 class DivideByExposure(Corrector):
     """A Node that divides its input by exposure time."""
 
-    def __init__(self, datamodel=None, dtype='float32'):
+    def __init__(self, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = False
 
         super(DivideByExposure, self).__init__(
             datamodel=datamodel,
+            calibid=calibid,
             dtype=dtype
         )
 
