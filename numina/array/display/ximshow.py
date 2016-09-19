@@ -110,13 +110,13 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
     #         raise ValueError("image2d.shape=" + str(image2d.shape) +
     #                          " does not correspond to bounding box size")
 
-    def get_current_zoom(ax, debug=False):
+    def get_current_zoom(ax_image, debug=False):
         """Return subimage corresponding to current zoom.
 
         Parameters
         ----------
-        ax : axes
-            Images axes.
+        ax_image : axes
+            Image axes.
         debug : bool
             If True, the image corners are printed.
 
@@ -127,12 +127,12 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
 
         """
 
-        xmin, xmax = ax.get_xlim()
-        ymin, ymax = ax.get_ylim()
-        ixmin = int(xmin + 0.5)
-        ixmax = int(xmax + 0.5)
-        iymin = int(ymin + 0.5)
-        iymax = int(ymax + 0.5)
+        xmin_image, xmax_image = ax_image.get_xlim()
+        ymin_image, ymax_image = ax_image.get_ylim()
+        ixmin = int(xmin_image + 0.5)
+        ixmax = int(xmax_image + 0.5)
+        iymin = int(ymin_image + 0.5)
+        iymax = int(ymax_image + 0.5)
         if ixmin < nc1 - 1:
             ixmin = nc1 - 1
         if ixmin > nc2 - 1:
@@ -285,6 +285,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         ax.set_ylabel('image pixel in the Y direction')
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
+    ax.grid(False)
     if z1z2 is None:
         z1, z2 = ZScaleInterval().get_limits(
             image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
@@ -305,6 +306,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                  orientation="horizontal")
     if title is not None:
         ax.set_title(title)
+
     # set the geometry
     if geometry is not None:
         x_geom, y_geom, dx_geom, dy_geom = geometry
@@ -447,7 +449,6 @@ def ximshow_file(singlefile,
                  image_bbox=(nc1, nc2, ns1, ns2),
                  geometry=geometry,
                  debugplot=debugplot)
-    ax.grid(False)
 
     if pdf is not None:
         pdf.savefig()
