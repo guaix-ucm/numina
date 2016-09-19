@@ -104,21 +104,21 @@ def summary(x, debug=False):
     }
 
     if debug:
-        print('>>> =======================================')
+        print('>>> ========================================')
         print('>>> STATISTICAL SUMMARY:')
-        print('>>> ---------------------------------------')
+        print('>>> ----------------------------------------')
         print('>>> Minimum..................:', result['minimum'])
         print('>>> 1st Quartile.............:', result['percentile25'])
         print('>>> Median...................:', result['median'])
         print('>>> Mean.....................:', result['mean'])
         print('>>> 3rd Quartile.............:', result['percentile75'])
         print('>>> Maximum..................:', result['maximum'])
-        print('>>> ---------------------------------------')
+        print('>>> ----------------------------------------')
         print('>>> Standard deviation.......:', result['std'])
         print('>>> Robust standard deviation:', result['robust_std'])
         print('>>> 0.1586553 percentile.....:', result['percentile15'])
         print('>>> 0.8413447 percentile.....:', result['percentile84'])
-        print('>>> =======================================')
+        print('>>> ========================================')
 
     return result
 

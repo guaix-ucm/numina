@@ -100,22 +100,25 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
     image_coord = (nc1 == 0 and nc2 == 0 and ns1 == 0 and ns2 == 0)
 
     naxis2_, naxis1_ = image2d.shape
-    if not image_coord:
-        # check that image shape corresponds to bounding box size
-        if naxis1_ != nc2 - nc1 + 1:
-            raise ValueError("image2d.shape=" + str(image2d.shape) +
-                             " does not correspond to bounding box size")
-        if naxis2_ != ns2 - ns1 + 1:
-            raise ValueError("image2d.shape=" + str(image2d.shape) +
-                             " does not correspond to bounding box size")
 
-    def get_current_zoom(ax):
+    # if not image_coord:
+    #     # check that image shape corresponds to bounding box size
+    #     if naxis1_ != nc2 - nc1 + 1:
+    #         raise ValueError("image2d.shape=" + str(image2d.shape) +
+    #                          " does not correspond to bounding box size")
+    #     if naxis2_ != ns2 - ns1 + 1:
+    #         raise ValueError("image2d.shape=" + str(image2d.shape) +
+    #                          " does not correspond to bounding box size")
+
+    def get_current_zoom(ax, debug=False):
         """Return subimage corresponding to current zoom.
 
         Parameters
         ----------
         ax : axes
             Images axes.
+        debug : bool
+            If True, the image corners are printed.
 
         Returns
         -------
@@ -126,26 +129,31 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
 
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
+        print("TEST:", xmin, xmax, ymin, ymax)
+        #raw_input("STOP HERE")
         ixmin = int(xmin + 0.5)
         ixmax = int(xmax + 0.5)
         iymin = int(ymin + 0.5)
         iymax = int(ymax + 0.5)
-        if ixmin < 0:
-            ixmin = 0
-        if ixmin > naxis1_:
-            ixmin = naxis1_ - 1
-        if ixmax < 0:
-            ixmax = 0
-        if ixmax > naxis1_:
-            ixmax = naxis1_ - 1
-        if iymin < 0:
-            iymin = 0
-        if iymin > naxis2_:
-            iymin = naxis2_ - 1
-        if iymax < 0:
-            iymax = 0
-        if iymax > naxis2_:
-            iymax = naxis2_ - 1
+        if ixmin < nc1 - 1:
+            ixmin = nc1 - 1
+        if ixmin > nc2 - 1:
+            ixmin = nc2 - 1
+        if ixmax < nc1 - 1:
+            ixmax = nc1 - 1
+        if ixmax > nc2 - 1:
+            ixmax = nc2 - 1
+        if iymin < ns1 - 1:
+            iymin = ns1 - 1
+        if iymin > ns2 - 1:
+            iymin = ns2 - 1
+        if iymax < ns1 - 1:
+            iymax = ns1 - 1
+        if iymax > ns2 - 1:
+            iymax = ns2 - 1
+        if debug:
+            print(">>> xmin, xmax, ymin, ymax (pixels):",
+                  ixmin+1, ixmax+1, iymin+1, iymax+1)
         return image2d[iymin:(iymax+1), ixmin:(ixmax+1)]
 
 
@@ -169,6 +177,8 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         global dum_par
         if event.key == "?":
             print("""
+Keyword events
+==============
 Home/Reset......................: h or r or home
 Back............................: c or left arrow or backspace
 Forward.........................: v or right arrow
@@ -280,10 +290,11 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     if z1z2 is None:
-        z1, z2 = ZScaleInterval().get_limits(image2d)
+        z1, z2 = ZScaleInterval().get_limits(image2d[ns1 - 1:ns2, nc1 - 1:nc2])
     else:
         z1, z2 = z1z2
-    im_show = plt.imshow(image2d, cmap=cmap, aspect='auto',
+    im_show = plt.imshow(image2d[ns1 - 1:ns2, nc1 - 1:nc2],
+                         cmap=cmap, aspect='auto',
                          vmin=z1, vmax=z2,
                          interpolation='nearest', origin='low',
                          extent=[xmin, xmax, ymin, ymax])
@@ -424,8 +435,9 @@ def ximshow_file(singlefile,
         if ns2 > naxis2:
             ns2 = naxis2
 
-    # display full image
-    ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
+    # display image
+    #ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
+    ax = ximshow(image2d=image2d, show=False,
                  title=title,
                  z1z2=z1z2,
                  image_bbox=(nc1, nc2, ns1, ns2),
