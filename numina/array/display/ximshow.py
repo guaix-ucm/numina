@@ -36,7 +36,7 @@ dum_par = ''  # global variable in function keypress
 
 def ximshow(image2d, title=None, cbar_label=None, show=True,
             z1z2=None, cmap="hot", image_bbox=(0, 0, 0, 0),
-            debugplot=None):
+            geometry=None, debugplot=None):
     """Auxiliary function to display a numpy 2d array.
 
     Parameters
@@ -61,6 +61,8 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         the bounding box of the image is read from this tuple,
         assuming (nc1,nc2,ns1,ns2). In this case, the coordinates
         indicate pixels.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt4 backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -252,8 +254,6 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                 dum_str += event.key
 
     # display image
-    # plt.ion()
-    # plt.pause(0.001)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)
@@ -287,6 +287,11 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                  orientation="horizontal")
     if title is not None:
         ax.set_title(title)
+    # set the geometry
+    if geometry is not None:
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
     # connect keypress event with function responsible for
     # updating vmin and vmax
     fig.canvas.mpl_connect('key_press_event', keypress)
@@ -302,7 +307,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 def ximshow_file(singlefile,
                  args_z1z2=None, args_bbox=None,
-                 args_keystitle=None, args_pdffile=None,
+                 args_keystitle=None, args_geometry=None,
+                 args_pdffile=None,
                  args_debugplot=None):
     """Function to execute ximshow() as called from command line.
 
@@ -316,6 +322,9 @@ def ximshow_file(singlefile,
         String providing the bounding box tuple: nc1, nc2, ns1, ns2
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
+    args_geometry : string or None
+        Tuple x,y,dx,dy to define the Qt4 backend geometry. This
+        information is ignored if args_pdffile is not None.
     args_pdffile : string or None
         Output PDF file name.
     args_debugplot : string or None
@@ -346,6 +355,15 @@ def ximshow_file(singlefile,
         import matplotlib
         matplotlib.use('Qt4Agg')
         import matplotlib.pyplot as plt
+        if args_geometry is None:
+            geometry = None
+        else:
+            tmp_str = args_geometry.split(",")
+            x_geom = int(tmp_str[0])
+            y_geom = int(tmp_str[1])
+            dx_geom = int(tmp_str[2])
+            dy_geom = int(tmp_str[3])
+            geometry = x_geom, y_geom, dx_geom, dy_geom
         pdf = None
 
     # read debugplot value
@@ -404,7 +422,9 @@ def ximshow_file(singlefile,
     ax = ximshow(image2d=image2d[ns1-1:ns2, nc1-1:nc2], show=False,
                  title=title,
                  z1z2=z1z2,
-                 image_bbox=(nc1, nc2, ns1, ns2), debugplot=debugplot)
+                 image_bbox=(nc1, nc2, ns1, ns2),
+                 geometry=geometry,
+                 debugplot=debugplot)
     ax.grid(False)
 
     if pdf is not None:
@@ -432,6 +452,8 @@ def main(args=None):
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
+    parser.add_argument("--geometry",
+                        help="tuple x,y,dx,dy")
     parser.add_argument("--pdffile",
                         help="ouput PDF file name")
     parser.add_argument("--debugplot",
@@ -447,6 +469,7 @@ def main(args=None):
                      args_z1z2=args.z1z2,
                      args_bbox=args.bbox,
                      args_keystitle=args.keystitle,
+                     args_geometry=args.geometry,
                      args_pdffile=args.pdffile,
                      args_debugplot=args.debugplot)
 
