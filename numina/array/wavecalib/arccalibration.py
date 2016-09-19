@@ -30,6 +30,7 @@ import scipy.misc
 from ..display.pause_debugplot import pause_debugplot
 from ..robustfit import fit_theil_sen
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
+from ..stats import robust_std
 
 
 class WavecalFeature(object):
@@ -257,29 +258,6 @@ class SolutionArcCalibration(object):
         for key in self._KEYS:
             state[key] = np.array(state[key])
         self.__dict__ = state
-
-
-def robust_std(x):
-    """Compute a robust estimator of the standard deviation.
-
-    See Eq. 3.36 (page 84) in Statistics, Data Mining, and Machine
-    in Astronomy, by Ivezic, Connolly, VanderPlas & Gray.
-
-    Parameters
-    ----------
-    x : 1d numpy array, float
-        Array of input values which standard deviation is requested.
-
-    Returns
-    -------
-    sigma_g : float
-        Robust estimator of the standard deviation.
-
-    """
-
-    q25, q75 = np.percentile(x, [25.0, 75.0])
-    sigma_g = 0.7413*(q75-q25)
-    return sigma_g
 
 
 def select_data_for_fit(list_of_wvfeatures):
