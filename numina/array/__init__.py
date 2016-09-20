@@ -110,7 +110,7 @@ def combine_shape(shapes, offsets):
 
 
 def resize_array(data, finalshape, region, window=None,
-                 scale=1, fill=0, conserve=True):
+                 scale=1, fill=0.0, conserve=True):
 
     if window is not None:
         data = data[window]
@@ -125,8 +125,20 @@ def resize_array(data, finalshape, region, window=None,
     newdata[region] = finaldata
     # Conserve the total sum of the original data
     if conserve:
-        newdata[region] /= scale**2
+        newdata[region] = newdata[region] / scale**2
     return newdata
+
+
+def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True, fill=0.0):
+    rarrays = []
+    regions = []
+    for array, rel_offset in zip(arrays, offsetsp):
+        region, _ = subarray_match(finalshape, rel_offset, shape)
+        newdata = resize_array(array, finalshape, region, window=window,
+                               fill=fill, scale=scale, conserve=conserve)
+        rarrays.append(newdata)
+        regions.append(region)
+    return rarrays, regions
 
 
 def rebin_scale(a, scale=1):

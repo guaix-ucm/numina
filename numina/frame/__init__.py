@@ -55,6 +55,25 @@ def resize_hdu(hdu, newshape, region, window=None, fill=0.0,
     return newhdu
 
 
+def resize_hdul(hdul, newshape, region, extensions=None, window=None,
+                scale=1, fill=0.0, conserve=True):
+    from numina.frame import resize_hdu
+    if extensions is None:
+        extensions = [0]
+
+    nhdul = [None] * len(hdul)
+    for ext, hdu in enumerate(hdul):
+        if ext in extensions:
+            nhdul[ext] = resize_hdu(hdu, newshape,
+                                    region, fill=fill,
+                                    window=window,
+                                    scale=scale,
+                                    conserve=conserve)
+        else:
+            nhdul[ext] = hdu
+    return fits.HDUList(nhdul)
+
+
 def resize_fits(fitsfile, newfilename, newshape, region, window=None,
                 scale=1, fill=0.0, clobber=True, conserve=True):
 
