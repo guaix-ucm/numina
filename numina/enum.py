@@ -54,6 +54,7 @@ class EnumType(type):
         return super(EnumType, cls).__new__(cls, classname, parents, valid)
 
     def __init__(cls, classname, parents, attributes):
+        super(EnumType, cls).__init__(classname, parents, attributes)
         for i, v in cls.__members__.items():
             m = cls.__new__(cls)
             m.__init__(i, v)

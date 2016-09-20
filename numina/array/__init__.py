@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,14 +20,7 @@
 from __future__ import print_function
 
 import logging
-from itertools import product
 
-import six
-
-if six.PY2:
-    from itertools import imap
-else:
-    imap = map
 
 import numpy
 from scipy import asarray, zeros_like, minimum, maximum
@@ -38,8 +31,6 @@ from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
 from numina.array.nirproc import ramp_array
 from numina.array.nirproc import fowler_array
-
-_logger = logging.getLogger("numina.array")
 
 
 def subarray_match(shape, ref, sshape, sref=None):
@@ -142,22 +133,15 @@ def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, con
 
 
 def rebin_scale(a, scale=1):
-    '''Scale an array to a new shape.'''
+    """Scale an array to a new shape."""
 
     newshape = tuple((side * scale) for side in a.shape)
 
-    slices = [slice(0, old, float(old)/new)
-              for old, new in zip(a.shape, newshape)]
-    coordinates = numpy.mgrid[slices]
-    # choose the biggest smaller integer index
-    indices = coordinates.astype('i')
-    return a[tuple(indices)]
+    return rebin(a, newshape)
 
 
 def rebin(a, newshape):
-    '''Rebin an array to a new shape.'''
-
-    assert len(a.shape) == len(newshape)
+    """Rebin an array to a new shape."""
 
     slices = [slice(0, old, float(old)/new)
               for old, new in zip(a.shape, newshape)]
@@ -259,9 +243,6 @@ def compute_sky_advanced(data, omasks):
     result = numpy.zeros(data[0].shape)
     result += median_sky
     return result
-
-    result = median(data, omasks)
-    return result[0]
 
 
 def compute_median_background(img, omask, region):

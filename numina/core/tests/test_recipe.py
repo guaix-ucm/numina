@@ -52,8 +52,6 @@ def test_metaclass_empty_base():
 def test_metaclass():
 
     class TestRecipe(with_metaclass(RecipeType, object)):
-        pass   
-
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 

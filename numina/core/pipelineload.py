@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Build a LoadableDRP from a yaml file'''
+"""Build a LoadableDRP from a yaml file"""
 
 import pkgutil
 import yaml
@@ -132,15 +132,6 @@ def load_pipeline(name, node):
     recipes = node['recipes']
     version = node['version']
     return Pipeline(name, recipes, version)
-
-
-def load_conf(node):
-    keys = []
-    for key in keys:
-        if key not in node:
-            raise ValueError('Missing key %r inside configuration node', key)
-
-    return InstrumentConfiguration(node)
 
 
 def load_instrument(node, confclass=None):

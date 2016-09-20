@@ -17,13 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
-Results of the Observing Blocks
-'''
-
-import warnings
+"""Results of the Observing Blocks"""
 
 import six
+
 from astropy.io import fits
 
 from .dataframe import DataFrame
@@ -50,7 +47,6 @@ class ObservationResult(object):
         self.frames = [prod.content]
         self.prodid = prod.id
 
-    #TODO: Delete this property or at least, use frame
     @property
     def images(self):
         return self.frames
@@ -61,7 +57,7 @@ class ObservationResult(object):
 
 
 def dataframe_from_list(values):
-    '''Build a DataFrame object from a list.'''
+    """Build a DataFrame object from a list."""
     if(isinstance(values, six.string_types)):
         return DataFrame(filename=values)
     elif(isinstance(values, fits.HDUList)):
@@ -71,7 +67,7 @@ def dataframe_from_list(values):
 
 
 def obsres_from_dict(values):
-    '''Build a ObservationResult object from a dictionary.'''
+    """Build a ObservationResult object from a dictionary."""
 
     obsres = ObservationResult()
 
@@ -87,7 +83,7 @@ def obsres_from_dict(values):
     obsres.pipeline = values.get('pipeline', 'default')
     try:
         obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
-    except:
+    except Exception:
         obsres.frames = []
 
     return obsres
