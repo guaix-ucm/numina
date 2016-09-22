@@ -40,9 +40,10 @@ def wvcal_spectrum(filename, ns1, ns2,
                    nwin_background,
                    times_sigma_threshold,
                    wv_master_file,
-                   reverse, debugplot,
+                   reverse,
                    poly_degree_wfit,
-                   savesp):
+                   out_sp,
+                   debugplot):
     """Execute wavelength calibration of a spectrum.
 
     The initial image can be 2 dimensional, although in this case the
@@ -69,6 +70,11 @@ def wvcal_spectrum(filename, ns1, ns2,
     reverse : bool
         If True, reserve wavelength direction prior to wavelength
         calibration.
+    poly_degree_wfit : int
+        Degree for wavelength calibration polynomial.
+    out_sp : string or None
+        File name to save the selected spectrum in FITS format before
+        performing the wavelength calibration.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -78,10 +84,6 @@ def wvcal_spectrum(filename, ns1, ns2,
         10 : debug, no plots
         11 : debug, plots without pauses
         12 : debug, plots with pauses
-    poly_degree_wfit : int
-        Degree for wavelength calibration polynomial.
-    savesp : bool
-        If True, save spectrum as xxx.fits.
 
     """
 
@@ -108,10 +110,11 @@ def wvcal_spectrum(filename, ns1, ns2,
             background = ndimage.filters.median_filter(sp_mean, size=81)
             sp_mean -= background
 
-        # save spectrum in external FITS file
-        if savesp:
+        # save spectrum before wavelength calibration in external
+        # FITS file
+        if out_sp is not None:
             hdu = fits.PrimaryHDU(sp_mean)
-            hdu.writeto("xxx.fits", clobber=True)
+            hdu.writeto(out_sp, clobber=True)
 
         # initial location of the peaks (integer values)
         q50 = np.percentile(sp_mean, q=50)
@@ -215,27 +218,29 @@ def wvcal_spectrum(filename, ns1, ns2,
             plot_title=title
         )
 
-        # final plot with identified lines
-        ax = ximplot(sp_mean, title=title, show=False,
-                     plot_bbox=(1, naxis1))
-        ymin = sp_mean.min()
-        ymax = sp_mean.max()
-        dy = ymax-ymin
-        ymin -= dy/20.
-        ymax += dy/20.
-        ax.set_ylim([ymin, ymax])
-        # plot wavelength of each identified line
-        for xpos, reference in zip(solution_wv.xpos, solution_wv.reference):
-            ax.text(xpos, sp_mean[int(xpos+0.5)-1],
-                    str(reference), fontsize=8,
-                    horizontalalignment='center')
-        # show plot
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(11)
+        if debugplot % 10 != 0:
+            # final plot with identified lines
+            ax = ximplot(sp_mean, title=title, show=False,
+                         plot_bbox=(1, naxis1))
+            ymin = sp_mean.min()
+            ymax = sp_mean.max()
+            dy = ymax-ymin
+            ymin -= dy/20.
+            ymax += dy/20.
+            ax.set_ylim([ymin, ymax])
+            # plot wavelength of each identified line
+            for xpos, reference in \
+                    zip(solution_wv.xpos, solution_wv.reference):
+                ax.text(xpos, sp_mean[int(xpos+0.5)-1],
+                        str(reference), fontsize=8,
+                        horizontalalignment='center')
+            # show plot
+            import matplotlib
+            matplotlib.use('Qt4Agg')
+            import matplotlib.pyplot as plt
+            plt.show(block=False)
+            plt.pause(0.001)
+            pause_debugplot(11)
     else:
         raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
                          " values")
@@ -267,10 +272,11 @@ def main(args=None):
     parser.add_argument("--degree",
                         help="Polynomial degree (default=3)",
                         default=3)
-    parser.add_argument("--savesp",
-                        help="Save spectrum (yes/no)" +
-                        " (default=no)",
-                        default="no")
+    parser.add_argument("--out_sp",
+                        help="File name to save the selected spectrum in FITS "
+                             "format before performing the wavelength "
+                             "calibration (default=None)",
+                        default=None)
     args = parser.parse_args(args=args)
 
     ns1 = int(args.ns1)
@@ -280,15 +286,16 @@ def main(args=None):
     debugplot = int(args.debugplot)
     reverse = (args.reverse == "yes")
     poly_degree_wfit = int(args.degree)
-    savesp = (args.savesp == "yes")
 
-    wvcal_spectrum(args.filename, ns1, ns2,
-                   nwin_background,
-                   times_sigma_threshold,
-                   args.wv_master_file,
-                   reverse, debugplot,
-                   poly_degree_wfit,
-                   savesp)
+    wvcal_spectrum(filename=args.filename,
+                   ns1=ns1, ns2=ns2,
+                   nwin_background=nwin_background,
+                   times_sigma_threshold=times_sigma_threshold,
+                   wv_master_file=args.wv_master_file,
+                   reverse=reverse,
+                   poly_degree_wfit=poly_degree_wfit,
+                   out_sp=args.out_sp,
+                   debugplot=debugplot)
 
     try:
         input("\nPress RETURN to QUIT...")
