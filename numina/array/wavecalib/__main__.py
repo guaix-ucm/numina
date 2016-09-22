@@ -241,6 +241,10 @@ def wvcal_spectrum(filename, ns1, ns2,
             plt.show(block=False)
             plt.pause(0.001)
             pause_debugplot(11)
+
+        # return the wavelength calibration solution
+        return solution_wv
+
     else:
         raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
                          " values")
