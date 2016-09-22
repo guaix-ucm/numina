@@ -85,6 +85,14 @@ def wvcal_spectrum(filename, ns1, ns2,
         11 : debug, plots without pauses
         12 : debug, plots with pauses
 
+    Returns
+    -------
+    sp : numpy array (floats)
+        1d array containing the selected spectrum before computing the
+        wavelength calibration.
+    solution_wv : instance of SolutionArcCalibration
+        Wavelength calibration solution.
+
     """
 
     # read FITS file
@@ -128,6 +136,13 @@ def wvcal_spectrum(filename, ns1, ns2,
         ixpeaks = find_peaks_spectrum(sp_mean,
                                       nwinwidth=nwinwidth_initial,
                                       threshold=threshold)
+
+        # check there are enough lines for fit
+        if len(ixpeaks) <= poly_degree_wfit:
+            print(">>> Warning: not enough lines to fit spectrum computed" +
+                  " from scans [" + str(ns1) + "," + str(ns2), "]")
+            sp_mean = np.zeros((naxis1))
+            return sp_mean, None
 
         # refined location of the peaks (float values)
         nwinwidth_refined = 5
@@ -242,8 +257,9 @@ def wvcal_spectrum(filename, ns1, ns2,
             plt.pause(0.001)
             pause_debugplot(11)
 
-        # return the wavelength calibration solution
-        return solution_wv
+        # return the spectrum before the wavelength calibration and
+        # the wavelength calibration solution
+        return sp_mean, solution_wv
 
     else:
         raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
@@ -261,14 +277,14 @@ def main(args=None):
                         help="Last scan (from 1 to NAXIS2)")
     parser.add_argument("wv_master_file",
                         help="TXT file containing wavelengths")
-    parser.add_argument("nwin_background",
-                        help="window to compute background (0=none)")
-    parser.add_argument("times_sigma_threshold",
-                        help="Threshold (times sigma_g to detect lines)")
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
+    parser.add_argument("--nwin_background",
+                        help="window to compute background (0=none)"
                         " (default=0)",
                         default=0)
+    parser.add_argument("--times_sigma_threshold",
+                        help="Threshold (times robust sigma to detect lines)"
+                             " (default=10)",
+                        default=10)
     parser.add_argument("--reverse",
                         help="Reverse wavelength direction (yes/no)" +
                         " (default=no)",
@@ -281,6 +297,10 @@ def main(args=None):
                              "format before performing the wavelength "
                              "calibration (default=None)",
                         default=None)
+    parser.add_argument("--debugplot",
+                        help="Integer indicating plotting/debugging" +
+                        " (default=0)",
+                        default=0)
     args = parser.parse_args(args=args)
 
     ns1 = int(args.ns1)
