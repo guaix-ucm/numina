@@ -269,14 +269,16 @@ def wvcal_spectrum(filename, ns1, ns2,
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='wavecalib')
+    # required parameters
     parser.add_argument("filename",
                         help="FITS image containing the spectra")
-    parser.add_argument("ns1",
-                        help="First scan (from 1 to NAXIS2)")
-    parser.add_argument("ns2",
-                        help="Last scan (from 1 to NAXIS2)")
-    parser.add_argument("wv_master_file",
+    parser.add_argument("--scans", required=True,
+                        help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+    parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths")
+    parser.add_argument("--degree", required=True,
+                        help="Polynomial degree")
+    # optional arguments
     parser.add_argument("--nwin_background",
                         help="window to compute background (0=none)"
                         " (default=0)",
@@ -289,9 +291,6 @@ def main(args=None):
                         help="Reverse wavelength direction (yes/no)" +
                         " (default=no)",
                         default="no")
-    parser.add_argument("--degree",
-                        help="Polynomial degree (default=3)",
-                        default=3)
     parser.add_argument("--out_sp",
                         help="File name to save the selected spectrum in FITS "
                              "format before performing the wavelength "
@@ -303,13 +302,25 @@ def main(args=None):
                         default=0)
     args = parser.parse_args(args=args)
 
-    ns1 = int(args.ns1)
-    ns2 = int(args.ns2)
+    # scan range
+    tmp_str = args.scans.split(",")
+    if len(tmp_str) == 2:
+        ns1 = int(tmp_str[0])
+        ns2 = int(tmp_str[1])
+    elif len(tmp_str) == 1:
+        ns1 = int(tmp_str[0])
+        ns2 = ns1
+    else:
+        raise ValueError("Invalid tuple for scan range")
+
+    # polynomial degree
+    poly_degree_wfit = int(args.degree)
+
+    # optional arguments
     nwin_background = int(args.nwin_background)
     times_sigma_threshold = float(args.times_sigma_threshold)
     debugplot = int(args.debugplot)
     reverse = (args.reverse == "yes")
-    poly_degree_wfit = int(args.degree)
 
     wvcal_spectrum(filename=args.filename,
                    ns1=ns1, ns2=ns2,
