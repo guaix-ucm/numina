@@ -37,11 +37,11 @@ from .peaks_spectrum import refine_peaks_spectrum
 
 
 def wvcal_spectrum(filename, ns1, ns2,
+                   poly_degree_wfit,
                    nwin_background,
                    times_sigma_threshold,
                    wv_master_file,
                    reverse,
-                   poly_degree_wfit,
                    out_sp,
                    debugplot):
     """Execute wavelength calibration of a spectrum.
@@ -324,11 +324,11 @@ def main(args=None):
 
     wvcal_spectrum(filename=args.filename,
                    ns1=ns1, ns2=ns2,
+                   poly_degree_wfit=poly_degree_wfit,
                    nwin_background=nwin_background,
                    times_sigma_threshold=times_sigma_threshold,
                    wv_master_file=args.wv_master_file,
                    reverse=reverse,
-                   poly_degree_wfit=poly_degree_wfit,
                    out_sp=args.out_sp,
                    debugplot=debugplot)
 
