@@ -115,7 +115,8 @@ def wvcal_spectrum(filename, ns1, ns2,
 
         # fit and subtract background
         if nwin_background > 0:
-            background = ndimage.filters.median_filter(sp_mean, size=81)
+            background = ndimage.filters.median_filter(sp_mean,
+                                                       size=nwin_background)
             sp_mean -= background
 
         # save spectrum before wavelength calibration in external
