@@ -34,12 +34,18 @@ class SerialFlow(Node):
     """A flow where Nodes are executed sequentially."""
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
-        for i, o in zip(nodeseq, nodeseq[1:]):
-            if i.noutputs != o.ninputs:
-                raise FlowError
         self.nodeseq = nodeseq
-        super(SerialFlow, self).__init__(nodeseq[0].ninputs,
-                                         nodeseq[-1].noutputs)
+        if nodeseq:
+            ninputs = nodeseq[0].ninputs
+            noutputs = nodeseq[-1].noutputs
+            # Check nodes
+            for i, o in zip(nodeseq, nodeseq[1:]):
+                if i.noutputs != o.ninputs:
+                    raise FlowError
+        else:
+            ninputs = 1
+            noutputs = 1
+        super(SerialFlow, self).__init__(ninputs, noutputs)
 
     def __iter__(self):
         return self.nodeseq.__iter__()
