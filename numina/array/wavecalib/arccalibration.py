@@ -132,27 +132,27 @@ class SolutionArcCalibration(object):
     ----------
     nlines_arc : int
         Total number of identified arc lines.
-    xpos : 1d numpy array (float)
+    xpos : list of floats
         Pixel coordinate of the peak of all the arc lines.
-    ypos : 1d numpy array (float)
+    ypos : lsit of floats
         Pixel y-coordinate of the peak of the line.
-    flux : 1d numpy array (float)
+    flux : list of floats
         Flux of the line.
-    fwhm : 1d numpy array (float)
+    fwhm : list of floats
         FWHM of the line.
-    reference : 1d numpy array (float)
+    reference : list of floats
         Wavelength of the identified lines in the master list.
-    wavelength : 1d numpy array (float)
+    wavelength : list of floats
         Wavelength of the identified lines from fitted polynomial.
-    funcost : 1d numpy array (float)
+    funcost : list of floats
         Cost function corresponding to each identified arc line.
-    category : 1d numpy array (char)
+    category : list of characters
         Line identification type (A, B, C, D, E, R, T, P, K, I, X).
         See documentation embedded within the arccalibration_direct
         function for details.
-    id : 1d numpy array (integer)
+    id : list of integers
         Number of identified arc line within the wv_master array.
-    coeff : 1d numpy array (float)
+    coeff : list of floats
         Coefficients of the wavelength calibration polynomial.
     residual_std : float
         Residual standard deviation of the fit.
@@ -179,6 +179,7 @@ class SolutionArcCalibration(object):
     # class methods __getstate__() and __setstate__() are employed.
     _KEYS = ['xpos', 'ypos', 'flux', 'fwhm', 'reference', 'wavelength',
              'funcost', 'category', 'id', 'coeff']
+    _KEYS = []
 
     def __init__(self, list_of_wvfeatures,
                  coeff, residual_std, crpix1_linear, crval1_linear,
@@ -189,25 +190,25 @@ class SolutionArcCalibration(object):
             raise ValueError("Number of arc lines is zero!")
 
         # initialize members
-        self.xpos = np.array([wvfeature.xpos for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.ypos = np.array([wvfeature.ypos for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.flux = np.array([wvfeature.flux for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.fwhm = np.array([wvfeature.fwhm for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.reference = np.array([wvfeature.wv for wvfeature
-                                   in list_of_wvfeatures if wvfeature.line_ok])
-        self.funcost = np.array([wvfeature.funcost for wvfeature
-                                 in list_of_wvfeatures if wvfeature.line_ok])
-        self.category = np.array([wvfeature.category for wvfeature
-                                  in list_of_wvfeatures if wvfeature.line_ok])
-        self.id = np.array([wvfeature.id for wvfeature
-                            in list_of_wvfeatures if wvfeature.line_ok])
+        self.xpos = [wvfeature.xpos for wvfeature
+                     in list_of_wvfeatures if wvfeature.line_ok]
+        self.ypos = [wvfeature.ypos for wvfeature
+                     in list_of_wvfeatures if wvfeature.line_ok]
+        self.flux = [wvfeature.flux for wvfeature
+                     in list_of_wvfeatures if wvfeature.line_ok]
+        self.fwhm = [wvfeature.fwhm for wvfeature
+                     in list_of_wvfeatures if wvfeature.line_ok]
+        self.reference = [wvfeature.wv for wvfeature
+                          in list_of_wvfeatures if wvfeature.line_ok]
+        self.funcost = [wvfeature.funcost for wvfeature
+                        in list_of_wvfeatures if wvfeature.line_ok]
+        self.category = [wvfeature.category for wvfeature
+                         in list_of_wvfeatures if wvfeature.line_ok]
+        self.id = [wvfeature.id for wvfeature
+                   in list_of_wvfeatures if wvfeature.line_ok]
 
-        self.nlines_arc = self.xpos.size
-        self.coeff = coeff
+        self.nlines_arc = len(self.xpos)
+        self.coeff = coeff.tolist()
         self.residual_std = residual_std
         self.crpix1_linear = crpix1_linear
         self.crval1_linear = crval1_linear
@@ -218,7 +219,7 @@ class SolutionArcCalibration(object):
         # use fitted polynomial to predict wavelengths at the line
         # locations given by xpos
         poly = Polynomial(coeff)
-        self.wavelength = poly(self.xpos)
+        self.wavelength = poly(self.xpos).tolist()
 
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
@@ -250,13 +251,13 @@ class SolutionArcCalibration(object):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        for key in self._KEYS:
-            result[key] = result[key].tolist()
+        # for key in self._KEYS:
+        #     result[key] = result[key].tolist()
         return result
 
     def __setstate__(self, state):
-        for key in self._KEYS:
-            state[key] = np.array(state[key])
+        # for key in self._KEYS:
+        #     state[key] = np.array(state[key])
         self.__dict__ = state
 
 
