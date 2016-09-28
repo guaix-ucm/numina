@@ -37,12 +37,13 @@ from .peaks_spectrum import refine_peaks_spectrum
 
 
 def wvcal_spectrum(filename, ns1, ns2,
+                   poly_degree_wfit,
                    nwin_background,
                    times_sigma_threshold,
                    wv_master_file,
-                   reverse, debugplot,
-                   poly_degree_wfit,
-                   savesp):
+                   reverse,
+                   out_sp,
+                   debugplot):
     """Execute wavelength calibration of a spectrum.
 
     The initial image can be 2 dimensional, although in this case the
@@ -69,6 +70,11 @@ def wvcal_spectrum(filename, ns1, ns2,
     reverse : bool
         If True, reserve wavelength direction prior to wavelength
         calibration.
+    poly_degree_wfit : int
+        Degree for wavelength calibration polynomial.
+    out_sp : string or None
+        File name to save the selected spectrum in FITS format before
+        performing the wavelength calibration.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -78,10 +84,14 @@ def wvcal_spectrum(filename, ns1, ns2,
         10 : debug, no plots
         11 : debug, plots without pauses
         12 : debug, plots with pauses
-    poly_degree_wfit : int
-        Degree for wavelength calibration polynomial.
-    savesp : bool
-        If True, save spectrum as xxx.fits.
+
+    Returns
+    -------
+    sp : numpy array (floats)
+        1d array containing the selected spectrum before computing the
+        wavelength calibration.
+    solution_wv : instance of SolutionArcCalibration
+        Wavelength calibration solution.
 
     """
 
@@ -105,13 +115,15 @@ def wvcal_spectrum(filename, ns1, ns2,
 
         # fit and subtract background
         if nwin_background > 0:
-            background = ndimage.filters.median_filter(sp_mean, size=81)
+            background = ndimage.filters.median_filter(sp_mean,
+                                                       size=nwin_background)
             sp_mean -= background
 
-        # save spectrum in external FITS file
-        if savesp:
+        # save spectrum before wavelength calibration in external
+        # FITS file
+        if out_sp is not None:
             hdu = fits.PrimaryHDU(sp_mean)
-            hdu.writeto("xxx.fits", clobber=True)
+            hdu.writeto(out_sp, clobber=True)
 
         # initial location of the peaks (integer values)
         q50 = np.percentile(sp_mean, q=50)
@@ -125,6 +137,13 @@ def wvcal_spectrum(filename, ns1, ns2,
         ixpeaks = find_peaks_spectrum(sp_mean,
                                       nwinwidth=nwinwidth_initial,
                                       threshold=threshold)
+
+        # check there are enough lines for fit
+        if len(ixpeaks) <= poly_degree_wfit:
+            print(">>> Warning: not enough lines to fit spectrum computed" +
+                  " from scans [" + str(ns1) + "," + str(ns2), "]")
+            sp_mean = np.zeros(naxis1)
+            return sp_mean, None
 
         # refined location of the peaks (float values)
         nwinwidth_refined = 5
@@ -215,27 +234,34 @@ def wvcal_spectrum(filename, ns1, ns2,
             plot_title=title
         )
 
-        # final plot with identified lines
-        ax = ximplot(sp_mean, title=title, show=False,
-                     plot_bbox=(1, naxis1))
-        ymin = sp_mean.min()
-        ymax = sp_mean.max()
-        dy = ymax-ymin
-        ymin -= dy/20.
-        ymax += dy/20.
-        ax.set_ylim([ymin, ymax])
-        # plot wavelength of each identified line
-        for xpos, reference in zip(solution_wv.xpos, solution_wv.reference):
-            ax.text(xpos, sp_mean[int(xpos+0.5)-1],
-                    str(reference), fontsize=8,
-                    horizontalalignment='center')
-        # show plot
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(11)
+        if debugplot % 10 != 0:
+            # final plot with identified lines
+            ax = ximplot(sp_mean, title=title, show=False,
+                         plot_bbox=(1, naxis1))
+            ymin = sp_mean.min()
+            ymax = sp_mean.max()
+            dy = ymax-ymin
+            ymin -= dy/20.
+            ymax += dy/20.
+            ax.set_ylim([ymin, ymax])
+            # plot wavelength of each identified line
+            for xpos, reference in \
+                    zip(solution_wv.xpos, solution_wv.reference):
+                ax.text(xpos, sp_mean[int(xpos+0.5)-1],
+                        str(reference), fontsize=8,
+                        horizontalalignment='center')
+            # show plot
+            import matplotlib
+            matplotlib.use('Qt4Agg')
+            import matplotlib.pyplot as plt
+            plt.show(block=False)
+            plt.pause(0.001)
+            pause_debugplot(11)
+
+        # return the spectrum before the wavelength calibration and
+        # the wavelength calibration solution
+        return sp_mean, solution_wv
+
     else:
         raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
                          " values")
@@ -244,51 +270,60 @@ def wvcal_spectrum(filename, ns1, ns2,
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='wavecalib')
+    # required parameters
     parser.add_argument("filename",
                         help="FITS image containing the spectra")
-    parser.add_argument("ns1",
-                        help="First scan (from 1 to NAXIS2)")
-    parser.add_argument("ns2",
-                        help="Last scan (from 1 to NAXIS2)")
-    parser.add_argument("wv_master_file",
+    parser.add_argument("--scans", required=True,
+                        help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+    parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths")
-    parser.add_argument("nwin_background",
-                        help="window to compute background (0=none)")
-    parser.add_argument("times_sigma_threshold",
-                        help="Threshold (times sigma_g to detect lines)")
+    parser.add_argument("--degree", required=True,
+                        help="Polynomial degree", type=int)
+    # optional arguments
+    parser.add_argument("--nwin_background",
+                        help="window to compute background (0=none)"
+                        " (default=0)",
+                        default=0, type=int)
+    parser.add_argument("--times_sigma_threshold",
+                        help="Threshold (times robust sigma to detect lines)"
+                             " (default=10)",
+                        default=10, type=float)
+    parser.add_argument("--reverse",
+                        help="Reverse wavelength direction",
+                        action="store_true")
+    parser.add_argument("--out_sp",
+                        help="File name to save the selected spectrum in FITS "
+                             "format before performing the wavelength "
+                             "calibration (default=None)",
+                        default=None,
+                        type=argparse.FileType('w'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                         " (default=0)",
-                        default=0)
-    parser.add_argument("--reverse",
-                        help="Reverse wavelength direction (yes/no)" +
-                        " (default=no)",
-                        default="no")
-    parser.add_argument("--degree",
-                        help="Polynomial degree (default=3)",
-                        default=3)
-    parser.add_argument("--savesp",
-                        help="Save spectrum (yes/no)" +
-                        " (default=no)",
-                        default="no")
+                        default=0, type=int,
+                        choices=[0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args=args)
 
-    ns1 = int(args.ns1)
-    ns2 = int(args.ns2)
-    nwin_background = int(args.nwin_background)
-    times_sigma_threshold = float(args.times_sigma_threshold)
-    debugplot = int(args.debugplot)
-    reverse = (args.reverse == "yes")
-    poly_degree_wfit = int(args.degree)
-    savesp = (args.savesp == "yes")
+    # scan range
+    tmp_str = args.scans.split(",")
+    if len(tmp_str) == 2:
+        ns1 = int(tmp_str[0])
+        ns2 = int(tmp_str[1])
+    elif len(tmp_str) == 1:
+        ns1 = int(tmp_str[0])
+        ns2 = ns1
+    else:
+        raise ValueError("Invalid tuple for scan range")
 
-    wvcal_spectrum(args.filename, ns1, ns2,
-                   nwin_background,
-                   times_sigma_threshold,
-                   args.wv_master_file,
-                   reverse, debugplot,
-                   poly_degree_wfit,
-                   savesp)
+    wvcal_spectrum(filename=args.filename,
+                   ns1=ns1, ns2=ns2,
+                   poly_degree_wfit=args.degree,
+                   nwin_background=args.nwin_background,
+                   times_sigma_threshold=args.times_sigma_threshold,
+                   wv_master_file=args.wv_master_file,
+                   reverse=args.reverse,
+                   out_sp=args.out_sp,
+                   debugplot=args.debugplot)
 
     try:
         input("\nPress RETURN to QUIT...")

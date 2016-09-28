@@ -101,6 +101,12 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
 
     naxis2_, naxis1_ = image2d.shape
 
+    if image_coord:
+        nc1 = 1
+        nc2 = naxis1_
+        ns1 = 1
+        ns2 = naxis2_
+
     # if not image_coord:
     #     # check that image shape corresponds to bounding box size
     #     if naxis1_ != nc2 - nc1 + 1:
