@@ -142,7 +142,7 @@ def wvcal_spectrum(filename, ns1, ns2,
         if len(ixpeaks) <= poly_degree_wfit:
             print(">>> Warning: not enough lines to fit spectrum computed" +
                   " from scans [" + str(ns1) + "," + str(ns2), "]")
-            sp_mean = np.zeros((naxis1))
+            sp_mean = np.zeros(naxis1)
             return sp_mean, None
 
         # refined location of the peaks (float values)
@@ -278,29 +278,30 @@ def main(args=None):
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths")
     parser.add_argument("--degree", required=True,
-                        help="Polynomial degree")
+                        help="Polynomial degree", type=int)
     # optional arguments
     parser.add_argument("--nwin_background",
                         help="window to compute background (0=none)"
                         " (default=0)",
-                        default=0)
+                        default=0, type=int)
     parser.add_argument("--times_sigma_threshold",
                         help="Threshold (times robust sigma to detect lines)"
                              " (default=10)",
-                        default=10)
+                        default=10, type=float)
     parser.add_argument("--reverse",
-                        help="Reverse wavelength direction (yes/no)" +
-                        " (default=no)",
-                        default="no")
+                        help="Reverse wavelength direction",
+                        action="store_true")
     parser.add_argument("--out_sp",
                         help="File name to save the selected spectrum in FITS "
                              "format before performing the wavelength "
                              "calibration (default=None)",
-                        default=None)
+                        default=None,
+                        type=argparse.FileType('w'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                         " (default=0)",
-                        default=0)
+                        default=0, type=int,
+                        choices=[0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args=args)
 
     # scan range
@@ -314,24 +315,15 @@ def main(args=None):
     else:
         raise ValueError("Invalid tuple for scan range")
 
-    # polynomial degree
-    poly_degree_wfit = int(args.degree)
-
-    # optional arguments
-    nwin_background = int(args.nwin_background)
-    times_sigma_threshold = float(args.times_sigma_threshold)
-    debugplot = int(args.debugplot)
-    reverse = (args.reverse == "yes")
-
     wvcal_spectrum(filename=args.filename,
                    ns1=ns1, ns2=ns2,
-                   poly_degree_wfit=poly_degree_wfit,
-                   nwin_background=nwin_background,
-                   times_sigma_threshold=times_sigma_threshold,
+                   poly_degree_wfit=args.degree,
+                   nwin_background=args.nwin_background,
+                   times_sigma_threshold=args.times_sigma_threshold,
                    wv_master_file=args.wv_master_file,
-                   reverse=reverse,
+                   reverse=args.reverse,
                    out_sp=args.out_sp,
-                   debugplot=debugplot)
+                   debugplot=args.debugplot)
 
     try:
         input("\nPress RETURN to QUIT...")
