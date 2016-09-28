@@ -33,6 +33,16 @@ from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..stats import robust_std
 
 
+class CrLinear(object):
+
+    def __init__(self, crpix, crval, crmin, crmax, cdelt):
+        self.crpix = crpix
+        self.crval = crval
+        self.cdelt = cdelt
+        self.crmin = crmin
+        self.crmax = crmax
+
+
 class WavecalFeature(object):
     """Store information concerning a particular line identification.
 
@@ -44,7 +54,7 @@ class WavecalFeature(object):
         Line identification type (A, B, C, D, E, R, T, P, K, I, X).
         See documentation embedded within the arccalibration_direct
         function for details.
-    line_id : int
+    lineid : int
         Number of identified line within the master list.
     xpos : float
         Pixel x-coordinate of the peak of the line.
@@ -62,11 +72,11 @@ class WavecalFeature(object):
 
     """
 
-    def __init__(self, line_ok, category, line_id, funcost, xpos, ypos,
+    def __init__(self, line_ok, category, lineid, funcost, xpos, ypos,
                  flux, fwhm, wv):
         self.line_ok = line_ok
         self.category = category
-        self.id = line_id
+        self.lineid = lineid
         self.funcost = funcost
         self.xpos = xpos
         self.ypos = ypos
@@ -82,7 +92,7 @@ class WavecalFeature(object):
         output = "<WavecalFeature instance>  " + \
                  "line_ok: " + sline_ok + "  " + \
                  "category: " + str(self.category) + "  " + \
-                 "id: " + str(self.id) + "  " + \
+                 "id: " + str(self.lineid) + "  " + \
                  "xpos: " + str(self.xpos) + "  " + \
                  "ypos: " + str(self.ypos) + "  " + \
                  "flux: " + str(self.flux) + "  " + \
@@ -104,7 +114,7 @@ class SolutionArcCalibration(object):
 
     Parameters
     ----------
-    list_of_wvfeatures : list (of WavecalFeature instances)
+    features : list (of WavecalFeature instances)
         A list of size equal to the number of identified lines, which
         elements are instances of the class WavecalFeature, containing
         all the relevant information concerning the line
@@ -173,53 +183,27 @@ class SolutionArcCalibration(object):
 
     """
 
-    # Define here all the class members that are numpy arrays. These
-    # members will be exported/read as/from dictionaries of native
-    # python types when necessary. For that purpose, the auxiliary
-    # class methods __getstate__() and __setstate__() are employed.
-    _KEYS = ['xpos', 'ypos', 'flux', 'fwhm', 'reference', 'wavelength',
-             'funcost', 'category', 'id', 'coeff']
-    _KEYS = []
-
-    def __init__(self, list_of_wvfeatures,
-                 coeff, residual_std, crpix1_linear, crval1_linear,
-                 crmin1_linear, crmax1_linear, cdelt1_linear):
+    def __init__(self, features,
+                 coeff, residual_std, cr_linear):
         # protections
-        nlines_arc_total = len(list_of_wvfeatures)
-        if nlines_arc_total == 0:
-            raise ValueError("Number of arc lines is zero!")
+        self.features = features
 
         # initialize members
-        self.xpos = [wvfeature.xpos for wvfeature
-                     in list_of_wvfeatures if wvfeature.line_ok]
-        self.ypos = [wvfeature.ypos for wvfeature
-                     in list_of_wvfeatures if wvfeature.line_ok]
-        self.flux = [wvfeature.flux for wvfeature
-                     in list_of_wvfeatures if wvfeature.line_ok]
-        self.fwhm = [wvfeature.fwhm for wvfeature
-                     in list_of_wvfeatures if wvfeature.line_ok]
-        self.reference = [wvfeature.wv for wvfeature
-                          in list_of_wvfeatures if wvfeature.line_ok]
-        self.funcost = [wvfeature.funcost for wvfeature
-                        in list_of_wvfeatures if wvfeature.line_ok]
-        self.category = [wvfeature.category for wvfeature
-                         in list_of_wvfeatures if wvfeature.line_ok]
-        self.id = [wvfeature.id for wvfeature
-                   in list_of_wvfeatures if wvfeature.line_ok]
+        xpos = [wvfeature.xpos for wvfeature
+                     in features if wvfeature.line_ok]
 
-        self.nlines_arc = len(self.xpos)
-        self.coeff = coeff.tolist()
+        self.nlines_arc = len(xpos)
+        self.coeff = list(coeff)
         self.residual_std = residual_std
-        self.crpix1_linear = crpix1_linear
-        self.crval1_linear = crval1_linear
-        self.crmin1_linear = crmin1_linear
-        self.crmax1_linear = crmax1_linear
-        self.cdelt1_linear = cdelt1_linear
+        self.cr_linear = cr_linear
 
         # use fitted polynomial to predict wavelengths at the line
         # locations given by xpos
         poly = Polynomial(coeff)
-        self.wavelength = poly(self.xpos).tolist()
+        self.wavelength = poly(xpos).tolist()
+
+    def __eq__(self, other):
+        return self.__getstate__() == other.__getstate__()
 
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
@@ -251,14 +235,22 @@ class SolutionArcCalibration(object):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        # for key in self._KEYS:
-        #     result[key] = result[key].tolist()
+        result['features'] = [
+            feature.__dict__ for feature in self.features
+            ]
+        result['cr_linear'] = result['cr_linear'].__dict__
         return result
 
     def __setstate__(self, state):
-        # for key in self._KEYS:
-        #     state[key] = np.array(state[key])
         self.__dict__ = state
+        features = []
+        for feature in state['features']:
+            features.append(
+                WavecalFeature(**feature)
+            )
+
+        self.features = features
+        self.cr_linear = CrLinear(**state['cr_linear'])
 
 
 def select_data_for_fit(list_of_wvfeatures):
@@ -389,7 +381,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
 
     # polynomial fit
     if weighted:
-        weights = 1.0/wfit
+        weights = 1.0 / wfit
     else:
         weights = np.zeros_like(wfit) + 1.0
 
@@ -419,17 +411,21 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     # generate solution (note that the class SolutionArcCalibration
     # only sotres the information in list_of_wvfeatures corresponding
     # to lines that have been properly identified
+    cr_linear = CrLinear(
+        crpix1,
+        crval1_linear,
+        crmin1_linear,
+        crmax1_linear,
+        cdelt1_linear
+    )
+    print(cr_linear.__dict__)
     solution_wv = SolutionArcCalibration(
-        list_of_wvfeatures=list_of_wvfeatures,
+        features=list_of_wvfeatures,
         coeff=coeff,
         residual_std=residual_std,
-        crpix1_linear=crpix1,
-        crval1_linear=crval1_linear,
-        crmin1_linear=crmin1_linear,
-        crmax1_linear=crmax1_linear,
-        cdelt1_linear=cdelt1_linear
+        cr_linear=cr_linear
     )
-
+    print(crmin1_linear, crmax1_linear)
     if debugplot % 10 != 0:
         # polynomial fit
         xpol = np.linspace(1, naxis1_arc, naxis1_arc)
@@ -1305,7 +1301,7 @@ def arccalibration_direct(wv_master,
     for i in range(nlines_arc):
         tmp_feature = WavecalFeature(line_ok=False,
                                      category='X',
-                                     line_id=-1,
+                                     lineid=-1,
                                      funcost=np.inf,
                                      xpos=xpos_arc[i],
                                      ypos=0.0,
