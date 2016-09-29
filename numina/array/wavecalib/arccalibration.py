@@ -36,11 +36,11 @@ from ..stats import robust_std
 class CrLinear(object):
 
     def __init__(self, crpix, crval, crmin, crmax, cdelt):
-        self.crpix = crpix
-        self.crval = crval
-        self.cdelt = cdelt
-        self.crmin = crmin
-        self.crmax = crmax
+        self.crpix = float(crpix)
+        self.crval = float(crval)
+        self.cdelt = float(cdelt)
+        self.crmin = float(crmin)
+        self.crmax = float(crmax)
 
 
 class WavecalFeature(object):
@@ -182,6 +182,8 @@ class SolutionArcCalibration(object):
         calibration.
 
     """
+    # TODO: update previous attribute list after introducing the new class
+    #       cr_linear
 
     def __init__(self, features,
                  coeff, residual_std, cr_linear):
@@ -192,8 +194,9 @@ class SolutionArcCalibration(object):
         xpos = [wvfeature.xpos for wvfeature
                      in features if wvfeature.line_ok]
 
-        self.coeff = list(coeff)
-        self.residual_std = residual_std
+        self.coeff = [float(tmpcoeff) for tmpcoeff in coeff]
+        # force residual_std to be a float and not an scalar numpy array
+        self.residual_std = float(residual_std)
         self.cr_linear = cr_linear
 
         # use fitted polynomial to predict wavelengths at the line
@@ -254,6 +257,21 @@ class SolutionArcCalibration(object):
 
         self.features = features
         self.cr_linear = CrLinear(**state['cr_linear'])
+
+
+def members2floats(list_of_wvfeatures):
+    """TODO.
+
+    """
+
+    # transform to simple floats instead of scalar numpy arrays
+    for tmp_feature in list_of_wvfeatures:
+        tmp_feature.xpos = float(tmp_feature.xpos)
+        tmp_feature.ypos = float(tmp_feature.ypos)
+        tmp_feature.funcost = float(tmp_feature.funcost)
+        tmp_feature.wv = float(tmp_feature.wv)
+
+    return list_of_wvfeatures
 
 
 def select_data_for_fit(list_of_wvfeatures):
@@ -1319,7 +1337,7 @@ def arccalibration_direct(wv_master,
         if j1 == j2 == j3 and j1 is not None:
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'A'
-            list_of_wvfeatures[i].id = j1
+            list_of_wvfeatures[i].lineid = j1
             list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
             list_of_wvfeatures[i].wv = wv_master[j1]
     
@@ -1338,21 +1356,21 @@ def arccalibration_direct(wv_master,
                 if max(f1, f2) < f3:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].lineid = j1
                     list_of_wvfeatures[i].funcost = min(f1, f2)
                     list_of_wvfeatures[i].wv = wv_master[j1]
             elif j1 == j3 and j1 is not None:
                 if max(f1, f3) < f2:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].lineid = j1
                     list_of_wvfeatures[i].funcost = min(f1, f3)
                     list_of_wvfeatures[i].wv = wv_master[j1]
             elif j2 == j3 and j2 is not None:
                 if max(f2, f3) < f1:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].id = j2
+                    list_of_wvfeatures[i].lineid = j2
                     list_of_wvfeatures[i].funcost = min(f2, f3)
                     list_of_wvfeatures[i].wv = wv_master[j2]
 
@@ -1371,14 +1389,14 @@ def arccalibration_direct(wv_master,
                 if min(f2, f3) > f1:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'C'
-                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].lineid = j1
                     list_of_wvfeatures[i].funcost = f1
                     list_of_wvfeatures[i].wv = wv_master[j1]
             elif list_of_wvfeatures[i+1].category == 'B':
                 if min(f1, f2) > f3:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'C'
-                    list_of_wvfeatures[i].id = j3
+                    list_of_wvfeatures[i].lineid = j3
                     list_of_wvfeatures[i].funcost = f3
                     list_of_wvfeatures[i].wv = wv_master[j3]
 
@@ -1395,7 +1413,7 @@ def arccalibration_direct(wv_master,
             f1, f2 = diagonal_funcost[i]
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'D'
-            list_of_wvfeatures[i].id = j1
+            list_of_wvfeatures[i].lineid = j1
             list_of_wvfeatures[i].funcost = min(f1, f2)
             list_of_wvfeatures[i].wv = wv_master[j1]
 
@@ -1412,7 +1430,7 @@ def arccalibration_direct(wv_master,
         if j1 is not None:
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'E'
-            list_of_wvfeatures[i].id = diagonal_ids[i][0]
+            list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
             list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
             list_of_wvfeatures[i].wv = wv_master[j1]
     i = nlines_arc-1
@@ -1421,7 +1439,7 @@ def arccalibration_direct(wv_master,
         if j1 is not None:
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'E'
-            list_of_wvfeatures[i].id = diagonal_ids[i][0]
+            list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
             list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
             list_of_wvfeatures[i].wv = wv_master[j1]
 
@@ -1448,10 +1466,10 @@ def arccalibration_direct(wv_master,
         lduplicated = False
         for i1 in range(nlines_arc):
             if list_of_wvfeatures[i1].line_ok:
-                j1 = list_of_wvfeatures[i1].id
+                j1 = list_of_wvfeatures[i1].lineid
                 for i2 in range(i1+1, nlines_arc):
                     if list_of_wvfeatures[i2].line_ok:
-                        j2 = list_of_wvfeatures[i2].id
+                        j2 = list_of_wvfeatures[i2].lineid
                         if j1 == j2:
                             lduplicated = True
                             nduplicated += 1
@@ -1615,7 +1633,7 @@ def arccalibration_direct(wv_master,
     # fit and exit
     line_ok = np.array([wvfeature.line_ok for wvfeature in list_of_wvfeatures])
     if np.all(line_ok):
-        return list_of_wvfeatures
+        return members2floats(list_of_wvfeatures)
 
     # ---
     # Include unidentified lines by using the prediction of the
@@ -1643,7 +1661,7 @@ def arccalibration_direct(wv_master,
         list_funcost_already_found = []
         for i in range(nlines_arc):
             if list_of_wvfeatures[i].line_ok:
-                list_id_already_found.append(list_of_wvfeatures[i].id)
+                list_id_already_found.append(list_of_wvfeatures[i].lineid)
                 list_funcost_already_found.append(
                     list_of_wvfeatures[i].funcost)
 
@@ -1674,7 +1692,7 @@ def arccalibration_direct(wv_master,
                         list_id_already_found.append(ifound)
                         list_of_wvfeatures[i].line_ok = True
                         list_of_wvfeatures[i].category = 'I'
-                        list_of_wvfeatures[i].id = ifound
+                        list_of_wvfeatures[i].lineid = ifound
                         # assign the worse cost function value
                         list_of_wvfeatures[i].funcost = max(
                             list_funcost_already_found
@@ -1701,4 +1719,4 @@ def arccalibration_direct(wv_master,
         if nnewlines == 0:
             loop_include_new_lines = False
 
-    return list_of_wvfeatures
+    return members2floats(list_of_wvfeatures)
