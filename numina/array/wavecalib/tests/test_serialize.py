@@ -20,7 +20,7 @@ def test_serialize1():
 
     orig = {'cr_linear': {'cdelt': 3.0, 'crmax': 4600, 'crmin': 2300, 'crpix': 1200,
                           'crval': 12},
-            'nlines_arc': 3, 'features': [
+            'features': [
         {'category': 'A', 'xpos': 100, 'wv': 3210, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
          'lineid': 1},
         {'category': 'A', 'xpos': 150, 'wv': 3310, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
@@ -36,7 +36,7 @@ def test_serialize2():
 
     orig = {'cr_linear': {'cdelt': 3.0, 'crmax': 4600, 'crmin': 2300, 'crpix': 1200,
                           'crval': 12},
-            'nlines_arc': 3, 'features': [
+            'features': [
         {'category': 'A', 'xpos': 100, 'wv': 3210, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
          'lineid': 1},
         {'category': 'A', 'xpos': 150, 'wv': 3310, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,

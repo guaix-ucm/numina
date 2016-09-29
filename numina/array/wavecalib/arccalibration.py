@@ -192,7 +192,6 @@ class SolutionArcCalibration(object):
         xpos = [wvfeature.xpos for wvfeature
                      in features if wvfeature.line_ok]
 
-        self.nlines_arc = len(xpos)
         self.coeff = list(coeff)
         self.residual_std = residual_std
         self.cr_linear = cr_linear
@@ -201,6 +200,10 @@ class SolutionArcCalibration(object):
         # locations given by xpos
         poly = Polynomial(coeff)
         self.wavelength = poly(xpos).tolist()
+
+    @property
+    def nlines_arc(self):
+        return len([wvfeature.xpos for wvfeature in self.features if wvfeature.line_ok])
 
     def __eq__(self, other):
         return self.__getstate__() == other.__getstate__()
@@ -242,12 +245,12 @@ class SolutionArcCalibration(object):
         return result
 
     def __setstate__(self, state):
-        self.__dict__ = state
+        self.__dict__ = state.copy()
         features = []
         for feature in state['features']:
-            features.append(
-                WavecalFeature(**feature)
-            )
+            newf = WavecalFeature.__new__(WavecalFeature)
+            newf.__dict__ = feature
+            features.append(newf)
 
         self.features = features
         self.cr_linear = CrLinear(**state['cr_linear'])
