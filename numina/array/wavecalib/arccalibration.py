@@ -36,11 +36,17 @@ from ..stats import robust_std
 class CrLinear(object):
 
     def __init__(self, crpix, crval, crmin, crmax, cdelt):
-        self.crpix = float(crpix)
-        self.crval = float(crval)
-        self.cdelt = float(cdelt)
-        self.crmin = float(crmin)
-        self.crmax = float(crmax)
+        self.crpix = crpix
+        self.crval = crval
+        self.cdelt = cdelt
+        self.crmin = crmin
+        self.crmax = crmax
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        for k in state:
+            state[k] = float(state[k])
+        return state
 
 
 class WavecalFeature(object):
@@ -83,6 +89,17 @@ class WavecalFeature(object):
         self.flux = flux
         self.fwhm = fwhm
         self.wv = wv
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        for k in state:
+            if k in ['funcost', 'xpos', 'ypos', 'flux', 'fwhm', 'wv']:
+                state[k] = float(state[k])
+            elif k in ['lineid']:
+                state[k] = int(state[k])
+            else:
+                pass
+        return state
 
     def __str__(self):
         if self.line_ok:
@@ -242,9 +259,9 @@ class SolutionArcCalibration(object):
     def __getstate__(self):
         result = self.__dict__.copy()
         result['features'] = [
-            feature.__dict__ for feature in self.features
+            feature.__getstate__() for feature in self.features
             ]
-        result['cr_linear'] = result['cr_linear'].__dict__
+        result['cr_linear'] = result['cr_linear'].__getstate__()
         return result
 
     def __setstate__(self, state):
