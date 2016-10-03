@@ -70,7 +70,7 @@ class WavecalFeature(object):
     """
 
     def __init__(self, line_ok, category, lineid, funcost, xpos, ypos,
-                 flux, fwhm, reference):
+                 flux, fwhm, reference, wavelength=0.0):
         self.line_ok = line_ok
         self.category = category
         self.lineid = lineid
@@ -80,7 +80,7 @@ class WavecalFeature(object):
         self.flux = flux
         self.fwhm = fwhm
         self.reference = reference
-        self.wavelength = 0.0
+        self.wavelength = wavelength
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -108,6 +108,7 @@ class WavecalFeature(object):
                  "flux: " + str(self.flux) + "  " + \
                  "fwhm: " + str(self.fwhm) + "  " + \
                  "reference: " + str(self.reference) + "  " + \
+                 "wavelength: " + str(self.wavelength) + "  " + \
                  "funcost: " + str(self.funcost)
 
         return output
