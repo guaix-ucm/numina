@@ -114,7 +114,16 @@ class WorkEnvironment(object):
         make_sure_path_exists(self.workdir)
         make_sure_file_exists(self.index_file)
         # Load dictionary of hashes
-        import pickle
+
+        with open(self.index_file) as fd:
+            try:
+                self.hashes = pickle.load(fd)
+            except EOFError:
+                self.hashes = {}
+        # make_sure_path_doesnot_exist(self.resultsdir)
+        make_sure_file_exists(self.index_file)
+
+        # Load dictionary of hashes
         with open(self.index_file) as fd:
             try:
                 self.hashes = pickle.load(fd)
@@ -154,29 +163,33 @@ class WorkEnvironment(object):
                 self.copy_if_needed(value.filename, complete)
 
     def copy_if_needed(self, key, complete):
+
         md5hash = compute_md5sum_file(complete)
         _logger.debug('compute hash, %s %s', key, md5hash)
 
-        # Check hash
-        trigger_save = False
+        head, tail = os.path.split(complete)
+        destination = os.path.join(self.workdir, tail)
+
+        # If destination doesn't exist, then copy
         make_copy = True
-        try:
-            hash_in_file = self.hashes[key]
+        trigger_save = False
+        # If destination exists, cjeck hash
+        if os.path.isfile(destination):
+            # Check hash
+            hash_in_file = self.hashes.get(key)
             if hash_in_file == md5hash:
                 make_copy = False
             else:
                 # Update hash
                 self.hashes[key] = md5hash
                 trigger_save = True
-        except KeyError:
-            self.hashes[key] = md5hash
-            trigger_save = True
 
         if make_copy:
             _logger.debug('copying %r to %r', key, self.workdir)
             shutil.copy(complete, self.workdir)
         else:
             _logger.debug('copying %r not needed', key)
+
         if trigger_save:
             _logger.debug('save hashes')
             with open(self.index_file, 'w') as fd:
