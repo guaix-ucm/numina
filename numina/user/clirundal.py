@@ -179,10 +179,11 @@ def mode_run_common_obs(args, extra_args):
         task = ProcessingTask(obsres, runinfo)
 
         # Copy files
-        _logger.debug('copy files to work directory')
-        workenv.sane_work()
-        workenv.copyfiles_stage1(obsres)
-        workenv.copyfiles_stage2(rinput)
+        if args.copy_files:
+            _logger.debug('copy files to work directory')
+            workenv.sane_work()
+            workenv.copyfiles_stage1(obsres)
+            workenv.copyfiles_stage2(rinput)
 
         completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
                                     workenv=workenv, task_control=task_control)

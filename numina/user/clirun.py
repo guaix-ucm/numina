@@ -71,6 +71,10 @@ def register(subparsers, config):
         default=False, help='cleanup workdir on exit [disabled]'
         )
     parser_run.add_argument(
+        '--not-copy-files', action="store_false", dest="copy_files",
+        help='do not copy observation result and requirement files'
+        )
+    parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'
         )
