@@ -334,8 +334,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 def ximshow_file(singlefile,
                  args_z1z2=None, args_bbox=None,
                  args_keystitle=None, args_geometry=None,
-                 args_pdffile=None,
-                 args_debugplot=None):
+                 pdf=None,
+                 debugplot=None):
     """Function to execute ximshow() as called from command line.
 
     Parameters
@@ -351,9 +351,9 @@ def ximshow_file(singlefile,
     args_geometry : string or None
         Tuple x,y,dx,dy to define the Qt4 backend geometry. This
         information is ignored if args_pdffile is not None.
-    args_pdffile : string or None
-        Output PDF file name.
-    args_debugplot : string or None
+    pdf : PdfFile object or None
+        If not None, output is sent to PDF file.
+    debugplot : integer or None
         Determines whether intermediate computations and/or plots
         are displayed:
         00 : no debug, no plots
@@ -374,17 +374,6 @@ def ximshow_file(singlefile,
         tmp_str = args_z1z2.split(",")
         z1z2 = float(tmp_str[0]), float(tmp_str[1])
 
-    # read pdffile
-    pdffile = args_pdffile
-    if pdffile is not None:
-        from matplotlib.backends.backend_pdf import PdfPages
-        pdf = PdfPages(pdffile)
-    else:
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
-        pdf = None
-
     # read geometry
     if args_geometry is None:
         geometry = None
@@ -395,9 +384,6 @@ def ximshow_file(singlefile,
         dx_geom = int(tmp_str[2])
         dy_geom = int(tmp_str[3])
         geometry = x_geom, y_geom, dx_geom, dy_geom
-
-    # read debugplot value
-    debugplot = int(args_debugplot)
 
     # read input FITS file
     hdulist = fits.open(singlefile)
@@ -464,9 +450,6 @@ def ximshow_file(singlefile,
         plt.pause(0.001)
         pause_debugplot(debugplot)
 
-    if pdf is not None:
-        pdf.close()
-
 
 def main(args=None):
 
@@ -484,14 +467,26 @@ def main(args=None):
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy")
     parser.add_argument("--pdffile",
-                        help="ouput PDF file name")
+                        help="ouput PDF file name",
+                        type=argparse.FileType('w'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                              " (default=12)",
-                        default=12)
+                        default=12, type=int,
+                        choices = [0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
     list_fits_files = list_fits_files_from_txt(args.filename)
+
+    # read pdffile
+    if args.pdffile is not None:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(args.pdffile.name)
+    else:
+        import matplotlib
+        matplotlib.use('Qt4Agg')
+        import matplotlib.pyplot as plt
+        pdf = None
 
     for myfile in list_fits_files:
         ximshow_file(singlefile=myfile,
@@ -499,8 +494,11 @@ def main(args=None):
                      args_bbox=args.bbox,
                      args_keystitle=args.keystitle,
                      args_geometry=args.geometry,
-                     args_pdffile=args.pdffile,
-                     args_debugplot=args.debugplot)
+                     pdf=pdf,
+                     debugplot=args.debugplot)
+
+    if pdf is not None:
+        pdf.close()
 
     if len(list_fits_files) > 1:
         pause_debugplot(12, optional_prompt="Press RETURN to STOP")
