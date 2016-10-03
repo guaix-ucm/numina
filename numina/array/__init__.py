@@ -100,6 +100,32 @@ def combine_shape(shapes, offsets):
     return (finalshape, offsetsp)
 
 
+def combine_shapes_alt(shapes, refs):
+
+    sharr = numpy.asarray(shapes)
+    refs = numpy.asarray(refs)
+    lower_corner = -refs + refs[0] # coordinate of the lower corner
+    upper_corner = sharr -refs + refs[0]  # coordinate of the lower corner
+
+    # Coordinates with respect to 0
+    baseref = lower_corner.min(axis=0)
+
+    # With respect to baseref
+    lower_corner2 = lower_corner - baseref
+    upper_corner2 = upper_corner - baseref
+
+    subshapes = []
+    for lc, uc in zip(lower_corner2, upper_corner2):
+        subshape = []
+        for start, end in zip(lc, uc):
+            subshape.append(slice(start, end))
+        subshapes.append(tuple(subshape))
+
+    finalshape = tuple(upper_corner2.max(axis=0))
+
+    return (finalshape, subshapes)
+
+
 def resize_array(data, finalshape, region, window=None,
                  scale=1, fill=0.0, conserve=True):
 
