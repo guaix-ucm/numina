@@ -25,6 +25,7 @@ import logging
 import os
 import errno
 import shutil
+import pickle
 
 import yaml
 
@@ -104,13 +105,22 @@ class WorkEnvironment(object):
             datadir = os.path.join(basedir, 'data')
 
         self.datadir = os.path.abspath(datadir)
+        self.index_file = os.path.join(self.workdir, 'index.pkl')
+        self.hashes = {}
 
     def sane_work(self):
-        make_sure_path_doesnot_exist(self.workdir)
+        # make_sure_path_doesnot_exist(self.workdir)
         _logger.debug('check workdir for working: %r', self.workdir)
         make_sure_path_exists(self.workdir)
-
-        make_sure_path_doesnot_exist(self.resultsdir)
+        make_sure_file_exists(self.index_file)
+        # Load dictionary of hashes
+        import pickle
+        with open(self.index_file) as fd:
+            try:
+                self.hashes = pickle.load(fd)
+            except EOFError:
+                self.hashes = {}
+        # make_sure_path_doesnot_exist(self.resultsdir)
         _logger.debug('check resultsdir to store results %r', self.resultsdir)
         make_sure_path_exists(self.resultsdir)
 
@@ -126,26 +136,60 @@ class WorkEnvironment(object):
     def copyfiles_stage1(self, obsres):
         _logger.debug('copying files from observation result')
         for f in obsres.images:
-            _logger.debug('copying %r to %r', f.filename, self.workdir)
             complete = os.path.abspath(os.path.join(self.datadir, f.filename))
-            shutil.copy(complete, self.workdir)
+            self.copy_if_needed(f.filename, complete)
 
     def copyfiles_stage2(self, reqs):
         _logger.debug('copying files from requirements')
         for _, req in reqs.stored().items():
             if isinstance(req.type, DataFrameType):
                 value = getattr(reqs, req.dest)
-                if value is not None:
-                    _logger.debug(
-                        'copying %r to %r',
-                        value.filename,
-                        self.workdir
-                        )
-                    complete = os.path.abspath(
-                        os.path.join(self.datadir, value.filename)
-                        )
-                    shutil.copy(complete, self.workdir)
+                if value is None:
+                    continue
 
+                complete = os.path.abspath(
+                    os.path.join(self.datadir, value.filename)
+                )
+
+                self.copy_if_needed(value.filename, complete)
+
+    def copy_if_needed(self, key, complete):
+        md5hash = compute_md5sum_file(complete)
+        _logger.debug('compute hash, %s %s', key, md5hash)
+
+        # Check hash
+        trigger_save = False
+        make_copy = True
+        try:
+            hash_in_file = self.hashes[key]
+            if hash_in_file == md5hash:
+                make_copy = False
+            else:
+                # Update hash
+                self.hashes[key] = md5hash
+                trigger_save = True
+        except KeyError:
+            self.hashes[key] = md5hash
+            trigger_save = True
+
+        if make_copy:
+            _logger.debug('copying %r to %r', key, self.workdir)
+            shutil.copy(complete, self.workdir)
+        else:
+            _logger.debug('copying %r not needed', key)
+        if trigger_save:
+            _logger.debug('save hashes')
+            with open(self.index_file, 'w') as fd:
+                pickle.dump(self.hashes, fd)
+
+
+def compute_md5sum_file(filename):
+    import hashlib
+    md5 = hashlib.md5()
+    with open(filename, 'rb') as f:
+        for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
 
 def make_sure_path_doesnot_exist(path):
     try:
@@ -158,6 +202,15 @@ def make_sure_path_doesnot_exist(path):
 def make_sure_path_exists(path):
     try:
         os.makedirs(path)
+    except (OSError, IOError) as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
+
+def make_sure_file_exists(path):
+    try:
+        with open(path, 'a') as fd:
+            pass
     except (OSError, IOError) as exception:
         if exception.errno != errno.EEXIST:
             raise
