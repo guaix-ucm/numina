@@ -142,17 +142,17 @@ class WavecalFeature(object):
             sline_ok = 'True '
         else:
             sline_ok = 'False'
-        output = "<WavecalFeature instance>  " + \
-                 "line_ok...: " + sline_ok + "  " + \
-                 "category..: " + str(self.category) + "  " + \
-                 "id........: " + str(self.lineid) + "  " + \
-                 "xpos......: " + str(self.xpos) + "  " + \
-                 "ypos......: " + str(self.ypos) + "  " + \
-                 "peak......: " + str(self.peak) + "  " + \
-                 "fwhm......: " + str(self.fwhm) + "  " + \
-                 "reference.: " + str(self.reference) + "  " + \
+        output = "<WavecalFeature instance>\n" + \
+                 " line_ok: " + sline_ok + "  " + \
+                 "category: " + str(self.category) + "  " + \
+                 "id: " + str(self.lineid) + "  " + \
+                 "xpos: " + str(self.xpos) + "  " + \
+                 "ypos: " + str(self.ypos) + "\n" + \
+                 " peak: " + str(self.peak) + "  " + \
+                 "fwhm: " + str(self.fwhm) + "  " + \
+                 "reference: " + str(self.reference) + "  " + \
                  "wavelength: " + str(self.wavelength) + "  " + \
-                 "funcost...: " + str(self.funcost)
+                 "funcost: " + str(self.funcost)
 
         return output
 
@@ -216,13 +216,13 @@ class SolutionArcCalibration(object):
         """Printable representation of a SolutionArcCalibration instance."""
 
         output = "<SolutionArcCalibration instance>\n" + \
-                 "Number arc lines: " + str(self.nlines_arc) + "\n" + \
-                 "Coeff...........: " + str(self.coeff) + "\n" + \
-                 "Residual std....: " + str(self.residual_std) + "\n" + \
-                 str(self.cr_linear) + "\n"
+                 "- Number arc lines: " + str(self.nlines_arc) + "\n" + \
+                 "- Coeff...........: " + str(self.coeff) + "\n" + \
+                 "- Residual std....: " + str(self.residual_std) + "\n" + \
+                 "- " + str(self.cr_linear) + "\n"
 
         for feature in self.features:
-            output += str(feature)
+            output += "- " + str(feature) + "\n"
 
         # return string with all the information
         return output
