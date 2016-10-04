@@ -115,7 +115,7 @@ class WorkEnvironment(object):
         make_sure_file_exists(self.index_file)
         # Load dictionary of hashes
 
-        with open(self.index_file) as fd:
+        with open(self.index_file, 'rb') as fd:
             try:
                 self.hashes = pickle.load(fd)
             except EOFError:
@@ -123,12 +123,6 @@ class WorkEnvironment(object):
         # make_sure_path_doesnot_exist(self.resultsdir)
         make_sure_file_exists(self.index_file)
 
-        # Load dictionary of hashes
-        with open(self.index_file) as fd:
-            try:
-                self.hashes = pickle.load(fd)
-            except EOFError:
-                self.hashes = {}
         # make_sure_path_doesnot_exist(self.resultsdir)
         _logger.debug('check resultsdir to store results %r', self.resultsdir)
         make_sure_path_exists(self.resultsdir)
@@ -192,7 +186,7 @@ class WorkEnvironment(object):
 
         if trigger_save:
             _logger.debug('save hashes')
-            with open(self.index_file, 'w') as fd:
+            with open(self.index_file, 'wb') as fd:
                 pickle.dump(self.hashes, fd)
 
 
@@ -203,6 +197,7 @@ def compute_md5sum_file(filename):
         for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
             md5.update(chunk)
     return md5.hexdigest()
+
 
 def make_sure_path_doesnot_exist(path):
     try:
