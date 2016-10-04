@@ -25,6 +25,30 @@ from numpy.polynomial import Polynomial
 
 
 class CrLinear(object):
+    """Store information concerning the linear wavelength calibration.
+
+    Parameters
+    ----------
+    crpix : float
+        CRPIX1 value employed in the linear wavelength calibration.
+    crval : float
+        CRVAL1 value corresponding tot he linear wavelength
+        calibration.
+    crmin : float
+        CRVAL value at pixel number 1 corresponding to the linear
+        wavelength calibration.
+    crmax : float
+        CRVAL value at pixel number NAXIS1 corresponding to the linear
+        wavelength calibration.
+    cdelt : float
+        CDELT1 value corresponding to the linear wavelength
+        calibration.
+
+    Attributes
+    ----------
+    Identical to parameters.
+
+    """
 
     def __init__(self, crpix, crval, crmin, crmax, cdelt):
         self.crpix = crpix
@@ -38,6 +62,18 @@ class CrLinear(object):
         for k in state:
             state[k] = float(state[k])
         return state
+
+    def __str__(self):
+        """Printable representation of a CrLinear instancer."""
+
+        output = "<CrLinear instance>\n" + \
+                 "crpix linear: " + str(self.crpix) + "\n" + \
+                 "crval linear: " + str(self.crval) + "\n" + \
+                 "cdelt linear: " + str(self.cdelt) + "\n" + \
+                 "crmin linear: " + str(self.crmin) + "\n" + \
+                 "crmax linear: " + str(self.crmax)
+
+        return output
 
 
 class WavecalFeature(object):
@@ -64,12 +100,14 @@ class WavecalFeature(object):
     reference : float
         Wavelength of the identified line in the master list.
     wavelength : float
-        Wavelength of the identified lines from fitted polynomial.
+        Wavelength of the identified line estimated from the wavelength
+        calibration polynomial.
     funcost : float
         Cost function corresponding to each identified arc line.
 
     Attributes
     ----------
+    Identical to parameters.
 
     """
 
@@ -88,7 +126,8 @@ class WavecalFeature(object):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        float_keys = ['funcost', 'xpos', 'ypos', 'flux', 'fwhm', 'reference', 'wavelength']
+        float_keys = ['funcost', 'xpos', 'ypos', 'peak', 'fwhm',
+                      'reference', 'wavelength']
         for k in state:
             if k in float_keys:
                 state[k] = float(state[k])
@@ -104,16 +143,16 @@ class WavecalFeature(object):
         else:
             sline_ok = 'False'
         output = "<WavecalFeature instance>  " + \
-                 "line_ok: " + sline_ok + "  " + \
-                 "category: " + str(self.category) + "  " + \
-                 "id: " + str(self.lineid) + "  " + \
-                 "xpos: " + str(self.xpos) + "  " + \
-                 "ypos: " + str(self.ypos) + "  " + \
-                 "peak: " + str(self.peak) + "  " + \
-                 "fwhm: " + str(self.fwhm) + "  " + \
-                 "reference: " + str(self.reference) + "  " + \
+                 "line_ok...: " + sline_ok + "  " + \
+                 "category..: " + str(self.category) + "  " + \
+                 "id........: " + str(self.lineid) + "  " + \
+                 "xpos......: " + str(self.xpos) + "  " + \
+                 "ypos......: " + str(self.ypos) + "  " + \
+                 "peak......: " + str(self.peak) + "  " + \
+                 "fwhm......: " + str(self.fwhm) + "  " + \
+                 "reference.: " + str(self.reference) + "  " + \
                  "wavelength: " + str(self.wavelength) + "  " + \
-                 "funcost: " + str(self.funcost)
+                 "funcost...: " + str(self.funcost)
 
         return output
 
@@ -124,8 +163,7 @@ class SolutionArcCalibration(object):
     Note that this class only stores the information concerning the
     arc lines that have been properly identified. The information
     about all the lines (including those initially found but at the
-    end discarded) is stored in the list of WavecalFeature instances
-    'list_of_wvfeatures'.
+    end discarded) is stored in the list of WavecalFeature instances.
 
     Parameters
     ----------
@@ -138,34 +176,21 @@ class SolutionArcCalibration(object):
         Coefficients of the wavelength calibration polynomial.
     residual_std : float
         Residual standard deviation of the fit.
-    crpix1_linear : float
-        CRPIX1 value employed in the linear wavelength calibration.
-    crval1_linear : float
-        CRVAL1 value corresponding to the linear wavelength
-        calibration.
-    crmin1_linear : float
-        CRVAL value at pixel number 1 corresponding to the linear
-        wavelength calibration.
-    crmax1_linear : float
-        CRVAL value at pixel number NAXIS1 corresponding to the linear
-        wavelength calibration.
-    cdelt1_linear: float
-        CDELT1 value corresponding to the linear wavelength
-        calibration.
+    cr_linear : instance of CrLinear
+        Object containing the linear approximation parameters crpix,
+        crval, cdelt, crmin and crmax.
 
     Attributes
     ----------
+    Identical to parameters.
 
     """
-    # TODO: update previous attribute list after introducing the new class
-    #       cr_linear
 
     def __init__(self, features, coeff, residual_std, cr_linear):
 
         self.features = features
-
         self.coeff = [float(tmpcoeff) for tmpcoeff in coeff]
-        # force residual_std to be a float and not an scalar numpy array
+        # force residual_std to be a float and not a scalar numpy array
         self.residual_std = float(residual_std)
         self.cr_linear = cr_linear
 
@@ -174,12 +199,15 @@ class SolutionArcCalibration(object):
         self.update_features(poly=Polynomial(self.coeff))
 
     def update_features(self, poly):
+        """Evaluate wavelength at xpos using the provided polynomial."""
+
         for feature in self.features:
             feature.wavelength = poly(feature.xpos)
 
     @property
     def nlines_arc(self):
-        return len([wvfeature for wvfeature in self.features if wvfeature.line_ok])
+        return len([wvfeature for wvfeature in self.features
+                    if wvfeature.line_ok])
 
     def __eq__(self, other):
         return self.__getstate__() == other.__getstate__()
@@ -191,23 +219,10 @@ class SolutionArcCalibration(object):
                  "Number arc lines: " + str(self.nlines_arc) + "\n" + \
                  "Coeff...........: " + str(self.coeff) + "\n" + \
                  "Residual std....: " + str(self.residual_std) + "\n" + \
-                 "CRPIX1_linear...: " + str(self.cr_linear.crpix) + "\n" + \
-                 "CRVAL1_linear...: " + str(self.cr_linear.crval) + "\n" + \
-                 "CDELT1_linear...: " + str(self.cr_linear.cdelt) + "\n" + \
-                 "CRMIN1_linear...: " + str(self.cr_linear.crmin) + "\n" + \
-                 "CRMAX1_linear...: " + str(self.cr_linear.crmax) + "\n"
+                 str(self.cr_linear) + "\n"
 
         for feature in self.features:
-            output += "xpos: {0:9.3f},  ".format(feature.xpos)
-            output += "ypos: {0:9.3f},  ".format(feature.ypos)
-            output += "flux: {0:g},  ".format(feature.peak)
-            output += "fwhm: {0:g},  ".format(feature.fwhm)
-            output += "reference: {0:10.3f},  ".format(feature.reference)
-            output += "wavelength: {0:10.3f},  ".format(feature.wavelength)
-            output += "category: {0:1s},  ".format(feature.category)
-            output += "id: {0:3d},  ".format(feature.id)
-            output += "funcost: {0:g},  ".format(feature.funcost)
-            output += "\n"
+            output += str(feature)
 
         # return string with all the information
         return output
