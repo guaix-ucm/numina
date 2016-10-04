@@ -31,233 +31,7 @@ from ..display.pause_debugplot import pause_debugplot
 from ..robustfit import fit_theil_sen
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..stats import robust_std
-
-
-class WavecalFeature(object):
-    """Store information concerning a particular line identification.
-
-    Parameters
-    ----------
-    line_ok : bool
-        True if the line has been properly identified.
-    category : char
-        Line identification type (A, B, C, D, E, R, T, P, K, I, X).
-        See documentation embedded within the arccalibration_direct
-        function for details.
-    line_id : int
-        Number of identified line within the master list.
-    xpos : float
-        Pixel x-coordinate of the peak of the line.
-    ypos : float
-        Pixel y-coordinate of the peak of the line.
-    flux : float
-        Flux of the line.
-    fwhm : float
-        FWHM of the line.
-    wv : float
-        Wavelength of the identified line in the master list.
-
-    Attributes
-    ----------
-
-    """
-
-    def __init__(self, line_ok, category, line_id, funcost, xpos, ypos,
-                 flux, fwhm, wv):
-        self.line_ok = line_ok
-        self.category = category
-        self.id = line_id
-        self.funcost = funcost
-        self.xpos = xpos
-        self.ypos = ypos
-        self.flux = flux
-        self.fwhm = fwhm
-        self.wv = wv
-
-    def __str__(self):
-        if self.line_ok:
-            sline_ok = 'True '
-        else:
-            sline_ok = 'False'
-        output = "<WavecalFeature instance>  " + \
-                 "line_ok: " + sline_ok + "  " + \
-                 "category: " + str(self.category) + "  " + \
-                 "id: " + str(self.id) + "  " + \
-                 "xpos: " + str(self.xpos) + "  " + \
-                 "ypos: " + str(self.ypos) + "  " + \
-                 "flux: " + str(self.flux) + "  " + \
-                 "fwhm: " + str(self.fwhm) + "  " + \
-                 "wv: " + str(self.wv) + "  " + \
-                 "funcost: " + str(self.funcost)
-
-        return output
-
-
-class SolutionArcCalibration(object):
-    """Auxiliary class to store the arc calibration solution.
-
-    Note that this class only stores the information concerning the
-    arc lines that have been properly identified. The information
-    about all the lines (including those initially found but at the
-    end discarded) is stored in the list of WavecalFeature instances
-    'list_of_wvfeatures'.
-
-    Parameters
-    ----------
-    list_of_wvfeatures : list (of WavecalFeature instances)
-        A list of size equal to the number of identified lines, which
-        elements are instances of the class WavecalFeature, containing
-        all the relevant information concerning the line
-        identification.
-    coeff : 1d numpy array (float)
-        Coefficients of the wavelength calibration polynomial.
-    residual_std : float
-        Residual standard deviation of the fit.
-    crpix1_linear : float
-        CRPIX1 value employed in the linear wavelength calibration.
-    crval1_linear : float
-        CRVAL1 value corresponding to the linear wavelength
-        calibration.
-    crmin1_linear : float
-        CRVAL value at pixel number 1 corresponding to the linear
-        wavelength calibration.
-    crmax1_linear : float
-        CRVAL value at pixel number NAXIS1 corresponding to the linear
-        wavelength calibration.
-    cdelt1_linear: float
-        CDELT1 value corresponding to the linear wavelength
-        calibration.
-
-    Attributes
-    ----------
-    nlines_arc : int
-        Total number of identified arc lines.
-    xpos : 1d numpy array (float)
-        Pixel coordinate of the peak of all the arc lines.
-    ypos : 1d numpy array (float)
-        Pixel y-coordinate of the peak of the line.
-    flux : 1d numpy array (float)
-        Flux of the line.
-    fwhm : 1d numpy array (float)
-        FWHM of the line.
-    reference : 1d numpy array (float)
-        Wavelength of the identified lines in the master list.
-    wavelength : 1d numpy array (float)
-        Wavelength of the identified lines from fitted polynomial.
-    funcost : 1d numpy array (float)
-        Cost function corresponding to each identified arc line.
-    category : 1d numpy array (char)
-        Line identification type (A, B, C, D, E, R, T, P, K, I, X).
-        See documentation embedded within the arccalibration_direct
-        function for details.
-    id : 1d numpy array (integer)
-        Number of identified arc line within the wv_master array.
-    coeff : 1d numpy array (float)
-        Coefficients of the wavelength calibration polynomial.
-    residual_std : float
-        Residual standard deviation of the fit.
-    crpix1_linear : float
-        CRPIX1 value employed in the linear wavelength calibration.
-    crval1_linear : float
-        CRVAL1 value corresponding to the linear wavelength
-        calibration.
-    crmin1_linear : float
-        CRVAL value at pixel number 1 corresponding to the linear
-        wavelength calibration.
-    crmax1_linear : float
-        CRVAL value at pixel number NAXIS1 corresponding to the linear
-        wavelength calibration.
-    cdelt1_linear: float
-        CDELT1 value corresponding to the linear wavelength
-        calibration.
-
-    """
-
-    # Define here all the class members that are numpy arrays. These
-    # members will be exported/read as/from dictionaries of native
-    # python types when necessary. For that purpose, the auxiliary
-    # class methods __getstate__() and __setstate__() are employed.
-    _KEYS = ['xpos', 'ypos', 'flux', 'fwhm', 'reference', 'wavelength',
-             'funcost', 'category', 'id', 'coeff']
-
-    def __init__(self, list_of_wvfeatures,
-                 coeff, residual_std, crpix1_linear, crval1_linear,
-                 crmin1_linear, crmax1_linear, cdelt1_linear):
-        # protections
-        nlines_arc_total = len(list_of_wvfeatures)
-        if nlines_arc_total == 0:
-            raise ValueError("Number of arc lines is zero!")
-
-        # initialize members
-        self.xpos = np.array([wvfeature.xpos for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.ypos = np.array([wvfeature.ypos for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.flux = np.array([wvfeature.flux for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.fwhm = np.array([wvfeature.fwhm for wvfeature
-                              in list_of_wvfeatures if wvfeature.line_ok])
-        self.reference = np.array([wvfeature.wv for wvfeature
-                                   in list_of_wvfeatures if wvfeature.line_ok])
-        self.funcost = np.array([wvfeature.funcost for wvfeature
-                                 in list_of_wvfeatures if wvfeature.line_ok])
-        self.category = np.array([wvfeature.category for wvfeature
-                                  in list_of_wvfeatures if wvfeature.line_ok])
-        self.id = np.array([wvfeature.id for wvfeature
-                            in list_of_wvfeatures if wvfeature.line_ok])
-
-        self.nlines_arc = self.xpos.size
-        self.coeff = coeff
-        self.residual_std = residual_std
-        self.crpix1_linear = crpix1_linear
-        self.crval1_linear = crval1_linear
-        self.crmin1_linear = crmin1_linear
-        self.crmax1_linear = crmax1_linear
-        self.cdelt1_linear = cdelt1_linear
-
-        # use fitted polynomial to predict wavelengths at the line
-        # locations given by xpos
-        poly = Polynomial(coeff)
-        self.wavelength = poly(self.xpos)
-
-    def __str__(self):
-        """Printable representation of a SolutionArcCalibration instance."""
-
-        output = "<SolutionArcCalibration instance>\n" + \
-                 "Number arc lines: " + str(self.nlines_arc) + "\n" + \
-                 "Coeff...........: " + str(self.coeff) + "\n" + \
-                 "Residual std....: " + str(self.residual_std) + "\n" + \
-                 "CRPIX1_linear...: " + str(self.crpix1_linear) + "\n" + \
-                 "CRVAL1_linear...: " + str(self.crval1_linear) + "\n" + \
-                 "CDELT1_linear...: " + str(self.cdelt1_linear) + "\n" + \
-                 "CRMIN1_linear...: " + str(self.crmin1_linear) + "\n" + \
-                 "CRMAX1_linear...: " + str(self.crmax1_linear) + "\n"
-
-        for i in range(self.nlines_arc):
-            output += "xpos: {0:9.3f},  ".format(self.xpos[i])
-            output += "ypos: {0:9.3f},  ".format(self.ypos[i])
-            output += "flux: {0:g},  ".format(self.flux[i])
-            output += "fwhm: {0:g},  ".format(self.fwhm[i])
-            output += "reference: {0:10.3f},  ".format(self.reference[i])
-            output += "wavelength: {0:10.3f},  ".format(self.wavelength[i])
-            output += "category: {0:1s},  ".format(self.category[i])
-            output += "id: {0:3d},  ".format(self.id[i])
-            output += "funcost: {0:g},  ".format(self.funcost[i])
-            output += "\n"
-
-        # return string with all the information
-        return output
-
-    def __getstate__(self):
-        result = self.__dict__.copy()
-        for key in self._KEYS:
-            result[key] = result[key].tolist()
-        return result
-
-    def __setstate__(self, state):
-        for key in self._KEYS:
-            state[key] = np.array(state[key])
-        self.__dict__ = state
+from .solutionarc import CrLinear, WavecalFeature,SolutionArcCalibration
 
 
 def select_data_for_fit(list_of_wvfeatures):
@@ -299,7 +73,7 @@ def select_data_for_fit(list_of_wvfeatures):
         if list_of_wvfeatures[i].line_ok:
             ifit.append(i)
             xfit = np.append(xfit, [list_of_wvfeatures[i].xpos])
-            yfit = np.append(yfit, [list_of_wvfeatures[i].wv])
+            yfit = np.append(yfit, [list_of_wvfeatures[i].reference])
             wfit = np.append(wfit, [list_of_wvfeatures[i].funcost])
             nfit += 1
 
@@ -388,7 +162,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
 
     # polynomial fit
     if weighted:
-        weights = 1.0/wfit
+        weights = 1.0 / wfit
     else:
         weights = np.zeros_like(wfit) + 1.0
 
@@ -418,15 +192,19 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     # generate solution (note that the class SolutionArcCalibration
     # only sotres the information in list_of_wvfeatures corresponding
     # to lines that have been properly identified
+    cr_linear = CrLinear(
+        crpix1,
+        crval1_linear,
+        crmin1_linear,
+        crmax1_linear,
+        cdelt1_linear
+    )
+
     solution_wv = SolutionArcCalibration(
-        list_of_wvfeatures=list_of_wvfeatures,
+        features=list_of_wvfeatures,
         coeff=coeff,
         residual_std=residual_std,
-        crpix1_linear=crpix1,
-        crval1_linear=crval1_linear,
-        crmin1_linear=crmin1_linear,
-        crmax1_linear=crmax1_linear,
-        cdelt1_linear=cdelt1_linear
+        cr_linear=cr_linear
     )
 
     if debugplot % 10 != 0:
@@ -458,7 +236,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                 yyp = np.array([])
                 for i in list_x:
                     xxp = np.append(xxp, [list_of_wvfeatures[i].xpos])
-                    yyp = np.append(yyp, [list_of_wvfeatures[i].wv])
+                    yyp = np.append(yyp, [list_of_wvfeatures[i].reference])
                 yyres = yyp - poly(xxp)
                 ax2.plot(xxp, yyres, marker='x', markersize=15, c=val[2],
                          linewidth=0)
@@ -496,7 +274,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                 yyp = np.array([])
                 for i in list_x:
                     xxp = np.append(xxp, [list_of_wvfeatures[i].xpos])
-                    yyp = np.append(yyp, [list_of_wvfeatures[i].wv])
+                    yyp = np.append(yyp, [list_of_wvfeatures[i].reference])
                 yyp -= crval1_linear + (xxp - crpix1) * cdelt1_linear
                 ax.plot(xxp, yyp, marker='x', markersize=15, c=val[2],
                         linewidth=0, label='removed')
@@ -1304,13 +1082,13 @@ def arccalibration_direct(wv_master,
     for i in range(nlines_arc):
         tmp_feature = WavecalFeature(line_ok=False,
                                      category='X',
-                                     line_id=-1,
+                                     lineid=-1,
                                      funcost=np.inf,
                                      xpos=xpos_arc[i],
                                      ypos=0.0,
                                      flux=0.0,
                                      fwhm=0.0,
-                                     wv=0.0)
+                                     reference=0.0)
         list_of_wvfeatures.append(tmp_feature)
 
     # Category A lines
@@ -1319,9 +1097,9 @@ def arccalibration_direct(wv_master,
         if j1 == j2 == j3 and j1 is not None:
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'A'
-            list_of_wvfeatures[i].id = j1
+            list_of_wvfeatures[i].lineid = j1
             list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
-            list_of_wvfeatures[i].wv = wv_master[j1]
+            list_of_wvfeatures[i].reference = wv_master[j1]
     
     if debugplot >= 10:
         print('\n* Including category A lines:')
@@ -1338,23 +1116,23 @@ def arccalibration_direct(wv_master,
                 if max(f1, f2) < f3:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].lineid = j1
                     list_of_wvfeatures[i].funcost = min(f1, f2)
-                    list_of_wvfeatures[i].wv = wv_master[j1]
+                    list_of_wvfeatures[i].reference = wv_master[j1]
             elif j1 == j3 and j1 is not None:
                 if max(f1, f3) < f2:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].lineid = j1
                     list_of_wvfeatures[i].funcost = min(f1, f3)
-                    list_of_wvfeatures[i].wv = wv_master[j1]
+                    list_of_wvfeatures[i].reference = wv_master[j1]
             elif j2 == j3 and j2 is not None:
                 if max(f2, f3) < f1:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].id = j2
+                    list_of_wvfeatures[i].lineid = j2
                     list_of_wvfeatures[i].funcost = min(f2, f3)
-                    list_of_wvfeatures[i].wv = wv_master[j2]
+                    list_of_wvfeatures[i].reference = wv_master[j2]
 
     if debugplot >= 10:
         print('\n* Including category B lines:')
@@ -1371,16 +1149,16 @@ def arccalibration_direct(wv_master,
                 if min(f2, f3) > f1:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'C'
-                    list_of_wvfeatures[i].id = j1
+                    list_of_wvfeatures[i].lineid = j1
                     list_of_wvfeatures[i].funcost = f1
-                    list_of_wvfeatures[i].wv = wv_master[j1]
+                    list_of_wvfeatures[i].reference = wv_master[j1]
             elif list_of_wvfeatures[i+1].category == 'B':
                 if min(f1, f2) > f3:
                     list_of_wvfeatures[i].line_ok = True
                     list_of_wvfeatures[i].category = 'C'
-                    list_of_wvfeatures[i].id = j3
+                    list_of_wvfeatures[i].lineid = j3
                     list_of_wvfeatures[i].funcost = f3
-                    list_of_wvfeatures[i].wv = wv_master[j3]
+                    list_of_wvfeatures[i].reference = wv_master[j3]
 
     if debugplot >= 10:
         print('\n* Including category C lines:')
@@ -1395,9 +1173,9 @@ def arccalibration_direct(wv_master,
             f1, f2 = diagonal_funcost[i]
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'D'
-            list_of_wvfeatures[i].id = j1
+            list_of_wvfeatures[i].lineid = j1
             list_of_wvfeatures[i].funcost = min(f1, f2)
-            list_of_wvfeatures[i].wv = wv_master[j1]
+            list_of_wvfeatures[i].reference = wv_master[j1]
 
     if debugplot >= 10:
         print('\n* Including category D lines:')
@@ -1412,18 +1190,18 @@ def arccalibration_direct(wv_master,
         if j1 is not None:
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'E'
-            list_of_wvfeatures[i].id = diagonal_ids[i][0]
+            list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
             list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
-            list_of_wvfeatures[i].wv = wv_master[j1]
+            list_of_wvfeatures[i].reference = wv_master[j1]
     i = nlines_arc-1
     if list_of_wvfeatures[i-2].line_ok and list_of_wvfeatures[i-1].line_ok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
             list_of_wvfeatures[i].line_ok = True
             list_of_wvfeatures[i].category = 'E'
-            list_of_wvfeatures[i].id = diagonal_ids[i][0]
+            list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
             list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
-            list_of_wvfeatures[i].wv = wv_master[j1]
+            list_of_wvfeatures[i].reference = wv_master[j1]
 
     if debugplot >= 10:
         print('\n* Including category E lines:')
@@ -1448,10 +1226,10 @@ def arccalibration_direct(wv_master,
         lduplicated = False
         for i1 in range(nlines_arc):
             if list_of_wvfeatures[i1].line_ok:
-                j1 = list_of_wvfeatures[i1].id
+                j1 = list_of_wvfeatures[i1].lineid
                 for i2 in range(i1+1, nlines_arc):
                     if list_of_wvfeatures[i2].line_ok:
-                        j2 = list_of_wvfeatures[i2].id
+                        j2 = list_of_wvfeatures[i2].lineid
                         if j1 == j2:
                             lduplicated = True
                             nduplicated += 1
@@ -1461,12 +1239,12 @@ def arccalibration_direct(wv_master,
                                 list_of_wvfeatures[i2].line_ok = False
                                 list_of_wvfeatures[i2].category = 'R'
                                 # do not uncomment the next line:
-                                # list_of_wvfeatures[i2].wv = None
+                                # list_of_wvfeatures[i2].reference = None
                             else:
                                 list_of_wvfeatures[i1].line_ok = False
                                 list_of_wvfeatures[i1].category = 'R'
                                 # do not uncomment the next line:
-                                # list_of_wvfeatures[i1].wv = None
+                                # list_of_wvfeatures[i1].reference = None
 
     if debugplot >= 10:
         if nduplicated > 0:
@@ -1510,7 +1288,7 @@ def arccalibration_direct(wv_master,
                 list_of_wvfeatures[ifit[i]].line_ok = False
                 list_of_wvfeatures[ifit[i]].category = 'T'
                 # do not uncomment the next line:
-                # list_of_wvfeatures[ifit[i]].wv = None
+                # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
     
     if debugplot >= 10:
@@ -1553,7 +1331,7 @@ def arccalibration_direct(wv_master,
                 list_of_wvfeatures[ifit[i]].line_ok = False
                 list_of_wvfeatures[ifit[i]].category = 'P'
                 # do not uncomment the next line:
-                # list_of_wvfeatures[ifit[i]].wv = None
+                # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
 
         if debugplot >= 10:
@@ -1593,7 +1371,7 @@ def arccalibration_direct(wv_master,
                     list_of_wvfeatures[ifit[i]].line_ok = False
                     list_of_wvfeatures[ifit[i]].category = 'K'
                     # do not uncomment the next line:
-                    # list_of_wvfeatures[ifit[i]].wv = None
+                    # list_of_wvfeatures[ifit[i]].reference = None
                     nremoved += 1
 
         if debugplot >= 10:
@@ -1643,7 +1421,7 @@ def arccalibration_direct(wv_master,
         list_funcost_already_found = []
         for i in range(nlines_arc):
             if list_of_wvfeatures[i].line_ok:
-                list_id_already_found.append(list_of_wvfeatures[i].id)
+                list_id_already_found.append(list_of_wvfeatures[i].lineid)
                 list_funcost_already_found.append(
                     list_of_wvfeatures[i].funcost)
 
@@ -1674,12 +1452,12 @@ def arccalibration_direct(wv_master,
                         list_id_already_found.append(ifound)
                         list_of_wvfeatures[i].line_ok = True
                         list_of_wvfeatures[i].category = 'I'
-                        list_of_wvfeatures[i].id = ifound
+                        list_of_wvfeatures[i].lineid = ifound
                         # assign the worse cost function value
                         list_of_wvfeatures[i].funcost = max(
                             list_funcost_already_found
                         )
-                        list_of_wvfeatures[i].wv = wv_master[ifound]
+                        list_of_wvfeatures[i].reference = wv_master[ifound]
                         nnewlines += 1
 
         if debugplot >= 10:

@@ -470,10 +470,10 @@ def test__execute_notebook_example(ldebug=False, lplot=False):
 
     coeff_expected = np.array([3.99875794e+03, 9.59950578e-01, 1.72739867e-05])
     assert np.allclose(solution_wv.coeff, coeff_expected)
-    assert np.allclose(solution_wv.crval1_linear, 3999.7179085283897)  # 3996.42717772)
-    assert np.allclose(solution_wv.crmin1_linear, 3999.7179085283897)
-    assert np.allclose(solution_wv.crmax1_linear, 4999.8604201544294)
-    assert np.allclose(solution_wv.cdelt1_linear, 0.97765641410170068)  # 0.978303317095)
+    assert np.allclose(solution_wv.cr_linear.crval, 3999.7179085283897)  # 3996.42717772)
+    assert np.allclose(solution_wv.cr_linear.crmin, 3999.7179085283897)
+    assert np.allclose(solution_wv.cr_linear.crmax, 4999.8604201544294)
+    assert np.allclose(solution_wv.cr_linear.cdelt, 0.97765641410170068)  # 0.978303317095)
 
     print("TEST: test__execute_notebook_example... OK")
 
@@ -491,10 +491,10 @@ def test__execute_simple_case(ldebug=False, lplot=False):
 
     coeff_expected = np.array([2.99467778e+03, 3.89781863e+00, 1.22960881e-05])
     assert np.allclose(solution_wv.coeff, coeff_expected)
-    assert np.allclose(solution_wv.crval1_linear, 2998.5756138701254)  # 2995.4384155)
-    assert np.allclose(solution_wv.crmin1_linear, 2998.5756138701254)
-    assert np.allclose(solution_wv.crmax1_linear, 6998.9374406492443)
-    assert np.allclose(solution_wv.cdelt1_linear, 3.9104221180636549)  # 3.91231531392)
+    assert np.allclose(solution_wv.cr_linear.crval, 2998.5756138701254)  # 2995.4384155)
+    assert np.allclose(solution_wv.cr_linear.crmin, 2998.5756138701254)
+    assert np.allclose(solution_wv.cr_linear.crmax, 6998.9374406492443)
+    assert np.allclose(solution_wv.cr_linear.cdelt, 3.9104221180636549)  # 3.91231531392)
 
     print("TEST: test__execute_simple_case... OK")
 
