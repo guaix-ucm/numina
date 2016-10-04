@@ -20,6 +20,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import glob
 import os.path
 
 
@@ -45,7 +46,12 @@ def list_fits_files_from_txt(filename):
     
     # check for input file
     if not os.path.isfile(filename):
-        raise ValueError("File " + filename + " not found!")
+        # check for wildcards
+        list_fits_files = glob.glob(filename)
+        if len(list_fits_files) == 0:
+            raise ValueError("File " + filename + " not found!")
+        else:
+            return list_fits_files
 
     # if input file is a txt file, assume it is a list of FITS files
     if filename[-4:] == ".txt":
