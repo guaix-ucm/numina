@@ -466,8 +466,9 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='ximshow')
     parser.add_argument("filename",
-                        help="FITS file (wildcards valid using quotes) "
-                             "or txt file with list of FITS files")
+                        help="FITS file (wildcards allowed) "
+                             "or txt file with list of FITS files",
+                        nargs="+")
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
@@ -487,8 +488,11 @@ def main(args=None):
                         choices = [0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
-    list_fits_files = [tmp.filename for
-                       tmp in list_fileinfo_from_txt(args.filename)]
+    if len(args.filename) == 1:
+        list_fits_files = [tmp.filename for
+                           tmp in list_fileinfo_from_txt(args.filename)]
+    else:
+        list_fits_files = args.filename
 
     # read pdffile
     if args.pdffile is not None:
