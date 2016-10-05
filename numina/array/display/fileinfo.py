@@ -20,6 +20,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import argparse
 import glob
 import os.path
 
@@ -48,8 +49,8 @@ class FileInfo(object):
         """Printable representation of a FileInfo instance."""
 
         output = "<FileInfo instance>\n" + \
-                 "filename: " + self.filename + "\n" + \
-                 "fileinfo: " + str(self.fileinfo)
+                 "- filename: " + self.filename + "\n" + \
+                 "- fileinfo: " + str(self.fileinfo)
 
         return output
 
@@ -104,3 +105,20 @@ def list_fileinfo_from_txt(filename):
 
     return output
 
+
+def main(args=None):
+
+    # parse command-line options
+    parser = argparse.ArgumentParser(prog='fileinfo')
+    parser.add_argument("txt_file",
+                        help="txt file with list files")
+    args = parser.parse_args(args)
+
+    # execute function
+    list_fileinfo = list_fileinfo_from_txt(args.txt_file)
+    for item in list_fileinfo:
+        print(item)
+
+if __name__ == "__main__":
+
+    main()

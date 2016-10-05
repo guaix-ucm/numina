@@ -487,8 +487,8 @@ def main(args=None):
                         choices = [0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
-    list_fits_files = [tmpinfo.filename for
-                       tmpinfo in list_fileinfo_from_txt(args.filename)]
+    list_fits_files = [tmp.filename for
+                       tmp in list_fileinfo_from_txt(args.filename)]
 
     # read pdffile
     if args.pdffile is not None:
