@@ -64,7 +64,7 @@ class CrLinear(object):
         return state
 
     def __str__(self):
-        """Printable representation of a CrLinear instancer."""
+        """Printable representation of a CrLinear instance."""
 
         output = "<CrLinear instance>\n" + \
                  "crpix linear: " + str(self.crpix) + "\n" + \
