@@ -62,8 +62,8 @@ def list_fileinfo_from_txt(filename):
     ----------
     filename : string
         Name of a file (wildcards are acceptable) or a TXT file
-        containing a list of files. Empty Lines and lines starting by
-        a hash symbol in the TXT file are ignored.
+        containing a list of files. Empty Lines, and lines starting by
+        a hash or a at symbol in the TXT file are ignored.
     
     Returns
     -------
@@ -90,7 +90,7 @@ def list_fileinfo_from_txt(filename):
         output = []
         for line in file_content:
             if len(line) > 0:
-                if line[0] != '#':
+                if line[0] not in ['#', '@']:
                     tmplist = line.split()
                     tmpfile = tmplist[0]
                     if len(tmplist) > 1:
