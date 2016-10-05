@@ -19,9 +19,6 @@
 
 from __future__ import print_function
 
-import logging
-
-
 import numpy
 from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
@@ -95,35 +92,48 @@ def combine_shape(shapes, offsets):
     offarr = asarray(offsets)
     ucorners = offarr + sharr
     ref = offarr.min(axis=0)
-    finalshape = ucorners.max(axis=0) - ref
+    finalshape = tuple(ucorners.max(axis=0) - ref)
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
 
 
-def combine_shapes_alt(shapes, refs):
+def combine_shapes(shapes, refs, order='rc'):
+
+    # Order 'rc' -> row column
+    # Order 'xy' -> xy coordinates
 
     sharr = numpy.asarray(shapes)
-    refs = numpy.asarray(refs)
-    lower_corner = -refs + refs[0] # coordinate of the lower corner
-    upper_corner = sharr -refs + refs[0]  # coordinate of the lower corner
+    rfarr = numpy.asarray(refs)
+
+    if order == 'xy':
+        rfarr = rfarr[:,::-1]
+
+    offarr = rfarr - rfarr[0]
+    lower_corners = -offarr # coordinate of the lower corner
 
     # Coordinates with respect to 0
-    baseref = lower_corner.min(axis=0)
+    baseref = lower_corners.min(axis=0)
 
     # With respect to baseref
-    lower_corner2 = lower_corner - baseref
-    upper_corner2 = upper_corner - baseref
+    lower_corners = lower_corners - baseref
+    upper_corners = sharr - offarr - baseref
+    finalshape = tuple(upper_corners.max(axis=0))
 
     subshapes = []
-    for lc, uc in zip(lower_corner2, upper_corner2):
+    for lc, uc in zip(lower_corners, upper_corners):
         subshape = []
         for start, end in zip(lc, uc):
             subshape.append(slice(start, end))
         subshapes.append(tuple(subshape))
 
-    finalshape = tuple(upper_corner2.max(axis=0))
+    # Coordinate of the refs pixels in final image
+    # It's equal for all pixels
+    ref_final_0 = lower_corners[0] + rfarr[0]
 
-    return (finalshape, subshapes)
+    if order == 'xy':
+        ref_final_0 = ref_final_0[::-1]
+
+    return (finalshape, subshapes, tuple(ref_final_0))
 
 
 def resize_array(data, finalshape, region, window=None,
@@ -156,6 +166,15 @@ def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, con
         rarrays.append(newdata)
         regions.append(region)
     return rarrays, regions
+
+
+def resize_arrays_alt(arrays, regions, finalshape, window=None, scale=1, conserve=True, fill=0.0):
+    rarrays = []
+    for array, region in zip(arrays, regions):
+        newdata = resize_array(array, finalshape, region, window=window,
+                               fill=fill, scale=scale, conserve=conserve)
+        rarrays.append(newdata)
+    return rarrays
 
 
 def rebin_scale(a, scale=1):

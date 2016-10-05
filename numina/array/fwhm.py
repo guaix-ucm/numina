@@ -24,7 +24,7 @@ from __future__ import division
 import numpy as np
 import scipy.interpolate as itpl
 
-from numina.array.utils import wc_to_pix_1d
+from numina.array.utils import coor_to_pix_1d
 
 
 def compute_fwhm_2d_simple(img, xc, yc):
@@ -32,8 +32,8 @@ def compute_fwhm_2d_simple(img, xc, yc):
     X = np.arange(0, img.shape[1], 1.0)
     Y = np.arange(0, img.shape[0], 1.0)
 
-    xpix = wc_to_pix_1d(xc - X[0])
-    ypix = wc_to_pix_1d(yc - Y[0])
+    xpix = coor_to_pix_1d(xc - X[0])
+    ypix = coor_to_pix_1d(yc - Y[0])
 
     peak = img[ypix, xpix]
 
@@ -51,8 +51,8 @@ def compute_fwhm_2d_spline(img, xc, yc):
     Y = np.arange(0.0, img.shape[1], 1.0)
     X = np.arange(0.0, img.shape[0], 1.0)
 
-    xpix = wc_to_pix_1d(xc)
-    ypix = wc_to_pix_1d(yc)
+    xpix = coor_to_pix_1d(xc)
+    ypix = coor_to_pix_1d(yc)
     # The image is already cropped
 
     bb = itpl.RectBivariateSpline(X, Y, img)
@@ -91,7 +91,7 @@ def compute_fw_at_frac_max_1d_simple(Y, xc, X=None, f=0.5):
     else:
         xx = X
 
-    xpix = wc_to_pix_1d(xc - xx[0])
+    xpix = coor_to_pix_1d(xc - xx[0])
 
     try:
         peak = yy[xpix]

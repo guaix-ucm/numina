@@ -19,7 +19,7 @@
 
 import numpy
 
-from ..utils import wcs_to_pix
+from ..utils import coor_to_pix
 from ._traces import tracing
 
 
@@ -54,7 +54,7 @@ def trace(arr, x, y, axis=0, background=0.0,
         A nx3 array, with x,y,p of each point in the trace
     '''
 
-    i,j = wcs_to_pix([x, y])
+    i,j = coor_to_pix([x, y], order='xy')
     value = arr[i,j]
 
     # If arr is not in native byte order, the C-extension won't work
