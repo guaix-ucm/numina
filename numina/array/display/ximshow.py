@@ -490,7 +490,7 @@ def main(args=None):
 
     if len(args.filename) == 1:
         list_fits_files = [tmp.filename for
-                           tmp in list_fileinfo_from_txt(args.filename)]
+                           tmp in list_fileinfo_from_txt(args.filename[0])]
     else:
         list_fits_files = args.filename
 
