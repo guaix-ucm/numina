@@ -1086,7 +1086,7 @@ def arccalibration_direct(wv_master,
                                      funcost=np.inf,
                                      xpos=xpos_arc[i],
                                      ypos=0.0,
-                                     flux=0.0,
+                                     peak=0.0,
                                      fwhm=0.0,
                                      reference=0.0)
         list_of_wvfeatures.append(tmp_feature)

@@ -57,27 +57,31 @@ class WavecalFeature(object):
         Pixel x-coordinate of the peak of the line.
     ypos : float
         Pixel y-coordinate of the peak of the line.
-    flux : float
-        Flux of the line.
+    peak : float
+        Flux of the peak of the line.
     fwhm : float
         FWHM of the line.
-    wv : float
+    reference : float
         Wavelength of the identified line in the master list.
+    wavelength : float
+        Wavelength of the identified lines from fitted polynomial.
+    funcost : float
+        Cost function corresponding to each identified arc line.
 
     Attributes
     ----------
 
     """
 
-    def __init__(self, line_ok, category, lineid, funcost, xpos, ypos,
-                 flux, fwhm, reference, wavelength=0.0):
+    def __init__(self, line_ok, category, lineid, funcost, xpos, ypos=0.0,
+                 peak=0.0, fwhm=0.0, reference=0.0, wavelength=0.0):
         self.line_ok = line_ok
         self.category = category
         self.lineid = lineid
         self.funcost = funcost
         self.xpos = xpos
         self.ypos = ypos
-        self.flux = flux
+        self.peak = peak
         self.fwhm = fwhm
         self.reference = reference
         self.wavelength = wavelength
@@ -105,7 +109,7 @@ class WavecalFeature(object):
                  "id: " + str(self.lineid) + "  " + \
                  "xpos: " + str(self.xpos) + "  " + \
                  "ypos: " + str(self.ypos) + "  " + \
-                 "flux: " + str(self.flux) + "  " + \
+                 "peak: " + str(self.peak) + "  " + \
                  "fwhm: " + str(self.fwhm) + "  " + \
                  "reference: " + str(self.reference) + "  " + \
                  "wavelength: " + str(self.wavelength) + "  " + \
@@ -151,46 +155,6 @@ class SolutionArcCalibration(object):
 
     Attributes
     ----------
-    nlines_arc : int
-        Total number of identified arc lines.
-    xpos : list of floats
-        Pixel coordinate of the peak of all the arc lines.
-    ypos : lsit of floats
-        Pixel y-coordinate of the peak of the line.
-    flux : list of floats
-        Flux of the line.
-    fwhm : list of floats
-        FWHM of the line.
-    reference : list of floats
-        Wavelength of the identified lines in the master list.
-    wavelength : list of floats
-        Wavelength of the identified lines from fitted polynomial.
-    funcost : list of floats
-        Cost function corresponding to each identified arc line.
-    category : list of characters
-        Line identification type (A, B, C, D, E, R, T, P, K, I, X).
-        See documentation embedded within the arccalibration_direct
-        function for details.
-    id : list of integers
-        Number of identified arc line within the wv_master array.
-    coeff : list of floats
-        Coefficients of the wavelength calibration polynomial.
-    residual_std : float
-        Residual standard deviation of the fit.
-    crpix1_linear : float
-        CRPIX1 value employed in the linear wavelength calibration.
-    crval1_linear : float
-        CRVAL1 value corresponding to the linear wavelength
-        calibration.
-    crmin1_linear : float
-        CRVAL value at pixel number 1 corresponding to the linear
-        wavelength calibration.
-    crmax1_linear : float
-        CRVAL value at pixel number NAXIS1 corresponding to the linear
-        wavelength calibration.
-    cdelt1_linear: float
-        CDELT1 value corresponding to the linear wavelength
-        calibration.
 
     """
     # TODO: update previous attribute list after introducing the new class
@@ -207,7 +171,7 @@ class SolutionArcCalibration(object):
 
         # use fitted polynomial to predict wavelengths at the line
         # locations given by xpos
-        self.update_features(poly=Polynomial(coeff))
+        self.update_features(poly=Polynomial(self.coeff))
 
     def update_features(self, poly):
         for feature in self.features:
@@ -227,22 +191,22 @@ class SolutionArcCalibration(object):
                  "Number arc lines: " + str(self.nlines_arc) + "\n" + \
                  "Coeff...........: " + str(self.coeff) + "\n" + \
                  "Residual std....: " + str(self.residual_std) + "\n" + \
-                 "CRPIX1_linear...: " + str(self.crpix1_linear) + "\n" + \
-                 "CRVAL1_linear...: " + str(self.crval1_linear) + "\n" + \
-                 "CDELT1_linear...: " + str(self.cdelt1_linear) + "\n" + \
-                 "CRMIN1_linear...: " + str(self.crmin1_linear) + "\n" + \
-                 "CRMAX1_linear...: " + str(self.crmax1_linear) + "\n"
+                 "CRPIX1_linear...: " + str(self.cr_linear.crpix) + "\n" + \
+                 "CRVAL1_linear...: " + str(self.cr_linear.crval) + "\n" + \
+                 "CDELT1_linear...: " + str(self.cr_linear.cdelt) + "\n" + \
+                 "CRMIN1_linear...: " + str(self.cr_linear.crmin) + "\n" + \
+                 "CRMAX1_linear...: " + str(self.cr_linear.crmax) + "\n"
 
-        for i in range(self.nlines_arc):
-            output += "xpos: {0:9.3f},  ".format(self.xpos[i])
-            output += "ypos: {0:9.3f},  ".format(self.ypos[i])
-            output += "flux: {0:g},  ".format(self.flux[i])
-            output += "fwhm: {0:g},  ".format(self.fwhm[i])
-            output += "reference: {0:10.3f},  ".format(self.reference[i])
-            output += "wavelength: {0:10.3f},  ".format(self.wavelength[i])
-            output += "category: {0:1s},  ".format(self.category[i])
-            output += "id: {0:3d},  ".format(self.id[i])
-            output += "funcost: {0:g},  ".format(self.funcost[i])
+        for feature in self.features:
+            output += "xpos: {0:9.3f},  ".format(feature.xpos)
+            output += "ypos: {0:9.3f},  ".format(feature.ypos)
+            output += "flux: {0:g},  ".format(feature.peak)
+            output += "fwhm: {0:g},  ".format(feature.fwhm)
+            output += "reference: {0:10.3f},  ".format(feature.reference)
+            output += "wavelength: {0:10.3f},  ".format(feature.wavelength)
+            output += "category: {0:1s},  ".format(feature.category)
+            output += "id: {0:3d},  ".format(feature.id)
+            output += "funcost: {0:g},  ".format(feature.funcost)
             output += "\n"
 
         # return string with all the information
