@@ -25,7 +25,7 @@ from astropy.io import fits
 import numpy as np
 
 from .pause_debugplot import pause_debugplot
-from .list_fits_files_from_txt import list_fits_files_from_txt
+from .fileinfo import list_fileinfo_from_txt
 from ..stats import summary
 
 from numina.visualization import ZScaleInterval
@@ -392,7 +392,10 @@ def ximshow_file(singlefile,
     hdulist.close()
 
     naxis1 = image_header['naxis1']
-    naxis2 = image_header['naxis2']
+    if 'naxis2' in image_header:
+        naxis2 = image_header['naxis2']
+    else:
+        naxis2 = 1
 
     # title for plot
     title = singlefile
@@ -406,12 +409,19 @@ def ximshow_file(singlefile,
             tuple_of_keyval += (keyval,)
         title += "\n" + str(keysformat % tuple_of_keyval)
 
-    if image2d.shape != (naxis2, naxis1):
-        raise ValueError("Unexpected error with NAXIS1, NAXIS2")
+    if len(image2d.shape) == 1:
+        if image2d.shape != (naxis1,):
+            raise ValueError("Unexpected error with NAXIS1")
+        image2d = np.reshape(image2d, (1, naxis1))
+    elif len(image2d.shape) == 2:
+        if image2d.shape != (naxis2, naxis1):
+            raise ValueError("Unexpected error with NAXIS1, NAXIS2")
     else:
-        print('>>> File..:', singlefile)
-        print('>>> NAXIS1:', naxis1)
-        print('>>> NAXIS2:', naxis2)
+        raise ValueError("Unexpected number of dimensions > 2")
+
+    print('>>> File..:', singlefile)
+    print('>>> NAXIS1:', naxis1)
+    print('>>> NAXIS2:', naxis2)
 
     # read bounding box
     if args_bbox is None:
@@ -456,7 +466,9 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='ximshow')
     parser.add_argument("filename",
-                        help="FITS file or txt file with list of FITS files")
+                        help="FITS file (wildcards allowed) "
+                             "or txt file with list of FITS files",
+                        nargs="+")
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
@@ -476,7 +488,11 @@ def main(args=None):
                         choices = [0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
-    list_fits_files = list_fits_files_from_txt(args.filename)
+    if len(args.filename) == 1:
+        list_fits_files = [tmp.filename for
+                           tmp in list_fileinfo_from_txt(args.filename[0])]
+    else:
+        list_fits_files = args.filename
 
     # read pdffile
     if args.pdffile is not None:

@@ -62,13 +62,16 @@ def robust_std(x, debug=False):
     return sigmag
 
 
-def summary(x, debug=False):
+def summary(x, rm_nan=False, debug=False):
     """Compute basic statistical parameters.
 
     Parameters
     ----------
     x : 1d numpy array, float
-        Input array with values which statistical properties are requested.
+        Input array with values which statistical properties are 
+        requested.
+    rm_nan : bool
+        If True, filter out NaN values before computing statistics.
     debug : bool
         If True prints computed values.
 
@@ -89,18 +92,23 @@ def summary(x, debug=False):
     if x.ndim is not 1:
         raise ValueError('x.dim=' + str(x.ndim) + ' must be 1')
 
+    # filter out NaN's
+    xx = np.copy(x)
+    if rm_nan:
+        xx = xx[np.logical_not(np.isnan(xx))]
+
     # compute basic statistics
     result = {
-        'minimum' : np.min(x),
-        'percentile25' : np.percentile(x, 25),
-        'median' : np.percentile(x, 50),
-        'mean' : np.mean(x),
-        'percentile75': np.percentile(x, 75),
-        'maximum' : np.max(x),
-        'std': np.std(x),
-        'robust_std' : robust_std(x),
-        'percentile15': np.percentile(x, 15.86553),
-        'percentile84': np.percentile(x, 84.13447)
+        'minimum' : np.min(xx),
+        'percentile25' : np.percentile(xx, 25),
+        'median' : np.percentile(xx, 50),
+        'mean' : np.mean(xx),
+        'percentile75': np.percentile(xx, 75),
+        'maximum' : np.max(xx),
+        'std': np.std(xx),
+        'robust_std' : robust_std(xx),
+        'percentile15': np.percentile(xx, 15.86553),
+        'percentile84': np.percentile(xx, 84.13447)
     }
 
     if debug:

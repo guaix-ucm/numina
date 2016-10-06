@@ -245,8 +245,9 @@ def wvcal_spectrum(filename, ns1, ns2,
             ymax += dy/20.
             ax.set_ylim([ymin, ymax])
             # plot wavelength of each identified line
-            for xpos, reference in \
-                    zip(solution_wv.xpos, solution_wv.reference):
+            for feature in solution_wv.features:
+                xpos = feature.xpos
+                reference = feature.reference
                 ax.text(xpos, sp_mean[int(xpos+0.5)-1],
                         str(reference), fontsize=8,
                         horizontalalignment='center')
