@@ -17,6 +17,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Numina version.'''
+"""Numina version."""
 
-version = '0.15.dev0'
+version = '0.15.dev1'
