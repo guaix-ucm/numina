@@ -159,25 +159,28 @@ class WorkEnvironment(object):
     def copy_if_needed(self, key, complete):
 
         md5hash = compute_md5sum_file(complete)
-        _logger.debug('compute hash, %s %s', key, md5hash)
+        _logger.debug('compute hash, %s %s %s', key, md5hash, complete)
 
         head, tail = os.path.split(complete)
         destination = os.path.join(self.workdir, tail)
 
-        # If destination doesn't exist, then copy
-        make_copy = True
-        trigger_save = False
-        # If destination exists, cjeck hash
-        if os.path.isfile(destination):
-            # Check hash
-            hash_in_file = self.hashes.get(key)
-            if hash_in_file == md5hash:
+        # Check hash
+        hash_in_file = self.hashes.get(key)
+        if hash_in_file is None:
+            trigger_save = True
+            make_copy = True
+        elif hash_in_file == md5hash:
+            trigger_save = False
+            if os.path.isfile(destination):
                 make_copy = False
             else:
-                # Update hash
-                self.hashes[key] = md5hash
-                trigger_save = True
-
+                make_copy = True
+        else:
+            trigger_save = True
+            make_copy = True
+            
+        self.hashes[key] = md5hash
+            
         if make_copy:
             _logger.debug('copying %r to %r', key, self.workdir)
             shutil.copy(complete, self.workdir)
