@@ -18,6 +18,6 @@ modes:
 pipelines:
   default:
       recipes:
-          bias: test.recipes.BiasRecipe
+          bias: numina.tests.recipes.BiasRecipe
           fail: numina.core.utils.AlwaysFailRecipe
       version: 1

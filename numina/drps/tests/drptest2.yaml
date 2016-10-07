@@ -18,6 +18,6 @@ modes:
 pipelines:
     default:
         recipes:
-            dark: test.recipes.DarkRecipe
-            success: numina.core.utils.SuccessRecipe
+            dark: numina.tests.recipes.DarkRecipe
+            success: numina.core.utils.AlwaysSuccessRecipe
         version: 1

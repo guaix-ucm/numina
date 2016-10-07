@@ -80,4 +80,5 @@ def test_fake_pipeline_alt2(drpmocker):
     for m in drp.modes:
         assert m.tagger is not None
 
-    assert drp.pipelines[oblock.pipeline].get_recipe(oblock.mode) == 'test.recipes.BiasRecipe'
+    expected = 'numina.tests.recipes.BiasRecipe'
+    assert drp.pipelines[oblock.pipeline].get_recipe(oblock.mode) == expected
