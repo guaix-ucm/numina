@@ -92,12 +92,12 @@ class WorkEnvironment(object):
         self.basedir = basedir
 
         if workdir is None:
-            workdir = os.path.join(basedir, 'obsid%d_work' % obsid)
+            workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
 
         self.workdir = os.path.abspath(workdir)
 
         if resultsdir is None:
-            resultsdir = os.path.join(basedir, 'obsid%d_results' % obsid)
+            resultsdir = os.path.join(basedir, 'obsid{}_results'.format(obsid))
 
         self.resultsdir = os.path.abspath(resultsdir)
 
