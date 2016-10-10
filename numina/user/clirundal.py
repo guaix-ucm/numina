@@ -133,14 +133,12 @@ def mode_run_common_obs(args, extra_args):
         _logger.debug('recipe input created')
 
         # Show the actual inputs
-        _logger.debug('parsing requirements')
         for key in recipeclass.requirements():
             v = getattr(rinput, key)
-            _logger.info("recipe requires %r value is %s", key, str(v)[:10])
+            _logger.debug("recipe requires %r, value is %s", key, v)
 
-        _logger.debug('parsing products')
         for req in recipeclass.products().values():
-            _logger.info('recipe provides %s, %s', req.type, req.description)
+            _logger.debug('recipe provides %s, %s', req.type, req.description)
 
         os.chdir(cwd)
 
@@ -159,14 +157,6 @@ def mode_run_common_obs(args, extra_args):
 
         # Build the recipe input data structure
         # and copy needed files to workdir
-        _logger.debug('parsing requirements')
-        for key in recipeclass.requirements().values():
-            _logger.info("recipe requires %r", key)
-
-        _logger.debug('parsing products')
-        for req in recipeclass.products().values():
-            _logger.info('recipe provides %r', req)
-
         runinfo = {
             'taskid': obid,
             'pipeline': pipe_name,
