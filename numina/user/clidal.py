@@ -102,11 +102,11 @@ class CommandLineDAL(AbsDAL):
             ob = self.ob_table[obsid]
             return ObservingBlock(**ob)
         except KeyError:
-            raise NoResultFound("oblock with id %d not found" % obsid)
+            raise NoResultFound("oblock with id %s not found" % obsid)
 
     def search_recipe_from_ob(self, obsres, pipeline):
 
-        _logger.info("Identifier of the observation result: %d", obsres.id)
+        _logger.info("Identifier of the observation result: %s", obsres.id)
 
         _logger.info("instrument name: %s", obsres.instrument)
         my_ins = self.drps.query_by_name(obsres.instrument)
