@@ -186,7 +186,7 @@ class InstrumentConfigurationType(DataType):
         return True
 
 
-class QualityControlProduct(DataProductType):
+class QualityControlProduct(DataType):
     def __init__(self):
         super(QualityControlProduct, self).__init__(
             ptype=QC,
@@ -222,7 +222,7 @@ def dump_dataframe(obj, where):
             filename = where.get_next_basename('.fits')
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            obj.frame.writeto(filename, clobber=True)
+            obj.frame.writeto(filename, clobber=True, output_verify='warn')
         return filename
 
 
