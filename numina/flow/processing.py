@@ -87,7 +87,7 @@ class Corrector(Node):
         return img
 
     def get_imgid(self, img):
-        self.datamodel.get_imgid(img)
+        return self.datamodel.get_imgid(img)
 
 
 TagOptionalCorrector = Corrector
