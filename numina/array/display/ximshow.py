@@ -334,7 +334,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 def ximshow_file(singlefile,
                  args_z1z2=None, args_bbox=None,
                  args_keystitle=None, args_geometry=None,
-                 pdf=None,
+                 pdf=None, show=True,
                  debugplot=None):
     """Function to execute ximshow() as called from command line.
 
@@ -353,6 +353,10 @@ def ximshow_file(singlefile,
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
+    show : bool
+        If True, the function shows the displayed image. Otherwise
+        the function just invoke the plt.imshow() function and
+        plt.show() is expected to be executed outside.
     debugplot : integer or None
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -362,6 +366,12 @@ def ximshow_file(singlefile,
         10 : debug, no plots
         11 : debug, plots without pauses
         12 : debug, plots with pauses
+
+    Returns
+    -------
+    ax : axes object
+        Matplotlib axes instance. This value is returned only when
+        'show' is False.
 
     """
 
@@ -455,10 +465,14 @@ def ximshow_file(singlefile,
     if pdf is not None:
         pdf.savefig()
     else:
-        import matplotlib.pyplot as plt
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(debugplot)
+        if show:
+            import matplotlib.pyplot as plt
+            plt.show(block=False)
+            plt.pause(0.001)
+            pause_debugplot(debugplot)
+        else:
+            # return axes
+            return ax
 
 
 def main(args=None):
