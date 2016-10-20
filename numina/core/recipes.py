@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -103,26 +103,25 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     def run(self, recipe_input):
         return self.create_result()
 
+    def run_qc(self, recipe_input, recipe_result):
+        """Run Quality Control checks"""
+        return recipe_result
+
     def __call__(self, recipe_input):
-        '''
+        """
         Process the result of the observing block with the
         Recipe.
 
         :param recipe_input: the input appropriated for the Recipe
         :param type: RecipeInput
         :rtype: a RecipeResult object or an error
+        """
 
-        '''
+        result = self.run(recipe_input)
 
-        try:
-            result = self.run(recipe_input)
-        except Exception as exc:
-            self.logger.error("During recipe execution %s", exc)
-            return ErrorRecipeResult(
-                exc.__class__.__name__,
-                str(exc),
-                traceback.format_exc()
-                )
+        # Update QC in the result
+        self.run_qc(recipe_input, result)
+
         return result
 
     def set_base_headers(self, hdr):

@@ -29,6 +29,29 @@ from ..requirements import ObservationResultRequirement
 from ..dataholders import Product
 from ..requirements import Requirement
 from ..products import QualityControlProduct
+from ..qc import QC
+
+
+class TestRecipe1(BaseRecipe):
+    somereq = Requirement(int, 'Some integer')
+    someresult = Product(int, 'Some integer')
+    qc = Product(QualityControlProduct)
+
+    def run(self, recipe_input):
+        if recipe_input.somereq >= 100:
+            result = 1
+        else:
+            result = 100
+
+        return self.create_result(someresult=result)
+
+    def run_qc(self, recipe_input, recipe_result):
+        if recipe_result.someresult >= 100:
+            recipe_result.qc = QC.BAD
+        else:
+            recipe_result.qc = QC.GOOD
+
+        return recipe_result
 
 
 def test_metaclass_empty_base():
@@ -177,4 +200,23 @@ def test_recipe_io_baseclass():
 
     assert TestRecipe.RecipeInput().myfunction() == 1
     assert TestRecipe.RecipeResult().myfunction() == 2
+
+
+def test_run_qc():
+
+    recipe_input = TestRecipe1.create_input(somereq=100)
+    recipe = TestRecipe1()
+    result = recipe(recipe_input)
+
+    assert result.qc == QC.GOOD
+
+
+def test_run_base():
+
+    recipe_input = TestRecipe1.create_input(somereq=1)
+    recipe = TestRecipe1()
+    result = recipe(recipe_input)
+
+    assert result.qc == QC.BAD
+    assert result.someresult == 100
 
