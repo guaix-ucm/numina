@@ -138,7 +138,7 @@ def mode_run_common_obs(args, extra_args):
             _logger.debug("recipe requires %r, value is %s", key, v)
 
         for req in recipeclass.products().values():
-            _logger.debug('recipe provides %s, %s', req.type, req.description)
+            _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
 
         os.chdir(cwd)
 
