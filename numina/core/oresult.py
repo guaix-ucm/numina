@@ -55,6 +55,13 @@ class ObservationResult(object):
     def images(self, value):
         self.frames = value
 
+    def __str__(self):
+        return 'ObservationResult(id={}, instrument={}, mode={})'.format(
+            self.id,
+            self.instrument,
+            self.mode
+        )
+
 
 def dataframe_from_list(values):
     """Build a DataFrame object from a list."""
