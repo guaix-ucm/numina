@@ -124,6 +124,14 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
         return result
 
+    def validate_input(self, recipe_input):
+        "Validate the input of the recipe"
+        recipe_input.validate()
+
+    def validate_result(self, recipe_result):
+        "Validate the result of the recipe"
+        recipe_result.validate()
+
     def set_base_headers(self, hdr):
         '''Set metadata in FITS headers.'''
         hdr['NUMXVER'] = (__version__, 'Numina package version')

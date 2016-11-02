@@ -25,11 +25,11 @@ Validator decorator
 def validate(method):
     """Decorate run method, inputs and outputs are validated"""
     def mod_run(self, ri):
-        ri.validate()
+        self.validate_input(ri)
         #
         result = method(self, ri)
         #
-        result.validate()
+        self.validate_result(result)
         return result
 
     return mod_run
