@@ -54,6 +54,10 @@ class DataType(object):
     def isproduct(cls):
         return False
 
+    @classmethod
+    def isconfiguration(cls):
+        return False
+
     def __repr__(self):
         sclass = type(self).__name__
         return "%s()" % (sclass, )

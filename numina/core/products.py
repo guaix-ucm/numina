@@ -33,12 +33,19 @@ from numina.exceptions import ValidationError
 import warnings
 
 
-
 class DataProductTag(object):
     """A type that is a data product."""
 
     @classmethod
     def isproduct(cls):
+        return True
+
+
+class ConfigurationTag(object):
+    """A type that is part of the instrument configuration."""
+
+    @classmethod
+    def isconfiguration(cls):
         return True
 
 
