@@ -60,3 +60,11 @@ class DataModel(object):
 
     def do_sky_correction(self, img):
         return True
+
+    def gather_info(self, img):
+        with img.open() as hdulist:
+            info = self.gather_info_hdu(hdulist)
+        return info
+
+    def gather_info_hdu(self, hdulist):
+        return {}
