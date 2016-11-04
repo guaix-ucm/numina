@@ -1,7 +1,7 @@
 import pytest
 
 import numina.exceptions
-
+import numina.core.recipes
 from ..validator import validate
 
 
@@ -25,13 +25,13 @@ class RecipeResult(RecipeIO):
     pass
 
 
-class Recipe1(object):
+class Recipe1(numina.core.recipes.BaseRecipe):
     @validate
     def run(self, rinput):
         return RecipeResult()
 
 
-class Recipe2(object):
+class Recipe2(numina.core.recipes.BaseRecipe):
     @validate
     def run(self, rinput):
         return RecipeResult(valid=False)
