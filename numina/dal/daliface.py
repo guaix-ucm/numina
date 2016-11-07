@@ -58,11 +58,10 @@ class DALInterface(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def search_prod_type_tags(self, tipo, instrument, tags, pipeline):
-        '''Returns the first coincidence...'''
+        """Returns the first coincidence..."""
         # returns StoredProduct
         pass
 
     @abstractmethod
-    def search_param_req(self, req, instrument, mode, pipeline):
-        # returns StoredParameter
+    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         pass

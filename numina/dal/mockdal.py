@@ -53,5 +53,5 @@ class MockDAL(AbsDAL):
         return StoredProduct(id=100, content='null.fits',
                              tags={'readmode': 'a'})
 
-    def search_param_req(self, req, instrument, mode, pipeline):
+    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         return StoredParameter(content='parameter')

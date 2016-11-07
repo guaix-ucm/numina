@@ -152,7 +152,7 @@ class BaseDictDAL(AbsDAL):
         else:
             msg = 'type %s compatible with tags %r not found' % (klass, tags)
             raise NoResultFound(msg)
-    
+
     def search_param_req(self, req, instrument, mode, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
         req_table_insi_pipe = req_table_ins.get(pipeline, {})
@@ -166,7 +166,7 @@ class BaseDictDAL(AbsDAL):
             content = StoredParameter(value)
             return content
         else:
-            raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)            
+            raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)
 
     def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
