@@ -168,6 +168,26 @@ class BaseDictDAL(AbsDAL):
         else:
             raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)            
 
+    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
+        req_table_ins = self.req_table.get(instrument, {})
+        req_table_insi_pipe = req_table_ins.get(pipeline, {})
+        mode_list = req_table_insi_pipe.get(mode, [])
+        if req.dest in self.extra_data:
+            value = self.extra_data[req.dest]
+            content = StoredParameter(value)
+            return content
+        else:
+            for prod in mode_list:
+                pk = prod['name']
+                pt = prod['tags']
+                if pk == req.dest and tags_are_valid(pt, tags):
+                    # We have found the result, no more checks
+                    content = StoredParameter(prod['content'])
+                    return content
+            else:
+                msg = 'name %s compatible with tags %r not found' % (req.dest, tags)
+                raise NoResultFound(msg)
+
     def obsres_from_oblock_id(self, obsid, configuration=None):
         """"
         Override instrument configuration if configuration is not None

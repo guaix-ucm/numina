@@ -194,10 +194,9 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
                 except NoResultFound:
                     pass
             else:
-                # Still not clear what to do with the other types
                 try:
-                    param = dal.search_param_req(req, obsres.instrument,
-                                                 obsres.mode, pipeline)
+                    param = dal.search_param_req_tags(req, obsres.instrument,
+                                                      obsres.mode, tags, pipeline)
                     result[key] = param.content
                 except NoResultFound:
                     pass
