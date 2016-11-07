@@ -40,6 +40,7 @@ def wvcal_spectrum(filename, ns1, ns2,
                    poly_degree_wfit,
                    nwin_background,
                    times_sigma_threshold,
+                   nbrightlines,
                    wv_master_file,
                    reverse,
                    out_sp,
@@ -59,19 +60,23 @@ def wvcal_spectrum(filename, ns1, ns2,
         First scan (from 1 to NAXIS2).
     ns2 : int
         Last scan (from 1 to NAXIS2).
+    poly_degree_wfit : int
+        Degree for wavelength calibration polynomial.
     nwin_background : int
         Window size for the computation of background using a median
         filtering with that window width. This background is computed
         and subtracted only if this parameter is > 0.
     times_sigma_threshold : float
         Times robust sigma above the median to detect line peaks.
+    nbrightlines : int
+        Maximum number of brightest lines to be employed in the
+        wavelength calibration. If this value is 0, all the detected
+        lines will be employed.
     wv_master_file : string
         File name of txt file containing the wavelength database.
     reverse : bool
         If True, reserve wavelength direction prior to wavelength
         calibration.
-    poly_degree_wfit : int
-        Degree for wavelength calibration polynomial.
     out_sp : string or None
         File name to save the selected spectrum in FITS format before
         performing the wavelength calibration.
@@ -137,6 +142,13 @@ def wvcal_spectrum(filename, ns1, ns2,
         ixpeaks = find_peaks_spectrum(sp_mean,
                                       nwinwidth=nwinwidth_initial,
                                       threshold=threshold)
+
+        # select a maximum number of brightest lines
+        if 0 < nbrightlines < len(ixpeaks):
+            peak_fluxes = sp_mean[ixpeaks]
+            spositions = peak_fluxes.argsort()
+            ixpeaks = ixpeaks[spositions[-nbrightlines:]]
+            ixpeaks.sort()   # in-place sort
 
         # check there are enough lines for fit
         if len(ixpeaks) <= poly_degree_wfit:
@@ -289,6 +301,10 @@ def main(args=None):
                         help="Threshold (times robust sigma to detect lines)"
                              " (default=10)",
                         default=10, type=float)
+    parser.add_argument("--nbrightlines",
+                        help="Maximum number of brightest lines to be used "
+                             "[0=all] default=0)",
+                        default=0, type=int)
     parser.add_argument("--reverse",
                         help="Reverse wavelength direction",
                         action="store_true")
@@ -321,6 +337,7 @@ def main(args=None):
                    poly_degree_wfit=args.degree,
                    nwin_background=args.nwin_background,
                    times_sigma_threshold=args.times_sigma_threshold,
+                   nbrightlines=args.nbrightlines,
                    wv_master_file=args.wv_master_file,
                    reverse=args.reverse,
                    out_sp=args.out_sp,
