@@ -214,6 +214,9 @@ def wvcal_spectrum(filename, ns1, ns2,
             print("Reading master table: " + wv_master_file)
             print("wv_master:\n", wv_master)
 
+        wv_master_range = wv_master[-1] - wv_master[0]
+        delta_wv_master_range = 0.10 * wv_master_range
+
         # wavelength calibration
         xchannel = fxpeaks + 1.0
         list_of_wvfeatures = arccalibration(
@@ -221,8 +224,8 @@ def wvcal_spectrum(filename, ns1, ns2,
             xpos_arc=xchannel,
             naxis1_arc=naxis1,
             crpix1=1.0,
-            wv_ini_search=wv_master[0] - 1000.0,
-            wv_end_search=wv_master[-1] + 1000.0,
+            wv_ini_search=wv_master[0] - delta_wv_master_range,
+            wv_end_search=wv_master[-1] + delta_wv_master_range,
             error_xpos_arc=3,
             times_sigma_r=3.0,
             frac_triplets_for_sum=0.50,
