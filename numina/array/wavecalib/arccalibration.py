@@ -1417,6 +1417,10 @@ def arccalibration_direct(wv_master,
             print('robust std:', sigma_rfit)
             print('normal std:', np.std(rfit))
 
+        intercept, slope = fit_theil_sen(xfit, yfit)
+        if debugplot >= 10:
+            print('crval1, cdelt1 (linear fit):', intercept, slope)
+
         list_id_already_found = []
         list_funcost_already_found = []
         for i in range(nlines_arc):
@@ -1448,7 +1452,9 @@ def arccalibration_direct(wv_master,
                 if debugplot >= 10:
                     print(i, ifound, wv_master[ifound], zfit, dlambda)
                 if ifound not in list_id_already_found:  # unused line
-                    if dlambda < times_sigma_inclusion * sigma_rfit:
+                    condition1 = dlambda < times_sigma_inclusion * sigma_rfit
+                    condition2 = dlambda/slope < error_xpos_arc
+                    if condition1 or condition2:
                         list_id_already_found.append(ifound)
                         list_of_wvfeatures[i].line_ok = True
                         list_of_wvfeatures[i].category = 'I'
