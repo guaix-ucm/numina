@@ -216,7 +216,7 @@ class BaseDictDAL(AbsDAL):
             obsres.configuration = self.search_instrument_configuration(obsres.instrument, configuration)
         else:
             # Insert Instrument configuration
-            obsres.configuration = self.search_instrument_configuration_from_ob(obsres)
+            obsres.configuration = this_drp.configuration_selector(obsres)
 
         return obsres
 

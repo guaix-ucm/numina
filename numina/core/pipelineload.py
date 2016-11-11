@@ -112,16 +112,21 @@ def load_pipelines(node):
 
 
 def load_confs(node, confclass=None):
-    keys = ['default']
+    keys = ['default', 'tagger', 'values']
     check_section(node, 'configurations', keys=keys)
 
     if confclass is None:
         confclass = InstrumentConfiguration
 
+    default_entry = node['default']
+    tagger = node['tagger']
+    ins_tagger = import_object(tagger)
+    values = node['values']
     confs = {}
-    for key in node:
-        confs[key] = confclass(key, node[key])
-    return confs
+    for uuid in values:
+        confs[uuid] = confclass(uuid, uuid)
+    confs['default'] = confs[default_entry]
+    return confs, ins_tagger
 
 
 def load_pipeline(name, node):
@@ -139,7 +144,6 @@ def load_instrument(node, confclass=None):
     keys = ['name', 'configurations', 'modes', 'pipelines']
     check_section(node, 'root', keys=keys)
 
-
     # name = node['name']
     pipe_node = node['pipelines']
     mode_node = node['modes']
@@ -149,6 +153,9 @@ def load_instrument(node, confclass=None):
     trans = {'name': node['name']}
     trans['pipelines'] = load_pipelines(pipe_node)
     trans['modes'] = load_modes(mode_node)
-    trans['configurations'] = load_confs(conf_node, confclass=confclass)
+    confs, selector = load_confs(conf_node, confclass=confclass)
+    trans['configurations'] = confs
     trans['products'] = prod_node
-    return InstrumentDRP(**trans)
+    ins = InstrumentDRP(**trans)
+    ins.selector = selector
+    return ins

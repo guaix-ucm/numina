@@ -93,7 +93,7 @@ class CommandLineDAL(AbsDAL):
             obsres.configuration = self.search_instrument_configuration(obsres.instrument, configuration)
         else:
             # Insert Instrument configuration
-            obsres.configuration = self.search_instrument_configuration_from_ob(obsres)
+            obsres.configuration = this_drp.configuration_selector(obsres)
 
         return obsres
 
@@ -158,3 +158,6 @@ class CommandLineDAL(AbsDAL):
         except KeyError:
             raise NoResultFound("key %s not found" % key)
         return StoredParameter(content)
+
+    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
+        raise NotImplementedError

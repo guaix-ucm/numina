@@ -20,7 +20,6 @@
 from __future__ import print_function
 
 
-
 class DataModel(object):
     """Model of the Data being processed"""
 

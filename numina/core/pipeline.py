@@ -43,12 +43,19 @@ class InstrumentDRP(object):
     def __init__(self, name, configurations, modes, pipelines, products=None):
         self.name = name
         self.configurations = configurations
+        self.selector = None
         self.modes = modes
         self.pipelines = pipelines
         self.products = products
         if products is None:
             self.products = []
 
+    def configuration_selector(self, obsres):
+        if self.selector is not None:
+            key = self.selector(obsres)
+        else:
+            key = 'default'
+        return self.configurations[key]
 
 class ObservingMode(object):
     """Observing modes of an Instrument."""
