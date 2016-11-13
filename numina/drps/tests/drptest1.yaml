@@ -1,6 +1,7 @@
 name: TEST1
 configurations:
-  default: {}
+  values:
+  - default
 modes:
   - description: A recipe that always fails
     key: fail

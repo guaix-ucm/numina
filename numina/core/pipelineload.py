@@ -35,7 +35,7 @@ def check_section(node, section, keys=None):
     if keys:
         for key in keys:
             if key not in node:
-                raise ValueError('Missing key %r inside %r node', key, section)
+                raise ValueError('Missing key %r inside %r node' % (key, section))
 
 
 def drp_load(package, resource, confclass=None):
@@ -112,20 +112,29 @@ def load_pipelines(node):
 
 
 def load_confs(node, confclass=None):
-    keys = ['default', 'tagger', 'values']
+    keys = ['values']
     check_section(node, 'configurations', keys=keys)
 
     if confclass is None:
         confclass = InstrumentConfiguration
 
-    default_entry = node['default']
-    tagger = node['tagger']
-    ins_tagger = import_object(tagger)
+    default_entry = node.get('default')
+    tagger = node.get('tagger')
+    if tagger:
+        ins_tagger = import_object(tagger)
+    else:
+        ins_tagger = lambda obsres: 'default'
+
     values = node['values']
     confs = {}
     for uuid in values:
         confs[uuid] = confclass(uuid, uuid)
-    confs['default'] = confs[default_entry]
+    if default_entry:
+        confs['default'] = confs[default_entry]
+    else:
+        if 'default' not in confs:
+            # Choose the first if is not already defined
+            confs['default'] = confs[values[0]]
     return confs, ins_tagger
 
 

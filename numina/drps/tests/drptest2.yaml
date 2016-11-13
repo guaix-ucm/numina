@@ -1,6 +1,9 @@
 name: TEST2
 configurations:
-    default: {}
+  tagger: null
+  values:
+  - default
+  default: default
 modes:
     - description: A recipe that always success
       key: success
