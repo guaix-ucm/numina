@@ -21,6 +21,9 @@
 
 import pkgutil
 import yaml
+import os
+
+from six import StringIO
 
 from .objimport import import_object
 from .pipeline import ObservingMode
@@ -41,13 +44,13 @@ def check_section(node, section, keys=None):
 def drp_load(package, resource, confclass=None):
     """Load the DRPS from a resource file."""
     data = pkgutil.get_data(package, resource)
-    return drp_load_data(data, confclass=confclass)
+    return drp_load_data(package, data, confclass=confclass)
 
 
-def drp_load_data(data, confclass=None):
+def drp_load_data(package, data, confclass=None):
     """Load the DRPS from data."""
     drpdict = yaml.load(data)
-    ins = load_instrument(drpdict, confclass=confclass)
+    ins = load_instrument(package, drpdict, confclass=confclass)
     return ins
 
 
@@ -111,12 +114,21 @@ def load_pipelines(node):
     return pipelines
 
 
-def load_confs(node, confclass=None):
+def load_confs(package, node, confclass=None):
     keys = ['values']
     check_section(node, 'configurations', keys=keys)
 
+    path = node.get('path')
+    if path:
+        modpath = path
+    else:
+        modpath = "%s.instrument.configs" % package
+
     if confclass is None:
-        confclass = InstrumentConfiguration
+        loader = DefaultLoader(modpath=modpath)
+
+        def confclass(uuid):
+            return build_instrument_config(uuid, loader)
 
     default_entry = node.get('default')
     tagger = node.get('tagger')
@@ -128,7 +140,7 @@ def load_confs(node, confclass=None):
     values = node['values']
     confs = {}
     for uuid in values:
-        confs[uuid] = confclass(uuid, uuid)
+        confs[uuid] = confclass(uuid)
     if default_entry:
         confs['default'] = confs[default_entry]
     else:
@@ -148,7 +160,7 @@ def load_pipeline(name, node):
     return Pipeline(name, recipes, version)
 
 
-def load_instrument(node, confclass=None):
+def load_instrument(package, node, confclass=None):
     # Verify keys...
     keys = ['name', 'configurations', 'modes', 'pipelines']
     check_section(node, 'root', keys=keys)
@@ -162,9 +174,110 @@ def load_instrument(node, confclass=None):
     trans = {'name': node['name']}
     trans['pipelines'] = load_pipelines(pipe_node)
     trans['modes'] = load_modes(mode_node)
-    confs, selector = load_confs(conf_node, confclass=confclass)
+    confs, selector = load_confs(package, conf_node, confclass=confclass)
     trans['configurations'] = confs
     trans['products'] = prod_node
     ins = InstrumentDRP(**trans)
     ins.selector = selector
     return ins
+
+
+class PathLoader(object):
+    def __init__(self, inspath, compath):
+        self.inspath = inspath
+        self.compath = compath
+
+    def build_component_fp(self, key):
+        fname = 'component-%s.json' % key
+        fcomp = open(os.path.join(self.compath, fname))
+        return fcomp
+
+    def build_instrument_fp(self, key):
+        fname = 'instrument-%s.json' % key
+        fcomp = open(os.path.join(self.inspath, fname))
+        return fcomp
+
+
+class DefaultLoader(object):
+    def __init__(self, modpath):
+        self.modpath = modpath
+
+    def build_component_fp(self, key):
+        fname = 'component-%s.json' % key
+        return self.build_type_fp(fname)
+
+    def build_instrument_fp(self, key):
+        fname = 'instrument-%s.json' % key
+        return self.build_type_fp(fname)
+
+    def build_type_fp(self, fname):
+        data = pkgutil.get_data(self.modpath, fname)
+        fcomp = StringIO(data)
+        return fcomp
+
+
+def build_instrument_config(uuid, loader):
+
+    fp = loader.build_instrument_fp(uuid)
+
+    mm = load_instrument_configuration_from_file(fp, loader=loader)
+    return mm
+
+
+def load_ce_from_file(fp):
+    import json
+    from .pipeline import ConfigurationEntry
+    contents = json.load(fp)
+
+    if contents['type'] != 'configuration':
+        raise ValueError('type is not configuration')
+
+    key = contents['name']
+    confs = contents['configurations']
+    val = confs[key]
+    mm = ConfigurationEntry(val['values'], val['depends'])
+    return mm
+
+
+def load_cc_from_file(fp, loader):
+    from .pipeline import ComponentConfigurations, ConfigurationEntry
+    import json
+    contents = json.load(fp)
+    mm = ComponentConfigurations()
+    if contents['type'] != 'component':
+        raise ValueError('type is not component')
+    mm.component = contents['name']
+    mm.name = contents['description']
+    mm.uuid = contents['uuid']
+    mm.data_start = 0
+    mm.data_end = 0
+    for key, val in contents['configurations'].items():
+        if 'uuid' in val:
+            # remote component
+            fp = loader.build_component_fp(val['uuid'])
+            mm.configurations[key] = load_ce_from_file(fp)
+        else:
+            mm.configurations[key] = ConfigurationEntry(val['values'], val['depends'])
+    return mm
+
+
+def load_instrument_configuration_from_file(fp, loader):
+    import json
+
+    contents = json.load(fp)
+    if contents['type'] != 'instrument':
+        raise ValueError('type is not instrument')
+
+    mm = InstrumentConfiguration.__new__(InstrumentConfiguration)
+
+    mm.instrument = contents['name']
+    mm.name = contents['description']
+    mm.uuid = contents['uuid']
+    mm.data_start = 0
+    mm.data_end = 0
+    mm.components = {}
+    for cname, cuuid in contents['components'].items():
+        fcomp = loader.build_component_fp(cuuid)
+        rr = load_cc_from_file(fcomp, loader=loader)
+        mm.components[cname] = rr
+    return mm

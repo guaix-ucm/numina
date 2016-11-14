@@ -1,6 +1,7 @@
 name: TEST2
 configurations:
   tagger: null
+  path: numina.drps.tests.configs
   values:
   - default
   default: default

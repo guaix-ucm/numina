@@ -33,7 +33,6 @@ def test_fake_pipeline(monkeypatch):
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
 
-
     alldrps = DrpSystem().load().query_all()
     for k, v in alldrps.items():
         assert_valid_instrument(v)

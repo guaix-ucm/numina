@@ -1,5 +1,6 @@
 name: TEST1
 configurations:
+  path: numina.drps.tests.configs
   values:
   - default
 modes:

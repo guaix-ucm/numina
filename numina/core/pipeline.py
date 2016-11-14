@@ -31,13 +31,6 @@ class Pipeline(object):
         return self.recipes[mode]
 
 
-class InstrumentConfiguration(object):
-    """Configuration of an Instrument."""
-    def __init__(self, name, values):
-        self.name = name
-        self.values = values
-
-
 class InstrumentDRP(object):
     """Description of an Instrument Data Reduction Pipeline"""
     def __init__(self, name, configurations, modes, pipelines, products=None):
@@ -57,6 +50,54 @@ class InstrumentDRP(object):
             key = 'default'
         return self.configurations[key]
 
+
+class InstrumentConfiguration(object):
+
+    def __init__(self, instrument):
+        self.instrument = instrument
+        self.name = 'config'
+        self.uuid = ''
+        self.data_start = 0
+        self.data_end = 0
+        self.components = {}
+
+    def get(self, path, **kwds):
+        # split key
+        vals = path.split('.')
+        component = vals[0]
+        key = vals[1]
+        conf = self.components[component]
+        return conf.get(key, **kwds)
+
+
+class ConfigurationEntry(object):
+    def __init__(self, values, depends):
+        self.values = values
+        self.depends = depends
+
+    def get(self, **kwds):
+        result = self.values
+        for dep in self.depends:
+            key = kwds[dep]
+            result = result[key]
+        return result
+
+
+class ComponentConfigurations(object):
+
+    def __init__(self):
+        self.name = 'config'
+        self.uuid = ''
+        self.data_start = 0
+        self.data_end = 0
+        self.component = 'component'
+        self.configurations = {}
+
+    def get(self, key, **kwds):
+        conf = self.configurations[key]
+        return conf.get(**kwds)
+
+
 class ObservingMode(object):
     """Observing modes of an Instrument."""
     def __init__(self):
@@ -72,3 +113,6 @@ class ObservingMode(object):
         self.reference = ''
         self.tagger = None
         self.validator = None
+
+    def validate(self):
+        return True

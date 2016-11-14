@@ -39,15 +39,15 @@ def mockreturn0():
 
 def mockreturn1():
     drps = {}
-    drp1 = pload.drp_load_data(drpdata1)
+    drp1 = pload.drp_load_data('numina', drpdata1)
     drps[drp1.name] = drp1
     return numina.drps.drpbase.DrpGeneric(drps)
 
 
 def mockreturn2():
     drps = {}
-    drp1 = pload.drp_load_data(drpdata1)
-    drp2 = pload.drp_load_data(drpdata2)
+    drp1 = pload.drp_load_data('numina', drpdata1)
+    drp2 = pload.drp_load_data('numina', drpdata2)
     drps[drp1.name] = drp1
     drps[drp2.name] = drp2
     return numina.drps.drpbase.DrpGeneric(drps)

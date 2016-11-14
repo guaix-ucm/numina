@@ -20,7 +20,7 @@ def test_show_modes(capsys, monkeypatch):
         import numina.core.pipelineload as pload
         drps = {}
 
-        drp1 = pload.drp_load_data(drpdata1)
+        drp1 = pload.drp_load_data('numina', drpdata1)
         drps[drp1.name] = drp1
         return numina.drps.drpbase.DrpGeneric(drps)
 
@@ -50,8 +50,8 @@ def test_show_2_instruments(capsys, monkeypatch):
     def mockreturn():
         drps = {}
 
-        drp1 = pload.drp_load_data(drpdata1)
-        drp2 = pload.drp_load_data(drpdata2)
+        drp1 = pload.drp_load_data('numina', drpdata1)
+        drp2 = pload.drp_load_data('numina', drpdata2)
         drps[drp1.name] = drp1
         drps[drp2.name] = drp2
         return numina.drps.drpbase.DrpGeneric(drps)
@@ -104,8 +104,8 @@ def test_show_modes_2_instruments_select_no(capsys, monkeypatch):
 
     def mockreturn():
         drps = {}
-        drp1 = pload.drp_load_data(drpdata1)
-        drp2 = pload.drp_load_data(drpdata2)
+        drp1 = pload.drp_load_data('numina', drpdata1)
+        drp2 = pload.drp_load_data('numina', drpdata2)
         drps[drp1.name] = drp1
         drps[drp2.name] = drp2
         return numina.drps.drpbase.DrpGeneric(drps)

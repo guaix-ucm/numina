@@ -60,7 +60,7 @@ class DRPMocker(object):
             drpdata = loader
 
             def drploader():
-                return pload.drp_load_data(drpdata)
+                return pload.drp_load_data('numina', drpdata)
 
             ep = create_mock_entry_point(self.monkeypatch, name, drploader)
 
