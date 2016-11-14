@@ -212,7 +212,7 @@ class DefaultLoader(object):
 
     def build_type_fp(self, fname):
         data = pkgutil.get_data(self.modpath, fname)
-        fcomp = StringIO(data)
+        fcomp = StringIO(data.decode('utf-8'))
         return fcomp
 
 
