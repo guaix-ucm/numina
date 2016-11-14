@@ -161,7 +161,7 @@ class BiasCorrector(Corrector):
 class DarkCorrector(Corrector):
     """A Node that corrects a frame from dark current."""
 
-    def __init__(self, darkmap, darkvar=None, calibid='calibid-unknown', datamodel=None, dtype='float32'):
+    def __init__(self, darkmap, darkvar=None, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         self.update_variance = False
 
@@ -294,7 +294,7 @@ class SkyCorrector(Corrector):
             hdr['history'] = 'Sky subtraction time {}'.format(datetime.datetime.utcnow().isoformat())
             hdr['history'] = 'Sky subtraction mean {}'.format(self.calib_stats)
         else:
-            _logger.debug('skip sky correction')
+            _logger.debug('skip sky correction in %s', imgid)
         return img
 
 
