@@ -32,8 +32,8 @@ from .stored import StoredProduct, StoredParameter
 def product_label(drp, klass):
     fqn = fully_qualified_name(klass)
     for p in drp.products:
-        if p['name'] == fqn:
-            return p['alias']
+        if p.name == fqn:
+            return p.alias
     else:
         return klass.__name__
 

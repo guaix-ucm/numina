@@ -43,12 +43,33 @@ class InstrumentDRP(object):
         if products is None:
             self.products = []
 
+    def query_mode_provides(self, productname):
+        """Return the mode that provides a given product"""
+
+        for p in self.products:
+            if p.name == productname:
+                return p.mode, p.field
+        else:
+            raise ValueError('no mode provides %s' % productname)
+
     def configuration_selector(self, obsres):
         if self.selector is not None:
             key = self.selector(obsres)
         else:
             key = 'default'
         return self.configurations[key]
+
+
+class ProductEntry(object):
+    def __init__(self, name, mode, field, alias=None):
+        self.name = name
+        self.mode = mode
+        self.field = field
+        if alias is None:
+            split_name = name.split('.')
+            self.alias = split_name[-1]
+        else:
+            self.alias = alias
 
 
 class InstrumentConfiguration(object):

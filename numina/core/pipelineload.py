@@ -30,6 +30,7 @@ from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
+from .pipeline import ProductEntry
 from .taggers import get_tags_from_full_ob
 
 
@@ -160,6 +161,25 @@ def load_pipeline(name, node):
     return Pipeline(name, recipes, version)
 
 
+def load_prods(node, allmodes):
+    result = []
+    for entry in node:
+        name = entry['name']
+        alias = entry.get('alias')
+        mode_name = entry['mode']
+        field = entry['field']
+        for mode in allmodes:
+            if mode.key == mode_name:
+                prod = ProductEntry(name, mode, field, alias=alias)
+                result.append(prod)
+                break
+        else:
+            # Undefined mode
+            pass
+
+    return result
+
+
 def load_instrument(package, node, confclass=None):
     # Verify keys...
     keys = ['name', 'configurations', 'modes', 'pipelines']
@@ -176,7 +196,7 @@ def load_instrument(package, node, confclass=None):
     trans['modes'] = load_modes(mode_node)
     confs, selector = load_confs(package, conf_node, confclass=confclass)
     trans['configurations'] = confs
-    trans['products'] = prod_node
+    trans['products'] = load_prods(prod_node, trans['modes'])
     ins = InstrumentDRP(**trans)
     ins.selector = selector
     return ins

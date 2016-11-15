@@ -23,3 +23,7 @@ pipelines:
           bias: numina.tests.recipes.BiasRecipe
           fail: numina.core.utils.AlwaysFailRecipe
       version: 1
+products:
+  - name: MasterBias
+    mode: bias
+    field: master_bias
