@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 from __future__ import print_function
 
@@ -156,7 +156,7 @@ def print_requirements(recipe, pad=''):
 
         if req.default is not None:
             dispname = dispname + '=' + str(req.default)
-        typ = req.type.python_type.__name__
+        typ = req.type.internal_type.__name__
 
         print("%s%s type=%r [%s]" % (pad, dispname, typ, req.description))
 
