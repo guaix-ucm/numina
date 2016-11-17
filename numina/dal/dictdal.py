@@ -178,11 +178,12 @@ class BaseDictDAL(AbsDAL):
             return content
         else:
             for prod in mode_list:
-                pk = prod['name']
+                pn = prod['name']
                 pt = prod['tags']
-                if pk == req.dest and tags_are_valid(pt, tags):
+                if pn == req.dest and tags_are_valid(pt, tags):
                     # We have found the result, no more checks
-                    content = StoredParameter(prod['content'])
+                    value = load(req.type, prod['content'])
+                    content = StoredParameter(value)
                     return content
             else:
                 msg = 'name %s compatible with tags %r not found' % (req.dest, tags)
