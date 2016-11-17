@@ -51,6 +51,8 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
+    # Recipe own logger
+    logger = logging.getLogger('numina.recipes.numina')
 
     def __init__(self, *args, **kwds):
         super(BaseRecipe, self).__init__()
@@ -62,34 +64,30 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         self.runinfo = {}
         #
         self.instrument = None
+        self.intermediate_results = False
         self.configure(**kwds)
-
-        # Recipe own logger
-        self.logger = logging.getLogger('numina')
 
     def configure(self, **kwds):
         if 'author' in kwds:
             self.__author__ = kwds['author']
         if 'version' in kwds:
             self.__version__ = kwds['version']
-        if 'instrument' in kwds:
-            self.instrument = kwds['instrument']
-        if 'runinfo' in kwds:
-            self.runinfo = kwds['runinfo']
 
+        base_kwds = ['instrument', 'runinfo', 'intermediate_results']
+        for kwd in base_kwds:
+            if kwd in kwds:
+                setattr(self, kwd, kwds[kwd])
 
     @classmethod
     def create_input(cls, *args, **kwds):
-        '''
-        Pass the result arguments to the RecipeInput constructor
-        '''
+        """Pass the result arguments to the RecipeInput constructor"""
+
         return cls.RecipeInput(*args, **kwds)
 
     @classmethod
     def create_result(cls, *args, **kwds):
-        '''
-        Pass the result arguments to the RecipeResult constructor
-        '''
+        """Pass the result arguments to the RecipeResult constructor"""
+
         return cls.RecipeResult(*args, **kwds)
 
     @classmethod
@@ -125,15 +123,15 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         return result
 
     def validate_input(self, recipe_input):
-        "Validate the input of the recipe"
+        """"Validate the input of the recipe"""
         recipe_input.validate()
 
     def validate_result(self, recipe_result):
-        "Validate the result of the recipe"
+        """Validate the result of the recipe"""
         recipe_result.validate()
 
     def set_base_headers(self, hdr):
-        '''Set metadata in FITS headers.'''
+        """Set metadata in FITS headers."""
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
