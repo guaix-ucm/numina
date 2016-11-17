@@ -20,6 +20,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import numpy
 import numpy as np
 
 
@@ -42,16 +43,11 @@ def robust_std(x, debug=False):
         Robust estimator of the standar deviation
     """
 
-    # protections
-    if type(x) is not np.ndarray:
-        raise ValueError('x=' + str(x) + ' must be a numpy.ndarray')
-
-    if x.ndim is not 1:
-        raise ValueError('x.dim=' + str(x.ndim) + ' must be 1')
+    x = numpy.asarray(x)
 
     # compute percentiles and robust estimator
-    q25 = np.percentile(x, 25)
-    q75 = np.percentile(x, 75)
+    q25 = numpy.percentile(x, 25)
+    q75 = numpy.percentile(x, 75)
     sigmag = 0.7413 * (q75 - q25)
 
     if debug:

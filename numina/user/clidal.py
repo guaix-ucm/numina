@@ -72,6 +72,7 @@ class CommandLineDAL(AbsDAL):
         this_drp = self.drps.query_by_name(obsres.instrument)
         tagger = None
         for mode in this_drp.modes:
+            print(mode.key, obsres.mode)
             if mode.key == obsres.mode:
                 tagger = mode.tagger
                 break

@@ -144,7 +144,9 @@ def mode_run_common_obs(args, extra_args):
 
         os.chdir(cwd)
 
-        recipe = recipeclass()
+        # Enable intermediate results by default
+        _logger.debug('enable intermediate results')
+        recipe = recipeclass(intermediate_results=True)
         _logger.debug('recipe created')
 
         # Logging and task control
