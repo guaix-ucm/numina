@@ -19,7 +19,9 @@
 
 """DRP system-wide loader"""
 
+from __future__ import print_function
 
+import sys
 import pkg_resources
 
 from .drpbase import DrpGeneric
@@ -38,10 +40,14 @@ class DrpSystem(DrpGeneric):
         drps = {}
 
         for entry in pkg_resources.iter_entry_points(group=self.entry):
-            drp_loader = entry.load()
-            drpins = drp_loader()
-            if self.instrumentdrp_check(drpins, entry.name):
-                drps[drpins.name] = drpins
+            try:
+                drp_loader = entry.load()
+                drpins = drp_loader()
+                if self.instrumentdrp_check(drpins, entry.name):
+                    drps[drpins.name] = drpins
+            except Exception as error:
+                print('Problem loading', entry, file=sys.stderr)
+                print("Error is: ", error, file=sys.stderr)
 
         self.drps = drps
         return self

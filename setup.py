@@ -93,6 +93,7 @@ setup(name='numina',
           'numina.drps.tests': [
               'drptest1.yaml',
               'drptest2.yaml',
+              'drptest3.yaml',
               'drpclodia.yaml',
           ],
           'numina.drps.tests.configs': [
