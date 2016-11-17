@@ -11,6 +11,14 @@ def test_robust_std():
     assert numpy.allclose([sigmag], [7.0423499999999999])
 
 
+def test_robust_std_2d():
+    xdata = numpy.arange(20).reshape((5,4))
+
+    sigmag = robust_std(xdata)
+
+    assert numpy.allclose([sigmag], [7.0423499999999999])
+
+
 def test_summary():
     xdata = numpy.arange(50)
 
