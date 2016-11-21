@@ -17,10 +17,17 @@ modes:
     summary: Summary of Bias recipe
     tagger:
        - KEY3
+  - description: Dark
+    key: dark
+    name: Dark
+    summary: Summary of Dark recipe
+    tagger:
+       - KEY3
 pipelines:
   default:
       recipes:
           bias: numina.tests.recipes.BiasRecipe
+          dark: numina.tests.recipes.DarkRecipe
           fail: numina.core.utils.AlwaysFailRecipe
       version: 1
 products:

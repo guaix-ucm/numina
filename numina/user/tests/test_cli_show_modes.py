@@ -32,6 +32,9 @@ def test_show_modes(capsys, monkeypatch):
                 "Observing Mode: 'Bias' (bias)",
                 " summary: Summary of Bias recipe",
                 " instrument: TEST1",
+                "Observing Mode: 'Dark' (dark)",
+                " summary: Summary of Dark recipe",
+                " instrument: TEST1",
                 ""
                 ]
 
@@ -64,6 +67,9 @@ def test_show_2_instruments(capsys, monkeypatch):
                 ' instrument: TEST1',
                 "Observing Mode: 'Bias' (bias)",
                 ' summary: Summary of Bias recipe',
+                ' instrument: TEST1',
+                "Observing Mode: 'Dark' (dark)",
+                ' summary: Summary of Dark recipe',
                 ' instrument: TEST1',
                 "Observing Mode: 'Success' (success)",
                 ' instrument: TEST2',

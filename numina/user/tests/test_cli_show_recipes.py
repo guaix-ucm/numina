@@ -39,6 +39,12 @@ def test_show_recipes(capsys, monkeypatch):
                 "  obs mode: bias",
                 " requirements:",
                 "",
+                "Recipe: numina.tests.recipes.DarkRecipe",
+                " instrument: TEST1",
+                "  pipeline: default",
+                "  obs mode: dark",
+                " requirements:",
+                "",
                 ""
                 ]
 
@@ -75,6 +81,12 @@ def test_show_2_instruments(capsys, monkeypatch):
                 u' instrument: TEST1',
                 u'  pipeline: default',
                 u'  obs mode: bias',
+                u' requirements:',
+                u'',
+                u'Recipe: numina.tests.recipes.DarkRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: dark',
                 u' requirements:',
                 u'',
                 u'Recipe: numina.tests.recipes.DarkRecipe',

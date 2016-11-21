@@ -21,11 +21,20 @@
 """Recipes for testing"""
 
 import numina.core
+import numina.core.products
+
+
+class MasterBias(numina.core.products.DataProductTag, numina.core.DataFrameType):
+    pass
+
+
+class MasterDark(numina.core.products.DataProductTag, numina.core.DataFrameType):
+    pass
 
 
 class BiasRecipe(numina.core.BaseRecipe):
-    pass
+    master_bias = numina.core.Product(MasterBias)
 
 
 class DarkRecipe(numina.core.BaseRecipe):
-    pass
+    master_dark = numina.core.Product(MasterDark)

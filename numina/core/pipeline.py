@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,6 +18,11 @@
 #
 
 """DRP related classes"""
+
+import warnings
+
+import numina.core.objimport
+import numina.core.products
 
 
 class Pipeline(object):
@@ -43,14 +48,43 @@ class InstrumentDRP(object):
         if products is None:
             self.products = []
 
-    def query_mode_provides(self, productname):
+    def query_provides(self, productname, search=False):
         """Return the mode that provides a given product"""
 
         for p in self.products:
             if p.name == productname:
-                return p.mode, p.field
+                return p
+        else:
+            if search:
+                return self.search_mode_provides(productname)
+
+            raise ValueError('no mode provides %s' % productname)
+
+    def search_mode_provides(self, productname):
+        """Search the mode that provides a given product"""
+
+        for obj, mode, field in self.iterate_mode_provides():
+            # extract name from obj
+            name = obj.__class__.__name__
+            if name == productname:
+                return ProductEntry(name, mode, field)
         else:
             raise ValueError('no mode provides %s' % productname)
+
+    def iterate_mode_provides(self):
+        """Return the mode that provides a given product"""
+
+        for mode in self.modes:
+            mode_key = mode.key
+            default_pipeline = self.pipelines['default']
+            try:
+                fqn = default_pipeline.get_recipe(mode_key)
+                recipe_class = numina.core.objimport.import_object(fqn)
+                for key, provide in recipe_class.products().items():
+                    if isinstance(provide.type, numina.core.products.DataProductTag):
+                        yield provide.type, mode, key
+            except KeyError:
+                warnings.warn('Mode {} has not recipe'.format(mode_key))
 
     def configuration_selector(self, obsres):
         if self.selector is not None:
