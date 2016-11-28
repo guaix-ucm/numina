@@ -118,12 +118,6 @@ def mode_run_common_obs(args, extra_args):
         cwd = os.getcwd()
         os.chdir(workenv.datadir)
 
-        # Only the first, for the moment
-        if args.insconf:
-            _logger.debug("instrument configuration from CLI is %r", args.insconf)
-        else:
-            _logger.debug("instrument configuration from images is %r", dal)
-
         obsres = dal.obsres_from_oblock_id(obid, configuration=args.insconf)
 
         _logger.debug("pipeline from CLI is %r", args.pipe_name)
