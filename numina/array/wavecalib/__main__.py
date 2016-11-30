@@ -143,12 +143,28 @@ def wvcal_spectrum(filename, ns1, ns2,
                                       nwinwidth=nwinwidth_initial,
                                       threshold=threshold)
 
-        # select a maximum number of brightest lines
-        if 0 < nbrightlines < len(ixpeaks):
-            peak_fluxes = sp_mean[ixpeaks]
-            spositions = peak_fluxes.argsort()
-            ixpeaks = ixpeaks[spositions[-nbrightlines:]]
-            ixpeaks.sort()   # in-place sort
+        # select a maximum number of brightest lines in each region
+        if len(nbrightlines) == 1 and nbrightlines[0] == 0:
+            pass
+        else:
+            region_size = (naxis1-1)/len(nbrightlines)
+            ixpeaks_filtered = np.array([], dtype=int)
+            for iregion, nlines_in_region in enumerate(nbrightlines):
+                if nlines_in_region > 0:
+                    imin = int(iregion * region_size)
+                    imax = int((iregion + 1) * region_size)
+                    if iregion > 0:
+                        imin += 1
+                    ixpeaks_region = \
+                        ixpeaks[np.logical_and(ixpeaks >= imin, ixpeaks <= imax)]
+                    if len(ixpeaks_region) > 0:
+                        peak_fluxes = sp_mean[ixpeaks_region]
+                        spos = peak_fluxes.argsort()
+                        ixpeaks_tmp = ixpeaks_region[spos[-nlines_in_region:]]
+                        ixpeaks_tmp.sort()  # in-place sort
+                        ixpeaks_filtered=np.concatenate((ixpeaks_filtered,
+                                                         ixpeaks_tmp))
+            ixpeaks = ixpeaks_filtered
 
         # check there are enough lines for fit
         if len(ixpeaks) <= poly_degree_wfit:
@@ -305,9 +321,9 @@ def main(args=None):
                              " (default=10)",
                         default=10, type=float)
     parser.add_argument("--nbrightlines",
-                        help="Maximum number of brightest lines to be used "
-                             "[0=all] default=0)",
-                        default=0, type=int)
+                        help="Tuple n1,[n2,[n3,...]] with maximum number of "
+                             "brightest lines to be used [0=all] (default=0)",
+                        default=0)
     parser.add_argument("--reverse",
                         help="Reverse wavelength direction",
                         action="store_true")
@@ -335,12 +351,15 @@ def main(args=None):
     else:
         raise ValueError("Invalid tuple for scan range")
 
+    # convert nbrightlines in a list of integers
+    nbrightlines = [int(nlines) for nlines in args.nbrightlines.split(",")]
+
     wvcal_spectrum(filename=args.filename,
                    ns1=ns1, ns2=ns2,
                    poly_degree_wfit=args.degree,
                    nwin_background=args.nwin_background,
                    times_sigma_threshold=args.times_sigma_threshold,
-                   nbrightlines=args.nbrightlines,
+                   nbrightlines=nbrightlines,
                    wv_master_file=args.wv_master_file,
                    reverse=args.reverse,
                    out_sp=args.out_sp,
