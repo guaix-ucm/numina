@@ -173,7 +173,10 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     )
     poly = Polynomial.cast(poly)
     coeff = poly.coef
-    residual_std = np.sqrt(stats_list[0]/(len(xfit)-2))[0]
+    if len(xfit) > poly_degree_wfit + 1:
+        residual_std = np.sqrt(stats_list[0]/(len(xfit)-2))[0]
+    else:
+        residual_std = 0.0
 
     if debugplot >= 10:
         print('>>> Fitted coefficients:\n', coeff)
