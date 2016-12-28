@@ -644,10 +644,11 @@ def arccalibration_direct(wv_master,
 
     nlines_master = wv_master.size
 
+    delta_wv = 0.20 * (wv_master.max() - wv_master.min())
     if wv_ini_search is None:
-        wv_ini_search = wv_master.min()
+        wv_ini_search = wv_master.min() - delta_wv
     if wv_end_search is None:
-        wv_end_search = wv_master.max()
+        wv_end_search = wv_master.max() + delta_wv
 
     nlines_arc = xpos_arc.size
     if nlines_arc < 5:

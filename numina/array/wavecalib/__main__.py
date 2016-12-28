@@ -231,7 +231,7 @@ def wvcal_spectrum(filename, ns1, ns2,
             print("wv_master:\n", wv_master)
 
         wv_master_range = wv_master[-1] - wv_master[0]
-        delta_wv_master_range = 0.10 * wv_master_range
+        delta_wv_master_range = 0.20 * wv_master_range
 
         # wavelength calibration
         xchannel = fxpeaks + 1.0
