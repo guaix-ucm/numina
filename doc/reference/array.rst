@@ -22,6 +22,9 @@
    :param saturation: saturation level
    :return: a 2d array
 
+
+
+
 :mod:`numina.array.background` --- Background estimation
 ========================================================
 
@@ -34,7 +37,13 @@
 .. automodule:: numina.array.blocks
    :members:  
  
-   
+:mod:`numina.array.bpm` --- Bad Pixel Mask interpolation
+========================================================
+
+.. automodule:: numina.array.bpm
+   :members:
+
+
 :mod:`numina.array.combine` --- Array combination
 =================================================
 
@@ -257,6 +266,13 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.cosmetics
    :synopsis: Array cosmetics
    :members:
+
+
+:mod:`numina.array.fwhm` --- FWHM
+===================================================
+
+.. automodule:: numina.array.fwhm
+   :members:
     
 :mod:`numina.array.imsurfit` --- Image surface fitting
 ======================================================
@@ -265,9 +281,79 @@ Once the module is created and loaded, a sample session would be:
    :synopsis: Image surface fitting
    :members:
 
+:mod:`numina.array.interpolation` --- Interpolation
+======================================================
+
+.. automodule:: numina.array.interpolation
+   :members:
+
+:mod:`numina.array.mode` --- Mode
+======================================================
+
+.. automodule:: numina.array.mode
+   :members:
+
+
 :mod:`numina.array.nirproc` --- nIR preprocessing
 ======================================================
 
 .. automodule:: numina.array.nirproc
    :synopsis: nIR preprocessing
+   :members:
+
+
+:mod:`numina.array.offrot` --- Offset and Rotation
+======================================================
+
+.. automodule:: numina.array.offrot
+   :members:
+
+:mod:`numina.array.peaks` --- Peak finding
+======================================================
+
+.. automodule:: numina.array.peaks
+   :members:
+
+
+:mod:`numina.array.recenter` --- Recenter
+======================================================
+
+.. automodule:: numina.array.recenter
+   :members:
+
+:mod:`numina.array.robusfit` --- Robust fits
+======================================================
+
+.. automodule:: numina.array.robustfit
+   :members:
+
+:mod:`numina.array.rutilities` ---
+======================================================
+
+.. automodule:: numina.array.rutilities
+   :members:
+
+:mod:`numina.array.stats` ---
+======================================================
+
+.. automodule:: numina.array.stats
+   :members:
+
+:mod:`numina.array.trace` --- Spectrum tracing
+======================================================
+
+.. automodule:: numina.array.trace
+   :members:
+
+:mod:`numina.array.wavecalib` --- Wavelength calibration
+=========================================================
+
+.. automodule:: numina.array.wavecalib
+   :members:
+
+
+:mod:`numina.array.utils` ---
+======================================================
+
+.. automodule:: numina.array.utils
    :members:
