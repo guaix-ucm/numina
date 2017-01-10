@@ -327,11 +327,6 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.robustfit
    :members:
 
-:mod:`numina.array.rutilities` ---
-======================================================
-
-.. automodule:: numina.array.rutilities
-   :members:
 
 :mod:`numina.array.stats` ---
 ======================================================

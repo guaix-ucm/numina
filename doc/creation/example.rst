@@ -439,6 +439,7 @@ And finally `Image`:
         final = Product(DataFrameType)              (3)
 
         ...                                       (4)
+
 1. `MasterBias` is used as a requirement. This guaranties that the images provided
    here are those created by `Bias` and no other.
 2. `MasterFlat` is used as a requirement. This guaranties that the images provided

@@ -88,16 +88,16 @@
 .. automodule:: numina.core.types
    :members:
 
-:mod:`numina.core.util` ---
+:mod:`numina.core.utils` ---
 ==================================================
 
-.. automodule:: numina.core.taggers
+.. automodule:: numina.core.utils
    :members:
 
 
 :mod:`numina.core.validator` ---
 ==================================================
 
-.. automodule:: numina.core.taggers
+.. automodule:: numina.core.validator
    :members:
 
