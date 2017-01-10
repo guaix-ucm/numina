@@ -1,6 +1,6 @@
 numpy
 six
 scipy
-astropy
+astropy == 1.2
 PyYaml
 matplotlib
