@@ -5,3 +5,4 @@ scipy
 astropy == 1.2
 PyYaml
 matplotlib
+mock;python_version<"3.3"
