@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,22 +24,49 @@ from .typedialect import dialect_info
 
 
 class DataType(object):
+    """Base class for input/output types of recipes.
 
+    """
     def __init__(self, ptype, default=None):
         self.internal_type = ptype
         self.internal_dialect = dialect_info(self)
         self.internal_default = default
 
     def convert(self, obj):
+        """Basic conversion to internal type
+
+        This method is intended to be redefined by subclasses
+        """
         return obj
 
     def convert_in(self, obj):
+        """Basic conversion to internal type of inputs.
+
+        This method is intended to be redefined by subclasses
+        """
         return self.convert(obj)
 
     def convert_out(self, obj):
+        """Basic conversion to internal type of outputs.
+
+        This method is intended to be redefined by subclasses
+        """
         return self.convert(obj)
 
     def validate(self, obj):
+        """Validate convertibility to internal representation
+
+        Returns
+        -------
+        bool
+          True if 'obj' matches the data type
+
+        Raises
+        -------
+        ValidationError
+            If the validation fails
+
+        """
         if not isinstance(obj, self.internal_type):
             raise ValidationError(obj, self.internal_type)
         return True
@@ -52,6 +79,7 @@ class DataType(object):
 
     @classmethod
     def isproduct(cls):
+        """Check if the DataType is the product of a Recipe"""
         return False
 
     @classmethod
@@ -70,10 +98,9 @@ class AutoDataType(DataType):
 
 
 class NullType(DataType):
-
+    """Data type for None."""
     def __init__(self):
         super(NullType, self).__init__(type(None))
-        self.dialect = None
 
     def convert(self, obj):
         return None
@@ -85,14 +112,15 @@ class NullType(DataType):
 
 
 class PlainPythonType(DataType):
+    """Data type for Python basic types."""
     def __init__(self, ref=None):
         stype = type(ref)
         default = stype()
         super(PlainPythonType, self).__init__(stype, default=default)
-        self.dialect = stype
 
 
 class ListOfType(DataType):
+    """Data type for lists of other types."""
     def __init__(self, ref, index=0):
         stype = list
         if inspect.isclass(ref):
@@ -100,7 +128,6 @@ class ListOfType(DataType):
         else:
             self.internal = ref
         super(ListOfType, self).__init__(stype)
-        self.dialect = {}
         self.index = index
 
     def convert(self, obj):
