@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -50,6 +50,8 @@ class RecipeType(type):
 
         filter_attr[_RECIPE_RESULT_NAME] = ResultClass
         filter_attr[_RECIPE_INPUT_NAME] = ReqsClass
+        filter_attr[ResultClass.__name__] = ResultClass
+        filter_attr[ReqsClass.__name__] = ReqsClass
 
         return super(RecipeType, cls).__new__(
             cls, classname, parents, filter_attr)
@@ -58,6 +60,8 @@ class RecipeType(type):
     def create_gen_class(cls, classname, baseclass, attributes):
         if attributes:
             klass = type(classname, (baseclass,), attributes)
+            # Add docs
+            klass = generate_docs(klass)
         else:
             klass = baseclass
         return klass
@@ -83,3 +87,45 @@ class RecipeType(type):
     def create_prod_class(cls, classname, base, attributes):
         return cls.create_gen_class('%sResult' % classname,
                                     base, attributes)
+
+
+def generate_docs(klass):
+    """Add documentation to generated classes"""
+    import numina.core.types
+
+    attrh = ('Attributes\n'
+             '----------\n')
+    doc = "%s documentation." % klass.__name__
+
+    if len(klass.stored()):
+        doc = doc + '\n\n' + attrh
+    for x, y in klass.stored().items():
+        modo = ""
+        if isinstance(y, Requirement):
+            modo = 'requirement'
+        elif isinstance(y, Product):
+            modo = 'product'
+        else:
+            modo = ""
+        if y.type.isproduct():
+            tipo = y.type.__class__.__name__
+        elif isinstance(y.type, numina.core.types.PlainPythonType):
+            tipo = y.type.internal_type.__name__
+        else:
+            tipo = y.type.__class__.__name__
+
+        if y.optional:
+            if y.default_value():
+                modo = "%s, optional, default=%s" % (modo, y.default)
+            else:
+                modo = "%s, optional" % (modo,)
+
+        descript = y.description
+        if descript:
+            field = "%s : %s, %s\n %s\n" % (x, tipo, modo, descript)
+        else:
+            field = "%s : %s, %s\n" % (x, tipo, modo)
+        doc = doc + field
+
+    klass.__doc__ = doc
+    return klass
