@@ -55,10 +55,16 @@ class Parameter(Requirement):
     """The Recipe requires a plain Python type."""
     def __init__(self, value, description, dest=None, optional=False,
                  choices=None, validation=True):
+        if isinstance(value, (bool, str, int, float, complex, list)):
+            optional = True
+            default = value
+        else:
+            default = None
         rtype = type(value)
+
         super(Parameter, self).__init__(
             rtype, description, dest=dest,
-            optional=optional, default=value,
+            optional=optional, default=default,
             choices=choices, validation=validation
             )
 
