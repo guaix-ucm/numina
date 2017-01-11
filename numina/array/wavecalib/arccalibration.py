@@ -303,25 +303,26 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
             plt.title(plot_title + "\n\n\n")
 
         # include important parameters in plot
-        ax.text(0.98, 0.25, "poldeg: " + str(poly_degree_wfit),
+        ax.text(0.50, 0.25, "poldeg: " + str(poly_degree_wfit) +
+                ", nfit: " + str(len(xfit)),
                 fontsize=12,
                 transform=ax.transAxes,
-                horizontalalignment="right",
+                horizontalalignment="center",
                 verticalalignment="bottom")
-        ax.text(0.98, 0.15, "CRVAL1: " + str(round(crval1_linear, 4)),
+        ax.text(0.50, 0.15, "CRVAL1: " + str(round(crval1_linear, 4)),
                 fontsize=12,
                 transform=ax.transAxes,
-                horizontalalignment="right",
+                horizontalalignment="center",
                 verticalalignment="bottom")
-        ax.text(0.98, 0.05, "CDELT1: " + str(round(cdelt1_linear, 4)),
+        ax.text(0.50, 0.05, "CDELT1: " + str(round(cdelt1_linear, 4)),
                 fontsize=12,
                 transform=ax.transAxes,
-                horizontalalignment="right",
+                horizontalalignment="center",
                 verticalalignment="bottom")
-        ax2.text(0.98, 0.05, "r.m.s.: " + str(round(residual_std, 4)),
+        ax2.text(0.50, 0.05, "r.m.s.: " + str(round(residual_std, 4)),
                  fontsize=12,
                  transform=ax2.transAxes,
-                 horizontalalignment="right",
+                 horizontalalignment="center",
                  verticalalignment="bottom")
 
         plt.show(block=False)
