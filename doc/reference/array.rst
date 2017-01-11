@@ -337,15 +337,20 @@ Once the module is created and loaded, a sample session would be:
 :mod:`numina.array.trace` --- Spectrum tracing
 ======================================================
 
-.. automodule:: numina.array.trace
+.. automodule:: numina.array.trace.traces
    :members:
 
 :mod:`numina.array.wavecalib` --- Wavelength calibration
 =========================================================
 
-.. automodule:: numina.array.wavecalib
+.. automodule:: numina.array.wavecalib.arccalibration
    :members:
 
+.. automodule:: numina.array.wavecalib.peaks_spectrum
+   :members:
+
+.. automodule:: numina.array.wavecalib.solutionarc
+   :members:
 
 :mod:`numina.array.utils` ---
 ======================================================
