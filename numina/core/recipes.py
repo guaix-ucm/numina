@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -102,17 +102,21 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         return self.create_result()
 
     def run_qc(self, recipe_input, recipe_result):
-        """Run Quality Control checks"""
+        """Run Quality Control checks."""
         return recipe_result
 
     def __call__(self, recipe_input):
         """
-        Process the result of the observing block with the
-        Recipe.
+        Process the result of the observing block with the Recipe.
 
-        :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeInput
-        :rtype: a RecipeResult object or an error
+        Parameters
+        ----------
+        recipe_input : RecipeInput
+                       The input appropriated for the Recipe
+
+        Returns
+        -------
+        a RecipeResult object or an error
         """
 
         result = self.run(recipe_input)
@@ -203,4 +207,3 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
     # An alias required by GTC
     buildRI = build_recipe_input
-
