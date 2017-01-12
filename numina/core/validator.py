@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,13 +21,17 @@
 Validator decorator
 """
 
+from functools import wraps
+
 
 def validate(method):
     """Decorate run method, inputs and outputs are validated"""
-    def mod_run(self, ri):
-        self.validate_input(ri)
+
+    @wraps(method)
+    def mod_run(self, rinput):
+        self.validate_input(rinput)
         #
-        result = method(self, ri)
+        result = method(self, rinput)
         #
         self.validate_result(result)
         return result
