@@ -95,12 +95,19 @@ def generate_docs(klass):
 
     attrh = ('Attributes\n'
              '----------\n')
-    doc = "%s documentation." % klass.__name__
+
+    doc = getattr(klass, '__doc__', None)
+
+    if doc is None or doc == '':
+        doc = "%s documentation." % klass.__name__
 
     if len(klass.stored()):
         doc = doc + '\n\n' + attrh
-    for x, y in klass.stored().items():
-        modo = ""
+
+    skeys = sorted(klass.stored().keys())
+    for key in skeys:
+        y = klass.stored()[key]
+
         if isinstance(y, Requirement):
             modo = 'requirement'
         elif isinstance(y, Product):
@@ -122,9 +129,9 @@ def generate_docs(klass):
 
         descript = y.description
         if descript:
-            field = "%s : %s, %s\n %s\n" % (x, tipo, modo, descript)
+            field = "%s : %s, %s\n %s\n" % (key, tipo, modo, descript)
         else:
-            field = "%s : %s, %s\n" % (x, tipo, modo)
+            field = "%s : %s, %s\n" % (key, tipo, modo)
         doc = doc + field
 
     klass.__doc__ = doc
