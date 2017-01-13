@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -25,9 +25,6 @@ import scipy.stats
 import scipy.ndimage
 from numina.array.blocks import max_blk_coverage, blk_nd_short
 
-from six.moves import reduce
-
-
 
 # Values stored in integer masks
 PIXEL_HOT = 1
@@ -38,7 +35,7 @@ PIXEL_VALID = 0
 HIGH_SIGMA = 200
 LOW_SIGMA = -200
 
-_logger = logging.getLogger('numina.cosmetics')
+_logger = logging.getLogger(__name__)
 
 
 def update_mask(mask, gmask, newmask, value):
@@ -53,7 +50,7 @@ def update_mask(mask, gmask, newmask, value):
 # IRAF task
 def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
             siglev=1.0, mode='region', nmed=(7, 7), nsig=(15, 15)):
-    '''Find cosmetic defects in a detector using two flat field images.
+    """Find cosmetic defects in a detector using two flat field images.
 
     Two arrays representing flat fields of different exposure times are
     required. Cosmetic defects are selected as points that deviate
@@ -99,10 +96,9 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
 
         :py:func:`cosmetics`
             Operates much like this function but computes
-            median and sigma in the hole image instead of in boxes
+            median and sigma in the whole image instead of in boxes
 
-
-    '''
+    """
 
     if flat2 is None:
         # we have to swap flat1 and flat2, and
