@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,4 +19,4 @@
 
 """Numina version."""
 
-version = '0.15.dev1'
+version = '0.15.dev2'
