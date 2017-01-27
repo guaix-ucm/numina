@@ -30,10 +30,10 @@ class ObservationResult(object):
     """The result of a observing block.
 
     """
-    def __init__(self, mode=None):
+    def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         self.id = 1
         self.mode = mode
-        self.instrument = None
+        self.instrument = instrument
         self.frames = []
         self.parent = None
         self.children = []  # other ObservationResult
