@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -27,23 +27,22 @@ try:
     _run_in_gtc = True
 except ImportError:
     import types
+    import numina.enum
     # FIXME: workaround
     DF = types.ModuleType('DF')
-    DF.TYPE_FRAME = None
+
+    class AdaptedOrbTypes(numina.enum.Enum):
+        TYPE_FRAME = 1
+        TYPE_STRUCT = 2
+        TYPE_FRAME_LIST = 3
+        TYPE_STRUCT_LIST = 4
+
+    DF.TYPE_FRAME = AdaptedOrbTypes.TYPE_FRAME
+    DF.TYPE_STRUCT = AdaptedOrbTypes.TYPE_STRUCT
+    DF.TYPE_FRAME_LIST = AdaptedOrbTypes.TYPE_FRAME_LIST
+    DF.TYPE_STRUCT_LIST = AdaptedOrbTypes.TYPE_STRUCT_LIST
+
     _run_in_gtc = False
-
-_eqtypes = {'numina.core.products.FrameDataProduct': DF.TYPE_FRAME}
-
-
-def dialect_info(obj):
-    key = obj.__module__ + '.' + obj.__class__.__name__
-    tipo = _eqtypes.get(key, None)
-    result = {'gtc': {'fqn': key, 'python': obj.python_type, 'type': tipo}}
-    return result
-
-
-def register(more):
-    _eqtypes.update(more)
 
 
 def ignore_gtc_check(value=True):

@@ -77,6 +77,12 @@ class DataType(object):
     def _datatype_load(self, obj):
         return obj
 
+    def add_dialect_info(self, dialect, tipo):
+        key = self.__module__ + '.' + self.__class__.__name__
+        result = {'fqn': key, 'python': self.internal_type, 'type': tipo}
+        self.internal_dialect[dialect] = result
+        return result
+
     @classmethod
     def isproduct(cls):
         """Check if the DataType is the product of a Recipe"""

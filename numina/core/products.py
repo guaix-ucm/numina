@@ -1,4 +1,4 @@
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,6 +17,7 @@
 #
 
 import sys
+import warnings
 
 import six
 import numpy
@@ -24,13 +25,12 @@ from astropy.io import fits
 
 from .qc import QC
 from .pipeline import InstrumentConfiguration
-from .objimport import import_object
 from .oresult import ObservationResult
 from .dataframe import DataFrame
 from .types import DataType
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
-import warnings
+from numina.ext.gtc import DF
 
 
 class DataProductTag(object):
@@ -69,6 +69,8 @@ class DataFrameType(DataType):
     def __init__(self):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
+
+        self.add_dialect_info('gtc', DF.TYPE_FRAME)
 
     def convert(self, obj):
         """Convert"""
