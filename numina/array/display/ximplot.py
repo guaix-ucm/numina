@@ -82,7 +82,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0), debugplot=None):
 
     # display image
     import matplotlib
-    matplotlib.use('Qt4Agg')
+    matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
     # plt.ion()
     # plt.pause(0.001)

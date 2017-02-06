@@ -202,7 +202,7 @@ def polfit_residuals(
             srejected = mysize[reject]
 
         import matplotlib
-        matplotlib.use('Qt4Agg')
+        matplotlib.use('Qt5Agg')
         import matplotlib.pyplot as plt
         fig = plt.figure()
 
