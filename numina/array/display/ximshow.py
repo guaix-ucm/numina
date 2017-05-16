@@ -63,7 +63,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         assuming (nc1,nc2,ns1,ns2). In this case, the coordinates
         indicate pixels.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt4 backend geometry.
+        x, y, dx, dy values employed to set the Qt5 backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -84,7 +84,7 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
     """
 
     import matplotlib
-    matplotlib.use('Qt4Agg')
+    matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
 
     # protections
@@ -349,7 +349,7 @@ def ximshow_file(singlefile,
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
     args_geometry : string or None
-        Tuple x,y,dx,dy to define the Qt4 backend geometry. This
+        Tuple x,y,dx,dy to define the Qt5 backend geometry. This
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
@@ -514,7 +514,7 @@ def main(args=None):
         pdf = PdfPages(args.pdffile.name)
     else:
         import matplotlib
-        matplotlib.use('Qt4Agg')
+        matplotlib.use('Qt5Agg')
         import matplotlib.pyplot as plt
         pdf = None
 
