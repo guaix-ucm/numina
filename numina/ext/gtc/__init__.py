@@ -36,11 +36,13 @@ except ImportError:
         TYPE_STRUCT = 2
         TYPE_FRAME_LIST = 3
         TYPE_STRUCT_LIST = 4
+        TYPE_DOUBLE_ARRAY2D = 5
 
     DF.TYPE_FRAME = AdaptedOrbTypes.TYPE_FRAME
     DF.TYPE_STRUCT = AdaptedOrbTypes.TYPE_STRUCT
     DF.TYPE_FRAME_LIST = AdaptedOrbTypes.TYPE_FRAME_LIST
     DF.TYPE_STRUCT_LIST = AdaptedOrbTypes.TYPE_STRUCT_LIST
+    DF.TYPE_DOUBLE_ARRAY2D = AdaptedOrbTypes.TYPE_DOUBLE_ARRAY2D
 
     _run_in_gtc = False
 
