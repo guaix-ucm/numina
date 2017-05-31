@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,12 +20,8 @@
 """Exceptions for the numina package."""
 
 
-# Check if the GTC environment is available
-try:
-    import gtc.SSL.GCSTypes
-    GCS_ENVIRONMENT = True
-except ImportError:
-    GCS_ENVIRONMENT = False
+import numina.ext.gtc
+
 
 class Error(Exception):
     """Base class for exceptions in the numina package."""
@@ -33,22 +29,22 @@ class Error(Exception):
 
 
 class RecipeError(Error):
-    '''A non recoverable problem during recipe execution.'''
+    """A non recoverable problem during recipe execution."""
     pass
 
 
 class DetectorElapseError(Error):
-    '''Error in the clocking of a Detector.'''
+    """Error in the clocking of a Detector."""
     pass
 
 
 class DetectorReadoutError(Error):
-    '''Error in the readout of a Detector.'''
+    """Error in the readout of a Detector."""
     pass
 
 
 class ValidationError(Exception):
-    '''Error during validation of Recipe inputs and outputs.'''
+    """Error during validation of Recipe inputs and outputs."""
     pass
 
 
@@ -56,9 +52,14 @@ class NoResultFound(Exception):
     """No result found in a DAL query."""
     pass
 
+NoResultFoundOrig = NoResultFound
+
 
 # If we are in the GCS environment, use its exceptions
 # where applies
+if numina.ext.gtc.check_gtc():
+    import gtc.SSL.GCSTypes
 
-if GCS_ENVIRONMENT:
+    # Save original exception
+    NoResultFoundOrig = NoResultFound
     NoResultFound = gtc.SSL.GCSTypes.NotFound
