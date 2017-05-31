@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -90,7 +90,7 @@ def test_metaclass():
 def test_recipe_with_autoqc():
 
     class TestRecipeAutoQC(BaseRecipe):
-        qc = Product(QualityControlProduct, dest='qc')
+        qc82h = Product(QualityControlProduct, destination='qc')
 
     class TestRecipe(TestRecipeAutoQC):
         obsresult = ObservationResultRequirement()

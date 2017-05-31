@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -29,11 +29,11 @@ from .dataholders import EntryHolder
 
 class Requirement(EntryHolder):
     """Requirement holder holder for RecipeRequirement."""
-    def __init__(self, rtype, description, validation=True,
-                 dest=None, optional=False, default=None, choices=None):
+    def __init__(self, rtype, description, destination=None, optional=False,
+                 default=None, choices=None, validation=True):
         super(Requirement, self).__init__(
-            rtype, description, dest,
-            optional, default, choices=choices,
+            rtype, description, destination=destination,
+            optional=optional, default=default, choices=choices,
             validation=validation
             )
 
@@ -53,7 +53,7 @@ class Requirement(EntryHolder):
 
 class Parameter(Requirement):
     """The Recipe requires a plain Python type."""
-    def __init__(self, value, description, dest=None, optional=False,
+    def __init__(self, value, description, destination=None, optional=False,
                  choices=None, validation=True):
         if isinstance(value, (bool, str, int, float, complex, list)):
             optional = True
@@ -63,7 +63,7 @@ class Parameter(Requirement):
         rtype = type(value)
 
         super(Parameter, self).__init__(
-            rtype, description, dest=dest,
+            rtype, description, destination=destination,
             optional=optional, default=default,
             choices=choices, validation=validation
             )

@@ -20,7 +20,7 @@
 """Metaclasses for Recipes."""
 
 from .recipeinout import RecipeResult, RecipeInput
-from .dataholders import Product
+from .dataholders import EntryHolder, Product
 from .requirements import Requirement
 
 _RECIPE_RESULT_NAME = 'RecipeResult'
@@ -35,10 +35,11 @@ class RecipeType(type):
         filter_attr = {}
 
         for name, val in attributes.items():
-            if isinstance(val, Requirement):
-                filter_reqs[name] = val
-            elif isinstance(val, Product):
-                filter_prods[name] = val
+            if isinstance(val, EntryHolder):
+                if isinstance(val, Requirement):
+                    filter_reqs[name] = val
+                if isinstance(val, Product):
+                    filter_prods[name] = val
             else:
                 filter_attr[name] = val
 

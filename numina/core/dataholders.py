@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -90,12 +90,12 @@ class EntryHolder(object):
 
 
 class Product(EntryHolder):
-    '''Product holder for RecipeResult.'''
-    def __init__(self, ptype, description='', validation=True,
-                 dest=None, optional=False, default=None, *args, **kwds):
+    """Product holder for RecipeResult."""
+    def __init__(self, ptype, description="", validation=True,
+                 destination=None, optional=False, default=None, choices=None):
         super(Product, self).__init__(
-            ptype, description, dest, optional,
-            default, choices=None, validation=validation
+            ptype, description, destination=destination, optional=optional,
+            default=default, choices=choices, validation=validation
             )
 
 #        if not isinstance(self.type, DataProductType):
