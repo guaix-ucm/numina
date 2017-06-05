@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -65,8 +65,15 @@ def show_instruments(args, extra_args):
 
 def print_instrument(instrument, modes=True):
     print('Instrument:', instrument.name)
-    for ic in instrument.configurations:
-        print(' has configuration', repr(ic))
+    for ic, conf in instrument.configurations.items():
+        if ic == 'default':
+            # skip default configuration
+            continue
+        msg = " has configuration '{}' uuid={}".format(conf.name, ic)
+        print(msg)
+    default_conf = instrument.configurations['default']
+    msg = " default is '{}'".format(default_conf.name)
+    print(msg)
     for _, pl in instrument.pipelines.items():
         print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
     if modes and instrument.modes:

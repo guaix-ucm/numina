@@ -17,17 +17,17 @@ expecte0 = [""]
 
 
 expecte1 = ["Instrument: TEST1",
-            " has configuration 'default'",
+            " default is 'Default configuration'",
             " has pipeline 'default', version 1",
             ""
             ]
 
 
 expecte2 = ["Instrument: TEST2",
-            " has configuration 'default'",
+            " default is 'Default configuration'",
             " has pipeline 'default', version 1",
             "Instrument: TEST1",
-            " has configuration 'default'",
+            " default is 'Default configuration'",
             " has pipeline 'default', version 1",
             ""
             ]
@@ -66,8 +66,8 @@ def test_show_instrument(capsys, monkeypatch, drpsfunc, expected):
 
     main(['show-instruments'])
 
-
     out, err = capsys.readouterr()
+    print(out)
     out = out.split("\n")
     out.sort()
     expected.sort()
