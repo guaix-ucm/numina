@@ -161,47 +161,12 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
             raise ValueError('ob input is neither a ObservingBlock'
                              ' nor a ObservationResult')
 
-        tags = getattr(obsres, 'tags', {})
-
         for key, req in cls.requirements().items():
 
-            # First check if the requirement is embedded
-            # in the observation result
-            # it can happen in GTC
-
-            # Using NoResultFound instead of None
-            # None can be a valid result
-            val = getattr(obsres, key, NoResultFound)
-
-            if val is not NoResultFound:
-                result[key] = val
-                continue
-
-            # Then, continue checking the rest
-
-            if isinstance(req.type, ObservationResultType):
-                result[key] = obsres
-            elif isinstance(req.type, InstrumentConfigurationType):
-                if not isinstance(obsres.configuration, InstrumentConfiguration):
-                    warnings.warn(RuntimeWarning, 'instrument configuration not configured')
-                    result[key] = {}
-                else:
-                    result[key] = obsres.configuration
-
-            elif isinstance(req.type, DataProductTag):
-                try:
-                    prod = dal.search_prod_req_tags(req, obsres.instrument,
-                                                    tags, pipeline)
-                    result[key] = prod.content
-                except NoResultFound:
-                    pass
-            else:
-                try:
-                    param = dal.search_param_req_tags(req, obsres.instrument,
-                                                      obsres.mode, tags, pipeline)
-                    result[key] = param.content
-                except NoResultFound:
-                    pass
+            try:
+                result[key] = req.query(dal, obsres)
+            except NoResultFound as notfound:
+                req.on_query_not_found(notfound)
 
         return cls.create_input(**result)
 

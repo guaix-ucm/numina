@@ -30,6 +30,7 @@ from .dataframe import DataFrame
 from .types import DataType
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
+from numina.exceptions import NoResultFound
 from numina.ext.gtc import DF
 
 
@@ -39,6 +40,29 @@ class DataProductTag(object):
     @classmethod
     def isproduct(cls):
         return True
+
+    def query_on_ob(self, key, ob):
+        # First check if the requirement is embedded
+        # in the observation result
+        # it can happen in GTC
+
+        try:
+            return getattr(ob, key)
+        except AttributeError:
+            raise NoResultFound
+
+    def query_req(self, req, dal, ob):
+        try:
+            self.query_on_ob(req.dest, ob)
+        except NoResultFound:
+            pass
+
+        prod = dal.search_prod_req_tags(req, ob.instrument,
+                                            ob.tags, ob.pipeline)
+        return prod.content
+
+    def on_query_not_found(self, notfound):
+        pass
 
 
 class ConfigurationTag(object):
@@ -182,6 +206,14 @@ class ObservationResultType(DataType):
         validator = _obtain_validator_for(obj.instrument, obj.mode)
         return validator(obj)
 
+    def query_input(self, dal, ob, key):
+        return ob
+
+    def query_req(self, req, dal, ob):
+        return self.query_input(dal, ob, req.dest)
+
+    def on_query_not_found(self, notfound):
+        raise notfound
 
 class InstrumentConfigurationType(DataType):
     """The type of InstrumentConfiguration."""
@@ -194,6 +226,18 @@ class InstrumentConfigurationType(DataType):
     def validate(self, obj):
         return True
 
+    def query_input(self, dal, ob, key):
+        if not isinstance(ob.configuration, InstrumentConfiguration):
+            warnings.warn(RuntimeWarning, 'instrument configuration not configured')
+            return {}
+        else:
+            return ob.configuration
+
+    def query_req(self, req, dal, ob):
+        return self.query_input(req.dest, ob, dal)
+
+    def on_query_not_found(self, notfound):
+        raise notfound
 
 class QualityControlProduct(DataType):
     def __init__(self):

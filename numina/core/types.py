@@ -20,6 +20,7 @@
 import inspect
 
 from numina.exceptions import ValidationError
+from numina.exceptions import NoResultFound
 from .typedialect import dialect_info
 
 
@@ -70,6 +71,31 @@ class DataType(object):
         if not isinstance(obj, self.internal_type):
             raise ValidationError(obj, self.internal_type)
         return True
+
+    def query_req(self, req, dal, ob):
+
+        try:
+            return self.query_on_ob(req.dest, ob)
+        except NoResultFound:
+            pass
+
+        param = dal.search_param_req_tags(req, ob.instrument,
+                                              ob.mode, ob.tags, ob.pipeline)
+        return param.content
+
+
+    def query_on_ob(self, key, ob):
+        # First check if the requirement is embedded
+        # in the observation result
+        # it can happen in GTC
+
+        try:
+            return getattr(ob, key)
+        except AttributeError:
+            raise NoResultFound
+
+    def on_query_not_found(self, notfound):
+        pass
 
     def _datatype_dump(self, obj, where):
         return obj
@@ -124,6 +150,16 @@ class PlainPythonType(DataType):
         default = stype()
         super(PlainPythonType, self).__init__(stype, default=default)
 
+    def query_req(self, req, dal, ob):
+
+        try:
+            return self.query_on_ob(req.dest, ob)
+        except NoResultFound:
+            pass
+
+        param = dal.search_param_req_tags(req, ob.instrument,
+                                              ob.mode, ob.tags, ob.pipeline)
+        return param.content
 
 class ListOfType(DataType):
     """Data type for lists of other types."""

@@ -42,6 +42,13 @@ class Requirement(EntryHolder):
     def convert(self, val):
         return self.type.convert_in(val)
 
+    def query(self, dal, obsres):
+        val = self.type.query_req(self, dal, obsres)
+        return val
+
+    def on_query_not_found(self, notfound):
+        self.type.on_query_not_found(notfound)
+
     def __repr__(self):
         sclass = type(self).__name__
         fmt = ("%s(dest=%r, description='%s', "
