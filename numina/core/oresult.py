@@ -41,6 +41,7 @@ class ObservationResult(object):
         self.configuration = 'default'
         self.prodid = None
         self.tags = {}
+        self.results = {}
 
     def update_with_product(self, prod):
         self.tags = prod.tags
@@ -88,6 +89,9 @@ def obsres_from_dict(values):
     obsres.instrument = values['instrument']
     obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get('pipeline', 'default')
+    obsres.children = values.get('children',  [])
+    obsres.parent = values.get('parent', None)
+    obsres.results = values.get('results', {})
     try:
         obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
     except Exception:
