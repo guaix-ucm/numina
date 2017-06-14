@@ -49,7 +49,7 @@ class DataProductTag(object):
         try:
             return getattr(ob, key)
         except AttributeError:
-            raise NoResultFound
+            raise NoResultFound("DataProductTag.query_on_ob")
 
     def query(self, name, dal, ob):
 

@@ -71,7 +71,15 @@ class InstrumentDRP(object):
         self.pipelines = pipelines
         self.products = products
         if products is None:
-            self.products = []
+            self.products = {}
+
+    def query_provides_class(self, product, search=False):
+        """Return the mode that provides a given product"""
+
+        try:
+            return self.products[product]
+        except KeyError:
+            raise ValueError('no mode provides %s' % product)
 
     def query_provides(self, productname, search=False):
         """Return the mode that provides a given product"""

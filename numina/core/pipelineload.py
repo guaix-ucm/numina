@@ -187,16 +187,17 @@ def load_recipes(name, node):
 
 
 def load_prods(node, allmodes):
-    result = []
+    result = {}
     for entry in node:
         name = entry['name']
         alias = entry.get('alias')
         mode_name = entry['mode']
         field = entry['field']
+        klass = import_object(name)
         for mode in allmodes:
             if mode.key == mode_name:
                 prod = ProductEntry(name, mode, field, alias=alias)
-                result.append(prod)
+                result[klass] = prod
                 break
         else:
             # Undefined mode

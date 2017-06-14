@@ -93,7 +93,7 @@ class DataType(object):
         try:
             return getattr(ob, key)
         except AttributeError:
-            raise NoResultFound
+            raise NoResultFound("DataType.query_on_ob")
 
     def on_query_not_found(self, notfound):
         pass
