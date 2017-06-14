@@ -38,7 +38,7 @@ class DALInterface(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def search_recipe_from_ob(self, ob, pipeline):
+    def search_recipe_from_ob(self, ob):
         # returns RecipeClass
         pass
 
@@ -52,16 +52,12 @@ class DALInterface(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def search_prod_req_tags(self, req, instrument, tags, pipeline):
+    def search_product(self, name, tipo, obsres):
         # returns StoredProduct
         pass
 
     @abstractmethod
-    def search_prod_type_tags(self, tipo, instrument, tags, pipeline):
-        """Returns the first coincidence..."""
+    def search_parameter(self, name, tipo, obsres):
         # returns StoredProduct
         pass
 
-    @abstractmethod
-    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
-        pass

@@ -62,6 +62,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
     def __init__(self, *args, **kwargs):
         super(BaseRecipe, self).__init__()
+        self.configure(**kwargs)
 
     def configure(self, **kwds):
         if 'version' in kwds:

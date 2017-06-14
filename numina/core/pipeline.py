@@ -44,18 +44,19 @@ class Pipeline(object):
         args = recipe_entry.get('args', ())
         kwargs = recipe_entry.get('kwargs', {})
         Cls = numina.core.objimport.import_object(recipe_fqn)
+
         # Like Pickle protocol
         recipe = Cls.__new__(Cls, *args)
+        # Addition
         recipe.__init__(*args, **kwargs)
-        
-        recipe.mode = mode
-        recipe.instrument = self.instrument
-
-        recipe.configure(**kwargs)
 
         # Like pickle protocol
         if 'state' in recipe_entry:
             recipe.__setstate__(recipe_entry['state'])
+
+        # Init additional members
+        recipe.mode = mode
+        recipe.instrument = self.instrument
 
         return recipe
 

@@ -104,7 +104,7 @@ class CommandLineDAL(AbsDAL):
         except KeyError:
             raise NoResultFound("oblock with id %s not found" % obsid)
 
-    def search_recipe_from_ob(self, obsres, pipeline):
+    def search_recipe_from_ob(self, obsres):
 
         _logger.info("Identifier of the observation result: %s", obsres.id)
 
@@ -113,6 +113,7 @@ class CommandLineDAL(AbsDAL):
         if my_ins is None:
             raise ValueError('no instrument named %r' % obsres.instrument)
 
+        pipeline = obsres.pipeline
         my_pipe = my_ins.pipelines.get(pipeline)
 
         if my_pipe is None:

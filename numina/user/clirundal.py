@@ -122,7 +122,8 @@ def mode_run_common_obs(args, extra_args):
 
         _logger.debug("pipeline from CLI is %r", args.pipe_name)
         pipe_name = args.pipe_name
-        recipe = dal.search_recipe_from_ob(obsres, pipe_name)
+        obsres.pipeline = pipe_name
+        recipe = dal.search_recipe_from_ob(obsres)
         _logger.debug('recipe class is %s', recipe.__class__)
 
         # Enable intermediate results by default
@@ -130,7 +131,7 @@ def mode_run_common_obs(args, extra_args):
         recipe.intermediate_results = True
         _logger.debug('recipe created')
 
-        rinput = recipe.build_recipe_input(obsres, dal, pipeline=pipe_name)
+        rinput = recipe.build_recipe_input(obsres, dal)
         _logger.debug('recipe input created')
 
         # Show the actual inputs

@@ -43,7 +43,7 @@ class Requirement(EntryHolder):
         return self.type.convert_in(val)
 
     def query(self, dal, obsres):
-        val = self.type.query_req(self, dal, obsres)
+        val = self.type.query(self.dest, dal, obsres)
         return val
 
     def on_query_not_found(self, notfound):

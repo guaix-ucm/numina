@@ -51,14 +51,16 @@ class DataProductTag(object):
         except AttributeError:
             raise NoResultFound
 
-    def query_req(self, req, dal, ob):
+    def query(self, name, dal, ob):
+
         try:
-            self.query_on_ob(req.dest, ob)
+            return self.query_on_ob(name, ob)
         except NoResultFound:
             pass
 
-        prod = dal.search_prod_req_tags(req, ob.instrument,
-                                            ob.tags, ob.pipeline)
+        #param = dal.search_param_req_tags(req, ob.instrument,
+        #                                      ob.mode, ob.tags, ob.pipeline)
+        prod = dal.search_product(name, self, ob)
         return prod.content
 
     def on_query_not_found(self, notfound):
@@ -206,11 +208,8 @@ class ObservationResultType(DataType):
         validator = _obtain_validator_for(obj.instrument, obj.mode)
         return validator(obj)
 
-    def query_input(self, dal, ob, key):
+    def query(self, name, dal, ob):
         return ob
-
-    def query_req(self, req, dal, ob):
-        return self.query_input(dal, ob, req.dest)
 
     def on_query_not_found(self, notfound):
         raise notfound

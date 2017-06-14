@@ -120,9 +120,10 @@ class BaseDictDAL(AbsDAL):
 
         return recipe_fqn
 
-    def search_recipe_from_ob(self, ob, pipeline):
+    def search_recipe_from_ob(self, ob):
         ins = ob.instrument
         mode = ob.mode
+        pipeline = ob.pipeline
         return self.search_recipe(ins, mode, pipeline)
 
     def search_prod_obsid(self, ins, obsid, pipeline):
@@ -235,6 +236,46 @@ class BaseDictDAL(AbsDAL):
             obsres.configuration = this_drp.configuration_selector(obsres)
 
         return obsres
+
+    def search_product(self, name, tipo, obsres):
+        # returns StoredProduct
+        ins = obsres.instrument
+        tags = obsres.tags
+        pipeline = obsres.pipeline
+
+        if name in self.extra_data:
+            val = self.extra_data[name]
+            content = load(tipo, val)
+            return StoredProduct(id=0, tags={}, content=content)
+        else:
+            return self.search_prod_type_tags(tipo, ins, tags, pipeline)
+
+    def search_parameter(self, name, tipo, obsres):
+        # returns StoredProduct
+        instrument = obsres.instrument
+        mode = obsres.mode
+        tags = obsres.tags
+        pipeline = obsres.pipeline
+
+        req_table_ins = self.req_table.get(instrument, {})
+        req_table_insi_pipe = req_table_ins.get(pipeline, {})
+        mode_list = req_table_insi_pipe.get(mode, [])
+        if name in self.extra_data:
+            value = self.extra_data[name]
+            content = StoredParameter(value)
+            return content
+        else:
+            for prod in mode_list:
+                pn = prod['name']
+                pt = prod['tags']
+                if pn == name and tags_are_valid(pt, tags):
+                    # We have found the result, no more checks
+                    value = load(name, prod['content'])
+                    content = StoredParameter(value)
+                    return content
+            else:
+                msg = 'name %s compatible with tags %r not found' % (name, tags)
+                raise NoResultFound(msg)
 
 
 class DictDAL(BaseDictDAL):

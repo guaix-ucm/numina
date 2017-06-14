@@ -72,15 +72,16 @@ class DataType(object):
             raise ValidationError(obj, self.internal_type)
         return True
 
-    def query_req(self, req, dal, ob):
+    def query(self, name, dal, ob):
 
         try:
-            return self.query_on_ob(req.dest, ob)
+            return self.query_on_ob(name, ob)
         except NoResultFound:
             pass
 
-        param = dal.search_param_req_tags(req, ob.instrument,
-                                              ob.mode, ob.tags, ob.pipeline)
+        #param = dal.search_param_req_tags(req, ob.instrument,
+        #                                      ob.mode, ob.tags, ob.pipeline)
+        param = dal.search_parameter(name, self, ob)
         return param.content
 
 
@@ -150,15 +151,16 @@ class PlainPythonType(DataType):
         default = stype()
         super(PlainPythonType, self).__init__(stype, default=default)
 
-    def query_req(self, req, dal, ob):
+    def query(self, name, dal, ob):
 
         try:
-            return self.query_on_ob(req.dest, ob)
+            return self.query_on_ob(name, ob)
         except NoResultFound:
             pass
 
-        param = dal.search_param_req_tags(req, ob.instrument,
-                                              ob.mode, ob.tags, ob.pipeline)
+        #param = dal.search_param_req_tags(req, ob.instrument,
+        #                                      ob.mode, ob.tags, ob.pipeline)
+        param = dal.search_parameter(name, self, ob)
         return param.content
 
 class ListOfType(DataType):
