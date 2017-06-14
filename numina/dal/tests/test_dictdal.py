@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -125,7 +125,7 @@ def test_search_recipe(basedictdal):
         basedictdal.search_recipe('TEST1', 'fail', 'invalid')
 
     res = basedictdal.search_recipe('TEST1', 'fail', 'default')
-    assert res is AlwaysFailRecipe
+    assert isinstance(res, AlwaysFailRecipe)
 
 
 def test_search_prod_obsid(basedictdal):

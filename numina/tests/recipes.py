@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -34,6 +34,10 @@ class MasterDark(numina.core.products.DataProductTag, numina.core.DataFrameType)
 
 class BiasRecipe(numina.core.BaseRecipe):
     master_bias = numina.core.Product(MasterBias)
+
+    def __init__(self, *args, **kwds):
+        super(BiasRecipe, self).__init__(*args, **kwds)
+        self.simulate_error = kwds.get('simulate_error', False)
 
 
 class DarkRecipe(numina.core.BaseRecipe):

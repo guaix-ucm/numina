@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -105,13 +105,13 @@ def load_mode_validator(obs_mode, node):
     return obs_mode
 
 
-def load_pipelines(node):
+def load_pipelines(instrument, node):
     keys = ['default']
     check_section(node, 'pipelines', keys=keys)
 
     pipelines = {}
     for key in node:
-        pipelines[key] = load_pipeline(key, node[key])
+        pipelines[key] = load_pipeline(instrument, key, node[key])
     return pipelines
 
 
@@ -151,14 +151,39 @@ def load_confs(package, node, confclass=None):
     return confs, ins_tagger
 
 
-def load_pipeline(name, node):
+def load_pipeline(instrument, name, node):
 
     keys = ['recipes', 'version']
     check_section(node, 'pipeline', keys=keys)
 
-    recipes = node['recipes']
+    recipes = load_recipes("recipes", node['recipes'])
     version = node['version']
-    return Pipeline(name, recipes, version)
+    return Pipeline(instrument, name, recipes, version)
+
+
+def load_recipe(name, node):
+
+    recipe = {'class': ''}
+
+    keys =  ['class']
+    if isinstance(node, dict):
+        check_section(node, name, keys=keys)
+        recipe = node
+    else:
+        recipe['class'] = node
+    if 'args' in recipe:
+        recipe['args'] = tuple(recipe['args'])
+    return recipe
+
+
+def load_recipes(name, node):
+
+    #keys = ['recipes', 'version']
+    #check_section(node, 'pipeline', keys=keys)
+    recipes = {}
+    for key in node:
+        recipes[key] = load_recipe(key, node[key])
+    return recipes
 
 
 def load_prods(node, allmodes):
@@ -192,7 +217,7 @@ def load_instrument(package, node, confclass=None):
     prod_node = node.get('products', [])
 
     trans = {'name': node['name']}
-    trans['pipelines'] = load_pipelines(pipe_node)
+    trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
     confs, selector = load_confs(package, conf_node, confclass=confclass)
     trans['configurations'] = confs

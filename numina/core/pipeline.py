@@ -27,13 +27,37 @@ import numina.core.products
 
 class Pipeline(object):
     """Base class for pipelines."""
-    def __init__(self, name, recipes, version=1):
+    def __init__(self, instrument, name, recipes, version=1):
+        self.instrument = instrument
         self.name = name
         self.recipes = recipes
         self.version = version
 
     def get_recipe(self, mode):
-        return self.recipes[mode]
+        node = self.recipes[mode]
+        return node['class']
+
+    def get_recipe_object(self, mode):
+        recipe_entry = self.recipes[mode]
+
+        recipe_fqn = recipe_entry['class']
+        args = recipe_entry.get('args', ())
+        kwargs = recipe_entry.get('kwargs', {})
+        Cls = numina.core.objimport.import_object(recipe_fqn)
+        # Like Pickle protocol
+        recipe = Cls.__new__(Cls, *args)
+        recipe.__init__(*args, **kwargs)
+        
+        recipe.mode = mode
+        recipe.instrument = self.instrument
+
+        recipe.configure(**kwargs)
+
+        # Like pickle protocol
+        if 'state' in recipe_entry:
+            recipe.__setstate__(recipe_entry['state'])
+
+        return recipe
 
 
 class InstrumentDRP(object):

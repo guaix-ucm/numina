@@ -1,4 +1,4 @@
-# Copyright 2014-2015 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -72,7 +72,6 @@ class CommandLineDAL(AbsDAL):
         this_drp = self.drps.query_by_name(obsres.instrument)
         tagger = None
         for mode in this_drp.modes:
-            print(mode.key, obsres.mode)
             if mode.key == obsres.mode:
                 tagger = mode.tagger
                 break

@@ -33,17 +33,12 @@ import warnings
 from six import with_metaclass
 
 from .. import __version__
-from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult
 from ..dal.stored import ObservingBlock
 from ..exceptions import NoResultFound
-from .products import ObservationResultType
-from .products import InstrumentConfigurationType
-from .products import DataProductTag
-from .pipeline import InstrumentConfiguration
 
 
 class BaseRecipe(with_metaclass(RecipeType, object)):
@@ -54,29 +49,31 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     # Recipe own logger
     logger = logging.getLogger('numina.recipes.numina')
 
-    def __init__(self, *args, **kwds):
+    def __new__(cls, *args, **kwargs):
+        recipe = super(BaseRecipe, cls).__new__(cls)
+        recipe.instrument = 'UNKNOWN'
+        recipe.mode = 'UNKNOWN'
+        recipe.intermediate_results = False
+        recipe.runinfo = {}
+        recipe.environ = {}
+        recipe.__version__ = 1
+        recipe.configure(**kwargs)
+        return recipe
+
+    def __init__(self, *args, **kwargs):
         super(BaseRecipe, self).__init__()
-        self.__author__ = 'Unknown'
-        self.__version__ = 1
-        # These two are maintained
-        # for the moment
-        self.environ = {}
-        self.runinfo = {}
-        #
-        self.instrument = None
-        self.intermediate_results = False
-        self.configure(**kwds)
 
     def configure(self, **kwds):
-        if 'author' in kwds:
-            self.__author__ = kwds['author']
         if 'version' in kwds:
             self.__version__ = kwds['version']
 
-        base_kwds = ['instrument', 'runinfo', 'intermediate_results']
+        base_kwds = ['instrument', 'mode', 'runinfo', 'intermediate_results']
         for kwd in base_kwds:
             if kwd in kwds:
                 setattr(self, kwd, kwds[kwd])
+
+    def __setstate__(self, state):
+        self.configure(**state)
 
     @classmethod
     def create_input(cls, *args, **kwds):
@@ -141,8 +138,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
 
-    @classmethod
-    def build_recipe_input(cls, ob, dal, pipeline='default'):
+    def build_recipe_input(cls, ob, dal):
         """Build a RecipeInput object."""
 
         result = {}
@@ -169,6 +165,3 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
                 req.on_query_not_found(notfound)
 
         return cls.create_input(**result)
-
-    # An alias required by GTC
-    buildRI = build_recipe_input

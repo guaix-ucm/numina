@@ -28,7 +28,7 @@ try:
 except ImportError:
     import types
     import numina.enum
-    # FIXME: workaround
+
     DF = types.ModuleType('DF')
 
     class AdaptedOrbTypes(numina.enum.Enum):

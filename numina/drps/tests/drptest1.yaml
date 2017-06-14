@@ -26,7 +26,10 @@ modes:
 pipelines:
   default:
       recipes:
-          bias: numina.tests.recipes.BiasRecipe
+          bias:
+            class: numina.tests.recipes.BiasRecipe
+            kwargs:
+             simulate_error: True
           dark: numina.tests.recipes.DarkRecipe
           fail: numina.core.utils.AlwaysFailRecipe
       version: 1

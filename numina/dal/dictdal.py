@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -82,9 +82,23 @@ class BaseDictDAL(AbsDAL):
             raise NoResultFound("oblock with id %d not found" % obsid)
 
     def search_recipe(self, ins, mode, pipeline):
-        recipe_fqn = self.search_recipe_fqn(ins, mode, pipeline)
-        klass = import_object(recipe_fqn)
-        return klass
+
+        drp = self.drps.query_by_name(ins)
+
+        if drp is None:
+            raise NoResultFound('DRP not found')
+
+        try:
+            this_pipeline = drp.pipelines[pipeline]
+        except KeyError:
+            raise NoResultFound('pipeline not found')
+
+        try:
+            recipe = this_pipeline.get_recipe_object(mode)
+            return recipe
+        except KeyError:
+            raise NoResultFound('mode not found')
+
 
     def search_recipe_fqn(self, ins, mode, pipename):
 
@@ -147,6 +161,7 @@ class BaseDictDAL(AbsDAL):
                 # We have found the result, no more checks
                 # Make a copy
                 rprod = dict(prod)
+                print(tipo, prod['content'])
                 rprod['content'] = load(tipo, prod['content'])
                 return StoredProduct(**rprod)
         else:

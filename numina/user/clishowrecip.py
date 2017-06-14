@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -80,11 +80,12 @@ def show_recipes(args, extra_args):
         # Per instrument
         if theins:
             for pipe in theins.pipelines.values():
-                for mode, recipe_fqn in pipe.recipes.items():
+                for mode, recipe_entry in pipe.recipes.items():
+                    recipe_fqn = recipe_entry['class']
                     if not args.name or (recipe_fqn in args.name):
-                        Cls = import_object(recipe_fqn)
+                        recipe = pipe.get_recipe_object(mode)
                         this_recipe_print(
-                            Cls, name=recipe_fqn,
+                            recipe.__class__, name=recipe_fqn,
                             insname=theins.name,
                             pipename=pipe.name,
                             modename=mode

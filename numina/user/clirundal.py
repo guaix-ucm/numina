@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -122,26 +122,26 @@ def mode_run_common_obs(args, extra_args):
 
         _logger.debug("pipeline from CLI is %r", args.pipe_name)
         pipe_name = args.pipe_name
-        recipeclass = dal.search_recipe_from_ob(obsres, pipe_name)
-        _logger.debug('recipe class is %s', recipeclass)
-
-        rinput = recipeclass.build_recipe_input(obsres, dal, pipeline=pipe_name)
-        _logger.debug('recipe input created')
-
-        # Show the actual inputs
-        for key in recipeclass.requirements():
-            v = getattr(rinput, key)
-            _logger.debug("recipe requires %r, value is %s", key, v)
-
-        for req in recipeclass.products().values():
-            _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
-
-        os.chdir(cwd)
+        recipe = dal.search_recipe_from_ob(obsres, pipe_name)
+        _logger.debug('recipe class is %s', recipe.__class__)
 
         # Enable intermediate results by default
         _logger.debug('enable intermediate results')
-        recipe = recipeclass(intermediate_results=True)
+        recipe.intermediate_results = True
         _logger.debug('recipe created')
+
+        rinput = recipe.build_recipe_input(obsres, dal, pipeline=pipe_name)
+        _logger.debug('recipe input created')
+
+        # Show the actual inputs
+        for key in recipe.requirements():
+            v = getattr(rinput, key)
+            _logger.debug("recipe requires %r, value is %s", key, v)
+
+        for req in recipe.products().values():
+            _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
+
+        os.chdir(cwd)
 
         # Logging and task control
         logger_control = dict(
@@ -158,7 +158,7 @@ def mode_run_common_obs(args, extra_args):
         runinfo = {
             'taskid': obid,
             'pipeline': pipe_name,
-            'recipeclass': recipeclass,
+            'recipeclass': recipe.__class__,
             'workenv': workenv,
             'recipe_version': recipe.__version__,
             'instrument_configuration': args.insconf
