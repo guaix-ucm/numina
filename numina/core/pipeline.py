@@ -73,36 +73,29 @@ class InstrumentDRP(object):
         if products is None:
             self.products = {}
 
-    def query_provides_class(self, product, search=False):
+    def query_provides(self, product, search=False):
         """Return the mode that provides a given product"""
 
         try:
             return self.products[product]
         except KeyError:
-            raise ValueError('no mode provides %s' % product)
+            pass
 
-    def query_provides(self, productname, search=False):
-        """Return the mode that provides a given product"""
+        if search:
+            return self.search_mode_provides(product)
 
-        for p in self.products:
-            if p.name == productname:
-                return p
-        else:
-            if search:
-                return self.search_mode_provides(productname)
+        raise ValueError('no mode provides %s' % product)
 
-            raise ValueError('no mode provides %s' % productname)
-
-    def search_mode_provides(self, productname):
+    def search_mode_provides(self, product):
         """Search the mode that provides a given product"""
 
         for obj, mode, field in self.iterate_mode_provides():
             # extract name from obj
             name = obj.__class__.__name__
-            if name == productname:
+            if isinstance(obj, product):
                 return ProductEntry(name, mode, field)
         else:
-            raise ValueError('no mode provides %s' % productname)
+            raise ValueError('no mode provides %s' % product)
 
     def iterate_mode_provides(self):
         """Return the mode that provides a given product"""
@@ -111,9 +104,8 @@ class InstrumentDRP(object):
             mode_key = mode.key
             default_pipeline = self.pipelines['default']
             try:
-                fqn = default_pipeline.get_recipe(mode_key)
-                recipe_class = numina.core.objimport.import_object(fqn)
-                for key, provide in recipe_class.products().items():
+                recipe = default_pipeline.get_recipe_object(mode_key)
+                for key, provide in recipe.products().items():
                     if isinstance(provide.type, numina.core.products.DataProductTag):
                         yield provide.type, mode, key
             except KeyError:
@@ -126,6 +118,12 @@ class InstrumentDRP(object):
             key = 'default'
         return self.configurations[key]
 
+    def product_label(self, klass):
+        try:
+            res = self.products[klass]
+            return res.alias
+        except KeyError:
+            return klass.__name__
 
 class ProductEntry(object):
     def __init__(self, name, mode, field, alias=None):

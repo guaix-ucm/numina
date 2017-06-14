@@ -29,15 +29,6 @@ from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
 
 
-def product_label(drp, klass):
-    fqn = fully_qualified_name(klass)
-    for p in drp.products:
-        if p.name == fqn:
-            return p.alias
-    else:
-        return klass.__name__
-
-
 def tags_are_valid(subset, superset):
     for key, val in subset.items():
         if key in superset and superset[key] != val:
@@ -151,7 +142,7 @@ class BaseDictDAL(AbsDAL):
 
         klass = tipo.__class__
         drp = self.drps.query_by_name(ins)
-        label = product_label(drp, klass)
+        label = drp.product_label(klass)
 
         # search results of these OBs
         for prod in self.prod_table[ins]:
