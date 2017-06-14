@@ -36,7 +36,8 @@ dum_par = ''  # global variable in function keypress
 
 
 def ximshow(image2d, title=None, cbar_label=None, show=True,
-            z1z2=None, cmap="hot", image_bbox=(0, 0, 0, 0),
+            z1z2=None, cmap="hot",
+            image_bbox=None, first_pixel=(1,1),
             geometry=None, debugplot=None):
     """Auxiliary function to display a numpy 2d array.
 
@@ -57,11 +58,11 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
     cmap : string
         Color map to be employed.
     image_bbox : tuple (4 integers)
-        If (0,0,0,0), image is displayed with image coordinates
-        (indices corresponding to the numpy array). Otherwise,
-        the bounding box of the image is read from this tuple,
-        assuming (nc1,nc2,ns1,ns2). In this case, the coordinates
-        indicate pixels.
+        Image rectangle to be displayed, with indices given by
+        (nc1,nc2,ns1,ns2), which correspond to the numpy array:
+        image2d[(ns1-1):ns2,(nc1-1):nc2].
+    first_pixel : tuple (2 integers)
+        (x0,y0) coordinates of pixel at origin.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt5 backend geometry.
     debugplot : int
@@ -95,26 +96,24 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         raise ValueError("image2d.ndim=" + str(image2d.dim) +
                          " must be 2")
 
-    # read bounding box limits
-    nc1, nc2, ns1, ns2 = image_bbox
-    image_coord = (nc1 == 0 and nc2 == 0 and ns1 == 0 and ns2 == 0)
-
     naxis2_, naxis1_ = image2d.shape
 
-    if image_coord:
+    # read bounding box limits
+    if image_bbox is None:
         nc1 = 1
         nc2 = naxis1_
         ns1 = 1
         ns2 = naxis2_
-
-    # if not image_coord:
-    #     # check that image shape corresponds to bounding box size
-    #     if naxis1_ != nc2 - nc1 + 1:
-    #         raise ValueError("image2d.shape=" + str(image2d.shape) +
-    #                          " does not correspond to bounding box size")
-    #     if naxis2_ != ns2 - ns1 + 1:
-    #         raise ValueError("image2d.shape=" + str(image2d.shape) +
-    #                          " does not correspond to bounding box size")
+    else:
+        nc1, nc2, ns1, ns2 = image_bbox
+        if 1 <= nc1 <= nc2 <= naxis1_:
+            pass
+        else:
+            raise ValueError("Invalid bounding box limits")
+        if 1 <= ns1 <= ns2 <= naxis2_:
+            pass
+        else:
+            raise ValueError("Invalid bounding box limits")
 
     def get_current_zoom(ax_image, debug=False):
         """Return subimage corresponding to current zoom.
@@ -139,26 +138,30 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         ixmax = int(xmax_image + 0.5)
         iymin = int(ymin_image + 0.5)
         iymax = int(ymax_image + 0.5)
-        if ixmin < nc1 - 1:
-            ixmin = nc1 - 1
-        if ixmin > nc2 - 1:
-            ixmin = nc2 - 1
-        if ixmax < nc1 - 1:
-            ixmax = nc1 - 1
-        if ixmax > nc2 - 1:
-            ixmax = nc2 - 1
-        if iymin < ns1 - 1:
-            iymin = ns1 - 1
-        if iymin > ns2 - 1:
-            iymin = ns2 - 1
-        if iymax < ns1 - 1:
-            iymax = ns1 - 1
-        if iymax > ns2 - 1:
-            iymax = ns2 - 1
+        ixmin -= first_pixel[0] - 1
+        ixmax -= first_pixel[0] - 1
+        iymin -= first_pixel[1] - 1
+        iymax -= first_pixel[1] - 1
+        if ixmin < nc1:
+            ixmin = nc1
+        if ixmin > nc2:
+            ixmin = nc2
+        if ixmax < nc1:
+            ixmax = nc1
+        if ixmax > nc2:
+            ixmax = nc2
+        if iymin < ns1:
+            iymin = ns1
+        if iymin > ns2:
+            iymin = ns2
+        if iymax < ns1:
+            iymax = ns1
+        if iymax > ns2:
+            iymax = ns2
         if debug:
-            print("\n>>> xmin, xmax, ymin, ymax (pixels):",
-                  ixmin+1, ixmax+1, iymin+1, iymax+1)
-        return image2d[iymin:(iymax+1), ixmin:(ixmax+1)]
+            print("\n>>> xmin, xmax, ymin, ymax [pixels; origin (1,1)]:",
+                  ixmin, ixmax, iymin, iymax)
+        return image2d[(iymin-1):iymax, (ixmin-1):ixmax]
 
     def keypress(event):
         """Deal with keyboard events, allowing the update of vmin and vmax.
@@ -275,20 +278,12 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)
-    if image_coord:
-        xmin = -0.5
-        xmax = (naxis1_ - 1) + 0.5
-        ymin = -0.5
-        ymax = (naxis2_ - 1) + 0.5
-        ax.set_xlabel('image array index in the X direction')
-        ax.set_ylabel('image array index in the Y direction')
-    else:
-        xmin = float(nc1) - 0.5
-        xmax = float(nc2) + 0.5
-        ymin = float(ns1) - 0.5
-        ymax = float(ns2) + 0.5
-        ax.set_xlabel('image pixel in the X direction')
-        ax.set_ylabel('image pixel in the Y direction')
+    xmin = float(nc1) - 0.5 + (first_pixel[0] - 1)
+    xmax = float(nc2) + 0.5 + (first_pixel[0] - 1)
+    ymin = float(ns1) - 0.5 + (first_pixel[1] - 1)
+    ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
+    ax.set_xlabel('image pixel in the X direction')
+    ax.set_ylabel('image pixel in the Y direction')
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     ax.grid(False)
@@ -332,7 +327,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 
 def ximshow_file(singlefile,
-                 args_z1z2=None, args_bbox=None,
+                 args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_geometry=None,
                  pdf=None, show=True,
                  debugplot=None):
@@ -346,6 +341,8 @@ def ximshow_file(singlefile,
         String providing the image cuts tuple: z1, z2, minmax of None
     args_bbox : string or None
         String providing the bounding box tuple: nc1, nc2, ns1, ns2
+    args_firstpix : string or None
+        String providing the coordinates of lower left pixel.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
     args_geometry : string or None
@@ -454,11 +451,21 @@ def ximshow_file(singlefile,
         if ns2 > naxis2:
             ns2 = naxis2
 
+    # read coordinates of lower left pixel
+    if args_firstpix is None:
+        nc0 = 1
+        ns0 = 1
+    else:
+        tmp_firstpix = args_firstpix.split(",")
+        nc0 = int(tmp_firstpix[0])
+        ns0 = int(tmp_firstpix[1])
+
     # display image
     ax = ximshow(image2d=image2d, show=False,
                  title=title,
                  z1z2=z1z2,
                  image_bbox=(nc1, nc2, ns1, ns2),
+                 first_pixel=(nc0, ns0),
                  geometry=geometry,
                  debugplot=debugplot)
 
@@ -487,6 +494,8 @@ def main(args=None):
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
+    parser.add_argument("--firstpix",
+                        help="coordinates of lower left pixel: nc0, ns0")
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
@@ -522,6 +531,7 @@ def main(args=None):
         ximshow_file(singlefile=myfile,
                      args_z1z2=args.z1z2,
                      args_bbox=args.bbox,
+                     args_firstpix=args.firstpix,
                      args_keystitle=args.keystitle,
                      args_geometry=args.geometry,
                      pdf=pdf,
