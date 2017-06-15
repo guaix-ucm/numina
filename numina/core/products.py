@@ -51,7 +51,7 @@ class DataProductTag(object):
         except AttributeError:
             raise NoResultFound("DataProductTag.query_on_ob")
 
-    def query(self, name, dal, ob):
+    def query(self, name, dal, ob, options=None):
 
         try:
             return self.query_on_ob(name, ob)
@@ -208,7 +208,7 @@ class ObservationResultType(DataType):
         validator = _obtain_validator_for(obj.instrument, obj.mode)
         return validator(obj)
 
-    def query(self, name, dal, ob):
+    def query(self, name, dal, ob, options=None):
         return ob
 
     def on_query_not_found(self, notfound):
@@ -225,15 +225,12 @@ class InstrumentConfigurationType(DataType):
     def validate(self, obj):
         return True
 
-    def query_input(self, dal, ob, key):
+    def query(self, name, dal, ob, options=None):
         if not isinstance(ob.configuration, InstrumentConfiguration):
             warnings.warn(RuntimeWarning, 'instrument configuration not configured')
             return {}
         else:
             return ob.configuration
-
-    def query_req(self, req, dal, ob):
-        return self.query_input(req.dest, ob, dal)
 
     def on_query_not_found(self, notfound):
         raise notfound

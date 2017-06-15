@@ -72,7 +72,7 @@ class DataType(object):
             raise ValidationError(obj, self.internal_type)
         return True
 
-    def query(self, name, dal, ob):
+    def query(self, name, dal, ob, options=None):
 
         try:
             return self.query_on_ob(name, ob)
@@ -151,7 +151,7 @@ class PlainPythonType(DataType):
         default = stype()
         super(PlainPythonType, self).__init__(stype, default=default)
 
-    def query(self, name, dal, ob):
+    def query(self, name, dal, ob, options=True):
 
         try:
             return self.query_on_ob(name, ob)

@@ -42,8 +42,8 @@ class Requirement(EntryHolder):
     def convert(self, val):
         return self.type.convert_in(val)
 
-    def query(self, dal, obsres):
-        val = self.type.query(self.dest, dal, obsres)
+    def query(self, dal, obsres, options=None):
+        val = self.type.query(self.dest, dal, obsres, options=options)
         return val
 
     def on_query_not_found(self, notfound):
