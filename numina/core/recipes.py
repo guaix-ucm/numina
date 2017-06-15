@@ -57,6 +57,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         recipe.runinfo = {}
         recipe.environ = {}
         recipe.__version__ = 1
+        recipe.query_options = {}
         recipe.configure(**kwargs)
         return recipe
 
@@ -139,7 +140,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
 
-    def build_recipe_input(cls, ob, dal):
+    def build_recipe_input(self, ob, dal):
         """Build a RecipeInput object."""
 
         result = {}
@@ -158,11 +159,12 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
             raise ValueError('ob input is neither a ObservingBlock'
                              ' nor a ObservationResult')
 
-        for key, req in cls.requirements().items():
+        for key, req in self.requirements().items():
 
             try:
-                result[key] = req.query(dal, obsres)
+                query_option = self.query_options.get(key)
+                result[key] = req.query(dal, obsres, options=query_option)
             except NoResultFound as notfound:
                 req.on_query_not_found(notfound)
 
-        return cls.create_input(**result)
+        return self.create_input(**result)
