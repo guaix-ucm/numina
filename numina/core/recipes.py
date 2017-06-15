@@ -51,10 +51,10 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
     def __new__(cls, *args, **kwargs):
         recipe = super(BaseRecipe, cls).__new__(cls)
-        recipe.instrument = 'UNKNOWN'
-        recipe.mode = 'UNKNOWN'
-        recipe.intermediate_results = False
-        recipe.runinfo = {}
+        recipe.instrument = kwargs.get('instrument', 'UNKNOWN')
+        recipe.mode = kwargs.get('mode', 'UNKNOWN')
+        recipe.intermediate_results = kwargs.get('intermediate_results', False)
+        recipe.runinfo = kwargs.get('runinfo', {})
         recipe.environ = {}
         recipe.__version__ = 1
         recipe.query_options = {}
