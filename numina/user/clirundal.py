@@ -27,32 +27,25 @@ import datetime
 import yaml
 
 import numina.drps
-from numina.dal.dictdal import BaseDictDAL
+from numina.dal.dictdal import HybridDAL
+from numina.dal.clidal import CommandLineDAL
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
-from .clidal import process_format_version_0
+
 
 DEFAULT_RECIPE_LOGGER = 'numina.recipes'
 
 _logger = logging.getLogger("numina")
 
 
-class Dict2DAL(BaseDictDAL):
-    def __init__(self, drps, obtable, base, extra_data=None):
-
-        prod_table = base['products']
-
-        if 'parameters' in base:
-            req_table = base['parameters']
-        else:
-            req_table = base['requirements']
-
-        super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
+def process_format_version_0(loaded_obs, loaded_data, loaded_data_extra=None):
+    drps = numina.drps.get_system_drps()
+    return CommandLineDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
 
 
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
     drps = numina.drps.get_system_drps()
-    return Dict2DAL(drps, loaded_obs, loaded_data, loaded_data_extra)
+    return HybridDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
 
 
 def mode_run_common(args, extra_args, mode):

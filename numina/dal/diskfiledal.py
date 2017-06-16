@@ -25,21 +25,60 @@ from __future__ import print_function
 
 import os
 import itertools
+import logging
 
 from numina.core import import_object
 from numina.store import load
 from numina.exceptions import NoResultFound
 from numina.dal import StoredProduct
 
-
-DAL_USE_OFFLINE_CALIBS = True
+_logger = logging.getLogger(__name__)
 
 
 def _combinations(seq):
     maxl = len(seq)
-    for i in range(maxl + 1):
+    for i in range(maxl + 1, -1, -1):
         for j in itertools.combinations(seq, i):
             yield j
+
+
+def build_product_path(drp, rootdir, conf, name, tipo, ob):
+    klass = tipo.__class__
+    _logger.info('search %s of type %s', name, tipo)
+
+    try:
+        res = drp.query_provides(tipo.__class__)
+        label = res.alias
+    except ValueError:
+        label = tipo.__class__.__name__
+
+    # search results of these OBs
+    # build path based in combinations of tags
+    for com in _combinations(ob.tags.values()):
+        directory = os.path.join(rootdir, ob.instrument, conf, label, *com)
+        _logger.debug('try directory %s', directory)
+        try:
+            files_s = [filename for filename in sorted(os.listdir(directory))]
+            _logger.debug("files in directory: %s", files_s)
+            for fname in files_s:
+                loadpath = os.path.join(directory, fname)
+                _logger.debug("check %s", loadpath)
+                if os.path.isfile(loadpath):
+                    _logger.debug("is regular file %s", loadpath)
+                    _logger.info("found %s", loadpath)
+                    return loadpath
+                else:
+                    _logger.debug("is not regular file %s", loadpath)
+        except OSError as msg:
+            _logger.debug("%s", msg)
+    else:
+        msg = 'type %s compatible with tags %r not found' % (
+            klass, ob.tags)
+        _logger.info("%s", msg)
+        raise NoResultFound(msg)
+
+
+DAL_USE_OFFLINE_CALIBS = True
 
 
 class DiskFileDAL(object):

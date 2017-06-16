@@ -19,6 +19,8 @@
 
 """DAL for dictionary-based database of products."""
 
+import logging
+
 from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
@@ -27,6 +29,9 @@ from numina.exceptions import NoResultFound
 from .absdal import AbsDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
+from .diskfiledal import build_product_path
+
+_logger = logging.getLogger("numina.dal.dictdal")
 
 
 def tags_are_valid(subset, superset):
@@ -40,7 +45,7 @@ class BaseDictDAL(AbsDAL):
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
         super(BaseDictDAL, self).__init__()
 
-        # Check that the structure de base is correct
+        # Check that the structure of the base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
         self.req_table = req_table
@@ -279,3 +284,65 @@ class DictDAL(BaseDictDAL):
             base['products'],
             base['parameters']
         )
+
+
+class Dict2DAL(BaseDictDAL):
+    def __init__(self, drps, obtable, base, extra_data=None):
+
+        prod_table = base['products']
+
+        if 'parameters' in base:
+            req_table = base['parameters']
+        else:
+            req_table = base['requirements']
+
+        super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
+
+
+class HybridDAL(Dict2DAL):
+    def __init__(self, drps, obtable, base, extra_data=None):
+        self.rootdir = base.get("rootdir", "")
+
+        super(HybridDAL, self).__init__(drps, obtable, base, extra_data)
+
+
+    def search_product(self, name, tipo, obsres):
+        if name in self.extra_data:
+            val = self.extra_data[name]
+            content = load(tipo, val)
+            return StoredProduct(id=0, tags={}, content=content)
+        else:
+            return self.search_prod_table(name, tipo, obsres)
+
+    def search_prod_table(self, name, tipo, obsres):
+        """Returns the first coincidence..."""
+
+        instrument = obsres.instrument
+
+        conf = obsres.configuration.uuid
+
+        klass = tipo.__class__
+        drp = self.drps.query_by_name(instrument)
+        label = drp.product_label(klass)
+
+        # search results of these OBs
+        for prod in self.prod_table[instrument]:
+            pk = prod['type']
+            pt = prod['tags']
+            if pk == label and tags_are_valid(pt, obsres.tags):
+                # this is a valid product
+                # We have found the result, no more checks
+                # Make a copy
+                rprod = dict(prod)
+
+                if 'content' in prod:
+                    path = prod['content']
+                else:
+                    # Build path
+                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+                _logger.debug("path is %s", path)
+                rprod['content'] = load(tipo, path)
+                return StoredProduct(**rprod)
+        else:
+            msg = 'type %s compatible with tags %r not found' % (klass, obsres.tags)
+            raise NoResultFound(msg)

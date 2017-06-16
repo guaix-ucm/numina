@@ -18,7 +18,6 @@
 
 import logging
 
-import numina.drps
 from numina.exceptions import NoResultFound
 from numina.dal import AbsDAL
 from numina.dal import StoredProduct
@@ -28,12 +27,8 @@ from numina.core import import_object
 from numina.core import obsres_from_dict
 import numina.store as storage
 
-_logger = logging.getLogger("numina.simpledal")
 
-
-def process_format_version_0(loaded_obs, loaded_data, loaded_data_extra=None):
-    drps = numina.drps.get_system_drps()
-    return CommandLineDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
+_logger = logging.getLogger("numina.dal.clidal")
 
 
 class CommandLineDAL(AbsDAL):
@@ -162,3 +157,5 @@ class CommandLineDAL(AbsDAL):
 
     def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         raise NotImplementedError
+
+
