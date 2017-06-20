@@ -20,6 +20,7 @@
 """DAL for dictionary-based database of products."""
 
 import logging
+from itertools import chain
 
 from numina.core import import_object
 from numina.core import fully_qualified_name
@@ -312,9 +313,9 @@ class HybridDAL(Dict2DAL):
             content = load(tipo, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
-            return self.search_prod_table(name, tipo, obsres)
+            return self._search_prod_table(name, tipo, obsres)
 
-    def search_prod_table(self, name, tipo, obsres):
+    def _search_prod_table(self, name, tipo, obsres):
         """Returns the first coincidence..."""
 
         instrument = obsres.instrument
@@ -345,4 +346,56 @@ class HybridDAL(Dict2DAL):
                 return StoredProduct(**rprod)
         else:
             msg = 'type %s compatible with tags %r not found' % (klass, obsres.tags)
+            raise NoResultFound(msg)
+
+    def search_result(self, name, tipo, obsres, resultid=None):
+
+        if resultid is None:
+            for g in chain([tipo.name()], tipo.generators()):
+                if g in obsres.results:
+                    resultid = obsres.results[g]
+                    break
+            else:
+                raise NoResultFound("resultid not found")
+        prod = self._search_result(name, tipo, obsres, resultid)
+        return prod
+
+    def search_last_result(self, name, tipo, obsres):
+        #instrument = obsres.instrument
+        #mode = "LS_ABBA"
+        #field = "accum"
+        #dal.getLastRecipeResult("EMIR", "EMIR", "LS_ABBA")
+        #accum_dither = latest_result['elements']['accum']
+        pass
+
+    def _search_result(self, name, tipo, obsres, resultid):
+        """Returns the first coincidence..."""
+
+        instrument = obsres.instrument
+
+        conf = obsres.configuration.uuid
+
+        klass = tipo.__class__
+        drp = self.drps.query_by_name(instrument)
+        label = drp.product_label(klass)
+
+        # search results of these OBs
+        for prod in self.prod_table[instrument]:
+            pid = prod['id']
+            if pid == resultid:
+                # this is a valid product
+                # We have found the result, no more checks
+                # Make a copy
+                rprod = dict(prod)
+
+                if 'content' in prod:
+                    path = prod['content']
+                else:
+                    # Build path
+                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+                _logger.debug("path is %s", path)
+                rprod['content'] = load(tipo, path)
+                return StoredProduct(**rprod)
+        else:
+            msg = 'result with id %s not found' % (resultid, )
             raise NoResultFound(msg)

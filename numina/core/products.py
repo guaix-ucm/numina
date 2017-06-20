@@ -18,6 +18,7 @@
 
 import sys
 import warnings
+from itertools import chain
 
 import six
 import numpy
@@ -36,6 +37,12 @@ from numina.ext.gtc import DF
 
 class DataProductTag(object):
     """A type that is a data product."""
+
+    def name(self):
+        return self.__class__.__name__
+
+    def generators(self):
+        return []
 
     @classmethod
     def isproduct(cls):
@@ -58,9 +65,16 @@ class DataProductTag(object):
         except NoResultFound:
             pass
 
-        #param = dal.search_param_req_tags(req, ob.instrument,
-        #                                      ob.mode, ob.tags, ob.pipeline)
-        prod = dal.search_product(name, self, ob)
+        # If ob declares a particular ID, check that
+        for g in chain([self.name()], self.generators()):
+            if g in ob.results:
+                resultid = ob.results[g]
+                prod = dal.search_result(name, self, ob, resultid)
+                break
+        else:
+            # if not, the normal query
+            prod = dal.search_product(name, self, ob)
+
         return prod.content
 
     def on_query_not_found(self, notfound):
