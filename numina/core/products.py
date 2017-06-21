@@ -38,15 +38,17 @@ from numina.ext.gtc import DF
 class DataProductTag(object):
     """A type that is a data product."""
 
-    def name(self):
-        return self.__class__.__name__
-
     def generators(self):
         return []
 
     @classmethod
     def isproduct(cls):
         return True
+
+    def name(self):
+        """Unique name of the datatype"""
+        sclass = type(self).__name__
+        return "%s" % (sclass, )
 
     def query_on_ob(self, key, ob):
         # First check if the requirement is embedded

@@ -123,6 +123,10 @@ class DataType(object):
         sclass = type(self).__name__
         return "%s()" % (sclass, )
 
+    def name(self):
+        """Unique name of the datatype"""
+        return self.__repr__()
+
 
 class AutoDataType(DataType):
     """Data type for types that are its own python type"""
