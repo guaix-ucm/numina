@@ -23,7 +23,7 @@ import warnings
 
 import numina.core.objimport
 import numina.core.products
-
+import numina.core.deptree
 
 class Pipeline(object):
     """Base class for pipelines."""
@@ -33,11 +33,20 @@ class Pipeline(object):
         self.recipes = recipes
         self.version = version
 
+        self._cache = {}
+        self._requires = {}
+        self._provides = {}
+
     def get_recipe(self, mode):
         node = self.recipes[mode]
         return node['class']
 
     def get_recipe_object(self, mode):
+        """Load recipe object, according to observing mode"""
+
+        if mode in self._cache:
+            return self._cache[mode]
+
         recipe_entry = self.recipes[mode]
 
         recipe_fqn = recipe_entry['class']
@@ -58,7 +67,78 @@ class Pipeline(object):
         recipe.mode = mode
         recipe.instrument = self.instrument
 
+        self._cache[mode] = recipe
+
         return recipe
+
+    def init_depsolve(self):
+        """Load all recipes to search for products"""
+        # load everything
+        for mode, r in self.recipes.items():
+            l = self.get_recipe_object(mode)
+
+            for field, vv in l.requirements().items():
+                name = vv.type.name()
+                pe = ProductEntry(name, mode, field, alias=None)
+                #print("--->", field, vv.type, pe)
+
+            for field, vv in l.products().items():
+                name = vv.type.name()
+                pe = ProductEntry(name, mode, field, alias=None)
+                #print("+++>", field, vv.type, pe)
+                self._provides[pe] = name
+
+    def query_provides(self, obj):
+        """Return the mode that provides some requirement"""
+        key = obj.type.name()
+
+        result = []
+        for k in self._provides:
+            if k.name == key:
+                result.append(k)
+        return result
+
+    def _query_recipe(self, thismode, modes):
+        if thismode in modes:
+            thisnode = modes[thismode]
+        else:
+            thisnode = numina.core.deptree.DepNode(thismode)
+            modes[thismode] = thisnode
+
+        l = self.get_recipe_object(thismode)
+        for field, vv in l.requirements().items():
+            if vv.type.isproduct():
+
+                result = self.query_provides(vv)
+                # get first result
+                if result:
+                    good = result[0]
+                    recurse = False
+                    if good.mode not in modes:
+                        # Add link
+                        recurse = True
+                        node = numina.core.deptree.DepNode(good.mode)
+                        modes[good.mode] = node
+
+
+                    node = modes[good.mode]
+                    weight = 1
+                    if vv.optional:
+                        weight = 0
+                    #print "link", thismode, "with", good.mode
+                    newlink = numina.core.deptree.DepLink(node, weight=weight)
+                    thisnode.links.append(newlink)
+                    if recurse:
+                        self._query_recipe(good.mode, modes)
+                else:
+                    # No recipe provides this product
+                    pass
+        return modes
+
+    def query_recipe(self, mode):
+        """Recursive query of all calibrations required by a mode"""
+        allmodes = self._query_recipe(mode, {})
+        return allmodes[mode]
 
 
 class InstrumentDRP(object):
@@ -118,12 +198,14 @@ class InstrumentDRP(object):
             key = 'default'
         return self.configurations[key]
 
-    def product_label(self, klass):
+    def product_label(self, tipo):
         try:
+            klass = tipo.__class__
             res = self.products[klass]
             return res.alias
         except KeyError:
-            return klass.__name__
+            return tipo.name()
+
 
 class ProductEntry(object):
     def __init__(self, name, mode, field, alias=None):
@@ -135,6 +217,11 @@ class ProductEntry(object):
             self.alias = split_name[-1]
         else:
             self.alias = alias
+
+    def __repr__(self):
+        msg = 'ProductEntry(name="{}", mode="{}", field="{}")'.format(
+            self.name, self.mode, self.field)
+        return msg
 
 
 class InstrumentConfiguration(object):
