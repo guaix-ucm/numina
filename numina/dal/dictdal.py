@@ -353,8 +353,12 @@ class HybridDAL(Dict2DAL):
                 rprod['content'] = load(tipo, path)
                 return StoredProduct(**rprod)
         else:
-            msg = 'type %s compatible with tags %r not found' % (tipo, obsres.tags)
-            raise NoResultFound(msg)
+            # Not in table, try file directly
+            _logger.debug("%s not in table, try file directly", tipo)
+            path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+            _logger.debug("path is %s", path)
+            content = load(tipo, path)
+            return StoredProduct(id=0, content=content, tags=obsres.tags)
 
     def search_result(self, name, tipo, obsres, resultid=None):
 

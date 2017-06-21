@@ -74,7 +74,7 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob):
             _logger.debug("%s", msg)
     else:
         msg = 'type %s compatible with tags %r not found' % (
-            klass, ob.tags)
+            label, ob.tags)
         _logger.info("%s", msg)
         raise NoResultFound(msg)
 
