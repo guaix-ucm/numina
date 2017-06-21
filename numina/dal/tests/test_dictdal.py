@@ -144,7 +144,9 @@ def test_search_prod_req_tags1(basedictdal):
     import numina.core
 
     class DemoType1(object):
-        pass
+        def name(self):
+            return "DemoType1"
+
 
     req = numina.core.Requirement(DemoType1, description='Demo1 Requirement')
     ins = 'TEST1'
@@ -162,7 +164,9 @@ def test_search_prod_req_tags2(basedictdal):
     import numina.core
 
     class DemoType2(object):
-        pass
+        def name(self):
+            return "DemoType2"
+
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
@@ -180,7 +184,9 @@ def test_search_prod_req_tags3(basedictdal):
     import numina.core
 
     class DemoType2(object):
-        pass
+        def name(self):
+            return "DemoType2"
+
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
@@ -194,7 +200,9 @@ def test_search_prod_req_tags4(basedictdal):
     import numina.core
 
     class DemoType2(object):
-        pass
+        def name(self):
+            return "DemoType2"
+
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'

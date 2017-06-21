@@ -146,24 +146,28 @@ class BaseDictDAL(AbsDAL):
     def search_prod_type_tags(self, tipo, ins, tags, pipeline):
         """Returns the first coincidence..."""
 
-        klass = tipo.__class__
         drp = self.drps.query_by_name(ins)
-        label = drp.product_label(klass)
+        label = drp.product_label(tipo)
+
+        # Strip () is present
+        if label.endswith("()"):
+            label_alt = label[:-2]
+        else:
+            label_alt = label
 
         # search results of these OBs
         for prod in self.prod_table[ins]:
             pk = prod['type'] 
             pt = prod['tags']
-            if pk == label and tags_are_valid(pt, tags):
+            if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, tags):
                 # this is a valid product
                 # We have found the result, no more checks
                 # Make a copy
                 rprod = dict(prod)
-                print(tipo, prod['content'])
                 rprod['content'] = load(tipo, prod['content'])
                 return StoredProduct(**rprod)
         else:
-            msg = 'type %s compatible with tags %r not found' % (klass, tags)
+            msg = 'type %s compatible with tags %r not found' % (tipo, tags)
             raise NoResultFound(msg)
 
     def search_param_req(self, req, instrument, mode, pipeline):
@@ -322,15 +326,19 @@ class HybridDAL(Dict2DAL):
 
         conf = obsres.configuration.uuid
 
-        klass = tipo.__class__
         drp = self.drps.query_by_name(instrument)
-        label = drp.product_label(klass)
+        label = drp.product_label(tipo)
+        # Strip () is present
+        if label.endswith("()"):
+            label_alt = label[:-2]
+        else:
+            label_alt = label
 
         # search results of these OBs
         for prod in self.prod_table[instrument]:
             pk = prod['type']
             pt = prod['tags']
-            if pk == label and tags_are_valid(pt, obsres.tags):
+            if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, obsres.tags):
                 # this is a valid product
                 # We have found the result, no more checks
                 # Make a copy
@@ -345,7 +353,7 @@ class HybridDAL(Dict2DAL):
                 rprod['content'] = load(tipo, path)
                 return StoredProduct(**rprod)
         else:
-            msg = 'type %s compatible with tags %r not found' % (klass, obsres.tags)
+            msg = 'type %s compatible with tags %r not found' % (tipo, obsres.tags)
             raise NoResultFound(msg)
 
     def search_result(self, name, tipo, obsres, resultid=None):
@@ -375,9 +383,8 @@ class HybridDAL(Dict2DAL):
 
         conf = obsres.configuration.uuid
 
-        klass = tipo.__class__
         drp = self.drps.query_by_name(instrument)
-        label = drp.product_label(klass)
+        label = drp.product_label(tipo)
 
         # search results of these OBs
         for prod in self.prod_table[instrument]:

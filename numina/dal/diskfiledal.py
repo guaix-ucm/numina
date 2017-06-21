@@ -47,10 +47,11 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob):
     _logger.info('search %s of type %s', name, tipo)
 
     try:
+        # FIXME
         res = drp.query_provides(tipo.__class__)
         label = res.alias
     except ValueError:
-        label = tipo.__class__.__name__
+        label = tipo.name()
 
     # search results of these OBs
     # build path based in combinations of tags
