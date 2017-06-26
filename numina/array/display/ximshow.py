@@ -35,7 +35,8 @@ dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
 
 
-def ximshow(image2d, title=None, cbar_label=None, show=True,
+def ximshow(image2d, title=None, show=True,
+            cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1,1),
             geometry=None, debugplot=None):
@@ -49,6 +50,9 @@ def ximshow(image2d, title=None, cbar_label=None, show=True,
         Plot title.
     cbar_label : string
         Color bar label.
+    cbar_orientation : string
+        Color bar orientation: valid options are 'horizontal' or
+        'vertical'.
     show : bool
         If True, the function shows the displayed image. Otherwise
         the function just invoke the plt.imshow() function and
@@ -303,8 +307,10 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                          extent=[xmin, xmax, ymin, ymax])
     if cbar_label is None:
         cbar_label = "Number of counts"
+    if cbar_orientation is None:
+        cbar_orientation = "horizontal"
     plt.colorbar(im_show, shrink=1.0, label=cbar_label,
-                 orientation="horizontal")
+                 orientation=cbar_orientation)
     if title is not None:
         ax.set_title(title)
 
@@ -327,6 +333,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 
 def ximshow_file(singlefile,
+                 args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_geometry=None,
                  pdf=None, show=True,
@@ -337,6 +344,11 @@ def ximshow_file(singlefile,
     ----------
     singlefile : string
         Name of the FITS file to be displayed.
+    args_cbar_label : string
+        Color bar label.
+    args_cbar_orientation : string
+        Color bar orientation: valid options are 'horizontal' or
+        'vertical'.
     args_z1z2 : string or None
         String providing the image cuts tuple: z1, z2, minmax of None
     args_bbox : string or None
@@ -462,6 +474,8 @@ def ximshow_file(singlefile,
 
     # display image
     ax = ximshow(image2d=image2d, show=False,
+                 cbar_label=args_cbar_label,
+                 cbar_orientation=args_cbar_orientation,
                  title=title,
                  z1z2=z1z2,
                  image_bbox=(nc1, nc2, ns1, ns2),
