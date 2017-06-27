@@ -59,7 +59,7 @@ class RecipeInOut(object):
             try:
                 getattr(self, key)
             except ValueError as err:
-                all_msg_errors.append(err.message)
+                all_msg_errors.append(err.args[0])
 
         # Raises a list of all the missing entries
         if all_msg_errors:
