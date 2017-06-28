@@ -70,8 +70,15 @@ def mode_run_common_obs(args, extra_args):
 
         with open(obfile) as fd:
             for doc in yaml.load_all(fd):
-                loaded_ids.append(doc['id'])
-                loaded_obs[doc['id']] = doc
+                enabled = doc.get('enabled', True)
+                docid = doc['id']
+                if enabled:
+                    _logger.debug("load observation result with id %s", docid)
+                    loaded_ids.append(docid)
+                    loaded_obs[docid] = doc
+                else:
+                    _logger.debug("skip observation result with id %s", docid)
+
 
     if args.reqs:
         _logger.info('reading control from %s', args.reqs)
