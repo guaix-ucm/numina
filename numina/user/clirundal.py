@@ -166,6 +166,7 @@ def mode_run_common_obs(args, extra_args):
             workenv.sane_work()
             workenv.copyfiles_stage1(obsres)
             workenv.copyfiles_stage2(rinput)
+            workenv.adapt_obsres(obsres)
 
         completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
                                     workenv=workenv, task_control=task_control)

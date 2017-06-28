@@ -192,6 +192,15 @@ class WorkEnvironment(object):
             with open(self.index_file, 'wb') as fd:
                 pickle.dump(self.hashes, fd)
 
+    def adapt_obsres(self, obsres):
+        """Adapt obsres after file copy"""
+
+        _logger.debug('adapt observation result for work dir')
+        for f in obsres.images:
+            # Remove path components
+            f.filename = os.path.basename(f.filename)
+        return obsres
+
 
 def compute_md5sum_file(filename):
     import hashlib
