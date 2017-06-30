@@ -131,7 +131,13 @@ def mode_run_common_obs(args, extra_args):
         recipe.intermediate_results = True
         _logger.debug('recipe created')
 
-        rinput = recipe.build_recipe_input(obsres, dal)
+        try:
+            rinput = recipe.build_recipe_input(obsres, dal)
+        except ValueError as err:
+            _logger.error("During recipe input construction")
+            for msg in err.args[0]:
+                _logger.error(msg)
+            sys.exit(0)
         _logger.debug('recipe input created')
 
         # Show the actual inputs
