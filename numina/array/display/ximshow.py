@@ -484,7 +484,10 @@ def ximshow_file(singlefile,
                  debugplot=debugplot)
 
     if pdf is not None:
-        pdf.savefig()
+        if show:
+            pdf.savefig()
+        else:
+            return ax
     else:
         if show:
             import matplotlib.pyplot as plt
