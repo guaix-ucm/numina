@@ -22,6 +22,7 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .pause_debugplot import pause_debugplot
@@ -384,6 +385,10 @@ def ximshow_file(singlefile,
 
     """
 
+    import matplotlib
+    matplotlib.use('Qt5Agg')
+    import matplotlib.pyplot as plt
+
     # read z1, z2
     if args_z1z2 is None:
         z1z2 = None
@@ -485,6 +490,7 @@ def ximshow_file(singlefile,
 
     if pdf is not None:
         pdf.savefig()
+        plt.close()
     else:
         if show:
             import matplotlib.pyplot as plt
