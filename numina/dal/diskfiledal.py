@@ -67,7 +67,7 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob):
                 if fname.startswith("."):
                     _logger.debug("file %s is hidden, ignore", loadpath)
                     continue
-                if os.os.path.isfile(loadpath):
+                if os.path.isfile(loadpath):
                     _logger.debug("is regular file %s", loadpath)
                     _logger.info("found %s", loadpath)
                     return loadpath
