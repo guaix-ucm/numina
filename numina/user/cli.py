@@ -30,6 +30,7 @@ from importlib import import_module
 
 import six.moves.configparser as configparser
 import pkg_resources
+import yaml
 
 from numina import __version__
 
@@ -108,17 +109,19 @@ def main(args=None):
         import numina.ext.gtc
         numina.ext.gtc.ignore_gtc_check()
 
-    if args.logging is not None:
-        logging.config.fileConfig(args.logging)
-    else:
-        # This should be a default path in defaults.cfg
-        try:
-            args.logging = config.get('numina', 'logging')
-            logging.config.fileConfig(args.logging)
-        except configparser.Error:
-            logging.config.dictConfig(numina_cli_logconf)
+    try:
+        if args.logging is not None:
+            loggingf = args.logging
+        else:
+            loggingf = config.get('numina', 'logging')
 
-    _logger.info('Numina simple recipe runner version %s', __version__)
+        with open(loggingf) as logfile:
+            logconf = yaml.load(logfile)
+            logging.config.dictConfig(logconf)
+    except configparser.Error:
+        logging.config.dictConfig(numina_cli_logconf)
+
+    _logger.debug('Numina simple recipe runner version %s', __version__)
 
     args.command(args, extra_args)
 
