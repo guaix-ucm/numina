@@ -22,6 +22,9 @@ from __future__ import print_function
 
 import matplotlib.pyplot as plt
 
+DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12,
+                   -21, 21, -22, 22)
+
 
 def pause_debugplot(debugplot, optional_prompt=None, pltshow=False):
     """Ask the user to press RETURN to continue after plotting.
@@ -39,14 +42,17 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False):
         12 : debug, plots with pauses
         21 : debug, extra plots without pauses
         22 : debug, extra plots with pause
+        NOTE: negative values are also valid and indicate that a call
+        to plt.close() is also performed
     optional_prompt : string
         Optional prompt.
     pltshow : bool
         If True, a call to plt.show() is also performed.
-    pltclose: bool
-        If True, a call to plt.close() is also performed.
 
     """
+
+    if debugplot not in DEBUGPLOT_CODES:
+        raise ValueError('Invalid debugplot value:', debugplot)
 
     if debugplot < 0:
         debugplot_ = -debugplot
