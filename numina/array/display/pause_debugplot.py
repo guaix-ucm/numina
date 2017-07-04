@@ -43,14 +43,23 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False):
         Optional prompt.
     pltshow : bool
         If True, a call to plt.show() is also performed.
+    pltclose: bool
+        If True, a call to plt.close() is also performed.
 
     """
 
-    if debugplot in [1, 2, 11, 12, 21, 22] and pltshow:
+    if debugplot < 0:
+        debugplot_ = -debugplot
+        pltclose = True
+    else:
+        debugplot_ = debugplot
+        pltclose = False
+
+    if debugplot_ in [1, 2, 11, 12, 21, 22] and pltshow:
         plt.show(block=False)
         plt.pause(0.001)
 
-    if debugplot in [2, 12, 22]:
+    if debugplot_ in [2, 12, 22]:
         try:
             if optional_prompt is not None:
                 input(optional_prompt)
@@ -60,3 +69,6 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False):
             pass
 
         print(' ')
+
+    if debugplot_ in [1, 2, 11, 12, 21, 22] and pltclose:
+        plt.close()
