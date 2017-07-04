@@ -20,8 +20,10 @@
 from __future__ import division
 from __future__ import print_function
 
+import matplotlib.pyplot as plt
 
-def pause_debugplot(debugplot, optional_prompt=None):
+
+def pause_debugplot(debugplot, optional_prompt=None, pltshow=False):
     """Ask the user to press RETURN to continue after plotting.
 
     Parameters
@@ -35,8 +37,18 @@ def pause_debugplot(debugplot, optional_prompt=None):
         10 : debug, no plots
         11 : debug, plots without pauses
         12 : debug, plots with pauses
+        21 : debug, extra plots without pauses
+        22 : debug, extra plots with pause
+    optional_prompt : string
+        Optional prompt.
+    pltshow : bool
+        If True, a call to plt.show() is also performed.
 
     """
+
+    if debugplot in [1, 2, 11, 12, 21, 22] and pltshow:
+        plt.show(block=False)
+        plt.pause(0.001)
 
     if debugplot in [2, 12, 22]:
         try:
