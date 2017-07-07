@@ -32,8 +32,10 @@ pipelines:
              simulate_error: True
           dark: numina.tests.recipes.DarkRecipe
           fail: numina.core.utils.AlwaysFailRecipe
+      products:
+          MasterBias: numina.tests.recipes.MasterBias
+      provides:
+          - name: MasterBias
+            mode: bias
+            field: master_bias
       version: 1
-products:
-  - name: numina.tests.recipes.MasterBias
-    mode: bias
-    field: master_bias

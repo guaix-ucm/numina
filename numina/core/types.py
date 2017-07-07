@@ -19,6 +19,7 @@
 
 import inspect
 
+from numina.util.parser import parse_arg_line
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
 from .typedialect import dialect_info
@@ -126,6 +127,32 @@ class DataType(object):
     def name(self):
         """Unique name of the datatype"""
         return self.__repr__()
+
+    @classmethod
+    def from_name(cls, name):
+        # name is in the form Class(arg1=val1, arg2=val2)
+        # find first (
+        fp = name.find('(')
+        sp = name.find(')')
+        if (fp == -1) or (sp == -1) or (sp < fp):
+            # paren not found
+            klass = name
+            kwargs = {}
+        else:
+            import ast
+            # parse things between parens
+            klass = name[:fp]
+            fargs = name[fp+1:sp]
+            kwargs = parse_arg_line(fargs)
+
+        if klass == cls.__name__:
+            # create thing
+            obj = cls.__new__(cls)
+            obj.__init__(**kwargs)
+
+            return obj
+        else:
+            raise TypeError
 
     def extract_tags(self, obj):
         return {}

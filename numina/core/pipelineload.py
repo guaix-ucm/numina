@@ -23,6 +23,7 @@ import pkgutil
 import yaml
 import os
 
+import six
 from six import StringIO
 
 from .objimport import import_object
@@ -79,10 +80,9 @@ def load_mode(node):
             return get_tags_from_full_ob(obsres, reqtags=ntagger)
 
         obs_mode.tagger = full_tagger
-    elif isinstance(ntagger, str):
+    elif isinstance(ntagger, six.string_types):
         # load function
         obs_mode.tagger = import_object(ntagger)
-
     else:
         raise TypeError('tagger must be None, a list or a string')
 
@@ -156,9 +156,18 @@ def load_pipeline(instrument, name, node):
     keys = ['recipes', 'version']
     check_section(node, 'pipeline', keys=keys)
 
-    recipes = load_recipes("recipes", node['recipes'])
+    recipes = load_base("recipes", node['recipes'])
+    if 'products' in node:
+        products = load_base("products", node['products'])
+    else:
+        products = {}
+    if 'provides' in node:
+        provides = load_prods(node['provides'], recipes.keys())
+    else:
+        provides = []
     version = node['version']
-    return Pipeline(instrument, name, recipes, version)
+    return Pipeline(instrument, name, recipes, version=version,
+                    products=products, provides=provides)
 
 
 def load_recipe(name, node):
@@ -176,7 +185,7 @@ def load_recipe(name, node):
     return recipe
 
 
-def load_recipes(name, node):
+def load_base(name, node):
 
     #keys = ['recipes', 'version']
     #check_section(node, 'pipeline', keys=keys)
@@ -187,17 +196,15 @@ def load_recipes(name, node):
 
 
 def load_prods(node, allmodes):
-    result = {}
+    result = []
     for entry in node:
         name = entry['name']
-        alias = entry.get('alias')
         mode_name = entry['mode']
         field = entry['field']
-        klass = import_object(name)
-        for mode in allmodes:
-            if mode.key == mode_name:
-                prod = ProductEntry(name, mode, field, alias=alias)
-                result[klass] = prod
+        for mode_key in allmodes:
+            if mode_key == mode_name:
+                prod = ProductEntry(name, mode_key, field)
+                result.append(prod)
                 break
         else:
             # Undefined mode
@@ -215,14 +222,12 @@ def load_instrument(package, node, confclass=None):
     pipe_node = node['pipelines']
     mode_node = node['modes']
     conf_node = node['configurations']
-    prod_node = node.get('products', [])
 
     trans = {'name': node['name']}
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
     confs, selector = load_confs(package, conf_node, confclass=confclass)
     trans['configurations'] = confs
-    trans['products'] = load_prods(prod_node, trans['modes'])
     ins = InstrumentDRP(**trans)
     ins.selector = selector
     return ins
