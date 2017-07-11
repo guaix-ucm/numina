@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2016 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -31,26 +31,28 @@ def norm_pdf_t(x):
     return np.exp(-0.5 * x * x) / M_SQRT_2_PI
 
 
-def gauss_box_model(x, amplitude=1.0, location=0.0, s=1.0, d=0.5):
-    '''Integrate a Gaussian profile.'''
-    m2 = (x + d - location) / s
-    m1 = (x - d - location) / s
-    return amplitude * (norm.cdf(m2) - norm.cdf(m1))
+def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
+    """"Integrate a Gaussian profile."""
+    z = (x - mean) / stddev
+    z2 = z + hpix / stddev
+    z1 = z - hpix / stddev
+    return amplitude * (norm.cdf(z2) - norm.cdf(z1))
 
 
-def gauss_box_model_deriv(x, amplitude=1.0, location=0.0, s=1.0, d=0.5):
-    '''Integrate a Gaussian profile.'''
-    z2 = (x + d - location) / s
-    z1 = (x - d - location) / s
+def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
+    """Integrate a Gaussian profile."""
+    z = (x - mean) / stddev
+    z2 = z + hpix / stddev
+    z1 = z - hpix / stddev
 
     da = norm.cdf(z2) - norm.cdf(z1)
 
     fp2 = norm_pdf_t(z2)
     fp1 = norm_pdf_t(z1)
 
-    dl = -amplitude / s * (fp2 - fp1)
-    ds = -amplitude / s * (fp2 * z2 - fp1 * z1)
-    dd = amplitude / s * (fp2 + fp1)
+    dl = -amplitude / stddev * (fp2 - fp1)
+    ds = -amplitude / stddev * (fp2 * z2 - fp1 * z1)
+    dd = amplitude / stddev * (fp2 + fp1)
 
     return (da, dl, ds, dd)
 
