@@ -332,7 +332,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 def ximshow_file(singlefile,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
-                 args_keystitle=None, args_geometry=None,
+                 args_keystitle=None, args_geometry="0,0,640,480",
                  pdf=None, show=True,
                  debugplot=None):
     """Function to execute ximshow() as called from command line.
