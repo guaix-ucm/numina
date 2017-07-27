@@ -69,7 +69,10 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
         if tight_layout:
             plt.tight_layout()
         plt.show(block=False)
-        plt.pause(0.001)
+        if debugplot_ in [1, 11, 21]:
+            plt.pause(0.2)
+        else:
+            plt.pause(0.001)
 
     if debugplot_ in [2, 12, 22]:
         try:

@@ -323,11 +323,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     # show plot or return axes
     if show:
-        if tight_layout:
-            plt.tight_layout()
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
         return ax

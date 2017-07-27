@@ -96,11 +96,7 @@ def ximplotxy(x, y, plottype=None,
         mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
 
     if show:
-        if tight_layout:
-            plt.tight_layout()
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
         return ax
