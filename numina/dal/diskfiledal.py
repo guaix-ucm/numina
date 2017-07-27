@@ -55,7 +55,8 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob):
 
     # search results of these OBs
     # build path based in combinations of tags
-    for com in _combinations(ob.tags.values()):
+    vals = [ob.tags[k] for k in sorted(ob.tags.keys())]
+    for com in _combinations(vals):
         directory = os.path.join(rootdir, ob.instrument, conf, label, *com)
         _logger.debug('try directory %s', directory)
         try:
