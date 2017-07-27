@@ -39,7 +39,8 @@ def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1,1),
-            geometry=None, debugplot=None):
+            geometry=(0, 0, 640, 480), tight_layout=True,
+            debugplot=None):
     """Auxiliary function to display a numpy 2d array.
 
     Parameters
@@ -69,16 +70,12 @@ def ximshow(image2d, title=None, show=True,
         (x0,y0) coordinates of pixel at origin.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt5 backend geometry.
+    tight_layout : bool
+        If True, and show=True, a tight display layout is set.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
-        This parameter is ignored when show is False.
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot
 
     Returns
     -------
@@ -319,11 +316,15 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         x_geom, y_geom, dx_geom, dy_geom = geometry
         mngr = plt.get_current_fig_manager()
         mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+
     # connect keypress event with function responsible for
     # updating vmin and vmax
     fig.canvas.mpl_connect('key_press_event', keypress)
+
     # show plot or return axes
     if show:
+        if tight_layout:
+            plt.tight_layout()
         plt.show(block=False)
         plt.pause(0.001)
         pause_debugplot(debugplot)

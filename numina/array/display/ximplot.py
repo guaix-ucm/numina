@@ -25,7 +25,9 @@ import numpy as np
 from .pause_debugplot import pause_debugplot
 
 
-def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0), debugplot=None):
+def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
+            geometry=(0, 0, 640, 480), tight_layout=True,
+            debugplot=None):
     """Auxiliary function to display 1d plot.
 
     Parameters
@@ -43,15 +45,14 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0), debugplot=None):
         Otherwise, the bounding box of the image is read from this
         tuple, assuming (nc1,nc2). In this case, the coordinates
         indicate pixels.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt5 backend geometry.
+    tight_layout : bool
+        If True, and show=True, a tight display layout is set.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -84,8 +85,6 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0), debugplot=None):
     import matplotlib
     matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
-    # plt.ion()
-    # plt.pause(0.001)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)
@@ -108,7 +107,16 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0), debugplot=None):
     ax.plot(xcut, ycut, '-')
     if title is not None:
         ax.set_title(title)
+
+    # set the geometry
+    if geometry is not None:
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+
     if show:
+        if tight_layout:
+            plt.tight_layout()
         plt.show(block=False)
         plt.pause(0.001)
         pause_debugplot(debugplot)
