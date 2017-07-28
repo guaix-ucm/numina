@@ -365,13 +365,8 @@ def ximshow_file(singlefile,
         plt.show() is expected to be executed outside.
     debugplot : integer or None
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -514,7 +509,8 @@ def main(args=None):
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy")
+                        help="tuple x,y,dx,dy",
+                        default="0,0,640,480")
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
                         type=argparse.FileType('w'))

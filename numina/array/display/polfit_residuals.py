@@ -33,6 +33,7 @@ def polfit_residuals(
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=False,
+        geometry=(0,0,640,480),
         debugplot=0):
     """Polynomial fit with display of residuals and additional work with R.
 
@@ -73,15 +74,12 @@ def polfit_residuals(
     use_r : bool
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt5 backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Return
     ------
@@ -206,6 +204,11 @@ def polfit_residuals(
         import matplotlib.pyplot as plt
         fig = plt.figure()
 
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+
         # residuals
         ax2 = fig.add_subplot(2, 1, 2)
         if xlabel is None:
@@ -280,9 +283,7 @@ def polfit_residuals(
         if title is not None:
             plt.title(title + "\n\n")
 
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     # return result
     return poly, yres
@@ -294,6 +295,7 @@ def polfit_residuals_with_sigma_rejection(
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
+        geometry=(0,0,640,480),
         debugplot=0):
     """Polynomial fit with iterative rejection of points.
 
@@ -308,7 +310,7 @@ def polfit_residuals_with_sigma_rejection(
         Y coordinates of the data being fitted.
     deg : int
         Degree of the fitting polynomial.
-    times_sigma_reject : float
+    times_sigma_reject : float or None
         Number of times the standard deviation to reject points
         iteratively. If None, the fit does not reject any point.
     color : single character or 1d numpy array of characters
@@ -335,15 +337,12 @@ def polfit_residuals_with_sigma_rejection(
     use_r : bool
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt5 backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Return
     ------
@@ -391,6 +390,7 @@ def polfit_residuals_with_sigma_rejection(
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
+                                      geometry=geometry,
                                       debugplot=debugplot)
         return poly, yres, reject
 
@@ -405,6 +405,7 @@ def polfit_residuals_with_sigma_rejection(
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
+                                      geometry=geometry,
                                       debugplot=debugplot)
         # check that there is room to remove a point with the current
         # polynomial degree
@@ -455,6 +456,7 @@ def polfit_residuals_with_cook_rejection(
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
+        geometry=(0,0,640,480),
         debugplot=0):
     """Polynomial fit with iterative rejection of points.
 
@@ -469,7 +471,7 @@ def polfit_residuals_with_cook_rejection(
         Y coordinates of the data being fitted.
     deg : int
         Degree of the fitting polynomial.
-    times_sigma_cook : float
+    times_sigma_cook : float or None
         Number of times the standard deviation of Cook's distances
         above the median value to reject points iteratively.
     color : single character or 1d numpy array of characters
@@ -496,15 +498,12 @@ def polfit_residuals_with_cook_rejection(
     use_r : bool
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt5 backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Return
     ------
@@ -552,6 +551,7 @@ def polfit_residuals_with_cook_rejection(
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
+                                      geometry=geometry,
                                       debugplot=debugplot)
         return poly, yres, reject
 
@@ -569,6 +569,7 @@ def polfit_residuals_with_cook_rejection(
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
+                                      geometry=geometry,
                                       debugplot=debugplot)
         npoints_effective = npoints - np.sum(reject)
         residual_variance = np.sum(yres*yres)/float(npoints_effective-deg-1)
@@ -656,15 +657,19 @@ def main(args=None):
     parser.add_argument("cols",
                         help="tuple col1,col2")
     parser.add_argument("polydeg",
-                        help="polynomial degree")
+                        help="polynomial degree",
+                        type=int)
     parser.add_argument("--times_sigma_reject",
                         help="Times sigma to reject points" +
                              " (default=None)",
-                        default=None)
+                        default=None, type=float)
     parser.add_argument("--times_sigma_cook",
                         help="Times sigma to reject points" +
                              " (default=None)",
-                        default=None)
+                        default=None, type=float)
+    parser.add_argument("--geometry",
+                        help="tuple x,y,dx,dy",
+                        default="0,0,640,480")
     args = parser.parse_args(args)
 
     # ASCII file
@@ -677,19 +682,25 @@ def main(args=None):
     col2 -= 1
 
     # polynomial degree
-    polydeg = int(args.polydeg)
+    polydeg = args.polydeg
 
     # times_sigma_reject
-    if args.times_sigma_reject is None:
-        times_sigma_reject = None
-    else:
-        times_sigma_reject = float(args.times_sigma_reject)
+    times_sigma_reject = args.times_sigma_reject
 
     # times_sigma_cook
-    if args.times_sigma_cook is None:
-        times_sigma_cook = None
+    times_sigma_cook = args.times_sigma_cook
+
+    # geometry
+    if args.geometry is None:
+        geometry = None
     else:
-        times_sigma_cook = float(args.times_sigma_cook)
+        tmp_str = args.geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry = x_geom, y_geom, dx_geom, dy_geom
+
 
     # check
     if times_sigma_reject is not None and times_sigma_cook is not None:
@@ -703,14 +714,16 @@ def main(args=None):
 
     # plot fit and residuals
     if times_sigma_reject is None and times_sigma_cook is None:
-        polfit_residuals(x, y, polydeg, debugplot=12)
+        polfit_residuals(x, y, polydeg, geometry=args.geometry, debugplot=12)
     elif times_sigma_reject is not None:
         polfit_residuals_with_sigma_rejection(
-            x, y, polydeg, times_sigma_reject, debugplot=12
+            x, y, polydeg, times_sigma_reject,
+            geometry=geometry, debugplot=12
         )
     elif times_sigma_cook is not None:
         polfit_residuals_with_cook_rejection(
-            x, y, polydeg, times_sigma_cook, debugplot=12
+            x, y, polydeg, times_sigma_cook,
+            geometry=geometry, debugplot=12
         )
 
 
