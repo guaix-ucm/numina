@@ -32,7 +32,7 @@ from ..products import QualityControlProduct
 from ..qc import QC
 
 
-class TestRecipe1(BaseRecipe):
+class PruebaRecipe1(BaseRecipe):
     somereq = Requirement(int, 'Some integer')
     someresult = Product(int, 'Some integer')
     qc = Product(QualityControlProduct)
@@ -56,91 +56,91 @@ class TestRecipe1(BaseRecipe):
 
 def test_metaclass_empty_base():
 
-    class TestRecipe(with_metaclass(RecipeType, object)):
+    class RecipeTest(with_metaclass(RecipeType, object)):
         pass
 
-    assert hasattr(TestRecipe, 'RecipeInput')
+    assert hasattr(RecipeTest, 'RecipeInput')
 
-    assert hasattr(TestRecipe, 'RecipeResult')
+    assert hasattr(RecipeTest, 'RecipeResult')
 
-    assert issubclass(TestRecipe.RecipeInput, RecipeInput)
+    assert issubclass(RecipeTest.RecipeInput, RecipeInput)
 
-    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+    assert issubclass(RecipeTest.RecipeResult, RecipeResult)
 
-    assert TestRecipe.RecipeInput.__name__ == 'RecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == 'RecipeInput'
 
-    assert TestRecipe.RecipeResult.__name__ == 'RecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == 'RecipeResult'
 
 
 def test_metaclass():
 
-    class TestRecipe(with_metaclass(RecipeType, object)):
+    class RecipeTest(with_metaclass(RecipeType, object)):
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 
-    assert hasattr(TestRecipe, 'RecipeInput')
+    assert hasattr(RecipeTest, 'RecipeInput')
 
-    assert hasattr(TestRecipe, 'RecipeResult')
+    assert hasattr(RecipeTest, 'RecipeResult')
 
-    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
 
-    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
 
 
 def test_recipe_with_autoqc():
 
-    class TestRecipeAutoQC(BaseRecipe):
+    class RecipeTestAutoQC(BaseRecipe):
         qc82h = Product(QualityControlProduct, destination='qc')
 
-    class TestRecipe(TestRecipeAutoQC):
+    class RecipeTest(RecipeTestAutoQC):
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 
-    assert hasattr(TestRecipe, 'RecipeInput')
+    assert hasattr(RecipeTest, 'RecipeInput')
 
-    assert hasattr(TestRecipe, 'RecipeResult')
+    assert hasattr(RecipeTest, 'RecipeResult')
 
-    assert issubclass(TestRecipe.RecipeInput, RecipeInput)
+    assert issubclass(RecipeTest.RecipeInput, RecipeInput)
 
-    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+    assert issubclass(RecipeTest.RecipeResult, RecipeResult)
 
-    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
 
-    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
 
-    assert 'qc' in TestRecipe.RecipeResult.stored()
-    assert 'qc' in TestRecipe.products()
+    assert 'qc' in RecipeTest.RecipeResult.stored()
+    assert 'qc' in RecipeTest.products()
 
-    for prod in TestRecipe.RecipeResult.stored().values():
+    for prod in RecipeTest.RecipeResult.stored().values():
         assert isinstance(prod, Product)
 
-    qc = TestRecipe.RecipeResult.stored()['qc']
+    qc = RecipeTest.RecipeResult.stored()['qc']
 
     assert isinstance(qc.type, QualityControlProduct)
 
 
 def test_recipe_without_autoqc():
 
-    class TestRecipe(BaseRecipe):
+    class RecipeTest(BaseRecipe):
         obsresult = ObservationResultRequirement()
         someresult = Product(int, 'Some integer')
 
-    assert hasattr(TestRecipe, 'RecipeInput')
+    assert hasattr(RecipeTest, 'RecipeInput')
 
-    assert hasattr(TestRecipe, 'RecipeResult')
+    assert hasattr(RecipeTest, 'RecipeResult')
 
-    assert issubclass(TestRecipe.RecipeInput, RecipeInput)
+    assert issubclass(RecipeTest.RecipeInput, RecipeInput)
 
-    assert issubclass(TestRecipe.RecipeResult, RecipeResult)
+    assert issubclass(RecipeTest.RecipeResult, RecipeResult)
 
-    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
 
-    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
 
-    assert 'qc' not in TestRecipe.RecipeResult.stored()
-    assert 'qc' not in TestRecipe.products()
+    assert 'qc' not in RecipeTest.RecipeResult.stored()
+    assert 'qc' not in RecipeTest.products()
 
-    for prod in TestRecipe.RecipeResult.stored().values():
+    for prod in RecipeTest.RecipeResult.stored().values():
         assert isinstance(prod, Product)
 
 
@@ -150,22 +150,22 @@ def test_recipe_io_inheritance():
         obresult = ObservationResultRequirement()
         someresult1 = Product(int, 'Some integer')
 
-    class TestRecipe(TestBaseRecipe):
+    class RecipeTest(TestBaseRecipe):
         other = Requirement(int, description='Other')
         someresult2 = Product(int, 'Some integer')
 
-    assert issubclass(TestRecipe.RecipeInput, TestBaseRecipe.RecipeInput)
+    assert issubclass(RecipeTest.RecipeInput, TestBaseRecipe.RecipeInput)
 
-    assert issubclass(TestRecipe.RecipeResult, TestBaseRecipe.RecipeResult)
+    assert issubclass(RecipeTest.RecipeResult, TestBaseRecipe.RecipeResult)
 
-    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
 
-    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
 
-    assert 'obresult' in TestRecipe.requirements()
-    assert 'other' in TestRecipe.requirements()
-    assert 'someresult1' in TestRecipe.products()
-    assert 'someresult2' in TestRecipe.products()
+    assert 'obresult' in RecipeTest.requirements()
+    assert 'other' in RecipeTest.requirements()
+    assert 'someresult1' in RecipeTest.products()
+    assert 'someresult2' in RecipeTest.products()
 
 
 def test_recipe_io_baseclass():
@@ -178,7 +178,7 @@ def test_recipe_io_baseclass():
         def myfunction(self):
             return 2
 
-    class TestRecipe(BaseRecipe):
+    class RecipeTest(BaseRecipe):
 
         RecipeInput = MyRecipeInput
 
@@ -187,25 +187,25 @@ def test_recipe_io_baseclass():
         other = Requirement(int, description='Other')
         someresult2 = Product(int, 'Some integer')
 
-    assert issubclass(TestRecipe.RecipeInput, MyRecipeInput)
+    assert issubclass(RecipeTest.RecipeInput, MyRecipeInput)
 
-    assert issubclass(TestRecipe.RecipeResult, MyRecipeResult)
+    assert issubclass(RecipeTest.RecipeResult, MyRecipeResult)
 
-    assert TestRecipe.RecipeInput.__name__ == 'TestRecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
 
-    assert TestRecipe.RecipeResult.__name__ == 'TestRecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
 
-    assert 'other' in TestRecipe.requirements()
-    assert 'someresult2' in TestRecipe.products()
+    assert 'other' in RecipeTest.requirements()
+    assert 'someresult2' in RecipeTest.products()
 
-    assert TestRecipe.RecipeInput().myfunction() == 1
-    assert TestRecipe.RecipeResult().myfunction() == 2
+    assert RecipeTest.RecipeInput().myfunction() == 1
+    assert RecipeTest.RecipeResult().myfunction() == 2
 
 
 def test_run_qc():
 
-    recipe_input = TestRecipe1.create_input(somereq=100)
-    recipe = TestRecipe1()
+    recipe_input = PruebaRecipe1.create_input(somereq=100)
+    recipe = PruebaRecipe1()
     result = recipe(recipe_input)
 
     assert result.qc == QC.GOOD
@@ -213,8 +213,8 @@ def test_run_qc():
 
 def test_run_base():
 
-    recipe_input = TestRecipe1.create_input(somereq=1)
-    recipe = TestRecipe1()
+    recipe_input = PruebaRecipe1.create_input(somereq=1)
+    recipe = PruebaRecipe1()
     result = recipe(recipe_input)
 
     assert result.qc == QC.BAD
