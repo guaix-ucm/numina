@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,7 +17,10 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Least squares 2D image fitting to a polynomial.'''
+"""Least squares 2D image fitting to a polynomial."""
+
+
+from __future__ import division
 
 import numpy
 
@@ -30,7 +33,7 @@ def _powers(order):
 
 
 def _compute_value(power, wg):
-    '''Return the weight corresponding to single power.'''
+    """Return the weight corresponding to single power."""
     if power not in wg:
         p1, p2 = power
         # y power
@@ -45,7 +48,7 @@ def _compute_value(power, wg):
 
 
 def _compute_weight(powers, wg):
-    '''Return the weight corresponding to given powers.'''
+    """Return the weight corresponding to given powers."""
     # split
     pow1 = (powers[0], 0)
     pow2 = (0, powers[1])
@@ -57,7 +60,7 @@ def _compute_weight(powers, wg):
 
 
 def imsurfit(data, order, output_fit=False):
-    '''Fit a bidimensional polynomial to an image.
+    """Fit a bidimensional polynomial to an image.
 
     :param data: a bidimensional array
     :param integer order: order of the polynomial
@@ -70,7 +73,7 @@ def imsurfit(data, order, output_fit=False):
     >>> imsurfit(z, order=1) #doctest: +NORMALIZE_WHITESPACE
     (array([  4.56000000e+02,   3.00000000e-01,  -9.00000000e-01]),)
 
-    '''
+    """
 
     # we create a grid with the same number of points
     # between -1 and 1
@@ -78,7 +81,7 @@ def imsurfit(data, order, output_fit=False):
     c1 = complex(0, data.shape[1])
     xx, yy = numpy.ogrid[-1:1:c0, -1:1:c1]
 
-    ncoeff = (order + 1) * (order + 2) / 2
+    ncoeff = (order + 1) * (order + 2) // 2
 
     powerlist = list(_powers(order))
 
@@ -127,14 +130,14 @@ def imsurfit(data, order, output_fit=False):
                 result += polycoeff[index] * (xx ** a) * (yy ** b)
                 index += 1
 
-        return (polycoeff, result)
+        return polycoeff, result
 
     return (polycoeff,)
 
 
 class FitOne(object):
     def __init__(self, x, y, z):
-        '''Fit a plane to a region using least squares.'''
+        """Fit a plane to a region using least squares."""
         x = x.astype('float')
         y = y.astype('float')
         self.xm = x.mean()
