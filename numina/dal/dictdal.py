@@ -355,9 +355,9 @@ class HybridDAL(Dict2DAL):
         else:
             # Not in table, try file directly
             _logger.debug("%s not in table, try file directly", tipo)
-            path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+            path = self.build_product_path(drp, conf, name, tipo, obsres)
             _logger.debug("path is %s", path)
-            content = load(tipo, path)
+            content = self.product_loader(tipo, path)
             return StoredProduct(id=0, content=content, tags=obsres.tags)
 
     def search_result(self, name, tipo, obsres, resultid=None):
@@ -405,8 +405,16 @@ class HybridDAL(Dict2DAL):
                     # Build path
                     path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
                 _logger.debug("path is %s", path)
-                rprod['content'] = load(tipo, path)
+                rprod['content'] = self.product_loader(tipo, path)
                 return StoredProduct(**rprod)
         else:
             msg = 'result with id %s not found' % (resultid, )
             raise NoResultFound(msg)
+
+    def build_product_path(self, drp, conf, name, tipo, obsres):
+        path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+        return path
+
+    def product_loader(self, tipo, path):
+        return load(tipo, path)
+
