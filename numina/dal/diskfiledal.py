@@ -42,9 +42,59 @@ def _combinations(seq):
             yield j
 
 
-def build_product_path(drp, rootdir, conf, name, tipo, ob):
-    klass = tipo.__class__
+class FileFinder(object):
+
+    def candidates(self, directory):
+        return [filename for filename in sorted(os.listdir(directory))]
+
+    def build_path(self, directory, value):
+        return os.path.join(directory, value)
+
+    def build_final_path(self, directory, value):
+        return os.path.join(directory, value)
+
+    def check(self, directory, value):
+        fname = value
+        loadpath = self.build_path(directory, fname)
+        print('loadpath=', loadpath)
+        _logger.debug("check %s", loadpath)
+        if fname.startswith("."):
+            _logger.debug("file %s is hidden, ignore", loadpath)
+            return False
+        if os.path.isfile(loadpath):
+            _logger.debug("is regular file %s", loadpath)
+            _logger.info("found %s", loadpath)
+            print(loadpath)
+            return True
+        else:
+            _logger.debug("is not regular file %s", loadpath)
+            return False
+
+
+class FileFinderGTC(FileFinder):
+
+    def candidates(self, directory):
+        base = [('result.json', 1)]
+        other = [(m, 0) for m in super(FileFinderGTC, self).candidates(directory)]
+        base.extend(other)
+        return base
+
+    def build_path(self, directory, value):
+        return super(FileFinderGTC, self).build_path(directory, value)
+
+    def build_final_path(self, directory, value):
+        return os.path.join(directory, value[0]), value[1]
+
+    def check(self, directory, value):
+        fname, kind = value
+        return super(FileFinderGTC, self).check(directory, fname)
+
+
+def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
+
     _logger.info('search %s of type %s', name, tipo)
+
+    file_finder = cls()
 
     try:
         # FIXME
@@ -60,20 +110,9 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob):
         directory = os.path.join(rootdir, ob.instrument, conf, label, *com)
         _logger.debug('try directory %s', directory)
         try:
-            files_s = [filename for filename in sorted(os.listdir(directory))]
-            _logger.debug("files in directory: %s", files_s)
-            for fname in files_s:
-                loadpath = os.path.join(directory, fname)
-                _logger.debug("check %s", loadpath)
-                if fname.startswith("."):
-                    _logger.debug("file %s is hidden, ignore", loadpath)
-                    continue
-                if os.path.isfile(loadpath):
-                    _logger.debug("is regular file %s", loadpath)
-                    _logger.info("found %s", loadpath)
-                    return loadpath
-                else:
-                    _logger.debug("is not regular file %s", loadpath)
+            for value in file_finder.candidates(directory):
+                if file_finder.check(directory, value):
+                    return file_finder.build_final_path(directory, value)
         except OSError as msg:
             _logger.debug("%s", msg)
     else:
@@ -138,48 +177,3 @@ class DiskFileDAL(object):
                     klass, ob.tags)
             print(msg)
             raise NoResultFound(msg)
-
-
-def process_result(data):
-    node = dict()
-    node["name"] = "reqs",
-    node["typeid"] = 52,
-    node["typename"] = "StructDataValue"
-    node["value"] = {}
-    node["value"]['elements'] = data['elements']
-    node["value"]['struct_type'] = 'dict'
-    obj = process_node(node)
-    return obj
-
-
-def process_node(node):
-    if node['typename'] == "StructDataValue":
-        obj = {}
-        value = node['value']
-#        print value['struct_type']
-        for el in value['elements']:
-            name = el['name']
-            obj[name] = process_node(el)
-        if value['struct_type'] != 'dict':
-            klass = import_object(value['struct_type'])
-            ob = klass.__new__(klass)
-            if hasattr(ob, '__setstate__'):
-                ob.__setstate__(obj)
-            else:
-                ob.__dict__ = obj
-            return ob
-        else:
-            return obj
-    elif node['typename'] == "StructDataValueList":
-        obj = []
-        value = node['value']
-        for el in value:
-            sobj = dict()
-            for sel in el['elements']:
-                name = sel['name']
-                sobj[name] = process_node(sel)
-            obj.append(sobj)
-    else:
-        return node['value']
-
-    return obj

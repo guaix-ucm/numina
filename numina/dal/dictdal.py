@@ -20,8 +20,10 @@
 """DAL for dictionary-based database of products."""
 
 import logging
+import json
 from itertools import chain
 
+import numina.store.gtc.load as gtcload
 from numina.core import import_object
 from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
@@ -357,7 +359,7 @@ class HybridDAL(Dict2DAL):
             _logger.debug("%s not in table, try file directly", tipo)
             path = self.build_product_path(drp, conf, name, tipo, obsres)
             _logger.debug("path is %s", path)
-            content = self.product_loader(tipo, path)
+            content = self.product_loader(tipo, name, path)
             return StoredProduct(id=0, content=content, tags=obsres.tags)
 
     def search_result(self, name, tipo, obsres, resultid=None):
@@ -405,7 +407,7 @@ class HybridDAL(Dict2DAL):
                     # Build path
                     path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
                 _logger.debug("path is %s", path)
-                rprod['content'] = self.product_loader(tipo, path)
+                rprod['content'] = self.product_loader(tipo, name, path)
                 return StoredProduct(**rprod)
         else:
             msg = 'result with id %s not found' % (resultid, )
@@ -415,6 +417,15 @@ class HybridDAL(Dict2DAL):
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
         return path
 
-    def product_loader(self, tipo, path):
-        return load(tipo, path)
+    def product_loader(self, tipo, name, path):
+        path, kind = path
+        if kind == 0:
+            return load(tipo, path)
+        else:
+            # GTC load
+            with open(path) as fd:
+                data = json.load(fd)
+                inter = gtcload.build_result(data)
+                elem = inter['elements']
+                return elem[name]
 

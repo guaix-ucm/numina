@@ -21,6 +21,7 @@
 
 from __future__ import print_function
 
+import os.path
 
 from numina.core import import_object
 from numina.core import DataFrame
@@ -46,7 +47,11 @@ def process_node(node):
             else:
                 newobj.__dict__ = obj
             obj = newobj
-
+    elif typeid == 9:
+        data = value['data']
+        dim = value['dimension']
+        shape = dim['height'], dim['width']
+        obj = data
     elif typeid == 90: # StructDataValueList
         obj = []
         for el in value:
@@ -57,8 +62,9 @@ def process_node(node):
             obj.append(sobj)
 
     elif typeid == 45: # Frame
-        obj = DataFrame(frame=value['path'])
+        obj = DataFrame(frame=os.path.abspath(value['path']))
     else:
+        #print("LOADDD", typeid, value)
         obj = value
 
     return mname, obj
