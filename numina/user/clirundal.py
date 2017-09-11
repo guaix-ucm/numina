@@ -129,6 +129,16 @@ def mode_run_common_obs(args, extra_args):
         # Enable intermediate results by default
         _logger.debug('enable intermediate results')
         recipe.intermediate_results = True
+
+        # Update runinfo
+        _logger.debug('update recipe runinfo')
+        recipe.runinfo['runner'] = 'numina'
+        recipe.runinfo['runner_version'] = '1'
+        recipe.runinfo['taskid'] = obid
+        recipe.runinfo['data_dir'] = workenv.datadir
+        recipe.runinfo['work_dir'] = workenv.workdir
+        recipe.runinfo['results_dir'] = workenv.resultsdir
+
         _logger.debug('recipe created')
 
         try:

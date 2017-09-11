@@ -26,9 +26,8 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
-import traceback
+
 import logging
-import warnings
 
 from six import with_metaclass
 
@@ -53,8 +52,10 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         recipe = super(BaseRecipe, cls).__new__(cls)
         recipe.instrument = kwargs.get('instrument', 'UNKNOWN')
         recipe.mode = kwargs.get('mode', 'UNKNOWN')
+        recipe.pipeline = kwargs.get('pipeline', 'default')
         recipe.intermediate_results = kwargs.get('intermediate_results', False)
-        recipe.runinfo = kwargs.get('runinfo', {})
+        recipe.runinfo = cls.create_default_runinfo()
+        recipe.runinfo.update(kwargs.get('runinfo', {}))
         recipe.environ = {}
         recipe.__version__ = 1
         recipe.query_options = {}
@@ -76,6 +77,19 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
     def __setstate__(self, state):
         self.configure(**state)
+
+    @staticmethod
+    def create_default_runinfo():
+        runinfo = {
+            'data_dir': None,
+            'results_dir': None,
+            'work_dir': None,
+            'pipeline': 'default',
+            'runner': 'unknown-runner',
+            'runner_version': 'unknown-version',
+            'taskid': 'unknown-id'
+        }
+        return runinfo
 
     @classmethod
     def create_input(cls, *args, **kwds):
