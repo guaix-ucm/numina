@@ -29,6 +29,7 @@ import yaml
 import numina.drps
 from numina.dal.dictdal import HybridDAL
 from numina.dal.clidal import CommandLineDAL
+from numina.util.context import working_directory
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 
@@ -115,50 +116,48 @@ def mode_run_common_obs(args, extra_args):
                                   datadir=args.datadir
                                   )
 
-        cwd = os.getcwd()
-        os.chdir(workenv.datadir)
+        # Roll back to cwd after leaving the context
+        with working_directory(workenv.datadir):
 
-        obsres = dal.obsres_from_oblock_id(obid, configuration=args.insconf)
+            obsres = dal.obsres_from_oblock_id(obid, configuration=args.insconf)
 
-        _logger.debug("pipeline from CLI is %r", args.pipe_name)
-        pipe_name = args.pipe_name
-        obsres.pipeline = pipe_name
-        recipe = dal.search_recipe_from_ob(obsres)
-        _logger.debug('recipe class is %s', recipe.__class__)
+            _logger.debug("pipeline from CLI is %r", args.pipe_name)
+            pipe_name = args.pipe_name
+            obsres.pipeline = pipe_name
+            recipe = dal.search_recipe_from_ob(obsres)
+            _logger.debug('recipe class is %s', recipe.__class__)
 
-        # Enable intermediate results by default
-        _logger.debug('enable intermediate results')
-        recipe.intermediate_results = True
+            # Enable intermediate results by default
+            _logger.debug('enable intermediate results')
+            recipe.intermediate_results = True
 
-        # Update runinfo
-        _logger.debug('update recipe runinfo')
-        recipe.runinfo['runner'] = 'numina'
-        recipe.runinfo['runner_version'] = '1'
-        recipe.runinfo['taskid'] = obid
-        recipe.runinfo['data_dir'] = workenv.datadir
-        recipe.runinfo['work_dir'] = workenv.workdir
-        recipe.runinfo['results_dir'] = workenv.resultsdir
+            # Update runinfo
+            _logger.debug('update recipe runinfo')
+            recipe.runinfo['runner'] = 'numina'
+            recipe.runinfo['runner_version'] = '1'
+            recipe.runinfo['taskid'] = obid
+            recipe.runinfo['data_dir'] = workenv.datadir
+            recipe.runinfo['work_dir'] = workenv.workdir
+            recipe.runinfo['results_dir'] = workenv.resultsdir
 
-        _logger.debug('recipe created')
+            _logger.debug('recipe created')
 
-        try:
-            rinput = recipe.build_recipe_input(obsres, dal)
-        except ValueError as err:
-            _logger.error("During recipe input construction")
-            for msg in err.args[0]:
-                _logger.error(msg)
-            sys.exit(0)
-        _logger.debug('recipe input created')
+            try:
+                rinput = recipe.build_recipe_input(obsres, dal)
+            except ValueError as err:
+                _logger.error("During recipe input construction")
+                for msg in err.args[0]:
+                    _logger.error(msg)
+                sys.exit(0)
+            _logger.debug('recipe input created')
 
-        # Show the actual inputs
-        for key in recipe.requirements():
-            v = getattr(rinput, key)
-            _logger.debug("recipe requires %r, value is %s", key, v)
+            # Show the actual inputs
+            for key in recipe.requirements():
+                v = getattr(rinput, key)
+                _logger.debug("recipe requires %r, value is %s", key, v)
 
-        for req in recipe.products().values():
-            _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
-
-        os.chdir(cwd)
+            for req in recipe.products().values():
+                _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
 
         # Logging and task control
         logger_control = dict(
@@ -225,18 +224,12 @@ def run_recipe(recipe, task, rinput, workenv, task_control):
 
     recipe_logger.addHandler(fh)
 
-    csd = os.getcwd()
-    try:
-        _logger.debug('cwd to workdir')
-        os.chdir(workenv.workdir)
-        completed_task = run_recipe_timed(recipe, rinput, task)
-
-        return completed_task
-
-    finally:
-        _logger.debug('cwd to original path: %r', csd)
-        os.chdir(csd)
-        recipe_logger.removeHandler(fh)
+    with working_directory(workenv.workdir):
+        try:
+            completed_task = run_recipe_timed(recipe, rinput, task)
+            return completed_task
+        finally:
+            recipe_logger.removeHandler(fh)
 
 
 def run_recipe_timed(recipe, rinput, task):

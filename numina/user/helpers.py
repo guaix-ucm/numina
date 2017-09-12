@@ -32,6 +32,7 @@ import yaml
 from numina import __version__
 from numina.core import fully_qualified_name
 from numina.core.products import DataFrameType
+from numina.util.context import working_directory
 
 
 _logger = logging.getLogger("numina")
@@ -252,15 +253,6 @@ class DiskStorageDefault(object):
     def store(self, completed_task):
         """Store the values of the completed task."""
 
-        csd = os.getcwd()
-
-        try:
-            _logger.debug('cwd to resultdir: %r', self.resultsdir)
-            os.chdir(self.resultsdir)
-
+        with working_directory(self.resultsdir):
             _logger.info('storing result')
             completed_task.store(self)
-
-        finally:
-            _logger.debug('cwd to original path: %r', csd)
-            os.chdir(csd)
