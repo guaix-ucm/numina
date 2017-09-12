@@ -29,7 +29,6 @@ import pickle
 
 import yaml
 
-from numina import __version__
 from numina.core import fully_qualified_name
 from numina.core.products import DataFrameType
 from numina.util.context import working_directory
@@ -50,11 +49,12 @@ class ProcessingTask(object):
             self.runinfo['pipeline'] = insconf['pipeline']
             self.runinfo['recipe'] = insconf['recipeclass'].__name__
             self.runinfo['recipe_full_name'] = fully_qualified_name(insconf['recipeclass'])
-            self.runinfo['runner'] = 'numina'
-            self.runinfo['runner_version'] = __version__
+            self.runinfo['runner'] = insconf.get('runner', 'numina')
+            self.runinfo['runner_version'] = insconf.get('runner_version', "0")
             self.runinfo['data_dir'] = insconf['workenv'].datadir
             self.runinfo['work_dir'] = insconf['workenv'].workdir
             self.runinfo['results_dir'] = insconf['workenv'].resultsdir
+            self.runinfo['base_dir'] = insconf['workenv'].basedir
             self.runinfo['recipe_version'] = insconf['recipe_version']
             self.runinfo['time_start'] = 0
             self.runinfo['time_end'] = 0
@@ -64,9 +64,9 @@ class ProcessingTask(object):
             self.observation['observing_result'] = obsres.id
             self.observation['instrument'] = obsres.instrument
         else:
-            self.observation['mode'] = None
-            self.observation['observing_result'] = None
-            self.observation['instrument'] = None
+            self.observation['mode'] = 'unknown'
+            self.observation['observing_result'] = 'unknown'
+            self.observation['instrument'] = 'unknown'
 
         if insconf['instrument_configuration']:
             self.observation['instrument_configuration'] = insconf['instrument_configuration']

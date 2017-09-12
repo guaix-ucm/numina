@@ -26,6 +26,7 @@ import datetime
 
 import yaml
 
+from numina import __version__
 import numina.drps
 from numina.dal.dictdal import HybridDAL
 from numina.dal.clidal import CommandLineDAL
@@ -177,6 +178,8 @@ def mode_run_common_obs(args, extra_args):
             'recipeclass': recipe.__class__,
             'workenv': workenv,
             'recipe_version': recipe.__version__,
+            'runner': 'numina',
+            'runner_version': __version__,
             'instrument_configuration': args.insconf
         }
 
