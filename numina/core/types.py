@@ -157,6 +157,9 @@ class DataType(object):
     def extract_tags(self, obj):
         return {}
 
+    def extract_meta_info(self, obj):
+        return {}
+
     def potential_tags(self):
         return {}
 
