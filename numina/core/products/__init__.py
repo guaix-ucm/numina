@@ -19,16 +19,18 @@
 import sys
 import warnings
 from itertools import chain
+import datetime
 
+import uuid
 import six
 import numpy
 from astropy.io import fits
 
-from .qc import QC
-from .pipeline import InstrumentConfiguration
-from .oresult import ObservationResult
-from .dataframe import DataFrame
-from .types import DataType
+from ..qc import QC
+from ..pipeline import InstrumentConfiguration
+from ..oresult import ObservationResult
+from ..dataframe import DataFrame
+from ..types import DataType
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
@@ -106,8 +108,26 @@ _base_schema = {
     }
 
 
+def convert_date(value):
+    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+
+
 class DataFrameType(DataType):
     """A type of DataFrame."""
+
+    meta_info_headers = {
+        'instrument': 'INSTRUME',
+        'observation_date': ('DATE-OBS', convert_date),
+        'uuid': 'uuid',
+        'type': 'numtype',
+        'mode': 'obsmode',
+        'exptime': 'exptime',
+        'darktime': 'darktime',
+        'insconf': 'insconf',
+        'blckuuid': 'blckuuid'
+    }
+    tags_headers = {}
+
     def __init__(self):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
@@ -156,6 +176,30 @@ class DataFrameType(DataType):
         else:
             return DataFrame(filename=obj)
 
+    def extract_meta_info(self, obj):
+        """Extract tags from serialized file"""
+
+        objl = self.convert(obj)
+        # empty result
+        result = super(DataFrameType, self).extract_meta_info(objl)
+        if objl:
+            with objl.open() as frame:
+                header = frame[0].header
+                for field, entry in self.meta_info_headers.items():
+                    if isinstance(entry, tuple):
+                        keyname = entry[0]
+                        convert = entry[1]
+                    else:
+                        keyname = entry
+                        convert = lambda x:x
+                    result[field] = convert(header.get(keyname))
+                tags = result['tags']
+                for tagname, keyname in self.tags_headers.items():
+                    tags[tagname] = header.get(keyname)
+                return result
+        else:
+            return result
+
 
 class ArrayType(DataType):
     """A type of array."""
@@ -166,8 +210,7 @@ class ArrayType(DataType):
         return self.convert_to_array(obj)
 
     def convert_to_array(self, obj):
-        result = numpy.array(obj)
-        return result
+        return numpy.array(obj)
 
     def _datatype_dump(self, obj, where):
         return dump_numpy_array(obj, where)
@@ -267,6 +310,21 @@ class LinesCatalog(DataProductType):
         with open(obj, 'r') as fd:
             linecat = numpy.loadtxt(fd)
         return linecat
+
+    def extract_meta_info(self, obj):
+        """Extract metadata from serialized file"""
+
+        objl = self.convert(obj)
+
+        result = super(LinesCatalog, self).extract_meta_info(objl)
+
+        result['tags'] = {}
+        result['type'] = 'LinesCatalog'
+        result['uuid'] = str(uuid.uuid1())
+        result['observation_date'] = datetime.datetime.utcnow()
+        result['origin'] = {}
+
+        return result
 
 
 def dump_dataframe(obj, where):

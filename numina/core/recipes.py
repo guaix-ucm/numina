@@ -30,6 +30,7 @@ A recipe is a class that complies with the *reduction recipe API*:
 import logging
 
 from six import with_metaclass
+from astropy.io import fits
 
 from .. import __version__
 from .recipeinout import RecipeResult as RecipeResultClass
@@ -41,8 +42,25 @@ from ..exceptions import NoResultFound
 
 
 class BaseRecipe(with_metaclass(RecipeType, object)):
-    """Base class for all instrument recipes"""
+    """Base class for all instrument recipes
 
+    Parameters
+    ----------
+    intermediate_results : bool, optional
+                           If True, save intermediate results of the Recipe
+
+
+    Attributes
+    ----------
+
+    obresult : ObservationResult, requirement
+
+    qc : QualityControl, result, QC.GOOD by default
+
+    logger :
+         recipe logger
+
+    """
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
     # Recipe own logger
@@ -146,6 +164,16 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     def validate_result(self, recipe_result):
         """Validate the result of the recipe"""
         recipe_result.validate()
+
+    def save_intermediate_img(self, img, name):
+        """Save intermediate FITS objects."""
+        if self.intermediate_results:
+            img.writeto(name, clobber=True)
+
+    def save_intermediate_array(self, array, name):
+        """Save intermediate array object as FITS."""
+        if self.intermediate_results:
+            fits.writeto(name, array, clobber=True)
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""

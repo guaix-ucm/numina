@@ -139,7 +139,6 @@ class DataType(object):
             klass = name
             kwargs = {}
         else:
-            import ast
             # parse things between parens
             klass = name[:fp]
             fargs = name[fp+1:sp]
@@ -152,13 +151,30 @@ class DataType(object):
 
             return obj
         else:
-            raise TypeError
+            raise TypeError(name)
 
     def extract_tags(self, obj):
-        return {}
+        """Extract tags from serialized file"""
+        meta_info = self.extract_meta_info(obj)
+        return meta_info['tags']
+
+    @staticmethod
+    def create_meta_info():
+        """Create metadata structure"""
+        result = {}
+        result['instrument'] = ''
+        result['uuid'] = ''
+        result['tags'] = {}
+        result['type'] = ''
+        result['mode'] = ''
+        result['observation_date'] = ""
+        result['origin'] = {}
+        return result
 
     def extract_meta_info(self, obj):
-        return {}
+        """Extract metadata from serialized file"""
+        result = self.create_meta_info()
+        return result
 
     def potential_tags(self):
         return {}
@@ -202,6 +218,7 @@ class PlainPythonType(DataType):
         #                                      ob.mode, ob.tags, ob.pipeline)
         param = dal.search_parameter(name, self, ob)
         return param.content
+
 
 class ListOfType(DataType):
     """Data type for lists of other types."""

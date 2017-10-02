@@ -1,6 +1,6 @@
 
-from ..products import DataFrameType
-from ..dataframe import DataFrame
+from .. import  DataFrameType
+from ...dataframe import DataFrame
 
 
 def test_dataframe_convert_none():
