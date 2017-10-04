@@ -243,7 +243,7 @@ def run_recipe_timed(recipe, rinput, task):
     task.runinfo['time_start'] = now1.strftime(TIMEFMT)
     #
 
-    result = recipe.run(rinput)
+    result = recipe(rinput)
     _logger.info('result: %r', result)
     task.result = result
     #

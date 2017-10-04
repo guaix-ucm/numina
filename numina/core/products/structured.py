@@ -43,7 +43,7 @@ class ExtEncoder(json.JSONEncoder):
         elif isinstance(obj, datetime.timedelta):
             return obj.total_seconds()
         elif isinstance(obj, numina.core.qc.QC):
-            return str(obj)
+            return obj.name
         else:
             return super(ExtEncoder, self).default(obj)
 
@@ -71,9 +71,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         self.instrument = instrument
         self.tags = {}
         self.uuid = str(uuid.uuid1())
-        self.total_fibers = 0
-        self.missing_fibers = []
-        self.error_fitting = []
+
         self.meta_info = {}
         #
         self.add_dialect_info('gtc', DF.TYPE_STRUCT)
@@ -87,10 +85,10 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         return None
 
     def __getstate__(self):
-        st = {}
-        keys = ['instrument', 'tags', 'uuid',
-                "meta_info", "total_fibers",
-                "missing_fibers", "error_fitting"]
+
+        st = super(BaseStructuredCalibration, self).__getstate__()
+
+        keys = ['instrument', 'tags', 'uuid', 'meta_info']
         for key in keys:
             st[key] = self.__dict__[key]
 
@@ -140,13 +138,13 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
 
         objl = self.convert(obj)
 
-        result = super(BaseStructuredCalibration, self).extract_meta_info(objl)
-
         try:
-            with open(obj, 'r') as fd:
+            with open(objl, 'r') as fd:
                 state = json.load(fd)
         except IOError as e:
             raise e
+
+        result = super(BaseStructuredCalibration, self).extract_meta_info(state)
 
         minfo = state['meta_info']
         origin = minfo['origin']
@@ -157,4 +155,5 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         result['type'] = state['type']
         result['observation_date'] = convert_date(date_obs)
         result['origin'] = origin
+
         return result

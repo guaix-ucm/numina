@@ -30,15 +30,19 @@ from ..qc import QC
 from ..pipeline import InstrumentConfiguration
 from ..oresult import ObservationResult
 from ..dataframe import DataFrame
-from ..types import DataType
+from ..types import DataType, DataTypeBase
 from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
 from numina.ext.gtc import DF
 
 
-class DataProductTag(object):
+class DataProductTag(DataTypeBase):
     """A type that is a data product."""
+
+    def __init__(self, *args, **kwds):
+        super(DataProductTag, self).__init__(*args, **kwds)
+        self.quality_control = QC.UNKNOWN
 
     def generators(self):
         return []
@@ -50,17 +54,7 @@ class DataProductTag(object):
     def name(self):
         """Unique name of the datatype"""
         sclass = type(self).__name__
-        return "%s" % (sclass, )
-
-    def query_on_ob(self, key, ob):
-        # First check if the requirement is embedded
-        # in the observation result
-        # it can happen in GTC
-
-        try:
-            return getattr(ob, key)
-        except AttributeError:
-            raise NoResultFound("DataProductTag.query_on_ob")
+        return "%s" % (sclass,)
 
     def query(self, name, dal, ob, options=None):
 
@@ -81,9 +75,24 @@ class DataProductTag(object):
 
         return prod.content
 
-    def on_query_not_found(self, notfound):
-        pass
+    def extract_meta_info(self, obj):
+        """Extract metadata from serialized file"""
 
+        result = {}
+        if isinstance(obj, dict):
+            result['quality_control'] = obj['quality_control']
+            other = super(DataProductTag, self).extract_meta_info(obj)
+            result.update(other)
+
+        return result
+
+    def __getstate__(self):
+        st = {}
+        st['quality_control'] = self.quality_control
+
+        other = super(DataProductTag, self).__getstate__()
+        st.update(other)
+        return st
 
 class ConfigurationTag(object):
     """A type that is part of the instrument configuration."""
@@ -112,19 +121,28 @@ def convert_date(value):
     return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
 
 
+def convert_qc(value):
+    if value:
+        return QC[value]
+    else:
+        return QC.UNKNOWN
+
+
 class DataFrameType(DataType):
     """A type of DataFrame."""
 
     meta_info_headers = {
         'instrument': 'INSTRUME',
-        'observation_date': ('DATE-OBS', convert_date),
+        'object': 'OBJECT',
+        'observation_date': ('DATE-OBS', 0, convert_date),
         'uuid': 'uuid',
         'type': 'numtype',
         'mode': 'obsmode',
         'exptime': 'exptime',
         'darktime': 'darktime',
         'insconf': 'insconf',
-        'blckuuid': 'blckuuid'
+        'blckuuid': 'blckuuid',
+        'quality_control': ('NUMRQC', 0, convert_qc),
     }
     tags_headers = {}
 
@@ -184,21 +202,30 @@ class DataFrameType(DataType):
         result = super(DataFrameType, self).extract_meta_info(objl)
         if objl:
             with objl.open() as frame:
-                header = frame[0].header
                 for field, entry in self.meta_info_headers.items():
-                    if isinstance(entry, tuple):
-                        keyname = entry[0]
-                        convert = entry[1]
-                    else:
-                        keyname = entry
-                        convert = lambda x:x
+                    keyname, hduname, convert = self.convert_field(entry)
+                    header = frame[hduname].header
                     result[field] = convert(header.get(keyname))
+
                 tags = result['tags']
-                for tagname, keyname in self.tags_headers.items():
-                    tags[tagname] = header.get(keyname)
+                for tagname, entry in self.tags_headers.items():
+                    keyname, hduname, convert = self.convert_field(entry)
+                    header = frame[hduname].header
+                    tags[tagname] = convert(header.get(keyname))
                 return result
         else:
             return result
+
+    def convert_field(self, entry):
+        if isinstance(entry, tuple):
+            keyname = entry[0]
+            hduname = entry[1]
+            convert = entry[2]
+        else:
+            keyname = entry
+            hduname = 0
+            convert = lambda x: x
+        return keyname, hduname, convert
 
 
 class ArrayType(DataType):
@@ -273,6 +300,7 @@ class ObservationResultType(DataType):
     def on_query_not_found(self, notfound):
         raise notfound
 
+
 class InstrumentConfigurationType(DataType):
     """The type of InstrumentConfiguration."""
 
@@ -293,6 +321,7 @@ class InstrumentConfigurationType(DataType):
 
     def on_query_not_found(self, notfound):
         raise notfound
+
 
 class QualityControlProduct(DataType):
     def __init__(self):
@@ -322,6 +351,7 @@ class LinesCatalog(DataProductType):
         result['type'] = 'LinesCatalog'
         result['uuid'] = str(uuid.uuid1())
         result['observation_date'] = datetime.datetime.utcnow()
+        result['quality_control'] = QC.GOOD
         result['origin'] = {}
 
         return result

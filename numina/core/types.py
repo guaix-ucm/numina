@@ -22,56 +22,20 @@ import inspect
 from numina.util.parser import parse_arg_line
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
+
 from .typedialect import dialect_info
+from .qc import QC
 
 
-class DataType(object):
+class DataTypeBase(object):
     """Base class for input/output types of recipes.
 
     """
-    def __init__(self, ptype, default=None):
-        self.internal_type = ptype
-        self.internal_dialect = dialect_info(self)
-        self.internal_default = default
+    def __init__(self, *args, **kwds):
+        pass
 
-    def convert(self, obj):
-        """Basic conversion to internal type
-
-        This method is intended to be redefined by subclasses
-        """
-        return obj
-
-    def convert_in(self, obj):
-        """Basic conversion to internal type of inputs.
-
-        This method is intended to be redefined by subclasses
-        """
-        return self.convert(obj)
-
-    def convert_out(self, obj):
-        """Basic conversion to internal type of outputs.
-
-        This method is intended to be redefined by subclasses
-        """
-        return self.convert(obj)
-
-    def validate(self, obj):
-        """Validate convertibility to internal representation
-
-        Returns
-        -------
-        bool
-          True if 'obj' matches the data type
-
-        Raises
-        -------
-        ValidationError
-            If the validation fails
-
-        """
-        if not isinstance(obj, self.internal_type):
-            raise ValidationError(obj, self.internal_type)
-        return True
+    def __getstate__(self):
+        return {}
 
     def query(self, name, dal, ob, options=None):
 
@@ -99,25 +63,9 @@ class DataType(object):
     def on_query_not_found(self, notfound):
         pass
 
-    def _datatype_dump(self, obj, where):
-        return obj
-
-    def _datatype_load(self, obj):
-        return obj
-
-    def add_dialect_info(self, dialect, tipo):
-        key = self.__module__ + '.' + self.__class__.__name__
-        result = {'fqn': key, 'python': self.internal_type, 'type': tipo}
-        self.internal_dialect[dialect] = result
-        return result
-
     @classmethod
     def isproduct(cls):
         """Check if the DataType is the product of a Recipe"""
-        return False
-
-    @classmethod
-    def isconfiguration(cls):
         return False
 
     def __repr__(self):
@@ -175,6 +123,72 @@ class DataType(object):
         """Extract metadata from serialized file"""
         result = self.create_meta_info()
         return result
+
+
+class DataType(DataTypeBase):
+    """Base class for input/output types of recipes.
+
+    """
+    def __init__(self, ptype, default=None):
+        super(DataType, self).__init__()
+        self.internal_type = ptype
+        self.internal_dialect = dialect_info(self)
+        self.internal_default = default
+
+    def convert(self, obj):
+        """Basic conversion to internal type
+
+        This method is intended to be redefined by subclasses
+        """
+        return obj
+
+    def convert_in(self, obj):
+        """Basic conversion to internal type of inputs.
+
+        This method is intended to be redefined by subclasses
+        """
+        return self.convert(obj)
+
+    def convert_out(self, obj):
+        """Basic conversion to internal type of outputs.
+
+        This method is intended to be redefined by subclasses
+        """
+        return self.convert(obj)
+
+    def validate(self, obj):
+        """Validate convertibility to internal representation
+
+        Returns
+        -------
+        bool
+          True if 'obj' matches the data type
+
+        Raises
+        -------
+        ValidationError
+            If the validation fails
+
+        """
+        if not isinstance(obj, self.internal_type):
+            raise ValidationError(obj, self.internal_type)
+        return True
+
+    def _datatype_dump(self, obj, where):
+        return obj
+
+    def _datatype_load(self, obj):
+        return obj
+
+    def add_dialect_info(self, dialect, tipo):
+        key = self.__module__ + '.' + self.__class__.__name__
+        result = {'fqn': key, 'python': self.internal_type, 'type': tipo}
+        self.internal_dialect[dialect] = result
+        return result
+
+    @classmethod
+    def isconfiguration(cls):
+        return False
 
     def potential_tags(self):
         return {}
