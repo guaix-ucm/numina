@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,8 +20,110 @@
 from __future__ import print_function
 
 
+class KeyDefinition(object):
+    def __init__(self, key, ext=None, default=None, convert=None):
+        self.key = key
+        self.ext = 0 if ext is None else ext
+        self.default = default
+        self.convert = convert
+
+    def __call__(self, hdulist):
+        value = hdulist[self.ext].header.get(self.key, self.default)
+        if self.convert:
+            return self.convert(value)
+        return value
+
+
+class FITSKeyExtractor(object):
+    def __init__(self, values):
+        self.map = {}
+        for key, entry in values.items():
+            if isinstance(entry, KeyDefinition):
+                newval = entry
+            elif isinstance(entry, tuple):
+                if len(entry) == 3:
+                    keyname = entry[0]
+                    hduname = entry[1]
+                    convert = entry[2]
+                    default = None
+                elif len(entry) == 2:
+                    keyname = entry[0]
+                    default = entry[1]
+                    hduname = 0
+                    convert = None
+                else:
+                    raise ValueError
+
+                newval= KeyDefinition(
+                    keyname,
+                    ext=hduname,
+                    convert=convert,
+                    default=default
+                )
+            elif isinstance(entry, str):
+                newval = KeyDefinition(
+                    entry
+                )
+            else:
+                newval = entry
+
+            self.map[key] = newval
+
+    def extract(self, value, hdulist):
+        extractor = self.map[value]
+        return extractor(hdulist)
+
+
+def convert_date(value):
+    # FIXME: duplicated
+    import datetime
+    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+
+
+def convert_qc(value):
+    # FIXME: duplicated
+    from numina.core.qc import QC
+    if value:
+        return QC[value]
+    else:
+        return QC.UNKNOWN
+
+
 class DataModel(object):
     """Model of the Data being processed"""
+
+    meta_info_headers = [
+        'instrument',
+        'object',
+        'observation_date',
+        'uuid',
+        'type',
+        'mode',
+        'exptime',
+        'darktime',
+        'insconf',
+        'blckuuid',
+        'quality_control',
+    ]
+
+    def __init__(self, extractor=None):
+
+        default_values = {
+            'instrument': 'INSTRUME',
+            'object': 'OBJECT',
+            'observation_date': ('DATE-OBS', 0, convert_date),
+            'uuid': 'uuid',
+            'type': 'numtype',
+            'mode': 'obsmode',
+            'exptime': 'exptime',
+            'darktime': 'darktime',
+            'quality_control': ('NUMRQC', 0, convert_qc),
+            'insmode': ('INSMODE', 'undefined'),
+        }
+
+        values = {} if extractor is None else extractor
+        values.update(default_values)
+        self.extractor = FITSKeyExtractor(values)
 
     def get_data(self, img):
         return img['primary'].data
@@ -67,3 +169,6 @@ class DataModel(object):
 
     def gather_info_hdu(self, hdulist):
         return {}
+
+    def get_quality_control(self, img):
+        return self.extractor.extract('quality_control', img)

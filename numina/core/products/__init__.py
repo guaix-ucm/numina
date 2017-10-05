@@ -35,6 +35,7 @@ from numina.frame.schema import Schema
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
 from numina.ext.gtc import DF
+from numina.flow.datamodel import DataModel
 
 
 class DataProductTag(DataTypeBase):
@@ -77,13 +78,22 @@ class DataProductTag(DataTypeBase):
 
     def extract_meta_info(self, obj):
         """Extract metadata from serialized file"""
-
+        # print('Tag.extract_meta_info', obj)
         result = {}
-        if isinstance(obj, dict):
-            result['quality_control'] = obj['quality_control']
-            other = super(DataProductTag, self).extract_meta_info(obj)
-            result.update(other)
 
+        if isinstance(obj, dict):
+            qc = obj['quality_control']
+        elif isinstance(obj, DataFrame):
+            # FIXME: use datamodel if available
+            with obj.open() as hdulist:
+                value = hdulist[0].header.get('NUMRQC', 'UNKNOWN')
+                qc = QC[value]
+        else:
+            qc = QC.UNKNOWN
+
+        result['quality_control'] = qc
+        other = super(DataProductTag, self).extract_meta_info(obj)
+        result.update(other)
         return result
 
     def __getstate__(self):
@@ -146,9 +156,13 @@ class DataFrameType(DataType):
     }
     tags_headers = {}
 
-    def __init__(self):
+    def __init__(self, datamodel=None):
         super(DataFrameType, self).__init__(DataFrame)
         self.headerschema = Schema(_base_schema)
+        if datamodel is None:
+            self.datamodel = DataModel()
+        else:
+            self.datamodel = datamodel
 
         self.add_dialect_info('gtc', DF.TYPE_FRAME)
 
@@ -201,31 +215,19 @@ class DataFrameType(DataType):
         # empty result
         result = super(DataFrameType, self).extract_meta_info(objl)
         if objl:
-            with objl.open() as frame:
-                for field, entry in self.meta_info_headers.items():
-                    keyname, hduname, convert = self.convert_field(entry)
-                    header = frame[hduname].header
-                    result[field] = convert(header.get(keyname))
+            with objl.open() as hdulist:
+                ext = self.datamodel.extractor
+                for field in self.datamodel.meta_info_headers:
+                    result[field] = ext.extract(field, hdulist)
 
                 tags = result['tags']
-                for tagname, entry in self.tags_headers.items():
-                    keyname, hduname, convert = self.convert_field(entry)
-                    header = frame[hduname].header
-                    tags[tagname] = convert(header.get(keyname))
+                for field in self.tags_headers.items():
+                    tags[field] = ext.extract(field, hdulist)
+
                 return result
         else:
             return result
 
-    def convert_field(self, entry):
-        if isinstance(entry, tuple):
-            keyname = entry[0]
-            hduname = entry[1]
-            convert = entry[2]
-        else:
-            keyname = entry
-            hduname = 0
-            convert = lambda x: x
-        return keyname, hduname, convert
 
 
 class ArrayType(DataType):
