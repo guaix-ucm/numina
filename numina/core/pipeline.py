@@ -25,6 +25,7 @@ import numina.core.objimport
 import numina.core.products
 import numina.core.deptree
 import numina.util.parser
+import numina.flow.datamodel
 
 
 class Pipeline(object):
@@ -186,12 +187,16 @@ class Pipeline(object):
 
 class InstrumentDRP(object):
     """Description of an Instrument Data Reduction Pipeline"""
-    def __init__(self, name, configurations, modes, pipelines, products=None):
+    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None):
         self.name = name
         self.configurations = configurations
         self.selector = None
         self.modes = modes
         self.pipelines = pipelines
+        if datamodel:
+            self.datamodel = datamodel()
+        else:
+            self.datamodel = numina.flow.datamodel.DataModel()
 
     def query_provides(self, product, pipeline='default', search=False):
         """Return the mode that provides a given product"""

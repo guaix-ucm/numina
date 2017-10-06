@@ -22,7 +22,7 @@
 from __future__ import print_function
 
 import numina.drps
-
+import numina.core.objimport as objimport
 
 def register(subparsers, config):
     parser_show_ins = subparsers.add_parser(
@@ -74,6 +74,7 @@ def print_instrument(instrument, modes=True):
     default_conf = instrument.configurations['default']
     msg = " default is '{}'".format(default_conf.name)
     print(msg)
+    print(" has datamodel '{}'".format(objimport.fully_qualified_name(instrument.datamodel)))
     for _, pl in instrument.pipelines.items():
         print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
     if modes and instrument.modes:

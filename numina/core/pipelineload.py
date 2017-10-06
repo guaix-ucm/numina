@@ -224,6 +224,10 @@ def load_instrument(package, node, confclass=None):
     conf_node = node['configurations']
 
     trans = {'name': node['name']}
+    if 'datamodel' in node:
+        trans['datamodel'] = import_object(node['datamodel'])
+    else:
+        trans['datamodel'] = None
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
     confs, selector = load_confs(package, conf_node, confclass=confclass)
