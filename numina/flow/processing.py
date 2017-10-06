@@ -19,15 +19,15 @@
 
 from __future__ import print_function
 
+import datetime
 import logging
 import warnings
-import datetime
 
 from astropy.io import fits
 
-from .datamodel import DataModel
-from .node import Node
 import numina.array as array
+from numina.datamodel import DataModel
+from .node import Node
 
 _logger = logging.getLogger('numina.processing')
 

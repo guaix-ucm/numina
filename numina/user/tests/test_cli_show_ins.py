@@ -18,7 +18,7 @@ expecte0 = [""]
 
 expecte1 = ["Instrument: TEST1",
             " default is 'Default configuration'",
-            " has datamodel 'numina.flow.datamodel.DataModel'",
+            " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
             ""
             ]
@@ -26,11 +26,11 @@ expecte1 = ["Instrument: TEST1",
 
 expecte2 = ["Instrument: TEST2",
             " default is 'Default configuration'",
-            " has datamodel 'numina.flow.datamodel.DataModel'",
+            " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
             "Instrument: TEST1",
             " default is 'Default configuration'",
-            " has datamodel 'numina.flow.datamodel.DataModel'",
+            " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
             ""
             ]

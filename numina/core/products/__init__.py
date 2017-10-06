@@ -16,26 +16,26 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import datetime
 import sys
+import uuid
 import warnings
 from itertools import chain
-import datetime
 
-import uuid
-import six
 import numpy
+import six
 from astropy.io import fits
 
-from ..qc import QC
-from ..pipeline import InstrumentConfiguration
-from ..oresult import ObservationResult
-from ..dataframe import DataFrame
-from ..types import DataType, DataTypeBase
-from numina.frame.schema import Schema
-from numina.exceptions import ValidationError
+from numina.datamodel import DataModel
 from numina.exceptions import NoResultFound
+from numina.exceptions import ValidationError
 from numina.ext.gtc import DF
-from numina.flow.datamodel import DataModel
+from numina.frame.schema import Schema
+from ..dataframe import DataFrame
+from ..oresult import ObservationResult
+from ..pipeline import InstrumentConfiguration
+from ..qc import QC
+from ..types import DataType, DataTypeBase
 
 
 class DataProductTag(DataTypeBase):

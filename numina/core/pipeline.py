@@ -21,11 +21,11 @@
 
 import warnings
 
+import numina.core.deptree
 import numina.core.objimport
 import numina.core.products
-import numina.core.deptree
 import numina.util.parser
-import numina.flow.datamodel
+import numina.datamodel
 
 
 class Pipeline(object):
@@ -196,7 +196,7 @@ class InstrumentDRP(object):
         if datamodel:
             self.datamodel = datamodel()
         else:
-            self.datamodel = numina.flow.datamodel.DataModel()
+            self.datamodel = numina.datamodel.DataModel()
 
     def query_provides(self, product, pipeline='default', search=False):
         """Return the mode that provides a given product"""

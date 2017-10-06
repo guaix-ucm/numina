@@ -106,7 +106,9 @@ class DataModel(object):
         'quality_control',
     ]
 
-    def __init__(self, extractor=None):
+    def __init__(self, name='UNKNOWN', extractor=None):
+
+        self.name = name
 
         default_values = {
             'instrument': 'INSTRUME',
