@@ -56,6 +56,29 @@ def main(args=None):
         '.numina.cfg'
     ])
 
+    parser0 = argparse.ArgumentParser(
+        description='Command line interface of Numina',
+        prog='numina',
+        epilog="For detailed help pass --help to a target"
+        )
+
+    parser0.add_argument('--disable-plugins', action='store_false')
+
+    args0, args = parser0.parse_known_args(args)
+
+    # Load plugin commands if enabled
+    subcmd_load = []
+
+    if args0.disable_plugins:
+        for entry in pkg_resources.iter_entry_points(
+                group='numina.plugins.1'
+        ):
+            try:
+                register = entry.load()
+                subcmd_load.append(register)
+            except StandardError as error:
+                print(error, file=sys.stderr)
+
     parser = argparse.ArgumentParser(
         description='Command line interface of Numina',
         prog='numina',
@@ -94,10 +117,9 @@ def main(args=None):
         if register is not None:
             register(subparsers, config)
 
-    # Load plugin commands
-    for entry in pkg_resources.iter_entry_points(group='numina_plugins.1'):
+    # Add commands by plugins
+    for register in subcmd_load:
         try:
-            register = entry.load()
             register(subparsers, config)
         except StandardError as error:
             print(error, file=sys.stderr)
