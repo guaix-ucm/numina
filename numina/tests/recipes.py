@@ -21,14 +21,14 @@
 """Recipes for testing"""
 
 import numina.core
-import numina.core.products
+import numina.types.product as prod
+import numina.types.frame as frame
 
-
-class MasterBias(numina.core.products.DataProductTag, numina.core.DataFrameType):
+class MasterBias(prod.DataProductTag, frame.DataFrameType):
     pass
 
 
-class MasterDark(numina.core.products.DataProductTag, numina.core.DataFrameType):
+class MasterDark(prod.DataProductTag, frame.DataFrameType):
     pass
 
 

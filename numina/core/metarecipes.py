@@ -92,7 +92,7 @@ class RecipeType(type):
 
 def generate_docs(klass):
     """Add documentation to generated classes"""
-    import numina.core.types
+    import numina.types.datatype
 
     attrh = ('Attributes\n'
              '----------\n')
@@ -117,7 +117,7 @@ def generate_docs(klass):
             modo = ""
         if y.type.isproduct():
             tipo = y.type.__class__.__name__
-        elif isinstance(y.type, numina.core.types.PlainPythonType):
+        elif isinstance(y.type, numina.types.datatype.PlainPythonType):
             tipo = y.type.internal_type.__name__
         else:
             tipo = y.type.__class__.__name__

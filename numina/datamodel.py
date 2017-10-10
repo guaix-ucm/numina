@@ -19,6 +19,8 @@
 
 from __future__ import print_function
 
+import numina.util.convert as conv
+
 
 class KeyDefinition(object):
     def __init__(self, key, ext=None, default=None, convert=None):
@@ -74,21 +76,6 @@ class FITSKeyExtractor(object):
         return extractor(hdulist)
 
 
-def convert_date(value):
-    # FIXME: duplicated
-    import datetime
-    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-
-
-def convert_qc(value):
-    # FIXME: duplicated
-    from numina.core.qc import QC
-    if value:
-        return QC[value]
-    else:
-        return QC.UNKNOWN
-
-
 class DataModel(object):
     """Model of the Data being processed"""
 
@@ -113,13 +100,13 @@ class DataModel(object):
         default_values = {
             'instrument': 'INSTRUME',
             'object': 'OBJECT',
-            'observation_date': ('DATE-OBS', 0, convert_date),
+            'observation_date': ('DATE-OBS', 0, conv.convert_date),
             'uuid': 'uuid',
             'type': 'numtype',
             'mode': 'obsmode',
             'exptime': 'exptime',
             'darktime': 'darktime',
-            'quality_control': ('NUMRQC', 0, convert_qc),
+            'quality_control': ('NUMRQC', 0, conv.convert_qc),
             'insmode': ('INSMODE', 'undefined'),
         }
 

@@ -20,7 +20,7 @@
 
 '''Unit test for types'''
 
-from ..types import NullType, DataType
+from ..datatype import NullType, DataType
 
 def test_null_type():
     '''Test NullType.'''

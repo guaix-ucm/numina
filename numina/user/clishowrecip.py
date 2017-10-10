@@ -27,7 +27,8 @@ import yaml
 
 from numina import __version__
 import numina.drps
-from numina.core import DataFrameType, DataProductType
+from numina.types.frame import DataFrameType
+from numina.types.product import DataProductTag
 from numina.core import import_object
 from numina.user.clishowins import print_no_instrument
 
@@ -103,7 +104,7 @@ def print_recipe_template(recipe, name=None, insname=None,
             return (dispname, req.default)
         elif isinstance(req.type, DataFrameType):
             return (dispname, dispname + '.fits')
-        elif isinstance(req.type, DataProductType):
+        elif isinstance(req.type, DataProductTag):
             return (dispname, getattr(req.type, 'default', None))
         else:
             return (dispname, None)

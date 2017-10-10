@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,34 +17,21 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Convert strings to values in data load """
 
-'''Unit test for types'''
-
-from numina.types.datatype import DataType
-from ..dataholders import Product
-from ..recipeinout import RecipeResult
+import datetime
 
 
-def test_product_out():
+def convert_date(value):
+    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
 
-    class AVal(object):
-        def __init__(self, val):
-            self.val = val
 
-    class A(DataType):
-
-        def __init__(self):
-            super(A, self).__init__(ptype=AVal)
-
-        def convert(self, obj):
-            return AVal(val=1)
-
-        def convert_out(self, obj):
-            return AVal(val=2)
-
-    class RR(RecipeResult):
-        prod = Product(A)
-
-    rr = RR(prod=100)
-
-    assert rr.prod.val == 2
+def convert_qc(value):
+    from numina.types.qc import QC
+    if value:
+        if isinstance(value, QC):
+            return value
+        else:
+            return QC[value]
+    else:
+        return QC.UNKNOWN

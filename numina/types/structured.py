@@ -18,38 +18,17 @@
 
 import json
 import uuid
-import datetime
 
-import numpy
-import numina.core.types
-import numina.core.products
-import numina.core.qc
+
+import numina.types.qc
 from numina.ext.gtc import DF
 
-
-def convert_date(value):
-    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-
-
-class ExtEncoder(json.JSONEncoder):
-    """"Encode numpy.floats and numpy.integer"""
-    def default(self, obj):
-        if isinstance(obj, numpy.integer):
-            return int(obj)
-        elif isinstance(obj, numpy.floating):
-            return float(obj)
-        elif isinstance(obj, numpy.ndarray):
-            return obj.tolist()
-        elif isinstance(obj, datetime.timedelta):
-            return obj.total_seconds()
-        elif isinstance(obj, numina.core.qc.QC):
-            return obj.name
-        else:
-            return super(ExtEncoder, self).default(obj)
+import numina.util.convert as conv
+from numina.util.jsonencoder import ExtEncoder
 
 
-class BaseStructuredCalibration(numina.core.products.DataProductTag,
-                                numina.core.types.AutoDataType):
+class BaseStructuredCalibration(numina.types.product.DataProductTag,
+                                numina.types.datatype.AutoDataType):
     """Base class for structured calibration data
 
     Parameters
@@ -96,13 +75,14 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         return st
 
     def __setstate__(self, state):
+        super(BaseStructuredCalibration, self).__setstate__(state)
+
         self.instrument = state['instrument']
         self.tags = state['tags']
         self.uuid = state['uuid']
         self.meta_info = {}
-
         for key in state:
-            if key not in ['contents']:
+            if key not in ['contents', 'quality_control']:
                 setattr(self, key, state[key])
 
     def __str__(self):
@@ -136,7 +116,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
     def extract_meta_info(self, obj):
         """Extract metadata from serialized file"""
 
-        objl = self.convert(obj)
+        objl = self.convert_in(obj)
 
         try:
             with open(objl, 'r') as fd:
@@ -153,7 +133,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         result['uuid'] = state['uuid']
         result['tags'] = state['tags']
         result['type'] = state['type']
-        result['observation_date'] = convert_date(date_obs)
+        result['observation_date'] = conv.convert_date(date_obs)
         result['origin'] = origin
 
         return result

@@ -23,8 +23,8 @@ Recipe requirements
 
 import inspect
 
-from .types import NullType, PlainPythonType
-from .types import ListOfType
+from numina.types.datatype import NullType, PlainPythonType
+from numina.types.datatype import ListOfType
 
 
 class EntryHolder(object):

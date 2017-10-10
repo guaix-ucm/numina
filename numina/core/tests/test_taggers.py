@@ -24,7 +24,7 @@ import pytest
 
 import astropy.io.fits as fits
 
-from ..dataframe import DataFrame
+from numina.types.dataframe import DataFrame
 from ..oresult import ObservationResult
 from ..taggers import get_tags_from_full_ob
 

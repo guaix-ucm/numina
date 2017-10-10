@@ -26,8 +26,10 @@ except ImportError:
 
 import numpy
 
-from numina.core.dataframe import DataFrame
-from numina.core.products import dump_dataframe,dump_numpy_array
+from numina.types.dataframe import DataFrame
+from numina.types.frame import dump_dataframe
+from numina.types.array import dump_numpy_array
+
 
 @singledispatch
 def dump(tag, obj, where):

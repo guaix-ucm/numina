@@ -22,8 +22,8 @@ Recipe requirement holders
 """
 
 
-from .products import ObservationResultType
-from .products import InstrumentConfigurationType
+from numina.types.obsresult import ObservationResultType
+from numina.types.obsresult import InstrumentConfigurationType
 from .dataholders import EntryHolder
 
 

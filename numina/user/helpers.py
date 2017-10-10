@@ -30,7 +30,7 @@ import pickle
 import yaml
 
 from numina.core import fully_qualified_name
-from numina.core.products import DataFrameType
+from numina.types.frame import DataFrameType
 from numina.util.context import working_directory
 
 

@@ -28,8 +28,8 @@ from ..recipeinout import RecipeInput, RecipeResult
 from ..requirements import ObservationResultRequirement
 from ..dataholders import Product
 from ..requirements import Requirement
-from ..products import QualityControlProduct
-from ..qc import QC
+from numina.types.obsresult import QualityControlProduct
+from numina.types.qc import QC
 
 
 class PruebaRecipe1(BaseRecipe):

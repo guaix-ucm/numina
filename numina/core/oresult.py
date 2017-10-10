@@ -23,7 +23,7 @@ import six
 
 from astropy.io import fits
 
-from .dataframe import DataFrame
+from numina.types.dataframe import DataFrame
 
 
 class ObservationResult(object):
