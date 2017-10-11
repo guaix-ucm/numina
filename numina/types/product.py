@@ -94,7 +94,7 @@ class DataProductTag(DataTypeBase):
         return st
 
     def __setstate__(self, state):
-        qcval = state['quality_control']
+        qcval = state.get('quality_control', 'UNKNOWN')
         self.quality_control = convert_qc(qcval)
 
         super(DataProductTag, self).__setstate__(state)
