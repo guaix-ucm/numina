@@ -365,8 +365,9 @@ def gen_triplets_master(wv_master, debugplot=0):
     wv_previous = wv_master[0]
     for i in range(1, nlines_master):
         if wv_previous >= wv_master[i]:
-            raise ValueError('Wavelengths in master table are duplicated' +
-                             ' or not sorted')
+            raise ValueError('Wavelengths:\n--> ' +
+                             str(wv_previous) + '\n--> ' + str(wv_master[i]) +
+                             '\nin master table are duplicated or not sorted')
         wv_previous = wv_master[i]
 
     # Generate all the possible triplets with the numbers of the lines
