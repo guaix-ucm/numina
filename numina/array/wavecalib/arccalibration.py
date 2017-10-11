@@ -113,13 +113,8 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         the borders of the wavelength calibration range).
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
     plot_title : string or None
         Title for residuals plot.
 
@@ -178,7 +173,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     else:
         residual_std = 0.0
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('>>> Fitted coefficients:\n', coeff)
         print('>>> Residual std.......:', residual_std)
 
@@ -188,7 +183,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     crmin1_linear = poly(1)
     crmax1_linear = poly(naxis1_arc)
     cdelt1_linear = (crmax1_linear - crval1_linear) / (naxis1_arc - crpix1)
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('>>> CRVAL1 linear scale:', crval1_linear)
         print('>>> CDELT1 linear scale:', cdelt1_linear)
 
@@ -210,7 +205,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         cr_linear=cr_linear
     )
 
-    if debugplot % 10 != 0:
+    if abs(debugplot) % 10 != 0:
         # polynomial fit
         xpol = np.linspace(1, naxis1_arc, naxis1_arc)
         ypol = poly(xpol) - (crval1_linear + (xpol - crpix1) * cdelt1_linear)
@@ -323,9 +318,12 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                  horizontalalignment="center",
                  verticalalignment="bottom")
 
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(debugplot)
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=False)
 
     return solution_wv
 
@@ -344,13 +342,8 @@ def gen_triplets_master(wv_master, debugplot=0):
         (Angstroms).
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -388,7 +381,7 @@ def gen_triplets_master(wv_master, debugplot=0):
     # value.
     ntriplets_master = len(triplets_master_list)
     if ntriplets_master == scipy.misc.comb(nlines_master, 3, exact=True):
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('>>> Total number of lines in master table:', 
                   nlines_master)
             print('>>> Number of triplets in master table...:', 
@@ -414,7 +407,7 @@ def gen_triplets_master(wv_master, debugplot=0):
     triplets_master_sorted_list = [triplets_master_list[i]
                                    for i in isort_ratios_master]
 
-    if debugplot in [21, 22]:
+    if abs(debugplot) in [21, 22]:
         # compute and plot histogram with position ratios
         bins_in = np.linspace(0.0, 1.0, 41)
         hist, bins_out = np.histogram(ratios_master, bins=bins_in)
@@ -427,11 +420,15 @@ def gen_triplets_master(wv_master, debugplot=0):
         ax.bar(center, hist, align='center', width=width_hist)
         ax.set_xlabel('distance ratio in each triplet')
         ax.set_ylabel('Number of triplets')
-        plt.title("Number of lines/triplets: " +
-                  str(nlines_master) + "/" + str(ntriplets_master))
-        plt.show(block=False)
-        plt.pause(0.001)
-        pause_debugplot(debugplot)
+        ax.title("Number of lines/triplets: " +
+                 str(nlines_master) + "/" + str(ntriplets_master))
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
 
@@ -501,13 +498,8 @@ def arccalibration(wv_master,
         lines.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -619,15 +611,8 @@ def arccalibration_direct(wv_master,
         lines.
     debugplot : int
         Determines whether intermediate computations and/or plots
-        are displayed:
-        00 : no debug, no plots
-        01 : no debug, plots without pauses
-        02 : no debug, plots with pauses
-        10 : debug, no plots
-        11 : debug, plots without pauses
-        12 : debug, plots with pauses
-        21 : debug, many plots without pauses
-        22 : debug, many plots with pauses
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -667,7 +652,7 @@ def arccalibration_direct(wv_master,
     clabel_search = []
 
     ntriplets_arc = nlines_arc - 2
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('>>> Total number of arc lines............:', nlines_arc)
         print('>>> Total number of arc triplets.........:', ntriplets_arc)
 
@@ -695,7 +680,7 @@ def arccalibration_direct(wv_master,
         if j_loc_max > ntriplets_master:
             j_loc_max = ntriplets_master
 
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print(i, ratio_arc_min, ratio_arc, ratio_arc_max, 
                   j_loc_min, j_loc_max)
 
@@ -742,7 +727,7 @@ def arccalibration_direct(wv_master,
     error_crval1_search_norm /= (wv_end_search-wv_ini_search)
 
     # intermediate plots
-    if debugplot in [21, 22]:
+    if abs(debugplot) in [21, 22]:
         from numina.array.display.matplotlib_qt import plt
 
         # CDELT1 vs CRVAL1 diagram (original coordinates)
@@ -768,11 +753,14 @@ def arccalibration_direct(wv_master,
         xp_limits = np.concatenate((xp_limits, [xp_limits[0], xp_limits[0]]))
         yp_limits = np.concatenate((yp_limits, [yp_limits[1], yp_limits[0]]))
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        plt.title("Potential solutions within the valid parameter space")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions within the valid parameter space")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         fig = plt.figure()
@@ -789,11 +777,14 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        plt.title("Potential solutions within the valid parameter space")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions within the valid parameter space")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with different color for each arc triplet and overplotting 
@@ -810,11 +801,14 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        plt.title("Potential solutions: arc line triplet number")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions: arc line triplet number")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # including triplet numbers
@@ -830,11 +824,14 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        plt.title("Potential solutions: master line triplets")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions: master line triplets")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with error bars (note that errors in this plot are highly
@@ -850,11 +847,14 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        plt.title("Potential solutions within the valid parameter space")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions within the valid parameter space")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     # ---
     # Segregate the different solutions (normalized to [0,1]) by
@@ -888,7 +888,7 @@ def arccalibration_direct(wv_master,
         clabel_dum = [k for (k, v) in zip(clabel_search, ldum) if v]
         clabel_layered_list.append(clabel_dum)
     
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('>>> Total number of potential solutions: ' +
               str(sum(ntriplets_layered_list)) + " (double check ==) " +
               str(len(itriplet_search)))
@@ -927,7 +927,7 @@ def arccalibration_direct(wv_master,
 
     # normalize the cost function
     funcost_min = min(funcost_search)
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('funcost_min:', funcost_min)
     funcost_search /= funcost_min
 
@@ -937,7 +937,7 @@ def arccalibration_direct(wv_master,
         ldum = (itriplet_search == i)
         funcost_dum = funcost_search[ldum]
         funcost_layered_list.append(funcost_dum)
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         for i in range(ntriplets_arc):
             if ntriplets_layered_list[i] > 0:
                 jdum = funcost_layered_list[i].argmin()
@@ -950,7 +950,7 @@ def arccalibration_direct(wv_master,
         pause_debugplot(debugplot)
 
     # intermediate plots
-    if debugplot in [21, 22]:
+    if abs(debugplot) in [21, 22]:
         from numina.array.display.matplotlib_qt import plt
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates) with symbol
@@ -970,12 +970,15 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.title("Potential solutions within the valid parameter space\n" +
-                  "[symbol size proportional to 1/(cost function)]")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions within the valid parameter space\n" +
+                 "[symbol size proportional to 1/(cost function)]")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # with symbol size proportional to the inverse of the cost
@@ -992,12 +995,15 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        plt.title("Potential solutions: arc line triplet number\n" +
-                  "[symbol size proportional to 1/(cost function)]")
-        plt.show(block=False)
-        plt.pause(0.001)
+        ax.title("Potential solutions: arc line triplet number\n" +
+                 "[symbol size proportional to 1/(cost function)]")
+        # window geometry
+        geometry = (0, 0, 640, 480)
+        x_geom, y_geom, dx_geom, dy_geom = geometry
+        mngr = plt.get_current_fig_manager()
+        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search))
-        pause_debugplot(debugplot)
+        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # for i in range(ntriplets_arc):
@@ -1012,13 +1018,16 @@ def arccalibration_direct(wv_master,
         #     ax.set_xlim([xmin, xmax])
         #     ax.set_ylim([ymin, ymax])
         #     ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        #     plt.title("Potential solutions: arc line triplet " + str(i) +
-        #               " (from 0 to " + str(ntriplets_arc-1) + ")\n" +
-        #               "[symbol size proportional to 1/(cost function)]")
-        #     plt.show(block=False)
-        #     plt.pause(0.001)
+        #     ax.title("Potential solutions: arc line triplet " + str(i) +
+        #              " (from 0 to " + str(ntriplets_arc-1) + ")\n" +
+        #              "[symbol size proportional to 1/(cost function)]")
+        #     # window geometry
+        #     geometry = (0, 0, 640, 480)
+        #     x_geom, y_geom, dx_geom, dy_geom = geometry
+        #     mngr = plt.get_current_fig_manager()
+        #     mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         #     print('Number of points in last plot:', xdum.size)
-        #     pause_debugplot(debugplot)
+        #     pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     # ---
     # Line identification: several scenarios are considered.
@@ -1068,7 +1077,7 @@ def arccalibration_direct(wv_master,
             diagonal_funcost[i+1].append(funcost_dum)
             diagonal_funcost.append([funcost_dum])
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         for i in range(nlines_arc):
             print(i, diagonal_ids[i], diagonal_funcost[i])
         pause_debugplot(debugplot)
@@ -1106,7 +1115,7 @@ def arccalibration_direct(wv_master,
             list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
             list_of_wvfeatures[i].reference = wv_master[j1]
     
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('\n* Including category A lines:')
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
@@ -1139,7 +1148,7 @@ def arccalibration_direct(wv_master,
                     list_of_wvfeatures[i].funcost = min(f2, f3)
                     list_of_wvfeatures[i].reference = wv_master[j2]
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('\n* Including category B lines:')
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
@@ -1165,7 +1174,7 @@ def arccalibration_direct(wv_master,
                     list_of_wvfeatures[i].funcost = f3
                     list_of_wvfeatures[i].reference = wv_master[j3]
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('\n* Including category C lines:')
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
@@ -1182,7 +1191,7 @@ def arccalibration_direct(wv_master,
             list_of_wvfeatures[i].funcost = min(f1, f2)
             list_of_wvfeatures[i].reference = wv_master[j1]
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('\n* Including category D lines:')
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
@@ -1208,7 +1217,7 @@ def arccalibration_direct(wv_master,
             list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
             list_of_wvfeatures[i].reference = wv_master[j1]
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('\n* Including category E lines:')
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
@@ -1251,7 +1260,7 @@ def arccalibration_direct(wv_master,
                                 # do not uncomment the next line:
                                 # list_of_wvfeatures[i1].reference = None
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         if nduplicated > 0:
             print('\n* Removing category R lines:')
             for i in range(nlines_arc):
@@ -1265,26 +1274,26 @@ def arccalibration_direct(wv_master,
     # ---
     # Filter out points with a large deviation from a robust linear
     # fit. The filtered lines are labelled as category='T'.
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('\n>>> Theil-Sen filtering...')
     nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
     if nfit < 5:
         nremoved = 0
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print("nfit=", nfit)
             print("=> Skipping Theil-Sen filtering!")
     else:
         intercept, slope = fit_theil_sen(xfit, yfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             cdelt1_approx = slope
             crval1_approx = intercept + slope * crpix1
             print('>>> Theil-Sen CRVAL1: ', crval1_approx)
             print('>>> Theil-Sen CDELT1: ', cdelt1_approx)
         rfit = yfit - (intercept + slope*xfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('rfit:\n', rfit)
         sigma_rfit = robust_std(rfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('robust std:', sigma_rfit)
             print('normal std:', np.std(rfit))
         nremoved = 0
@@ -1296,7 +1305,7 @@ def arccalibration_direct(wv_master,
                 # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
     
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         if nremoved > 0:
             print('\n* Removing category T lines:')
             for i in range(nlines_arc):
@@ -1311,7 +1320,7 @@ def arccalibration_direct(wv_master,
     # Filter out points that deviates from a polynomial fit. The
     # filtered lines are labelled as category='P'.
     if times_sigma_polfilt > 0:
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('\n>>> Polynomial filtering...')
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
@@ -1324,10 +1333,10 @@ def arccalibration_direct(wv_master,
         poly = Polynomial.fit(x=xfit, y=yfit, deg=poly_degree_wfit)
         poly = Polynomial.cast(poly)
         rfit = yfit - poly(xfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('rfit:', rfit)
         sigma_rfit = robust_std(rfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('robust std:', sigma_rfit)
             print('normal std:', np.std(rfit))
         nremoved = 0
@@ -1339,7 +1348,7 @@ def arccalibration_direct(wv_master,
                 # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
 
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             if nremoved > 0:
                 print('\n* Removing category P lines:')
                 for i in range(nlines_arc):
@@ -1350,14 +1359,14 @@ def arccalibration_direct(wv_master,
             else:
                 print('\nNo category P lines have been found and removed')
     else:
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('\n=> Skipping polynomial filtering!')
 
     # ---
     # Remove outliers using the Cook distance. The filtered lines are
     # labelled as category='K'.
     if times_sigma_cook > 0:
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('\n>>> Removing outliers using Cook distance...')
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         # There must be enough points to compute reasonable Cook distances
@@ -1379,7 +1388,7 @@ def arccalibration_direct(wv_master,
                     # list_of_wvfeatures[ifit[i]].reference = None
                     nremoved += 1
 
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             if nremoved > 0:
                 print('\n* Removing category K lines:')
                 for i in range(nlines_arc):
@@ -1390,7 +1399,7 @@ def arccalibration_direct(wv_master,
             else:
                 print('\nNo category K lines have been found and removed')
     else:
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('\n=> Skipping outlier detection using Cook distance!')
 
     # ---
@@ -1407,7 +1416,7 @@ def arccalibration_direct(wv_master,
     loop_include_new_lines = True
     new_lines_included = False
     while loop_include_new_lines:
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('\n>>> Polynomial prediction of unknown lines...')
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
@@ -1415,15 +1424,15 @@ def arccalibration_direct(wv_master,
         poly = Polynomial.fit(x=xfit, y=yfit, deg=poly_degree_wfit)
         poly = Polynomial.cast(poly)
         rfit = yfit - poly(xfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('rfit:\n', rfit)
         sigma_rfit = robust_std(rfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('robust std:', sigma_rfit)
             print('normal std:', np.std(rfit))
 
         intercept, slope = fit_theil_sen(xfit, yfit)
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             print('crval1, cdelt1 (linear fit):', intercept, slope)
 
         list_id_already_found = []
@@ -1454,7 +1463,7 @@ def arccalibration_direct(wv_master,
                     else:
                         ifound = isort
                         dlambda = dlambda2
-                if debugplot >= 10:
+                if abs(debugplot) >= 10:
                     print(i, ifound, wv_master[ifound], zfit, dlambda)
                 if ifound not in list_id_already_found:  # unused line
                     condition1 = dlambda < times_sigma_inclusion * sigma_rfit
@@ -1471,7 +1480,7 @@ def arccalibration_direct(wv_master,
                         list_of_wvfeatures[i].reference = wv_master[ifound]
                         nnewlines += 1
 
-        if debugplot >= 10:
+        if abs(debugplot) >= 10:
             if nnewlines > 0:
                 new_lines_included = True
                 print('\n* Including category I lines:')
