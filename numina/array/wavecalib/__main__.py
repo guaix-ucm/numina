@@ -198,9 +198,7 @@ def wvcal_spectrum(filename, ns1, ns2,
             ymax += dy/20.
             ax.set_ylim([ymin, ymax])
             # display threshold
-            import matplotlib
-            matplotlib.use('Qt4Agg')
-            import matplotlib.pyplot as plt
+            from numina.array.display.matplotlib_qt import plt
             plt.axhline(y=threshold, color="black", linestyle="dotted",
                         label="detection threshold")
             # mark peak location
@@ -283,9 +281,7 @@ def wvcal_spectrum(filename, ns1, ns2,
                         str(reference), fontsize=8,
                         horizontalalignment='center')
             # show plot
-            import matplotlib
-            matplotlib.use('Qt4Agg')
-            import matplotlib.pyplot as plt
+            from numina.array.display.matplotlib_qt import plt
             plt.show(block=False)
             plt.pause(0.001)
             pause_debugplot(11)

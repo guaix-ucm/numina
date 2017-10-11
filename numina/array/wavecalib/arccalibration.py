@@ -219,9 +219,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         yp = yfit - (crval1_linear + (xp - crpix1) * cdelt1_linear)
         yres = yfit - poly(xp)  # residuals
         # include residuals plot with identified lines
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
+        from numina.array.display.matplotlib_qt import plt
         fig = plt.figure()
         ax2 = fig.add_subplot(2, 1, 2)
         ax2.set_xlim([1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc])
@@ -421,9 +419,7 @@ def gen_triplets_master(wv_master, debugplot=0):
         bins_in = np.linspace(0.0, 1.0, 41)
         hist, bins_out = np.histogram(ratios_master, bins=bins_in)
         #
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
+        from numina.array.display.matplotlib_qt import plt
         fig = plt.figure()
         ax = fig.add_subplot(111)
         width_hist = 0.8*(bins_out[1]-bins_out[0])
@@ -747,9 +743,7 @@ def arccalibration_direct(wv_master,
 
     # intermediate plots
     if debugplot in [21, 22]:
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
+        from numina.array.display.matplotlib_qt import plt
 
         # CDELT1 vs CRVAL1 diagram (original coordinates)
         fig = plt.figure()
@@ -957,9 +951,7 @@ def arccalibration_direct(wv_master,
 
     # intermediate plots
     if debugplot in [21, 22]:
-        import matplotlib
-        matplotlib.use('Qt4Agg')
-        import matplotlib.pyplot as plt
+        from numina.array.display.matplotlib_qt import plt
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates) with symbol
         # size proportional to the inverse of the cost function

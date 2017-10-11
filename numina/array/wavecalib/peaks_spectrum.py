@@ -230,9 +230,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
         xfpeaks[iline] = refined_peak
 
         if debugplot % 10 != 0:
-            import matplotlib
-            matplotlib.use('Qt4Agg')
-            import matplotlib.pyplot as plt
+            from numina.array.display.matplotlib_qt import plt
             fig = plt.figure()
             ax = fig.add_subplot(111)
             xmin = x_fit.min()-1
