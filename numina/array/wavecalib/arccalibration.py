@@ -31,7 +31,7 @@ from ..display.pause_debugplot import pause_debugplot
 from ..robustfit import fit_theil_sen
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..stats import robust_std
-from .solutionarc import CrLinear, WavecalFeature,SolutionArcCalibration
+from .solutionarc import CrLinear, WavecalFeature, SolutionArcCalibration
 
 
 def select_data_for_fit(list_of_wvfeatures):
@@ -174,7 +174,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     poly = Polynomial.cast(poly)
     coeff = poly.coef
     if len(xfit) > poly_degree_wfit + 1:
-        residual_std = np.sqrt(stats_list[0]/(len(xfit)-2))[0]
+        residual_std = np.sqrt(stats_list[0]/(len(xfit)-poly_degree_wfit-1))[0]
     else:
         residual_std = 0.0
 
