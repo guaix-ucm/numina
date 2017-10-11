@@ -21,7 +21,6 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
 
 from .pause_debugplot import pause_debugplot
@@ -55,7 +54,7 @@ def ximplotxy(x, y, plottype=None,
         If True, the function shows the displayed image. Otherwise
         plt.show() is expected to be executed outside.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt5 backend geometry.
+        x, y, dx, dy values employed to set the Qt backend geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
@@ -71,6 +70,7 @@ def ximplotxy(x, y, plottype=None,
 
     """
 
+    from matplotlib_qt import plt
     fig = plt.figure()
     ax = fig.add_subplot(111)
     if plottype == 'semilog':

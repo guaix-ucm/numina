@@ -46,7 +46,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
         tuple, assuming (nc1,nc2). In this case, the coordinates
         indicate pixels.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt5 backend geometry.
+        x, y, dx, dy values employed to set the Qt backend geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
@@ -82,9 +82,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
                              " does not correspond to bounding box size")
 
     # display image
-    import matplotlib
-    matplotlib.use('Qt5Agg')
-    import matplotlib.pyplot as plt
+    from matplotlib_qt import plt
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)

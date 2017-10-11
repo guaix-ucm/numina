@@ -69,7 +69,7 @@ def ximshow(image2d, title=None, show=True,
     first_pixel : tuple (2 integers)
         (x0,y0) coordinates of pixel at origin.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt5 backend geometry.
+        x, y, dx, dy values employed to set the Qt backend geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
@@ -85,9 +85,7 @@ def ximshow(image2d, title=None, show=True,
 
     """
 
-    import matplotlib
-    matplotlib.use('Qt5Agg')
-    import matplotlib.pyplot as plt
+    from matplotlib_qt import plt
 
     # protections
     if type(image2d) is not np.ndarray:
@@ -355,7 +353,7 @@ def ximshow_file(singlefile,
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
     args_geometry : string or None
-        Tuple x,y,dx,dy to define the Qt5 backend geometry. This
+        Tuple x,y,dx,dy to define the Qt backend geometry. This
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
@@ -532,9 +530,7 @@ def main(args=None):
         from matplotlib.backends.backend_pdf import PdfPages
         pdf = PdfPages(args.pdffile.name)
     else:
-        import matplotlib
-        matplotlib.use('Qt5Agg')
-        import matplotlib.pyplot as plt
+        from matplotlib_qt import plt
         pdf = None
 
     for myfile in list_fits_files:
