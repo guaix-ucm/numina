@@ -1580,7 +1580,7 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     return wv_verified_all_peaks
 
 
-def refine_arccalibration(sp, poly_initial, wv_master,
+def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                           npix=2,
                           nwinwidth_initial=7,
                           nwinwidth_refined=5,
@@ -1598,6 +1598,10 @@ def refine_arccalibration(sp, poly_initial, wv_master,
         NAXIS1).
     wv_master : numpy array
         Array containing the master list of arc line wavelengths.
+    poldeg : int
+        Polynomial degree of refined wavelength calibration. Note
+        that this degree can be different from the polynomial degree
+        of poly_initial.
     npix : int
         Number of pixels around each line peak where the expected
         wavelength must match the tabulated wavelength in the master
@@ -1628,9 +1632,6 @@ def refine_arccalibration(sp, poly_initial, wv_master,
     poly_refined = None
     npoints_eff = 0
     residual_std = None
-
-    # polynomial degree
-    poldeg = len(poly_initial.coeff) - 1
 
     # spectrum length
     naxis1 = sp.shape[0]
@@ -1723,7 +1724,7 @@ def refine_arccalibration(sp, poly_initial, wv_master,
                     label="identified lines")
             for i in range(len(ixpeaks)):
                 if wv_verified_all_peaks[i] > 0:
-                    ax.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
+                    ax.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]] + dy/100,
                             wv_verified_all_peaks[i], fontsize=8,
                             horizontalalignment='center')
             # legend
