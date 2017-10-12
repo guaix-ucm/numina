@@ -29,6 +29,7 @@ import scipy.misc
 
 from ..display.pause_debugplot import pause_debugplot
 from ..robustfit import fit_theil_sen
+from ..display.ximplotxy import ximplotxy
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from ..stats import robust_std
@@ -1693,9 +1694,41 @@ def refine_arccalibration(sp, poly_initial, wv_master,
         # residual standard deviation
         sum_res2 = np.sum(yres[np.logical_not(reject)] ** 2)
         residual_std = np.sqrt(sum_res2 / (npoints_eff - poldeg - 1))
+
         if abs(debugplot) >= 10:
             print("npoints_eff, residual_std:",
                   npoints_eff, residual_std)
             print("poly.coef:", poly_refined.coef)
+
+        # display spectrum and peaks
+        if abs(debugplot) % 10 != 0:
+            xp = np.arange(1, naxis1 + 1)
+            ax = ximplotxy(xp, sp,
+                           xlabel='pixel (from 1 to NAXIS1)',
+                           ylabel='number of counts',
+                           title='Refining wavelength calibration',
+                           show=False, debugplot=debugplot)
+            ymin = sp.min()
+            ymax = sp.max()
+            dy = ymax - ymin
+            ymin -= dy / 20.
+            ymax += dy / 20.
+            ax.set_ylim([ymin, ymax])
+            # mark peak location
+            ax.plot(ixpeaks + 1, sp[ixpeaks], 'bo',
+                    label="initial location")
+            ax.plot(fxpeaks + 1, sp[ixpeaks], 'go',
+                    label="refined location")
+            ax.plot((fxpeaks + 1)[lines_ok], sp[ixpeaks][lines_ok], 'mo',
+                    label="identified lines")
+            for i in range(len(ixpeaks)):
+                if wv_verified_all_peaks[i] > 0:
+                    ax.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
+                            wv_verified_all_peaks[i], fontsize=8,
+                            horizontalalignment='center')
+            # legend
+            ax.legend(numpoints=1)
+            # show plot
+            pause_debugplot(debugplot, pltshow=True)
 
     return poly_refined, npoints_eff, residual_std
