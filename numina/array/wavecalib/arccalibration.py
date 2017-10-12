@@ -30,8 +30,11 @@ import scipy.misc
 from ..display.pause_debugplot import pause_debugplot
 from ..robustfit import fit_theil_sen
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
+from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from ..stats import robust_std
 from .solutionarc import CrLinear, WavecalFeature, SolutionArcCalibration
+from .peaks_spectrum import find_peaks_spectrum
+from .peaks_spectrum import refine_peaks_spectrum
 
 
 def select_data_for_fit(list_of_wvfeatures):
@@ -1501,3 +1504,198 @@ def arccalibration_direct(wv_master,
             loop_include_new_lines = False
 
     return list_of_wvfeatures
+
+
+def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
+    """Match two lists with wavelengths.
+
+    Assign individual wavelengths from wv_master to each expected
+    wavelength when the latter is within the maximum allowed range.
+
+    Parameters
+    ----------
+    wv_master : numpy array
+        Array containing the master wavelengths.
+    wv_expected_all_peaks : numpy array
+        Array containing the expected wavelengths (computed, for
+        example, from an approximate polynomial calibration applied to
+        the location of the line peaks).
+    delta_wv_max : float
+        Maximum distance to accept that the master wavelength
+        corresponds to the expected wavelength.
+
+    Returns
+    -------
+    wv_verified_all_peaks : numpy array
+        Verified wavelengths from master list.
+
+    """
+
+    # initialize the output array to zero
+    wv_verified_all_peaks = np.zeros_like(wv_expected_all_peaks)
+
+    # initialize to True array to indicate that no peak has already
+    # been verified (this flag avoids duplication)
+    wv_unused = np.ones_like(wv_expected_all_peaks, dtype=bool)
+
+    # since it is likely that len(wv_master) < len(wv_expected_all_peaks),
+    # it is more convenient to execute the search in the following order
+    for i in range(len(wv_master)):
+        j = np.searchsorted(wv_expected_all_peaks, wv_master[i])
+        if j == 0:
+            if wv_unused[j]:
+                delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j])
+                if delta_wv < delta_wv_max:
+                    wv_verified_all_peaks[j] = wv_master[i]
+                    wv_unused[j] = False
+        elif j == len(wv_expected_all_peaks):
+            if wv_unused[j-1]:
+                delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+                if delta_wv < delta_wv_max:
+                    wv_verified_all_peaks[j-1] = wv_master[i]
+                    wv_unused[j-1] = False
+        else:
+            delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+            delta_wv2 = abs(wv_master[i] - wv_expected_all_peaks[j])
+            if delta_wv1 < delta_wv2:
+                if delta_wv1 < delta_wv_max:
+                    if wv_unused[j-1]:
+                        wv_verified_all_peaks[j-1] = wv_master[i]
+                        wv_unused[j-1] = False
+                    elif wv_unused[j]:
+                        if delta_wv2 < delta_wv_max:
+                            wv_verified_all_peaks[j] = wv_master[i]
+                            wv_unused[j] = False
+            else:
+                if delta_wv2 < delta_wv_max:
+                    if wv_unused[j]:
+                        wv_verified_all_peaks[j] = wv_master[i]
+                        wv_unused[j] = False
+                    elif wv_unused[j-1]:
+                        if delta_wv1 < delta_wv_max:
+                            wv_verified_all_peaks[j-1] = wv_master[i]
+                            wv_unused[j-1] = False
+
+    return wv_verified_all_peaks
+
+
+def refine_arccalibration(sp, poly_initial, wv_master,
+                          npix=2,
+                          nwinwidth_initial=7,
+                          nwinwidth_refined=5,
+                          times_sigma_reject=5,
+                          debugplot=0):
+    """Refine wavelength calibration using an initial polynomial.
+
+    Parameters
+    ----------
+    sp : numpy array
+        1D array of length NAXIS1 containing the input spectrum.
+    poly_initial : Polynomial instance
+        Initial wavelength calibration polynomial, providing the
+        wavelength as a function of pixel number (running from 1 to
+        NAXIS1).
+    wv_master : numpy array
+        Array containing the master list of arc line wavelengths.
+    npix : int
+        Number of pixels around each line peak where the expected
+        wavelength must match the tabulated wavelength in the master
+        list.
+    nwinwidth_initial : int
+        Initial window width to search for line peaks in spectrum.
+    nwinwidth_refined : int
+        Window width to refine line peak location.
+    times_sigma_reject : float
+        Times sigma to reject points in the fit.
+    debugplot : int
+        Debugging level for messages and plots. For details see
+        'numina.array.display.pause_debugplot.py'.
+
+    Returns
+    -------
+    poly_refined : Polynomial instance
+        Refined wavelength calibration polynomial or None (when the
+        fit cannot be obtained).
+    npoints_eff : int
+        Effective number of points employed in the fit.
+    residual_std : float
+        Residual standard deviation of the fit or None (when the fit
+        cannot be obtained).
+
+    """
+
+    poly_refined = None
+    npoints_eff = 0
+    residual_std = None
+
+    # polynomial degree
+    poldeg = len(poly_initial.coeff) - 1
+
+    # spectrum length
+    naxis1 = sp.shape[0]
+
+    # find initial line peaks
+    ixpeaks = find_peaks_spectrum(sp, nwinwidth=nwinwidth_initial)
+
+    if len(ixpeaks) > poldeg:
+
+        # refine line peak locations
+        fxpeaks, sxpeaks = refine_peaks_spectrum(
+            sp, ixpeaks,
+            nwinwidth=nwinwidth_refined,
+            method="gaussian"
+        )
+
+        # expected wavelength of all identified peaks
+        wv_expected_all_peaks = poly_initial(fxpeaks + 1.0)
+
+        # assign individual arc lines from master list to spectrum
+        # line peaks when the expected wavelength is within the maximum
+        # allowed range (+/- npix around the peak)
+        crmin1_linear = poly_initial(1)
+        crmax1_linear = poly_initial(naxis1)
+        cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
+        delta_wv_max = npix * cdelt1_linear
+
+        # iteration #1: find overall offset
+        wv_verified_all_peaks = match_wv_arrays(
+            wv_master,
+            wv_expected_all_peaks,
+            delta_wv_max=delta_wv_max
+        )
+        lines_ok = np.where(wv_verified_all_peaks > 0)
+        wv_offsets_all_peaks = wv_verified_all_peaks - wv_expected_all_peaks
+        overall_offset = np.median(wv_offsets_all_peaks[lines_ok])
+
+        # iteration #2: use previous overall offset
+        wv_expected_all_peaks += overall_offset
+        wv_verified_all_peaks = match_wv_arrays(
+            wv_master,
+            wv_expected_all_peaks,
+            delta_wv_max=delta_wv_max
+        )
+
+        # fit with sigma rejection
+        lines_ok = np.where(wv_verified_all_peaks > 0)
+        xdum = (fxpeaks + 1.0)[lines_ok]
+        ydum = wv_verified_all_peaks[lines_ok]
+        poly_refined, yres, reject = polfit_residuals_with_sigma_rejection(
+            x=xdum,
+            y=ydum,
+            deg=poldeg,
+            times_sigma_reject=times_sigma_reject,
+            debugplot=debugplot
+        )
+
+        # effective number of points
+        npoints_eff = np.sum(np.logical_not(reject))
+
+        # residual standard deviation
+        sum_res2 = np.sum(yres[np.logical_not(reject)] ** 2)
+        residual_std = np.sqrt(sum_res2 / (npoints_eff - poldeg - 1))
+        if abs(debugplot) >= 10:
+            print("npoints_eff, residual_std:",
+                  npoints_eff, residual_std)
+            print("poly.coef:", poly_refined.coef)
+
+    return poly_refined, npoints_eff, residual_std
