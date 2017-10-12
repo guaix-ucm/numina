@@ -68,7 +68,7 @@ def wvcal_spectrum(filename, ns1, ns2,
         and subtracted only if this parameter is > 0.
     times_sigma_threshold : float
         Times robust sigma above the median to detect line peaks.
-    nbrightlines : int
+    nbrightlines : int or list of integers
         Maximum number of brightest lines to be employed in the
         wavelength calibration. If this value is 0, all the detected
         lines will be employed.
@@ -198,31 +198,32 @@ def wvcal_spectrum(filename, ns1, ns2,
             ymax += dy/20.
             ax.set_ylim([ymin, ymax])
             # display threshold
-            from numina.array.display.matplotlib_qt import plt
-            plt.axhline(y=threshold, color="black", linestyle="dotted",
-                        label="detection threshold")
+            ax.axhline(y=threshold, color="black", linestyle="dotted",
+                       label="detection threshold")
             # mark peak location
-            plt.plot(ixpeaks + 1,
+            ax.plot(ixpeaks + 1,
                      sp_mean[ixpeaks], 'bo', label="initial location")
-            plt.plot(fxpeaks + 1,
+            ax.plot(fxpeaks + 1,
                      sp_mean[ixpeaks], 'go', label="refined location")
             # legend
-            plt.legend(numpoints=1)
+            ax.legend(numpoints=1)
             # show plot
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(debugplot)
+            pause_debugplot(debugplot, pltshow=True)
 
         # read arc line wavelengths from external file
         master_table = np.genfromtxt(wv_master_file)
         if master_table.ndim == 1:
             wv_master = master_table
         else:
-            wv_master = master_table[:, 0]
-            wv_master_flag = master_table[:, 1]
-            iremove = np.where(wv_master_flag == -1)
-            if len(iremove) > 0:
-                wv_master = np.delete(wv_master, iremove)
+            wv_master_all = master_table[:, 0]
+            if master_table.shape[1] == 2:  # assume old format
+                wv_master = np.copy(wv_master_all)
+            elif master_table.shape[1] == 3:  # assume new format
+                wv_flag = master_table[:, 1]
+                wv_master = wv_master_all[np.where(wv_flag == 1)]
+            else:
+                raise ValueError('lines_catalog file does not have the '
+                                 'expected number of columns')
 
         if debugplot >= 10:
             print("Reading master table: " + wv_master_file)
@@ -277,14 +278,11 @@ def wvcal_spectrum(filename, ns1, ns2,
             for feature in solution_wv.features:
                 xpos = feature.xpos
                 reference = feature.reference
-                ax.text(xpos, sp_mean[int(xpos+0.5)-1],
+                ax.text(xpos, sp_mean[int(xpos+0.5)-1] + dy/100,
                         str(reference), fontsize=8,
                         horizontalalignment='center')
             # show plot
-            from numina.array.display.matplotlib_qt import plt
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(11)
+            pause_debugplot(11, pltshow=True, tight_layout=False)
 
         # return the spectrum before the wavelength calibration and
         # the wavelength calibration solution
