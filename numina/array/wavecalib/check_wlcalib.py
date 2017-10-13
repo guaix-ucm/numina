@@ -27,6 +27,7 @@ import astropy.io.fits as fits
 import numpy as np
 import os
 
+from numina.array.stats import summary
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from .peaks_spectrum import find_peaks_spectrum
@@ -201,6 +202,7 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
     # compute residuals
     xresid = fxpeaks_wv[lines_ok]
     yresid = wv_verified_all_peaks[lines_ok] - fxpeaks_wv[lines_ok]
+    ysummary = summary(yresid)
 
     # fit polynomial to residuals
     polyres, yresres = polfit_residuals(
@@ -236,14 +238,28 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
         # residuals
         ax2 = fig.add_subplot(2, 1, 1)
         ax2.plot(xresid, yresid, 'o')
-        ax2.set_ylabel('Residuals (Angstroms)')
+        ax2.set_ylabel('Offset ' + r'($\AA$)')
         ax2.yaxis.label.set_size(10)
         ax2.set_title(title, **{'size': 10})
         xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
         ax2.plot(xwv, polyres(xwv), '-')
-        ax2.text(1, 0, 'Wavelength (Angstroms)',
+        ax2.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel)=' + str(cdelt1),
                  horizontalalignment='right',
                  verticalalignment='bottom',
+                 transform=ax2.transAxes)
+        ax2.text(0, 0, 'Wavelength ' + r'($\AA$) --->',
+                 horizontalalignment='left',
+                 verticalalignment='bottom',
+                 transform=ax2.transAxes)
+        ax2.text(0, 1, 'median=' + str(round(ysummary['median'], 4)) +
+                 r' $\AA$',
+                 horizontalalignment='left',
+                 verticalalignment='top',
+                 transform=ax2.transAxes)
+        ax2.text(1, 1, 'robust_std=' + str(round(ysummary['robust_std'], 4)) +
+                 r' $\AA$',
+                 horizontalalignment='right',
+                 verticalalignment='top',
                  transform=ax2.transAxes)
 
         # median spectrum and peaks
