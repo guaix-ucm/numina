@@ -108,9 +108,12 @@ def main(args=None):
     parser = argparse.ArgumentParser(prog='ximplotxy')
     parser.add_argument("filename",
                         help="ASCII file with data in columns")
-    parser.add_argument("cols",
-                        help="Tuple col1 col2",
-                        type=int, nargs=2)
+    parser.add_argument("col1",
+                        help="Column number for X data",
+                        type=int)
+    parser.add_argument("col2",
+                        help="Column number for Y data",
+                        type=int)
     parser.add_argument("--kwargs",
                         help="Extra arguments for plot, e.g.: "
                              "\"{'marker':'o',"
@@ -126,9 +129,8 @@ def main(args=None):
     filename = args.filename
 
     # columns to be plotted (first column will be number 1 and not 0)
-    col1, col2 = args.cols
-    col1 -= 1
-    col2 -= 1
+    col1 = args.col1 - 1
+    col2 = args.col2 - 1
 
     # read ASCII file
     bigtable = np.genfromtxt(filename)

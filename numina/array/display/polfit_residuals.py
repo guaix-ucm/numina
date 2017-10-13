@@ -75,7 +75,7 @@ def polfit_residuals(
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt5 backend geometry.
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -199,8 +199,7 @@ def polfit_residuals(
             sfitted = mysize[np.logical_not(reject)]
             srejected = mysize[reject]
 
-        import matplotlib
-        matplotlib.use('Qt5Agg')
+        from matplotlib_qt import plt
         import matplotlib.pyplot as plt
         fig = plt.figure()
 
@@ -338,7 +337,7 @@ def polfit_residuals_with_sigma_rejection(
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt5 backend geometry.
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -499,7 +498,7 @@ def polfit_residuals_with_cook_rejection(
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt5 backend geometry.
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -654,10 +653,14 @@ def main(args=None):
     parser = argparse.ArgumentParser(prog='polfit_residuals')
     parser.add_argument("filename",
                         help="ASCII file with data in columns")
-    parser.add_argument("cols",
-                        help="tuple col1,col2")
+    parser.add_argument("col1",
+                        help="Column number for X data",
+                        type=int)
+    parser.add_argument("col2",
+                        help="Column number for Y data",
+                        type=int)
     parser.add_argument("polydeg",
-                        help="polynomial degree",
+                        help="Polynomial degree",
                         type=int)
     parser.add_argument("--times_sigma_reject",
                         help="Times sigma to reject points" +
@@ -676,10 +679,8 @@ def main(args=None):
     filename = args.filename
 
     # columns to be plotted (first column will be number 1 and not 0)
-    tmp_str = args.cols.split(",")
-    col1, col2 = int(tmp_str[0]), int(tmp_str[1])
-    col1 -= 1
-    col2 -= 1
+    col1 = args.col1 - 1
+    col2 = args.col2 - 1
 
     # polynomial degree
     polydeg = args.polydeg
@@ -714,7 +715,7 @@ def main(args=None):
 
     # plot fit and residuals
     if times_sigma_reject is None and times_sigma_cook is None:
-        polfit_residuals(x, y, polydeg, geometry=args.geometry, debugplot=12)
+        polfit_residuals(x, y, polydeg, geometry=geometry, debugplot=12)
     elif times_sigma_reject is not None:
         polfit_residuals_with_sigma_rejection(
             x, y, polydeg, times_sigma_reject,
