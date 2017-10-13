@@ -339,7 +339,13 @@ def main(args=None):
     with fits.open(args.filename) as hdulist:
         image2d_header = hdulist[0].header
         image2d = hdulist[0].data
-    naxis2, naxis1 = image2d.shape
+    if image2d.ndim == 1:
+        naxis1 = image2d.shape[0]
+        naxis2 = 1
+    elif image2d.ndim == 2:
+        naxis2, naxis1 = image2d.shape
+    else:
+        raise ValueError("Unexpected image dimensions!")
     crpix1 = image2d_header['crpix1']
     crval1 = image2d_header['crval1']
     cdelt1 = image2d_header['cdelt1']
@@ -351,8 +357,11 @@ def main(args=None):
     print('>>> CDELT1:', cdelt1)
 
     if 1 <= ns1 <= ns2 <= naxis2:
-        # extract spectrum
-        spmedian = np.median(image2d[(ns1-1):ns2], axis=0)
+        if ns1 == ns2 == 1 and image2d.ndim == 1:
+            spmedian = np.copy(image2d[:])
+        else:
+            # extract spectrum
+            spmedian = np.median(image2d[(ns1-1):ns2], axis=0)
     else:
         raise ValueError("Invalid scan numbers")
 
