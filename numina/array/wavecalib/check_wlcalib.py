@@ -1,3 +1,24 @@
+#
+# Copyright 2015-2017 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# Numina is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Numina is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+"""Supervised quality control of wavelength calibration"""
+
 from __future__ import division
 from __future__ import print_function
 
@@ -165,7 +186,7 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
     fxpeaks_wv = fun_wv(fxpeaks + 1, crpix1, crval1, cdelt1)
 
     # read list of expected arc lines
-    if abs(debugplot) in (21,22):
+    if abs(debugplot) in (21, 22):
         print('wv_master:', wv_master)
 
     # match peaks with expected arc lines
@@ -197,7 +218,10 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
     list_wv_found = [str(round(wv, 4))
                      for wv in wv_verified_all_peaks if wv != 0]
     list_wv_master = [str(round(wv, 4)) for wv in wv_master]
-    missing_wv = list(set(list_wv_master).symmetric_difference(set(list_wv_found)))
+    set1 = set(list_wv_master)
+    set2 = set(list_wv_found)
+    missing_wv = list(set1.symmetric_difference(set2))
+    missing_wv.sort()
     print(">>> Unmatched lines...................:", missing_wv)
 
     # display results
@@ -237,10 +261,8 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
         ax1.set_xlim([xmin, xmax])
         ax1.set_ylim([ymin, ymax])
         ax1.plot(xwv, sp)
-        ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o',
-                label="initial location")
-        ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
-                label="refined location")
+        ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o', label="initial location")
+        ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o', label="refined location")
         ax1.set_ylabel('Counts')
         ax1.yaxis.label.set_size(10)
         ax1.xaxis.tick_top()
@@ -249,12 +271,12 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
             # identified lines
             if wv_verified_all_peaks[i] > 0:
                 ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
-                        wv_verified_all_peaks[i], fontsize=8,
-                        horizontalalignment='center')
+                         wv_verified_all_peaks[i], fontsize=8,
+                         horizontalalignment='center')
             # estimated wavelength from initial calibration
-            estimated_wv=fun_wv(fxpeaks[i] + 1, crpix1, crval1, cdelt1)
-            estimated_wv=str(round(estimated_wv, 4))
-            ax1.text(fxpeaks_wv[i], 0, # spmedian[ixpeaks[i]],
+            estimated_wv = fun_wv(fxpeaks[i] + 1, crpix1, crval1, cdelt1)
+            estimated_wv = str(round(estimated_wv, 4))
+            ax1.text(fxpeaks_wv[i], 0,  # spmedian[ixpeaks[i]],
                      estimated_wv, fontsize=8, color='grey',
                      rotation='vertical',
                      horizontalalignment='center',
@@ -341,8 +363,9 @@ def main(args=None):
         print('wv_master:', wv_master)
 
     # define plot title
-    title = 'fitsfile: ' + os.path.basename(args.filename) + '\n' + \
-        'wv_master: ' + os.path.basename(args.wv_master_file)
+    title = 'fitsfile: ' + os.path.basename(args.filename.name) + \
+            ' [' + str(ns1) + ',' + str(ns2) + ']\n' + \
+            'wv_master: ' + os.path.basename(args.wv_master_file.name)
 
     # check the wavelength calibration
     check_sp(sp=spmedian,
