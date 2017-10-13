@@ -200,7 +200,6 @@ def polfit_residuals(
             srejected = mysize[reject]
 
         from matplotlib_qt import plt
-        import matplotlib.pyplot as plt
         fig = plt.figure()
 
         if geometry is not None:
