@@ -25,18 +25,19 @@ Recipe requirement holders
 from numina.types.obsresult import ObservationResultType
 from numina.types.obsresult import InstrumentConfigurationType
 from .dataholders import EntryHolder
-
+from .query import QueryModifier
 
 class Requirement(EntryHolder):
     """Requirement holder holder for RecipeRequirement."""
-    def __init__(self, rtype, description, destination=None, optional=False,
-                 default=None, choices=None, validation=True):
+    def __init__(self, rtype, description, *args, destination=None, optional=False,
+                 default=None, choices=None, validation=True, query_opts=None):
         super(Requirement, self).__init__(
             rtype, description, destination=destination,
             optional=optional, default=default, choices=choices,
             validation=validation
             )
 
+        self.query_opts = query_opts
         self.hidden = False
 
     def convert(self, val):
