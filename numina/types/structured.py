@@ -19,10 +19,9 @@
 import json
 import uuid
 
-
-import numina.types.qc
+import numina.types.product
+import numina.types.datatype
 from numina.ext.gtc import DF
-
 import numina.util.convert as conv
 from numina.util.jsonencoder import ExtEncoder
 
@@ -126,9 +125,14 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
 
         result = super(BaseStructuredCalibration, self).extract_meta_info(state)
 
-        minfo = state['meta_info']
-        origin = minfo['origin']
-        date_obs = origin['date_obs']
+        try:
+            minfo = state['meta_info']
+            origin = minfo['origin']
+            date_obs = origin['date_obs']
+        except KeyError:
+            origin = {}
+            date_obs = "1970-01-01T00:00:00.00"
+
         result['instrument'] = state['instrument']
         result['uuid'] = state['uuid']
         result['tags'] = state['tags']
