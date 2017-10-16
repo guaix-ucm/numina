@@ -28,9 +28,12 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 
 import logging
+import json
 
 from six import with_metaclass
 from astropy.io import fits
+
+from numina.util.jsonencoder import ExtEncoder
 
 from .. import __version__
 from .recipeinout import RecipeResult as RecipeResultClass
@@ -174,6 +177,18 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         """Save intermediate array object as FITS."""
         if self.intermediate_results:
             fits.writeto(name, array, clobber=True)
+
+    def save_structured_as_json(self, structured, name):
+        if self.intermediate_results:
+            if hasattr(structured, '__getstate__'):
+                state = structured.__getstate__()
+            elif isinstance(structured, dict):
+                state = structured
+            else:
+                state = structured.__dict__
+
+            with open(name, 'w') as fd:
+                json.dump(state, fd, indent=2, cls=ExtEncoder)
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
