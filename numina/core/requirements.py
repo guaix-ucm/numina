@@ -29,7 +29,7 @@ from .query import QueryModifier
 
 class Requirement(EntryHolder):
     """Requirement holder holder for RecipeRequirement."""
-    def __init__(self, rtype, description, *args, destination=None, optional=False,
+    def __init__(self, rtype, description, destination=None, optional=False,
                  default=None, choices=None, validation=True, query_opts=None):
         super(Requirement, self).__init__(
             rtype, description, destination=destination,
