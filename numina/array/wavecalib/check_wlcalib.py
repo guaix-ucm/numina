@@ -137,7 +137,9 @@ def fun_wv(xchannel, crpix1, crval1, cdelt1):
 
 
 def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
-             title, geometry, debugplot):
+             nwinwidth_initial=7,
+             nwinwidth_refined=5,
+             title=None, geometry=None, debugplot=0):
     """Process twilight image.
 
     Parameters
@@ -152,6 +154,10 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
         CDELT1 keyword.
     wv_master: numpy array
         Array with the detailed list of expected arc lines.
+    nwinwidth_initial : int
+        Width of the window where each peak must be initially found.
+    nwinwidth_refined : int
+        Width of the window where each peak must be refined.
     title : string
         Plot title.
     geometry : tuple (4 integers) or None
@@ -172,11 +178,9 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
     naxis1 = sp.shape[0]
 
     # find initial line peaks
-    nwinwidth_initial = 7
     ixpeaks = find_peaks_spectrum(sp, nwinwidth=nwinwidth_initial)
 
     # refine location of line peaks
-    nwinwidth_refined = 5
     fxpeaks, sxpeaks = refine_peaks_spectrum(
         sp, ixpeaks,
         nwinwidth=nwinwidth_refined,
@@ -240,7 +244,8 @@ def check_sp(sp, crpix1, crval1, cdelt1, wv_master,
         ax2.plot(xresid, yresid, 'o')
         ax2.set_ylabel('Offset ' + r'($\AA$)')
         ax2.yaxis.label.set_size(10)
-        ax2.set_title(title, **{'size': 10})
+        if title is not None:
+            ax2.set_title(title, **{'size': 10})
         xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
         ax2.plot(xwv, polyres(xwv), '-')
         ax2.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel)=' + str(cdelt1),
@@ -318,6 +323,14 @@ def main(args=None):
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths",
                         type=argparse.FileType('r'))
+    parser.add_argument("--nwinwidth_initial",
+                        help="Window width where each peak must be found "
+                             "(default=7)",
+                        type=int, default=7)
+    parser.add_argument("--nwinwidth_refined",
+                        help="Window width where each peak must be refined "
+                             "(default=5)",
+                        type=int, default=5)
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy",
                         default="0,0,640,480")
@@ -398,6 +411,8 @@ def main(args=None):
              crval1=crval1,
              cdelt1=cdelt1,
              wv_master=wv_master,
+             nwinwidth_initial=args.nwinwidth_initial,
+             nwinwidth_refined=args.nwinwidth_refined,
              title=title,
              geometry=geometry,
              debugplot=args.debugplot)
