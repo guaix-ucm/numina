@@ -66,7 +66,7 @@ class DataProductTag(DataTypeBase):
 
         return prod.content
 
-    def extract_meta_info(self, obj):
+    def extract_db_info(self, obj):
         """Extract metadata from serialized file"""
         result = {}
         if isinstance(obj, dict):
@@ -81,8 +81,13 @@ class DataProductTag(DataTypeBase):
             qc = QC.UNKNOWN
 
         result['quality_control'] = qc
-        other = super(DataProductTag, self).extract_meta_info(obj)
+        other = super(DataProductTag, self).extract_db_info(obj)
         result.update(other)
+        return result
+
+    def update_meta_info(self):
+        result = super(DataProductTag, self).update_meta_info()
+        result['quality_control'] = self.quality_control.name
         return result
 
     def __getstate__(self):

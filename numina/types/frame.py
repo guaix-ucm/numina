@@ -44,20 +44,21 @@ _base_schema = {
 class DataFrameType(DataType):
     """A type of DataFrame."""
 
-    meta_info_headers = {
-        'instrument': 'INSTRUME',
-        'object': 'OBJECT',
-        'observation_date': 'DATE-OBS',
-        'uuid': 'uuid',
-        'type': 'numtype',
-        'mode': 'obsmode',
-        'exptime': 'exptime',
-        'darktime': 'darktime',
-        'insconf': 'insconf',
-        'blckuuid': 'blckuuid',
-        'quality_control': 'NUMRQC',
-    }
-    tags_headers = {}
+    db_info_keys = [
+        'instrument',
+        'object',
+        'observation_date',
+        'uuid',
+        'type',
+        'mode',
+        'exptime',
+        'darktime',
+        'insconf',
+        'blckuuid',
+        'quality_control'
+    ]
+
+    tags_keys = []
 
     def __init__(self, datamodel=None):
         super(DataFrameType, self).__init__(DataFrame, datamodel=datamodel)
@@ -107,20 +108,20 @@ class DataFrameType(DataType):
         else:
             return DataFrame(filename=obj)
 
-    def extract_meta_info(self, obj):
+    def extract_db_info(self, obj):
         """Extract tags from serialized file"""
 
         objl = self.convert(obj)
 
-        result = super(DataFrameType, self).extract_meta_info(objl)
+        result = super(DataFrameType, self).extract_db_info(objl)
         if objl:
             with objl.open() as hdulist:
                 ext = self.datamodel.extractor
-                for field in self.datamodel.meta_info_headers:
+                for field in self.datamodel.db_info_keys:
                     result[field] = ext.extract(field, hdulist)
 
                 tags = result['tags']
-                for field in self.tags_headers:
+                for field in self.tags_keys:
                     tags[field] = ext.extract(field, hdulist)
 
                 return result

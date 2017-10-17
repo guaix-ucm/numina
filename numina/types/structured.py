@@ -18,12 +18,18 @@
 
 import json
 import uuid
+import datetime
 
 import numina.types.product
 import numina.types.datatype
 from numina.ext.gtc import DF
 import numina.util.convert as conv
 from numina.util.jsonencoder import ExtEncoder
+
+
+def writeto(obj, name):
+    with open(name, 'w') as fd:
+        json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
 
 
 class BaseStructuredCalibration(numina.types.product.DataProductTag,
@@ -50,8 +56,10 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         self.tags = {}
         self.uuid = str(uuid.uuid1())
 
-        self.meta_info = {}
-        #
+        self.meta_info = self.create_meta_info()
+        self.meta_info['instrument_name'] = self.instrument
+        self.meta_info['creation_date'] = datetime.datetime.utcnow().isoformat()
+        self._base_info = {}
         self.add_dialect_info('gtc', DF.TYPE_STRUCT)
 
     @property
@@ -75,11 +83,13 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
 
     def __setstate__(self, state):
         super(BaseStructuredCalibration, self).__setstate__(state)
+        # self.add_dialect_info('gtc', DF.TYPE_STRUCT)
 
         self.instrument = state['instrument']
         self.tags = state['tags']
         self.uuid = state['uuid']
         self.meta_info = {}
+        self._base_info = {}
         for key in state:
             if key not in ['contents', 'quality_control']:
                 setattr(self, key, state[key])
@@ -91,13 +101,14 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         else:
             return "{}()".format(sclass)
 
+    def writeto(self, name):
+        return  writeto(self, name)
+
     @classmethod
     def _datatype_dump(cls, obj, where):
+
         filename = where.destination + '.json'
-
-        with open(filename, 'w') as fd:
-            json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
-
+        writeto(obj, filename)
         return filename
 
     @classmethod
@@ -112,7 +123,17 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         result.__setstate__(state=state)
         return result
 
-    def extract_meta_info(self, obj):
+    @staticmethod
+    def create_meta_info():
+        meta_info = {}
+        meta_info['mode_name'] = 'unknown'
+        meta_info['instrument_name'] = 'unknown'
+        meta_info['recipe_name'] = 'unknown'
+        meta_info['recipe_version'] = 'unknown'
+        meta_info['origin'] = {}
+        return meta_info
+
+    def extract_db_info(self, obj):
         """Extract metadata from serialized file"""
 
         objl = self.convert_in(obj)
@@ -123,10 +144,11 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         except IOError as e:
             raise e
 
-        result = super(BaseStructuredCalibration, self).extract_meta_info(state)
+        result = super(BaseStructuredCalibration, self).extract_db_info(state)
 
         try:
             minfo = state['meta_info']
+            result['mode'] = minfo['mode_name']
             origin = minfo['origin']
             date_obs = origin['date_obs']
         except KeyError:
@@ -141,3 +163,44 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         result['origin'] = origin
 
         return result
+
+    def update_meta_info(self):
+        """Extract metadata from myself"""
+        result = super(BaseStructuredCalibration, self).update_meta_info()
+
+        result['instrument'] = self.instrument
+        result['uuid'] = self.uuid
+        result['tags'] = self.tags
+        result['type'] = self.name()
+
+        minfo = self.meta_info
+        try:
+            result['mode'] = minfo['mode_name']
+            origin = minfo['origin']
+            date_obs = origin['date_obs']
+        except KeyError:
+            origin = {}
+            date_obs = "1970-01-01T00:00:00.00"
+
+        result['observation_date'] = conv.convert_date(date_obs)
+        result['origin'] = origin
+
+        return result
+
+    @property
+    def meta(self):
+        self._base_info = self.update_meta_info()
+        return self._base_info
+
+    def update_metadata(self, recipe):
+        self.meta_info['mode_name'] = recipe.mode
+        self.meta_info['instrument_name'] = recipe.instrument
+        self.meta_info['recipe_name'] = recipe.__class__.__name__
+        self.meta_info['recipe_version'] = recipe.__version__
+
+    def update_metadata_origin(self, obresult_meta):
+        origin = self.meta_info['origin']
+        origin['block_uuid'] = obresult_meta['block_uuid']
+        origin['insconf_uuid'] = obresult_meta['insconf_uuid']
+        origin['date_obs'] = obresult_meta['date_obs']
+        origin['frames'] = obresult_meta['frames']

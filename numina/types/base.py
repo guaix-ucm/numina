@@ -110,11 +110,11 @@ class DataTypeBase(object):
 
     def extract_tags(self, obj):
         """Extract tags from serialized file"""
-        meta_info = self.extract_meta_info(obj)
-        return meta_info['tags']
+        db_info = self.extract_db_info(obj)
+        return db_info['tags']
 
     @staticmethod
-    def create_meta_info():
+    def create_db_info():
         """Create metadata structure"""
         result = {}
         result['instrument'] = ''
@@ -126,7 +126,13 @@ class DataTypeBase(object):
         result['origin'] = {}
         return result
 
-    def extract_meta_info(self, obj):
+    def extract_db_info(self, obj):
         """Extract metadata from serialized file"""
-        result = self.create_meta_info()
+        result = self.create_db_info()
         return result
+
+    def update_meta_info(self):
+        """Extract my metadata"""
+        result = self.create_db_info()
+        return result
+

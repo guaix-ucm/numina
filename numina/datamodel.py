@@ -79,7 +79,7 @@ class FITSKeyExtractor(object):
 class DataModel(object):
     """Model of the Data being processed"""
 
-    meta_info_headers = [
+    db_info_keys = [
         'instrument',
         'object',
         'observation_date',
