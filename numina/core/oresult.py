@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -62,6 +62,17 @@ class ObservationResult(object):
             self.instrument,
             self.mode
         )
+
+    def metadata_with(self, datamodel):
+        origin = {}
+        imginfo = datamodel.gather_info_oresult(self)
+        origin['info'] = imginfo
+        first = imginfo[0]
+        origin["block_uuid"] = first['block_uuid']
+        origin['insconf_uuid'] = first['insconf_uuid']
+        origin['date_obs'] = first['date_obs']
+        origin['frames'] = [img['imgid'] for img in imginfo]
+        return origin
 
 
 def dataframe_from_list(values):
