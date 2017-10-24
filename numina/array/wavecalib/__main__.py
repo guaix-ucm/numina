@@ -79,7 +79,7 @@ def collapsed_spectrum(filename, ns1, ns2,
     image2d = hdulist[0].data
     naxis2, naxis1 = image2d.shape
     hdulist.close()
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print('>>> Reading file:', filename)
         print('>>> NAXIS1:', naxis1)
         print('>>> NAXIS2:', naxis2)
@@ -116,11 +116,47 @@ def collapsed_spectrum(filename, ns1, ns2,
     return sp
 
 
+def read_wv_master_file(wv_master_file, debugplot):
+    """read arc line wavelengths from external file.
+
+    Parameters
+    ----------
+    wv_master_file : string
+        File name of txt file containing the wavelength database.
+
+    Returns
+    -------
+    wv_master : 1d numpy array
+        Array with arc line wavelengths.
+
+    """
+
+    master_table = np.genfromtxt(wv_master_file)
+    if master_table.ndim == 1:
+        wv_master = master_table
+    else:
+        wv_master_all = master_table[:, 0]
+        if master_table.shape[1] == 2:  # assume old format
+            wv_master = np.copy(wv_master_all)
+        elif master_table.shape[1] == 3:  # assume new format
+            wv_flag = master_table[:, 1]
+            wv_master = wv_master_all[np.where(wv_flag == 1)]
+        else:
+            raise ValueError('lines_catalog file does not have the '
+                             'expected number of columns')
+
+    if abs(debugplot) >= 10:
+        print("Reading master table: " + wv_master_file)
+        print("wv_master:\n", wv_master)
+
+    return wv_master
+
+
 def wvcal_spectrum(sp,
                    poly_degree_wfit,
                    times_sigma_threshold,
                    nbrightlines,
-                   wv_master_file,
+                   wv_master,
                    debugplot):
     """Execute wavelength calibration of a spectrum.
 
@@ -136,8 +172,8 @@ def wvcal_spectrum(sp,
         Maximum number of brightest lines to be employed in the
         wavelength calibration. If this value is 0, all the detected
         lines will be employed.
-    wv_master_file : string
-        File name of txt file containing the wavelength database.
+    wv_master : 1d numpy array
+        Array with arc line wavelengths.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -156,7 +192,7 @@ def wvcal_spectrum(sp,
     q50 = np.percentile(sp, q=50)
     sigma_g = robust_std(sp)
     threshold = q50 + times_sigma_threshold * sigma_g
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print("median....:", q50)
         print("robuts std:", sigma_g)
         print("threshold.:", threshold)
@@ -200,14 +236,14 @@ def wvcal_spectrum(sp,
                                              method="gaussian")
 
     # print peak location and width of fitted lines
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print(">>> Number of lines found:", len(fxpeaks))
         print("# line_number, channel, width")
         for i, (fx, sx) in enumerate(zip(fxpeaks, sxpeaks)):
             print(i, fx+1, sx)
 
     # display median spectrum and peaks
-    if debugplot % 10 != 0:
+    if abs(debugplot) % 10 != 0:
         ax = ximplot(sp, plot_bbox=(1, naxis1),
                      show=False)
         ymin = sp.min()
@@ -226,25 +262,6 @@ def wvcal_spectrum(sp,
         ax.legend(numpoints=1)
         # show plot
         pause_debugplot(debugplot, pltshow=True)
-
-    # read arc line wavelengths from external file
-    master_table = np.genfromtxt(wv_master_file)
-    if master_table.ndim == 1:
-        wv_master = master_table
-    else:
-        wv_master_all = master_table[:, 0]
-        if master_table.shape[1] == 2:  # assume old format
-            wv_master = np.copy(wv_master_all)
-        elif master_table.shape[1] == 3:  # assume new format
-            wv_flag = master_table[:, 1]
-            wv_master = wv_master_all[np.where(wv_flag == 1)]
-        else:
-            raise ValueError('lines_catalog file does not have the '
-                             'expected number of columns')
-
-    if debugplot >= 10:
-        print("Reading master table: " + wv_master_file)
-        print("wv_master:\n", wv_master)
 
     wv_master_range = wv_master[-1] - wv_master[0]
     delta_wv_master_range = 0.20 * wv_master_range
@@ -280,7 +297,7 @@ def wvcal_spectrum(sp,
         plot_title=title
     )
 
-    if debugplot % 10 != 0:
+    if abs(debugplot) % 10 != 0:
         # final plot with identified lines
         ax = ximplot(sp, title=title, show=False,
                      plot_bbox=(1, naxis1))
@@ -373,11 +390,18 @@ def main(args=None):
         debugplot=args.debugplot
     )
 
+    # read arc line wavelengths from external file
+    wv_master = read_wv_master_file(
+        args.wv_master_file,
+        debugplot=args.debugplot
+    )
+
+    # perform wavelength calibration
     wvcal_spectrum(sp=sp,
                    poly_degree_wfit=args.degree,
                    times_sigma_threshold=args.times_sigma_threshold,
                    nbrightlines=nbrightlines,
-                   wv_master_file=args.wv_master_file,
+                   wv_master=wv_master,
                    debugplot=args.debugplot)
 
     try:
