@@ -123,6 +123,10 @@ def read_wv_master_file(wv_master_file, debugplot):
     ----------
     wv_master_file : string
         File name of txt file containing the wavelength database.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
