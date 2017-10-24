@@ -229,6 +229,9 @@ def find_fxpeaks(sp,
     if len(nbrightlines) == 1 and nbrightlines[0] == 0:
         pass
     else:
+        if abs(debugplot) >= 10:
+            print('nbrightlines =', nbrightlines)
+            print('ixpeaks in whole spectrum:\n', ixpeaks)
         region_size = (naxis1-1)/len(nbrightlines)
         ixpeaks_filtered = np.array([], dtype=int)
         for iregion, nlines_in_region in enumerate(nbrightlines):
@@ -244,9 +247,13 @@ def find_fxpeaks(sp,
                     spos = peak_fluxes.argsort()
                     ixpeaks_tmp = ixpeaks_region[spos[-nlines_in_region:]]
                     ixpeaks_tmp.sort()  # in-place sort
+                    if abs(debugplot) >= 10:
+                        print('ixpeaks in region........:\n', ixpeaks_tmp)
                     ixpeaks_filtered = np.concatenate((ixpeaks_filtered,
                                                        ixpeaks_tmp))
         ixpeaks = ixpeaks_filtered
+        if abs(debugplot) >= 10:
+            print('ixpeaks filtered.........:\n', ixpeaks)
 
     # remove peaks too close to any of the borders of the spectrum
     if npix_avoid_border > 0:
