@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -156,28 +156,38 @@ def read_wv_master_file(wv_master_file, debugplot):
     return wv_master
 
 
-def wvcal_spectrum(sp,
-                   poly_degree_wfit,
-                   times_sigma_threshold,
-                   nbrightlines,
-                   wv_master,
-                   debugplot):
-    """Execute wavelength calibration of a spectrum.
+def find_fxpeaks(sp,
+                 times_sigma_threshold,
+                 minimum_threshold,
+                 nwinwidth_initial,
+                 nwinwidth_refined,
+                 npix_avoid_border,
+                 nbrightlines,
+                 debugplot):
+    """Locate line peaks in array coordinates (from 0 to naxis1-1).
 
     Parameters
     ----------
     sp : 1d numpy array
         Spectrum to be wavelength calibrated.
-    poly_degree_wfit : int
-        Degree for wavelength calibration polynomial.
     times_sigma_threshold : float
         Times robust sigma above the median to detect line peaks.
+    minimum_threshold : float or None
+            Minimum value of the threshold.
+    nwinwidth_initial : int
+        Width of the window where each peak must be found using
+        the initial method (approximate)
+    nwinwidth_refined : int
+        Width of the window where each peak location will be
+        refined.
+    npix_avoid_border : int
+            Number of pixels at the borders of the spectrum where peaks
+            are not considered. If zero, the actual number will be
+            given by nwinwidth_initial.
     nbrightlines : int or list of integers
         Maximum number of brightest lines to be employed in the
         wavelength calibration. If this value is 0, all the detected
         lines will be employed.
-    wv_master : 1d numpy array
-        Array with arc line wavelengths.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -185,14 +195,18 @@ def wvcal_spectrum(sp,
 
     Returns
     -------
-    solution_wv : instance of SolutionArcCalibration
-        Wavelength calibration solution.
+    fxpeaks : 1d numpy array
+        Refined location of peaks in array index scale, i.e, from 0
+        to naxis1 - 1.
+    sxpeaks : 1d numpy array
+        Line peak widths.
 
     """
 
+    # spectrum dimension
     naxis1 = sp.shape[0]
 
-    # initial location of the peaks (integer values)
+    # threshold to search for peaks
     q50 = np.percentile(sp, q=50)
     sigma_g = robust_std(sp)
     threshold = q50 + times_sigma_threshold * sigma_g
@@ -200,7 +214,13 @@ def wvcal_spectrum(sp,
         print("median....:", q50)
         print("robuts std:", sigma_g)
         print("threshold.:", threshold)
-    nwinwidth_initial = 7
+    if minimum_threshold > threshold:
+        threshold = minimum_threshold
+    if abs(debugplot) >= 10:
+        print("minimum threshold:", minimum_threshold)
+        print("final threshold..:", threshold)
+
+    # initial location of the peaks (integer values)
     ixpeaks = find_peaks_spectrum(sp,
                                   nwinwidth=nwinwidth_initial,
                                   threshold=threshold)
@@ -228,13 +248,13 @@ def wvcal_spectrum(sp,
                                                        ixpeaks_tmp))
         ixpeaks = ixpeaks_filtered
 
-    # check there are enough lines for fit
-    if len(ixpeaks) <= poly_degree_wfit:
-        print(">>> Warning: not enough lines to fit spectrum")
-        return None
+    # remove peaks too close to any of the borders of the spectrum
+    if npix_avoid_border > 0:
+        lok_ini = ixpeaks >= npix_avoid_border
+        lok_end = ixpeaks <= naxis1 - 1 - npix_avoid_border
+        ixpeaks = ixpeaks[lok_ini * lok_end]
 
     # refined location of the peaks (float values)
-    nwinwidth_refined = 5
     fxpeaks, sxpeaks = refine_peaks_spectrum(sp, ixpeaks,
                                              nwinwidth=nwinwidth_refined,
                                              method="gaussian")
@@ -267,11 +287,51 @@ def wvcal_spectrum(sp,
         # show plot
         pause_debugplot(debugplot, pltshow=True)
 
+    return fxpeaks, sxpeaks
+
+
+def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master, debugplot):
+    """Execute wavelength calibration of a spectrum using fixed line peaks.
+
+    Parameters
+    ----------
+    sp : 1d numpy array
+        Spectrum to be wavelength calibrated.
+    fxpeaks : 1d numpy array
+        Refined location of peaks in array index scale, i.e, from 0
+        to naxis1 - 1. The wavelength calibration is performed using
+        these line locations.
+    poly_degree_wfit : int
+        Degree for wavelength calibration polynomial.
+    wv_master : 1d numpy array
+        Array with arc line wavelengths.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
+
+    Returns
+    -------
+    solution_wv : instance of SolutionArcCalibration
+        Wavelength calibration solution.
+
+    """
+
+    # check there are enough lines for fit
+    if len(fxpeaks) <= poly_degree_wfit:
+        print(">>> Warning: not enough lines to fit spectrum")
+        return None
+
+    # spectrum dimension
+    naxis1 = sp.shape[0]
+
     wv_master_range = wv_master[-1] - wv_master[0]
     delta_wv_master_range = 0.20 * wv_master_range
 
-    # wavelength calibration
+    # use channels (pixels from 1 to naxis1)
     xchannel = fxpeaks + 1.0
+
+    # wavelength calibration
     list_of_wvfeatures = arccalibration(
         wv_master=wv_master,
         xpos_arc=xchannel,
@@ -350,6 +410,22 @@ def main(args=None):
                         help="Threshold (times robust sigma to detect lines)"
                              " (default=10)",
                         default=10, type=float)
+    parser.add_argument("--minimum_threshold",
+                        help="Minimum threshold to detect lines"
+                             " (default=0)",
+                        default=0, type=float)
+    parser.add_argument("--nwinwidth_initial",
+                        help="Initial window width to detect lines"
+                             " (default=7)",
+                        default=7, type=int)
+    parser.add_argument("--nwinwidth_refined",
+                        help="Refined window width to detect lines"
+                             " (default=5)",
+                        default=5, type=int)
+    parser.add_argument("--npix_avoid_border",
+                        help="Number of pixels in the borders to be avoided"
+                             " (default=6)",
+                        default=6, type=int)
     parser.add_argument("--nbrightlines",
                         help="Tuple n1,[n2,[n3,...]] with maximum number of "
                              "brightest lines to be used [0=all] (default=0)",
@@ -400,13 +476,27 @@ def main(args=None):
         debugplot=args.debugplot
     )
 
+    # determine refined peak location in array coordinates, i.e.,
+    # from 0 to (naxis - 1)
+    fxpeaks, sxpeaks = find_fxpeaks(
+        sp=sp,
+        times_sigma_threshold=args.times_sigma_threshold,
+        minimum_threshold=args.minimum_threshold,
+        nwinwidth_initial=args.nwinwidth_initial,
+        nwinwidth_refined=args.nwinwidth_refined,
+        npix_avoid_border=args.npix_avoid_border,
+        nbrightlines=nbrightlines,
+        debugplot=args.debugplot
+    )
+
     # perform wavelength calibration
-    wvcal_spectrum(sp=sp,
-                   poly_degree_wfit=args.degree,
-                   times_sigma_threshold=args.times_sigma_threshold,
-                   nbrightlines=nbrightlines,
-                   wv_master=wv_master,
-                   debugplot=args.debugplot)
+    solution_wv = wvcal_spectrum(
+        sp=sp,
+        fxpeaks=fxpeaks,
+        poly_degree_wfit=args.degree,
+        wv_master=wv_master,
+        debugplot=args.debugplot
+    )
 
     try:
         input("\nPress RETURN to QUIT...")
