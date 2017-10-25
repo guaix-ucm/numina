@@ -116,13 +116,19 @@ def collapsed_spectrum(filename, ns1, ns2,
     return sp
 
 
-def read_wv_master_file(wv_master_file, debugplot):
+def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     """read arc line wavelengths from external file.
 
     Parameters
     ----------
     wv_master_file : string
         File name of txt file containing the wavelength database.
+    lines : string
+        Indicates which lines to read. For files with a single column
+        or two columns this parameter is irrelevant. For files with
+        three columns, lines='brightest' indicates that only the
+        brightest lines are read, whereas lines='all' means that all
+        the lines are considered.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -135,7 +141,14 @@ def read_wv_master_file(wv_master_file, debugplot):
 
     """
 
+    # protection
+    if lines not in ['brightest', 'all']:
+        raise ValueError('Unexpected lines=' + str(lines))
+
+    # read table from txt file
     master_table = np.genfromtxt(wv_master_file)
+
+    # determine wavelengths according to the number of columns
     if master_table.ndim == 1:
         wv_master = master_table
     else:
@@ -143,10 +156,13 @@ def read_wv_master_file(wv_master_file, debugplot):
         if master_table.shape[1] == 2:  # assume old format
             wv_master = np.copy(wv_master_all)
         elif master_table.shape[1] == 3:  # assume new format
-            wv_flag = master_table[:, 1]
-            wv_master = wv_master_all[np.where(wv_flag == 1)]
+            if lines == 'brightest':
+                wv_flag = master_table[:, 1]
+                wv_master = wv_master_all[np.where(wv_flag == 1)]
+            else:
+                wv_master = np.copy(wv_master_all)
         else:
-            raise ValueError('lines_catalog file does not have the '
+            raise ValueError('Lines_catalog file does not have the '
                              'expected number of columns')
 
     if abs(debugplot) >= 10:
