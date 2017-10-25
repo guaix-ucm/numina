@@ -1724,7 +1724,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                     label="identified lines")
             for i in range(len(ixpeaks)):
                 if wv_verified_all_peaks[i] > 0:
-                    ax.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]] + dy/100,
+                    ax.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
                             wv_verified_all_peaks[i], fontsize=8,
                             horizontalalignment='center')
             # legend
