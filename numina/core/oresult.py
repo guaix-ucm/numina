@@ -71,6 +71,7 @@ class ObservationResult(object):
         origin["block_uuid"] = first['block_uuid']
         origin['insconf_uuid'] = first['insconf_uuid']
         origin['date_obs'] = first['date_obs']
+        origin['observation_date'] = first['date_obs']
         origin['frames'] = [img['imgid'] for img in imginfo]
         return origin
 

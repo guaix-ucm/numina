@@ -79,10 +79,11 @@ class Parameter(Requirement):
 
 class ObservationResultRequirement(Requirement):
     """The Recipe requires the result of an observation."""
-    def __init__(self):
+    def __init__(self, query_opts=None):
 
         super(ObservationResultRequirement, self).__init__(
-            ObservationResultType, "Observation Result"
+            ObservationResultType, "Observation Result",
+            query_opts=query_opts
             )
 
     def __repr__(self):

@@ -29,3 +29,8 @@ class Result(QueryModifier):
         self.mode_attr = mode_attr
         self.node = node
         super(QueryModifier, self).__init__()
+
+
+class Ignore(QueryModifier):
+    """Ignore this parameter"""
+    pass
