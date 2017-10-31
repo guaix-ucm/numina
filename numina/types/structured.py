@@ -25,6 +25,7 @@ import numina.types.datatype
 from numina.ext.gtc import DF
 import numina.util.convert as conv
 from numina.util.jsonencoder import ExtEncoder
+from numina.util.fqn import fully_qualified_name
 
 
 def writeto(obj, name):
@@ -79,6 +80,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
             st[key] = self.__dict__[key]
 
         st['type'] = self.name()
+        st['type_fqn'] = fully_qualified_name(self)
         return st
 
     def __setstate__(self, state):
@@ -202,5 +204,5 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         origin = self.meta_info['origin']
         origin['block_uuid'] = obresult_meta['block_uuid']
         origin['insconf_uuid'] = obresult_meta['insconf_uuid']
-        origin['date_obs'] = obresult_meta['date_obs']
+        origin['date_obs'] = obresult_meta['observation_date']
         origin['frames'] = obresult_meta['frames']
