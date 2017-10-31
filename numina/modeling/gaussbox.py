@@ -32,7 +32,7 @@ def norm_pdf_t(x):
 
 
 def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
-    """"Integrate a Gaussian profile."""
+    """Integrate a Gaussian profile."""
     z = (x - mean) / stddev
     z2 = z + hpix / stddev
     z1 = z - hpix / stddev
@@ -40,7 +40,7 @@ def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
 
 
 def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
-    """Integrate a Gaussian profile."""
+    """Derivative of the integral of  a Gaussian profile."""
     z = (x - mean) / stddev
     z2 = z + hpix / stddev
     z1 = z - hpix / stddev
@@ -54,7 +54,7 @@ def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
     ds = -amplitude / stddev * (fp2 * z2 - fp1 * z1)
     dd = amplitude / stddev * (fp2 + fp1)
 
-    return (da, dl, ds, dd)
+    return da, dl, ds, dd
 
 
 GaussBox = custom_model(
