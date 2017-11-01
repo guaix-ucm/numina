@@ -164,10 +164,10 @@ def polfit_residuals(
     if nrejected > 0:
         yres_rejected = yrejected - poly(xrejected)  # points rejected
 
-    if debugplot >= 10:
+    if abs(debugplot) >= 10:
         print(">>> Polynomial fit:\n", poly)
 
-    if debugplot % 10 != 0:
+    if abs(debugplot) % 10 != 0:
         # define colors, markers and sizes for symbols
         if np.array(color).size == 1:
             mycolor = np.array([color] * npoints)
@@ -397,14 +397,17 @@ def polfit_residuals_with_sigma_rejection(
     poly = None
     yres = None
     while loop_to_reject_points:
-        poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
-                                      color=color, size=size,
-                                      xlim=xlim, ylim=ylim,
-                                      xlabel=xlabel, ylabel=ylabel,
-                                      title=title,
-                                      use_r=use_r,
-                                      geometry=geometry,
-                                      debugplot=debugplot)
+        if abs(debugplot) in [21, 22]:
+            poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
+                                          color=color, size=size,
+                                          xlim=xlim, ylim=ylim,
+                                          xlabel=xlabel, ylabel=ylabel,
+                                          title=title,
+                                          use_r=use_r,
+                                          geometry=geometry,
+                                          debugplot=debugplot)
+        else:
+            poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject)
         # check that there is room to remove a point with the current
         # polynomial degree
         npoints_effective = npoints - np.sum(reject)
@@ -418,7 +421,7 @@ def polfit_residuals_with_sigma_rejection(
             # --- method 2 ---
             yres_fitted = np.abs(yres[np.logical_not(reject)])
             rms = np.median(yres_fitted)
-            if debugplot >= 10:
+            if abs(debugplot) >= 10:
                 print("--> robust rms:", rms)
             # reject fitted point exceeding the threshold with the
             # largest deviation (note: with this method only one point
@@ -430,19 +433,34 @@ def polfit_residuals_with_sigma_rejection(
                 if not reject[i]:
                     if np.abs(yres[i]) > times_sigma_reject * rms:
                         index_to_remove.append(i)
-                        if debugplot >= 10:
+                        if abs(debugplot) >= 10:
                             print('--> suspicious point #', i + 1)
             if len(index_to_remove) == 0:
-                if debugplot >= 10:
+                if abs(debugplot) >= 10:
                     print('==> no need to remove any point')
                 loop_to_reject_points = False
             else:
                 imax = np.argmax(np.abs(yres[index_to_remove]))
                 reject[index_to_remove[imax]] = True
-                if debugplot >= 10:
+                if abs(debugplot) >= 10:
                     print('==> removing point #', index_to_remove[imax] + 1)
         else:
             loop_to_reject_points = False
+
+    # plot final fit in case it has not been already shown
+    if abs(debugplot) % 10 != 0:
+        if abs(debugplot) not in [21, 22]:
+            poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
+                                          color=color, size=size,
+                                          xlim=xlim, ylim=ylim,
+                                          xlabel=xlabel, ylabel=ylabel,
+                                          title=title,
+                                          use_r=use_r,
+                                          geometry=geometry,
+                                          debugplot=debugplot)
+        else:
+            if abs(debugplot) >= 10:
+                print(' ')
 
     # return result
     return poly, yres, reject
@@ -594,7 +612,7 @@ def polfit_residuals_with_cook_rejection(
                         (2*residual_variance)
                 else:
                     cook_distance[i] = np.inf
-                if debugplot >= 10:
+                if abs(debugplot) >= 10:
                     print('i, cook_distance[i]:', i, cook_distance[i])
             # determine median absolute cook distance, excluding points
             # already rejected
@@ -603,7 +621,7 @@ def polfit_residuals_with_cook_rejection(
             # rms computed from the previous data after removing the
             # point with the largest deviation
             rms = np.std(np.sort(dist_cook_fitted)[:-2])
-            if debugplot >= 10:
+            if abs(debugplot) >= 10:
                 print("--> median.......:", q50)
                 print("--> rms -2 points:", rms)
             # reject fitted point exceeding the threshold with the
@@ -624,10 +642,10 @@ def polfit_residuals_with_cook_rejection(
                 if not reject[i]:
                     if np.abs(cook_distance[i]-q50) > times_sigma_cook * rms:
                         index_to_remove.append(i)
-                        if debugplot >= 10:
+                        if abs(debugplot) >= 10:
                             print('--> suspicious point #', i + 1)
             if len(index_to_remove) == 0:
-                if debugplot >= 10:
+                if abs(debugplot) >= 10:
                     if any_point_removed:
                         print('==> no need to remove any additional point')
                     else:
@@ -637,7 +655,7 @@ def polfit_residuals_with_cook_rejection(
                 imax = np.argmax(np.abs(cook_distance[index_to_remove]))
                 reject[index_to_remove[imax]] = True
                 any_point_removed = True
-                if debugplot >= 10:
+                if abs(debugplot) >= 10:
                     print('==> removing point #', index_to_remove[imax] + 1)
         else:
             loop_to_reject_points = False
