@@ -31,6 +31,7 @@ from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_wvfeatures
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplot import ximplot
+from ..display.ximplotxy import ximplotxy
 from ..stats import robust_std
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
@@ -179,6 +180,7 @@ def find_fxpeaks(sp,
                  nwinwidth_refined,
                  npix_avoid_border,
                  nbrightlines,
+                 sigma_gaussian_filtering,
                  debugplot):
     """Locate line peaks in array coordinates (from 0 to naxis1-1).
 
@@ -204,6 +206,10 @@ def find_fxpeaks(sp,
         Maximum number of brightest lines to be employed in the
         wavelength calibration. If this value is 0, all the detected
         lines will be employed.
+    sigma_gaussian_filtering : float
+        Sigma of the gaussian filter to be applied to the spectrum in
+        order to avoid problems with saturated lines. This filtering is
+        skipped when this parameter is <= 0.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -222,9 +228,18 @@ def find_fxpeaks(sp,
     # spectrum dimension
     naxis1 = sp.shape[0]
 
+    # apply gaussian filtering when requested
+    if sigma_gaussian_filtering > 0:
+        spf = ndimage.filters.gaussian_filter(
+            sp,
+            sigma=sigma_gaussian_filtering
+        )
+    else:
+        spf = np.copy(sp)
+
     # threshold to search for peaks
-    q50 = np.percentile(sp, q=50)
-    sigma_g = robust_std(sp)
+    q50 = np.percentile(spf, q=50)
+    sigma_g = robust_std(spf)
     threshold = q50 + times_sigma_threshold * sigma_g
     if abs(debugplot) >= 10:
         print("median....:", q50)
@@ -237,7 +252,7 @@ def find_fxpeaks(sp,
         print("final threshold..:", threshold)
 
     # initial location of the peaks (integer values)
-    ixpeaks = find_peaks_spectrum(sp,
+    ixpeaks = find_peaks_spectrum(spf,
                                   nwinwidth=nwinwidth_initial,
                                   threshold=threshold)
 
@@ -259,7 +274,7 @@ def find_fxpeaks(sp,
                 ixpeaks_region = \
                     ixpeaks[np.logical_and(ixpeaks >= imin, ixpeaks <= imax)]
                 if len(ixpeaks_region) > 0:
-                    peak_fluxes = sp[ixpeaks_region]
+                    peak_fluxes = spf[ixpeaks_region]
                     spos = peak_fluxes.argsort()
                     ixpeaks_tmp = ixpeaks_region[spos[-nlines_in_region:]]
                     ixpeaks_tmp.sort()  # in-place sort
@@ -278,7 +293,7 @@ def find_fxpeaks(sp,
         ixpeaks = ixpeaks[lok_ini * lok_end]
 
     # refined location of the peaks (float values)
-    fxpeaks, sxpeaks = refine_peaks_spectrum(sp, ixpeaks,
+    fxpeaks, sxpeaks = refine_peaks_spectrum(spf, ixpeaks,
                                              nwinwidth=nwinwidth_refined,
                                              method="gaussian")
 
@@ -291,8 +306,11 @@ def find_fxpeaks(sp,
 
     # display median spectrum and peaks
     if abs(debugplot) % 10 != 0:
-        ax = ximplot(sp, plot_bbox=(1, naxis1),
-                     show=False)
+        xplot = np.arange(1, naxis1 + 1, dtype=float)
+        ax = ximplotxy(xplot, sp, show=False,
+                       **{'label': 'original spectrum'})
+        if sigma_gaussian_filtering > 0:
+            ax.plot(xplot, spf, label="filtered spectrum")
         ymin = sp.min()
         ymax = sp.max()
         dy = ymax - ymin
@@ -303,8 +321,8 @@ def find_fxpeaks(sp,
         ax.axhline(y=threshold, color="black", linestyle="dotted",
                    label="detection threshold")
         # mark peak location
-        ax.plot(ixpeaks + 1, sp[ixpeaks], 'bo', label="initial location")
-        ax.plot(fxpeaks + 1, sp[ixpeaks], 'go', label="refined location")
+        ax.plot(ixpeaks + 1, spf[ixpeaks], 'bo', label="initial location")
+        ax.plot(fxpeaks + 1, spf[ixpeaks], 'go', label="refined location")
         # legend
         ax.legend(numpoints=1)
         # show plot
@@ -453,6 +471,10 @@ def main(args=None):
                         help="Tuple n1,[n2,[n3,...]] with maximum number of "
                              "brightest lines to be used [0=all] (default=0)",
                         default=0)
+    parser.add_argument("--sigma_gauss_filt",
+                        help="Sigma (pixels) of gaussian filtering to avoid "
+                             "saturared lines (default=0)",
+                        default=0, type=float)
     parser.add_argument("--reverse",
                         help="Reverse wavelength direction",
                         action="store_true")
@@ -509,6 +531,7 @@ def main(args=None):
         nwinwidth_refined=args.nwinwidth_refined,
         npix_avoid_border=args.npix_avoid_border,
         nbrightlines=nbrightlines,
+        sigma_gaussian_filtering=args.sigma_gauss_filt,
         debugplot=args.debugplot
     )
 
