@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Utility functions to determine image distortions."""
+"""Utility functions to handle image distortions."""
 
 import numpy as np
 from skimage import transform
@@ -43,6 +43,12 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
         X coordinate of the reference points in the rectified image
     y_rect : numpy array
         Y coordinate of the reference points in the rectified image
+    order : int
+        Order of the polynomial transformation
+    debugplot : int
+        Determine whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -225,3 +231,25 @@ def fmap(order, aij, bij, x, y):
             k += 1
 
     return u, v
+
+
+def ncoef_fmap(order):
+    """Expected number of coefficients in a 2D transformation of a given order.
+
+    Parameters
+    ----------
+    order : int
+        Order of the 2D polynomial transformation.
+
+    Returns
+    -------
+    ncoef : int
+        Expected number of coefficients.
+
+    """
+
+    ncoef = 0
+    for i in range(order + 1):
+        for j in range(i + 1):
+            ncoef += 1
+    return ncoef
