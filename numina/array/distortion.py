@@ -19,6 +19,9 @@
 
 """Utility functions to handle image distortions."""
 
+from __future__ import division
+from __future__ import print_function
+
 import numpy as np
 from skimage import transform
 
@@ -53,9 +56,9 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     Returns
     -------
 
-    ttd_aij : numpy array
+    aij : numpy array
         Coefficients a_ij of the 2D transformation.
-    ttd_bij : numpy array
+    bij : numpy array
         Coefficients b_ij of the 2D transformation.
 
     """
@@ -66,64 +69,16 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
         if len(xdum) != npoints:
             raise ValueError('Unexpected different number of points')
 
-    # normalize ranges dividing by the maximum, so the
-    # transformation fit will be computed with data points with
-    # coordinates in the range [0,1]
+    # normalize ranges dividing by the maximum, so that the transformation
+    # fit will be computed with data points with coordinates in the range [0,1]
     x_scale = 1.0 / np.concatenate((x_orig,
                                     x_rect)).max()
     y_scale = 1.0 / np.concatenate((y_orig,
                                     y_rect)).max()
-    if abs(debugplot) >= 10:
-        print("x_scale:", x_scale)
-        print("y_scale:", y_scale)
     x_orig_scaled = x_orig * x_scale
     y_orig_scaled = y_orig * y_scale
     x_inter_scaled = x_rect * x_scale
     y_inter_scaled = y_rect * y_scale
-
-    if abs(debugplot) % 10 != 0:
-        ax = ximplotxy(x_orig_scaled, y_orig_scaled,
-                       show=False,
-                       **{'marker': 'o', 'color': 'cyan',
-                          'label': 'original', 'linestyle': ''})
-        dum = zip(x_orig_scaled, y_orig_scaled)
-        for idum in range(len(dum)):
-            ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
-                    horizontalalignment='center',
-                    verticalalignment='bottom', color='green')
-        ax.plot(x_inter_scaled, y_inter_scaled, 'bo',
-                label="rectified")
-        dum = zip(x_inter_scaled, y_inter_scaled)
-        for idum in range(len(dum)):
-            ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
-                    horizontalalignment='center',
-                    verticalalignment='bottom', color='blue')
-        xmin = np.concatenate((x_orig_scaled,
-                               x_inter_scaled)).min()
-        xmax = np.concatenate((x_orig_scaled,
-                               x_inter_scaled)).max()
-        ymin = np.concatenate((y_orig_scaled,
-                               y_inter_scaled)).min()
-        ymax = np.concatenate((y_orig_scaled,
-                               y_inter_scaled)).max()
-        dx = xmax - xmin
-        xmin -= dx / 20
-        xmax += dx / 20
-        dy = ymax - ymin
-        ymin -= dy / 20
-        ymax += dy / 20
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
-        ax.set_xlabel("pixel (normalized coordinate)")
-        ax.set_ylabel("pixel (normalized coordinate)")
-        ax.set_title("(estimate_tt_to_rectify #1)\n\n")
-        # shrink current axis and put a legend
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0, box.width, box.height * 0.92])
-        ax.legend(loc=3, bbox_to_anchor=(0., 1.02, 1., 0.07),
-                  mode="expand", borderaxespad=0., ncol=4,
-                  numpoints=1)
-        pause_debugplot(debugplot, pltshow=True)
 
     # solve 2 systems of equations with half number of unknowns each
     if order == 1:
@@ -166,7 +121,7 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
                               y_inter_scaled ** 4]).T
     else:
         raise ValueError("Invalid order=" + str(order))
-    ttd = transform.PolynomialTransform(
+    poltrans = transform.PolynomialTransform(
         np.vstack(
             [np.linalg.lstsq(a_matrix, x_orig_scaled)[0],
              np.linalg.lstsq(a_matrix, y_orig_scaled)[0]]
@@ -175,19 +130,60 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
 
     # reverse normalization to recover coefficients of the
     # transformation in the correct system
-    factor = np.zeros_like(ttd.params[0])
+    factor = np.zeros_like(poltrans.params[0])
     k = 0
     for i in range(order + 1):
         for j in range(i + 1):
             factor[k] = (x_scale ** (i - j)) * (y_scale ** j)
             k += 1
-    ttd_aij = ttd.params[0] * factor / x_scale
-    ttd_bij = ttd.params[1] * factor / y_scale
-    if abs(debugplot) >= 10:
-        print("ttd_aij X:\n", ttd_aij)
-        print("ttd_bij Y:\n", ttd_bij)
+    aij = poltrans.params[0] * factor / x_scale
+    bij = poltrans.params[1] * factor / y_scale
 
-    return ttd_aij, ttd_bij
+    # show results
+    if abs(debugplot) >= 10:
+        print(">>> u=u(x,y) --> aij:\n", aij)
+        print(">>> v=v(x,y) --> bij:\n", bij)
+
+    if abs(debugplot) % 10 != 0:
+        ax = ximplotxy(x_orig_scaled, y_orig_scaled,
+                       show=False,
+                       **{'marker': 'o', # 'color': 'cyan',
+                          'label': '(u,v) coordinates', 'linestyle': ''})
+        dum = zip(x_orig_scaled, y_orig_scaled)
+        for idum in range(len(dum)):
+            ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
+                    horizontalalignment='center',
+                    verticalalignment='bottom', color='black')
+        ax.plot(x_inter_scaled, y_inter_scaled, 'o',
+                label="(x,y) coordinates")
+        dum = zip(x_inter_scaled, y_inter_scaled)
+        for idum in range(len(dum)):
+            ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
+                    horizontalalignment='center',
+                    verticalalignment='bottom', color='grey')
+        xmin = np.concatenate((x_orig_scaled,
+                               x_inter_scaled)).min()
+        xmax = np.concatenate((x_orig_scaled,
+                               x_inter_scaled)).max()
+        ymin = np.concatenate((y_orig_scaled,
+                               y_inter_scaled)).min()
+        ymax = np.concatenate((y_orig_scaled,
+                               y_inter_scaled)).max()
+        dx = xmax - xmin
+        xmin -= dx / 20
+        xmax += dx / 20
+        dy = ymax - ymin
+        ymin -= dy / 20
+        ymax += dy / 20
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
+        ax.set_xlabel("pixel (normalized coordinate)")
+        ax.set_ylabel("pixel (normalized coordinate)")
+        ax.set_title("compute distortion")
+        ax.legend()
+        pause_debugplot(debugplot, pltshow=True)
+
+    return aij, bij
 
 
 def fmap(order, aij, bij, x, y):
