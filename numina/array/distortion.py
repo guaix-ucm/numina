@@ -27,6 +27,32 @@ from numina.array.display.ximplotxy import ximplotxy
 
 
 def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
+    """Compute image distortion transformation.
+
+    This function computes the following 2D transformation:
+    x_orig = sum[i=0:order]( sum[j=0:j]( a_ij * x_rect**(i - j) * y_rect**j ))
+    y_orig = sum[i=0:order]( sum[j=0:j]( b_ij * x_rect**(i - j) * y_rect**j ))
+
+    Parameters
+    ----------
+    x_orig : numpy array
+        X coordinate of the reference points in the distorted image
+    y_orig : numpy array
+        Y coordinate of the reference points in the distorted image
+    x_rect : numpy array
+        X coordinate of the reference points in the rectified image
+    y_rect : numpy array
+        Y coordinate of the reference points in the rectified image
+
+    Returns
+    -------
+
+    ttd_aij : numpy array
+        Coefficients a_ij of the 2D transformation.
+    ttd_bij : numpy array
+        Coefficients b_ij of the 2D transformation.
+
+    """
 
     # protections
     npoints = len(x_orig)
@@ -160,6 +186,9 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
 
 def fmap(order, aij, bij, x, y):
     """Evaluate the 2D polynomial transformation.
+
+    u = sum[i=0:order]( sum[j=0:j]( a_ij * x**(i - j) * y**j ))
+    v = sum[i=0:order]( sum[j=0:j]( b_ij * x**(i - j) * y**j ))
 
     Parameters
     ----------
