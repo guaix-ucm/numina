@@ -249,3 +249,81 @@ def ncoef_fmap(order):
         for j in range(i + 1):
             ncoef += 1
     return ncoef
+
+
+def rectify2d(image2d, aij, bij, resampling):
+    """Rectify image applying the provided 2D transformation.
+
+    The rectified image correspond to the transformation given by:
+        u = sum[i=0:order]( sum[j=0:j]( a_ij * x**(i - j) * y**j ))
+        v = sum[i=0:order]( sum[j=0:j]( b_ij * x**(i - j) * y**j ))
+
+    Parameters
+    ----------
+    image2d : 2d numpy array
+        Initial image.
+    aij : numpy array
+        Coefficients a_ij of the transformation.
+    bij : numpy array
+        Coefficients b_ij of the transformation.
+    resampling : int
+        1: nearest neighbour, 2: flux preserving interpolation.
+
+    Returns
+    -------
+    image2d_rect : 2d numpy array
+        Rectified image.
+
+    """
+
+    # protections
+    ncoef = aij.shape[0]
+    if bij.shape[0] != ncoef:
+        raise ValueError("aij and bij lengths are different!")
+
+    # order of the polynomial transformation
+    loop = True
+    order = 0
+    while loop:
+        loop = not (ncoef == ncoef_fmap(order))
+        order += 1
+        if order > 4:
+            raise ValueError("order > 4 not implemented")
+
+    # image dimension
+    naxis2, naxis1 = image2d.shape
+
+    # initialize result
+    image2d_rect = np.zeros_like(image2d)
+
+    if resampling == 1:
+        # pixel coordinates (rectified image); since the fmap function
+        # below requires floats, these arrays must use dtype=np.float
+        j = np.arange(0, naxis1, dtype=np.float)
+        i = np.arange(0, naxis2, dtype=np.float)
+        # the cartesian product of the previous 1D arrays could be stored
+        # as np.transpose([xx,yy]), where xx and yy are computed as follows
+        xx = np.tile(j, (len(i),))
+        yy = np.repeat(i, len(j))
+        # compute pixel coordinates in original (distorted) image
+        xxx, yyy = fmap(order, aij, bij, xx, yy)
+        # round to nearest integer and cast to integer; note that the
+        # rounding still provides a float, so the casting is required
+        ixxx = np.rint(xxx).astype(np.int)
+        iyyy = np.rint(yyy).astype(np.int)
+        # determine pixel coordinates within available image
+        lxxx = np.logical_and(ixxx >= 0, ixxx < naxis1)
+        lyyy = np.logical_and(iyyy >= 0, iyyy < naxis2)
+        lok = np.logical_and(lxxx, lyyy)
+        # assign pixel values to rectified image
+        ixx = xx.astype(np.int)[lok]
+        iyy = yy.astype(np.int)[lok]
+        ixxx = ixxx[lok]
+        iyyy = iyyy[lok]
+        image2d_rect[iyy, ixx] = image2d[iyyy, ixxx]
+    else:
+        raise ValueError("Sorry, this resampling method has not been"
+                         " implemented yet!")
+
+    # return result
+    return image2d_rect
