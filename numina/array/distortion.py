@@ -251,7 +251,10 @@ def ncoef_fmap(order):
     return ncoef
 
 
-def rectify2d(image2d, aij, bij, resampling):
+def rectify2d(image2d, aij, bij, resampling,
+              naxis1out=None, naxis2out=None,
+              ioffx=None, ioffy=None,
+              debugplot=0):
     """Rectify image applying the provided 2D transformation.
 
     The rectified image correspond to the transformation given by:
@@ -262,12 +265,24 @@ def rectify2d(image2d, aij, bij, resampling):
     ----------
     image2d : 2d numpy array
         Initial image.
-    aij : numpy array
+    aij : 1d numpy array
         Coefficients a_ij of the transformation.
-    bij : numpy array
+    bij : 1d numpy array
         Coefficients b_ij of the transformation.
     resampling : int
         1: nearest neighbour, 2: flux preserving interpolation.
+    naxis1out : int or None
+        X-axis dimension of output image.
+    naxis2out : int or None
+        Y-axis dimension of output image.
+    ioffx : int
+        Integer offset in the X direction.
+    ioffy : int
+        Integer offset in the Y direction.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot
 
     Returns
     -------
@@ -277,8 +292,8 @@ def rectify2d(image2d, aij, bij, resampling):
     """
 
     # protections
-    ncoef = aij.shape[0]
-    if bij.shape[0] != ncoef:
+    ncoef = len(aij)
+    if len(bij) != ncoef:
         raise ValueError("aij and bij lengths are different!")
 
     # order of the polynomial transformation
@@ -286,21 +301,34 @@ def rectify2d(image2d, aij, bij, resampling):
     order = 0
     while loop:
         loop = not (ncoef == ncoef_fmap(order))
-        order += 1
-        if order > 4:
-            raise ValueError("order > 4 not implemented")
+        if loop:
+            order += 1
+            if order > 4:
+                raise ValueError("order > 4 not implemented")
+    if abs(debugplot) >= 10:
+        print('--> rectification order:', order)
 
-    # image dimension
+    # initial image dimension
     naxis2, naxis1 = image2d.shape
 
+    # output image dimension
+    if naxis1out is None:
+        naxis1out = naxis1
+    if naxis2out is None:
+        naxis2out = naxis2
+    if ioffx is None:
+        ioffx = 0
+    if ioffy is None:
+        ioffy = 0
+
     # initialize result
-    image2d_rect = np.zeros_like(image2d)
+    image2d_rect = np.zeros((naxis2out, naxis1out))
 
     if resampling == 1:
         # pixel coordinates (rectified image); since the fmap function
         # below requires floats, these arrays must use dtype=np.float
-        j = np.arange(0, naxis1, dtype=np.float)
-        i = np.arange(0, naxis2, dtype=np.float)
+        j = np.arange(0, naxis1out, dtype=np.float) - ioffx
+        i = np.arange(0, naxis2out, dtype=np.float) - ioffy
         # the cartesian product of the previous 1D arrays could be stored
         # as np.transpose([xx,yy]), where xx and yy are computed as follows
         xx = np.tile(j, (len(i),))
@@ -320,7 +348,7 @@ def rectify2d(image2d, aij, bij, resampling):
         iyy = yy.astype(np.int)[lok]
         ixxx = ixxx[lok]
         iyyy = iyyy[lok]
-        image2d_rect[iyy, ixx] = image2d[iyyy, ixxx]
+        image2d_rect[iyy + ioffy, ixx + ioffx] = image2d[iyyy, ixxx]
     else:
         raise ValueError("Sorry, this resampling method has not been"
                          " implemented yet!")
