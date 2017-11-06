@@ -265,21 +265,12 @@ def polfit_residuals(
                        marker='x', s=srejected, color=crejected,
                        label="rejected")
 
-        # shrink axes and put a legend
-        box = ax2.get_position()
-        ax2.set_position([box.x0, box.y0,
-                          box.width, box.height * 0.92])
-        delta_ybox = box.height*0.15
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 - delta_ybox,
-                         box.width, box.height * 0.92])
-        ax.legend(loc=3, bbox_to_anchor=(0.0, 1.1, 1., 0.07),
-                  mode="expand", borderaxespad=0., ncol=4,
-                  numpoints=1)
+        # put a legend
+        ax.legend(numpoints=1)
 
         # graph title
         if title is not None:
-            plt.title(title + "\n\n")
+            plt.title(title)
 
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
