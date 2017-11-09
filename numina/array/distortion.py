@@ -28,6 +28,8 @@ from skimage import transform
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 
+NMAX_ORDER = 4
+
 
 def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     """Compute image distortion transformation.
@@ -68,6 +70,8 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     for xdum in [y_orig, x_rect, y_rect]:
         if len(xdum) != npoints:
             raise ValueError('Unexpected different number of points')
+    if order < 1 or order > NMAX_ORDER:
+        raise ValueError("Invalid order=" + str(order))
 
     # normalize ranges dividing by the maximum, so that the transformation
     # fit will be computed with data points with coordinates in the range [0,1]
@@ -147,7 +151,7 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     if abs(debugplot) % 10 != 0:
         ax = ximplotxy(x_orig_scaled, y_orig_scaled,
                        show=False,
-                       **{'marker': 'o', # 'color': 'cyan',
+                       **{'marker': 'o',
                           'label': '(u,v) coordinates', 'linestyle': ''})
         dum = zip(x_orig_scaled, y_orig_scaled)
         for idum in range(len(dum)):
@@ -251,6 +255,34 @@ def ncoef_fmap(order):
     return ncoef
 
 
+def order_fmap(ncoef):
+    """Compute order corresponding to a given number of coefficients.
+
+    Parameters
+    ----------
+    ncoef : int
+        Number of coefficients.
+
+    Returns
+    -------
+    order : int
+        Order corresponding to the provided number of coefficients.
+
+    """
+
+    loop = True
+    order = 1
+    while loop:
+        loop = not (ncoef == ncoef_fmap(order))
+        if loop:
+            order += 1
+            if order > NMAX_ORDER:
+                print('No. of coefficients: ', ncoef)
+                raise ValueError("order > " + str(NMAX_ORDER) +
+                                 " not implemented")
+    return order
+
+
 def rectify2d(image2d, aij, bij, resampling,
               naxis1out=None, naxis2out=None,
               ioffx=None, ioffy=None,
@@ -297,14 +329,7 @@ def rectify2d(image2d, aij, bij, resampling,
         raise ValueError("aij and bij lengths are different!")
 
     # order of the polynomial transformation
-    loop = True
-    order = 0
-    while loop:
-        loop = not (ncoef == ncoef_fmap(order))
-        if loop:
-            order += 1
-            if order > 4:
-                raise ValueError("order > 4 not implemented")
+    order = order_fmap(ncoef)
     if abs(debugplot) >= 10:
         print('--> rectification order:', order)
 
