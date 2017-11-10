@@ -94,17 +94,20 @@ def summary(x, rm_nan=False, debug=False):
         xx = xx[np.logical_not(np.isnan(xx))]
 
     # compute basic statistics
+    npoints = len(xx)
+    ok = npoints > 0
     result = {
-        'minimum' : np.min(xx),
-        'percentile25' : np.percentile(xx, 25),
-        'median' : np.percentile(xx, 50),
-        'mean' : np.mean(xx),
-        'percentile75': np.percentile(xx, 75),
-        'maximum' : np.max(xx),
-        'std': np.std(xx),
-        'robust_std' : robust_std(xx),
-        'percentile15': np.percentile(xx, 15.86553),
-        'percentile84': np.percentile(xx, 84.13447)
+        'npoints' : npoints,
+        'minimum' : np.min(xx) if ok else 0,
+        'percentile25' : np.percentile(xx, 25) if ok else 0,
+        'median' : np.percentile(xx, 50) if ok else 0,
+        'mean' : np.mean(xx) if ok else 0,
+        'percentile75': np.percentile(xx, 75) if ok else 0,
+        'maximum' : np.max(xx) if ok else 0,
+        'std': np.std(xx) if ok else 0,
+        'robust_std' : robust_std(xx) if ok else 0,
+        'percentile15': np.percentile(xx, 15.86553) if ok else 0,
+        'percentile84': np.percentile(xx, 84.13447) if ok else 0
     }
 
     if debug:
