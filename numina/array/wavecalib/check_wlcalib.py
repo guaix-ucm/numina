@@ -183,6 +183,12 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
 
+    Returns
+    -------
+    polyres : instance of numpy.polynomial.Polynomial
+        Polynomial fit to residuals
+    ysummary : Python dictionary
+        S
     """
 
     # protections
@@ -251,9 +257,12 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         fxpeaks_wv = np.array([])
         wv_verified_all_peaks = np.array([])
         nlines_ok = 0
+        nresiduals = 0
         xresid = []
         yresid = []
+        reject = []
         polyres = np.polynomial.Polynomial([0])
+        poldeg_effective = 0
         ysummary = summary(np.array([]))
 
     print('-' * 79)
@@ -283,18 +292,23 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
 
         # residuals
         ax2 = fig.add_subplot(2, 1, 1)
-        ymin = min(yresid)
-        ymax = max(yresid)
-        dy = ymax - ymin
-        ymin -= dy/20
-        ymax += dy/20
+        if nresiduals > 0:
+            ymin = min(yresid)
+            ymax = max(yresid)
+            dy = ymax - ymin
+            ymin -= dy/20
+            ymax += dy/20
+        else:
+            ymin = -1.0
+            ymax = 1.0
         ax2.set_ylim([ymin, ymax])
-        ax2.plot(xresid, yresid, 'o')
-        ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
+        if nresiduals > 0:
+            ax2.plot(xresid, yresid, 'o')
+            ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
         ax2.set_ylabel('Offset ' + r'($\AA$)')
         ax2.yaxis.label.set_size(10)
         if title is not None:
-            ax2.set_title(title, **{'size': 10})
+            ax2.set_title(title, **{'size': 12})
         xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
         ax2.plot(xwv, polyres(xwv), '-')
         ax2.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel)=' + str(cdelt1),
@@ -366,8 +380,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 ax1.text(fxpeaks_wv[i], 0,  # spmedian[ixpeaks[i]],
                          estimated_wv, fontsize=8, color='grey',
                          rotation='vertical',
-                        horizontalalignment='center',
-                        verticalalignment='top')
+                         horizontalalignment='center',
+                         verticalalignment='top')
         if len(missing_wv) > 0:
             tmp = [float(wv) for wv in missing_wv]
             ax1.vlines(tmp, ymin=ymin, ymax=ymax,
@@ -375,6 +389,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                        label='missing lines')
         ax1.legend()
         pause_debugplot(debugplot, pltshow=True)
+
+    return polyres, ysummary
 
 
 def main(args=None):
@@ -472,16 +488,16 @@ def main(args=None):
             'wv_master: ' + os.path.basename(args.wv_master_file.name)
 
     # check the wavelength calibration
-    check_sp(sp=spmedian,
-             crpix1=crpix1,
-             crval1=crval1,
-             cdelt1=cdelt1,
-             wv_master=wv_master,
-             nwinwidth_initial=args.nwinwidth_initial,
-             nwinwidth_refined=args.nwinwidth_refined,
-             title=title,
-             geometry=geometry,
-             debugplot=args.debugplot)
+    check_wlcalib_sp(sp=spmedian,
+                     crpix1=crpix1,
+                     crval1=crval1,
+                     cdelt1=cdelt1,
+                     wv_master=wv_master,
+                     nwinwidth_initial=args.nwinwidth_initial,
+                     nwinwidth_refined=args.nwinwidth_refined,
+                     title=title,
+                     geometry=geometry,
+                     debugplot=args.debugplot)
 
 
 if __name__ == "__main__":

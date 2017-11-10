@@ -73,11 +73,12 @@ def summary(x, rm_nan=False, debug=False):
 
     Returns
     -------
-    result : dictionary of floats
-        Minimum, percentile 25, percentile 50 (median), mean,
-        percentile 75, maximum, standard deviation, robust standard
-        deviation, percentile 15.866 (equivalent to -1 sigma in a normal
-        distribution) and percentile 84.134 (+1 sigma).
+    result : Python dictionary
+        Number of points, minimum, percentile 25, percentile 50
+        (median), mean, percentile 75, maximum, standard deviation,
+        robust standard deviation, percentile 15.866 (equivalent
+        to -1 sigma in a normal distribution) and percentile 84.134
+        (+1 sigma).
 
     """
 
@@ -114,6 +115,7 @@ def summary(x, rm_nan=False, debug=False):
         print('>>> ========================================')
         print('>>> STATISTICAL SUMMARY:')
         print('>>> ----------------------------------------')
+        print('>>> Number of points.........:', result['npoints'])
         print('>>> Minimum..................:', result['minimum'])
         print('>>> 1st Quartile.............:', result['percentile25'])
         print('>>> Median...................:', result['median'])
