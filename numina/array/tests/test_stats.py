@@ -25,6 +25,7 @@ def test_summary():
     result = summary(xdata)
 
     expected_result = {
+        'npoints': 50,
         'minimum': 0,
         'percentile25': 12.25,
         'median': 24.5,
