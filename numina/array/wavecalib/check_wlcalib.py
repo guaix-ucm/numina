@@ -29,6 +29,7 @@ import os
 
 from numina.array.stats import summary
 from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals \
     import polfit_residuals_with_sigma_rejection
 from .peaks_spectrum import find_peaks_spectrum
@@ -145,7 +146,10 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      poldeg_residuals=1,
                      times_sigma_reject=5,
                      use_r=True,
-                     title=None, geometry=None, debugplot=0):
+                     title=None,
+                     full=False,
+                     geometry=None,
+                     debugplot=0):
     """Check wavelength calibration of the provided spectrum.
 
     Parameters
@@ -177,6 +181,9 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         If True, additional statistical analysis is performed using R.
     title : string
         Plot title.
+    full : bool
+        If True, the function also returns the data points
+        employed in the fit: xresid, yresid, reject
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -188,7 +195,11 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     polyres : instance of numpy.polynomial.Polynomial
         Polynomial fit to residuals
     ysummary : Python dictionary
-        S
+        Statistical summary of residuals.
+    xyrfit : tuple of numpy arrays
+        Abscissae, ordinates and booleans (numpy arrays) corresponding
+        to the data points employed in the fit.
+
     """
 
     # protections
@@ -258,9 +269,9 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         wv_verified_all_peaks = np.array([])
         nlines_ok = 0
         nresiduals = 0
-        xresid = []
-        yresid = []
-        reject = []
+        xresid = np.array([], dtype=float)
+        yresid = np.array([], dtype=float)
+        reject = np.array([], dtype=bool)
         polyres = np.polynomial.Polynomial([0])
         poldeg_effective = 0
         ysummary = summary(np.array([]))
@@ -390,7 +401,112 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         ax1.legend()
         pause_debugplot(debugplot, pltshow=True)
 
-    return polyres, ysummary
+    if full:
+        xyrfit = (xresid, yresid, reject)
+        return polyres, ysummary, xyrfit
+    else:
+        return polyres, ysummary
+
+
+def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis2):
+    """Update wavelength calibration polynomial using the residuals fit.
+
+    The idea is to repeat the original fit using the information
+    previously computed with the function check_wlcalib_sp() in this
+    module.
+
+    Parameters
+    ----------
+    coeff_ini : array like (floats)
+        Coefficients corresponding to the initial wavelength
+        calibration.
+    coeff_residuals: array like (floats)
+        Coefficients corresponding to the fit performed by the
+        function check_wlcalib_sp() in this module.
+    xyrfit : tuple of numpy arrays
+        Additional information returned by the function
+        check_wlcalib_sp() providing the data points employed in
+        the fit carried out by that function.
+    naxis2 : int
+        NAXIS2 in original spectrum employed to fit the initial
+        wavelength calibration.
+
+    Returns
+    -------
+    coeff_end : numpy array (floats)
+        Updated coefficients.
+
+    """
+
+    # define initial wavelength calibration polynomial (use generic
+    # code valid for lists of numpy.arrays)
+    coeff = []
+    for fdum in coeff_ini:
+        coeff.append(fdum)
+    poly_ini = np.polynomial.Polynomial(coeff)
+    poldeg_wlcalib = len(coeff) - 1
+
+    # return initial polynomial when there is no need to compute an
+    # updated version
+    if len(coeff_residuals) == 0:
+        return poly_ini.coef
+    else:
+        if np.count_nonzero(poly_ini.coef) == 0:
+            return poly_ini.coef
+
+    # define polynomial corresponding to the residuals fit carried
+    # out by check_wlcalib_sp()
+    coeff = []
+    for fdum in coeff_residuals:
+        coeff.append(fdum)
+    poly_residuals = np.polynomial.Polynomial(coeff)
+
+    # extract data points employed by check_wlcalib_sp()
+    if len(xyrfit) != 3:
+        raise ValueError('Wrong tuple')
+    xresid = xyrfit[0]
+    reject = xyrfit[2]
+    nresid = len(xresid)
+
+    # if there are no points, return initial polynomial
+    if nresid == 0:
+        return poly_ini.coef
+
+    # define new points to be fitted
+    xfit = []
+    yfit = []
+    for i in range(nresid):
+        if not reject[i]:
+            poly_tmp = poly_ini.copy()
+            poly_tmp.coef[0] -= xresid[i]
+            roots = poly_tmp.roots()
+            loop = True
+            k = 0
+            while loop:
+                if roots[k].imag == 0:
+                    if 1 <= roots[k].real <= naxis2:
+                        xfit.append(roots[k].real)
+                        yfit.append(xresid[i]+poly_residuals(xresid[i]))
+                        loop = False
+                    if loop:
+                        k += 1
+                        if k > poldeg_wlcalib + 1:
+                            raise ValueError('Valid root not found')
+                else:
+                    k += 1
+
+    # fit to get the updated polynomial
+    if len(xfit) > poldeg_wlcalib:
+        poldeg_effective = poldeg_wlcalib
+    else:
+        poldeg_effective = len(xfit) - 1
+    poly_updated, ydum = polfit_residuals(
+        x=np.array(xfit),
+        y=np.array(yfit),
+        deg=poldeg_effective)
+
+    # return coefficients of updated polynomial
+    return poly_updated.coef
 
 
 def main(args=None):
