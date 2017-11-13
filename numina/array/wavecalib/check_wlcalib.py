@@ -147,6 +147,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      times_sigma_reject=5,
                      use_r=True,
                      title=None,
+                     remove_null_borders=True,
                      full=False,
                      geometry=None,
                      debugplot=0):
@@ -181,6 +182,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         If True, additional statistical analysis is performed using R.
     title : string
         Plot title.
+    remove_null_borders : bool
+        If True, remove leading and trailing zeros in spectrum.
     full : bool
         If True, the function also returns the data points
         employed in the fit: xresid, yresid, reject
@@ -353,8 +356,16 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                  transform=ax2.transAxes)
 
         # median spectrum and peaks
-        xmin = min(xwv)
-        xmax = max(xwv)
+        # remove leading and trailing zeros in spectrum when requested
+        if remove_null_borders:
+            nonzero = np.nonzero(sp)[0]
+            j1 = nonzero[0]
+            j2 = nonzero[-1] + 1
+            xmin = xwv[j1]
+            xmax = xwv[j2]
+        else:
+            xmin = min(xwv)
+            xmax = max(xwv)
         dx = xmax - xmin
         xmin -= dx / 80
         xmax += dx / 80
@@ -368,10 +379,10 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         ax1.set_ylim([ymin, ymax])
         ax1.plot(xwv, sp)
         if npeaks > 0:
-            ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o', fillstyle='none',
-                     label="initial location")
-            ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o', fillstyle='none',
-                     label="refined location")
+            ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o',
+                     fillstyle='none', label="initial location")
+            ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
+                     fillstyle='none', label="refined location")
             ax1.plot(wv_verified_all_peaks, sp[ixpeaks], 'go',
                      label="valid line")
         ax1.set_ylabel('Counts')
@@ -408,7 +419,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         return polyres, ysummary
 
 
-def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis2):
+def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis1,
+                        debugplot):
     """Update wavelength calibration polynomial using the residuals fit.
 
     The idea is to repeat the original fit using the information
@@ -427,9 +439,12 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis2):
         Additional information returned by the function
         check_wlcalib_sp() providing the data points employed in
         the fit carried out by that function.
-    naxis2 : int
-        NAXIS2 in original spectrum employed to fit the initial
+    naxis1 : int
+        NAXIS1 in original spectrum employed to fit the initial
         wavelength calibration.
+    debugplot : int
+        Debugging level for messages and plots. For details see
+        'numina.array.display.pause_debugplot.py'.
 
     Returns
     -------
@@ -473,27 +488,12 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis2):
         return poly_ini.coef
 
     # define new points to be fitted
-    xfit = []
-    yfit = []
-    for i in range(nresid):
-        if not reject[i]:
-            poly_tmp = poly_ini.copy()
-            poly_tmp.coef[0] -= xresid[i]
-            roots = poly_tmp.roots()
-            loop = True
-            k = 0
-            while loop:
-                if roots[k].imag == 0:
-                    if 1 <= roots[k].real <= naxis2:
-                        xfit.append(roots[k].real)
-                        yfit.append(xresid[i]+poly_residuals(xresid[i]))
-                        loop = False
-                    if loop:
-                        k += 1
-                        if k > poldeg_wlcalib + 1:
-                            raise ValueError('Valid root not found')
-                else:
-                    k += 1
+    xfit = np.zeros(naxis1)
+    yfit = np.zeros(naxis1)
+    for i in range(naxis1):
+        xfit[i] = float(i + 1)
+        wv_tmp = poly_ini(xfit[i])
+        yfit[i] = wv_tmp + poly_residuals(wv_tmp)
 
     # fit to get the updated polynomial
     if len(xfit) > poldeg_wlcalib:
@@ -501,9 +501,11 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis2):
     else:
         poldeg_effective = len(xfit) - 1
     poly_updated, ydum = polfit_residuals(
-        x=np.array(xfit),
-        y=np.array(yfit),
-        deg=poldeg_effective)
+        x=xfit,
+        y=yfit,
+        deg=poldeg_effective,
+        debugplot=debugplot
+    )
 
     # return coefficients of updated polynomial
     return poly_updated.coef
