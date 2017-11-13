@@ -218,6 +218,19 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     # determine spectrum length
     naxis1 = sp.shape[0]
 
+    # define default values in case no useful lines are identified
+    fxpeaks = np.array([])
+    ixpeaks_wv = np.array([])
+    fxpeaks_wv = np.array([])
+    wv_verified_all_peaks = np.array([])
+    nlines_ok = 0
+    xresid = np.array([], dtype=float)
+    yresid = np.array([], dtype=float)
+    reject = np.array([], dtype=bool)
+    polyres = np.polynomial.Polynomial([0])
+    poldeg_effective = 0
+    ysummary = summary(np.array([]))
+
     # find initial line peaks
     ixpeaks = find_peaks_spectrum(sp,
                                   nwinwidth=nwinwidth_initial,
@@ -242,42 +255,30 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             delta_wv_max=delta_wv_max
         )
         lines_ok = np.where(wv_verified_all_peaks > 0)
-
-        # compute residuals
-        xresid = fxpeaks_wv[lines_ok]
-        yresid = wv_verified_all_peaks[lines_ok] - fxpeaks_wv[lines_ok]
-        ysummary = summary(yresid)
-
-        # determine effective polynomial degree
-        nresiduals = len(xresid)
-        if nresiduals > poldeg_residuals:
-            poldeg_effective = poldeg_residuals
-        else:
-            poldeg_effective = nresiduals - 1
-
-        # fit polynomial to residuals
-        polyres, yresres, reject = polfit_residuals_with_sigma_rejection(
-            x=xresid,
-            y=yresid,
-            deg=poldeg_effective,
-            times_sigma_reject=times_sigma_reject,
-            use_r=use_r,
-            debugplot=0
-        )
         nlines_ok = len(lines_ok[0])
-    else:
-        fxpeaks = np.array([])
-        ixpeaks_wv = np.array([])
-        fxpeaks_wv = np.array([])
-        wv_verified_all_peaks = np.array([])
-        nlines_ok = 0
-        nresiduals = 0
-        xresid = np.array([], dtype=float)
-        yresid = np.array([], dtype=float)
-        reject = np.array([], dtype=bool)
-        polyres = np.polynomial.Polynomial([0])
-        poldeg_effective = 0
-        ysummary = summary(np.array([]))
+
+        # there are matched lines
+        if nlines_ok > 0:
+            # compute residuals
+            xresid = fxpeaks_wv[lines_ok]
+            yresid = wv_verified_all_peaks[lines_ok] - fxpeaks_wv[lines_ok]
+            ysummary = summary(yresid)
+
+            # determine effective polynomial degree
+            if nlines_ok > poldeg_residuals:
+                poldeg_effective = poldeg_residuals
+            else:
+                poldeg_effective = nlines_ok  - 1
+
+            # fit polynomial to residuals
+            polyres, yresres, reject = polfit_residuals_with_sigma_rejection(
+                x=xresid,
+                y=yresid,
+                deg=poldeg_effective,
+                times_sigma_reject=times_sigma_reject,
+                use_r=use_r,
+                debugplot=0
+            )
 
     list_wv_found = [str(round(wv, 4))
                      for wv in wv_verified_all_peaks if wv != 0]
@@ -311,7 +312,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
 
         # residuals
         ax2 = fig.add_subplot(2, 1, 1)
-        if nresiduals > 0:
+        if nlines_ok > 0:
             ymin = min(yresid)
             ymax = max(yresid)
             dy = ymax - ymin
@@ -321,7 +322,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             ymin = -1.0
             ymax = 1.0
         ax2.set_ylim([ymin, ymax])
-        if nresiduals > 0:
+        if nlines_ok > 0:
             ax2.plot(xresid, yresid, 'o')
             ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
         ax2.set_ylabel('Offset ' + r'($\AA$)')
