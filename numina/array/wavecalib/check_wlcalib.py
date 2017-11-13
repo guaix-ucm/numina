@@ -262,7 +262,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             deg=poldeg_effective,
             times_sigma_reject=times_sigma_reject,
             use_r=use_r,
-            debugplot=10
+            debugplot=0
         )
         nlines_ok = len(lines_ok[0])
     else:
@@ -279,7 +279,6 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         poldeg_effective = 0
         ysummary = summary(np.array([]))
 
-    print('-' * 79)
     list_wv_found = [str(round(wv, 4))
                      for wv in wv_verified_all_peaks if wv != 0]
     list_wv_master = [str(round(wv, 4)) for wv in wv_master]
@@ -287,13 +286,19 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     set2 = set(list_wv_found)
     missing_wv = list(set1.symmetric_difference(set2))
     missing_wv.sort()
-    print(">>> Unmatched lines...................:", missing_wv)
-    print(">>> Number of arc lines in master file:", len(wv_master))
-    print(">>> Number of line peaks found........:", npeaks)
-    print(">>> Number of identified lines........:", nlines_ok)
-    print(">>> Number of unmatched lines.........:", len(missing_wv))
-    print(">>> Polynomial degree in residuals fit:", poldeg_effective)
-    print(">>> Polynomial fit to residuals.......:", polyres)
+    if abs(debugplot) >= 10:
+        print('-' * 79)
+        print(">>> Number of arc lines in master file:", len(wv_master))
+    if abs(debugplot) in [21, 22]:
+        print(">>> Unmatched lines...................:", missing_wv)
+    elif abs(debugplot) >= 10:
+        print(">>> Number of unmatched lines.........:", len(missing_wv))
+    if abs(debugplot) >= 10:
+        print(">>> Number of line peaks found........:", npeaks)
+        print(">>> Number of identified lines........:", nlines_ok)
+        print(">>> Number of unmatched lines.........:", len(missing_wv))
+        print(">>> Polynomial degree in residuals fit:", poldeg_effective)
+        print(">>> Polynomial fit to residuals.......:", polyres)
 
     # display results
     if abs(debugplot) % 10 != 0:
