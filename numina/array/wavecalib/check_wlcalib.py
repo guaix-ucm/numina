@@ -316,8 +316,12 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             ymin = min(yresid)
             ymax = max(yresid)
             dy = ymax - ymin
-            ymin -= dy/20
-            ymax += dy/20
+            if dy > 0:
+                ymin -= dy/20
+                ymax += dy/20
+            else:
+                ymin -= 0.5
+                ymax += 0.5
         else:
             ymin = -1.0
             ymax = 1.0
@@ -373,13 +377,21 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             xmin = min(xwv)
             xmax = max(xwv)
         dx = xmax - xmin
-        xmin -= dx / 80
-        xmax += dx / 80
+        if dx > 0:
+            xmin -= dx / 80
+            xmax += dx / 80
+        else:
+            xmin -= 0.5
+            xmax += 0.5
         ymin = min(sp)
         ymax = max(sp)
         dy = ymax - ymin
-        ymin -= dy/20
-        ymax += dy/20
+        if dy > 0:
+            ymin -= dy/20
+            ymax += dy/20
+        else:
+            ymin -= 0.5
+            ymax += 0.5
         ax1 = fig.add_subplot(2, 1, 2, sharex=ax2)
         ax1.set_xlim([xmin, xmax])
         ax1.set_ylim([ymin, ymax])
