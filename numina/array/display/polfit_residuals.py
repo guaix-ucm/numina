@@ -154,7 +154,10 @@ def polfit_residuals(
         pause_debugplot(debugplot)
 
     # fit with requested degree (and raw polynomials)
-    poly = Polynomial.fit(x=xfitted, y=yfitted, deg=deg)
+    if deg == 0 and len(xfitted) == 1:  # constant (avoid fitting error)
+        poly = Polynomial(yfitted[0])
+    else:
+        poly = Polynomial.fit(x=xfitted, y=yfitted, deg=deg)
     poly = Polynomial.cast(poly)
 
     # compute residuals
