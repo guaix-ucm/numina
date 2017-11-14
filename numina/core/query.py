@@ -25,9 +25,23 @@ class QueryModifier(object):
 
 
 class Result(QueryModifier):
-    def __init__(self, mode_attr, node=None):
-        self.mode_attr = mode_attr
+    def __init__(self, mode_field, node=None):
+        self.mode_field = mode_field
         self.node = node
+
+        splitm = mode_field.split('.')
+        lm = len(splitm)
+        if lm == 1:
+            mode = None
+            field = mode_field
+        elif lm == 2:
+            mode = splitm[0]
+            field = splitm[1]
+        else:
+            raise ValueError('malformed mode_field %s' % mode_field)
+        self.mode = mode
+        self.field = field
+
         super(QueryModifier, self).__init__()
 
 

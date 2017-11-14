@@ -79,7 +79,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         recipe.runinfo.update(kwargs.get('runinfo', {}))
         recipe.environ = {}
         recipe.__version__ = 1
-        recipe.query_options = {}
+        recipe.query_options = kwargs.get('query_options', {})
         recipe.configure(**kwargs)
         return recipe
 

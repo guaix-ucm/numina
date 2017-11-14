@@ -25,7 +25,8 @@ Recipe requirement holders
 from numina.types.obsresult import ObservationResultType
 from numina.types.obsresult import InstrumentConfigurationType
 from .dataholders import EntryHolder
-from .query import QueryModifier
+from .query import QueryModifier, Ignore, Result
+
 
 class Requirement(EntryHolder):
     """Requirement holder holder for RecipeRequirement."""
@@ -38,14 +39,25 @@ class Requirement(EntryHolder):
             )
 
         self.query_opts = query_opts
+
         self.hidden = False
 
     def convert(self, val):
         return self.type.convert_in(val)
 
     def query(self, dal, obsres, options=None):
-        if options is None:
-            options = self.query_opts
+        # query opts
+        if isinstance(self.query_opts, Ignore):
+            # we do not perform any query
+            return self.default_value()
+
+        if isinstance((self.query_opts), Result):
+            mode = self.query_opts.mode
+            field = self.query_opts.field
+            node = self.query_opts.node
+            val = dal.search_last_result_(self.dest, self.type, obsres, mode, field, node)
+            return val
+
         val = self.type.query(self.dest, dal, obsres, options=options)
         return val
 

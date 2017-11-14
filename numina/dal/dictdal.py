@@ -387,6 +387,18 @@ class HybridDAL(Dict2DAL):
         prod = self._search_result(name, tipo, obsres, resultid)
         return prod
 
+    def search_result_id(self, name, tipo, obsres, resultid):
+
+        if resultid is None:
+            for g in chain([tipo.name()], tipo.generators()):
+                if g in obsres.results:
+                    resultid = obsres.results[g]
+                    break
+            else:
+                raise NoResultFound("resultid not found")
+        prod = self._search_result(name, tipo, obsres, resultid)
+        return prod
+
     def search_last_result(self, name, tipo, obsres):
         #instrument = obsres.instrument
         #mode = "LS_ABBA"
@@ -394,6 +406,12 @@ class HybridDAL(Dict2DAL):
         #dal.getLastRecipeResult("EMIR", "EMIR", "LS_ABBA")
         #accum_dither = latest_result['elements']['accum']
         pass
+
+    def search_last_result_(self, name, tipo, obsres, mode, field, node):
+        instrument = obsres.instrument
+        if mode is None:
+            mode = obsres.mode
+        print('search last result', instrument, mode, field, node)
 
     def _search_result(self, name, tipo, obsres, resultid):
         """Returns the first coincidence..."""
