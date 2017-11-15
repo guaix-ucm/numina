@@ -205,4 +205,5 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         origin['block_uuid'] = obresult_meta['block_uuid']
         origin['insconf_uuid'] = obresult_meta['insconf_uuid']
         origin['date_obs'] = obresult_meta['observation_date']
+        origin['observation_date'] = obresult_meta['observation_date']
         origin['frames'] = obresult_meta['frames']
