@@ -36,6 +36,8 @@ class ExtEncoder(json.JSONEncoder):
             return obj.tolist()
         elif isinstance(obj, datetime.timedelta):
             return obj.total_seconds()
+        elif isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
         elif isinstance(obj, numina.types.qc.QC):
             return obj.name
         else:
