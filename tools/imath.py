@@ -25,8 +25,11 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
+import sys
 
 from numina.array.display.ximshow import ximshow_file
+
+from arg_file_is_new import arg_file_is_new
 
 
 def compute_operation(file1, file2, operation, output, display,
@@ -136,7 +139,7 @@ def main(args=None):
     # optional arguments
     parser.add_argument("output",
                         help="Output FITS image",
-                        type=argparse.FileType('w'))
+                        type=lambda x: arg_file_is_new(parser, x))
     parser.add_argument("--display",
                         help="Display images: all, result, none (default)",
                         default="none",
@@ -151,7 +154,14 @@ def main(args=None):
                              "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy")
+    parser.add_argument("--echo",
+                        help="Display full command line",
+                        action="store_true")
+
     args = parser.parse_args(args=args)
+
+    if args.echo:
+        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # compute operation
     compute_operation(args.file1, args.file2,
