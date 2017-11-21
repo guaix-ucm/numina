@@ -127,6 +127,7 @@ def setup_package():
         entry_points={
             'console_scripts': [
                 'numina = numina.user.cli:main',
+                'numina-imath = tools.imath:main',
             ],
             },
         setup_requires=['numpy'],
