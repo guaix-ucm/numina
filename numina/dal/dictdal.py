@@ -22,10 +22,10 @@
 import logging
 import json
 from itertools import chain
+import os.path
 
+import yaml
 import numina.store.gtc.load as gtcload
-from numina.core import import_object
-from numina.core import fully_qualified_name
 from numina.core import obsres_from_dict
 from numina.store import load
 from numina.exceptions import NoResultFound
@@ -240,6 +240,9 @@ class BaseDictDAL(AbsDAL):
 
         return obsres
 
+    def search_result_id(self, child_id, tipo, field):
+        pass
+
     def search_product(self, name, tipo, obsres):
         # returns StoredProduct
         ins = obsres.instrument
@@ -312,7 +315,6 @@ class HybridDAL(Dict2DAL):
 
         super(HybridDAL, self).__init__(drps, obtable, base, extra_data)
 
-
     def search_product(self, name, tipo, obsres):
         if name in self.extra_data:
             val = self.extra_data[name]
@@ -361,6 +363,17 @@ class HybridDAL(Dict2DAL):
             _logger.debug("path is %s", path)
             content = self.product_loader(tipo, name, path)
             return StoredProduct(id=0, content=content, tags=obsres.tags)
+
+    def search_result_id(self, resultid, tipo, field):
+        pspath = 'rootdir'
+        postfix = 'obsid%s_results' % resultid
+        final = os.path.join(pspath, postfix, 'result.yaml')
+        # FIXME: I'm assuming that I need a path here
+        with open(final) as fd:
+            result = yaml.load(fd)
+            attr = result[field]
+            final = os.path.join(pspath, postfix, attr)
+            return load(tipo, final)
 
     def search_result(self, name, tipo, obsres, resultid=None):
 
