@@ -44,6 +44,8 @@ class Requirement(EntryHolder):
         return self.type.convert_in(val)
 
     def query(self, dal, obsres, options=None):
+        if options is None:
+            options = self.query_opts
         val = self.type.query(self.dest, dal, obsres, options=options)
         return val
 
