@@ -273,7 +273,7 @@ class BaseDictDAL(AbsDAL):
                 pt = prod['tags']
                 if pn == name and tags_are_valid(pt, tags):
                     # We have found the result, no more checks
-                    value = load(name, prod['content'])
+                    value = load(tipo, prod['content'])
                     content = StoredParameter(value)
                     return content
             else:
