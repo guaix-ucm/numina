@@ -137,7 +137,7 @@ def combine_shapes(shapes, refs, order='rc'):
 
 
 def resize_array(data, finalshape, region, window=None,
-                 scale=1, fill=0.0, conserve=True):
+                 scale=1, fill=0.0, conserve=True, dtype=None):
 
     if window is not None:
         data = data[window]
@@ -147,7 +147,10 @@ def resize_array(data, finalshape, region, window=None,
     else:
         finaldata = rebin_scale(data, scale)
 
-    newdata = numpy.empty(finalshape, dtype=data.dtype)
+    if dtype is None:
+        dtype = data.dtype
+
+    newdata = numpy.empty(finalshape, dtype=dtype)
     newdata.fill(fill)
     newdata[region] = finaldata
     # Conserve the total sum of the original data
