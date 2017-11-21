@@ -60,8 +60,10 @@ class DataTypeBase(object):
     def query_on_ob(self, key, ob):
         # First check if the requirement is embedded
         # in the observation result
-        # it can happen in GTC
-
+        # It can in ob.requirements
+        # or directly in the structure (as in GTC)
+        if key in ob.requirements:
+            return ob.requirements[key]
         try:
             return getattr(ob, key)
         except AttributeError:
