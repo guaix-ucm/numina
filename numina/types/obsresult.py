@@ -19,12 +19,10 @@
 
 import warnings
 
-
-
-
 from .frame import DataFrameType
 
 from numina.core.oresult import ObservationResult
+from numina.core.query import Result
 from numina.core.pipeline import InstrumentConfiguration
 from numina.types.qc import QC
 
@@ -63,6 +61,16 @@ class ObservationResultType(DataType):
         return validator(obj)
 
     def query(self, name, dal, ob, options=None):
+
+        if options:
+            if isinstance(options, Result):
+                tipo = DataFrameType()
+                field = options.mode_attr
+                for child_id in ob.children:
+                    # print('obtain result of', child_id, field)
+                    result = dal.search_result_id(child_id, tipo, field)
+                    ob.results[child_id] = result
+
         return ob
 
     def on_query_not_found(self, notfound):
