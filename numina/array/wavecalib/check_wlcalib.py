@@ -370,7 +370,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         if remove_null_borders:
             nonzero = np.nonzero(sp)[0]
             j1 = nonzero[0]
-            j2 = nonzero[-1] + 1
+            j2 = nonzero[-1]
             xmin = xwv[j1]
             xmax = xwv[j2]
         else:
