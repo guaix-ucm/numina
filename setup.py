@@ -128,6 +128,8 @@ def setup_package():
             'console_scripts': [
                 'numina = numina.user.cli:main',
                 'numina-imath = tools.imath:main',
+                'numina-ximshow = numina.array.display.ximshow:main',
+                'numina-ximplotxy = numina.array.display.ximplotxy:main',
             ],
             },
         setup_requires=['numpy'],
