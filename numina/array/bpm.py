@@ -21,10 +21,13 @@
 
 from __future__ import division
 
-
+import argparse
+from astropy.io import fits
 import numpy
+import sys
 
 from numina.array._bpm import _process_bpm_intl
+from tools.arg_file_is_new import arg_file_is_new
 
 
 def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
@@ -50,3 +53,66 @@ def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
     method = numina.array.combine.median_method()
 
     return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill)
+
+
+def main(args=None):
+
+    # parse command-line options
+    parser = argparse.ArgumentParser()
+
+    # positional arguments
+    parser.add_argument("fitsfile",
+                        help="Input FITS file name",
+                        type=argparse.FileType('r'))
+    parser.add_argument("--bpm", required=True,
+                        help="Bad pixel mask",
+                        type=argparse.FileType('r'))
+    parser.add_argument("--outfile", required=True,
+                        help="Output FITS file name",
+                        type=lambda x: arg_file_is_new(parser, x))
+
+    # optional arguments
+    parser.add_argument("--extnum",
+                        help="Extension number in input FITS image "
+                             "(default=0)",
+                        default=0, type=int)
+    parser.add_argument("--extnum_bpm",
+                        help="Extension number in bad pixel mask image "
+                             "(default=0)",
+                        default=0, type=int)
+    parser.add_argument("--echo",
+                        help="Display full command line",
+                        action="store_true")
+
+    args = parser.parse_args()
+
+    if args.echo:
+        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    # read input FITS file
+    with fits.open(args.fitsfile, mode='readonly') as hdulist_image:
+        image2d = hdulist_image[args.extnum].data
+
+        naxis2, naxis1 = image2d.shape
+
+        # read bad pixel mask
+        # (mask > 0: masked pixels; mask = 0: unmasked pixel)
+        with fits.open(args.bpm) as hdulist_bpm:
+            image2d_bpm = hdulist_bpm[args.extnum_bpm].data
+            if image2d_bpm.shape != (naxis2, naxis1):
+                raise ValueError("NAXIS1, NAXIS2 of FITS image and mask do "
+                                 "not match")
+
+            # apply bad pixel mask
+            hdulist_image[args.extnum].data = process_bpm_median(
+                arr=image2d,
+                mask=image2d_bpm
+            )
+
+        # save output FITS file
+        hdulist_image.writeto(args.outfile)
+
+
+if __name__ == "__main__":
+
+    main()
