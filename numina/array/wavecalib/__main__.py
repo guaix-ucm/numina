@@ -345,7 +345,7 @@ def find_fxpeaks(sp,
 
 
 def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
-                   geometry, debugplot):
+                   geometry=None, debugplot=0):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
     Parameters
