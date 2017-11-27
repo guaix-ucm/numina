@@ -76,7 +76,7 @@ def main(args=None):
             try:
                 register = entry.load()
                 subcmd_load.append(register)
-            except StandardError as error:
+            except Exception as error:
                 print(error, file=sys.stderr)
 
     parser = argparse.ArgumentParser(
@@ -103,6 +103,8 @@ def main(args=None):
         help="do not activate GTC compatibility code"
         )
 
+    parser.set_defaults(command=None)
+
     subparsers = parser.add_subparsers(
         title='Targets',
         description='These are valid commands you can ask numina to do.'
@@ -121,10 +123,11 @@ def main(args=None):
     for register in subcmd_load:
         try:
             register(subparsers, config)
-        except StandardError as error:
+        except Exception as error:
             print(error, file=sys.stderr)
 
     args, unknowns = parser.parse_known_args(args)
+
     extra_args = process_unknown_arguments(unknowns)
     # logger file
     if args.standalone:
@@ -144,8 +147,8 @@ def main(args=None):
         logging.config.dictConfig(numina_cli_logconf)
 
     _logger.debug('Numina simple recipe runner version %s', __version__)
-
-    args.command(args, extra_args)
+    if args.command:
+        args.command(args, extra_args)
 
 
 def process_unknown_arguments(unknowns):
