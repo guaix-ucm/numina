@@ -41,12 +41,12 @@ class LinesCatalog(DataProductType):
             linecat = numpy.loadtxt(fd)
         return linecat
 
-    def extract_db_info(self, obj):
+    def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""
 
         objl = self.convert(obj)
 
-        result = super(LinesCatalog, self).extract_db_info(objl)
+        result = super(LinesCatalog, self).extract_db_info(objl, keys)
 
         result['tags'] = {}
         result['type'] = 'LinesCatalog'

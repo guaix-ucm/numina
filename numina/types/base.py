@@ -29,8 +29,9 @@ class DataTypeBase(object):
 
     """
     def __init__(self, *args, **kwds):
-        if 'datamodel' in kwds:
-            datamodel = kwds['datamodel']
+        datamodel = kwds.get('datamodel')
+
+        if datamodel is not None:
             if inspect.isclass(datamodel):
                 self.datamodel = datamodel()
             else:
@@ -109,11 +110,6 @@ class DataTypeBase(object):
             return obj
         else:
             raise TypeError(name)
-
-    def extract_tags(self, obj):
-        """Extract tags from serialized file"""
-        db_info = self.extract_db_info(obj)
-        return db_info['tags']
 
     @staticmethod
     def create_db_info():

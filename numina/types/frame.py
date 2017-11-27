@@ -53,8 +53,8 @@ class DataFrameType(DataType):
         'mode',
         'exptime',
         'darktime',
-        'insconf',
-        'blckuuid',
+        # 'insconf',
+        # 'blckuuid',
         'quality_control'
     ]
 
@@ -108,16 +108,16 @@ class DataFrameType(DataType):
         else:
             return DataFrame(filename=obj)
 
-    def extract_db_info(self, obj, db_info_keys):
+    def extract_db_info(self, obj, keys):
         """Extract tags from serialized file"""
 
         objl = self.convert(obj)
 
-        result = super(DataFrameType, self).extract_db_info(objl, db_info_keys)
+        result = super(DataFrameType, self).extract_db_info(objl, keys)
         if objl:
             with objl.open() as hdulist:
                 ext = self.datamodel.extractor
-                for field in db_info_keys:
+                for field in keys:
                     result[field] = ext.extract(field, hdulist)
 
                 tags = result['tags']

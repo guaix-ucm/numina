@@ -135,7 +135,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         meta_info['origin'] = {}
         return meta_info
 
-    def extract_db_info(self, obj):
+    def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""
 
         objl = self.convert_in(obj)
@@ -146,7 +146,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         except IOError as e:
             raise e
 
-        result = super(BaseStructuredCalibration, self).extract_db_info(state)
+        result = super(BaseStructuredCalibration, self).extract_db_info(state, keys)
 
         try:
             minfo = state['meta_info']
