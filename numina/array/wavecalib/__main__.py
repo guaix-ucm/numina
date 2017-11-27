@@ -645,6 +645,7 @@ def main(args=None):
         )
         print(">>> npoints_eff.:", npoints_eff)
         print(">>> poly_refined:\n", poly_refined)
+        print(">>> residual std:", residual_std)
         naxis1 = sp.shape[0]
         crpix1 = 1.0
         crval1_linear = poly_refined(crpix1)
