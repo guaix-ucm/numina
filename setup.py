@@ -129,6 +129,7 @@ def setup_package():
                 'numina = numina.user.cli:main',
                 'numina-bpm = numina.array.bpm:main',
                 'numina-imath = tools.imath:main',
+                'numina-wavecalib = numina.array.wavecalib.__main__:main',
                 'numina-ximshow = numina.array.display.ximshow:main',
                 'numina-ximplotxy = numina.array.display.ximplotxy:main',
             ],

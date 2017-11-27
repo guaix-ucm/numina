@@ -89,8 +89,9 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                            crpix1,
                            poly_degree_wfit,
                            weighted=False,
-                           debugplot=0,
-                           plot_title=None):
+                           plot_title=None,
+                           geometry=None,
+                           debugplot=0):
     """Fit polynomial to arc calibration list_of_wvfeatures.
 
     Parameters
@@ -115,12 +116,14 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         practice, they totally ignore the points with the smallest
         weights (which, in the other hand, are useful when handling
         the borders of the wavelength calibration range).
+    plot_title : string or None
+        Title for residuals plot.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
-    plot_title : string or None
-        Title for residuals plot.
 
     Returns
     -------
@@ -281,23 +284,14 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                 for k in range(len(xxp)):
                     ax.text(xxp[k], yyp[k], val[0], fontsize=15)
 
-        # shrink current axis and put a legend
-        box = ax2.get_position()
-        ax2.set_position([box.x0, box.y0,
-                          box.width, box.height * 0.92])
-        delta_ybox = box.height * 0.15
-        box = ax.get_position()
-        ax.set_position([box.x0, box.y0 - delta_ybox,
-                         box.width, box.height * 0.92])
-        ax.legend(loc=3, bbox_to_anchor=(0.0, 1.1, 1., 0.07),
-                  mode="expand", borderaxespad=0., ncol=4,
-                  numpoints=1)
+        # legend
+        ax.legend()
 
         # title
         if plot_title is None:
-            plt.title("Wavelength calibration\n\n\n")
+            plt.title("Wavelength calibration")
         else:
-            plt.title(plot_title + "\n\n\n")
+            plt.title(plot_title)
 
         # include important parameters in plot
         ax.text(0.50, 0.25, "poldeg: " + str(poly_degree_wfit) +
@@ -323,16 +317,16 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                  verticalalignment="bottom")
 
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         pause_debugplot(debugplot, pltshow=True, tight_layout=False)
 
     return solution_wv
 
 
-def gen_triplets_master(wv_master, debugplot=0):
+def gen_triplets_master(wv_master, geometry, debugplot=0):
     """Compute information associated to triplets in master table.
 
     Determine all the possible triplets that can be generated from the
@@ -344,6 +338,8 @@ def gen_triplets_master(wv_master, debugplot=0):
     wv_master : 1d numpy array, float
         Array with wavelengths corresponding to the master table
         (Angstroms).
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -425,13 +421,13 @@ def gen_triplets_master(wv_master, debugplot=0):
         ax.bar(center, hist, align='center', width=width_hist)
         ax.set_xlabel('distance ratio in each triplet')
         ax.set_ylabel('Number of triplets')
-        ax.title("Number of lines/triplets: " +
+        ax.set_title("Number of lines/triplets: " +
                  str(nlines_master) + "/" + str(ntriplets_master))
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
 
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -451,6 +447,7 @@ def arccalibration(wv_master,
                    times_sigma_polfilt,
                    times_sigma_cook,
                    times_sigma_inclusion,
+                   geometry=None,
                    debugplot=0):
     """Performs arc line identification for arc calibration.
 
@@ -501,6 +498,8 @@ def arccalibration(wv_master,
         Number of times the (robust) standard deviation around the
         polynomial fit to include a new line in the set of identified
         lines.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -517,7 +516,8 @@ def arccalibration(wv_master,
     """
 
     ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-      gen_triplets_master(wv_master=wv_master, debugplot=debugplot)
+      gen_triplets_master(wv_master=wv_master,
+                          geometry=geometry, debugplot=debugplot)
 
     list_of_wvfeatures = arccalibration_direct(
         wv_master=wv_master,
@@ -537,6 +537,7 @@ def arccalibration(wv_master,
         times_sigma_polfilt=times_sigma_polfilt,
         times_sigma_cook=times_sigma_cook,
         times_sigma_inclusion=times_sigma_inclusion,
+        geometry=geometry,
         debugplot=debugplot)
 
     return list_of_wvfeatures
@@ -559,6 +560,7 @@ def arccalibration_direct(wv_master,
                           times_sigma_polfilt=10.0,
                           times_sigma_cook=10.0,
                           times_sigma_inclusion=5.0,
+                          geometry=None,
                           debugplot=0):
     """Performs line identification for arc calibration using line triplets.
 
@@ -614,6 +616,8 @@ def arccalibration_direct(wv_master,
         Number of times the (robust) standard deviation around the
         polynomial fit to include a new line in the set of identified
         lines.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -758,12 +762,12 @@ def arccalibration_direct(wv_master,
         xp_limits = np.concatenate((xp_limits, [xp_limits[0], xp_limits[0]]))
         yp_limits = np.concatenate((yp_limits, [yp_limits[1], yp_limits[0]]))
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        ax.title("Potential solutions within the valid parameter space")
+        ax.set_title("Potential solutions within the valid parameter space")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -782,12 +786,12 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        ax.title("Potential solutions within the valid parameter space")
+        ax.set_title("Potential solutions within the valid parameter space")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -806,12 +810,12 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        ax.title("Potential solutions: arc line triplet number")
+        ax.set_title("Potential solutions: arc line triplet number")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -829,12 +833,12 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        ax.title("Potential solutions: master line triplets")
+        ax.set_title("Potential solutions: master line triplets")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -852,12 +856,12 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
-        ax.title("Potential solutions within the valid parameter space")
+        ax.set_title("Potential solutions within the valid parameter space")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -975,13 +979,13 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        ax.title("Potential solutions within the valid parameter space\n" +
+        ax.set_title("Potential solutions within the valid parameter space\n" +
                  "[symbol size proportional to 1/(cost function)]")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -1000,13 +1004,13 @@ def arccalibration_direct(wv_master,
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        ax.title("Potential solutions: arc line triplet number\n" +
+        ax.set_title("Potential solutions: arc line triplet number\n" +
                  "[symbol size proportional to 1/(cost function)]")
         # window geometry
-        geometry = (0, 0, 640, 480)
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if geometry is not None:
+            x_geom, y_geom, dx_geom, dy_geom = geometry
+            mngr = plt.get_current_fig_manager()
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         print('Number of points in last plot:', len(cdelt1_search))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -1023,14 +1027,14 @@ def arccalibration_direct(wv_master,
         #     ax.set_xlim([xmin, xmax])
         #     ax.set_ylim([ymin, ymax])
         #     ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        #     ax.title("Potential solutions: arc line triplet " + str(i) +
+        #     ax.set_title("Potential solutions: arc line triplet " + str(i) +
         #              " (from 0 to " + str(ntriplets_arc-1) + ")\n" +
         #              "[symbol size proportional to 1/(cost function)]")
         #     # window geometry
-        #     geometry = (0, 0, 640, 480)
-        #     x_geom, y_geom, dx_geom, dy_geom = geometry
-        #     mngr = plt.get_current_fig_manager()
-        #     mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        #     if geometry is not None:
+        #         x_geom, y_geom, dx_geom, dy_geom = geometry
+        #         mngr = plt.get_current_fig_manager()
+        #         mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
         #     print('Number of points in last plot:', xdum.size)
         #     pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -1228,8 +1232,8 @@ def arccalibration_direct(wv_master,
             print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
         fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                               poly_degree_wfit,
-                               weighted=False, debugplot=debugplot)
+                               poly_degree_wfit, weighted=False,
+                               geometry=geometry, debugplot=debugplot)
 
     # ---
     # Check that the solutions do not contain duplicated values. If
@@ -1271,8 +1275,8 @@ def arccalibration_direct(wv_master,
             for i in range(nlines_arc):
                 print(i, list_of_wvfeatures[i])
             fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                   poly_degree_wfit,
-                                   weighted=False, debugplot=debugplot)
+                                   poly_degree_wfit, weighted=False,
+                                   geometry=geometry, debugplot=debugplot)
         else:
             print('\n* No duplicated category R lines have been found')
 
@@ -1316,8 +1320,8 @@ def arccalibration_direct(wv_master,
             for i in range(nlines_arc):
                 print(i, list_of_wvfeatures[i])
             fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                   poly_degree_wfit,
-                                   weighted=False, debugplot=debugplot)
+                                   poly_degree_wfit, weighted=False,
+                                   geometry=geometry, debugplot=debugplot)
         else:
             print('\nNo category T lines have been found and removed')
 
@@ -1359,8 +1363,8 @@ def arccalibration_direct(wv_master,
                 for i in range(nlines_arc):
                     print(i, list_of_wvfeatures[i])
                 fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                       poly_degree_wfit,
-                                       weighted=False, debugplot=debugplot)
+                                       poly_degree_wfit, weighted=False,
+                                       geometry=geometry, debugplot=debugplot)
             else:
                 print('\nNo category P lines have been found and removed')
     else:
@@ -1399,8 +1403,8 @@ def arccalibration_direct(wv_master,
                 for i in range(nlines_arc):
                     print(i, list_of_wvfeatures[i])
                 fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                       poly_degree_wfit,
-                                       weighted=False, debugplot=debugplot)
+                                       poly_degree_wfit, weighted=False,
+                                       geometry=geometry, debugplot=debugplot)
             else:
                 print('\nNo category K lines have been found and removed')
     else:
@@ -1492,8 +1496,8 @@ def arccalibration_direct(wv_master,
                 for i in range(nlines_arc):
                     print(i, list_of_wvfeatures[i])
                 fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                       poly_degree_wfit,
-                                       weighted=False, debugplot=debugplot)
+                                       poly_degree_wfit, weighted=False,
+                                       geometry=geometry, debugplot=debugplot)
             else:
                 if new_lines_included:
                     print("\nNo additional category I lines have been found " +
@@ -1707,7 +1711,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ax = ximplotxy(xp, sp,
                            xlabel='pixel (from 1 to NAXIS1)',
                            ylabel='number of counts',
-                           title='Refining wavelength calibration',
+                           title='Refined wavelength calibration',
                            show=False, debugplot=debugplot)
             ymin = sp.min()
             ymax = sp.max()

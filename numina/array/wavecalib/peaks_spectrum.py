@@ -116,7 +116,7 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 
 
 def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
-                          debugplot=0):
+                          geometry=None, debugplot=0):
     """Refine line peaks in spectrum.
 
     Parameters
@@ -132,6 +132,8 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
     method : string
         "poly2" : fit to a 2nd order polynomial
         "gaussian" : fit to a Gaussian
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -232,6 +234,10 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
         if debugplot % 10 != 0:
             from numina.array.display.matplotlib_qt import plt
             fig = plt.figure()
+            if geometry is not None:
+                x_geom, y_geom, dx_geom, dy_geom = geometry
+                mngr = plt.get_current_fig_manager()
+                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
             ax = fig.add_subplot(111)
             xmin = x_fit.min()-1
             xmax = x_fit.max()+1

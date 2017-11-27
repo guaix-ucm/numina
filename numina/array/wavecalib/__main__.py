@@ -25,26 +25,30 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
+import os
 from scipy import ndimage
+import sys
 
 from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_wvfeatures
+from .arccalibration import refine_arccalibration
 from ..display.pause_debugplot import pause_debugplot
-from ..display.ximplot import ximplot
 from ..display.ximplotxy import ximplotxy
 from ..stats import robust_std
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
+from ..display.pause_debugplot import DEBUGPLOT_CODES
 
-def collapsed_spectrum(filename, ns1, ns2,
+
+def collapsed_spectrum(fitsfile, ns1, ns2,
                        method='mean', nwin_background=0,
                        reverse=False, out_sp=None, debugplot=0):
     """Compute a collapsed spectrum from a 2D image using scans in [ns1,ns2].
 
     Parameters
     ----------
-    filename : string
+    fitsfile : file object
         File name of FITS file containing the spectra to be calibrated.
     ns1 : int
         First scan (from 1 to NAXIS2).
@@ -76,12 +80,11 @@ def collapsed_spectrum(filename, ns1, ns2,
     """
 
     # read FITS file
-    hdulist = fits.open(filename)
-    image2d = hdulist[0].data
+    with fits.open(fitsfile) as hdulist:
+        image2d = hdulist[0].data
     naxis2, naxis1 = image2d.shape
-    hdulist.close()
     if abs(debugplot) >= 10:
-        print('>>> Reading file:', filename)
+        print('>>> Reading file:', fitsfile.name)
         print('>>> NAXIS1:', naxis1)
         print('>>> NAXIS2:', naxis2)
 
@@ -181,7 +184,9 @@ def find_fxpeaks(sp,
                  npix_avoid_border,
                  nbrightlines,
                  sigma_gaussian_filtering,
-                 debugplot):
+                 plottitle=None,
+                 geometry=None,
+                 debugplot=0):
     """Locate line peaks in array coordinates (from 0 to naxis1-1).
 
     Parameters
@@ -210,6 +215,10 @@ def find_fxpeaks(sp,
         Sigma of the gaussian filter to be applied to the spectrum in
         order to avoid problems with saturated lines. This filtering is
         skipped when this parameter is <= 0.
+    plottile : string
+        Plot title.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -307,8 +316,12 @@ def find_fxpeaks(sp,
     # display median spectrum and peaks
     if abs(debugplot) % 10 != 0:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        ax = ximplotxy(xplot, sp, show=False,
+        ax = ximplotxy(xplot, sp, show=False, geometry=geometry,
                        **{'label': 'original spectrum'})
+        ax.set_xlabel('pixel (from 1 to NAXIS1)')
+        ax.set_ylabel('counts')
+        if plottitle is not None:
+            ax.set_title(plottitle)
         if sigma_gaussian_filtering > 0:
             ax.plot(xplot, spf, label="filtered spectrum")
         ymin = sp.min()
@@ -331,7 +344,8 @@ def find_fxpeaks(sp,
     return fxpeaks, sxpeaks
 
 
-def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master, debugplot):
+def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
+                   geometry, debugplot):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
     Parameters
@@ -346,6 +360,8 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master, debugplot):
         Degree for wavelength calibration polynomial.
     wv_master : 1d numpy array
         Array with arc line wavelengths.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -388,6 +404,7 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master, debugplot):
         times_sigma_polfilt=10.0,
         times_sigma_cook=10.0,
         times_sigma_inclusion=10.0,
+        geometry=geometry,
         debugplot=debugplot
     )
 
@@ -398,14 +415,18 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master, debugplot):
         crpix1=1.0,
         poly_degree_wfit=poly_degree_wfit,
         weighted=False,
-        debugplot=debugplot,
-        plot_title=title
+        plot_title=title,
+        geometry=geometry,
+        debugplot=debugplot
     )
 
     if abs(debugplot) % 10 != 0:
         # final plot with identified lines
-        ax = ximplot(sp, title=title, show=False,
-                     plot_bbox=(1, naxis1))
+        xplot = np.arange(1, naxis1 + 1, dtype=float)
+        ax = ximplotxy(xplot, sp, title=title, show=False,
+                       xlabel='pixel (from 1 to NAXIS1)',
+                       ylabel='number of counts',
+                       geometry=geometry)
         ymin = sp.min()
         ymax = sp.max()
         dy = ymax-ymin
@@ -420,7 +441,7 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master, debugplot):
                     str(reference), fontsize=8,
                     horizontalalignment='center')
         # show plot
-        pause_debugplot(11, pltshow=True, tight_layout=False)
+        pause_debugplot(11, pltshow=True)
 
     # return the wavelength calibration solution
     return solution_wv
@@ -430,8 +451,9 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='wavecalib')
     # required parameters
-    parser.add_argument("filename",
-                        help="FITS image containing the spectra")
+    parser.add_argument("fitsfile",
+                        help="FITS image containing the spectra",
+                        type=argparse.FileType('r'))
     parser.add_argument("--scans", required=True,
                         help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
     parser.add_argument("--wv_master_file", required=True,
@@ -439,6 +461,12 @@ def main(args=None):
     parser.add_argument("--degree", required=True,
                         help="Polynomial degree", type=int)
     # optional arguments
+    parser.add_argument("--wvmin",
+                        help="Minimum expected wavelength",
+                        type=float)
+    parser.add_argument("--wvmax",
+                        help="Maximum expected wavelength",
+                        type=float)
     parser.add_argument("--nwin_background",
                         help="window to compute background (0=none)"
                         " (default=0)",
@@ -471,6 +499,10 @@ def main(args=None):
                         help="Tuple n1,[n2,[n3,...]] with maximum number of "
                              "brightest lines to be used [0=all] (default=0)",
                         default=0)
+    parser.add_argument("--refine",
+                        help="Refine fit using faint lines from "
+                             "wv_master_file",
+                        action="store_true")
     parser.add_argument("--sigma_gauss_filt",
                         help="Sigma (pixels) of gaussian filtering to avoid "
                              "saturared lines (default=0)",
@@ -484,12 +516,23 @@ def main(args=None):
                              "calibration (default=None)",
                         default=None,
                         type=argparse.FileType('w'))
+    parser.add_argument("--geometry",
+                        help="tuple x,y,dx,dy (default 0,0,640,480)",
+                        default="0,0,640,480")
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                         " (default=0)",
                         default=0, type=int,
-                        choices=[0, 1, 2, 10, 11, 12, 21, 22])
+                        choices=DEBUGPLOT_CODES)
+    parser.add_argument("--echo",
+                        help="Display full command line",
+                        action="store_true")
     args = parser.parse_args(args=args)
+
+    if args.echo:
+        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    # ---
 
     # scan range
     tmp_str = args.scans.split(",")
@@ -502,12 +545,23 @@ def main(args=None):
     else:
         raise ValueError("Invalid tuple for scan range")
 
+    # geometry
+    if args.geometry is None:
+        geometry = None
+    else:
+        tmp_str = args.geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry = x_geom, y_geom, dx_geom, dy_geom
+
     # convert nbrightlines in a list of integers
     nbrightlines = [int(nlines) for nlines in args.nbrightlines.split(",")]
 
     # compute collapsed spectrum
     sp = collapsed_spectrum(
-        filename=args.filename, ns1=ns1, ns2=ns2,
+        fitsfile=args.fitsfile, ns1=ns1, ns2=ns2,
         method=args.method,
         nwin_background=args.nwin_background,
         reverse=args.reverse,
@@ -515,14 +569,45 @@ def main(args=None):
         debugplot=args.debugplot
     )
 
-    # read arc line wavelengths from external file
-    wv_master = read_wv_master_file(
-        args.wv_master_file,
-        debugplot=args.debugplot
-    )
+    # read arc line wavelengths from external file (all the lines)
+    wv_master_all = read_wv_master_file(args.wv_master_file, lines='all')
+    # read arc line wavelengths from external file (brightest lines only)
+    wv_master = read_wv_master_file(args.wv_master_file, lines='brightest')
+
+    # clip master arc line lists to expected wavelength range
+    if args.wvmin is None:
+        wvmin = -np.infty
+    else:
+        wvmin = args.wvmin
+    if args.wvmax is None:
+        wvmax = np.infty
+    else:
+        wvmax = args.wvmax
+
+    lok1 = wvmin <= wv_master_all
+    lok2 = wv_master_all <= wvmax
+    lok = lok1 * lok2
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in wv_master_all........: ", len(wv_master_all))
+    wv_master_all = wv_master_all[lok]
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in clipped wv_master_all: ", len(wv_master_all))
+        print("clipped wv_master_all:\n", wv_master_all)
+
+    lok1 = wvmin <= wv_master
+    lok2 = wv_master <= wvmax
+    lok = lok1 * lok2
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in wv_master............: ", len(wv_master))
+    wv_master = wv_master[lok]
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in clipped wv_master....: ", len(wv_master))
+        print("clipped wv_master....:\n", wv_master)
 
     # determine refined peak location in array coordinates, i.e.,
     # from 0 to (naxis - 1)
+    plottitle = os.path.basename(args.fitsfile.name) + \
+                ' [{}, {}:{}]'.format(args.method, ns1, ns2)
     fxpeaks, sxpeaks = find_fxpeaks(
         sp=sp,
         times_sigma_threshold=args.times_sigma_threshold,
@@ -532,6 +617,8 @@ def main(args=None):
         npix_avoid_border=args.npix_avoid_border,
         nbrightlines=nbrightlines,
         sigma_gaussian_filtering=args.sigma_gauss_filt,
+        plottitle=plottitle,
+        geometry=geometry,
         debugplot=args.debugplot
     )
 
@@ -541,8 +628,30 @@ def main(args=None):
         fxpeaks=fxpeaks,
         poly_degree_wfit=args.degree,
         wv_master=wv_master,
+        geometry=geometry,
         debugplot=args.debugplot
     )
+
+    # refine wavelength calibration when requested
+    if args.refine:
+        pause_debugplot(args.debugplot)
+        poly_refined, npoints_eff, residual_std = refine_arccalibration(
+            sp=sp,
+            poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
+            wv_master=wv_master_all,
+            poldeg=args.degree,
+            npix=1,
+            debugplot=args.debugplot
+        )
+        print(">>> npoints_eff.:", npoints_eff)
+        print(">>> poly_refined:\n", poly_refined)
+        naxis1 = sp.shape[0]
+        crpix1 = 1.0
+        crval1_linear = poly_refined(crpix1)
+        crmax1_linear = poly_refined(naxis1)
+        cdelt1_linear = (crmax1_linear - crval1_linear) / (naxis1 - crpix1)
+        print('>>> CRVAL1 linear scale:', crval1_linear)
+        print('>>> CDELT1 linear scale:', cdelt1_linear)
 
     try:
         input("\nPress RETURN to QUIT...")
