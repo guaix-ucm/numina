@@ -128,7 +128,7 @@ class DataTypeBase(object):
         result['origin'] = {}
         return result
 
-    def extract_db_info(self, obj):
+    def extract_db_info(self, obj, db_info_keys):
         """Extract metadata from serialized file"""
         result = self.create_db_info()
         return result

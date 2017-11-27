@@ -88,16 +88,21 @@ class DataModel(object):
         'mode',
         'exptime',
         'darktime',
-        'insconf',
-        'blckuuid',
+        #'insconf',
+        #'blckuuid',
         'quality_control',
     ]
 
-    def __init__(self, name='UNKNOWN', extractor=None):
+    def __init__(self, name='UNKNOWN', mappings=None):
 
         self.name = name
+        values = self.default_mappings()
+        more = {} if mappings is None else mappings
+        values.update(more)
+        self.extractor = FITSKeyExtractor(values)
 
-        default_values = {
+    def default_mappings(self):
+        return {
             'instrument': 'INSTRUME',
             'object': 'OBJECT',
             'observation_date': ('DATE-OBS', 0, conv.convert_date),
@@ -108,11 +113,8 @@ class DataModel(object):
             'darktime': 'darktime',
             'quality_control': ('NUMRQC', 0, conv.convert_qc),
             'insmode': ('INSMODE', 'undefined'),
+            'imgid': self.get_imgid
         }
-
-        values = {} if extractor is None else extractor
-        values.update(default_values)
-        self.extractor = FITSKeyExtractor(values)
 
     def get_data(self, img):
         return img['primary'].data
@@ -156,8 +158,19 @@ class DataModel(object):
             info = self.gather_info_hdu(hdulist)
         return info
 
+    def gather_info_dframe(self, img):
+        return self.gather_info(img)
+
     def gather_info_hdu(self, hdulist):
-        return {}
+        values = {}
+        values['n_ext'] = len(hdulist)
+        extnames = [hdu.header.get('extname', '') for hdu in hdulist[1:]]
+        values['name_ext'] = ['PRIMARY'] + extnames
+
+        for key in self.meta_dinfo_headers:
+            values[key] = self.extractor.extract(key, hdulist)
+
+        return values
 
     def get_quality_control(self, img):
         return self.extractor.extract('quality_control', img)

@@ -23,7 +23,10 @@ import datetime
 
 
 def convert_date(value):
-    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+    if value:
+        return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+    else:
+        return datetime.datetime.utcnow()
 
 
 def convert_qc(value):
