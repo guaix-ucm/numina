@@ -1589,6 +1589,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                           nwinwidth_initial=7,
                           nwinwidth_refined=5,
                           times_sigma_reject=5,
+                          plottitle=None,
+                          geometry=None,
                           debugplot=0):
     """Refine wavelength calibration using an initial polynomial.
 
@@ -1616,6 +1618,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         Window width to refine line peak location.
     times_sigma_reject : float
         Times sigma to reject points in the fit.
+    plottitle : string or None
+        Plot title.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -1658,6 +1664,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         # assign individual arc lines from master list to spectrum
         # line peaks when the expected wavelength is within the maximum
         # allowed range (+/- npix around the peak)
+        crpix1_linear = 1.0
+        crval1_linear = poly_initial(crpix1_linear)
         crmin1_linear = poly_initial(1)
         crmax1_linear = poly_initial(naxis1)
         cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
@@ -1700,19 +1708,97 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         sum_res2 = np.sum(yres[np.logical_not(reject)] ** 2)
         residual_std = np.sqrt(sum_res2 / (npoints_eff - poldeg - 1))
 
+        # update linear values
+        crpix1_linear = 1.0
+        crval1_linear = poly_refined(crpix1_linear)
+        crmin1_linear = poly_refined(1)
+        crmax1_linear = poly_refined(naxis1)
+        cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
+
         if abs(debugplot) >= 10:
-            print("npoints_eff, residual_std:",
-                  npoints_eff, residual_std)
-            print("poly.coef:", poly_refined.coef)
+            print(79 * '=')
+            print(">>> Residual std.......:", residual_std)
+            print(">>> npoints_eff........:", npoints_eff)
+            print(">>> Fitted coefficients:\n", poly_refined.coef)
+            print(">>> CRVAL1 linear scale:", crval1_linear)
+            print(">>> CDELT1 linear scale:", cdelt1_linear)
+            print(79 * '-')
 
         # display spectrum and peaks
         if abs(debugplot) % 10 != 0:
-            xp = np.arange(1, naxis1 + 1)
-            ax = ximplotxy(xp, sp,
+            # polynomial fit
+            xpol = np.arange(1, naxis1 + 1)
+            ypol = poly_refined(xpol) - \
+                   (crval1_linear + (xpol - crpix1_linear) * cdelt1_linear)
+            # identified lines
+            yp = ydum - (crval1_linear + (xdum - crpix1_linear) *
+                         cdelt1_linear)
+            # plots
+            from numina.array.display.matplotlib_qt import plt
+            fig = plt.figure()
+            # residuals
+            ax2 = fig.add_subplot(2, 1, 2)
+            ax2.set_xlim([1 - 0.05 * naxis1, naxis1 * 1.05])
+            ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
+            ax2.set_ylabel('residuals (Angstrom)')
+            ax2.plot(xdum, yres, 'go')
+            for xx, yyres, rreject in zip(xdum, yres, reject):
+                if rreject:
+                    ax2.plot(xx, yyres, marker='x', markersize=15, c='red')
+            ax2.axhline(y=0.0, color='black', linestyle='dashed')
+            # differences between linear fit and fitted polynomial
+            ax = fig.add_subplot(2, 1, 1, sharex=ax2)
+            ax.set_xlim([1 - 0.05 * naxis1, naxis1 * 1.05])
+            ax.set_ylabel('differences with\nlinear solution (Angstrom)')
+            ax.plot(xdum, yp, 'go', label='identified')
+            ax.plot(xpol, ypol, 'c-', label='fit')
+            if plottitle is None:
+                titleeff = 'Refined wavelength calibration'
+            else:
+                titleeff = plottitle
+            ax.set_title(titleeff)
+            # legend
+            ax.legend(numpoints=1)
+            # include important parameters in plot
+            ax.text(0.50, 0.25, "poldeg: " + str(poldeg) +
+                    ", nfit: " + str(len(xdum)),
+                    fontsize=12,
+                    transform=ax.transAxes,
+                    horizontalalignment="center",
+                    verticalalignment="bottom")
+            ax.text(0.50, 0.15, "CRVAL1: " + str(round(crval1_linear, 4)),
+                    fontsize=12,
+                    transform=ax.transAxes,
+                    horizontalalignment="center",
+                    verticalalignment="bottom")
+            ax.text(0.50, 0.05, "CDELT1: " + str(round(cdelt1_linear, 4)),
+                    fontsize=12,
+                    transform=ax.transAxes,
+                    horizontalalignment="center",
+                    verticalalignment="bottom")
+            ax2.text(0.50, 0.05, "r.m.s.: " + str(round(residual_std, 4)),
+                     fontsize=12,
+                     transform=ax2.transAxes,
+                     horizontalalignment="center",
+                     verticalalignment="bottom")
+            # window geometry
+            if geometry is not None:
+                x_geom, y_geom, dx_geom, dy_geom = geometry
+                mngr = plt.get_current_fig_manager()
+                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+            # show plot
+            pause_debugplot(debugplot, pltshow=True)
+            #
+            ax = ximplotxy(xpol, sp,
                            xlabel='pixel (from 1 to NAXIS1)',
                            ylabel='number of counts',
-                           title='Refined wavelength calibration',
+                           title=titleeff,
                            show=False, debugplot=debugplot)
+            if plottitle is None:
+                titleeff = 'Refined wavelength calibration'
+            else:
+                titleeff = plottitle
+            ax.set_title(titleeff)
             ymin = sp.min()
             ymax = sp.max()
             dy = ymax - ymin
@@ -1733,6 +1819,11 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                             horizontalalignment='center')
             # legend
             ax.legend(numpoints=1)
+            # window geometry
+            if geometry is not None:
+                x_geom, y_geom, dx_geom, dy_geom = geometry
+                mngr = plt.get_current_fig_manager()
+                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
             # show plot
             pause_debugplot(debugplot, pltshow=True)
 

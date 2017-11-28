@@ -641,18 +641,10 @@ def main(args=None):
             wv_master=wv_master_all,
             poldeg=args.degree,
             npix=1,
+            plottitle=plottitle,
+            geometry=geometry,
             debugplot=args.debugplot
         )
-        print(">>> npoints_eff.:", npoints_eff)
-        print(">>> poly_refined:\n", poly_refined)
-        print(">>> residual std:", residual_std)
-        naxis1 = sp.shape[0]
-        crpix1 = 1.0
-        crval1_linear = poly_refined(crpix1)
-        crmax1_linear = poly_refined(naxis1)
-        cdelt1_linear = (crmax1_linear - crval1_linear) / (naxis1 - crpix1)
-        print('>>> CRVAL1 linear scale:', crval1_linear)
-        print('>>> CDELT1 linear scale:', cdelt1_linear)
 
     try:
         input("\nPress RETURN to QUIT...")
