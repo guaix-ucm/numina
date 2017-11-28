@@ -63,7 +63,7 @@ def simulate_master_table(my_seed, wv_ini_master, wv_end_master, nlines_master,
 
     Returns
     -------
-    wv_master : 1d numpy array, float
+    wv_master : numpy array
         Array with wavelengths corresponding to the master table (Angstroms).
     """
 
@@ -104,7 +104,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         Minimum wavelength in master table.
     wv_end_master : float
         Maximum wavelength in master table.
-    wv_master : 1d numpy array, float
+    wv_master : numpy array
         Array with wavelengths corresponding to the master table (Angstroms).
     wv_ini_arc : float
         Minimum wavelength in arc spectrum.
@@ -139,7 +139,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
     -------
     nlines_arc : int
         Number of arc lines
-    xpos_arc : 1d numpy array, float
+    xpos_arc : numpy array
         Location of arc lines (pixels).
     crval1_arc : float
         CRVAL1 for arc spectrum (linear approximation).
@@ -147,11 +147,11 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         CDELT1 for arc spectrum (linear approximation).
     c0_arc, c1_arc, c2_arc : floats
         Coefficients of the second order polynomial.
-    ipos_wv_arc : 1d numpy array, int
+    ipos_wv_arc : numpy array
         Number of line in master table corresponding to each arc line. Unknown
         lines (i.e. those that are not present in the master table) are
         assigned to -1.
-    coeff_original : 1d numpy array, float
+    coeff_original : numpy array
         Polynomial coefficients ordered from low to high, corresponding to the
         fit to the arc lines before the inclusion of unknown lines.
 
@@ -403,7 +403,7 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000,
 
     Returns
     -------
-    coeff : 1d numpy array, float
+    coeff : numpy array
         Coefficients of the polynomial fit.
     crval1_approx : float
         Approximate CRVAL1 value.

@@ -326,7 +326,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     return solution_wv
 
 
-def gen_triplets_master(wv_master, geometry, debugplot=0):
+def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     """Compute information associated to triplets in master table.
 
     Determine all the possible triplets that can be generated from the
