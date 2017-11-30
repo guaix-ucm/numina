@@ -23,6 +23,8 @@ import datetime
 
 
 def convert_date(value):
+    if isinstance(value, datetime.datetime):
+        return value
     if value:
         return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
     else:
