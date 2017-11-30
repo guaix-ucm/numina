@@ -51,12 +51,9 @@ class Requirement(EntryHolder):
             # we do not perform any query
             return self.default_value()
 
-        if isinstance((self.query_opts), Result):
-            mode = self.query_opts.mode
-            field = self.query_opts.field
-            node = self.query_opts.node
-            val = dal.search_last_result_(self.dest, self.type, obsres, mode, field, node)
-            return val
+        # FIX merge somehow...
+        # options and self.query_options
+        options = self.query_opts
 
         val = self.type.query(self.dest, dal, obsres, options=options)
         return val
