@@ -59,17 +59,18 @@ def main(args=None):
     parser0 = argparse.ArgumentParser(
         description='Command line interface of Numina',
         prog='numina',
-        epilog="For detailed help pass --help to a target"
+        epilog="For detailed help pass --help to a target",
+        add_help=False
         )
 
-    parser0.add_argument('--disable-plugins', action='store_false')
+    parser0.add_argument('--disable-plugins', action='store_true')
 
     args0, args = parser0.parse_known_args(args)
 
     # Load plugin commands if enabled
     subcmd_load = []
 
-    if args0.disable_plugins:
+    if not args0.disable_plugins:
         for entry in pkg_resources.iter_entry_points(
                 group='numina.plugins.1'
         ):
@@ -85,6 +86,8 @@ def main(args=None):
         epilog="For detailed help pass --help to a target"
         )
 
+    parser.add_argument('--disable-plugins', action='store_true',
+                        help='disable plugin loading')
     parser.add_argument(
         '-l', action="store", dest="logging", metavar="FILE",
         help="FILE with logging configuration"
