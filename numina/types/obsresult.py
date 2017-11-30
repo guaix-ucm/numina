@@ -66,7 +66,7 @@ class ObservationResultType(DataType):
             mode = options.mode
             field = options.field
             node = options.node
-            val = dal.search_last_result_('dest', tipo, ob, mode, field, node)
+            val = dal.search_result_relative(name, tipo, ob, mode, field, node)
             ob.results = []
             if val:
                 for r in val:

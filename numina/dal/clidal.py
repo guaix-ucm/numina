@@ -19,7 +19,7 @@
 import logging
 
 from numina.exceptions import NoResultFound
-from numina.dal import AbsDAL
+from numina.dal.absdal import AbsDrpDAL
 from numina.dal import StoredProduct
 from numina.dal import StoredParameter
 from numina.dal import ObservingBlock
@@ -31,31 +31,15 @@ import numina.store as storage
 _logger = logging.getLogger("numina.dal.clidal")
 
 
-class CommandLineDAL(AbsDAL):
+class CommandLineDAL(AbsDrpDAL):
     """A DAL to use with the command line interface"""
 
     def __init__(self, drps, ob_table, reqs, extra_reqs=None):
+        super(CommandLineDAL, self).__init__(drps)
         self.ob_table = ob_table
         self._reqs = reqs
         if extra_reqs:
             self._reqs['requirements'].update(extra_reqs)
-        self.drps = drps
-
-    def search_instrument_configuration_from_ob(self, ob):
-        ins = ob.instrument
-        name = ob.configuration
-        return self.search_instrument_configuration(ins, name)
-
-    def search_instrument_configuration(self, ins, name):
-
-        drp = self.drps.query_by_name(ins)
-
-        try:
-            this_configuration = drp.configurations[name]
-        except KeyError:
-            raise KeyError('Instrument configuration "{}" missing'.format(name))
-
-        return this_configuration
 
     def search_rib_from_ob(self, obsres, pipeline):
         return None
@@ -99,7 +83,7 @@ class CommandLineDAL(AbsDAL):
         except KeyError:
             raise NoResultFound("oblock with id %s not found" % obsid)
 
-    def search_recipe_from_ob(self, obsres):
+    def search_recipe_from_ob(self, obsres, pipeline='default'):
 
         _logger.info("Identifier of the observation result: %s", obsres.id)
 
@@ -157,5 +141,9 @@ class CommandLineDAL(AbsDAL):
 
     def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         raise NotImplementedError
+
+    def search_result_relative(self, name, obsres, mode, field, node, options=None):
+        # mode field node could go together...
+        return []
 
 

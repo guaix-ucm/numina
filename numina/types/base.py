@@ -45,16 +45,14 @@ class DataTypeBase(object):
     def __setstate__(self, state):
         pass
 
-    def query(self, name, dal, ob, options=None):
+    def query(self, name, dal, obsres, options=None):
 
         try:
-            return self.query_on_ob(name, ob)
+            return self.query_on_ob(name, obsres)
         except NoResultFound:
             pass
 
-        #param = dal.search_param_req_tags(req, ob.instrument,
-        #                                      ob.mode, ob.tags, ob.pipeline)
-        param = dal.search_parameter(name, self, ob)
+        param = dal.search_parameter(name, self, obsres)
         return param.content
 
 

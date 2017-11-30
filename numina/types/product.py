@@ -54,15 +54,8 @@ class DataProductTag(DataTypeBase):
         except NoResultFound:
             pass
 
-        # If ob declares a particular ID, check that
-        for g in chain([self.name()], self.generators()):
-            if g in ob.results:
-                resultid = ob.results[g]
-                prod = dal.search_result(name, self, ob, resultid)
-                break
-        else:
-            # if not, the normal query
-            prod = dal.search_product(name, self, ob)
+        # if not, the normal query
+        prod = dal.search_product(name, self, ob)
 
         return prod.content
 

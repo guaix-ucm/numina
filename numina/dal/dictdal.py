@@ -22,56 +22,30 @@
 import logging
 import json
 from itertools import chain
-import os.path
 
-import yaml
 import numina.store.gtc.load as gtcload
 from numina.core import obsres_from_dict
 from numina.store import load
 from numina.exceptions import NoResultFound
-from .absdal import AbsDAL
+from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
 from .diskfiledal import build_product_path
+from .utils import tags_are_valid
+
 
 _logger = logging.getLogger("numina.dal.dictdal")
 
 
-def tags_are_valid(subset, superset):
-    for key, val in subset.items():
-        if key in superset and superset[key] != val:
-            return False
-    return True
-
-
-class BaseDictDAL(AbsDAL):
+class BaseDictDAL(AbsDrpDAL):
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
-        super(BaseDictDAL, self).__init__()
+        super(BaseDictDAL, self).__init__(drps)
 
         # Check that the structure of the base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
         self.req_table = req_table
         self.extra_data = extra_data if extra_data else {}
-        self.drps = drps
-
-    def search_instrument_configuration_from_ob(self, ob):
-        ins = ob.instrument
-        name = ob.configuration
-        return self.search_instrument_configuration(ins, name)
-
-    def search_instrument_configuration(self, ins, name):
-
-        drp = self.drps.query_by_name(ins)
-
-        if drp is None:
-            raise NoResultFound('Instrument "{}" not found'.format(ins))
-        try:
-            this_configuration = drp.configurations[name]
-        except KeyError:
-            raise NoResultFound('Instrument configuration "{}" missing'.format(name))
-
-        return this_configuration
 
     def search_oblock_from_id(self, obsid):
         try:
@@ -79,51 +53,6 @@ class BaseDictDAL(AbsDAL):
             return ObservingBlock(**ob)
         except KeyError:
             raise NoResultFound("oblock with id %d not found" % obsid)
-
-    def search_recipe(self, ins, mode, pipeline):
-
-        drp = self.drps.query_by_name(ins)
-
-        if drp is None:
-            raise NoResultFound('DRP not found')
-
-        try:
-            this_pipeline = drp.pipelines[pipeline]
-        except KeyError:
-            raise NoResultFound('pipeline not found')
-
-        try:
-            recipe = this_pipeline.get_recipe_object(mode)
-            return recipe
-        except KeyError:
-            raise NoResultFound('mode not found')
-
-
-    def search_recipe_fqn(self, ins, mode, pipename):
-
-        drp = self.drps.query_by_name(ins)
-
-        if drp is None:
-            raise NoResultFound('result not found')
-
-        try:
-            this_pipeline = drp.pipelines[pipename]
-        except KeyError:
-            raise NoResultFound('result not found')
-
-        recipes = this_pipeline.recipes
-        try:
-            recipe_fqn = recipes[mode]
-        except KeyError:
-            raise NoResultFound('result not found')
-
-        return recipe_fqn
-
-    def search_recipe_from_ob(self, ob):
-        ins = ob.instrument
-        mode = ob.mode
-        pipeline = ob.pipeline
-        return self.search_recipe(ins, mode, pipeline)
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         """Returns the first coincidence..."""
@@ -243,7 +172,7 @@ class BaseDictDAL(AbsDAL):
     def search_result_id(self, child_id, tipo, field):
         pass
 
-    def search_product(self, name, tipo, obsres):
+    def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         ins = obsres.instrument
         tags = obsres.tags
@@ -256,7 +185,7 @@ class BaseDictDAL(AbsDAL):
         else:
             return self.search_prod_type_tags(tipo, ins, tags, pipeline)
 
-    def search_parameter(self, name, tipo, obsres):
+    def search_parameter(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         instrument = obsres.instrument
         mode = obsres.mode
@@ -282,6 +211,10 @@ class BaseDictDAL(AbsDAL):
             else:
                 msg = 'name %s compatible with tags %r not found' % (name, tags)
                 raise NoResultFound(msg)
+
+    def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
+        # mode field node could go together...
+        return []
 
 
 class DictDAL(BaseDictDAL):
@@ -315,7 +248,7 @@ class HybridDAL(Dict2DAL):
 
         super(HybridDAL, self).__init__(drps, obtable, base, extra_data)
 
-    def search_product(self, name, tipo, obsres):
+    def search_product(self, name, tipo, obsres, options=None):
         if name in self.extra_data:
             val = self.extra_data[name]
             content = load(tipo, val)
@@ -364,17 +297,6 @@ class HybridDAL(Dict2DAL):
             content = self.product_loader(tipo, name, path)
             return StoredProduct(id=0, content=content, tags=obsres.tags)
 
-    def search_result_id(self, resultid, tipo, field):
-        pspath = 'rootdir'
-        postfix = 'obsid%s_results' % resultid
-        final = os.path.join(pspath, postfix, 'result.yaml')
-        # FIXME: I'm assuming that I need a path here
-        with open(final) as fd:
-            result = yaml.load(fd)
-            attr = result[field]
-            final = os.path.join(pspath, postfix, attr)
-            return load(tipo, final)
-
     def search_result(self, name, tipo, obsres, resultid=None):
 
         if resultid is None:
@@ -387,31 +309,11 @@ class HybridDAL(Dict2DAL):
         prod = self._search_result(name, tipo, obsres, resultid)
         return prod
 
-    def search_result_id(self, name, tipo, obsres, resultid):
-
-        if resultid is None:
-            for g in chain([tipo.name()], tipo.generators()):
-                if g in obsres.results:
-                    resultid = obsres.results[g]
-                    break
-            else:
-                raise NoResultFound("resultid not found")
-        prod = self._search_result(name, tipo, obsres, resultid)
-        return prod
-
-    def search_last_result(self, name, tipo, obsres):
-        #instrument = obsres.instrument
-        #mode = "LS_ABBA"
-        #field = "accum"
-        #dal.getLastRecipeResult("EMIR", "EMIR", "LS_ABBA")
-        #accum_dither = latest_result['elements']['accum']
-        pass
-
-    def search_last_result_(self, name, tipo, obsres, mode, field, node):
+    def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
         instrument = obsres.instrument
         if mode is None:
             mode = obsres.mode
-        print('search last result', instrument, mode, field, node)
+        print('search relative', instrument, mode, field, node)
 
     def _search_result(self, name, tipo, obsres, resultid):
         """Returns the first coincidence..."""
