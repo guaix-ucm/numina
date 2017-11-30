@@ -255,4 +255,4 @@ class DiskStorageDefault(object):
 
         with working_directory(self.resultsdir):
             _logger.info('storing result')
-            completed_task.store(self)
+            return completed_task.store(self)
