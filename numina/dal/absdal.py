@@ -32,10 +32,12 @@ class AbsDrpDAL(DALInterface):
 
         drp = self.drps.query_by_name(ins)
 
+        if drp is None:
+            raise NoResultFound('Instrument "{}" not found'.format(ins))
         try:
             this_configuration = drp.configurations[name]
         except KeyError:
-            raise KeyError('Instrument configuration "{}" missing'.format(name))
+            raise NoResultFound('Instrument configuration "{}" missing'.format(name))
 
         return this_configuration
 
