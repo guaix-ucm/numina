@@ -209,12 +209,8 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         if isinstance(ob, ObservingBlock):
             # We have to build an Obsres
             obsres = dal.obsres_from_oblock_id(ob.id)
-        elif isinstance(ob, ObservationResult):
-            # We have one
-            obsres = ob
         else:
-            raise ValueError('ob input is neither a ObservingBlock'
-                             ' nor a ObservationResult')
+            obsres = ob
 
         for key, req in self.requirements().items():
 

@@ -19,13 +19,11 @@
 
 import warnings
 
-from .frame import DataFrameType
-
 from numina.core.oresult import ObservationResult
 from numina.core.query import Result
 from numina.core.pipeline import InstrumentConfiguration
 from numina.types.qc import QC
-
+from .frame import DataFrameType
 from .datatype import DataType
 
 
@@ -56,20 +54,23 @@ class ObservationResultType(DataType):
             self.rawtype = DataFrameType
 
     def validate(self, obj):
-        super(ObservationResultType, self).validate(obj)
+        # super(ObservationResultType, self).validate(obj)
         validator = _obtain_validator_for(obj.instrument, obj.mode)
         return validator(obj)
 
     def query(self, name, dal, ob, options=None):
 
-        if options:
-            if isinstance(options, Result):
-                tipo = DataFrameType()
-                field = options.mode_attr
-                for child_id in ob.children:
-                    # print('obtain result of', child_id, field)
-                    result = dal.search_result_id(child_id, tipo, field)
-                    ob.results[child_id] = result
+        # Here, only makes sense that node == 'children'
+        if isinstance(options, Result):
+            tipo = DataFrameType()
+            mode = options.mode
+            field = options.field
+            node = options.node
+            val = dal.search_last_result_('dest', tipo, ob, mode, field, node)
+            ob.results = []
+            if val:
+                for r in val:
+                    ob.results.append(r.content)
 
         return ob
 
