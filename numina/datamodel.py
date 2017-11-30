@@ -88,8 +88,23 @@ class DataModel(object):
         'mode',
         'exptime',
         'darktime',
-        #'insconf',
-        #'blckuuid',
+        'insconf',
+        'blckuuid',
+        'quality_control',
+    ]
+    db_info_keys_extra = []
+    
+    meta_dinfo_headers = [
+        'instrument',
+        'object',
+        'observation_date',
+        'uuid',
+        'type',
+        'mode',
+        'exptime',
+        'darktime',
+        # 'insconf',
+        # 'blckuuid',
         'quality_control',
     ]
 
