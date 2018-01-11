@@ -26,6 +26,7 @@ import argparse
 import astropy.io.fits as fits
 import numpy as np
 import os
+import sys
 
 from numina.array.stats import summary
 from numina.array.display.pause_debugplot import pause_debugplot
@@ -254,67 +255,145 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             fxpeaks_wv,
             delta_wv_max=delta_wv_max
         )
-        lines_ok = np.where(wv_verified_all_peaks > 0)
-        nlines_ok = len(lines_ok[0])
 
-        # there are matched lines
-        if nlines_ok > 0:
-            # compute residuals
-            xresid = fxpeaks_wv[lines_ok]
-            yresid = wv_verified_all_peaks[lines_ok] - fxpeaks_wv[lines_ok]
-            ysummary = summary(yresid)
+    loop = True
 
-            # determine effective polynomial degree
-            if nlines_ok > poldeg_residuals:
-                poldeg_effective = poldeg_residuals
+    while loop:
+
+        if npeaks > 0:
+
+            lines_ok = np.where(wv_verified_all_peaks > 0)
+            nlines_ok = len(lines_ok[0])
+
+            # there are matched lines
+            if nlines_ok > 0:
+                # compute residuals
+                xresid = fxpeaks_wv[lines_ok]
+                yresid = wv_verified_all_peaks[lines_ok] - fxpeaks_wv[lines_ok]
+                ysummary = summary(yresid)
+
+                # determine effective polynomial degree
+                if nlines_ok > poldeg_residuals:
+                    poldeg_effective = poldeg_residuals
+                else:
+                    poldeg_effective = nlines_ok  - 1
+
+                # fit polynomial to residuals
+                polyres, yresres, reject = \
+                    polfit_residuals_with_sigma_rejection(
+                        x=xresid,
+                        y=yresid,
+                        deg=poldeg_effective,
+                        times_sigma_reject=times_sigma_reject,
+                        use_r=use_r,
+                        debugplot=0
+                    )
+
+        list_wv_found = [str(round(wv, 4))
+                         for wv in wv_verified_all_peaks if wv != 0]
+        list_wv_master = [str(round(wv, 4)) for wv in wv_master]
+        set1 = set(list_wv_master)
+        set2 = set(list_wv_found)
+        missing_wv = list(set1.symmetric_difference(set2))
+        missing_wv.sort()
+        if abs(debugplot) >= 10:
+            print('-' * 79)
+            print(">>> Number of arc lines in master file:", len(wv_master))
+        if abs(debugplot) in [21, 22]:
+            print(">>> Unmatched lines...................:", missing_wv)
+        elif abs(debugplot) >= 10:
+            print(">>> Number of unmatched lines.........:", len(missing_wv))
+        if abs(debugplot) >= 10:
+            print(">>> Number of line peaks found........:", npeaks)
+            print(">>> Number of identified lines........:", nlines_ok)
+            print(">>> Number of unmatched lines.........:", len(missing_wv))
+            print(">>> Polynomial degree in residuals fit:", poldeg_effective)
+            print(">>> Polynomial fit to residuals.......:", polyres)
+
+        # display results
+        if abs(debugplot) % 10 != 0:
+            from numina.array.display.matplotlib_qt import plt
+            fig = plt.figure()
+            if geometry is not None:
+                x_geom, y_geom, dx_geom, dy_geom = geometry
+                mngr = plt.get_current_fig_manager()
+                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+
+            # residuals
+            ax2 = fig.add_subplot(2, 1, 1)
+            if nlines_ok > 0:
+                ymin = min(yresid)
+                ymax = max(yresid)
+                dy = ymax - ymin
+                if dy > 0:
+                    ymin -= dy/20
+                    ymax += dy/20
+                else:
+                    ymin -= 0.5
+                    ymax += 0.5
             else:
-                poldeg_effective = nlines_ok  - 1
+                ymin = -1.0
+                ymax = 1.0
+            ax2.set_ylim([ymin, ymax])
+            if nlines_ok > 0:
+                ax2.plot(xresid, yresid, 'o')
+                ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
+            ax2.set_ylabel('Offset ' + r'($\AA$)')
+            ax2.yaxis.label.set_size(10)
+            if title is not None:
+                ax2.set_title(title, **{'size': 12})
+            xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
+            ax2.plot(xwv, polyres(xwv), '-')
+            ax2.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel)=' + str(cdelt1),
+                     horizontalalignment='right',
+                     verticalalignment='bottom',
+                     transform=ax2.transAxes)
+            ax2.text(0, 0, 'Wavelength ' + r'($\AA$) --->',
+                     horizontalalignment='left',
+                     verticalalignment='bottom',
+                     transform=ax2.transAxes)
+            ax2.text(0, 1, 'median=' +
+                     str(round(ysummary['median'], 4)) + r' $\AA$',
+                     horizontalalignment='left',
+                     verticalalignment='top',
+                     transform=ax2.transAxes)
+            ax2.text(0.5, 1, 'npoints (total / used / removed)',
+                     horizontalalignment='center',
+                     verticalalignment='top',
+                     transform=ax2.transAxes)
+            ax2.text(0.5, 0.92,
+                     str(ysummary['npoints']) + ' / ' +
+                     str(ysummary['npoints'] - sum(reject)) + ' / ' +
+                     str(sum(reject)),
+                     horizontalalignment='center',
+                     verticalalignment='top',
+                     transform=ax2.transAxes)
+            ax2.text(1, 1, 'robust_std=' +
+                     str(round(ysummary['robust_std'], 4)) + r' $\AA$',
+                     horizontalalignment='right',
+                     verticalalignment='top',
+                     transform=ax2.transAxes)
 
-            # fit polynomial to residuals
-            polyres, yresres, reject = polfit_residuals_with_sigma_rejection(
-                x=xresid,
-                y=yresid,
-                deg=poldeg_effective,
-                times_sigma_reject=times_sigma_reject,
-                use_r=use_r,
-                debugplot=0
-            )
-
-    list_wv_found = [str(round(wv, 4))
-                     for wv in wv_verified_all_peaks if wv != 0]
-    list_wv_master = [str(round(wv, 4)) for wv in wv_master]
-    set1 = set(list_wv_master)
-    set2 = set(list_wv_found)
-    missing_wv = list(set1.symmetric_difference(set2))
-    missing_wv.sort()
-    if abs(debugplot) >= 10:
-        print('-' * 79)
-        print(">>> Number of arc lines in master file:", len(wv_master))
-    if abs(debugplot) in [21, 22]:
-        print(">>> Unmatched lines...................:", missing_wv)
-    elif abs(debugplot) >= 10:
-        print(">>> Number of unmatched lines.........:", len(missing_wv))
-    if abs(debugplot) >= 10:
-        print(">>> Number of line peaks found........:", npeaks)
-        print(">>> Number of identified lines........:", nlines_ok)
-        print(">>> Number of unmatched lines.........:", len(missing_wv))
-        print(">>> Polynomial degree in residuals fit:", poldeg_effective)
-        print(">>> Polynomial fit to residuals.......:", polyres)
-
-    # display results
-    if abs(debugplot) % 10 != 0:
-        from numina.array.display.matplotlib_qt import plt
-        fig = plt.figure()
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
-
-        # residuals
-        ax2 = fig.add_subplot(2, 1, 1)
-        if nlines_ok > 0:
-            ymin = min(yresid)
-            ymax = max(yresid)
+            # median spectrum and peaks
+            # remove leading and trailing zeros in spectrum when requested
+            if remove_null_borders:
+                nonzero = np.nonzero(sp)[0]
+                j1 = nonzero[0]
+                j2 = nonzero[-1]
+                xmin = xwv[j1]
+                xmax = xwv[j2]
+            else:
+                xmin = min(xwv)
+                xmax = max(xwv)
+            dx = xmax - xmin
+            if dx > 0:
+                xmin -= dx / 80
+                xmax += dx / 80
+            else:
+                xmin -= 0.5
+                xmax += 0.5
+            ymin = min(sp)
+            ymax = max(sp)
             dy = ymax - ymin
             if dy > 0:
                 ymin -= dy/20
@@ -322,113 +401,101 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             else:
                 ymin -= 0.5
                 ymax += 0.5
-        else:
-            ymin = -1.0
-            ymax = 1.0
-        ax2.set_ylim([ymin, ymax])
-        if nlines_ok > 0:
-            ax2.plot(xresid, yresid, 'o')
-            ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
-        ax2.set_ylabel('Offset ' + r'($\AA$)')
-        ax2.yaxis.label.set_size(10)
-        if title is not None:
-            ax2.set_title(title, **{'size': 12})
-        xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
-        ax2.plot(xwv, polyres(xwv), '-')
-        ax2.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel)=' + str(cdelt1),
-                 horizontalalignment='right',
-                 verticalalignment='bottom',
-                 transform=ax2.transAxes)
-        ax2.text(0, 0, 'Wavelength ' + r'($\AA$) --->',
-                 horizontalalignment='left',
-                 verticalalignment='bottom',
-                 transform=ax2.transAxes)
-        ax2.text(0, 1, 'median=' +
-                 str(round(ysummary['median'], 4)) + r' $\AA$',
-                 horizontalalignment='left',
-                 verticalalignment='top',
-                 transform=ax2.transAxes)
-        ax2.text(0.5, 1, 'npoints (total / used / removed)',
-                 horizontalalignment='center',
-                 verticalalignment='top',
-                 transform=ax2.transAxes)
-        ax2.text(0.5, 0.92,
-                 str(ysummary['npoints']) + ' / ' +
-                 str(ysummary['npoints'] - sum(reject)) + ' / ' +
-                 str(sum(reject)),
-                 horizontalalignment='center',
-                 verticalalignment='top',
-                 transform=ax2.transAxes)
-        ax2.text(1, 1, 'robust_std=' +
-                 str(round(ysummary['robust_std'], 4)) + r' $\AA$',
-                 horizontalalignment='right',
-                 verticalalignment='top',
-                 transform=ax2.transAxes)
-
-        # median spectrum and peaks
-        # remove leading and trailing zeros in spectrum when requested
-        if remove_null_borders:
-            nonzero = np.nonzero(sp)[0]
-            j1 = nonzero[0]
-            j2 = nonzero[-1]
-            xmin = xwv[j1]
-            xmax = xwv[j2]
-        else:
-            xmin = min(xwv)
-            xmax = max(xwv)
-        dx = xmax - xmin
-        if dx > 0:
-            xmin -= dx / 80
-            xmax += dx / 80
-        else:
-            xmin -= 0.5
-            xmax += 0.5
-        ymin = min(sp)
-        ymax = max(sp)
-        dy = ymax - ymin
-        if dy > 0:
-            ymin -= dy/20
-            ymax += dy/20
-        else:
-            ymin -= 0.5
-            ymax += 0.5
-        ax1 = fig.add_subplot(2, 1, 2, sharex=ax2)
-        ax1.set_xlim([xmin, xmax])
-        ax1.set_ylim([ymin, ymax])
-        ax1.plot(xwv, sp)
-        if npeaks > 0:
-            ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o',
-                     fillstyle='none', label="initial location")
-            ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
-                     fillstyle='none', label="refined location")
-            ax1.plot(wv_verified_all_peaks, sp[ixpeaks], 'go',
-                     label="valid line")
-        ax1.set_ylabel('Counts')
-        ax1.yaxis.label.set_size(10)
-        ax1.xaxis.tick_top()
-        ax1.xaxis.set_label_position('top')
-        for i in range(len(ixpeaks)):
-            # identified lines
-            if wv_verified_all_peaks[i] > 0:
-                ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
-                         wv_verified_all_peaks[i], fontsize=8,
-                         horizontalalignment='center')
-            # estimated wavelength from initial calibration
+            ax1 = fig.add_subplot(2, 1, 2, sharex=ax2)
+            ax1.set_xlim([xmin, xmax])
+            ax1.set_ylim([ymin, ymax])
+            ax1.plot(xwv, sp)
             if npeaks > 0:
-                estimated_wv = fun_wv(fxpeaks[i] + 1, crpix1, crval1, cdelt1)
-                estimated_wv = str(round(estimated_wv, 4))
-                ax1.text(fxpeaks_wv[i], 0,  # spmedian[ixpeaks[i]],
-                         estimated_wv, fontsize=8, color='grey',
-                         rotation='vertical',
-                         horizontalalignment='center',
-                         verticalalignment='top')
-        if len(missing_wv) > 0:
-            tmp = [float(wv) for wv in missing_wv]
-            ax1.vlines(tmp, ymin=ymin, ymax=ymax,
-                       colors='grey', linestyles='dotted',
-                       label='missing lines')
-        ax1.legend()
-        pause_debugplot(debugplot, pltshow=True)
+                ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o',
+                         fillstyle='none', label="initial location")
+                ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
+                         fillstyle='none', label="refined location")
+                ax1.plot(wv_verified_all_peaks, sp[ixpeaks], 'go',
+                         label="valid line")
+            ax1.set_ylabel('Counts')
+            ax1.yaxis.label.set_size(10)
+            ax1.xaxis.tick_top()
+            ax1.xaxis.set_label_position('top')
+            for i in range(len(ixpeaks)):
+                # identified lines
+                if wv_verified_all_peaks[i] > 0:
+                    ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
+                             str(wv_verified_all_peaks[i]) +
+                             '(' + str(i + 1) + ')',
+                             fontsize=8,
+                             horizontalalignment='center')
+                else:
+                    ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
+                             '(' + str(i + 1) + ')',
+                             fontsize=8,
+                             horizontalalignment='center')
+                # estimated wavelength from initial calibration
+                if npeaks > 0:
+                    estimated_wv = fun_wv(fxpeaks[i] + 1,
+                                          crpix1, crval1, cdelt1)
+                    estimated_wv = str(round(estimated_wv, 4))
+                    ax1.text(fxpeaks_wv[i], 0,  # spmedian[ixpeaks[i]],
+                             estimated_wv, fontsize=8, color='grey',
+                             rotation='vertical',
+                             horizontalalignment='center',
+                             verticalalignment='top')
+            if len(missing_wv) > 0:
+                tmp = [float(wv) for wv in missing_wv]
+                ax1.vlines(tmp, ymin=ymin, ymax=ymax,
+                           colors='grey', linestyles='dotted',
+                           label='missing lines')
+            ax1.legend()
+            if debugplot in [-22, -12, 12, 22]:
+                pause_debugplot(
+                    debugplot=debugplot,
+                    optional_prompt='Zoom/Unzoom or ' +
+                                    'press RETURN to continue...',
+                    pltshow=True
+                )
+            else:
+                pause_debugplot(debugplot=debugplot, pltshow=True)
+
+            # display results and request next action
+            if debugplot in [-22, -12, 12, 22]:
+                ask_peak = True
+                while ask_peak:
+                    print('Select option:')
+                    print(' #: from 1 to ' + str(len(ixpeaks)) +
+                          ' --> modify line #')
+                    print('-1: modify polynomial degree')
+                    print(' 0: continue without changes')
+                    print('Option [0] ? ', end='')
+                    coption = sys.stdin.readline().strip()
+                    if coption == '':  # equivalent to coption == '0'
+                        ask_peak = False
+                        loop = False
+                    else:
+                        try:
+                            ioption = int(coption)
+                            if 1 <= ioption <= len(ixpeaks):
+                                print(wv_master)
+                                print(">>> Expected wavelength: ",
+                                      fxpeaks_wv[ioption -1])
+                                print('New value (0 to delete line)? ', end='')
+                                cnewvalue = sys.stdin.readline().strip()
+                                wv_verified_all_peaks[ioption - 1] = \
+                                    float(cnewvalue)
+                                ask_peak = False
+                            elif ioption == 0:
+                                ask_peak = False
+                                loop = False
+                            elif ioption == -1:
+                                print('New polynomial degree? ', end='')
+                                cnewvalue = sys.stdin.readline().strip()
+                                poldeg_residuals = int(cnewvalue)
+                                ask_peak = False
+                            else:
+                                print('Peak number out of range. Try again!')
+                        except:
+                            print('Invalid peak number. Try again!')
+            else:
+                pause_debugplot(debugplot=debugplot, pltshow=True)
+                loop = False
 
     if full:
         xyrfit = (xresid, yresid, reject)
