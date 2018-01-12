@@ -29,6 +29,8 @@ import os
 import sys
 
 from numina.array.stats import summary
+from numina.array.display.iofunctions import readi
+from numina.array.display.iofunctions import readf
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals \
@@ -457,42 +459,24 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
 
             # display results and request next action
             if debugplot in [-22, -12, 12, 22]:
-                ask_peak = True
-                while ask_peak:
-                    print('Select option:')
-                    print(' #: from 1 to ' + str(len(ixpeaks)) +
-                          ' --> modify line #')
-                    print('-1: modify polynomial degree')
-                    print(' 0: continue without changes')
-                    print('Option [0] ? ', end='')
-                    coption = sys.stdin.readline().strip()
-                    if coption == '':  # equivalent to coption == '0'
-                        ask_peak = False
-                        loop = False
-                    else:
-                        try:
-                            ioption = int(coption)
-                            if 1 <= ioption <= len(ixpeaks):
-                                print(wv_master)
-                                print(">>> Expected wavelength: ",
-                                      fxpeaks_wv[ioption -1])
-                                print('New value (0 to delete line)? ', end='')
-                                cnewvalue = sys.stdin.readline().strip()
-                                wv_verified_all_peaks[ioption - 1] = \
-                                    float(cnewvalue)
-                                ask_peak = False
-                            elif ioption == 0:
-                                ask_peak = False
-                                loop = False
-                            elif ioption == -1:
-                                print('New polynomial degree? ', end='')
-                                cnewvalue = sys.stdin.readline().strip()
-                                poldeg_residuals = int(cnewvalue)
-                                ask_peak = False
-                            else:
-                                print('Peak number out of range. Try again!')
-                        except:
-                            print('Invalid peak number. Try again!')
+                print('Recalibration menu')
+                print('------------------')
+                print('-1) modify polynomial degree')
+                print(' 0) continue without changes')
+                print(' #) from 1 to ' + str(len(ixpeaks)) +
+                      ' --> modify line #')
+                ioption = readi('Option', default=0,
+                                minval=-1, maxval=len(ixpeaks))
+                if ioption == -1:
+                    poldeg_residuals = readi('New polynomial degree')
+                elif ioption == 0:
+                    loop = False
+                else:
+                    print(wv_master)
+                    print(">>> Current expected wavelength: ",
+                          fxpeaks_wv[ioption -1])
+                    newvalue = readf('New value (0 to delete line)')
+                    wv_verified_all_peaks[ioption - 1] = newvalue
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
                 loop = False
