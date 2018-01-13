@@ -461,13 +461,18 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             if debugplot in [-22, -12, 12, 22]:
                 print('Recalibration menu')
                 print('------------------')
+                print('-2) refit data')
                 print('-1) modify polynomial degree')
                 print(' 0) continue without changes')
                 print(' #) from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default=0,
-                                minval=-1, maxval=len(ixpeaks))
-                if ioption == -1:
+                                minval=-2, maxval=len(ixpeaks))
+                if ioption == -2:
+                    for i in range(len(ixpeaks)):
+                        wv_verified_all_peaks[i] = fxpeaks_wv[i] + \
+                            polyres(fxpeaks_wv[i])
+                elif ioption == -1:
                     poldeg_residuals = readi('New polynomial degree')
                 elif ioption == 0:
                     loop = False
