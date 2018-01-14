@@ -24,13 +24,14 @@ from __future__ import print_function
 
 import argparse
 import astropy.io.fits as fits
+import decimal
 import numpy as np
 import os
-import sys
 
 from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
 from numina.array.display.iofunctions import readf
+from numina.array.display.iofunctions import readc
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals \
@@ -142,6 +143,9 @@ def fun_wv(xchannel, crpix1, crval1, cdelt1):
 
 
 def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
+                     coeff_ini=None, naxis1_ini=None,
+                     min_nlines_to_refine=None,
+                     interactive=False,
                      threshold=0,
                      nwinwidth_initial=7,
                      nwinwidth_refined=5,
@@ -151,7 +155,6 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      use_r=True,
                      title=None,
                      remove_null_borders=True,
-                     full=False,
                      geometry=None,
                      debugplot=0):
     """Check wavelength calibration of the provided spectrum.
@@ -168,6 +171,22 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         CDELT1 keyword.
     wv_master: numpy array
         Array with the detailed list of expected arc lines.
+    coeff_ini : array like
+        Coefficients initially employed to obtain the wavelength
+        calibration of the provided spectrum. When this coefficients
+        are provided, this function computes a refined version of
+        them, incorporating the corrections derived from the fit to
+        the residuals.
+    naxis1_ini : int
+        NAXIS1 in original spectrum employed to fit the initial
+        wavelength calibration.
+    min_nlines_to_refine : int
+        Minimum number of identified lines necessary to perform the
+        wavelength calibration refinement. If None, no minimum number
+        is required.
+    interactive : bool
+        If True, the function allows the user to modify the residuals
+        fit.
     threshold : float
         Minimum signal in the peaks.
     nwinwidth_initial : int
@@ -187,9 +206,6 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         Plot title.
     remove_null_borders : bool
         If True, remove leading and trailing zeros in spectrum.
-    full : bool
-        If True, the function also returns the data points
-        employed in the fit: xresid, yresid, reject
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -198,13 +214,10 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
 
     Returns
     -------
-    polyres : instance of numpy.polynomial.Polynomial
-        Polynomial fit to residuals
-    ysummary : Python dictionary
-        Statistical summary of residuals.
-    xyrfit : tuple of numpy arrays
-        Abscissae, ordinates and booleans (numpy arrays) corresponding
-        to the data points employed in the fit.
+    coeff_refined : numpy array
+        Refined version of the initial wavelength calibration
+        coefficients. These coefficients are computed only when
+        the input parameter 'coeff_ini' is not None.
 
     """
 
@@ -213,6 +226,20 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         raise ValueError("sp must be a numpy.ndarray")
     elif sp.ndim != 1:
         raise ValueError("sp.ndim is not 1")
+
+    if coeff_ini is None and naxis1_ini is None:
+        pass
+    elif coeff_ini is not None and naxis1_ini is not None:
+        pass
+    else:
+        raise ValueError("coeff_ini and naxis1_ini must be simultaneously "
+                         "None of both different from None")
+
+    # check that interactive use takes place when plotting
+    if interactive:
+        if abs(debugplot) % 10 == 0:
+            raise ValueError("ERROR: interative use of this function is not "
+                             "possible when debugplot=", debugplot)
 
     # display list of expected arc lines
     if abs(debugplot) in (21, 22):
@@ -290,6 +317,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                         use_r=use_r,
                         debugplot=0
                     )
+            else:
+                polyres = np.polynomial.Polynomial([0.0])
 
         list_wv_found = [str(round(wv, 4))
                          for wv in wv_verified_all_peaks if wv != 0]
@@ -310,7 +339,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             print(">>> Number of identified lines........:", nlines_ok)
             print(">>> Number of unmatched lines.........:", len(missing_wv))
             print(">>> Polynomial degree in residuals fit:", poldeg_effective)
-            print(">>> Polynomial fit to residuals.......:", polyres)
+            print(">>> Polynomial fit to residuals.......:\n", polyres)
 
         # display results
         if abs(debugplot) % 10 != 0:
@@ -412,7 +441,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                          fillstyle='none', label="initial location")
                 ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
                          fillstyle='none', label="refined location")
-                ax1.plot(wv_verified_all_peaks, sp[ixpeaks], 'go',
+                lok = wv_verified_all_peaks > 0
+                ax1.plot(fxpeaks_wv[lok], sp[ixpeaks][lok], 'go',
                          label="valid line")
             ax1.set_ylabel('Counts')
             ax1.yaxis.label.set_size(10)
@@ -461,17 +491,39 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             if debugplot in [-22, -12, 12, 22]:
                 print('Recalibration menu')
                 print('------------------')
+                print('-4) remove all the identified lines')
+                print('-3) restart from begining')
                 print('-2) refit data')
                 print('-1) modify polynomial degree')
                 print(' 0) continue without changes')
                 print(' #) from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default=0,
-                                minval=-2, maxval=len(ixpeaks))
-                if ioption == -2:
-                    for i in range(len(ixpeaks)):
-                        wv_verified_all_peaks[i] = fxpeaks_wv[i] + \
+                                minval=-4, maxval=len(ixpeaks))
+                if ioption == -4:
+                    for i in range(npeaks):
+                        wv_verified_all_peaks[i] = 0
+                elif ioption == -3:
+                    delta_wv_max = ntimes_match_wv * cdelt1
+                    wv_verified_all_peaks = match_wv_arrays(
+                        wv_master,
+                        fxpeaks_wv,
+                        delta_wv_max=delta_wv_max
+                    )
+                elif ioption == -2:
+                    fxpeaks_wv_corrected = np.zeros_like(fxpeaks_wv)
+                    for i in range(npeaks):
+                        fxpeaks_wv_corrected[i] = fxpeaks_wv[i] + \
                             polyres(fxpeaks_wv[i])
+                    delta_wv_max = ntimes_match_wv * cdelt1
+                    wv_verified_all_peaks = match_wv_arrays(
+                        wv_master,
+                        fxpeaks_wv_corrected,
+                        delta_wv_max=delta_wv_max
+                    )
+                    #for i in range(len(ixpeaks)):
+                    #    wv_verified_all_peaks[i] = fxpeaks_wv[i] + \
+                    #        polyres(fxpeaks_wv[i])
                 elif ioption == -1:
                     poldeg_residuals = readi('New polynomial degree')
                 elif ioption == 0:
@@ -479,22 +531,59 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 else:
                     print(wv_master)
                     print(">>> Current expected wavelength: ",
-                          fxpeaks_wv[ioption -1])
+                          fxpeaks_wv[ioption -1] +
+                          polyres(fxpeaks_wv[ioption - 1]))
                     newvalue = readf('New value (0 to delete line)')
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
                 loop = False
 
-    if full:
-        xyrfit = (xresid, yresid, reject)
-        return polyres, ysummary, xyrfit
+    # refined wavelength calibration coefficients
+    if coeff_ini is not None:
+        npoints_total = len(xresid)
+        npoints_removed = sum(reject)
+        npoints_used = npoints_total - npoints_removed
+        if abs(debugplot) >= 10:
+            print('>>> Npoints (total / used / removed)..:',
+                npoints_total, npoints_used, npoints_removed)
+        if interactive:
+            if npoints_used < min_nlines_to_refine:
+                print('Warning: number of lines insuficient to refine '
+                      'wavelength calibration!')
+                copc = 'n'
+            else:
+                copc = readc('Refine wavelength calibration coefficients: '
+                             '(y)es, (n)o', default='y', valid='yn')
+        else:
+            if npoints_used < min_nlines_to_refine:
+                copc = 'n'
+            else:
+                copc = 'y'
+        if copc == 'y':
+            coeff_refined = update_poly_wlcalib(
+                    coeff_ini=coeff_ini,
+                    coeff_residuals=polyres.coef,
+                    naxis1_ini=naxis1_ini,
+                    debugplot=0
+                )
+        else:
+            coeff_refined = np.array(coeff_ini)
     else:
-        return polyres, ysummary
+        coeff_refined = None
+
+    if abs(debugplot) % 10 != 0:
+        if coeff_refined is not None:
+            for idum, fdum in \
+                    enumerate(zip(coeff_ini, coeff_refined)):
+                print(">>> coef#" + str(idum) + ':  ', end='')
+                print("%+.8E  -->  %+.8E" % (decimal.Decimal(fdum[0]),
+                                         decimal.Decimal(fdum[1])))
+
+    return coeff_refined
 
 
-def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis1,
-                        debugplot):
+def update_poly_wlcalib(coeff_ini, coeff_residuals, naxis1_ini, debugplot):
     """Update wavelength calibration polynomial using the residuals fit.
 
     The idea is to repeat the original fit using the information
@@ -509,11 +598,7 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis1,
     coeff_residuals: array like (floats)
         Coefficients corresponding to the fit performed by the
         function check_wlcalib_sp() in this module.
-    xyrfit : tuple of numpy arrays
-        Additional information returned by the function
-        check_wlcalib_sp() providing the data points employed in
-        the fit carried out by that function.
-    naxis1 : int
+    naxis1_ini : int
         NAXIS1 in original spectrum employed to fit the initial
         wavelength calibration.
     debugplot : int
@@ -550,21 +635,10 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, xyrfit, naxis1,
         coeff.append(fdum)
     poly_residuals = np.polynomial.Polynomial(coeff)
 
-    # extract data points employed by check_wlcalib_sp()
-    if len(xyrfit) != 3:
-        raise ValueError('Wrong tuple')
-    xresid = xyrfit[0]
-    reject = xyrfit[2]
-    nresid = len(xresid)
-
-    # if there are no points, return initial polynomial
-    if nresid == 0:
-        return poly_ini.coef
-
     # define new points to be fitted
-    xfit = np.zeros(naxis1)
-    yfit = np.zeros(naxis1)
-    for i in range(naxis1):
+    xfit = np.zeros(naxis1_ini)
+    yfit = np.zeros(naxis1_ini)
+    for i in range(naxis1_ini):
         xfit[i] = float(i + 1)
         wv_tmp = poly_ini(xfit[i])
         yfit[i] = wv_tmp + poly_residuals(wv_tmp)
