@@ -299,7 +299,6 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 # compute residuals
                 xresid = fxpeaks_wv[lines_ok]
                 yresid = wv_verified_all_peaks[lines_ok] - fxpeaks_wv[lines_ok]
-                ysummary = summary(yresid)
 
                 # determine effective polynomial degree
                 if nlines_ok > poldeg_residuals:
@@ -317,6 +316,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                         use_r=use_r,
                         debugplot=0
                     )
+                ysummary = summary(yresres)
             else:
                 polyres = np.polynomial.Polynomial([0.0])
 
@@ -491,26 +491,27 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             if debugplot in [-22, -12, 12, 22]:
                 print('Recalibration menu')
                 print('------------------')
-                print('-4) remove all the identified lines')
-                print('-3) restart from begining')
-                print('-2) refit data')
-                print('-1) modify polynomial degree')
-                print(' 0) continue without changes')
-                print(' #) from 1 to ' + str(len(ixpeaks)) +
+                print('[d] (d)elete all the identified lines')
+                print('[r] (r)estart from begining')
+                print('[w] refit (w)hole data set')
+                print('[p] modify (p)olynomial degree')
+                print('[x] e(x)xit without additional changes')
+                print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
-                ioption = readi('Option', default=0,
-                                minval=-4, maxval=len(ixpeaks))
-                if ioption == -4:
+                ioption = readi('Option', default='x',
+                                minval=1, maxval=len(ixpeaks),
+                                allowed_single_chars='dprwx')
+                if ioption == 'd':
                     for i in range(npeaks):
                         wv_verified_all_peaks[i] = 0
-                elif ioption == -3:
+                elif ioption == 'r':
                     delta_wv_max = ntimes_match_wv * cdelt1
                     wv_verified_all_peaks = match_wv_arrays(
                         wv_master,
                         fxpeaks_wv,
                         delta_wv_max=delta_wv_max
                     )
-                elif ioption == -2:
+                elif ioption == 'w':
                     fxpeaks_wv_corrected = np.zeros_like(fxpeaks_wv)
                     for i in range(npeaks):
                         fxpeaks_wv_corrected[i] = fxpeaks_wv[i] + \
@@ -521,19 +522,23 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                         fxpeaks_wv_corrected,
                         delta_wv_max=delta_wv_max
                     )
-                    #for i in range(len(ixpeaks)):
-                    #    wv_verified_all_peaks[i] = fxpeaks_wv[i] + \
-                    #        polyres(fxpeaks_wv[i])
-                elif ioption == -1:
-                    poldeg_residuals = readi('New polynomial degree')
-                elif ioption == 0:
+                elif ioption == 'p':
+                    poldeg_residuals = readi('New polynomial degree',
+                                             minval=0)
+                elif ioption == 'x':
                     loop = False
                 else:
                     print(wv_master)
-                    print(">>> Current expected wavelength: ",
-                          fxpeaks_wv[ioption -1] +
-                          polyres(fxpeaks_wv[ioption - 1]))
-                    newvalue = readf('New value (0 to delete line)')
+                    expected_value = fxpeaks_wv[ioption -1] + \
+                                     polyres(fxpeaks_wv[ioption - 1])
+                    print(">>> Current expected wavelength: ", expected_value)
+                    delta_wv_max = ntimes_match_wv * cdelt1
+                    close_value = match_wv_arrays(
+                        wv_master,
+                        np.array([expected_value]),
+                        delta_wv_max=delta_wv_max)
+                    newvalue = readf('New value (0 to delete line)',
+                                     default=close_value[0])
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
