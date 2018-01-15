@@ -152,7 +152,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      ntimes_match_wv=2,
                      poldeg_residuals=1,
                      times_sigma_reject=5,
-                     use_r=True,
+                     use_r=False,
                      title=None,
                      remove_null_borders=True,
                      geometry=None,
@@ -488,7 +488,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 pause_debugplot(debugplot=debugplot, pltshow=True)
 
             # display results and request next action
-            if debugplot in [-22, -12, 12, 22]:
+            if interactive:
                 print('Recalibration menu')
                 print('------------------')
                 print('[d] (d)elete all the identified lines')
@@ -541,7 +541,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                                      default=close_value[0])
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
-                pause_debugplot(debugplot=debugplot, pltshow=True)
+                #pause_debugplot(debugplot=debugplot, pltshow=True)
                 loop = False
 
     # refined wavelength calibration coefficients
@@ -552,17 +552,14 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         if abs(debugplot) >= 10:
             print('>>> Npoints (total / used / removed)..:',
                 npoints_total, npoints_used, npoints_removed)
-        if interactive:
-            if npoints_used < min_nlines_to_refine:
-                print('Warning: number of lines insuficient to refine '
-                      'wavelength calibration!')
-                copc = 'n'
-            else:
+        if npoints_used < min_nlines_to_refine:
+            print('Warning: number of lines insuficient to refine '
+                  'wavelength calibration!')
+            copc = 'n'
+        else:
+            if interactive:
                 copc = readc('Refine wavelength calibration coefficients: '
                              '(y)es, (n)o', default='y', valid='yn')
-        else:
-            if npoints_used < min_nlines_to_refine:
-                copc = 'n'
             else:
                 copc = 'y'
         if copc == 'y':
@@ -666,7 +663,8 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, naxis1_ini, debugplot):
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='check_wlcalib')
+    parser = argparse.ArgumentParser()
+
     # positional parameters
     parser.add_argument("filename",
                         help="FITS image containing the spectra",
@@ -676,6 +674,15 @@ def main(args=None):
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths",
                         type=argparse.FileType('r'))
+
+    # optional arguments
+    parser.add_argument("--interactive",
+                        help="Ask the user for confirmation before updating "
+                             "the wavelength calibration polynomial",
+                        action="store_true")
+    parser.add_argument("--threshold",
+                        help="Minimum signal in the line peaks (default=0)",
+                        default=0, type=float)
     parser.add_argument("--nwinwidth_initial",
                         help="Window width where each peak must be found "
                              "(default=7)",
@@ -684,6 +691,25 @@ def main(args=None):
                         help="Window width where each peak must be refined "
                              "(default=5)",
                         type=int, default=5)
+    parser.add_argument("--ntimes_match_wv",
+                        help="Times CDELT1 to match measured and expected "
+                             "wavelengths (default 2)",
+                        default=2, type=float)
+    parser.add_argument("--poldeg_residuals",
+                        help="Polynomial degree for fit to residuals "
+                             "(default 1)",
+                        default=1, type=int)
+    parser.add_argument("--times_sigma_reject",
+                        help="Times the standard deviation to reject points "
+                             "iteratively in the fit to residuals ("
+                             "default=5)",
+                        default=5, type=float)
+    parser.add_argument("--use_r",
+                        help="Perform additional statistical analysis with R",
+                        action="store_true")
+    parser.add_argument("--remove_null_borders",
+                        help="Remove leading and trailing zeros in spectrum",
+                        action="store_true")
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy",
                         default="0,0,640,480")
@@ -764,9 +790,16 @@ def main(args=None):
                      crval1=crval1,
                      cdelt1=cdelt1,
                      wv_master=wv_master,
+                     interactive=args.interactive,
+                     threshold=args.threshold,
                      nwinwidth_initial=args.nwinwidth_initial,
                      nwinwidth_refined=args.nwinwidth_refined,
+                     ntimes_match_wv=args.ntimes_match_wv,
+                     poldeg_residuals=args.poldeg_residuals,
+                     times_sigma_reject=args.times_sigma_reject,
+                     use_r=args.use_r,
                      title=title,
+                     remove_null_borders=args.remove_null_borders,
                      geometry=geometry,
                      debugplot=args.debugplot)
 
