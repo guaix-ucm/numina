@@ -24,6 +24,8 @@ def readc(prompt, default=None, valid=None):
 
     """
 
+    cresult = None  # Avoid PyCharm warning
+
     # main loop
     loop = True
     while loop:
@@ -55,19 +57,22 @@ def readc(prompt, default=None, valid=None):
     return cresult
 
 
-def readi(prompt, default=None, minval=None, maxval=None):
+def readi(prompt, default=None, minval=None, maxval=None,
+          allowed_single_chars=None):
     """Return integer value read from keyboard
 
     Parameters
     ----------
     prompt : str
         Prompt string.
-    default : integer or None
+    default : integer, str or None
         Default value.
     minval :  integer or None
         Mininum allowed value.
     maxval :  integer or None
         Maximum allowed value.
+    allowed_single_chars : str
+        String containing allowed valid characters.
 
     Returns
     -------
@@ -80,10 +85,12 @@ def readi(prompt, default=None, minval=None, maxval=None):
                       prompt=prompt,
                       default=default,
                       minval=minval,
-                      maxval=maxval)
+                      maxval=maxval,
+                      allowed_single_chars=allowed_single_chars)
 
 
-def readf(prompt, default=None, minval=None, maxval=None):
+def readf(prompt, default=None, minval=None, maxval=None,
+          allowed_single_chars=None):
     """Return integer value read from keyboard
 
     Parameters
@@ -96,6 +103,8 @@ def readf(prompt, default=None, minval=None, maxval=None):
         Mininum allowed value.
     maxval :  float or None
         Maximum allowed value.
+    allowed_single_chars : str
+        String containing allowed valid characters.
 
     Returns
     -------
@@ -108,10 +117,12 @@ def readf(prompt, default=None, minval=None, maxval=None):
                       prompt=prompt,
                       default=default,
                       minval=minval,
-                      maxval=maxval)
+                      maxval=maxval,
+                      allowed_single_chars=allowed_single_chars)
 
 
-def read_value(ftype, prompt, default=None, minval=None, maxval=None):
+def read_value(ftype, prompt, default=None, minval=None, maxval=None,
+               allowed_single_chars=None):
     """Return value read from keyboard
 
     Parameters
@@ -121,16 +132,18 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None):
     prompt : str
         Prompt string.
     default : int or None
-        Default value
+        Default value.
     minval : int or None
-        Mininum allowed value
+        Mininum allowed value.
     maxval : int or None
-        Maximum allowed value
+        Maximum allowed value.
+    allowed_single_chars : str
+        String containing allowed valid characters.
 
     Returns
     -------
-    result : integer or float
-        Integer value
+    result : integer, float or str
+        Integer, float of single character.
 
     """
 
@@ -180,7 +193,14 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None):
         # read user's input
         cresult = sys.stdin.readline().strip()
         if cresult == '' and default is not None:
-            cresult = default
+            cresult = str(default)
+
+        # if valid allowed single character, return character
+        if len(cresult) == 1:
+            if allowed_single_chars is not None:
+                if cresult in allowed_single_chars:
+                    return cresult
+
 
         # convert to integer
         try:
