@@ -541,7 +541,6 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                                      default=close_value[0])
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
-                #pause_debugplot(debugplot=debugplot, pltshow=True)
                 loop = False
 
     # refined wavelength calibration coefficients

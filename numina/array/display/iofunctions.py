@@ -4,7 +4,7 @@ from __future__ import print_function
 import sys
 
 
-def readc(prompt, default=None, valid=None):
+def readc(prompt, default=None, valid=None, question_mark=True):
     """Return a single character read from keyboard
 
     Parameters
@@ -16,6 +16,8 @@ def readc(prompt, default=None, valid=None):
     valid : str
         String providing valid characters. If None, all characters are
         valid (default).
+    question_mark : bool
+        If True, display question mark after prompt.
 
     Returns
     -------
@@ -26,15 +28,22 @@ def readc(prompt, default=None, valid=None):
 
     cresult = None  # Avoid PyCharm warning
 
+    # question mark
+    if question_mark:
+        cquestion_mark = ' ? '
+    else:
+        cquestion_mark = ''
+
     # main loop
     loop = True
     while loop:
 
         # display prompt
         if default is None:
-            sys.stdout.write(prompt + ' ? ')
+            sys.stdout.write(prompt + cquestion_mark)
         else:
-            sys.stdout.write(prompt + ' [' + str(default) + '] ? ')
+            sys.stdout.write(prompt + ' [' + str(default) + ']' +
+                             cquestion_mark)
 
         # read user's input
         cresult = sys.stdin.readline().strip()
@@ -58,7 +67,7 @@ def readc(prompt, default=None, valid=None):
 
 
 def readi(prompt, default=None, minval=None, maxval=None,
-          allowed_single_chars=None):
+          allowed_single_chars=None, question_mark=True):
     """Return integer value read from keyboard
 
     Parameters
@@ -73,6 +82,8 @@ def readi(prompt, default=None, minval=None, maxval=None,
         Maximum allowed value.
     allowed_single_chars : str
         String containing allowed valid characters.
+    question_mark : bool
+        If True, display question mark after prompt.
 
     Returns
     -------
@@ -90,7 +101,7 @@ def readi(prompt, default=None, minval=None, maxval=None,
 
 
 def readf(prompt, default=None, minval=None, maxval=None,
-          allowed_single_chars=None):
+          allowed_single_chars=None, question_mark=True):
     """Return integer value read from keyboard
 
     Parameters
@@ -105,6 +116,8 @@ def readf(prompt, default=None, minval=None, maxval=None,
         Maximum allowed value.
     allowed_single_chars : str
         String containing allowed valid characters.
+    question_mark : bool
+        If True, display question mark after prompt.
 
     Returns
     -------
@@ -122,7 +135,7 @@ def readf(prompt, default=None, minval=None, maxval=None,
 
 
 def read_value(ftype, prompt, default=None, minval=None, maxval=None,
-               allowed_single_chars=None):
+               allowed_single_chars=None, question_mark=True):
     """Return value read from keyboard
 
     Parameters
@@ -139,6 +152,8 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
         Maximum allowed value.
     allowed_single_chars : str
         String containing allowed valid characters.
+    question_mark : bool
+        If True, display question mark after prompt.
 
     Returns
     -------
@@ -149,6 +164,12 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
 
     # avoid PyCharm warning 'might be referenced before assignment'
     result = None
+
+    # question mark
+    if question_mark:
+        cquestion_mark = ' ? '
+    else:
+        cquestion_mark = ''
 
     # check minimum value
     if minval is not None:
@@ -186,9 +207,10 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
 
         # display prompt
         if default is None:
-            sys.stdout.write(prompt + cminmax + ' ? ')
+            sys.stdout.write(prompt + cminmax + cquestion_mark)
         else:
-            sys.stdout.write(prompt + cminmax + ' [' + str(default) + '] ? ')
+            sys.stdout.write(prompt + cminmax + ' [' + str(default) + ']' +
+                             cquestion_mark)
 
         # read user's input
         cresult = sys.stdin.readline().strip()
