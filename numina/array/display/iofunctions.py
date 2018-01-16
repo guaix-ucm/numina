@@ -40,10 +40,11 @@ def readc(prompt, default=None, valid=None, question_mark=True):
 
         # display prompt
         if default is None:
-            sys.stdout.write(prompt + cquestion_mark)
+            print(prompt + cquestion_mark, end='')
+            sys.stdout.flush()
         else:
-            sys.stdout.write(prompt + ' [' + str(default) + ']' +
-                             cquestion_mark)
+            print(prompt + ' [' + str(default) + ']' + cquestion_mark, end='')
+            sys.stdout.flush()
 
         # read user's input
         cresult = sys.stdin.readline().strip()
@@ -97,7 +98,8 @@ def readi(prompt, default=None, minval=None, maxval=None,
                       default=default,
                       minval=minval,
                       maxval=maxval,
-                      allowed_single_chars=allowed_single_chars)
+                      allowed_single_chars=allowed_single_chars,
+                      question_mark=question_mark)
 
 
 def readf(prompt, default=None, minval=None, maxval=None,
@@ -131,7 +133,8 @@ def readf(prompt, default=None, minval=None, maxval=None,
                       default=default,
                       minval=minval,
                       maxval=maxval,
-                      allowed_single_chars=allowed_single_chars)
+                      allowed_single_chars=allowed_single_chars,
+                      question_mark=question_mark)
 
 
 def read_value(ftype, prompt, default=None, minval=None, maxval=None,
@@ -175,7 +178,7 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
     if minval is not None:
         try:
             iminval = ftype(minval)
-        except:
+        except ValueError:
             raise ValueError("'" + str(minval) + "' cannot " +
                              "be used as an minval in readi()")
     else:
@@ -185,7 +188,7 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
     if maxval is not None:
         try:
             imaxval = ftype(maxval)
-        except:
+        except ValueError:
             raise ValueError("'" + str(maxval) + "' cannot " +
                              "be used as an maxval in readi()")
     else:
@@ -207,10 +210,12 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
 
         # display prompt
         if default is None:
-            sys.stdout.write(prompt + cminmax + cquestion_mark)
+            print(prompt + cminmax + cquestion_mark, end='')
+            sys.stdout.flush()
         else:
-            sys.stdout.write(prompt + cminmax + ' [' + str(default) + ']' +
-                             cquestion_mark)
+            print(prompt + cminmax + ' [' + str(default) + ']' +
+                  cquestion_mark, end='')
+            sys.stdout.flush()
 
         # read user's input
         cresult = sys.stdin.readline().strip()
@@ -223,10 +228,12 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
                 if cresult in allowed_single_chars:
                     return cresult
 
-
-        # convert to integer
+        # convert to ftype value
         try:
             result = ftype(cresult)
+        except ValueError:
+            print("*** Error: invalid " + str(ftype) + " value. Try again!")
+        else:
             # check number is within expected range
             if minval is None and maxval is None:
                 loop = False
@@ -245,8 +252,6 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
                     loop = False
                 else:
                     print("*** Error: number out of range. Try again!")
-        except:
-            print("*** Error: invalid value. Try again!")
 
     return result
 
