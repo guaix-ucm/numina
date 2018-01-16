@@ -20,7 +20,7 @@
 from __future__ import division
 from __future__ import print_function
 
-from matplotlib_qt import plt
+from .matplotlib_qt import plt
 
 DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12,
                    -21, 21, -22, 22)
