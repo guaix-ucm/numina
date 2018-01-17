@@ -1595,6 +1595,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                           threshold=0,
                           plottitle=None,
                           decimal_places=4,
+                          ylogscale=False,
                           geometry=None,
                           debugplot=0):
     """Refine wavelength calibration using an initial polynomial.
@@ -1633,6 +1634,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     decimal_places : int
         Number of decimal places to be employed when displaying relevant
         fitted parameters.
+    ylogscale : bool
+        If True, the spectrum is displayed in logarithmic units. Note
+        that this is only employed for display purposes. The line peaks
+        are found in the original spectrum.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -1780,6 +1785,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 mngr = plt.get_current_fig_manager()
                 mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
 
+            grid = plt.GridSpec(2, 1)
+            grid.update(left=0.05, right=0.98,
+                        bottom=0.10, top=0.95, hspace=0.01)
+
             # differences between linear fit and fitted polynomial
             # polynomial fit
             xpol = np.arange(1, naxis1 + 1)
@@ -1790,21 +1799,21 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                          cdelt1_linear)
 
             # upper plot
-            ax1 = fig.add_subplot(2, 1, 1)
+            ax1 = fig.add_subplot(grid[0, 0])
             if nlines_ok > 0:
                 ymin = min(ypol)
                 ymax = max(ypol)
                 dy = ymax - ymin
                 if dy > 0:
-                    ymin -= dy/20
-                    ymax += dy/20
+                    ymin -= dy/50
+                    ymax += dy/50
                 else:
                     ymin -= 0.5
                     ymax += 0.5
             else:
                 ymin = -1.0
                 ymax = 1.0
-            ax1.set_xlim([1 - 0.05 * naxis1, naxis1 * 1.05])
+            ax1.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
             ax1.set_ylim([ymin, ymax])
             if nlines_ok > 0:
                 ax1.plot(xdum, yp, 'go', label='identified')
@@ -1812,7 +1821,6 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                     ax1.plot(xdum[reject], yp[reject], 'o',
                              color='tab:gray', label='ignored')
                 ax1.plot(xpol, ypol, 'c-', label='fit')
-            ax1.set_xlabel('pixel position (from 1 to NAXIS1)')
             ax1.set_ylabel('polynomial - linear fit ' + r'($\AA$)')
             ax1.text(0, 1, 'CRVAL1 (' + r'$\AA$' + '):' +
                      str(round(crval1_linear, decimal_places)),
@@ -1846,32 +1854,41 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ax1.legend(numpoints=1)
 
             # lower plot
-            ax2 = fig.add_subplot(2, 1, 2, sharex=ax1)
-            ymin = sp.min()
-            ymax = sp.max()
+            if ylogscale:
+                spectrum = sp - sp.min() + 1.0
+                spectrum = np.log10(spectrum)
+            else:
+                spectrum = sp.copy()
+            ax2 = fig.add_subplot(grid[1, 0], sharex=ax1)
+            ax2.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
+            ymin = spectrum.min()
+            ymax = spectrum.max()
             dy = ymax - ymin
             ymin -= dy / 20.
             ymax += dy / 20.
             ax2.set_ylim([ymin, ymax])
-            ax2.plot(xpol, sp, '-')
+            ax2.plot(xpol, spectrum, '-')
             ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
-            ax2.set_ylabel('number of counts')
+            if ylogscale:
+                ax2.set_ylabel('~ log10(number of counts)')
+            else:
+                ax2.set_ylabel('number of counts')
             # mark peak location
-            ax2.plot(ixpeaks + 1, sp[ixpeaks], 'bo',
+            ax2.plot(ixpeaks + 1, spectrum[ixpeaks], 'bo',
                      label="initial location")
-            ax2.plot(fxpeaks + 1, sp[ixpeaks], 'go',
+            ax2.plot(fxpeaks + 1, spectrum[ixpeaks], 'go',
                      label="refined location")
-            ax2.plot((fxpeaks + 1)[lines_ok], sp[ixpeaks][lines_ok], 'mo',
-                     label="identified lines")
+            ax2.plot((fxpeaks + 1)[lines_ok], spectrum[ixpeaks][lines_ok],
+                     'mo', label="identified lines")
             for i in range(len(ixpeaks)):
                 if wv_verified_all_peaks[i] > 0:
-                    ax2.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
+                    ax2.text(fxpeaks[i] + 1.0, spectrum[ixpeaks[i]],
                              str(wv_verified_all_peaks[i]) +
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
                 else:
-                    ax2.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
+                    ax2.text(fxpeaks[i] + 1.0, spectrum[ixpeaks[i]],
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
@@ -1883,10 +1900,12 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                     debugplot=local_debugplot,
                     optional_prompt='Zoom/Unzoom or ' +
                                     'press RETURN to continue...',
+                    tight_layout=False,
                     pltshow=True
                 )
             else:
-                pause_debugplot(debugplot=local_debugplot, pltshow=True)
+                pause_debugplot(debugplot=local_debugplot,
+                                tight_layout=False, pltshow=True)
 
             # request next action in interactive session
             if interactive:
