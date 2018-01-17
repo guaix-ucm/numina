@@ -493,17 +493,16 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 print('------------------')
                 print('[d] (d)elete all the identified lines')
                 print('[r] (r)estart from begining')
-                print('[w] refit (w)hole data set')
+                print('[a] (a)utomatic line inclusion')
                 print('[p] modify (p)olynomial degree')
                 print('[x] e(x)xit without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='dprwx')
+                                allowed_single_chars='adprx')
                 if ioption == 'd':
-                    for i in range(npeaks):
-                        wv_verified_all_peaks[i] = 0
+                    wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
                     delta_wv_max = ntimes_match_wv * cdelt1
                     wv_verified_all_peaks = match_wv_arrays(
@@ -511,7 +510,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                         fxpeaks_wv,
                         delta_wv_max=delta_wv_max
                     )
-                elif ioption == 'w':
+                elif ioption == 'a':
                     fxpeaks_wv_corrected = np.zeros_like(fxpeaks_wv)
                     for i in range(npeaks):
                         fxpeaks_wv_corrected[i] = fxpeaks_wv[i] + \
@@ -529,7 +528,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     loop = False
                 else:
                     print(wv_master)
-                    expected_value = fxpeaks_wv[ioption -1] + \
+                    expected_value = fxpeaks_wv[ioption - 1] + \
                                      polyres(fxpeaks_wv[ioption - 1])
                     print(">>> Current expected wavelength: ", expected_value)
                     delta_wv_max = ntimes_match_wv * cdelt1

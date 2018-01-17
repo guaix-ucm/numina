@@ -27,11 +27,13 @@ import numpy as np
 from numpy.polynomial import Polynomial
 import scipy.misc
 
+from ..display.iofunctions import readi
+from ..display.iofunctions import readf
 from ..display.pause_debugplot import pause_debugplot
-from ..robustfit import fit_theil_sen
-from ..display.ximplotxy import ximplotxy
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
+from ..robustfit import fit_theil_sen
+from ..stats import summary
 from ..stats import robust_std
 from .solutionarc import CrLinear, WavecalFeature, SolutionArcCalibration
 from .peaks_spectrum import find_peaks_spectrum
@@ -422,7 +424,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
         ax.set_xlabel('distance ratio in each triplet')
         ax.set_ylabel('Number of triplets')
         ax.set_title("Number of lines/triplets: " +
-                 str(nlines_master) + "/" + str(ntriplets_master))
+                     str(nlines_master) + "/" + str(ntriplets_master))
         # window geometry
         if geometry is not None:
             x_geom, y_geom, dx_geom, dy_geom = geometry
@@ -516,8 +518,8 @@ def arccalibration(wv_master,
     """
 
     ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-      gen_triplets_master(wv_master=wv_master,
-                          geometry=geometry, debugplot=debugplot)
+        gen_triplets_master(wv_master=wv_master, geometry=geometry,
+                            debugplot=debugplot)
 
     list_of_wvfeatures = arccalibration_direct(
         wv_master=wv_master,
@@ -709,8 +711,8 @@ def arccalibration_direct(wv_master,
                 error_crval1_temp = \
                     cdelt1_temp*error_xpos_arc * \
                     np.sqrt(1+2*((xpos_arc[i2]-crpix1)**2)/(dist13**2))
-                error_cdelt1_temp = np.sqrt(2)*cdelt1_temp * \
-                                    error_xpos_arc/dist13
+                error_cdelt1_temp = \
+                    np.sqrt(2)*cdelt1_temp * error_xpos_arc/dist13
                 # Store values and errors
                 crval1_search = np.append(crval1_search, [crval1_temp])
                 cdelt1_search = np.append(cdelt1_search, [cdelt1_temp])
@@ -980,7 +982,7 @@ def arccalibration_direct(wv_master,
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         ax.set_title("Potential solutions within the valid parameter space\n" +
-                 "[symbol size proportional to 1/(cost function)]")
+                     "[symbol size proportional to 1/(cost function)]")
         # window geometry
         if geometry is not None:
             x_geom, y_geom, dx_geom, dy_geom = geometry
@@ -1005,7 +1007,7 @@ def arccalibration_direct(wv_master,
         ax.set_ylim([ymin, ymax])
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         ax.set_title("Potential solutions: arc line triplet number\n" +
-                 "[symbol size proportional to 1/(cost function)]")
+                     "[symbol size proportional to 1/(cost function)]")
         # window geometry
         if geometry is not None:
             x_geom, y_geom, dx_geom, dy_geom = geometry
@@ -1585,11 +1587,14 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
 
 
 def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
-                          npix=2,
+                          ntimes_match_wv=2,
                           nwinwidth_initial=7,
                           nwinwidth_refined=5,
                           times_sigma_reject=5,
+                          interactive=False,
+                          threshold=0,
                           plottitle=None,
+                          decimal_places=4,
                           geometry=None,
                           debugplot=0):
     """Refine wavelength calibration using an initial polynomial.
@@ -1608,7 +1613,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         Polynomial degree of refined wavelength calibration. Note
         that this degree can be different from the polynomial degree
         of poly_initial.
-    npix : int
+    ntimes_match_wv : int
         Number of pixels around each line peak where the expected
         wavelength must match the tabulated wavelength in the master
         list.
@@ -1618,8 +1623,16 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         Window width to refine line peak location.
     times_sigma_reject : float
         Times sigma to reject points in the fit.
+    interactive : bool
+        If True, the function allows the user to modify the fit
+        interactively.
+    threshold : float
+        Minimum signal in the peaks.
     plottitle : string or None
         Plot title.
+    decimal_places : int
+        Number of decimal places to be employed when displaying relevant
+        fitted parameters.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -1629,27 +1642,45 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     Returns
     -------
     poly_refined : Polynomial instance
-        Refined wavelength calibration polynomial or None (when the
-        fit cannot be obtained).
-    npoints_eff : int
-        Effective number of points employed in the fit.
-    residual_std : float
-        Residual standard deviation of the fit or None (when the fit
-        cannot be obtained).
+        Refined wavelength calibration polynomial.
 
     """
 
-    poly_refined = None
-    npoints_eff = 0
-    residual_std = None
+    # check that the requested polynomial degree is equal or larger than
+    # the degree of the initial polynomial
+    if poldeg < len(poly_initial.coef) - 1:
+        raise ValueError("Polynomial degree of refined polynomial must be "
+                         "equal or larger than that of the initial polynomial")
+
+    # check that interactive use takes place when plotting
+    if interactive:
+        if abs(debugplot) % 10 != 0:
+            local_debugplot = debugplot
+        else:
+            local_debugplot = -12
+    else:
+        local_debugplot = debugplot
 
     # spectrum length
     naxis1 = sp.shape[0]
 
-    # find initial line peaks
-    ixpeaks = find_peaks_spectrum(sp, nwinwidth=nwinwidth_initial)
+    # define default values in case no useful lines are identified
+    fxpeaks = np.array([])
+    poly_refined = np.polynomial.Polynomial([0.0])
+    poldeg_effective = len(poly_refined.coef) - 1
 
-    if len(ixpeaks) > poldeg:
+    # computer linear values from initial polynomial
+    crmin1_linear = poly_initial(1)
+    crmax1_linear = poly_initial(naxis1)
+    cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
+
+    # find initial line peaks
+    ixpeaks = find_peaks_spectrum(sp,
+                                  nwinwidth=nwinwidth_initial,
+                                  threshold=threshold)
+    npeaks = len(ixpeaks)
+
+    if npeaks > 0:
 
         # refine line peak locations
         fxpeaks, sxpeaks = refine_peaks_spectrum(
@@ -1663,50 +1694,60 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
         # assign individual arc lines from master list to spectrum
         # line peaks when the expected wavelength is within the maximum
-        # allowed range (+/- npix around the peak)
-        crpix1_linear = 1.0
-        crval1_linear = poly_initial(crpix1_linear)
-        crmin1_linear = poly_initial(1)
-        crmax1_linear = poly_initial(naxis1)
-        cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
-        delta_wv_max = npix * cdelt1_linear
-
-        # iteration #1: find overall offset
-        wv_verified_all_peaks = match_wv_arrays(
-            wv_master,
-            wv_expected_all_peaks,
-            delta_wv_max=delta_wv_max
-        )
-        lines_ok = np.where(wv_verified_all_peaks > 0)
-        wv_offsets_all_peaks = wv_verified_all_peaks - wv_expected_all_peaks
-        overall_offset = np.median(wv_offsets_all_peaks[lines_ok])
-
-        # iteration #2: use previous overall offset
-        wv_expected_all_peaks += overall_offset
+        # allowed range (+/- ntimes_match_wv * CDELT1 around the peak)
+        delta_wv_max = ntimes_match_wv * cdelt1_linear
         wv_verified_all_peaks = match_wv_arrays(
             wv_master,
             wv_expected_all_peaks,
             delta_wv_max=delta_wv_max
         )
 
-        # fit with sigma rejection
-        lines_ok = np.where(wv_verified_all_peaks > 0)
-        xdum = (fxpeaks + 1.0)[lines_ok]
-        ydum = wv_verified_all_peaks[lines_ok]
-        poly_refined, yres, reject = polfit_residuals_with_sigma_rejection(
-            x=xdum,
-            y=ydum,
-            deg=poldeg,
-            times_sigma_reject=times_sigma_reject,
-            debugplot=debugplot
-        )
+    loop = True
 
-        # effective number of points
-        npoints_eff = np.sum(np.logical_not(reject))
+    while loop:
 
-        # residual standard deviation
-        sum_res2 = np.sum(yres[np.logical_not(reject)] ** 2)
-        residual_std = np.sqrt(sum_res2 / (npoints_eff - poldeg - 1))
+        nlines_ok = 0
+        xdum = np.array([])
+        ydum = np.array([])
+        reject = np.array([])
+
+        if npeaks > 0:
+
+            # fit with sigma rejection
+            lines_ok = np.where(wv_verified_all_peaks > 0)
+            nlines_ok = len(lines_ok[0])
+
+            # there are matched lines
+            if nlines_ok > 0:
+                # select points to be fitted
+                xdum = (fxpeaks + 1.0)[lines_ok]
+                ydum = wv_verified_all_peaks[lines_ok]
+
+                # determine effective polynomial degree
+                if nlines_ok > poldeg:
+                    poldeg_effective = poldeg
+                else:
+                    poldeg_effective = nlines_ok - 1
+
+                # fit polynomial
+                poly_refined, yres, reject = \
+                    polfit_residuals_with_sigma_rejection(
+                        x=xdum,
+                        y=ydum,
+                        deg=poldeg_effective,
+                        times_sigma_reject=times_sigma_reject,
+                        debugplot=0
+                    )
+
+                # effective number of points
+                yres_summary = summary(yres[np.logical_not(reject)])
+
+            else:
+                poly_refined = np.polynomial.Polynomial([0.0])
+                yres_summary = summary(np.array([]))
+
+        # update poldeg_effective
+        poldeg_effective = len(poly_refined.coef) - 1
 
         # update linear values
         crpix1_linear = 1.0
@@ -1715,116 +1756,198 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         crmax1_linear = poly_refined(naxis1)
         cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
 
-        if abs(debugplot) >= 10:
+        if abs(local_debugplot) >= 10:
             print(79 * '=')
-            print(">>> Residual std.......:", residual_std)
-            print(">>> npoints_eff........:", npoints_eff)
-            print(">>> Fitted coefficients:\n", poly_refined.coef)
-            print(">>> CRVAL1 linear scale:", crval1_linear)
-            print(">>> CDELT1 linear scale:", cdelt1_linear)
+            print(">>> poldeg (requested, effective)..:",
+                  poldeg, poldeg_effective)
+            print(">>> Fitted coefficients............:\n", poly_refined.coef)
+            print(">>> NAXIS1.........................:", naxis1)
+            print(">>> CRVAL1 linear scale............:", crval1_linear)
+            print(">>> CDELT1 linear scale............:", cdelt1_linear)
+            print(79 * '.')
+            print(">>> Number of peaks................:", npeaks)
+            print(">>> nlines identified (total, used): ",
+                  nlines_ok, yres_summary['npoints'])
+            print(">>> robust_std.....................:",
+                  yres_summary['robust_std'])
             print(79 * '-')
 
-        # display spectrum and peaks
-        if abs(debugplot) % 10 != 0:
-            # polynomial fit
-            xpol = np.arange(1, naxis1 + 1)
-            ypol = poly_refined(xpol) - \
-                   (crval1_linear + (xpol - crpix1_linear) * cdelt1_linear)
-            # identified lines
-            yp = ydum - (crval1_linear + (xdum - crpix1_linear) *
-                         cdelt1_linear)
-            # plots
+        if abs(local_debugplot) % 10 != 0:
             from numina.array.display.matplotlib_qt import plt
             fig = plt.figure()
-            # residuals
-            ax2 = fig.add_subplot(2, 1, 2)
-            ax2.set_xlim([1 - 0.05 * naxis1, naxis1 * 1.05])
-            ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
-            ax2.set_ylabel('residuals (Angstrom)')
-            ax2.plot(xdum, yres, 'go')
-            for xx, yyres, rreject in zip(xdum, yres, reject):
-                if rreject:
-                    ax2.plot(xx, yyres, marker='x', markersize=15, c='red')
-            ax2.axhline(y=0.0, color='black', linestyle='dashed')
-            # differences between linear fit and fitted polynomial
-            ax = fig.add_subplot(2, 1, 1, sharex=ax2)
-            ax.set_xlim([1 - 0.05 * naxis1, naxis1 * 1.05])
-            ax.set_ylabel('differences with\nlinear solution (Angstrom)')
-            ax.plot(xdum, yp, 'go', label='identified')
-            ax.plot(xpol, ypol, 'c-', label='fit')
-            if plottitle is None:
-                titleeff = 'Refined wavelength calibration'
-            else:
-                titleeff = plottitle
-            ax.set_title(titleeff)
-            # legend
-            ax.legend(numpoints=1)
-            # include important parameters in plot
-            ax.text(0.50, 0.25, "poldeg: " + str(poldeg) +
-                    ", nfit: " + str(len(xdum)),
-                    fontsize=12,
-                    transform=ax.transAxes,
-                    horizontalalignment="center",
-                    verticalalignment="bottom")
-            ax.text(0.50, 0.15, "CRVAL1: " + str(round(crval1_linear, 4)),
-                    fontsize=12,
-                    transform=ax.transAxes,
-                    horizontalalignment="center",
-                    verticalalignment="bottom")
-            ax.text(0.50, 0.05, "CDELT1: " + str(round(cdelt1_linear, 4)),
-                    fontsize=12,
-                    transform=ax.transAxes,
-                    horizontalalignment="center",
-                    verticalalignment="bottom")
-            ax2.text(0.50, 0.05, "r.m.s.: " + str(round(residual_std, 4)),
-                     fontsize=12,
-                     transform=ax2.transAxes,
-                     horizontalalignment="center",
-                     verticalalignment="bottom")
-            # window geometry
             if geometry is not None:
                 x_geom, y_geom, dx_geom, dy_geom = geometry
                 mngr = plt.get_current_fig_manager()
                 mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
-            # show plot
-            pause_debugplot(debugplot, pltshow=True)
-            #
-            ax = ximplotxy(xpol, sp,
-                           xlabel='pixel (from 1 to NAXIS1)',
-                           ylabel='number of counts',
-                           title=titleeff,
-                           show=False, debugplot=debugplot)
-            if plottitle is None:
-                titleeff = 'Refined wavelength calibration'
+
+            # differences between linear fit and fitted polynomial
+            # polynomial fit
+            xpol = np.arange(1, naxis1 + 1)
+            ylinear = crval1_linear + (xpol - crpix1_linear) * cdelt1_linear
+            ypol = poly_refined(xpol) - ylinear
+            # identified lines
+            yp = ydum - (crval1_linear + (xdum - crpix1_linear) *
+                         cdelt1_linear)
+
+            # upper plot
+            ax1 = fig.add_subplot(2, 1, 1)
+            if nlines_ok > 0:
+                ymin = min(ypol)
+                ymax = max(ypol)
+                dy = ymax - ymin
+                if dy > 0:
+                    ymin -= dy/20
+                    ymax += dy/20
+                else:
+                    ymin -= 0.5
+                    ymax += 0.5
             else:
-                titleeff = plottitle
-            ax.set_title(titleeff)
+                ymin = -1.0
+                ymax = 1.0
+            ax1.set_xlim([1 - 0.05 * naxis1, naxis1 * 1.05])
+            ax1.set_ylim([ymin, ymax])
+            if nlines_ok > 0:
+                ax1.plot(xdum, yp, 'go', label='identified')
+                if sum(reject) > 0:
+                    ax1.plot(xdum[reject], yp[reject], 'o',
+                             color='tab:gray', label='ignored')
+                ax1.plot(xpol, ypol, 'c-', label='fit')
+            ax1.set_xlabel('pixel position (from 1 to NAXIS1)')
+            ax1.set_ylabel('polynomial - linear fit ' + r'($\AA$)')
+            ax1.text(0, 1, 'CRVAL1 (' + r'$\AA$' + '):' +
+                     str(round(crval1_linear, decimal_places)),
+                     horizontalalignment='left',
+                     verticalalignment='top',
+                     transform=ax1.transAxes)
+            ax1.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel):' +
+                     str(round(cdelt1_linear, decimal_places)),
+                     horizontalalignment='right',
+                     verticalalignment='bottom',
+                     transform=ax1.transAxes)
+            ax1.text(1, 1, 'robust_std (' + r'$\AA$' + '):' +
+                     str(round(yres_summary['robust_std'], decimal_places)),
+                     horizontalalignment='right',
+                     verticalalignment='top',
+                     transform=ax1.transAxes)
+            ax1.text(0.5, 1, 'No. points (total / used): ' +
+                     str(nlines_ok) + ' / ' +
+                     str(yres_summary['npoints']),
+                     horizontalalignment='center',
+                     verticalalignment='top',
+                     transform=ax1.transAxes)
+            ax1.text(0.5, 0, 'Polynomial degree: ' + str(poldeg_effective),
+                     horizontalalignment='center',
+                     verticalalignment='bottom',
+                     transform=ax1.transAxes)
+            if plottitle is None:
+                ax1.set_title('Refined wavelength calibration')
+            else:
+                ax1.set_title(plottitle)
+            ax1.legend(numpoints=1)
+
+            # lower plot
+            ax2 = fig.add_subplot(2, 1, 2, sharex=ax1)
             ymin = sp.min()
             ymax = sp.max()
             dy = ymax - ymin
             ymin -= dy / 20.
             ymax += dy / 20.
-            ax.set_ylim([ymin, ymax])
+            ax2.set_ylim([ymin, ymax])
+            ax2.plot(xpol, sp, '-')
+            ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
+            ax2.set_ylabel('number of counts')
             # mark peak location
-            ax.plot(ixpeaks + 1, sp[ixpeaks], 'bo',
-                    label="initial location")
-            ax.plot(fxpeaks + 1, sp[ixpeaks], 'go',
-                    label="refined location")
-            ax.plot((fxpeaks + 1)[lines_ok], sp[ixpeaks][lines_ok], 'mo',
-                    label="identified lines")
+            ax2.plot(ixpeaks + 1, sp[ixpeaks], 'bo',
+                     label="initial location")
+            ax2.plot(fxpeaks + 1, sp[ixpeaks], 'go',
+                     label="refined location")
+            ax2.plot((fxpeaks + 1)[lines_ok], sp[ixpeaks][lines_ok], 'mo',
+                     label="identified lines")
             for i in range(len(ixpeaks)):
                 if wv_verified_all_peaks[i] > 0:
-                    ax.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
-                            wv_verified_all_peaks[i], fontsize=8,
-                            horizontalalignment='center')
+                    ax2.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
+                             str(wv_verified_all_peaks[i]) +
+                             '(' + str(i + 1) + ')',
+                             fontsize=8,
+                             horizontalalignment='center')
+                else:
+                    ax2.text(fxpeaks[i] + 1.0, sp[ixpeaks[i]],
+                             '(' + str(i + 1) + ')',
+                             fontsize=8,
+                             horizontalalignment='center')
             # legend
-            ax.legend(numpoints=1)
-            # window geometry
-            if geometry is not None:
-                x_geom, y_geom, dx_geom, dy_geom = geometry
-                mngr = plt.get_current_fig_manager()
-                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
-            # show plot
-            pause_debugplot(debugplot, pltshow=True)
+            ax2.legend(numpoints=1)
 
-    return poly_refined, npoints_eff, residual_std
+            if local_debugplot in [-22, -12, 12, 22]:
+                pause_debugplot(
+                    debugplot=local_debugplot,
+                    optional_prompt='Zoom/Unzoom or ' +
+                                    'press RETURN to continue...',
+                    pltshow=True
+                )
+            else:
+                pause_debugplot(debugplot=local_debugplot, pltshow=True)
+
+            # request next action in interactive session
+            if interactive:
+                print('Recalibration menu')
+                print('------------------')
+                print('[d] (d)elete all the identified lines')
+                print('[r] (r)estart from begining')
+                print('[a] (a)utomatic line inclusion')
+                print('[x] e(x)xit without additional changes')
+                print('[#] from 1 to ' + str(len(ixpeaks)) +
+                      ' --> modify line #')
+                ioption = readi('Option', default='x',
+                                minval=1, maxval=len(ixpeaks),
+                                allowed_single_chars='adrx')
+                if ioption == 'd':
+                    wv_verified_all_peaks = np.zeros(npeaks)
+                elif ioption == 'r':
+                    delta_wv_max = ntimes_match_wv * cdelt1_linear
+                    wv_expected_all_peaks = poly_initial(fxpeaks + 1.0)
+                    wv_verified_all_peaks = match_wv_arrays(
+                        wv_master,
+                        wv_expected_all_peaks,
+                        delta_wv_max=delta_wv_max
+                    )
+                elif ioption == 'a':
+                    delta_wv_max = ntimes_match_wv * cdelt1_linear
+                    wv_verified_all_peaks = match_wv_arrays(
+                        wv_master,
+                        poly_refined(fxpeaks + 1.0),
+                        delta_wv_max=delta_wv_max
+                    )
+                elif ioption == 'x':
+                    loop = False
+                else:
+                    print(wv_master)
+                    expected_value = \
+                        poly_refined(fxpeaks[ioption - 1] + 1.0)
+                    print(">>> Current expected wavelength: ", expected_value)
+                    delta_wv_max = ntimes_match_wv * cdelt1_linear
+                    close_value = match_wv_arrays(
+                        wv_master,
+                        np.array([expected_value]),
+                        delta_wv_max=delta_wv_max)
+                    newvalue = readf('New value (0 to delete line)',
+                                     default=close_value[0])
+                    wv_verified_all_peaks[ioption - 1] = newvalue
+
+            else:
+                loop = False
+
+        else:
+            loop = False
+
+    # if effective degree of poly_refined < poldeg, add zeros
+    if poldeg_effective < poldeg:
+        numzeros = poldeg - poldeg_effective
+        final_coefficients = np.concatenate((poly_refined.coef,
+                                             np.zeros(numzeros)))
+        poly_refined = np.polynomial.Polynomial(final_coefficients)
+
+    if abs(local_debugplot) >= 10:
+        print(">>> Final fitted coefficients....:\n", poly_refined.coef)
+
+    return poly_refined
