@@ -1816,7 +1816,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ax1.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
             ax1.set_ylim([ymin, ymax])
             if nlines_ok > 0:
-                ax1.plot(xdum, yp, 'go', label='identified')
+                ax1.plot(xdum, yp, 'mo', label='identified')
                 if sum(reject) > 0:
                     ax1.plot(xdum[reject], yp[reject], 'o',
                              color='tab:gray', label='ignored')
@@ -1877,10 +1877,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             else:
                 ax2.set_ylabel('number of counts')
             # mark peak location
-            ax2.plot(ixpeaks + 1, spectrum[ixpeaks], 'co',
-                     label="initial location")
-            ax2.plot(fxpeaks + 1, spectrum[ixpeaks], 'go',
-                     label="refined location")
+            # ax2.plot(ixpeaks + 1, spectrum[ixpeaks], 'co',
+            #          label="initial location")
+            # ax2.plot(fxpeaks + 1, spectrum[ixpeaks], 'go',
+            #          label="refined location")
             ax2.plot((fxpeaks + 1)[lines_ok], spectrum[ixpeaks][lines_ok],
                      'mo', label="identified lines")
             for i in range(len(ixpeaks)):
