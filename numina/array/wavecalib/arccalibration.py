@@ -1648,6 +1648,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     -------
     poly_refined : Polynomial instance
         Refined wavelength calibration polynomial.
+    yres_summary : dictionary
+        Statistical summary of the residuals.
 
     """
 
@@ -1673,6 +1675,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     fxpeaks = np.array([])
     poly_refined = np.polynomial.Polynomial([0.0])
     poldeg_effective = len(poly_refined.coef) - 1
+    yres_summary = summary(np.array([]))
 
     # computer linear values from initial polynomial
     crmin1_linear = poly_initial(1)
@@ -1974,4 +1977,4 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     if abs(local_debugplot) >= 10:
         print(">>> Final fitted coefficients....:\n", poly_refined.coef)
 
-    return poly_refined
+    return poly_refined, yres_summary

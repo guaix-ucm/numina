@@ -635,7 +635,7 @@ def main(args=None):
     # refine wavelength calibration when requested
     if args.refine:
         pause_debugplot(args.debugplot)
-        poly_refined = refine_arccalibration(
+        poly_refined, yres_summary = refine_arccalibration(
             sp=sp,
             poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
             wv_master=wv_master_all,
