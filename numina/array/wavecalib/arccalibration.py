@@ -1861,11 +1861,14 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 spectrum = sp.copy()
             ax2 = fig.add_subplot(grid[1, 0], sharex=ax1)
             ax2.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
-            ymin = spectrum.min()
+            if ylogscale:
+                ymin = spectrum[ixpeaks].min()
+            else:
+                ymin = spectrum.min()
             ymax = spectrum.max()
             dy = ymax - ymin
-            ymin -= dy / 20.
-            ymax += dy / 20.
+            ymin -= dy / 40.
+            ymax += dy / 40.
             ax2.set_ylim([ymin, ymax])
             ax2.plot(xpol, spectrum, '-')
             ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
@@ -1874,7 +1877,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             else:
                 ax2.set_ylabel('number of counts')
             # mark peak location
-            ax2.plot(ixpeaks + 1, spectrum[ixpeaks], 'bo',
+            ax2.plot(ixpeaks + 1, spectrum[ixpeaks], 'co',
                      label="initial location")
             ax2.plot(fxpeaks + 1, spectrum[ixpeaks], 'go',
                      label="refined location")
@@ -1943,13 +1946,15 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                     print(wv_master)
                     expected_value = \
                         poly_refined(fxpeaks[ioption - 1] + 1.0)
-                    print(">>> Current expected wavelength: ", expected_value)
+                    print('>>> Current expected wavelength for line #' +
+                          str(ioption) + ": ", expected_value)
                     delta_wv_max = ntimes_match_wv * cdelt1_linear
                     close_value = match_wv_arrays(
                         wv_master,
                         np.array([expected_value]),
                         delta_wv_max=delta_wv_max)
-                    newvalue = readf('New value (0 to delete line)',
+                    newvalue = readf('New value for line #' + str(ioption) +
+                                     ' (0 to delete line)',
                                      default=close_value[0])
                     wv_verified_all_peaks[ioption - 1] = newvalue
 
