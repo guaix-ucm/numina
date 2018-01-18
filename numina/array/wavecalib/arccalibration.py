@@ -1923,12 +1923,13 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 print('[r] (r)estart from begining')
                 print('[a] (a)utomatic line inclusion')
                 print('[l] toggle (l)ogarithmic scale on/off')
+                print('[e] (e)valuate current polynomial at a given pixel')
                 print('[x] e(x)xit without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adlrx')
+                                allowed_single_chars='adelrx')
                 if ioption == 'd':
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
@@ -1951,6 +1952,12 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         local_ylogscale = False
                     else:
                         local_ylogscale = True
+                elif ioption == 'e':
+                    pixel = 1
+                    while pixel != 0:
+                        pixel = readf("Pixel coordinate (0=exit)",
+                                      default=0)
+                        print("--> Wavelength:", poly_refined(pixel))
                 elif ioption == 'x':
                     loop = False
                 else:
