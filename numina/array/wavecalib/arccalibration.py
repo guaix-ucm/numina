@@ -1990,6 +1990,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         poly_refined = np.polynomial.Polynomial(final_coefficients)
 
     if abs(local_debugplot) >= 10:
-        print(">>> Final fitted coefficients....:\n", poly_refined.coef)
+        print(">>> Initial coefficients:\n", poly_initial.coef)
+        print(">>> Refined coefficients:\n", poly_refined.coef)
 
     return poly_refined, yres_summary

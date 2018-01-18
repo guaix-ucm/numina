@@ -499,10 +499,10 @@ def main(args=None):
                         help="Tuple n1,[n2,[n3,...]] with maximum number of "
                              "brightest lines to be used [0=all] (default=0)",
                         default=0)
-    parser.add_argument("--refine",
-                        help="Refine fit using faint lines from "
-                             "wv_master_file",
-                        action="store_true")
+    parser.add_argument("--degree_refined",
+                        help="Degree of the refined fit using faint lines "
+                             "from wv_master_file",
+                        default=0, type=int)
     parser.add_argument("--sigma_gauss_filt",
                         help="Sigma (pixels) of gaussian filtering to avoid "
                              "saturared lines (default=0)",
@@ -533,6 +533,12 @@ def main(args=None):
         print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
 
     # ---
+
+    # if refinement is going to be used, check that the corresponding
+    # polynomial degree is at least as large as the initial degree
+    if args.degree_refined > 0:
+        if args.degree > args.degree_refined:
+            raise ValueError("degree_refined must be >= degree")
 
     # scan range
     tmp_str = args.scans.split(",")
@@ -633,8 +639,7 @@ def main(args=None):
     )
 
     # refine wavelength calibration when requested
-    if args.refine:
-        pause_debugplot(args.debugplot)
+    if args.degree_refined > 0:
         # apply gaussian filtering
         if args.sigma_gauss_filt > 0:
             spf = ndimage.filters.gaussian_filter(
@@ -647,7 +652,7 @@ def main(args=None):
             sp=spf,
             poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
             wv_master=wv_master_all,
-            poldeg=args.degree,
+            poldeg=args.degree_refined,
             ntimes_match_wv=1,
             plottitle=plottitle,
             interactive=True,
