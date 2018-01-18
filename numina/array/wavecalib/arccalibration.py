@@ -1668,6 +1668,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     else:
         local_debugplot = debugplot
 
+    local_ylogscale = ylogscale
+
     # spectrum length
     naxis1 = sp.shape[0]
 
@@ -1857,14 +1859,14 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ax1.legend(numpoints=1)
 
             # lower plot
-            if ylogscale:
+            if local_ylogscale:
                 spectrum = sp - sp.min() + 1.0
                 spectrum = np.log10(spectrum)
             else:
                 spectrum = sp.copy()
             ax2 = fig.add_subplot(grid[1, 0], sharex=ax1)
             ax2.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
-            if ylogscale:
+            if local_ylogscale:
                 ymin = spectrum[ixpeaks].min()
             else:
                 ymin = spectrum.min()
@@ -1875,7 +1877,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ax2.set_ylim([ymin, ymax])
             ax2.plot(xpol, spectrum, '-')
             ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
-            if ylogscale:
+            if local_ylogscale:
                 ax2.set_ylabel('~ log10(number of counts)')
             else:
                 ax2.set_ylabel('number of counts')
@@ -1920,12 +1922,13 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 print('[d] (d)elete all the identified lines')
                 print('[r] (r)estart from begining')
                 print('[a] (a)utomatic line inclusion')
+                print('[l] toggle (l)ogarithmic scale on/off')
                 print('[x] e(x)xit without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adrx')
+                                allowed_single_chars='adlrx')
                 if ioption == 'd':
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
@@ -1943,6 +1946,11 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         poly_refined(fxpeaks + 1.0),
                         delta_wv_max=delta_wv_max
                     )
+                elif ioption == 'l':
+                    if local_ylogscale:
+                        local_ylogscale = False
+                    else:
+                        local_ylogscale = True
                 elif ioption == 'x':
                     loop = False
                 else:
