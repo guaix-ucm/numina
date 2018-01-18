@@ -635,8 +635,16 @@ def main(args=None):
     # refine wavelength calibration when requested
     if args.refine:
         pause_debugplot(args.debugplot)
+        # apply gaussian filtering
+        if args.sigma_gauss_filt > 0:
+            spf = ndimage.filters.gaussian_filter(
+                sp,
+                sigma=args.sigma_gauss_filt
+            )
+        else:
+            spf = np.copy(sp)
         poly_refined, yres_summary = refine_arccalibration(
-            sp=sp,
+            sp=spf,
             poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
             wv_master=wv_master_all,
             poldeg=args.degree,
