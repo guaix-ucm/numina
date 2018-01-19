@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -45,6 +45,12 @@ class DataTypeBase(object):
     def __setstate__(self, state):
         pass
 
+    def _datatype_dump(self, obj, where):
+        return obj
+
+    def _datatype_load(self, obj):
+        return obj
+
     def query(self, name, dal, obsres, options=None):
 
         try:
@@ -55,14 +61,15 @@ class DataTypeBase(object):
         param = dal.search_parameter(name, self, obsres)
         return param.content
 
-
     def query_on_ob(self, key, ob):
         # First check if the requirement is embedded
         # in the observation result
         # It can in ob.requirements
         # or directly in the structure (as in GTC)
         if key in ob.requirements:
-            return ob.requirements[key]
+            content = ob.requirements[key]
+            value = self._datatype_load(content)
+            return value
         try:
             return getattr(ob, key)
         except AttributeError:

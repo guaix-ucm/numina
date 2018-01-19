@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -74,12 +74,6 @@ class DataType(DataTypeBase):
         if not isinstance(obj, self.internal_type):
             raise ValidationError(obj, self.internal_type)
         return True
-
-    def _datatype_dump(self, obj, where):
-        return obj
-
-    def _datatype_load(self, obj):
-        return obj
 
     def add_dialect_info(self, dialect, tipo):
         key = self.__module__ + '.' + self.__class__.__name__
