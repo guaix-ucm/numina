@@ -70,7 +70,7 @@ def ximplotxy(x, y, plottype=None,
 
     """
 
-    from matplotlib_qt import plt
+    from numina.array.display.matplotlib_qt import plt
     fig = plt.figure()
     ax = fig.add_subplot(111)
     if plottype == 'semilog':

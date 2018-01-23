@@ -82,7 +82,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
                              " does not correspond to bounding box size")
 
     # display image
-    from matplotlib_qt import plt
+    from numina.array.display.matplotlib_qt import plt
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)

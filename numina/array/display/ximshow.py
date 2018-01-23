@@ -85,7 +85,7 @@ def ximshow(image2d, title=None, show=True,
 
     """
 
-    from matplotlib_qt import plt
+    from numina.array.display.matplotlib_qt import plt
 
     # protections
     if type(image2d) is not np.ndarray:
@@ -530,7 +530,7 @@ def main(args=None):
         from matplotlib.backends.backend_pdf import PdfPages
         pdf = PdfPages(args.pdffile.name)
     else:
-        from matplotlib_qt import plt
+        from numina.array.display.matplotlib_qt import plt
         pdf = None
 
     for myfile in list_fits_files:
