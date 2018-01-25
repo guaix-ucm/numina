@@ -56,7 +56,7 @@ def compute_operation(file1, file2, operation, output, display,
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
     args_geometry : string or None
-        Tuple x,y,dx,dy to define the Qt4 backend geometry.
+        Tuple x,y,dx,dy to define the Qt backend geometry.
 
     """
 
