@@ -184,6 +184,7 @@ def find_fxpeaks(sp,
                  npix_avoid_border,
                  nbrightlines,
                  sigma_gaussian_filtering,
+                 minimum_gaussian_filtering,
                  plottitle=None,
                  geometry=None,
                  debugplot=0):
@@ -215,6 +216,9 @@ def find_fxpeaks(sp,
         Sigma of the gaussian filter to be applied to the spectrum in
         order to avoid problems with saturated lines. This filtering is
         skipped when this parameter is <= 0.
+    minimum_gaussian_filtering : float
+        Minimum pixel value to employ gaussian filtering. This value is
+        employed only when sigma_gaussian_filtering is > 0.
     plottile : string
         Plot title.
     geometry : tuple (4 integers) or None
@@ -243,6 +247,8 @@ def find_fxpeaks(sp,
             sp,
             sigma=sigma_gaussian_filtering
         )
+        lpreserve = sp < minimum_gaussian_filtering
+        spf[lpreserve] = sp[lpreserve]
     else:
         spf = np.copy(sp)
 
@@ -345,6 +351,7 @@ def find_fxpeaks(sp,
 
 
 def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
+                   wv_ini_search=None, wv_end_search=None,
                    geometry=None, debugplot=0):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
@@ -360,6 +367,10 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         Degree for wavelength calibration polynomial.
     wv_master : 1d numpy array
         Array with arc line wavelengths.
+    wv_ini_search : float
+        Minimum valid wavelength.
+    wv_end_search : float
+        Maximum valid wavelength.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -384,6 +395,10 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
 
     wv_master_range = wv_master[-1] - wv_master[0]
     delta_wv_master_range = 0.20 * wv_master_range
+    if wv_ini_search is None:
+        wv_ini_search = wv_master[0] - delta_wv_master_range
+    if wv_end_search is None:
+        wv_end_search = wv_master[-1] + delta_wv_master_range
 
     # use channels (pixels from 1 to naxis1)
     xchannel = fxpeaks + 1.0
@@ -394,8 +409,8 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         xpos_arc=xchannel,
         naxis1_arc=naxis1,
         crpix1=1.0,
-        wv_ini_search=wv_master[0] - delta_wv_master_range,
-        wv_end_search=wv_master[-1] + delta_wv_master_range,
+        wv_ini_search=wv_ini_search,
+        wv_end_search=wv_end_search,
         error_xpos_arc=3,
         times_sigma_r=3.0,
         frac_triplets_for_sum=0.50,
@@ -506,6 +521,10 @@ def main(args=None):
     parser.add_argument("--sigma_gauss_filt",
                         help="Sigma (pixels) of gaussian filtering to avoid "
                              "saturared lines (default=0)",
+                        default=0, type=float)
+    parser.add_argument("--minimum_gauss_filt",
+                        help="Minimum pixel value to use gaussian filtering "
+                             "(default=0)",
                         default=0, type=float)
     parser.add_argument("--reverse",
                         help="Reverse wavelength direction",
@@ -623,6 +642,7 @@ def main(args=None):
         npix_avoid_border=args.npix_avoid_border,
         nbrightlines=nbrightlines,
         sigma_gaussian_filtering=args.sigma_gauss_filt,
+        minimum_gaussian_filtering=args.minimum_gauss_filt,
         plottitle=plottitle,
         geometry=geometry,
         debugplot=args.debugplot
@@ -634,6 +654,8 @@ def main(args=None):
         fxpeaks=fxpeaks,
         poly_degree_wfit=args.degree,
         wv_master=wv_master,
+        wv_ini_search=wvmin,
+        wv_end_search=wvmax,
         geometry=geometry,
         debugplot=args.debugplot
     )
