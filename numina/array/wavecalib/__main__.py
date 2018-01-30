@@ -654,8 +654,8 @@ def main(args=None):
         fxpeaks=fxpeaks,
         poly_degree_wfit=args.degree,
         wv_master=wv_master,
-        wv_ini_search=wvmin,
-        wv_end_search=wvmax,
+        wv_ini_search=args.wvmin,
+        wv_end_search=args.wvmax,
         geometry=geometry,
         debugplot=args.debugplot
     )
