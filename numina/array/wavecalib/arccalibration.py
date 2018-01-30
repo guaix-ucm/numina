@@ -1900,6 +1900,19 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
+            # display expected location of lines in master file
+            for i in range(len(wv_master)):
+                tempol = poly_refined.copy()
+                tempol.coef[0] -= wv_master[i]
+                # compute roots
+                tmproots = tempol.roots()
+                # select real solutions
+                tmproots = tmproots.real[abs(tmproots.imag) < 1e-5]
+                # choose values within valid channel range
+                tmproots = tmproots[(tmproots >= 1) * (tmproots <= naxis1)]
+                if len(tmproots) > 0:
+                    ax2.plot([tmproots[0], tmproots[0]], [ymin, ymax],
+                             color='grey', linestyle='dotted')
             # legend
             ax2.legend(numpoints=1)
 
