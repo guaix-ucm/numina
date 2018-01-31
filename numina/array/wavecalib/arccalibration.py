@@ -667,6 +667,9 @@ def arccalibration_direct(wv_master,
         print('>>> Total number of arc lines............:', nlines_arc)
         print('>>> Total number of arc triplets.........:', ntriplets_arc)
 
+    # maximum allowed value for CDELT1
+    cdelt1_max = (wv_end_search-wv_ini_search)/float(naxis1_arc-1)
+
     # Loop in all the arc line triplets. Note that only triplets built
     # from consecutive arc lines are considered.
     for i in range(ntriplets_arc):
@@ -706,7 +709,7 @@ def arccalibration_direct(wv_master,
             crmax1_temp = crval1_temp + float(naxis1_arc-crpix1)*cdelt1_temp
             # check that CRMIN1 and CRMAX1 are within the valid limits
             if wv_ini_search <= crmin1_temp <= wv_end_search \
-                    and wv_ini_search <= crmax1_temp <= wv_end_search:
+                    and cdelt1_temp <= cdelt1_max:
                 # Compute errors
                 error_crval1_temp = \
                     cdelt1_temp*error_xpos_arc * \
@@ -723,9 +726,6 @@ def arccalibration_direct(wv_master,
                 # Store additional information about the triplets
                 itriplet_search = np.append(itriplet_search, [i])
                 clabel_search.append((j1, j2, j3))
-
-    # maximum allowed value for CDELT1
-    cdelt1_max = (wv_end_search-wv_ini_search)/float(naxis1_arc-1)
 
     # normalize the values of CDELT1 and CRVAL1 to the interval [0,1]
     # in each case
