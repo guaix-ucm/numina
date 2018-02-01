@@ -1932,6 +1932,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             if interactive:
                 print('Recalibration menu')
                 print('------------------')
+                print('[i] (i)nsert new peak and restart')
                 print('[d] (d)elete all the identified lines')
                 print('[r] (r)estart from begining')
                 print('[a] (a)utomatic line inclusion')
@@ -1942,7 +1943,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adelrx')
+                                allowed_single_chars='adeilrx')
                 if ioption == 'd':
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
@@ -1971,6 +1972,32 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         pixel = readf("Pixel coordinate (0=exit)",
                                       default=0)
                         print("--> Wavelength:", poly_refined(pixel))
+                elif ioption == 'i':
+                    ipixel = 1
+                    # include new peaks
+                    while ipixel != 0:
+                        ipixel = readi("Closest pixel coordinate (integer) "
+                                       "to insert peak (0=exit)",
+                                       default=0, minval=0, maxval=naxis1)
+                        if ipixel > 0:
+                            ixpeaks = np.concatenate((ixpeaks,
+                                                      np.array([ipixel-1])))
+                    # sort updated array
+                    ixpeaks.sort()
+                    npeaks = len(ixpeaks)
+                    # refine line peak locations
+                    fxpeaks, sxpeaks = refine_peaks_spectrum(
+                        sp, ixpeaks,
+                        nwinwidth=nwinwidth_refined,
+                        method="gaussian"
+                    )
+                    # expected wavelength of all identified peaks
+                    delta_wv_max = ntimes_match_wv * cdelt1_linear
+                    wv_verified_all_peaks = match_wv_arrays(
+                        wv_master,
+                        poly_refined(fxpeaks + 1.0),
+                        delta_wv_max=delta_wv_max
+                    )
                 elif ioption == 'x':
                     loop = False
                 else:
