@@ -111,9 +111,17 @@ class NullType(DataType):
 
 class PlainPythonType(DataType):
     """Data type for Python basic types."""
-    def __init__(self, ref=None):
+    def __init__(self, ref=None, validator=None):
         stype = type(ref)
         default = stype()
+
+        if validator is None:
+            self.custom_validator = None
+        elif callable(validator):
+            self.custom_validator = validator
+        else:
+            raise TypeError('validator must be callable or None')
+
         super(PlainPythonType, self).__init__(stype, default=default)
 
     def query(self, name, dal, ob, options=True):
@@ -127,6 +135,15 @@ class PlainPythonType(DataType):
         #                                      ob.mode, ob.tags, ob.pipeline)
         param = dal.search_parameter(name, self, ob)
         return param.content
+
+    def convert(self, obj):
+        pre = self.internal_type(obj)
+
+        if self.custom_validator is not None:
+            m = self.custom_validator(pre)
+            return m
+
+        return pre
 
 
 class ListOfType(DataType):

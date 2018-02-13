@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,6 +28,7 @@ import yaml
 
 from numina import __version__
 import numina.drps
+import numina.exceptions
 from numina.dal.dictdal import HybridDAL
 from numina.dal.clidal import CommandLineDAL
 from numina.util.context import working_directory
@@ -145,10 +146,9 @@ def mode_run_common_obs(args, extra_args):
 
             try:
                 rinput = recipe.build_recipe_input(obsres, dal)
-            except ValueError as err:
+            except (ValueError, numina.exceptions.ValidationError) as err:
                 _logger.error("During recipe input construction")
-                for msg in err.args[0]:
-                    _logger.error(msg)
+                _logger.error("%s", err)
                 sys.exit(0)
             _logger.debug('recipe input created')
 

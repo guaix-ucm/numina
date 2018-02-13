@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,8 +23,8 @@ Recipe requirements
 
 import inspect
 
+import numina.exceptions
 from numina.types.datatype import NullType, PlainPythonType
-from numina.types.datatype import ListOfType
 
 
 class EntryHolder(object):
@@ -37,8 +37,6 @@ class EntryHolder(object):
             self.type = NullType()
         elif tipo in [bool, str, int, float, complex, list]:
             self.type = PlainPythonType(ref=tipo())
-        elif isinstance(tipo, ListOfType):
-            self.type = tipo
         elif inspect.isclass(tipo):
             self.type = tipo()
         else:
@@ -63,9 +61,24 @@ class EntryHolder(object):
 
     def __set__(self, instance, value):
         """Setter of the descriptor protocol."""
-        cval = self.convert(value)
-        if self.choices and (cval not in self.choices):
-            raise ValueError('{} not in {}'.format(cval, self.choices))
+        try:
+            cval = self.convert(value)
+            if self.choices and (cval not in self.choices):
+                errmsg = '{} not in {}'.format(cval, self.choices)
+                raise numina.exceptions.ValidationError(errmsg)
+        except numina.exceptions.ValidationError as err:
+
+            if len(err.args) == 0:
+                errmsg = 'UNDEFINED ERROR'
+                rem = ()
+            else:
+                errmsg = err.args[0]
+                rem = err.args[1:]
+
+            msg = '"{}": {}'.format(self.dest, errmsg)
+            newargs = (msg, ) + rem
+            raise numina.exceptions.ValidationError(*newargs)
+
         instance._numina_desc_val[self.dest] = cval
 
     def convert(self, val):

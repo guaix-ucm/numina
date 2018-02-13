@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,6 +24,7 @@ Recipe requirement holders
 
 from numina.types.obsresult import ObservationResultType
 from numina.types.obsresult import InstrumentConfigurationType
+from numina.types.datatype import PlainPythonType
 from .dataholders import EntryHolder
 from .query import QueryModifier, Ignore, Result
 
@@ -73,16 +74,17 @@ class Requirement(EntryHolder):
 class Parameter(Requirement):
     """The Recipe requires a plain Python type."""
     def __init__(self, value, description, destination=None, optional=False,
-                 choices=None, validation=True):
+                 choices=None, validation=True, validator=None):
         if isinstance(value, (bool, str, int, float, complex, list)):
             optional = True
             default = value
         else:
             default = None
         rtype = type(value)
+        mtype = PlainPythonType(ref=rtype(), validator=validator)
 
         super(Parameter, self).__init__(
-            rtype, description, destination=destination,
+            mtype, description, destination=destination,
             optional=optional, default=default,
             choices=choices, validation=validation
             )
