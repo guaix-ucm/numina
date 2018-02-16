@@ -158,7 +158,7 @@ def print_requirements(recipe, pad=''):
 
         if req.default is not None:
             dispname = dispname + '=' + str(req.default)
-        typ = req.type.internal_type.__name__
+        typ = req.type.descriptive_name()
 
         print("%s%s type=%r [%s]" % (pad, dispname, typ, req.description))
 

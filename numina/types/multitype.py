@@ -51,3 +51,11 @@ class MultiType(object):
             return self.current.convert_in(obj)
 
         raise ValueError('No query performed, current is None')
+
+    def descriptive_name(self):
+        start, remain = self.options[0], self.options[1:]
+        build_str = [start.descriptive_name()]
+        for x in remain:
+            field = "or {}".format(x.descriptive_name())
+            build_str.append(field)
+        return " ".join(build_str)

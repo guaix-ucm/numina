@@ -88,6 +88,9 @@ class DataType(DataTypeBase):
     def potential_tags(self):
         return {}
 
+    def descriptive_name(self):
+        return self.name()
+
 
 class AutoDataType(DataType):
     """Data type for types that are its own python type"""
