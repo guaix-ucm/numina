@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,14 +17,36 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 import os
 
 from .clirundal import mode_run_common
 
 
-def add(subparsers):
+def complete_config(config):
+    """Complete config with default values"""
+
+    if not config.has_section('run'):
+        config.add_section('run')
+
+    values = {
+        'basedir': os.getcwd(),
+        'task_control': 'control.yaml',
+    }
+
+    for k, v in values.items():
+        if not config.has_option('run', k):
+            config.set('run', k, v)
+
+    return config
+
+def register(subparsers, config):
+
+    complete_config(config)
+
+    task_control_base = config.get('run', 'task_control')
+
     parser_run = subparsers.add_parser(
         'run',
         help='process a observation result'
@@ -33,16 +55,16 @@ def add(subparsers):
     parser_run.set_defaults(command=mode_run_obsmode)
 
     parser_run.add_argument(
-        '-c', '--task-control', dest='reqs',
+        '-c', '--task-control', dest='reqs', default=task_control_base,
         help='configuration file of the processing task', metavar='FILE'
         )
     parser_run.add_argument(
-        '-r', '--requirements', dest='reqs',
+        '-r', '--requirements', dest='reqs', default=task_control_base,
         help='alias for --task-control', metavar='FILE'
         )
     parser_run.add_argument(
         '-i', '--instrument', dest='insconf',
-        default="default",
+        default=None,
         help='name of an instrument configuration'
         )
     parser_run.add_argument(
@@ -71,11 +93,16 @@ def add(subparsers):
         default=False, help='cleanup workdir on exit [disabled]'
         )
     parser_run.add_argument(
-        'obsresult',
+        '--not-copy-files', action="store_false", dest="copy_files",
+        help='do not copy observation result and requirement files'
+        )
+    parser_run.add_argument(
+        'obsresult', nargs='+',
         help='file with the observation result'
         )
 
     return parser_run
 
-def mode_run_obsmode(args):
-    mode_run_common(args, mode='obs')
+
+def mode_run_obsmode(args, extra_args):
+    mode_run_common(args, extra_args, mode='obs')

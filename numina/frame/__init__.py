@@ -42,21 +42,41 @@ def custom_region_to_str(region):
 
 
 def resize_hdu(hdu, newshape, region, window=None, fill=0.0,
-               scale=1, conserve=True):
+               scale=1, conserve=True, dtype=None):
     basedata = hdu.data
     newdata = resize_array(basedata, newshape, region, window=window,
-                           fill=fill, scale=scale, conserve=conserve)
-    hdu.header.update('NVALREGI', custom_region_to_str(region),
-                      'Valid region of resized FITS')
+                           fill=fill, scale=scale, conserve=conserve,
+                           dtype=dtype)
+    hdu.header['NVALREGI'] = (custom_region_to_str(region),
+                              'Valid region of resized FITS')
     if window:
-        hdu.header.update('OVALREGI', custom_region_to_str(window),
-                          'Valid region of original FITS')
+        hdu.header['OVALREGI'] = (custom_region_to_str(window),
+                                  'Valid region of original FITS')
     newhdu = fits.PrimaryHDU(newdata, hdu.header)
     return newhdu
 
 
+def resize_hdul(hdul, newshape, region, extensions=None, window=None,
+                scale=1, fill=0.0, conserve=True):
+    from numina.frame import resize_hdu
+    if extensions is None:
+        extensions = [0]
+
+    nhdul = [None] * len(hdul)
+    for ext, hdu in enumerate(hdul):
+        if ext in extensions:
+            nhdul[ext] = resize_hdu(hdu, newshape,
+                                    region, fill=fill,
+                                    window=window,
+                                    scale=scale,
+                                    conserve=conserve)
+        else:
+            nhdul[ext] = hdu
+    return fits.HDUList(nhdul)
+
+
 def resize_fits(fitsfile, newfilename, newshape, region, window=None,
-                scale=1, fill=0.0, clobber=True, conserve=True):
+                scale=1, fill=0.0, clobber=True, conserve=True, dtype=None):
 
     close_on_exit = False
     if isinstance(fitsfile, six.string_types):
@@ -68,7 +88,8 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
     try:
         hdu = hdulist['primary']
         newhdu = resize_hdu(hdu, newshape, region, fill=fill,
-                            window=window, scale=scale, conserve=conserve)
+                            window=window, scale=scale, conserve=conserve,
+                            dtype=dtype)
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             newhdu.writeto(newfilename, clobber=clobber)

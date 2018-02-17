@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -22,22 +22,45 @@ Recipe requirement holders
 """
 
 
-from .products import ObservationResultType
-from .products import InstrumentConfigurationType
+from numina.types.obsresult import ObservationResultType
+from numina.types.obsresult import InstrumentConfigurationType
+from numina.types.datatype import PlainPythonType
 from .dataholders import EntryHolder
+from .query import QueryModifier, Ignore, Result
 
 
 class Requirement(EntryHolder):
     """Requirement holder holder for RecipeRequirement."""
-    def __init__(self, rtype, description, validation=True,
-                 dest=None, optional=False, default=None, choices=None):
+    def __init__(self, rtype, description, destination=None, optional=False,
+                 default=None, choices=None, validation=True, query_opts=None):
         super(Requirement, self).__init__(
-            rtype, description, dest,
-            optional, default, choices=choices,
+            rtype, description, destination=destination,
+            optional=optional, default=default, choices=choices,
             validation=validation
             )
 
+        self.query_opts = query_opts
+
         self.hidden = False
+
+    def convert(self, val):
+        return self.type.convert_in(val)
+
+    def query(self, dal, obsres, options=None):
+        # query opts
+        if isinstance(self.query_opts, Ignore):
+            # we do not perform any query
+            return self.default_value()
+
+        # FIX merge somehow...
+        # options and self.query_options
+        options = self.query_opts
+
+        val = self.type.query(self.dest, dal, obsres, options=options)
+        return val
+
+    def on_query_not_found(self, notfound):
+        self.type.on_query_not_found(notfound)
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -50,22 +73,30 @@ class Requirement(EntryHolder):
 
 class Parameter(Requirement):
     """The Recipe requires a plain Python type."""
-    def __init__(self, value, description, dest=None, optional=False,
-                 choices=None, validation=True):
+    def __init__(self, value, description, destination=None, optional=False,
+                 choices=None, validation=True, validator=None):
+        if isinstance(value, (bool, str, int, float, complex, list)):
+            optional = True
+            default = value
+        else:
+            default = None
         rtype = type(value)
+        mtype = PlainPythonType(ref=rtype(), validator=validator)
+
         super(Parameter, self).__init__(
-            rtype, description, dest=dest,
-            optional=optional, default=value,
+            mtype, description, destination=destination,
+            optional=optional, default=default,
             choices=choices, validation=validation
             )
 
 
 class ObservationResultRequirement(Requirement):
     """The Recipe requires the result of an observation."""
-    def __init__(self):
+    def __init__(self, query_opts=None):
 
         super(ObservationResultRequirement, self).__init__(
-            ObservationResultType, "Observation Result"
+            ObservationResultType, "Observation Result",
+            query_opts=query_opts
             )
 
     def __repr__(self):

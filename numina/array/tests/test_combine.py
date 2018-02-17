@@ -313,7 +313,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[1].flat:
             self.assertEqual(v, 0)
         for v in r[2].flat:
-            self.assertAlmostEqual(v, 5.4)
+            self.assertAlmostEqual(v, 5.0)
 
     def testBasic4(self):
         '''Test complex fractional rejections'''
@@ -349,7 +349,7 @@ class QuantileClipTestCase(unittest.TestCase):
         # for v in r[1].flat:
         #    self.assertAlmostEqual(v, 0.76666666666666672)
         for v in r[2].flat:
-            self.assertAlmostEqual(v, 8.2)
+            self.assertAlmostEqual(v, 9.0)
 
     def testResults5(self):
         '''Test deviant points are ignored'''
@@ -363,7 +363,7 @@ class QuantileClipTestCase(unittest.TestCase):
         for v in r[1].flat:
             self.assertAlmostEqual(v, 0.0)
         for v in r[2].flat:
-            self.assertAlmostEqual(v, 15.4)
+            self.assertAlmostEqual(v, 15.0)
 
 
 def test_suite():

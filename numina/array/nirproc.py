@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -214,7 +214,7 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
 def _ramp(data, saturation, dt, gain, ron, nsig):
     nsdata = data[data < saturation]
 
-# Finding glitches in the pixels
+    # Finding glitches in the pixels
     intervals, glitches = _rglitches(nsdata, gain=gain, ron=ron, nsig=nsig)
     vals = numpy.asarray([_slope(nsdata[intls], dt=dt, gain=gain, ron=ron)
                           for intls in intervals if len(nsdata[intls]) >= 2])
@@ -237,8 +237,8 @@ def _rglitches(nsdata, gain, ron, nsig):
             intervals.append(slice(start, idx + 1))
             start = idx + 1
             glitches.append(start)
-    else:
-        intervals.append(slice(start, None))
+
+    intervals.append(slice(start, None))
 
     return intervals, glitches
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,11 +20,12 @@
 """User command line interface of Numina."""
 
 from __future__ import print_function
-from numina.core.pipeline import DrpSystem
+
+import numina.drps
 from numina.user.clishowins import print_no_instrument
 
 
-def add(subparsers):
+def register(subparsers, config):
     parser_show_mode = subparsers.add_parser(
         'show-modes',
         help='show information of observing modes'
@@ -49,9 +50,9 @@ def add(subparsers):
     return parser_show_mode
 
 
-def show_observingmodes(args):
+def show_observingmodes(args, extra_args):
 
-    drpsys = DrpSystem()
+    drpsys = numina.drps.get_system_drps()
 
     if args.instrument:
         name = args.instrument

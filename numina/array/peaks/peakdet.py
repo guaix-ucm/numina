@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -53,22 +53,28 @@ WW[9] = numpy.array([[-0.09090909, 0.06060606, 0.16883117, 0.23376623, 0.2554112
                      [0.48484848, 0.12121212, -0.13852814, -0.29437229, -0.34632035,
                       -0.29437229, -0.13852814, 0.12121212, 0.48484848]])
 
-def filter_array_margins(arr, ipeaks, window_width=5):
 
+def _check_window_width(window_width):
+    """Check `window_width` is odd and >=3"""
     if (window_width<3) or (window_width % 2 == 0):
         raise ValueError('Window width must be an odd number and >=3')
+
+
+def filter_array_margins(arr, ipeaks, window_width=5):
+    _check_window_width(window_width)
 
     max_number = (len(arr)-1) - (window_width // 2)
     min_number = window_width // 2
     return ipeaks[(ipeaks >= min_number) & (ipeaks <= max_number)]
 
 
-def find_peaks_indexes(arr, window_width=5, threshold=0.0):
+def find_peaks_indexes(arr, window_width=5, threshold=0.0, fpeak=0):
     """Find indexes of peaks in a 1d array.
 
     Note that window_width must be an odd number. The function imposes that the
     fluxes in the window_width /2 points to the left (and right) of the peak
-    decrease monotonously as one moves away from the peak.
+    decrease monotonously as one moves away from the peak, except that
+    it allows fpeak constant values around the peak.
 
     Parameters
     ----------
@@ -79,6 +85,8 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
         odd.
     threshold : float
         Minimum signal in the peak (optional).
+    fpeak: int
+        Number of equal values around the peak
 
     Returns
     -------
@@ -88,10 +96,12 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0):
 
     """
 
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+    _check_window_width(window_width)
 
-    kernel_peak = kernel_peak_function(threshold)
+    if (fpeak<0 or fpeak + 1 >= window_width):
+        raise ValueError('fpeak must be in the range 0- window_width - 2')
+
+    kernel_peak = kernel_peak_function(threshold, fpeak)
     out = generic_filter(arr, kernel_peak, window_width, mode="reflect")
     result, =  numpy.nonzero(out)
 
@@ -106,8 +116,8 @@ def return_weights(window_width):
     :return: ndarray
     Matrix needed to interpolate 'window_width' points
     """
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+
+    _check_window_width(window_width)
 
     try:
         return WW[window_width]
@@ -126,8 +136,7 @@ def generate_weights(window_width):
     Matrix needed to interpolate 'window_width' points
     """
 
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+    _check_window_width(window_width)
 
     evenly_spaced = numpy.linspace(-1, 1, window_width)
     pow_matrix = numpy.fliplr(numpy.vander(evenly_spaced, N=3))
@@ -154,14 +163,13 @@ def refine_peaks(arr, ipeaks, window_width):
         interpolated Y-coordinates
 
     """
-    if (window_width<3) or (window_width % 2 == 0):
-        raise ValueError('Window width must be an odd number and >=3')
+    _check_window_width(window_width)
 
     step = window_width // 2
 
     ipeaks = filter_array_margins(arr, ipeaks, window_width)
 
-    winoff = numpy.arange(-step, step+1)
+    winoff = numpy.arange(-step, step+1, dtype='int')
     peakwin = ipeaks[:, numpy.newaxis] + winoff
     ycols = arr[peakwin]
 

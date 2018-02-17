@@ -25,20 +25,20 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from ..utils import wc_to_pix_1d, wcs_to_pix_np
+from ..utils import coor_to_pix_1d, wcs_to_pix_np
 from ..utils import slice_create, expand_slice, expand_region
 
 
 def test_wctopix():
 
     xin = [0, 1, 2, 3, 4, 5]
-    cpix = [wc_to_pix_1d(x) for x in xin]
+    cpix = [coor_to_pix_1d(x) for x in xin]
     pix = [0, 1, 2, 3, 4, 5]
 
     assert_array_equal(cpix, pix)
 
     xin = [0.1, 1.6, 2.8, 3.5, 3.500001, 4.9999, 5.7]
-    cpix = [wc_to_pix_1d(x) for x in xin]
+    cpix = [coor_to_pix_1d(x) for x in xin]
     pix = [0, 2, 3, 4, 4, 5, 6]
 
     assert_array_equal(cpix, pix)

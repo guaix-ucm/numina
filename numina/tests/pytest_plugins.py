@@ -17,10 +17,19 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
+
 import os
 import tarfile
 
 import pytest
+import sys
+
+if "pytest_benchmark" in sys.modules:
+    HAS_BENCHMARCK = True
+else:
+    from .nobenchmark import benchmark
+    HAS_BENCHMARCK = False
 
 from .drpmocker import DRPMocker
 from .testcache import download_cache
@@ -83,9 +92,14 @@ def pytest_configure(config):
         "remote: mark test to run with online data"
         )
 
+def pytest_report_header(config):
+    if not HAS_BENCHMARCK:
+        return "pytest-benchmark not installed"
+    return ""
 
 def pytest_runtest_setup(item):
     if ('remote' in item.keywords and
             not item.config.getoption("--run-remote")):
-
+        
         pytest.skip("need --run-remote option to run")
+

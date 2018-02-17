@@ -35,7 +35,7 @@ class MockDAL(AbsDAL):
     # Implemented in base class
     # def obsres_from_oblock_id(self, obsid):
 
-    def search_recipe_from_ob(self, ob, pipeline):
+    def search_recipe_from_ob(self, ob, pipeline='default'):
 
         return AlwaysSuccessRecipe
 
@@ -53,5 +53,5 @@ class MockDAL(AbsDAL):
         return StoredProduct(id=100, content='null.fits',
                              tags={'readmode': 'a'})
 
-    def search_param_req(self, req, instrument, mode, pipeline):
+    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         return StoredParameter(content='parameter')

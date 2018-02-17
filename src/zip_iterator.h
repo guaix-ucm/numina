@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2016 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -34,14 +34,24 @@ namespace Detail
  * This class is used to access by reference the elements pointed by the individual iterators
  * inside a ZipIterator. This class is convertible to std::pair
  */
-template<typename T1, typename T2>
+template<typename IteratorPair>
 class ProxyPairRef
 {
 public:
+  //! The type of the first iterator in IteratorPair
+  typedef typename IteratorPair::first_type first_iterator_type;
+  //! The type of the second iterator in IteratorPair
+  typedef typename IteratorPair::second_type second_iterator_type;
+  //! The value_type of the first iterator in IteratorPair
+  typedef typename std::iterator_traits<first_iterator_type>::value_type
+      first_value_type;
+  //! The value_type of the second iterator in IteratorPair
+  typedef typename std::iterator_traits<second_iterator_type>::value_type
+      second_value_type;
   //! Type of the first member
-  typedef T1 first_type;
+  typedef first_value_type T1;
   //! Type of the second member
-  typedef T2 second_type;
+  typedef second_value_type T2;
   //! Type of the std::pair with the same types in the first and second member
   typedef std::pair<T1, T2> value_type;
 
@@ -51,13 +61,15 @@ public:
   {
   }
 
-  //! Constructor from tow references
+  //! Constructor from two references
   ProxyPairRef(T1& a, T2& b) :
     m_first(&a), m_second(&b)
   {
   }
 
-  //! Copy constructor
+
+
+  //! Assignment operator
   ProxyPairRef& operator=(const ProxyPairRef& b)
   {
     if (this == &b)
@@ -66,7 +78,8 @@ public:
     *m_second = *b.m_second;
     return *this;
   }
-  //! Asignation operator
+
+  //! Asignament operator
   ProxyPairRef& operator=(const value_type& b)
   {
     *m_first = b.first;
@@ -127,10 +140,27 @@ public:
   {
     m_second = &b;
   }
+
+  /**
+   * Internal swap method. It is used by the swap function in the namespace
+   */
+  void swap(ProxyPairRef& b) {
+    std::swap(*m_first, *b.m_first);
+    std::swap(*m_second, *b.m_second);
+  }
 private:
+
   T1* m_first;
   T2* m_second;
 };
+
+/**
+ * Swap two values. It is required by nth_element (at least in gcc >= 6 and LLVM)
+ */
+template<typename IteratorPair>
+void swap(ProxyPairRef<IteratorPair>& ppr1, ProxyPairRef<IteratorPair>& ppr2) {
+    ppr1.swap(ppr2);
+}
 
 /**
  * \brief Types used to help build ZipIterator
@@ -153,7 +183,7 @@ struct ZipIteratorTypes
    * A proxy class to access to and to modify the values stored in the two parallel sequences. It is convertible to
    * value_type
    */
-  typedef Detail::ProxyPairRef<first_value_type, second_value_type>
+  typedef Detail::ProxyPairRef<IteratorPair>
       reference_wrapper;
 
   //! The reference type of the sequence

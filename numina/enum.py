@@ -54,6 +54,7 @@ class EnumType(type):
         return super(EnumType, cls).__new__(cls, classname, parents, valid)
 
     def __init__(cls, classname, parents, attributes):
+        super(EnumType, cls).__init__(classname, parents, attributes)
         for i, v in cls.__members__.items():
             m = cls.__new__(cls)
             m.__init__(i, v)
@@ -87,7 +88,7 @@ class EnumType(type):
 
 
 class Enum(with_metaclass(EnumType, object)):
-    '''Base class for enumerated classes.'''
+    """Base class for enumerated classes."""
 
     def __init__(self, name, value):
         self.name = name
@@ -99,6 +100,9 @@ class Enum(with_metaclass(EnumType, object)):
                  isinstance(self, other.__class__)) and
                 (other.name == self.name) and
                 (other.value == self.value))
+
+    def __hash__(self):
+        return hash(self.name)
 
     def __le__(self, other):
         raise TypeError('operation <= not defined for %r' % self.__class__)

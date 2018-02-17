@@ -1,39 +1,75 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-'''DAL base class'''
+"""DAL base classes"""
 
-from ..core.oresult import ObservationResult
+
 from .daliface import DALInterface
+from numina.exceptions import NoResultFound
 
 
 class AbsDAL(DALInterface):
+    pass
 
-    def obsres_from_proc_oblock_id(self, instrument, child_id):
-        # This implementation does not depend
-        # on the details of the DAL...
-        ob = self.search_oblock_from_id(child_id)
-        prod = self.search_prod_obsid(instrument, child_id, 'default')
 
-        h = ObservationResult(ob.mode)
-        h.id = child_id
-        h.instrument = ob.instrument
-        h.parent = ob.parent
-        h.update_with_product(prod)
-        return h
+class AbsDrpDAL(DALInterface):
+    def __init__(self, drps, *args, **kwargs):
+        super(AbsDrpDAL, self).__init__()
+        self.drps = drps
+
+    def search_instrument_configuration_from_ob(self, ob):
+        ins = ob.instrument
+        name = ob.configuration
+        return self.search_instrument_configuration(ins, name)
+
+    def search_instrument_configuration(self, ins, name):
+
+        drp = self.drps.query_by_name(ins)
+
+        if drp is None:
+            raise NoResultFound('Instrument "{}" not found'.format(ins))
+        try:
+            this_configuration = drp.configurations[name]
+        except KeyError:
+            raise NoResultFound('Instrument configuration "{}" missing'.format(name))
+
+        return this_configuration
+
+    def search_recipe(self, ins, mode, pipeline):
+
+        drp = self.drps.query_by_name(ins)
+
+        if drp is None:
+            raise NoResultFound('DRP not found')
+
+        try:
+            this_pipeline = drp.pipelines[pipeline]
+        except KeyError:
+            raise NoResultFound('pipeline not found')
+
+        try:
+            recipe = this_pipeline.get_recipe_object(mode)
+            return recipe
+        except KeyError:
+            raise NoResultFound('mode not found')
+
+    def search_recipe_fqn(self, ins, mode, pipename):
+
+        drp = self.drps.query_by_name(ins)
+
+        this_pipeline = drp.pipelines[pipename]
+        recipes = this_pipeline.recipes
+        recipe_fqn = recipes[mode]
+        return recipe_fqn
+
+    def search_recipe_from_ob(self, ob, pipeline='default'):
+        instrument = ob.instrument
+        mode = ob.mode
+        pipeline = ob.pipeline
+        return self.search_recipe(instrument, mode, pipeline)

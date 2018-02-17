@@ -36,14 +36,18 @@ class StoreType(type):
             if stored:
                 n_stored.update(stored)
 
+        new_attributes = {}
         for name, val in attributes.items():
             if cls.exclude(name, val):
-                nname, nval = cls.transform(name, val)
-                n_stored[nname] = nval
+                new_name, new_val = cls.transform(name, val)
+                n_stored[new_name] = new_val
+                new_attributes[new_name] = new_val
+            else:
+                new_attributes[name] = val
 
-        attributes['__numina_stored__'] = n_stored
+        new_attributes['__numina_stored__'] = n_stored
 
-        return super(StoreType, cls).__new__(cls, classname, parents, attributes)
+        return super(StoreType, cls).__new__(cls, classname, parents, new_attributes)
 
     def __setattr__(self, key, value):
         """Define __setattr__ in 'classes' created with this metaclass."""

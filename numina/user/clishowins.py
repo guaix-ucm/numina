@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,9 +20,11 @@
 """User command line interface of Numina, show-instruments functionallity."""
 
 from __future__ import print_function
-from numina.core.pipeline import DrpSystem
 
-def add(subparsers):
+import numina.drps
+import numina.core.objimport as objimport
+
+def register(subparsers, config):
     parser_show_ins = subparsers.add_parser(
         'show-instruments',
         help='show registered instruments'
@@ -45,8 +47,9 @@ def add(subparsers):
     return parser_show_ins
 
 
-def show_instruments(args):
-    mm = DrpSystem()
+def show_instruments(args, extra_args):
+
+    mm = numina.drps.get_system_drps()
 
     if args.name:
         for name in args.name:
@@ -62,8 +65,16 @@ def show_instruments(args):
 
 def print_instrument(instrument, modes=True):
     print('Instrument:', instrument.name)
-    for ic in instrument.configurations:
-        print(' has configuration', repr(ic))
+    for ic, conf in instrument.configurations.items():
+        if ic == 'default':
+            # skip default configuration
+            continue
+        msg = " has configuration '{}' uuid={}".format(conf.name, ic)
+        print(msg)
+    default_conf = instrument.configurations['default']
+    msg = " default is '{}'".format(default_conf.name)
+    print(msg)
+    print(" has datamodel '{}'".format(objimport.fully_qualified_name(instrument.datamodel)))
     for _, pl in instrument.pipelines.items():
         print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
     if modes and instrument.modes:

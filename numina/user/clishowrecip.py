@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 from __future__ import print_function
 
@@ -26,13 +26,14 @@ import warnings
 import yaml
 
 from numina import __version__
-from numina.core import DataFrameType, DataProductType
+import numina.drps
+from numina.types.frame import DataFrameType
+from numina.types.product import DataProductTag
 from numina.core import import_object
-from numina.core.pipeline import DrpSystem
 from numina.user.clishowins import print_no_instrument
 
 
-def add(subparsers):
+def register(subparsers, config):
     parser_show_rec = subparsers.add_parser(
         'show-recipes',
         help='show information of recipes'
@@ -59,9 +60,9 @@ def add(subparsers):
     return parser_show_rec
 
 
-def show_recipes(args):
+def show_recipes(args, extra_args):
 
-    drpsys = DrpSystem()
+    drpsys = numina.drps.get_system_drps()
 
     # Query instruments
     if args.instrument:
@@ -80,11 +81,12 @@ def show_recipes(args):
         # Per instrument
         if theins:
             for pipe in theins.pipelines.values():
-                for mode, recipe_fqn in pipe.recipes.items():
+                for mode, recipe_entry in pipe.recipes.items():
+                    recipe_fqn = recipe_entry['class']
                     if not args.name or (recipe_fqn in args.name):
-                        Cls = import_object(recipe_fqn)
+                        recipe = pipe.get_recipe_object(mode)
                         this_recipe_print(
-                            Cls, name=recipe_fqn,
+                            recipe.__class__, name=recipe_fqn,
                             insname=theins.name,
                             pipename=pipe.name,
                             modename=mode
@@ -102,7 +104,7 @@ def print_recipe_template(recipe, name=None, insname=None,
             return (dispname, req.default)
         elif isinstance(req.type, DataFrameType):
             return (dispname, dispname + '.fits')
-        elif isinstance(req.type, DataProductType):
+        elif isinstance(req.type, DataProductTag):
             return (dispname, getattr(req.type, 'default', None))
         else:
             return (dispname, None)
@@ -156,7 +158,7 @@ def print_requirements(recipe, pad=''):
 
         if req.default is not None:
             dispname = dispname + '=' + str(req.default)
-        typ = req.type.python_type.__name__
+        typ = req.type.descriptive_name()
 
         print("%s%s type=%r [%s]" % (pad, dispname, typ, req.description))
 

@@ -59,7 +59,7 @@ class RecipeInOut(object):
             try:
                 getattr(self, key)
             except ValueError as err:
-                all_msg_errors.append(err.message)
+                all_msg_errors.append(err.args[0])
 
         # Raises a list of all the missing entries
         if all_msg_errors:
@@ -132,10 +132,7 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
             where.destination = prod.dest
             saveres[key] = numina.store.dump(prod.type, val, where)
 
-        with open(where.result, 'w+') as fd:
-            yaml.dump(saveres, fd)
-
-        return where.result
+        return saveres
 
 
 class define_result(object):

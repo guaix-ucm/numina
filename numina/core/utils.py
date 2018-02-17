@@ -26,7 +26,7 @@ from numina.core.requirements import ObservationResultRequirement
 class AlwaysFailRecipe(BaseRecipe):
     """A Recipe that always fails."""
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super(AlwaysFailRecipe, self).__init__(
             version="1"
         )
@@ -38,7 +38,7 @@ class AlwaysFailRecipe(BaseRecipe):
 class AlwaysSuccessRecipe(BaseRecipe):
     """A Recipe that always successes."""
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super(AlwaysSuccessRecipe, self).__init__(
             version=1
         )
@@ -52,7 +52,7 @@ class OBSuccessRecipe(BaseRecipe):
 
     obresult = ObservationResultRequirement()
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super(OBSuccessRecipe, self).__init__(
             version=1
         )

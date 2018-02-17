@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2014 Universidad Complutense de Madrid
+# Copyright 2010-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import abc
+
 import logging
 
 from .node import Node
@@ -26,20 +26,26 @@ _logger = logging.getLogger('numina.flow')
 
 
 class FlowError(Exception):
-    '''Error base class for flows.'''
+    """Error base class for flows."""
     pass
 
 
 class SerialFlow(Node):
-    '''A flow where Nodes are executed sequentially.'''
+    """A flow where Nodes are executed sequentially."""
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
-        for i, o in zip(nodeseq, nodeseq[1:]):
-            if i.noutputs != o.ninputs:
-                raise FlowError
         self.nodeseq = nodeseq
-        super(SerialFlow, self).__init__(nodeseq[0].ninputs,
-                                         nodeseq[-1].noutputs)
+        if nodeseq:
+            ninputs = nodeseq[0].ninputs
+            noutputs = nodeseq[-1].noutputs
+            # Check nodes
+            for i, o in zip(nodeseq, nodeseq[1:]):
+                if i.noutputs != o.ninputs:
+                    raise FlowError
+        else:
+            ninputs = 1
+            noutputs = 1
+        super(SerialFlow, self).__init__(ninputs, noutputs)
 
     def __iter__(self):
         return self.nodeseq.__iter__()
@@ -53,22 +59,22 @@ class SerialFlow(Node):
     def __setitem__(self, key, value):
         self.nodeseq[key] = value
 
-    def _run(self, img):
+    def run(self, img):
+        out = img
         for nd in self.nodeseq:
-            out = nd(img)
-            img = out
+            out = nd(out)
         return out
 
 
 class ParallelFlow(Node):
-    '''A flow where Nodes are executed in parallel.'''
+    """A flow where Nodes are executed in parallel."""
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
         nin = sum((f.ninputs for f in nodeseq), 0)
         nout = sum((f.noutputs for f in nodeseq), 0)
         super(ParallelFlow, self).__init__(nin, nout)
 
-    def _run(self, args):
+    def run(self, args):
         out = []
         for func, arg in zip(self.nodeseq, args):
             r = func(arg)
@@ -99,7 +105,7 @@ class MixerFlow(Node):
         super(MixerFlow, self).__init__(nin, nout)
         self.table = table
 
-    def _run(self, args):
+    def run(self, args):
         assert len(args) == self.ninputs
 
         return tuple(args[idx] for idx in self.table)

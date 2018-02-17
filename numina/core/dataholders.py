@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,8 +23,8 @@ Recipe requirements
 
 import inspect
 
-from .types import NullType, PlainPythonType
-from .types import ListOfType
+import numina.exceptions
+from numina.types.datatype import NullType, PlainPythonType
 
 
 class EntryHolder(object):
@@ -37,8 +37,6 @@ class EntryHolder(object):
             self.type = NullType()
         elif tipo in [bool, str, int, float, complex, list]:
             self.type = PlainPythonType(ref=tipo())
-        elif isinstance(tipo, ListOfType):
-            self.type = tipo
         elif inspect.isclass(tipo):
             self.type = tipo()
         else:
@@ -63,9 +61,24 @@ class EntryHolder(object):
 
     def __set__(self, instance, value):
         """Setter of the descriptor protocol."""
-        cval = self.convert(value)
-        if self.choices and (cval not in self.choices):
-            raise ValueError('{} not in {}'.format(cval, self.choices))
+        try:
+            cval = self.convert(value)
+            if self.choices and (cval not in self.choices):
+                errmsg = '{} not in {}'.format(cval, self.choices)
+                raise numina.exceptions.ValidationError(errmsg)
+        except numina.exceptions.ValidationError as err:
+
+            if len(err.args) == 0:
+                errmsg = 'UNDEFINED ERROR'
+                rem = ()
+            else:
+                errmsg = err.args[0]
+                rem = err.args[1:]
+
+            msg = '"{}": {}'.format(self.dest, errmsg)
+            newargs = (msg, ) + rem
+            raise numina.exceptions.ValidationError(*newargs)
+
         instance._numina_desc_val[self.dest] = cval
 
     def convert(self, val):
@@ -79,8 +92,8 @@ class EntryHolder(object):
     def default_value(self):
         if self.default is not None:
             return self.convert(self.default)
-        if self.type.default is not None:
-            return self.type.default
+        if self.type.internal_default is not None:
+            return self.type.internal_default
         if self.optional:
             return None
         else:
@@ -90,12 +103,12 @@ class EntryHolder(object):
 
 
 class Product(EntryHolder):
-    '''Product holder for RecipeResult.'''
-    def __init__(self, ptype, description='', validation=True,
-                 dest=None, optional=False, default=None, *args, **kwds):
+    """Product holder for RecipeResult."""
+    def __init__(self, ptype, description="", validation=True,
+                 destination=None, optional=False, default=None, choices=None):
         super(Product, self).__init__(
-            ptype, description, dest, optional,
-            default, choices=None, validation=validation
+            ptype, description, destination=destination, optional=optional,
+            default=default, choices=choices, validation=validation
             )
 
 #        if not isinstance(self.type, DataProductType):
@@ -103,3 +116,6 @@ class Product(EntryHolder):
 
     def __repr__(self):
         return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
+
+    def convert(self, val):
+        return self.type.convert_out(val)

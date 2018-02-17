@@ -1,23 +1,13 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-'''DAL base class'''
+"""DAL base class"""
 
 from abc import ABCMeta, abstractmethod
 
@@ -25,11 +15,7 @@ from six import with_metaclass
 
 
 class DALInterface(with_metaclass(ABCMeta, object)):
-
-    @abstractmethod
-    def search_oblock_from_id(self, objid):
-        # returns ObservingBlock object
-        pass
+    """Abstract Base Class for DAL"""
 
     @abstractmethod
     def obsres_from_oblock_id(self, obsid):
@@ -38,31 +24,21 @@ class DALInterface(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def search_recipe_from_ob(self, ob, pipeline):
+    def search_recipe_from_ob(self, ob, pipeline='default'):
         # returns RecipeClass
         pass
 
     @abstractmethod
-    def obsres_from_proc_oblock_id(self, instrument, child_id):
-        pass
-
-    @abstractmethod
-    def search_prod_obsid(self, instrument, obsid, pipeline):
+    def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         pass
 
     @abstractmethod
-    def search_prod_req_tags(self, req, instrument, tags, pipeline):
+    def search_parameter(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         pass
 
     @abstractmethod
-    def search_prod_type_tags(self, tipo, instrument, tags, pipeline):
-        '''Returns the first coincidence...'''
-        # returns StoredProduct
-        pass
-
-    @abstractmethod
-    def search_param_req(self, req, instrument, mode, pipeline):
-        # returns StoredParameter
+    def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
+        # mode field node could go together...
         pass

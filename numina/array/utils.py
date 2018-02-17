@@ -26,13 +26,19 @@ import math
 import numpy
 
 
-def wc_to_pix_1d(w):
-    '''Return the pixel where a value is located.'''
+def coor_to_pix_1d(w):
+    """Return the pixel where a coordinate is located."""
     return int(math.floor(w + 0.5))
 
 
 def wcs_to_pix(w):
-    return [wc_to_pix_1d(w1) for w1 in w[::-1]]
+    return [coor_to_pix_1d(w1) for w1 in w[::-1]]
+
+
+def coor_to_pix(w, order='rc'):
+    if order == 'xy':
+        return coor_to_pix(w[::-1], order='rc')
+    return [coor_to_pix_1d(w1) for w1 in w]
 
 
 def wcs_to_pix_np(w):
@@ -44,8 +50,8 @@ def wcs_to_pix_np(w):
 def slice_create(center, block, start=0, stop=None):
     '''Return an slice with a symmetric region around center.'''
 
-    do = wc_to_pix_1d(center - block)
-    up = wc_to_pix_1d(center + block)
+    do = coor_to_pix_1d(center - block)
+    up = coor_to_pix_1d(center + block)
 
     l = max(start, do)
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,16 +19,6 @@
 
 from __future__ import print_function
 
-import logging
-from itertools import product
-
-import six
-
-if six.PY2:
-    from itertools import imap
-else:
-    imap = map
-
 import numpy
 from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
@@ -38,8 +28,6 @@ from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
 from numina.array.nirproc import ramp_array
 from numina.array.nirproc import fowler_array
-
-_logger = logging.getLogger("numina.array")
 
 
 def subarray_match(shape, ref, sshape, sref=None):
@@ -104,15 +92,54 @@ def combine_shape(shapes, offsets):
     offarr = asarray(offsets)
     ucorners = offarr + sharr
     ref = offarr.min(axis=0)
-    finalshape = ucorners.max(axis=0) - ref
+    finalshape = tuple(ucorners.max(axis=0) - ref)
     offsetsp = offarr - ref
     return (finalshape, offsetsp)
 
 
-def resize_array(data, finalshape, region, window=None,
-                 scale=1, fill=0, conserve=True):
+def combine_shapes(shapes, refs, order='rc'):
 
-    if window:
+    # Order 'rc' -> row column
+    # Order 'xy' -> xy coordinates
+
+    sharr = numpy.asarray(shapes)
+    rfarr = numpy.asarray(refs)
+
+    if order == 'xy':
+        rfarr = rfarr[:,::-1]
+
+    offarr = rfarr - rfarr[0]
+    lower_corners = -offarr # coordinate of the lower corner
+
+    # Coordinates with respect to 0
+    baseref = lower_corners.min(axis=0)
+
+    # With respect to baseref
+    lower_corners = lower_corners - baseref
+    upper_corners = sharr - offarr - baseref
+    finalshape = tuple(upper_corners.max(axis=0))
+
+    subshapes = []
+    for lc, uc in zip(lower_corners, upper_corners):
+        subshape = []
+        for start, end in zip(lc, uc):
+            subshape.append(slice(start, end))
+        subshapes.append(tuple(subshape))
+
+    # Coordinate of the refs pixels in final image
+    # It's equal for all pixels
+    ref_final_0 = lower_corners[0] + rfarr[0]
+
+    if order == 'xy':
+        ref_final_0 = ref_final_0[::-1]
+
+    return (finalshape, subshapes, tuple(ref_final_0))
+
+
+def resize_array(data, finalshape, region, window=None,
+                 scale=1, fill=0.0, conserve=True, dtype=None):
+
+    if window is not None:
         data = data[window]
 
     if scale == 1:
@@ -120,32 +147,49 @@ def resize_array(data, finalshape, region, window=None,
     else:
         finaldata = rebin_scale(data, scale)
 
-    newdata = numpy.empty(finalshape, dtype=data.dtype)
+    if dtype is None:
+        dtype = data.dtype
+
+    newdata = numpy.empty(finalshape, dtype=dtype)
     newdata.fill(fill)
     newdata[region] = finaldata
     # Conserve the total sum of the original data
     if conserve:
-        newdata[region] /= scale**2
+        newdata[region] = newdata[region] / scale**2
     return newdata
 
 
+def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True, fill=0.0):
+    rarrays = []
+    regions = []
+    for array, rel_offset in zip(arrays, offsetsp):
+        region, _ = subarray_match(finalshape, rel_offset, shape)
+        newdata = resize_array(array, finalshape, region, window=window,
+                               fill=fill, scale=scale, conserve=conserve)
+        rarrays.append(newdata)
+        regions.append(region)
+    return rarrays, regions
+
+
+def resize_arrays_alt(arrays, regions, finalshape, window=None, scale=1, conserve=True, fill=0.0):
+    rarrays = []
+    for array, region in zip(arrays, regions):
+        newdata = resize_array(array, finalshape, region, window=window,
+                               fill=fill, scale=scale, conserve=conserve)
+        rarrays.append(newdata)
+    return rarrays
+
+
 def rebin_scale(a, scale=1):
-    '''Scale an array to a new shape.'''
+    """Scale an array to a new shape."""
 
     newshape = tuple((side * scale) for side in a.shape)
 
-    slices = [slice(0, old, float(old)/new)
-              for old, new in zip(a.shape, newshape)]
-    coordinates = numpy.mgrid[slices]
-    # choose the biggest smaller integer index
-    indices = coordinates.astype('i')
-    return a[tuple(indices)]
+    return rebin(a, newshape)
 
 
 def rebin(a, newshape):
-    '''Rebin an array to a new shape.'''
-
-    assert len(a.shape) == len(newshape)
+    """Rebin an array to a new shape."""
 
     slices = [slice(0, old, float(old)/new)
               for old, new in zip(a.shape, newshape)]
@@ -247,9 +291,6 @@ def compute_sky_advanced(data, omasks):
     result = numpy.zeros(data[0].shape)
     result += median_sky
     return result
-
-    result = median(data, omasks)
-    return result[0]
 
 
 def compute_median_background(img, omask, region):

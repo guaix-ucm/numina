@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,7 +23,8 @@ import os
 
 from .clirundal import mode_run_common
 
-def add(subparsers):
+
+def register(subparsers, config):
     parser_run_recipe = subparsers.add_parser(
         'run-recipe',
         help='run a recipe'
@@ -70,6 +71,6 @@ def add(subparsers):
 
     return parser_run_recipe
 
-def mode_run_recipe(args):
-    mode_run_common(args, mode='rec')
+def mode_run_recipe(args, extra_args):
+    mode_run_common(args, extra_args, mode='rec')
 

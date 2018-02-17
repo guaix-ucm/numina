@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2015 Universidad Complutense de Madrid
+# Copyright 2014-2016 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,14 +17,14 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''FWHM calculation'''
+"""FWHM calculation"""
 
 from __future__ import division
 
 import numpy as np
 import scipy.interpolate as itpl
 
-from numina.array.utils import wc_to_pix_1d
+from numina.array.utils import coor_to_pix_1d
 
 
 def compute_fwhm_2d_simple(img, xc, yc):
@@ -32,8 +32,8 @@ def compute_fwhm_2d_simple(img, xc, yc):
     X = np.arange(0, img.shape[1], 1.0)
     Y = np.arange(0, img.shape[0], 1.0)
 
-    xpix = wc_to_pix_1d(xc - X[0])
-    ypix = wc_to_pix_1d(yc - Y[0])
+    xpix = coor_to_pix_1d(xc - X[0])
+    ypix = coor_to_pix_1d(yc - Y[0])
 
     peak = img[ypix, xpix]
 
@@ -51,8 +51,8 @@ def compute_fwhm_2d_spline(img, xc, yc):
     Y = np.arange(0.0, img.shape[1], 1.0)
     X = np.arange(0.0, img.shape[0], 1.0)
 
-    xpix = wc_to_pix_1d(xc)
-    ypix = wc_to_pix_1d(yc)
+    xpix = coor_to_pix_1d(xc)
+    ypix = coor_to_pix_1d(yc)
     # The image is already cropped
 
     bb = itpl.RectBivariateSpline(X, Y, img)
@@ -71,19 +71,34 @@ def compute_fwhm_2d_spline(img, xc, yc):
 
 
 def compute_fwhm_1d_simple(Y, xc, X=None):
-    '''Compute the FWHM.'''
+    """Compute the FWHM."""
     return compute_fw_at_frac_max_1d_simple(Y, xc, X=X, f=0.5)
 
 
 def compute_fw_at_frac_max_1d_simple(Y, xc, X=None, f=0.5):
-    '''Compute the full width at fraction f of the maximum'''
+    """Compute the full width at fraction f of the maximum"""
+
+    yy = np.asarray(Y)
+
+    if yy.ndim != 1:
+        raise ValueError('array must be 1-d')
+
+    if yy.size == 0:
+        raise ValueError('array is empty')
+
     if X is None:
-        X = np.arange(Y.shape[0])
+        xx = np.arange(yy.shape[0])
+    else:
+        xx = X
 
-    xpix = wc_to_pix_1d(xc - X[0])
-    peak = Y[xpix]
+    xpix = coor_to_pix_1d(xc - xx[0])
 
-    fwhm_x, _codex, _msgx = compute_fwhm_1d(X, Y - f * peak, xc, xpix)
+    try:
+        peak = yy[xpix]
+    except IndexError:
+        raise ValueError('peak is out of array')
+
+    fwhm_x, _codex, _msgx = compute_fwhm_1d(xx, yy - f * peak, xc, xpix)
     return peak, fwhm_x
 
 

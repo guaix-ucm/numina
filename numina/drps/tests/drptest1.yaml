@@ -1,0 +1,41 @@
+name: TEST1
+configurations:
+  path: numina.drps.tests.configs
+  values:
+  - default
+modes:
+  - description: A recipe that always fails
+    key: fail
+    name: Fail
+    summary: Summary of fail recipe
+    tagger:
+       - KEY1
+       - KEY2
+  - description: Bias
+    key: bias
+    name: Bias
+    summary: Summary of Bias recipe
+    tagger:
+       - KEY3
+  - description: Dark
+    key: dark
+    name: Dark
+    summary: Summary of Dark recipe
+    tagger:
+       - KEY3
+pipelines:
+  default:
+      recipes:
+          bias:
+            class: numina.tests.recipes.BiasRecipe
+            kwargs:
+             simulate_error: True
+          dark: numina.tests.recipes.DarkRecipe
+          fail: numina.core.utils.AlwaysFailRecipe
+      products:
+          MasterBias: numina.tests.recipes.MasterBias
+      provides:
+          - name: MasterBias
+            mode: bias
+            field: master_bias
+      version: 1

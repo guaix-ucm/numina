@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -26,70 +26,102 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
-import traceback
+
 import logging
+import json
 
 from six import with_metaclass
+from astropy.io import fits
+
+from numina.util.jsonencoder import ExtEncoder
 
 from .. import __version__
-from .recipeinout import ErrorRecipeResult
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult
 from ..dal.stored import ObservingBlock
 from ..exceptions import NoResultFound
-from .products import ObservationResultType
-from .products import InstrumentConfigurationType
-from .products import DataProductTag
-from .dataholders import Product
-from .products import QualityControlProduct
 
 
 class BaseRecipe(with_metaclass(RecipeType, object)):
-    """Base class for all instrument recipes"""
+    """Base class for all instrument recipes
 
+    Parameters
+    ----------
+    intermediate_results : bool, optional
+                           If True, save intermediate results of the Recipe
+
+
+    Attributes
+    ----------
+
+    obresult : ObservationResult, requirement
+
+    qc : QualityControl, result, QC.GOOD by default
+
+    logger :
+         recipe logger
+
+    """
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
+    # Recipe own logger
+    logger = logging.getLogger('numina.recipes.numina')
 
-    def __init__(self, *args, **kwds):
+    def __new__(cls, *args, **kwargs):
+        recipe = super(BaseRecipe, cls).__new__(cls)
+        recipe.instrument = kwargs.get('instrument', 'UNKNOWN')
+        recipe.mode = kwargs.get('mode', 'UNKNOWN')
+        recipe.pipeline = kwargs.get('pipeline', 'default')
+        recipe.intermediate_results = kwargs.get('intermediate_results', False)
+        recipe.runinfo = cls.create_default_runinfo()
+        recipe.runinfo.update(kwargs.get('runinfo', {}))
+        recipe.environ = {}
+        recipe.__version__ = 1
+        recipe.query_options = kwargs.get('query_options', {})
+        recipe.configure(**kwargs)
+        return recipe
+
+    def __init__(self, *args, **kwargs):
         super(BaseRecipe, self).__init__()
-        self.__author__ = 'Unknown'
-        self.__version__ = 1
-        # These two are maintained
-        # for the moment
-        self.environ = {}
-        self.runinfo = {}
-        #
-        self.instrument = None
-        self.configure(**kwds)
-
-        # Recipe own logger
-        self.logger = logging.getLogger('numina')
+        self.configure(**kwargs)
 
     def configure(self, **kwds):
-        if 'author' in kwds:
-            self.__author__ = kwds['author']
         if 'version' in kwds:
             self.__version__ = kwds['version']
-        if 'instrument' in kwds:
-            self.instrument = kwds['instrument']
-        if 'runinfo' in kwds:
-            self.runinfo = kwds['runinfo']
 
+        base_kwds = ['instrument', 'mode', 'runinfo', 'intermediate_results']
+        for kwd in base_kwds:
+            if kwd in kwds:
+                setattr(self, kwd, kwds[kwd])
+
+    def __setstate__(self, state):
+        self.configure(**state)
+
+    @staticmethod
+    def create_default_runinfo():
+        runinfo = {
+            'data_dir': None,
+            'results_dir': None,
+            'work_dir': None,
+            'pipeline': 'default',
+            'runner': 'unknown-runner',
+            'runner_version': 'unknown-version',
+            'taskid': 'unknown-id'
+        }
+        return runinfo
 
     @classmethod
     def create_input(cls, *args, **kwds):
-        '''
-        Pass the result arguments to the RecipeInput constructor
-        '''
+        """Pass the result arguments to the RecipeInput constructor"""
+
         return cls.RecipeInput(*args, **kwds)
 
     @classmethod
     def create_result(cls, *args, **kwds):
-        '''
-        Pass the result arguments to the RecipeResult constructor
-        '''
+        """Pass the result arguments to the RecipeResult constructor"""
+
         return cls.RecipeResult(*args, **kwds)
 
     @classmethod
@@ -103,37 +135,69 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     def run(self, recipe_input):
         return self.create_result()
 
+    def run_qc(self, recipe_input, recipe_result):
+        """Run Quality Control checks."""
+        return recipe_result
+
     def __call__(self, recipe_input):
-        '''
-        Process the result of the observing block with the
-        Recipe.
+        """
+        Process the result of the observing block with the Recipe.
 
-        :param recipe_input: the input appropriated for the Recipe
-        :param type: RecipeInput
-        :rtype: a RecipeResult object or an error
+        Parameters
+        ----------
+        recipe_input : RecipeInput
+                       The input appropriated for the Recipe
 
-        '''
+        Returns
+        -------
+        a RecipeResult object or an error
+        """
 
-        try:
-            result = self.run(recipe_input)
-        except Exception as exc:
-            self.logger.error("During recipe execution %s", exc)
-            return ErrorRecipeResult(
-                exc.__class__.__name__,
-                str(exc),
-                traceback.format_exc()
-                )
+        result = self.run(recipe_input)
+
+        # Update QC in the result
+        self.run_qc(recipe_input, result)
+
         return result
 
+    def validate_input(self, recipe_input):
+        """"Validate the input of the recipe"""
+        recipe_input.validate()
+
+    def validate_result(self, recipe_result):
+        """Validate the result of the recipe"""
+        recipe_result.validate()
+
+    def save_intermediate_img(self, img, name):
+        """Save intermediate FITS objects."""
+        if self.intermediate_results:
+            img.writeto(name, clobber=True)
+
+    def save_intermediate_array(self, array, name):
+        """Save intermediate array object as FITS."""
+        if self.intermediate_results:
+            fits.writeto(name, array, clobber=True)
+
+    def save_structured_as_json(self, structured, name):
+        if self.intermediate_results:
+            if hasattr(structured, '__getstate__'):
+                state = structured.__getstate__()
+            elif isinstance(structured, dict):
+                state = structured
+            else:
+                state = structured.__dict__
+
+            with open(name, 'w') as fd:
+                json.dump(state, fd, indent=2, cls=ExtEncoder)
+
     def set_base_headers(self, hdr):
-        '''Set metadata in FITS headers.'''
+        """Set metadata in FITS headers."""
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         return hdr
 
-    @classmethod
-    def build_recipe_input(cls, ob, dal, pipeline='default'):
+    def build_recipe_input(self, ob, dal):
         """Build a RecipeInput object."""
 
         result = {}
@@ -145,59 +209,15 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         if isinstance(ob, ObservingBlock):
             # We have to build an Obsres
             obsres = dal.obsres_from_oblock_id(ob.id)
-        elif isinstance(ob, ObservationResult):
-            # We have one
-            obsres = ob
         else:
-            raise ValueError('ob input is neither a ObservingBlock'
-                             ' nor a ObservationResult')
+            obsres = ob
 
-        tags = getattr(obsres, 'tags', {})
+        for key, req in self.requirements().items():
 
-        for key, req in cls.requirements().items():
+            try:
+                query_option = self.query_options.get(key)
+                result[key] = req.query(dal, obsres, options=query_option)
+            except NoResultFound as notfound:
+                req.on_query_not_found(notfound)
 
-            # First check if the requirement is embedded
-            # in the observation result
-            # it can happen in GTC
-
-            # Using NoResultFound instead of None
-            # None can be a valid result
-            val = getattr(obsres, key, NoResultFound)
-
-            if val is not NoResultFound:
-                result[key] = val
-                continue
-
-            # Then, continue checking the rest
-
-            if isinstance(req.type, ObservationResultType):
-                result[key] = obsres
-            elif isinstance(req.type, InstrumentConfigurationType):
-                # Not sure how to handle this, or if it is needed...
-                result[key] = {}
-            elif isinstance(req.type, DataProductTag):
-                try:
-                    prod = dal.search_prod_req_tags(req, obsres.instrument,
-                                                    tags, pipeline)
-                    result[key] = prod.content
-                except NoResultFound:
-                    pass
-            else:
-                # Still not clear what to do with the other types
-                try:
-                    param = dal.search_param_req(req, obsres.instrument,
-                                                 obsres.mode, pipeline)
-                    result[key] = param.content
-                except NoResultFound:
-                    pass
-
-        return cls.create_input(**result)
-
-    # An alias required by GTC
-    buildRI = build_recipe_input
-
-
-class BaseRecipeAutoQC(with_metaclass(RecipeType, BaseRecipe)):
-    """Base class for instrument recipes"""
-
-    qc = Product(QualityControlProduct, dest='qc')
+        return self.create_input(**result)

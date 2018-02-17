@@ -19,12 +19,12 @@
 
 import numpy
 
-from ..utils import wcs_to_pix
+from ..utils import coor_to_pix
 from ._traces import tracing
 
 
 def trace(arr, x, y, axis=0, background=0.0,
-          step=4, hs=1, tol=2, maxdis=2.0):
+          step=4, hs=1, tol=2, maxdis=2.0, gauss=1):
     '''Trace peak in array starting in (x,y).
 
     Trace a peak feature in an array starting in position (x,y).
@@ -44,6 +44,9 @@ def trace(arr, x, y, axis=0, background=0.0,
     step : int, optional
            Number of pixels to move (left and rigth)
            in each iteration
+    gauss : bint, optional
+            If 1 --> Gaussian interpolation method
+            if 0 --> Linear interpolation method
 
     Returns
     -------
@@ -51,7 +54,7 @@ def trace(arr, x, y, axis=0, background=0.0,
         A nx3 array, with x,y,p of each point in the trace
     '''
 
-    i,j = wcs_to_pix([x, y])
+    i,j = coor_to_pix([x, y], order='xy')
     value = arr[i,j]
 
     # If arr is not in native byte order, the C-extension won't work
@@ -69,7 +72,7 @@ def trace(arr, x, y, axis=0, background=0.0,
         raise ValueError("'axis' must be 0 or 1")
 
     result = tracing(arr3, x, y, value, background=background,
-                     step=step, hs=hs, tol=tol, maxdis=maxdis)
+                     step=step, hs=hs, tol=tol, maxdis=maxdis, gauss=gauss)
 
     if axis == 1:
         # Flip X,Y columns

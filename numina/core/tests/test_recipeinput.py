@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -64,6 +64,18 @@ def test_class_desc_set():
     assert isinstance(BB.param3, Parameter)
     assert BB.param3 is BB.stored()['param3']
     assert BB.param3.dest == 'param3'
+
+
+def test_class_destination_set():
+
+    class BB(RecipeInput):
+        param3h2hd = Parameter(1, 'something1', destination="param3")
+
+    assert BB.param3 is getattr(BB, 'param3')
+    assert isinstance(BB.param3, Parameter)
+    assert BB.param3 is BB.stored()['param3']
+    assert BB.param3.dest == 'param3'
+
 
 def test_class_desc_stored():
 
