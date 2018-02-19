@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -78,7 +78,6 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
-
     :parameter lowercut: values below this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
@@ -233,9 +232,8 @@ def comp_ratio(img1, img2, mask):
     return ratio, mask3
 
 
-
 def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev=2.0):
-    '''Find cosmetic defects in a detector using two flat field images.
+    """Find cosmetic defects in a detector using two flat field images.
 
     Two arrays representing flat fields of different exposure times are
     required. Cosmetic defects are selected as points that deviate
@@ -259,8 +257,10 @@ def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev
     :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
-    :returns:the updated mask
-    '''
+    :returns: the updated mask
+
+    """
+
     if flat2 is None:
         flat1, flat2 = flat2, flat1
         flat1 = numpy.ones_like(flat2)

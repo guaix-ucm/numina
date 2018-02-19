@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,7 +28,7 @@ class SteffenInterpolator(object):
     Steffen, M., Astronomy & Astrophysics, 239, 443-450 (1990)
 
     `x` and `y` are arrays of values used to approximate some function f:
-    ``y = f(x)``.  This class returns an object whose call method uses
+    `y = f(x)`.  This class returns an object whose call method uses
     monotonic cubic splines to find the value of new points.
 
     Parameters

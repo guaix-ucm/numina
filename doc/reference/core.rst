@@ -3,13 +3,6 @@
 =================================================
 
 
-:mod:`numina.core.dataframe` --- 
-==================================================
-.. automodule:: numina.core.dataframe
-   :synopsis:  Base DataFrame
-   :members:
-
-
 :mod:`numina.core.dataholders` ---
 ==================================================
 .. automodule:: numina.core.dataholders

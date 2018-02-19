@@ -13,7 +13,9 @@ Numina modules
    logger
    qa
    treedict
+   types
    user
    util
+   visualization
    xdgdirs
    
