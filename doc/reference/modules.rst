@@ -8,6 +8,7 @@ Numina modules
    array
    core
    dal
+   datamodel
    drps
    exceptions
    flow
