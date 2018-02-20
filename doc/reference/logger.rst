@@ -1,5 +1,5 @@
 ==========================================
-:mod:`numina.logger` --- 
+:mod:`numina.logger` --- Logging utilities
 ==========================================
 
 .. automodule:: numina.logger

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -26,6 +26,7 @@ _system_drps = None
 
 
 def get_system_drps():
+    """Load all compatible DRPs in the system"""
     global _system_drps
     if _system_drps is None:
         _system_drps = DrpSystem()

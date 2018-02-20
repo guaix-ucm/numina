@@ -1,5 +1,5 @@
 ==========================================
-:mod:`numina.util` --- 
+:mod:`numina.util` --- Generic utilities
 ==========================================
 
 .. automodule:: numina.util

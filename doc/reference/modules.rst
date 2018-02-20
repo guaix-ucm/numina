@@ -7,11 +7,15 @@ Numina modules
 
    array
    core
-   flow
+   dal
+   drps
    exceptions
+   flow
    frame
    logger
+   modeling
    qa
+   store
    treedict
    types
    user

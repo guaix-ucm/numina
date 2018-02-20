@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -38,6 +38,7 @@ _logger = logging.getLogger("numina.dal.dictdal")
 
 
 class BaseDictDAL(AbsDrpDAL):
+    """A dictionary based DAL"""
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
         super(BaseDictDAL, self).__init__(drps)
 
@@ -243,6 +244,7 @@ class Dict2DAL(BaseDictDAL):
 
 
 class HybridDAL(Dict2DAL):
+    """A DAL that can read files from directory structure"""
     def __init__(self, drps, obtable, base, extra_data=None):
         self.rootdir = base.get("rootdir", "")
 
