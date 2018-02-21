@@ -77,7 +77,14 @@ class FITSKeyExtractor(object):
 
 
 class DataModel(object):
-    """Model of the Data being processed"""
+    """Model of the Data being processed
+
+    Parameters
+    ==========
+    name: str
+    mappings: dict or None
+
+    """
 
     db_info_keys = [
         'instrument',
@@ -132,19 +139,40 @@ class DataModel(object):
         }
 
     def get_data(self, img):
+        """Obtain the primary data from the image"""
         return img['primary'].data
 
     def get_header(self, img):
+        """Obtain the primary header from the image"""
         return img['primary'].header
 
     def get_variance(self, img):
+        """Obtain the variance of the primary data from the image"""
         return img['variance'].data
 
     def get_imgid(self, img):
+        """Obtain a unique identifier of the image.
+
+        Parameters
+        ----------
+        img : astropy.io.fits.HDUList
+
+        Returns
+        -------
+        str:
+             Identification of the image
+
+        """
         imgid = img.filename()
 
         # More heuristics here...
-        # get FILENAME keyword, for example...
+        # get FILENAME keyword, CHECKSUM, for example...
+        hdr = self.get_header(img)
+        if 'checksum' in hdr:
+            return hdr['checksum']
+
+        if 'filename' in hdr:
+            return hdr['filename']
 
         if not imgid:
             imgid = repr(img)
@@ -152,9 +180,11 @@ class DataModel(object):
         return imgid
 
     def get_darktime(self, img):
+        """Obtain DARKTIME"""
         return self.get_exptime(img)
 
     def get_exptime(self, img):
+        """Obtain EXPTIME"""
         header = self.get_header(img)
         if 'EXPTIME' in header.keys():
             etime = header['EXPTIME']
@@ -166,17 +196,21 @@ class DataModel(object):
         return etime
 
     def do_sky_correction(self, img):
+        """Perform sky correction"""
         return True
 
-    def gather_info(self, img):
-        with img.open() as hdulist:
+    def gather_info(self, dframe):
+        """Obtain a summary of information about the image."""
+        with dframe.open() as hdulist:
             info = self.gather_info_hdu(hdulist)
         return info
 
     def gather_info_dframe(self, img):
+        """Obtain a summary of information about the image."""
         return self.gather_info(img)
 
     def gather_info_hdu(self, hdulist):
+        """Obtain a summary of information about the image."""
         values = {}
         values['n_ext'] = len(hdulist)
         extnames = [hdu.header.get('extname', '') for hdu in hdulist[1:]]
@@ -188,4 +222,5 @@ class DataModel(object):
         return values
 
     def get_quality_control(self, img):
+        """Obtain quality control flag from the image."""
         return self.extractor.extract('quality_control', img)
