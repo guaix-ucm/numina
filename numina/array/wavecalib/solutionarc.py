@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,6 +20,9 @@
 """Store the solution of a wavelength calibration"""
 
 from __future__ import division, print_function
+
+import math
+import warnings
 
 from numpy.polynomial import Polynomial
 
@@ -130,7 +133,16 @@ class WavecalFeature(object):
                       'reference', 'wavelength']
         for k in state:
             if k in float_keys:
-                state[k] = float(state[k])
+                value = float(state[k])
+                # translate infinities
+                if math.isinf(value):
+                    value = 1e50
+                    warnings.warn(
+                        'Converting {}=inf to {}'.format(k, value),
+                        RuntimeWarning
+                    )
+
+                state[k] = value
             elif k in ['lineid']:
                 state[k] = int(state[k])
             else:
