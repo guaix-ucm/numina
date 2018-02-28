@@ -3,6 +3,8 @@ import pytest
 import numina.exceptions
 import numina.core.recipes
 from ..validator import validate
+from ..validator import only_positive
+from ..validator import as_list
 
 
 class RecipeIO(object):
@@ -61,3 +63,39 @@ def test_validate_exception2():
     rinput = RecipeInput(valid=True)
     with pytest.raises(numina.exceptions.ValidationError):
         recipe.run(rinput)
+
+
+def test_only_positive1():
+    """Test only_positive pass positice values"""
+    for value in [0, 1, 2, 50, 400]:
+        assert value == only_positive(value)
+
+
+def test_only_positive2():
+    """Test only_positive raises on negative values"""
+    for value in [-1, -2, -50, -400, -1.3, -2939]:
+        with pytest.raises(numina.exceptions.ValidationError):
+            only_positive(value)
+
+
+def test_as_list1():
+    """Test as_list decorator"""
+    @as_list
+    def some_test(value):
+        return value
+
+    values = [0, 1, 2, 50, 400]
+    assert values == some_test(values)
+
+
+def test_as_list2():
+    """Test as_list decorator raises ValidationError"""
+    @as_list
+    def some_test(value):
+        if value > 1:
+            raise numina.exceptions.ValidationError('must be <= 1')
+        return value
+
+    values = [0, 1, 2, 50, 400]
+    with pytest.raises(numina.exceptions.ValidationError):
+        some_test(values)

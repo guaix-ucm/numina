@@ -21,16 +21,42 @@
 Recipe requirement holders
 """
 
+import collections
 
 from numina.types.obsresult import ObservationResultType
 from numina.types.obsresult import InstrumentConfigurationType
-from numina.types.datatype import PlainPythonType
+from numina.types.datatype import PlainPythonType, ListOfType
+from .validator import as_list as deco_as_list
 from .dataholders import EntryHolder
-from .query import QueryModifier, Ignore, Result
+from .query import Ignore
 
 
 class Requirement(EntryHolder):
-    """Requirement holder holder for RecipeRequirement."""
+    """Requirement holder for RecipeInput.
+
+    Parameters
+    ----------
+    rtype : :class:`~numina.types.datatype.DataType` or Type[DataType]
+       Object or class repressenting the yype of the requirement,
+       it must be a subclass of DataType
+    description : str
+       Description of the Requirement. The value is used
+       by `numina show-recipes` to provide human-readable documentation.
+    destination : str, optional
+       Name of the field in the RecipeInput object. Overrides the value
+       provided by the name of the Requirement variable
+    optional : bool, optional
+       If `False`, the builder of the RecipeInput must provide a value
+       for this Parameter. If `True` (default), the builder can skip
+       this Parameter and then the default in `value` is used.
+    default : optional
+        The value provided by the Requirement if the RecipeInput builder
+        does not provide one.
+    choices : list of values, optional
+        The possible values of the inputs. Any other value will raise
+        an exception
+    """
+
     def __init__(self, rtype, description, destination=None, optional=False,
                  default=None, choices=None, validation=True, query_opts=None):
         super(Requirement, self).__init__(
@@ -71,23 +97,107 @@ class Requirement(EntryHolder):
                       self.optional, self.type, self.choices)
 
 
+def _recursive_type(value, accept_scalar=True):
+    if isinstance(value, (list, tuple)):
+        # Continue with contents of list
+        if len(value) == 0:
+            next_ = None
+        else:
+            next_ = value[0]
+        final = _recursive_type(next_, accept_scalar=accept_scalar)
+        return ListOfType(final, accept_scalar=accept_scalar)
+    elif isinstance(value, (bool, str, int, float, complex)):
+        next_ = value
+        return PlainPythonType(next_)
+    else:
+        return value
+
+
 class Parameter(Requirement):
-    """The Recipe requires a plain Python type."""
-    def __init__(self, value, description, destination=None, optional=False,
-                 choices=None, validation=True, validator=None):
+    """The Recipe requires a plain Python type.
+
+    Parameters
+    ----------
+    value : plain python type
+       Default value of the parameter, the requested type is inferred from
+       the type of value.
+    description: str
+       Description of the parameter. The value is used
+       by `numina show-recipes` to provide human-readible documentation.
+    destination: str, optional
+       Name of the field in the RecipeInput object. Overrides the value
+       provided by the name of the Parameter variable
+    optional: bool, optional
+       If `False`, the builder of the RecipeInput must provide a value
+       for this Parameter. If `True` (default), the builder can skip
+       this Parameter and then the default in `value` is used.
+    choices: list of  plain python type, optional
+        The possible values of the inputs. Any other value will raise
+        an exception
+    validator: callable, optional
+        A custom validator for inputs
+    accept_scalar: bool, optional
+        If `True`, when `value` is a list, scalar value inputs are converted
+        to list. If `False` (default), scalar values will raise an exception
+        if `value` is a list
+    as_list: bool, optional:
+        If `True`, consider the internal type a list even if `value` is scalar
+        Default is `False`
+
+    """
+    def __init__(self, value, description, destination=None, optional=True,
+                 choices=None, validation=True, validator=None,
+                 accept_scalar=False,
+                 as_list=False
+                 ):
+
+        if as_list:
+            accept_scalar = True
+            if not isinstance(value, collections.Iterable):
+                value = [value]
+
         if isinstance(value, (bool, str, int, float, complex, list)):
-            optional = True
             default = value
         else:
             default = None
-        rtype = type(value)
-        mtype = PlainPythonType(ref=rtype(), validator=validator)
+
+        if validator is None:
+            self.custom_validator = None
+        elif callable(validator):
+            if as_list:
+                self.custom_validator = deco_as_list(validator)
+            else:
+                self.custom_validator = validator
+        else:
+            raise TypeError('validator must be callable or None')
+
+        mtype = _recursive_type(value, accept_scalar=accept_scalar)
 
         super(Parameter, self).__init__(
             mtype, description, destination=destination,
             optional=optional, default=default,
             choices=choices, validation=validation
             )
+
+    def convert(self, val):
+        """Convert input values to type values."""
+        pre = self.type.convert(val)
+
+        if self.custom_validator is not None:
+            post = self.custom_validator(pre)
+        else:
+            post = pre
+        return post
+
+    def validate(self, val):
+        """Validate values according to the requirement"""
+        if self.validation:
+            self.type.validate(val)
+
+            if self.custom_validator is not None:
+                self.custom_validator(val)
+
+        return True
 
 
 class ObservationResultRequirement(Requirement):

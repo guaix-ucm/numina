@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,6 +23,8 @@ Validator decorator
 
 from functools import wraps
 
+from numina.exceptions import ValidationError
+
 
 def validate(method):
     """Decorate run method, inputs and outputs are validated"""
@@ -37,3 +39,19 @@ def validate(method):
         return result
 
     return mod_run
+
+
+def only_positive(value):
+    """Validation error is value is negative"""
+    if value < 0:
+        raise ValidationError("must be >= 0")
+    return value
+
+
+def as_list(callable):
+    """Convert a scalar validator in a list validator"""
+    @wraps(callable)
+    def wrapper(value_iter):
+        return [callable(value) for value in value_iter]
+
+    return wrapper
