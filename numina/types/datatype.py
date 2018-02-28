@@ -18,6 +18,7 @@
 #
 
 import inspect
+import collections
 
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
@@ -148,10 +149,14 @@ class PlainPythonType(DataType):
 
         return pre
 
+    def __str__(self):
+        sclass = type(self).__name__
+        return "%s[%s]" % (sclass, self.internal_type)
+
 
 class ListOfType(DataType):
     """Data type for lists of other types."""
-    def __init__(self, ref, index=0):
+    def __init__(self, ref, index=0, accept_scalar=False):
         stype = list
         if inspect.isclass(ref):
             self.internal = ref()
@@ -159,8 +164,11 @@ class ListOfType(DataType):
             self.internal = ref
         super(ListOfType, self).__init__(stype)
         self.index = index
+        self.accept_scalar = accept_scalar
 
     def convert(self, obj):
+        if self.accept_scalar and not isinstance(obj, collections.Iterable):
+            obj = [obj]
         result = [self.internal.convert(o) for o in obj]
         return result
 
@@ -178,3 +186,7 @@ class ListOfType(DataType):
             result.append(res)
         where.destination = old_dest
         return result
+
+    def __str__(self):
+        sclass = type(self).__name__
+        return "%s[%s]" % (sclass, self.internal)
