@@ -5,6 +5,7 @@ import numina.core.recipes
 from ..validator import validate
 from ..validator import only_positive
 from ..validator import as_list
+from ..validator import range_validator
 
 
 class RecipeIO(object):
@@ -99,3 +100,20 @@ def test_as_list2():
     values = [0, 1, 2, 50, 400]
     with pytest.raises(numina.exceptions.ValidationError):
         some_test(values)
+
+
+@pytest.mark.parametrize("validator, allowed, not_allowed", [
+    (range_validator(), [-1, 2.0, 34.0, 4, -5], []),
+    (range_validator(minval=3), [3, 34.0, 4], [2.99, -1]),
+    (range_validator(maxval=3), [3, -1, -100], [3.1, 34.0, 4]),
+    (range_validator(minval=2, maxval=3), [2, 2.5, 3], [-4, -1, 100])
+])
+def test_range_validator3(validator, allowed, not_allowed):
+    "Range validators"
+
+    for val in allowed:
+        assert val == validator(val)
+
+    for val in not_allowed:
+        with pytest.raises(numina.exceptions.ValidationError):
+            validator(val)
