@@ -23,6 +23,8 @@ Recipe requirement holders
 
 import collections
 
+import six
+
 from numina.types.obsresult import ObservationResultType
 from numina.types.obsresult import InstrumentConfigurationType
 from numina.types.datatype import PlainPythonType, ListOfType
@@ -97,7 +99,21 @@ class Requirement(EntryHolder):
                       self.optional, self.type, self.choices)
 
 
-def _recursive_type(value, accept_scalar=True):
+def _process_nelem(nlem):
+    if nlem is None:
+        return False, (None, None)
+    if isinstance(nlem, int):
+        return True, (nlem, nlem)
+    if isinstance(nlem, six.string_types):
+        if nlem == '*':
+            return True, (0, None)
+        if nlem == '+':
+            return True, (1, None)
+
+    raise ValueError('value {} is invalid'.format(nlem))
+
+
+def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):
     if isinstance(value, (list, tuple)):
         # Continue with contents of list
         if len(value) == 0:
@@ -105,7 +121,7 @@ def _recursive_type(value, accept_scalar=True):
         else:
             next_ = value[0]
         final = _recursive_type(next_, accept_scalar=accept_scalar)
-        return ListOfType(final, accept_scalar=accept_scalar)
+        return ListOfType(final, nmin=nmin, nmax=nmax, accept_scalar=accept_scalar)
     elif isinstance(value, (bool, str, int, float, complex)):
         next_ = value
         return PlainPythonType(next_)
@@ -143,18 +159,31 @@ class Parameter(Requirement):
     as_list: bool, optional:
         If `True`, consider the internal type a list even if `value` is scalar
         Default is `False`
-
+    nelem: str or int, optional:
+        If nelem is '*', the list can contain any number of objects. If is '+',
+        the list must contain at least 1 element. With a number, the list must
+        contain that number of elements.
     """
     def __init__(self, value, description, destination=None, optional=True,
                  choices=None, validation=True, validator=None,
                  accept_scalar=False,
-                 as_list=False
+                 as_list=False, nelem=None,
                  ):
 
-        if as_list:
+        if nelem is not None:
+            decl_list, (nmin, nmax) = _process_nelem(nelem)
+        elif as_list:
+            decl_list = True
+            nmin = nmax = None
+        else:
+            decl_list = False
+            nmin = nmax = None
+
+        is_scalar = not isinstance(value, collections.Iterable)
+
+        if is_scalar and decl_list:
             accept_scalar = True
-            if not isinstance(value, collections.Iterable):
-                value = [value]
+            value = [value]
 
         if isinstance(value, (bool, str, int, float, complex, list)):
             default = value
@@ -171,7 +200,10 @@ class Parameter(Requirement):
         else:
             raise TypeError('validator must be callable or None')
 
-        mtype = _recursive_type(value, accept_scalar=accept_scalar)
+        mtype = _recursive_type(value,
+                                nmin=nmin, nmax=nmax,
+                                accept_scalar=accept_scalar
+                                )
 
         super(Parameter, self).__init__(
             mtype, description, destination=destination,

@@ -146,6 +146,22 @@ def test_param_as_list3():
     assert result == [(3,4), (1,1)]
 
 
+@pytest.mark.parametrize("nelem, allowed, not_allowed", [
+    ('*', [[], [1], [2,3,4]], []),
+    ('+', [[1], [2, 3, 4]], [[]]),
+    (1, [[1]], [[], [3.1, 34.0, 4]])
+])
+def test_param_as_list4(nelem, allowed, not_allowed):
+    """Test list of tuples"""
+    some = Parameter(5, 'List of coordinates', nelem=nelem)
+    for obj in allowed:
+        assert obj == some.convert(obj)
+
+    for obj in not_allowed:
+        with pytest.raises(ValidationError):
+            some.convert(obj)
+
+
 def test_param_custom_validator1():
     """Test accept_scalar argument"""
     some = Parameter(1, 'Validate', validator=only_positive)
@@ -183,3 +199,17 @@ def test_param_custom_validator4():
 
     with pytest.raises(ValidationError):
         some.convert([50, -22])
+
+
+def test_param_default1():
+    """Test accept_scalar argument"""
+    some = Parameter([1], 'Validate')
+
+    assert some.default_value() == [1]
+
+
+def test_param_default2():
+    """Test accept_scalar argument"""
+    some = Parameter(1, 'Validate', as_list=True)
+
+    assert some.default_value() == [1]
