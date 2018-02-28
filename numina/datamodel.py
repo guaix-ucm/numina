@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -37,6 +37,7 @@ class KeyDefinition(object):
 
 
 class FITSKeyExtractor(object):
+    """Extract values from FITS images"""
     def __init__(self, values):
         self.map = {}
         for key, entry in values.items():
@@ -81,8 +82,10 @@ class DataModel(object):
 
     Parameters
     ==========
-    name: str
-    mappings: dict or None
+    name : str
+        Name of the DataModel
+    mappings: dict, optional
+        A dictionary of str keys and values convertibles to FITSKeyExtractor
 
     """
 
