@@ -121,7 +121,7 @@ def test_param_accept_scalar():
     assert some.type.internal_type is list
 
 
-def test_param_as_list():
+def test_param_as_list1():
     """Test as_list argument"""
     some = Parameter(1, 'Convert scalar to list', as_list=True)
     result = some.convert([1, 2, 3])
@@ -129,6 +129,21 @@ def test_param_as_list():
 
     result = some.convert(1)
     assert result == [1]
+
+
+def test_param_as_list2():
+    """Test list of tuples"""
+    some = Parameter([(0, 0)], 'List of coordinates')
+    result = some.convert([(3, 4), (1, 1)])
+    assert result == [[3,4], [1,1]]
+
+
+@pytest.mark.xfail
+def test_param_as_list3():
+    """Test list of tuples"""
+    some = Parameter([(0, 0)], 'List of coordinates')
+    result = some.convert([(3, 4), (1, 1)])
+    assert result == [(3,4), (1,1)]
 
 
 def test_param_custom_validator1():
