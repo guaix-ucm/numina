@@ -480,10 +480,7 @@ def ximshow_file(singlefile,
             return ax
     else:
         if show:
-            import matplotlib.pyplot as plt
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(debugplot)
+            pause_debugplot(debugplot, pltshow=True)
         else:
             # return axes
             return ax
@@ -545,9 +542,6 @@ def main(args=None):
 
     if pdf is not None:
         pdf.close()
-
-    if len(list_fits_files) > 1:
-        pause_debugplot(12, optional_prompt="Press RETURN to STOP")
 
 
 if __name__ == "__main__":

@@ -20,6 +20,8 @@
 from __future__ import division
 from __future__ import print_function
 
+import sys
+
 from .matplotlib_qt import plt
 
 DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12,
@@ -65,25 +67,22 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
         debugplot_ = debugplot
         pltclose = False
 
-    if debugplot_ in [1, 2, 11, 12, 21, 22] and pltshow:
-        if tight_layout:
-            plt.tight_layout()
-        plt.show(block=False)
-        if debugplot_ in [1, 11, 21]:
-            plt.pause(0.2)
-        else:
-            plt.pause(0.001)
-
-    if debugplot_ in [2, 12, 22]:
-        try:
-            if optional_prompt is not None:
-                input(optional_prompt)
-            else:
-                input("\nPress RETURN to continue...")
-        except SyntaxError:
-            pass
-
-        print(' ')
+    if pltshow:
+        if debugplot_ in [1, 2, 11, 12, 21, 22]:
+            if tight_layout:
+                plt.tight_layout()
+            if debugplot_ in [1, 11, 21]:
+                plt.show(block=False)
+                plt.pause(0.2)
+            elif debugplot_ in [2, 12, 22]:
+                print('Press "q" to continue...', end='', flush=True)
+                plt.show()
+                print('')
+    else:
+        if debugplot_ in [2, 12, 22]:
+            print('Press <RETURN> to continue...', end='')
+            sys.stdout.flush()
+            cdummy = sys.stdin.readline().strip()
 
     if debugplot_ in [1, 2, 11, 12, 21, 22] and pltclose:
         plt.close()
