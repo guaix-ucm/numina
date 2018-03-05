@@ -452,11 +452,12 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         for feature in solution_wv.features:
             xpos = feature.xpos
             reference = feature.reference
-            ax.text(xpos, sp[int(xpos+0.5)-1] + dy/100,
+            ax.text(xpos, sp[int(xpos+0.5)-1],
                     str(reference), fontsize=8,
                     horizontalalignment='center')
         # show plot
-        pause_debugplot(11, pltshow=True)
+        print('Plot with identified lines')
+        pause_debugplot(12, pltshow=True)
 
     # return the wavelength calibration solution
     return solution_wv

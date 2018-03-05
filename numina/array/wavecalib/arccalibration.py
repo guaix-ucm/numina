@@ -1389,6 +1389,7 @@ def arccalibration_direct(wv_master,
             poly, yres, reject = polfit_residuals_with_cook_rejection(
                 x=xfit, y=yfit, deg=poly_degree_wfit,
                 times_sigma_cook=times_sigma_cook,
+                geometry=geometry,
                 debugplot=debugplot)
             nremoved = 0
             for i in range(nfit):
