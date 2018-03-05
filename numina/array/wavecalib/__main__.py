@@ -112,7 +112,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
         # FITS file
         if out_sp is not None:
             hdu = fits.PrimaryHDU(sp)
-            hdu.writeto(out_sp, clobber=True)
+            hdu.writeto(out_sp, overwrite=True)
     else:
         raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
                          " values")
@@ -468,7 +468,7 @@ def main(args=None):
     # required parameters
     parser.add_argument("fitsfile",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--scans", required=True,
                         help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
     parser.add_argument("--wv_master_file", required=True,
@@ -534,7 +534,7 @@ def main(args=None):
                              "format before performing the wavelength "
                              "calibration (default=None)",
                         default=None,
-                        type=argparse.FileType('w'))
+                        type=argparse.FileType('wb'))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")

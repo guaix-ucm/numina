@@ -202,7 +202,7 @@ def polfit_residuals(
             sfitted = mysize[np.logical_not(reject)]
             srejected = mysize[reject]
 
-        from matplotlib_qt import plt
+        from numina.array.display.matplotlib_qt import plt
         fig = plt.figure()
 
         if geometry is not None:

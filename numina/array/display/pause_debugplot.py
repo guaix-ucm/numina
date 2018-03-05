@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import sys
 
-from .matplotlib_qt import plt
+from numina.array.display.matplotlib_qt import plt
 
 DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12,
                    -21, 21, -22, 22)
@@ -75,12 +75,16 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
                 plt.show(block=False)
                 plt.pause(0.2)
             elif debugplot_ in [2, 12, 22]:
-                print('Press "q" to continue...', end='', flush=True)
+                print('Press "q" to continue...', end='')
+                sys.stdout.flush()
                 plt.show()
                 print('')
     else:
         if debugplot_ in [2, 12, 22]:
-            print('Press <RETURN> to continue...', end='')
+            if optional_prompt is None:
+                print('Press <RETURN> to continue...', end='')
+            else:
+                print(optional_prompt, end='')
             sys.stdout.flush()
             cdummy = sys.stdin.readline().strip()
 
