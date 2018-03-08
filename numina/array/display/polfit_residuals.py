@@ -229,7 +229,7 @@ def polfit_residuals(
                 xmax += 0.5
         else:
             xmin, xmax = xlim
-        ax2.set_xlim([xmin, xmax])
+        ax2.set_xlim(xmin, xmax)
         ymin = min(yres_fitted)
         ymax = max(yres_fitted)
         dy = ymax - ymin
@@ -239,7 +239,7 @@ def polfit_residuals(
         else:
             ymin -= 0.5
             ymax += 0.5
-        ax2.set_ylim([ymin, ymax])
+        ax2.set_ylim(ymin, ymax)
         ax2.axhline(y=0.0, color="black", linestyle="dashed")
         ax2.scatter(xfitted, yres_fitted, color=cfitted,
                     marker='o',
@@ -255,7 +255,7 @@ def polfit_residuals(
             ax.set_ylabel('y')
         else:
             ax.set_ylabel(ylabel)
-        ax.set_xlim([xmin, xmax])
+        ax.set_xlim(xmin, xmax)
         if ylim is None:
             ymin = min(y)
             ymax = max(y)
@@ -268,7 +268,7 @@ def polfit_residuals(
                 ymax += 0.5
         else:
             ymin, ymax = ylim
-        ax.set_ylim([ymin, ymax])
+        ax.set_ylim(ymin, ymax)
         ax.scatter(xfitted, yfitted,
                    color=cfitted, marker='o', edgecolor='k',
                    s=sfitted, label="fitted data")

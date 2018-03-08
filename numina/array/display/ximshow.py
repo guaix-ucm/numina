@@ -283,8 +283,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
     ax.set_xlabel('image pixel in the X direction')
     ax.set_ylabel('image pixel in the Y direction')
-    ax.set_xlim([xmin, xmax])
-    ax.set_ylim([ymin, ymax])
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
     ax.grid(False)
     if z1z2 is None:
         z1, z2 = ZScaleInterval().get_limits(

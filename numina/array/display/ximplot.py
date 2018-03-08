@@ -100,8 +100,8 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
         xcut = np.linspace(start=nc1, stop=nc2, num=nc2 - nc1 + 1)
         ax.set_xlabel('image pixel in the X direction')
         ax.set_ylabel('pixel value')
-    ax.set_xlim([xmin, xmax])
-    ax.set_ylim([ymin, ymax])
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
     ax.plot(xcut, ycut, '-')
     if title is not None:
         ax.set_title(title)

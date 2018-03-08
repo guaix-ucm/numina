@@ -79,9 +79,9 @@ def ximplotxy(x, y, plottype=None,
         ax.plot(x, y, **kwargs)
 
     if xlim is not None:
-        ax.set_xlim(xlim)
+        ax.set_xlim(xlim[0], xlim[1])
     if ylim is not None:
-        ax.set_ylim(ylim)
+        ax.set_ylim(ylim[0], ylim[1])
 
     if xlabel is not None:
         ax.set_xlabel(xlabel)
