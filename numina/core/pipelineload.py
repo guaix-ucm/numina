@@ -140,8 +140,13 @@ def load_confs(package, node, confclass=None):
 
     values = node['values']
     confs = {}
-    for uuid in values:
-        confs[uuid] = confclass(uuid)
+    if values:
+        for uuid in values:
+            confs[uuid] = confclass(uuid)
+    else:
+        confs['default'] = InstrumentConfiguration('EMPTY')
+        default_entry = 'default'
+
     if default_entry:
         confs['default'] = confs[default_entry]
     else:
