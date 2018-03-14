@@ -19,14 +19,17 @@
 
 """DAL for dictionary-based database of products."""
 
+import os
 import logging
 import json
 from itertools import chain
 
+import yaml
 import numina.store.gtc.load as gtcload
 from numina.core import obsres_from_dict
 from numina.store import load
 from numina.exceptions import NoResultFound
+from numina.core import DataFrameType
 from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
@@ -243,10 +246,27 @@ class Dict2DAL(BaseDictDAL):
         super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
 
 
+# FIXME: this is a workaround
+def workdir_default(basedir, obsid):
+    workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
+    workdir = os.path.abspath(workdir)
+    return workdir
+
+
+def resultsdir_default(basedir, obsid):
+    resultsdir = os.path.join(basedir, 'obsid{}_results'.format(obsid))
+    resultsdir = os.path.abspath(resultsdir)
+    return resultsdir
+
+
 class HybridDAL(Dict2DAL):
     """A DAL that can read files from directory structure"""
-    def __init__(self, drps, obtable, base, extra_data=None):
+    def __init__(self, drps, obtable, base, extra_data=None, basedir=None):
         self.rootdir = base.get("rootdir", "")
+        if basedir is None:
+            self.basedir = os.getcwd()
+        else:
+            self.basedir = basedir
 
         super(HybridDAL, self).__init__(drps, obtable, base, extra_data)
 
@@ -312,10 +332,28 @@ class HybridDAL(Dict2DAL):
         return prod
 
     def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
-        instrument = obsres.instrument
-        if mode is None:
-            mode = obsres.mode
-        print('search relative', instrument, mode, field, node)
+
+        results = []
+
+        if node == 'children':
+
+            for c in obsres.children:
+
+                rdir = resultsdir_default(self.basedir, c)
+                resfile = os.path.join(rdir, 'result.yaml')
+                # FIXME: hardcoded
+                result_contents = yaml.load(open(resfile))
+                field_file = result_contents[field]
+
+                st = StoredProduct(
+                    id=c,
+                    content=load(DataFrameType(), os.path.join(rdir, field_file)),
+                    tags={}
+                )
+                results.append(st)
+            return results
+        else:
+            return results
 
     def _search_result(self, name, tipo, obsres, resultid):
         """Returns the first coincidence..."""
@@ -363,4 +401,3 @@ class HybridDAL(Dict2DAL):
                 inter = gtcload.build_result(data)
                 elem = inter['elements']
                 return elem[name]
-

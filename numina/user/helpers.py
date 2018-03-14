@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -142,6 +142,8 @@ class WorkEnvironment(object):
         for f in obsres.images:
             complete = os.path.abspath(os.path.join(self.datadir, f.filename))
             self.copy_if_needed(f.filename, complete)
+        if obsres.results:
+            _logger.warning("not copying files in 'results")
 
     def copyfiles_stage2(self, reqs):
         _logger.debug('copying files from requirements')
