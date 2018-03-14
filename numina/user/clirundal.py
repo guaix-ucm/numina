@@ -30,7 +30,6 @@ from numina import __version__
 import numina.drps
 import numina.exceptions
 from numina.dal.dictdal import HybridDAL
-from numina.dal.clidal import CommandLineDAL
 from numina.util.context import working_directory
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
@@ -41,9 +40,7 @@ DEFAULT_RECIPE_LOGGER = 'numina.recipes'
 _logger = logging.getLogger("numina")
 
 
-def process_format_version_0(loaded_obs, loaded_data, loaded_data_extra=None):
-    drps = numina.drps.get_system_drps()
-    return CommandLineDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
+
 
 
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
@@ -99,9 +96,12 @@ def mode_run_common_obs(args, extra_args):
 
     control_format = loaded_data.get('version', 0)
     _logger.info('control format version %d', control_format)
-    if control_format == 0:
-        dal = process_format_version_0(loaded_obs, loaded_data, loaded_data_extra)
-    elif control_format == 1:
+
+    # FIXME: DAL and WorkEnvironment sho
+    # DAL and WorkEnvironment
+    # must share its information
+    #
+    if control_format == 1:
         dal = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
