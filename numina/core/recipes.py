@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -29,6 +29,7 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 import logging
 import json
+import functools
 
 from six import with_metaclass
 from astropy.io import fits
@@ -221,3 +222,21 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
                 req.on_query_not_found(notfound)
 
         return self.create_input(**result)
+
+
+def timeit(method):
+    """Decorator to measure the time used by the recipe"""
+
+    import datetime
+
+    @functools.wraps(method)
+    def timed_method(self, rinput):
+
+        time_start = datetime.datetime.utcnow()
+        result = method(self, rinput)
+        time_end = datetime.datetime.utcnow()
+        result.time_it(time_start, time_end)
+        self.logger.info('total time measured')
+        return result
+
+    return timed_method
