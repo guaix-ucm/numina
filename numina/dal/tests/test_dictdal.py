@@ -21,24 +21,10 @@ import pytest
 
 import numina.core.pipeline
 from numina.exceptions import NoResultFound
+from numina.tests.drptest import create_drp_test
 
 from ..dictdal import BaseDictDAL
 from ..stored import ObservingBlock, StoredProduct
-
-
-def create_drp_test(names):
-    import pkgutil
-    import numina.drps.drpbase
-    import numina.core.pipelineload as pload
-
-    drps = {}
-    for name in names:
-        drpdata = pkgutil.get_data('numina.drps.tests', name)
-
-        drp = pload.drp_load_data('numina', drpdata)
-        drps[drp.name] = drp
-
-    return numina.drps.drpbase.DrpGeneric(drps)
 
 
 @pytest.fixture
