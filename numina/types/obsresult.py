@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,6 +19,8 @@
 
 import warnings
 
+import six
+from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
 from numina.core.query import Result
 from numina.core.pipeline import InstrumentConfiguration
@@ -60,22 +62,23 @@ class ObservationResultType(DataType):
 
     def query(self, name, dal, ob, options=None):
 
-        # Here, only makes sense that node == 'children'
+        # Complete values with previous Results
         if isinstance(options, Result):
             tipo = DataFrameType()
             mode = options.mode
             field = options.field
             node = options.node
-            val = dal.search_result_relative(name, tipo, ob, mode, field, node)
+            query_opts = {}
+            query_opts['ignore_fail'] = options.ignore_fail
+            val = dal.search_result_relative(name, tipo, ob, mode, field, node, options=query_opts)
             ob.results = []
-            if val:
-                for r in val:
-                    ob.results.append(r.content)
+            for r in val:
+                ob.results.append(r.content)
 
         return ob
 
     def on_query_not_found(self, notfound):
-        raise notfound
+        six.raise_from(NoResultFound('unable to complete ObservationResult'), notfound)
 
 
 class InstrumentConfigurationType(DataType):

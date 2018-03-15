@@ -40,9 +40,6 @@ DEFAULT_RECIPE_LOGGER = 'numina.recipes'
 _logger = logging.getLogger("numina")
 
 
-
-
-
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
     drps = numina.drps.get_system_drps()
     return HybridDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
@@ -63,8 +60,7 @@ def mode_run_common_obs(args, extra_args):
     """Observing mode processing mode of numina."""
 
     # Loading observation result if exists
-    loaded_obs = {}
-    loaded_ids = []
+    loaded_obs = []
     for obfile in args.obsresult:
         _logger.info("Loading observation results from %r", obfile)
 
@@ -74,11 +70,9 @@ def mode_run_common_obs(args, extra_args):
                 docid = doc['id']
                 if enabled:
                     _logger.debug("load observation result with id %s", docid)
-                    loaded_ids.append(docid)
-                    loaded_obs[docid] = doc
+                    loaded_obs.append(doc)
                 else:
                     _logger.debug("skip observation result with id %s", docid)
-
 
     if args.reqs:
         _logger.info('reading control from %s', args.reqs)
@@ -97,7 +91,7 @@ def mode_run_common_obs(args, extra_args):
     control_format = loaded_data.get('version', 0)
     _logger.info('control format version %d', control_format)
 
-    # FIXME: DAL and WorkEnvironment sho
+    # FIXME: DAL and WorkEnvironment
     # DAL and WorkEnvironment
     # must share its information
     #
@@ -108,9 +102,9 @@ def mode_run_common_obs(args, extra_args):
         sys.exit(1)
 
     # Start processing
-
-    for obid in loaded_ids:
+    for obid in dal.search_session_ids():
         # Directories with relevant data
+        _logger.info("procesing OB with id={}".format(obid))
         workenv = WorkEnvironment(obid,
                                   args.basedir,
                                   workdir=args.workdir,

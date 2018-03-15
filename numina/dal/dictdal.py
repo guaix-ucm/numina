@@ -24,6 +24,7 @@ import logging
 import json
 from itertools import chain
 
+import six
 import yaml
 import numina.store.gtc.load as gtcload
 from numina.core import obsres_from_dict
@@ -42,6 +43,9 @@ _logger = logging.getLogger("numina.dal.dictdal")
 
 class BaseDictDAL(AbsDrpDAL):
     """A dictionary based DAL"""
+
+    _RESERVED_MODE_NAMES = ['nulo', 'container', 'root', 'raiz']
+
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
         super(BaseDictDAL, self).__init__(drps)
 
@@ -150,12 +154,16 @@ class BaseDictDAL(AbsDrpDAL):
 
         this_drp = self.drps.query_by_name(obsres.instrument)
 
-        for mode in this_drp.modes:
-            if mode.key == obsres.mode:
-                tagger = mode.tagger
-                break
+        # Reserved names
+        if obsres.mode in self._RESERVED_MODE_NAMES:
+            tagger = None
         else:
-            raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
+            for mode in this_drp.modes:
+                if mode.key == obsres.mode:
+                    tagger = mode.tagger
+                    break
+            else:
+                raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
 
         if tagger is None:
             master_tags = {}
@@ -173,8 +181,30 @@ class BaseDictDAL(AbsDrpDAL):
 
         return obsres
 
-    def search_result_id(self, child_id, tipo, field):
-        pass
+    def search_result_id(self, node_id, tipo, field):
+        cobsres = self.obsres_from_oblock_id(node_id)
+
+        rdir = resultsdir_default(self.basedir, node_id)
+        # FIXME: hardcoded
+        taskfile = os.path.join(rdir, 'task.yaml')
+        resfile = os.path.join(rdir, 'result.yaml')
+        result_contents = yaml.load(open(resfile))
+        task_contents = yaml.load(open(taskfile))
+
+        try:
+            field_file = result_contents[field]
+        except KeyError as err:
+            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
+            # Python 2.7 compatibility
+            six.raise_from(NoResultFound(msg), err)
+            # raise NoResultFound(msg) from err
+
+        st = StoredProduct(
+            id=node_id,
+            content=load(tipo, os.path.join(rdir, field_file)),
+            tags={}
+        )
+        return st
 
     def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
@@ -262,13 +292,29 @@ def resultsdir_default(basedir, obsid):
 class HybridDAL(Dict2DAL):
     """A DAL that can read files from directory structure"""
     def __init__(self, drps, obtable, base, extra_data=None, basedir=None):
+
         self.rootdir = base.get("rootdir", "")
+
         if basedir is None:
             self.basedir = os.getcwd()
         else:
             self.basedir = basedir
 
-        super(HybridDAL, self).__init__(drps, obtable, base, extra_data)
+        # Preprocessing
+        obdict = {}
+        self.ob_ids = []
+        for ob in obtable:
+            obid = ob['id']
+            self.ob_ids.append(obid)
+            obdict[obid] = ob
+
+        # Update parents
+        for ob in obdict.values():
+            children = ob.get('children', [])
+            for ch in children:
+                obdict[ch]['parent'] = ob['id']
+
+        super(HybridDAL, self).__init__(drps, obdict, base, extra_data)
 
     def search_product(self, name, tipo, obsres, options=None):
         if name in self.extra_data:
@@ -331,29 +377,101 @@ class HybridDAL(Dict2DAL):
         prod = self._search_result(name, tipo, obsres, resultid)
         return prod
 
+    def search_previous_obsres(self, obsres, node=None):
+
+        if node is None:
+            node = 'prev'
+
+        if node == 'prev-rel':
+            # Compute nodes relative to parent
+            # unless parent is None, then is equal to prev
+            parent_id = obsres.parent
+            if parent_id is not None:
+                cobsres = self.obsres_from_oblock_id(parent_id)
+                subset_ids = cobsres.children
+                idx = subset_ids.index(obsres.id)
+                return reversed(subset_ids[:idx])
+            else:
+                return self.search_previous_obsid_all(obsres.id)
+        else:
+            return self.search_previous_obsid_all(obsres.id)
+
+    def search_previous_obsid_all(self, obsid):
+        idx = self.ob_ids.index(obsid)
+        return reversed(self.ob_ids[:idx])
+
+    def search_result_id(self, node_id, tipo, field, mode=None):
+        cobsres = self.obsres_from_oblock_id(node_id)
+
+        if mode is not None:
+            # mode must match
+            if cobsres.mode != mode:
+                msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
+                print(msg)
+                raise NoResultFound(msg)
+
+        rdir = resultsdir_default(self.basedir, node_id)
+        # FIXME: hardcoded
+        taskfile = os.path.join(rdir, 'task.yaml')
+        resfile = os.path.join(rdir, 'result.yaml')
+        result_contents = yaml.load(open(resfile))
+        task_contents = yaml.load(open(taskfile))
+
+        try:
+            field_file = result_contents[field]
+        except KeyError as err:
+            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
+            # Python 2.7 compatibility
+            six.raise_from(NoResultFound(msg), err)
+            # raise NoResultFound(msg) from err
+
+        st = StoredProduct(
+            id=node_id,
+            content=load(tipo, os.path.join(rdir, field_file)),
+            tags={}
+        )
+        return st
+
     def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
 
-        results = []
+        _logger.debug('search relative result for %s', name)
+        if options is None:
+            options = {}
+
+        ignore_fail = options.get('ignore_fail', False)
 
         if node == 'children':
-
+            # Results are multiple
+            # one per children
+            _logger.debug('search children nodes of %s', obsres.id)
+            results = []
             for c in obsres.children:
+                try:
+                    st = self.search_result_id(c, tipo, field)
+                    results.append(st)
+                except NoResultFound:
+                    if not ignore_fail:
+                        raise
 
-                rdir = resultsdir_default(self.basedir, c)
-                resfile = os.path.join(rdir, 'result.yaml')
-                # FIXME: hardcoded
-                result_contents = yaml.load(open(resfile))
-                field_file = result_contents[field]
-
-                st = StoredProduct(
-                    id=c,
-                    content=load(DataFrameType(), os.path.join(rdir, field_file)),
-                    tags={}
-                )
-                results.append(st)
             return results
+        elif node == 'prev' or node == 'prev-rel':
+            _logger.debug('search previous nodes of %s', obsres.id)
+
+            # obtain previous nodes
+            for previd in self.search_previous_obsres(obsres, node=node):
+                # print('searching in node', previd)
+                try:
+                    st = self.search_result_id(previd, tipo, field, mode=mode)
+                    return st
+                except NoResultFound:
+                    pass
+
+            else:
+                print('not found in any node')
+                raise NoResultFound('value not found in any node')
         else:
-            return results
+            msg = 'unknown node type {}'.format(node)
+            raise TypeError(msg)
 
     def _search_result(self, name, tipo, obsres, resultid):
         """Returns the first coincidence..."""
@@ -401,3 +519,12 @@ class HybridDAL(Dict2DAL):
                 inter = gtcload.build_result(data)
                 elem = inter['elements']
                 return elem[name]
+
+    def search_session_ids(self):
+        for obs_id in self.ob_ids:
+            obdict = self.ob_table[obs_id]
+            if obdict['mode'] in self._RESERVED_MODE_NAMES:
+                # ignore these OBs
+                continue
+
+            yield obs_id

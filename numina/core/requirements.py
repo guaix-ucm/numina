@@ -76,15 +76,18 @@ class Requirement(EntryHolder):
 
     def query(self, dal, obsres, options=None):
         # query opts
+        if options is not None:
+            # Starting with True/False
+            perform_query = options
+            if not perform_query:
+                # we do not perform any query
+                return self.default
+
         if isinstance(self.query_opts, Ignore):
             # we do not perform any query
-            return self.default_value()
+            return self.default
 
-        # FIX merge somehow...
-        # options and self.query_options
-        options = self.query_opts
-
-        val = self.type.query(self.dest, dal, obsres, options=options)
+        val = self.type.query(self.dest, dal, obsres, options=self.query_opts)
         return val
 
     def on_query_not_found(self, notfound):

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -62,9 +62,7 @@ class Pipeline(object):
         args = entry.get('args', ())
         kwargs = entry.get('kwargs', {})
 
-        # Like Pickle protocol
-        recipe = Cls.__new__(Cls, *args)
-        # Addition
+        recipe = Cls.__new__(Cls, *args, **kwargs)
         recipe.__init__(*args, **kwargs)
 
         # Like pickle protocol

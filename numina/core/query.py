@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -25,10 +25,10 @@ class QueryModifier(object):
 
 
 class Result(QueryModifier):
-    def __init__(self, mode_field, node=None):
+    def __init__(self, mode_field, node=None, ignore_fail=False):
         self.mode_field = mode_field
         self.node = node
-
+        self.ignore_fail = ignore_fail
         splitm = mode_field.split('.')
         lm = len(splitm)
         if lm == 1:

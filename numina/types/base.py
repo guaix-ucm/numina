@@ -22,6 +22,7 @@ import inspect
 from numina.util.parser import parse_arg_line
 from numina.exceptions import NoResultFound
 from numina.datamodel import DataModel
+from numina.core.query import Result
 
 
 class DataTypeBase(object):
@@ -58,8 +59,20 @@ class DataTypeBase(object):
         except NoResultFound:
             pass
 
-        param = dal.search_parameter(name, self, obsres)
-        return param.content
+        if isinstance(options, Result):
+            value = dal.search_result_relative(name, self, obsres,
+                                               mode=options.mode,
+                                               field=options.field,
+                                               node=options.node)
+            return value.content
+
+        if self.isproduct():
+            # if not, the normal query
+            prod = dal.search_product(name, self, obsres)
+            return prod.content
+        else:
+            param = dal.search_parameter(name, self, obsres)
+            return param.content
 
     def query_on_ob(self, key, ob):
         # First check if the requirement is embedded
