@@ -70,10 +70,10 @@ def mode_run_common_obs(args, extra_args):
                 docid = doc['id']
                 if enabled:
                     _logger.debug("load observation result with id %s", docid)
-                    loaded_obs.append(doc)
                 else:
                     _logger.debug("skip observation result with id %s", docid)
-
+                
+                loaded_obs.append(doc)
     if args.reqs:
         _logger.info('reading control from %s', args.reqs)
         with open(args.reqs, 'r') as fd:

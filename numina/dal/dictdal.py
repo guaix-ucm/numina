@@ -467,7 +467,6 @@ class HybridDAL(Dict2DAL):
                     pass
 
             else:
-                print('not found in any node')
                 raise NoResultFound('value not found in any node')
         else:
             msg = 'unknown node type {}'.format(node)
@@ -523,8 +522,12 @@ class HybridDAL(Dict2DAL):
     def search_session_ids(self):
         for obs_id in self.ob_ids:
             obdict = self.ob_table[obs_id]
-            if obdict['mode'] in self._RESERVED_MODE_NAMES:
+            enabled = obdict.get('enabled', True)
+            if ((not enabled) or
+                    obdict['mode'] in self._RESERVED_MODE_NAMES
+            ):
                 # ignore these OBs
                 continue
+
 
             yield obs_id

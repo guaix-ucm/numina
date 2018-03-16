@@ -28,6 +28,9 @@ def hybriddal():
     drps = create_drp_test(['drpclodia.yaml'])
     name = 'CLODIA'
     ob_table = [
+        dict(id=1, instrument=name, mode="sky", images=[], children=[],
+             enabled=False
+             ),
         dict(id=2, instrument=name, mode="sky", images=[], children=[]),
         dict(id=3, instrument=name, mode="image", images=[], children=[]),
         dict(id=4, instrument=name, mode="sky", images=[], children=[]),
@@ -39,9 +42,12 @@ def hybriddal():
 
     prod_table = {
         'TEST1': [
-            {'id': 1, 'type': 'DemoType1', 'tags': {}, 'content': {'demo1': 1}, 'ob': 2},
-            {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
-            {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
+            {'id': 1, 'type': 'DemoType1', 'tags': {},
+             'content': {'demo1': 1}, 'ob': 2},
+            {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'},
+             'content': {'demo2': 2}, 'ob': 14},
+            {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'},
+             'content': {'demo2': 3}, 'ob': 15}
         ]
     }
 
@@ -80,7 +86,7 @@ def test_previous_obsid(hybriddal):
 
     obsres = hybriddal.search_oblock_from_id(5)
     previd = hybriddal.search_previous_obsres(obsres, node='prev')
-    assert list(previd) == [4, 3, 2]
+    assert list(previd) == [4, 3, 2, 1]
 
     obsres = hybriddal.search_oblock_from_id(5)
     previd = hybriddal.search_previous_obsres(obsres, node='prev-rel')
