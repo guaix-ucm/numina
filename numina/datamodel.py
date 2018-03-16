@@ -134,11 +134,13 @@ class DataModel(object):
             'uuid': 'uuid',
             'type': 'numtype',
             'mode': 'obsmode',
-            'exptime': 'exptime',
-            'darktime': 'darktime',
+            'exptime': self.get_exptime,
+            'darktime': self.get_darktime,
             'quality_control': ('NUMRQC', 0, conv.convert_qc),
             'insmode': ('INSMODE', 'undefined'),
-            'imgid': self.get_imgid
+            'imgid': self.get_imgid,
+            'insconf': lambda x: 'v1',
+            'blckuuid': lambda x: '1'
         }
 
     def get_data(self, img):
