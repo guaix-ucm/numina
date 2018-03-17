@@ -26,6 +26,9 @@ class QueryModifier(object):
 
 class Result(QueryModifier):
     def __init__(self, mode_field, node=None, ignore_fail=False):
+
+        super(Result, self).__init__()
+
         self.mode_field = mode_field
         self.node = node
         self.ignore_fail = ignore_fail
@@ -41,8 +44,6 @@ class Result(QueryModifier):
             raise ValueError('malformed mode_field %s' % mode_field)
         self.mode = mode
         self.field = field
-
-        super(QueryModifier, self).__init__()
 
 
 class Ignore(QueryModifier):

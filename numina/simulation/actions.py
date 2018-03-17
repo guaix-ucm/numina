@@ -19,7 +19,7 @@ class Sequence(object):
         pass
 
     def run(self, **kwds):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 
