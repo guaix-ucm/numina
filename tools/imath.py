@@ -17,7 +17,7 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Auxiliary script to perform basic image arithmetic."""
+"""Auxiliary script to perform binary image arithmetic."""
 
 from __future__ import division
 from __future__ import print_function
@@ -124,13 +124,15 @@ def compute_operation(file1, file2, operation, output, display,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="description: binary image arithmetic"
+    )
     # positional parameters
     parser.add_argument("file1",
                         help="First FITS image",
                         type=argparse.FileType('rb'))
     parser.add_argument("operation",
-                        help="Mathematical operation",
+                        help="Arithmetic operation",
                         type=str,
                         choices=['+', '-', '*', '/'])
     parser.add_argument("file2",
