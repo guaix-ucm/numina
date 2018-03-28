@@ -27,7 +27,7 @@ import numpy
 import sys
 
 from numina.array._bpm import _process_bpm_intl
-from tools.arg_file_is_new import arg_file_is_new
+from numina.tools.arg_file_is_new import arg_file_is_new
 
 
 def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
