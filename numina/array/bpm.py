@@ -63,13 +63,13 @@ def main(args=None):
     # positional arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file name",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--bpm", required=True,
                         help="Bad pixel mask",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--outfile", required=True,
                         help="Output FITS file name",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
     parser.add_argument("--extnum",
