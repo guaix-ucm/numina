@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -29,7 +29,7 @@ import sys
 
 from numina.array.display.ximshow import ximshow_file
 
-from arg_file_is_new import arg_file_is_new
+from .arg_file_is_new import arg_file_is_new
 
 
 def compute_operation(file1, file2, operation, output, display,
@@ -128,18 +128,18 @@ def main(args=None):
     # positional parameters
     parser.add_argument("file1",
                         help="First FITS image",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("operation",
                         help="Mathematical operation",
                         type=str,
                         choices=['+', '-', '*', '/'])
     parser.add_argument("file2",
                         help="Second FITS image",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     # optional arguments
     parser.add_argument("output",
                         help="Output FITS image",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--display",
                         help="Display images: all, result, none (default)",
                         default="none",
