@@ -38,13 +38,13 @@ def compute_operation(file1, file2, operation, output, display,
 
     Parameters
     ----------
-    file1 : string
+    file1 : file object
         First FITS file.
-    file2 : string
+    file2 : file object
         Second FITS file.
     operation : string
         Mathematical operation.
-    output : string
+    output : file object
         Output FITS file.
     display : string
         Character string indication whether the images are displayed.
@@ -69,7 +69,7 @@ def compute_operation(file1, file2, operation, output, display,
 
     # if required, display file1
     if display == 'all':
-        ximshow_file(file1,
+        ximshow_file(file1.name,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -84,7 +84,7 @@ def compute_operation(file1, file2, operation, output, display,
 
     # if required, display file2
     if display == 'all':
-        ximshow_file(file2,
+        ximshow_file(file2.name,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -114,7 +114,7 @@ def compute_operation(file1, file2, operation, output, display,
 
     # if required, display result
     if display in ['all', 'result']:
-        ximshow_file(output,
+        ximshow_file(output.name,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -153,7 +153,8 @@ def main(args=None):
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy")
+                        help="Tuple x,y,dx,dy indicating window geometry",
+                        default="0,0,640,480")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
