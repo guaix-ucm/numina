@@ -489,11 +489,17 @@ def ximshow_file(singlefile,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='ximshow')
+    parser = argparse.ArgumentParser(
+        description='description: display FITS images'
+    )
+
+    # positional arguments
     parser.add_argument("filename",
                         help="FITS file (wildcards allowed) "
                              "or txt file with list of FITS files",
                         nargs="+")
+
+    # optional arguments
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",

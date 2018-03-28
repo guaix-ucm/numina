@@ -58,7 +58,9 @@ def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='description: apply bad-pixel-mask to image'
+    )
 
     # positional arguments
     parser.add_argument("fitsfile",
