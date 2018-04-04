@@ -82,6 +82,7 @@ def test_parent_inserted(hybriddal):
     assert obsres.parent is None
 
 
+@pytest.mark.xfail(reason='bug #163')
 def test_previous_obsid(hybriddal):
 
     obsres = hybriddal.search_oblock_from_id(5)
