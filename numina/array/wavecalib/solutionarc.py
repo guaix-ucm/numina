@@ -222,8 +222,14 @@ class SolutionArcCalibration(object):
                     if wvfeature.line_ok])
 
     def __eq__(self, other):
-        return self.__getstate__() == other.__getstate__()
+        if isinstance(other, SolutionArcCalibration):
+            return self.__getstate__() == other.__getstate__()
+        else:
+            return NotImplemented
 
+    def __ne__(self, other):
+        return not self == other
+    
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
 
