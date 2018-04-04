@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,12 +17,12 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Quality control for Numina-based applications.'''
+"""Quality control for Numina-based applications."""
 
-from numina.enum import Enum
+import enum
 
 
-class QC(Enum):
+class QC(enum.Enum):
     GOOD = 1
     PARTIAL = 2
     BAD = 3

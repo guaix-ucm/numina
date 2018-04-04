@@ -27,11 +27,11 @@ try:
     _run_in_gtc = True
 except ImportError:
     import types
-    import numina.enum
+    import enum
 
     DF = types.ModuleType('DF')
 
-    class AdaptedOrbTypes(numina.enum.Enum):
+    class AdaptedOrbTypes(enum.Enum):
         TYPE_FRAME = 1
         TYPE_STRUCT = 2
         TYPE_FRAME_LIST = 3

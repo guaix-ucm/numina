@@ -101,7 +101,6 @@ def generate_extensions():
 def setup_package():
 
     from numina import __version__
-    REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.3', 'scipy', 'PyYaml', 'matplotlib']
 
     META_DATA = dict(
         name='numina',
@@ -136,7 +135,15 @@ def setup_package():
             },
         setup_requires=['numpy'],
         tests_require=['pytest'],
-        install_requires=REQUIRES,
+        install_requires=[
+            'setuptools',
+            'six>=1.7',
+            'numpy>=1.7',
+            'astropy>=1.3',
+            'scipy', 'PyYaml',
+            'matplotlib',
+            'enum34;python_version<"3.4"'
+        ],
         zip_safe=False,
         classifiers=[
             "Programming Language :: C",
