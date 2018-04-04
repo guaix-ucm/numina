@@ -33,6 +33,7 @@ from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
 from .pipeline import ProductEntry
 from .taggers import get_tags_from_full_ob
+import numina.util.convert as convert
 
 
 def check_section(node, section, keys=None):
@@ -136,7 +137,7 @@ def load_confs(package, node, confclass=None):
     if tagger:
         ins_tagger = import_object(tagger)
     else:
-        ins_tagger = lambda obsres: 'default'
+        ins_tagger = None
 
     values = node['values']
     confs = {}
@@ -235,10 +236,12 @@ def load_instrument(package, node, confclass=None):
         trans['datamodel'] = None
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
-    confs, selector = load_confs(package, conf_node, confclass=confclass)
+    confs, custom_selector = load_confs(package, conf_node, confclass=confclass)
     trans['configurations'] = confs
     ins = InstrumentDRP(**trans)
-    ins.selector = selector
+    # add bound method
+    if custom_selector:
+        ins.select_configuration = custom_selector.__get__(ins)
     return ins
 
 
@@ -333,8 +336,8 @@ def load_instrument_configuration_from_file(fp, loader):
     mm.instrument = contents['name']
     mm.name = contents['description']
     mm.uuid = contents['uuid']
-    mm.data_start = 0
-    mm.data_end = 0
+    mm.date_start = convert.convert_date(contents['date_start'])
+    mm.date_end = convert.convert_date(contents['date_end'])
     mm.components = {}
     for cname, cuuid in contents['components'].items():
         fcomp = loader.build_component_fp(cuuid)

@@ -76,6 +76,14 @@ class ObservationResult(object):
         origin['frames'] = [img['imgid'] for img in imginfo]
         return origin
 
+    def get_sample_frame(self):
+        """Return first available image in observation result"""
+        if self.frames:
+            return self.frames[0].open()
+        if self.children:
+            return self.children[0].open()
+        return None
+
 
 def dataframe_from_list(values):
     """Build a DataFrame object from a list."""

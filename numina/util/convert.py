@@ -28,7 +28,7 @@ def convert_date(value):
     if value:
         return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
     else:
-        return datetime.datetime.utcnow()
+        return None
 
 
 def convert_qc(value):

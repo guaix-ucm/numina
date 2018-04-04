@@ -20,6 +20,7 @@
 """DRP related classes"""
 
 import warnings
+import logging
 
 import numina.core.deptree
 import numina.core.objimport
@@ -188,7 +189,6 @@ class InstrumentDRP(object):
     def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None):
         self.name = name
         self.configurations = configurations
-        self.selector = None
         self.modes = modes
         self.pipelines = pipelines
         if datamodel:
@@ -233,14 +233,47 @@ class InstrumentDRP(object):
                 warnings.warn('Mode {} has not recipe'.format(mode_key))
 
     def configuration_selector(self, obsres):
-        if self.selector is not None:
-            key = self.selector(obsres)
-        else:
-            key = 'default'
-        return self.configurations[key]
+        warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
+                      DeprecationWarning)
+        return self.select_configuration(obsres)
 
     def product_label(self, tipo):
         return tipo.name()
+
+    def select_configuration(self, obresult):
+        """Select instrument configuration based on OB"""
+
+        logger = logging.getLogger(__name__)
+        logger.debug('calling default configuration selector')
+
+        # get first possible image
+        ref = obresult.get_sample_frame()
+
+        # get INSCONF configuration
+        result = self.datamodel.extractor.extract('insconf', ref)
+
+        if result:
+            # found the keyword, try to match
+            logger.debug('found insconf config uuid=%s', result)
+            return self.configurations[result]
+
+        # If not, try to match by DATE
+        date_obs = self.datamodel.extractor.extract('observation_date', ref)
+        logger.debug('DATE-OBS is %s', date_obs)
+        for key, conf in self.configurations.items():
+            if key == 'default':
+                # skip default
+                continue
+            if conf.date_end is not None:
+                upper_t = date_obs < conf.date_end
+            else:
+                upper_t = True
+            if upper_t and (date_obs >= conf.date_start):
+                logger.debug('found date match, config uuid=%s', key)
+                return conf
+        else:
+            logger.debug('no match, using default configuration')
+            return self.configurations['default']
 
 
 class ProductEntry(object):
@@ -266,8 +299,8 @@ class InstrumentConfiguration(object):
         self.instrument = instrument
         self.name = 'config'
         self.uuid = ''
-        self.data_start = 0
-        self.data_end = 0
+        self.date_start = 0
+        self.date_end = 0
         self.components = {}
 
     def get(self, path, **kwds):

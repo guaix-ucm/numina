@@ -139,7 +139,7 @@ class DataModel(object):
             'quality_control': ('NUMRQC', 0, conv.convert_qc),
             'insmode': ('INSMODE', 'undefined'),
             'imgid': self.get_imgid,
-            'insconf': lambda x: 'v1',
+            'insconf': 'INSCONF',
             'blckuuid': lambda x: '1'
         }
 
