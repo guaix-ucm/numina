@@ -22,6 +22,7 @@
 import warnings
 import logging
 
+import numina.core.query
 import numina.core.deptree
 import numina.core.objimport
 import numina.types.product
@@ -249,28 +250,27 @@ class InstrumentDRP(object):
         # get first possible image
         ref = obresult.get_sample_frame()
 
-        # get INSCONF configuration
-        result = self.datamodel.extractor.extract('insconf', ref)
+        if ref:
+            # get INSCONF configuration
+            result = self.datamodel.extractor.extract('insconf', ref)
+            if result:
+                # found the keyword, try to match
+                logger.debug('found insconf config uuid=%s', result)
+                return self.configurations[result]
 
-        if result:
-            # found the keyword, try to match
-            logger.debug('found insconf config uuid=%s', result)
-            return self.configurations[result]
-
-        # If not, try to match by DATE
-        date_obs = self.datamodel.extractor.extract('observation_date', ref)
-        logger.debug('DATE-OBS is %s', date_obs)
-        for key, conf in self.configurations.items():
-            if key == 'default':
-                # skip default
-                continue
-            if conf.date_end is not None:
-                upper_t = date_obs < conf.date_end
-            else:
-                upper_t = True
-            if upper_t and (date_obs >= conf.date_start):
-                logger.debug('found date match, config uuid=%s', key)
-                return conf
+            # If not, try to match by DATE
+            date_obs = self.datamodel.extractor.extract('observation_date', ref)
+            for key, conf in self.configurations.items():
+                if key == 'default':
+                    # skip default
+                    continue
+                if conf.date_end is not None:
+                    upper_t = date_obs < conf.date_end
+                else:
+                    upper_t = True
+                if upper_t and (date_obs >= conf.date_start):
+                    logger.debug('found date match, config uuid=%s', key)
+                    return conf
         else:
             logger.debug('no match, using default configuration')
             return self.configurations['default']
@@ -358,6 +358,22 @@ class ObservingMode(object):
 
     def validate(self):
         return True
+
+    def build_ob(self, partial_ob, backend, options=None):
+
+        if isinstance(options, numina.core.query.Result):
+            result_type = options.result_type
+            name = 'relative_result'
+            val = backend.search_result_relative(name, result_type, partial_ob, result_desc=options)
+            for r in val:
+                partial_ob.results[r.id] = r.content
+
+        return partial_ob
+
+    def tag_ob(self, partial):
+        if self.tagger is not None:
+            partial.tags = self.tagger(partial)
+        return partial
 
     def __repr__(self):
         return "ObservingMode(name={})".format(self.name)

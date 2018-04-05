@@ -61,9 +61,7 @@ class DataTypeBase(object):
 
         if isinstance(options, Result):
             value = dal.search_result_relative(name, self, obsres,
-                                               mode=options.mode,
-                                               field=options.field,
-                                               node=options.node)
+                                               result_desc=options)
             return value.content
 
         if self.isproduct():

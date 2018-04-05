@@ -69,7 +69,19 @@ def load_mode(node):
 
     # handle validator
     load_mode_validator(obs_mode, node)
-    
+
+    # handle builder
+    load_mode_builder(obs_mode, node)
+
+    # handle tagger:
+    load_mode_tagger(obs_mode, node)
+
+    return obs_mode
+
+
+def load_mode_tagger(obs_mode, node):
+    """Load observing mode OB tagger"""
+
     # handle tagger:
     ntagger = node.get('tagger')
 
@@ -86,6 +98,22 @@ def load_mode(node):
         obs_mode.tagger = import_object(ntagger)
     else:
         raise TypeError('tagger must be None, a list or a string')
+
+    return obs_mode
+
+
+def load_mode_builder(obs_mode, node):
+    """Load observing mode OB builder"""
+
+    nval = node.get('builder')
+
+    if nval is not None:
+        if isinstance(nval, str):
+            # override method
+            newmethod = import_object(nval)
+            obs_mode.build_ob = newmethod.__get__(obs_mode)
+        else:
+            raise TypeError('builder must be None or a string')
 
     return obs_mode
 

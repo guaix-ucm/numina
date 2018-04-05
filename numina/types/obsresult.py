@@ -61,20 +61,6 @@ class ObservationResultType(DataType):
         return validator(obj)
 
     def query(self, name, dal, ob, options=None):
-
-        # Complete values with previous Results
-        if isinstance(options, Result):
-            tipo = DataFrameType()
-            mode = options.mode
-            field = options.field
-            node = options.node
-            query_opts = {}
-            query_opts['ignore_fail'] = options.ignore_fail
-            val = dal.search_result_relative(name, tipo, ob, mode, field, node, options=query_opts)
-            ob.results = []
-            for r in val:
-                ob.results.append(r.content)
-
         return ob
 
     def on_query_not_found(self, notfound):

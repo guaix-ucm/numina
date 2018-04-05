@@ -38,7 +38,7 @@ from .diskfiledal import build_product_path
 from .utils import tags_are_valid
 
 
-_logger = logging.getLogger("numina.dal.dictdal")
+_logger = logging.getLogger('clodiadrp.loader')
 
 
 class BaseDictDAL(AbsDrpDAL):
@@ -151,26 +151,26 @@ class BaseDictDAL(AbsDrpDAL):
         """
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
-
+        _logger.debug("obsres_from_oblock_id id='%s', mode='%s' START", obsid, obsres.mode)
         this_drp = self.drps.query_by_name(obsres.instrument)
+
+        if this_drp is None:
+            raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
 
         # Reserved names
         if obsres.mode in self._RESERVED_MODE_NAMES:
-            tagger = None
+            selected_mode = None # null mode
         else:
             for mode in this_drp.modes:
                 if mode.key == obsres.mode:
-                    tagger = mode.tagger
+                    selected_mode = mode
                     break
             else:
                 raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
 
-        if tagger is None:
-            master_tags = {}
-        else:
-            master_tags = tagger(obsres)
-
-        obsres.tags = master_tags
+        if selected_mode:
+            obsres = selected_mode.build_ob(obsres, self)
+            obsres = selected_mode.tag_ob(obsres)
 
         if configuration:
             # override instrument configuration
@@ -181,7 +181,7 @@ class BaseDictDAL(AbsDrpDAL):
         else:
             # Insert Instrument configuration
             obsres.configuration = this_drp.configuration_selector(obsres)
-
+        _logger.debug('obsres_from_oblock_id %s END', obsid)
         return obsres
 
     def search_result_id(self, node_id, tipo, field):
@@ -249,7 +249,7 @@ class BaseDictDAL(AbsDrpDAL):
                 msg = 'name %s compatible with tags %r not found' % (name, tags)
                 raise NoResultFound(msg)
 
-    def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
+    def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
         # mode field node could go together...
         return []
 
@@ -435,36 +435,39 @@ class HybridDAL(Dict2DAL):
         )
         return st
 
-    def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
+    def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
 
         _logger.debug('search relative result for %s', name)
-        if options is None:
-            options = {}
 
-        ignore_fail = options.get('ignore_fail', False)
+        # result_type = DataFrameType()
+        result_mode = result_desc.mode
+        result_field = result_desc.field
+        result_node = result_desc.node
 
-        if node == 'children':
+        ignore_fail = result_desc.ignore_fail
+
+        if result_node == 'children':
             # Results are multiple
             # one per children
             _logger.debug('search children nodes of %s', obsres.id)
             results = []
             for c in obsres.children:
                 try:
-                    st = self.search_result_id(c, tipo, field)
+                    st = self.search_result_id(c, tipo, result_field)
                     results.append(st)
                 except NoResultFound:
                     if not ignore_fail:
                         raise
 
             return results
-        elif node == 'prev' or node == 'prev-rel':
+        elif result_node == 'prev' or result_node == 'prev-rel':
             _logger.debug('search previous nodes of %s', obsres.id)
 
             # obtain previous nodes
-            for previd in self.search_previous_obsres(obsres, node=node):
+            for previd in self.search_previous_obsres(obsres, node=result_node):
                 # print('searching in node', previd)
                 try:
-                    st = self.search_result_id(previd, tipo, field, mode=mode)
+                    st = self.search_result_id(previd, tipo, result_field, mode=result_mode)
                     return st
                 except NoResultFound:
                     pass
@@ -472,7 +475,7 @@ class HybridDAL(Dict2DAL):
             else:
                 raise NoResultFound('value not found in any node')
         else:
-            msg = 'unknown node type {}'.format(node)
+            msg = 'unknown node type {}'.format(result_node)
             raise TypeError(msg)
 
     def _search_result(self, name, tipo, obsres, resultid):
