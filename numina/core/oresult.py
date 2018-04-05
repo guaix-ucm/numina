@@ -78,10 +78,12 @@ class ObservationResult(object):
 
     def get_sample_frame(self):
         """Return first available image in observation result"""
-        if self.frames:
-            return self.frames[0].open()
-        if self.children:
-            return self.children[0].open()
+        for frame in self.frames:
+            return frame.open()
+
+        for res in self.results.values():
+            return res.open()
+
         return None
 
 
