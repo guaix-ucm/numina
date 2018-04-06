@@ -66,6 +66,11 @@ def generate_extensions():
                          include_dirs=[numpy_include],
                          language='c++')
         extensions.append(ext7)
+        ext8 = Extension('numina.array._clippix',
+                         ['numina/array/clippix.pyx'],
+                         include_dirs=[numpy_include],
+                         language='c')
+        extensions.append(ext8)
 
     except ImportError:
         cmdclass = {}
@@ -94,6 +99,11 @@ def generate_extensions():
                          include_dirs=[numpy_include],
                          language='c++')
         extensions.append(ext7)
+        ext8 = Extension('numina.array._clippix',
+                         ['numina/array/clippix.c'],
+                         include_dirs=[numpy_include],
+                         language='c')
+        extensions.append(ext8)
 
     return extensions, cmdclass
 
