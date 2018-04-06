@@ -22,7 +22,6 @@ import warnings
 import six
 from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
-from numina.core.query import Result
 from numina.core.pipeline import InstrumentConfiguration
 from numina.types.qc import QC
 from .frame import DataFrameType

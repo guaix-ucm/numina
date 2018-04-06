@@ -22,7 +22,7 @@ import inspect
 from numina.util.parser import parse_arg_line
 from numina.exceptions import NoResultFound
 from numina.datamodel import DataModel
-from numina.core.query import Result
+from numina.core.query import ResultOf
 
 
 class DataTypeBase(object):
@@ -59,7 +59,7 @@ class DataTypeBase(object):
         except NoResultFound:
             pass
 
-        if isinstance(options, Result):
+        if isinstance(options, ResultOf):
             value = dal.search_result_relative(name, self, obsres,
                                                result_desc=options)
             return value.content

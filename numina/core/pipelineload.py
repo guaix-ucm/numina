@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -32,6 +32,7 @@ from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
 from .pipeline import ProductEntry
+from .query import ResultOf
 from .taggers import get_tags_from_full_ob
 import numina.util.convert as convert
 
@@ -105,15 +106,29 @@ def load_mode_tagger(obs_mode, node):
 def load_mode_builder(obs_mode, node):
     """Load observing mode OB builder"""
 
-    nval = node.get('builder')
+    # Check 'builder' and 'builder_options'
+    nval1 = node.get('builder')
 
-    if nval is not None:
-        if isinstance(nval, str):
+    if nval1 is not None:
+        if isinstance(nval1, str):
             # override method
-            newmethod = import_object(nval)
+            newmethod = import_object(nval1)
             obs_mode.build_ob = newmethod.__get__(obs_mode)
         else:
             raise TypeError('builder must be None or a string')
+    else:
+        nval2 = node.get('builder_options')
+
+        if nval2 is not None:
+            if isinstance(nval2, list):
+                for opt_dict in nval2:
+
+                    if 'result_of' in opt_dict:
+                        fields = opt_dict['result_of']
+                        obs_mode.build_ob_options = ResultOf(**fields)
+                        break
+            else:
+                raise TypeError('builder_options must be None or a list')
 
     return obs_mode
 

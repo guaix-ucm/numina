@@ -441,7 +441,7 @@ class HybridDAL(Dict2DAL):
 
         # result_type = DataFrameType()
         result_mode = result_desc.mode
-        result_field = result_desc.field
+        result_field = result_desc.attr
         result_node = result_desc.node
 
         ignore_fail = result_desc.ignore_fail

@@ -27,28 +27,26 @@ class QueryModifier(object):
     pass
 
 
-class Result(QueryModifier):
-    def __init__(self, mode_field, node=None, ignore_fail=False):
+class ResultOf(QueryModifier):
+    def __init__(self, field, node=None, ignore_fail=False):
         from numina.types.frame import DataFrameType
 
-        super(Result, self).__init__()
+        super(ResultOf, self).__init__()
 
-        self.mode_field = mode_field
+        self.field = field
         self.node = node
         self.ignore_fail = ignore_fail
         self.result_type = DataFrameType()
-        splitm = mode_field.split('.')
+        splitm = field.split('.')
         lm = len(splitm)
         if lm == 1:
-            mode = None
-            field = mode_field
+            self.mode = None
+            self.attr = field
         elif lm == 2:
-            mode = splitm[0]
-            field = splitm[1]
+            self.mode = splitm[0]
+            self.attr = splitm[1]
         else:
-            raise ValueError('malformed mode_field %s' % mode_field)
-        self.mode = mode
-        self.field = field
+            raise ValueError('malformed desc: %s' % field)
 
 
 class Ignore(QueryModifier):
@@ -61,7 +59,7 @@ def basic_mode_builder(mode, partial_ob, backend, options=None):
 
     logger.debug("builder for mode='%s'", mode.name)
 
-    if isinstance(options, Result):
+    if isinstance(options, ResultOf):
         result_type = options.result_type
         name = 'relative_result'
         logger.debug('query, children id: %s', partial_ob.children)

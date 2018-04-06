@@ -355,16 +355,19 @@ class ObservingMode(object):
         self.reference = ''
         self.tagger = None
         self.validator = None
+        self.build_ob_options = None
 
     def validate(self):
         return True
 
     def build_ob(self, partial_ob, backend, options=None):
 
-        if isinstance(options, numina.core.query.Result):
-            result_type = options.result_type
+        mod = options or self.build_ob_options
+
+        if isinstance(mod, numina.core.query.ResultOf):
+            result_type = mod.result_type
             name = 'relative_result'
-            val = backend.search_result_relative(name, result_type, partial_ob, result_desc=options)
+            val = backend.search_result_relative(name, result_type, partial_ob, result_desc=mod)
             for r in val:
                 partial_ob.results[r.id] = r.content
 
