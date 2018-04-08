@@ -161,12 +161,7 @@ class BaseDictDAL(AbsDrpDAL):
         if obsres.mode in self._RESERVED_MODE_NAMES:
             selected_mode = None # null mode
         else:
-            for mode in this_drp.modes:
-                if mode.key == obsres.mode:
-                    selected_mode = mode
-                    break
-            else:
-                raise ValueError('no mode for %s in instrument %s' % (obsres.mode, obsres.instrument))
+            selected_mode = this_drp.modes[obsres.mode]
 
         if selected_mode:
             obsres = selected_mode.build_ob(obsres, self)

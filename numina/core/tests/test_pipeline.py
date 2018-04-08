@@ -15,13 +15,13 @@ def test_mode_search(drptest):
     ll = drptest.search_mode_provides("MasterBias")
 
     assert ll.name == 'MasterBias'
-    assert ll.mode == drptest.modes[1].key
+    assert ll.mode == drptest.modes[ll.mode].key
     assert ll.field == 'master_bias'
 
     ll = drptest.search_mode_provides("MasterDark")
 
     assert ll.name == 'MasterDark'
-    assert ll.mode == drptest.modes[2].key
+    assert ll.mode == drptest.modes[ll.mode].key
     assert ll.field == 'master_dark'
 
 
@@ -30,7 +30,7 @@ def test_mode_query(drptest):
     ll = drptest.query_provides("MasterBias")
 
     assert ll.name == 'MasterBias'
-    assert ll.mode == drptest.modes[1].key
+    assert ll.mode == drptest.modes[ll.mode].key
     assert ll.field == 'master_bias'
 
     with pytest.raises(ValueError):
@@ -39,5 +39,5 @@ def test_mode_query(drptest):
     ll = drptest.query_provides("MasterDark", search=True)
 
     assert ll.name == 'MasterDark'
-    assert ll.mode == drptest.modes[2].key
+    assert ll.mode == drptest.modes[ll.mode].key
     assert ll.field == 'master_dark'

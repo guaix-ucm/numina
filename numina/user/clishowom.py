@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -62,7 +62,7 @@ def show_observingmodes(args, extra_args):
 
     for name, theins in res:
         if theins:
-            for mode in theins.modes:
+            for mode in theins.modes.values():
                 if not args.name or (mode.key in args.name):
                     print_obsmode(mode, theins)
         else:

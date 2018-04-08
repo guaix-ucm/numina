@@ -34,14 +34,11 @@ def _obtain_validator_for(instrument, mode_key):
 
     lol = drps.query_by_name(instrument)
 
-    for mode in lol.modes:
-        if mode.key == mode_key:
-            if mode.validator:
-                return mode.validator
-            else:
-                break
-
-    return lambda obj: True
+    mode = lol.modes[mode_key]
+    if mode.validator:
+        return mode.validator
+    else:
+        return lambda obj: True
 
 
 class ObservationResultType(DataType):

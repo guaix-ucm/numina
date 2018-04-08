@@ -186,7 +186,17 @@ class Pipeline(object):
 
 
 class InstrumentDRP(object):
-    """Description of an Instrument Data Reduction Pipeline"""
+    """Description of an Instrument Data Reduction Pipeline
+
+    Parameters
+    ==========
+       name : str
+           Name of the instrument
+       configurations : dict of InstrumentConfiguration
+       modes : dict of ObservingModes
+       pipeline : dict of Pipeline
+
+    """
     def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None):
         self.name = name
         self.configurations = configurations
@@ -223,8 +233,7 @@ class InstrumentDRP(object):
     def iterate_mode_provides(self, modes, pipeline):
         """Return the mode that provides a given product"""
 
-        for mode in modes:
-            mode_key = mode.key
+        for mode_key, mode in modes.items():
             try:
                 recipe = pipeline.get_recipe_object(mode_key)
                 for key, provide in recipe.products().items():
@@ -249,14 +258,22 @@ class InstrumentDRP(object):
 
         # get first possible image
         ref = obresult.get_sample_frame()
-
         if ref:
             # get INSCONF configuration
             result = self.datamodel.extractor.extract('insconf', ref)
             if result:
                 # found the keyword, try to match
                 logger.debug('found insconf config uuid=%s', result)
-                return self.configurations[result]
+                # Use insconf as uuid key
+                if result in self.configurations:
+                    return self.configurations[result]
+                else:
+                    # Additional check for conf.name
+                    for conf in self.configurations.values():
+                        if conf.name == result:
+                            return conf
+                    else:
+                        raise KeyError('insconf {} does not match any config'.format(result))
 
             # If not, try to match by DATE
             date_obs = self.datamodel.extractor.extract('observation_date', ref)
@@ -344,15 +361,10 @@ class ObservingMode(object):
     """Observing modes of an Instrument."""
     def __init__(self):
         self.name = ''
-        self.uuid = ''
         self.key = ''
-        self.url = ''
         self.instrument = ''
         self.summary = ''
         self.description = ''
-        self.status = ''
-        self.date = ''
-        self.reference = ''
         self.tagger = None
         self.validator = None
         self.build_ob_options = None

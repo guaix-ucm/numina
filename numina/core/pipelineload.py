@@ -60,8 +60,15 @@ def drp_load_data(package, data, confclass=None):
 
 def load_modes(node):
     """Load all observing modes"""
-    return [load_mode(child) for child in node]
-
+    if isinstance(node, list):
+        values = [load_mode(child) for child in node]
+        keys = [mode.key for mode in values]
+        return dict(zip(keys,values))
+    elif isinstance(node, dict):
+        values = {key: load_mode(child) for key, child in node}
+        return values
+    else:
+        raise NotImplementedError
 
 def load_mode(node):
     """Load one observing mdode"""
