@@ -53,10 +53,10 @@ def show_instruments(args, extra_args):
 
     if args.name:
         for name in args.name:
-            drp = mm.query_by_name(name)
-            if drp:
+            try:
+                drp = mm.query_by_name(name)
                 print_instrument(drp, modes=args.om)
-            else:
+            except KeyError:
                 print_no_instrument(name)
     else:
         drps = mm.query_all()

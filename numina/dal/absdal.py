@@ -29,16 +29,8 @@ class AbsDrpDAL(DALInterface):
         return self.search_instrument_configuration(ins, name)
 
     def search_instrument_configuration(self, ins, name):
-
         drp = self.drps.query_by_name(ins)
-
-        if drp is None:
-            raise NoResultFound('Instrument "{}" not found'.format(ins))
-        try:
-            this_configuration = drp.configurations[name]
-        except KeyError:
-            raise NoResultFound('Instrument configuration "{}" missing'.format(name))
-
+        this_configuration = drp.configurations[name]
         return this_configuration
 
     def search_recipe(self, ins, mode, pipeline):
@@ -48,17 +40,7 @@ class AbsDrpDAL(DALInterface):
         if drp is None:
             raise NoResultFound('DRP not found')
 
-        try:
-            this_pipeline = drp.pipelines[pipeline]
-        except KeyError:
-            raise NoResultFound('pipeline not found')
-
-        try:
-            mode = drp.modes[mode]
-            recipe = this_pipeline.get_recipe_object(mode)
-            return recipe
-        except KeyError:
-            raise NoResultFound('mode not found')
+        return drp.get_recipe_object(mode, pipeline_name=pipeline)
 
     def search_recipe_fqn(self, ins, mode, pipename):
 

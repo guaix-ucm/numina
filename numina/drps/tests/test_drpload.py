@@ -20,8 +20,8 @@ def test_drpsys_one_instrument(drpmocker):
     assert ldrp is not None
     assert ldrp.name == 'TEST1'
 
-    res = drpsys.query_by_name('OTHER')
-    assert res is None
+    with pytest.raises(KeyError):
+        drpsys.query_by_name('OTHER')
 
     alldrps = drpsys.query_all()
     assert len(alldrps) == 1
@@ -51,8 +51,8 @@ def test_drpsys_2_instruments(drpmocker):
     assert ldrp2 is not None
     assert ldrp2.name == 'TEST2'
 
-    res = drpsys.query_by_name('OTHER')
-    assert res is None
+    with pytest.raises(KeyError):
+        drpsys.query_by_name('OTHER')
 
     alldrps = drpsys.query_all()
     assert len(alldrps) == 2
@@ -71,14 +71,14 @@ def test_drpsys_no_instrument():
     drpsys = DrpSystem()
     drpsys.load()
 
-    res = drpsys.query_by_name('TEST1')
-    assert res is None
+    with pytest.raises(KeyError):
+        drpsys.query_by_name('TEST1')
 
-    res = drpsys.query_by_name('TEST2')
-    assert res is None
+    with pytest.raises(KeyError):
+        drpsys.query_by_name('TEST2')
 
-    res = drpsys.query_by_name('OTHER')
-    assert res is None
+    with pytest.raises(KeyError):
+        drpsys.query_by_name('OTHER')
 
     alldrps = drpsys.query_all()
     assert len(alldrps) == 0

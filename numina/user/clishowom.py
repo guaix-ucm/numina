@@ -56,7 +56,11 @@ def show_observingmodes(args, extra_args):
 
     if args.instrument:
         name = args.instrument
-        res = [(name, drpsys.query_by_name(name))]
+        try:
+            val = drpsys.query_by_name(name)
+        except KeyError:
+            val = None
+        res = [(name, val)]
     else:
         res = drpsys.query_all().items()
 

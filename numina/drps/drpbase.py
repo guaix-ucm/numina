@@ -61,10 +61,7 @@ class DrpGeneric(DrpBase):
         """Query DRPs in internal storage by name
 
         """
-        try:
-            return self._drps[name]
-        except KeyError:
-            return None
+        return self._drps[name]
 
     def query_all(self):
         """Return all available DRPs in internal storage"""
