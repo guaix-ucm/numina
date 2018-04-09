@@ -3,7 +3,8 @@
 import sys
 import warnings
 
-from numina.types.datatype import ListOfType
+
+from numina.types.datatype import ListOfType, DataType
 import numina.types.datatype as datatype
 
 
