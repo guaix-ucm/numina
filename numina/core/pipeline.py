@@ -82,7 +82,7 @@ class Pipeline(object):
             key_mode = mode
         else:
             key_mode = mode
-            
+
         recipe_entry = self.recipes[key_mode]
         recipe = self._get_base_object(recipe_entry)
 
@@ -298,6 +298,13 @@ class InstrumentDRP(object):
         else:
             logger.debug('no match, using default configuration')
             return self.configurations['default']
+
+    def get_recipe_object(self, mode_name, pipeline_name='default'):
+        """Build a recipe object from a given mode name"""
+        active_mode = self.modes[mode_name]
+        active_pipeline = self.pipelines[pipeline_name]
+        recipe = active_pipeline.get_recipe_object(active_mode)
+        return recipe
 
 
 class ProductEntry(object):

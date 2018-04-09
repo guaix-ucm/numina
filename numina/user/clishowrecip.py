@@ -67,7 +67,11 @@ def show_recipes(args, extra_args):
     # Query instruments
     if args.instrument:
         name = args.instrument
-        res = [(name, drpsys.query_by_name(name))]
+        try:
+            val = drpsys.query_by_name(name)
+        except KeyError:
+            val = None
+        res = [(name, val)]
     else:
         res = drpsys.query_all().items()
 
