@@ -28,7 +28,7 @@ def test_invalid_instrument1_warning():
 
 
 def test_invalid_instrument2():
-    insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', [], [], [], [])
+    insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', {}, {}, [], [])
 
     drpbase = DrpBase()
     res = drpbase.instrumentdrp_check(insdrp, 'TEST1')
@@ -38,7 +38,7 @@ def test_invalid_instrument2():
 @pytest.mark.xfail(reason="warning seems unreliable")
 def test_invalid_instrument2_warning():
 
-    insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', [], [], [], [])
+    insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', {}, {}, [], [])
 
     drpbase = DrpBase()
     with pytest.warns(RuntimeWarning):
@@ -46,7 +46,7 @@ def test_invalid_instrument2_warning():
 
 
 def test_valid_instrument():
-    insdrp = numina.core.pipeline.InstrumentDRP('TEST1', [], [], [], [])
+    insdrp = numina.core.pipeline.InstrumentDRP('TEST1', {}, {}, [], [])
 
     drpbase = DrpBase()
     res = drpbase.instrumentdrp_check(insdrp, 'TEST1')

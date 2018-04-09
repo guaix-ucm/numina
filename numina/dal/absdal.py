@@ -34,12 +34,7 @@ class AbsDrpDAL(DALInterface):
         return this_configuration
 
     def search_recipe(self, ins, mode, pipeline):
-
         drp = self.drps.query_by_name(ins)
-
-        if drp is None:
-            raise NoResultFound('DRP not found')
-
         return drp.get_recipe_object(mode, pipeline_name=pipeline)
 
     def search_recipe_fqn(self, ins, mode, pipename):

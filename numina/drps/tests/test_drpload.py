@@ -65,6 +65,42 @@ def test_drpsys_2_instruments(drpmocker):
     assert alldrps['TEST2'].name == ldrp2.name
 
 
+def test_drpsys_name_2_instruments(drpmocker):
+    """Test that two DRPs are returned"""
+
+    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
+    drpdata2 = pkgutil.get_data('numina.drps.tests', 'drptest2.yaml')
+    drpmocker.add_drp('TEST1', drpdata1)
+    drpmocker.add_drp('TEST2', drpdata2)
+
+    ldrp1 = DrpSystem.load_drp('TEST1')
+
+    assert ldrp1 is not None
+    assert ldrp1.name == 'TEST1'
+
+    ldrp2 = DrpSystem.load_drp('TEST2')
+
+    assert ldrp2 is not None
+    assert ldrp2.name == 'TEST2'
+
+    with pytest.raises(KeyError):
+        DrpSystem.load_drp('OTHER')
+
+
+def test_drpsys_iload_2_instruments(drpmocker):
+    """Test that two DRPs are returned"""
+
+    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
+    drpdata2 = pkgutil.get_data('numina.drps.tests', 'drptest2.yaml')
+    drpmocker.add_drp('TEST1', drpdata1)
+    drpmocker.add_drp('TEST2', drpdata2)
+
+    gendrp = DrpSystem.iload()
+
+    for ldrp in gendrp:
+        assert ldrp is not None
+
+
 @pytest.mark.usefixtures("drpmocker")
 def test_drpsys_no_instrument():
 
