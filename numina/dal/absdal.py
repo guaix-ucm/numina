@@ -54,6 +54,7 @@ class AbsDrpDAL(DALInterface):
             raise NoResultFound('pipeline not found')
 
         try:
+            mode = drp.modes[mode]
             recipe = this_pipeline.get_recipe_object(mode)
             return recipe
         except KeyError:

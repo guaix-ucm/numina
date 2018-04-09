@@ -76,7 +76,14 @@ class Pipeline(object):
     def get_recipe_object(self, mode):
         """Load recipe object, according to observing mode"""
 
-        recipe_entry = self.recipes[mode]
+        if isinstance(mode, ObservingMode):
+            key_mode = mode.key
+        elif isinstance(mode, str):
+            key_mode = mode
+        else:
+            key_mode = mode
+            
+        recipe_entry = self.recipes[key_mode]
         recipe = self._get_base_object(recipe_entry)
 
         # Init additional members

@@ -195,7 +195,11 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         return self._base_info
 
     def update_metadata(self, recipe):
-        self.meta_info['mode_name'] = recipe.mode
+        try:
+            self.meta_info['mode_name'] = recipe.mode.key
+        except AttributeError:
+            self.meta_info['mode_name'] = recipe.mode
+
         self.meta_info['instrument_name'] = recipe.instrument
         self.meta_info['recipe_name'] = recipe.__class__.__name__
         self.meta_info['recipe_version'] = recipe.__version__
