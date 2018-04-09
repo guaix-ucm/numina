@@ -25,7 +25,7 @@ from __future__ import print_function
 import numpy as np
 from skimage import transform
 
-from numina.array._clippix import _clippix, _polygon_area
+from numina.array._clippix import _resample
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 
@@ -347,9 +347,6 @@ def rectify2d(image2d, aij, bij, resampling,
     if ioffy is None:
         ioffy = 0
 
-    # initialize result
-    image2d_rect = np.zeros((naxis2out, naxis1out))
-
     if resampling == 1:
         # pixel coordinates (rectified image); since the fmap function
         # below requires floats, these arrays must use dtype=np.float
@@ -374,55 +371,31 @@ def rectify2d(image2d, aij, bij, resampling,
         iyy = yy.astype(np.int)[lok]
         ixxx = ixxx[lok]
         iyyy = iyyy[lok]
+        # initialize result
+        image2d_rect = np.zeros((naxis2out, naxis1out), dtype=np.float)
+        # rectified image
         image2d_rect[iyy + ioffy, ixx + ioffx] = image2d[iyyy, ixxx]
     elif resampling == 2:
-        # ToDo: consider ioffx, ioffy
         # coordinates (rectified image) of the four corners, sorted in
         # anticlockwise order, of every pixel
-        j = np.array([[k-0.5, k+0.5, k+0.5, k-0.5] for k in range(naxis1out)])
-        i = np.array([[k-0.5, k-0.5, k+0.5, k+0.5] for k in range(naxis2out)])
-        xx = np.reshape(np.tile(j, naxis2out), naxis1out*naxis2out*4)
-        yy = np.concatenate([np.reshape(i, naxis2out*4)]*naxis1out)
+        j = np.array(
+            [[k - 0.5 - ioffx, k + 0.5 - ioffx,
+              k + 0.5 - ioffx, k - 0.5 - ioffx] for k in range(naxis1out)]
+        )
+        i = np.array(
+            [[k - 0.5 - ioffy, k - 0.5 - ioffy,
+              k + 0.5 - ioffy, k + 0.5 - ioffy] for k in range(naxis2out)]
+        )
+        xx = np.reshape(np.tile(j, naxis2out), naxis1out * naxis2out * 4)
+        yy = np.concatenate([np.reshape(i, naxis2out * 4)] * naxis1out)
         # compute pixel coordinates in original (distorted) image
         xxx, yyy = fmap(order, aij, bij, xx, yy)
-        # reshape last arrays to facilitate the manipulation of the four
-        # vertices of each individual pixel
-        xxx = np.reshape(xxx, (naxis1out*naxis2out, 4))
-        yyy = np.reshape(yyy, (naxis1out*naxis2out, 4))
         # indices of pixels in the rectified image
         ixx = np.repeat(np.arange(naxis1out), naxis2out)
         iyy = np.tile(np.arange(naxis2out), (naxis1out,))
-        # loop in all pixels of the rectified image
-        for xvertices, yvertices, iixx, iiyy in zip(xxx, yyy, ixx, iyy):
-            # polygon corresponding to the projection of a pixel of the
-            # rectified image on the original (distorted) image
-            polygon1 = np.array([[xvertices[k], yvertices[k]]
-                                 for k in range(4)])
-            image2d_rect[iiyy, iixx] = 0.0
-            # limits to determine the pixels of the original (distorted) image
-            # that can have intersection with polygon1
-            jmin = np.rint(np.min(xvertices)).astype(np.int)
-            jmax = np.rint(np.max(xvertices)).astype(np.int)
-            imin = np.rint(np.min(yvertices)).astype(np.int)
-            imax = np.rint(np.max(yvertices)).astype(np.int)
-            # determine intersection of polygon1 with pixels in the original
-            # (distorted) image
-            for jdum in range(jmin, jmax + 1):
-                if 0 <= jdum < naxis1:
-                    for idum in range(imin, imax + 1):
-                        if 0 <= idum < naxis2:
-                            # polygon corresponding to a particular pixel in
-                            # the original (distorted) image
-                            polygon2 = np.array([[jdum - 0.5, idum - 0.5],
-                                                 [jdum + 0.5, idum - 0.5],
-                                                 [jdum + 0.5, idum + 0.5],
-                                                 [jdum - 0.5, idum + 0.5]])
-                            # intersection of polygon1 with polygon2
-                            polydum = _clippix(polygon1, polygon2)
-                            # add signal according to the area of the
-                            # intersection
-                            image2d_rect[iiyy, iixx] += \
-                                _polygon_area(polydum) * image2d[idum, jdum]
+        # rectified image (using cython function)
+        image2d_rect = _resample(image2d, xxx, yyy, ixx, iyy,
+                                 naxis1out, naxis2out)
     else:
         raise ValueError("Sorry, resampling method must be 1 or 2")
 
