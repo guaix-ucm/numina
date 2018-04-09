@@ -24,12 +24,13 @@ Recipe requirements
 import inspect
 
 import numina.exceptions
-from numina.types.datatype import NullType, PlainPythonType
 
 
 class EntryHolder(object):
     def __init__(self, tipo, description, destination, optional,
                  default, choices=None, validation=True):
+
+        from numina.types.datatype import NullType, PlainPythonType
 
         super(EntryHolder, self).__init__()
 
