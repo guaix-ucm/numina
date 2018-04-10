@@ -64,19 +64,6 @@ cdef inline check_ncorners(Polygon p):
 
 # Sutherland–Hodgman algorithm implementation in Cython
 # https://stackoverflow.com/questions/44765229/
-@cython.cdivision(True)
-@cython.nonecheck(False)
-cdef inline tuple compute_intersection(double cp10, double cp11,
-                                       double cp20, double cp21,
-                                       double s0, double s1,
-                                       double e0, double e1):
-    dc0, dc1 = cp10 - cp20, cp11 - cp21
-    dp0, dp1 =  s0 - e0, s1 - e1
-    n1 = cp10 * cp21 - cp11 * cp20
-    n2 = s0 * e1 - s1 * e0
-    n3 = 1.0 / (dc0 * dp1 - dc1 * dp0)
-    return (n1 * dp0 - n2 * dc0) * n3, (n1 * dp1 - n2 * dc1) * n3
-
 # The original code has been modified to make use of the Polygon structure
 # and the auxiliary functions (note that although the original lists are not
 # employed, the variable names have been preserved)
@@ -90,6 +77,9 @@ cdef cclippix_area(Polygon subjectPolygon, Polygon clipPolygon):
         double cp10, cp11, cp20, cp21
         double s0, s1, e0, e1
         double s_in, e_in
+        double dc0, dc1
+        double dp0, dp1
+        double n1, n2, n3
         double xdum, ydum
         double x1, y1, x2, y2
         double area = 0.0
@@ -113,8 +103,14 @@ cdef cclippix_area(Polygon subjectPolygon, Polygon clipPolygon):
             e_in = (cp20 - cp10) * (e1 - cp11) - (cp21 - cp11) * (e0 - cp10)
             if e_in > 0:
                 if s_in <= 0:
-                    xdum, ydum = compute_intersection(cp10, cp11, cp20, cp21,
-                                                      s0, s1, e0, e1)
+                    # compute intersection
+                    dc0, dc1 = cp10 - cp20, cp11 - cp21
+                    dp0, dp1 =  s0 - e0, s1 - e1
+                    n1 = cp10 * cp21 - cp11 * cp20
+                    n2 = s0 * e1 - s1 * e0
+                    n3 = 1.0 / (dc0 * dp1 - dc1 * dp0)
+                    xdum = (n1 * dp0 - n2 * dc0) * n3
+                    ydum = (n1 * dp1 - n2 * dc1) * n3
                     check_ncorners(outputList)
                     outputList.x[outputList.ncorners] = xdum
                     outputList.y[outputList.ncorners] = ydum
@@ -124,8 +120,14 @@ cdef cclippix_area(Polygon subjectPolygon, Polygon clipPolygon):
                 outputList.y[outputList.ncorners] = e1
                 outputList.ncorners += 1
             elif s_in > 0:
-                xdum, ydum = compute_intersection(cp10, cp11, cp20, cp21,
-                                                  s0, s1, e0, e1)
+                # compute intersection
+                dc0, dc1 = cp10 - cp20, cp11 - cp21
+                dp0, dp1 =  s0 - e0, s1 - e1
+                n1 = cp10 * cp21 - cp11 * cp20
+                n2 = s0 * e1 - s1 * e0
+                n3 = 1.0 / (dc0 * dp1 - dc1 * dp0)
+                xdum = (n1 * dp0 - n2 * dc0) * n3
+                ydum = (n1 * dp1 - n2 * dc1) * n3
                 check_ncorners(outputList)
                 outputList.x[outputList.ncorners] = xdum
                 outputList.y[outputList.ncorners] = ydum
