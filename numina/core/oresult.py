@@ -68,12 +68,13 @@ class ObservationResult(object):
         origin = {}
         imginfo = datamodel.gather_info_oresult(self)
         origin['info'] = imginfo
-        first = imginfo[0]
-        origin["block_uuid"] = first['block_uuid']
-        origin['insconf_uuid'] = first['insconf_uuid']
-        origin['date_obs'] = first['observation_date']
-        origin['observation_date'] = first['observation_date']
-        origin['frames'] = [img['imgid'] for img in imginfo]
+        if imginfo:
+            first = imginfo[0]
+            origin["block_uuid"] = first['block_uuid']
+            origin['insconf_uuid'] = first['insconf_uuid']
+            origin['date_obs'] = first['observation_date']
+            origin['observation_date'] = first['observation_date']
+            origin['frames'] = [img['imgid'] for img in imginfo]
         return origin
 
     def get_sample_frame(self):

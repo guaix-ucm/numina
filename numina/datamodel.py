@@ -113,9 +113,12 @@ class DataModel(object):
         'mode',
         'exptime',
         'darktime',
-        # 'insconf',
-        # 'blckuuid',
+        'insconf',
+        'blckuuid',
         'quality_control',
+        'block_uuid', # Alias
+        'insconf_uuid', # Alias
+        'imgid',
     ]
 
     def __init__(self, name='UNKNOWN', mappings=None):
@@ -140,7 +143,10 @@ class DataModel(object):
             'insmode': ('INSMODE', 'undefined'),
             'imgid': self.get_imgid,
             'insconf': 'INSCONF',
-            'blckuuid': lambda x: '1'
+            'blckuuid': lambda x: '1',
+            'insconf_uuid': 'insconf', # Alias
+            'block_uuid': 'blckuuid', # Alias
+
         }
 
     def get_data(self, img):
@@ -229,6 +235,9 @@ class DataModel(object):
             values[key] = self.extractor.extract(key, hdulist)
 
         return values
+
+    def gather_info_oresult(self, ob):
+        return [self.gather_info_dframe(f) for f in ob.images]
 
     def get_quality_control(self, img):
         """Obtain quality control flag from the image."""
