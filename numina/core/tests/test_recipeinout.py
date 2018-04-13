@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,91 +17,70 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-"""Tests for RecipeInput and RecipeResult"""
-
-from numina.core.recipeinout import ErrorRecipeResult
-from numina.user.helpers import DiskStorageDefault
 import pytest
 
+import numina.types.qc as qct
+import numina.types.datatype as df
+import numina.core.dataholders as dh
 
-def test_ErrorRecipeResult_access():
-
-    BB = ErrorRecipeResult("errortype","message","traceback")
-    assert BB.errortype is getattr(BB, 'errortype')
-    assert BB.message is getattr(BB, 'message')
-    assert BB.traceback is getattr(BB, 'traceback')
-
-    assert BB.errortype == 'errortype'
-    assert BB.message == 'message'
-    assert BB.traceback == 'traceback'
+from ..recipeinout import RecipeResultQC
 
 
-@pytest.mark.usefixtures("numinatmpdir")
-def test_ErrorRecipeResult__repr__(tmpdir):
+class RRTest(RecipeResultQC):
+    param1 = dh.Product(df.NullType, 'something1')
+    param2 = dh.Product(df.NullType, 'something2')
 
-    BB = ErrorRecipeResult("errortype","message","traceback", str(tmpdir)+"/errors.yaml")
-    # where = DiskStorageDefault(str(tmpdir))
-    print (tmpdir)
-    # where.store(BB)
-    BB.store()
+    def mayfun(self):
+        pass
 
 
+def test_test1():
 
-# def test_class_desc_stored():
-#
-#     BB = create_input_class()
-#
-#     stored = BB.stored()
-#
-#     assert BB.param1 is stored['param1']
-#     assert BB.param2 is stored['param2']
-#
-#
-# def test_ins_desc_access():
-#
-#     BB = create_input_class()
-#
-#     bb = BB(param1=80)
-#
-#     values = {'param2': 2, 'param1': 80}
-#
-#     for key, val in values.items():
-#         ival = getattr(bb, key)
-#         assert val == ival
-#
-#     # These values are not stored in __dict__
-#     for key in values:
-#         assert key not in bb.__dict__
-#
-#
-# def test_ins_attr_access():
-#
-#     BB = create_input_class()
-#
-#     bb = BB(param1=80)
-#
-#     values = {'param2': 2, 'param1': 80}
-#
-#     for key, val in bb.attrs().items():
-#         assert val == values[key]
-#
-#     # These values are not stored in __dict__
-#     for key in values:
-#         assert key not in bb.__dict__
-#
-#
-# def test_class_nondesc_access():
-#
-#     BB = create_input_class()
-#     bb = BB(param1=80)
-#
-#     values = {'param2': 2, 'param1': 80}
-#
-#     # If we insert a new attribute,it goes to __dict__
-#     bb.otherattr = 100
-#
-#     for key, val in bb.attrs().items():
-#         assert val == values[key]
-#
-#     assert 'otherattr' in bb.__dict__
+    m = RecipeResultQC()
+    assert hasattr(m, 'qc')
+
+
+def test_test2():
+    m = RecipeResultQC()
+    assert m.qc == qct.QC.UNKNOWN
+
+
+def test_test3():
+    m = RRTest(param1=None, param2=None)
+    assert m.qc == qct.QC.UNKNOWN
+
+    m = RRTest(param1=None, param2=None, qc=qct.QC.GOOD)
+    assert m.qc == qct.QC.GOOD
+
+
+@pytest.mark.parametrize("qc", [
+    qct.QC.GOOD,
+    qct.QC.UNKNOWN,
+    qct.QC.BAD,
+    qct.QC.PARTIAL,
+])
+def test_test4(qc):
+
+    m = RRTest(param1=None, param2=None, qc=qc)
+    assert m.qc == qc
+
+
+@pytest.mark.parametrize("qc", [
+    qct.QC.GOOD,
+    qct.QC.UNKNOWN,
+    qct.QC.BAD,
+    qct.QC.PARTIAL,
+])
+def test_store_to(qc):
+    m = RRTest(param1=None, param2=None, qc=qc)
+
+    exp = {'param1': None, 'param2': None, 'qc': qc}
+
+    class Storage(object):
+        pass
+
+    where = Storage()
+
+    saveres = m.store_to(where)
+
+    assert saveres == exp

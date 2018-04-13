@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -30,7 +30,6 @@ from .oresult import ObservationResult
 
 from .recipeinout import RecipeInput, define_requirements, define_input
 from .recipeinout import RecipeResult, define_result
-from .recipeinout import ErrorRecipeResult
 from .dataholders import Product
 from .oresult import obsres_from_dict
 
