@@ -40,6 +40,8 @@ class DataTypeBase(object):
         else:
             self.datamodel = DataModel()
 
+        self.query_opts = []
+
     def __getstate__(self):
         return {}
 

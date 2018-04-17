@@ -128,6 +128,9 @@ class DataModel(object):
         more = {} if mappings is None else mappings
         values.update(more)
         self.extractor = FITSKeyExtractor(values)
+        self.extractor2 = {}
+        self.extractor2['fits'] = FITSKeyExtractor(values)
+        self.extractor2['json'] = None
 
     def default_mappings(self):
         return {
@@ -146,7 +149,6 @@ class DataModel(object):
             'blckuuid': lambda x: '1',
             'insconf_uuid': 'insconf', # Alias
             'block_uuid': 'blckuuid', # Alias
-
         }
 
     def get_data(self, img):

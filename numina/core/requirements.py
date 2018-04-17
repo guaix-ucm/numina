@@ -74,6 +74,9 @@ class Requirement(EntryHolder):
     def convert(self, val):
         return self.type.convert_in(val)
 
+    def query_options(self):
+        return self.query_opts
+
     def query(self, dal, obsres, options=None):
         # query opts
         if options is not None:
@@ -86,6 +89,11 @@ class Requirement(EntryHolder):
         if isinstance(self.query_opts, Ignore):
             # we do not perform any query
             return self.default
+
+        if self.dest is None:
+            raise ValueError("destination value is not set, "
+                             "use the constructor to set destination='value' "
+                             "explicitly")
 
         val = self.type.query(self.dest, dal, obsres, options=self.query_opts)
         return val

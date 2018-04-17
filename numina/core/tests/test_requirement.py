@@ -45,29 +45,6 @@ def test_query11():
     # assert False
 
 
-def test_query2():
-    import numina.types.qc as qct
-
-    opt1 = numina.core.query.QueryModifier()
-    opt2 = numina.core.query.QueryModifier()
-
-    class B(numina.core.query.QueryModifier):
-        pass
-
-    class TQC(object):
-        pass
-
-    r = TQC() >= qct.QC.PARTIAL
-    print(r)
-
-
-    opt3 = B()
-
-    req = Requirement(rtype=None, description="", destination='req_null', query_opts=[opt1, opt2, opt3])
-
-    assert req.query_options() == [opt1, opt2, opt3]
-
-
 def test_dest_not_set():
 
     req = Requirement(rtype=None, description="")

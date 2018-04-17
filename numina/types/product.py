@@ -111,3 +111,25 @@ class ConfigurationTag(object):
     @classmethod
     def isconfiguration(cls):
         return True
+
+
+if __name__ == '__main__':
+
+    import numina.util.namespace as nm
+    import numina.core.tagexpr as tagexpr
+
+
+    class TagsNamespace(nm.Namespace):
+
+        @staticmethod
+        def p_(name):
+            return tagexpr.Placeholder(name)
+
+
+    class Tagged(object):
+
+        def __init__(self, tags_ids):
+            self.tag_ids = tags_ids
+            tg = {key: tagexpr.TagRepr(key) for key in self.tag_ids}
+            self.tags = TagsNamespace(**tg)
+            self.tags_dict = tg
