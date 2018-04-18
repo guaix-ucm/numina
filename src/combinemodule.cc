@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2018 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -274,6 +274,12 @@ py_method_median(PyObject *obj, PyObject *args) {
 }
 
 static PyObject *
+py_method_sum(PyObject *obj, PyObject *args) {
+
+  return PyCapsule_New((void*)NU_sum_function, "numina.cmethod", NULL);
+}
+
+static PyObject *
 py_method_minmax(PyObject *obj, PyObject *args) {
   int nmin = 0;
   int nmax = 0;
@@ -397,6 +403,7 @@ static PyMethodDef module_functions[] = {
     {"minmax_method", py_method_minmax, METH_VARARGS, ""},
     {"sigmaclip_method", py_method_sigmaclip, METH_VARARGS, ""},
     {"quantileclip_method", py_method_quantileclip, METH_VARARGS, ""},
+    {"sum_method", py_method_sum, METH_NOARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */
 };
 

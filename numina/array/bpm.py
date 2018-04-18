@@ -48,9 +48,9 @@ def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
 
 
 def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
-    import numina.array.combine
+    import numina.array._combine
 
-    method = numina.array.combine.median_method()
+    method = numina.array._combine.median_method()
 
     return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill)
 

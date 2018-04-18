@@ -217,6 +217,20 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
 
 template<typename Iterator1, typename Iterator2>
 inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
+    typename std::iterator_traits<Iterator1>::value_type> sum_central_tendency(
+    Iterator1 begin, Iterator1 end, Iterator2 weights) {
+  typedef typename std::iterator_traits<Iterator1>::value_type T;
+  if (begin == end)
+    return std::make_pair(T(0.0), T(0.0));
+
+  const T mu = weighted_mean(begin, end, weights);
+  const T m = mu * std::distance(begin, end);
+  const T v = weighted_population_variance(begin, end, weights, mu) * std::distance(begin, end);
+  return std::make_pair(m, v);
+}
+
+template<typename Iterator1, typename Iterator2>
+inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
     typename std::iterator_traits<Iterator1>::value_type> median_central_tendency(
     Iterator1 begin, Iterator1 end, Iterator2 weights) {
   typedef typename std::iterator_traits<Iterator1>::value_type T;
