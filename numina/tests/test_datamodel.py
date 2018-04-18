@@ -79,7 +79,9 @@ def test_ginfo():
         'exptime': 560,
         'darktime': 573,
         'uuid': uuid_str,
-        'DATE-OBS': '1975-03-31T12:23:45.00'
+        'DATE-OBS': '1975-03-31T12:23:45.00',
+        'blckuuid': 1,
+        'insconf': 'v1'
     }
 
     date_obs = datetime.datetime(1975, 3, 31, 12, 23, 45)
@@ -95,7 +97,11 @@ def test_ginfo():
         'exptime': 560,
         'darktime': 573,
         'uuid': uuid_str,
-        'observation_date': date_obs
+        'observation_date': date_obs,
+        'blckuuid': '1',
+        'block_uuid': 1,
+        'imgid': 'RfAdUd2cRd9cRd9c',
+        'insconf': 'v1', 'insconf_uuid': 'v1'
     }
 
     img = create_test_image(hdr)
