@@ -29,6 +29,7 @@ packages installed in order to work properly:
  - scipy (http://www.scipy.org)
  - astropy >= 1.3 (http://www.astropy.org/)
  - PyYaml (http://pyyaml.org/)
+ - dateutil (https://pypi.org/project/python-dateutil/)
  
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
 

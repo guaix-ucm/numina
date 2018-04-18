@@ -152,7 +152,8 @@ def setup_package():
             'astropy>=1.3',
             'scipy', 'PyYaml',
             'matplotlib',
-            'enum34;python_version<"3.4"'
+            'enum34;python_version<"3.4"',
+            'dateutil'
         ],
         zip_safe=False,
         classifiers=[
