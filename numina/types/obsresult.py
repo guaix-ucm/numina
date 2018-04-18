@@ -56,8 +56,24 @@ class ObservationResultType(DataType):
         validator = _obtain_validator_for(obj.instrument, obj.mode)
         return validator(obj)
 
-    def query(self, name, dal, ob, options=None):
-        return ob
+    def query(self, name, dal, obsres, options=None):
+        from numina.core.query import ResultOf
+        if isinstance(options, ResultOf):
+            dest_field = 'frames'
+            dest_type = list
+            # Field to insert the results
+            if not hasattr(obsres, dest_field):
+                setattr(obsres, dest_field, dest_type())
+
+            dest_obj = getattr(obsres, dest_field)
+
+            values = dal.search_result_relative(name, self, obsres,
+                                                result_desc=options)
+
+            for partial in values:
+                dest_obj.append(partial.content)
+
+        return obsres
 
     def on_query_not_found(self, notfound):
         six.raise_from(NoResultFound('unable to complete ObservationResult'), notfound)
