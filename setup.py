@@ -153,7 +153,7 @@ def setup_package():
             'scipy', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',
-            'dateutil'
+            'python-dateutil'
         ],
         zip_safe=False,
         classifiers=[
