@@ -27,16 +27,31 @@ class QueryModifier(object):
     pass
 
 
+class Constraint(QueryModifier):
+    pass
+
+
 class ResultOf(QueryModifier):
-    def __init__(self, field, node=None, ignore_fail=False):
+    def __init__(self, field, node="children", ignore_fail=False,
+                 id_field=None):
         from numina.types.frame import DataFrameType
 
         super(ResultOf, self).__init__()
 
         self.field = field
+
+        if node not in ['children', 'prev', 'prev-rel']:
+            raise ValueError("value '{}' not allowed for node".format(node))
+
         self.node = node
+        if self.node == 'children':
+            self.id_field = id_field or "children"
+        elif self.node in ['prev', 'prev-rel']:
+            self.id_field = id_field or "prev"
+
         self.ignore_fail = ignore_fail
         self.result_type = DataFrameType()
+
         splitm = field.split('.')
         lm = len(splitm)
         if lm == 1:
