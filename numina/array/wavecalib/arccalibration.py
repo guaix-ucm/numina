@@ -1598,6 +1598,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                           decimal_places=4,
                           ylogscale=False,
                           geometry=None,
+                          pdf=None,
                           debugplot=0):
     """Refine wavelength calibration using an initial polynomial.
 
@@ -1641,6 +1642,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         are found in the original spectrum.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
+    pdf : PdfFile object or None
+        If not None, output is sent to PDF file.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -1783,7 +1786,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                   yres_summary['robust_std'])
             print(79 * '-')
 
-        if abs(local_debugplot) % 10 != 0:
+        if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
             fig = plt.figure()
             if geometry is not None:
@@ -1917,17 +1920,20 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             # legend
             ax2.legend(numpoints=1)
 
-            if local_debugplot in [-22, -12, 12, 22]:
-                pause_debugplot(
-                    debugplot=local_debugplot,
-                    optional_prompt='Zoom/Unzoom or ' +
-                                    'press RETURN to continue...',
-                    tight_layout=False,
-                    pltshow=True
-                )
+            if pdf is not None:
+                pdf.savefig()
             else:
-                pause_debugplot(debugplot=local_debugplot,
-                                tight_layout=False, pltshow=True)
+                if local_debugplot in [-22, -12, 12, 22]:
+                    pause_debugplot(
+                        debugplot=local_debugplot,
+                        optional_prompt='Zoom/Unzoom or ' +
+                                        'press RETURN to continue...',
+                        tight_layout=False,
+                        pltshow=True
+                    )
+                else:
+                    pause_debugplot(debugplot=local_debugplot,
+                                    tight_layout=False, pltshow=True)
 
             # request next action in interactive session
             if interactive:
