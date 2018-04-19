@@ -33,15 +33,13 @@ import functools
 
 from six import with_metaclass
 from astropy.io import fits
-
 from numina.util.jsonencoder import ExtEncoder
 
 from .. import __version__
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
-from .oresult import ObservationResult
-from ..dal.stored import ObservingBlock
+from .oresult import ObservationResult, ObservingBlock
 from ..exceptions import NoResultFound
 
 
@@ -207,9 +205,33 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         # or if it contains the nested results (Obsres)
         #
         # it has to contain the tags corresponding to the observing modes...
+        ob_query_skip = False
+        ob_query_field = 'obresult'
+
         if isinstance(ob, ObservingBlock):
+            import numina.types.obsresult as obtype
             # We have to build an Obsres
-            obsres = dal.obsres_from_oblock_id(ob.id)
+            for key, req in self.requirements().items():
+                if isinstance(req.type, obtype.ObservationResultType):
+                    ob_query_field = key
+                    ob_query_skip = True
+                    query_option = self.query_options.get(key)
+
+                    print('req for ob is named', key, query_option)
+                    newOR = ObservationResult()
+                    newOR.__dict__ = ob.__dict__
+                    obsres = req.query(dal, newOR, options=query_option)
+                    print('Use mode tagger to fill tags in OB')
+                    tagger = self.mode.tagger
+                    if tagger is not None:
+                        obsres.tags = tagger(obsres)
+                    else:
+                        obsres.tags = {}
+                    print('tags are', obsres.tags)
+                    break
+            else:
+                # nothing to do
+                obsres = ob
         else:
             obsres = ob
 
@@ -217,7 +239,10 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
             try:
                 query_option = self.query_options.get(key)
-                result[key] = req.query(dal, obsres, options=query_option)
+                if key == ob_query_field and ob_query_skip:
+                    result[key] = obsres
+                else:
+                    result[key] = req.query(dal, obsres, options=query_option)
             except NoResultFound as notfound:
                 req.on_query_not_found(notfound)
 

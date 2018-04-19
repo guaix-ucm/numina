@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -26,23 +26,28 @@ from astropy.io import fits
 from numina.types.dataframe import DataFrame
 
 
-class ObservationResult(object):
-    """The result of a observing block.
-
-    """
+class ObservingBlock(object):
     def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         self.id = 1
-        self.mode = mode
         self.instrument = instrument
+        self.mode = mode
         self.frames = []
+        self.children = []
         self.parent = None
-        self.children = []  # other ObservationResult
         self.pipeline = 'default'
         self.configuration = 'default'
         self.prodid = None
         self.tags = {}
         self.results = {}
         self.requirements = {}
+
+
+class ObservationResult(ObservingBlock):
+    """The result of a observing block.
+
+    """
+    def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
+        super(ObservationResult, self).__init__(instrument, mode)
 
     def update_with_product(self, prod):
         self.tags = prod.tags
