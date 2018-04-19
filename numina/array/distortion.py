@@ -128,8 +128,8 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
         raise ValueError("Invalid order=" + str(order))
     poltrans = transform.PolynomialTransform(
         np.vstack(
-            [np.linalg.lstsq(a_matrix, x_orig_scaled)[0],
-             np.linalg.lstsq(a_matrix, y_orig_scaled)[0]]
+            [np.linalg.lstsq(a_matrix, x_orig_scaled, rcond=None)[0],
+             np.linalg.lstsq(a_matrix, y_orig_scaled, rcond=None)[0]]
         )
     )
 
