@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,8 +16,6 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from itertools import chain
 
 from numina.util.convert import convert_qc
 from numina.exceptions import NoResultFound
@@ -58,6 +56,10 @@ class DataProductTag(DataTypeBase):
         prod = dal.search_product(name, self, ob)
 
         return prod.content
+
+    def query_constraints(self):
+        import numina.core.query
+        return numina.core.query.Constraint()
 
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""

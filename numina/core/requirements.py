@@ -101,6 +101,9 @@ class Requirement(EntryHolder):
         return fmt % (sclass, self.dest, self.description, self.default,
                       self.optional, self.type, self.choices)
 
+    def query_constraints(self):
+        return self.type.query_constraints()
+
 
 def _process_nelem(nlem):
     if nlem is None:

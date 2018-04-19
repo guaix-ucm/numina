@@ -22,7 +22,7 @@ import inspect
 from numina.util.parser import parse_arg_line
 from numina.exceptions import NoResultFound
 from numina.datamodel import DataModel
-from numina.core.query import ResultOf
+from numina.core.query import ResultOf, Constraint
 
 
 class DataTypeBase(object):
@@ -88,6 +88,9 @@ class DataTypeBase(object):
 
     def on_query_not_found(self, notfound):
         pass
+
+    def query_constraints(self):
+        return Constraint()
 
     @classmethod
     def isproduct(cls):
