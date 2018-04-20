@@ -1683,7 +1683,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     poldeg_effective = len(poly_refined.coef) - 1
     yres_summary = summary(np.array([]))
 
-    # computer linear values from initial polynomial
+    # compute linear values from initial polynomial
     crmin1_linear = poly_initial(1)
     crmax1_linear = poly_initial(naxis1)
     cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
@@ -2038,6 +2038,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
     if abs(local_debugplot) >= 10:
         print(">>> Initial coefficients:\n", poly_initial.coef)
-        print(">>> Refined coefficients:\n", poly_refined.coef)
+        print(">>> Refined coefficients:")
+        for cdum in poly_refined.coef:
+            print(cdum)
+        print(">>> CRVAL1 linear scale............:", crval1_linear)
+        print(">>> CDELT1 linear scale............:", cdelt1_linear)
 
     return poly_refined, yres_summary
