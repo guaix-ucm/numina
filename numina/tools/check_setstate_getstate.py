@@ -22,7 +22,7 @@
 import importlib
 
 
-def test_setstate_getstate(self, json_file_name):
+def check_setstate_getstate(self, json_file_name):
     class_name = self.__class__.__name__
 
     ClassName = getattr(importlib.import_module('emirdrp.products'),
