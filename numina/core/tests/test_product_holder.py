@@ -21,7 +21,7 @@
 '''Unit test for types'''
 
 from numina.types.datatype import DataType
-from ..dataholders import Product
+from ..dataholders import Result
 from ..recipeinout import RecipeResult
 
 
@@ -43,7 +43,7 @@ def test_product_out():
             return AVal(val=2)
 
     class RR(RecipeResult):
-        prod = Product(A)
+        prod = Result(A)
 
     rr = RR(prod=100)
 

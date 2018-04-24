@@ -128,9 +128,9 @@ pipeline called *default*. It may have other pipelines for specific purposes.
 Products, Requirements and Data Types
 #####################################
 A recipe announces its required inputs as :class:`~numina.core.requirements.Requirement` and its outputs as
-:class:`~numina.core.dataholders.Product`.
+:class:`~numina.core.dataholders.Result`.
 
-Both Products and Requirements have a name and a type. Types can be plain
+Both Results and Requirements have a name and a type. Types can be plain
 Python types or defined by the developer.
 
 Format of the input files

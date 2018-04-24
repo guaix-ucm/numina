@@ -103,11 +103,11 @@ class EntryHolder(object):
             raise ValueError(msg)
 
 
-class Product(EntryHolder):
-    """Product holder for RecipeResult."""
+class Result(EntryHolder):
+    """Result holder for RecipeResult."""
     def __init__(self, ptype, description="", validation=True,
                  destination=None, optional=False, default=None, choices=None):
-        super(Product, self).__init__(
+        super(Result, self).__init__(
             ptype, description, destination=destination, optional=optional,
             default=default, choices=choices, validation=validation
             )
@@ -116,7 +116,29 @@ class Product(EntryHolder):
 #            raise TypeError('type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
+        return 'Result(type=%r, dest=%r)' % (self.type, self.dest)
 
     def convert(self, val):
         return self.type.convert_out(val)
+
+
+class Product(Result):
+    """Product holder for RecipeResult."""
+
+    def __init__(self, ptype, description="", validation=True,
+                 destination=None, optional=False, default=None, choices=None):
+        super(Product, self).__init__(
+            ptype,
+            description=description,
+            validation=validation,
+            destination=destination,
+            optional=optional,
+            default=default,
+            choices=choices
+        )
+
+        import warnings
+        warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning)
+
+    def __repr__(self):
+        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)

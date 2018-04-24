@@ -21,7 +21,7 @@
 Base metaclasses
 """
 
-from .dataholders import Product
+from .dataholders import Result
 from .requirements import Requirement
 import weakref
 
@@ -83,4 +83,4 @@ class RecipeResultType(StoreType):
     """Metaclass for RecipeResult."""
     @classmethod
     def exclude(cls, name, value):
-        return isinstance(value, Product)
+        return isinstance(value, Result)

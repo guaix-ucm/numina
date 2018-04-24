@@ -34,7 +34,7 @@ class MasterDark(prod.DataProductMixin, frame.DataFrameType):
 
 
 class BiasRecipe(numina.core.BaseRecipe):
-    master_bias = numina.core.Product(MasterBias)
+    master_bias = numina.core.Result(MasterBias)
 
     def __init__(self, *args, **kwds):
         super(BiasRecipe, self).__init__(*args, **kwds)
@@ -42,4 +42,4 @@ class BiasRecipe(numina.core.BaseRecipe):
 
 
 class DarkRecipe(numina.core.BaseRecipe):
-    master_dark = numina.core.Product(MasterDark)
+    master_dark = numina.core.Result(MasterDark)

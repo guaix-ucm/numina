@@ -20,15 +20,15 @@
 
 """Tests for RecipeResult"""
 
-from ..dataholders import Product
+from ..dataholders import Result
 from ..recipeinout import RecipeResult
 
 
 def create_result_class():
 
     class BB(RecipeResult):
-        prod1 = Product(int, 'something1')
-        prod2 = Product(int, 'something2')
+        prod1 = Result(int, 'something1')
+        prod2 = Result(int, 'something2')
 
         def somefun(self):
             pass
@@ -50,18 +50,18 @@ def test_class_desc_access():
     assert BB.prod1 is getattr(BB, 'prod1')
     assert BB.prod2 is getattr(BB, 'prod2')
 
-    assert isinstance(BB.prod1, Product)
-    assert isinstance(BB.prod2, Product)
+    assert isinstance(BB.prod1, Result)
+    assert isinstance(BB.prod2, Result)
 
 
 def test_class_desc_set():
 
     BB = create_result_class()
 
-    BB.prod3 = Product(3, 'something3')
+    BB.prod3 = Result(3, 'something3')
 
     assert BB.prod3 is getattr(BB, 'prod3')
-    assert isinstance(BB.prod3, Product)
+    assert isinstance(BB.prod3, Result)
     assert BB.prod3 is BB.stored()['prod3']
     assert BB.prod3.dest == 'prod3'
 

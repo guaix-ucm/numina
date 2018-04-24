@@ -27,8 +27,8 @@ from ..recipeinout import RecipeResultQC
 
 
 class RRTest(RecipeResultQC):
-    param1 = dh.Product(df.NullType, 'something1')
-    param2 = dh.Product(df.NullType, 'something2')
+    param1 = dh.Result(df.NullType, 'something1')
+    param2 = dh.Result(df.NullType, 'something2')
 
     def mayfun(self):
         pass

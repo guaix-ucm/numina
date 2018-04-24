@@ -49,7 +49,7 @@ Version 0.12.0 (30 Apr 2014)
 ----------------------------
  Changes:
   * Initial implementation of FITS Schema
-  * Allow plain python types in Product
+  * Allow plain python types in Result
   * Import ArrayType from PyEmir
   * Import recenter function from PyEmir
   * Handle multiextension FITS in promote_hdulist

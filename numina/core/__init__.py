@@ -30,7 +30,7 @@ from .oresult import ObservationResult
 
 from .recipeinout import RecipeInput, define_requirements, define_input
 from .recipeinout import RecipeResult, define_result
-from .dataholders import Product
+from .dataholders import Result, Product
 from .oresult import obsres_from_dict
 
 from numina.exceptions import RecipeError # Do not remove, part of the API

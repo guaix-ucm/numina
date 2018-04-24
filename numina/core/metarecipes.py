@@ -20,7 +20,7 @@
 """Metaclasses for Recipes."""
 
 from .recipeinout import RecipeResult, RecipeInput
-from .dataholders import EntryHolder, Product
+from .dataholders import EntryHolder, Result
 from .requirements import Requirement
 
 _RECIPE_RESULT_NAME = 'RecipeResult'
@@ -38,7 +38,7 @@ class RecipeType(type):
             if isinstance(val, EntryHolder):
                 if isinstance(val, Requirement):
                     filter_reqs[name] = val
-                if isinstance(val, Product):
+                if isinstance(val, Result):
                     filter_prods[name] = val
             else:
                 filter_attr[name] = val
@@ -111,7 +111,7 @@ def generate_docs(klass):
 
         if isinstance(y, Requirement):
             modo = 'requirement'
-        elif isinstance(y, Product):
+        elif isinstance(y, Result):
             modo = 'product'
         else:
             modo = ""

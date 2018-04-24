@@ -204,7 +204,7 @@ The recipe will receive the result of the observation and return a master bias i
 
 .. code-block:: python
 
-    from numina.core import Product, Requirement
+    from numina.core import Result, Requirement
     from numina.core import DataFrameType
     from numina.types.obsresult import ObservationResultType
     from numina.core.recipes import BaseRecipe
@@ -212,7 +212,7 @@ The recipe will receive the result of the observation and return a master bias i
     class Bias(BaseRecipe):                            (1)
 
         obresult = Requirement(ObservationResultType, "Observation Result")  (2)
-        master_bias = Product(DataFrameType)           (3)
+        master_bias = Result(DataFrameType)           (3)
 
         def run(self, rinput):                         (4)
 
@@ -228,7 +228,7 @@ The recipe will receive the result of the observation and return a master bias i
    type of the requirement is :class:`~numina.types.obsresult.ObservationResultType`, representing
    the result of the observation.
 3. This recipe only produces one result. Each product is an object of
-   :class:`~numina.core.dataholders.Product` class. The type of the product is given by
+   :class:`~numina.core.dataholders.Result` class. The type of the product is given by
    :class:`~numina.core.products.DataFrameType`, representing an image.
 4. Each recipe must provide a `run` method. The method has only one argument that collects
    the values of all inputs declared by the recipe. In this case, `rinput` has a member
@@ -244,7 +244,7 @@ observation result and a master bias image (flat-field images require bias subtr
 
 .. code-block:: python
 
-    from numina.core import Product, Requirement
+    from numina.core import Result, Requirement
     from numina.core import DataFrameType
     from numina.types.obsresult import ObservationResultType
     from numina.core.recipes import BaseRecipe
@@ -253,7 +253,7 @@ observation result and a master bias image (flat-field images require bias subtr
 
         obresult = Requirement(ObservationResultType, "Observation Result")  (1)
         master_bias = Requirement(DataFrameType, "Master Bias")      (2)
-        master_flat = Product(DataFrameType)
+        master_flat = Result(DataFrameType)
 
         def run(self, rinput):                          (3)
 
@@ -278,7 +278,7 @@ observation result, a master bias and a master flat images
 
 .. code-block:: python
 
-    from numina.core import Product, Requirement
+    from numina.core import Result, Requirement
     from numina.core import DataFrameType
     from numina.types.obsresult import ObservationResultType
     from numina.core.recipes import BaseRecipe
@@ -288,7 +288,7 @@ observation result, a master bias and a master flat images
         obresult = Requirement(ObservationResultType)
         master_bias = Requirement(DataFrameType)
         master_flat = Requirement(DataFrameType)
-        final = Product(DataFrameType)
+        final = Result(DataFrameType)
 
         def run(self, rinput):                          (1)
 
@@ -383,7 +383,7 @@ Now we must modify our recipes as follows. First `Bias`
 
 .. code-block:: python
 
-    from numina.core import Product, Requirement
+    from numina.core import Result, Requirement
     from numina.types.obsresult import ObservationResultType
     from numina.core.recipes import BaseRecipe
     from clodiadrp.products import MasterBias   (1)
@@ -391,7 +391,7 @@ Now we must modify our recipes as follows. First `Bias`
     class Bias(BaseRecipe):
 
         obresult = Requirement(ObservationResultType)
-        master_bias = Product(MasterBias)        (2)
+        master_bias = Result(MasterBias)        (2)
 
         ...                                       (3)
 
@@ -403,7 +403,7 @@ Then `Flat`:
 
 .. code-block:: python
 
-    from numina.core import Product, Requirement
+    from numina.core import Result, Requirement
     from numina.types.obsresult import ObservationResultType
     from numina.core.recipes import BaseRecipe
     from clodiadrp.products import MasterBias, MasterFlat
@@ -412,7 +412,7 @@ Then `Flat`:
 
         obresult = Requirement(ObservationResultType)
         master_bias = Requirement(MasterBias)         (1)
-        master_flat = Product(MasterFlat)             (2)
+        master_flat = Result(MasterFlat)             (2)
 
         ...                                       (3)
 
@@ -426,7 +426,7 @@ And finally `Image`:
 
 .. code-block:: python
 
-    from numina.core import Product, Requirement
+    from numina.core import Result, Requirement
     from numina.core import DataFrameType
     from numina.types.obsresult import ObservationResultType
     from numina.core.recipes import BaseRecipe
@@ -437,7 +437,7 @@ And finally `Image`:
         obresult = Requirement(ObservationResultType)
         master_bias = Requirement(MasterBias)       (1)
         master_flat = Requirement(MasterFlat)       (2)
-        final = Product(DataFrameType)              (3)
+        final = Result(DataFrameType)              (3)
 
         ...                                       (4)
 
