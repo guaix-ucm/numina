@@ -17,6 +17,8 @@
 #
 
 
+import warnings
+
 from numina.util.convert import convert_qc
 from numina.exceptions import NoResultFound
 
@@ -26,11 +28,11 @@ from .dataframe import DataFrame
 from .qc import QC
 
 
-class DataProductTag(DataTypeBase):
+class DataProductMixin(DataTypeBase):
     """A type that is a data product."""
 
     def __init__(self, *args, **kwds):
-        super(DataProductTag, self).__init__(*args, **kwds)
+        super(DataProductMixin, self).__init__(*args, **kwds)
         self.quality_control = QC.UNKNOWN
 
     def generators(self):
@@ -76,12 +78,12 @@ class DataProductTag(DataTypeBase):
             qc = QC.UNKNOWN
 
         result['quality_control'] = qc
-        other = super(DataProductTag, self).extract_db_info(obj, keys)
+        other = super(DataProductMixin, self).extract_db_info(obj, keys)
         result.update(other)
         return result
 
     def update_meta_info(self):
-        result = super(DataProductTag, self).update_meta_info()
+        result = super(DataProductMixin, self).update_meta_info()
         result['quality_control'] = self.quality_control.name
         return result
 
@@ -89,7 +91,7 @@ class DataProductTag(DataTypeBase):
         st = {}
         st['quality_control'] = self.quality_control
 
-        other = super(DataProductTag, self).__getstate__()
+        other = super(DataProductMixin, self).__getstate__()
         st.update(other)
         return st
 
@@ -97,10 +99,17 @@ class DataProductTag(DataTypeBase):
         qcval = state.get('quality_control', 'UNKNOWN')
         self.quality_control = convert_qc(qcval)
 
-        super(DataProductTag, self).__setstate__(state)
+        super(DataProductMixin, self).__setstate__(state)
 
 
-class DataProductType(DataProductTag, DataType):
+class DataProductTag(DataProductMixin):
+    def __init__(self, *args, **kwargs):
+        warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'",
+                      DeprecationWarning)
+        super(DataProductTag, self).__init__(*args, **kwargs)
+
+
+class DataProductType(DataProductMixin, DataType):
     def __init__(self, ptype, default=None):
         super(DataProductType, self).__init__(ptype, default=default)
 

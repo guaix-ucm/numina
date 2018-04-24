@@ -33,7 +33,7 @@ def writeto(obj, name):
         json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
 
 
-class BaseStructuredCalibration(numina.types.product.DataProductTag,
+class BaseStructuredCalibration(numina.types.product.DataProductMixin,
                                 numina.types.datatype.AutoDataType):
     """Base class for structured calibration data
 

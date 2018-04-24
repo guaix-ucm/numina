@@ -24,11 +24,12 @@ import numina.core
 import numina.types.product as prod
 import numina.types.frame as frame
 
-class MasterBias(prod.DataProductTag, frame.DataFrameType):
+
+class MasterBias(prod.DataProductMixin, frame.DataFrameType):
     pass
 
 
-class MasterDark(prod.DataProductTag, frame.DataFrameType):
+class MasterDark(prod.DataProductMixin, frame.DataFrameType):
     pass
 
 

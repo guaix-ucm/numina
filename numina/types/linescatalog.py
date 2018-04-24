@@ -24,10 +24,10 @@ import numpy
 from numina.core.qc import QC
 
 from .datatype import DataType
-from .product import DataProductTag
+from .product import DataProductMixin
 
 
-class DataProductType(DataProductTag, DataType):
+class DataProductType(DataProductMixin, DataType):
     def __init__(self, ptype, default=None):
         super(DataProductType, self).__init__(ptype, default=default)
 

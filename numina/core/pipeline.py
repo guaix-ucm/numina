@@ -244,7 +244,7 @@ class InstrumentDRP(object):
             try:
                 recipe = pipeline.get_recipe_object(mode_key)
                 for key, provide in recipe.products().items():
-                    if isinstance(provide.type, numina.types.product.DataProductTag):
+                    if isinstance(provide.type, numina.types.product.DataProductMixin):
                         yield provide.type, mode, key
             except KeyError:
                 warnings.warn('Mode {} has not recipe'.format(mode_key))
