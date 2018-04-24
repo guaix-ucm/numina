@@ -26,7 +26,7 @@ from astropy.io import fits
 from numina.util.jsonencoder import ExtEncoder
 
 from .. import __version__
-from .recipeinout import RecipeResultQC as RecipeResultClass
+from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult, ObservingBlock
