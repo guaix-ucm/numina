@@ -25,7 +25,6 @@ import logging
 import numina.core.query
 import numina.core.deptree
 import numina.core.objimport
-import numina.types.product
 import numina.util.parser
 import numina.datamodel
 
@@ -244,7 +243,7 @@ class InstrumentDRP(object):
             try:
                 recipe = pipeline.get_recipe_object(mode_key)
                 for key, provide in recipe.products().items():
-                    if isinstance(provide.type, numina.types.product.DataProductMixin):
+                    if provide.type.isproduct():
                         yield provide.type, mode, key
             except KeyError:
                 warnings.warn('Mode {} has not recipe'.format(mode_key))

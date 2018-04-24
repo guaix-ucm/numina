@@ -28,8 +28,6 @@ import yaml
 from numina import __version__
 import numina.drps
 from numina.types.frame import DataFrameType
-from numina.types.product import DataProductMixin
-from numina.core import import_object
 from numina.user.clishowins import print_no_instrument
 
 
@@ -108,7 +106,7 @@ def print_recipe_template(recipe, name=None, insname=None,
             return (dispname, req.default)
         elif isinstance(req.type, DataFrameType):
             return (dispname, dispname + '.fits')
-        elif isinstance(req.type, DataProductMixin):
+        elif req.type.isproduct():
             return (dispname, getattr(req.type, 'default', None))
         else:
             return (dispname, None)
