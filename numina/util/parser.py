@@ -1,4 +1,13 @@
 #
+# Copyright 2017-2018 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
+
+#
 # Copyright 2017 Universidad Complutense de Madrid
 #
 # This file is part of Numina
