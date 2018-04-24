@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -26,10 +26,12 @@ import warnings
 from astropy.io import fits
 
 import numina.array as array
+import numina.util.node as node
 from numina.datamodel import DataModel
-from .node import Node
 
-_logger = logging.getLogger('numina.processing')
+
+
+_logger = logging.getLogger(__name__)
 
 
 def promote_hdulist(hdulist, totype='float32'):
@@ -60,7 +62,7 @@ class SimpleDataModel(DataModel):
     pass
 
 
-class Corrector(Node):
+class Corrector(node.Node):
     """A Node that corrects a frame from instrumental signatures."""
 
     def __init__(self, datamodel=None, calibid='calibid-unknown', dtype='float32'):

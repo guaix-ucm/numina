@@ -20,9 +20,10 @@
 
 import logging
 
-from .node import Node
+import numina.util.node as node
 
-_logger = logging.getLogger('numina.flow')
+
+_logger = logging.getLogger(__name__)
 
 
 class FlowError(Exception):
@@ -30,7 +31,7 @@ class FlowError(Exception):
     pass
 
 
-class SerialFlow(Node):
+class SerialFlow(node.Node):
     """A flow where Nodes are executed sequentially."""
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
@@ -66,7 +67,7 @@ class SerialFlow(Node):
         return out
 
 
-class ParallelFlow(Node):
+class ParallelFlow(node.Node):
     """A flow where Nodes are executed in parallel."""
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
@@ -98,7 +99,7 @@ class ParallelFlow(Node):
         self.nodeseq[key] = value
 
 
-class MixerFlow(Node):
+class MixerFlow(node.Node):
     def __init__(self, table):
         nin = max(table) + 1
         nout = len(table)
