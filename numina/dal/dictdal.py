@@ -16,11 +16,10 @@ from itertools import chain
 
 import six
 import yaml
+import numina.store
 import numina.store.gtc.load as gtcload
-from numina.core import obsres_from_dict
-from numina.store import load
+from numina.core.oresult import obsres_from_dict
 from numina.exceptions import NoResultFound
-from numina.core import DataFrameType
 from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
@@ -67,7 +66,7 @@ class BaseDictDAL(AbsDrpDAL):
     def search_prod_req_tags(self, req, ins, tags, pipeline):
         if req.dest in self.extra_data:
             val = self.extra_data[req.dest]
-            content = load(req.type, val)
+            content = numina.store.load(req.type, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
             return self.search_prod_type_tags(req.type, ins, tags, pipeline)
@@ -93,7 +92,7 @@ class BaseDictDAL(AbsDrpDAL):
                 # We have found the result, no more checks
                 # Make a copy
                 rprod = dict(prod)
-                rprod['content'] = load(tipo, prod['content'])
+                rprod['content'] = numina.store.load(tipo, prod['content'])
                 return StoredProduct(**rprod)
         else:
             msg = 'type %s compatible with tags %r not found' % (tipo, tags)
@@ -128,7 +127,7 @@ class BaseDictDAL(AbsDrpDAL):
                 pt = prod['tags']
                 if pn == req.dest and tags_are_valid(pt, tags):
                     # We have found the result, no more checks
-                    value = load(req.type, prod['content'])
+                    value = numina.store.load(req.type, prod['content'])
                     content = StoredParameter(value)
                     return content
             else:
@@ -189,7 +188,7 @@ class BaseDictDAL(AbsDrpDAL):
 
         st = StoredProduct(
             id=node_id,
-            content=load(tipo, os.path.join(rdir, field_file)),
+            content=numina.store.load(tipo, os.path.join(rdir, field_file)),
             tags={}
         )
         return st
@@ -202,7 +201,7 @@ class BaseDictDAL(AbsDrpDAL):
 
         if name in self.extra_data:
             val = self.extra_data[name]
-            content = load(tipo, val)
+            content = numina.store.load(tipo, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
             return self.search_prod_type_tags(tipo, ins, tags, pipeline)
@@ -227,7 +226,7 @@ class BaseDictDAL(AbsDrpDAL):
                 pt = prod['tags']
                 if pn == name and tags_are_valid(pt, tags):
                     # We have found the result, no more checks
-                    value = load(tipo, prod['content'])
+                    value = numina.store.load(tipo, prod['content'])
                     content = StoredParameter(value)
                     return content
             else:
@@ -307,7 +306,7 @@ class HybridDAL(Dict2DAL):
     def search_product(self, name, tipo, obsres, options=None):
         if name in self.extra_data:
             val = self.extra_data[name]
-            content = load(tipo, val)
+            content = numina.store.load(tipo, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
             return self._search_prod_table(name, tipo, obsres)
@@ -343,7 +342,7 @@ class HybridDAL(Dict2DAL):
                     # Build path
                     path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
                 _logger.debug("path is %s", path)
-                rprod['content'] = load(tipo, path)
+                rprod['content'] = numina.store.load(tipo, path)
                 return StoredProduct(**rprod)
         else:
             # Not in table, try file directly
@@ -415,7 +414,7 @@ class HybridDAL(Dict2DAL):
 
         st = StoredProduct(
             id=node_id,
-            content=load(tipo, os.path.join(rdir, field_file)),
+            content=numina.store.load(tipo, os.path.join(rdir, field_file)),
             tags={}
         )
         return st
@@ -501,7 +500,7 @@ class HybridDAL(Dict2DAL):
     def product_loader(self, tipo, name, path):
         path, kind = path
         if kind == 0:
-            return load(tipo, path)
+            return numina.store.load(tipo, path)
         else:
             # GTC load
             with open(path) as fd:

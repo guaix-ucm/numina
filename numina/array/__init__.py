@@ -16,12 +16,10 @@ import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
-from numina.array.nirproc import ramp_array
-from numina.array.nirproc import fowler_array
 
 
 def subarray_match(shape, ref, sshape, sref=None):
-    '''Compute the slice representation of intersection of two arrays.
+    """Compute the slice representation of intersection of two arrays.
 
     Given the shapes of two arrays and a reference point ref, compute the
     intersection of the two arrays.
@@ -46,7 +44,7 @@ def subarray_match(shape, ref, sshape, sref=None):
       >>> i,j = subarray_match(im.shape, [20, 23], sim.shape)
       >>> im[i] = 2 * sim[j]
 
-    '''
+    """
     # Reference point in im
     ref1 = asarray(ref, dtype='int')
 
@@ -190,7 +188,7 @@ def rebin(a, newshape):
 
 
 def fixpix(data, mask, kind='linear'):
-    '''Interpolate 2D array data in rows'''
+    """Interpolate 2D array data in rows"""
     if data.shape != mask.shape:
         raise ValueError
 
@@ -208,8 +206,8 @@ def fixpix(data, mask, kind='linear'):
 
 
 def fixpix2(data, mask, iterations=3, out=None):
-    '''Substitute pixels in mask by a bilinear least square fitting.
-    '''
+    """Substitute pixels in mask by a bilinear least square fitting.
+    """
     out = out if out is not None else data.copy()
 
     # A binary mask, regions are ones
@@ -291,7 +289,7 @@ def compute_median_background(img, omask, region):
 
 
 def numberarray(x, shape):
-    '''Return x if it is an array or create an array and fill it with x.'''
+    """Return x if it is an array or create an array and fill it with x."""
     try:
         iter(x)
     except TypeError:

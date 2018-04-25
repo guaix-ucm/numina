@@ -10,7 +10,6 @@
 import warnings
 
 from numina.util.convert import convert_qc
-from numina.exceptions import NoResultFound
 
 from .base import DataTypeBase
 from .datatype import DataType

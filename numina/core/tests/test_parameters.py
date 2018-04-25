@@ -1,7 +1,7 @@
 
 import pytest
 
-from ..requirements import Parameter
+from ..dataholders import Parameter
 
 from numina.core.validator import as_list, only_positive
 from numina.types.datatype import PlainPythonType

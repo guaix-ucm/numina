@@ -10,7 +10,7 @@
 
 """Tests for RecipeInput and RecipeResult"""
 
-from ..requirements import Parameter
+from ..dataholders import Parameter
 from ..recipeinout import RecipeInput
 
 

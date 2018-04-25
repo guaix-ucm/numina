@@ -7,7 +7,7 @@ import numina.dal.stored
 import numina.exceptions
 import numina.types.datatype
 
-from ..requirements import Requirement
+from ..dataholders import Requirement
 
 
 class Dal(object):

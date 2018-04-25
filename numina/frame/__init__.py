@@ -11,7 +11,7 @@ import warnings
 import six
 from astropy.io import fits
 
-from numina.array import resize_array
+import numina.array
 
 
 def get_hdu_shape(header):
@@ -33,10 +33,14 @@ def custom_region_to_str(region):
 
 def resize_hdu(hdu, newshape, region, window=None, fill=0.0,
                scale=1, conserve=True, dtype=None):
+    from numina.array import resize_array
+
     basedata = hdu.data
-    newdata = resize_array(basedata, newshape, region, window=window,
-                           fill=fill, scale=scale, conserve=conserve,
-                           dtype=dtype)
+    newdata = numina.array.resize_array(
+        basedata, newshape, region, window=window,
+        fill=fill, scale=scale, conserve=conserve,
+        dtype=dtype
+    )
     hdu.header['NVALREGI'] = (custom_region_to_str(region),
                               'Valid region of resized FITS')
     if window:
