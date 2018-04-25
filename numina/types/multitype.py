@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina DRP
 #
@@ -8,52 +8,73 @@
 #
 
 import inspect
-from numina.exceptions import NoResultFound
+import numina.exceptions as nexcep
 
 
 class MultiType(object):
     def __init__(self, *args):
-        self.options = []
-        self.current = None
+        self.type_options = []
+        self._current = None
         for obj in args:
             if inspect.isclass(obj):
                 obj = obj()
-            self.options.append(obj)
+            self.type_options.append(obj)
 
     def isproduct(self):
-        # FIXME: this is only need for docs, remove it
+        if self._current:
+            return self._current.isproduct()
         return True
 
     def query(self, name, dal, ob, options=None):
 
         # Results for subtypes
         results = []
-        for subtype in self.options:
+        faillures = []
+        for subtype in self.type_options:
             try:
                 result = subtype.query(name, dal, ob, options=options)
                 results.append((subtype, result))
-            except NoResultFound as notfound:
+            except nexcep.NoResultFound as notfound:
+                faillures.append((subtype, notfound))
+        else:
+            # Not found
+            for subtype, notfound in faillures:
                 subtype.on_query_not_found(notfound)
         # Select wich of the results we choose
         if results:
             # Select the first, for the moment
             subtype, result = results[0]
-            self.current = subtype
+            self._current = subtype
             return result
         else:
-            raise NoResultFound
+            raise nexcep.NoResultFound
 
     def on_query_not_found(self, notfound):
         pass
 
     def convert_in(self, obj):
-        if self.current:
-            return self.current.convert_in(obj)
+        if self._current:
+            return self._current.convert_in(obj)
 
-        raise ValueError('No query performed, current is None')
+        raise ValueError('No query performed, current type is not set')
+
+    def validate(self, obj):
+        if self._current:
+            return self._current.validate(obj)
+        else:
+            faillures = []
+            for subtype in self.type_options:
+                try:
+                    return subtype.validate(obj)
+                except nexcep.ValidationError as val_err:
+                    faillures.append(val_err)
+            else:
+                internal_m = tuple(v.args[1] for v in faillures)
+                raise nexcep.ValidationError(obj, internal_m)
+
 
     def descriptive_name(self):
-        start, remain = self.options[0], self.options[1:]
+        start, remain = self.type_options[0], self.type_options[1:]
         build_str = [start.descriptive_name()]
         for x in remain:
             field = "or {}".format(x.descriptive_name())
