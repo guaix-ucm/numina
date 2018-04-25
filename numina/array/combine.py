@@ -257,6 +257,10 @@ def generic_combine(method, arrays, masks=None, dtype=None,
     :return: median, variance of the median and number of points stored
     """
 
+    arrays = [numpy.asarray(arr, dtype=dtype) for arr in arrays]
+    if masks is not None:
+        masks = [numpy.asarray(msk) for msk in masks]
+
     if out is None:
         # Creating out if needed
         # We need three numbers
