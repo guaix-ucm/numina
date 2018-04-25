@@ -20,17 +20,21 @@ details.
 Requirements
 ------------
 
-Python 2.7 or 3.4 (or greater) is required. Numina requires the following
+Python 2.7 or Python >= 3.4 is required. Numina requires the following
 packages installed in order to work properly:
 
  - setuptools (http://pythonhosted.org/setuptools/)
  - six >= 1.7 (https://pythonhosted.org/six/)
  - numpy >= 1.6 (http://numpy.scipy.org/) 
  - scipy (http://www.scipy.org)
- - astropy >= 1.3 (http://www.astropy.org/)
+ - astropy >= 1.0 (http://www.astropy.org/)
  - PyYaml (http://pyyaml.org/)
  - dateutil (https://pypi.org/project/python-dateutil/)
- 
+
+For Python 2.7, the following compatibility packages are required:
+  - singledispatch (https://pypi.python.org/pypi/singledispatch)
+  - enum34 (https://pypi.org/project/enum34/)
+
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
 
 Additional packages are optionally required:
