@@ -37,18 +37,6 @@ class DataProductMixin(DataTypeBase):
         sclass = type(self).__name__
         return "%s" % (sclass,)
 
-    def query(self, name, dal, ob, options=None):
-
-        try:
-            return self.query_on_ob(name, ob)
-        except NoResultFound:
-            pass
-
-        # if not, the normal query
-        prod = dal.search_product(name, self, ob)
-
-        return prod.content
-
     def query_constraints(self):
         import numina.core.query
         return numina.core.query.Constraint()
