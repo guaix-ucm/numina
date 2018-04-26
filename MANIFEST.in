@@ -5,4 +5,4 @@ include src/*.h
 include src/*.pyx
 include src/nirproc.cpp
 recursive-include doc *
-include tools/*.py
+recursive-include numina *.h
