@@ -195,7 +195,11 @@ def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     # read table from txt file
     master_table = np.genfromtxt(wv_master_file)
 
-    wv_master = read_wv_master_from_array(master_table, lines, debugplot)
+    wv_master = read_wv_master_from_array(master_table, lines)
+
+    if abs(debugplot) >= 10:
+        print("Reading master table: " + wv_master_file)
+        print("wv_master:\n", wv_master)
 
     return wv_master
 
