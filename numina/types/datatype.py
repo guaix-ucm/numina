@@ -3,25 +3,16 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import inspect
+import collections
 
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
-
+from numina.core.validator import range_validator
 from .base import DataTypeBase
 from .typedialect import dialect_info
 
@@ -148,10 +139,14 @@ class PlainPythonType(DataType):
 
         return pre
 
+    def __str__(self):
+        sclass = type(self).__name__
+        return "%s[%s]" % (sclass, self.internal_type)
+
 
 class ListOfType(DataType):
     """Data type for lists of other types."""
-    def __init__(self, ref, index=0):
+    def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False):
         stype = list
         if inspect.isclass(ref):
             self.internal = ref()
@@ -159,22 +154,34 @@ class ListOfType(DataType):
             self.internal = ref
         super(ListOfType, self).__init__(stype)
         self.index = index
+        self.nmin = nmin
+        self.nmax = nmax
+        self.accept_scalar = accept_scalar
+        self.len_validator = range_validator(minval=nmin, maxval=nmax)
 
     def convert(self, obj):
+        if self.accept_scalar and not isinstance(obj, collections.Iterable):
+            obj = [obj]
         result = [self.internal.convert(o) for o in obj]
+        self.len_validator(len(result))
         return result
 
     def validate(self, obj):
         for o in obj:
             self.internal.validate(o)
+        self.len_validator(len(obj))
         return True
 
     def _datatype_dump(self, objs, where):
         result = []
         old_dest = where.destination
         for idx, obj in enumerate(objs, start=self.index):
-            where.destination = old_dest + str(idx)
+            where.destination = '{}{}'.format(old_dest, idx)
             res = self.internal._datatype_dump(obj, where)
             result.append(res)
         where.destination = old_dest
         return result
+
+    def __str__(self):
+        sclass = type(self).__name__
+        return "%s[%s]" % (sclass, self.internal)

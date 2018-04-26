@@ -1,20 +1,10 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Build a LoadableDRP from a yaml file"""
@@ -32,7 +22,9 @@ from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
 from .pipeline import InstrumentConfiguration
 from .pipeline import ProductEntry
+from .query import ResultOf
 from .taggers import get_tags_from_full_ob
+import numina.util.convert as convert
 
 
 def check_section(node, section, keys=None):
@@ -58,8 +50,15 @@ def drp_load_data(package, data, confclass=None):
 
 def load_modes(node):
     """Load all observing modes"""
-    return [load_mode(child) for child in node]
-
+    if isinstance(node, list):
+        values = [load_mode(child) for child in node]
+        keys = [mode.key for mode in values]
+        return dict(zip(keys,values))
+    elif isinstance(node, dict):
+        values = {key: load_mode(child) for key, child in node}
+        return values
+    else:
+        raise NotImplementedError
 
 def load_mode(node):
     """Load one observing mdode"""
@@ -68,7 +67,19 @@ def load_mode(node):
 
     # handle validator
     load_mode_validator(obs_mode, node)
-    
+
+    # handle builder
+    load_mode_builder(obs_mode, node)
+
+    # handle tagger:
+    load_mode_tagger(obs_mode, node)
+
+    return obs_mode
+
+
+def load_mode_tagger(obs_mode, node):
+    """Load observing mode OB tagger"""
+
     # handle tagger:
     ntagger = node.get('tagger')
 
@@ -85,6 +96,36 @@ def load_mode(node):
         obs_mode.tagger = import_object(ntagger)
     else:
         raise TypeError('tagger must be None, a list or a string')
+
+    return obs_mode
+
+
+def load_mode_builder(obs_mode, node):
+    """Load observing mode OB builder"""
+
+    # Check 'builder' and 'builder_options'
+    nval1 = node.get('builder')
+
+    if nval1 is not None:
+        if isinstance(nval1, str):
+            # override method
+            newmethod = import_object(nval1)
+            obs_mode.build_ob = newmethod.__get__(obs_mode)
+        else:
+            raise TypeError('builder must be None or a string')
+    else:
+        nval2 = node.get('builder_options')
+
+        if nval2 is not None:
+            if isinstance(nval2, list):
+                for opt_dict in nval2:
+
+                    if 'result_of' in opt_dict:
+                        fields = opt_dict['result_of']
+                        obs_mode.build_ob_options = ResultOf(**fields)
+                        break
+            else:
+                raise TypeError('builder_options must be None or a list')
 
     return obs_mode
 
@@ -136,12 +177,17 @@ def load_confs(package, node, confclass=None):
     if tagger:
         ins_tagger = import_object(tagger)
     else:
-        ins_tagger = lambda obsres: 'default'
+        ins_tagger = None
 
     values = node['values']
     confs = {}
-    for uuid in values:
-        confs[uuid] = confclass(uuid)
+    if values:
+        for uuid in values:
+            confs[uuid] = confclass(uuid)
+    else:
+        confs['default'] = InstrumentConfiguration('EMPTY')
+        default_entry = 'default'
+
     if default_entry:
         confs['default'] = confs[default_entry]
     else:
@@ -230,10 +276,12 @@ def load_instrument(package, node, confclass=None):
         trans['datamodel'] = None
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
-    confs, selector = load_confs(package, conf_node, confclass=confclass)
+    confs, custom_selector = load_confs(package, conf_node, confclass=confclass)
     trans['configurations'] = confs
     ins = InstrumentDRP(**trans)
-    ins.selector = selector
+    # add bound method
+    if custom_selector:
+        ins.select_configuration = custom_selector.__get__(ins)
     return ins
 
 
@@ -328,8 +376,8 @@ def load_instrument_configuration_from_file(fp, loader):
     mm.instrument = contents['name']
     mm.name = contents['description']
     mm.uuid = contents['uuid']
-    mm.data_start = 0
-    mm.data_end = 0
+    mm.date_start = convert.convert_date(contents['date_start'])
+    mm.date_end = convert.convert_date(contents['date_end'])
     mm.components = {}
     for cname, cuuid in contents['components'].items():
         fcomp = loader.build_component_fp(cuuid)

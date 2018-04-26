@@ -1,25 +1,18 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Store the solution of a wavelength calibration"""
 
 from __future__ import division, print_function
+
+import math
+import warnings
 
 from numpy.polynomial import Polynomial
 
@@ -130,7 +123,16 @@ class WavecalFeature(object):
                       'reference', 'wavelength']
         for k in state:
             if k in float_keys:
-                state[k] = float(state[k])
+                value = float(state[k])
+                # translate infinities
+                if math.isinf(value):
+                    value = 1e50
+                    warnings.warn(
+                        'Converting {}=inf to {}'.format(k, value),
+                        RuntimeWarning
+                    )
+
+                state[k] = value
             elif k in ['lineid']:
                 state[k] = int(state[k])
             else:
@@ -210,8 +212,14 @@ class SolutionArcCalibration(object):
                     if wvfeature.line_ok])
 
     def __eq__(self, other):
-        return self.__getstate__() == other.__getstate__()
+        if isinstance(other, SolutionArcCalibration):
+            return self.__getstate__() == other.__getstate__()
+        else:
+            return NotImplemented
 
+    def __ne__(self, other):
+        return not self == other
+    
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
 

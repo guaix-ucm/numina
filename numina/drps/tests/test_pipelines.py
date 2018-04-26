@@ -48,7 +48,7 @@ def test_fake_pipeline_alt(drpmocker):
     assert mydrp is not None
 
     assert_valid_instrument(mydrp)
-    for m in mydrp.modes:
+    for m in mydrp.modes.values():
         assert m.tagger is not None
 
 
@@ -77,7 +77,7 @@ def test_fake_pipeline_alt2(drpmocker):
     assert drp is not None
 
     assert_valid_instrument(drp)
-    for m in drp.modes:
+    for m in drp.modes.values():
         assert m.tagger is not None
 
     this_pipeline = drp.pipelines[oblock.pipeline]

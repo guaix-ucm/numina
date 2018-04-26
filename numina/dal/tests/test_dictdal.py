@@ -3,42 +3,18 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import pytest
 
 import numina.core.pipeline
 from numina.exceptions import NoResultFound
+from numina.tests.drptest import create_drp_test
 
 from ..dictdal import BaseDictDAL
 from ..stored import ObservingBlock, StoredProduct
-
-
-def create_drp_test(names):
-    import pkgutil
-    import numina.drps.drpbase
-    import numina.core.pipelineload as pload
-
-    drps = {}
-    for name in names:
-        drpdata = pkgutil.get_data('numina.drps.tests', name)
-
-        drp = pload.drp_load_data('numina', drpdata)
-        drps[drp.name] = drp
-
-    return numina.drps.drpbase.DrpGeneric(drps)
 
 
 @pytest.fixture
@@ -70,10 +46,10 @@ def test_search_instrument_configuration(basedictdal):
 
     assert isinstance(res, numina.core.pipeline.InstrumentConfiguration)
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_instrument_configuration('TEST1', 'missing')
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_instrument_configuration('TEST2', 'default')
 
 
@@ -81,7 +57,7 @@ def test_search_instrument_configuration_from_ob(basedictdal):
 
     ob = numina.core.ObservationResult(mode=None)
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_instrument_configuration_from_ob(ob)
 
     ob = numina.core.ObservationResult(mode='TEST1')
@@ -95,7 +71,7 @@ def test_search_instrument_configuration_from_ob(basedictdal):
     ob.instrument = 'TEST1'
     ob.configuration = 'missing'
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_instrument_configuration_from_ob(ob)
 
 
@@ -115,13 +91,13 @@ def test_search_oblock(basedictdal):
 def test_search_recipe(basedictdal):
     from numina.core.utils import AlwaysFailRecipe
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_recipe('FAIL', 'mode1', 'default')
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_recipe('TEST1', 'mode1', 'default')
 
-    with pytest.raises(NoResultFound):
+    with pytest.raises(KeyError):
         basedictdal.search_recipe('TEST1', 'fail', 'invalid')
 
     res = basedictdal.search_recipe('TEST1', 'fail', 'default')

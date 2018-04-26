@@ -3,32 +3,22 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 
 """Tests for RecipeResult"""
 
-from ..dataholders import Product
+from ..dataholders import Result
 from ..recipeinout import RecipeResult
 
 
 def create_result_class():
 
     class BB(RecipeResult):
-        prod1 = Product(int, 'something1')
-        prod2 = Product(int, 'something2')
+        prod1 = Result(int, 'something1')
+        prod2 = Result(int, 'something2')
 
         def somefun(self):
             pass
@@ -50,18 +40,18 @@ def test_class_desc_access():
     assert BB.prod1 is getattr(BB, 'prod1')
     assert BB.prod2 is getattr(BB, 'prod2')
 
-    assert isinstance(BB.prod1, Product)
-    assert isinstance(BB.prod2, Product)
+    assert isinstance(BB.prod1, Result)
+    assert isinstance(BB.prod2, Result)
 
 
 def test_class_desc_set():
 
     BB = create_result_class()
 
-    BB.prod3 = Product(3, 'something3')
+    BB.prod3 = Result(3, 'something3')
 
     assert BB.prod3 is getattr(BB, 'prod3')
-    assert isinstance(BB.prod3, Product)
+    assert isinstance(BB.prod3, Result)
     assert BB.prod3 is BB.stored()['prod3']
     assert BB.prod3.dest == 'prod3'
 

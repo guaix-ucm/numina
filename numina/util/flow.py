@@ -1,28 +1,18 @@
 #
-# Copyright 2010-2016 Universidad Complutense de Madrid
+# Copyright 2010-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-#
-
 
 import logging
 
-from .node import Node
+import numina.util.node as node
 
-_logger = logging.getLogger('numina.flow')
+
+_logger = logging.getLogger(__name__)
 
 
 class FlowError(Exception):
@@ -30,7 +20,7 @@ class FlowError(Exception):
     pass
 
 
-class SerialFlow(Node):
+class SerialFlow(node.Node):
     """A flow where Nodes are executed sequentially."""
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
@@ -66,7 +56,7 @@ class SerialFlow(Node):
         return out
 
 
-class ParallelFlow(Node):
+class ParallelFlow(node.Node):
     """A flow where Nodes are executed in parallel."""
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
@@ -98,7 +88,7 @@ class ParallelFlow(Node):
         self.nodeseq[key] = value
 
 
-class MixerFlow(Node):
+class MixerFlow(node.Node):
     def __init__(self, table):
         nin = max(table) + 1
         nout = len(table)

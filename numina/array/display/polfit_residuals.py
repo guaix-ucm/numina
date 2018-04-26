@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import division
@@ -202,7 +192,7 @@ def polfit_residuals(
             sfitted = mysize[np.logical_not(reject)]
             srejected = mysize[reject]
 
-        from matplotlib_qt import plt
+        from numina.array.display.matplotlib_qt import plt
         fig = plt.figure()
 
         if geometry is not None:
@@ -229,7 +219,7 @@ def polfit_residuals(
                 xmax += 0.5
         else:
             xmin, xmax = xlim
-        ax2.set_xlim([xmin, xmax])
+        ax2.set_xlim(xmin, xmax)
         ymin = min(yres_fitted)
         ymax = max(yres_fitted)
         dy = ymax - ymin
@@ -239,7 +229,7 @@ def polfit_residuals(
         else:
             ymin -= 0.5
             ymax += 0.5
-        ax2.set_ylim([ymin, ymax])
+        ax2.set_ylim(ymin, ymax)
         ax2.axhline(y=0.0, color="black", linestyle="dashed")
         ax2.scatter(xfitted, yres_fitted, color=cfitted,
                     marker='o',
@@ -255,7 +245,7 @@ def polfit_residuals(
             ax.set_ylabel('y')
         else:
             ax.set_ylabel(ylabel)
-        ax.set_xlim([xmin, xmax])
+        ax.set_xlim(xmin, xmax)
         if ylim is None:
             ymin = min(y)
             ymax = max(y)
@@ -268,7 +258,7 @@ def polfit_residuals(
                 ymax += 0.5
         else:
             ymin, ymax = ylim
-        ax.set_ylim([ymin, ymax])
+        ax.set_ylim(ymin, ymax)
         ax.scatter(xfitted, yfitted,
                    color=cfitted, marker='o', edgecolor='k',
                    s=sfitted, label="fitted data")

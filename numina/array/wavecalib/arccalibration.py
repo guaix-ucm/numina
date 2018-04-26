@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Automatic identification of lines and wavelength calibration"""
@@ -226,7 +216,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         from numina.array.display.matplotlib_qt import plt
         fig = plt.figure()
         ax2 = fig.add_subplot(2, 1, 2)
-        ax2.set_xlim([1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc])
+        ax2.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
         ax2.set_xlabel('pixel position in arc spectrum [from 1 to NAXIS1]')
         ax2.set_ylabel('residuals (Angstrom)')
         ax2.plot(xp, yres, 'go')
@@ -249,7 +239,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         # plot with differences between linear fit and fitted
         # polynomial
         ax = fig.add_subplot(2, 1, 1, sharex=ax2)
-        ax.set_xlim([1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc])
+        ax.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
         ax.set_ylabel('differences with\nlinear solution (Angstrom)')
         ax.plot(xp, yp, 'go', label="identified")
         for i in range(nfit):
@@ -752,13 +742,13 @@ def arccalibration_direct(wv_master,
         dx = xmax-xmin
         xmin -= dx/20
         xmax += dx/20
-        ax.set_xlim([xmin, xmax])
+        ax.set_xlim(xmin, xmax)
         ymin = wv_ini_search
         ymax = wv_end_search
         dy = ymax-ymin
         ymin -= dy/20
         ymax += dy/20
-        ax.set_ylim([ymin, ymax])
+        ax.set_ylim(ymin, ymax)
         xp_limits = np.array([0., cdelt1_max])
         yp_limits = wv_end_search-float(naxis1_arc-1)*xp_limits
         xp_limits = np.concatenate((xp_limits, [xp_limits[0], xp_limits[0]]))
@@ -785,8 +775,8 @@ def arccalibration_direct(wv_master,
         ymax = 1.05
         xp_limits = np.array([0., 1., 0., 0.])
         yp_limits = np.array([1., 0., 0., 1.])
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions within the valid parameter space")
         # window geometry
@@ -809,8 +799,8 @@ def arccalibration_direct(wv_master,
         for i in range(len(itriplet_search)):
             ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
                     str(int(itriplet_search[i])), fontsize=6)
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions: arc line triplet number")
         # window geometry
@@ -832,8 +822,8 @@ def arccalibration_direct(wv_master,
         for i in range(len(clabel_search)):
             ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
                     clabel_search[i], fontsize=6)
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions: master line triplets")
         # window geometry
@@ -855,8 +845,8 @@ def arccalibration_direct(wv_master,
                     xerr=error_cdelt1_search_norm,
                     yerr=error_crval1_search_norm,
                     fmt='none')
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions within the valid parameter space")
         # window geometry
@@ -978,8 +968,8 @@ def arccalibration_direct(wv_master,
         ymax = 1.05
         xp_limits = np.array([0., 1., 0., 0.])
         yp_limits = np.array([1., 0., 0., 1.])
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         ax.set_title("Potential solutions within the valid parameter space\n" +
                      "[symbol size proportional to 1/(cost function)]")
@@ -1003,8 +993,8 @@ def arccalibration_direct(wv_master,
         for i in range(len(itriplet_search)):
             ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
                     str(int(itriplet_search[i])), fontsize=6)
-        ax.set_xlim([xmin, xmax])
-        ax.set_ylim([ymin, ymax])
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         ax.set_title("Potential solutions: arc line triplet number\n" +
                      "[symbol size proportional to 1/(cost function)]")
@@ -1026,8 +1016,8 @@ def arccalibration_direct(wv_master,
         #     ydum = crval1_layered_list[i]
         #     sdum = 2000/funcost_layered_list[i]
         #     ax.scatter(xdum, ydum, s=sdum, alpha=0.8)
-        #     ax.set_xlim([xmin, xmax])
-        #     ax.set_ylim([ymin, ymax])
+        #     ax.set_xlim(xmin, xmax)
+        #     ax.set_ylim(ymin, ymax)
         #     ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         #     ax.set_title("Potential solutions: arc line triplet " + str(i) +
         #              " (from 0 to " + str(ntriplets_arc-1) + ")\n" +
@@ -1389,6 +1379,7 @@ def arccalibration_direct(wv_master,
             poly, yres, reject = polfit_residuals_with_cook_rejection(
                 x=xfit, y=yfit, deg=poly_degree_wfit,
                 times_sigma_cook=times_sigma_cook,
+                geometry=geometry,
                 debugplot=debugplot)
             nremoved = 0
             for i in range(nfit):
@@ -1597,6 +1588,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                           decimal_places=4,
                           ylogscale=False,
                           geometry=None,
+                          pdf=None,
                           debugplot=0):
     """Refine wavelength calibration using an initial polynomial.
 
@@ -1640,6 +1632,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         are found in the original spectrum.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
+    pdf : PdfFile object or None
+        If not None, output is sent to PDF file.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -1679,7 +1673,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     poldeg_effective = len(poly_refined.coef) - 1
     yres_summary = summary(np.array([]))
 
-    # computer linear values from initial polynomial
+    # compute linear values from initial polynomial
     crmin1_linear = poly_initial(1)
     crmax1_linear = poly_initial(naxis1)
     cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
@@ -1782,7 +1776,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                   yres_summary['robust_std'])
             print(79 * '-')
 
-        if abs(local_debugplot) % 10 != 0:
+        if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
             fig = plt.figure()
             if geometry is not None:
@@ -1818,8 +1812,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             else:
                 ymin = -1.0
                 ymax = 1.0
-            ax1.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
-            ax1.set_ylim([ymin, ymax])
+            ax1.set_xlim(1 - 0.02 * naxis1, naxis1 * 1.02)
+            ax1.set_ylim(ymin, ymax)
             if nlines_ok > 0:
                 ax1.plot(xdum, yp, 'mo', label='identified')
                 if sum(reject) > 0:
@@ -1865,7 +1859,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             else:
                 spectrum = sp.copy()
             ax2 = fig.add_subplot(grid[1, 0], sharex=ax1)
-            ax2.set_xlim([1 - 0.02 * naxis1, naxis1 * 1.02])
+            ax2.set_xlim(1 - 0.02 * naxis1, naxis1 * 1.02)
             if local_ylogscale:
                 ymin = spectrum[ixpeaks].min()
             else:
@@ -1874,7 +1868,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             dy = ymax - ymin
             ymin -= dy / 40.
             ymax += dy / 40.
-            ax2.set_ylim([ymin, ymax])
+            ax2.set_ylim(ymin, ymax)
             ax2.plot(xpol, spectrum, '-')
             ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
             if local_ylogscale:
@@ -1916,17 +1910,20 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             # legend
             ax2.legend(numpoints=1)
 
-            if local_debugplot in [-22, -12, 12, 22]:
-                pause_debugplot(
-                    debugplot=local_debugplot,
-                    optional_prompt='Zoom/Unzoom or ' +
-                                    'press RETURN to continue...',
-                    tight_layout=False,
-                    pltshow=True
-                )
+            if pdf is not None:
+                pdf.savefig()
             else:
-                pause_debugplot(debugplot=local_debugplot,
-                                tight_layout=False, pltshow=True)
+                if local_debugplot in [-22, -12, 12, 22]:
+                    pause_debugplot(
+                        debugplot=local_debugplot,
+                        optional_prompt='Zoom/Unzoom or ' +
+                                        'press RETURN to continue...',
+                        tight_layout=False,
+                        pltshow=True
+                    )
+                else:
+                    pause_debugplot(debugplot=local_debugplot,
+                                    tight_layout=False, pltshow=True)
 
             # request next action in interactive session
             if interactive:
@@ -1938,7 +1935,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 print('[a] (a)utomatic line inclusion')
                 print('[l] toggle (l)ogarithmic scale on/off')
                 print('[e] (e)valuate current polynomial at a given pixel')
-                print('[x] e(x)xit without additional changes')
+                print('[x] e(x)it without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
@@ -2031,6 +2028,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
     if abs(local_debugplot) >= 10:
         print(">>> Initial coefficients:\n", poly_initial.coef)
-        print(">>> Refined coefficients:\n", poly_refined.coef)
+        print(">>> Refined coefficients:")
+        for cdum in poly_refined.coef:
+            print(cdum)
+        print(">>> CRVAL1 linear scale............:", crval1_linear)
+        print(">>> CDELT1 linear scale............:", cdelt1_linear)
 
     return poly_refined, yres_summary

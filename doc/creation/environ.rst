@@ -115,7 +115,7 @@ with the following code:
 
 .. code-block:: python
 
-    from numina.core import Product
+    from numina.core import Result
     from numina.core.recipes import BaseRecipe
     from numina.core.requirements import ObservationResultRequirement
     import numpy as np
@@ -124,7 +124,7 @@ with the following code:
     class name_of_recipe(BaseRecipe):
 
         obresult = ObservationResultRequirement()
-        output_image = Product()
+        output_image = Result()
 
         def run(self, rinput):
 

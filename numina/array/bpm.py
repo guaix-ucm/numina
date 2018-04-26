@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Fix points in an image given by a bad pixel mask """
@@ -27,7 +17,7 @@ import numpy
 import sys
 
 from numina.array._bpm import _process_bpm_intl
-from tools.arg_file_is_new import arg_file_is_new
+from numina.tools.arg_file_is_new import arg_file_is_new
 
 
 def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
@@ -48,9 +38,9 @@ def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
 
 
 def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
-    import numina.array.combine
+    import numina.array._combine
 
-    method = numina.array.combine.median_method()
+    method = numina.array._combine.median_method()
 
     return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill)
 
@@ -58,18 +48,20 @@ def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description='description: apply bad-pixel-mask to image'
+    )
 
     # positional arguments
     parser.add_argument("fitsfile",
                         help="Input FITS file name",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--bpm", required=True,
                         help="Bad pixel mask",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--outfile", required=True,
                         help="Output FITS file name",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
 
     # optional arguments
     parser.add_argument("--extnum",

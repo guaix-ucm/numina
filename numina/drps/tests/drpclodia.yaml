@@ -1,67 +1,48 @@
 name: CLODIA
 configurations:
-  alt:
-    detector:
-      channels: FULL
-      shape:
-      - 2048
-      - 2048
-    keywords:
-      airmass: AIRMASS
-      exposure: EXPTIME
-      imagetype: IMGTYP
-      juliandate: MJD-OBS
-    pipeline: alt
-  default:
-    detector:
-      channels: FULL
-      shape:
-      - 2048
-      - 2048
-    keywords:
-      airmass: AIRMASS
-      exposure: EXPTIME
-      imagetype: IMGTYP
-      juliandate: MJD-OBS
-    pipeline: default
+  values: {}
 modes:
-- date: 2013-11-12
-  description: A recipe that always fails
-  key: fail
-  name: Fail
-  reference: numina
-  status: DRAFT
-  summary: A recipe that always fails
-  url: http://somegtc_url.es/emir/obsmode1.html
-  uuid: a7cf7b82-e527-4d53-ad7a-3dae009a1b4e
-- date: 2014-02-01
-  description: A recipe that always success
-  key: success
-  name: Success
-  reference: numina
-  status: DRAFT
-  summary: A recipe that always success
-  url: http://somegtc_url.es/emir/obsmode1.html
-  uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
-- date: 2014-02-01
-  description: A recipe that always success, takes an Obs result
-  key: success_obs
-  name: Success Obs
-  reference: numina
-  status: DRAFT
-  summary: A recipe that always success
-  url: http://somegtc_url.es/emir/obsmode1.html
-  uuid: a7ea9c0c-76a6-4609-8413-0157102ec284
+  - key: bias
+    name: Bias
+    summary: Bias mode
+    description: >
+      Full description of the Bias mode
+  - key: flat
+    name: Flat
+    summary: Flat mode
+    description: >
+      Full description of the Flat mode
+  - key: image
+    name: Image
+    summary: Image mode
+    description: >
+      Full description of the Image mode
+  - key: image_with_sky
+    name: Image with Sky substraction
+    summary: Image mode with sky substraction
+    description: >
+      Full description of the Image mode
+  - key: sky
+    name: Sky Image
+    summary: Image obtained to substract sky
+    description: >
+      Full description of the Sky Image mode
+  - key: mosaic
+    name: ClodiaMosaic
+    summary: Mosaic of images
+    description: >
+      Full description of the Mosaic mode
 pipelines:
-  alt:
-    recipes:
-      fail: numina.core.utils.AlwaysFailRecipe
-      success: numina.core.utils.AlwaysSuccessRecipe
-      success_obs: numina.core.utils.OBSuccessRecipe
-    version: 1
   default:
-    recipes:
-      fail: numina.core.utils.AlwaysFailRecipe
-      success: numina.core.utils.AlwaysSuccessRecipe
-      success_obs: numina.core.utils.OBSuccessRecipe
     version: 1
+    recipes:
+      bias: clodiadrp.recipes.bias.BiasRecipe
+      flat: clodiadrp.recipes.flat.Flat
+      image:
+        class: clodiadrp.recipes.image.ImageSkyRecipe
+        kwargs:
+          query_options:
+            sky_image: False
+      image_with_sky: clodiadrp.recipes.image.ImageSkyRecipe
+      sky: clodiadrp.recipes.image.SkyRecipe
+      mosaic: clodiadrp.recipes.mosaic.Mosaic

@@ -1162,7 +1162,7 @@ typedef struct __pyx_defaults6 __pyx_defaults6;
 struct __pyx_defaults7;
 typedef struct __pyx_defaults7 __pyx_defaults7;
 
-/* "numina/array/trace/traces.pyx":138
+/* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -2798,7 +2798,7 @@ static PyObject *__pyx_tuple__72;
 static PyObject *__pyx_codeobj__66;
 static PyObject *__pyx_codeobj__73;
 
-/* "numina/array/trace/traces.pyx":50
+/* "numina/array/trace/traces.pyx":40
  * 
  * 
  * cdef vector[int] local_max(double* mm, size_t n, double background) nogil:             # <<<<<<<<<<<<<<
@@ -2815,7 +2815,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
   size_t __pyx_t_3;
   int __pyx_t_4;
 
-  /* "numina/array/trace/traces.pyx":58
+  /* "numina/array/trace/traces.pyx":48
  *     cdef size_t i
  * 
  *     if mm[0] >= background:             # <<<<<<<<<<<<<<
@@ -2825,7 +2825,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
   __pyx_t_1 = (((__pyx_v_mm[0]) >= __pyx_v_background) != 0);
   if (__pyx_t_1) {
 
-    /* "numina/array/trace/traces.pyx":59
+    /* "numina/array/trace/traces.pyx":49
  * 
  *     if mm[0] >= background:
  *         if mm[0] > mm[1]:             # <<<<<<<<<<<<<<
@@ -2835,7 +2835,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
     __pyx_t_1 = (((__pyx_v_mm[0]) > (__pyx_v_mm[1])) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/trace/traces.pyx":60
+      /* "numina/array/trace/traces.pyx":50
  *     if mm[0] >= background:
  *         if mm[0] > mm[1]:
  *             result.push_back(0)             # <<<<<<<<<<<<<<
@@ -2852,10 +2852,10 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
         #ifdef WITH_THREAD
         __Pyx_PyGILState_Release(__pyx_gilstate_save);
         #endif
-        __PYX_ERR(0, 60, __pyx_L1_error)
+        __PYX_ERR(0, 50, __pyx_L1_error)
       }
 
-      /* "numina/array/trace/traces.pyx":59
+      /* "numina/array/trace/traces.pyx":49
  * 
  *     if mm[0] >= background:
  *         if mm[0] > mm[1]:             # <<<<<<<<<<<<<<
@@ -2864,7 +2864,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
  */
     }
 
-    /* "numina/array/trace/traces.pyx":58
+    /* "numina/array/trace/traces.pyx":48
  *     cdef size_t i
  * 
  *     if mm[0] >= background:             # <<<<<<<<<<<<<<
@@ -2873,7 +2873,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
  */
   }
 
-  /* "numina/array/trace/traces.pyx":62
+  /* "numina/array/trace/traces.pyx":52
  *             result.push_back(0)
  * 
  *     for i in range(1, n-1):             # <<<<<<<<<<<<<<
@@ -2884,7 +2884,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
   for (__pyx_t_3 = 1; __pyx_t_3 < __pyx_t_2; __pyx_t_3+=1) {
     __pyx_v_i = __pyx_t_3;
 
-    /* "numina/array/trace/traces.pyx":63
+    /* "numina/array/trace/traces.pyx":53
  * 
  *     for i in range(1, n-1):
  *         if mm[i] >= background:             # <<<<<<<<<<<<<<
@@ -2894,7 +2894,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
     __pyx_t_1 = (((__pyx_v_mm[__pyx_v_i]) >= __pyx_v_background) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/trace/traces.pyx":64
+      /* "numina/array/trace/traces.pyx":54
  *     for i in range(1, n-1):
  *         if mm[i] >= background:
  *             if (mm[i] > mm[i+1]) and (mm[i] > mm[i-1]):             # <<<<<<<<<<<<<<
@@ -2912,7 +2912,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
       __pyx_L9_bool_binop_done:;
       if (__pyx_t_1) {
 
-        /* "numina/array/trace/traces.pyx":65
+        /* "numina/array/trace/traces.pyx":55
  *         if mm[i] >= background:
  *             if (mm[i] > mm[i+1]) and (mm[i] > mm[i-1]):
  *                 result.push_back(i)             # <<<<<<<<<<<<<<
@@ -2929,10 +2929,10 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
           #ifdef WITH_THREAD
           __Pyx_PyGILState_Release(__pyx_gilstate_save);
           #endif
-          __PYX_ERR(0, 65, __pyx_L1_error)
+          __PYX_ERR(0, 55, __pyx_L1_error)
         }
 
-        /* "numina/array/trace/traces.pyx":64
+        /* "numina/array/trace/traces.pyx":54
  *     for i in range(1, n-1):
  *         if mm[i] >= background:
  *             if (mm[i] > mm[i+1]) and (mm[i] > mm[i-1]):             # <<<<<<<<<<<<<<
@@ -2941,7 +2941,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
  */
       }
 
-      /* "numina/array/trace/traces.pyx":63
+      /* "numina/array/trace/traces.pyx":53
  * 
  *     for i in range(1, n-1):
  *         if mm[i] >= background:             # <<<<<<<<<<<<<<
@@ -2951,7 +2951,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
     }
   }
 
-  /* "numina/array/trace/traces.pyx":67
+  /* "numina/array/trace/traces.pyx":57
  *                 result.push_back(i)
  * 
  *     if mm[n-1] >= background:             # <<<<<<<<<<<<<<
@@ -2961,7 +2961,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
   __pyx_t_1 = (((__pyx_v_mm[(__pyx_v_n - 1)]) >= __pyx_v_background) != 0);
   if (__pyx_t_1) {
 
-    /* "numina/array/trace/traces.pyx":68
+    /* "numina/array/trace/traces.pyx":58
  * 
  *     if mm[n-1] >= background:
  *         if mm[n-1] > mm[n-2]:             # <<<<<<<<<<<<<<
@@ -2971,7 +2971,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
     __pyx_t_1 = (((__pyx_v_mm[(__pyx_v_n - 1)]) > (__pyx_v_mm[(__pyx_v_n - 2)])) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/trace/traces.pyx":69
+      /* "numina/array/trace/traces.pyx":59
  *     if mm[n-1] >= background:
  *         if mm[n-1] > mm[n-2]:
  *             result.push_back(n-1)             # <<<<<<<<<<<<<<
@@ -2988,10 +2988,10 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
         #ifdef WITH_THREAD
         __Pyx_PyGILState_Release(__pyx_gilstate_save);
         #endif
-        __PYX_ERR(0, 69, __pyx_L1_error)
+        __PYX_ERR(0, 59, __pyx_L1_error)
       }
 
-      /* "numina/array/trace/traces.pyx":68
+      /* "numina/array/trace/traces.pyx":58
  * 
  *     if mm[n-1] >= background:
  *         if mm[n-1] > mm[n-2]:             # <<<<<<<<<<<<<<
@@ -3000,7 +3000,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
  */
     }
 
-    /* "numina/array/trace/traces.pyx":67
+    /* "numina/array/trace/traces.pyx":57
  *                 result.push_back(i)
  * 
  *     if mm[n-1] >= background:             # <<<<<<<<<<<<<<
@@ -3009,7 +3009,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
  */
   }
 
-  /* "numina/array/trace/traces.pyx":71
+  /* "numina/array/trace/traces.pyx":61
  *             result.push_back(n-1)
  * 
  *     return result             # <<<<<<<<<<<<<<
@@ -3019,7 +3019,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":50
+  /* "numina/array/trace/traces.pyx":40
  * 
  * 
  * cdef vector[int] local_max(double* mm, size_t n, double background) nogil:             # <<<<<<<<<<<<<<
@@ -3035,7 +3035,7 @@ static std::vector<int>  __pyx_f_6numina_5array_5trace_7_traces_local_max(double
   return __pyx_r;
 }
 
-/* "numina/array/trace/traces.pyx":76
+/* "numina/array/trace/traces.pyx":66
  * 
  * @cython.boundscheck(False)
  * cdef vector[double] fit_para_equal_spaced(double y0, double y1, double y2) nogil:             # <<<<<<<<<<<<<<
@@ -3050,7 +3050,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
   double __pyx_v_C;
   std::vector<double>  __pyx_r;
 
-  /* "numina/array/trace/traces.pyx":81
+  /* "numina/array/trace/traces.pyx":71
  *     cdef vector[double] result
  *     cdef double A, B, C
  *     C = y1             # <<<<<<<<<<<<<<
@@ -3059,7 +3059,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
  */
   __pyx_v_C = __pyx_v_y1;
 
-  /* "numina/array/trace/traces.pyx":82
+  /* "numina/array/trace/traces.pyx":72
  *     cdef double A, B, C
  *     C = y1
  *     B = 0.5 * (y2 - y0)             # <<<<<<<<<<<<<<
@@ -3068,7 +3068,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
  */
   __pyx_v_B = (0.5 * (__pyx_v_y2 - __pyx_v_y0));
 
-  /* "numina/array/trace/traces.pyx":83
+  /* "numina/array/trace/traces.pyx":73
  *     C = y1
  *     B = 0.5 * (y2 - y0)
  *     A = 0.5 * (y0 + y2 - 2 * y1)             # <<<<<<<<<<<<<<
@@ -3077,7 +3077,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
  */
   __pyx_v_A = (0.5 * ((__pyx_v_y0 + __pyx_v_y2) - (2.0 * __pyx_v_y1)));
 
-  /* "numina/array/trace/traces.pyx":85
+  /* "numina/array/trace/traces.pyx":75
  *     A = 0.5 * (y0 + y2 - 2 * y1)
  * 
  *     result.push_back(A)             # <<<<<<<<<<<<<<
@@ -3094,10 +3094,10 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
     #ifdef WITH_THREAD
     __Pyx_PyGILState_Release(__pyx_gilstate_save);
     #endif
-    __PYX_ERR(0, 85, __pyx_L1_error)
+    __PYX_ERR(0, 75, __pyx_L1_error)
   }
 
-  /* "numina/array/trace/traces.pyx":86
+  /* "numina/array/trace/traces.pyx":76
  * 
  *     result.push_back(A)
  *     result.push_back(B)             # <<<<<<<<<<<<<<
@@ -3114,10 +3114,10 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
     #ifdef WITH_THREAD
     __Pyx_PyGILState_Release(__pyx_gilstate_save);
     #endif
-    __PYX_ERR(0, 86, __pyx_L1_error)
+    __PYX_ERR(0, 76, __pyx_L1_error)
   }
 
-  /* "numina/array/trace/traces.pyx":87
+  /* "numina/array/trace/traces.pyx":77
  *     result.push_back(A)
  *     result.push_back(B)
  *     result.push_back(C)             # <<<<<<<<<<<<<<
@@ -3134,10 +3134,10 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
     #ifdef WITH_THREAD
     __Pyx_PyGILState_Release(__pyx_gilstate_save);
     #endif
-    __PYX_ERR(0, 87, __pyx_L1_error)
+    __PYX_ERR(0, 77, __pyx_L1_error)
   }
 
-  /* "numina/array/trace/traces.pyx":88
+  /* "numina/array/trace/traces.pyx":78
  *     result.push_back(B)
  *     result.push_back(C)
  *     return result             # <<<<<<<<<<<<<<
@@ -3147,7 +3147,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":76
+  /* "numina/array/trace/traces.pyx":66
  * 
  * @cython.boundscheck(False)
  * cdef vector[double] fit_para_equal_spaced(double y0, double y1, double y2) nogil:             # <<<<<<<<<<<<<<
@@ -3163,7 +3163,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_fit_para_equa
   return __pyx_r;
 }
 
-/* "numina/array/trace/traces.pyx":94
+/* "numina/array/trace/traces.pyx":84
  * 
  * @cython.boundscheck(False)
  * cdef vector[double] interp_max_3(double y0, double y1, double y2) nogil:             # <<<<<<<<<<<<<<
@@ -3182,7 +3182,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
   double __pyx_t_2;
   double __pyx_t_3;
 
-  /* "numina/array/trace/traces.pyx":103
+  /* "numina/array/trace/traces.pyx":93
  *     cdef vector[double] params
  *     cdef double A,B,C
  *     params = fit_para_equal_spaced(y0, y1, y2)             # <<<<<<<<<<<<<<
@@ -3191,7 +3191,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
  */
   __pyx_v_params = __pyx_f_6numina_5array_5trace_7_traces_fit_para_equal_spaced(__pyx_v_y0, __pyx_v_y1, __pyx_v_y2);
 
-  /* "numina/array/trace/traces.pyx":104
+  /* "numina/array/trace/traces.pyx":94
  *     cdef double A,B,C
  *     params = fit_para_equal_spaced(y0, y1, y2)
  *     A = params[0]             # <<<<<<<<<<<<<<
@@ -3200,7 +3200,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
  */
   __pyx_v_A = (__pyx_v_params[0]);
 
-  /* "numina/array/trace/traces.pyx":105
+  /* "numina/array/trace/traces.pyx":95
  *     params = fit_para_equal_spaced(y0, y1, y2)
  *     A = params[0]
  *     B = params[1]             # <<<<<<<<<<<<<<
@@ -3209,7 +3209,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
  */
   __pyx_v_B = (__pyx_v_params[1]);
 
-  /* "numina/array/trace/traces.pyx":106
+  /* "numina/array/trace/traces.pyx":96
  *     A = params[0]
  *     B = params[1]
  *     C = params[2]             # <<<<<<<<<<<<<<
@@ -3218,7 +3218,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
  */
   __pyx_v_C = (__pyx_v_params[2]);
 
-  /* "numina/array/trace/traces.pyx":107
+  /* "numina/array/trace/traces.pyx":97
  *     B = params[1]
  *     C = params[2]
  *     if A == 0:             # <<<<<<<<<<<<<<
@@ -3228,7 +3228,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
   __pyx_t_1 = ((__pyx_v_A == 0.0) != 0);
   if (__pyx_t_1) {
 
-    /* "numina/array/trace/traces.pyx":108
+    /* "numina/array/trace/traces.pyx":98
  *     C = params[2]
  *     if A == 0:
  *         result.push_back(0.0)             # <<<<<<<<<<<<<<
@@ -3245,10 +3245,10 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 108, __pyx_L1_error)
+      __PYX_ERR(0, 98, __pyx_L1_error)
     }
 
-    /* "numina/array/trace/traces.pyx":109
+    /* "numina/array/trace/traces.pyx":99
  *     if A == 0:
  *         result.push_back(0.0)
  *         result.push_back(C)             # <<<<<<<<<<<<<<
@@ -3265,10 +3265,10 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 109, __pyx_L1_error)
+      __PYX_ERR(0, 99, __pyx_L1_error)
     }
 
-    /* "numina/array/trace/traces.pyx":107
+    /* "numina/array/trace/traces.pyx":97
  *     B = params[1]
  *     C = params[2]
  *     if A == 0:             # <<<<<<<<<<<<<<
@@ -3278,7 +3278,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
     goto __pyx_L3;
   }
 
-  /* "numina/array/trace/traces.pyx":111
+  /* "numina/array/trace/traces.pyx":101
  *         result.push_back(C)
  *     else:
  *         result.push_back(-B / (2*A))             # <<<<<<<<<<<<<<
@@ -3296,7 +3296,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 111, __pyx_L1_error)
+      __PYX_ERR(0, 101, __pyx_L1_error)
     }
     try {
       __pyx_v_result.push_back((__pyx_t_2 / __pyx_t_3));
@@ -3308,10 +3308,10 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 111, __pyx_L1_error)
+      __PYX_ERR(0, 101, __pyx_L1_error)
     }
 
-    /* "numina/array/trace/traces.pyx":112
+    /* "numina/array/trace/traces.pyx":102
  *     else:
  *         result.push_back(-B / (2*A))
  *         result.push_back(C - B * B / (4*A))             # <<<<<<<<<<<<<<
@@ -3328,7 +3328,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 112, __pyx_L1_error)
+      __PYX_ERR(0, 102, __pyx_L1_error)
     }
     try {
       __pyx_v_result.push_back((__pyx_v_C - (__pyx_t_3 / __pyx_t_2)));
@@ -3340,12 +3340,12 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 112, __pyx_L1_error)
+      __PYX_ERR(0, 102, __pyx_L1_error)
     }
   }
   __pyx_L3:;
 
-  /* "numina/array/trace/traces.pyx":113
+  /* "numina/array/trace/traces.pyx":103
  *         result.push_back(-B / (2*A))
  *         result.push_back(C - B * B / (4*A))
  *     return result             # <<<<<<<<<<<<<<
@@ -3355,7 +3355,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":94
+  /* "numina/array/trace/traces.pyx":84
  * 
  * @cython.boundscheck(False)
  * cdef vector[double] interp_max_3(double y0, double y1, double y2) nogil:             # <<<<<<<<<<<<<<
@@ -3371,7 +3371,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
   return __pyx_r;
 }
 
-/* "numina/array/trace/traces.pyx":116
+/* "numina/array/trace/traces.pyx":106
  * 
  * 
  * cdef int wc_to_pix(double x) nogil:             # <<<<<<<<<<<<<<
@@ -3382,7 +3382,7 @@ static std::vector<double>  __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(
 static int __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(double __pyx_v_x) {
   int __pyx_r;
 
-  /* "numina/array/trace/traces.pyx":117
+  /* "numina/array/trace/traces.pyx":107
  * 
  * cdef int wc_to_pix(double x) nogil:
  *     return <int>floor(x + 0.5)             # <<<<<<<<<<<<<<
@@ -3392,7 +3392,7 @@ static int __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(double __pyx_v_x) {
   __pyx_r = ((int)floor((__pyx_v_x + 0.5)));
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":116
+  /* "numina/array/trace/traces.pyx":106
  * 
  * 
  * cdef int wc_to_pix(double x) nogil:             # <<<<<<<<<<<<<<
@@ -3405,7 +3405,7 @@ static int __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(double __pyx_v_x) {
   return __pyx_r;
 }
 
-/* "numina/array/trace/traces.pyx":122
+/* "numina/array/trace/traces.pyx":112
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:             # <<<<<<<<<<<<<<
@@ -3427,7 +3427,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   size_t __pyx_t_5;
   size_t __pyx_t_6;
 
-  /* "numina/array/trace/traces.pyx":123
+  /* "numina/array/trace/traces.pyx":113
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]             # <<<<<<<<<<<<<<
@@ -3436,7 +3436,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_I = (__pyx_v_arr.shape[0]);
 
-  /* "numina/array/trace/traces.pyx":124
+  /* "numina/array/trace/traces.pyx":114
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]
  *     cdef size_t J = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -3445,7 +3445,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_J = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":127
+  /* "numina/array/trace/traces.pyx":117
  *     cdef double accum
  *     cdef size_t i, j
  *     for i in range(I):             # <<<<<<<<<<<<<<
@@ -3456,7 +3456,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":128
+    /* "numina/array/trace/traces.pyx":118
  *     cdef size_t i, j
  *     for i in range(I):
  *         accum = 0.0             # <<<<<<<<<<<<<<
@@ -3465,7 +3465,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
     __pyx_v_accum = 0.0;
 
-    /* "numina/array/trace/traces.pyx":129
+    /* "numina/array/trace/traces.pyx":119
  *     for i in range(I):
  *         accum = 0.0
  *         for j in range(J):             # <<<<<<<<<<<<<<
@@ -3476,7 +3476,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_j = __pyx_t_4;
 
-      /* "numina/array/trace/traces.pyx":130
+      /* "numina/array/trace/traces.pyx":120
  *         accum = 0.0
  *         for j in range(J):
  *             accum += arr[i, j]             # <<<<<<<<<<<<<<
@@ -3488,7 +3488,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
       __pyx_v_accum = (__pyx_v_accum + (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_5 * __pyx_v_arr.strides[0]) ) + __pyx_t_6 * __pyx_v_arr.strides[1]) ))));
     }
 
-    /* "numina/array/trace/traces.pyx":131
+    /* "numina/array/trace/traces.pyx":121
  *         for j in range(J):
  *             accum += arr[i, j]
  *         out[i] = accum / J             # <<<<<<<<<<<<<<
@@ -3498,7 +3498,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     (__pyx_v_out[__pyx_v_i]) = (__pyx_v_accum / __pyx_v_J);
   }
 
-  /* "numina/array/trace/traces.pyx":133
+  /* "numina/array/trace/traces.pyx":123
  *         out[i] = accum / J
  * 
  *     return 0             # <<<<<<<<<<<<<<
@@ -3508,7 +3508,7 @@ static int __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":122
+  /* "numina/array/trace/traces.pyx":112
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:             # <<<<<<<<<<<<<<
@@ -3535,7 +3535,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   size_t __pyx_t_5;
   size_t __pyx_t_6;
 
-  /* "numina/array/trace/traces.pyx":123
+  /* "numina/array/trace/traces.pyx":113
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]             # <<<<<<<<<<<<<<
@@ -3544,7 +3544,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_I = (__pyx_v_arr.shape[0]);
 
-  /* "numina/array/trace/traces.pyx":124
+  /* "numina/array/trace/traces.pyx":114
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]
  *     cdef size_t J = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -3553,7 +3553,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_J = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":127
+  /* "numina/array/trace/traces.pyx":117
  *     cdef double accum
  *     cdef size_t i, j
  *     for i in range(I):             # <<<<<<<<<<<<<<
@@ -3564,7 +3564,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":128
+    /* "numina/array/trace/traces.pyx":118
  *     cdef size_t i, j
  *     for i in range(I):
  *         accum = 0.0             # <<<<<<<<<<<<<<
@@ -3573,7 +3573,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
     __pyx_v_accum = 0.0;
 
-    /* "numina/array/trace/traces.pyx":129
+    /* "numina/array/trace/traces.pyx":119
  *     for i in range(I):
  *         accum = 0.0
  *         for j in range(J):             # <<<<<<<<<<<<<<
@@ -3584,7 +3584,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_j = __pyx_t_4;
 
-      /* "numina/array/trace/traces.pyx":130
+      /* "numina/array/trace/traces.pyx":120
  *         accum = 0.0
  *         for j in range(J):
  *             accum += arr[i, j]             # <<<<<<<<<<<<<<
@@ -3596,7 +3596,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
       __pyx_v_accum = (__pyx_v_accum + (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_5 * __pyx_v_arr.strides[0]) ) + __pyx_t_6 * __pyx_v_arr.strides[1]) ))));
     }
 
-    /* "numina/array/trace/traces.pyx":131
+    /* "numina/array/trace/traces.pyx":121
  *         for j in range(J):
  *             accum += arr[i, j]
  *         out[i] = accum / J             # <<<<<<<<<<<<<<
@@ -3606,7 +3606,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     (__pyx_v_out[__pyx_v_i]) = (__pyx_v_accum / __pyx_v_J);
   }
 
-  /* "numina/array/trace/traces.pyx":133
+  /* "numina/array/trace/traces.pyx":123
  *         out[i] = accum / J
  * 
  *     return 0             # <<<<<<<<<<<<<<
@@ -3616,7 +3616,7 @@ static int __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":122
+  /* "numina/array/trace/traces.pyx":112
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:             # <<<<<<<<<<<<<<
@@ -3643,7 +3643,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   size_t __pyx_t_5;
   size_t __pyx_t_6;
 
-  /* "numina/array/trace/traces.pyx":123
+  /* "numina/array/trace/traces.pyx":113
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]             # <<<<<<<<<<<<<<
@@ -3652,7 +3652,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_I = (__pyx_v_arr.shape[0]);
 
-  /* "numina/array/trace/traces.pyx":124
+  /* "numina/array/trace/traces.pyx":114
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]
  *     cdef size_t J = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -3661,7 +3661,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_J = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":127
+  /* "numina/array/trace/traces.pyx":117
  *     cdef double accum
  *     cdef size_t i, j
  *     for i in range(I):             # <<<<<<<<<<<<<<
@@ -3672,7 +3672,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":128
+    /* "numina/array/trace/traces.pyx":118
  *     cdef size_t i, j
  *     for i in range(I):
  *         accum = 0.0             # <<<<<<<<<<<<<<
@@ -3681,7 +3681,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
     __pyx_v_accum = 0.0;
 
-    /* "numina/array/trace/traces.pyx":129
+    /* "numina/array/trace/traces.pyx":119
  *     for i in range(I):
  *         accum = 0.0
  *         for j in range(J):             # <<<<<<<<<<<<<<
@@ -3692,7 +3692,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_j = __pyx_t_4;
 
-      /* "numina/array/trace/traces.pyx":130
+      /* "numina/array/trace/traces.pyx":120
  *         accum = 0.0
  *         for j in range(J):
  *             accum += arr[i, j]             # <<<<<<<<<<<<<<
@@ -3704,7 +3704,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
       __pyx_v_accum = (__pyx_v_accum + (*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_5 * __pyx_v_arr.strides[0]) ) + __pyx_t_6 * __pyx_v_arr.strides[1]) ))));
     }
 
-    /* "numina/array/trace/traces.pyx":131
+    /* "numina/array/trace/traces.pyx":121
  *         for j in range(J):
  *             accum += arr[i, j]
  *         out[i] = accum / J             # <<<<<<<<<<<<<<
@@ -3714,7 +3714,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     (__pyx_v_out[__pyx_v_i]) = (__pyx_v_accum / __pyx_v_J);
   }
 
-  /* "numina/array/trace/traces.pyx":133
+  /* "numina/array/trace/traces.pyx":123
  *         out[i] = accum / J
  * 
  *     return 0             # <<<<<<<<<<<<<<
@@ -3724,7 +3724,7 @@ static int __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":122
+  /* "numina/array/trace/traces.pyx":112
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:             # <<<<<<<<<<<<<<
@@ -3751,7 +3751,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   size_t __pyx_t_5;
   size_t __pyx_t_6;
 
-  /* "numina/array/trace/traces.pyx":123
+  /* "numina/array/trace/traces.pyx":113
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]             # <<<<<<<<<<<<<<
@@ -3760,7 +3760,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_I = (__pyx_v_arr.shape[0]);
 
-  /* "numina/array/trace/traces.pyx":124
+  /* "numina/array/trace/traces.pyx":114
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
  *     cdef size_t I = arr.shape[0]
  *     cdef size_t J = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -3769,7 +3769,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
   __pyx_v_J = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":127
+  /* "numina/array/trace/traces.pyx":117
  *     cdef double accum
  *     cdef size_t i, j
  *     for i in range(I):             # <<<<<<<<<<<<<<
@@ -3780,7 +3780,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":128
+    /* "numina/array/trace/traces.pyx":118
  *     cdef size_t i, j
  *     for i in range(I):
  *         accum = 0.0             # <<<<<<<<<<<<<<
@@ -3789,7 +3789,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
  */
     __pyx_v_accum = 0.0;
 
-    /* "numina/array/trace/traces.pyx":129
+    /* "numina/array/trace/traces.pyx":119
  *     for i in range(I):
  *         accum = 0.0
  *         for j in range(J):             # <<<<<<<<<<<<<<
@@ -3800,7 +3800,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
       __pyx_v_j = __pyx_t_4;
 
-      /* "numina/array/trace/traces.pyx":130
+      /* "numina/array/trace/traces.pyx":120
  *         accum = 0.0
  *         for j in range(J):
  *             accum += arr[i, j]             # <<<<<<<<<<<<<<
@@ -3812,7 +3812,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
       __pyx_v_accum = (__pyx_v_accum + (*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_arr.data + __pyx_t_5 * __pyx_v_arr.strides[0]) ) + __pyx_t_6 * __pyx_v_arr.strides[1]) ))));
     }
 
-    /* "numina/array/trace/traces.pyx":131
+    /* "numina/array/trace/traces.pyx":121
  *         for j in range(J):
  *             accum += arr[i, j]
  *         out[i] = accum / J             # <<<<<<<<<<<<<<
@@ -3822,7 +3822,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
     (__pyx_v_out[__pyx_v_i]) = (__pyx_v_accum / __pyx_v_J);
   }
 
-  /* "numina/array/trace/traces.pyx":133
+  /* "numina/array/trace/traces.pyx":123
  *         out[i] = accum / J
  * 
  *     return 0             # <<<<<<<<<<<<<<
@@ -3832,7 +3832,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   __pyx_r = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":122
+  /* "numina/array/trace/traces.pyx":112
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:             # <<<<<<<<<<<<<<
@@ -3845,7 +3845,7 @@ static int __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__Pyx
   return __pyx_r;
 }
 
-/* "numina/array/trace/traces.pyx":138
+/* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -3912,7 +3912,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
     }
   }
 
-  /* "numina/array/trace/traces.pyx":144
+  /* "numina/array/trace/traces.pyx":134
  *                              int direction=-1, bint gauss = 1) nogil:
  * 
  *     cdef int col = wc_to_pix(x)             # <<<<<<<<<<<<<<
@@ -3921,7 +3921,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_col = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_x);
 
-  /* "numina/array/trace/traces.pyx":145
+  /* "numina/array/trace/traces.pyx":135
  * 
  *     cdef int col = wc_to_pix(x)
  *     cdef int row = wc_to_pix(y)             # <<<<<<<<<<<<<<
@@ -3930,7 +3930,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_row = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_y);
 
-  /* "numina/array/trace/traces.pyx":150
+  /* "numina/array/trace/traces.pyx":140
  *     cdef double prediction
  * 
  *     cdef int axis = 1             # <<<<<<<<<<<<<<
@@ -3939,7 +3939,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis = 1;
 
-  /* "numina/array/trace/traces.pyx":152
+  /* "numina/array/trace/traces.pyx":142
  *     cdef int axis = 1
  *     cdef size_t i
  *     cdef size_t tolcounter = tol             # <<<<<<<<<<<<<<
@@ -3948,7 +3948,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_tolcounter = __pyx_v_tol;
 
-  /* "numina/array/trace/traces.pyx":153
+  /* "numina/array/trace/traces.pyx":143
  *     cdef size_t i
  *     cdef size_t tolcounter = tol
  *     cdef size_t axis_size = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -3957,7 +3957,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis_size = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":156
+  /* "numina/array/trace/traces.pyx":146
  * 
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)             # <<<<<<<<<<<<<<
@@ -3966,7 +3966,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_regw = (1 + ((int)ceil(__pyx_v_maxdis)));
 
-  /* "numina/array/trace/traces.pyx":157
+  /* "numina/array/trace/traces.pyx":147
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)
  *     cdef size_t buffsize = 2 * regw + 1             # <<<<<<<<<<<<<<
@@ -3975,7 +3975,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_buffsize = ((2 * __pyx_v_regw) + 1);
 
-  /* "numina/array/trace/traces.pyx":168
+  /* "numina/array/trace/traces.pyx":158
  * 
  *     # Init pbuff
  *     for _ in range(buffsize):             # <<<<<<<<<<<<<<
@@ -3986,7 +3986,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v__ = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":169
+    /* "numina/array/trace/traces.pyx":159
  *     # Init pbuff
  *     for _ in range(buffsize):
  *         pbuff.push_back(0.0)             # <<<<<<<<<<<<<<
@@ -4003,11 +4003,11 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 169, __pyx_L1_error)
+      __PYX_ERR(0, 159, __pyx_L1_error)
     }
   }
 
-  /* "numina/array/trace/traces.pyx":172
+  /* "numina/array/trace/traces.pyx":162
  * 
  * 
  *     while (col - step > hs) and (col + step + hs < axis_size):             # <<<<<<<<<<<<<<
@@ -4026,7 +4026,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
     __pyx_L7_bool_binop_done:;
     if (!__pyx_t_3) break;
 
-    /* "numina/array/trace/traces.pyx":176
+    /* "numina/array/trace/traces.pyx":166
  *         # printf("col %i dir %i step %i\n", col, direction, step)
  * 
  *         col += direction * step             # <<<<<<<<<<<<<<
@@ -4035,7 +4035,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_col = (__pyx_v_col + (__pyx_v_direction * __pyx_v_step));
 
-    /* "numina/array/trace/traces.pyx":177
+    /* "numina/array/trace/traces.pyx":167
  * 
  *         col += direction * step
  *         prediction = trace.predict(col)             # <<<<<<<<<<<<<<
@@ -4044,7 +4044,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_prediction = __pyx_v_trace.predict(__pyx_v_col);
 
-    /* "numina/array/trace/traces.pyx":179
+    /* "numina/array/trace/traces.pyx":169
  *         prediction = trace.predict(col)
  * 
  *         pred_pix = wc_to_pix(prediction)             # <<<<<<<<<<<<<<
@@ -4053,7 +4053,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_pix = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_prediction);
 
-    /* "numina/array/trace/traces.pyx":180
+    /* "numina/array/trace/traces.pyx":170
  * 
  *         pred_pix = wc_to_pix(prediction)
  *         pred_off = pred_pix - regw             # <<<<<<<<<<<<<<
@@ -4062,7 +4062,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_off = (__pyx_v_pred_pix - __pyx_v_regw);
 
-    /* "numina/array/trace/traces.pyx":185
+    /* "numina/array/trace/traces.pyx":175
  *         # extract a region around the expected peak
  *         # and collapse it
  *         colapse_mean(arr[pred_pix-regw:pred_pix+regw + 1,col-hs:col+hs+1], pbuff)             # <<<<<<<<<<<<<<
@@ -4087,7 +4087,7 @@ static Numina::InternalTrace __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 if (unlikely(__pyx_memoryview_slice_memviewslice(
@@ -4104,7 +4104,7 @@ if (unlikely(__pyx_memoryview_slice_memviewslice(
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_pbuff);
@@ -4112,7 +4112,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_5.memview = NULL;
     __pyx_t_5.data = NULL;
 
-    /* "numina/array/trace/traces.pyx":190
+    /* "numina/array/trace/traces.pyx":180
  * 
  *         # Find the peaks
  *         peaks = local_max(&pbuff[0], buffsize, background=background)             # <<<<<<<<<<<<<<
@@ -4121,7 +4121,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_peaks = __pyx_f_6numina_5array_5trace_7_traces_local_max((&(__pyx_v_pbuff[0])), __pyx_v_buffsize, __pyx_v_background);
 
-    /* "numina/array/trace/traces.pyx":193
+    /* "numina/array/trace/traces.pyx":183
  * 
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number             # <<<<<<<<<<<<<<
@@ -4130,7 +4130,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_dis = 40000.0;
 
-    /* "numina/array/trace/traces.pyx":194
+    /* "numina/array/trace/traces.pyx":184
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number
  *         ipeak = -1             # <<<<<<<<<<<<<<
@@ -4139,7 +4139,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_ipeak = -1L;
 
-    /* "numina/array/trace/traces.pyx":195
+    /* "numina/array/trace/traces.pyx":185
  *         dis = 40000.0 # a large number
  *         ipeak = -1
  *         for i in range(peaks.size()):             # <<<<<<<<<<<<<<
@@ -4150,7 +4150,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_7; __pyx_t_1+=1) {
       __pyx_v_i = __pyx_t_1;
 
-      /* "numina/array/trace/traces.pyx":196
+      /* "numina/array/trace/traces.pyx":186
  *         ipeak = -1
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)             # <<<<<<<<<<<<<<
@@ -4159,7 +4159,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_ndis = fabs((((__pyx_v_peaks[__pyx_v_i]) + __pyx_v_pred_off) - __pyx_v_prediction));
 
-      /* "numina/array/trace/traces.pyx":197
+      /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -4169,7 +4169,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_ndis < __pyx_v_dis) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":198
+        /* "numina/array/trace/traces.pyx":188
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:
  *                 dis = ndis             # <<<<<<<<<<<<<<
@@ -4178,7 +4178,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_dis = __pyx_v_ndis;
 
-        /* "numina/array/trace/traces.pyx":199
+        /* "numina/array/trace/traces.pyx":189
  *             if ndis < dis:
  *                 dis = ndis
  *                 ipeak = i             # <<<<<<<<<<<<<<
@@ -4187,7 +4187,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_ipeak = __pyx_v_i;
 
-        /* "numina/array/trace/traces.pyx":197
+        /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -4197,7 +4197,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       }
     }
 
-    /* "numina/array/trace/traces.pyx":202
+    /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -4215,7 +4215,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L13_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":205
+      /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -4225,7 +4225,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_tolcounter > 0) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":208
+        /* "numina/array/trace/traces.pyx":198
  *                 # Try again
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1             # <<<<<<<<<<<<<<
@@ -4234,7 +4234,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_tolcounter = (__pyx_v_tolcounter - 1);
 
-        /* "numina/array/trace/traces.pyx":209
+        /* "numina/array/trace/traces.pyx":199
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1
  *                 continue             # <<<<<<<<<<<<<<
@@ -4243,7 +4243,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         goto __pyx_L5_continue;
 
-        /* "numina/array/trace/traces.pyx":205
+        /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -4252,7 +4252,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       }
 
-      /* "numina/array/trace/traces.pyx":214
+      /* "numina/array/trace/traces.pyx":204
  *                 # printf("%i tries remaining\n", 0)
  *                 # Exit now
  *                 return trace             # <<<<<<<<<<<<<<
@@ -4264,7 +4264,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
         goto __pyx_L0;
       }
 
-      /* "numina/array/trace/traces.pyx":202
+      /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -4273,7 +4273,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     }
 
-    /* "numina/array/trace/traces.pyx":217
+    /* "numina/array/trace/traces.pyx":207
  * 
  *         # Reset counter
  *         tolcounter = tol             # <<<<<<<<<<<<<<
@@ -4282,7 +4282,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_tolcounter = __pyx_v_tol;
 
-    /* "numina/array/trace/traces.pyx":219
+    /* "numina/array/trace/traces.pyx":209
  *         tolcounter = tol
  * 
  *         nearp = peaks[ipeak] + pred_off             # <<<<<<<<<<<<<<
@@ -4291,7 +4291,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_nearp = ((__pyx_v_peaks[__pyx_v_ipeak]) + __pyx_v_pred_off);
 
-    /* "numina/array/trace/traces.pyx":222
+    /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -4301,7 +4301,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_3 = (__pyx_v_gauss != 0);
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":223
+      /* "numina/array/trace/traces.pyx":213
  *         # fit the peak with three points
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))             # <<<<<<<<<<<<<<
@@ -4310,7 +4310,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_result = __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) - 1)])), log((__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])])), log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) + 1)])));
 
-      /* "numina/array/trace/traces.pyx":224
+      /* "numina/array/trace/traces.pyx":214
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
  *             result[1] = expc(result[1])             # <<<<<<<<<<<<<<
@@ -4319,7 +4319,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       (__pyx_v_result[1]) = exp((__pyx_v_result[1]));
 
-      /* "numina/array/trace/traces.pyx":222
+      /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -4329,7 +4329,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L16;
     }
 
-    /* "numina/array/trace/traces.pyx":226
+    /* "numina/array/trace/traces.pyx":216
  *             result[1] = expc(result[1])
  *         else:
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])             # <<<<<<<<<<<<<<
@@ -4341,7 +4341,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     }
     __pyx_L16:;
 
-    /* "numina/array/trace/traces.pyx":228
+    /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -4359,7 +4359,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L18_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":230
+      /* "numina/array/trace/traces.pyx":220
  *         if (result[0] > 0.5) or (result[0] < -0.5):
  *             # ignore the correction if it's larger than 0.5 pixel
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])             # <<<<<<<<<<<<<<
@@ -4368,7 +4368,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_trace.push_back(__pyx_v_col, __pyx_v_nearp, (__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])]));
 
-      /* "numina/array/trace/traces.pyx":228
+      /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -4378,7 +4378,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L17;
     }
 
-    /* "numina/array/trace/traces.pyx":232
+    /* "numina/array/trace/traces.pyx":222
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])
  *         else:
  *             trace.push_back(col, result[0] + nearp, result[1])             # <<<<<<<<<<<<<<
@@ -4392,7 +4392,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L5_continue:;
   }
 
-  /* "numina/array/trace/traces.pyx":234
+  /* "numina/array/trace/traces.pyx":224
  *             trace.push_back(col, result[0] + nearp, result[1])
  * 
  *     return trace             # <<<<<<<<<<<<<<
@@ -4402,7 +4402,7 @@ __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
   __pyx_r = __pyx_v_trace;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":138
+  /* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -4478,7 +4478,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
     }
   }
 
-  /* "numina/array/trace/traces.pyx":144
+  /* "numina/array/trace/traces.pyx":134
  *                              int direction=-1, bint gauss = 1) nogil:
  * 
  *     cdef int col = wc_to_pix(x)             # <<<<<<<<<<<<<<
@@ -4487,7 +4487,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_col = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_x);
 
-  /* "numina/array/trace/traces.pyx":145
+  /* "numina/array/trace/traces.pyx":135
  * 
  *     cdef int col = wc_to_pix(x)
  *     cdef int row = wc_to_pix(y)             # <<<<<<<<<<<<<<
@@ -4496,7 +4496,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_row = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_y);
 
-  /* "numina/array/trace/traces.pyx":150
+  /* "numina/array/trace/traces.pyx":140
  *     cdef double prediction
  * 
  *     cdef int axis = 1             # <<<<<<<<<<<<<<
@@ -4505,7 +4505,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis = 1;
 
-  /* "numina/array/trace/traces.pyx":152
+  /* "numina/array/trace/traces.pyx":142
  *     cdef int axis = 1
  *     cdef size_t i
  *     cdef size_t tolcounter = tol             # <<<<<<<<<<<<<<
@@ -4514,7 +4514,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_tolcounter = __pyx_v_tol;
 
-  /* "numina/array/trace/traces.pyx":153
+  /* "numina/array/trace/traces.pyx":143
  *     cdef size_t i
  *     cdef size_t tolcounter = tol
  *     cdef size_t axis_size = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -4523,7 +4523,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis_size = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":156
+  /* "numina/array/trace/traces.pyx":146
  * 
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)             # <<<<<<<<<<<<<<
@@ -4532,7 +4532,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_regw = (1 + ((int)ceil(__pyx_v_maxdis)));
 
-  /* "numina/array/trace/traces.pyx":157
+  /* "numina/array/trace/traces.pyx":147
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)
  *     cdef size_t buffsize = 2 * regw + 1             # <<<<<<<<<<<<<<
@@ -4541,7 +4541,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_buffsize = ((2 * __pyx_v_regw) + 1);
 
-  /* "numina/array/trace/traces.pyx":168
+  /* "numina/array/trace/traces.pyx":158
  * 
  *     # Init pbuff
  *     for _ in range(buffsize):             # <<<<<<<<<<<<<<
@@ -4552,7 +4552,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v__ = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":169
+    /* "numina/array/trace/traces.pyx":159
  *     # Init pbuff
  *     for _ in range(buffsize):
  *         pbuff.push_back(0.0)             # <<<<<<<<<<<<<<
@@ -4569,11 +4569,11 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 169, __pyx_L1_error)
+      __PYX_ERR(0, 159, __pyx_L1_error)
     }
   }
 
-  /* "numina/array/trace/traces.pyx":172
+  /* "numina/array/trace/traces.pyx":162
  * 
  * 
  *     while (col - step > hs) and (col + step + hs < axis_size):             # <<<<<<<<<<<<<<
@@ -4592,7 +4592,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
     __pyx_L7_bool_binop_done:;
     if (!__pyx_t_3) break;
 
-    /* "numina/array/trace/traces.pyx":176
+    /* "numina/array/trace/traces.pyx":166
  *         # printf("col %i dir %i step %i\n", col, direction, step)
  * 
  *         col += direction * step             # <<<<<<<<<<<<<<
@@ -4601,7 +4601,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_col = (__pyx_v_col + (__pyx_v_direction * __pyx_v_step));
 
-    /* "numina/array/trace/traces.pyx":177
+    /* "numina/array/trace/traces.pyx":167
  * 
  *         col += direction * step
  *         prediction = trace.predict(col)             # <<<<<<<<<<<<<<
@@ -4610,7 +4610,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_prediction = __pyx_v_trace.predict(__pyx_v_col);
 
-    /* "numina/array/trace/traces.pyx":179
+    /* "numina/array/trace/traces.pyx":169
  *         prediction = trace.predict(col)
  * 
  *         pred_pix = wc_to_pix(prediction)             # <<<<<<<<<<<<<<
@@ -4619,7 +4619,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_pix = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_prediction);
 
-    /* "numina/array/trace/traces.pyx":180
+    /* "numina/array/trace/traces.pyx":170
  * 
  *         pred_pix = wc_to_pix(prediction)
  *         pred_off = pred_pix - regw             # <<<<<<<<<<<<<<
@@ -4628,7 +4628,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_off = (__pyx_v_pred_pix - __pyx_v_regw);
 
-    /* "numina/array/trace/traces.pyx":185
+    /* "numina/array/trace/traces.pyx":175
  *         # extract a region around the expected peak
  *         # and collapse it
  *         colapse_mean(arr[pred_pix-regw:pred_pix+regw + 1,col-hs:col+hs+1], pbuff)             # <<<<<<<<<<<<<<
@@ -4653,7 +4653,7 @@ static Numina::InternalTrace __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 if (unlikely(__pyx_memoryview_slice_memviewslice(
@@ -4670,7 +4670,7 @@ if (unlikely(__pyx_memoryview_slice_memviewslice(
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_pbuff);
@@ -4678,7 +4678,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_5.memview = NULL;
     __pyx_t_5.data = NULL;
 
-    /* "numina/array/trace/traces.pyx":190
+    /* "numina/array/trace/traces.pyx":180
  * 
  *         # Find the peaks
  *         peaks = local_max(&pbuff[0], buffsize, background=background)             # <<<<<<<<<<<<<<
@@ -4687,7 +4687,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_peaks = __pyx_f_6numina_5array_5trace_7_traces_local_max((&(__pyx_v_pbuff[0])), __pyx_v_buffsize, __pyx_v_background);
 
-    /* "numina/array/trace/traces.pyx":193
+    /* "numina/array/trace/traces.pyx":183
  * 
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number             # <<<<<<<<<<<<<<
@@ -4696,7 +4696,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_dis = 40000.0;
 
-    /* "numina/array/trace/traces.pyx":194
+    /* "numina/array/trace/traces.pyx":184
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number
  *         ipeak = -1             # <<<<<<<<<<<<<<
@@ -4705,7 +4705,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_ipeak = -1L;
 
-    /* "numina/array/trace/traces.pyx":195
+    /* "numina/array/trace/traces.pyx":185
  *         dis = 40000.0 # a large number
  *         ipeak = -1
  *         for i in range(peaks.size()):             # <<<<<<<<<<<<<<
@@ -4716,7 +4716,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_7; __pyx_t_1+=1) {
       __pyx_v_i = __pyx_t_1;
 
-      /* "numina/array/trace/traces.pyx":196
+      /* "numina/array/trace/traces.pyx":186
  *         ipeak = -1
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)             # <<<<<<<<<<<<<<
@@ -4725,7 +4725,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_ndis = fabs((((__pyx_v_peaks[__pyx_v_i]) + __pyx_v_pred_off) - __pyx_v_prediction));
 
-      /* "numina/array/trace/traces.pyx":197
+      /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -4735,7 +4735,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_ndis < __pyx_v_dis) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":198
+        /* "numina/array/trace/traces.pyx":188
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:
  *                 dis = ndis             # <<<<<<<<<<<<<<
@@ -4744,7 +4744,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_dis = __pyx_v_ndis;
 
-        /* "numina/array/trace/traces.pyx":199
+        /* "numina/array/trace/traces.pyx":189
  *             if ndis < dis:
  *                 dis = ndis
  *                 ipeak = i             # <<<<<<<<<<<<<<
@@ -4753,7 +4753,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_ipeak = __pyx_v_i;
 
-        /* "numina/array/trace/traces.pyx":197
+        /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -4763,7 +4763,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       }
     }
 
-    /* "numina/array/trace/traces.pyx":202
+    /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -4781,7 +4781,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L13_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":205
+      /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -4791,7 +4791,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_tolcounter > 0) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":208
+        /* "numina/array/trace/traces.pyx":198
  *                 # Try again
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1             # <<<<<<<<<<<<<<
@@ -4800,7 +4800,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_tolcounter = (__pyx_v_tolcounter - 1);
 
-        /* "numina/array/trace/traces.pyx":209
+        /* "numina/array/trace/traces.pyx":199
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1
  *                 continue             # <<<<<<<<<<<<<<
@@ -4809,7 +4809,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         goto __pyx_L5_continue;
 
-        /* "numina/array/trace/traces.pyx":205
+        /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -4818,7 +4818,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       }
 
-      /* "numina/array/trace/traces.pyx":214
+      /* "numina/array/trace/traces.pyx":204
  *                 # printf("%i tries remaining\n", 0)
  *                 # Exit now
  *                 return trace             # <<<<<<<<<<<<<<
@@ -4830,7 +4830,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
         goto __pyx_L0;
       }
 
-      /* "numina/array/trace/traces.pyx":202
+      /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -4839,7 +4839,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     }
 
-    /* "numina/array/trace/traces.pyx":217
+    /* "numina/array/trace/traces.pyx":207
  * 
  *         # Reset counter
  *         tolcounter = tol             # <<<<<<<<<<<<<<
@@ -4848,7 +4848,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_tolcounter = __pyx_v_tol;
 
-    /* "numina/array/trace/traces.pyx":219
+    /* "numina/array/trace/traces.pyx":209
  *         tolcounter = tol
  * 
  *         nearp = peaks[ipeak] + pred_off             # <<<<<<<<<<<<<<
@@ -4857,7 +4857,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_nearp = ((__pyx_v_peaks[__pyx_v_ipeak]) + __pyx_v_pred_off);
 
-    /* "numina/array/trace/traces.pyx":222
+    /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -4867,7 +4867,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_3 = (__pyx_v_gauss != 0);
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":223
+      /* "numina/array/trace/traces.pyx":213
  *         # fit the peak with three points
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))             # <<<<<<<<<<<<<<
@@ -4876,7 +4876,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_result = __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) - 1)])), log((__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])])), log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) + 1)])));
 
-      /* "numina/array/trace/traces.pyx":224
+      /* "numina/array/trace/traces.pyx":214
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
  *             result[1] = expc(result[1])             # <<<<<<<<<<<<<<
@@ -4885,7 +4885,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       (__pyx_v_result[1]) = exp((__pyx_v_result[1]));
 
-      /* "numina/array/trace/traces.pyx":222
+      /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -4895,7 +4895,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L16;
     }
 
-    /* "numina/array/trace/traces.pyx":226
+    /* "numina/array/trace/traces.pyx":216
  *             result[1] = expc(result[1])
  *         else:
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])             # <<<<<<<<<<<<<<
@@ -4907,7 +4907,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     }
     __pyx_L16:;
 
-    /* "numina/array/trace/traces.pyx":228
+    /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -4925,7 +4925,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L18_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":230
+      /* "numina/array/trace/traces.pyx":220
  *         if (result[0] > 0.5) or (result[0] < -0.5):
  *             # ignore the correction if it's larger than 0.5 pixel
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])             # <<<<<<<<<<<<<<
@@ -4934,7 +4934,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_trace.push_back(__pyx_v_col, __pyx_v_nearp, (__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])]));
 
-      /* "numina/array/trace/traces.pyx":228
+      /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -4944,7 +4944,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L17;
     }
 
-    /* "numina/array/trace/traces.pyx":232
+    /* "numina/array/trace/traces.pyx":222
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])
  *         else:
  *             trace.push_back(col, result[0] + nearp, result[1])             # <<<<<<<<<<<<<<
@@ -4958,7 +4958,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L5_continue:;
   }
 
-  /* "numina/array/trace/traces.pyx":234
+  /* "numina/array/trace/traces.pyx":224
  *             trace.push_back(col, result[0] + nearp, result[1])
  * 
  *     return trace             # <<<<<<<<<<<<<<
@@ -4968,7 +4968,7 @@ __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
   __pyx_r = __pyx_v_trace;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":138
+  /* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -5044,7 +5044,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
     }
   }
 
-  /* "numina/array/trace/traces.pyx":144
+  /* "numina/array/trace/traces.pyx":134
  *                              int direction=-1, bint gauss = 1) nogil:
  * 
  *     cdef int col = wc_to_pix(x)             # <<<<<<<<<<<<<<
@@ -5053,7 +5053,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_col = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_x);
 
-  /* "numina/array/trace/traces.pyx":145
+  /* "numina/array/trace/traces.pyx":135
  * 
  *     cdef int col = wc_to_pix(x)
  *     cdef int row = wc_to_pix(y)             # <<<<<<<<<<<<<<
@@ -5062,7 +5062,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_row = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_y);
 
-  /* "numina/array/trace/traces.pyx":150
+  /* "numina/array/trace/traces.pyx":140
  *     cdef double prediction
  * 
  *     cdef int axis = 1             # <<<<<<<<<<<<<<
@@ -5071,7 +5071,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis = 1;
 
-  /* "numina/array/trace/traces.pyx":152
+  /* "numina/array/trace/traces.pyx":142
  *     cdef int axis = 1
  *     cdef size_t i
  *     cdef size_t tolcounter = tol             # <<<<<<<<<<<<<<
@@ -5080,7 +5080,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_tolcounter = __pyx_v_tol;
 
-  /* "numina/array/trace/traces.pyx":153
+  /* "numina/array/trace/traces.pyx":143
  *     cdef size_t i
  *     cdef size_t tolcounter = tol
  *     cdef size_t axis_size = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -5089,7 +5089,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis_size = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":156
+  /* "numina/array/trace/traces.pyx":146
  * 
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)             # <<<<<<<<<<<<<<
@@ -5098,7 +5098,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_regw = (1 + ((int)ceil(__pyx_v_maxdis)));
 
-  /* "numina/array/trace/traces.pyx":157
+  /* "numina/array/trace/traces.pyx":147
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)
  *     cdef size_t buffsize = 2 * regw + 1             # <<<<<<<<<<<<<<
@@ -5107,7 +5107,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_buffsize = ((2 * __pyx_v_regw) + 1);
 
-  /* "numina/array/trace/traces.pyx":168
+  /* "numina/array/trace/traces.pyx":158
  * 
  *     # Init pbuff
  *     for _ in range(buffsize):             # <<<<<<<<<<<<<<
@@ -5118,7 +5118,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v__ = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":169
+    /* "numina/array/trace/traces.pyx":159
  *     # Init pbuff
  *     for _ in range(buffsize):
  *         pbuff.push_back(0.0)             # <<<<<<<<<<<<<<
@@ -5135,11 +5135,11 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 169, __pyx_L1_error)
+      __PYX_ERR(0, 159, __pyx_L1_error)
     }
   }
 
-  /* "numina/array/trace/traces.pyx":172
+  /* "numina/array/trace/traces.pyx":162
  * 
  * 
  *     while (col - step > hs) and (col + step + hs < axis_size):             # <<<<<<<<<<<<<<
@@ -5158,7 +5158,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
     __pyx_L7_bool_binop_done:;
     if (!__pyx_t_3) break;
 
-    /* "numina/array/trace/traces.pyx":176
+    /* "numina/array/trace/traces.pyx":166
  *         # printf("col %i dir %i step %i\n", col, direction, step)
  * 
  *         col += direction * step             # <<<<<<<<<<<<<<
@@ -5167,7 +5167,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_col = (__pyx_v_col + (__pyx_v_direction * __pyx_v_step));
 
-    /* "numina/array/trace/traces.pyx":177
+    /* "numina/array/trace/traces.pyx":167
  * 
  *         col += direction * step
  *         prediction = trace.predict(col)             # <<<<<<<<<<<<<<
@@ -5176,7 +5176,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_prediction = __pyx_v_trace.predict(__pyx_v_col);
 
-    /* "numina/array/trace/traces.pyx":179
+    /* "numina/array/trace/traces.pyx":169
  *         prediction = trace.predict(col)
  * 
  *         pred_pix = wc_to_pix(prediction)             # <<<<<<<<<<<<<<
@@ -5185,7 +5185,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_pix = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_prediction);
 
-    /* "numina/array/trace/traces.pyx":180
+    /* "numina/array/trace/traces.pyx":170
  * 
  *         pred_pix = wc_to_pix(prediction)
  *         pred_off = pred_pix - regw             # <<<<<<<<<<<<<<
@@ -5194,7 +5194,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_off = (__pyx_v_pred_pix - __pyx_v_regw);
 
-    /* "numina/array/trace/traces.pyx":185
+    /* "numina/array/trace/traces.pyx":175
  *         # extract a region around the expected peak
  *         # and collapse it
  *         colapse_mean(arr[pred_pix-regw:pred_pix+regw + 1,col-hs:col+hs+1], pbuff)             # <<<<<<<<<<<<<<
@@ -5219,7 +5219,7 @@ static Numina::InternalTrace __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 if (unlikely(__pyx_memoryview_slice_memviewslice(
@@ -5236,7 +5236,7 @@ if (unlikely(__pyx_memoryview_slice_memviewslice(
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_pbuff);
@@ -5244,7 +5244,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_5.memview = NULL;
     __pyx_t_5.data = NULL;
 
-    /* "numina/array/trace/traces.pyx":190
+    /* "numina/array/trace/traces.pyx":180
  * 
  *         # Find the peaks
  *         peaks = local_max(&pbuff[0], buffsize, background=background)             # <<<<<<<<<<<<<<
@@ -5253,7 +5253,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_peaks = __pyx_f_6numina_5array_5trace_7_traces_local_max((&(__pyx_v_pbuff[0])), __pyx_v_buffsize, __pyx_v_background);
 
-    /* "numina/array/trace/traces.pyx":193
+    /* "numina/array/trace/traces.pyx":183
  * 
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number             # <<<<<<<<<<<<<<
@@ -5262,7 +5262,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_dis = 40000.0;
 
-    /* "numina/array/trace/traces.pyx":194
+    /* "numina/array/trace/traces.pyx":184
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number
  *         ipeak = -1             # <<<<<<<<<<<<<<
@@ -5271,7 +5271,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_ipeak = -1L;
 
-    /* "numina/array/trace/traces.pyx":195
+    /* "numina/array/trace/traces.pyx":185
  *         dis = 40000.0 # a large number
  *         ipeak = -1
  *         for i in range(peaks.size()):             # <<<<<<<<<<<<<<
@@ -5282,7 +5282,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_7; __pyx_t_1+=1) {
       __pyx_v_i = __pyx_t_1;
 
-      /* "numina/array/trace/traces.pyx":196
+      /* "numina/array/trace/traces.pyx":186
  *         ipeak = -1
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)             # <<<<<<<<<<<<<<
@@ -5291,7 +5291,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_ndis = fabs((((__pyx_v_peaks[__pyx_v_i]) + __pyx_v_pred_off) - __pyx_v_prediction));
 
-      /* "numina/array/trace/traces.pyx":197
+      /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -5301,7 +5301,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_ndis < __pyx_v_dis) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":198
+        /* "numina/array/trace/traces.pyx":188
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:
  *                 dis = ndis             # <<<<<<<<<<<<<<
@@ -5310,7 +5310,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_dis = __pyx_v_ndis;
 
-        /* "numina/array/trace/traces.pyx":199
+        /* "numina/array/trace/traces.pyx":189
  *             if ndis < dis:
  *                 dis = ndis
  *                 ipeak = i             # <<<<<<<<<<<<<<
@@ -5319,7 +5319,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_ipeak = __pyx_v_i;
 
-        /* "numina/array/trace/traces.pyx":197
+        /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -5329,7 +5329,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       }
     }
 
-    /* "numina/array/trace/traces.pyx":202
+    /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -5347,7 +5347,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L13_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":205
+      /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -5357,7 +5357,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_tolcounter > 0) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":208
+        /* "numina/array/trace/traces.pyx":198
  *                 # Try again
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1             # <<<<<<<<<<<<<<
@@ -5366,7 +5366,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_tolcounter = (__pyx_v_tolcounter - 1);
 
-        /* "numina/array/trace/traces.pyx":209
+        /* "numina/array/trace/traces.pyx":199
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1
  *                 continue             # <<<<<<<<<<<<<<
@@ -5375,7 +5375,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         goto __pyx_L5_continue;
 
-        /* "numina/array/trace/traces.pyx":205
+        /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -5384,7 +5384,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       }
 
-      /* "numina/array/trace/traces.pyx":214
+      /* "numina/array/trace/traces.pyx":204
  *                 # printf("%i tries remaining\n", 0)
  *                 # Exit now
  *                 return trace             # <<<<<<<<<<<<<<
@@ -5396,7 +5396,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
         goto __pyx_L0;
       }
 
-      /* "numina/array/trace/traces.pyx":202
+      /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -5405,7 +5405,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     }
 
-    /* "numina/array/trace/traces.pyx":217
+    /* "numina/array/trace/traces.pyx":207
  * 
  *         # Reset counter
  *         tolcounter = tol             # <<<<<<<<<<<<<<
@@ -5414,7 +5414,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_tolcounter = __pyx_v_tol;
 
-    /* "numina/array/trace/traces.pyx":219
+    /* "numina/array/trace/traces.pyx":209
  *         tolcounter = tol
  * 
  *         nearp = peaks[ipeak] + pred_off             # <<<<<<<<<<<<<<
@@ -5423,7 +5423,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_nearp = ((__pyx_v_peaks[__pyx_v_ipeak]) + __pyx_v_pred_off);
 
-    /* "numina/array/trace/traces.pyx":222
+    /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -5433,7 +5433,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_3 = (__pyx_v_gauss != 0);
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":223
+      /* "numina/array/trace/traces.pyx":213
  *         # fit the peak with three points
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))             # <<<<<<<<<<<<<<
@@ -5442,7 +5442,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_result = __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) - 1)])), log((__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])])), log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) + 1)])));
 
-      /* "numina/array/trace/traces.pyx":224
+      /* "numina/array/trace/traces.pyx":214
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
  *             result[1] = expc(result[1])             # <<<<<<<<<<<<<<
@@ -5451,7 +5451,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       (__pyx_v_result[1]) = exp((__pyx_v_result[1]));
 
-      /* "numina/array/trace/traces.pyx":222
+      /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -5461,7 +5461,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L16;
     }
 
-    /* "numina/array/trace/traces.pyx":226
+    /* "numina/array/trace/traces.pyx":216
  *             result[1] = expc(result[1])
  *         else:
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])             # <<<<<<<<<<<<<<
@@ -5473,7 +5473,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     }
     __pyx_L16:;
 
-    /* "numina/array/trace/traces.pyx":228
+    /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -5491,7 +5491,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L18_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":230
+      /* "numina/array/trace/traces.pyx":220
  *         if (result[0] > 0.5) or (result[0] < -0.5):
  *             # ignore the correction if it's larger than 0.5 pixel
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])             # <<<<<<<<<<<<<<
@@ -5500,7 +5500,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_trace.push_back(__pyx_v_col, __pyx_v_nearp, (__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])]));
 
-      /* "numina/array/trace/traces.pyx":228
+      /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -5510,7 +5510,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L17;
     }
 
-    /* "numina/array/trace/traces.pyx":232
+    /* "numina/array/trace/traces.pyx":222
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])
  *         else:
  *             trace.push_back(col, result[0] + nearp, result[1])             # <<<<<<<<<<<<<<
@@ -5524,7 +5524,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L5_continue:;
   }
 
-  /* "numina/array/trace/traces.pyx":234
+  /* "numina/array/trace/traces.pyx":224
  *             trace.push_back(col, result[0] + nearp, result[1])
  * 
  *     return trace             # <<<<<<<<<<<<<<
@@ -5534,7 +5534,7 @@ __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
   __pyx_r = __pyx_v_trace;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":138
+  /* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -5610,7 +5610,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
     }
   }
 
-  /* "numina/array/trace/traces.pyx":144
+  /* "numina/array/trace/traces.pyx":134
  *                              int direction=-1, bint gauss = 1) nogil:
  * 
  *     cdef int col = wc_to_pix(x)             # <<<<<<<<<<<<<<
@@ -5619,7 +5619,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_col = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_x);
 
-  /* "numina/array/trace/traces.pyx":145
+  /* "numina/array/trace/traces.pyx":135
  * 
  *     cdef int col = wc_to_pix(x)
  *     cdef int row = wc_to_pix(y)             # <<<<<<<<<<<<<<
@@ -5628,7 +5628,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_row = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_y);
 
-  /* "numina/array/trace/traces.pyx":150
+  /* "numina/array/trace/traces.pyx":140
  *     cdef double prediction
  * 
  *     cdef int axis = 1             # <<<<<<<<<<<<<<
@@ -5637,7 +5637,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis = 1;
 
-  /* "numina/array/trace/traces.pyx":152
+  /* "numina/array/trace/traces.pyx":142
  *     cdef int axis = 1
  *     cdef size_t i
  *     cdef size_t tolcounter = tol             # <<<<<<<<<<<<<<
@@ -5646,7 +5646,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_tolcounter = __pyx_v_tol;
 
-  /* "numina/array/trace/traces.pyx":153
+  /* "numina/array/trace/traces.pyx":143
  *     cdef size_t i
  *     cdef size_t tolcounter = tol
  *     cdef size_t axis_size = arr.shape[1]             # <<<<<<<<<<<<<<
@@ -5655,7 +5655,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_axis_size = (__pyx_v_arr.shape[1]);
 
-  /* "numina/array/trace/traces.pyx":156
+  /* "numina/array/trace/traces.pyx":146
  * 
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)             # <<<<<<<<<<<<<<
@@ -5664,7 +5664,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_regw = (1 + ((int)ceil(__pyx_v_maxdis)));
 
-  /* "numina/array/trace/traces.pyx":157
+  /* "numina/array/trace/traces.pyx":147
  *     # Buffer
  *     cdef size_t regw = 1 + <int>ceil(maxdis)
  *     cdef size_t buffsize = 2 * regw + 1             # <<<<<<<<<<<<<<
@@ -5673,7 +5673,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
   __pyx_v_buffsize = ((2 * __pyx_v_regw) + 1);
 
-  /* "numina/array/trace/traces.pyx":168
+  /* "numina/array/trace/traces.pyx":158
  * 
  *     # Init pbuff
  *     for _ in range(buffsize):             # <<<<<<<<<<<<<<
@@ -5684,7 +5684,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v__ = __pyx_t_2;
 
-    /* "numina/array/trace/traces.pyx":169
+    /* "numina/array/trace/traces.pyx":159
  *     # Init pbuff
  *     for _ in range(buffsize):
  *         pbuff.push_back(0.0)             # <<<<<<<<<<<<<<
@@ -5701,11 +5701,11 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
       #ifdef WITH_THREAD
       __Pyx_PyGILState_Release(__pyx_gilstate_save);
       #endif
-      __PYX_ERR(0, 169, __pyx_L1_error)
+      __PYX_ERR(0, 159, __pyx_L1_error)
     }
   }
 
-  /* "numina/array/trace/traces.pyx":172
+  /* "numina/array/trace/traces.pyx":162
  * 
  * 
  *     while (col - step > hs) and (col + step + hs < axis_size):             # <<<<<<<<<<<<<<
@@ -5724,7 +5724,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
     __pyx_L7_bool_binop_done:;
     if (!__pyx_t_3) break;
 
-    /* "numina/array/trace/traces.pyx":176
+    /* "numina/array/trace/traces.pyx":166
  *         # printf("col %i dir %i step %i\n", col, direction, step)
  * 
  *         col += direction * step             # <<<<<<<<<<<<<<
@@ -5733,7 +5733,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_col = (__pyx_v_col + (__pyx_v_direction * __pyx_v_step));
 
-    /* "numina/array/trace/traces.pyx":177
+    /* "numina/array/trace/traces.pyx":167
  * 
  *         col += direction * step
  *         prediction = trace.predict(col)             # <<<<<<<<<<<<<<
@@ -5742,7 +5742,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_prediction = __pyx_v_trace.predict(__pyx_v_col);
 
-    /* "numina/array/trace/traces.pyx":179
+    /* "numina/array/trace/traces.pyx":169
  *         prediction = trace.predict(col)
  * 
  *         pred_pix = wc_to_pix(prediction)             # <<<<<<<<<<<<<<
@@ -5751,7 +5751,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_pix = __pyx_f_6numina_5array_5trace_7_traces_wc_to_pix(__pyx_v_prediction);
 
-    /* "numina/array/trace/traces.pyx":180
+    /* "numina/array/trace/traces.pyx":170
  * 
  *         pred_pix = wc_to_pix(prediction)
  *         pred_off = pred_pix - regw             # <<<<<<<<<<<<<<
@@ -5760,7 +5760,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
  */
     __pyx_v_pred_off = (__pyx_v_pred_pix - __pyx_v_regw);
 
-    /* "numina/array/trace/traces.pyx":185
+    /* "numina/array/trace/traces.pyx":175
  *         # extract a region around the expected peak
  *         # and collapse it
  *         colapse_mean(arr[pred_pix-regw:pred_pix+regw + 1,col-hs:col+hs+1], pbuff)             # <<<<<<<<<<<<<<
@@ -5785,7 +5785,7 @@ static Numina::InternalTrace __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 if (unlikely(__pyx_memoryview_slice_memviewslice(
@@ -5802,7 +5802,7 @@ if (unlikely(__pyx_memoryview_slice_memviewslice(
     0,
     1) < 0))
 {
-    __PYX_ERR(0, 185, __pyx_L1_error)
+    __PYX_ERR(0, 175, __pyx_L1_error)
 }
 
 __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_pbuff);
@@ -5810,7 +5810,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_5.memview = NULL;
     __pyx_t_5.data = NULL;
 
-    /* "numina/array/trace/traces.pyx":190
+    /* "numina/array/trace/traces.pyx":180
  * 
  *         # Find the peaks
  *         peaks = local_max(&pbuff[0], buffsize, background=background)             # <<<<<<<<<<<<<<
@@ -5819,7 +5819,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_peaks = __pyx_f_6numina_5array_5trace_7_traces_local_max((&(__pyx_v_pbuff[0])), __pyx_v_buffsize, __pyx_v_background);
 
-    /* "numina/array/trace/traces.pyx":193
+    /* "numina/array/trace/traces.pyx":183
  * 
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number             # <<<<<<<<<<<<<<
@@ -5828,7 +5828,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_dis = 40000.0;
 
-    /* "numina/array/trace/traces.pyx":194
+    /* "numina/array/trace/traces.pyx":184
  *         # find nearest peak to prediction
  *         dis = 40000.0 # a large number
  *         ipeak = -1             # <<<<<<<<<<<<<<
@@ -5837,7 +5837,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_ipeak = -1L;
 
-    /* "numina/array/trace/traces.pyx":195
+    /* "numina/array/trace/traces.pyx":185
  *         dis = 40000.0 # a large number
  *         ipeak = -1
  *         for i in range(peaks.size()):             # <<<<<<<<<<<<<<
@@ -5848,7 +5848,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_7; __pyx_t_1+=1) {
       __pyx_v_i = __pyx_t_1;
 
-      /* "numina/array/trace/traces.pyx":196
+      /* "numina/array/trace/traces.pyx":186
  *         ipeak = -1
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)             # <<<<<<<<<<<<<<
@@ -5857,7 +5857,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_ndis = fabs((((__pyx_v_peaks[__pyx_v_i]) + __pyx_v_pred_off) - __pyx_v_prediction));
 
-      /* "numina/array/trace/traces.pyx":197
+      /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -5867,7 +5867,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_ndis < __pyx_v_dis) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":198
+        /* "numina/array/trace/traces.pyx":188
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:
  *                 dis = ndis             # <<<<<<<<<<<<<<
@@ -5876,7 +5876,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_dis = __pyx_v_ndis;
 
-        /* "numina/array/trace/traces.pyx":199
+        /* "numina/array/trace/traces.pyx":189
  *             if ndis < dis:
  *                 dis = ndis
  *                 ipeak = i             # <<<<<<<<<<<<<<
@@ -5885,7 +5885,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_ipeak = __pyx_v_i;
 
-        /* "numina/array/trace/traces.pyx":197
+        /* "numina/array/trace/traces.pyx":187
  *         for i in range(peaks.size()):
  *             ndis = fabs(peaks[i] + pred_off - prediction)
  *             if ndis < dis:             # <<<<<<<<<<<<<<
@@ -5895,7 +5895,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       }
     }
 
-    /* "numina/array/trace/traces.pyx":202
+    /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -5913,7 +5913,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L13_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":205
+      /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -5923,7 +5923,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       __pyx_t_3 = ((__pyx_v_tolcounter > 0) != 0);
       if (__pyx_t_3) {
 
-        /* "numina/array/trace/traces.pyx":208
+        /* "numina/array/trace/traces.pyx":198
  *                 # Try again
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1             # <<<<<<<<<<<<<<
@@ -5932,7 +5932,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         __pyx_v_tolcounter = (__pyx_v_tolcounter - 1);
 
-        /* "numina/array/trace/traces.pyx":209
+        /* "numina/array/trace/traces.pyx":199
  *                 # printf("%i tries remaining\n", tolcounter)
  *                 tolcounter -= 1
  *                 continue             # <<<<<<<<<<<<<<
@@ -5941,7 +5941,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
         goto __pyx_L5_continue;
 
-        /* "numina/array/trace/traces.pyx":205
+        /* "numina/array/trace/traces.pyx":195
  *             # printf("peak is not found %i\n", ipeak)
  *             # peak is not found
  *             if tolcounter > 0:             # <<<<<<<<<<<<<<
@@ -5950,7 +5950,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       }
 
-      /* "numina/array/trace/traces.pyx":214
+      /* "numina/array/trace/traces.pyx":204
  *                 # printf("%i tries remaining\n", 0)
  *                 # Exit now
  *                 return trace             # <<<<<<<<<<<<<<
@@ -5962,7 +5962,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
         goto __pyx_L0;
       }
 
-      /* "numina/array/trace/traces.pyx":202
+      /* "numina/array/trace/traces.pyx":192
  * 
  *         # check the peak is not further than npixels'
  *         if ipeak < 0 or dis > maxdis:             # <<<<<<<<<<<<<<
@@ -5971,7 +5971,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     }
 
-    /* "numina/array/trace/traces.pyx":217
+    /* "numina/array/trace/traces.pyx":207
  * 
  *         # Reset counter
  *         tolcounter = tol             # <<<<<<<<<<<<<<
@@ -5980,7 +5980,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_tolcounter = __pyx_v_tol;
 
-    /* "numina/array/trace/traces.pyx":219
+    /* "numina/array/trace/traces.pyx":209
  *         tolcounter = tol
  * 
  *         nearp = peaks[ipeak] + pred_off             # <<<<<<<<<<<<<<
@@ -5989,7 +5989,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
     __pyx_v_nearp = ((__pyx_v_peaks[__pyx_v_ipeak]) + __pyx_v_pred_off);
 
-    /* "numina/array/trace/traces.pyx":222
+    /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -5999,7 +5999,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_t_3 = (__pyx_v_gauss != 0);
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":223
+      /* "numina/array/trace/traces.pyx":213
  *         # fit the peak with three points
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))             # <<<<<<<<<<<<<<
@@ -6008,7 +6008,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_result = __pyx_f_6numina_5array_5trace_7_traces_interp_max_3(log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) - 1)])), log((__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])])), log((__pyx_v_pbuff[((__pyx_v_peaks[__pyx_v_ipeak]) + 1)])));
 
-      /* "numina/array/trace/traces.pyx":224
+      /* "numina/array/trace/traces.pyx":214
  *         if gauss:
  *             result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
  *             result[1] = expc(result[1])             # <<<<<<<<<<<<<<
@@ -6017,7 +6017,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       (__pyx_v_result[1]) = exp((__pyx_v_result[1]));
 
-      /* "numina/array/trace/traces.pyx":222
+      /* "numina/array/trace/traces.pyx":212
  * 
  *         # fit the peak with three points
  *         if gauss:             # <<<<<<<<<<<<<<
@@ -6027,7 +6027,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L16;
     }
 
-    /* "numina/array/trace/traces.pyx":226
+    /* "numina/array/trace/traces.pyx":216
  *             result[1] = expc(result[1])
  *         else:
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])             # <<<<<<<<<<<<<<
@@ -6039,7 +6039,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     }
     __pyx_L16:;
 
-    /* "numina/array/trace/traces.pyx":228
+    /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -6057,7 +6057,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L18_bool_binop_done:;
     if (__pyx_t_3) {
 
-      /* "numina/array/trace/traces.pyx":230
+      /* "numina/array/trace/traces.pyx":220
  *         if (result[0] > 0.5) or (result[0] < -0.5):
  *             # ignore the correction if it's larger than 0.5 pixel
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])             # <<<<<<<<<<<<<<
@@ -6066,7 +6066,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
  */
       __pyx_v_trace.push_back(__pyx_v_col, __pyx_v_nearp, (__pyx_v_pbuff[(__pyx_v_peaks[__pyx_v_ipeak])]));
 
-      /* "numina/array/trace/traces.pyx":228
+      /* "numina/array/trace/traces.pyx":218
  *             result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
  * 
  *         if (result[0] > 0.5) or (result[0] < -0.5):             # <<<<<<<<<<<<<<
@@ -6076,7 +6076,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
       goto __pyx_L17;
     }
 
-    /* "numina/array/trace/traces.pyx":232
+    /* "numina/array/trace/traces.pyx":222
  *             trace.push_back(col, nearp, pbuff[peaks[ipeak]])
  *         else:
  *             trace.push_back(col, result[0] + nearp, result[1])             # <<<<<<<<<<<<<<
@@ -6090,7 +6090,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
     __pyx_L5_continue:;
   }
 
-  /* "numina/array/trace/traces.pyx":234
+  /* "numina/array/trace/traces.pyx":224
  *             trace.push_back(col, result[0] + nearp, result[1])
  * 
  *     return trace             # <<<<<<<<<<<<<<
@@ -6100,7 +6100,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
   __pyx_r = __pyx_v_trace;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":138
+  /* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -6117,7 +6117,7 @@ __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx
   return __pyx_r;
 }
 
-/* "numina/array/trace/traces.pyx":239
+/* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
@@ -6164,23 +6164,23 @@ static PyObject *__pyx_pw_6numina_5array_5trace_7_traces_1tracing(PyObject *__py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_args)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 1); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 1); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_kwargs)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 2); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 2); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_defaults)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 3); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 3); __PYX_ERR(0, 229, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_fused_cpdef") < 0)) __PYX_ERR(0, 239, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_fused_cpdef") < 0)) __PYX_ERR(0, 229, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
       goto __pyx_L5_argtuple_error;
@@ -6197,7 +6197,7 @@ static PyObject *__pyx_pw_6numina_5array_5trace_7_traces_1tracing(PyObject *__py
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 239, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 229, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._traces.__pyx_fused_cpdef", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6256,7 +6256,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
   int __pyx_t_19;
   __Pyx_RefNannySetupContext("tracing", 0);
   __Pyx_INCREF(__pyx_v_kwargs);
-  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(Py_None);
   __Pyx_GIVEREF(Py_None);
@@ -6270,7 +6270,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
     __pyx_t_2 = __pyx_t_4;
     goto __pyx_L4_bool_binop_done;
   }
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_kwargs); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_kwargs); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
   __pyx_t_3 = ((!__pyx_t_4) != 0);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L4_bool_binop_done:;
@@ -6278,7 +6278,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
     __Pyx_INCREF(Py_None);
     __Pyx_DECREF_SET(__pyx_v_kwargs, Py_None);
   }
-  __pyx_t_1 = ((PyObject *)__Pyx_ImportNumPyArrayTypeIfAvailable()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__Pyx_ImportNumPyArrayTypeIfAvailable()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_ndarray = ((PyTypeObject*)__pyx_t_1);
   __pyx_t_1 = 0;
@@ -6288,14 +6288,14 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
   __pyx_v_long_is_signed = (((long)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 239, __pyx_L1_error)
+    __PYX_ERR(0, 229, __pyx_L1_error)
   }
-  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 229, __pyx_L1_error)
   __pyx_t_2 = ((0 < __pyx_t_5) != 0);
   if (__pyx_t_2) {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 239, __pyx_L1_error)
+      __PYX_ERR(0, 229, __pyx_L1_error)
     }
     __pyx_t_1 = PyTuple_GET_ITEM(((PyObject*)__pyx_v_args), 0);
     __Pyx_INCREF(__pyx_t_1);
@@ -6312,18 +6312,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
   }
   if (unlikely(__pyx_v_kwargs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 239, __pyx_L1_error)
+    __PYX_ERR(0, 229, __pyx_L1_error)
   }
-  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_arr, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_arr, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
   __pyx_t_3 = (__pyx_t_4 != 0);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L7_bool_binop_done:;
   if (__pyx_t_2) {
     if (unlikely(__pyx_v_kwargs == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 239, __pyx_L1_error)
+      __PYX_ERR(0, 229, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_arr); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_arr); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_arg = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -6332,12 +6332,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
   /*else*/ {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 239, __pyx_L1_error)
+      __PYX_ERR(0, 229, __pyx_L1_error)
     }
-    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 239, __pyx_L1_error)
-    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 229, __pyx_L1_error)
+    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_INCREF(__pyx_int_4);
     __Pyx_GIVEREF(__pyx_int_4);
@@ -6348,20 +6348,20 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __PYX_ERR(0, 239, __pyx_L1_error)
+    __PYX_ERR(0, 229, __pyx_L1_error)
   }
   __pyx_L6:;
   while (1) {
@@ -6371,7 +6371,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_3 = __Pyx_TypeCheck(__pyx_v_arg, __pyx_v_ndarray); 
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_v_dtype = __pyx_t_1;
         __pyx_t_1 = 0;
@@ -6381,14 +6381,14 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_2 = __pyx_memoryview_check(__pyx_v_arg); 
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_v_arg_base = __pyx_t_1;
         __pyx_t_1 = 0;
         __pyx_t_3 = __Pyx_TypeCheck(__pyx_v_arg_base, __pyx_v_ndarray); 
         __pyx_t_2 = (__pyx_t_3 != 0);
         if (__pyx_t_2) {
-          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_v_dtype = __pyx_t_1;
           __pyx_t_1 = 0;
@@ -6410,21 +6410,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_2 = (__pyx_v_dtype != Py_None);
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_1); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_1); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_v_itemsize = __pyx_t_5;
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_1); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_1); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_v_kind = __pyx_t_7;
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_byteorder); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_byteorder); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_v_byteorder = __pyx_t_1;
         __pyx_t_1 = 0;
-        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__29, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__29, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         if (__pyx_t_2) {
         } else {
           __pyx_t_3 = __pyx_t_2;
@@ -6437,7 +6437,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
         if (__pyx_t_3) {
           __pyx_v_arg_is_pythran_compatible = 0;
         }
-        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__30, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__30, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         if (__pyx_t_2) {
         } else {
           __pyx_t_3 = __pyx_t_2;
@@ -6453,31 +6453,31 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
         __pyx_v_dtype_signed = (__pyx_v_kind == 'i');
         __pyx_t_3 = (__pyx_v_arg_is_pythran_compatible != 0);
         if (__pyx_t_3) {
-          __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_v_cur_stride = __pyx_t_1;
           __pyx_t_1 = 0;
-          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
-          __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_GIVEREF(__pyx_t_1);
           PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
           __pyx_t_1 = 0;
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_strides); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_strides); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_GIVEREF(__pyx_t_6);
           PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_6);
           __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-          __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_GIVEREF(__pyx_t_1);
           PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_1);
@@ -6485,16 +6485,16 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
           PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_6);
           __pyx_t_1 = 0;
           __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           if (likely(PyList_CheckExact(__pyx_t_6)) || PyTuple_CheckExact(__pyx_t_6)) {
             __pyx_t_9 = __pyx_t_6; __Pyx_INCREF(__pyx_t_9); __pyx_t_5 = 0;
             __pyx_t_10 = NULL;
           } else {
-            __pyx_t_5 = -1; __pyx_t_9 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_5 = -1; __pyx_t_9 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_9);
-            __pyx_t_10 = Py_TYPE(__pyx_t_9)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_10 = Py_TYPE(__pyx_t_9)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 229, __pyx_L1_error)
           }
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           for (;;) {
@@ -6502,17 +6502,17 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
               if (likely(PyList_CheckExact(__pyx_t_9))) {
                 if (__pyx_t_5 >= PyList_GET_SIZE(__pyx_t_9)) break;
                 #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-                __pyx_t_6 = PyList_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+                __pyx_t_6 = PyList_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
                 #else
-                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 #endif
               } else {
                 if (__pyx_t_5 >= PyTuple_GET_SIZE(__pyx_t_9)) break;
                 #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-                __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+                __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
                 #else
-                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 #endif
               }
@@ -6522,7 +6522,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
                 PyObject* exc_type = PyErr_Occurred();
                 if (exc_type) {
                   if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-                  else __PYX_ERR(0, 239, __pyx_L1_error)
+                  else __PYX_ERR(0, 229, __pyx_L1_error)
                 }
                 break;
               }
@@ -6538,7 +6538,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
               if (unlikely(size != 2)) {
                 if (size > 2) __Pyx_RaiseTooManyValuesError(2);
                 else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-                __PYX_ERR(0, 239, __pyx_L1_error)
+                __PYX_ERR(0, 229, __pyx_L1_error)
               }
               #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
               if (likely(PyTuple_CheckExact(sequence))) {
@@ -6551,15 +6551,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
               __Pyx_INCREF(__pyx_t_1);
               __Pyx_INCREF(__pyx_t_11);
               #else
-              __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+              __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_1);
-              __pyx_t_11 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+              __pyx_t_11 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_11);
               #endif
               __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             } else {
               Py_ssize_t index = -1;
-              __pyx_t_12 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 239, __pyx_L1_error)
+              __pyx_t_12 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 229, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_12);
               __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
               __pyx_t_13 = Py_TYPE(__pyx_t_12)->tp_iternext;
@@ -6567,7 +6567,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
               __Pyx_GOTREF(__pyx_t_1);
               index = 1; __pyx_t_11 = __pyx_t_13(__pyx_t_12); if (unlikely(!__pyx_t_11)) goto __pyx_L24_unpacking_failed;
               __Pyx_GOTREF(__pyx_t_11);
-              if (__Pyx_IternextUnpackEndCheck(__pyx_t_13(__pyx_t_12), 2) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
+              if (__Pyx_IternextUnpackEndCheck(__pyx_t_13(__pyx_t_12), 2) < 0) __PYX_ERR(0, 229, __pyx_L1_error)
               __pyx_t_13 = NULL;
               __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
               goto __pyx_L25_unpacking_done;
@@ -6575,43 +6575,43 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
               __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
               __pyx_t_13 = NULL;
               if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-              __PYX_ERR(0, 239, __pyx_L1_error)
+              __PYX_ERR(0, 229, __pyx_L1_error)
               __pyx_L25_unpacking_done:;
             }
             __Pyx_XDECREF_SET(__pyx_v_dim, __pyx_t_1);
             __pyx_t_1 = 0;
             __Pyx_XDECREF_SET(__pyx_v_stride, __pyx_t_11);
             __pyx_t_11 = 0;
-            __pyx_t_6 = PyObject_RichCompare(__pyx_v_stride, __pyx_v_cur_stride, Py_NE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
-            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_6 = PyObject_RichCompare(__pyx_v_stride, __pyx_v_cur_stride, Py_NE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             if (__pyx_t_3) {
               __pyx_v_arg_is_pythran_compatible = 0;
               goto __pyx_L23_break;
             }
-            __pyx_t_6 = PyNumber_InPlaceMultiply(__pyx_v_cur_stride, __pyx_v_dim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_6 = PyNumber_InPlaceMultiply(__pyx_v_cur_stride, __pyx_v_dim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_6);
             __Pyx_DECREF_SET(__pyx_v_cur_stride, __pyx_t_6);
             __pyx_t_6 = 0;
           }
           /*else*/ {
-            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_6);
-            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_f_contiguous); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_f_contiguous); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_11);
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_11); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_11); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
             if (__pyx_t_2) {
             } else {
               __pyx_t_3 = __pyx_t_2;
               goto __pyx_L28_bool_binop_done;
             }
-            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_11);
-            __pyx_t_6 = PyObject_RichCompare(__pyx_t_11, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_6 = PyObject_RichCompare(__pyx_t_11, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             __pyx_t_3 = __pyx_t_2;
             __pyx_L28_bool_binop_done:;
@@ -6629,9 +6629,9 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L31_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           if (__pyx_t_2) {
@@ -6643,7 +6643,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
           __pyx_t_3 = __pyx_t_2;
           __pyx_L31_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           __pyx_t_2 = (((sizeof(long)) == __pyx_v_itemsize) != 0);
@@ -6652,9 +6652,9 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L35_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           if (__pyx_t_2) {
@@ -6666,7 +6666,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
           __pyx_t_3 = __pyx_t_2;
           __pyx_L35_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           break;
@@ -6677,15 +6677,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L39_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           __pyx_t_3 = __pyx_t_2;
           __pyx_L39_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           __pyx_t_2 = (((sizeof(float)) == __pyx_v_itemsize) != 0);
@@ -6694,15 +6694,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L42_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           __pyx_t_3 = __pyx_t_2;
           __pyx_L42_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           break;
@@ -6729,7 +6729,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -6751,7 +6751,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -6773,7 +6773,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -6795,27 +6795,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
         PyErr_Clear(); 
       }
     }
-    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 0) < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
     goto __pyx_L10_break;
   }
   __pyx_L10_break:;
-  __pyx_t_9 = PyList_New(0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_9 = PyList_New(0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __pyx_v_candidates = ((PyObject*)__pyx_t_9);
   __pyx_t_9 = 0;
   __pyx_t_5 = 0;
   if (unlikely(__pyx_v_signatures == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 239, __pyx_L1_error)
+    __PYX_ERR(0, 229, __pyx_L1_error)
   }
-  __pyx_t_6 = __Pyx_dict_iterator(((PyObject*)__pyx_v_signatures), 1, ((PyObject *)NULL), (&__pyx_t_15), (&__pyx_t_8)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_dict_iterator(((PyObject*)__pyx_v_signatures), 1, ((PyObject *)NULL), (&__pyx_t_15), (&__pyx_t_8)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_9);
   __pyx_t_9 = __pyx_t_6;
@@ -6823,39 +6823,39 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
   while (1) {
     __pyx_t_16 = __Pyx_dict_iter_next(__pyx_t_9, __pyx_t_15, &__pyx_t_5, &__pyx_t_6, NULL, NULL, __pyx_t_8);
     if (unlikely(__pyx_t_16 == 0)) break;
-    if (unlikely(__pyx_t_16 == -1)) __PYX_ERR(0, 239, __pyx_L1_error)
+    if (unlikely(__pyx_t_16 == -1)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_XDECREF_SET(__pyx_v_sig, __pyx_t_6);
     __pyx_t_6 = 0;
     __pyx_v_match_found = 0;
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_sig, __pyx_n_s_strip); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_sig, __pyx_n_s_strip); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__32, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__32, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_11, __pyx_n_s_split); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_11, __pyx_n_s_split); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__34, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__34, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF_SET(__pyx_v_src_sig, __pyx_t_11);
     __pyx_t_11 = 0;
-    __pyx_t_17 = PyList_GET_SIZE(__pyx_v_dest_sig); if (unlikely(__pyx_t_17 == ((Py_ssize_t)-1))) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_17 = PyList_GET_SIZE(__pyx_v_dest_sig); if (unlikely(__pyx_t_17 == ((Py_ssize_t)-1))) __PYX_ERR(0, 229, __pyx_L1_error)
     for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
       __pyx_v_i = __pyx_t_18;
-      __pyx_t_11 = __Pyx_GetItemInt_List(__pyx_v_dest_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 1, 1, 0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __pyx_t_11 = __Pyx_GetItemInt_List(__pyx_v_dest_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 1, 1, 0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_11);
       __Pyx_XDECREF_SET(__pyx_v_dst_type, __pyx_t_11);
       __pyx_t_11 = 0;
       __pyx_t_3 = (__pyx_v_dst_type != Py_None);
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_11 = __Pyx_GetItemInt(__pyx_v_src_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 1, 0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_11 = __Pyx_GetItemInt(__pyx_v_src_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 1, 0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_11);
-        __pyx_t_6 = PyObject_RichCompare(__pyx_t_11, __pyx_v_dst_type, Py_EQ); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_6 = PyObject_RichCompare(__pyx_t_11, __pyx_v_dst_type, Py_EQ); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-        __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         if (__pyx_t_2) {
           __pyx_v_match_found = 1;
@@ -6871,35 +6871,35 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_tracing(CYTHON_UNUSED P
     __pyx_L63_break:;
     __pyx_t_2 = (__pyx_v_match_found != 0);
     if (__pyx_t_2) {
-      __pyx_t_19 = __Pyx_PyList_Append(__pyx_v_candidates, __pyx_v_sig); if (unlikely(__pyx_t_19 == ((int)-1))) __PYX_ERR(0, 239, __pyx_L1_error)
+      __pyx_t_19 = __Pyx_PyList_Append(__pyx_v_candidates, __pyx_v_sig); if (unlikely(__pyx_t_19 == ((int)-1))) __PYX_ERR(0, 229, __pyx_L1_error)
     }
   }
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __pyx_t_2 = (__pyx_v_candidates != Py_None) && (PyList_GET_SIZE(__pyx_v_candidates) != 0);
   __pyx_t_3 = ((!__pyx_t_2) != 0);
   if (__pyx_t_3) {
-    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__35, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__35, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_Raise(__pyx_t_9, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __PYX_ERR(0, 239, __pyx_L1_error)
+    __PYX_ERR(0, 229, __pyx_L1_error)
   }
-  __pyx_t_15 = PyList_GET_SIZE(__pyx_v_candidates); if (unlikely(__pyx_t_15 == ((Py_ssize_t)-1))) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_15 = PyList_GET_SIZE(__pyx_v_candidates); if (unlikely(__pyx_t_15 == ((Py_ssize_t)-1))) __PYX_ERR(0, 229, __pyx_L1_error)
   __pyx_t_3 = ((__pyx_t_15 > 1) != 0);
   if (__pyx_t_3) {
-    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__36, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__36, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_Raise(__pyx_t_9, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __PYX_ERR(0, 239, __pyx_L1_error)
+    __PYX_ERR(0, 229, __pyx_L1_error)
   }
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
     if (unlikely(__pyx_v_signatures == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 239, __pyx_L1_error)
+      __PYX_ERR(0, 229, __pyx_L1_error)
     }
-    __pyx_t_9 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_signatures), PyList_GET_ITEM(__pyx_v_candidates, 0)); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_signatures), PyList_GET_ITEM(__pyx_v_candidates, 0)); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 229, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __pyx_r = __pyx_t_9;
     __pyx_t_9 = 0;
@@ -6947,19 +6947,19 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_20__defaults__(CYTHON_U
   PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1);
@@ -6979,7 +6979,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_20__defaults__(CYTHON_U
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_7);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7);
@@ -7065,19 +7065,19 @@ static PyObject *__pyx_fuse_0__pyx_pw_6numina_5array_5trace_7_traces_3tracing(Py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_x)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_p)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -7117,7 +7117,7 @@ static PyObject *__pyx_fuse_0__pyx_pw_6numina_5array_5trace_7_traces_3tracing(Py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 239, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 229, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -7141,44 +7141,44 @@ static PyObject *__pyx_fuse_0__pyx_pw_6numina_5array_5trace_7_traces_3tracing(Py
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     if (values[4]) {
-      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     } else {
       __pyx_v_step = __pyx_dynamic_args->__pyx_arg_step;
     }
     if (values[5]) {
-      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_hs = __pyx_dynamic_args->__pyx_arg_hs;
     }
     if (values[6]) {
-      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_tol = __pyx_dynamic_args->__pyx_arg_tol;
     }
     if (values[7]) {
-      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_background = __pyx_dynamic_args->__pyx_arg_background;
     }
     if (values[8]) {
-      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_maxdis = __pyx_dynamic_args->__pyx_arg_maxdis;
     }
     if (values[9]) {
-      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_gauss = __pyx_dynamic_args->__pyx_arg_gauss;
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 239, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 229, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._traces.tracing", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -7207,7 +7207,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   std::vector<double> ::size_type __pyx_t_8;
   __Pyx_RefNannySetupContext("__pyx_fuse_0tracing", 0);
 
-  /* "numina/array/trace/traces.pyx":268
+  /* "numina/array/trace/traces.pyx":258
  *     cdef InternalTrace trace
  *     # Initial values
  *     trace.push_back(x, y, p)             # <<<<<<<<<<<<<<
@@ -7216,7 +7216,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, __pyx_v_p);
 
-  /* "numina/array/trace/traces.pyx":270
+  /* "numina/array/trace/traces.pyx":260
  *     trace.push_back(x, y, p)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -7233,7 +7233,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":273
+  /* "numina/array/trace/traces.pyx":263
  *                       maxdis=maxdis, background=background,
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()             # <<<<<<<<<<<<<<
@@ -7242,7 +7242,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.reverse();
 
-  /* "numina/array/trace/traces.pyx":274
+  /* "numina/array/trace/traces.pyx":264
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -7259,21 +7259,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_0__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":278
+  /* "numina/array/trace/traces.pyx":268
  *                       direction=+1, gauss=gauss)
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')             # <<<<<<<<<<<<<<
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -7281,15 +7281,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   __Pyx_GIVEREF(__pyx_int_3);
   PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 278, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 268, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -7297,7 +7297,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   __pyx_v_result = __pyx_t_6;
   __pyx_t_6 = 0;
 
-  /* "numina/array/trace/traces.pyx":279
+  /* "numina/array/trace/traces.pyx":269
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):             # <<<<<<<<<<<<<<
@@ -7308,18 +7308,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
     __pyx_v_i = __pyx_t_8;
 
-    /* "numina/array/trace/traces.pyx":280
+    /* "numina/array/trace/traces.pyx":270
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]             # <<<<<<<<<<<<<<
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -7327,22 +7327,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_0);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_0);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 280, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":281
+    /* "numina/array/trace/traces.pyx":271
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]             # <<<<<<<<<<<<<<
  *         result[i,2] = trace.ptrace[i]
  * 
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -7350,22 +7350,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_1);
     PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_1);
     __pyx_t_3 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 281, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":282
+    /* "numina/array/trace/traces.pyx":272
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]             # <<<<<<<<<<<<<<
  * 
  *     return result
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -7373,12 +7373,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_2);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_2);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 282, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
 
-  /* "numina/array/trace/traces.pyx":284
+  /* "numina/array/trace/traces.pyx":274
  *         result[i,2] = trace.ptrace[i]
  * 
  *     return result             # <<<<<<<<<<<<<<
@@ -7389,7 +7389,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_2tracing(CYTHON_UNUSED 
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
@@ -7425,19 +7425,19 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_22__defaults__(CYTHON_U
   PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1);
@@ -7457,7 +7457,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_22__defaults__(CYTHON_U
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_7);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7);
@@ -7543,19 +7543,19 @@ static PyObject *__pyx_fuse_1__pyx_pw_6numina_5array_5trace_7_traces_5tracing(Py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_x)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_p)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -7595,7 +7595,7 @@ static PyObject *__pyx_fuse_1__pyx_pw_6numina_5array_5trace_7_traces_5tracing(Py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 239, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 229, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -7619,44 +7619,44 @@ static PyObject *__pyx_fuse_1__pyx_pw_6numina_5array_5trace_7_traces_5tracing(Py
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     if (values[4]) {
-      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     } else {
       __pyx_v_step = __pyx_dynamic_args->__pyx_arg_step;
     }
     if (values[5]) {
-      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_hs = __pyx_dynamic_args->__pyx_arg_hs;
     }
     if (values[6]) {
-      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_tol = __pyx_dynamic_args->__pyx_arg_tol;
     }
     if (values[7]) {
-      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_background = __pyx_dynamic_args->__pyx_arg_background;
     }
     if (values[8]) {
-      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_maxdis = __pyx_dynamic_args->__pyx_arg_maxdis;
     }
     if (values[9]) {
-      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_gauss = __pyx_dynamic_args->__pyx_arg_gauss;
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 239, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 229, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._traces.tracing", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -7685,7 +7685,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   std::vector<double> ::size_type __pyx_t_8;
   __Pyx_RefNannySetupContext("__pyx_fuse_1tracing", 0);
 
-  /* "numina/array/trace/traces.pyx":268
+  /* "numina/array/trace/traces.pyx":258
  *     cdef InternalTrace trace
  *     # Initial values
  *     trace.push_back(x, y, p)             # <<<<<<<<<<<<<<
@@ -7694,7 +7694,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, __pyx_v_p);
 
-  /* "numina/array/trace/traces.pyx":270
+  /* "numina/array/trace/traces.pyx":260
  *     trace.push_back(x, y, p)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -7711,7 +7711,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":273
+  /* "numina/array/trace/traces.pyx":263
  *                       maxdis=maxdis, background=background,
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()             # <<<<<<<<<<<<<<
@@ -7720,7 +7720,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.reverse();
 
-  /* "numina/array/trace/traces.pyx":274
+  /* "numina/array/trace/traces.pyx":264
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -7737,21 +7737,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_1__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":278
+  /* "numina/array/trace/traces.pyx":268
  *                       direction=+1, gauss=gauss)
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')             # <<<<<<<<<<<<<<
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -7759,15 +7759,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   __Pyx_GIVEREF(__pyx_int_3);
   PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 278, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 268, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -7775,7 +7775,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   __pyx_v_result = __pyx_t_6;
   __pyx_t_6 = 0;
 
-  /* "numina/array/trace/traces.pyx":279
+  /* "numina/array/trace/traces.pyx":269
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):             # <<<<<<<<<<<<<<
@@ -7786,18 +7786,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
     __pyx_v_i = __pyx_t_8;
 
-    /* "numina/array/trace/traces.pyx":280
+    /* "numina/array/trace/traces.pyx":270
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]             # <<<<<<<<<<<<<<
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -7805,22 +7805,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_0);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_0);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 280, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":281
+    /* "numina/array/trace/traces.pyx":271
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]             # <<<<<<<<<<<<<<
  *         result[i,2] = trace.ptrace[i]
  * 
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -7828,22 +7828,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_1);
     PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_1);
     __pyx_t_3 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 281, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":282
+    /* "numina/array/trace/traces.pyx":272
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]             # <<<<<<<<<<<<<<
  * 
  *     return result
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -7851,12 +7851,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_2);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_2);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 282, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
 
-  /* "numina/array/trace/traces.pyx":284
+  /* "numina/array/trace/traces.pyx":274
  *         result[i,2] = trace.ptrace[i]
  * 
  *     return result             # <<<<<<<<<<<<<<
@@ -7867,7 +7867,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_4tracing(CYTHON_UNUSED 
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
@@ -7903,19 +7903,19 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_24__defaults__(CYTHON_U
   PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1);
@@ -7935,7 +7935,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_24__defaults__(CYTHON_U
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_7);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7);
@@ -8021,19 +8021,19 @@ static PyObject *__pyx_fuse_2__pyx_pw_6numina_5array_5trace_7_traces_7tracing(Py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_x)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_p)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -8073,7 +8073,7 @@ static PyObject *__pyx_fuse_2__pyx_pw_6numina_5array_5trace_7_traces_7tracing(Py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 239, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 229, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -8097,44 +8097,44 @@ static PyObject *__pyx_fuse_2__pyx_pw_6numina_5array_5trace_7_traces_7tracing(Py
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_int(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_int(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     if (values[4]) {
-      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     } else {
       __pyx_v_step = __pyx_dynamic_args->__pyx_arg_step;
     }
     if (values[5]) {
-      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_hs = __pyx_dynamic_args->__pyx_arg_hs;
     }
     if (values[6]) {
-      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_tol = __pyx_dynamic_args->__pyx_arg_tol;
     }
     if (values[7]) {
-      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_background = __pyx_dynamic_args->__pyx_arg_background;
     }
     if (values[8]) {
-      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_maxdis = __pyx_dynamic_args->__pyx_arg_maxdis;
     }
     if (values[9]) {
-      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_gauss = __pyx_dynamic_args->__pyx_arg_gauss;
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 239, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 229, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._traces.tracing", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -8163,7 +8163,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   std::vector<double> ::size_type __pyx_t_8;
   __Pyx_RefNannySetupContext("__pyx_fuse_2tracing", 0);
 
-  /* "numina/array/trace/traces.pyx":268
+  /* "numina/array/trace/traces.pyx":258
  *     cdef InternalTrace trace
  *     # Initial values
  *     trace.push_back(x, y, p)             # <<<<<<<<<<<<<<
@@ -8172,7 +8172,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, __pyx_v_p);
 
-  /* "numina/array/trace/traces.pyx":270
+  /* "numina/array/trace/traces.pyx":260
  *     trace.push_back(x, y, p)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -8189,7 +8189,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":273
+  /* "numina/array/trace/traces.pyx":263
  *                       maxdis=maxdis, background=background,
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()             # <<<<<<<<<<<<<<
@@ -8198,7 +8198,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.reverse();
 
-  /* "numina/array/trace/traces.pyx":274
+  /* "numina/array/trace/traces.pyx":264
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -8215,21 +8215,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_2__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":278
+  /* "numina/array/trace/traces.pyx":268
  *                       direction=+1, gauss=gauss)
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')             # <<<<<<<<<<<<<<
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -8237,15 +8237,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   __Pyx_GIVEREF(__pyx_int_3);
   PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 278, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 268, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -8253,7 +8253,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   __pyx_v_result = __pyx_t_6;
   __pyx_t_6 = 0;
 
-  /* "numina/array/trace/traces.pyx":279
+  /* "numina/array/trace/traces.pyx":269
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):             # <<<<<<<<<<<<<<
@@ -8264,18 +8264,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
     __pyx_v_i = __pyx_t_8;
 
-    /* "numina/array/trace/traces.pyx":280
+    /* "numina/array/trace/traces.pyx":270
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]             # <<<<<<<<<<<<<<
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -8283,22 +8283,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_0);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_0);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 280, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":281
+    /* "numina/array/trace/traces.pyx":271
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]             # <<<<<<<<<<<<<<
  *         result[i,2] = trace.ptrace[i]
  * 
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -8306,22 +8306,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_1);
     PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_1);
     __pyx_t_3 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 281, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":282
+    /* "numina/array/trace/traces.pyx":272
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]             # <<<<<<<<<<<<<<
  * 
  *     return result
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -8329,12 +8329,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_2);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_2);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 282, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
 
-  /* "numina/array/trace/traces.pyx":284
+  /* "numina/array/trace/traces.pyx":274
  *         result[i,2] = trace.ptrace[i]
  * 
  *     return result             # <<<<<<<<<<<<<<
@@ -8345,7 +8345,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_6tracing(CYTHON_UNUSED 
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
@@ -8381,19 +8381,19 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_26__defaults__(CYTHON_U
   PyObject *__pyx_t_7 = NULL;
   __Pyx_RefNannySetupContext("__defaults__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_step); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_hs); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_tol); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_background); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = PyFloat_FromDouble(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_maxdis); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyBool_FromLong(__Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_self)->__pyx_arg_gauss); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1);
@@ -8413,7 +8413,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_26__defaults__(CYTHON_U
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(2); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_7);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_7);
@@ -8499,19 +8499,19 @@ static PyObject *__pyx_fuse_3__pyx_pw_6numina_5array_5trace_7_traces_9tracing(Py
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_x)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 1); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_y)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 2); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_p)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 239, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, 3); __PYX_ERR(0, 229, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
@@ -8551,7 +8551,7 @@ static PyObject *__pyx_fuse_3__pyx_pw_6numina_5array_5trace_7_traces_9tracing(Py
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 239, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "tracing") < 0)) __PYX_ERR(0, 229, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -8575,44 +8575,44 @@ static PyObject *__pyx_fuse_3__pyx_pw_6numina_5array_5trace_7_traces_9tracing(Py
         default: goto __pyx_L5_argtuple_error;
       }
     }
-    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_long(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
-    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+    __pyx_v_arr = __Pyx_PyObject_to_MemoryviewSlice_dsds_long(values[0]); if (unlikely(!__pyx_v_arr.memview)) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_x = __pyx_PyFloat_AsDouble(values[1]); if (unlikely((__pyx_v_x == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_y = __pyx_PyFloat_AsDouble(values[2]); if (unlikely((__pyx_v_y == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
+    __pyx_v_p = __pyx_PyFloat_AsDouble(values[3]); if (unlikely((__pyx_v_p == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     if (values[4]) {
-      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 239, __pyx_L3_error)
+      __pyx_v_step = __Pyx_PyInt_As_size_t(values[4]); if (unlikely((__pyx_v_step == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 229, __pyx_L3_error)
     } else {
       __pyx_v_step = __pyx_dynamic_args->__pyx_arg_step;
     }
     if (values[5]) {
-      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_hs = __Pyx_PyInt_As_size_t(values[5]); if (unlikely((__pyx_v_hs == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_hs = __pyx_dynamic_args->__pyx_arg_hs;
     }
     if (values[6]) {
-      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_tol = __Pyx_PyInt_As_size_t(values[6]); if (unlikely((__pyx_v_tol == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_tol = __pyx_dynamic_args->__pyx_arg_tol;
     }
     if (values[7]) {
-      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L3_error)
+      __pyx_v_background = __pyx_PyFloat_AsDouble(values[7]); if (unlikely((__pyx_v_background == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 230, __pyx_L3_error)
     } else {
       __pyx_v_background = __pyx_dynamic_args->__pyx_arg_background;
     }
     if (values[8]) {
-      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_maxdis = __pyx_PyFloat_AsDouble(values[8]); if (unlikely((__pyx_v_maxdis == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_maxdis = __pyx_dynamic_args->__pyx_arg_maxdis;
     }
     if (values[9]) {
-      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L3_error)
+      __pyx_v_gauss = __Pyx_PyObject_IsTrue(values[9]); if (unlikely((__pyx_v_gauss == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 231, __pyx_L3_error)
     } else {
       __pyx_v_gauss = __pyx_dynamic_args->__pyx_arg_gauss;
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 239, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("tracing", 0, 4, 10, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 229, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._traces.tracing", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -8641,7 +8641,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   std::vector<double> ::size_type __pyx_t_8;
   __Pyx_RefNannySetupContext("__pyx_fuse_3tracing", 0);
 
-  /* "numina/array/trace/traces.pyx":268
+  /* "numina/array/trace/traces.pyx":258
  *     cdef InternalTrace trace
  *     # Initial values
  *     trace.push_back(x, y, p)             # <<<<<<<<<<<<<<
@@ -8650,7 +8650,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, __pyx_v_p);
 
-  /* "numina/array/trace/traces.pyx":270
+  /* "numina/array/trace/traces.pyx":260
  *     trace.push_back(x, y, p)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -8667,7 +8667,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":273
+  /* "numina/array/trace/traces.pyx":263
  *                       maxdis=maxdis, background=background,
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()             # <<<<<<<<<<<<<<
@@ -8676,7 +8676,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
  */
   __pyx_v_trace.reverse();
 
-  /* "numina/array/trace/traces.pyx":274
+  /* "numina/array/trace/traces.pyx":264
  *                       direction=-1, gauss=gauss)
  *     trace.reverse()
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,             # <<<<<<<<<<<<<<
@@ -8693,21 +8693,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   __pyx_t_2.gauss = __pyx_v_gauss;
   __pyx_t_1 = __pyx_fuse_3__pyx_f_6numina_5array_5trace_7_traces__internal_tracing(__pyx_v_arr, __pyx_v_trace, __pyx_v_x, __pyx_v_y, &__pyx_t_2); 
 
-  /* "numina/array/trace/traces.pyx":278
+  /* "numina/array/trace/traces.pyx":268
  *                       direction=+1, gauss=gauss)
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')             # <<<<<<<<<<<<<<
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_numpy); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_empty); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_trace.xtrace.size()); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -8715,15 +8715,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   __Pyx_GIVEREF(__pyx_int_3);
   PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 278, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyDict_NewPresized(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 278, __pyx_L1_error)
-  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 278, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_n_s_float) < 0) __PYX_ERR(0, 268, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 268, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -8731,7 +8731,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   __pyx_v_result = __pyx_t_6;
   __pyx_t_6 = 0;
 
-  /* "numina/array/trace/traces.pyx":279
+  /* "numina/array/trace/traces.pyx":269
  * 
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):             # <<<<<<<<<<<<<<
@@ -8742,18 +8742,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
     __pyx_v_i = __pyx_t_8;
 
-    /* "numina/array/trace/traces.pyx":280
+    /* "numina/array/trace/traces.pyx":270
  *     result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]             # <<<<<<<<<<<<<<
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.xtrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 280, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -8761,22 +8761,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_0);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_0);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 280, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 270, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":281
+    /* "numina/array/trace/traces.pyx":271
  *     for i in range(trace.xtrace.size()):
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]             # <<<<<<<<<<<<<<
  *         result[i,2] = trace.ptrace[i]
  * 
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ytrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_GIVEREF(__pyx_t_3);
     PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_3);
@@ -8784,22 +8784,22 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_1);
     PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_int_1);
     __pyx_t_3 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 281, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_5, __pyx_t_6) < 0)) __PYX_ERR(0, 271, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
 
-    /* "numina/array/trace/traces.pyx":282
+    /* "numina/array/trace/traces.pyx":272
  *         result[i,0] = trace.xtrace[i]
  *         result[i,1] = trace.ytrace[i]
  *         result[i,2] = trace.ptrace[i]             # <<<<<<<<<<<<<<
  * 
  *     return result
  */
-    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_6 = PyFloat_FromDouble((__pyx_v_trace.ptrace[__pyx_v_i])); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyInt_FromSize_t(__pyx_v_i); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 282, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_5);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_5);
@@ -8807,12 +8807,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
     __Pyx_GIVEREF(__pyx_int_2);
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_int_2);
     __pyx_t_5 = 0;
-    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 282, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(__pyx_v_result, __pyx_t_3, __pyx_t_6) < 0)) __PYX_ERR(0, 272, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
   }
 
-  /* "numina/array/trace/traces.pyx":284
+  /* "numina/array/trace/traces.pyx":274
  *         result[i,2] = trace.ptrace[i]
  * 
  *     return result             # <<<<<<<<<<<<<<
@@ -8823,7 +8823,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_7_traces_8tracing(CYTHON_UNUSED 
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
@@ -25083,10 +25083,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 62, __pyx_L1_error)
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 239, __pyx_L1_error)
-  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 239, __pyx_L1_error)
-  __pyx_builtin_reversed = __Pyx_GetBuiltinName(__pyx_n_s_reversed); if (!__pyx_builtin_reversed) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 52, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 229, __pyx_L1_error)
+  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 229, __pyx_L1_error)
+  __pyx_builtin_reversed = __Pyx_GetBuiltinName(__pyx_n_s_reversed); if (!__pyx_builtin_reversed) __PYX_ERR(0, 229, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 235, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 823, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 1013, __pyx_L1_error)
@@ -25104,23 +25104,23 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
  *                      size_t hs=1, size_t tol=2, double background=150.0,
  *                      double maxdis=2.0, bint gauss = 1):
  */
-  __pyx_tuple__32 = PyTuple_Pack(1, __pyx_kp_s__31); if (unlikely(!__pyx_tuple__32)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_tuple__32 = PyTuple_Pack(1, __pyx_kp_s__31); if (unlikely(!__pyx_tuple__32)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__32);
   __Pyx_GIVEREF(__pyx_tuple__32);
-  __pyx_tuple__34 = PyTuple_Pack(1, __pyx_kp_s__33); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_tuple__34 = PyTuple_Pack(1, __pyx_kp_s__33); if (unlikely(!__pyx_tuple__34)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__34);
   __Pyx_GIVEREF(__pyx_tuple__34);
-  __pyx_tuple__35 = PyTuple_Pack(1, __pyx_kp_s_No_matching_signature_found); if (unlikely(!__pyx_tuple__35)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_tuple__35 = PyTuple_Pack(1, __pyx_kp_s_No_matching_signature_found); if (unlikely(!__pyx_tuple__35)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__35);
   __Pyx_GIVEREF(__pyx_tuple__35);
-  __pyx_tuple__36 = PyTuple_Pack(1, __pyx_kp_s_Function_call_with_ambiguous_arg); if (unlikely(!__pyx_tuple__36)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_tuple__36 = PyTuple_Pack(1, __pyx_kp_s_Function_call_with_ambiguous_arg); if (unlikely(!__pyx_tuple__36)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__36);
   __Pyx_GIVEREF(__pyx_tuple__36);
 
@@ -25424,17 +25424,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__64);
   __Pyx_GIVEREF(__pyx_tuple__64);
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
  *                      size_t hs=1, size_t tol=2, double background=150.0,
  *                      double maxdis=2.0, bint gauss = 1):
  */
-  __pyx_tuple__65 = PyTuple_Pack(13, __pyx_n_s_arr, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_p, __pyx_n_s_step, __pyx_n_s_hs, __pyx_n_s_tol, __pyx_n_s_background, __pyx_n_s_maxdis, __pyx_n_s_gauss, __pyx_n_s_trace, __pyx_n_s_result, __pyx_n_s_i); if (unlikely(!__pyx_tuple__65)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_tuple__65 = PyTuple_Pack(13, __pyx_n_s_arr, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_p, __pyx_n_s_step, __pyx_n_s_hs, __pyx_n_s_tol, __pyx_n_s_background, __pyx_n_s_maxdis, __pyx_n_s_gauss, __pyx_n_s_trace, __pyx_n_s_result, __pyx_n_s_i); if (unlikely(!__pyx_tuple__65)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__65);
   __Pyx_GIVEREF(__pyx_tuple__65);
-  __pyx_codeobj__66 = (PyObject*)__Pyx_PyCode_New(10, 0, 13, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__65, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_trace_traces_pyx, __pyx_n_s_tracing, 239, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__66)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_codeobj__66 = (PyObject*)__Pyx_PyCode_New(10, 0, 13, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__65, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_trace_traces_pyx, __pyx_n_s_tracing, 229, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__66)) __PYX_ERR(0, 229, __pyx_L1_error)
 
   /* "View.MemoryView":284
  *         return self.name
@@ -25724,19 +25724,19 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "numina/array/trace/traces.pyx":23
+  /* "numina/array/trace/traces.pyx":13
  * cimport cython
  * 
  * import numpy             # <<<<<<<<<<<<<<
  * cimport numpy
  * 
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 23, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_numpy, __pyx_t_1) < 0) __PYX_ERR(0, 23, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_numpy, __pyx_t_1) < 0) __PYX_ERR(0, 13, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "numina/array/trace/traces.pyx":138
+  /* "numina/array/trace/traces.pyx":128
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * cdef InternalTrace _internal_tracing(FType[:, :] arr,             # <<<<<<<<<<<<<<
@@ -25772,50 +25772,50 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   __pyx_k__27 = -1L;
   __pyx_k__28 = 1;
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
  *                      size_t hs=1, size_t tol=2, double background=150.0,
  *                      double maxdis=2.0, bint gauss = 1):
  */
-  __pyx_t_1 = __Pyx_PyInt_From_long(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_long(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
 
-  /* "numina/array/trace/traces.pyx":240
+  /* "numina/array/trace/traces.pyx":230
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
  *                      size_t hs=1, size_t tol=2, double background=150.0,             # <<<<<<<<<<<<<<
  *                      double maxdis=2.0, bint gauss = 1):
  *     '''Trace peak in array starting in (x,y).
  */
-  __pyx_t_2 = __Pyx_PyInt_From_long(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_long(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 230, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyInt_From_long(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_long(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 230, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyFloat_FromDouble(150.0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_4 = PyFloat_FromDouble(150.0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 230, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
 
-  /* "numina/array/trace/traces.pyx":241
+  /* "numina/array/trace/traces.pyx":231
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
  *                      size_t hs=1, size_t tol=2, double background=150.0,
  *                      double maxdis=2.0, bint gauss = 1):             # <<<<<<<<<<<<<<
  *     '''Trace peak in array starting in (x,y).
  * 
  */
-  __pyx_t_5 = PyFloat_FromDouble(2.0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_5 = PyFloat_FromDouble(2.0); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_6 = __Pyx_PyInt_From_long(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyInt_From_long(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 231, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
 
-  /* "numina/array/trace/traces.pyx":239
+  /* "numina/array/trace/traces.pyx":229
  * @cython.cdivision(True)
  * @cython.boundscheck(False)
  * def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,             # <<<<<<<<<<<<<<
  *                      size_t hs=1, size_t tol=2, double background=150.0,
  *                      double maxdis=2.0, bint gauss = 1):
  */
-  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_GIVEREF(__pyx_t_1);
   PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_1);
@@ -25835,11 +25835,11 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   __pyx_t_4 = 0;
   __pyx_t_5 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_0__pyx_mdef_6numina_5array_5trace_7_traces_3tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_0__pyx_mdef_6numina_5array_5trace_7_traces_3tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults4), 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults4), 0)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_t_5)->__pyx_arg_step = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_t_5)->__pyx_arg_hs = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_t_5)->__pyx_arg_tol = 2;
@@ -25848,11 +25848,11 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   __Pyx_CyFunction_Defaults(__pyx_defaults4, __pyx_t_5)->__pyx_arg_gauss = 1;
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_t_7);
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_5, __pyx_pf_6numina_5array_5trace_7_traces_20__defaults__);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_double, __pyx_t_5) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_double, __pyx_t_5) < 0) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_1__pyx_mdef_6numina_5array_5trace_7_traces_5tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_1__pyx_mdef_6numina_5array_5trace_7_traces_5tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults5), 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults5), 0)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_t_5)->__pyx_arg_step = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_t_5)->__pyx_arg_hs = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_t_5)->__pyx_arg_tol = 2;
@@ -25861,11 +25861,11 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   __Pyx_CyFunction_Defaults(__pyx_defaults5, __pyx_t_5)->__pyx_arg_gauss = 1;
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_t_7);
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_5, __pyx_pf_6numina_5array_5trace_7_traces_22__defaults__);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_float, __pyx_t_5) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_float, __pyx_t_5) < 0) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_2__pyx_mdef_6numina_5array_5trace_7_traces_7tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_2__pyx_mdef_6numina_5array_5trace_7_traces_7tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults6), 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults6), 0)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_t_5)->__pyx_arg_step = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_t_5)->__pyx_arg_hs = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_t_5)->__pyx_arg_tol = 2;
@@ -25874,11 +25874,11 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   __Pyx_CyFunction_Defaults(__pyx_defaults6, __pyx_t_5)->__pyx_arg_gauss = 1;
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_t_7);
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_5, __pyx_pf_6numina_5array_5trace_7_traces_24__defaults__);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_int, __pyx_t_5) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_int, __pyx_t_5) < 0) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_3__pyx_mdef_6numina_5array_5trace_7_traces_9tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_fuse_3__pyx_mdef_6numina_5array_5trace_7_traces_9tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults7), 0)) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (!__Pyx_CyFunction_InitDefaults(__pyx_t_5, sizeof(__pyx_defaults7), 0)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_t_5)->__pyx_arg_step = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_t_5)->__pyx_arg_hs = 1;
   __Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_t_5)->__pyx_arg_tol = 2;
@@ -25887,15 +25887,15 @@ static int __pyx_pymod_exec__traces(PyObject *__pyx_pyinit_module)
   __Pyx_CyFunction_Defaults(__pyx_defaults7, __pyx_t_5)->__pyx_arg_gauss = 1;
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_t_7);
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_5, __pyx_pf_6numina_5array_5trace_7_traces_26__defaults__);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_long, __pyx_t_5) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_long, __pyx_t_5) < 0) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_mdef_6numina_5array_5trace_7_traces_1tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_5 = __pyx_FusedFunction_NewEx(&__pyx_mdef_6numina_5array_5trace_7_traces_1tracing, 0, __pyx_n_s_tracing, NULL, __pyx_n_s_numina_array_trace__traces, __pyx_d, ((PyObject *)__pyx_codeobj__66)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_5, __pyx_t_7);
   __Pyx_CyFunction_SetDefaultsGetter(__pyx_t_5, __pyx_pf_6numina_5array_5trace_7_traces_20__defaults__);
   ((__pyx_FusedFunctionObject *) __pyx_t_5)->__signatures__ = __pyx_t_6;
   __Pyx_GIVEREF(__pyx_t_6);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_tracing, __pyx_t_5) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_tracing, __pyx_t_5) < 0) __PYX_ERR(0, 229, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 

@@ -2,7 +2,6 @@
 
 import numpy
 from numina.array.bpm import process_bpm_median
-from numina.array.combine import mean_method
 
 
 def test_process_bpm():

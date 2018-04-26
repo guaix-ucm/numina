@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Results of the Observing Blocks"""
@@ -26,23 +16,28 @@ from astropy.io import fits
 from numina.types.dataframe import DataFrame
 
 
-class ObservationResult(object):
-    """The result of a observing block.
-
-    """
+class ObservingBlock(object):
     def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         self.id = 1
-        self.mode = mode
         self.instrument = instrument
+        self.mode = mode
         self.frames = []
+        self.children = []
         self.parent = None
-        self.children = []  # other ObservationResult
         self.pipeline = 'default'
         self.configuration = 'default'
         self.prodid = None
         self.tags = {}
         self.results = {}
         self.requirements = {}
+
+
+class ObservationResult(ObservingBlock):
+    """The result of a observing block.
+
+    """
+    def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
+        super(ObservationResult, self).__init__(instrument, mode)
 
     def update_with_product(self, prod):
         self.tags = prod.tags
@@ -68,13 +63,24 @@ class ObservationResult(object):
         origin = {}
         imginfo = datamodel.gather_info_oresult(self)
         origin['info'] = imginfo
-        first = imginfo[0]
-        origin["block_uuid"] = first['block_uuid']
-        origin['insconf_uuid'] = first['insconf_uuid']
-        origin['date_obs'] = first['observation_date']
-        origin['observation_date'] = first['observation_date']
-        origin['frames'] = [img['imgid'] for img in imginfo]
+        if imginfo:
+            first = imginfo[0]
+            origin["block_uuid"] = first['block_uuid']
+            origin['insconf_uuid'] = first['insconf_uuid']
+            origin['date_obs'] = first['observation_date']
+            origin['observation_date'] = first['observation_date']
+            origin['frames'] = [img['imgid'] for img in imginfo]
         return origin
+
+    def get_sample_frame(self):
+        """Return first available image in observation result"""
+        for frame in self.frames:
+            return frame.open()
+
+        for res in self.results.values():
+            return res.open()
+
+        return None
 
 
 def dataframe_from_list(values):

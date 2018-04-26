@@ -1,9 +1,8 @@
 include LICENSE.txt
 include README.rst
-include NEWS.rst
 include AUTHORS.rst
 include src/*.h
 include src/*.pyx
 include src/nirproc.cpp
 recursive-include doc *
-include tools/*.py
+recursive-include numina *.h

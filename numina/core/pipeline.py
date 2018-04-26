@@ -1,29 +1,20 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """DRP related classes"""
 
 import warnings
+import logging
 
+import numina.core.query
 import numina.core.deptree
 import numina.core.objimport
-import numina.types.product
 import numina.util.parser
 import numina.datamodel
 
@@ -62,9 +53,7 @@ class Pipeline(object):
         args = entry.get('args', ())
         kwargs = entry.get('kwargs', {})
 
-        # Like Pickle protocol
-        recipe = Cls.__new__(Cls, *args)
-        # Addition
+        recipe = Cls.__new__(Cls, *args, **kwargs)
         recipe.__init__(*args, **kwargs)
 
         # Like pickle protocol
@@ -76,7 +65,14 @@ class Pipeline(object):
     def get_recipe_object(self, mode):
         """Load recipe object, according to observing mode"""
 
-        recipe_entry = self.recipes[mode]
+        if isinstance(mode, ObservingMode):
+            key_mode = mode.key
+        elif isinstance(mode, str):
+            key_mode = mode
+        else:
+            key_mode = mode
+
+        recipe_entry = self.recipes[key_mode]
         recipe = self._get_base_object(recipe_entry)
 
         # Init additional members
@@ -186,11 +182,20 @@ class Pipeline(object):
 
 
 class InstrumentDRP(object):
-    """Description of an Instrument Data Reduction Pipeline"""
+    """Description of an Instrument Data Reduction Pipeline
+
+    Parameters
+    ==========
+       name : str
+           Name of the instrument
+       configurations : dict of InstrumentConfiguration
+       modes : dict of ObservingModes
+       pipeline : dict of Pipeline
+
+    """
     def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None):
         self.name = name
         self.configurations = configurations
-        self.selector = None
         self.modes = modes
         self.pipelines = pipelines
         if datamodel:
@@ -224,25 +229,71 @@ class InstrumentDRP(object):
     def iterate_mode_provides(self, modes, pipeline):
         """Return the mode that provides a given product"""
 
-        for mode in modes:
-            mode_key = mode.key
+        for mode_key, mode in modes.items():
             try:
                 recipe = pipeline.get_recipe_object(mode_key)
                 for key, provide in recipe.products().items():
-                    if isinstance(provide.type, numina.types.product.DataProductTag):
+                    if provide.type.isproduct():
                         yield provide.type, mode, key
             except KeyError:
                 warnings.warn('Mode {} has not recipe'.format(mode_key))
 
     def configuration_selector(self, obsres):
-        if self.selector is not None:
-            key = self.selector(obsres)
-        else:
-            key = 'default'
-        return self.configurations[key]
+        warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
+                      DeprecationWarning)
+        return self.select_configuration(obsres)
 
     def product_label(self, tipo):
         return tipo.name()
+
+    def select_configuration(self, obresult):
+        """Select instrument configuration based on OB"""
+
+        logger = logging.getLogger(__name__)
+        logger.debug('calling default configuration selector')
+
+        # get first possible image
+        ref = obresult.get_sample_frame()
+        if ref:
+            # get INSCONF configuration
+            result = self.datamodel.extractor.extract('insconf', ref)
+            if result:
+                # found the keyword, try to match
+                logger.debug('found insconf config uuid=%s', result)
+                # Use insconf as uuid key
+                if result in self.configurations:
+                    return self.configurations[result]
+                else:
+                    # Additional check for conf.name
+                    for conf in self.configurations.values():
+                        if conf.name == result:
+                            return conf
+                    else:
+                        raise KeyError('insconf {} does not match any config'.format(result))
+
+            # If not, try to match by DATE
+            date_obs = self.datamodel.extractor.extract('observation_date', ref)
+            for key, conf in self.configurations.items():
+                if key == 'default':
+                    # skip default
+                    continue
+                if conf.date_end is not None:
+                    upper_t = date_obs < conf.date_end
+                else:
+                    upper_t = True
+                if upper_t and (date_obs >= conf.date_start):
+                    logger.debug('found date match, config uuid=%s', key)
+                    return conf
+        else:
+            logger.debug('no match, using default configuration')
+            return self.configurations['default']
+
+    def get_recipe_object(self, mode_name, pipeline_name='default'):
+        """Build a recipe object from a given mode name"""
+        active_mode = self.modes[mode_name]
+        active_pipeline = self.pipelines[pipeline_name]
+        recipe = active_pipeline.get_recipe_object(active_mode)
+        return recipe
 
 
 class ProductEntry(object):
@@ -268,8 +319,8 @@ class InstrumentConfiguration(object):
         self.instrument = instrument
         self.name = 'config'
         self.uuid = ''
-        self.data_start = 0
-        self.data_end = 0
+        self.date_start = 0
+        self.date_end = 0
         self.components = {}
 
     def get(self, path, **kwds):
@@ -313,20 +364,34 @@ class ObservingMode(object):
     """Observing modes of an Instrument."""
     def __init__(self):
         self.name = ''
-        self.uuid = ''
         self.key = ''
-        self.url = ''
         self.instrument = ''
         self.summary = ''
         self.description = ''
-        self.status = ''
-        self.date = ''
-        self.reference = ''
         self.tagger = None
         self.validator = None
+        self.build_ob_options = None
 
     def validate(self):
         return True
+
+    def build_ob(self, partial_ob, backend, options=None):
+
+        mod = options or self.build_ob_options
+
+        if isinstance(mod, numina.core.query.ResultOf):
+            result_type = mod.result_type
+            name = 'relative_result'
+            val = backend.search_result_relative(name, result_type, partial_ob, result_desc=mod)
+            for r in val:
+                partial_ob.results[r.id] = r.content
+
+        return partial_ob
+
+    def tag_ob(self, partial):
+        if self.tagger is not None:
+            partial.tags = self.tagger(partial)
+        return partial
 
     def __repr__(self):
         return "ObservingMode(name={})".format(self.name)

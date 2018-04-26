@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 
@@ -24,14 +14,11 @@ import math
 
 import numpy
 
-from numina.array._nirproc import _process_fowler_intl
-from numina.array._nirproc import _process_ramp_intl
-
 
 def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
                  badpixels=None, dtype='float64',
                  saturation=65631, blank=0, normalize=False):
-    '''Loop over the first axis applying Fowler processing.
+    """Loop over the first axis applying Fowler processing.
 
     *fowlerdata* is assumed to be a 3D numpy.ndarray containing the
     result of a nIR observation in Fowler mode (Fowler and Gatley 1991).
@@ -86,7 +73,8 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
         and badpixel mask.
     :raises: ValueError
 
-    '''
+    """
+    import numina.array._nirproc as _nirproc
 
     if gain <= 0:
         raise ValueError("invalid parameter, gain <= 0.0")
@@ -136,16 +124,18 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_fowler_intl(fowlerdata, ti, ts,  gain, ron,
-                         badpixels, saturation, blank,
-                         result, var, npix, mask)
+    _nirproc._process_fowler_intl(
+        fowlerdata, ti, ts,  gain, ron,
+        badpixels, saturation, blank,
+        result, var, npix, mask
+    )
     return result, var, npix, mask
 
 
 def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
                badpixels=None, dtype='float64',
                saturation=65631, blank=0, nsig=None, normalize=False):
-    '''Loop over the first axis applying ramp processing.
+    """Loop over the first axis applying ramp processing.
 
     *rampdata* is assumed to be a 3D numpy.ndarray containing the
     result of a nIR observation in folow-up-the-ramp mode.
@@ -163,8 +153,9 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
     :returns: A tuple of signal, variance of the signal, numper of pixels used
         and badpixel mask.
     :raises: ValueError
-    '''
+    """
 
+    import numina.array._nirproc as _nirproc
     if ti <= 0:
         raise ValueError("invalid parameter, ti <= 0.0")
 
@@ -204,8 +195,10 @@ def ramp_array(rampdata, ti, gain=1.0, ron=1.0,
     npix = numpy.empty(fshape, dtype=mdtype)
     mask = badpixels.copy()
 
-    _process_ramp_intl(rampdata, ti, gain, ron, badpixels,
-                       saturation, blank, result, var, npix, mask)
+    _nirproc._process_ramp_intl(
+        rampdata, ti, gain, ron, badpixels,
+        saturation, blank, result, var, npix, mask
+    )
     return result, var, npix, mask
 
 

@@ -10,7 +10,7 @@ Create a new DataType
 
 New Data Types must derive from `numina.core.DataType` or
 one of its subclasses. In the constructor, we must declare the base type
-of the objects ot this Data Product. 
+of the objects ot this Data Product.
 
 For example, a `MasterBias` Data Product is an image, so its base type
 is a `DataFrame`. A table of 2D coordinates will have a `numpy.ndarray`

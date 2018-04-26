@@ -1,21 +1,12 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 from __future__ import print_function
 
@@ -26,10 +17,11 @@ import warnings
 from astropy.io import fits
 
 import numina.array as array
+import numina.util.node as node
 from numina.datamodel import DataModel
-from .node import Node
 
-_logger = logging.getLogger('numina.processing')
+
+_logger = logging.getLogger(__name__)
 
 
 def promote_hdulist(hdulist, totype='float32'):
@@ -60,7 +52,7 @@ class SimpleDataModel(DataModel):
     pass
 
 
-class Corrector(Node):
+class Corrector(node.Node):
     """A Node that corrects a frame from instrumental signatures."""
 
     def __init__(self, datamodel=None, calibid='calibid-unknown', dtype='float32'):

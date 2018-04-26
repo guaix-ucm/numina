@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """User command line interface of Numina."""
@@ -30,7 +20,6 @@ from numina import __version__
 import numina.drps
 import numina.exceptions
 from numina.dal.dictdal import HybridDAL
-from numina.dal.clidal import CommandLineDAL
 from numina.util.context import working_directory
 
 from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
@@ -39,11 +28,6 @@ from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
 DEFAULT_RECIPE_LOGGER = 'numina.recipes'
 
 _logger = logging.getLogger("numina")
-
-
-def process_format_version_0(loaded_obs, loaded_data, loaded_data_extra=None):
-    drps = numina.drps.get_system_drps()
-    return CommandLineDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
 
 
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
@@ -66,8 +50,7 @@ def mode_run_common_obs(args, extra_args):
     """Observing mode processing mode of numina."""
 
     # Loading observation result if exists
-    loaded_obs = {}
-    loaded_ids = []
+    loaded_obs = []
     for obfile in args.obsresult:
         _logger.info("Loading observation results from %r", obfile)
 
@@ -77,12 +60,10 @@ def mode_run_common_obs(args, extra_args):
                 docid = doc['id']
                 if enabled:
                     _logger.debug("load observation result with id %s", docid)
-                    loaded_ids.append(docid)
-                    loaded_obs[docid] = doc
                 else:
                     _logger.debug("skip observation result with id %s", docid)
-
-
+                
+                loaded_obs.append(doc)
     if args.reqs:
         _logger.info('reading control from %s', args.reqs)
         with open(args.reqs, 'r') as fd:
@@ -99,18 +80,21 @@ def mode_run_common_obs(args, extra_args):
 
     control_format = loaded_data.get('version', 0)
     _logger.info('control format version %d', control_format)
-    if control_format == 0:
-        dal = process_format_version_0(loaded_obs, loaded_data, loaded_data_extra)
-    elif control_format == 1:
+
+    # FIXME: DAL and WorkEnvironment
+    # DAL and WorkEnvironment
+    # must share its information
+    #
+    if control_format == 1:
         dal = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
 
     # Start processing
-
-    for obid in loaded_ids:
+    for obid in dal.search_session_ids():
         # Directories with relevant data
+        _logger.info("procesing OB with id={}".format(obid))
         workenv = WorkEnvironment(obid,
                                   args.basedir,
                                   workdir=args.workdir,

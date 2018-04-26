@@ -3,25 +3,15 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """
 Base metaclasses
 """
 
-from .dataholders import Product
+from .dataholders import Result
 from .requirements import Requirement
 import weakref
 
@@ -83,4 +73,4 @@ class RecipeResultType(StoreType):
     """Metaclass for RecipeResult."""
     @classmethod
     def exclude(cls, name, value):
-        return isinstance(value, Product)
+        return isinstance(value, Result)

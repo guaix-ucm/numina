@@ -39,6 +39,5 @@ class DALInterface(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def search_result_relative(self, name, tipo, obsres, mode, field, node, options=None):
-        # mode field node could go together...
+    def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
         pass

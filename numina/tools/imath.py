@@ -1,23 +1,13 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-"""Auxiliary script to perform basic image arithmetic."""
+"""Auxiliary script to perform binary image arithmetic."""
 
 from __future__ import division
 from __future__ import print_function
@@ -29,7 +19,7 @@ import sys
 
 from numina.array.display.ximshow import ximshow_file
 
-from arg_file_is_new import arg_file_is_new
+from .arg_file_is_new import arg_file_is_new
 
 
 def compute_operation(file1, file2, operation, output, display,
@@ -38,13 +28,13 @@ def compute_operation(file1, file2, operation, output, display,
 
     Parameters
     ----------
-    file1 : string
+    file1 : file object
         First FITS file.
-    file2 : string
+    file2 : file object
         Second FITS file.
     operation : string
         Mathematical operation.
-    output : string
+    output : file object
         Output FITS file.
     display : string
         Character string indication whether the images are displayed.
@@ -69,7 +59,7 @@ def compute_operation(file1, file2, operation, output, display,
 
     # if required, display file1
     if display == 'all':
-        ximshow_file(file1,
+        ximshow_file(file1.name,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -84,7 +74,7 @@ def compute_operation(file1, file2, operation, output, display,
 
     # if required, display file2
     if display == 'all':
-        ximshow_file(file2,
+        ximshow_file(file2.name,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -114,7 +104,7 @@ def compute_operation(file1, file2, operation, output, display,
 
     # if required, display result
     if display in ['all', 'result']:
-        ximshow_file(output,
+        ximshow_file(output.name,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -124,22 +114,24 @@ def compute_operation(file1, file2, operation, output, display,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="description: binary image arithmetic"
+    )
     # positional parameters
     parser.add_argument("file1",
                         help="First FITS image",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("operation",
-                        help="Mathematical operation",
+                        help="Arithmetic operation",
                         type=str,
                         choices=['+', '-', '*', '/'])
     parser.add_argument("file2",
                         help="Second FITS image",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     # optional arguments
     parser.add_argument("output",
                         help="Output FITS image",
-                        type=lambda x: arg_file_is_new(parser, x))
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--display",
                         help="Display images: all, result, none (default)",
                         default="none",
@@ -153,7 +145,8 @@ def main(args=None):
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy")
+                        help="Tuple x,y,dx,dy indicating window geometry",
+                        default="0,0,640,480")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")

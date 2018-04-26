@@ -1,31 +1,22 @@
 #
-# Copyright 2008-2015 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
+
 """
-Recipe inpus and outputs
+Recipe inputs and outputs
 """
 
 from six import with_metaclass
-import yaml
 
 from .metaclass import RecipeInputType, RecipeResultType
 import numina.store.dump
+import numina.types.qc
 
 
 class RecipeInOut(object):
@@ -94,33 +85,6 @@ class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     pass
 
 
-class ErrorRecipeResult(object):
-    """The error result of a Recipe."""
-    def __init__(self, errortype, message, traceback, _error=""):
-        self.errortype = errortype
-        self.message = message
-        self.traceback = traceback
-        self.file = "errors.yaml" if not _error else _error
-
-    def __repr__(self):
-        fmt = "ErrorRecipeResult(errortype=%r, message='%s', traceback='%s')"
-        return fmt % (self.errortype, self.message, self.traceback)
-
-    def store(self):
-        try:
-            with open(self.file, 'a') as fd:
-                yaml.dump(repr(self), fd)
-        except IOError:
-            with open(self.file, 'w+') as fd:
-                yaml.dump(repr(self), fd)
-
-    def store_to(self, where):
-        with open(where.result, 'w+') as fd:
-            yaml.dump(where.result, fd)
-
-        return where.result
-
-
 class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
     """The result of a Recipe."""
 
@@ -132,6 +96,25 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
             where.destination = prod.dest
             saveres[key] = numina.store.dump(prod.type, val, where)
 
+        return saveres
+
+
+class RecipeResultQC(RecipeResult):
+    def __init__(self, *args, **kwds):
+
+        # Extract QC if available
+        self.qc = numina.types.qc.QC.UNKNOWN
+        if 'qc' in kwds:
+            self.qc = kwds['qc']
+            del kwds['qc']
+
+        super(RecipeResultQC, self).__init__(*args, **kwds)
+
+    def store_to(self, where):
+
+        saveres = super(RecipeResultQC, self).store_to(where)
+
+        saveres['qc'] = self.qc
         return saveres
 
 

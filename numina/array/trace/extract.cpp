@@ -2605,7 +2605,7 @@ static PyObject *__pyx_tuple__44;
 static PyObject *__pyx_codeobj__38;
 static PyObject *__pyx_codeobj__45;
 
-/* "numina/array/trace/extract.pyx":25
+/* "numina/array/trace/extract.pyx":15
  * cimport numpy
  * 
  * cdef int wc_to_pix2(double x):             # <<<<<<<<<<<<<<
@@ -2618,7 +2618,7 @@ static int __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(double __pyx_v_x) 
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("wc_to_pix2", 0);
 
-  /* "numina/array/trace/extract.pyx":26
+  /* "numina/array/trace/extract.pyx":16
  * 
  * cdef int wc_to_pix2(double x):
  *     return <int>(floor(x + 0.5))             # <<<<<<<<<<<<<<
@@ -2628,7 +2628,7 @@ static int __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(double __pyx_v_x) 
   __pyx_r = ((int)floor((__pyx_v_x + 0.5)));
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":25
+  /* "numina/array/trace/extract.pyx":15
  * cimport numpy
  * 
  * cdef int wc_to_pix2(double x):             # <<<<<<<<<<<<<<
@@ -2642,7 +2642,7 @@ static int __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(double __pyx_v_x) 
   return __pyx_r;
 }
 
-/* "numina/array/trace/extract.pyx":39
+/* "numina/array/trace/extract.pyx":29
  * 
  * 
  * cdef inline int int_max(int a, int b): return a if a >= b else b             # <<<<<<<<<<<<<<
@@ -2669,7 +2669,7 @@ static CYTHON_INLINE int __pyx_f_6numina_5array_5trace_8_extract_int_max(int __p
   return __pyx_r;
 }
 
-/* "numina/array/trace/extract.pyx":40
+/* "numina/array/trace/extract.pyx":30
  * 
  * cdef inline int int_max(int a, int b): return a if a >= b else b
  * cdef inline int int_min(int a, int b): return a if a <= b else b             # <<<<<<<<<<<<<<
@@ -2696,7 +2696,7 @@ static CYTHON_INLINE int __pyx_f_6numina_5array_5trace_8_extract_int_min(int __p
   return __pyx_r;
 }
 
-/* "numina/array/trace/extract.pyx":42
+/* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -2742,23 +2742,23 @@ static PyObject *__pyx_pw_6numina_5array_5trace_8_extract_1extract_simple_intl(P
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_args)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_kwargs)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_defaults)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_fused_cpdef") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__pyx_fused_cpdef") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 4) {
       goto __pyx_L5_argtuple_error;
@@ -2775,7 +2775,7 @@ static PyObject *__pyx_pw_6numina_5array_5trace_8_extract_1extract_simple_intl(P
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__pyx_fused_cpdef", 1, 4, 4, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.__pyx_fused_cpdef", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -2834,7 +2834,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   int __pyx_t_19;
   __Pyx_RefNannySetupContext("extract_simple_intl", 0);
   __Pyx_INCREF(__pyx_v_kwargs);
-  __pyx_t_1 = PyList_New(1 * 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1 * 2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   { Py_ssize_t __pyx_temp;
     for (__pyx_temp=0; __pyx_temp < 2; __pyx_temp++) {
@@ -2852,7 +2852,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
     __pyx_t_2 = __pyx_t_4;
     goto __pyx_L4_bool_binop_done;
   }
-  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_kwargs); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_IsTrue(__pyx_v_kwargs); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_t_3 = ((!__pyx_t_4) != 0);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L4_bool_binop_done:;
@@ -2860,7 +2860,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
     __Pyx_INCREF(Py_None);
     __Pyx_DECREF_SET(__pyx_v_kwargs, Py_None);
   }
-  __pyx_t_1 = ((PyObject *)__Pyx_ImportNumPyArrayTypeIfAvailable()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_1 = ((PyObject *)__Pyx_ImportNumPyArrayTypeIfAvailable()); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_ndarray = ((PyTypeObject*)__pyx_t_1);
   __pyx_t_1 = 0;
@@ -2870,16 +2870,16 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   __pyx_v_long_is_signed = (((long)-1L) < 0);
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_t_2 = ((0 < __pyx_t_5) != 0);
   if (__pyx_t_2) {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_GetItemInt_Tuple(((PyObject*)__pyx_v_args), 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetItemInt_Tuple(((PyObject*)__pyx_v_args), 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_arg = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -2894,18 +2894,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   }
   if (unlikely(__pyx_v_kwargs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_data, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_data, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_t_3 = (__pyx_t_4 != 0);
   __pyx_t_2 = __pyx_t_3;
   __pyx_L7_bool_binop_done:;
   if (__pyx_t_2) {
     if (unlikely(__pyx_v_kwargs == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __pyx_v_arg = __pyx_t_1;
     __pyx_t_1 = 0;
@@ -2914,12 +2914,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   /*else*/ {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
-    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
+    __pyx_t_1 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_INCREF(__pyx_int_5);
     __Pyx_GIVEREF(__pyx_int_5);
@@ -2930,20 +2930,20 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_Raise(__pyx_t_1, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
   __pyx_L6:;
   while (1) {
@@ -2953,7 +2953,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = __Pyx_TypeCheck(__pyx_v_arg, __pyx_v_ndarray); 
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_v_dtype = __pyx_t_1;
         __pyx_t_1 = 0;
@@ -2963,14 +2963,14 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_2 = __pyx_memoryview_check(__pyx_v_arg); 
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_v_arg_base = __pyx_t_1;
         __pyx_t_1 = 0;
         __pyx_t_3 = __Pyx_TypeCheck(__pyx_v_arg_base, __pyx_v_ndarray); 
         __pyx_t_2 = (__pyx_t_3 != 0);
         if (__pyx_t_2) {
-          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_v_dtype = __pyx_t_1;
           __pyx_t_1 = 0;
@@ -2992,21 +2992,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_2 = (__pyx_v_dtype != Py_None);
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_1); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_1); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_v_itemsize = __pyx_t_5;
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_1); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_1); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __pyx_v_kind = __pyx_t_7;
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_byteorder); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_byteorder); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __pyx_v_byteorder = __pyx_t_1;
         __pyx_t_1 = 0;
-        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         if (__pyx_t_2) {
         } else {
           __pyx_t_3 = __pyx_t_2;
@@ -3019,7 +3019,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
         if (__pyx_t_3) {
           __pyx_v_arg_is_pythran_compatible = 0;
         }
-        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__2, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__2, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         if (__pyx_t_2) {
         } else {
           __pyx_t_3 = __pyx_t_2;
@@ -3035,31 +3035,31 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
         __pyx_v_dtype_signed = (__pyx_v_kind == 'i');
         __pyx_t_3 = (__pyx_v_arg_is_pythran_compatible != 0);
         if (__pyx_t_3) {
-          __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_1 = PyInt_FromSsize_t(__pyx_v_itemsize); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __pyx_v_cur_stride = __pyx_t_1;
           __pyx_t_1 = 0;
-          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_shape); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
-          __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_GIVEREF(__pyx_t_1);
           PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_1);
           __pyx_t_1 = 0;
-          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_strides); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_strides); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = PyTuple_New(1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_GIVEREF(__pyx_t_6);
           PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_6);
           __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-          __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_GIVEREF(__pyx_t_1);
           PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_1);
@@ -3067,16 +3067,16 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
           PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_6);
           __pyx_t_1 = 0;
           __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_9, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           if (likely(PyList_CheckExact(__pyx_t_6)) || PyTuple_CheckExact(__pyx_t_6)) {
             __pyx_t_9 = __pyx_t_6; __Pyx_INCREF(__pyx_t_9); __pyx_t_5 = 0;
             __pyx_t_10 = NULL;
           } else {
-            __pyx_t_5 = -1; __pyx_t_9 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_5 = -1; __pyx_t_9 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_9);
-            __pyx_t_10 = Py_TYPE(__pyx_t_9)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_10 = Py_TYPE(__pyx_t_9)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 32, __pyx_L1_error)
           }
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           for (;;) {
@@ -3084,17 +3084,17 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               if (likely(PyList_CheckExact(__pyx_t_9))) {
                 if (__pyx_t_5 >= PyList_GET_SIZE(__pyx_t_9)) break;
                 #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-                __pyx_t_6 = PyList_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PyList_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
                 #else
-                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 #endif
               } else {
                 if (__pyx_t_5 >= PyTuple_GET_SIZE(__pyx_t_9)) break;
                 #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-                __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_9, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
                 #else
-                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PySequence_ITEM(__pyx_t_9, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 #endif
               }
@@ -3104,7 +3104,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
                 PyObject* exc_type = PyErr_Occurred();
                 if (exc_type) {
                   if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-                  else __PYX_ERR(0, 42, __pyx_L1_error)
+                  else __PYX_ERR(0, 32, __pyx_L1_error)
                 }
                 break;
               }
@@ -3120,7 +3120,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               if (unlikely(size != 2)) {
                 if (size > 2) __Pyx_RaiseTooManyValuesError(2);
                 else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-                __PYX_ERR(0, 42, __pyx_L1_error)
+                __PYX_ERR(0, 32, __pyx_L1_error)
               }
               #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
               if (likely(PyTuple_CheckExact(sequence))) {
@@ -3133,15 +3133,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               __Pyx_INCREF(__pyx_t_1);
               __Pyx_INCREF(__pyx_t_11);
               #else
-              __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+              __pyx_t_1 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_1);
-              __pyx_t_11 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+              __pyx_t_11 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_11);
               #endif
               __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             } else {
               Py_ssize_t index = -1;
-              __pyx_t_12 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 42, __pyx_L1_error)
+              __pyx_t_12 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 32, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_12);
               __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
               __pyx_t_13 = Py_TYPE(__pyx_t_12)->tp_iternext;
@@ -3149,7 +3149,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               __Pyx_GOTREF(__pyx_t_1);
               index = 1; __pyx_t_11 = __pyx_t_13(__pyx_t_12); if (unlikely(!__pyx_t_11)) goto __pyx_L24_unpacking_failed;
               __Pyx_GOTREF(__pyx_t_11);
-              if (__Pyx_IternextUnpackEndCheck(__pyx_t_13(__pyx_t_12), 2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+              if (__Pyx_IternextUnpackEndCheck(__pyx_t_13(__pyx_t_12), 2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
               __pyx_t_13 = NULL;
               __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
               goto __pyx_L25_unpacking_done;
@@ -3157,43 +3157,43 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
               __pyx_t_13 = NULL;
               if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-              __PYX_ERR(0, 42, __pyx_L1_error)
+              __PYX_ERR(0, 32, __pyx_L1_error)
               __pyx_L25_unpacking_done:;
             }
             __Pyx_XDECREF_SET(__pyx_v_dim, __pyx_t_1);
             __pyx_t_1 = 0;
             __Pyx_XDECREF_SET(__pyx_v_stride, __pyx_t_11);
             __pyx_t_11 = 0;
-            __pyx_t_6 = PyObject_RichCompare(__pyx_v_stride, __pyx_v_cur_stride, Py_NE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
-            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = PyObject_RichCompare(__pyx_v_stride, __pyx_v_cur_stride, Py_NE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             if (__pyx_t_3) {
               __pyx_v_arg_is_pythran_compatible = 0;
               goto __pyx_L23_break;
             }
-            __pyx_t_6 = PyNumber_InPlaceMultiply(__pyx_v_cur_stride, __pyx_v_dim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = PyNumber_InPlaceMultiply(__pyx_v_cur_stride, __pyx_v_dim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_6);
             __Pyx_DECREF_SET(__pyx_v_cur_stride, __pyx_t_6);
             __pyx_t_6 = 0;
           }
           /*else*/ {
-            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_6);
-            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_f_contiguous); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_f_contiguous); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_11);
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_11); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_11); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
             if (__pyx_t_2) {
             } else {
               __pyx_t_3 = __pyx_t_2;
               goto __pyx_L28_bool_binop_done;
             }
-            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_11);
-            __pyx_t_6 = PyObject_RichCompare(__pyx_t_11, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = PyObject_RichCompare(__pyx_t_11, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             __pyx_t_3 = __pyx_t_2;
             __pyx_L28_bool_binop_done:;
@@ -3211,9 +3211,9 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L31_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           if (__pyx_t_2) {
@@ -3225,7 +3225,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
           __pyx_t_3 = __pyx_t_2;
           __pyx_L31_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           __pyx_t_2 = (((sizeof(long)) == __pyx_v_itemsize) != 0);
@@ -3234,9 +3234,9 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L35_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           if (__pyx_t_2) {
@@ -3248,7 +3248,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
           __pyx_t_3 = __pyx_t_2;
           __pyx_L35_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           break;
@@ -3259,15 +3259,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L39_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           __pyx_t_3 = __pyx_t_2;
           __pyx_L39_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           __pyx_t_2 = (((sizeof(float)) == __pyx_v_itemsize) != 0);
@@ -3276,15 +3276,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
             __pyx_t_3 = __pyx_t_2;
             goto __pyx_L42_bool_binop_done;
           }
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
           __pyx_t_2 = ((((Py_ssize_t)__pyx_t_5) == 2) != 0);
           __pyx_t_3 = __pyx_t_2;
           __pyx_L42_bool_binop_done:;
           if (__pyx_t_3) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             goto __pyx_L10_break;
           }
           break;
@@ -3311,7 +3311,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_double, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -3333,7 +3333,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_float, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -3355,7 +3355,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
@@ -3377,29 +3377,29 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_3) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         goto __pyx_L10_break;
       }
       /*else*/ {
         PyErr_Clear(); 
       }
     }
-    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 0, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
     goto __pyx_L10_break;
   }
   __pyx_L10_break:;
   if (unlikely(__pyx_v_args == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_t_3 = ((1 < __pyx_t_5) != 0);
   if (__pyx_t_3) {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_9 = __Pyx_GetItemInt_Tuple(((PyObject*)__pyx_v_args), 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_GetItemInt_Tuple(((PyObject*)__pyx_v_args), 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF_SET(__pyx_v_arg, __pyx_t_9);
     __pyx_t_9 = 0;
@@ -3414,18 +3414,18 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   }
   if (unlikely(__pyx_v_kwargs == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_xx, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_4 = (__Pyx_PyDict_ContainsTF(__pyx_n_s_xx, ((PyObject*)__pyx_v_kwargs), Py_EQ)); if (unlikely(__pyx_t_4 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_t_2 = (__pyx_t_4 != 0);
   __pyx_t_3 = __pyx_t_2;
   __pyx_L61_bool_binop_done:;
   if (__pyx_t_3) {
     if (unlikely(__pyx_v_kwargs == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_9 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_xx); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_kwargs), __pyx_n_s_xx); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF_SET(__pyx_v_arg, __pyx_t_9);
     __pyx_t_9 = 0;
@@ -3434,12 +3434,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   /*else*/ {
     if (unlikely(__pyx_v_args == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "object of type 'NoneType' has no len()");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
-    __pyx_t_9 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_5 = PyTuple_GET_SIZE(((PyObject*)__pyx_v_args)); if (unlikely(__pyx_t_5 == ((Py_ssize_t)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
+    __pyx_t_9 = PyInt_FromSsize_t(__pyx_t_5); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
-    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(3); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_INCREF(__pyx_int_5);
     __Pyx_GIVEREF(__pyx_int_5);
@@ -3450,20 +3450,20 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
     __Pyx_GIVEREF(__pyx_t_9);
     PyTuple_SET_ITEM(__pyx_t_6, 2, __pyx_t_9);
     __pyx_t_9 = 0;
-    __pyx_t_9 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyString_Format(__pyx_kp_s_Expected_at_least_d_argument_s_g, __pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_GIVEREF(__pyx_t_9);
     PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_9);
     __pyx_t_9 = 0;
-    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_t_6, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_t_6, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_Raise(__pyx_t_9, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
   __pyx_L60:;
   while (1) {
@@ -3473,7 +3473,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_2 = __Pyx_TypeCheck(__pyx_v_arg, __pyx_v_ndarray); 
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_dtype); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
         __Pyx_XDECREF_SET(__pyx_v_dtype, __pyx_t_9);
         __pyx_t_9 = 0;
@@ -3483,14 +3483,14 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = __pyx_memoryview_check(__pyx_v_arg); 
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_base); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
         __Pyx_XDECREF_SET(__pyx_v_arg_base, __pyx_t_9);
         __pyx_t_9 = 0;
         __pyx_t_2 = __Pyx_TypeCheck(__pyx_v_arg_base, __pyx_v_ndarray); 
         __pyx_t_3 = (__pyx_t_2 != 0);
         if (__pyx_t_3) {
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg_base, __pyx_n_s_dtype); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_XDECREF_SET(__pyx_v_dtype, __pyx_t_9);
           __pyx_t_9 = 0;
@@ -3512,21 +3512,21 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_3 = (__pyx_v_dtype != Py_None);
       __pyx_t_2 = (__pyx_t_3 != 0);
       if (__pyx_t_2) {
-        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_itemsize); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
-        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_9); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
         __pyx_v_itemsize = __pyx_t_5;
-        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_kind); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
-        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_9); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Ord(__pyx_t_9); if (unlikely(__pyx_t_7 == ((long)(long)(Py_UCS4)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
         __pyx_v_kind = __pyx_t_7;
-        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_byteorder); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_dtype, __pyx_n_s_byteorder); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
         __Pyx_XDECREF_SET(__pyx_v_byteorder, __pyx_t_9);
         __pyx_t_9 = 0;
-        __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s_, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         if (__pyx_t_3) {
         } else {
           __pyx_t_2 = __pyx_t_3;
@@ -3539,7 +3539,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
         if (__pyx_t_2) {
           __pyx_v_arg_is_pythran_compatible = 0;
         }
-        __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__2, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_3 = (__Pyx_PyString_Equals(__pyx_v_byteorder, __pyx_kp_s__2, Py_EQ)); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         if (__pyx_t_3) {
         } else {
           __pyx_t_2 = __pyx_t_3;
@@ -3555,31 +3555,31 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
         __pyx_v_dtype_signed = (__pyx_v_kind == 'i');
         __pyx_t_2 = (__pyx_v_arg_is_pythran_compatible != 0);
         if (__pyx_t_2) {
-          __pyx_t_9 = PyInt_FromSsize_t(__pyx_v_itemsize); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = PyInt_FromSsize_t(__pyx_v_itemsize); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_XDECREF_SET(__pyx_v_cur_stride, __pyx_t_9);
           __pyx_t_9 = 0;
-          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_shape); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_shape); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
-          __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_GIVEREF(__pyx_t_9);
           PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_9);
           __pyx_t_9 = 0;
-          __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_6, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_9 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_6, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_strides); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_strides); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
-          __pyx_t_11 = PyTuple_New(1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_11 = PyTuple_New(1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_11);
           __Pyx_GIVEREF(__pyx_t_6);
           PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_6);
           __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_11, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_reversed, __pyx_t_11, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-          __pyx_t_11 = PyTuple_New(2); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_11 = PyTuple_New(2); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_11);
           __Pyx_GIVEREF(__pyx_t_9);
           PyTuple_SET_ITEM(__pyx_t_11, 0, __pyx_t_9);
@@ -3587,16 +3587,16 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
           PyTuple_SET_ITEM(__pyx_t_11, 1, __pyx_t_6);
           __pyx_t_9 = 0;
           __pyx_t_6 = 0;
-          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_11, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_6 = __Pyx_PyObject_Call(__pyx_builtin_zip, __pyx_t_11, NULL); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_6);
           __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
           if (likely(PyList_CheckExact(__pyx_t_6)) || PyTuple_CheckExact(__pyx_t_6)) {
             __pyx_t_11 = __pyx_t_6; __Pyx_INCREF(__pyx_t_11); __pyx_t_5 = 0;
             __pyx_t_10 = NULL;
           } else {
-            __pyx_t_5 = -1; __pyx_t_11 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_5 = -1; __pyx_t_11 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_11);
-            __pyx_t_10 = Py_TYPE(__pyx_t_11)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_10 = Py_TYPE(__pyx_t_11)->tp_iternext; if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 32, __pyx_L1_error)
           }
           __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
           for (;;) {
@@ -3604,17 +3604,17 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               if (likely(PyList_CheckExact(__pyx_t_11))) {
                 if (__pyx_t_5 >= PyList_GET_SIZE(__pyx_t_11)) break;
                 #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-                __pyx_t_6 = PyList_GET_ITEM(__pyx_t_11, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PyList_GET_ITEM(__pyx_t_11, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
                 #else
-                __pyx_t_6 = PySequence_ITEM(__pyx_t_11, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PySequence_ITEM(__pyx_t_11, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 #endif
               } else {
                 if (__pyx_t_5 >= PyTuple_GET_SIZE(__pyx_t_11)) break;
                 #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-                __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_11, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PyTuple_GET_ITEM(__pyx_t_11, __pyx_t_5); __Pyx_INCREF(__pyx_t_6); __pyx_t_5++; if (unlikely(0 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
                 #else
-                __pyx_t_6 = PySequence_ITEM(__pyx_t_11, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+                __pyx_t_6 = PySequence_ITEM(__pyx_t_11, __pyx_t_5); __pyx_t_5++; if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
                 __Pyx_GOTREF(__pyx_t_6);
                 #endif
               }
@@ -3624,7 +3624,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
                 PyObject* exc_type = PyErr_Occurred();
                 if (exc_type) {
                   if (likely(__Pyx_PyErr_GivenExceptionMatches(exc_type, PyExc_StopIteration))) PyErr_Clear();
-                  else __PYX_ERR(0, 42, __pyx_L1_error)
+                  else __PYX_ERR(0, 32, __pyx_L1_error)
                 }
                 break;
               }
@@ -3640,7 +3640,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               if (unlikely(size != 2)) {
                 if (size > 2) __Pyx_RaiseTooManyValuesError(2);
                 else if (size >= 0) __Pyx_RaiseNeedMoreValuesError(size);
-                __PYX_ERR(0, 42, __pyx_L1_error)
+                __PYX_ERR(0, 32, __pyx_L1_error)
               }
               #if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
               if (likely(PyTuple_CheckExact(sequence))) {
@@ -3653,15 +3653,15 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               __Pyx_INCREF(__pyx_t_9);
               __Pyx_INCREF(__pyx_t_1);
               #else
-              __pyx_t_9 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 42, __pyx_L1_error)
+              __pyx_t_9 = PySequence_ITEM(sequence, 0); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 32, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_9);
-              __pyx_t_1 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+              __pyx_t_1 = PySequence_ITEM(sequence, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_1);
               #endif
               __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             } else {
               Py_ssize_t index = -1;
-              __pyx_t_12 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 42, __pyx_L1_error)
+              __pyx_t_12 = PyObject_GetIter(__pyx_t_6); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 32, __pyx_L1_error)
               __Pyx_GOTREF(__pyx_t_12);
               __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
               __pyx_t_13 = Py_TYPE(__pyx_t_12)->tp_iternext;
@@ -3669,7 +3669,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               __Pyx_GOTREF(__pyx_t_9);
               index = 1; __pyx_t_1 = __pyx_t_13(__pyx_t_12); if (unlikely(!__pyx_t_1)) goto __pyx_L78_unpacking_failed;
               __Pyx_GOTREF(__pyx_t_1);
-              if (__Pyx_IternextUnpackEndCheck(__pyx_t_13(__pyx_t_12), 2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+              if (__Pyx_IternextUnpackEndCheck(__pyx_t_13(__pyx_t_12), 2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
               __pyx_t_13 = NULL;
               __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
               goto __pyx_L79_unpacking_done;
@@ -3677,43 +3677,43 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
               __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
               __pyx_t_13 = NULL;
               if (__Pyx_IterFinish() == 0) __Pyx_RaiseNeedMoreValuesError(index);
-              __PYX_ERR(0, 42, __pyx_L1_error)
+              __PYX_ERR(0, 32, __pyx_L1_error)
               __pyx_L79_unpacking_done:;
             }
             __Pyx_XDECREF_SET(__pyx_v_dim, __pyx_t_9);
             __pyx_t_9 = 0;
             __Pyx_XDECREF_SET(__pyx_v_stride, __pyx_t_1);
             __pyx_t_1 = 0;
-            __pyx_t_6 = PyObject_RichCompare(__pyx_v_stride, __pyx_v_cur_stride, Py_NE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
-            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = PyObject_RichCompare(__pyx_v_stride, __pyx_v_cur_stride, Py_NE); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
+            __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             if (__pyx_t_2) {
               __pyx_v_arg_is_pythran_compatible = 0;
               goto __pyx_L77_break;
             }
-            __pyx_t_6 = PyNumber_InPlaceMultiply(__pyx_v_cur_stride, __pyx_v_dim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = PyNumber_InPlaceMultiply(__pyx_v_cur_stride, __pyx_v_dim); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_6);
             __Pyx_DECREF_SET(__pyx_v_cur_stride, __pyx_t_6);
             __pyx_t_6 = 0;
           }
           /*else*/ {
-            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_flags); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_6);
-            __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_f_contiguous); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_f_contiguous); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_1);
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
             if (__pyx_t_3) {
             } else {
               __pyx_t_2 = __pyx_t_3;
               goto __pyx_L82_bool_binop_done;
             }
-            __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_1);
-            __pyx_t_6 = PyObject_RichCompare(__pyx_t_1, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_6 = PyObject_RichCompare(__pyx_t_1, __pyx_int_1, Py_GT); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
             __pyx_t_2 = __pyx_t_3;
             __pyx_L82_bool_binop_done:;
@@ -3731,9 +3731,9 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
             __pyx_t_2 = __pyx_t_3;
             goto __pyx_L85_bool_binop_done;
           }
-          __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_11);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_11); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_11); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
           __pyx_t_3 = ((((Py_ssize_t)__pyx_t_5) == 1) != 0);
           if (__pyx_t_3) {
@@ -3745,7 +3745,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
           __pyx_t_2 = __pyx_t_3;
           __pyx_L85_bool_binop_done:;
           if (__pyx_t_2) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             goto __pyx_L64_break;
           }
           __pyx_t_3 = (((sizeof(long)) == __pyx_v_itemsize) != 0);
@@ -3754,9 +3754,9 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
             __pyx_t_2 = __pyx_t_3;
             goto __pyx_L89_bool_binop_done;
           }
-          __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_11 = __Pyx_PyObject_GetAttrStr(__pyx_v_arg, __pyx_n_s_ndim); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_11);
-          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_11); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 42, __pyx_L1_error)
+          __pyx_t_5 = __Pyx_PyIndex_AsSsize_t(__pyx_t_11); if (unlikely((__pyx_t_5 == (Py_ssize_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 32, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
           __pyx_t_3 = ((((Py_ssize_t)__pyx_t_5) == 1) != 0);
           if (__pyx_t_3) {
@@ -3768,7 +3768,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
           __pyx_t_2 = __pyx_t_3;
           __pyx_L89_bool_binop_done:;
           if (__pyx_t_2) {
-            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+            if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
             goto __pyx_L64_break;
           }
           break;
@@ -3797,7 +3797,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_2 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_2) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_int, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         goto __pyx_L64_break;
       }
       /*else*/ {
@@ -3819,27 +3819,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
       __pyx_t_2 = (__pyx_v_memslice.memview != 0);
       if (__pyx_t_2) {
         __PYX_XDEC_MEMVIEW((&__pyx_v_memslice), 1); 
-        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, __pyx_n_s_long, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         goto __pyx_L64_break;
       }
       /*else*/ {
         PyErr_Clear(); 
       }
     }
-    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+    if (unlikely(__Pyx_SetItemInt(__pyx_v_dest_sig, 1, Py_None, long, 1, __Pyx_PyInt_From_long, 1, 0, 1) < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
     goto __pyx_L64_break;
   }
   __pyx_L64_break:;
-  __pyx_t_11 = PyList_New(0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_11 = PyList_New(0); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_11);
   __pyx_v_candidates = ((PyObject*)__pyx_t_11);
   __pyx_t_11 = 0;
   __pyx_t_5 = 0;
   if (unlikely(__pyx_v_signatures == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_6 = __Pyx_dict_iterator(((PyObject*)__pyx_v_signatures), 1, ((PyObject *)NULL), (&__pyx_t_15), (&__pyx_t_8)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_dict_iterator(((PyObject*)__pyx_v_signatures), 1, ((PyObject *)NULL), (&__pyx_t_15), (&__pyx_t_8)); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_XDECREF(__pyx_t_11);
   __pyx_t_11 = __pyx_t_6;
@@ -3847,39 +3847,39 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
   while (1) {
     __pyx_t_16 = __Pyx_dict_iter_next(__pyx_t_11, __pyx_t_15, &__pyx_t_5, &__pyx_t_6, NULL, NULL, __pyx_t_8);
     if (unlikely(__pyx_t_16 == 0)) break;
-    if (unlikely(__pyx_t_16 == -1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    if (unlikely(__pyx_t_16 == -1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_XDECREF_SET(__pyx_v_sig, __pyx_t_6);
     __pyx_t_6 = 0;
     __pyx_v_match_found = 0;
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_sig, __pyx_n_s_strip); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_sig, __pyx_n_s_strip); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_split); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_split); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_tuple__6, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_XDECREF_SET(__pyx_v_src_sig, __pyx_t_1);
     __pyx_t_1 = 0;
-    __pyx_t_17 = PyList_GET_SIZE(__pyx_v_dest_sig); if (unlikely(__pyx_t_17 == ((Py_ssize_t)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_17 = PyList_GET_SIZE(__pyx_v_dest_sig); if (unlikely(__pyx_t_17 == ((Py_ssize_t)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
     for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
       __pyx_v_i = __pyx_t_18;
-      __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_dest_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 1, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_GetItemInt_List(__pyx_v_dest_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 1, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_XDECREF_SET(__pyx_v_dst_type, __pyx_t_1);
       __pyx_t_1 = 0;
       __pyx_t_2 = (__pyx_v_dst_type != Py_None);
       __pyx_t_3 = (__pyx_t_2 != 0);
       if (__pyx_t_3) {
-        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_src_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_src_sig, __pyx_v_i, Py_ssize_t, 1, PyInt_FromSsize_t, 0, 1, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_6 = PyObject_RichCompare(__pyx_t_1, __pyx_v_dst_type, Py_EQ); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_6 = PyObject_RichCompare(__pyx_t_1, __pyx_v_dst_type, Py_EQ); __Pyx_XGOTREF(__pyx_t_6); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_6); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 32, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
         if (__pyx_t_3) {
           __pyx_v_match_found = 1;
@@ -3895,37 +3895,37 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_extract_simple_intl(CY
     __pyx_L103_break:;
     __pyx_t_3 = (__pyx_v_match_found != 0);
     if (__pyx_t_3) {
-      __pyx_t_19 = __Pyx_PyList_Append(__pyx_v_candidates, __pyx_v_sig); if (unlikely(__pyx_t_19 == ((int)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+      __pyx_t_19 = __Pyx_PyList_Append(__pyx_v_candidates, __pyx_v_sig); if (unlikely(__pyx_t_19 == ((int)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
     }
   }
   __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
   __pyx_t_3 = (__pyx_v_candidates != Py_None) && (PyList_GET_SIZE(__pyx_v_candidates) != 0);
   __pyx_t_2 = ((!__pyx_t_3) != 0);
   if (__pyx_t_2) {
-    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__7, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_Raise(__pyx_t_11, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
-  __pyx_t_15 = PyList_GET_SIZE(__pyx_v_candidates); if (unlikely(__pyx_t_15 == ((Py_ssize_t)-1))) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_15 = PyList_GET_SIZE(__pyx_v_candidates); if (unlikely(__pyx_t_15 == ((Py_ssize_t)-1))) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_t_2 = ((__pyx_t_15 > 1) != 0);
   if (__pyx_t_2) {
-    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_PyObject_Call(__pyx_builtin_TypeError, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
     __Pyx_Raise(__pyx_t_11, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
-    __PYX_ERR(0, 42, __pyx_L1_error)
+    __PYX_ERR(0, 32, __pyx_L1_error)
   }
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
     if (unlikely(__pyx_v_signatures == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 42, __pyx_L1_error)
+      __PYX_ERR(0, 32, __pyx_L1_error)
     }
-    __pyx_t_11 = __Pyx_GetItemInt_List(__pyx_v_candidates, 0, long, 1, __Pyx_PyInt_From_long, 1, 0, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_11 = __Pyx_GetItemInt_List(__pyx_v_candidates, 0, long, 1, __Pyx_PyInt_From_long, 1, 0, 1); if (unlikely(!__pyx_t_11)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_11);
-    __pyx_t_6 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_signatures), __pyx_t_11); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 42, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyDict_GetItem(((PyObject*)__pyx_v_signatures), __pyx_t_11); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 32, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_11); __pyx_t_11 = 0;
     __pyx_r = __pyx_t_6;
@@ -4003,29 +4003,29 @@ static PyObject *__pyx_fuse_0_0__pyx_pw_6numina_5array_5trace_8_extract_3extract
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -4036,15 +4036,15 @@ static PyObject *__pyx_fuse_0_0__pyx_pw_6numina_5array_5trace_8_extract_3extract
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -4093,7 +4093,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_0_0extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -4102,7 +4102,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -4113,7 +4113,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -4125,11 +4125,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((int *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -4141,11 +4141,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -4157,11 +4157,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -4170,7 +4170,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -4179,7 +4179,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -4189,7 +4189,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4207,7 +4207,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -4216,7 +4216,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -4236,7 +4236,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -4246,11 +4246,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4259,7 +4259,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -4269,7 +4269,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -4279,7 +4279,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4297,7 +4297,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -4306,7 +4306,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -4326,11 +4326,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4339,7 +4339,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -4357,7 +4357,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -4366,7 +4366,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -4386,11 +4386,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -4399,7 +4399,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -4410,7 +4410,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -4430,12 +4430,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -4450,27 +4450,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_2extract_simple_intl(C
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -4535,29 +4535,29 @@ static PyObject *__pyx_fuse_0_1__pyx_pw_6numina_5array_5trace_8_extract_5extract
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -4568,15 +4568,15 @@ static PyObject *__pyx_fuse_0_1__pyx_pw_6numina_5array_5trace_8_extract_5extract
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_double(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -4625,7 +4625,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_0_1extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -4634,7 +4634,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -4645,7 +4645,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -4657,11 +4657,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((long *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -4673,11 +4673,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -4689,11 +4689,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -4702,7 +4702,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -4711,7 +4711,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -4721,7 +4721,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4739,7 +4739,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -4748,7 +4748,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -4768,7 +4768,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -4778,11 +4778,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4791,7 +4791,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -4801,7 +4801,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -4811,7 +4811,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4829,7 +4829,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -4838,7 +4838,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -4858,11 +4858,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -4871,7 +4871,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -4889,7 +4889,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -4898,7 +4898,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -4918,11 +4918,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -4931,7 +4931,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -4942,7 +4942,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -4962,12 +4962,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((double *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -4982,27 +4982,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_4extract_simple_intl(C
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -5067,29 +5067,29 @@ static PyObject *__pyx_fuse_1_0__pyx_pw_6numina_5array_5trace_8_extract_7extract
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -5100,15 +5100,15 @@ static PyObject *__pyx_fuse_1_0__pyx_pw_6numina_5array_5trace_8_extract_7extract
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -5157,7 +5157,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_1_0extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -5166,7 +5166,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -5177,7 +5177,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -5189,11 +5189,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((int *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -5205,11 +5205,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -5221,11 +5221,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -5234,7 +5234,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -5243,7 +5243,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -5253,7 +5253,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5271,7 +5271,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -5280,7 +5280,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -5300,7 +5300,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -5310,11 +5310,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5323,7 +5323,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -5333,7 +5333,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -5343,7 +5343,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5361,7 +5361,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -5370,7 +5370,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -5390,11 +5390,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5403,7 +5403,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -5421,7 +5421,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -5430,7 +5430,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -5450,11 +5450,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -5463,7 +5463,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -5474,7 +5474,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -5494,12 +5494,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -5514,27 +5514,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_6extract_simple_intl(C
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -5599,29 +5599,29 @@ static PyObject *__pyx_fuse_1_1__pyx_pw_6numina_5array_5trace_8_extract_9extract
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -5632,15 +5632,15 @@ static PyObject *__pyx_fuse_1_1__pyx_pw_6numina_5array_5trace_8_extract_9extract
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -5689,7 +5689,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_1_1extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -5698,7 +5698,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -5709,7 +5709,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -5721,11 +5721,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((long *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -5737,11 +5737,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -5753,11 +5753,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -5766,7 +5766,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -5775,7 +5775,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -5785,7 +5785,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5803,7 +5803,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -5812,7 +5812,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -5832,7 +5832,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -5842,11 +5842,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5855,7 +5855,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -5865,7 +5865,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -5875,7 +5875,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5893,7 +5893,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -5902,7 +5902,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -5922,11 +5922,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -5935,7 +5935,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -5953,7 +5953,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -5962,7 +5962,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -5982,11 +5982,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -5995,7 +5995,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -6006,7 +6006,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -6026,12 +6026,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((float *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -6046,27 +6046,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_8extract_simple_intl(C
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -6131,29 +6131,29 @@ static PyObject *__pyx_fuse_2_0__pyx_pw_6numina_5array_5trace_8_extract_11extrac
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -6164,15 +6164,15 @@ static PyObject *__pyx_fuse_2_0__pyx_pw_6numina_5array_5trace_8_extract_11extrac
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_int(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_int(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6221,7 +6221,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_2_0extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -6230,7 +6230,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -6241,7 +6241,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -6253,11 +6253,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((int *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -6269,11 +6269,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -6285,11 +6285,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -6298,7 +6298,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -6307,7 +6307,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -6317,7 +6317,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6335,7 +6335,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -6344,7 +6344,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -6364,7 +6364,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -6374,11 +6374,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6387,7 +6387,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -6397,7 +6397,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -6407,7 +6407,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6425,7 +6425,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -6434,7 +6434,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -6454,11 +6454,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6467,7 +6467,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -6485,7 +6485,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -6494,7 +6494,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -6514,11 +6514,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -6527,7 +6527,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -6538,7 +6538,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -6558,12 +6558,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -6578,27 +6578,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_10extract_simple_intl(
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -6663,29 +6663,29 @@ static PyObject *__pyx_fuse_2_1__pyx_pw_6numina_5array_5trace_8_extract_13extrac
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -6696,15 +6696,15 @@ static PyObject *__pyx_fuse_2_1__pyx_pw_6numina_5array_5trace_8_extract_13extrac
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_int(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_int(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -6753,7 +6753,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_2_1extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -6762,7 +6762,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -6773,7 +6773,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -6785,11 +6785,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((long *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -6801,11 +6801,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -6817,11 +6817,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -6830,7 +6830,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -6839,7 +6839,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -6849,7 +6849,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6867,7 +6867,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -6876,7 +6876,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -6896,7 +6896,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -6906,11 +6906,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6919,7 +6919,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -6929,7 +6929,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -6939,7 +6939,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6957,7 +6957,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -6966,7 +6966,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -6986,11 +6986,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -6999,7 +6999,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -7017,7 +7017,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -7026,7 +7026,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -7046,11 +7046,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -7059,7 +7059,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -7070,7 +7070,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -7090,12 +7090,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((int *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -7110,27 +7110,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_12extract_simple_intl(
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -7195,29 +7195,29 @@ static PyObject *__pyx_fuse_3_0__pyx_pw_6numina_5array_5trace_8_extract_15extrac
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -7228,15 +7228,15 @@ static PyObject *__pyx_fuse_3_0__pyx_pw_6numina_5array_5trace_8_extract_15extrac
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_long(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_long(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_int(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -7285,7 +7285,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_3_0extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -7294,7 +7294,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -7305,7 +7305,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -7317,11 +7317,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((int *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -7333,11 +7333,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -7349,11 +7349,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -7362,7 +7362,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -7371,7 +7371,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -7381,7 +7381,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -7399,7 +7399,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -7408,7 +7408,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -7428,7 +7428,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -7438,11 +7438,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -7451,7 +7451,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -7461,7 +7461,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -7471,7 +7471,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -7489,7 +7489,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -7498,7 +7498,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -7518,11 +7518,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -7531,7 +7531,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -7549,7 +7549,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -7558,7 +7558,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -7578,11 +7578,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -7591,7 +7591,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -7602,7 +7602,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -7622,12 +7622,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -7642,27 +7642,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_14extract_simple_intl(
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -7727,29 +7727,29 @@ static PyObject *__pyx_fuse_3_1__pyx_pw_6numina_5array_5trace_8_extract_17extrac
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_xx)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 1); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb1)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 2); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_bb2)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 3); __PYX_ERR(0, 32, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_out)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 42, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, 4); __PYX_ERR(0, 32, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 42, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "extract_simple_intl") < 0)) __PYX_ERR(0, 32, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -7760,15 +7760,15 @@ static PyObject *__pyx_fuse_3_1__pyx_pw_6numina_5array_5trace_8_extract_17extrac
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_long(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 42, __pyx_L3_error)
-    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 43, __pyx_L3_error)
-    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 44, __pyx_L3_error)
+    __pyx_v_data = __Pyx_PyObject_to_MemoryviewSlice_dsds_long(values[0]); if (unlikely(!__pyx_v_data.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_xx = __Pyx_PyObject_to_MemoryviewSlice_ds_long(values[1]); if (unlikely(!__pyx_v_xx.memview)) __PYX_ERR(0, 32, __pyx_L3_error)
+    __pyx_v_bb1 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[2]); if (unlikely(!__pyx_v_bb1.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_bb2 = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[3]); if (unlikely(!__pyx_v_bb2.memview)) __PYX_ERR(0, 33, __pyx_L3_error)
+    __pyx_v_out = __Pyx_PyObject_to_MemoryviewSlice_ds_double(values[4]); if (unlikely(!__pyx_v_out.memview)) __PYX_ERR(0, 34, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 42, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("extract_simple_intl", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 32, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.trace._extract.extract_simple_intl", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -7817,7 +7817,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
   PyObject *__pyx_t_21 = NULL;
   __Pyx_RefNannySetupContext("__pyx_fuse_3_1extract_simple_intl", 0);
 
-  /* "numina/array/trace/extract.pyx":46
+  /* "numina/array/trace/extract.pyx":36
  *                         double[:] out):
  * 
  *     cdef size_t size = xx.shape[0]             # <<<<<<<<<<<<<<
@@ -7826,7 +7826,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
   __pyx_v_size = (__pyx_v_xx.shape[0]);
 
-  /* "numina/array/trace/extract.pyx":52
+  /* "numina/array/trace/extract.pyx":42
  *     cdef double a,b,w,acc
  * 
  *     for i in range(size):             # <<<<<<<<<<<<<<
@@ -7837,7 +7837,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "numina/array/trace/extract.pyx":53
+    /* "numina/array/trace/extract.pyx":43
  * 
  *     for i in range(size):
  *         x = xx[i]             # <<<<<<<<<<<<<<
@@ -7849,11 +7849,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
     if (unlikely(__pyx_t_3 >= (size_t)__pyx_v_xx.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 53, __pyx_L1_error)
+      __PYX_ERR(0, 43, __pyx_L1_error)
     }
     __pyx_v_x = (*((long *) ( /* dim=0 */ (__pyx_v_xx.data + __pyx_t_3 * __pyx_v_xx.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":54
+    /* "numina/array/trace/extract.pyx":44
  *     for i in range(size):
  *         x = xx[i]
  *         a = bb1[i]             # <<<<<<<<<<<<<<
@@ -7865,11 +7865,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
     if (unlikely(__pyx_t_5 >= (size_t)__pyx_v_bb1.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 54, __pyx_L1_error)
+      __PYX_ERR(0, 44, __pyx_L1_error)
     }
     __pyx_v_a = (*((double *) ( /* dim=0 */ (__pyx_v_bb1.data + __pyx_t_5 * __pyx_v_bb1.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":55
+    /* "numina/array/trace/extract.pyx":45
  *         x = xx[i]
  *         a = bb1[i]
  *         b = bb2[i]             # <<<<<<<<<<<<<<
@@ -7881,11 +7881,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
     if (unlikely(__pyx_t_6 >= (size_t)__pyx_v_bb2.shape[0])) __pyx_t_4 = 0;
     if (unlikely(__pyx_t_4 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_4);
-      __PYX_ERR(0, 55, __pyx_L1_error)
+      __PYX_ERR(0, 45, __pyx_L1_error)
     }
     __pyx_v_b = (*((double *) ( /* dim=0 */ (__pyx_v_bb2.data + __pyx_t_6 * __pyx_v_bb2.strides[0]) )));
 
-    /* "numina/array/trace/extract.pyx":56
+    /* "numina/array/trace/extract.pyx":46
  *         a = bb1[i]
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])             # <<<<<<<<<<<<<<
@@ -7894,7 +7894,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
     __pyx_v_pb = __pyx_f_6numina_5array_5trace_8_extract_int_min(__pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_b), (__pyx_v_data.shape[0]));
 
-    /* "numina/array/trace/extract.pyx":57
+    /* "numina/array/trace/extract.pyx":47
  *         b = bb2[i]
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))             # <<<<<<<<<<<<<<
@@ -7903,7 +7903,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
     __pyx_v_pa = __pyx_f_6numina_5array_5trace_8_extract_int_max(0, __pyx_f_6numina_5array_5trace_8_extract_wc_to_pix2(__pyx_v_a));
 
-    /* "numina/array/trace/extract.pyx":58
+    /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -7913,7 +7913,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
     __pyx_t_7 = ((__pyx_v_pa == __pyx_v_pb) != 0);
     if (__pyx_t_7) {
 
-      /* "numina/array/trace/extract.pyx":59
+      /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -7931,7 +7931,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
       __pyx_L7_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":60
+        /* "numina/array/trace/extract.pyx":50
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a             # <<<<<<<<<<<<<<
@@ -7940,7 +7940,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":61
+        /* "numina/array/trace/extract.pyx":51
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = b - a
  *                 out[x] = data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -7960,7 +7960,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
         } else if (unlikely(__pyx_t_10 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         __pyx_t_11 = __pyx_v_x;
         __pyx_t_4 = -1;
@@ -7970,11 +7970,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
         } else if (unlikely(__pyx_t_11 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 61, __pyx_L1_error)
+          __PYX_ERR(0, 51, __pyx_L1_error)
         }
         *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_11 * __pyx_v_out.strides[0]) )) = ((*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_9 * __pyx_v_data.strides[0]) ) + __pyx_t_10 * __pyx_v_data.strides[1]) ))) * __pyx_v_w);
 
-        /* "numina/array/trace/extract.pyx":59
+        /* "numina/array/trace/extract.pyx":49
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -7983,7 +7983,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":58
+      /* "numina/array/trace/extract.pyx":48
  *         pb = int_min(wc_to_pix2(b), data.shape[0])
  *         pa = int_max(0, wc_to_pix2(a))
  *         if pa == pb:             # <<<<<<<<<<<<<<
@@ -7993,7 +7993,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
       goto __pyx_L5;
     }
 
-    /* "numina/array/trace/extract.pyx":63
+    /* "numina/array/trace/extract.pyx":53
  *                 out[x] = data[pa, x] * w
  *         else:
  *             acc = 0             # <<<<<<<<<<<<<<
@@ -8003,7 +8003,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
     /*else*/ {
       __pyx_v_acc = 0.0;
 
-      /* "numina/array/trace/extract.pyx":64
+      /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -8021,7 +8021,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
       __pyx_L10_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":65
+        /* "numina/array/trace/extract.pyx":55
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a             # <<<<<<<<<<<<<<
@@ -8030,7 +8030,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
         __pyx_v_w = ((__pyx_v_pa + 0.5) - __pyx_v_a);
 
-        /* "numina/array/trace/extract.pyx":66
+        /* "numina/array/trace/extract.pyx":56
  *             if pa >= 0 and pa < data.shape[0]:
  *                 w = pa + 0.5 - a
  *                 acc += data[pa, x] * w             # <<<<<<<<<<<<<<
@@ -8050,11 +8050,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
         } else if (unlikely(__pyx_t_13 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 66, __pyx_L1_error)
+          __PYX_ERR(0, 56, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_12 * __pyx_v_data.strides[0]) ) + __pyx_t_13 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":64
+        /* "numina/array/trace/extract.pyx":54
  *         else:
  *             acc = 0
  *             if pa >= 0 and pa < data.shape[0]:             # <<<<<<<<<<<<<<
@@ -8063,7 +8063,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":68
+      /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -8081,7 +8081,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
       __pyx_L13_bool_binop_done:;
       if (__pyx_t_7) {
 
-        /* "numina/array/trace/extract.pyx":69
+        /* "numina/array/trace/extract.pyx":59
  * 
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)             # <<<<<<<<<<<<<<
@@ -8090,7 +8090,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
         __pyx_v_w = (__pyx_v_b - (__pyx_v_pb - 0.5));
 
-        /* "numina/array/trace/extract.pyx":70
+        /* "numina/array/trace/extract.pyx":60
  *             if pb < data.shape[1] and pb >= 0:
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w             # <<<<<<<<<<<<<<
@@ -8110,11 +8110,11 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
         } else if (unlikely(__pyx_t_15 >= __pyx_v_data.shape[1])) __pyx_t_4 = 1;
         if (unlikely(__pyx_t_4 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_4);
-          __PYX_ERR(0, 70, __pyx_L1_error)
+          __PYX_ERR(0, 60, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + ((*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_14 * __pyx_v_data.strides[0]) ) + __pyx_t_15 * __pyx_v_data.strides[1]) ))) * __pyx_v_w));
 
-        /* "numina/array/trace/extract.pyx":68
+        /* "numina/array/trace/extract.pyx":58
  *                 acc += data[pa, x] * w
  * 
  *             if pb < data.shape[1] and pb >= 0:             # <<<<<<<<<<<<<<
@@ -8123,7 +8123,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
  */
       }
 
-      /* "numina/array/trace/extract.pyx":71
+      /* "numina/array/trace/extract.pyx":61
  *                 w = b - (pb -0.5)
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):             # <<<<<<<<<<<<<<
@@ -8134,7 +8134,7 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
       for (__pyx_t_16 = (__pyx_v_pa + 1); __pyx_t_16 < __pyx_t_4; __pyx_t_16+=1) {
         __pyx_v_c = __pyx_t_16;
 
-        /* "numina/array/trace/extract.pyx":72
+        /* "numina/array/trace/extract.pyx":62
  *                 acc += data[pb, x] * w
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]             # <<<<<<<<<<<<<<
@@ -8154,12 +8154,12 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
         } else if (unlikely(__pyx_t_18 >= __pyx_v_data.shape[1])) __pyx_t_19 = 1;
         if (unlikely(__pyx_t_19 != -1)) {
           __Pyx_RaiseBufferIndexError(__pyx_t_19);
-          __PYX_ERR(0, 72, __pyx_L1_error)
+          __PYX_ERR(0, 62, __pyx_L1_error)
         }
         __pyx_v_acc = (__pyx_v_acc + (*((long *) ( /* dim=1 */ (( /* dim=0 */ (__pyx_v_data.data + __pyx_t_17 * __pyx_v_data.strides[0]) ) + __pyx_t_18 * __pyx_v_data.strides[1]) ))));
       }
 
-      /* "numina/array/trace/extract.pyx":73
+      /* "numina/array/trace/extract.pyx":63
  *             for c in range(pa + 1, pb):
  *                 acc += data[c,x]
  *             out[x] = acc             # <<<<<<<<<<<<<<
@@ -8174,27 +8174,27 @@ static PyObject *__pyx_pf_6numina_5array_5trace_8_extract_16extract_simple_intl(
       } else if (unlikely(__pyx_t_20 >= __pyx_v_out.shape[0])) __pyx_t_4 = 0;
       if (unlikely(__pyx_t_4 != -1)) {
         __Pyx_RaiseBufferIndexError(__pyx_t_4);
-        __PYX_ERR(0, 73, __pyx_L1_error)
+        __PYX_ERR(0, 63, __pyx_L1_error)
       }
       *((double *) ( /* dim=0 */ (__pyx_v_out.data + __pyx_t_20 * __pyx_v_out.strides[0]) )) = __pyx_v_acc;
     }
     __pyx_L5:;
   }
 
-  /* "numina/array/trace/extract.pyx":74
+  /* "numina/array/trace/extract.pyx":64
  *                 acc += data[c,x]
  *             out[x] = acc
  *     return out             # <<<<<<<<<<<<<<
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 74, __pyx_L1_error)
+  __pyx_t_21 = __pyx_memoryview_fromslice(__pyx_v_out, 1, (PyObject *(*)(char *)) __pyx_memview_get_double, (int (*)(char *, PyObject *)) __pyx_memview_set_double, 0);; if (unlikely(!__pyx_t_21)) __PYX_ERR(0, 64, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_21);
   __pyx_r = __pyx_t_21;
   __pyx_t_21 = 0;
   goto __pyx_L0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
@@ -24462,10 +24462,10 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 42, __pyx_L1_error)
-  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 42, __pyx_L1_error)
-  __pyx_builtin_reversed = __Pyx_GetBuiltinName(__pyx_n_s_reversed); if (!__pyx_builtin_reversed) __PYX_ERR(0, 42, __pyx_L1_error)
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_builtin_TypeError = __Pyx_GetBuiltinName(__pyx_n_s_TypeError); if (!__pyx_builtin_TypeError) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_builtin_zip = __Pyx_GetBuiltinName(__pyx_n_s_zip); if (!__pyx_builtin_zip) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_builtin_reversed = __Pyx_GetBuiltinName(__pyx_n_s_reversed); if (!__pyx_builtin_reversed) __PYX_ERR(0, 32, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 32, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 235, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 823, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 1013, __pyx_L1_error)
@@ -24483,23 +24483,23 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
  *                         double[:] bb1, double[:] bb2,
  *                         double[:] out):
  */
-  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_kp_s__3); if (unlikely(!__pyx_tuple__4)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_tuple__4 = PyTuple_Pack(1, __pyx_kp_s__3); if (unlikely(!__pyx_tuple__4)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__4);
   __Pyx_GIVEREF(__pyx_tuple__4);
-  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s__5); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_tuple__6 = PyTuple_Pack(1, __pyx_kp_s__5); if (unlikely(!__pyx_tuple__6)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__6);
   __Pyx_GIVEREF(__pyx_tuple__6);
-  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_No_matching_signature_found); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_tuple__7 = PyTuple_Pack(1, __pyx_kp_s_No_matching_signature_found); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
-  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_kp_s_Function_call_with_ambiguous_arg); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_kp_s_Function_call_with_ambiguous_arg); if (unlikely(!__pyx_tuple__8)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
@@ -24803,17 +24803,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__36);
   __Pyx_GIVEREF(__pyx_tuple__36);
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
  *                         double[:] bb1, double[:] bb2,
  *                         double[:] out):
  */
-  __pyx_tuple__37 = PyTuple_Pack(15, __pyx_n_s_data, __pyx_n_s_xx, __pyx_n_s_bb1, __pyx_n_s_bb2, __pyx_n_s_out, __pyx_n_s_size, __pyx_n_s_i, __pyx_n_s_pa, __pyx_n_s_pb, __pyx_n_s_x, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_w, __pyx_n_s_acc, __pyx_n_s_c); if (unlikely(!__pyx_tuple__37)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_tuple__37 = PyTuple_Pack(15, __pyx_n_s_data, __pyx_n_s_xx, __pyx_n_s_bb1, __pyx_n_s_bb2, __pyx_n_s_out, __pyx_n_s_size, __pyx_n_s_i, __pyx_n_s_pa, __pyx_n_s_pb, __pyx_n_s_x, __pyx_n_s_a, __pyx_n_s_b, __pyx_n_s_w, __pyx_n_s_acc, __pyx_n_s_c); if (unlikely(!__pyx_tuple__37)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__37);
   __Pyx_GIVEREF(__pyx_tuple__37);
-  __pyx_codeobj__38 = (PyObject*)__Pyx_PyCode_New(5, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__37, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_trace_extract_pyx, __pyx_n_s_extract_simple_intl, 42, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__38)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_codeobj__38 = (PyObject*)__Pyx_PyCode_New(5, 0, 15, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__37, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_trace_extract_pyx, __pyx_n_s_extract_simple_intl, 32, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__38)) __PYX_ERR(0, 32, __pyx_L1_error)
 
   /* "View.MemoryView":284
  *         return self.name
@@ -25097,73 +25097,73 @@ static int __pyx_pymod_exec__extract(PyObject *__pyx_pyinit_module)
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 1, __pyx_L1_error)
   #endif
 
-  /* "numina/array/trace/extract.pyx":22
+  /* "numina/array/trace/extract.pyx":12
  * 
  * from libc.math cimport floor
  * import numpy             # <<<<<<<<<<<<<<
  * cimport numpy
  * 
  */
-  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_Import(__pyx_n_s_numpy, 0, -1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_numpy, __pyx_t_1) < 0) __PYX_ERR(0, 22, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_numpy, __pyx_t_1) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "numina/array/trace/extract.pyx":42
+  /* "numina/array/trace/extract.pyx":32
  * cdef inline int int_min(int a, int b): return a if a <= b else b
  * 
  * def extract_simple_intl(FType[:,:] data, IType[:] xx,             # <<<<<<<<<<<<<<
  *                         double[:] bb1, double[:] bb2,
  *                         double[:] out):
  */
-  __pyx_t_1 = __Pyx_PyDict_NewPresized(8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(8); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_0_0__pyx_mdef_6numina_5array_5trace_8_extract_3extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_0_0__pyx_mdef_6numina_5array_5trace_8_extract_3extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_double_int, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_double_int, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_0_1__pyx_mdef_6numina_5array_5trace_8_extract_5extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_0_1__pyx_mdef_6numina_5array_5trace_8_extract_5extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_double_long, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_double_long, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_1_0__pyx_mdef_6numina_5array_5trace_8_extract_7extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_1_0__pyx_mdef_6numina_5array_5trace_8_extract_7extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_float_int, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_float_int, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_1_1__pyx_mdef_6numina_5array_5trace_8_extract_9extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_1_1__pyx_mdef_6numina_5array_5trace_8_extract_9extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_float_long, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_float_long, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_2_0__pyx_mdef_6numina_5array_5trace_8_extract_11extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_2_0__pyx_mdef_6numina_5array_5trace_8_extract_11extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_int_int, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_int_int, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_2_1__pyx_mdef_6numina_5array_5trace_8_extract_13extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_2_1__pyx_mdef_6numina_5array_5trace_8_extract_13extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_int_long, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_int_long, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_3_0__pyx_mdef_6numina_5array_5trace_8_extract_15extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_3_0__pyx_mdef_6numina_5array_5trace_8_extract_15extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_long_int, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_long_int, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_3_1__pyx_mdef_6numina_5array_5trace_8_extract_17extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_fuse_3_1__pyx_mdef_6numina_5array_5trace_8_extract_17extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_long_long, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_kp_s_long_long, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_mdef_6numina_5array_5trace_8_extract_1extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 42, __pyx_L1_error)
+  __pyx_t_2 = __pyx_FusedFunction_NewEx(&__pyx_mdef_6numina_5array_5trace_8_extract_1extract_simple_intl, 0, __pyx_n_s_extract_simple_intl, NULL, __pyx_n_s_numina_array_trace__extract, __pyx_d, ((PyObject *)__pyx_codeobj__38)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetDefaultsTuple(__pyx_t_2, __pyx_empty_tuple);
   ((__pyx_FusedFunctionObject *) __pyx_t_2)->__signatures__ = __pyx_t_1;
   __Pyx_GIVEREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_extract_simple_intl, __pyx_t_2) < 0) __PYX_ERR(0, 42, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_extract_simple_intl, __pyx_t_2) < 0) __PYX_ERR(0, 32, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "numina/array/trace/extract.pyx":1

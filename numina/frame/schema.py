@@ -1,23 +1,13 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-'''FITS header schema and validation.
+"""FITS header schema and validation.
 
 This module is a simplification of the FITS Schema defined
 by Erik Bray here:
@@ -27,16 +17,16 @@ If this schema implementation reaches pyfits/astropy stable,
 we will use it instead of ours, with schema definitions
 being the same.
 
-'''
+"""
 
 
 class SchemaValidationError(Exception):
-    '''Exception raised when a Schema does not validate a FITS header.'''
+    """Exception raised when a Schema does not validate a FITS header."""
     pass
 
 
 class SchemaDefinitionError(Exception):
-    '''Exception raised when a FITS Schema definition is not valid.'''
+    """Exception raised when a FITS Schema definition is not valid."""
     pass
 
 
@@ -64,6 +54,7 @@ def _from_ipt(value):
 
 
 class SchemaKeyword(object):
+    """A keyword in the schema"""
     def __init__(self, name, mandatory=False, valid=True,
                  value=None):
         self.name = name
@@ -140,6 +131,7 @@ class SchemaKeyword(object):
 
 
 class Schema(object):
+    """A FITS schema"""
     def __init__(self, sc):
         self.kwl = []
         self.extend(sc)

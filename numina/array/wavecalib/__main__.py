@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Compute the wavelength calibration of a particular spectrum."""
@@ -112,7 +102,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
         # FITS file
         if out_sp is not None:
             hdu = fits.PrimaryHDU(sp)
-            hdu.writeto(out_sp, clobber=True)
+            hdu.writeto(out_sp, overwrite=True)
     else:
         raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
                          " values")
@@ -452,11 +442,12 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         for feature in solution_wv.features:
             xpos = feature.xpos
             reference = feature.reference
-            ax.text(xpos, sp[int(xpos+0.5)-1] + dy/100,
+            ax.text(xpos, sp[int(xpos+0.5)-1],
                     str(reference), fontsize=8,
                     horizontalalignment='center')
         # show plot
-        pause_debugplot(11, pltshow=True)
+        print('Plot with identified lines')
+        pause_debugplot(12, pltshow=True)
 
     # return the wavelength calibration solution
     return solution_wv
@@ -468,7 +459,7 @@ def main(args=None):
     # required parameters
     parser.add_argument("fitsfile",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--scans", required=True,
                         help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
     parser.add_argument("--wv_master_file", required=True,
@@ -534,7 +525,7 @@ def main(args=None):
                              "format before performing the wavelength "
                              "calibration (default=None)",
                         default=None,
-                        type=argparse.FileType('w'))
+                        type=argparse.FileType('wb'))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")

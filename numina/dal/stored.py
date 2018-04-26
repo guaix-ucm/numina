@@ -1,24 +1,15 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 
 class StoredProduct(object):
+    """A product returned from the DAL"""
     def __init__(self, id, content, tags, **kwds):
         self.id = id
         self.content = content
@@ -26,6 +17,7 @@ class StoredProduct(object):
 
 
 class StoredParameter(object):
+    """A parameter returned from the DAL"""
     def __init__(self, content):
         self.content = content
 
@@ -34,7 +26,7 @@ class StoredParameter(object):
 # Notice that this is different to ObservationResult
 # that contains the results of the reductions
 class ObservingBlock(object):
-    def __init__(self, id, instrument, mode, images, children, parent, facts=None):
+    def __init__(self, id, instrument, mode, images, children, parent=None, facts=None):
         self.id = id
         self.instrument = instrument
         self.mode = mode

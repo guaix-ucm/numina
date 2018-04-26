@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import division
@@ -283,8 +273,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
     ax.set_xlabel('image pixel in the X direction')
     ax.set_ylabel('image pixel in the Y direction')
-    ax.set_xlim([xmin, xmax])
-    ax.set_ylim([ymin, ymax])
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
     ax.grid(False)
     if z1z2 is None:
         z1, z2 = ZScaleInterval().get_limits(
@@ -480,10 +470,7 @@ def ximshow_file(singlefile,
             return ax
     else:
         if show:
-            import matplotlib.pyplot as plt
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(debugplot)
+            pause_debugplot(debugplot, pltshow=True)
         else:
             # return axes
             return ax
@@ -492,11 +479,17 @@ def ximshow_file(singlefile,
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='ximshow')
+    parser = argparse.ArgumentParser(
+        description='description: display FITS images'
+    )
+
+    # positional arguments
     parser.add_argument("filename",
                         help="FITS file (wildcards allowed) "
                              "or txt file with list of FITS files",
                         nargs="+")
+
+    # optional arguments
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
@@ -545,9 +538,6 @@ def main(args=None):
 
     if pdf is not None:
         pdf.close()
-
-    if len(list_fits_files) > 1:
-        pause_debugplot(12, optional_prompt="Press RETURN to STOP")
 
 
 if __name__ == "__main__":

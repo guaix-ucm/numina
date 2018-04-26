@@ -1,20 +1,10 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import logging
@@ -78,7 +68,6 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
     :parameter mask: an integer array representing initial mask.
-
     :parameter lowercut: values below this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
@@ -233,9 +222,8 @@ def comp_ratio(img1, img2, mask):
     return ratio, mask3
 
 
-
 def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev=2.0):
-    '''Find cosmetic defects in a detector using two flat field images.
+    """Find cosmetic defects in a detector using two flat field images.
 
     Two arrays representing flat fields of different exposure times are
     required. Cosmetic defects are selected as points that deviate
@@ -259,8 +247,10 @@ def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev
     :parameter lowercut: values bellow this sigma level are flagged as dead pixels.
     :parameter uppercut: values above this sigma level are flagged as hot pixels.
     :parameter siglev: level to estimate the standard deviation.
-    :returns:the updated mask
-    '''
+    :returns: the updated mask
+
+    """
+
     if flat2 is None:
         flat1, flat2 = flat2, flat1
         flat1 = numpy.ones_like(flat2)

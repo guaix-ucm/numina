@@ -2,18 +2,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import json
@@ -33,7 +23,7 @@ def writeto(obj, name):
         json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
 
 
-class BaseStructuredCalibration(numina.types.product.DataProductTag,
+class BaseStructuredCalibration(numina.types.product.DataProductMixin,
                                 numina.types.datatype.AutoDataType):
     """Base class for structured calibration data
 
@@ -195,7 +185,11 @@ class BaseStructuredCalibration(numina.types.product.DataProductTag,
         return self._base_info
 
     def update_metadata(self, recipe):
-        self.meta_info['mode_name'] = recipe.mode
+        try:
+            self.meta_info['mode_name'] = recipe.mode.key
+        except AttributeError:
+            self.meta_info['mode_name'] = recipe.mode
+
         self.meta_info['instrument_name'] = recipe.instrument
         self.meta_info['recipe_name'] = recipe.__class__.__name__
         self.meta_info['recipe_version'] = recipe.__version__

@@ -66,6 +66,11 @@ def generate_extensions():
                          include_dirs=[numpy_include],
                          language='c++')
         extensions.append(ext7)
+        ext8 = Extension('numina.array._clippix',
+                         ['numina/array/clippix.pyx'],
+                         include_dirs=[numpy_include],
+                         language='c')
+        extensions.append(ext8)
 
     except ImportError:
         cmdclass = {}
@@ -94,6 +99,11 @@ def generate_extensions():
                          include_dirs=[numpy_include],
                          language='c++')
         extensions.append(ext7)
+        ext8 = Extension('numina.array._clippix',
+                         ['numina/array/clippix.c'],
+                         include_dirs=[numpy_include],
+                         language='c')
+        extensions.append(ext8)
 
     return extensions, cmdclass
 
@@ -101,7 +111,6 @@ def generate_extensions():
 def setup_package():
 
     from numina import __version__
-    REQUIRES = ['setuptools', 'six>=1.7', 'numpy>=1.7', 'astropy>=1.3', 'scipy', 'PyYaml', 'matplotlib']
 
     META_DATA = dict(
         name='numina',
@@ -128,7 +137,7 @@ def setup_package():
             'console_scripts': [
                 'numina = numina.user.cli:main',
                 'numina-bpm = numina.array.bpm:main',
-                'numina-imath = tools.imath:main',
+                'numina-imath = numina.tools.imath:main',
                 'numina-wavecalib = numina.array.wavecalib.__main__:main',
                 'numina-ximshow = numina.array.display.ximshow:main',
                 'numina-ximplotxy = numina.array.display.ximplotxy:main',
@@ -136,7 +145,16 @@ def setup_package():
             },
         setup_requires=['numpy'],
         tests_require=['pytest'],
-        install_requires=REQUIRES,
+        install_requires=[
+            'setuptools',
+            'six>=1.7',
+            'numpy>=1.7',
+            'astropy>=1.3',
+            'scipy', 'PyYaml',
+            'matplotlib',
+            'enum34;python_version<"3.4"',
+            'python-dateutil'
+        ],
         zip_safe=False,
         classifiers=[
             "Programming Language :: C",

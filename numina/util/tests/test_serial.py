@@ -1,11 +1,11 @@
 
 
-from .. import SerialFlow
+import numina.util.flow as flow
 
 
 def test_serial_empty_is_id():
 
-    empty_serial = SerialFlow([])
+    empty_serial = flow.SerialFlow([])
 
     class Something(object):
         pass

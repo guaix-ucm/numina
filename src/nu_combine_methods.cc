@@ -32,6 +32,7 @@ using Numina::make_zip_iterator;
 using Numina::LessPair1st;
 using Numina::RangePair1st;
 using Numina::average_central_tendency;
+using Numina::sum_central_tendency;
 using Numina::average_central_tendency_clip;
 using Numina::median_central_tendency;
 
@@ -46,6 +47,17 @@ int NU_mean_function(double *data, double *weights,
   *out[2] = size;
   ValuePair r = average_central_tendency(data, data + size, weights);
 
+  *out[0] = r.first;
+  *out[1] = r.second;
+
+  return 1;
+}
+
+int NU_sum_function(double *data, double *weights,
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
+{
+  *out[2] = size;
+  ValuePair r = sum_central_tendency(data, data + size, weights);
   *out[0] = r.first;
   *out[1] = r.second;
 

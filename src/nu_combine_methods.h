@@ -27,6 +27,9 @@
 int NU_mean_function(double *data, double *weights,
     size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data);
 
+int NU_sum_function(double *data, double *weights,
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data);
+
 int NU_median_function(double *data, double *weights,
     size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data);
 

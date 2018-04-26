@@ -3,24 +3,16 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import division
 from __future__ import print_function
 
-from .matplotlib_qt import plt
+import sys
+
+from numina.array.display.matplotlib_qt import plt
 
 DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12,
                    -21, 21, -22, 22)
@@ -65,25 +57,26 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
         debugplot_ = debugplot
         pltclose = False
 
-    if debugplot_ in [1, 2, 11, 12, 21, 22] and pltshow:
-        if tight_layout:
-            plt.tight_layout()
-        plt.show(block=False)
-        if debugplot_ in [1, 11, 21]:
-            plt.pause(0.2)
-        else:
-            plt.pause(0.001)
-
-    if debugplot_ in [2, 12, 22]:
-        try:
-            if optional_prompt is not None:
-                input(optional_prompt)
+    if pltshow:
+        if debugplot_ in [1, 2, 11, 12, 21, 22]:
+            if tight_layout:
+                plt.tight_layout()
+            if debugplot_ in [1, 11, 21]:
+                plt.show(block=False)
+                plt.pause(0.2)
+            elif debugplot_ in [2, 12, 22]:
+                print('Press "q" to continue...', end='')
+                sys.stdout.flush()
+                plt.show()
+                print('')
+    else:
+        if debugplot_ in [2, 12, 22]:
+            if optional_prompt is None:
+                print('Press <RETURN> to continue...', end='')
             else:
-                input("\nPress RETURN to continue...")
-        except SyntaxError:
-            pass
-
-        print(' ')
+                print(optional_prompt, end='')
+            sys.stdout.flush()
+            cdummy = sys.stdin.readline().strip()
 
     if debugplot_ in [1, 2, 11, 12, 21, 22] and pltclose:
         plt.close()

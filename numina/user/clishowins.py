@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """User command line interface of Numina, show-instruments functionallity."""
@@ -53,10 +43,10 @@ def show_instruments(args, extra_args):
 
     if args.name:
         for name in args.name:
-            drp = mm.query_by_name(name)
-            if drp:
+            try:
+                drp = mm.query_by_name(name)
                 print_instrument(drp, modes=args.om)
-            else:
+            except KeyError:
                 print_no_instrument(name)
     else:
         drps = mm.query_all()

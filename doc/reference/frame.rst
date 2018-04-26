@@ -1,4 +1,4 @@
-
+==========================================
 :mod:`numina.frame` --- Frame manipulation
 ==========================================
 
@@ -6,3 +6,7 @@
    :synopsis: Frame manipulation
    :members:
 
+
+.. automodule:: numina.frame.schema
+   :synopsis: Schema for FITS header
+   :members:

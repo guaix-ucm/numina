@@ -1,26 +1,17 @@
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 
 import warnings
 
+import six
+from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
-from numina.core.query import Result
 from numina.core.pipeline import InstrumentConfiguration
 from numina.types.qc import QC
 from .frame import DataFrameType
@@ -33,14 +24,11 @@ def _obtain_validator_for(instrument, mode_key):
 
     lol = drps.query_by_name(instrument)
 
-    for mode in lol.modes:
-        if mode.key == mode_key:
-            if mode.validator:
-                return mode.validator
-            else:
-                break
-
-    return lambda obj: True
+    mode = lol.modes[mode_key]
+    if mode.validator:
+        return mode.validator
+    else:
+        return lambda obj: True
 
 
 class ObservationResultType(DataType):
@@ -58,24 +46,27 @@ class ObservationResultType(DataType):
         validator = _obtain_validator_for(obj.instrument, obj.mode)
         return validator(obj)
 
-    def query(self, name, dal, ob, options=None):
+    def query(self, name, dal, obsres, options=None):
+        from numina.core.query import ResultOf
+        if isinstance(options, ResultOf):
+            dest_field = 'frames'
+            dest_type = list
+            # Field to insert the results
+            if not hasattr(obsres, dest_field):
+                setattr(obsres, dest_field, dest_type())
 
-        # Here, only makes sense that node == 'children'
-        if isinstance(options, Result):
-            tipo = DataFrameType()
-            mode = options.mode
-            field = options.field
-            node = options.node
-            val = dal.search_result_relative(name, tipo, ob, mode, field, node)
-            ob.results = []
-            if val:
-                for r in val:
-                    ob.results.append(r.content)
+            dest_obj = getattr(obsres, dest_field)
 
-        return ob
+            values = dal.search_result_relative(name, self, obsres,
+                                                result_desc=options)
+
+            for partial in values:
+                dest_obj.append(partial.content)
+
+        return obsres
 
     def on_query_not_found(self, notfound):
-        raise notfound
+        six.raise_from(NoResultFound('unable to complete ObservationResult'), notfound)
 
 
 class InstrumentConfigurationType(DataType):

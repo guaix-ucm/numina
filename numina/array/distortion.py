@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """Utility functions to handle image distortions."""
@@ -25,6 +15,7 @@ from __future__ import print_function
 import numpy as np
 from skimage import transform
 
+from numina.array._clippix import _resample
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 
@@ -127,8 +118,8 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
         raise ValueError("Invalid order=" + str(order))
     poltrans = transform.PolynomialTransform(
         np.vstack(
-            [np.linalg.lstsq(a_matrix, x_orig_scaled)[0],
-             np.linalg.lstsq(a_matrix, y_orig_scaled)[0]]
+            [np.linalg.lstsq(a_matrix, x_orig_scaled, rcond=None)[0],
+             np.linalg.lstsq(a_matrix, y_orig_scaled, rcond=None)[0]]
         )
     )
 
@@ -346,9 +337,6 @@ def rectify2d(image2d, aij, bij, resampling,
     if ioffy is None:
         ioffy = 0
 
-    # initialize result
-    image2d_rect = np.zeros((naxis2out, naxis1out))
-
     if resampling == 1:
         # pixel coordinates (rectified image); since the fmap function
         # below requires floats, these arrays must use dtype=np.float
@@ -373,10 +361,33 @@ def rectify2d(image2d, aij, bij, resampling,
         iyy = yy.astype(np.int)[lok]
         ixxx = ixxx[lok]
         iyyy = iyyy[lok]
+        # initialize result
+        image2d_rect = np.zeros((naxis2out, naxis1out), dtype=np.float)
+        # rectified image
         image2d_rect[iyy + ioffy, ixx + ioffx] = image2d[iyyy, ixxx]
+    elif resampling == 2:
+        # coordinates (rectified image) of the four corners, sorted in
+        # anticlockwise order, of every pixel
+        j = np.array(
+            [[k - 0.5 - ioffx, k + 0.5 - ioffx,
+              k + 0.5 - ioffx, k - 0.5 - ioffx] for k in range(naxis1out)]
+        )
+        i = np.array(
+            [[k - 0.5 - ioffy, k - 0.5 - ioffy,
+              k + 0.5 - ioffy, k + 0.5 - ioffy] for k in range(naxis2out)]
+        )
+        xx = np.reshape(np.tile(j, naxis2out), naxis1out * naxis2out * 4)
+        yy = np.concatenate([np.reshape(i, naxis2out * 4)] * naxis1out)
+        # compute pixel coordinates in original (distorted) image
+        xxx, yyy = fmap(order, aij, bij, xx, yy)
+        # indices of pixels in the rectified image
+        ixx = np.repeat(np.arange(naxis1out), naxis2out)
+        iyy = np.tile(np.arange(naxis2out), (naxis1out,))
+        # rectified image (using cython function)
+        image2d_rect = _resample(image2d, xxx, yyy, ixx, iyy,
+                                 naxis1out, naxis2out)
     else:
-        raise ValueError("Sorry, this resampling method has not been"
-                         " implemented yet!")
+        raise ValueError("Sorry, resampling method must be 1 or 2")
 
     # return result
     return image2d_rect

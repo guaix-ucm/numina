@@ -1,10 +1,14 @@
 
 import pytest
 
-from ..requirements import Parameter
+from ..dataholders import Parameter
+
+from numina.core.validator import as_list, only_positive
 from numina.types.datatype import PlainPythonType
 from numina.core.recipeinout import RecipeInput
 from numina.exceptions import ValidationError
+from numina.types.datatype import ListOfType
+
 
 def test_requirement_in():
 
@@ -104,3 +108,108 @@ def test_param_dest():
     rr = RR(other=default)
     assert hasattr(rr, 'other')
     assert not hasattr(rr, 'some')
+
+
+def test_param_accept_scalar():
+    """Test accept_scalar argument"""
+    some = Parameter([1], 'Convert scalar to list', accept_scalar=True)
+    result = some.convert(1)
+    assert result == [1]
+
+    assert isinstance(some.type, ListOfType)
+    assert isinstance(some.type.internal, PlainPythonType)
+    assert some.type.internal_type is list
+
+
+def test_param_as_list1():
+    """Test as_list argument"""
+    some = Parameter(1, 'Convert scalar to list', as_list=True)
+    result = some.convert([1, 2, 3])
+    assert result == [1, 2, 3]
+
+    result = some.convert(1)
+    assert result == [1]
+
+
+def test_param_as_list2():
+    """Test list of tuples"""
+    some = Parameter([(0, 0)], 'List of coordinates')
+    result = some.convert([(3, 4), (1, 1)])
+    assert result == [[3,4], [1,1]]
+
+
+@pytest.mark.xfail
+def test_param_as_list3():
+    """Test list of tuples"""
+    some = Parameter([(0, 0)], 'List of coordinates')
+    result = some.convert([(3, 4), (1, 1)])
+    assert result == [(3,4), (1,1)]
+
+
+@pytest.mark.parametrize("nelem, allowed, not_allowed", [
+    ('*', [[], [1], [2,3,4]], []),
+    ('+', [[1], [2, 3, 4]], [[]]),
+    (1, [[1]], [[], [3.1, 34.0, 4]])
+])
+def test_param_as_list4(nelem, allowed, not_allowed):
+    """Test list of tuples"""
+    some = Parameter(5, 'List of coordinates', nelem=nelem)
+    for obj in allowed:
+        assert obj == some.convert(obj)
+
+    for obj in not_allowed:
+        with pytest.raises(ValidationError):
+            some.convert(obj)
+
+
+def test_param_custom_validator1():
+    """Test accept_scalar argument"""
+    some = Parameter(1, 'Validate', validator=only_positive)
+
+    with pytest.raises(ValidationError):
+        some.convert(-11)
+
+
+def test_param_custom_validator2():
+    """Test accept_scalar argument"""
+    some = Parameter(1, 'Validate', as_list=True, validator=only_positive)
+
+    with pytest.raises(ValidationError):
+        some.convert(-11)
+
+    with pytest.raises(ValidationError):
+        some.convert([-11])
+
+
+def test_param_custom_validator3():
+    """Test accept_scalar argument"""
+    some = Parameter([1], 'Validate', validator=as_list(only_positive))
+
+    with pytest.raises(ValidationError):
+        some.convert([-33])
+
+
+def test_param_custom_validator4():
+    """Test accept_scalar argument"""
+    some = Parameter([1], 'Validate', accept_scalar=True,
+                     validator=as_list(only_positive))
+
+    with pytest.raises(ValidationError):
+        some.convert(-11)
+
+    with pytest.raises(ValidationError):
+        some.convert([50, -22])
+
+
+def test_param_default1():
+    """Test accept_scalar argument"""
+    some = Parameter([1], 'Validate')
+
+    assert some.default_value() == [1]
+
+
+def test_param_default2():
+    """Test accept_scalar argument"""
+    some = Parameter(1, 'Validate', as_list=True)
+
+    assert some.default_value() == [1]

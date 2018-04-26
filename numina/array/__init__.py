@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 from __future__ import print_function
@@ -26,12 +16,10 @@ import scipy.ndimage as ndimage
 
 from .blocks import blockgen1d, blockgen
 from .imsurfit import FitOne
-from numina.array.nirproc import ramp_array
-from numina.array.nirproc import fowler_array
 
 
 def subarray_match(shape, ref, sshape, sref=None):
-    '''Compute the slice representation of intersection of two arrays.
+    """Compute the slice representation of intersection of two arrays.
 
     Given the shapes of two arrays and a reference point ref, compute the
     intersection of the two arrays.
@@ -56,7 +44,7 @@ def subarray_match(shape, ref, sshape, sref=None):
       >>> i,j = subarray_match(im.shape, [20, 23], sim.shape)
       >>> im[i] = 2 * sim[j]
 
-    '''
+    """
     # Reference point in im
     ref1 = asarray(ref, dtype='int')
 
@@ -200,7 +188,7 @@ def rebin(a, newshape):
 
 
 def fixpix(data, mask, kind='linear'):
-    '''Interpolate 2D array data in rows'''
+    """Interpolate 2D array data in rows"""
     if data.shape != mask.shape:
         raise ValueError
 
@@ -218,8 +206,8 @@ def fixpix(data, mask, kind='linear'):
 
 
 def fixpix2(data, mask, iterations=3, out=None):
-    '''Substitute pixels in mask by a bilinear least square fitting.
-    '''
+    """Substitute pixels in mask by a bilinear least square fitting.
+    """
     out = out if out is not None else data.copy()
 
     # A binary mask, regions are ones
@@ -301,7 +289,7 @@ def compute_median_background(img, omask, region):
 
 
 def numberarray(x, shape):
-    '''Return x if it is an array or create an array and fill it with x.'''
+    """Return x if it is an array or create an array and fill it with x."""
     try:
         iter(x)
     except TypeError:

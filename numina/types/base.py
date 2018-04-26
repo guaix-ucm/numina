@@ -3,18 +3,8 @@
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 import inspect
@@ -22,6 +12,7 @@ import inspect
 from numina.util.parser import parse_arg_line
 from numina.exceptions import NoResultFound
 from numina.datamodel import DataModel
+from numina.core.query import ResultOf, Constraint
 
 
 class DataTypeBase(object):
@@ -38,6 +29,8 @@ class DataTypeBase(object):
                 self.datamodel = datamodel
         else:
             self.datamodel = DataModel()
+
+        self.query_opts = []
 
     def __getstate__(self):
         return {}
@@ -58,8 +51,18 @@ class DataTypeBase(object):
         except NoResultFound:
             pass
 
-        param = dal.search_parameter(name, self, obsres)
-        return param.content
+        if isinstance(options, ResultOf):
+            value = dal.search_result_relative(name, self, obsres,
+                                               result_desc=options)
+            return value.content
+
+        if self.isproduct():
+            # if not, the normal query
+            prod = dal.search_product(name, self, obsres)
+            return prod.content
+        else:
+            param = dal.search_parameter(name, self, obsres)
+            return param.content
 
     def query_on_ob(self, key, ob):
         # First check if the requirement is embedded
@@ -77,6 +80,9 @@ class DataTypeBase(object):
 
     def on_query_not_found(self, notfound):
         pass
+
+    def query_constraints(self):
+        return Constraint()
 
     @classmethod
     def isproduct(cls):
@@ -138,4 +144,3 @@ class DataTypeBase(object):
         """Extract my metadata"""
         result = self.create_db_info()
         return result
-

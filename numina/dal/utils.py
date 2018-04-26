@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,6 +12,7 @@
 
 
 def tags_are_valid(subset, superset):
+    """Validate tags"""
     for key, val in subset.items():
         if key in superset and superset[key] != val:
             return False

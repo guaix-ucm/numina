@@ -1,6 +1,6 @@
-
-:mod:`numina.flow` --- 
-==========================================
+=============================================
+:mod:`numina.flow` --- Blocks for processing
+=============================================
 
 .. automodule:: numina.flow
    :synopsis: TBD
