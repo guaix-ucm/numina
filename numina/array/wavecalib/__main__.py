@@ -110,6 +110,59 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
     return sp
 
 
+def read_wv_master_from_array(master_table, lines='brightest', debugplot=0):
+    """read arc line wavelengths from numpy array
+
+    Parameters
+    ----------
+    master_table : Numpy array
+        Numpy array containing the wavelength database.
+    lines : string
+        Indicates which lines to read. For files with a single column
+        or two columns this parameter is irrelevant. For files with
+        three columns, lines='brightest' indicates that only the
+        brightest lines are read, whereas lines='all' means that all
+        the lines are considered.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
+
+    Returns
+    -------
+    wv_master : 1d numpy array
+        Array with arc line wavelengths.
+
+    """
+
+    # protection
+    if lines not in ['brightest', 'all']:
+        raise ValueError('Unexpected lines=' + str(lines))
+
+    # determine wavelengths according to the number of columns
+    if master_table.ndim == 1:
+        wv_master = master_table
+    else:
+        wv_master_all = master_table[:, 0]
+        if master_table.shape[1] == 2:  # assume old format
+            wv_master = np.copy(wv_master_all)
+        elif master_table.shape[1] == 3:  # assume new format
+            if lines == 'brightest':
+                wv_flag = master_table[:, 1]
+                wv_master = wv_master_all[np.where(wv_flag == 1)]
+            else:
+                wv_master = np.copy(wv_master_all)
+        else:
+            raise ValueError('Lines_catalog file does not have the '
+                             'expected number of columns')
+
+    if abs(debugplot) >= 10:
+        print("Reading master table from numpy array")
+        print("wv_master:\n", wv_master)
+
+    return wv_master
+
+
 def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     """read arc line wavelengths from external file.
 
@@ -142,26 +195,7 @@ def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     # read table from txt file
     master_table = np.genfromtxt(wv_master_file)
 
-    # determine wavelengths according to the number of columns
-    if master_table.ndim == 1:
-        wv_master = master_table
-    else:
-        wv_master_all = master_table[:, 0]
-        if master_table.shape[1] == 2:  # assume old format
-            wv_master = np.copy(wv_master_all)
-        elif master_table.shape[1] == 3:  # assume new format
-            if lines == 'brightest':
-                wv_flag = master_table[:, 1]
-                wv_master = wv_master_all[np.where(wv_flag == 1)]
-            else:
-                wv_master = np.copy(wv_master_all)
-        else:
-            raise ValueError('Lines_catalog file does not have the '
-                             'expected number of columns')
-
-    if abs(debugplot) >= 10:
-        print("Reading master table: " + wv_master_file)
-        print("wv_master:\n", wv_master)
+    wv_master = read_wv_master_from_array(master_table, lines, debugplot)
 
     return wv_master
 
