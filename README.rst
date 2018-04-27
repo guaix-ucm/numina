@@ -95,4 +95,4 @@ if you type `make`
     :target: http://numina.readthedocs.org/en/latest/?badge=latest
 
 .. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.593638.svg
-   :target: http://dx.doi.org/10.5281/zenodo.
+   :target: https://doi.org/10.5281/zenodo.593638
