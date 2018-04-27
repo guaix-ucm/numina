@@ -14,7 +14,7 @@ import logging
 
 import numina.core.query
 import numina.core.deptree
-import numina.core.objimport
+import numina.util.objimport
 import numina.util.parser
 import numina.datamodel
 
@@ -44,7 +44,7 @@ class Pipeline(object):
     def _get_base_class(self, entry):
 
         recipe_fqn = entry['class']
-        return numina.core.objimport.import_object(recipe_fqn)
+        return numina.util.objimport.import_object(recipe_fqn)
 
     def _get_base_object(self, entry):
 

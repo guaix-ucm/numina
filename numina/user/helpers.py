@@ -19,7 +19,7 @@ import pickle
 
 import yaml
 
-from numina.core import fully_qualified_name
+import numina.util.objimport as objimp
 from numina.types.frame import DataFrameType
 from numina.util.context import working_directory
 
@@ -38,7 +38,7 @@ class ProcessingTask(object):
             self.runinfo['taskid'] = insconf['taskid']
             self.runinfo['pipeline'] = insconf['pipeline']
             self.runinfo['recipe'] = insconf['recipeclass'].__name__
-            self.runinfo['recipe_full_name'] = fully_qualified_name(insconf['recipeclass'])
+            self.runinfo['recipe_full_name'] = objimp.fully_qualified_name(insconf['recipeclass'])
             self.runinfo['runner'] = insconf.get('runner', 'numina')
             self.runinfo['runner_version'] = insconf.get('runner_version', "0")
             self.runinfo['data_dir'] = insconf['workenv'].datadir

@@ -16,7 +16,7 @@ import os
 import six
 from six import StringIO
 
-from .objimport import import_object
+from numina.util.objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP

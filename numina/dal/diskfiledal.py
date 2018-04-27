@@ -17,7 +17,7 @@ import os
 import itertools
 import logging
 
-from numina.core import import_object
+# import numina.util.objimport as objimp
 from numina.store import load
 from numina.exceptions import NoResultFound
 from numina.dal import StoredProduct

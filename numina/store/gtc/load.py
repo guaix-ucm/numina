@@ -13,8 +13,8 @@ from __future__ import print_function
 
 import os.path
 
-from numina.core import import_object
-from numina.core import DataFrame
+import numina.util.objimport as objimp
+import numina.types.dataframe as dataframe
 
 
 def process_node(node):
@@ -30,7 +30,7 @@ def process_node(node):
 
         if value['struct_type'] != 'dict':
             # Value is not a dict
-            klass = import_object(value['struct_type'])
+            klass = objimp.import_object(value['struct_type'])
             newobj = klass.__new__(klass)
             if hasattr(newobj, '__setstate__'):
                 newobj.__setstate__(obj)
@@ -52,9 +52,8 @@ def process_node(node):
             obj.append(sobj)
 
     elif typeid == 45: # Frame
-        obj = DataFrame(frame=os.path.abspath(value['path']))
+        obj = dataframe.DataFrame(frame=os.path.abspath(value['path']))
     else:
-        #print("LOADDD", typeid, value)
         obj = value
 
     return mname, obj

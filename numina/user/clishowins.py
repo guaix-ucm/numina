@@ -12,7 +12,7 @@
 from __future__ import print_function
 
 import numina.drps
-import numina.core.objimport as objimport
+import numina.util.objimport as objimport
 
 def register(subparsers, config):
     parser_show_ins = subparsers.add_parser(
