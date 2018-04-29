@@ -12,7 +12,6 @@ import collections
 
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
-from numina.core.validator import range_validator
 from .base import DataTypeBase
 from .typedialect import dialect_info
 
@@ -147,6 +146,7 @@ class PlainPythonType(DataType):
 class ListOfType(DataType):
     """Data type for lists of other types."""
     def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False):
+        from numina.core.validator import range_validator
         stype = list
         if inspect.isclass(ref):
             self.internal = ref()
