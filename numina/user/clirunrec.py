@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
 import os
 
@@ -60,6 +60,7 @@ def register(subparsers, config):
         )
 
     return parser_run_recipe
+
 
 def mode_run_recipe(args, extra_args):
     mode_run_common(args, extra_args, mode='rec')

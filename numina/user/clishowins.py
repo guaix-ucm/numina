@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import numina.drps
 import numina.util.objimport as objimport
+
 
 def register(subparsers, config):
     parser_show_ins = subparsers.add_parser(
@@ -52,6 +53,7 @@ def show_instruments(args, extra_args):
         drps = mm.query_all()
         for drp in drps.values():
             print_instrument(drp, modes=args.om)
+
 
 def print_instrument(instrument, modes=True):
     print('Instrument:', instrument.name)
