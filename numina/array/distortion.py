@@ -144,14 +144,14 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
                        show=False,
                        **{'marker': 'o',
                           'label': '(u,v) coordinates', 'linestyle': ''})
-        dum = zip(x_orig_scaled, y_orig_scaled)
+        dum = list(zip(x_orig_scaled, y_orig_scaled))
         for idum in range(len(dum)):
             ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
                     horizontalalignment='center',
                     verticalalignment='bottom', color='black')
         ax.plot(x_inter_scaled, y_inter_scaled, 'o',
                 label="(x,y) coordinates")
-        dum = zip(x_inter_scaled, y_inter_scaled)
+        dum = list(zip(x_inter_scaled, y_inter_scaled))
         for idum in range(len(dum)):
             ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
                     horizontalalignment='center',
