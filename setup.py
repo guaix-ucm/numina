@@ -148,8 +148,8 @@ def setup_package():
         install_requires=[
             'setuptools',
             'six>=1.7',
-            'numpy>=1.7',
-            'astropy>=1.3',
+            'numpy',
+            'astropy>=2',
             'scipy', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',

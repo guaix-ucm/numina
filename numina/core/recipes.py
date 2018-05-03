@@ -160,12 +160,12 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     def save_intermediate_img(self, img, name):
         """Save intermediate FITS objects."""
         if self.intermediate_results:
-            img.writeto(name, clobber=True)
+            img.writeto(name, overwrite=True)
 
     def save_intermediate_array(self, array, name):
         """Save intermediate array object as FITS."""
         if self.intermediate_results:
-            fits.writeto(name, array, clobber=True)
+            fits.writeto(name, array, overwrite=True)
 
     def save_structured_as_json(self, structured, name):
         if self.intermediate_results:
