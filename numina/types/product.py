@@ -80,6 +80,13 @@ class DataProductMixin(DataTypeBase):
 
 
 class DataProductTag(DataProductMixin):
+    """A type that is a data product.
+
+    .. deprecated:: 0.16
+            `DataProductTag` is replaced by `DataProductMixin`. It will
+            be removed in 1.0
+
+    """
     def __init__(self, *args, **kwargs):
         warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'",
                       DeprecationWarning)

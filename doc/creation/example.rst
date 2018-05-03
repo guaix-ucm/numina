@@ -365,18 +365,18 @@ data products. We start by adding a new module `products`::
 We have two types of images that are products of recipes that can be required by other recipes: **master bias**
 and **master flat**. We represent this by creating two new types derived
 from :class:`~numina.types.frame.DataFrameType`  (because the new types are images)
-and :class:`~numina.types.product.DataProductTag`  (because the new types are products that must be handled by both Numina CLI and GTC Control system) classes.
+and :class:`~numina.types.product.DataProductMixin`  (because the new types are products that must be handled by both Numina CLI and GTC Control system) classes.
 
 .. code-block:: python
 
     from numina.types.frame import DataFrameType
-    from numina.types.product import DataProductTag
+    from numina.types.product import DataProductMixin
 
-    class MasterBias(DataFrameType, DataProductTag):
+    class MasterBias(DataFrameType, DataProductMixin):
         pass
 
 
-    class MasterFlat(DataFrameType, DataProductTag):
+    class MasterFlat(DataFrameType, DataProductMixin):
         pass
 
 Now we must modify our recipes as follows. First `Bias`
