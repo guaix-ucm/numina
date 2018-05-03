@@ -2,7 +2,7 @@ Cython
 numpy
 six
 scipy
-astropy == 1.2
+astropy
 PyYaml
 matplotlib
 mock;python_version<"3.3"
