@@ -12,7 +12,6 @@ import inspect
 from numina.util.parser import parse_arg_line
 from numina.exceptions import NoResultFound
 from numina.datamodel import DataModel
-from numina.core.query import ResultOf, Constraint
 
 
 class DataTypeBase(object):
@@ -45,7 +44,7 @@ class DataTypeBase(object):
         return obj
 
     def query(self, name, dal, obsres, options=None):
-
+        from numina.core.query import ResultOf
         try:
             return self.query_on_ob(name, obsres)
         except NoResultFound:
@@ -82,6 +81,7 @@ class DataTypeBase(object):
         pass
 
     def query_constraints(self):
+        from numina.core.query import Constraint
         return Constraint()
 
     @classmethod
