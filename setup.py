@@ -158,6 +158,7 @@ def setup_package():
         zip_safe=False,
         classifiers=[
             "Programming Language :: C",
+            "Programming Language :: C++",
             "Programming Language :: Cython",
             "Programming Language :: Python :: 2.7",
             "Programming Language :: Python :: 3.4",
@@ -165,11 +166,12 @@ def setup_package():
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: Implementation :: CPython",
             'Development Status :: 3 - Alpha',
-            "Environment :: Other Environment",
+            "Environment :: Console",
             "Intended Audience :: Science/Research",
             "License :: OSI Approved :: GNU General Public License (GPL)",
             "Operating System :: OS Independent",
             "Topic :: Scientific/Engineering :: Astronomy",
+            "Topic :: Software Development:: Libraries:: Application Frameworks",
             ],
         long_description=open('README.rst').read()
         )
