@@ -89,6 +89,18 @@ class AutoDataType(DataType):
         super(AutoDataType, self).__init__(ptype=self.__class__)
 
 
+class AnyType(DataType):
+    """Type representing anything"""
+    def __init__(self):
+        super(AnyType, self).__init__(ptype=self.__class__)
+
+    def convert(self, obj):
+        return obj
+
+    def validate(self, obj):
+        return True
+
+
 class NullType(DataType):
     """Data type for None."""
     def __init__(self):

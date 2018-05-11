@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -40,23 +40,32 @@ def fit_offset_and_rotation(coords0, coords1):
 
     """
 
-    cP = coords0.mean(axis=0)
-    cQ = coords1.mean(axis=0)
+    coords0 = numpy.asarray(coords0)
+    coords1 = numpy.asarray(coords1)
 
-    P0 = coords0 - cP
-    Q0 = coords1 - cQ
+    cp = coords0.mean(axis=0)
+    cq = coords1.mean(axis=0)
 
-    crossvar = numpy.dot(P0.T, Q0)
+    p0 = coords0 - cp
+    q0 = coords1 - cq
 
-    u, s, vt = linalg.svd(crossvar)
+    crossvar = numpy.dot(numpy.transpose(p0), q0)
+
+    u, _, vt = linalg.svd(crossvar)
 
     d = linalg.det(u) * linalg.det(vt)
 
     if d < 0:
-        s[-1] = -s[-1]
-        vt[:, -1] = -vt[:, -1]
+        u[:, -1] = -u[:, -1]
 
-    rot = numpy.dot(vt, u)
-    off = -numpy.dot(rot, cP) + cQ
-
+    rot = numpy.transpose(numpy.dot(u, vt))
+    # Operation is
+    # B - B0 = R(A - A0)
+    # So off is B0 -R * A0
+    # The inverse operation is
+    # A - A0 = R* (B- B0)
+    # So inverse off* is A - R* B0
+    # where R* = transpose(R)
+    #  R * off* = -off
+    off = -numpy.dot(rot, cp) + cq
     return off, rot

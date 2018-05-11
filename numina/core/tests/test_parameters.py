@@ -213,3 +213,18 @@ def test_param_default2():
     some = Parameter(1, 'Validate', as_list=True)
 
     assert some.default_value() == [1]
+
+
+def test_empty_list_escalar():
+    some = Parameter([], 'Some', accept_scalar=True)
+    value = some.convert(1)
+    assert value == [1]
+
+
+def test_empty_list_iter():
+    some = Parameter([], 'Some')
+    value = some.convert([2])
+    assert value == [2]
+
+    value = some.convert(["A", 34.2])
+    assert value == ["A", 34.2]
