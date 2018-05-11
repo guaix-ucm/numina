@@ -172,8 +172,13 @@ class ListOfType(DataType):
         self.len_validator = range_validator(minval=nmin, maxval=nmax)
 
     def convert(self, obj):
-        if self.accept_scalar and not isinstance(obj, collections.Iterable):
-            obj = [obj]
+        if not isinstance(obj, collections.Iterable):
+            if self.accept_scalar:
+                obj = [obj]
+            else:
+                raise TypeError("The object received should be iterable"
+                                " or the type modified to accept scalar values")
+
         result = [self.internal.convert(o) for o in obj]
         self.len_validator(len(result))
         return result
