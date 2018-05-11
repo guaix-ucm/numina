@@ -241,7 +241,7 @@ def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):
     if isinstance(value, (list, tuple)):
         # Continue with contents of list
         if len(value) == 0:
-            next_ = None
+            next_ = dt.AnyType()
         else:
             next_ = value[0]
         final = _recursive_type(next_, accept_scalar=accept_scalar)
