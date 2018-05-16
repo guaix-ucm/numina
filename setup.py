@@ -117,9 +117,9 @@ def setup_package():
         version=__version__,
         author='Sergio Pascual',
         author_email='sergiopr@fis.ucm.es',
-        url='http://guaix.fis.ucm.es/projects/numina',
+        url='https://github.com/guaix-ucm/numina',
         license='GPLv3',
-        description='Numina reduction package',
+        description='Astronomy data reduction library',
         packages=find_packages('.'),
         package_data={
             'numina.drps.tests': [
