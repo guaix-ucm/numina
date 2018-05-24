@@ -619,7 +619,6 @@ def main(args=None):
         method=args.method,
         nwin_background=args.nwin_background,
         reverse=args.reverse,
-        out_sp=args.out_sp,
         debugplot=args.debugplot
     )
 
@@ -689,16 +688,22 @@ def main(args=None):
         debugplot=args.debugplot
     )
 
+    # apply gaussian filtering
+    if args.sigma_gauss_filt > 0:
+        spf = ndimage.filters.gaussian_filter(
+            sp,
+            sigma=args.sigma_gauss_filt
+        )
+    else:
+        spf = np.copy(sp)
+
+    # save fitted spectrum
+    if args.out_sp is not None:
+        hdu = fits.PrimaryHDU(spf.astype(np.float32))
+        hdu.writeto(args.out_sp, overwrite=True)
+
     # refine wavelength calibration when requested
     if args.degree_refined > 0:
-        # apply gaussian filtering
-        if args.sigma_gauss_filt > 0:
-            spf = ndimage.filters.gaussian_filter(
-                sp,
-                sigma=args.sigma_gauss_filt
-            )
-        else:
-            spf = np.copy(sp)
         poly_refined, yres_summary = refine_arccalibration(
             sp=spf,
             poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
