@@ -144,3 +144,6 @@ class DataTypeBase(object):
         """Extract my metadata"""
         result = self.create_db_info()
         return result
+
+    def tag_names(self):
+        return []

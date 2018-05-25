@@ -222,6 +222,9 @@ class Requirement(EntryHolder):
     def query_constraints(self):
         return self.type.query_constraints()
 
+    def tag_names(self):
+        return self.type.tag_names()
+
 
 def _process_nelem(nlem):
     if nlem is None:

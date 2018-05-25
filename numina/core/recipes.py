@@ -31,6 +31,7 @@ from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult, ObservingBlock
 from ..exceptions import NoResultFound
+from .taggers import get_tags_from_full_ob
 
 
 class BaseRecipe(with_metaclass(RecipeType, object)):
@@ -207,23 +208,38 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
                     ob_query_skip = True
                     query_option = self.query_options.get(key)
 
-                    print('req for ob is named', key, query_option)
-                    newOR = ObservationResult()
-                    newOR.__dict__ = ob.__dict__
-                    obsres = req.query(dal, newOR, options=query_option)
-                    print('Use mode tagger to fill tags in OB')
+                    # print('req for ob is named', key, query_option)
+                    new_or = ObservationResult()
+                    new_or.__dict__ = ob.__dict__
+                    obsres = req.query(dal, new_or, options=query_option)
                     tagger = self.mode.tagger
                     if tagger is not None:
+                        self.logger.debug('Use mode tagger to fill tags in OB')
                         obsres.tags = tagger(obsres)
                     else:
-                        obsres.tags = {}
-                    print('tags are', obsres.tags)
+                        obsres.tags = None
                     break
             else:
                 # nothing to do
                 obsres = ob
         else:
             obsres = ob
+
+        # Get tags_names per REQ
+        self.logger.debug('getting query fields per REQ')
+        qfields = set()
+        for key, req in self.requirements().items():
+            tag_n = req.tag_names()
+            self.logger.debug("%s has these query fields %s", key, tag_n)
+            qfields.update(tag_n)
+
+        if obsres.tags is None:
+            self.logger.debug('running recipe tagger')
+            self.logger.debug('with query fields %s', qfields)
+            if qfields:
+                obsres.tags = self.obsres_extractor(obsres, qfields)
+            else:
+                obsres.tags = {}
 
         for key, req in self.requirements().items():
 
@@ -237,6 +253,9 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
                 req.on_query_not_found(notfound)
 
         return self.create_input(**result)
+
+    def obsres_extractor(self, obsres, tag_keys):
+        return get_tags_from_full_ob(obsres, reqtags=tag_keys)
 
 
 def timeit(method):
