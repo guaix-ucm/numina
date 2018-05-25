@@ -17,6 +17,7 @@ import errno
 import shutil
 import pickle
 
+import six
 import yaml
 
 import numina.util.objimport as objimp
@@ -96,7 +97,11 @@ class WorkEnvironment(object):
             datadir = os.path.join(basedir, 'data')
 
         self.datadir = os.path.abspath(datadir)
-        self.index_file = os.path.join(self.workdir, 'index.pkl')
+        if six.PY2:
+            index_base = "index-2.pkl"
+        else:
+            index_base = "index.pkl"
+        self.index_file = os.path.join(self.workdir, index_base)
         self.hashes = {}
 
     def sane_work(self):
