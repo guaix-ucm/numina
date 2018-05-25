@@ -10,7 +10,9 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install numpy scipy astropy pytest python-dateutil matplotlib six PyYaml
+            pip install cython
       - run:
           command: |
             . venv/bin/activate
+            python setup.py build_ext -i
             py.test numina
