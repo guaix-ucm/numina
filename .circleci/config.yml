@@ -9,7 +9,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install numpy pytest
+            pip install numpy scipy astropy pytest python-dateutil matplotlib six PyYaml
       - run:
           command: |
             . venv/bin/activate
