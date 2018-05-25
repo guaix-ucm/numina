@@ -10,7 +10,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install numpy pytest
-      -run:
+      - run:
           command: |
             . venv/bin/activate
             py.test numina
