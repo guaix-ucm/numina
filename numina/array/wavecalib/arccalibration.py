@@ -430,7 +430,10 @@ def arccalibration(wv_master,
                    xpos_arc,
                    naxis1_arc,
                    crpix1,
-                   wv_ini_search, wv_end_search,
+                   wv_ini_search,
+                   wv_end_search,
+                   wvmin_useful,
+                   wvmax_useful,
                    error_xpos_arc,
                    times_sigma_r,
                    frac_triplets_for_sum,
@@ -464,9 +467,13 @@ def arccalibration(wv_master,
     crpix1 : float
         CRPIX1 value to be employed in the wavelength calibration.
     wv_ini_search : float
-        Minimum valid wavelength.
+        Minimum expected wavelength in spectrum.
     wv_end_search : float
-        Maximum valid wavelength.
+        Maximum expected wavelength in spectrum.
+    wvmin_useful : float
+        If not None, this value is used to clip detected lines below it.
+    wvmax_useful : float
+        If not None, this value is used to clip detected lines above it.
     error_xpos_arc : float
         Error in arc line position (pixels).
     times_sigma_r : float
@@ -521,6 +528,8 @@ def arccalibration(wv_master,
         crpix1=crpix1,
         wv_ini_search=wv_ini_search,
         wv_end_search=wv_end_search,
+        wvmin_useful=wvmin_useful,
+        wvmax_useful=wvmax_useful,
         error_xpos_arc=error_xpos_arc,
         times_sigma_r=times_sigma_r,
         frac_triplets_for_sum=frac_triplets_for_sum,
@@ -544,6 +553,8 @@ def arccalibration_direct(wv_master,
                           crpix1,
                           wv_ini_search, 
                           wv_end_search,
+                          wvmin_useful,
+                          wvmax_useful,
                           error_xpos_arc=1.0,
                           times_sigma_r=3.0,
                           frac_triplets_for_sum=0.50,
@@ -582,9 +593,13 @@ def arccalibration_direct(wv_master,
     crpix1 : float
         CRPIX1 value to be employed in the wavelength calibration.
     wv_ini_search : float
-        Minimum valid wavelength.
+        Minimum expected wavelength in spectrum.
     wv_end_search : float
-        Maximum valid wavelength.
+        Maximum expected wavelength in spectrum.
+    wvmin_useful : float
+        If not None, this value is used to clip detected lines below it.
+    wvmax_useful : float
+        If not None, this value is used to clip detected lines above it.
     error_xpos_arc : float
         Error in arc line position (pixels).
     times_sigma_r : float
@@ -1106,15 +1121,28 @@ def arccalibration_direct(wv_master,
                                      reference=0.0)
         list_of_wvfeatures.append(tmp_feature)
 
+    # set clipping window (in Angstrom)
+    # note that potential lines with wavelengths outside the interval
+    # [wvmin_clip, wvmax_clip] will be ignored
+    if wvmin_useful is None:
+        wvmin_clip = 0.0
+    else:
+        wvmin_clip = wvmin_useful
+    if wvmax_useful is None:
+        wvmax_clip = 1.0E10
+    else:
+        wvmax_clip = wvmax_useful
+
     # Category A lines
     for i in range(2, nlines_arc - 2):
         j1, j2, j3 = diagonal_ids[i]
         if j1 == j2 == j3 and j1 is not None:
-            list_of_wvfeatures[i].line_ok = True
-            list_of_wvfeatures[i].category = 'A'
-            list_of_wvfeatures[i].lineid = j1
-            list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
-            list_of_wvfeatures[i].reference = wv_master[j1]
+            if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                list_of_wvfeatures[i].line_ok = True
+                list_of_wvfeatures[i].category = 'A'
+                list_of_wvfeatures[i].lineid = j1
+                list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
+                list_of_wvfeatures[i].reference = wv_master[j1]
     
     if abs(debugplot) >= 10:
         print('\n* Including category A lines:')
@@ -1129,25 +1157,28 @@ def arccalibration_direct(wv_master,
             f1, f2, f3 = diagonal_funcost[i]
             if j1 == j2 and j1 is not None:
                 if max(f1, f2) < f3:
-                    list_of_wvfeatures[i].line_ok = True
-                    list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].lineid = j1
-                    list_of_wvfeatures[i].funcost = min(f1, f2)
-                    list_of_wvfeatures[i].reference = wv_master[j1]
+                    if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                        list_of_wvfeatures[i].line_ok = True
+                        list_of_wvfeatures[i].category = 'B'
+                        list_of_wvfeatures[i].lineid = j1
+                        list_of_wvfeatures[i].funcost = min(f1, f2)
+                        list_of_wvfeatures[i].reference = wv_master[j1]
             elif j1 == j3 and j1 is not None:
                 if max(f1, f3) < f2:
-                    list_of_wvfeatures[i].line_ok = True
-                    list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].lineid = j1
-                    list_of_wvfeatures[i].funcost = min(f1, f3)
-                    list_of_wvfeatures[i].reference = wv_master[j1]
+                    if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                        list_of_wvfeatures[i].line_ok = True
+                        list_of_wvfeatures[i].category = 'B'
+                        list_of_wvfeatures[i].lineid = j1
+                        list_of_wvfeatures[i].funcost = min(f1, f3)
+                        list_of_wvfeatures[i].reference = wv_master[j1]
             elif j2 == j3 and j2 is not None:
                 if max(f2, f3) < f1:
-                    list_of_wvfeatures[i].line_ok = True
-                    list_of_wvfeatures[i].category = 'B'
-                    list_of_wvfeatures[i].lineid = j2
-                    list_of_wvfeatures[i].funcost = min(f2, f3)
-                    list_of_wvfeatures[i].reference = wv_master[j2]
+                    if wvmin_clip <= wv_master[j2] <= wvmax_clip:
+                        list_of_wvfeatures[i].line_ok = True
+                        list_of_wvfeatures[i].category = 'B'
+                        list_of_wvfeatures[i].lineid = j2
+                        list_of_wvfeatures[i].funcost = min(f2, f3)
+                        list_of_wvfeatures[i].reference = wv_master[j2]
 
     if abs(debugplot) >= 10:
         print('\n* Including category B lines:')
@@ -1162,18 +1193,20 @@ def arccalibration_direct(wv_master,
             f1, f2, f3 = diagonal_funcost[i]
             if list_of_wvfeatures[i-1].category == 'B':
                 if min(f2, f3) > f1:
-                    list_of_wvfeatures[i].line_ok = True
-                    list_of_wvfeatures[i].category = 'C'
-                    list_of_wvfeatures[i].lineid = j1
-                    list_of_wvfeatures[i].funcost = f1
-                    list_of_wvfeatures[i].reference = wv_master[j1]
+                    if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                        list_of_wvfeatures[i].line_ok = True
+                        list_of_wvfeatures[i].category = 'C'
+                        list_of_wvfeatures[i].lineid = j1
+                        list_of_wvfeatures[i].funcost = f1
+                        list_of_wvfeatures[i].reference = wv_master[j1]
             elif list_of_wvfeatures[i+1].category == 'B':
                 if min(f1, f2) > f3:
-                    list_of_wvfeatures[i].line_ok = True
-                    list_of_wvfeatures[i].category = 'C'
-                    list_of_wvfeatures[i].lineid = j3
-                    list_of_wvfeatures[i].funcost = f3
-                    list_of_wvfeatures[i].reference = wv_master[j3]
+                    if wvmin_clip <= wv_master[j3] <= wvmax_clip:
+                        list_of_wvfeatures[i].line_ok = True
+                        list_of_wvfeatures[i].category = 'C'
+                        list_of_wvfeatures[i].lineid = j3
+                        list_of_wvfeatures[i].funcost = f3
+                        list_of_wvfeatures[i].reference = wv_master[j3]
 
     if abs(debugplot) >= 10:
         print('\n* Including category C lines:')
@@ -1185,12 +1218,13 @@ def arccalibration_direct(wv_master,
     for i in [1, nlines_arc - 2]:
         j1, j2 = diagonal_ids[i]
         if j1 == j2 and j1 is not None:
-            f1, f2 = diagonal_funcost[i]
-            list_of_wvfeatures[i].line_ok = True
-            list_of_wvfeatures[i].category = 'D'
-            list_of_wvfeatures[i].lineid = j1
-            list_of_wvfeatures[i].funcost = min(f1, f2)
-            list_of_wvfeatures[i].reference = wv_master[j1]
+            if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                f1, f2 = diagonal_funcost[i]
+                list_of_wvfeatures[i].line_ok = True
+                list_of_wvfeatures[i].category = 'D'
+                list_of_wvfeatures[i].lineid = j1
+                list_of_wvfeatures[i].funcost = min(f1, f2)
+                list_of_wvfeatures[i].reference = wv_master[j1]
 
     if abs(debugplot) >= 10:
         print('\n* Including category D lines:')
@@ -1203,20 +1237,22 @@ def arccalibration_direct(wv_master,
     if list_of_wvfeatures[i+1].line_ok and list_of_wvfeatures[i+2].line_ok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
-            list_of_wvfeatures[i].line_ok = True
-            list_of_wvfeatures[i].category = 'E'
-            list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
-            list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
-            list_of_wvfeatures[i].reference = wv_master[j1]
+            if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                list_of_wvfeatures[i].line_ok = True
+                list_of_wvfeatures[i].category = 'E'
+                list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
+                list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
+                list_of_wvfeatures[i].reference = wv_master[j1]
     i = nlines_arc-1
     if list_of_wvfeatures[i-2].line_ok and list_of_wvfeatures[i-1].line_ok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
-            list_of_wvfeatures[i].line_ok = True
-            list_of_wvfeatures[i].category = 'E'
-            list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
-            list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
-            list_of_wvfeatures[i].reference = wv_master[j1]
+            if wvmin_clip <= wv_master[j1] <= wvmax_clip:
+                list_of_wvfeatures[i].line_ok = True
+                list_of_wvfeatures[i].category = 'E'
+                list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
+                list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
+                list_of_wvfeatures[i].reference = wv_master[j1]
 
     if abs(debugplot) >= 10:
         print('\n* Including category E lines:')

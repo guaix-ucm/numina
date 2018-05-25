@@ -380,6 +380,7 @@ def find_fxpeaks(sp,
 
 def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
                    wv_ini_search=None, wv_end_search=None,
+                   wvmin_useful=None, wvmax_useful=None,
                    geometry=None, debugplot=0):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
@@ -395,10 +396,14 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         Degree for wavelength calibration polynomial.
     wv_master : 1d numpy array
         Array with arc line wavelengths.
-    wv_ini_search : float
-        Minimum valid wavelength.
-    wv_end_search : float
-        Maximum valid wavelength.
+    wv_ini_search : float or None
+        Minimum expected wavelength in spectrum.
+    wv_end_search : float or None
+        Maximum expected wavelength in spectrum.
+    wvmin_useful : float or None
+        If not None, this value is used to clip detected lines below it.
+    wvmax_useful : float or None
+        If not None, this value is used to clip detected lines above it.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -439,6 +444,8 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         crpix1=1.0,
         wv_ini_search=wv_ini_search,
         wv_end_search=wv_end_search,
+        wvmin_useful=wvmin_useful,
+        wvmax_useful=wvmax_useful,
         error_xpos_arc=3,
         times_sigma_r=3.0,
         frac_triplets_for_sum=0.50,
@@ -510,6 +517,12 @@ def main(args=None):
                         type=float)
     parser.add_argument("--wvmax",
                         help="Maximum expected wavelength",
+                        type=float)
+    parser.add_argument("--wvmin_useful",
+                        help="Minimum useful wavelength",
+                        type=float)
+    parser.add_argument("--wvmax_useful",
+                        help="Maximum useful wavelength",
                         type=float)
     parser.add_argument("--nwin_background",
                         help="window to compute background (0=none)"
@@ -684,6 +697,8 @@ def main(args=None):
         wv_master=wv_master,
         wv_ini_search=args.wvmin,
         wv_end_search=args.wvmax,
+        wvmin_useful=args.wvmin_useful,
+        wvmax_useful=args.wvmax_useful,
         geometry=geometry,
         debugplot=args.debugplot
     )
@@ -701,6 +716,26 @@ def main(args=None):
     if args.out_sp is not None:
         hdu = fits.PrimaryHDU(spf.astype(np.float32))
         hdu.writeto(args.out_sp, overwrite=True)
+
+    # clip master arc line lists to useful wavelength range
+    if args.wvmin_useful is None:
+        wvmin = -np.infty
+    else:
+        wvmin = args.wvmin_useful
+    if args.wvmax_useful is None:
+        wvmax = np.infty
+    else:
+        wvmax = args.wvmax_useful
+
+    lok1 = wvmin <= wv_master_all
+    lok2 = wv_master_all <= wvmax
+    lok = lok1 * lok2
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in wv_master_all........: ", len(wv_master_all))
+    wv_master_all = wv_master_all[lok]
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in clipped wv_master_all: ", len(wv_master_all))
+        print("clipped wv_master_all:\n", wv_master_all)
 
     # refine wavelength calibration when requested
     if args.degree_refined > 0:
