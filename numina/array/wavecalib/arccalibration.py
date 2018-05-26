@@ -2067,7 +2067,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         print(">>> Refined coefficients:")
         for cdum in poly_refined.coef:
             print(cdum)
-        print(">>> CRVAL1 linear scale............:", crval1_linear)
-        print(">>> CDELT1 linear scale............:", cdelt1_linear)
+        print(">>> Final CRVAL1 linear scale............:", crval1_linear)
+        print(">>> Final CDELT1 linear scale............:", cdelt1_linear)
 
     return poly_refined, yres_summary

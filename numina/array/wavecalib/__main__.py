@@ -25,6 +25,7 @@ from .arccalibration import refine_arccalibration
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplotxy import ximplotxy
 from ..stats import robust_std
+from ...tools.arg_file_is_new import arg_file_is_new
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
@@ -558,8 +559,9 @@ def main(args=None):
                         default=0)
     parser.add_argument("--degree_refined",
                         help="Degree of the refined fit using faint lines "
-                             "from wv_master_file",
-                        default=0, type=int)
+                             "from wv_master_file (default=None, i.e. no "
+                             "refinement)",
+                        default=None, type=int)
     parser.add_argument("--sigma_gauss_filt",
                         help="Sigma (pixels) of gaussian filtering to avoid "
                              "saturared lines (default=0)",
@@ -580,6 +582,9 @@ def main(args=None):
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
+    parser.add_argument("--pdffile",
+                        help="Output PDF file name",
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                         " (default=0)",
@@ -595,9 +600,18 @@ def main(args=None):
 
     # ---
 
+    # read pdffile
+    if args.pdffile is not None:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(args.pdffile.name)
+        interactive_refinement = False
+    else:
+        pdf = None
+        interactive_refinement = True
+
     # if refinement is going to be used, check that the corresponding
     # polynomial degree is at least as large as the initial degree
-    if args.degree_refined > 0:
+    if args.degree_refined is not None:
         if args.degree > args.degree_refined:
             raise ValueError("degree_refined must be >= degree")
 
@@ -738,7 +752,7 @@ def main(args=None):
         print("clipped wv_master_all:\n", wv_master_all)
 
     # refine wavelength calibration when requested
-    if args.degree_refined > 0:
+    if args.degree_refined is not None:
         poly_refined, yres_summary = refine_arccalibration(
             sp=spf,
             poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
@@ -746,15 +760,19 @@ def main(args=None):
             poldeg=args.degree_refined,
             ntimes_match_wv=1,
             plottitle=plottitle,
-            interactive=True,
+            interactive=interactive_refinement,
             geometry=geometry,
+            pdf=pdf,
             debugplot=args.debugplot
         )
 
-    try:
-        input("\nPress RETURN to QUIT...")
-    except SyntaxError:
-        pass
+    if pdf is not None:
+        pdf.close()
+    else:
+        try:
+            input("\nPress RETURN to QUIT...")
+        except SyntaxError:
+            pass
 
 
 if __name__ == "__main__":
