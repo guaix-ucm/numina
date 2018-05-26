@@ -1,6 +1,8 @@
 
 import os.path
 
+import six
+
 from ..helpers import WorkEnvironment
 
 
