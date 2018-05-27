@@ -596,9 +596,9 @@ def arccalibration_direct(wv_master,
         Minimum expected wavelength in spectrum.
     wv_end_search : float
         Maximum expected wavelength in spectrum.
-    wvmin_useful : float
+    wvmin_useful : float or None
         If not None, this value is used to clip detected lines below it.
-    wvmax_useful : float
+    wvmax_useful : float or None
         If not None, this value is used to clip detected lines above it.
     error_xpos_arc : float
         Error in arc line position (pixels).
