@@ -1572,22 +1572,35 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     # been verified (this flag avoids duplication)
     wv_unused = np.ones_like(wv_expected_all_peaks, dtype=bool)
 
+    # initialize to np.infty array to store minimum distance to already
+    # identified line
+    minimum_delta_wv = np.ones_like(wv_expected_all_peaks, dtype=float)
+    minimum_delta_wv *= np.infty
+
     # since it is likely that len(wv_master) < len(wv_expected_all_peaks),
     # it is more convenient to execute the search in the following order
     for i in range(len(wv_master)):
         j = np.searchsorted(wv_expected_all_peaks, wv_master[i])
         if j == 0:
-            if wv_unused[j]:
-                delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j])
-                if delta_wv < delta_wv_max:
+            delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j])
+            if delta_wv < delta_wv_max:
+                if wv_unused[j]:
                     wv_verified_all_peaks[j] = wv_master[i]
                     wv_unused[j] = False
+                    minimum_delta_wv[j] = delta_wv
+                else:
+                    if delta_wv < minimum_delta_wv[j]:
+                        wv_verified_all_peaks[j] = wv_master[i]
+                        minimum_delta_wv[j] = delta_wv
         elif j == len(wv_expected_all_peaks):
-            if wv_unused[j-1]:
-                delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j-1])
-                if delta_wv < delta_wv_max:
+            delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+            if delta_wv < delta_wv_max:
+                if wv_unused[j-1]:
                     wv_verified_all_peaks[j-1] = wv_master[i]
                     wv_unused[j-1] = False
+                else:
+                    if delta_wv < minimum_delta_wv[j-1]:
+                        wv_verified_all_peaks[j-1] = wv_master[i]
         else:
             delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j-1])
             delta_wv2 = abs(wv_master[i] - wv_expected_all_peaks[j])
@@ -1596,19 +1609,17 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
                     if wv_unused[j-1]:
                         wv_verified_all_peaks[j-1] = wv_master[i]
                         wv_unused[j-1] = False
-                    elif wv_unused[j]:
-                        if delta_wv2 < delta_wv_max:
-                            wv_verified_all_peaks[j] = wv_master[i]
-                            wv_unused[j] = False
+                    else:
+                        if delta_wv1 < minimum_delta_wv[j-1]:
+                            wv_verified_all_peaks[j-1] = wv_master[i]
             else:
                 if delta_wv2 < delta_wv_max:
                     if wv_unused[j]:
                         wv_verified_all_peaks[j] = wv_master[i]
                         wv_unused[j] = False
-                    elif wv_unused[j-1]:
-                        if delta_wv1 < delta_wv_max:
-                            wv_verified_all_peaks[j-1] = wv_master[i]
-                            wv_unused[j-1] = False
+                    else:
+                        if delta_wv2 < minimum_delta_wv[j]:
+                            wv_verified_all_peaks[j] = wv_master[i]
 
     return wv_verified_all_peaks
 
