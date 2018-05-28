@@ -64,7 +64,7 @@ class Expression(object):
     def __init__(self, *args):
 
         self.nodes = []
-
+        self.metadata = {}
         for arg in args:
             if isinstance(arg, Expression):
                 self.nodes.append(arg)
@@ -80,6 +80,9 @@ class Expression(object):
 
     def fields(self):
         return self._fields
+
+    def tags(self):
+        return self._places
 
     def places(self):
         return self._places
@@ -143,6 +146,8 @@ class Expression(object):
 
         return map_tree(change_p_node_tags, self)
 
+    fill_tags = fill_placeholders
+
     def clone(self, children):
         raise NotImplementedError
 
@@ -157,8 +162,9 @@ class AtomicExpr(Expression):
 
 class TagRepr(AtomicExpr):
     "A representation of a Tag"
-    def __init__(self, name):
+    def __init__(self, name, metadata=None):
         super(TagRepr, self).__init__(name, name)
+        self.metadata = metadata or {}
         self._fields.add(name)
 
     def clone(self, nodes):
@@ -188,6 +194,10 @@ class ConstExpr(AtomicExpr):
 
     def __repr__(self):
         return "ConstExpr(%s)" % self.value
+
+
+ConstExprTrue = ConstExpr(True)
+ConstExprFalse = ConstExpr(False)
 
 
 class CompoundExpr(Expression):
@@ -276,11 +286,13 @@ class ConstraintAdapter(object):
 
 
 def condition_terminal(tree):
-    term = all(node.is_terminal() for node in tree.nodes)
-    return not term
-
+    if tree.nodes:
+        term = all(node.is_terminal() for node in tree.nodes)
+        return not term
+    else:
+        return True
 
 def adapter(tree):
-    if all(node.is_terminal() for node in tree.nodes):
-        return ConstraintAdapter(tree.lhs.name, tree.rhs.value, tree.operator)
-    return tree
+    if tree.nodes:
+        if all(node.is_terminal() for node in tree.nodes):
+            return ConstraintAdapter(tree.lhs.name, tree.rhs.value, tree.operator)
