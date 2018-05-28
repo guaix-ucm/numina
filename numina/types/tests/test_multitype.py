@@ -106,3 +106,22 @@ def test_tag_names2():
     multi._current = multi.type_options[1]
 
     assert multi.tag_names() == ['domeB']
+
+
+def test_internal_default():
+    import numina.core.dataholders as dh
+
+    multi = MultiType(TypeA, TypeB)
+    req = dh.Requirement(multi, description="Some")
+
+    with pytest.raises(ValueError):
+        req.default_value()
+
+
+def test_internal_default_optional():
+    import numina.core.dataholders as dh
+
+    multi = MultiType(TypeA, TypeB)
+    req = dh.Requirement(multi, description="Some", optional=True)
+
+    assert req.default_value() is None

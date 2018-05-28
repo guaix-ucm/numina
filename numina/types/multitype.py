@@ -15,6 +15,7 @@ class MultiType(object):
     def __init__(self, *args):
         self.type_options = []
         self._current = None
+        self.internal_default = None
         for obj in args:
             if inspect.isclass(obj):
                 obj = obj()
