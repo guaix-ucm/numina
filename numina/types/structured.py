@@ -41,8 +41,8 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
        UUID of the result
 
     """
-    def __init__(self, instrument='unknown'):
-        super(BaseStructuredCalibration, self).__init__()
+    def __init__(self, instrument='unknown', datamodel=None):
+        super(BaseStructuredCalibration, self).__init__(datamodel=datamodel)
         self.instrument = instrument
         self.tags = {}
         self.uuid = str(uuid.uuid1())

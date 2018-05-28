@@ -84,8 +84,8 @@ class DataType(DataTypeBase):
 
 class AutoDataType(DataType):
     """Data type for types that are its own python type"""
-    def __init__(self):
-        super(AutoDataType, self).__init__(ptype=self.__class__)
+    def __init__(self, *args, **kwargs):
+        super(AutoDataType, self).__init__(ptype=self.__class__, **kwargs)
 
 
 class AnyType(DataType):

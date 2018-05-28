@@ -41,6 +41,11 @@ except ImportError:
 
 import operator
 
+try:
+    from functools import reduce
+except ImportError:
+    pass
+
 
 def map_tree(visitor, tree):
     """Apply function to nodes"""
@@ -293,6 +298,20 @@ def condition_terminal(tree):
         return True
 
 def adapter(tree):
-    if tree.nodes:
-        if all(node.is_terminal() for node in tree.nodes):
-            return ConstraintAdapter(tree.lhs.name, tree.rhs.value, tree.operator)
+    if tree.nodes and all(node.is_terminal() for node in tree.nodes):
+        return ConstraintAdapter(tree.lhs.name, tree.rhs.value, tree.operator)
+
+
+def query_expr_from_attr(attrs):
+    # Create a query descriptor from a sequence for fields
+    if len(attrs) == 0:
+        return ConstExprTrue
+    exprs = []
+    #for name, dtype in descs:
+    for attr in attrs:
+        metadata = {'type': attr.type, 'description': attr.description}
+        lhs = TagRepr(attr.name, metadata=metadata)
+        rhs = Placeholder(attr.name)
+        expr = (lhs == rhs)
+        exprs.append(expr)
+    return reduce(operator.and_, exprs)

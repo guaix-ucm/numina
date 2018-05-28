@@ -93,7 +93,7 @@ class DataModel(object):
         'quality_control',
     ]
     db_info_keys_extra = []
-    
+    query_attrs = {}
     meta_dinfo_headers = [
         'instrument',
         'object',
