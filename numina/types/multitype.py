@@ -58,6 +58,15 @@ class MultiType(object):
 
         raise ValueError('No query performed, current type is not set')
 
+    def tag_names(self):
+        if self._current:
+            return self._current.tag_names()
+        else:
+            join = []
+            for subtype in self.type_options:
+                join.extend(subtype.tag_names())
+            return join
+
     def validate(self, obj):
         if self._current:
             return self._current.validate(obj)

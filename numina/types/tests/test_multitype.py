@@ -33,6 +33,9 @@ class TypeA(DataType):
     def convert(self, obj):
         return TypeA()
 
+    def tag_names(self):
+        return ['domeA', 'domeA2']
+
 
 class TypeB(DataType):
 
@@ -41,6 +44,9 @@ class TypeB(DataType):
 
     def convert(self, obj):
         return TypeB()
+
+    def tag_names(self):
+        return ['domeB']
 
 
 def test_convert_in():
@@ -84,3 +90,19 @@ def test_validate2():
 
     with pytest.raises(numina.exceptions.ValidationError):
         multi.validate(3)
+
+
+def test_tag_names1():
+
+    multi = MultiType(TypeA, TypeB)
+
+    assert multi.tag_names() == ['domeA', 'domeA2', 'domeB']
+
+
+
+def test_tag_names2():
+
+    multi = MultiType(TypeA, TypeB)
+    multi._current = multi.type_options[1]
+
+    assert multi.tag_names() == ['domeB']
