@@ -1843,14 +1843,17 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
-            fig = plt.figure()
+            if pdf is not None:
+                fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+            else:
+                fig = plt.figure()
             if geometry is not None:
                 x_geom, y_geom, dx_geom, dy_geom = geometry
                 mngr = plt.get_current_fig_manager()
                 mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
 
             grid = plt.GridSpec(2, 1)
-            grid.update(left=0.05, right=0.98,
+            grid.update(left=0.08, right=0.98,
                         bottom=0.10, top=0.95, hspace=0.01)
 
             # differences between linear fit and fitted polynomial
