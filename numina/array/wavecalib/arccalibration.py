@@ -1625,6 +1625,7 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
 
 
 def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
+                          nrepeat=3,
                           ntimes_match_wv=2,
                           nwinwidth_initial=7,
                           nwinwidth_refined=5,
@@ -1653,6 +1654,9 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         Polynomial degree of refined wavelength calibration. Note
         that this degree can be different from the polynomial degree
         of poly_initial.
+    nrepeat : int
+        Number of times lines are iteratively included in the initial
+        fit.
     ntimes_match_wv : int
         Number of pixels around each line peak where the expected
         wavelength must match the tabulated wavelength in the master
@@ -1693,6 +1697,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         Statistical summary of the residuals.
 
     """
+
+    # check that nrepeat is larger than zero
+    if nrepeat <= 0:
+        raise ValueError("Unexpected nrepeat=", str(nrepeat))
 
     # check that the requested polynomial degree is equal or larger than
     # the degree of the initial polynomial
@@ -1755,6 +1763,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
     loop = True
 
+    nrepeat_eff = nrepeat
     while loop:
 
         nlines_ok = 0
@@ -1764,38 +1773,47 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
         if npeaks > 0:
 
-            # fit with sigma rejection
-            lines_ok = np.where(wv_verified_all_peaks > 0)
-            nlines_ok = len(lines_ok[0])
+            for irepeat in range(nrepeat_eff):
+                # fit with sigma rejection
+                lines_ok = np.where(wv_verified_all_peaks > 0)
+                nlines_ok = len(lines_ok[0])
 
-            # there are matched lines
-            if nlines_ok > 0:
-                # select points to be fitted
-                xdum = (fxpeaks + 1.0)[lines_ok]
-                ydum = wv_verified_all_peaks[lines_ok]
+                # there are matched lines
+                if nlines_ok > 0:
+                    # select points to be fitted
+                    xdum = (fxpeaks + 1.0)[lines_ok]
+                    ydum = wv_verified_all_peaks[lines_ok]
 
-                # determine effective polynomial degree
-                if nlines_ok > poldeg:
-                    poldeg_effective = poldeg
+                    # determine effective polynomial degree
+                    if nlines_ok > poldeg:
+                        poldeg_effective = poldeg
+                    else:
+                        poldeg_effective = nlines_ok - 1
+
+                    # fit polynomial
+                    poly_refined, yres, reject = \
+                        polfit_residuals_with_sigma_rejection(
+                            x=xdum,
+                            y=ydum,
+                            deg=poldeg_effective,
+                            times_sigma_reject=times_sigma_reject,
+                            debugplot=0
+                        )
+
+                    # effective number of points
+                    yres_summary = summary(yres[np.logical_not(reject)])
+
                 else:
-                    poldeg_effective = nlines_ok - 1
+                    poly_refined = np.polynomial.Polynomial([0.0])
+                    yres_summary = summary(np.array([]))
 
-                # fit polynomial
-                poly_refined, yres, reject = \
-                    polfit_residuals_with_sigma_rejection(
-                        x=xdum,
-                        y=ydum,
-                        deg=poldeg_effective,
-                        times_sigma_reject=times_sigma_reject,
-                        debugplot=0
+                if irepeat < nrepeat_eff - 1:
+                    delta_wv_max = ntimes_match_wv * cdelt1_linear
+                    wv_verified_all_peaks = match_wv_arrays(
+                        wv_master,
+                        poly_refined(fxpeaks + 1.0),
+                        delta_wv_max=delta_wv_max
                     )
-
-                # effective number of points
-                yres_summary = summary(yres[np.logical_not(reject)])
-
-            else:
-                poly_refined = np.polynomial.Polynomial([0.0])
-                yres_summary = summary(np.array([]))
 
         # update poldeg_effective
         poldeg_effective = len(poly_refined.coef) - 1
@@ -1974,6 +1992,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
             # request next action in interactive session
             if interactive:
+                nrepeat_eff = 1
                 print('Recalibration menu')
                 print('------------------')
                 print('[i] (i)nsert new peak and restart')
