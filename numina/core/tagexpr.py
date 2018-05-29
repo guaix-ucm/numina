@@ -33,12 +33,6 @@ Where & represents AND, | represents OR and ~ represents NOT
 
 """
 
-
-try:
-    from sets import Set as set
-except ImportError:
-    pass
-
 import operator
 
 try:
@@ -296,6 +290,7 @@ def condition_terminal(tree):
         return not term
     else:
         return True
+
 
 def adapter(tree):
     if tree.nodes and all(node.is_terminal() for node in tree.nodes):
