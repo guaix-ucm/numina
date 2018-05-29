@@ -458,9 +458,21 @@ class HybridDAL(Dict2DAL):
 
             else:
                 raise NoResultFound('value not found in any node')
+        elif result_node == 'last':
+            _logger.debug('search last node of %s', result_mode)
+
+            try:
+                st = self.search_result_last(name, tipo, result_desc)
+                return st
+            except NoResultFound:
+                pass
         else:
             msg = 'unknown node type {}'.format(result_node)
             raise TypeError(msg)
+
+    def search_result_last(self, name, tipo, result_desc):
+        # FIXME: Implement
+        raise NoResultFound
 
     def _search_result(self, name, tipo, obsres, resultid):
         """Returns the first coincidence..."""
