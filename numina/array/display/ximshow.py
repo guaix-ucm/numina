@@ -29,8 +29,9 @@ def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1,1),
+            crpix1=None, crval1=None, cdelt1=None,
             geometry=(0, 0, 640, 480), tight_layout=True,
-            debugplot=None):
+            debugplot=None, local_call=False):
     """Auxiliary function to display a numpy 2d array.
 
     Parameters
@@ -58,6 +59,15 @@ def ximshow(image2d, title=None, show=True,
         image2d[(ns1-1):ns2,(nc1-1):nc2].
     first_pixel : tuple (2 integers)
         (x0,y0) coordinates of pixel at origin.
+    crpix1 : float or None
+        CRPIX1 parameter corresponding to wavelength calibration in
+        the X direction.
+    crval1 : float or None
+        CRVAL1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cdelt1 : float or None
+        CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     tight_layout : bool
@@ -66,6 +76,8 @@ def ximshow(image2d, title=None, show=True,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot
+    local_call : bool
+        If True, this function is called from within this module.
 
     Returns
     -------
@@ -89,6 +101,9 @@ def ximshow(image2d, title=None, show=True,
                          " must be 2")
 
     naxis2_, naxis1_ = image2d.shape
+
+    # check if wavelength calibration is provided
+    wavecalib = crval1 is not None and cdelt1 is not None
 
     # read bounding box limits
     if image_bbox is None:
@@ -266,14 +281,16 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             else:
                 dum_str += event.key
 
-    # display image
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.autoscale(False)
+    # plot limits
     xmin = float(nc1) - 0.5 + (first_pixel[0] - 1)
     xmax = float(nc2) + 0.5 + (first_pixel[0] - 1)
     ymin = float(ns1) - 0.5 + (first_pixel[1] - 1)
     ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
+
+    # display image
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.autoscale(False)
     ax.set_xlabel('image pixel in the X direction')
     ax.set_ylabel('image pixel in the Y direction')
     ax.set_xlim(xmin, xmax)
@@ -300,7 +317,10 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     plt.colorbar(im_show, shrink=1.0, label=cbar_label,
                  orientation=cbar_orientation)
     if title is not None:
-        ax.set_title(title)
+        if wavecalib:
+            ax.set_title(title + "\n\n")
+        else:
+            ax.set_title(title)
 
     # set the geometry
     if geometry is not None:
@@ -311,15 +331,28 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
-    if show:
-        fig.canvas.mpl_connect('key_press_event', keypress)
+    fig.canvas.mpl_connect('key_press_event', keypress)
+
+    # wavelength scale
+    if wavecalib:
+        if crpix1 is None:
+            crpix1 = 1.0
+        xminwv = crval1 + (xmin - crpix1) * cdelt1
+        xmaxwv = crval1 + (xmax - crpix1) * cdelt1
+        ax2 = ax.twiny()
+        ax2.grid(False)
+        ax2.set_xlim(xminwv, xmaxwv)
+        ax2.set_xlabel('Wavelength (Angstroms)')
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
 
     # show plot or return axes
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
-        plt.ion()
+        if not local_call:
+            plt.ion()
         return ax
 
 
@@ -328,7 +361,8 @@ def ximshow_file(singlefile,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_geometry="0,0,640,480",
                  pdf=None, show=True,
-                 debugplot=None):
+                 debugplot=None,
+                 local_call=False):
     """Function to execute ximshow() as called from command line.
 
     Parameters
@@ -361,6 +395,8 @@ def ximshow_file(singlefile,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    local_call : bool
+        If True, this function is called from within this module.
 
     Returns
     -------
@@ -401,6 +437,20 @@ def ximshow_file(singlefile,
         naxis2 = image_header['naxis2']
     else:
         naxis2 = 1
+
+    # read wavelength calibration
+    if 'crpix1' in image_header:
+        crpix1 = image_header['crpix1']
+    else:
+        crpix1 = None
+    if 'crval1' in image_header:
+        crval1 = image_header['crval1']
+    else:
+        crval1 = None
+    if 'cdelt1' in image_header:
+        cdelt1 = image_header['cdelt1']
+    else:
+        cdelt1 = None
 
     # title for plot
     title = singlefile
@@ -466,8 +516,12 @@ def ximshow_file(singlefile,
                  z1z2=z1z2,
                  image_bbox=(nc1, nc2, ns1, ns2),
                  first_pixel=(nc0, ns0),
+                 crpix1=crpix1,
+                 crval1=crval1,
+                 cdelt1=cdelt1,
                  geometry=geometry,
-                 debugplot=debugplot)
+                 debugplot=debugplot,
+                 local_call=local_call)
 
     if pdf is not None:
         if show:
@@ -540,7 +594,8 @@ def main(args=None):
                      args_keystitle=args.keystitle,
                      args_geometry=args.geometry,
                      pdf=pdf,
-                     debugplot=args.debugplot)
+                     debugplot=args.debugplot,
+                     local_call=True)
 
     if pdf is not None:
         pdf.close()

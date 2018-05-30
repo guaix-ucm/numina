@@ -20,7 +20,8 @@ def ximplotxy(x, y, plottype=None,
               xlim=None, ylim=None, 
               xlabel=None, ylabel=None, title=None,
               show=True, geometry=(0, 0, 640, 480), tight_layout=True,
-              debugplot=0, **kwargs):
+              debugplot=0, local_call=False,
+              **kwargs):
     """
     Parameters
     ----------
@@ -51,6 +52,8 @@ def ximplotxy(x, y, plottype=None,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    local_call : bool
+        If True, this function is called from within this module.
 
     Returns
     -------
@@ -93,7 +96,8 @@ def ximplotxy(x, y, plottype=None,
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
-        plt.ion()
+        if not local_call:
+            plt.ion()
         return ax
 
 
@@ -133,9 +137,10 @@ def main(args=None):
     y = bigtable[:, col2]
 
     if args.kwargs is None:
-        ximplotxy(x, y, debugplot=12, marker='o', linestyle='')
+        ximplotxy(x, y, debugplot=12, marker='o', linestyle='',
+                  local_call=True)
     else:
-        ximplotxy(x, y, debugplot=12, **eval(args.kwargs))
+        ximplotxy(x, y, debugplot=12, local_call=True, **eval(args.kwargs))
 
 
 if __name__ == '__main__':
