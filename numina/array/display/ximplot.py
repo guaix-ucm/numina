@@ -110,4 +110,5 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
+        plt.ion()
         return ax
