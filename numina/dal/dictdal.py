@@ -406,7 +406,12 @@ class HybridDAL(Dict2DAL):
 
         try:
             field_file = result_contents[field]
-            filename = os.path.join(rdir, field_file)
+            if field_file is not None:
+                filename = os.path.join(rdir, field_file)
+                content = numina.store.load(DataFrameType(), filename)
+            else:
+                content = None
+
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
             # Python 2.7 compatibility
@@ -415,7 +420,7 @@ class HybridDAL(Dict2DAL):
 
         st = StoredProduct(
             id=node_id,
-            content=numina.store.load(DataFrameType(), filename),
+            content=content,
             tags={}
         )
         return st
