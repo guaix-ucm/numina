@@ -303,7 +303,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     if geometry is not None:
         x_geom, y_geom, dx_geom, dy_geom = geometry
         mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if 'window' in dir(mngr):
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
 
     # connect keypress event with function responsible for
     # updating vmin and vmax

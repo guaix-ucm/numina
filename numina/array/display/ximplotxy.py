@@ -83,7 +83,8 @@ def ximplotxy(x, y, plottype=None,
     if geometry is not None:
         x_geom, y_geom, dx_geom, dy_geom = geometry
         mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        if 'window' in dir(mngr):
+            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
 
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
