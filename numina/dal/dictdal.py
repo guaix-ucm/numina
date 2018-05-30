@@ -18,6 +18,7 @@ import six
 import yaml
 import numina.store
 import numina.store.gtc.load as gtcload
+from numina.types.frame import DataFrameType
 from numina.core.oresult import obsres_from_dict
 from numina.exceptions import NoResultFound
 from .absdal import AbsDrpDAL
@@ -27,7 +28,7 @@ from .diskfiledal import build_product_path
 from .utils import tags_are_valid
 
 
-_logger = logging.getLogger('clodiadrp.loader')
+_logger = logging.getLogger(__name__)
 
 
 class BaseDictDAL(AbsDrpDAL):
@@ -394,7 +395,6 @@ class HybridDAL(Dict2DAL):
             # mode must match
             if cobsres.mode != mode:
                 msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
-                print(msg)
                 raise NoResultFound(msg)
 
         rdir = resultsdir_default(self.basedir, node_id)
@@ -406,6 +406,7 @@ class HybridDAL(Dict2DAL):
 
         try:
             field_file = result_contents[field]
+            filename = os.path.join(rdir, field_file)
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
             # Python 2.7 compatibility
@@ -414,7 +415,7 @@ class HybridDAL(Dict2DAL):
 
         st = StoredProduct(
             id=node_id,
-            content=numina.store.load(tipo, os.path.join(rdir, field_file)),
+            content=numina.store.load(DataFrameType(), filename),
             tags={}
         )
         return st

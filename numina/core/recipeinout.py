@@ -93,7 +93,10 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
         saveres = {}
         for key, prod in self.stored().items():
             val = getattr(self, key)
-            where.destination = prod.dest
+            if 'obsid' in where.runinfo:
+                where.destination = "{}_{}".format(prod.dest, where.runinfo['obsid'])
+            else:
+                where.destination = "{}".format(prod.dest)
             saveres[key] = numina.store.dump(prod.type, val, where)
 
         return saveres

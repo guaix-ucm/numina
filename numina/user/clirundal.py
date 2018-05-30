@@ -158,6 +158,7 @@ def mode_run_common_obs(args, extra_args):
         # and copy needed files to workdir
         runinfo = {
             'taskid': obid,
+            'obsid': obid,
             'pipeline': pipe_name,
             'recipeclass': recipe.__class__,
             'workenv': workenv,
@@ -181,6 +182,8 @@ def mode_run_common_obs(args, extra_args):
                                     workenv=workenv, task_control=task_control)
 
         where = DiskStorageDefault(resultsdir=workenv.resultsdir)
+        # FIXME:
+        where.runinfo = runinfo
 
         where.store(completed_task)
 

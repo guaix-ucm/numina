@@ -67,7 +67,8 @@ def test_store_to(qc):
     exp = {'param1': None, 'param2': None, 'qc': qc}
 
     class Storage(object):
-        pass
+        def __init__(self):
+            self.runinfo = {}
 
     where = Storage()
 

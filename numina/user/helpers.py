@@ -25,7 +25,7 @@ from numina.types.frame import DataFrameType
 from numina.util.context import working_directory
 
 
-_logger = logging.getLogger("numina")
+_logger = logging.getLogger(__name__)
 
 
 class ProcessingTask(object):
