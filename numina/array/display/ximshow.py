@@ -77,6 +77,9 @@ def ximshow(image2d, title=None, show=True,
 
     from numina.array.display.matplotlib_qt import plt
 
+    if not show:
+        plt.ioff()
+
     # protections
     if type(image2d) is not np.ndarray:
         raise ValueError("image2d=" + str(image2d) +
@@ -308,7 +311,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
-    fig.canvas.mpl_connect('key_press_event', keypress)
+    if show:
+        fig.canvas.mpl_connect('key_press_event', keypress)
 
     # show plot or return axes
     if show:

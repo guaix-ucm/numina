@@ -73,6 +73,9 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
 
     # display image
     from numina.array.display.matplotlib_qt import plt
+    if not show:
+        plt.ioff()
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.autoscale(False)
