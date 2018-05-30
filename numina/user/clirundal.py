@@ -182,9 +182,6 @@ def mode_run_common_obs(args, extra_args):
                                     workenv=workenv, task_control=task_control)
 
         where = DiskStorageDefault(resultsdir=workenv.resultsdir)
-        # FIXME:
-        where.runinfo = runinfo
-
         where.store(completed_task)
 
 

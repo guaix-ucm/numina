@@ -133,12 +133,52 @@ class WorkEnvironment(object):
         self.copyfiles_stage2(reqs)
 
     def copyfiles_stage1(self, obsres):
+        import astropy.io.fits as fits
         _logger.debug('copying files from observation result')
+        tails = []
+        sources = []
         for f in obsres.images:
-            complete = os.path.abspath(os.path.join(self.datadir, f.filename))
-            self.copy_if_needed(f.filename, complete)
+            if not os.path.isabs(f.filename):
+                complete = os.path.abspath(os.path.join(self.datadir, f.filename))
+            else:
+                complete = f.filename
+            head, tail = os.path.split(complete)
+            #initial.append(complete)
+            tails.append(tail)
+#            heads.append(head)
+            sources.append(complete)
+
+        dupes = self.check_duplicates(tails)
+
+        for src, obj in zip(sources, obsres.images):
+            head, tail = os.path.split(src)
+            if tail in dupes:
+                # extract UUID
+                hdr = fits.getheader(src)
+                img_uuid = hdr['UUID']
+                root, ext = os.path.splitext(tail)
+                key = "{}_{}{}".format(root, img_uuid, ext)
+
+            else:
+                key = tail
+            dest = os.path.join(self.workdir, key)
+            # Update filename in DataFrame
+            obj.filename = dest
+            self.copy_if_needed(key, src, dest)
+
         if obsres.results:
             _logger.warning("not copying files in 'results")
+        return obsres
+
+    def check_duplicates(self, tails):
+        seen = set()
+        dupes = set()
+        for tail in tails:
+            if tail in seen:
+                dupes.add(tail)
+            else:
+                seen.add(tail)
+        return dupes
 
     def copyfiles_stage2(self, reqs):
         _logger.debug('copying files from requirements')
@@ -152,15 +192,12 @@ class WorkEnvironment(object):
                     os.path.join(self.datadir, value.filename)
                 )
 
-                self.copy_if_needed(value.filename, complete)
+                self.copy_if_needed(value.filename, complete, self.workdir)
 
-    def copy_if_needed(self, key, complete):
+    def copy_if_needed(self, key, src, dest):
 
-        md5hash = compute_md5sum_file(complete)
-        _logger.debug('compute hash, %s %s %s', key, md5hash, complete)
-
-        head, tail = os.path.split(complete)
-        destination = os.path.join(self.workdir, tail)
+        md5hash = compute_md5sum_file(src)
+        _logger.debug('compute hash, %s %s %s', key, md5hash, src)
 
         # Check hash
         hash_in_file = self.hashes.get(key)
@@ -169,7 +206,7 @@ class WorkEnvironment(object):
             make_copy = True
         elif hash_in_file == md5hash:
             trigger_save = False
-            if os.path.isfile(destination):
+            if os.path.isfile(dest):
                 make_copy = False
             else:
                 make_copy = True
@@ -181,7 +218,7 @@ class WorkEnvironment(object):
             
         if make_copy:
             _logger.debug('copying %r to %r', key, self.workdir)
-            shutil.copy(complete, self.workdir)
+            shutil.copy(src, dest)
         else:
             _logger.debug('copying %r not needed', key)
 
