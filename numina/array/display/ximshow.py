@@ -16,6 +16,7 @@ import numpy as np
 
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
+from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
 
 from numina.visualization import ZScaleInterval
@@ -30,6 +31,7 @@ def ximshow(image2d, title=None, show=True,
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1,1),
             crpix1=None, crval1=None, cdelt1=None,
+            ds9regfile=None,
             geometry=(0, 0, 640, 480), tight_layout=True,
             debugplot=0, local_call=False):
     """Auxiliary function to display a numpy 2d array.
@@ -68,6 +70,8 @@ def ximshow(image2d, title=None, show=True,
     cdelt1 : float or None
         CDELT1 parameter corresponding to wavelength calibration in
         the X direction.
+    ds9regfile : file handler
+        Ds9 region file to be overplotted.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     tight_layout : bool
@@ -205,6 +209,7 @@ Set bg=min and fg=max values....: ,
 Display statistical summary.....: .
 Set foreground by keyboard......: m
 Set background by keyboard......: n
+Activate/deactivate ds9 regions.: a
 Constrain pan/zoom to x axis....: hold x when panning/zooming with mouse
 Constrain pan/zoom to y axis....: hold y when panning/zooming with mouse
 Preserve aspect ratio...........: hold CONTROL when panning/zooming with mouse
@@ -322,6 +327,9 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         else:
             ax.set_title(title)
 
+    if ds9regfile is not None:
+        overplot_ds9reg(ds9regfile.name, ax)
+
     # set the geometry
     if geometry is not None:
         x_geom, y_geom, dx_geom, dy_geom = geometry
@@ -359,8 +367,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 def ximshow_file(singlefile,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
-                 args_keystitle=None, args_geometry="0,0,640,480",
-                 pdf=None, show=True,
+                 args_keystitle=None, args_ds9reg=None,
+                 args_geometry="0,0,640,480", pdf=None, show=True,
                  debugplot=None,
                  local_call=False):
     """Function to execute ximshow() as called from command line.
@@ -382,6 +390,8 @@ def ximshow_file(singlefile,
         String providing the coordinates of lower left pixel.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
+    args_ds9reg : file handler
+        Ds9 region file to be overplotted.
     args_geometry : string or None
         Tuple x,y,dx,dy to define the Qt backend geometry. This
         information is ignored if args_pdffile is not None.
@@ -519,6 +529,7 @@ def ximshow_file(singlefile,
                  crpix1=crpix1,
                  crval1=crval1,
                  cdelt1=cdelt1,
+                 ds9regfile=args_ds9reg,
                  geometry=geometry,
                  debugplot=debugplot,
                  local_call=local_call)
@@ -559,6 +570,9 @@ def main(args=None):
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
+    parser.add_argument("--ds9reg",
+                        help="ds9 region file to be overplotted",
+                        type=argparse.FileType('rt'))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy",
                         default="0,0,640,480")
@@ -592,6 +606,7 @@ def main(args=None):
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,
                      args_keystitle=args.keystitle,
+                     args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,
                      pdf=pdf,
                      debugplot=args.debugplot,
