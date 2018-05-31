@@ -14,6 +14,7 @@ import logging
 from numina.core import BaseRecipe, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 import numina.core.dataholders as dh
+import numina.core.query as qry
 
 
 _logger = logging.getLogger(__name__)
@@ -84,8 +85,16 @@ class Combine(BaseRecipe):
                 result[key] = req.query(dal, obsres, options=query_option)
             except numina.exceptions.NoResultFound as notfound:
                 req.on_query_not_found(notfound)
+        if 'field' in result:
+            # extract values:
+            obreq = self.requirements()['obresult']
+            qoptions = qry.ResultOf(field=result['field'])
 
-        return self.create_input(**result)
+            obsres = obreq.type.query("obresult", dal, obsres, options=qoptions)
+            result['obresult'] = obsres
+
+        rinput = self.create_input(**result)
+        return rinput
 
 
 def combine_frames(frames, method, errors=True, prolog=None):
