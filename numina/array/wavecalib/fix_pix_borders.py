@@ -64,7 +64,7 @@ def fix_pix_borders(image2d, nreplace, sought_value, replacement_value):
     nreplace : int
         Number of pixels to be replaced in each border.
     sought_value : int, float, bool
-        Pixel value that indicate missing data in the spectrum.
+        Pixel value that indicates missing data in the spectrum.
     replacement_value : int, float, bool
         Pixel value to be employed in the 'nreplace' pixels.
 
@@ -75,6 +75,7 @@ def fix_pix_borders(image2d, nreplace, sought_value, replacement_value):
 
     """
 
+    # input image size
     naxis2, naxis1 = image2d.shape
 
     for i in range(naxis2):
@@ -93,3 +94,47 @@ def fix_pix_borders(image2d, nreplace, sought_value, replacement_value):
             image2d[i, j1:j2] = replacement_value
 
     return image2d
+
+
+def define_mask_borders(image2d, sought_value, nadditional=0):
+    """Generate mask avoiding undesired values at the borders.
+
+    Set to True image borders with values equal to 'sought_value'
+
+    Parameters
+    ----------
+    image2d : numpy array
+        Initial 2D image.
+    sought_value : int, float, bool
+        Pixel value that indicates missing data in the spectrum.
+    nadditional : int
+        Number of additional pixels to be masked at each border.
+
+    Returns
+    -------
+    mask2d : numpy array
+        2D mask.
+
+    """
+
+    # input image size
+    naxis2, naxis1 = image2d.shape
+
+    # initialize mask
+    mask2d = np.zeros((naxis2, naxis1), dtype=bool)
+
+    for i in range(naxis2):
+        # only spectra with values different from 'sought_value'
+        jborder_min, jborder_max = find_pix_borders(image2d[i, :],
+                                                    sought_value=sought_value)
+        if (jborder_min, jborder_max) != (-1, naxis1):
+            if jborder_min != -1:
+                j1 = 0
+                j2 = jborder_min + nadditional + 1
+                mask2d[i, j1:j2] = True
+            if jborder_max != naxis1:
+                j1 = jborder_max - nadditional
+                j2 = naxis1
+                mask2d[i, j1:j2] = True
+
+    return mask2d
