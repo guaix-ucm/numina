@@ -35,9 +35,15 @@ class DataTypeBase(object):
         self.query_expr = tagexpr.ConstExprTrue
 
         if hasattr(self, '__tags__'):
-            objtags = [my_tag_table[t] for t in self.__tags__]
-            self.query_expr = tagexpr.query_expr_from_attr(objtags)
+            # FIXME:
+            if isinstance(self.__tags__, list):
+                objtags = [my_tag_table[t] for t in self.__tags__]
+            elif isinstance(self.__tags__, dict):
+                objtags = [t for t in self.__tags__.values()]
+            else:
+                raise TypeError('type not supported in tags')
 
+            self.query_expr = tagexpr.query_expr_from_attr(objtags)
         if 'query_expr' in kwds:
             self.query_expr = kwds['query_expr']
 
