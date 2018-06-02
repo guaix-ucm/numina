@@ -26,6 +26,10 @@ dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
 
 
+def ximshow_jupyter(image2d, **args):
+    return ximshow(image2d, using_jupyter=True, **args)
+
+
 def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
@@ -33,7 +37,7 @@ def ximshow(image2d, title=None, show=True,
             crpix1=None, crval1=None, cdelt1=None,
             ds9regfile=None,
             geometry=(0, 0, 640, 480), tight_layout=True,
-            debugplot=0, local_call=False):
+            debugplot=0, using_jupyter=False):
     """Auxiliary function to display a numpy 2d array.
 
     Parameters
@@ -80,8 +84,8 @@ def ximshow(image2d, title=None, show=True,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot
-    local_call : bool
-        If True, this function is called from within this module.
+    using_jupyter : bool
+        If True, this function is called from a jupyter notebook.
 
     Returns
     -------
@@ -93,7 +97,7 @@ def ximshow(image2d, title=None, show=True,
 
     from numina.array.display.matplotlib_qt import plt
 
-    if not show:
+    if not show and using_jupyter:
         plt.ioff()
 
     # protections
@@ -359,7 +363,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
-        if not local_call:
+        if using_jupyter:
             plt.ion()
         return ax
 
@@ -370,7 +374,7 @@ def ximshow_file(singlefile,
                  args_keystitle=None, args_ds9reg=None,
                  args_geometry="0,0,640,480", pdf=None, show=True,
                  debugplot=None,
-                 local_call=False):
+                 using_jupyter=False):
     """Function to execute ximshow() as called from command line.
 
     Parameters
@@ -405,8 +409,8 @@ def ximshow_file(singlefile,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
-    local_call : bool
-        If True, this function is called from within this module.
+    using_jupyter : bool
+        If True, this function is called from a jupyter notebook.
 
     Returns
     -------
@@ -532,7 +536,7 @@ def ximshow_file(singlefile,
                  ds9regfile=args_ds9reg,
                  geometry=geometry,
                  debugplot=debugplot,
-                 local_call=local_call)
+                 using_jupyter=using_jupyter)
 
     if pdf is not None:
         if show:
@@ -609,8 +613,7 @@ def main(args=None):
                      args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,
                      pdf=pdf,
-                     debugplot=args.debugplot,
-                     local_call=True)
+                     debugplot=args.debugplot)
 
     if pdf is not None:
         pdf.close()

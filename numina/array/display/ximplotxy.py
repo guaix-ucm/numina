@@ -16,11 +16,15 @@ import numpy as np
 from .pause_debugplot import pause_debugplot
 
 
+def ximplotxy_jupyter(x, y, **args):
+    return ximplotxy(x, y, using_jupyter=True, **args)
+
+
 def ximplotxy(x, y, plottype=None,
               xlim=None, ylim=None, 
               xlabel=None, ylabel=None, title=None,
               show=True, geometry=(0, 0, 640, 480), tight_layout=True,
-              debugplot=0, local_call=False,
+              debugplot=0, using_jupyter=False,
               **kwargs):
     """
     Parameters
@@ -52,8 +56,8 @@ def ximplotxy(x, y, plottype=None,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
-    local_call : bool
-        If True, this function is called from within this module.
+    using_jupyter : bool
+        If True, this function is called from a jupyter notebook.
 
     Returns
     -------
@@ -64,7 +68,7 @@ def ximplotxy(x, y, plottype=None,
     """
 
     from numina.array.display.matplotlib_qt import plt
-    if not show:
+    if not show and using_jupyter:
         plt.ioff()
 
     fig = plt.figure()
@@ -96,7 +100,7 @@ def ximplotxy(x, y, plottype=None,
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         # return axes
-        if not local_call:
+        if using_jupyter:
             plt.ion()
         return ax
 
@@ -137,10 +141,9 @@ def main(args=None):
     y = bigtable[:, col2]
 
     if args.kwargs is None:
-        ximplotxy(x, y, debugplot=12, marker='o', linestyle='',
-                  local_call=True)
+        ximplotxy(x, y, debugplot=12, marker='o', linestyle='')
     else:
-        ximplotxy(x, y, debugplot=12, local_call=True, **eval(args.kwargs))
+        ximplotxy(x, y, debugplot=12, **eval(args.kwargs))
 
 
 if __name__ == '__main__':
