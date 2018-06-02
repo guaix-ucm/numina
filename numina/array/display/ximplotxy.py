@@ -16,8 +16,15 @@ import numpy as np
 from .pause_debugplot import pause_debugplot
 
 
-def ximplotxy_jupyter(x, y, **args):
-    return ximplotxy(x, y, using_jupyter=True, **args)
+def ximplotxy_jupyter(x, y, fmt=None, **args):
+    """Auxiliary function to call ximplotxy from a jupyter notebook.
+    """
+    using_jupyter = True
+    if fmt is None:
+        return ximplotxy(x, y, using_jupyter=using_jupyter, **args)
+    else:
+        return ximplotxy(x, y, fmt, using_jupyter=using_jupyter, **args)
+
 
 
 def ximplotxy(x, y, plottype=None,

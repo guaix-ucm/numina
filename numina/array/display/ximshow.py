@@ -27,6 +27,8 @@ dum_par = ''  # global variable in function keypress
 
 
 def ximshow_jupyter(image2d, **args):
+    """Auxiliary function to call ximshow from a jupyter notebook.
+    """
     return ximshow(image2d, using_jupyter=True, **args)
 
 
