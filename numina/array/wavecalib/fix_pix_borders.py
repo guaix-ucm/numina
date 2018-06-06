@@ -89,8 +89,11 @@ def fix_pix_borders(image2d, nreplace, sought_value, replacement_value):
 
     for i in range(naxis2):
         # only spectra with values different from 'sought_value'
-        jborder_min, jborder_max = find_pix_borders(image2d[i, :],
-                                                    sought_value=sought_value)
+        jborder_min, jborder_max = find_pix_borders(
+            image2d[i, :],
+            sought_value=sought_value
+        )
+
         # left border
         if jborder_min != -1:
             j1 = jborder_min
@@ -123,6 +126,9 @@ def define_mask_borders(image2d, sought_value, nadditional=0):
     -------
     mask2d : numpy array
         2D mask.
+    borders : list of tuples
+        List of tuples (jmin, jmax) with the border limits (in array
+        coordinates) found by find_pix_borders.
 
     """
 
@@ -132,10 +138,16 @@ def define_mask_borders(image2d, sought_value, nadditional=0):
     # initialize mask
     mask2d = np.zeros((naxis2, naxis1), dtype=bool)
 
+    # initialize list to store borders
+    borders = []
+
     for i in range(naxis2):
         # only spectra with values different from 'sought_value'
-        jborder_min, jborder_max = find_pix_borders(image2d[i, :],
-                                                    sought_value=sought_value)
+        jborder_min, jborder_max = find_pix_borders(
+            image2d[i, :],
+            sought_value=sought_value
+        )
+        borders.append((jborder_min, jborder_max))
         if (jborder_min, jborder_max) != (-1, naxis1):
             if jborder_min != -1:
                 j1 = 0
@@ -146,4 +158,4 @@ def define_mask_borders(image2d, sought_value, nadditional=0):
                 j2 = naxis1
                 mask2d[i, j1:j2] = True
 
-    return mask2d
+    return mask2d, borders

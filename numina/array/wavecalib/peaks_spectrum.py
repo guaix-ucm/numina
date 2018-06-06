@@ -233,8 +233,8 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
             xmax = x_fit.max()+1
             ymin = 0
             ymax = y_fit.max()*1.10
-            ax.set_xlim([xmin, xmax])
-            ax.set_ylim([ymin, ymax])
+            ax.set_xlim(xmin, xmax)
+            ax.set_ylim(ymin, ymax)
             ax.set_xlabel('index around initial integer peak')
             ax.set_ylabel('Normalized number of counts')
             ax.set_title("Fit to line at array index " + str(jmax) +

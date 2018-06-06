@@ -10,6 +10,7 @@
 from __future__ import division
 from __future__ import print_function
 
+from mpl_toolkits.axes_grid.inset_locator import inset_axes
 import numpy as np
 
 from numina.array.display.ximplotxy import ximplotxy
@@ -137,39 +138,10 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
     return xwave, spectrum
 
 
-def periodic_corr1d(x, y):
-    """Periodic correlation, implemented using FFT.
-
-    x and y must be real sequences with the same length.
-
-    Parameters
-    ----------
-    x : numpy array
-        First sequence.
-    y : numpy array
-        Second sequence.
-
-    Returns
-    -------
-    crosscorr : numpy array
-        Periodic correlation
-
-    """
-
-    if x.ndim != 1 or y.ndim != 1:
-        raise ValueError("Invalid array dimensions")
-    if x.shape != y.shape:
-        raise ValueError("x and y shapes are different")
-
-    corr = np.fft.ifft(np.fft.fft(x) * np.fft.fft(y).conj()).real
-
-    return corr
-
-
-def apply_periodic_correlation(sp_reference, sp_offset,
-                               fminmax=None,
-                               debugplot=0):
-    """Compute cross-correlation between two spectra.
+def periodic_corr1d(sp_reference, sp_offset,
+                    fminmax=None,
+                    debugplot=0):
+    """Periodic correlation between two spectra, implemented using FFT.
 
     Parameters
     ----------
@@ -192,6 +164,13 @@ def apply_periodic_correlation(sp_reference, sp_offset,
         Offset between the two input spectra.
 
     """
+
+    # protections
+    if sp_reference.ndim != 1 or sp_offset.ndim != 1:
+        raise ValueError("Invalid array dimensions")
+    if sp_reference.shape != sp_offset.shape:
+        raise ValueError("x and y shapes are different")
+
     naxis1 = len(sp_reference)
 
     xcorr = np.arange(naxis1)
@@ -205,23 +184,63 @@ def apply_periodic_correlation(sp_reference, sp_offset,
         fmin, fmax = fminmax
         sp_reference_filtmask = filtmask(sp_reference, fmin=fmin, fmax=fmax)
         sp_offset_filtmask = filtmask(sp_offset, fmin=fmin, fmax=fmax)
+        if abs(debugplot) % 10 != 0:
+            from numina.array.display.matplotlib_qt import plt
+            xdum = np.arange(naxis1) + 1
+            # reference spectrum
+            ax = ximplotxy(xdum, sp_reference, show=False,
+                           title='reference spectrum',
+                           label='original spectrum')
+            ax.plot(xdum, sp_reference_filtmask,
+                    label='filtered and masked spectrum')
+            ax.legend()
+            plt.show()
+            # offset spectrum
+            ax = ximplotxy(xdum, sp_offset, show=False,
+                           title='offset spectrum',
+                           label='original spectrum')
+            ax.plot(xdum, sp_offset_filtmask,
+                    label='filtered and masked spectrum')
+            ax.legend()
+            plt.show()
     else:
         sp_reference_filtmask = np.copy(sp_reference)
         sp_offset_filtmask = np.copy(sp_offset)
 
-    corr = periodic_corr1d(sp_offset_filtmask, sp_reference_filtmask)
+    if abs(debugplot) % 10 != 0:
+        from numina.array.display.matplotlib_qt import plt
+        xdum = np.arange(naxis1) + 1
+        ax = ximplotxy(xdum, sp_reference_filtmask, show=False,
+                       label='reference spectrum')
+        ax.plot(xdum, sp_offset_filtmask, label='offset spectrum')
+        ax.legend()
+        plt.show()
+
+    corr = np.fft.ifft(np.fft.fft(sp_offset_filtmask) * \
+                       np.fft.fft(sp_reference_filtmask).conj()).real
     corr = corr[isort]
     ixpeak = np.array([corr.argmax()])
     xdum, sdum = refine_peaks_spectrum(corr, ixpeak, 7, method='gaussian')
-    offset = xdum - naxis1_half
-    if abs(debugplot) > 0:
+    offset = (xdum - naxis1_half)[0]
+    if abs(debugplot) % 10 != 0:
+        title="periodic correlation (offset={0:6.2f} pixels)".format(offset)
         from numina.array.display.matplotlib_qt import plt
         ax = ximplotxy(xcorr, corr,
                        xlabel='offset (pixels)',
                        ylabel='cross-correlation function',
-                       title="periodic correlation",
+                       title=title,
                        xlim=(-naxis1/2, naxis1/2), show=False)
         ax.axvline(offset, color='grey', linestyle='dashed')
+        # inset plot
+        inset_ax = inset_axes(
+            ax,
+            width="40%",
+            height="40%",
+            loc=1
+        )
+        inset_ax.plot(xcorr, corr)
+        inset_ax.set_xlim([-50,50])
+        inset_ax.axvline(offset, color='grey', linestyle='dashed')
         plt.show()
 
     return offset
