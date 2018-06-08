@@ -136,6 +136,7 @@ def setup_package():
         entry_points={
             'console_scripts': [
                 'numina = numina.user.cli:main',
+                'numina-apply_integer_offsets = numina.array.wavecalib.apply_integer_offsets:main',
                 'numina-bpm = numina.array.bpm:main',
                 'numina-imath = numina.tools.imath:main',
                 'numina-wavecalib = numina.array.wavecalib.__main__:main',

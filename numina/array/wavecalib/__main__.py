@@ -501,7 +501,7 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='wavecalib')
+    parser = argparse.ArgumentParser()
     # required parameters
     parser.add_argument("fitsfile",
                         help="FITS image containing the spectra",
