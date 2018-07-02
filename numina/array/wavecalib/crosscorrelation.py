@@ -12,10 +12,10 @@ from __future__ import print_function
 
 from mpl_toolkits.axes_grid.inset_locator import inset_axes
 import numpy as np
+from numpy.polynomial import Polynomial
 
 from numina.array.display.ximplotxy import ximplotxy
 from numina.modeling.gaussbox import gauss_box_model
-from numina.array.wavecalib.peaks_spectrum import refine_peaks_spectrum
 
 
 def filtmask(sp, fmin=0.02, fmax=0.15, debugplot=0):
@@ -162,6 +162,8 @@ def periodic_corr1d(sp_reference, sp_offset,
     -------
     offset : float
         Offset between the two input spectra.
+    fpeak : float
+        Maximum of the cross-correlation function.
 
     """
 
@@ -219,9 +221,35 @@ def periodic_corr1d(sp_reference, sp_offset,
     corr = np.fft.ifft(np.fft.fft(sp_offset_filtmask) * \
                        np.fft.fft(sp_reference_filtmask).conj()).real
     corr = corr[isort]
-    ixpeak = np.array([corr.argmax()])
-    xdum, sdum = refine_peaks_spectrum(corr, ixpeak, 7, method='gaussian')
-    offset = (xdum - naxis1_half)[0]
+    ixpeak = corr.argmax()
+
+    # fit correlation peak with 2nd order polynomial
+    nfit = 7
+    nmed = nfit // 2
+    imin = ixpeak - nmed
+    imax = ixpeak + nmed
+    lpeak_ok = True
+    if imin < 0 or imax > len(corr):
+        x_refined_peak = 0
+        y_refined_peak = 0
+        lpeak_ok = False
+        poly_peak = Polynomial([0.0])
+    else:
+        x_fit = np.arange(-nmed, nmed + 1, dtype=np.float)
+        y_fit = corr[imin:(imax+1)]
+        poly_peak = Polynomial.fit(x_fit, y_fit, 2)
+        poly_peak = Polynomial.cast(poly_peak)
+        coef = poly_peak.coef
+        if coef[2] != 0:
+            x_refined_peak = -coef[1] / (2.0 * coef[2])
+        else:
+            x_refined_peak = 0.0
+        y_refined_peak = poly_peak(x_refined_peak)
+        x_refined_peak += ixpeak
+
+    offset = x_refined_peak - naxis1_half
+    fpeak = y_refined_peak
+
     if abs(debugplot) % 10 != 0:
         title="periodic correlation (offset={0:6.2f} pixels)".format(offset)
         from numina.array.display.matplotlib_qt import plt
@@ -240,7 +268,14 @@ def periodic_corr1d(sp_reference, sp_offset,
         )
         inset_ax.plot(xcorr, corr)
         inset_ax.set_xlim([-50,50])
+        if lpeak_ok:
+            xplot = np.arange(-nmed, nmed, 0.5)
+            yplot = poly_peak(xplot)
+            xplot += ixpeak - naxis1_half
+            inset_ax.plot(xplot, yplot, '-')
+            inset_ax.plot([x_refined_peak - naxis1_half],
+                          [y_refined_peak], 'o')
         inset_ax.axvline(offset, color='grey', linestyle='dashed')
         plt.show()
 
-    return offset
+    return offset, fpeak
