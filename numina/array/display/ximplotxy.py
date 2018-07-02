@@ -27,7 +27,7 @@ def ximplotxy_jupyter(x, y, fmt=None, **args):
 
 
 
-def ximplotxy(x, y, plottype=None,
+def ximplotxy(x, y, fmt=None, plottype=None,
               xlim=None, ylim=None, 
               xlabel=None, ylabel=None, title=None,
               show=True, geometry=(0, 0, 640, 480), tight_layout=True,
@@ -40,6 +40,8 @@ def ximplotxy(x, y, plottype=None,
         Array containing the X coordinate.
     y : 1d numpy array, float
         Array containing the Y coordinate.
+    fmt : str, optional
+        Format string for quickly setting basic line properties.
     plottype : string
         Plot type. It can be 'semilog' or normal (default).
     xlim : tuple of floats
@@ -81,9 +83,15 @@ def ximplotxy(x, y, plottype=None,
     fig = plt.figure()
     ax = fig.add_subplot(111)
     if plottype == 'semilog':
-        ax.semilogy(x, y, **kwargs)
+        if fmt is None:
+            ax.semilogy(x, y, **kwargs)
+        else:
+            ax.semilogy(x, y, fmt, **kwargs)
     else:
-        ax.plot(x, y, **kwargs)
+        if fmt is None:
+            ax.plot(x, y, **kwargs)
+        else:
+            ax.plot(x, y, fmt, **kwargs)
 
     if xlim is not None:
         ax.set_xlim(xlim[0], xlim[1])
