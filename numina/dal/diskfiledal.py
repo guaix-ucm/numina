@@ -46,7 +46,7 @@ class FileFinder(object):
     def check(self, directory, value):
         fname = value
         loadpath = self.build_path(directory, fname)
-        print('loadpath=', loadpath)
+        # print('loadpath=', loadpath)
         _logger.debug("check %s", loadpath)
         if fname.startswith("."):
             _logger.debug("file %s is hidden, ignore", loadpath)
@@ -54,7 +54,7 @@ class FileFinder(object):
         if os.path.isfile(loadpath):
             _logger.debug("is regular file %s", loadpath)
             _logger.info("found %s", loadpath)
-            print(loadpath)
+            # print(loadpath)
             return True
         else:
             _logger.debug("is not regular file %s", loadpath)

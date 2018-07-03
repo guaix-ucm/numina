@@ -51,7 +51,7 @@ numina_cli_logconf = {
             'handlers': ['detailed_console'],
             'level': 'INFO',
             'propagate': False
-        },
+            },
         'numina.recipes': {
             'handlers': ['detailed_console'],
             'level': 'DEBUG',
@@ -60,7 +60,7 @@ numina_cli_logconf = {
         },
     'root': {
         'handlers': ['detailed_console'],
-        'level': 'NOTSET'
+        'level': 'INFO'
         }
     }
 

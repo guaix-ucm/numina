@@ -1,6 +1,6 @@
-import logging
-logger = logging.getLogger('matplotlib')
-logger.setLevel(logging.INFO)
+#import logging
+#logger = logging.getLogger('matplotlib')
+#logger.setLevel(logging.INFO)
 
 #import matplotlib
 #matplotlib.use('Qt5Agg')
