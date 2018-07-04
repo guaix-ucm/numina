@@ -138,6 +138,7 @@ def setup_package():
                 'numina = numina.user.cli:main',
                 'numina-apply_integer_offsets = numina.array.wavecalib.apply_integer_offsets:main',
                 'numina-bpm = numina.array.bpm:main',
+                'numina-check_wlcalib = numina.array.wavecalib.check_wlcalib:main',
                 'numina-imath = numina.tools.imath:main',
                 'numina-wavecalib = numina.array.wavecalib.__main__:main',
                 'numina-ximshow = numina.array.display.ximshow:main',

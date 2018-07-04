@@ -251,6 +251,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     polyres = np.polynomial.Polynomial([0])
     poldeg_effective = 0
     ysummary = summary(np.array([]))
+    local_ylogscale = False
 
     # find initial line peaks
     ixpeaks = find_peaks_spectrum(sp,
@@ -353,7 +354,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             else:
                 ymin = -1.0
                 ymax = 1.0
-            ax2.set_ylim([ymin, ymax])
+            ax2.set_ylim(ymin, ymax)
             if nlines_ok > 0:
                 ax2.plot(xresid, yresid, 'o')
                 ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
@@ -411,8 +412,14 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             else:
                 xmin -= 0.5
                 xmax += 0.5
-            ymin = min(sp)
-            ymax = max(sp)
+
+            if local_ylogscale:
+                spectrum = sp - sp.min() + 1.0
+                spectrum = np.log10(spectrum)
+            else:
+                spectrum = sp.copy()
+            ymin = min(spectrum)
+            ymax = max(spectrum)
             dy = ymax - ymin
             if dy > 0:
                 ymin -= dy/20
@@ -421,16 +428,16 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 ymin -= 0.5
                 ymax += 0.5
             ax1 = fig.add_subplot(2, 1, 2, sharex=ax2)
-            ax1.set_xlim([xmin, xmax])
-            ax1.set_ylim([ymin, ymax])
-            ax1.plot(xwv, sp)
+            ax1.set_xlim(xmin, xmax)
+            ax1.set_ylim(ymin, ymax)
+            ax1.plot(xwv, spectrum)
             if npeaks > 0:
-                ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o',
+                ax1.plot(ixpeaks_wv, spectrum[ixpeaks], 'o',
                          fillstyle='none', label="initial location")
-                ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
+                ax1.plot(fxpeaks_wv, spectrum[ixpeaks], 'o',
                          fillstyle='none', label="refined location")
                 lok = wv_verified_all_peaks > 0
-                ax1.plot(fxpeaks_wv[lok], sp[ixpeaks][lok], 'go',
+                ax1.plot(fxpeaks_wv[lok], spectrum[ixpeaks][lok], 'go',
                          label="valid line")
             ax1.set_ylabel('Counts')
             ax1.yaxis.label.set_size(10)
@@ -439,13 +446,13 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             for i in range(len(ixpeaks)):
                 # identified lines
                 if wv_verified_all_peaks[i] > 0:
-                    ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
+                    ax1.text(fxpeaks_wv[i], spectrum[ixpeaks[i]],
                              str(wv_verified_all_peaks[i]) +
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
                 else:
-                    ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
+                    ax1.text(fxpeaks_wv[i], spectrum[ixpeaks[i]],
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
@@ -482,13 +489,15 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 print('[d] (d)elete all the identified lines')
                 print('[r] (r)estart from begining')
                 print('[a] (a)utomatic line inclusion')
+                print('[l] toggle (l)ogarithmic scale on/off')
                 print('[p] modify (p)olynomial degree')
-                print('[x] e(x)xit without additional changes')
+                print('[o] (o)utput data with identified line peaks')
+                print('[x] e(x)it without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adprx')
+                                allowed_single_chars='adloprx')
                 if ioption == 'd':
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
@@ -509,9 +518,20 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                         fxpeaks_wv_corrected,
                         delta_wv_max=delta_wv_max
                     )
+                elif ioption == 'l':
+                    if local_ylogscale:
+                        local_ylogscale = False
+                    else:
+                        local_ylogscale = True
                 elif ioption == 'p':
                     poldeg_residuals = readi('New polynomial degree',
                                              minval=0)
+                elif ioption == 'o':
+                    for i in range(len(ixpeaks)):
+                        # identified lines
+                        if wv_verified_all_peaks[i] > 0:
+                            print(wv_verified_all_peaks[i],
+                                  spectrum[ixpeaks[i]])
                 elif ioption == 'x':
                     loop = False
                 else:
@@ -654,17 +674,17 @@ def main(args=None):
     # positional parameters
     parser.add_argument("filename",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--scans", required=True,
-                        help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+                        help="Tuple ns1[,ns2] (from 1 to NAXIS2) to compute "
+                             "median spectrum")
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
 
     # optional arguments
     parser.add_argument("--interactive",
-                        help="Ask the user for confirmation before updating "
-                             "the wavelength calibration polynomial",
+                        help="Allows the user to modify de residuals fit",
                         action="store_true")
     parser.add_argument("--threshold",
                         help="Minimum signal in the line peaks (default=0)",
