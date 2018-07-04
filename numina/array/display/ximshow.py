@@ -14,6 +14,7 @@ import argparse
 from astropy.io import fits
 import numpy as np
 
+from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
 from .overplot_ds9reg import overplot_ds9reg
@@ -79,7 +80,7 @@ def ximshow(image2d, title=None, show=True,
     ds9regfile : file handler
         Ds9 region file to be overplotted.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
@@ -337,11 +338,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         overplot_ds9reg(ds9regfile.name, ax)
 
     # set the geometry
-    if geometry is not None:
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        if 'window' in dir(mngr):
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+    set_window_geometry(geometry)
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
@@ -399,7 +396,7 @@ def ximshow_file(singlefile,
     args_ds9reg : file handler
         Ds9 region file to be overplotted.
     args_geometry : string or None
-        Tuple x,y,dx,dy to define the Qt backend geometry. This
+        Tuple x,y,dx,dy to define the window geometry. This
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.

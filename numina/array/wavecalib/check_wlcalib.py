@@ -22,6 +22,7 @@ from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
 from numina.array.display.iofunctions import readf
 from numina.array.display.iofunctions import readc
+from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals \
@@ -197,7 +198,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     remove_null_borders : bool
         If True, remove leading and trailing zeros in spectrum.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -335,10 +336,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         if abs(debugplot) % 10 != 0:
             from numina.array.display.matplotlib_qt import plt
             fig = plt.figure()
-            if geometry is not None:
-                x_geom, y_geom, dx_geom, dy_geom = geometry
-                mngr = plt.get_current_fig_manager()
-                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+            set_window_geometry(geometry)
 
             # residuals
             ax2 = fig.add_subplot(2, 1, 1)

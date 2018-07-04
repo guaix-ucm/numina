@@ -19,6 +19,7 @@ import scipy.misc
 
 from ..display.iofunctions import readi
 from ..display.iofunctions import readf
+from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
@@ -111,7 +112,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     plot_title : string or None
         Title for residuals plot.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -308,11 +309,8 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                  horizontalalignment="center",
                  verticalalignment="bottom")
 
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         pause_debugplot(debugplot, pltshow=True, tight_layout=False)
 
     return solution_wv
@@ -331,7 +329,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
         Array with wavelengths corresponding to the master table
         (Angstroms).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -415,12 +413,8 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
         ax.set_ylabel('Number of triplets')
         ax.set_title("Number of lines/triplets: " +
                      str(nlines_master) + "/" + str(ntriplets_master))
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
-
+        # set window geometry
+        set_window_geometry(geometry)
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
@@ -498,7 +492,7 @@ def arccalibration(wv_master,
         polynomial fit to include a new line in the set of identified
         lines.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -624,7 +618,7 @@ def arccalibration_direct(wv_master,
         polynomial fit to include a new line in the set of identified
         lines.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -770,11 +764,8 @@ def arccalibration_direct(wv_master,
         yp_limits = np.concatenate((yp_limits, [yp_limits[1], yp_limits[0]]))
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions within the valid parameter space")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -794,11 +785,8 @@ def arccalibration_direct(wv_master,
         ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions within the valid parameter space")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -818,11 +806,8 @@ def arccalibration_direct(wv_master,
         ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions: arc line triplet number")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -841,11 +826,8 @@ def arccalibration_direct(wv_master,
         ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions: master line triplets")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -864,11 +846,8 @@ def arccalibration_direct(wv_master,
         ax.set_ylim(ymin, ymax)
         ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
         ax.set_title("Potential solutions within the valid parameter space")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -988,11 +967,8 @@ def arccalibration_direct(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         ax.set_title("Potential solutions within the valid parameter space\n" +
                      "[symbol size proportional to 1/(cost function)]")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -1013,11 +989,8 @@ def arccalibration_direct(wv_master,
         ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
         ax.set_title("Potential solutions: arc line triplet number\n" +
                      "[symbol size proportional to 1/(cost function)]")
-        # window geometry
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        # set window geometry
+        set_window_geometry(geometry)
         print('Number of points in last plot:', len(cdelt1_search))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -1037,11 +1010,8 @@ def arccalibration_direct(wv_master,
         #     ax.set_title("Potential solutions: arc line triplet " + str(i) +
         #              " (from 0 to " + str(ntriplets_arc-1) + ")\n" +
         #              "[symbol size proportional to 1/(cost function)]")
-        #     # window geometry
-        #     if geometry is not None:
-        #         x_geom, y_geom, dx_geom, dy_geom = geometry
-        #         mngr = plt.get_current_fig_manager()
-        #         mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        #     # set window geometry
+        #     set_window_geometry(geometry)
         #     print('Number of points in last plot:', xdum.size)
         #     pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
@@ -1682,7 +1652,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         that this is only employed for display purposes. The line peaks
         are found in the original spectrum.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
     debugplot : int
@@ -1847,10 +1817,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
             else:
                 fig = plt.figure()
-            if geometry is not None:
-                x_geom, y_geom, dx_geom, dy_geom = geometry
-                mngr = plt.get_current_fig_manager()
-                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+            set_window_geometry(geometry)
 
             grid = plt.GridSpec(2, 1)
             grid.update(left=0.08, right=0.98,

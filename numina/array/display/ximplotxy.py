@@ -13,6 +13,7 @@ from __future__ import print_function
 import argparse
 import numpy as np
 
+from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 
 
@@ -58,7 +59,7 @@ def ximplotxy(x, y, fmt=None, plottype=None,
         If True, the function shows the displayed image. Otherwise
         plt.show() is expected to be executed outside.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
@@ -105,11 +106,7 @@ def ximplotxy(x, y, fmt=None, plottype=None,
     if title is not None:
         ax.set_title(title)
 
-    if geometry is not None:
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        if 'window' in dir(mngr):
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+    set_window_geometry(geometry)
 
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
