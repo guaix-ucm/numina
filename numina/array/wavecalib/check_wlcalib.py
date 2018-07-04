@@ -135,7 +135,7 @@ def fun_wv(xchannel, crpix1, crval1, cdelt1):
 
 def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      coeff_ini=None, naxis1_ini=None,
-                     min_nlines_to_refine=None,
+                     min_nlines_to_refine=0,
                      interactive=False,
                      threshold=0,
                      nwinwidth_initial=7,
@@ -173,7 +173,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         wavelength calibration.
     min_nlines_to_refine : int
         Minimum number of identified lines necessary to perform the
-        wavelength calibration refinement. If None, no minimum number
+        wavelength calibration refinement. If zero, no minimum number
         is required.
     interactive : bool
         If True, the function allows the user to modify the residuals
@@ -549,6 +549,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
                 loop = False
+        else:
+            loop = False
 
     # refined wavelength calibration coefficients
     if coeff_ini is not None:
