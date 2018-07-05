@@ -14,6 +14,7 @@ from mpl_toolkits.axes_grid.inset_locator import inset_axes
 import numpy as np
 from numpy.polynomial import Polynomial
 
+from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 from numina.modeling.gaussbox import gauss_box_model
 
@@ -140,6 +141,7 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 
 def periodic_corr1d(sp_reference, sp_offset,
                     fminmax=None,
+                    pdf=None,
                     debugplot=0):
     """Periodic correlation between two spectra, implemented using FFT.
 
@@ -153,6 +155,8 @@ def periodic_corr1d(sp_reference, sp_offset,
     fminmax : tuple of floats or None
         Minimum and maximum frequencies to be used. If None, no
         frequency filtering is employed.
+    pdf : PdfFile object or None
+        If not None, output is sent to PDF file.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -210,13 +214,15 @@ def periodic_corr1d(sp_reference, sp_offset,
         sp_offset_filtmask = np.copy(sp_offset)
 
     if abs(debugplot) % 10 != 0:
-        from numina.array.display.matplotlib_qt import plt
         xdum = np.arange(naxis1) + 1
         ax = ximplotxy(xdum, sp_reference_filtmask, show=False,
                        label='reference spectrum')
         ax.plot(xdum, sp_offset_filtmask, label='offset spectrum')
         ax.legend()
-        plt.show()
+        if pdf is not None:
+            pdf.savefig()
+        else:
+            pause_debugplot(debugplot=debugplot, pltshow=True)
 
     corr = np.fft.ifft(np.fft.fft(sp_offset_filtmask) * \
                        np.fft.fft(sp_reference_filtmask).conj()).real
@@ -252,7 +258,6 @@ def periodic_corr1d(sp_reference, sp_offset,
 
     if abs(debugplot) % 10 != 0:
         title="periodic correlation (offset={0:6.2f} pixels)".format(offset)
-        from numina.array.display.matplotlib_qt import plt
         ax = ximplotxy(xcorr, corr,
                        xlabel='offset (pixels)',
                        ylabel='cross-correlation function',
@@ -276,6 +281,9 @@ def periodic_corr1d(sp_reference, sp_offset,
             inset_ax.plot([x_refined_peak - naxis1_half],
                           [y_refined_peak], 'o')
         inset_ax.axvline(offset, color='grey', linestyle='dashed')
-        plt.show()
+        if pdf is not None:
+            pdf.savefig()
+        else:
+            pause_debugplot(debugplot=debugplot, pltshow=True)
 
     return offset, fpeak
