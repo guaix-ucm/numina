@@ -30,6 +30,11 @@ from .solutionarc import CrLinear, WavecalFeature, SolutionArcCalibration
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
+xmin_previous = None
+xmax_previous = None
+ymin_previous = None
+ymax_previous = None
+
 
 def select_data_for_fit(list_of_wvfeatures):
     """Select information from valid arc lines to facilitate posterior fits.
@@ -1689,6 +1694,16 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
     local_ylogscale = ylogscale
 
+    # latest limits
+    global xmin_previous
+    global xmax_previous
+    global ymin_previous
+    global ymax_previous
+    xmin_previous = None
+    xmax_previous = None
+    ymin_previous = None
+    ymax_previous = None
+
     # spectrum length
     naxis1 = sp.shape[0]
 
@@ -1813,10 +1828,19 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
+            def handle_close(evt):
+                global xmin_previous
+                global xmax_previous
+                global ymin_previous
+                global ymax_previous
+                xmin_previous, xmax_previous = ax2.get_xlim()
+                ymin_previous, ymax_previous = ax2.get_ylim()
+
             if pdf is not None:
                 fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
             else:
                 fig = plt.figure()
+                fig.canvas.mpl_connect('close_event', handle_close)
             set_window_geometry(geometry)
 
             grid = plt.GridSpec(2, 1)
@@ -1904,6 +1928,9 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ymin -= dy / 40.
             ymax += dy / 40.
             ax2.set_ylim(ymin, ymax)
+            if xmin_previous is not None:
+                ax2.set_xlim(xmin_previous, xmax_previous)
+                ax2.set_ylim(ymin_previous, ymax_previous)
             ax2.plot(xpol, spectrum, '-')
             ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
             if local_ylogscale:
@@ -1971,12 +1998,13 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 print('[a] (a)utomatic line inclusion')
                 print('[l] toggle (l)ogarithmic scale on/off')
                 print('[e] (e)valuate current polynomial at a given pixel')
+                print('[w] replot (w)hole spectrum')
                 print('[x] e(x)it without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adeilrx')
+                                allowed_single_chars='adeilrwx')
                 if ioption == 'd':
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
@@ -1995,6 +2023,10 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         delta_wv_max=delta_wv_max
                     )
                 elif ioption == 'l':
+                    xmin_previous = None
+                    xmax_previous = None
+                    ymin_previous = None
+                    ymax_previous = None
                     if local_ylogscale:
                         local_ylogscale = False
                     else:
@@ -2031,6 +2063,11 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         poly_refined(fxpeaks + 1.0),
                         delta_wv_max=delta_wv_max
                     )
+                elif ioption == 'w':
+                    xmin_previous = None
+                    xmax_previous = None
+                    ymin_previous = None
+                    ymax_previous = None
                 elif ioption == 'x':
                     loop = False
                 else:
