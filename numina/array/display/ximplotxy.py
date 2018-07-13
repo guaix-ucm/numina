@@ -111,6 +111,8 @@ def ximplotxy(x, y, fmt=None, plottype=None,
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
+        if tight_layout:
+            plt.tight_layout()
         # return axes
         if using_jupyter:
             plt.ion()
