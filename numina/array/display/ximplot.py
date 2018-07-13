@@ -106,5 +106,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
+        if tight_layout:
+            plt.tight_layout()
         # return axes
         return ax
