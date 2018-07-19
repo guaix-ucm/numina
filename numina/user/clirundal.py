@@ -32,12 +32,16 @@ _logger = logging.getLogger("numina")
 
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
     drps = numina.drps.get_system_drps()
-    return HybridDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
+    backend = HybridDAL(drps, [], loaded_data, loaded_data_extra)
+    backend.add_obs(loaded_obs)
+    return backend
 
 
 def process_format_version_2(loaded_obs, loaded_data, loaded_data_extra=None):
     drps = numina.drps.get_system_drps()
-    return Backend(drps, loaded_obs, loaded_data, loaded_data_extra)
+    backend = Backend(drps, loaded_data, loaded_data_extra)
+    backend.add_obs(loaded_obs)
+    return backend
 
 
 def mode_run_common(args, extra_args, mode):
@@ -56,19 +60,34 @@ def mode_run_common_obs(args, extra_args):
 
     # Loading observation result if exists
     loaded_obs = []
-    for obfile in args.obsresult:
-        _logger.info("Loading observation results from %r", obfile)
+    sessions = []
+    if args.session:
+        for obfile in args.obsresult:
+            _logger.info("session file from %r", obfile)
 
-        with open(obfile) as fd:
-            for doc in yaml.load_all(fd):
-                enabled = doc.get('enabled', True)
-                docid = doc['id']
-                if enabled:
-                    _logger.debug("load observation result with id %s", docid)
-                else:
-                    _logger.debug("skip observation result with id %s", docid)
+            with open(obfile) as fd:
+                sess = yaml.load(fd)
+                sessions.append(sess['session'])
+    else:
+        for obfile in args.obsresult:
+            _logger.info("Loading observation results from %r", obfile)
+
+            with open(obfile) as fd:
+                sess = []
+                for doc in yaml.load_all(fd):
+                    enabled = doc.get('enabled', True)
+                    docid = doc['id']
+                    requirements = doc.get('requirements', {})
+                    sess.append(dict(id=docid, enabled=enabled,
+                                               requirements=requirements))
+                    if enabled:
+                        _logger.debug("load observation result with id %s", docid)
+                    else:
+                        _logger.debug("skip observation result with id %s", docid)
                 
-                loaded_obs.append(doc)
+                    loaded_obs.append(doc)
+
+            sessions.append(sess)
     if args.reqs:
         _logger.info('reading control from %s', args.reqs)
         with open(args.reqs, 'r') as fd:
@@ -83,7 +102,7 @@ def mode_run_common_obs(args, extra_args):
     else:
         loaded_data_extra = None
 
-    control_format = loaded_data.get('version', 0)
+    control_format = loaded_data.get('version', 1)
     _logger.info('control format version %d', control_format)
 
     # FIXME: DAL and WorkEnvironment
@@ -99,8 +118,15 @@ def mode_run_common_obs(args, extra_args):
         sys.exit(1)
 
     # Start processing
-    for obid in dal.search_session_ids():
+    jobs = []
+    for session in sessions:
+        for job in session:
+            if job['enabled']:
+                jobs.append(job)
+
+    for job in jobs:
         # Directories with relevant data
+        obid = job['id']
         _logger.info("procesing OB with id={}".format(obid))
         workenv = WorkEnvironment(obid,
                                   args.basedir,

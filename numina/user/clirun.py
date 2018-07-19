@@ -91,6 +91,10 @@ def register(subparsers, config):
         help='save the modified task control file'
     )
     parser_run.add_argument(
+        '--session', action="store_true",
+        help='use the obresult file as a session file'
+    )
+    parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'
         )
