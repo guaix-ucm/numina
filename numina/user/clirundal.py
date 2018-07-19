@@ -22,7 +22,7 @@ import numina.exceptions
 from numina.dal.dictdal import HybridDAL, Backend
 from numina.util.context import working_directory
 
-from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
+from .helpers import WorkEnvironment, DiskStorageDefault, DataManager
 
 
 DEFAULT_RECIPE_LOGGER = 'numina.recipes'
@@ -109,13 +109,16 @@ def mode_run_common_obs(args, extra_args):
     # DAL and WorkEnvironment
     # must share its information
     #
+
     if control_format == 1:
-        dal = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
+        backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
     elif control_format == 2:
-        dal = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
+        backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
+
+    datamanager = DataManager(backend)
 
     # Start processing
     jobs = []
@@ -126,7 +129,15 @@ def mode_run_common_obs(args, extra_args):
 
     for job in jobs:
         # Directories with relevant data
+        request = 'reduce'
+        request_params = {}
         obid = job['id']
+        request_params['obs_id'] = obid
+
+        task = backend.new_task()
+        task.request = request
+        task.request_params = request_params
+
         _logger.info("procesing OB with id={}".format(obid))
         workenv = WorkEnvironment(obid,
                                   args.basedir,
@@ -138,12 +149,12 @@ def mode_run_common_obs(args, extra_args):
         # Roll back to cwd after leaving the context
         with working_directory(workenv.datadir):
 
-            obsres = dal.obsres_from_oblock_id(obid, configuration=args.insconf)
+            obsres = backend.obsres_from_oblock_id(obid, configuration=args.insconf)
 
             _logger.debug("pipeline from CLI is %r", args.pipe_name)
             pipe_name = args.pipe_name
             obsres.pipeline = pipe_name
-            recipe = dal.search_recipe_from_ob(obsres)
+            recipe = backend.search_recipe_from_ob(obsres)
             _logger.debug('recipe class is %s', recipe.__class__)
 
             # Enable intermediate results by default
@@ -162,7 +173,7 @@ def mode_run_common_obs(args, extra_args):
             _logger.debug('recipe created')
 
             try:
-                rinput = recipe.build_recipe_input(obsres, dal)
+                rinput = recipe.build_recipe_input(obsres, backend)
             except (ValueError, numina.exceptions.ValidationError) as err:
                 _logger.error("During recipe input construction")
                 _logger.error("%s", err)
@@ -201,7 +212,8 @@ def mode_run_common_obs(args, extra_args):
             'instrument_configuration': args.insconf
         }
 
-        task = ProcessingTask(obsres, runinfo)
+        task.set_runinfo(runinfo)
+        task.set_obsres(obsres)
 
         # Copy files
         if args.copy_files:
@@ -214,14 +226,12 @@ def mode_run_common_obs(args, extra_args):
         completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
                                     workenv=workenv, task_control=task_control)
 
-        where = DiskStorageDefault(resultsdir=workenv.resultsdir)
-        where.store(completed_task)
+        datamanager.store_task(completed_task, workenv.resultsdir)
 
     if args.dump_control:
         _logger.debug('dump control status')
         with open('control_dump.yaml', 'w') as fp:
-            dal.dump(fp)
-
+            backend.dump(fp)
 
 
 def create_recipe_file_logger(logger, logfile, logformat):
@@ -263,16 +273,14 @@ def run_recipe_timed(recipe, rinput, task):
     TIMEFMT = '%FT%T'
     _logger.info('running recipe')
     now1 = datetime.datetime.now()
-    task.runinfo['time_start'] = now1.strftime(TIMEFMT)
+    task.time_start = now1.strftime(TIMEFMT)
     #
-
     result = recipe(rinput)
     _logger.info('result: %r', result)
     task.result = result
     #
     now2 = datetime.datetime.now()
-    task.runinfo['time_end'] = now2.strftime(TIMEFMT)
-    task.runinfo['time_running'] = now2 - now1
+    task.time_end = now2.strftime(TIMEFMT)
     return task
 
 

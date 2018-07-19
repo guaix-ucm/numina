@@ -11,6 +11,7 @@
 
 from __future__ import print_function
 
+import datetime
 import logging
 import os
 import errno
@@ -28,39 +29,61 @@ from numina.util.context import working_directory
 _logger = logging.getLogger(__name__)
 
 
+class DataManager(object):
+    def __init__(self, backend):
+        self.backend = backend
+
+    def store_task(self, task, result_dir):
+
+        where = DiskStorageDefault(result_dir)
+        where.store(task)
+
+
 class ProcessingTask(object):
     def __init__(self, obsres=None, insconf=None):
 
         self.observation = {}
         self.runinfo = {}
         self.result = None
+        self.id = 1
+
+        self.time_create = datetime.datetime.utcnow()
+        self.time_start = 0
+        self.time_end = 0
+        self.request = "reduce"
+        self.request_params = {}
+        self.state = 0
 
         if insconf:
-            self.runinfo['taskid'] = insconf['taskid']
-            self.runinfo['pipeline'] = insconf['pipeline']
-            self.runinfo['recipe'] = insconf['recipeclass'].__name__
-            self.runinfo['recipe_full_name'] = objimp.fully_qualified_name(insconf['recipeclass'])
-            self.runinfo['runner'] = insconf.get('runner', 'numina')
-            self.runinfo['runner_version'] = insconf.get('runner_version', "0")
-            self.runinfo['data_dir'] = insconf['workenv'].datadir
-            self.runinfo['work_dir'] = insconf['workenv'].workdir
-            self.runinfo['results_dir'] = insconf['workenv'].resultsdir
-            self.runinfo['base_dir'] = insconf['workenv'].basedir
-            self.runinfo['recipe_version'] = insconf['recipe_version']
-            self.runinfo['time_start'] = 0
-            self.runinfo['time_end'] = 0
-            self.runinfo['time_running'] = 0
-        if obsres:
-            self.observation['mode'] = obsres.mode
-            self.observation['observing_result'] = obsres.id
-            self.observation['instrument'] = obsres.instrument
-        else:
-            self.observation['mode'] = 'unknown'
-            self.observation['observing_result'] = 'unknown'
-            self.observation['instrument'] = 'unknown'
+            self.set_runinfo(insconf)
 
-        if insconf['instrument_configuration']:
-            self.observation['instrument_configuration'] = insconf['instrument_configuration']
+        self.observation['mode'] = 'unknown'
+        self.observation['observing_result'] = 'unknown'
+        self.observation['instrument'] = 'unknown'
+
+        if obsres:
+            self.set_obsres(obsres)
+
+        if insconf and obsres:
+            if insconf['instrument_configuration']:
+                self.observation['instrument_configuration'] = insconf['instrument_configuration']
+
+    def set_obsres(self, obsres):
+        self.observation['mode'] = obsres.mode
+        self.observation['observing_result'] = obsres.id
+        self.observation['instrument'] = obsres.instrument
+
+    def set_runinfo(self, insconf):
+        self.runinfo['pipeline'] = insconf['pipeline']
+        self.runinfo['recipe'] = insconf['recipeclass'].__name__
+        self.runinfo['recipe_full_name'] = objimp.fully_qualified_name(insconf['recipeclass'])
+        self.runinfo['runner'] = insconf.get('runner', 'numina')
+        self.runinfo['runner_version'] = insconf.get('runner_version', "0")
+        self.runinfo['data_dir'] = insconf['workenv'].datadir
+        self.runinfo['work_dir'] = insconf['workenv'].workdir
+        self.runinfo['results_dir'] = insconf['workenv'].resultsdir
+        self.runinfo['base_dir'] = insconf['workenv'].basedir
+        self.runinfo['recipe_version'] = insconf['recipe_version']
 
     def store(self, where):
 

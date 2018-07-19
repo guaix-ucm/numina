@@ -13,6 +13,7 @@ import os
 import logging
 import json
 from itertools import chain
+import datetime
 
 import six
 import yaml
@@ -572,13 +573,42 @@ class HybridDAL(Dict2DAL):
         state = self.dump_data()
         yaml.dump(state, fp, indent=2)
 
+    def new_task_id(self):
+        task = ProcessingTask()
+        task.taskid = 1
+        task.time_create = time_create
+        return 1
+
 
 class Backend(HybridDAL):
 
     def __init__(self, drps, base, extra_data=None, basedir=None):
         super(Backend, self).__init__(drps, base['oblocks'], base, extra_data, basedir)
+        self.task_table = base.get('tasks', {})
+        self.task_table_index = base.get('tasks_index', [])
 
     def dump_data(self):
         state = super(Backend, self).dump_data()
         state['version'] = 2
+        state['tasks'] = self.task_table
+        state['tasks_index'] = self.task_table_index
         return state
+
+    def new_task(self):
+        from numina.user.helpers import ProcessingTask
+        _logger.info('running recipe')
+        time_create = datetime.datetime.utcnow()
+        if self.task_table_index:
+            newidx = self.task_table_index[-1] + 1
+        else:
+            newidx = 1
+        self.task_table_index.append(newidx)
+        task_reg = {
+            'taskid': newidx, 'state': 0,
+            'time_create': time_create.strftime('%FT%T')
+        }
+        self.task_table[newidx] = task_reg
+        task = ProcessingTask()
+        task.taskid = newidx
+        task.time_create = time_create
+        return task
