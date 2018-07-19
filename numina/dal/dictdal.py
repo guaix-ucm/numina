@@ -288,21 +288,40 @@ class HybridDAL(Dict2DAL):
         else:
             self.basedir = basedir
 
+        self.ob_ids = []
+        if isinstance(obtable, dict):
+            for ob in obtable:
+                self.ob_ids.append(ob)
+            obdict = obtable
+        elif isinstance(obtable, list):
+            obdict = {}
+            for ob in obtable:
+                self.ob_ids.append(ob['id'])
+                obdict[ob['id']] = ob
+        else:
+            raise TypeError
+
+        super(HybridDAL, self).__init__(drps, obdict, base, extra_data)
+
+    def add_obs(self, obtable):
+
         # Preprocessing
         obdict = {}
-        self.ob_ids = []
         for ob in obtable:
             obid = ob['id']
-            self.ob_ids.append(obid)
-            obdict[obid] = ob
+            if obid not in self.ob_ids:
 
+                self.ob_ids.append(obid)
+                obdict[obid] = ob
+            else:
+                print(obid, 'is already in table')
         # Update parents
         for ob in obdict.values():
             children = ob.get('children', [])
             for ch in children:
                 obdict[ch]['parent'] = ob['id']
 
-        super(HybridDAL, self).__init__(drps, obdict, base, extra_data)
+        self.ob_table.update(obdict)
 
     def search_product(self, name, tipo, obsres, options=None):
         if name in self.extra_data:
@@ -555,6 +574,9 @@ class HybridDAL(Dict2DAL):
 
 
 class Backend(HybridDAL):
+
+    def __init__(self, drps, base, extra_data=None, basedir=None):
+        super(Backend, self).__init__(drps, base['oblocks'], base, extra_data, basedir)
 
     def dump_data(self):
         state = super(Backend, self).dump_data()
