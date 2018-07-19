@@ -87,6 +87,10 @@ def register(subparsers, config):
         help='do not copy observation result and requirement files'
         )
     parser_run.add_argument(
+        '--dump-control', action="store_true",
+        help='save the modified task control file'
+    )
+    parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'
         )

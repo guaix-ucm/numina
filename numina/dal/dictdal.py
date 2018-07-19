@@ -539,3 +539,24 @@ class HybridDAL(Dict2DAL):
 
 
             yield obs_id
+
+    def dump_data(self):
+        state = {}
+        state['version'] = 1
+        state['rootdir'] = self.rootdir
+        state['products'] = self.prod_table
+        state['requirements'] = self.req_table
+        state['oblocks'] = self.ob_table
+        return state
+
+    def dump(self, fp):
+        state = self.dump_data()
+        yaml.dump(state, fp, indent=2)
+
+
+class Backend(HybridDAL):
+
+    def dump_data(self):
+        state = super(Backend, self).dump_data()
+        state['version'] = 2
+        return state
