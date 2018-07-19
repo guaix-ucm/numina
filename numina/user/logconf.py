@@ -49,7 +49,7 @@ numina_cli_logconf = {
             },
         'numina.dal': {
             'handlers': ['detailed_console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False
             },
         'numina.recipes': {

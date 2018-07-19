@@ -38,6 +38,8 @@ class DataManager(object):
         where = DiskStorageDefault(result_dir)
         where.store(task)
 
+        self.backend.update_task(task)
+
 
 class ProcessingTask(object):
     def __init__(self, obsres=None, insconf=None):

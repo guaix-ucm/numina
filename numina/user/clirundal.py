@@ -133,6 +133,9 @@ def mode_run_common_obs(args, extra_args):
         request_params = {}
         obid = job['id']
         request_params['obs_id'] = obid
+        request_params["results_dir"] = ""
+        request_params["work_dir"] = ""
+        request_params["task_dir"] = ""
 
         task = backend.new_task()
         task.request = request
@@ -170,6 +173,9 @@ def mode_run_common_obs(args, extra_args):
             recipe.runinfo['work_dir'] = workenv.workdir
             recipe.runinfo['results_dir'] = workenv.resultsdir
 
+            task.request_params["results_dir"] = workenv.resultsdir
+            task.request_params["work_dir"] = workenv.workdir
+            task.request_params["task_dir"] = "taskdir"
             _logger.debug('recipe created')
 
             try:
@@ -270,17 +276,18 @@ def run_recipe(recipe, task, rinput, workenv, task_control):
 
 def run_recipe_timed(recipe, rinput, task):
     """Run the recipe and count the time it takes."""
-    TIMEFMT = '%FT%T'
     _logger.info('running recipe')
     now1 = datetime.datetime.now()
-    task.time_start = now1.strftime(TIMEFMT)
+    task.state = 1
+    task.time_start = now1
     #
     result = recipe(rinput)
     _logger.info('result: %r', result)
     task.result = result
     #
     now2 = datetime.datetime.now()
-    task.time_end = now2.strftime(TIMEFMT)
+    task.state = 2
+    task.time_end = now2
     return task
 
 

@@ -573,11 +573,19 @@ class HybridDAL(Dict2DAL):
         state = self.dump_data()
         yaml.dump(state, fp, indent=2)
 
+        with open('dumx.json', 'w') as fp:
+            json.dump(state, fp, indent=2)
+
     def new_task_id(self):
+        from numina.user.helpers import ProcessingTask
+        time_create = datetime.datetime.utcnow()
         task = ProcessingTask()
         task.taskid = 1
         task.time_create = time_create
         return 1
+
+    def update_task(self, task):
+        pass
 
 
 class Backend(HybridDAL):
@@ -597,18 +605,28 @@ class Backend(HybridDAL):
     def new_task(self):
         from numina.user.helpers import ProcessingTask
         _logger.info('running recipe')
-        time_create = datetime.datetime.utcnow()
+
         if self.task_table_index:
             newidx = self.task_table_index[-1] + 1
         else:
             newidx = 1
         self.task_table_index.append(newidx)
+        task = ProcessingTask()
+        task.id = newidx
+
         task_reg = {
-            'taskid': newidx, 'state': 0,
-            'time_create': time_create.strftime('%FT%T')
+            'id': newidx, 'state': 0,
+            'time_create': task.time_create.strftime('%FT%T')
         }
         self.task_table[newidx] = task_reg
-        task = ProcessingTask()
-        task.taskid = newidx
-        task.time_create = time_create
+
         return task
+
+    def update_task(self, task):
+        _logger.debug('update task=%d in backend', task.id)
+        task_reg = self.task_table[task.id]
+        task_reg['state'] = task.state
+        task_reg['time_start'] = task.time_start.strftime('%FT%T')
+        task_reg['time_end'] = task.time_end.strftime('%FT%T')
+        task_reg['request'] = task.request
+        task_reg['request_params'] = task.request_params
