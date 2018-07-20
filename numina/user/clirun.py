@@ -68,6 +68,7 @@ def register(subparsers, config):
         )
     parser_run.add_argument(
         '--datadir', action="store", dest="datadir",
+        default='data',
         help='path to directory containing pristine data'
         )
     parser_run.add_argument(

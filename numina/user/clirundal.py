@@ -21,8 +21,9 @@ import numina.drps
 import numina.exceptions
 from numina.dal.dictdal import HybridDAL, Backend
 from numina.util.context import working_directory
+from numina.util.fqn import fully_qualified_name
 
-from .helpers import WorkEnvironment, DiskStorageDefault, DataManager
+from .helpers import DataManager
 
 
 DEFAULT_RECIPE_LOGGER = 'numina.recipes'
@@ -112,13 +113,16 @@ def mode_run_common_obs(args, extra_args):
 
     if control_format == 1:
         backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
+        datamanager = DataManager(args.basedir, args.datadir, backend)
+        datamanager.workdir_tmpl = "obsid{obsid}_work"
+        datamanager.resultdir_tmpl = "obsid{obsid}_result"
+
     elif control_format == 2:
         backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
+        datamanager = DataManager(args.basedir, args.datadir, backend)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
-
-    datamanager = DataManager(backend)
 
     # Start processing
     jobs = []
@@ -131,23 +135,32 @@ def mode_run_common_obs(args, extra_args):
         # Directories with relevant data
         request = 'reduce'
         request_params = {}
-        obid = job['id']
-        request_params['obs_id'] = obid
-        request_params["results_dir"] = ""
-        request_params["work_dir"] = ""
-        request_params["task_dir"] = ""
 
-        task = backend.new_task()
+        obid = job['id']
+
+        request_params['oblock_id'] = obid
+        request_params["pipeline"] = args.pipe_name
+        request_params["instrument_configuration"] = args.insconf
+
+        logger_control = dict(
+            logfile='processing.log',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            enabled=True
+            )
+        request_params['logger_control'] = logger_control
+
+        task = backend.new_task(request, request_params)
         task.request = request
         task.request_params = request_params
 
+        task.request_runinfo['runner'] = 'numina'
+        task.request_runinfo['runner_version'] = __version__
+
         _logger.info("procesing OB with id={}".format(obid))
-        workenv = WorkEnvironment(obid,
-                                  args.basedir,
-                                  workdir=args.workdir,
-                                  resultsdir=args.resultsdir,
-                                  datadir=args.datadir
-                                  )
+        workenv = datamanager.create_workenv(task)
+
+        task.request_runinfo["results_dir"] = workenv.resultsdir_rel
+        task.request_runinfo["work_dir"] = workenv.workdir_rel
 
         # Roll back to cwd after leaving the context
         with working_directory(workenv.datadir):
@@ -168,14 +181,11 @@ def mode_run_common_obs(args, extra_args):
             _logger.debug('update recipe runinfo')
             recipe.runinfo['runner'] = 'numina'
             recipe.runinfo['runner_version'] = '1'
-            recipe.runinfo['taskid'] = obid
+            recipe.runinfo['task_id'] = task.id
             recipe.runinfo['data_dir'] = workenv.datadir
             recipe.runinfo['work_dir'] = workenv.workdir
             recipe.runinfo['results_dir'] = workenv.resultsdir
 
-            task.request_params["results_dir"] = workenv.resultsdir
-            task.request_params["work_dir"] = workenv.workdir
-            task.request_params["task_dir"] = "taskdir"
             _logger.debug('recipe created')
 
             try:
@@ -202,24 +212,11 @@ def mode_run_common_obs(args, extra_args):
             )
 
         # Load recipe control and recipe parameters from file
-        task_control = dict(requirements={}, products={}, logger=logger_control)
-
-        # Build the recipe input data structure
-        # and copy needed files to workdir
-        runinfo = {
-            'taskid': obid,
-            'obsid': obid,
-            'pipeline': pipe_name,
-            'recipeclass': recipe.__class__,
-            'workenv': workenv,
-            'recipe_version': recipe.__version__,
-            'runner': 'numina',
-            'runner_version': __version__,
-            'instrument_configuration': args.insconf
-        }
-
-        task.set_runinfo(runinfo)
-        task.set_obsres(obsres)
+        task.request_runinfo['instrument'] =  obsres.instrument
+        task.request_runinfo['mode'] = obsres.mode
+        task.request_runinfo['recipe_class'] =  recipe.__class__.__name__
+        task.request_runinfo['recipe_fqn'] = fully_qualified_name(recipe.__class__)
+        task.request_runinfo['recipe_version'] =  recipe.__version__
 
         # Copy files
         if args.copy_files:
@@ -230,7 +227,7 @@ def mode_run_common_obs(args, extra_args):
             workenv.adapt_obsres(obsres)
 
         completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
-                                    workenv=workenv, task_control=task_control)
+                                    workenv=workenv, logger_control=logger_control)
 
         datamanager.store_task(completed_task, workenv.resultsdir)
 
@@ -249,13 +246,12 @@ def create_recipe_file_logger(logger, logfile, logformat):
     return fh
 
 
-def run_recipe(recipe, task, rinput, workenv, task_control):
+def run_recipe(recipe, task, rinput, workenv, logger_control):
     """Recipe execution mode of numina."""
 
     # Creating custom logger file
     recipe_logger = logging.getLogger(DEFAULT_RECIPE_LOGGER)
 
-    logger_control = task_control['logger']
     if logger_control['enabled']:
         logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
         logformat = logger_control['format']

@@ -573,16 +573,26 @@ class HybridDAL(Dict2DAL):
         state = self.dump_data()
         yaml.dump(state, fp, indent=2)
 
-        with open('dumx.json', 'w') as fp:
+        with open('control_dump.json', 'w') as fp:
             json.dump(state, fp, indent=2)
 
-    def new_task_id(self):
-        from numina.user.helpers import ProcessingTask
-        time_create = datetime.datetime.utcnow()
-        task = ProcessingTask()
-        task.taskid = 1
-        task.time_create = time_create
+    def new_task_id(self, request, request_params):
+        if request == 'reduce':
+            return request_params.get('oblock_id', 1)
         return 1
+
+    def new_task(self, request, request_params):
+
+        from numina.user.helpers import ProcessingTask
+
+        newidx =  self.new_task_id(request, request_params)
+        _logger.debug('create task=%d', newidx)
+        task = ProcessingTask()
+        task.id = newidx
+        task.request = request
+        task.request_params = request_params
+
+        return task
 
     def update_task(self, task):
         pass
@@ -602,23 +612,27 @@ class Backend(HybridDAL):
         state['tasks_index'] = self.task_table_index
         return state
 
-    def new_task(self):
-        from numina.user.helpers import ProcessingTask
-        _logger.info('running recipe')
-
+    def new_task_id(self, request, request_params):
         if self.task_table_index:
             newidx = self.task_table_index[-1] + 1
         else:
             newidx = 1
         self.task_table_index.append(newidx)
-        task = ProcessingTask()
-        task.id = newidx
+        return newidx
+
+    def new_task(self, request, request_params):
+
+        task = super(Backend, self).new_task(request, request_params)
 
         task_reg = {
-            'id': newidx, 'state': 0,
-            'time_create': task.time_create.strftime('%FT%T')
+            'id': task.id, 'state': task.state,
+            'time_create': task.time_create.strftime('%FT%T'),
+            'request': request,
+            'request_params': request_params,
+            'request_runinfo': task.request_runinfo
         }
-        self.task_table[newidx] = task_reg
+        _logger.debug('insert task=%d in backend', task.id)
+        self.task_table[task.id] = task_reg
 
         return task
 
@@ -630,3 +644,4 @@ class Backend(HybridDAL):
         task_reg['time_end'] = task.time_end.strftime('%FT%T')
         task_reg['request'] = task.request
         task_reg['request_params'] = task.request_params
+        task_reg['request_runinfo'] = task.request_runinfo

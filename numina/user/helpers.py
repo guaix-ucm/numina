@@ -30,22 +30,47 @@ _logger = logging.getLogger(__name__)
 
 
 class DataManager(object):
-    def __init__(self, backend):
+    def __init__(self, basedir, datadir, backend):
+        self.basedir = basedir
+        self.datadir = datadir
         self.backend = backend
+
+        self.workdir_tmpl = "obsid{obsid}_{taskid}_work"
+        self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
+
+        self.storage = DiskStorageBase()
 
     def store_task(self, task, result_dir):
 
-        where = DiskStorageDefault(result_dir)
-        where.store(task)
+        with working_directory(result_dir):
+            _logger.info('storing result')
+            task.store(self.storage)
 
         self.backend.update_task(task)
 
+    def create_workenv(self, task):
+
+        values = dict(
+            obsid=task.request_params['oblock_id'],
+            taskid=task.id
+        )
+
+        work_dir = self.workdir_tmpl.format(**values)
+        result_dir = self.resultdir_tmpl.format(**values)
+
+        workenv = BaseWorkEnvironment(
+            self.datadir,
+            self.basedir,
+            work_dir,
+            result_dir
+        )
+
+        return workenv
+
 
 class ProcessingTask(object):
-    def __init__(self, obsres=None, insconf=None):
+    def __init__(self):
 
-        self.observation = {}
-        self.runinfo = {}
         self.result = None
         self.id = 1
 
@@ -54,38 +79,9 @@ class ProcessingTask(object):
         self.time_end = 0
         self.request = "reduce"
         self.request_params = {}
+        self.request_runinfo = {}
         self.state = 0
 
-        if insconf:
-            self.set_runinfo(insconf)
-
-        self.observation['mode'] = 'unknown'
-        self.observation['observing_result'] = 'unknown'
-        self.observation['instrument'] = 'unknown'
-
-        if obsres:
-            self.set_obsres(obsres)
-
-        if insconf and obsres:
-            if insconf['instrument_configuration']:
-                self.observation['instrument_configuration'] = insconf['instrument_configuration']
-
-    def set_obsres(self, obsres):
-        self.observation['mode'] = obsres.mode
-        self.observation['observing_result'] = obsres.id
-        self.observation['instrument'] = obsres.instrument
-
-    def set_runinfo(self, insconf):
-        self.runinfo['pipeline'] = insconf['pipeline']
-        self.runinfo['recipe'] = insconf['recipeclass'].__name__
-        self.runinfo['recipe_full_name'] = objimp.fully_qualified_name(insconf['recipeclass'])
-        self.runinfo['runner'] = insconf.get('runner', 'numina')
-        self.runinfo['runner_version'] = insconf.get('runner_version', "0")
-        self.runinfo['data_dir'] = insconf['workenv'].datadir
-        self.runinfo['work_dir'] = insconf['workenv'].workdir
-        self.runinfo['results_dir'] = insconf['workenv'].resultsdir
-        self.runinfo['base_dir'] = insconf['workenv'].basedir
-        self.runinfo['recipe_version'] = insconf['recipe_version']
 
     def store(self, where):
 
@@ -102,36 +98,31 @@ class ProcessingTask(object):
         return where.task
 
 
-class WorkEnvironment(object):
-    def __init__(self, obsid, basedir, workdir=None,
-                 resultsdir=None, datadir=None):
+class BaseWorkEnvironment(object):
+    def __init__(self, datadir, basedir, workdir,
+                 resultsdir):
 
         self.basedir = basedir
 
-        if workdir is None:
-            workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
-
+        self.workdir_rel = workdir
         self.workdir = os.path.abspath(workdir)
 
-        if resultsdir is None:
-            resultsdir = os.path.join(basedir, 'obsid{}_results'.format(obsid))
-
+        self.resultsdir_rel = resultsdir
         self.resultsdir = os.path.abspath(resultsdir)
 
-        if datadir is None:
-            datadir = os.path.join(basedir, 'data')
-
+        self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
+
         if six.PY2:
             index_base = "index-2.pkl"
         else:
             index_base = "index.pkl"
+
         self.index_file = os.path.join(self.workdir, index_base)
         self.hashes = {}
 
     def sane_work(self):
-        # make_sure_path_doesnot_exist(self.workdir)
-        _logger.debug('check workdir for working: %r', self.workdir)
+        _logger.debug('check workdir for working: %r', self.workdir_rel)
         make_sure_path_exists(self.workdir)
         make_sure_file_exists(self.index_file)
         # Load dictionary of hashes
@@ -145,12 +136,12 @@ class WorkEnvironment(object):
         make_sure_file_exists(self.index_file)
 
         # make_sure_path_doesnot_exist(self.resultsdir)
-        _logger.debug('check resultsdir to store results %r', self.resultsdir)
+        _logger.debug('check resultsdir to store results %r', self.resultsdir_rel)
         make_sure_path_exists(self.resultsdir)
 
     def copyfiles(self, obsres, reqs):
 
-        _logger.info('copying files from %r to %r', self.datadir, self.workdir)
+        _logger.info('copying files from %r to %r', self.datadir_rel, self.workdir_rel)
 
         if obsres:
             self.copyfiles_stage1(obsres)
@@ -168,9 +159,9 @@ class WorkEnvironment(object):
             else:
                 complete = f.filename
             head, tail = os.path.split(complete)
-            #initial.append(complete)
+            # initial.append(complete)
             tails.append(tail)
-#            heads.append(head)
+            #            heads.append(head)
             sources.append(complete)
 
         dupes = self.check_duplicates(tails)
@@ -238,9 +229,9 @@ class WorkEnvironment(object):
         else:
             trigger_save = True
             make_copy = True
-            
+
         self.hashes[key] = md5hash
-            
+
         if make_copy:
             _logger.debug('copying %r to %r', key, self.workdir)
             shutil.copy(src, dest)
@@ -260,6 +251,20 @@ class WorkEnvironment(object):
             # Remove path components
             f.filename = os.path.basename(f.filename)
         return obsres
+
+
+class WorkEnvironment(BaseWorkEnvironment):
+    def __init__(self, obsid, basedir, workdir=None,
+                 resultsdir=None, datadir=None):
+        if workdir is None:
+            workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
+
+        if resultsdir is None:
+            resultsdir = os.path.join(basedir, 'obsid{}_results'.format(obsid))
+
+        if datadir is None:
+            datadir = os.path.join(basedir, 'data')
+        super(WorkEnvironment, self).__init__(datadir, basedir, workdir, resultsdir)
 
 
 def compute_md5sum_file(filename):
@@ -296,7 +301,28 @@ def make_sure_file_exists(path):
             raise
 
 
+class DiskStorageBase(object):
+    def __init__(self):
+        super(DiskStorageBase, self).__init__()
+        self.result = 'result.yaml'
+        self.task = 'task.yaml'
+        self.idx = 1
+
+    def get_next_basename(self, ext):
+        fname = 'product_%03d%s' % (self.idx, ext)
+        self.idx = self.idx + 1
+        return fname
+
+    def store(self, completed_task, resultsdir):
+        """Store the values of the completed task."""
+
+        with working_directory(resultsdir):
+            _logger.info('storing result')
+            return completed_task.store(self)
+
+
 class DiskStorageDefault(object):
+    # TODO: Deprecate
     def __init__(self, resultsdir):
         super(DiskStorageDefault, self).__init__()
         self.result = 'result.yaml'
