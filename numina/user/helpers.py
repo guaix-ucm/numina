@@ -47,6 +47,7 @@ class DataManager(object):
             task.store(self.storage)
 
         self.backend.update_task(task)
+        self.backend.update_result(task)
 
     def create_workenv(self, task):
 

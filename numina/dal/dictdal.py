@@ -597,27 +597,45 @@ class HybridDAL(Dict2DAL):
     def update_task(self, task):
         pass
 
+    def update_result(self, task):
+        pass
+
 
 class Backend(HybridDAL):
 
     def __init__(self, drps, base, extra_data=None, basedir=None):
         super(Backend, self).__init__(drps, base['oblocks'], base, extra_data, basedir)
-        self.task_table = base.get('tasks', {})
-        self.task_table_index = base.get('tasks_index', [])
+
+        self.db_tables = {}
+
+        self.db_tables['tasks'] = base.get('tasks', {})
+        self.db_tables['tasks_index'] = base.get('tasks_index', [])
+
+        self.db_tables['results'] = base.get('results', {})
+        self.db_tables['results_index'] = base.get('results_index', [])
 
     def dump_data(self):
         state = super(Backend, self).dump_data()
         state['version'] = 2
-        state['tasks'] = self.task_table
-        state['tasks_index'] = self.task_table_index
+        for name, val in self.db_tables.items():
+            state[name] = val
         return state
 
-    def new_task_id(self, request, request_params):
-        if self.task_table_index:
-            newidx = self.task_table_index[-1] + 1
+    @staticmethod
+    def new_id(table_index):
+        if table_index:
+            newidx = table_index[-1] + 1
         else:
             newidx = 1
-        self.task_table_index.append(newidx)
+        table_index.append(newidx)
+        return newidx
+
+    def new_task_id(self, request, request_params):
+        newidx = self.new_id(self.db_tables['tasks_index'])
+        return newidx
+
+    def new_result_id(self):
+        newidx = self.new_id(self.db_tables['results_index'])
         return newidx
 
     def new_task(self, request, request_params):
@@ -632,16 +650,26 @@ class Backend(HybridDAL):
             'request_runinfo': task.request_runinfo
         }
         _logger.debug('insert task=%d in backend', task.id)
-        self.task_table[task.id] = task_reg
+        self.db_tables['tasks'][task.id] = task_reg
 
         return task
 
     def update_task(self, task):
         _logger.debug('update task=%d in backend', task.id)
-        task_reg = self.task_table[task.id]
+        task_reg = self.db_tables['tasks'][task.id]
         task_reg['state'] = task.state
         task_reg['time_start'] = task.time_start.strftime('%FT%T')
         task_reg['time_end'] = task.time_end.strftime('%FT%T')
         task_reg['request'] = task.request
         task_reg['request_params'] = task.request_params
         task_reg['request_runinfo'] = task.request_runinfo
+
+    def update_result(self, task):
+        _logger.debug('update result of task=%d in backend', task.id)
+        newix = self.new_result_id()
+        _logger.debug('result_id=%d in backend', newix)
+        result_reg = {
+            'id': newix,
+            'task_id': task.id
+        }
+        self.db_tables['results'][newix] = result_reg

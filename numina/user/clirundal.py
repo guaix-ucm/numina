@@ -180,7 +180,7 @@ def mode_run_common_obs(args, extra_args):
             # Update runinfo
             _logger.debug('update recipe runinfo')
             recipe.runinfo['runner'] = 'numina'
-            recipe.runinfo['runner_version'] = '1'
+            recipe.runinfo['runner_version'] = __version__
             recipe.runinfo['task_id'] = task.id
             recipe.runinfo['data_dir'] = workenv.datadir
             recipe.runinfo['work_dir'] = workenv.workdir
@@ -203,13 +203,6 @@ def mode_run_common_obs(args, extra_args):
 
             for req in recipe.products().values():
                 _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
-
-        # Logging and task control
-        logger_control = dict(
-            logfile='processing.log',
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            enabled=True
-            )
 
         # Load recipe control and recipe parameters from file
         task.request_runinfo['instrument'] =  obsres.instrument
