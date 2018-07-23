@@ -22,6 +22,7 @@ import numina.store.gtc.load as gtcload
 from numina.types.frame import DataFrameType
 from numina.core.oresult import obsres_from_dict
 from numina.exceptions import NoResultFound
+from numina.util.fqn import fully_qualified_name
 from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
@@ -571,7 +572,8 @@ class HybridDAL(Dict2DAL):
 
     def dump(self, fp):
         state = self.dump_data()
-        yaml.dump(state, fp, indent=2)
+        yaml.dump(state, fp)
+        # yaml.dump(state, fp, default_flow_style=False)
 
         with open('control_dump.json', 'w') as fp:
             json.dump(state, fp, indent=2)
@@ -597,7 +599,7 @@ class HybridDAL(Dict2DAL):
     def update_task(self, task):
         pass
 
-    def update_result(self, task):
+    def update_result(self, task, serialized):
         pass
 
 
@@ -664,12 +666,39 @@ class Backend(HybridDAL):
         task_reg['request_params'] = task.request_params
         task_reg['request_runinfo'] = task.request_runinfo
 
-    def update_result(self, task):
+    def update_result(self, task, serialized):
         _logger.debug('update result of task=%d in backend', task.id)
         newix = self.new_result_id()
         _logger.debug('result_id=%d in backend', newix)
+        result = task.result
+        if result is None:
+            return
+
         result_reg = {
             'id': newix,
-            'task_id': task.id
+            'task_id': task.id,
+            'values': [],
+            'qc': task.result.qc.name,
+            'mode': task.request_runinfo['mode'],
+            'instrument': task.request_runinfo['instrument'],
+            'time_create': task.time_end.strftime('%FT%T'),
+            'time_obs': '',
+            'recipe_class': task.request_runinfo['recipe_class'],
+            'recipe_fqn': task.request_runinfo['recipe_fqn'],
+            'oblock_id': task.request_params['oblock_id']
         }
         self.db_tables['results'][newix] = result_reg
+
+        for key, prod in result.stored().items():
+            if prod.dest == 'qc':
+                continue
+
+            val = {}
+            val['name'] = prod.dest
+            val['datatype'] = prod.type.name()
+            val['datatype_fqn'] = fully_qualified_name(prod.type)
+            val['contents'] = serialized['values'][key]
+            result_reg['values'].append(val)
+
+            if prod.type.isproduct():
+                print(prod, 'is prod')

@@ -106,20 +106,15 @@ def mode_run_common_obs(args, extra_args):
     control_format = loaded_data.get('version', 1)
     _logger.info('control format version %d', control_format)
 
-    # FIXME: DAL and WorkEnvironment
-    # DAL and WorkEnvironment
-    # must share its information
-    #
-
     if control_format == 1:
-        backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
-        datamanager = DataManager(args.basedir, args.datadir, backend)
+        _backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
+        datamanager = DataManager(args.basedir, args.datadir, _backend)
         datamanager.workdir_tmpl = "obsid{obsid}_work"
         datamanager.resultdir_tmpl = "obsid{obsid}_result"
 
     elif control_format == 2:
-        backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
-        datamanager = DataManager(args.basedir, args.datadir, backend)
+        _backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
+        datamanager = DataManager(args.basedir, args.datadir, _backend)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
@@ -149,7 +144,7 @@ def mode_run_common_obs(args, extra_args):
             )
         request_params['logger_control'] = logger_control
 
-        task = backend.new_task(request, request_params)
+        task = datamanager.backend.new_task(request, request_params)
         task.request = request
         task.request_params = request_params
 
@@ -165,12 +160,12 @@ def mode_run_common_obs(args, extra_args):
         # Roll back to cwd after leaving the context
         with working_directory(workenv.datadir):
 
-            obsres = backend.obsres_from_oblock_id(obid, configuration=args.insconf)
+            obsres = datamanager.backend.obsres_from_oblock_id(obid, configuration=args.insconf)
 
             _logger.debug("pipeline from CLI is %r", args.pipe_name)
             pipe_name = args.pipe_name
             obsres.pipeline = pipe_name
-            recipe = backend.search_recipe_from_ob(obsres)
+            recipe = datamanager.backend.search_recipe_from_ob(obsres)
             _logger.debug('recipe class is %s', recipe.__class__)
 
             # Enable intermediate results by default
@@ -189,7 +184,7 @@ def mode_run_common_obs(args, extra_args):
             _logger.debug('recipe created')
 
             try:
-                rinput = recipe.build_recipe_input(obsres, backend)
+                rinput = recipe.build_recipe_input(obsres, datamanager.backend)
             except (ValueError, numina.exceptions.ValidationError) as err:
                 _logger.error("During recipe input construction")
                 _logger.error("%s", err)
@@ -222,12 +217,12 @@ def mode_run_common_obs(args, extra_args):
         completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
                                     workenv=workenv, logger_control=logger_control)
 
-        datamanager.store_task(completed_task, workenv.resultsdir)
+        datamanager.store_task(completed_task)
 
     if args.dump_control:
         _logger.debug('dump control status')
         with open('control_dump.yaml', 'w') as fp:
-            backend.dump(fp)
+            datamanager.backend.dump(fp)
 
 
 def create_recipe_file_logger(logger, logfile, logformat):

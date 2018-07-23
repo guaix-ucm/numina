@@ -21,6 +21,7 @@ import pickle
 import six
 import yaml
 
+from numina.util.jsonencoder import ExtEncoder
 import numina.util.objimport as objimp
 from numina.types.frame import DataFrameType
 from numina.util.context import working_directory
@@ -40,14 +41,29 @@ class DataManager(object):
 
         self.storage = DiskStorageBase()
 
-    def store_task(self, task, result_dir):
+    def store_task(self, task):
+
+        result_dir = task.request_runinfo['results_dir']
 
         with working_directory(result_dir):
-            _logger.info('storing result')
-            task.store(self.storage)
+            _logger.info('storing task and result')
+
+            # save to disk the RecipeResult part and return the file to save it
+            result_repr = task.result.store_to(self.storage)
+
+            task_repr = task.__dict__.copy()
+            # Change result structure by filename
+            task_repr['result'] = self.storage.result
+
+            import json
+            with open(self.storage.result, 'w+') as fd:
+                json.dump(result_repr, fd, indent=2, cls=ExtEncoder)
+
+            with open(self.storage.task, 'w+') as fd:
+                yaml.dump(task_repr, fd)
 
         self.backend.update_task(task)
-        self.backend.update_result(task)
+        self.backend.update_result(task, result_repr)
 
     def create_workenv(self, task):
 
@@ -83,19 +99,22 @@ class ProcessingTask(object):
         self.request_runinfo = {}
         self.state = 0
 
-
     def store(self, where):
 
         # save to disk the RecipeResult part and return the file to save it
-        saveres = self.result.store_to(where)
+        result_repr = self.result.store_to(where)
 
+        import json
         with open(where.result, 'w+') as fd:
-            yaml.dump(saveres, fd)
+            json.dump(result_repr, fd, indent=2, cls=ExtEncoder)
 
-        self.result = where.result
+        task_repr = self.__dict__.copy()
+        # Change result structure by filename
+        task_repr['result'] = where.result
 
         with open(where.task, 'w+') as fd:
-            yaml.dump(self.__dict__, fd)
+            yaml.dump(task_repr, fd)
+
         return where.task
 
 
