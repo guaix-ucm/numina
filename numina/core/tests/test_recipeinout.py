@@ -64,7 +64,7 @@ def test_test4(qc):
 def test_store_to(qc):
     m = RRTest(param1=None, param2=None, qc=qc)
 
-    exp = {'param1': None, 'param2': None, 'qc': qc}
+    exp = {'values': {'param1': None, 'param2': None}, 'qc': qc}
 
     class Storage(object):
         def __init__(self):
@@ -73,5 +73,4 @@ def test_store_to(qc):
     where = Storage()
 
     saveres = m.store_to(where)
-
     assert saveres == exp
