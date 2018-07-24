@@ -19,7 +19,8 @@ import yaml
 from numina import __version__
 import numina.drps
 import numina.exceptions
-from numina.dal.dictdal import HybridDAL, Backend
+from numina.dal.dictdal import HybridDAL
+from numina.dal.backend import Backend
 from numina.util.context import working_directory
 from numina.util.fqn import fully_qualified_name
 
