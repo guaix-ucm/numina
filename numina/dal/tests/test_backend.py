@@ -10,10 +10,10 @@
 import pytest
 
 from numina.tests.drptest import create_drp_test
-from ..dictdal import HybridDAL
+from ..dictdal import Backend
 
 @pytest.fixture
-def hybriddal():
+def backend():
 
     drps = create_drp_test(['drpclodia.yaml'])
     name = 'CLODIA'
@@ -27,7 +27,7 @@ def hybriddal():
         dict(id=5, instrument=name, mode="image", images=[], children=[]),
         dict(id=30, instrument=name, mode="mosaic", images=[], children=[2, 3]),
         dict(id=40, instrument=name, mode="mosaic", images=[], children=[4, 5]),
-        dict(id=400, instrument=name, mode="raiz", images=[], children=[30 ,40]),
+        dict(id=400, instrument=name, mode="raiz", images=[], children=[30 , 40]),
     ]
 
     prod_table = {
@@ -44,45 +44,46 @@ def hybriddal():
     gentable = {}
     gentable['products'] = prod_table
     gentable['requirements'] = {}
+    #gentable['oblocks'] = ob_table
 
-    base = HybridDAL(drps, ob_table, gentable, {})
+    base = Backend(drps, gentable)
+    base.add_obs(ob_table)
 
     return base
 
 
-def test_skip_reserved(hybriddal):
+def test_skip_reserved(backend):
 
-    ss_ids = list(hybriddal.search_session_ids())
+    ss_ids = list(backend.search_session_ids())
 
     assert ss_ids == [2, 3, 4, 5, 30, 40]
 
 
-def test_parent_inserted(hybriddal):
+def test_parent_inserted(backend):
 
-    obsres = hybriddal.search_oblock_from_id(2)
-    print('OBSR', obsres.__dict__)
+    obsres = backend.search_oblock_from_id(2)
     assert obsres.parent == 30
 
-    obsres = hybriddal.search_oblock_from_id(4)
+    obsres = backend.search_oblock_from_id(4)
     assert obsres.parent == 40
 
-    obsres = hybriddal.search_oblock_from_id(30)
+    obsres = backend.search_oblock_from_id(30)
     assert obsres.parent == 400
 
-    obsres = hybriddal.search_oblock_from_id(400)
+    obsres = backend.search_oblock_from_id(400)
     assert obsres.parent is None
 
 
-def test_previous_obsid(hybriddal):
+def test_previous_obsid(backend):
 
-    obsres = hybriddal.search_oblock_from_id(5)
-    previd = hybriddal.search_previous_obsres(obsres, node='prev')
+    obsres = backend.search_oblock_from_id(5)
+    previd = backend.search_previous_obsres(obsres, node='prev')
     assert list(previd) == [4, 3, 2, 1]
 
-    obsres = hybriddal.search_oblock_from_id(5)
-    previd = hybriddal.search_previous_obsres(obsres, node='prev-rel')
+    obsres = backend.search_oblock_from_id(5)
+    previd = backend.search_previous_obsres(obsres, node='prev-rel')
     assert list(previd) == [4]
 
-    obsres = hybriddal.search_oblock_from_id(4)
-    previd = hybriddal.search_previous_obsres(obsres, node='prev-rel')
+    obsres = backend.search_oblock_from_id(4)
+    previd = backend.search_previous_obsres(obsres, node='prev-rel')
     assert list(previd) == []
