@@ -260,7 +260,7 @@ class Dict2DAL(BaseDictDAL):
         if 'parameters' in base:
             req_table = base['parameters']
         else:
-            req_table = base['requirements']
+            req_table = base.get('requirements', {})
 
         super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
 
