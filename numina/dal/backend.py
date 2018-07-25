@@ -248,6 +248,9 @@ class Backend(Dict2DAL):
                     # Build path
                     path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
                 _logger.debug("path is %s", path)
+                # Check if path is absolute
+                if not os.path.isabs(path):
+                    path = os.path.join(self.basedir, path)
                 rprod['content'] = numina.store.load(tipo, path)
                 return StoredProduct(**rprod)
         else:

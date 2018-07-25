@@ -10,7 +10,8 @@
 import pytest
 
 from numina.tests.drptest import create_drp_test
-from ..dictdal import Backend
+from ..backend import Backend
+
 
 @pytest.fixture
 def backend():
