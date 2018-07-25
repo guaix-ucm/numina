@@ -10,7 +10,7 @@ def test_candidates_ff(tmpdir):
         tmpdir.mkdir(s)
 
     m = FileFinder()
-    ca = m.candidates(tmpdir)
+    ca = m.candidates(str(tmpdir))
     assert sorted(ca) == sorted(subd)
 
 
@@ -31,14 +31,14 @@ def test_check_ff(tmpdir):
     newdir.mkdir(fname3)
 
     m = FileFinder()
-
-    valid = m.check(newdir, fname1)
+    # Conversion is needed only in Python < 3.6
+    valid = m.check(str(newdir), fname1)
     assert valid
 
-    invalid = m.check(newdir, fname2)
+    invalid = m.check(str(newdir), fname2)
     assert invalid == False
 
-    invalid = m.check(newdir, fname2)
+    invalid = m.check(str(newdir), fname2)
     assert invalid == False
 
 
@@ -50,5 +50,5 @@ def test_candidates_ffg(tmpdir):
         tmpdir.mkdir(s)
 
     m = FileFinderGTC()
-    ca = m.candidates(tmpdir)
+    ca = m.candidates(str(tmpdir))
     assert sorted(ca) == sorted(res)
