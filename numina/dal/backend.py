@@ -14,6 +14,7 @@ import logging
 import json
 from itertools import chain
 import datetime
+import operator
 
 import six
 import yaml
@@ -22,8 +23,8 @@ import numina.store.gtc.load as gtcload
 from numina.types.frame import DataFrameType
 from numina.exceptions import NoResultFound
 from numina.util.fqn import fully_qualified_name
+from numina.util.objimport import import_object
 from .dictdal import Dict2DAL
-from .dictdal import resultsdir_default
 from .stored import StoredProduct
 from .diskfiledal import build_product_path
 from .utils import tags_are_valid
@@ -36,8 +37,6 @@ class Backend(Dict2DAL):
 
     # FIXME: most code here is duplicated with HybridDal
     def __init__(self, drps, base, extra_data=None, basedir=None):
-        # super(Backend, self).__init__(drps, base['oblocks'], base, extra_data, basedir)
-
 
         self.rootdir = base.get("rootdir", "")
         self.ob_ids = []
@@ -305,33 +304,48 @@ class Backend(Dict2DAL):
                 msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
                 raise NoResultFound(msg)
 
-        rdir = resultsdir_default(self.basedir, node_id)
-        # FIXME: hardcoded
-        taskfile = os.path.join(rdir, 'task.yaml')
-        resfile = os.path.join(rdir, 'result.yaml')
-        result_contents = yaml.load(open(resfile))
-        task_contents = yaml.load(open(taskfile))
-
         try:
-            field_file = result_contents[field]
-            if field_file is not None:
-                filename = os.path.join(rdir, field_file)
-                content = numina.store.load(DataFrameType(), filename)
-            else:
-                content = None
+            candidates = []
+            for idx, val in self.db_tables['results'].items():
+                if node_id == val['oblock_id']:
+                    candidates.append(val)
 
+            s_can = sorted(candidates, key=operator.itemgetter('time_create'), reverse=True)
+            if s_can:
+                result_reg = s_can[0]
+                directory = result_reg['directory']
+                field_files = result_reg['values']
+                for field_entry in field_files:
+                    if field_entry['name'] == field:
+                        break
+                else:
+                    raise NoResultFound('no field {} found'.format(field))
+
+                type_fqn = field_entry['type_fqn']
+
+                type_class = import_object(type_fqn)
+                type_obj = type_class()
+
+                content = None
+                if field_entry:
+                    if field_entry['content']:
+                        filename = os.path.join(directory, field_entry['content'])
+                        content = numina.store.load(type_obj, filename)
+
+                st = StoredProduct(
+                    id=result_reg['id'],
+                    content=content,
+                    tags={}
+                )
+                return st
+            else:
+                msg = "result of mode '{}' id={} not found".format(field, node_id)
+                raise NoResultFound(msg)
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
             # Python 2.7 compatibility
             six.raise_from(NoResultFound(msg), err)
             # raise NoResultFound(msg) from err
-
-        st = StoredProduct(
-            id=node_id,
-            content=content,
-            tags={}
-        )
-        return st
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
 

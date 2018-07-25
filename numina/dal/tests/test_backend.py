@@ -11,6 +11,7 @@ import pytest
 
 from numina.tests.drptest import create_drp_test
 from ..backend import Backend
+from numina.exceptions import NoResultFound
 
 
 @pytest.fixture
@@ -42,9 +43,55 @@ def backend():
         ]
     }
 
+    results_table = {
+        1: {'id': 1,
+            'instrument': name,
+            'mode': "image",
+            'oblock_id': 5,
+            'task_id': 1,
+            'time_create': '2018-07-24T19:12:01',
+            'directory': 'dum1',
+            'values': [
+                {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
+                 'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
+                {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
+                 'type_fqn': 'numina.types.frame.DataFrameType'},
+            ]
+        },
+        2: {'id': 2,
+            'instrument': name,
+            'mode': "sky",
+            'oblock_id': 4,
+            'task_id': 2,
+            'time_create': '2018-07-24T19:12:09',
+            'directory': 'dum2',
+            'values': [
+                {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
+                 'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
+                {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
+                 'type_fqn': 'numina.types.frame.DataFrameType'},
+            ]
+        },
+        3: {'id': 3,
+            'instrument': name,
+            'mode': "image",
+            'oblock_id': 5,
+            'task_id': 3,
+            'time_create': '2018-07-24T19:12:11',
+            'directory': 'dum3',
+            'values': [
+                {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
+                 'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
+                {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
+                 'type_fqn': 'numina.types.frame.DataFrameType'},
+            ]
+        },
+    }
+
     gentable = {}
     gentable['products'] = prod_table
     gentable['requirements'] = {}
+    gentable['results'] = results_table
     #gentable['oblocks'] = ob_table
 
     base = Backend(drps, gentable)
@@ -88,3 +135,27 @@ def test_previous_obsid(backend):
     obsres = backend.search_oblock_from_id(4)
     previd = backend.search_previous_obsres(obsres, node='prev-rel')
     assert list(previd) == []
+
+
+def test_search_result_id(backend):
+    from numina.types.frame import DataFrameType
+    from numina.types.dataframe import DataFrame
+
+    tipo = DataFrameType()
+    node_id = 5
+    field = 'reduced_rss'
+    res = backend.search_result_id(node_id, tipo, field, mode=None)
+
+    assert isinstance(res.content, DataFrame)
+    assert res.content.filename == 'dum3/reduced_rss.fits'
+
+
+def test_search_result_id_notfound(backend):
+    from numina.types.frame import DataFrameType
+
+    tipo = DataFrameType()
+    node_id = 2
+    field = 'reduced_rss'
+
+    with pytest.raises(NoResultFound):
+        backend.search_result_id(node_id, tipo, field, mode=None)
