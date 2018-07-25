@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,6 +11,7 @@
 
 import importlib
 import inspect
+import warnings
 
 
 def import_object(path):
@@ -36,10 +37,13 @@ def import_object(path):
 
 
 def fully_qualified_name(obj, sep='.'):
-    if inspect.isclass(obj):
-        return obj.__module__ + sep + obj.__name__
-    else:
-        return obj.__module__ + sep + obj.__class__.__name__
 
+    warnings.warn(
+        "use numina.utils.fqn.fully_qualified_name instead",
+        DeprecationWarning
+    )
+    import numina.util.fqn as fqn
+
+    return fqn.fully_qualified_name(obj, sep)
 
 

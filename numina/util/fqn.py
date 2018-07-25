@@ -8,7 +8,7 @@
 #
 
 
-"""Import objects by name"""
+"""Manage a fully qualified name for classes"""
 
 import inspect
 
