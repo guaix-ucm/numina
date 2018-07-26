@@ -13,17 +13,18 @@ import os
 import logging
 import json
 from itertools import chain
-import datetime
+
 import operator
 
 import six
-import yaml
 import numina.store
 import numina.store.gtc.load as gtcload
-from numina.types.frame import DataFrameType
+
 from numina.exceptions import NoResultFound
 from numina.util.fqn import fully_qualified_name
 from numina.util.objimport import import_object
+from numina.types.qc import QC
+
 from .dictdal import Dict2DAL
 from .stored import StoredProduct
 from .diskfiledal import build_product_path
@@ -31,6 +32,87 @@ from .utils import tags_are_valid
 
 
 _logger = logging.getLogger(__name__)
+
+
+# FIXME: this is already implemented, elsewhere
+# There should be one-- and preferably only one --obvious way to do it.
+
+def is_fits(filename, **kwargs):
+    return filename.endswith('.fits')
+
+
+def read_fits(filename):
+    import numina.types.dataframe as df
+    return df.DataFrame(filename=filename)
+
+
+def is_json(filename, **kwargs):
+    return filename.endswith('.json')
+
+
+def read_json(filename):
+    import json
+
+    with open(filename) as fd:
+        base = json.load(fd)
+    return read_structured(base)
+
+
+def is_yaml(filename, **kwargs):
+    return filename.endswith('.yaml')
+
+
+def read_yaml(filename):
+    import yaml
+
+    with open(filename) as fd:
+        base = yaml.load(fd)
+
+    return read_structured(base)
+
+
+def read_structured(data):
+
+    if 'type_fqn' in data:
+        type_fqn = data['type_fqn']
+        cls = import_object(type_fqn)
+        obj = cls.__new__(cls)
+        obj.__setstate__(data)
+        return obj
+    return data
+
+
+def unserial(value):
+    checkers = [(is_fits, read_fits), (is_json, read_json), (is_yaml, read_yaml)]
+    if isinstance(value, str):
+        for check_type, conv in checkers:
+            if check_type(value):
+                return conv(value)
+        else:
+            return value
+    else:
+        return value
+
+
+class StoredResult(object):
+    """Recover the RecipeResult values stored in the Backend"""
+    def __init__(self):
+        self.qc = QC.UNKNOWN
+
+    @classmethod
+    def load_data(cls, state):
+        obj = cls.__new__(cls)
+        obj._from_dict(state)
+        return obj
+    
+    def _from_dict(self, state):
+        self.qc = QC[state.get('qc', 'UNKNOWN')]
+        values = state.get('values', {})
+        if isinstance(values, list):
+            values = {o['name']: o['content'] for o in values}
+        for key, val in values.items():
+            loaded = unserial(val)
+            setattr(self, key, loaded)
 
 
 class Backend(Dict2DAL):
@@ -461,3 +543,7 @@ class Backend(Dict2DAL):
 
 
             yield obs_id
+
+    def build_recipe_result(self, result_id):
+        result_reg = self.db_tables['results'][result_id]
+        return StoredResult.load_data(result_reg)

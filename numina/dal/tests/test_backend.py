@@ -12,7 +12,7 @@ import pytest
 from numina.tests.drptest import create_drp_test
 from ..backend import Backend
 from numina.exceptions import NoResultFound
-
+import numina.types.qc as qc
 
 @pytest.fixture
 def backend():
@@ -51,11 +51,14 @@ def backend():
             'task_id': 1,
             'time_create': '2018-07-24T19:12:01',
             'directory': 'dum1',
+            'qc': 'GOOD',
             'values': [
                 {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
                  'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
                 {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
                  'type_fqn': 'numina.types.frame.DataFrameType'},
+                {'content': 'calib.json', 'name': 'calib', 'type': 'Other',
+                 'type_fqn': 'numina.types.frame.Other'},
             ]
         },
         2: {'id': 2,
@@ -63,6 +66,7 @@ def backend():
             'mode': "sky",
             'oblock_id': 4,
             'task_id': 2,
+            'qc': 'GOOD',
             'time_create': '2018-07-24T19:12:09',
             'directory': 'dum2',
             'values': [
@@ -78,6 +82,7 @@ def backend():
             'oblock_id': 5,
             'task_id': 3,
             'time_create': '2018-07-24T19:12:11',
+            'qc': 'GOOD',
             'directory': 'dum3',
             'values': [
                 {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
@@ -159,3 +164,28 @@ def test_search_result_id_notfound(backend):
 
     with pytest.raises(NoResultFound):
         backend.search_result_id(node_id, tipo, field, mode=None)
+
+
+def test_build_recipe_result(backend, tmpdir):
+    from numina.types.dataframe import DataFrame
+    from numina.types.structured import BaseStructuredCalibration, writeto
+    from numina.util.context import working_directory
+
+    p = tmpdir.join("calib.json")
+
+    bs = BaseStructuredCalibration()
+    writeto(bs, p)
+
+    with working_directory(str(tmpdir)):
+        res = backend.build_recipe_result(result_id=1)
+
+    assert res.qc == qc.QC.GOOD
+
+    assert hasattr(res, 'reduced_rss')
+    assert isinstance(res.reduced_rss, DataFrame)
+
+    assert hasattr(res, 'reduced_image')
+    assert isinstance(res.reduced_image, DataFrame)
+
+    assert hasattr(res, 'calib')
+    assert isinstance(res.calib, BaseStructuredCalibration)
