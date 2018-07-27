@@ -102,7 +102,7 @@ class DataManager(object):
                 self.serializer(task_repr, fd)
 
         self.backend.update_task(task)
-        self.backend.update_result(task, result_repr)
+        self.backend.update_result(task, result_repr, self.result_file)
 
     def create_workenv(self, task):
 

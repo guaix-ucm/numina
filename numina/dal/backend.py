@@ -209,7 +209,7 @@ class Backend(Dict2DAL):
         task_reg['request_params'] = task.request_params
         task_reg['request_runinfo'] = task.request_runinfo
 
-    def update_result(self, task, serialized):
+    def update_result(self, task, serialized, filename):
         _logger.debug('update result of task=%d in backend', task.id)
         newix = self.new_result_id()
         _logger.debug('result_id=%d in backend', newix)
@@ -217,6 +217,7 @@ class Backend(Dict2DAL):
         if result is None:
             return
 
+        res_dir = task.request_runinfo['results_dir']
         result_reg = {
             'id': newix,
             'task_id': task.id,
@@ -228,19 +229,21 @@ class Backend(Dict2DAL):
             'time_obs': '',
             'recipe_class': task.request_runinfo['recipe_class'],
             'recipe_fqn': task.request_runinfo['recipe_fqn'],
-            'oblock_id': task.request_params['oblock_id']
+            'oblock_id': task.request_params['oblock_id'],
+            'result_file': os.path.join(res_dir, filename)
         }
         self.db_tables['results'][newix] = result_reg
-        res_dir = task.request_runinfo['results_dir']
+
 
         for key, prod in result.stored().items():
             if prod.dest == 'qc':
                 continue
 
+            # This is the same contained in result_file
             val = {}
             val['name'] = prod.dest
-            val['type'] = prod.type.name()
-            val['type_fqn'] = fully_qualified_name(prod.type)
+            # val['type'] = prod.type.name()
+            # val['type_fqn'] = fully_qualified_name(prod.type)
             val['content'] = serialized['values'][key]
             result_reg['values'].append(val)
 
@@ -547,3 +550,11 @@ class Backend(Dict2DAL):
     def build_recipe_result(self, result_id):
         result_reg = self.db_tables['results'][result_id]
         return StoredResult.load_data(result_reg)
+
+    def build_recipe_result2(self, result_id):
+        result_reg = self.db_tables['results'][result_id]
+        result_file = result_reg['result_file']
+        with open(result_file) as fd:
+            import json
+            data = json.load(fd)
+            return StoredResult.load_data(data)

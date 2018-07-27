@@ -66,15 +66,11 @@ def backend():
             'mode': "sky",
             'oblock_id': 4,
             'task_id': 2,
-            'qc': 'GOOD',
+            'qc': 'BAD',
             'time_create': '2018-07-24T19:12:09',
             'directory': 'dum2',
-            'values': [
-                {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
-                 'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
-                {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
-                 'type_fqn': 'numina.types.frame.DataFrameType'},
-            ]
+            'result_file': 'result.json',
+            'values': [],
         },
         3: {'id': 3,
             'instrument': name,
@@ -189,3 +185,46 @@ def test_build_recipe_result(backend, tmpdir):
 
     assert hasattr(res, 'calib')
     assert isinstance(res.calib, BaseStructuredCalibration)
+
+
+def test_build_recipe_result2(backend, tmpdir):
+    import numina.store
+    from numina.types.structured import BaseStructuredCalibration
+    from numina.util.context import working_directory
+    import json
+
+    resd = {}
+    resd['qc'] = 'BAD'
+    saveres = {}
+    resd['values'] = saveres
+    obj = BaseStructuredCalibration()
+    obj.quality_control = qc.QC.BAD
+    obj_uuid = obj.uuid
+
+    class Storage(object):
+        pass
+
+    storage = Storage()
+    storage.destination = 'calib'
+
+    with working_directory(str(tmpdir)):
+        saveres['calib'] = numina.store.dump(obj, obj, storage)
+
+        p = tmpdir.join("result.json")
+        p.write(json.dumps(resd))
+
+    with working_directory(str(tmpdir)):
+        res = backend.build_recipe_result2(result_id=2)
+
+    assert res.qc == qc.QC.BAD
+
+    #assert hasattr(res, 'reduced_rss')
+    #assert isinstance(res.reduced_rss, DataFrame)
+
+    #assert hasattr(res, 'reduced_image')
+    #assert isinstance(res.reduced_image, DataFrame)
+
+    assert hasattr(res, 'calib')
+    assert isinstance(res.calib, BaseStructuredCalibration)
+
+    assert res.calib.uuid == obj_uuid

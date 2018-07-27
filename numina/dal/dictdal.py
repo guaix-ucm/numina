@@ -285,7 +285,7 @@ class Dict2DAL(BaseDictDAL):
     def update_task(self, task):
         pass
 
-    def update_result(self, task, serialized):
+    def update_result(self, task, serialized, filename):
         pass
 
     def dump(self, fp):
