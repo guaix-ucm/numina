@@ -111,7 +111,7 @@ def mode_run_common_obs(args, extra_args):
         _backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
         datamanager = DataManager(args.basedir, args.datadir, _backend)
         datamanager.workdir_tmpl = "obsid{obsid}_work"
-        datamanager.resultdir_tmpl = "obsid{obsid}_result"
+        datamanager.resultdir_tmpl = "obsid{obsid}_results"
 
     elif control_format == 2:
         _backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)

@@ -174,7 +174,7 @@ def test_build_recipe_result(backend, tmpdir):
     p = tmpdir.join("calib.json")
 
     bs = BaseStructuredCalibration()
-    writeto(bs, p)
+    writeto(bs, str(p))
 
     with working_directory(str(tmpdir)):
         res = backend.build_recipe_result(result_id=1)

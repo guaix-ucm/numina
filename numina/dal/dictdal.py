@@ -466,6 +466,8 @@ class HybridDAL(Dict2DAL):
         taskfile = os.path.join(rdir, 'task.yaml')
         resfile = os.path.join(rdir, 'result.yaml')
         result_contents = yaml.load(open(resfile))
+        if 'values' in result_contents:
+            result_contents = result_contents['values']
         task_contents = yaml.load(open(taskfile))
 
         try:
