@@ -38,8 +38,48 @@ class DataManager(object):
 
         self.workdir_tmpl = "obsid{obsid}_{taskid}_work"
         self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
+        self.serial_format = 'json'
+
+        self.result_file = 'result.json'
+        self.task_file = 'task.json'
 
         self.storage = DiskStorageBase()
+
+    def serializer(self, data, fd):
+        if self.serial_format == 'yaml':
+            self.serializer_json(data, fd)
+        elif self.serial_format == 'json':
+            self.serializer_json(data, fd)
+        else:
+            raise ValueError('serializer not supported')
+
+    def serializer_json(self, data, fd):
+        import json
+        json.dump(data, fd, indent=2, cls=ExtEncoder)
+
+    def serializer_yaml(self, data, fd):
+        import yaml
+        yaml.dump(data, fd)
+
+    def store_result_to(self, result, storage):
+        import numina.store
+
+        saveres = {}
+        saveres['values'] = {}
+        # FIXME: workaround for QC, this should be managed elsewhere
+        if hasattr(result, 'qc'):
+            saveres['qc'] = result.qc
+
+        saveres_v = saveres['values']
+        for key, prod in result.stored().items():
+            # FIXME: workaround for QC, this should be managed elsewhere
+            if key == 'qc':
+                continue
+            val = getattr(result, key)
+            storage.destination = "{}".format(prod.dest)
+            saveres_v[key] = numina.store.dump(prod.type, val, storage)
+
+        return saveres
 
     def store_task(self, task):
 
@@ -49,18 +89,17 @@ class DataManager(object):
             _logger.info('storing task and result')
 
             # save to disk the RecipeResult part and return the file to save it
-            result_repr = task.result.store_to(self.storage)
+            result_repr = self.store_result_to(task.result, self.storage)
 
             task_repr = task.__dict__.copy()
             # Change result structure by filename
-            task_repr['result'] = self.storage.result
+            task_repr['result'] = self.result_file
 
-            import json
-            with open(self.storage.result, 'w+') as fd:
-                json.dump(result_repr, fd, indent=2, cls=ExtEncoder)
+            with open(self.result_file, 'w+') as fd:
+                self.serializer(result_repr, fd)
 
             with open(self.storage.task, 'w+') as fd:
-                yaml.dump(task_repr, fd)
+                self.serializer(task_repr, fd)
 
         self.backend.update_task(task)
         self.backend.update_result(task, result_repr)

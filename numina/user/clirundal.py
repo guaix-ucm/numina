@@ -112,6 +112,9 @@ def mode_run_common_obs(args, extra_args):
         datamanager = DataManager(args.basedir, args.datadir, _backend)
         datamanager.workdir_tmpl = "obsid{obsid}_work"
         datamanager.resultdir_tmpl = "obsid{obsid}_results"
+        datamanager.serial_format = 'yaml'
+        datamanager.result_file = 'result.yaml'
+        datamanager.task_file = 'task.yaml'
 
     elif control_format == 2:
         _backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
