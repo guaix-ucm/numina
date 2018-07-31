@@ -84,7 +84,7 @@ def read_structured(data):
 
 def unserial(value):
     checkers = [(is_fits, read_fits), (is_json, read_json), (is_yaml, read_yaml)]
-    if isinstance(value, str):
+    if isinstance(value, six.string_types):
         for check_type, conv in checkers:
             if check_type(value):
                 return conv(value)
