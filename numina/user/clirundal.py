@@ -41,7 +41,9 @@ def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
 
 def process_format_version_2(loaded_obs, loaded_data, loaded_data_extra=None):
     drps = numina.drps.get_system_drps()
-    backend = Backend(drps, loaded_data, loaded_data_extra)
+    loaded_db = loaded_data['database']
+    backend = Backend(drps, loaded_db, loaded_data_extra)
+    backend.rootdir = loaded_data.get('rootdir', '')
     backend.add_obs(loaded_obs)
     return backend
 

@@ -154,12 +154,18 @@ class Backend(Dict2DAL):
 
         super(Backend, self).__init__(drps, obdict, base, extra_data)
 
+        self.db_tables['oblocks'] = self.ob_table
+        self.db_tables['requirements'] = self.req_table
+        # self.db_tables['obsi'] = self.ob_ids
+
     def dump_data(self):
-        state = super(Backend, self).dump_data()
+        state = {}
         state['version'] = 2
         state['rootdir'] = self.rootdir
+        database = {}
+        state['database'] = database
         for name, val in self.db_tables.items():
-            state[name] = val
+            database[name] = val
         return state
 
     @staticmethod
@@ -221,7 +227,7 @@ class Backend(Dict2DAL):
         result_reg = {
             'id': newix,
             'task_id': task.id,
-            'values': [],
+            # 'values': [],
             'qc': task.result.qc.name,
             'mode': task.request_runinfo['mode'],
             'instrument': task.request_runinfo['instrument'],
@@ -240,12 +246,12 @@ class Backend(Dict2DAL):
                 continue
 
             # This is the same contained in result_file
-            val = {}
-            val['name'] = prod.dest
+            # val = {}
+            # val['name'] = prod.dest
             # val['type'] = prod.type.name()
             # val['type_fqn'] = fully_qualified_name(prod.type)
-            val['content'] = serialized['values'][key]
-            result_reg['values'].append(val)
+            # val['content'] = serialized['values'][key]
+            # result_reg['values'].append(val)
 
             if prod.type.isproduct():
                 newprod = self.new_product_id()
