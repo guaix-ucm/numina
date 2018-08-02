@@ -141,6 +141,7 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 
 def periodic_corr1d(sp_reference, sp_offset,
                     fminmax=None,
+                    plottitle=None,
                     pdf=None,
                     debugplot=0):
     """Periodic correlation between two spectra, implemented using FFT.
@@ -155,6 +156,8 @@ def periodic_corr1d(sp_reference, sp_offset,
     fminmax : tuple of floats or None
         Minimum and maximum frequencies to be used. If None, no
         frequency filtering is employed.
+    plottitle : str
+        Optional plot title.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
     debugplot : int
@@ -213,9 +216,10 @@ def periodic_corr1d(sp_reference, sp_offset,
         sp_reference_filtmask = np.copy(sp_reference)
         sp_offset_filtmask = np.copy(sp_offset)
 
-    if abs(debugplot) % 10 != 0:
+    if (abs(debugplot) % 10 != 0) or (pdf is not None):
         xdum = np.arange(naxis1) + 1
         ax = ximplotxy(xdum, sp_reference_filtmask, show=False,
+                       title=plottitle,
                        label='reference spectrum')
         ax.plot(xdum, sp_offset_filtmask, label='offset spectrum')
         ax.legend()
@@ -256,14 +260,18 @@ def periodic_corr1d(sp_reference, sp_offset,
     offset = x_refined_peak - naxis1_half
     fpeak = y_refined_peak
 
-    if abs(debugplot) % 10 != 0:
-        title="periodic correlation (offset={0:6.2f} pixels)".format(offset)
+    if (abs(debugplot) % 10 != 0) or (pdf is not None):
         ax = ximplotxy(xcorr, corr,
                        xlabel='offset (pixels)',
                        ylabel='cross-correlation function',
-                       title=title,
+                       title=plottitle,
                        xlim=(-naxis1/2, naxis1/2), show=False)
         ax.axvline(offset, color='grey', linestyle='dashed')
+        coffset="(offset={0:6.2f} pixels)".format(offset)
+        ax.text(0, 1, coffset,
+                horizontalalignment='left',
+                verticalalignment='top',
+                transform=ax.transAxes)
         # inset plot
         inset_ax = inset_axes(
             ax,
