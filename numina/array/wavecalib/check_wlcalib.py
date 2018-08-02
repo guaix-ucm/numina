@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -146,7 +146,9 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      use_r=False,
                      title=None,
                      remove_null_borders=True,
+                     ylogscale=False,
                      geometry=None,
+                     pdf=None,
                      debugplot=0):
     """Check wavelength calibration of the provided spectrum.
 
@@ -197,8 +199,14 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         Plot title.
     remove_null_borders : bool
         If True, remove leading and trailing zeros in spectrum.
+    ylogscale : bool
+        If True, the spectrum is displayed in logarithmic units. Note
+        that this is only employed for display purposes. The line peaks
+        are found in the original spectrum.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
+    pdf : PdfFile object or None
+        If not None, output is sent to PDF file.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -232,6 +240,12 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             raise ValueError("ERROR: interative use of this function is not "
                              "possible when debugplot=", debugplot)
 
+   # interactive and pdf are incompatible
+    if interactive:
+        if pdf is not None:
+            raise ValueError("ERROR: interactive use of this function is not "
+                             "possible when pdf is not None")
+
     # display list of expected arc lines
     if abs(debugplot) in (21, 22):
         print('wv_master:', wv_master)
@@ -251,7 +265,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     polyres = np.polynomial.Polynomial([0])
     poldeg_effective = 0
     ysummary = summary(np.array([]))
-    local_ylogscale = False
+    local_ylogscale = ylogscale
 
     # find initial line peaks
     ixpeaks = find_peaks_spectrum(sp,
@@ -334,9 +348,12 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             print(">>> Polynomial fit to residuals.......:\n", polyres)
 
         # display results
-        if abs(debugplot) % 10 != 0:
+        if (abs(debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
-            fig = plt.figure()
+            if pdf is not None:
+                fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+            else:
+                fig = plt.figure()
             set_window_geometry(geometry)
 
             # residuals
@@ -416,9 +433,10 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             if local_ylogscale:
                 spectrum = sp - sp.min() + 1.0
                 spectrum = np.log10(spectrum)
+                ymin = spectrum[ixpeaks].min()
             else:
                 spectrum = sp.copy()
-            ymin = min(spectrum)
+                ymin = min(spectrum)
             ymax = max(spectrum)
             dy = ymax - ymin
             if dy > 0:
@@ -439,7 +457,10 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 lok = wv_verified_all_peaks > 0
                 ax1.plot(fxpeaks_wv[lok], spectrum[ixpeaks][lok], 'go',
                          label="valid line")
-            ax1.set_ylabel('Counts')
+            if local_ylogscale:
+                ax1.set_ylabel('~ log10(number of counts)')
+            else:
+                ax1.set_ylabel('number of counts')
             ax1.yaxis.label.set_size(10)
             ax1.xaxis.tick_top()
             ax1.xaxis.set_label_position('top')
@@ -461,7 +482,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     estimated_wv = fun_wv(fxpeaks[i] + 1,
                                           crpix1, crval1, cdelt1)
                     estimated_wv = str(round(estimated_wv, 4))
-                    ax1.text(fxpeaks_wv[i], 0,  # spmedian[ixpeaks[i]],
+                    ax1.text(fxpeaks_wv[i], ymin,  # spmedian[ixpeaks[i]],
                              estimated_wv, fontsize=8, color='grey',
                              rotation='vertical',
                              horizontalalignment='center',
@@ -472,15 +493,18 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                            colors='grey', linestyles='dotted',
                            label='missing lines')
             ax1.legend()
-            if debugplot in [-22, -12, 12, 22]:
-                pause_debugplot(
-                    debugplot=debugplot,
-                    optional_prompt='Zoom/Unzoom or ' +
-                                    'press RETURN to continue...',
-                    pltshow=True
-                )
+            if pdf is not None:
+                pdf.savefig()
             else:
-                pause_debugplot(debugplot=debugplot, pltshow=True)
+                if debugplot in [-22, -12, 12, 22]:
+                    pause_debugplot(
+                        debugplot=debugplot,
+                        optional_prompt='Zoom/Unzoom or ' +
+                                        'press RETURN to continue...',
+                        pltshow=True
+                    )
+                else:
+                    pause_debugplot(debugplot=debugplot, pltshow=True)
 
             # display results and request next action
             if interactive:
