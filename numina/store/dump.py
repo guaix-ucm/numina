@@ -43,7 +43,7 @@ def _(tag, obj, where):
     return [dump(tag, o, where) for o in obj]
 
 
-dump.register(numpy.ndarray, dump_numpy_array)
+dump.register(numpy.ndarray, lambda t, o, w: dump_numpy_array(o, w))
 
 
-dump.register(DataFrame, dump_dataframe)
+dump.register(DataFrame, lambda t,o,w: dump_dataframe(o, w))
