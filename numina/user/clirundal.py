@@ -24,6 +24,7 @@ from numina.dal.backend import Backend
 from numina.util.context import working_directory
 from numina.util.fqn import fully_qualified_name
 
+from .baserun import run_recipe
 from .helpers import DataManager
 
 
@@ -144,6 +145,7 @@ def mode_run_common_obs(args, extra_args):
         request_params["instrument_configuration"] = args.insconf
 
         logger_control = dict(
+            default=DEFAULT_RECIPE_LOGGER,
             logfile='processing.log',
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             enabled=True
@@ -229,56 +231,6 @@ def mode_run_common_obs(args, extra_args):
         _logger.debug('dump control status')
         with open('control_dump.yaml', 'w') as fp:
             datamanager.backend.dump(fp)
-
-
-def create_recipe_file_logger(logger, logfile, logformat):
-    """Redirect Recipe log messages to a file."""
-    recipe_formatter = logging.Formatter(logformat)
-    fh = logging.FileHandler(logfile, mode='w')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(recipe_formatter)
-    return fh
-
-
-def run_recipe(recipe, task, rinput, workenv, logger_control):
-    """Recipe execution mode of numina."""
-
-    # Creating custom logger file
-    recipe_logger = logging.getLogger(DEFAULT_RECIPE_LOGGER)
-
-    if logger_control['enabled']:
-        logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
-        logformat = logger_control['format']
-        _logger.debug('creating file logger %r from Recipe logger', logfile)
-        fh = create_recipe_file_logger(recipe_logger, logfile, logformat)
-    else:
-        fh = logging.NullHandler()
-
-    recipe_logger.addHandler(fh)
-
-    with working_directory(workenv.workdir):
-        try:
-            completed_task = run_recipe_timed(recipe, rinput, task)
-            return completed_task
-        finally:
-            recipe_logger.removeHandler(fh)
-
-
-def run_recipe_timed(recipe, rinput, task):
-    """Run the recipe and count the time it takes."""
-    _logger.info('running recipe')
-    now1 = datetime.datetime.now()
-    task.state = 1
-    task.time_start = now1
-    #
-    result = recipe(rinput)
-    _logger.info('result: %r', result)
-    task.result = result
-    #
-    now2 = datetime.datetime.now()
-    task.state = 2
-    task.time_end = now2
-    return task
 
 
 def parse_as_yaml(strdict):

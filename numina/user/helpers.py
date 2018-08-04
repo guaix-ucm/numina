@@ -21,8 +21,9 @@ import pickle
 import six
 import yaml
 
+import numina.drps
+from numina.dal.backend import Backend
 from numina.util.jsonencoder import ExtEncoder
-import numina.util.objimport as objimp
 from numina.types.frame import DataFrameType
 from numina.util.context import working_directory
 
@@ -44,6 +45,25 @@ class DataManager(object):
         self.task_file = 'task.json'
 
         self.storage = DiskStorageBase()
+
+    def insert_obs(self, loaded_obs):
+        self.backend.add_obs(loaded_obs)
+
+    def load_observations(self, obfile):
+
+        loaded_obs = []
+        with open(obfile) as fd:
+            sess = []
+            for doc in yaml.load_all(fd):
+                enabled = doc.get('enabled', True)
+                docid = doc['id']
+                requirements = doc.get('requirements', {})
+                sess.append(
+                    dict(id=docid, enabled=enabled,
+                         requirements=requirements)
+                )
+                loaded_obs.append(doc)
+        self.insert_obs(loaded_obs)
 
     def serializer(self, data, fd):
         if self.serial_format == 'yaml':
@@ -400,3 +420,44 @@ class DiskStorageDefault(object):
         with working_directory(self.resultsdir):
             _logger.info('storing result')
             return completed_task.store(self)
+
+
+def init_datastore_file(controlfile):
+
+    _logger.info('reading control from %s', controlfile)
+    with open(controlfile, 'r') as fd:
+        loaded_data = yaml.load(fd)
+
+    control_format = loaded_data.get('version', 1)
+    _logger.info('control format version %d', control_format)
+
+    if control_format == 2:
+        drps = numina.drps.get_system_drps()
+        loaded_db = loaded_data['database']
+        backend = Backend(drps, loaded_db, {})
+        backend.rootdir = loaded_data.get('rootdir', '')
+        datadir = 'data'
+        basedir = 'some'
+
+        datamanager = DataManager(basedir, datadir, backend)
+        return datamanager
+    else:
+        raise ValueError
+
+
+def load_observations(obfile):
+
+    loaded_obs = []
+    with open(obfile) as fd:
+        sess = []
+        for doc in yaml.load_all(fd):
+            enabled = doc.get('enabled', True)
+            docid = doc['id']
+            requirements = doc.get('requirements', {})
+            sess.append(
+                dict(id=docid, enabled=enabled,
+                                 requirements=requirements)
+            )
+            loaded_obs.append(doc)
+
+    return loaded_obs

@@ -50,7 +50,7 @@ def backend():
             'oblock_id': 5,
             'task_id': 1,
             'time_create': '2018-07-24T19:12:01',
-            'directory': 'dum1',
+            'result_dir': 'dum1',
             'qc': 'GOOD',
             'values': [
                 {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
@@ -68,8 +68,8 @@ def backend():
             'task_id': 2,
             'qc': 'BAD',
             'time_create': '2018-07-24T19:12:09',
-            'directory': 'dum2',
-            'result_file': 'result.json',
+            'result_file': 'dum2/result.json',
+            'result_dir': 'dum2',
             'values': [],
         },
         3: {'id': 3,
@@ -79,7 +79,7 @@ def backend():
             'task_id': 3,
             'time_create': '2018-07-24T19:12:11',
             'qc': 'GOOD',
-            'directory': 'dum3',
+            'result_dir': 'dum3',
             'values': [
                 {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
                  'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
@@ -163,14 +163,43 @@ def test_search_result_id_notfound(backend):
 
 
 def test_build_recipe_result(backend, tmpdir):
+    import numina.store
+    import astropy.io.fits as fits
+    import json
     from numina.types.dataframe import DataFrame
     from numina.types.structured import BaseStructuredCalibration, writeto
     from numina.util.context import working_directory
 
-    p = tmpdir.join("calib.json")
+    resd = {}
+    resd['qc'] = 'BAD'
+    saveres = {}
+    resd['values'] = saveres
+    obj = BaseStructuredCalibration()
+    obj.quality_control = qc.QC.BAD
 
-    bs = BaseStructuredCalibration()
-    writeto(bs, str(p))
+    resdir = tmpdir.mkdir('dum1')
+
+    class ResultR(object):
+        pass
+
+    class Storage(object):
+        pass
+
+    storage = Storage()
+
+    res = ResultR()
+    res.calib = obj
+    res.reduced_rss = DataFrame(frame=fits.HDUList([fits.PrimaryHDU()]))
+    res.reduced_image = DataFrame(frame=fits.HDUList([fits.PrimaryHDU()]))
+
+    with working_directory(str(resdir)):
+        for key in ['calib', 'reduced_image', 'reduced_rss']:
+            obj = getattr(res, key)
+            storage.destination = key
+            saveres[key] = numina.store.dump(obj, obj, storage)
+
+        p = resdir.join("result.json")
+        p.write(json.dumps(resd))
 
     with working_directory(str(tmpdir)):
         res = backend.build_recipe_result(result_id=1)
@@ -201,16 +230,18 @@ def test_build_recipe_result2(backend, tmpdir):
     obj.quality_control = qc.QC.BAD
     obj_uuid = obj.uuid
 
+    resdir = tmpdir.mkdir('dum2')
+
     class Storage(object):
         pass
 
     storage = Storage()
     storage.destination = 'calib'
 
-    with working_directory(str(tmpdir)):
+    with working_directory(str(resdir)):
         saveres['calib'] = numina.store.dump(obj, obj, storage)
 
-        p = tmpdir.join("result.json")
+        p = resdir.join("result.json")
         p.write(json.dumps(resd))
 
     with working_directory(str(tmpdir)):

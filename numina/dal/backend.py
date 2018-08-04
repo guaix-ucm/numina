@@ -23,6 +23,7 @@ import numina.store.gtc.load as gtcload
 from numina.exceptions import NoResultFound
 from numina.util.fqn import fully_qualified_name
 from numina.util.objimport import import_object
+from numina.util.context import working_directory
 from numina.types.qc import QC
 
 from .dictdal import Dict2DAL
@@ -43,7 +44,8 @@ def is_fits(filename, **kwargs):
 
 def read_fits(filename):
     import numina.types.dataframe as df
-    return df.DataFrame(filename=filename)
+    import astropy.io.fits as fits
+    return df.DataFrame(frame=fits.open(filename))
 
 
 def is_json(filename, **kwargs):
@@ -236,6 +238,7 @@ class Backend(Dict2DAL):
             'recipe_class': task.request_runinfo['recipe_class'],
             'recipe_fqn': task.request_runinfo['recipe_fqn'],
             'oblock_id': task.request_params['oblock_id'],
+            'result_dir': res_dir,
             'result_file': os.path.join(res_dir, filename)
         }
         self.db_tables['results'][newix] = result_reg
@@ -404,7 +407,7 @@ class Backend(Dict2DAL):
             s_can = sorted(candidates, key=operator.itemgetter('time_create'), reverse=True)
             if s_can:
                 result_reg = s_can[0]
-                directory = result_reg['directory']
+                directory = result_reg.get('result_dir', '')
                 field_files = result_reg['values']
                 for field_entry in field_files:
                     if field_entry['name'] == field:
@@ -555,12 +558,16 @@ class Backend(Dict2DAL):
 
     def build_recipe_result(self, result_id):
         result_reg = self.db_tables['results'][result_id]
-        return StoredResult.load_data(result_reg)
+        result_dir = result_reg.get('result_dir', '')
+        with working_directory(result_dir):
+            return StoredResult.load_data(result_reg)
 
     def build_recipe_result2(self, result_id):
         result_reg = self.db_tables['results'][result_id]
         result_file = result_reg['result_file']
+        result_dir = result_reg.get('result_dir', '')
         with open(result_file) as fd:
             import json
             data = json.load(fd)
-            return StoredResult.load_data(data)
+            with working_directory(result_dir):
+                return StoredResult.load_data(data)
