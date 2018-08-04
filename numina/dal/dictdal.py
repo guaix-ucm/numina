@@ -143,9 +143,9 @@ class BaseDictDAL(AbsDrpDAL):
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
         _logger.debug("obsres_from_oblock_id id='%s', mode='%s' START", obsid, obsres.mode)
-        this_drp = self.drps.query_by_name(obsres.instrument)
-
-        if this_drp is None:
+        try:
+            this_drp = self.drps.query_by_name(obsres.instrument)
+        except KeyError:
             raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
 
         # Reserved names

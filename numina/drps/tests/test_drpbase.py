@@ -8,7 +8,9 @@ from ..drpbase import DrpBase
 def test_drpbase():
     drpbase = DrpBase()
 
-    assert drpbase.query_by_name('TEST1') is None
+    with pytest.raises(KeyError):
+        drpbase.query_by_name('TEST1')
+
     assert drpbase.query_all() == {}
 
 
