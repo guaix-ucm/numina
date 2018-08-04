@@ -57,6 +57,8 @@ def show_instruments(args, extra_args):
 
 def print_instrument(instrument, modes=True):
     print('Instrument:', instrument.name)
+    msg = " version is '{}'".format(instrument.version)
+    print(msg)
     for ic, conf in instrument.configurations.items():
         if ic == 'default':
             # skip default configuration

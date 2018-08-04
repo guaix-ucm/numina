@@ -193,7 +193,7 @@ class InstrumentDRP(object):
        pipeline : dict of Pipeline
 
     """
-    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None):
+    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None, version='undefined'):
         self.name = name
         self.configurations = configurations
         self.modes = modes
@@ -202,6 +202,7 @@ class InstrumentDRP(object):
             self.datamodel = datamodel()
         else:
             self.datamodel = numina.datamodel.DataModel()
+        self.version = version
 
     def query_provides(self, product, pipeline='default', search=False):
         """Return the mode that provides a given product"""
