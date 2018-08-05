@@ -15,7 +15,7 @@ import pytest
 import numina.exceptions
 from ..datatype import DataType
 from ..multitype import MultiType
-
+from ..structured import BaseStructuredCalibration
 
 class AVal(object):
     pass
@@ -47,6 +47,51 @@ class TypeB(DataType):
 
     def tag_names(self):
         return ['domeB']
+
+
+class Structured1(BaseStructuredCalibration):
+    def __init__(self):
+        super(Structured1, self).__init__()
+        self.struct1 = 1
+
+    def __getstate__(self):
+        state = super(Structured1, self).__getstate__()
+        state['struct1'] = self.struct1
+        return state
+
+    def __setstate__(self, state):
+        super(Structured1, self).__setstate__(state)
+        self.struct1 = state['struct1']
+
+
+class Structured2(BaseStructuredCalibration):
+    def __init__(self):
+        super(Structured2, self).__init__()
+        self.struct2 = 2
+
+    def __getstate__(self):
+        state = super(Structured2, self).__getstate__()
+        state['struct2'] = self.struct2
+        return state
+
+    def __setstate__(self, state):
+        super(Structured2, self).__setstate__(state)
+        self.struct2 = state['struct2']
+
+
+class Structured3(BaseStructuredCalibration):
+    def __init__(self):
+        super(Structured3, self).__init__()
+        self.struct3 = 3
+
+    def __getstate__(self):
+        state = super(Structured3, self).__getstate__()
+        state['struct3'] = self.struct3
+        return state
+
+    def __setstate__(self, state):
+        super(Structured3, self).__setstate__(state)
+        self.struct3 = state['struct3']
 
 
 def test_convert_in():
@@ -125,3 +170,47 @@ def test_internal_default_optional():
     req = dh.Requirement(multi, description="Some", optional=True)
 
     assert req.default_value() is None
+
+
+def test_load_multitype(tmpdir):
+    import numina.store
+    import os
+    import numina.util.context as cntx
+
+    multi = MultiType(Structured1, Structured2)
+
+    prefix1 = 'some1'
+    prefix2 = 'some2'
+    prefix3 = 'some3'
+
+    filename1 = prefix1 + '.json'
+    filename2 = prefix2 + '.json'
+    filename3 = prefix3 + '.json'
+
+    class A(object):
+        pass
+
+    a = A()
+
+    obj1 = Structured1()
+    obj2 = Structured2()
+    obj3 = Structured3()
+
+    with cntx.working_directory(str(tmpdir)):
+        a.destination = prefix1
+        numina.store.dump(obj1, obj1, a)
+        a.destination = prefix2
+        numina.store.dump(obj2, obj2, a)
+        a.destination = prefix3
+        numina.store.dump(obj3, obj3, a)
+
+    with cntx.working_directory(str(tmpdir)):
+
+        recover = numina.store.load(multi, filename1)
+        assert isinstance(recover, Structured1)
+
+        recover = numina.store.load(multi, filename2)
+        assert isinstance(recover, Structured2)
+
+        with pytest.raises(TypeError):
+            numina.store.load(multi, filename3)

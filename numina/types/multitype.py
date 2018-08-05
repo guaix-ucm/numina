@@ -90,3 +90,14 @@ class MultiType(object):
             field = "or {}".format(x.descriptive_name())
             build_str.append(field)
         return " ".join(build_str)
+
+    def _datatype_load(self, obj):
+        faillures = []
+        for subtype in self.type_options:
+            try:
+                return subtype._datatype_load(obj)
+            except KeyError:
+                faillures.append(subtype)
+        else:
+            msg = "types {} cannot load 'obj'".format(faillures)
+            raise TypeError(msg)
