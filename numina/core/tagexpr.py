@@ -33,13 +33,12 @@ Where & represents AND, | represents OR and ~ represents NOT
 
 """
 
+import operator
 
 try:
-    from sets import Set as set
+    from functools import reduce
 except ImportError:
     pass
-
-import operator
 
 
 def map_tree(visitor, tree):
@@ -64,7 +63,7 @@ class Expression(object):
     def __init__(self, *args):
 
         self.nodes = []
-
+        self.metadata = {}
         for arg in args:
             if isinstance(arg, Expression):
                 self.nodes.append(arg)
@@ -80,6 +79,9 @@ class Expression(object):
 
     def fields(self):
         return self._fields
+
+    def tags(self):
+        return self._places
 
     def places(self):
         return self._places
@@ -143,6 +145,8 @@ class Expression(object):
 
         return map_tree(change_p_node_tags, self)
 
+    fill_tags = fill_placeholders
+
     def clone(self, children):
         raise NotImplementedError
 
@@ -157,8 +161,9 @@ class AtomicExpr(Expression):
 
 class TagRepr(AtomicExpr):
     "A representation of a Tag"
-    def __init__(self, name):
+    def __init__(self, name, metadata=None):
         super(TagRepr, self).__init__(name, name)
+        self.metadata = metadata or {}
         self._fields.add(name)
 
     def clone(self, nodes):
@@ -188,6 +193,10 @@ class ConstExpr(AtomicExpr):
 
     def __repr__(self):
         return "ConstExpr(%s)" % self.value
+
+
+ConstExprTrue = ConstExpr(True)
+ConstExprFalse = ConstExpr(False)
 
 
 class CompoundExpr(Expression):
@@ -276,11 +285,28 @@ class ConstraintAdapter(object):
 
 
 def condition_terminal(tree):
-    term = all(node.is_terminal() for node in tree.nodes)
-    return not term
+    if tree.nodes:
+        term = all(node.is_terminal() for node in tree.nodes)
+        return not term
+    else:
+        return True
 
 
 def adapter(tree):
-    if all(node.is_terminal() for node in tree.nodes):
+    if tree.nodes and all(node.is_terminal() for node in tree.nodes):
         return ConstraintAdapter(tree.lhs.name, tree.rhs.value, tree.operator)
-    return tree
+
+
+def query_expr_from_attr(attrs):
+    # Create a query descriptor from a sequence for fields
+    if len(attrs) == 0:
+        return ConstExprTrue
+    exprs = []
+    #for name, dtype in descs:
+    for attr in attrs:
+        metadata = {'type': attr.type, 'description': attr.description}
+        lhs = TagRepr(attr.name, metadata=metadata)
+        rhs = Placeholder(attr.name)
+        expr = (lhs == rhs)
+        exprs.append(expr)
+    return reduce(operator.and_, exprs)

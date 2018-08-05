@@ -117,9 +117,9 @@ def setup_package():
         version=__version__,
         author='Sergio Pascual',
         author_email='sergiopr@fis.ucm.es',
-        url='http://guaix.fis.ucm.es/projects/numina',
+        url='https://github.com/guaix-ucm/numina',
         license='GPLv3',
-        description='Numina reduction package',
+        description='Astronomy data reduction library',
         packages=find_packages('.'),
         package_data={
             'numina.drps.tests': [
@@ -136,7 +136,9 @@ def setup_package():
         entry_points={
             'console_scripts': [
                 'numina = numina.user.cli:main',
+                'numina-apply_integer_offsets = numina.array.wavecalib.apply_integer_offsets:main',
                 'numina-bpm = numina.array.bpm:main',
+                'numina-check_wlcalib = numina.array.wavecalib.check_wlcalib:main',
                 'numina-imath = numina.tools.imath:main',
                 'numina-wavecalib = numina.array.wavecalib.__main__:main',
                 'numina-ximshow = numina.array.display.ximshow:main',
@@ -148,8 +150,8 @@ def setup_package():
         install_requires=[
             'setuptools',
             'six>=1.7',
-            'numpy>=1.7',
-            'astropy>=1.3',
+            'numpy',
+            'astropy>=2',
             'scipy', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',
@@ -158,6 +160,7 @@ def setup_package():
         zip_safe=False,
         classifiers=[
             "Programming Language :: C",
+            "Programming Language :: C++",
             "Programming Language :: Cython",
             "Programming Language :: Python :: 2.7",
             "Programming Language :: Python :: 3.4",
@@ -165,11 +168,12 @@ def setup_package():
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: Implementation :: CPython",
             'Development Status :: 3 - Alpha',
-            "Environment :: Other Environment",
+            "Environment :: Console",
             "Intended Audience :: Science/Research",
             "License :: OSI Approved :: GNU General Public License (GPL)",
             "Operating System :: OS Independent",
             "Topic :: Scientific/Engineering :: Astronomy",
+            "Topic :: Software Development:: Libraries:: Application Frameworks",
             ],
         long_description=open('README.rst').read()
         )

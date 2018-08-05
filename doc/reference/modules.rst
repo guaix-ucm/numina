@@ -11,7 +11,6 @@ Numina modules
    datamodel
    drps
    exceptions
-   flow
    frame
    logger
    modeling

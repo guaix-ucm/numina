@@ -60,6 +60,7 @@ def test_skip_reserved(hybriddal):
 def test_parent_inserted(hybriddal):
 
     obsres = hybriddal.search_oblock_from_id(2)
+    print('OBSR', obsres.__dict__)
     assert obsres.parent == 30
 
     obsres = hybriddal.search_oblock_from_id(4)

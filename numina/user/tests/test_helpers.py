@@ -1,6 +1,8 @@
 
 import os.path
 
+import six
+
 from ..helpers import WorkEnvironment
 
 
@@ -16,9 +18,14 @@ def test_work1(tmpdir):
     assert work.workdir == os.path.join(basedir, "obsid%d_work" % obsid)
     assert work.basedir == basedir
     assert work.resultsdir == os.path.join(basedir, "obsid%d_results" % obsid)
-    assert  work.index_file == os.path.join(work.workdir, 'index.pkl')
+    if six.PY2:
+        index_base = "index-2.pkl"
+    else:
+        index_base = "index.pkl"
+    assert work.index_file == os.path.join(work.workdir, index_base)
 
     assert os.path.isdir(work.workdir)
     assert os.path.isdir(work.resultsdir)
     assert os.path.isdir(work.basedir)
     assert os.path.isfile(work.index_file)
+

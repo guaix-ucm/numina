@@ -20,9 +20,12 @@ from numina import __version__
 import numina.drps
 import numina.exceptions
 from numina.dal.dictdal import HybridDAL
+from numina.dal.backend import Backend
 from numina.util.context import working_directory
+from numina.util.fqn import fully_qualified_name
 
-from .helpers import ProcessingTask, WorkEnvironment, DiskStorageDefault
+from .baserun import run_recipe
+from .helpers import DataManager
 
 
 DEFAULT_RECIPE_LOGGER = 'numina.recipes'
@@ -32,7 +35,18 @@ _logger = logging.getLogger("numina")
 
 def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
     drps = numina.drps.get_system_drps()
-    return HybridDAL(drps, loaded_obs, loaded_data, loaded_data_extra)
+    backend = HybridDAL(drps, [], loaded_data, loaded_data_extra)
+    backend.add_obs(loaded_obs)
+    return backend
+
+
+def process_format_version_2(loaded_obs, loaded_data, loaded_data_extra=None):
+    drps = numina.drps.get_system_drps()
+    loaded_db = loaded_data['database']
+    backend = Backend(drps, loaded_db, loaded_data_extra)
+    backend.rootdir = loaded_data.get('rootdir', '')
+    backend.add_obs(loaded_obs)
+    return backend
 
 
 def mode_run_common(args, extra_args, mode):
@@ -51,19 +65,34 @@ def mode_run_common_obs(args, extra_args):
 
     # Loading observation result if exists
     loaded_obs = []
-    for obfile in args.obsresult:
-        _logger.info("Loading observation results from %r", obfile)
+    sessions = []
+    if args.session:
+        for obfile in args.obsresult:
+            _logger.info("session file from %r", obfile)
 
-        with open(obfile) as fd:
-            for doc in yaml.load_all(fd):
-                enabled = doc.get('enabled', True)
-                docid = doc['id']
-                if enabled:
-                    _logger.debug("load observation result with id %s", docid)
-                else:
-                    _logger.debug("skip observation result with id %s", docid)
+            with open(obfile) as fd:
+                sess = yaml.load(fd)
+                sessions.append(sess['session'])
+    else:
+        for obfile in args.obsresult:
+            _logger.info("Loading observation results from %r", obfile)
+
+            with open(obfile) as fd:
+                sess = []
+                for doc in yaml.load_all(fd):
+                    enabled = doc.get('enabled', True)
+                    docid = doc['id']
+                    requirements = doc.get('requirements', {})
+                    sess.append(dict(id=docid, enabled=enabled,
+                                               requirements=requirements))
+                    if enabled:
+                        _logger.debug("load observation result with id %s", docid)
+                    else:
+                        _logger.debug("skip observation result with id %s", docid)
                 
-                loaded_obs.append(doc)
+                    loaded_obs.append(doc)
+
+            sessions.append(sess)
     if args.reqs:
         _logger.info('reading control from %s', args.reqs)
         with open(args.reqs, 'r') as fd:
@@ -78,39 +107,73 @@ def mode_run_common_obs(args, extra_args):
     else:
         loaded_data_extra = None
 
-    control_format = loaded_data.get('version', 0)
+    control_format = loaded_data.get('version', 1)
     _logger.info('control format version %d', control_format)
 
-    # FIXME: DAL and WorkEnvironment
-    # DAL and WorkEnvironment
-    # must share its information
-    #
     if control_format == 1:
-        dal = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
+        _backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
+        datamanager = DataManager(args.basedir, args.datadir, _backend)
+        datamanager.workdir_tmpl = "obsid{obsid}_work"
+        datamanager.resultdir_tmpl = "obsid{obsid}_results"
+        datamanager.serial_format = 'yaml'
+        datamanager.result_file = 'result.yaml'
+        datamanager.task_file = 'task.yaml'
+
+    elif control_format == 2:
+        _backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
+        datamanager = DataManager(args.basedir, args.datadir, _backend)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)
         sys.exit(1)
 
     # Start processing
-    for obid in dal.search_session_ids():
+    jobs = []
+    for session in sessions:
+        for job in session:
+            if job['enabled']:
+                jobs.append(job)
+
+    for job in jobs:
         # Directories with relevant data
+        request = 'reduce'
+        request_params = {}
+
+        obid = job['id']
+
+        request_params['oblock_id'] = obid
+        request_params["pipeline"] = args.pipe_name
+        request_params["instrument_configuration"] = args.insconf
+
+        logger_control = dict(
+            default=DEFAULT_RECIPE_LOGGER,
+            logfile='processing.log',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            enabled=True
+            )
+        request_params['logger_control'] = logger_control
+
+        task = datamanager.backend.new_task(request, request_params)
+        task.request = request
+        task.request_params = request_params
+
+        task.request_runinfo['runner'] = 'numina'
+        task.request_runinfo['runner_version'] = __version__
+
         _logger.info("procesing OB with id={}".format(obid))
-        workenv = WorkEnvironment(obid,
-                                  args.basedir,
-                                  workdir=args.workdir,
-                                  resultsdir=args.resultsdir,
-                                  datadir=args.datadir
-                                  )
+        workenv = datamanager.create_workenv(task)
+
+        task.request_runinfo["results_dir"] = workenv.resultsdir_rel
+        task.request_runinfo["work_dir"] = workenv.workdir_rel
 
         # Roll back to cwd after leaving the context
         with working_directory(workenv.datadir):
 
-            obsres = dal.obsres_from_oblock_id(obid, configuration=args.insconf)
+            obsres = datamanager.backend.obsres_from_oblock_id(obid, configuration=args.insconf)
 
             _logger.debug("pipeline from CLI is %r", args.pipe_name)
             pipe_name = args.pipe_name
             obsres.pipeline = pipe_name
-            recipe = dal.search_recipe_from_ob(obsres)
+            recipe = datamanager.backend.search_recipe_from_ob(obsres)
             _logger.debug('recipe class is %s', recipe.__class__)
 
             # Enable intermediate results by default
@@ -120,8 +183,8 @@ def mode_run_common_obs(args, extra_args):
             # Update runinfo
             _logger.debug('update recipe runinfo')
             recipe.runinfo['runner'] = 'numina'
-            recipe.runinfo['runner_version'] = '1'
-            recipe.runinfo['taskid'] = obid
+            recipe.runinfo['runner_version'] = __version__
+            recipe.runinfo['task_id'] = task.id
             recipe.runinfo['data_dir'] = workenv.datadir
             recipe.runinfo['work_dir'] = workenv.workdir
             recipe.runinfo['results_dir'] = workenv.resultsdir
@@ -129,7 +192,7 @@ def mode_run_common_obs(args, extra_args):
             _logger.debug('recipe created')
 
             try:
-                rinput = recipe.build_recipe_input(obsres, dal)
+                rinput = recipe.build_recipe_input(obsres, datamanager.backend)
             except (ValueError, numina.exceptions.ValidationError) as err:
                 _logger.error("During recipe input construction")
                 _logger.error("%s", err)
@@ -144,30 +207,12 @@ def mode_run_common_obs(args, extra_args):
             for req in recipe.products().values():
                 _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
 
-        # Logging and task control
-        logger_control = dict(
-            logfile='processing.log',
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            enabled=True
-            )
-
         # Load recipe control and recipe parameters from file
-        task_control = dict(requirements={}, products={}, logger=logger_control)
-
-        # Build the recipe input data structure
-        # and copy needed files to workdir
-        runinfo = {
-            'taskid': obid,
-            'pipeline': pipe_name,
-            'recipeclass': recipe.__class__,
-            'workenv': workenv,
-            'recipe_version': recipe.__version__,
-            'runner': 'numina',
-            'runner_version': __version__,
-            'instrument_configuration': args.insconf
-        }
-
-        task = ProcessingTask(obsres, runinfo)
+        task.request_runinfo['instrument'] =  obsres.instrument
+        task.request_runinfo['mode'] = obsres.mode
+        task.request_runinfo['recipe_class'] =  recipe.__class__.__name__
+        task.request_runinfo['recipe_fqn'] = fully_qualified_name(recipe.__class__)
+        task.request_runinfo['recipe_version'] =  recipe.__version__
 
         # Copy files
         if args.copy_files:
@@ -178,63 +223,14 @@ def mode_run_common_obs(args, extra_args):
             workenv.adapt_obsres(obsres)
 
         completed_task = run_recipe(recipe=recipe, task=task, rinput=rinput,
-                                    workenv=workenv, task_control=task_control)
+                                    workenv=workenv, logger_control=logger_control)
 
-        where = DiskStorageDefault(resultsdir=workenv.resultsdir)
+        datamanager.store_task(completed_task)
 
-        where.store(completed_task)
-
-
-def create_recipe_file_logger(logger, logfile, logformat):
-    """Redirect Recipe log messages to a file."""
-    recipe_formatter = logging.Formatter(logformat)
-    fh = logging.FileHandler(logfile, mode='w')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(recipe_formatter)
-    return fh
-
-
-def run_recipe(recipe, task, rinput, workenv, task_control):
-    """Recipe execution mode of numina."""
-
-    # Creating custom logger file
-    recipe_logger = logging.getLogger(DEFAULT_RECIPE_LOGGER)
-
-    logger_control = task_control['logger']
-    if logger_control['enabled']:
-        logfile = os.path.join(workenv.resultsdir, logger_control['logfile'])
-        logformat = logger_control['format']
-        _logger.debug('creating file logger %r from Recipe logger', logfile)
-        fh = create_recipe_file_logger(recipe_logger, logfile, logformat)
-    else:
-        fh = logging.NullHandler()
-
-    recipe_logger.addHandler(fh)
-
-    with working_directory(workenv.workdir):
-        try:
-            completed_task = run_recipe_timed(recipe, rinput, task)
-            return completed_task
-        finally:
-            recipe_logger.removeHandler(fh)
-
-
-def run_recipe_timed(recipe, rinput, task):
-    """Run the recipe and count the time it takes."""
-    TIMEFMT = '%FT%T'
-    _logger.info('running recipe')
-    now1 = datetime.datetime.now()
-    task.runinfo['time_start'] = now1.strftime(TIMEFMT)
-    #
-
-    result = recipe(rinput)
-    _logger.info('result: %r', result)
-    task.result = result
-    #
-    now2 = datetime.datetime.now()
-    task.runinfo['time_end'] = now2.strftime(TIMEFMT)
-    task.runinfo['time_running'] = now2 - now1
-    return task
+    if args.dump_control:
+        _logger.debug('dump control status')
+        with open('control_dump.yaml', 'w') as fp:
+            datamanager.backend.dump(fp)
 
 
 def parse_as_yaml(strdict):

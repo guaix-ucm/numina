@@ -25,6 +25,7 @@ from .arccalibration import refine_arccalibration
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplotxy import ximplotxy
 from ..stats import robust_std
+from ...tools.arg_file_is_new import arg_file_is_new
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
@@ -110,6 +111,59 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
     return sp
 
 
+def read_wv_master_from_array(master_table, lines='brightest', debugplot=0):
+    """read arc line wavelengths from numpy array
+
+    Parameters
+    ----------
+    master_table : Numpy array
+        Numpy array containing the wavelength database.
+    lines : string
+        Indicates which lines to read. For files with a single column
+        or two columns this parameter is irrelevant. For files with
+        three columns, lines='brightest' indicates that only the
+        brightest lines are read, whereas lines='all' means that all
+        the lines are considered.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
+
+    Returns
+    -------
+    wv_master : 1d numpy array
+        Array with arc line wavelengths.
+
+    """
+
+    # protection
+    if lines not in ['brightest', 'all']:
+        raise ValueError('Unexpected lines=' + str(lines))
+
+    # determine wavelengths according to the number of columns
+    if master_table.ndim == 1:
+        wv_master = master_table
+    else:
+        wv_master_all = master_table[:, 0]
+        if master_table.shape[1] == 2:  # assume old format
+            wv_master = np.copy(wv_master_all)
+        elif master_table.shape[1] == 3:  # assume new format
+            if lines == 'brightest':
+                wv_flag = master_table[:, 1]
+                wv_master = wv_master_all[np.where(wv_flag == 1)]
+            else:
+                wv_master = np.copy(wv_master_all)
+        else:
+            raise ValueError('Lines_catalog file does not have the '
+                             'expected number of columns')
+
+    if abs(debugplot) >= 10:
+        print("Reading master table from numpy array")
+        print("wv_master:\n", wv_master)
+
+    return wv_master
+
+
 def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     """read arc line wavelengths from external file.
 
@@ -142,22 +196,7 @@ def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     # read table from txt file
     master_table = np.genfromtxt(wv_master_file)
 
-    # determine wavelengths according to the number of columns
-    if master_table.ndim == 1:
-        wv_master = master_table
-    else:
-        wv_master_all = master_table[:, 0]
-        if master_table.shape[1] == 2:  # assume old format
-            wv_master = np.copy(wv_master_all)
-        elif master_table.shape[1] == 3:  # assume new format
-            if lines == 'brightest':
-                wv_flag = master_table[:, 1]
-                wv_master = wv_master_all[np.where(wv_flag == 1)]
-            else:
-                wv_master = np.copy(wv_master_all)
-        else:
-            raise ValueError('Lines_catalog file does not have the '
-                             'expected number of columns')
+    wv_master = read_wv_master_from_array(master_table, lines)
 
     if abs(debugplot) >= 10:
         print("Reading master table: " + wv_master_file)
@@ -342,6 +381,7 @@ def find_fxpeaks(sp,
 
 def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
                    wv_ini_search=None, wv_end_search=None,
+                   wvmin_useful=None, wvmax_useful=None,
                    geometry=None, debugplot=0):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
@@ -357,10 +397,14 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         Degree for wavelength calibration polynomial.
     wv_master : 1d numpy array
         Array with arc line wavelengths.
-    wv_ini_search : float
-        Minimum valid wavelength.
-    wv_end_search : float
-        Maximum valid wavelength.
+    wv_ini_search : float or None
+        Minimum expected wavelength in spectrum.
+    wv_end_search : float or None
+        Maximum expected wavelength in spectrum.
+    wvmin_useful : float or None
+        If not None, this value is used to clip detected lines below it.
+    wvmax_useful : float or None
+        If not None, this value is used to clip detected lines above it.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
     debugplot : int
@@ -401,6 +445,8 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         crpix1=1.0,
         wv_ini_search=wv_ini_search,
         wv_end_search=wv_end_search,
+        wvmin_useful=wvmin_useful,
+        wvmax_useful=wvmax_useful,
         error_xpos_arc=3,
         times_sigma_r=3.0,
         frac_triplets_for_sum=0.50,
@@ -455,7 +501,7 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='wavecalib')
+    parser = argparse.ArgumentParser()
     # required parameters
     parser.add_argument("fitsfile",
                         help="FITS image containing the spectra",
@@ -472,6 +518,12 @@ def main(args=None):
                         type=float)
     parser.add_argument("--wvmax",
                         help="Maximum expected wavelength",
+                        type=float)
+    parser.add_argument("--wvmin_useful",
+                        help="Minimum useful wavelength",
+                        type=float)
+    parser.add_argument("--wvmax_useful",
+                        help="Maximum useful wavelength",
                         type=float)
     parser.add_argument("--nwin_background",
                         help="window to compute background (0=none)"
@@ -507,8 +559,9 @@ def main(args=None):
                         default=0)
     parser.add_argument("--degree_refined",
                         help="Degree of the refined fit using faint lines "
-                             "from wv_master_file",
-                        default=0, type=int)
+                             "from wv_master_file (default=None, i.e. no "
+                             "refinement)",
+                        default=None, type=int)
     parser.add_argument("--sigma_gauss_filt",
                         help="Sigma (pixels) of gaussian filtering to avoid "
                              "saturared lines (default=0)",
@@ -529,6 +582,9 @@ def main(args=None):
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
+    parser.add_argument("--pdffile",
+                        help="Output PDF file name",
+                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                         " (default=0)",
@@ -544,9 +600,18 @@ def main(args=None):
 
     # ---
 
+    # read pdffile
+    if args.pdffile is not None:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(args.pdffile.name)
+        interactive_refinement = False
+    else:
+        pdf = None
+        interactive_refinement = True
+
     # if refinement is going to be used, check that the corresponding
     # polynomial degree is at least as large as the initial degree
-    if args.degree_refined > 0:
+    if args.degree_refined is not None:
         if args.degree > args.degree_refined:
             raise ValueError("degree_refined must be >= degree")
 
@@ -581,7 +646,6 @@ def main(args=None):
         method=args.method,
         nwin_background=args.nwin_background,
         reverse=args.reverse,
-        out_sp=args.out_sp,
         debugplot=args.debugplot
     )
 
@@ -647,20 +711,48 @@ def main(args=None):
         wv_master=wv_master,
         wv_ini_search=args.wvmin,
         wv_end_search=args.wvmax,
+        wvmin_useful=args.wvmin_useful,
+        wvmax_useful=args.wvmax_useful,
         geometry=geometry,
         debugplot=args.debugplot
     )
 
+    # apply gaussian filtering
+    if args.sigma_gauss_filt > 0:
+        spf = ndimage.filters.gaussian_filter(
+            sp,
+            sigma=args.sigma_gauss_filt
+        )
+    else:
+        spf = np.copy(sp)
+
+    # save fitted spectrum
+    if args.out_sp is not None:
+        hdu = fits.PrimaryHDU(spf.astype(np.float32))
+        hdu.writeto(args.out_sp, overwrite=True)
+
+    # clip master arc line lists to useful wavelength range
+    if args.wvmin_useful is None:
+        wvmin = -np.infty
+    else:
+        wvmin = args.wvmin_useful
+    if args.wvmax_useful is None:
+        wvmax = np.infty
+    else:
+        wvmax = args.wvmax_useful
+
+    lok1 = wvmin <= wv_master_all
+    lok2 = wv_master_all <= wvmax
+    lok = lok1 * lok2
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in wv_master_all........: ", len(wv_master_all))
+    wv_master_all = wv_master_all[lok]
+    if abs(args.debugplot) >= 10:
+        print("Number of lines in clipped wv_master_all: ", len(wv_master_all))
+        print("clipped wv_master_all:\n", wv_master_all)
+
     # refine wavelength calibration when requested
-    if args.degree_refined > 0:
-        # apply gaussian filtering
-        if args.sigma_gauss_filt > 0:
-            spf = ndimage.filters.gaussian_filter(
-                sp,
-                sigma=args.sigma_gauss_filt
-            )
-        else:
-            spf = np.copy(sp)
+    if args.degree_refined is not None:
         poly_refined, yres_summary = refine_arccalibration(
             sp=spf,
             poly_initial=np.polynomial.Polynomial(solution_wv.coeff),
@@ -668,15 +760,19 @@ def main(args=None):
             poldeg=args.degree_refined,
             ntimes_match_wv=1,
             plottitle=plottitle,
-            interactive=True,
+            interactive=interactive_refinement,
             geometry=geometry,
+            pdf=pdf,
             debugplot=args.debugplot
         )
 
-    try:
-        input("\nPress RETURN to QUIT...")
-    except SyntaxError:
-        pass
+    if pdf is not None:
+        pdf.close()
+    else:
+        try:
+            input("\nPress RETURN to QUIT...")
+        except SyntaxError:
+            pass
 
 
 if __name__ == "__main__":

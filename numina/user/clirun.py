@@ -68,6 +68,7 @@ def register(subparsers, config):
         )
     parser_run.add_argument(
         '--datadir', action="store", dest="datadir",
+        default='data',
         help='path to directory containing pristine data'
         )
     parser_run.add_argument(
@@ -86,6 +87,14 @@ def register(subparsers, config):
         '--not-copy-files', action="store_false", dest="copy_files",
         help='do not copy observation result and requirement files'
         )
+    parser_run.add_argument(
+        '--dump-control', action="store_true",
+        help='save the modified task control file'
+    )
+    parser_run.add_argument(
+        '--session', action="store_true",
+        help='use the obresult file as a session file'
+    )
     parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'

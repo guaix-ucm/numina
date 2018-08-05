@@ -14,8 +14,10 @@ import argparse
 from astropy.io import fits
 import numpy as np
 
+from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
+from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
 
 from numina.visualization import ZScaleInterval
@@ -25,12 +27,20 @@ dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
 
 
+def ximshow_jupyter(image2d, **args):
+    """Auxiliary function to call ximshow from a jupyter notebook.
+    """
+    return ximshow(image2d, using_jupyter=True, **args)
+
+
 def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1,1),
+            crpix1=None, crval1=None, cdelt1=None,
+            ds9regfile=None,
             geometry=(0, 0, 640, 480), tight_layout=True,
-            debugplot=None):
+            debugplot=0, using_jupyter=False):
     """Auxiliary function to display a numpy 2d array.
 
     Parameters
@@ -58,14 +68,27 @@ def ximshow(image2d, title=None, show=True,
         image2d[(ns1-1):ns2,(nc1-1):nc2].
     first_pixel : tuple (2 integers)
         (x0,y0) coordinates of pixel at origin.
+    crpix1 : float or None
+        CRPIX1 parameter corresponding to wavelength calibration in
+        the X direction.
+    crval1 : float or None
+        CRVAL1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cdelt1 : float or None
+        CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    ds9regfile : file handler
+        Ds9 region file to be overplotted.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot
+    using_jupyter : bool
+        If True, this function is called from a jupyter notebook.
 
     Returns
     -------
@@ -77,6 +100,9 @@ def ximshow(image2d, title=None, show=True,
 
     from numina.array.display.matplotlib_qt import plt
 
+    if not show and using_jupyter:
+        plt.ioff()
+
     # protections
     if type(image2d) is not np.ndarray:
         raise ValueError("image2d=" + str(image2d) +
@@ -86,6 +112,9 @@ def ximshow(image2d, title=None, show=True,
                          " must be 2")
 
     naxis2_, naxis1_ = image2d.shape
+
+    # check if wavelength calibration is provided
+    wavecalib = crval1 is not None and cdelt1 is not None
 
     # read bounding box limits
     if image_bbox is None:
@@ -187,6 +216,7 @@ Set bg=min and fg=max values....: ,
 Display statistical summary.....: .
 Set foreground by keyboard......: m
 Set background by keyboard......: n
+Activate/deactivate ds9 regions.: a
 Constrain pan/zoom to x axis....: hold x when panning/zooming with mouse
 Constrain pan/zoom to y axis....: hold y when panning/zooming with mouse
 Preserve aspect ratio...........: hold CONTROL when panning/zooming with mouse
@@ -263,14 +293,16 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             else:
                 dum_str += event.key
 
-    # display image
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.autoscale(False)
+    # plot limits
     xmin = float(nc1) - 0.5 + (first_pixel[0] - 1)
     xmax = float(nc2) + 0.5 + (first_pixel[0] - 1)
     ymin = float(ns1) - 0.5 + (first_pixel[1] - 1)
     ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
+
+    # display image
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.autoscale(False)
     ax.set_xlabel('image pixel in the X direction')
     ax.set_ylabel('image pixel in the Y direction')
     ax.set_xlim(xmin, xmax)
@@ -297,32 +329,53 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     plt.colorbar(im_show, shrink=1.0, label=cbar_label,
                  orientation=cbar_orientation)
     if title is not None:
-        ax.set_title(title)
+        if wavecalib:
+            ax.set_title(title + "\n\n")
+        else:
+            ax.set_title(title)
+
+    if ds9regfile is not None:
+        overplot_ds9reg(ds9regfile.name, ax)
 
     # set the geometry
-    if geometry is not None:
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+    set_window_geometry(geometry)
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
     fig.canvas.mpl_connect('key_press_event', keypress)
 
+    # wavelength scale
+    if wavecalib:
+        if crpix1 is None:
+            crpix1 = 1.0
+        xminwv = crval1 + (xmin - crpix1) * cdelt1
+        xmaxwv = crval1 + (xmax - crpix1) * cdelt1
+        ax2 = ax.twiny()
+        ax2.grid(False)
+        ax2.set_xlim(xminwv, xmaxwv)
+        ax2.set_xlabel('Wavelength (Angstroms)')
+        ax.set_xlim(xmin, xmax)
+        ax.set_ylim(ymin, ymax)
+
     # show plot or return axes
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
+        if tight_layout:
+            plt.tight_layout()
         # return axes
+        if using_jupyter:
+            plt.ion()
         return ax
 
 
 def ximshow_file(singlefile,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
-                 args_keystitle=None, args_geometry="0,0,640,480",
-                 pdf=None, show=True,
-                 debugplot=None):
+                 args_keystitle=None, args_ds9reg=None,
+                 args_geometry="0,0,640,480", pdf=None, show=True,
+                 debugplot=None,
+                 using_jupyter=False):
     """Function to execute ximshow() as called from command line.
 
     Parameters
@@ -342,8 +395,10 @@ def ximshow_file(singlefile,
         String providing the coordinates of lower left pixel.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
+    args_ds9reg : file handler
+        Ds9 region file to be overplotted.
     args_geometry : string or None
-        Tuple x,y,dx,dy to define the Qt backend geometry. This
+        Tuple x,y,dx,dy to define the window geometry. This
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
@@ -355,6 +410,8 @@ def ximshow_file(singlefile,
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    using_jupyter : bool
+        If True, this function is called from a jupyter notebook.
 
     Returns
     -------
@@ -395,6 +452,20 @@ def ximshow_file(singlefile,
         naxis2 = image_header['naxis2']
     else:
         naxis2 = 1
+
+    # read wavelength calibration
+    if 'crpix1' in image_header:
+        crpix1 = image_header['crpix1']
+    else:
+        crpix1 = None
+    if 'crval1' in image_header:
+        crval1 = image_header['crval1']
+    else:
+        crval1 = None
+    if 'cdelt1' in image_header:
+        cdelt1 = image_header['cdelt1']
+    else:
+        cdelt1 = None
 
     # title for plot
     title = singlefile
@@ -460,8 +531,13 @@ def ximshow_file(singlefile,
                  z1z2=z1z2,
                  image_bbox=(nc1, nc2, ns1, ns2),
                  first_pixel=(nc0, ns0),
+                 crpix1=crpix1,
+                 crval1=crval1,
+                 cdelt1=cdelt1,
+                 ds9regfile=args_ds9reg,
                  geometry=geometry,
-                 debugplot=debugplot)
+                 debugplot=debugplot,
+                 using_jupyter=using_jupyter)
 
     if pdf is not None:
         if show:
@@ -499,6 +575,9 @@ def main(args=None):
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
+    parser.add_argument("--ds9reg",
+                        help="ds9 region file to be overplotted",
+                        type=argparse.FileType('rt'))
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy",
                         default="0,0,640,480")
@@ -532,6 +611,7 @@ def main(args=None):
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,
                      args_keystitle=args.keystitle,
+                     args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,
                      pdf=pdf,
                      debugplot=args.debugplot)

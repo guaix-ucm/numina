@@ -1,4 +1,5 @@
 name: TEST1
+version: "1"
 configurations:
   path: numina.drps.tests.configs
   values:

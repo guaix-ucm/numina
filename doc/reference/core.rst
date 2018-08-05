@@ -18,10 +18,7 @@
 .. automodule:: numina.core.metarecipes
    :members:
 
-:mod:`numina.core.objimport` --- Import objects
-==================================================
-.. automodule:: numina.core.objimport
-   :members:
+
 
 
 :mod:`numina.core.oresult` --- Observation Result
@@ -74,7 +71,10 @@
 ==================================================
 
 .. automodule:: numina.core.types
-   :members:
+
+.. deprecated:: 0.17
+   Use :mod:`numina.types`
+
 
 :mod:`numina.core.utils` --- Utilities
 ==================================================

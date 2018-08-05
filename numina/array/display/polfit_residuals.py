@@ -14,6 +14,7 @@ import argparse
 import numpy as np
 from numpy.polynomial import Polynomial
 
+from .matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
 
@@ -65,7 +66,7 @@ def polfit_residuals(
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -195,10 +196,7 @@ def polfit_residuals(
         from numina.array.display.matplotlib_qt import plt
         fig = plt.figure()
 
-        if geometry is not None:
-            x_geom, y_geom, dx_geom, dy_geom = geometry
-            mngr = plt.get_current_fig_manager()
-            mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+        set_window_geometry(geometry)
 
         # residuals
         ax2 = fig.add_subplot(2, 1, 2)
@@ -332,7 +330,7 @@ def polfit_residuals_with_sigma_rejection(
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -511,7 +509,7 @@ def polfit_residuals_with_cook_rejection(
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in

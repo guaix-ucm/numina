@@ -30,7 +30,7 @@ class ResultOf(QueryModifier):
 
         self.field = field
 
-        if node not in ['children', 'prev', 'prev-rel']:
+        if node not in ['children', 'prev', 'prev-rel', 'last']:
             raise ValueError("value '{}' not allowed for node".format(node))
 
         self.node = node
@@ -38,6 +38,8 @@ class ResultOf(QueryModifier):
             self.id_field = id_field or "children"
         elif self.node in ['prev', 'prev-rel']:
             self.id_field = id_field or "prev"
+        elif self.node == 'last':
+            self.id_field = id_field or "last"
 
         self.ignore_fail = ignore_fail
         self.result_type = DataFrameType()

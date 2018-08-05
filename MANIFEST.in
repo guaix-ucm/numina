@@ -1,6 +1,8 @@
 include LICENSE.txt
 include README.rst
 include AUTHORS.rst
+include numina/array/trace/Trace.h
+include numina/array/trace/fitter.h
 include src/*.h
 include src/*.pyx
 include src/nirproc.cpp

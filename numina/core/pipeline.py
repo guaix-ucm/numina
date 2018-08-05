@@ -14,7 +14,7 @@ import logging
 
 import numina.core.query
 import numina.core.deptree
-import numina.core.objimport
+import numina.util.objimport
 import numina.util.parser
 import numina.datamodel
 
@@ -44,7 +44,7 @@ class Pipeline(object):
     def _get_base_class(self, entry):
 
         recipe_fqn = entry['class']
-        return numina.core.objimport.import_object(recipe_fqn)
+        return numina.util.objimport.import_object(recipe_fqn)
 
     def _get_base_object(self, entry):
 
@@ -193,7 +193,7 @@ class InstrumentDRP(object):
        pipeline : dict of Pipeline
 
     """
-    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None):
+    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None, version='undefined'):
         self.name = name
         self.configurations = configurations
         self.modes = modes
@@ -202,6 +202,7 @@ class InstrumentDRP(object):
             self.datamodel = datamodel()
         else:
             self.datamodel = numina.datamodel.DataModel()
+        self.version = version
 
     def query_provides(self, product, pipeline='default', search=False):
         """Return the mode that provides a given product"""

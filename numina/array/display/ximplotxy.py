@@ -13,14 +13,27 @@ from __future__ import print_function
 import argparse
 import numpy as np
 
+from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 
 
-def ximplotxy(x, y, plottype=None,
+def ximplotxy_jupyter(x, y, fmt=None, **args):
+    """Auxiliary function to call ximplotxy from a jupyter notebook.
+    """
+    using_jupyter = True
+    if fmt is None:
+        return ximplotxy(x, y, using_jupyter=using_jupyter, **args)
+    else:
+        return ximplotxy(x, y, fmt, using_jupyter=using_jupyter, **args)
+
+
+
+def ximplotxy(x, y, fmt=None, plottype=None,
               xlim=None, ylim=None, 
               xlabel=None, ylabel=None, title=None,
               show=True, geometry=(0, 0, 640, 480), tight_layout=True,
-              debugplot=0, **kwargs):
+              debugplot=0, using_jupyter=False,
+              **kwargs):
     """
     Parameters
     ----------
@@ -28,6 +41,8 @@ def ximplotxy(x, y, plottype=None,
         Array containing the X coordinate.
     y : 1d numpy array, float
         Array containing the Y coordinate.
+    fmt : str, optional
+        Format string for quickly setting basic line properties.
     plottype : string
         Plot type. It can be 'semilog' or normal (default).
     xlim : tuple of floats
@@ -44,13 +59,15 @@ def ximplotxy(x, y, plottype=None,
         If True, the function shows the displayed image. Otherwise
         plt.show() is expected to be executed outside.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    using_jupyter : bool
+        If True, this function is called from a jupyter notebook.
 
     Returns
     -------
@@ -61,12 +78,21 @@ def ximplotxy(x, y, plottype=None,
     """
 
     from numina.array.display.matplotlib_qt import plt
+    if not show and using_jupyter:
+        plt.ioff()
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     if plottype == 'semilog':
-        ax.semilogy(x, y, **kwargs)
+        if fmt is None:
+            ax.semilogy(x, y, **kwargs)
+        else:
+            ax.semilogy(x, y, fmt, **kwargs)
     else:
-        ax.plot(x, y, **kwargs)
+        if fmt is None:
+            ax.plot(x, y, **kwargs)
+        else:
+            ax.plot(x, y, fmt, **kwargs)
 
     if xlim is not None:
         ax.set_xlim(xlim[0], xlim[1])
@@ -80,15 +106,16 @@ def ximplotxy(x, y, plottype=None,
     if title is not None:
         ax.set_title(title)
 
-    if geometry is not None:
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = plt.get_current_fig_manager()
-        mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+    set_window_geometry(geometry)
 
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
+        if tight_layout:
+            plt.tight_layout()
         # return axes
+        if using_jupyter:
+            plt.ion()
         return ax
 
 

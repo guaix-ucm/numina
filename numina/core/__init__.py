@@ -9,12 +9,8 @@
 
 from .recipes import BaseRecipe
 from .recipeinout import RecipeInput, RecipeResult
-from numina.exceptions import RecipeError # Do not remove, part of the API
-from numina.exceptions import ValidationError # Do not remove, part of the API
 from .pipeline import InstrumentDRP, Pipeline, InstrumentConfiguration
 from .pipeline import ObservingMode
-from .objimport import import_object
-from .objimport import fully_qualified_name
 from .pipelineload import drp_load
 from .dataholders import Parameter, Requirement
 from .dataholders import Result, Product

@@ -117,7 +117,12 @@ class Result(EntryHolder):
 
 
 class Product(Result):
-    """Product holder for RecipeResult."""
+    """Product holder for RecipeResult.
+
+    .. deprecated:: 0.16
+            `Product` is replaced by `Result`. It will
+            be removed in 1.0
+    """
 
     def __init__(self, ptype, description="", validation=True,
                  destination=None, optional=False, default=None, choices=None):
@@ -216,6 +221,9 @@ class Requirement(EntryHolder):
 
     def query_constraints(self):
         return self.type.query_constraints()
+
+    def tag_names(self):
+        return self.type.tag_names()
 
 
 def _process_nelem(nlem):

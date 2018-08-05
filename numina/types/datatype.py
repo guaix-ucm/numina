@@ -12,7 +12,6 @@ import collections
 
 from numina.exceptions import ValidationError
 from numina.exceptions import NoResultFound
-from numina.core.validator import range_validator
 from .base import DataTypeBase
 from .typedialect import dialect_info
 
@@ -85,8 +84,20 @@ class DataType(DataTypeBase):
 
 class AutoDataType(DataType):
     """Data type for types that are its own python type"""
+    def __init__(self, *args, **kwargs):
+        super(AutoDataType, self).__init__(ptype=self.__class__, **kwargs)
+
+
+class AnyType(DataType):
+    """Type representing anything"""
     def __init__(self):
-        super(AutoDataType, self).__init__(ptype=self.__class__)
+        super(AnyType, self).__init__(ptype=self.__class__)
+
+    def convert(self, obj):
+        return obj
+
+    def validate(self, obj):
+        return True
 
 
 class AnyType(DataType):
@@ -159,6 +170,7 @@ class PlainPythonType(DataType):
 class ListOfType(DataType):
     """Data type for lists of other types."""
     def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False):
+        from numina.core.validator import range_validator
         stype = list
         if inspect.isclass(ref):
             self.internal = ref()
@@ -172,8 +184,13 @@ class ListOfType(DataType):
         self.len_validator = range_validator(minval=nmin, maxval=nmax)
 
     def convert(self, obj):
-        if self.accept_scalar and not isinstance(obj, collections.Iterable):
-            obj = [obj]
+        if not isinstance(obj, collections.Iterable):
+            if self.accept_scalar:
+                obj = [obj]
+            else:
+                raise TypeError("The object received should be iterable"
+                                " or the type modified to accept scalar values")
+
         result = [self.internal.convert(o) for o in obj]
         self.len_validator(len(result))
         return result

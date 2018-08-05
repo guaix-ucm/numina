@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,7 +19,7 @@ class DrpBase(object):
         pass
 
     def query_by_name(self, name):
-        return None
+        raise KeyError(name)
 
     def query_all(self):
         return {}

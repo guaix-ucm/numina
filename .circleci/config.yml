@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6.2
+    steps:
+      - checkout
+      - run:
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install numpy scipy astropy pytest python-dateutil matplotlib six PyYaml
+            pip install cython
+      - run:
+          command: |
+            . venv/bin/activate
+            python setup.py build_ext -i
+            py.test numina

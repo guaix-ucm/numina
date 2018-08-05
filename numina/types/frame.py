@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -137,5 +137,5 @@ def dump_dataframe(obj, where):
             filename = where.get_next_basename('.fits')
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            obj.frame.writeto(filename, clobber=True, output_verify='warn')
+            obj.frame.writeto(filename, overwrite=True, output_verify='warn')
         return filename

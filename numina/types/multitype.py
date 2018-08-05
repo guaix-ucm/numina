@@ -15,6 +15,7 @@ class MultiType(object):
     def __init__(self, *args):
         self.type_options = []
         self._current = None
+        self.internal_default = None
         for obj in args:
             if inspect.isclass(obj):
                 obj = obj()
@@ -58,6 +59,15 @@ class MultiType(object):
 
         raise ValueError('No query performed, current type is not set')
 
+    def tag_names(self):
+        if self._current:
+            return self._current.tag_names()
+        else:
+            join = []
+            for subtype in self.type_options:
+                join.extend(subtype.tag_names())
+            return join
+
     def validate(self, obj):
         if self._current:
             return self._current.validate(obj)
@@ -80,3 +90,14 @@ class MultiType(object):
             field = "or {}".format(x.descriptive_name())
             build_str.append(field)
         return " ".join(build_str)
+
+    def _datatype_load(self, obj):
+        faillures = []
+        for subtype in self.type_options:
+            try:
+                return subtype._datatype_load(obj)
+            except KeyError:
+                faillures.append(subtype)
+        else:
+            msg = "types {} cannot load 'obj'".format(faillures)
+            raise TypeError(msg)

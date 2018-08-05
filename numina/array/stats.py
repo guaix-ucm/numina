@@ -73,14 +73,18 @@ def summary(x, rm_nan=False, debug=False):
     """
 
     # protections
-    if type(x) is not np.ndarray:
-        raise ValueError('x=' + str(x) + ' must be a numpy.ndarray')
+    if type(x) is np.ndarray:
+        xx = np.copy(x)
+    else:
+        if type(x) is list:
+            xx = np.array(x)
+        else:
+            raise ValueError('x=' + str(x) + ' must be a numpy.ndarray')
 
-    if x.ndim is not 1:
-        raise ValueError('x.dim=' + str(x.ndim) + ' must be 1')
+    if xx.ndim is not 1:
+        raise ValueError('xx.dim=' + str(xx.ndim) + ' must be 1')
 
     # filter out NaN's
-    xx = np.copy(x)
     if rm_nan:
         xx = xx[np.logical_not(np.isnan(xx))]
 

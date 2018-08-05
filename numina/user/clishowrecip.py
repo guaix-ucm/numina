@@ -16,9 +16,8 @@ import warnings
 
 import yaml
 
-from numina import __version__
+import numina
 import numina.drps
-from numina.types.frame import DataFrameType
 from numina.user.clishowins import print_no_instrument
 
 
@@ -90,7 +89,7 @@ def show_recipes(args, extra_args):
 
 def print_recipe_template(recipe, name=None, insname=None,
                           pipename=None, modename=None):
-
+    from numina.types.frame import DataFrameType
     def print_io(req):
         dispname = req.dest
         if getattr(req, 'default', None) is not None:
@@ -119,7 +118,7 @@ def print_recipe_template(recipe, name=None, insname=None,
 
     final = dict(requirements=requires)
 
-    print('# This is a numina %s template file' % (__version__,))
+    print('# This is a numina %s template file' % (numina.__version__,))
     print('# for recipe %r' % (name,))
     print('#')
     if optional:

@@ -12,9 +12,6 @@
 .. automodule:: numina.dal.absdal
    :members:
 
-.. automodule:: numina.dal.clidal
-   :members:
-
 .. automodule:: numina.dal.dictdal
    :members:
 
@@ -26,6 +23,10 @@
 
 .. automodule:: numina.dal.stored
    :members:
+
+.. automodule:: numina.dal.backend
+   :members:
+
 
 .. automodule:: numina.dal.utils
    :members:

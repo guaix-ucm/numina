@@ -3,6 +3,7 @@ import pkgutil
 
 import pytest
 
+import numina
 import numina.drps
 import numina.drps.drpbase
 import numina.core.pipelineload as pload
@@ -17,6 +18,7 @@ expecte0 = [""]
 
 
 expecte1 = ["Instrument: TEST1",
+            " version is '1'",
             " default is 'Default configuration'",
             " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
@@ -25,10 +27,12 @@ expecte1 = ["Instrument: TEST1",
 
 
 expecte2 = ["Instrument: TEST2",
+            " version is '{}'".format(numina.__version__),
             " default is 'Default configuration'",
             " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
             "Instrument: TEST1",
+            " version is '1'",
             " default is 'Default configuration'",
             " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
@@ -70,7 +74,6 @@ def test_show_instrument(capsys, monkeypatch, drpsfunc, expected):
     main(['show-instruments'])
 
     out, err = capsys.readouterr()
-    print(out)
     out = out.split("\n")
     out.sort()
     expected.sort()

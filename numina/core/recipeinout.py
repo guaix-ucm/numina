@@ -91,10 +91,19 @@ class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
     def store_to(self, where):
 
         saveres = {}
+        saveres['values'] = {}
+        # FIXME: workaround for QC, this should be managed elsewhere
+        if hasattr(self, 'qc'):
+            saveres['qc'] = self.qc
+
+        saveres_v = saveres['values']
         for key, prod in self.stored().items():
+            # FIXME: workaround for QC, this should be managed elsewhere
+            if key == 'qc':
+                continue
             val = getattr(self, key)
-            where.destination = prod.dest
-            saveres[key] = numina.store.dump(prod.type, val, where)
+            where.destination = "{}".format(prod.dest)
+            saveres_v[key] = numina.store.dump(prod.type, val, where)
 
         return saveres
 

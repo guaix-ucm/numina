@@ -13,13 +13,16 @@ import os
 import logging
 import json
 from itertools import chain
+import datetime
 
 import six
 import yaml
 import numina.store
 import numina.store.gtc.load as gtcload
+from numina.types.frame import DataFrameType
 from numina.core.oresult import obsres_from_dict
 from numina.exceptions import NoResultFound
+from numina.util.fqn import fully_qualified_name
 from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
@@ -27,7 +30,7 @@ from .diskfiledal import build_product_path
 from .utils import tags_are_valid
 
 
-_logger = logging.getLogger('clodiadrp.loader')
+_logger = logging.getLogger(__name__)
 
 
 class BaseDictDAL(AbsDrpDAL):
@@ -37,7 +40,6 @@ class BaseDictDAL(AbsDrpDAL):
 
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
         super(BaseDictDAL, self).__init__(drps)
-
         # Check that the structure of the base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
@@ -141,9 +143,9 @@ class BaseDictDAL(AbsDrpDAL):
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
         _logger.debug("obsres_from_oblock_id id='%s', mode='%s' START", obsid, obsres.mode)
-        this_drp = self.drps.query_by_name(obsres.instrument)
-
-        if this_drp is None:
+        try:
+            this_drp = self.drps.query_by_name(obsres.instrument)
+        except KeyError:
             raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
 
         # Reserved names
@@ -253,14 +255,54 @@ class DictDAL(BaseDictDAL):
 class Dict2DAL(BaseDictDAL):
     def __init__(self, drps, obtable, base, extra_data=None):
 
-        prod_table = base['products']
+        prod_table = base.get('products', {})
 
         if 'parameters' in base:
             req_table = base['parameters']
         else:
-            req_table = base['requirements']
+            req_table = base.get('requirements', {})
 
         super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
+
+    def new_task_id(self, request, request_params):
+        if request == 'reduce':
+            return request_params.get('oblock_id', 1)
+        return 1
+
+    def new_task(self, request, request_params):
+
+        from numina.user.helpers import ProcessingTask
+
+        newidx =  self.new_task_id(request, request_params)
+        _logger.debug('create task=%d', newidx)
+        task = ProcessingTask()
+        task.id = newidx
+        task.request = request
+        task.request_params = request_params
+
+        return task
+
+    def update_task(self, task):
+        pass
+
+    def update_result(self, task, serialized, filename):
+        pass
+
+    def dump(self, fp):
+        state = self.dump_data()
+        yaml.dump(state, fp)
+        # yaml.dump(state, fp, default_flow_style=False)
+
+        with open('control_dump.json', 'w') as fp:
+            json.dump(state, fp, indent=2)
+
+    def dump_data(self):
+        state = {}
+        state['version'] = 1
+        state['products'] = self.prod_table
+        state['requirements'] = self.req_table
+        state['oblocks'] = self.ob_table
+        return state
 
 
 # FIXME: this is a workaround
@@ -276,8 +318,10 @@ def resultsdir_default(basedir, obsid):
     return resultsdir
 
 
+
 class HybridDAL(Dict2DAL):
     """A DAL that can read files from directory structure"""
+
     def __init__(self, drps, obtable, base, extra_data=None, basedir=None):
 
         self.rootdir = base.get("rootdir", "")
@@ -302,6 +346,27 @@ class HybridDAL(Dict2DAL):
                 obdict[ch]['parent'] = ob['id']
 
         super(HybridDAL, self).__init__(drps, obdict, base, extra_data)
+
+
+    def add_obs(self, obtable):
+
+        # Preprocessing
+        obdict = {}
+        for ob in obtable:
+            obid = ob['id']
+            if obid not in self.ob_ids:
+
+                self.ob_ids.append(obid)
+                obdict[obid] = ob
+            else:
+                print(obid, 'is already in table')
+        # Update parents
+        for ob in obdict.values():
+            children = ob.get('children', [])
+            for ch in children:
+                obdict[ch]['parent'] = ob['id']
+
+        self.ob_table.update(obdict)
 
     def search_product(self, name, tipo, obsres, options=None):
         if name in self.extra_data:
@@ -394,7 +459,6 @@ class HybridDAL(Dict2DAL):
             # mode must match
             if cobsres.mode != mode:
                 msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
-                print(msg)
                 raise NoResultFound(msg)
 
         rdir = resultsdir_default(self.basedir, node_id)
@@ -402,10 +466,18 @@ class HybridDAL(Dict2DAL):
         taskfile = os.path.join(rdir, 'task.yaml')
         resfile = os.path.join(rdir, 'result.yaml')
         result_contents = yaml.load(open(resfile))
+        if 'values' in result_contents:
+            result_contents = result_contents['values']
         task_contents = yaml.load(open(taskfile))
 
         try:
             field_file = result_contents[field]
+            if field_file is not None:
+                filename = os.path.join(rdir, field_file)
+                content = numina.store.load(DataFrameType(), filename)
+            else:
+                content = None
+
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
             # Python 2.7 compatibility
@@ -414,7 +486,7 @@ class HybridDAL(Dict2DAL):
 
         st = StoredProduct(
             id=node_id,
-            content=numina.store.load(tipo, os.path.join(rdir, field_file)),
+            content=content,
             tags={}
         )
         return st
@@ -458,9 +530,21 @@ class HybridDAL(Dict2DAL):
 
             else:
                 raise NoResultFound('value not found in any node')
+        elif result_node == 'last':
+            _logger.debug('search last node of %s', result_mode)
+
+            try:
+                st = self.search_result_last(name, tipo, result_desc)
+                return st
+            except NoResultFound:
+                pass
         else:
             msg = 'unknown node type {}'.format(result_node)
             raise TypeError(msg)
+
+    def search_result_last(self, name, tipo, result_desc):
+        # FIXME: Implement
+        raise NoResultFound
 
     def _search_result(self, name, tipo, obsres, resultid):
         """Returns the first coincidence..."""
@@ -519,5 +603,29 @@ class HybridDAL(Dict2DAL):
                 # ignore these OBs
                 continue
 
-
             yield obs_id
+
+    def dump_data(self):
+        state = {}
+        state = super(HybridDAL, self).dump_data()
+        state['rootdir'] = self.rootdir
+        return state
+
+
+    def new_task_id(self, request, request_params):
+        if request == 'reduce':
+            return request_params.get('oblock_id', 1)
+        return 1
+
+    def new_task(self, request, request_params):
+
+        from numina.user.helpers import ProcessingTask
+
+        newidx =  self.new_task_id(request, request_params)
+        _logger.debug('create task=%d', newidx)
+        task = ProcessingTask()
+        task.id = newidx
+        task.request = request
+        task.request_params = request_params
+
+        return task

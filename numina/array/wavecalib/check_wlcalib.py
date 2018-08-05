@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -22,6 +22,7 @@ from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
 from numina.array.display.iofunctions import readf
 from numina.array.display.iofunctions import readc
+from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals \
@@ -134,7 +135,7 @@ def fun_wv(xchannel, crpix1, crval1, cdelt1):
 
 def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      coeff_ini=None, naxis1_ini=None,
-                     min_nlines_to_refine=None,
+                     min_nlines_to_refine=0,
                      interactive=False,
                      threshold=0,
                      nwinwidth_initial=7,
@@ -145,7 +146,9 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                      use_r=False,
                      title=None,
                      remove_null_borders=True,
+                     ylogscale=False,
                      geometry=None,
+                     pdf=None,
                      debugplot=0):
     """Check wavelength calibration of the provided spectrum.
 
@@ -172,7 +175,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         wavelength calibration.
     min_nlines_to_refine : int
         Minimum number of identified lines necessary to perform the
-        wavelength calibration refinement. If None, no minimum number
+        wavelength calibration refinement. If zero, no minimum number
         is required.
     interactive : bool
         If True, the function allows the user to modify the residuals
@@ -196,8 +199,14 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         Plot title.
     remove_null_borders : bool
         If True, remove leading and trailing zeros in spectrum.
+    ylogscale : bool
+        If True, the spectrum is displayed in logarithmic units. Note
+        that this is only employed for display purposes. The line peaks
+        are found in the original spectrum.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
+    pdf : PdfFile object or None
+        If not None, output is sent to PDF file.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -231,6 +240,12 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             raise ValueError("ERROR: interative use of this function is not "
                              "possible when debugplot=", debugplot)
 
+   # interactive and pdf are incompatible
+    if interactive:
+        if pdf is not None:
+            raise ValueError("ERROR: interactive use of this function is not "
+                             "possible when pdf is not None")
+
     # display list of expected arc lines
     if abs(debugplot) in (21, 22):
         print('wv_master:', wv_master)
@@ -250,6 +265,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     polyres = np.polynomial.Polynomial([0])
     poldeg_effective = 0
     ysummary = summary(np.array([]))
+    local_ylogscale = ylogscale
 
     # find initial line peaks
     ixpeaks = find_peaks_spectrum(sp,
@@ -332,13 +348,13 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             print(">>> Polynomial fit to residuals.......:\n", polyres)
 
         # display results
-        if abs(debugplot) % 10 != 0:
+        if (abs(debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
-            fig = plt.figure()
-            if geometry is not None:
-                x_geom, y_geom, dx_geom, dy_geom = geometry
-                mngr = plt.get_current_fig_manager()
-                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+            if pdf is not None:
+                fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+            else:
+                fig = plt.figure()
+            set_window_geometry(geometry)
 
             # residuals
             ax2 = fig.add_subplot(2, 1, 1)
@@ -355,7 +371,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             else:
                 ymin = -1.0
                 ymax = 1.0
-            ax2.set_ylim([ymin, ymax])
+            ax2.set_ylim(ymin, ymax)
             if nlines_ok > 0:
                 ax2.plot(xresid, yresid, 'o')
                 ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
@@ -413,8 +429,15 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             else:
                 xmin -= 0.5
                 xmax += 0.5
-            ymin = min(sp)
-            ymax = max(sp)
+
+            if local_ylogscale:
+                spectrum = sp - sp.min() + 1.0
+                spectrum = np.log10(spectrum)
+                ymin = spectrum[ixpeaks].min()
+            else:
+                spectrum = sp.copy()
+                ymin = min(spectrum)
+            ymax = max(spectrum)
             dy = ymax - ymin
             if dy > 0:
                 ymin -= dy/20
@@ -423,31 +446,34 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 ymin -= 0.5
                 ymax += 0.5
             ax1 = fig.add_subplot(2, 1, 2, sharex=ax2)
-            ax1.set_xlim([xmin, xmax])
-            ax1.set_ylim([ymin, ymax])
-            ax1.plot(xwv, sp)
+            ax1.set_xlim(xmin, xmax)
+            ax1.set_ylim(ymin, ymax)
+            ax1.plot(xwv, spectrum)
             if npeaks > 0:
-                ax1.plot(ixpeaks_wv, sp[ixpeaks], 'o',
+                ax1.plot(ixpeaks_wv, spectrum[ixpeaks], 'o',
                          fillstyle='none', label="initial location")
-                ax1.plot(fxpeaks_wv, sp[ixpeaks], 'o',
+                ax1.plot(fxpeaks_wv, spectrum[ixpeaks], 'o',
                          fillstyle='none', label="refined location")
                 lok = wv_verified_all_peaks > 0
-                ax1.plot(fxpeaks_wv[lok], sp[ixpeaks][lok], 'go',
+                ax1.plot(fxpeaks_wv[lok], spectrum[ixpeaks][lok], 'go',
                          label="valid line")
-            ax1.set_ylabel('Counts')
+            if local_ylogscale:
+                ax1.set_ylabel('~ log10(number of counts)')
+            else:
+                ax1.set_ylabel('number of counts')
             ax1.yaxis.label.set_size(10)
             ax1.xaxis.tick_top()
             ax1.xaxis.set_label_position('top')
             for i in range(len(ixpeaks)):
                 # identified lines
                 if wv_verified_all_peaks[i] > 0:
-                    ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
+                    ax1.text(fxpeaks_wv[i], spectrum[ixpeaks[i]],
                              str(wv_verified_all_peaks[i]) +
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
                 else:
-                    ax1.text(fxpeaks_wv[i], sp[ixpeaks[i]],
+                    ax1.text(fxpeaks_wv[i], spectrum[ixpeaks[i]],
                              '(' + str(i + 1) + ')',
                              fontsize=8,
                              horizontalalignment='center')
@@ -456,7 +482,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     estimated_wv = fun_wv(fxpeaks[i] + 1,
                                           crpix1, crval1, cdelt1)
                     estimated_wv = str(round(estimated_wv, 4))
-                    ax1.text(fxpeaks_wv[i], 0,  # spmedian[ixpeaks[i]],
+                    ax1.text(fxpeaks_wv[i], ymin,  # spmedian[ixpeaks[i]],
                              estimated_wv, fontsize=8, color='grey',
                              rotation='vertical',
                              horizontalalignment='center',
@@ -467,15 +493,18 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                            colors='grey', linestyles='dotted',
                            label='missing lines')
             ax1.legend()
-            if debugplot in [-22, -12, 12, 22]:
-                pause_debugplot(
-                    debugplot=debugplot,
-                    optional_prompt='Zoom/Unzoom or ' +
-                                    'press RETURN to continue...',
-                    pltshow=True
-                )
+            if pdf is not None:
+                pdf.savefig()
             else:
-                pause_debugplot(debugplot=debugplot, pltshow=True)
+                if debugplot in [-22, -12, 12, 22]:
+                    pause_debugplot(
+                        debugplot=debugplot,
+                        optional_prompt='Zoom/Unzoom or ' +
+                                        'press RETURN to continue...',
+                        pltshow=True
+                    )
+                else:
+                    pause_debugplot(debugplot=debugplot, pltshow=True)
 
             # display results and request next action
             if interactive:
@@ -484,13 +513,15 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 print('[d] (d)elete all the identified lines')
                 print('[r] (r)estart from begining')
                 print('[a] (a)utomatic line inclusion')
+                print('[l] toggle (l)ogarithmic scale on/off')
                 print('[p] modify (p)olynomial degree')
-                print('[x] e(x)xit without additional changes')
+                print('[o] (o)utput data with identified line peaks')
+                print('[x] e(x)it without additional changes')
                 print('[#] from 1 to ' + str(len(ixpeaks)) +
                       ' --> modify line #')
                 ioption = readi('Option', default='x',
                                 minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adprx')
+                                allowed_single_chars='adloprx')
                 if ioption == 'd':
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == 'r':
@@ -511,9 +542,20 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                         fxpeaks_wv_corrected,
                         delta_wv_max=delta_wv_max
                     )
+                elif ioption == 'l':
+                    if local_ylogscale:
+                        local_ylogscale = False
+                    else:
+                        local_ylogscale = True
                 elif ioption == 'p':
                     poldeg_residuals = readi('New polynomial degree',
                                              minval=0)
+                elif ioption == 'o':
+                    for i in range(len(ixpeaks)):
+                        # identified lines
+                        if wv_verified_all_peaks[i] > 0:
+                            print(wv_verified_all_peaks[i],
+                                  spectrum[ixpeaks[i]])
                 elif ioption == 'x':
                     loop = False
                 else:
@@ -531,6 +573,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
                 loop = False
+        else:
+            loop = False
 
     # refined wavelength calibration coefficients
     if coeff_ini is not None:
@@ -656,17 +700,17 @@ def main(args=None):
     # positional parameters
     parser.add_argument("filename",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rb'))
     parser.add_argument("--scans", required=True,
-                        help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+                        help="Tuple ns1[,ns2] (from 1 to NAXIS2) to compute "
+                             "median spectrum")
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths",
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('rt'))
 
     # optional arguments
     parser.add_argument("--interactive",
-                        help="Ask the user for confirmation before updating "
-                             "the wavelength calibration polynomial",
+                        help="Allows the user to modify de residuals fit",
                         action="store_true")
     parser.add_argument("--threshold",
                         help="Minimum signal in the line peaks (default=0)",

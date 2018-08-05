@@ -4,6 +4,7 @@ import astropy.io.fits as fits
 from ..oresult import ObservationResult
 import numina.datamodel
 import numina.core
+import numina.types.dataframe as dataframe
 
 
 def test_oresult_empty():
@@ -29,7 +30,7 @@ def test_oresult1():
         hdu.header['EXPTIME'] = 3.0
 
         hdulist = fits.HDUList(hdu)
-        ob.frames.append(numina.core.DataFrame(frame=hdulist))
+        ob.frames.append(dataframe.DataFrame(frame=hdulist))
 
     meta = ob.metadata_with(datamodel)
     

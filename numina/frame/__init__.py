@@ -70,7 +70,7 @@ def resize_hdul(hdul, newshape, region, extensions=None, window=None,
 
 
 def resize_fits(fitsfile, newfilename, newshape, region, window=None,
-                scale=1, fill=0.0, clobber=True, conserve=True, dtype=None):
+                scale=1, fill=0.0, overwrite=True, conserve=True, dtype=None):
 
     close_on_exit = False
     if isinstance(fitsfile, six.string_types):
@@ -86,7 +86,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
                             dtype=dtype)
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            newhdu.writeto(newfilename, clobber=clobber)
+            newhdu.writeto(newfilename, overwrite=overwrite)
     finally:
         if close_on_exit:
             hdulist.close()

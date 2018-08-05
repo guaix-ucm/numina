@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,12 +7,15 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Global cache for testing.'''
 
-from tempfile import NamedTemporaryFile
-from astropy.utils import data
+"""Global cache for testing."""
+
 import os
 import sys
+import tempfile
+import contextlib
+
+from astropy.utils import data
 
 
 def user_cache_dir(appname=None):
@@ -47,16 +50,30 @@ def user_cache_dir(appname=None):
     return path
 
 
-def download_cache(url):
+@contextlib.contextmanager
+def environ_context(cache_dir):
+    """Context manager for environment"""
+    old_val = os.environ.get('XDG_CACHE_HOME', None)
+    os.environ['XDG_CACHE_HOME'] = cache_dir
 
-    os.environ['XDG_CACHE_HOME'] = user_cache_dir('numina')
+    yield
 
-    fs = open(data.download_file(url, True))
-    with NamedTemporaryFile(delete=False) as fd:
-        block = fs.read()
-        while block:
-            fd.write(block)
+    if old_val is not None:
+        os.environ['XDG_CACHE_HOME'] = old_val
+    else:
+        del os.environ['XDG_CACHE_HOME']
+
+
+def download_cache(url, cache=True):
+    """Get a tempfile from an URL"""
+    cache_dir = user_cache_dir('numina')
+
+    with environ_context(cache_dir):
+        fs = open(data.download_file(url, cache=cache), 'rb')
+        with tempfile.NamedTemporaryFile(delete=False) as fd:
             block = fs.read()
+            while block:
+                fd.write(block)
+                block = fs.read()
 
-    return fd
-
+        return fd

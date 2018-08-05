@@ -10,13 +10,14 @@
 """Build a LoadableDRP from a yaml file"""
 
 import pkgutil
-import yaml
+import importlib
 import os
 
+import yaml
 import six
 from six import StringIO
 
-from .objimport import import_object
+from numina.util.objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
@@ -45,6 +46,9 @@ def drp_load_data(package, data, confclass=None):
     """Load the DRPS from data."""
     drpdict = yaml.load(data)
     ins = load_instrument(package, drpdict, confclass=confclass)
+    if ins.version == 'undefined':
+        pkg = importlib.import_module(package)
+        ins.version = getattr(pkg, '__version__', 'undefined')
     return ins
 
 
@@ -269,11 +273,13 @@ def load_instrument(package, node, confclass=None):
     mode_node = node['modes']
     conf_node = node['configurations']
 
-    trans = {'name': node['name']}
+    trans = {'name': node['name'], 'version': 'undefined'}
     if 'datamodel' in node:
         trans['datamodel'] = import_object(node['datamodel'])
     else:
         trans['datamodel'] = None
+    if 'version' in node:
+        trans['version'] = node['version']
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
     confs, custom_selector = load_confs(package, conf_node, confclass=confclass)
