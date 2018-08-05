@@ -173,7 +173,7 @@ def setup_package():
             "License :: OSI Approved :: GNU General Public License (GPL)",
             "Operating System :: OS Independent",
             "Topic :: Scientific/Engineering :: Astronomy",
-            "Topic :: Software Development:: Libraries:: Application Frameworks",
+            "Topic :: Software Development :: Libraries :: Application Frameworks",
             ],
         long_description=open('README.rst').read()
         )
