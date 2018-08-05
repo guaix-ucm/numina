@@ -10,4 +10,4 @@
 
 """Numina version."""
 
-version = '0.17.dev2'
+version = '0.18.dev0'
