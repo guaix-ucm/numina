@@ -6,8 +6,11 @@
    :synopsis:  Quality Control for Numina
 
 
-This moudle defines functions and classes which implement
-quality asses for Numina-based applications.
+This module defines functions and classes which implement
+quality assesment for Numina-based applications.
+
+.. deprecated:: 0.17
+   Use :mod:`numina.types.qc`
 
 QA Levels
 ---------
