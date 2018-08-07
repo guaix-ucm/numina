@@ -1,2 +1,2 @@
 
-from .tests.pytest_plugins import *
+from .tests.plugins import *
