@@ -64,6 +64,7 @@ class DataManager(object):
                 )
                 loaded_obs.append(doc)
         self.insert_obs(loaded_obs)
+        return loaded_obs
 
     def serializer(self, data, fd):
         if self.serial_format == 'yaml':
