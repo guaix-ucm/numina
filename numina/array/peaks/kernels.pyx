@@ -3,6 +3,9 @@ from cpython.version cimport PY_MAJOR_VERSION, PY_VERSION_HEX
 
 from libc.stdlib cimport malloc, free
 
+# PyCapsule exits in Py3 and Py2.7
+# But scipy use PyCObject in Py2.7
+# and PyCapsule in Py3
 
 from cpython.pycapsule cimport PyCapsule_New
 from cpython.pycapsule cimport PyCapsule_GetContext
