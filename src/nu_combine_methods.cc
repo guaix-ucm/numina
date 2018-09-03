@@ -27,6 +27,11 @@
 #include "operations.h"
 #include "zip_iterator.h"
 
+#ifndef NAN
+    static const unsigned long __nan[2] = {0xffffffff, 0x7fffffff};
+    #define NAN (*(const float *) __nan)
+#endif
+
 using Numina::ZipIterator;
 using Numina::make_zip_iterator;
 using Numina::LessPair1st;
