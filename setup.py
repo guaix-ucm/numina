@@ -152,7 +152,7 @@ def setup_package():
             'six>=1.7',
             'numpy',
             'astropy>=2',
-            'scipy', 'PyYaml',
+            'scipy>=0.19', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',
             'python-dateutil'
