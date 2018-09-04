@@ -27,6 +27,8 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+// Define and/not in WIN32
+#include <ciso646>
 
 #include "nu_combine_defs.h"
 
