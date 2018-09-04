@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2018 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -32,11 +32,11 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
     const double* scales,
     const double* weights);
 
-int NU_combine_image_check(PyObject* exception,
-    PyObject* image,
-    PyObject* ref,
-    PyObject* typeref,
-    const char* name,
-    size_t index);
+bool NU_combine_image_check(PyObject* exception,
+     PyObject* image,
+     PyObject* ref,
+     PyObject* typeref,
+     const char* name,
+     size_t index);
 
 #endif // NU_COMBINE_H
