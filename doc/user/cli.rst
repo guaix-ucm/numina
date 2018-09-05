@@ -124,11 +124,6 @@ It is called like this::
 
    Filter recipes by instrument name.
 
-.. option:: -t, --template
-
-   Generate a template file to be used a requirement file 
-   by :program:`numina run`. 
-
 .. option:: -m, --mode
 
    Filter recipes by observing mode.

@@ -34,10 +34,6 @@ def register(subparsers, config):
         help='filter recipes by instrument'
         )
     parser_show_rec.add_argument(
-        '-t', '--template', action='store_true',
-        help='generate requirements YAML template'
-        )
-    parser_show_rec.add_argument(
         '-m', '--mode',
         help='filter recipes by mode name'
     )
@@ -66,12 +62,6 @@ def show_recipes(args, extra_args):
     else:
         res = drpsys.query_all().items()
 
-    # Function to print
-    if args.template:
-        this_recipe_print = print_recipe_template
-    else:
-        this_recipe_print = print_recipe
-
     # predicates
     preds = []
     if args.name:
@@ -94,7 +84,7 @@ def show_recipes(args, extra_args):
                     else:
                         recipe_fqn = recipe_entry['class']
                         recipe = pipe.get_recipe_object(mode)
-                        this_recipe_print(
+                        print_recipe(
                             recipe.__class__, name=recipe_fqn,
                             insname=theins.name,
                             pipename=pipe.name,
@@ -102,56 +92,6 @@ def show_recipes(args, extra_args):
                             )
         else:
             print_no_instrument(name)
-
-
-def print_recipe_template(recipe, name=None, insname=None,
-                          pipename=None, modename=None):
-    from numina.types.frame import DataFrameType
-    def print_io(req):
-        dispname = req.dest
-        if getattr(req, 'default', None) is not None:
-            return (dispname, req.default)
-        elif isinstance(req.type, DataFrameType):
-            return (dispname, dispname + '.fits')
-        elif req.type.isproduct():
-            return (dispname, getattr(req.type, 'default', None))
-        else:
-            return (dispname, None)
-
-    # Create a dictionary with templates
-    requires = {}
-    optional = {}
-    for req in recipe.requirements().values():
-        if req.hidden:
-            # I Do not want to print it
-            continue
-        if req.optional:
-            out = optional
-        else:
-            out = requires
-
-        k, v = print_io(req)
-        out[k] = v
-
-    final = dict(requirements=requires)
-
-    print('# This is a numina %s template file' % (numina.__version__,))
-    print('# for recipe %r' % (name,))
-    print('#')
-    if optional:
-        print('# The following requirements are optional:')
-        for kvals in optional.items():
-            print('#  %s: %s' % kvals)
-        print('# end of optional requirements')
-    print(yaml.dump(final), end='')
-    print('#products:')
-    for prod in recipe.products().values():
-        print('# %s: %s' % print_io(prod))
-    print('#logger:')
-    print('# logfile: processing.log')
-    print('# format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"')
-    print('# enabled: true')
-    print('---')
 
 
 def print_requirements(recipe, pad=''):
