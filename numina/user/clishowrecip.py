@@ -37,7 +37,10 @@ def register(subparsers, config):
         '-t', '--template', action='store_true',
         help='generate requirements YAML template'
         )
-
+    parser_show_rec.add_argument(
+        '-m', '--mode',
+        help='filter recipes by mode name'
+    )
 #    parser_show_rec.add_argument('--output', type=argparse.FileType('wb', 0))
 
     parser_show_rec.add_argument(
@@ -69,13 +72,27 @@ def show_recipes(args, extra_args):
     else:
         this_recipe_print = print_recipe
 
+    # predicates
+    preds = []
+    if args.name:
+        pred1 = lambda mode_rec: mode_rec[1]['class'] == args.name
+        preds.append(pred1)
+    if args.mode:
+        pred1 = lambda mode_rec: mode_rec[0] == args.mode
+        preds.append(pred1)
+
     for name, theins in res:
         # Per instrument
         if theins:
             for pipe in theins.pipelines.values():
                 for mode, recipe_entry in pipe.recipes.items():
-                    recipe_fqn = recipe_entry['class']
-                    if not args.name or (recipe_fqn in args.name):
+                    mod_rec = mode, recipe_entry
+                    # Check all predicates
+                    for pre in preds:
+                        if not pre(mod_rec):
+                            break
+                    else:
+                        recipe_fqn = recipe_entry['class']
                         recipe = pipe.get_recipe_object(mode)
                         this_recipe_print(
                             recipe.__class__, name=recipe_fqn,
