@@ -129,6 +129,10 @@ It is called like this::
    Generate a template file to be used a requirement file 
    by :program:`numina run`. 
 
+.. option:: -m, --mode
+
+   Show the recipe that matches the name of the mode
+
 .. option:: name
 
    Name of the recipe to show. If empty show all recipes.
