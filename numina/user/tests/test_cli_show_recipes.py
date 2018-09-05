@@ -114,6 +114,152 @@ def test_show_2_instruments(capsys, monkeypatch):
     assert out == expected
 
 
+def test_show_1_recipe(capsys, monkeypatch):
+    """Test that one recipe is shown"""
+
+    def mockreturn():
+        drps = {}
+
+        drp1 = pload.drp_load_data('numina', drpdata1)
+        drp2 = pload.drp_load_data('numina', drpdata2)
+        drps[drp1.name] = drp1
+        drps[drp2.name] = drp2
+        return numina.drps.drpbase.DrpGeneric(drps)
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
+    expected = [u'Recipe: numina.tests.recipes.BiasRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: bias',
+                u' requirements:',
+                u'',
+                u''
+                ]
+
+    main(['show-recipes', 'numina.tests.recipes.BiasRecipe'])
+    out, err = capsys.readouterr()
+    out = out.split("\n")
+    out.sort()
+    expected.sort()
+    assert out == expected
+
+
+def test_show_2_recipes(capsys, monkeypatch):
+    """Test that two recipes are shown"""
+
+    def mockreturn():
+        drps = {}
+
+        drp1 = pload.drp_load_data('numina', drpdata1)
+        # drp2 = pload.drp_load_data('numina', drpdata2)
+        drps[drp1.name] = drp1
+        # drps[drp2.name] = drp2
+        return numina.drps.drpbase.DrpGeneric(drps)
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
+    expected = [u'Recipe: numina.tests.recipes.BiasRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: bias',
+                u' requirements:',
+                u'',
+                u'Recipe: numina.tests.recipes.DarkRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: dark',
+                u' requirements:',
+                u'',
+                u''
+                ]
+
+    main(
+        ['show-recipes',
+         'numina.tests.recipes.BiasRecipe',
+         'numina.tests.recipes.DarkRecipe'
+         ]
+    )
+    out, err = capsys.readouterr()
+    out = out.split("\n")
+    out.sort()
+    expected.sort()
+    assert out == expected
+
+
+def test_show_2_ins_recipes(capsys, monkeypatch):
+    """Test that two recipes are shown, selecting instrument"""
+
+    def mockreturn():
+        drps = {}
+
+        drp1 = pload.drp_load_data('numina', drpdata1)
+        drp2 = pload.drp_load_data('numina', drpdata2)
+        drps[drp1.name] = drp1
+        drps[drp2.name] = drp2
+        return numina.drps.drpbase.DrpGeneric(drps)
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
+    expected = [u'Recipe: numina.tests.recipes.BiasRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: bias',
+                u' requirements:',
+                u'',
+                u'Recipe: numina.tests.recipes.DarkRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: dark',
+                u' requirements:',
+                u'',
+                u''
+                ]
+
+    main(
+        ['show-recipes', '-i', 'TEST1',
+         'numina.tests.recipes.BiasRecipe',
+         'numina.tests.recipes.DarkRecipe'
+         ]
+    )
+    out, err = capsys.readouterr()
+    out = out.split("\n")
+    out.sort()
+    expected.sort()
+    assert out == expected
+
+
+def test_show_mode_name(capsys, monkeypatch):
+    """Test that one recipe by mode name is shown"""
+
+    def mockreturn():
+        drps = {}
+
+        drp1 = pload.drp_load_data('numina', drpdata1)
+        # drp2 = pload.drp_load_data('numina', drpdata2)
+        drps[drp1.name] = drp1
+        # drps[drp2.name] = drp2
+        return numina.drps.drpbase.DrpGeneric(drps)
+
+    monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
+
+    expected = [u'Recipe: numina.tests.recipes.BiasRecipe',
+                u' instrument: TEST1',
+                u'  pipeline: default',
+                u'  obs mode: bias',
+                u' requirements:',
+                u'',
+                u''
+                ]
+
+    main(['show-recipes', '--mode', 'bias'])
+    out, err = capsys.readouterr()
+    out = out.split("\n")
+    out.sort()
+    expected.sort()
+    assert out == expected
+
+
 def test_show_recipes_no_instruments(capsys, monkeypatch):
     """Test that no instruments are shown"""
 

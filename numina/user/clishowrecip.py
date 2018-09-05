@@ -75,7 +75,7 @@ def show_recipes(args, extra_args):
     # predicates
     preds = []
     if args.name:
-        pred1 = lambda mode_rec: mode_rec[1]['class'] == args.name
+        pred1 = lambda mode_rec: mode_rec[1]['class'] in args.name
         preds.append(pred1)
     if args.mode:
         pred1 = lambda mode_rec: mode_rec[0] == args.mode
