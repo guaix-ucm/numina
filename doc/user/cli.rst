@@ -131,7 +131,7 @@ It is called like this::
 
 .. option:: -m, --mode
 
-   Show the recipe that matches the name of the mode
+   Filter recipes by observing mode.
 
 .. option:: name
 
