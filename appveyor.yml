@@ -19,7 +19,7 @@ install:
   - "%PYTHON%\\python.exe -m pip install wheel"
   - "%PYTHON%\\python.exe -m pip install numpy Cython"
 
-build: false
+build: off
 
 test_script:
   # Put your test command here.
