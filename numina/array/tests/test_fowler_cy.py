@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -109,7 +109,9 @@ class FowlerTestCase(unittest.TestCase):
     def test_dtypes0(self):
         '''Test output is float64 by default'''
         inttypes = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
-        floattypes = ['float32', 'float64', 'float128']
+        floattypes = ['float32', 'float64', ]
+        if hasattr(numpy, 'float128'):
+            floattypes.append('float128')
         mdtype = numpy.dtype('uint8')
         ddtype = numpy.dtype('float64')
         rows = 3
