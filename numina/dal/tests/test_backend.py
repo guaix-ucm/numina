@@ -7,12 +7,15 @@
 # License-Filename: LICENSE.txt
 #
 
+import os.path
+
 import pytest
 
 from numina.tests.drptest import create_drp_test
 from ..backend import Backend
 from numina.exceptions import NoResultFound
 import numina.types.qc as qc
+
 
 @pytest.fixture
 def backend():
@@ -148,7 +151,7 @@ def test_search_result_id(backend):
     res = backend.search_result_id(node_id, tipo, field, mode=None)
 
     assert isinstance(res.content, DataFrame)
-    assert res.content.filename == 'dum3/reduced_rss.fits'
+    assert res.content.filename == os.path.join('dum3', 'reduced_rss.fits')
 
 
 def test_search_result_id_notfound(backend):
