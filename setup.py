@@ -148,7 +148,7 @@ def setup_package():
         setup_requires=['numpy'],
         tests_require=['pytest'],
         install_requires=[
-            'setuptools',
+            'setuptools>=36.2.1',
             'six>=1.7',
             'numpy',
             'astropy>=2',
