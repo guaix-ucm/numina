@@ -45,7 +45,7 @@ def log_to_history(logger, name):
                 if field:
                     with field.open() as hdulist:
                         hdr = hdulist[0].header
-                        hdr.ascardlist().extend(history_header.ascardlist())
+                        hdr.extend(history_header.cards)
                 return result
             finally:
                 logger.removeHandler(fh)
