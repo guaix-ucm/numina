@@ -12,6 +12,13 @@ from __future__ import print_function
 import numina.util.convert as conv
 
 
+class QueryAttribute(object):
+    def __init__(self, name, tipo, description=""):
+        self.name = name
+        self.type = tipo
+        self.description = description
+
+
 class KeyDefinition(object):
     def __init__(self, key, ext=None, default=None, convert=None):
         self.key = key
