@@ -124,10 +124,11 @@ class DataModel(object):
         values = self.default_mappings()
         more = {} if mappings is None else mappings
         values.update(more)
-        self.extractor = FITSKeyExtractor(values)
-        self.extractor2 = {}
-        self.extractor2['fits'] = FITSKeyExtractor(values)
-        self.extractor2['json'] = None
+
+        self.extractor_map = dict()
+        self.extractor_map['fits'] = FITSKeyExtractor(values)
+        self.extractor_map['json'] = None
+        self.extractor = self.extractor_map['fits']
 
     def default_mappings(self):
         return {
@@ -230,8 +231,9 @@ class DataModel(object):
         extnames = [hdu.header.get('extname', '') for hdu in hdulist[1:]]
         values['name_ext'] = ['PRIMARY'] + extnames
 
+        fits_extractor = self.extractor_map['fits']
         for key in self.meta_dinfo_headers:
-            values[key] = self.extractor.extract(key, hdulist)
+            values[key] = fits_extractor.extract(key, hdulist)
 
         return values
 
@@ -240,4 +242,5 @@ class DataModel(object):
 
     def get_quality_control(self, img):
         """Obtain quality control flag from the image."""
-        return self.extractor.extract('quality_control', img)
+        fits_extractor = self.extractor_map['fits']
+        return fits_extractor.extract('quality_control', img)
