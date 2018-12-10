@@ -62,7 +62,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Numina'
-copyright = u'2010-2018, Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
+copyright = u'2010-2018, Universidad Complutense de Madrid'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -240,8 +240,8 @@ man_pages = [
 # Bibliographic Dublin Core info.
 epub_title = u'Numina'
 epub_author = u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
-epub_publisher = u'Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
-epub_copyright = u'2010-2017, Sergio Pascual, Nicolás Cardiel, Pablo Picazo-Sánchez'
+epub_publisher = u'Universidad Complutense de Madrid'
+epub_copyright = u'2010-2018, Universidad Complutense de Madrid'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
