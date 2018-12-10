@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -287,6 +287,24 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(FollowUpTheRampTestCase))
     return suite
+
+
+def test_simple():
+
+    a = numpy.ones((1,1))
+    base = 2400 * numpy.ones((1, 1))
+    n = 5
+    slope = 2.8
+    cube = numpy.empty((n,1,1))
+    dt = 0.1
+    # times are: [i * dt]
+    for i in range(n):
+        cube[i] = base + slope * dt * a * i
+
+    m = ramp_array(cube, ti=dt*(n-1))
+
+    assert numpy.allclose(m[0][0,0], slope)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')
