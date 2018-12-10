@@ -10,8 +10,8 @@ Numina
 .. image:: https://coveralls.io/repos/guaix-ucm/numina/badge.svg?branch=master&service=github 
     :target: https://coveralls.io/github/guaix-ucm/numina?branch=master 
 
-This is Numina, the data reduction package used by the following GTC
-instruments: EMIR, FRIDA, MEGARA and MIRADAS.
+This is Numina, the data reduction package used by the following
+Gran Telescopio Canarias instruments: EMIR, FRIDA, MEGARA and MIRADAS.
 
 Numina is distributed under GNU GPL, either version 3 of the License, 
 or (at your option) any later version. See the file LICENSE.txt for 
@@ -39,7 +39,7 @@ Additional packages are optionally required:
  - pytest-benchmark (https://github.com/ionelmc/pytest-benchmark/) for 
    benchmarks of certain algorithms
 
-Webpage: https://guaix.fis.ucm.es/projects/numina
+Webpage: https://github.com/guaix-ucm/numina
 Maintainer: sergiopr@fis.ucm.es
 
 

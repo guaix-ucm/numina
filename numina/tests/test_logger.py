@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,14 +7,17 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Unit test for logger'''
+"""Unit test for logger"""
 
 import logging 
 
-from  ..logger import FITSHistoryHandler
+from  ..logger import FITSHistoryHandler, log_to_history
 
 import pytest
 from astropy.io import fits
+
+from numina.types.dataframe import DataFrame
+
 
 @pytest.fixture(scope="function")
 def logger_fits(request):
@@ -47,3 +50,29 @@ def test_fits_history_handler(logger_fits):
     assert(hheaders[1] == logtext2[:72])
     assert(hheaders[2] == logtext2[72:])
 
+
+def test_logger_decorator():
+
+    _logger = logging.getLogger('numina_test_logger')
+
+    class RecipeResult:
+        pass
+
+    class Recipe:
+        @log_to_history(_logger, "some")
+        def decorated_method(self, ri):
+            rr = RecipeResult()
+            img0 = fits.PrimaryHDU()
+            _logger.info("some")
+            _logger.info("other")
+            img = fits.HDUList([img0])
+            some = DataFrame(frame=img)
+            rr.some = some
+            return rr
+
+    recipe = Recipe()
+
+    rr = recipe.decorated_method(None)
+    h = rr.some.open()[0].header
+    assert h['history'][0] == 'some'
+    assert h['history'][1] == 'other'

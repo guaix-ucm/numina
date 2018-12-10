@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2018 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -27,6 +27,8 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+// Define and/not in WIN32
+#include <ciso646>
 
 #include "nu_combine_defs.h"
 
@@ -242,7 +244,19 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
     }
 
     // And pass the data to the combine method
-    if (not function(&data[0], &wdata[0], data.size(), pvalues, vdata)) {
+    double* pfdata = 0;
+    double* pfwdata = 0;
+    /* Getting a pointer to the first element
+       used to work even with empty arrays,
+       not anymore
+    */
+    if (data.size() > 0)
+    {
+      pfdata = &data[0];
+      pfwdata = &wdata[0];
+    }
+
+    if (not function(pfdata, pfwdata, data.size(), pvalues, vdata)) {
       if (not PyErr_Occurred())
         PyErr_SetString(PyExc_RuntimeError, "unknown error in combine method");
       goto exit;

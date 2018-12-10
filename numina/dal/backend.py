@@ -158,6 +158,7 @@ class Backend(Dict2DAL):
 
         self.db_tables['oblocks'] = self.ob_table
         self.db_tables['requirements'] = self.req_table
+        self.prod_table = self.db_tables['products']
         # self.db_tables['obsi'] = self.ob_ids
 
     def dump_data(self):
@@ -256,19 +257,26 @@ class Backend(Dict2DAL):
             # val['content'] = serialized['values'][key]
             # result_reg['values'].append(val)
 
+            DB_PRODUCT_KEYS = [
+                'instrument',
+                'observation_date',
+                'uuid',
+                'quality_control'
+            ]
+
             if prod.type.isproduct():
                 newprod = self.new_product_id()
                 _logger.debug('product_id=%d in backend', newprod)
                 internal_value = getattr(result, key)
-                origin_metadata = internal_value.meta['origin']
+                ometa = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
                 prod_reg = {
                     'id': newprod,
                     'result_id': newix,
                     'qc': task.result.qc.name,
                     'instrument': task.request_runinfo['instrument'],
                     'time_create': task.time_end.strftime('%FT%T'),
-                    'time_obs': origin_metadata['observation_date'].strftime('%FT%T'),
-                    'tags': internal_value.meta['tags'],
+                    'time_obs': ometa['observation_date'].strftime('%FT%T'),
+                    'tags': ometa['tags'],
                     'oblock_id': task.request_params['oblock_id'],
                     'type': prod.type.name(),
                     'type_fqn': fully_qualified_name(prod.type),

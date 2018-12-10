@@ -274,7 +274,7 @@ class Dict2DAL(BaseDictDAL):
         from numina.user.helpers import ProcessingTask
 
         newidx =  self.new_task_id(request, request_params)
-        _logger.debug('create task=%d', newidx)
+        _logger.debug('create task=%s', newidx)
         task = ProcessingTask()
         task.id = newidx
         task.request = request
@@ -622,7 +622,7 @@ class HybridDAL(Dict2DAL):
         from numina.user.helpers import ProcessingTask
 
         newidx =  self.new_task_id(request, request_params)
-        _logger.debug('create task=%d', newidx)
+        _logger.debug('create task=%s', newidx)
         task = ProcessingTask()
         task.id = newidx
         task.request = request

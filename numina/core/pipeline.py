@@ -255,9 +255,10 @@ class InstrumentDRP(object):
 
         # get first possible image
         ref = obresult.get_sample_frame()
+        extr = self.datamodel.extractor_map['fits']
         if ref:
             # get INSCONF configuration
-            result = self.datamodel.extractor.extract('insconf', ref)
+            result = extr.extract('insconf', ref)
             if result:
                 # found the keyword, try to match
                 logger.debug('found insconf config uuid=%s', result)
@@ -273,7 +274,7 @@ class InstrumentDRP(object):
                         raise KeyError('insconf {} does not match any config'.format(result))
 
             # If not, try to match by DATE
-            date_obs = self.datamodel.extractor.extract('observation_date', ref)
+            date_obs = extr.extract('observation_date', ref)
             for key, conf in self.configurations.items():
                 if key == 'default':
                     # skip default

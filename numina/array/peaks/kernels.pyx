@@ -3,18 +3,13 @@ from cpython.version cimport PY_MAJOR_VERSION, PY_VERSION_HEX
 
 from libc.stdlib cimport malloc, free
 
+# PyCapsule exits in Py3 and Py2.7
+# But scipy use PyCObject in Py2.7
+# and PyCapsule in Py3
 
-if PY_MAJOR_VERSION >= 3:
-    # PyCapsule exits in Py3 and Py2.7
-    # But scipy use PyCObject in Py2.7
-    # and PyCapsule in Py3
-
-    from cpython.pycapsule cimport PyCapsule_New
-    from cpython.pycapsule cimport PyCapsule_GetContext
-    from cpython.pycapsule cimport PyCapsule_SetContext
-
-if PY_MAJOR_VERSION < 3:
-    from cpython.cobject cimport PyCObject_FromVoidPtrAndDesc
+from cpython.pycapsule cimport PyCapsule_New
+from cpython.pycapsule cimport PyCapsule_GetContext
+from cpython.pycapsule cimport PyCapsule_SetContext
 
 
 # Kernel function is the same
@@ -82,45 +77,23 @@ cdef void _destructor_cap(object cap):
     free(cdata)
 
 
-if PY_MAJOR_VERSION < 3:
-    def kernel_peak_function(double threshold=0.0, int fpeak=1):
+def kernel_peak_function(double threshold=0.0, int fpeak=1):
 
-        cdef object result
-        cdef double *data
+    cdef object result
+    cdef double *data
 
-        data = <double*>malloc(2 * sizeof(double))
-        if data is NULL:
-            raise MemoryError()
+    data = <double*>malloc(2 * sizeof(double))
+    if data is NULL:
+        raise MemoryError()
 
-        data[0] = threshold
-        # A value of 1 allows a peak with 2 equal pixels
-        data[1] = fpeak
+    data[0] = threshold
+    # A value of 1 allows a peak with 2 equal pixels
+    data[1] = fpeak
 
-        result = PyCObject_FromVoidPtrAndDesc(&_kernel_function,
-                                              data,
-                                              &_destructor_cobj)
+    result = PyCapsule_New(&_kernel_function,
+                           NULL, # if we set a name here, generic_f doesn't work
+                           _destructor_cap)
 
-        return result
+    PyCapsule_SetContext(result, data)
 
-
-if PY_MAJOR_VERSION >= 3:
-    def kernel_peak_function(double threshold=0.0, int fpeak=1):
-
-        cdef object result
-        cdef double *data
-
-        data = <double*>malloc(2 * sizeof(double))
-        if data is NULL:
-            raise MemoryError()
-
-        data[0] = threshold
-        # A value of 1 allows a peak with 2 equal pixels
-        data[1] = fpeak
-
-        result = PyCapsule_New(&_kernel_function,
-                               NULL, # if we set a name here, generic_f doesn't work
-                               _destructor_cap)
-
-        PyCapsule_SetContext(result, data)
-
-        return result
+    return result

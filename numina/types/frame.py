@@ -104,9 +104,9 @@ class DataFrameType(DataType):
         objl = self.convert(obj)
 
         result = super(DataFrameType, self).extract_db_info(objl, keys)
+        ext = self.datamodel.extractor_map['fits']
         if objl:
             with objl.open() as hdulist:
-                ext = self.datamodel.extractor
                 for field in keys:
                     result[field] = ext.extract(field, hdulist)
 

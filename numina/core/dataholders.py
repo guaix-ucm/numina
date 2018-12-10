@@ -61,7 +61,7 @@ class EntryHolder(object):
             if self.choices and (cval not in self.choices):
                 errmsg = '{} not in {}'.format(cval, self.choices)
                 raise numina.exceptions.ValidationError(errmsg)
-        except numina.exceptions.ValidationError as err:
+        except (ValueError, TypeError, numina.exceptions.ValidationError) as err:
 
             if len(err.args) == 0:
                 errmsg = 'UNDEFINED ERROR'
@@ -72,7 +72,8 @@ class EntryHolder(object):
 
             msg = '"{}": {}'.format(self.dest, errmsg)
             newargs = (msg, ) + rem
-            raise numina.exceptions.ValidationError(*newargs)
+            err.args = newargs
+            raise
 
         instance._numina_desc_val[self.dest] = cval
 

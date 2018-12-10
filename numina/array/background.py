@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -35,7 +35,7 @@ def _interpolation(z, sx, sy, mx, my):
 
 
 def background_estimator(bdata):
-    '''Estimate the background in a 2D array'''
+    """Estimate the background in a 2D array"""
 
     crowded = False
 
@@ -62,11 +62,10 @@ def background_estimator(bdata):
 
 
 def create_background_map(data, bsx, bsy):
-    '''Create a background map with a given mesh size'''
+    """Create a background map with a given mesh size"""
     sx, sy = data.shape
-    mx = sx / bsx
-    my = sy / bsy
-
+    mx = sx // bsx
+    my = sy // bsy
     comp = []
     rms = []
     # Rows

@@ -25,11 +25,14 @@ class RecipeInOut(object):
         super(RecipeInOut, self).__init__()
         # Used to hold set values
         self._numina_desc_val = {}
-
+        all_msg_errors = []
         for key, val in kwds.items():
-            setattr(self, key, kwds[key])
+            try:
+                setattr(self, key, kwds[key])
+            except (ValueError, TypeError) as err:
+                all_msg_errors.append(err.args[0])
 
-        self._finalize()
+        self._finalize(all_msg_errors)
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -38,18 +41,19 @@ class RecipeInOut(object):
             full.append('%s=%r' % (key, val))
         return '%s(%s)' % (sclass, ', '.join(full))
 
-    def _finalize(self):
+    def _finalize(self, all_msg_errors=None):
         """Access all the instance descriptors
 
         This wil trigger an exception if a required
         parameter is not set
         """
-        all_msg_errors = []
+        if all_msg_errors is None:
+            all_msg_errors = []
 
         for key in self.stored():
             try:
                 getattr(self, key)
-            except ValueError as err:
+            except (ValueError, TypeError) as err:
                 all_msg_errors.append(err.args[0])
 
         # Raises a list of all the missing entries

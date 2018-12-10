@@ -1,0 +1,9 @@
+numpy
+astropy
+scipy>=0.19
+PyYaml
+matplotlib
+python-dateutil
+Cython
+pytest
+enum34; python_version<'3.4'

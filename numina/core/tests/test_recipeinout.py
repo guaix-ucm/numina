@@ -13,7 +13,7 @@ import numina.types.qc as qct
 import numina.types.datatype as df
 import numina.core.dataholders as dh
 
-from ..recipeinout import RecipeResultQC
+from ..recipeinout import RecipeResultQC, RecipeInput
 
 
 class RRTest(RecipeResultQC):
@@ -74,3 +74,12 @@ def test_store_to(qc):
 
     saveres = m.store_to(where)
     assert saveres == exp
+
+
+def test_capture_conversion_error():
+
+    class RRTest1(RecipeInput):
+        param1 = dh.Parameter(value=[100], description='some1')
+
+    with pytest.raises(ValueError):
+        RRTest1(param1=100)

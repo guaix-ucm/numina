@@ -148,11 +148,11 @@ def setup_package():
         setup_requires=['numpy'],
         tests_require=['pytest'],
         install_requires=[
-            'setuptools',
+            'setuptools>=36.2.1',
             'six>=1.7',
             'numpy',
             'astropy>=2',
-            'scipy', 'PyYaml',
+            'scipy>=0.19', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',
             'python-dateutil'
@@ -166,6 +166,7 @@ def setup_package():
             "Programming Language :: Python :: 3.4",
             "Programming Language :: Python :: 3.5",
             "Programming Language :: Python :: 3.6",
+            "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: Implementation :: CPython",
             'Development Status :: 3 - Alpha',
             "Environment :: Console",

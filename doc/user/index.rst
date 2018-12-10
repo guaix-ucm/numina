@@ -5,6 +5,14 @@
 Numina User Guide
 #################
 
+
+This is Numina, the data reduction package used by the following GTC
+instruments: EMIR, FRIDA, MEGARA and MIRADAS.
+
+Numina is distributed under GNU GPL, either version 3 of the License,
+or (at your option) any later version. See the file LICENSE.txt
+for details.
+
 This guide is intended as an introductory overview of Numina and
 explains how to install and make use of the most important features. For
 detailed reference documentation of the functions and
@@ -19,7 +27,7 @@ classes contained in the package, see the :ref:`reference`.
 .. toctree::
    :maxdepth: 2
 
-   intro
+   install
    deploy
    solaris
    cli

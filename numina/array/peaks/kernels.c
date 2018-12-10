@@ -968,11 +968,8 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from 'cpython.pycapsule' */
 
-/* Module declarations from 'cpython.cobject' */
-
 /* Module declarations from 'numina.array.peaks._kernels' */
 static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *, int, double *, void *); /*proto*/
-static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cobj(void *, void *); /*proto*/
 static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cap(PyObject *); /*proto*/
 #define __Pyx_MODULE_NAME "numina.array.peaks._kernels"
 extern int __pyx_module_is_main_numina__array__peaks___kernels;
@@ -1006,14 +1003,11 @@ static PyObject *__pyx_n_s_result;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_threshold;
 static PyObject *__pyx_pf_6numina_5array_5peaks_8_kernels_kernel_peak_function(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_threshold, int __pyx_v_fpeak); /* proto */
-static PyObject *__pyx_pf_6numina_5array_5peaks_8_kernels_2kernel_peak_function(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_threshold, int __pyx_v_fpeak); /* proto */
 static PyObject *__pyx_tuple_;
-static PyObject *__pyx_tuple__3;
 static PyObject *__pyx_codeobj__2;
-static PyObject *__pyx_codeobj__4;
 /* Late includes */
 
-/* "numina/array/peaks/kernels.pyx":21
+/* "numina/array/peaks/kernels.pyx":16
  * 
  * # Kernel function is the same
  * cdef int _kernel_function(double* buffer, int filter_size,             # <<<<<<<<<<<<<<
@@ -1039,7 +1033,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   int __pyx_t_6;
   __Pyx_RefNannySetupContext("_kernel_function", 0);
 
-  /* "numina/array/peaks/kernels.pyx":23
+  /* "numina/array/peaks/kernels.pyx":18
  * cdef int _kernel_function(double* buffer, int filter_size,
  *                           double* return_value, void* cb):
  *     cdef double* data = <double*> cb             # <<<<<<<<<<<<<<
@@ -1048,7 +1042,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_data = ((double *)__pyx_v_cb);
 
-  /* "numina/array/peaks/kernels.pyx":24
+  /* "numina/array/peaks/kernels.pyx":19
  *                           double* return_value, void* cb):
  *     cdef double* data = <double*> cb
  *     cdef int nmed = filter_size / 2             # <<<<<<<<<<<<<<
@@ -1057,7 +1051,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_nmed = __Pyx_div_long(__pyx_v_filter_size, 2);
 
-  /* "numina/array/peaks/kernels.pyx":25
+  /* "numina/array/peaks/kernels.pyx":20
  *     cdef double* data = <double*> cb
  *     cdef int nmed = filter_size / 2
  *     cdef int i = 0             # <<<<<<<<<<<<<<
@@ -1066,7 +1060,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_i = 0;
 
-  /* "numina/array/peaks/kernels.pyx":26
+  /* "numina/array/peaks/kernels.pyx":21
  *     cdef int nmed = filter_size / 2
  *     cdef int i = 0
  *     cdef int start = 0             # <<<<<<<<<<<<<<
@@ -1075,7 +1069,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_start = 0;
 
-  /* "numina/array/peaks/kernels.pyx":27
+  /* "numina/array/peaks/kernels.pyx":22
  *     cdef int i = 0
  *     cdef int start = 0
  *     cdef int mcount = 0             # <<<<<<<<<<<<<<
@@ -1084,7 +1078,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_mcount = 0;
 
-  /* "numina/array/peaks/kernels.pyx":28
+  /* "numina/array/peaks/kernels.pyx":23
  *     cdef int start = 0
  *     cdef int mcount = 0
  *     cdef double th = data[0]             # <<<<<<<<<<<<<<
@@ -1093,7 +1087,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_th = (__pyx_v_data[0]);
 
-  /* "numina/array/peaks/kernels.pyx":29
+  /* "numina/array/peaks/kernels.pyx":24
  *     cdef int mcount = 0
  *     cdef double th = data[0]
  *     cdef int limit = <int>data[1]             # <<<<<<<<<<<<<<
@@ -1102,7 +1096,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   __pyx_v_limit = ((int)(__pyx_v_data[1]));
 
-  /* "numina/array/peaks/kernels.pyx":31
+  /* "numina/array/peaks/kernels.pyx":26
  *     cdef int limit = <int>data[1]
  * 
  *     if buffer[nmed] < th:             # <<<<<<<<<<<<<<
@@ -1112,7 +1106,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   __pyx_t_1 = (((__pyx_v_buffer[__pyx_v_nmed]) < __pyx_v_th) != 0);
   if (__pyx_t_1) {
 
-    /* "numina/array/peaks/kernels.pyx":32
+    /* "numina/array/peaks/kernels.pyx":27
  * 
  *     if buffer[nmed] < th:
  *         return_value[0] = 0.0             # <<<<<<<<<<<<<<
@@ -1121,7 +1115,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
     (__pyx_v_return_value[0]) = 0.0;
 
-    /* "numina/array/peaks/kernels.pyx":33
+    /* "numina/array/peaks/kernels.pyx":28
  *     if buffer[nmed] < th:
  *         return_value[0] = 0.0
  *         return 1             # <<<<<<<<<<<<<<
@@ -1131,7 +1125,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     __pyx_r = 1;
     goto __pyx_L0;
 
-    /* "numina/array/peaks/kernels.pyx":31
+    /* "numina/array/peaks/kernels.pyx":26
  *     cdef int limit = <int>data[1]
  * 
  *     if buffer[nmed] < th:             # <<<<<<<<<<<<<<
@@ -1140,7 +1134,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   }
 
-  /* "numina/array/peaks/kernels.pyx":36
+  /* "numina/array/peaks/kernels.pyx":31
  * 
  *     # Count contiguous equal values to the right
  *     for i in range(nmed, filter_size-1):             # <<<<<<<<<<<<<<
@@ -1152,7 +1146,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   for (__pyx_t_4 = __pyx_v_nmed; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_i = __pyx_t_4;
 
-    /* "numina/array/peaks/kernels.pyx":39
+    /* "numina/array/peaks/kernels.pyx":34
  *         # print '0-',i, i+1
  *         # print '0-',buffer[i], buffer[i+1]
  *         if buffer[i] == buffer[i+1]:             # <<<<<<<<<<<<<<
@@ -1162,7 +1156,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     __pyx_t_1 = (((__pyx_v_buffer[__pyx_v_i]) == (__pyx_v_buffer[(__pyx_v_i + 1)])) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/peaks/kernels.pyx":40
+      /* "numina/array/peaks/kernels.pyx":35
  *         # print '0-',buffer[i], buffer[i+1]
  *         if buffer[i] == buffer[i+1]:
  *             mcount += 1             # <<<<<<<<<<<<<<
@@ -1171,7 +1165,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
       __pyx_v_mcount = (__pyx_v_mcount + 1);
 
-      /* "numina/array/peaks/kernels.pyx":41
+      /* "numina/array/peaks/kernels.pyx":36
  *         if buffer[i] == buffer[i+1]:
  *             mcount += 1
  *             start = i + 1             # <<<<<<<<<<<<<<
@@ -1180,7 +1174,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
       __pyx_v_start = (__pyx_v_i + 1);
 
-      /* "numina/array/peaks/kernels.pyx":39
+      /* "numina/array/peaks/kernels.pyx":34
  *         # print '0-',i, i+1
  *         # print '0-',buffer[i], buffer[i+1]
  *         if buffer[i] == buffer[i+1]:             # <<<<<<<<<<<<<<
@@ -1190,7 +1184,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
       goto __pyx_L6;
     }
 
-    /* "numina/array/peaks/kernels.pyx":43
+    /* "numina/array/peaks/kernels.pyx":38
  *             start = i + 1
  *         else:
  *             start = i             # <<<<<<<<<<<<<<
@@ -1200,7 +1194,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     /*else*/ {
       __pyx_v_start = __pyx_v_i;
 
-      /* "numina/array/peaks/kernels.pyx":44
+      /* "numina/array/peaks/kernels.pyx":39
  *         else:
  *             start = i
  *             break             # <<<<<<<<<<<<<<
@@ -1213,7 +1207,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   }
   __pyx_L5_break:;
 
-  /* "numina/array/peaks/kernels.pyx":46
+  /* "numina/array/peaks/kernels.pyx":41
  *             break
  * 
  *     for i in range(start, filter_size-1):             # <<<<<<<<<<<<<<
@@ -1225,7 +1219,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   for (__pyx_t_4 = __pyx_v_start; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
     __pyx_v_i = __pyx_t_4;
 
-    /* "numina/array/peaks/kernels.pyx":47
+    /* "numina/array/peaks/kernels.pyx":42
  * 
  *     for i in range(start, filter_size-1):
  *         if buffer[i] <= buffer[i+1]:             # <<<<<<<<<<<<<<
@@ -1235,7 +1229,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     __pyx_t_1 = (((__pyx_v_buffer[__pyx_v_i]) <= (__pyx_v_buffer[(__pyx_v_i + 1)])) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/peaks/kernels.pyx":48
+      /* "numina/array/peaks/kernels.pyx":43
  *     for i in range(start, filter_size-1):
  *         if buffer[i] <= buffer[i+1]:
  *             return_value[0] = 0.0             # <<<<<<<<<<<<<<
@@ -1244,7 +1238,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
       (__pyx_v_return_value[0]) = 0.0;
 
-      /* "numina/array/peaks/kernels.pyx":49
+      /* "numina/array/peaks/kernels.pyx":44
  *         if buffer[i] <= buffer[i+1]:
  *             return_value[0] = 0.0
  *             return 1             # <<<<<<<<<<<<<<
@@ -1254,7 +1248,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
       __pyx_r = 1;
       goto __pyx_L0;
 
-      /* "numina/array/peaks/kernels.pyx":47
+      /* "numina/array/peaks/kernels.pyx":42
  * 
  *     for i in range(start, filter_size-1):
  *         if buffer[i] <= buffer[i+1]:             # <<<<<<<<<<<<<<
@@ -1264,7 +1258,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     }
   }
 
-  /* "numina/array/peaks/kernels.pyx":52
+  /* "numina/array/peaks/kernels.pyx":47
  * 
  *     # Count contiguous equal values to the left
  *     for i in range(nmed, 0, -1):             # <<<<<<<<<<<<<<
@@ -1274,7 +1268,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   for (__pyx_t_4 = __pyx_v_nmed; __pyx_t_4 > 0; __pyx_t_4-=1) {
     __pyx_v_i = __pyx_t_4;
 
-    /* "numina/array/peaks/kernels.pyx":53
+    /* "numina/array/peaks/kernels.pyx":48
  *     # Count contiguous equal values to the left
  *     for i in range(nmed, 0, -1):
  *         if buffer[i] == buffer[i-1]:             # <<<<<<<<<<<<<<
@@ -1284,7 +1278,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     __pyx_t_1 = (((__pyx_v_buffer[__pyx_v_i]) == (__pyx_v_buffer[(__pyx_v_i - 1)])) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/peaks/kernels.pyx":54
+      /* "numina/array/peaks/kernels.pyx":49
  *     for i in range(nmed, 0, -1):
  *         if buffer[i] == buffer[i-1]:
  *             mcount += 1             # <<<<<<<<<<<<<<
@@ -1293,7 +1287,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
       __pyx_v_mcount = (__pyx_v_mcount + 1);
 
-      /* "numina/array/peaks/kernels.pyx":55
+      /* "numina/array/peaks/kernels.pyx":50
  *         if buffer[i] == buffer[i-1]:
  *             mcount += 1
  *             start = i - 1             # <<<<<<<<<<<<<<
@@ -1302,7 +1296,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
       __pyx_v_start = (__pyx_v_i - 1);
 
-      /* "numina/array/peaks/kernels.pyx":53
+      /* "numina/array/peaks/kernels.pyx":48
  *     # Count contiguous equal values to the left
  *     for i in range(nmed, 0, -1):
  *         if buffer[i] == buffer[i-1]:             # <<<<<<<<<<<<<<
@@ -1312,7 +1306,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
       goto __pyx_L12;
     }
 
-    /* "numina/array/peaks/kernels.pyx":57
+    /* "numina/array/peaks/kernels.pyx":52
  *             start = i - 1
  *         else:
  *             start = i             # <<<<<<<<<<<<<<
@@ -1322,7 +1316,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     /*else*/ {
       __pyx_v_start = __pyx_v_i;
 
-      /* "numina/array/peaks/kernels.pyx":58
+      /* "numina/array/peaks/kernels.pyx":53
  *         else:
  *             start = i
  *             break             # <<<<<<<<<<<<<<
@@ -1335,7 +1329,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   }
   __pyx_L11_break:;
 
-  /* "numina/array/peaks/kernels.pyx":60
+  /* "numina/array/peaks/kernels.pyx":55
  *             break
  * 
  *     for i in range(0, start):             # <<<<<<<<<<<<<<
@@ -1347,7 +1341,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
     __pyx_v_i = __pyx_t_6;
 
-    /* "numina/array/peaks/kernels.pyx":61
+    /* "numina/array/peaks/kernels.pyx":56
  * 
  *     for i in range(0, start):
  *         if buffer[i] >= buffer[i+1]:             # <<<<<<<<<<<<<<
@@ -1357,7 +1351,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     __pyx_t_1 = (((__pyx_v_buffer[__pyx_v_i]) >= (__pyx_v_buffer[(__pyx_v_i + 1)])) != 0);
     if (__pyx_t_1) {
 
-      /* "numina/array/peaks/kernels.pyx":62
+      /* "numina/array/peaks/kernels.pyx":57
  *     for i in range(0, start):
  *         if buffer[i] >= buffer[i+1]:
  *             return_value[0] = 0.0             # <<<<<<<<<<<<<<
@@ -1366,7 +1360,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
       (__pyx_v_return_value[0]) = 0.0;
 
-      /* "numina/array/peaks/kernels.pyx":63
+      /* "numina/array/peaks/kernels.pyx":58
  *         if buffer[i] >= buffer[i+1]:
  *             return_value[0] = 0.0
  *             return 1             # <<<<<<<<<<<<<<
@@ -1376,7 +1370,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
       __pyx_r = 1;
       goto __pyx_L0;
 
-      /* "numina/array/peaks/kernels.pyx":61
+      /* "numina/array/peaks/kernels.pyx":56
  * 
  *     for i in range(0, start):
  *         if buffer[i] >= buffer[i+1]:             # <<<<<<<<<<<<<<
@@ -1386,7 +1380,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     }
   }
 
-  /* "numina/array/peaks/kernels.pyx":67
+  /* "numina/array/peaks/kernels.pyx":62
  *     # Reject peak if it has too much
  *     # flat values
  *     if mcount > limit:             # <<<<<<<<<<<<<<
@@ -1396,7 +1390,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   __pyx_t_1 = ((__pyx_v_mcount > __pyx_v_limit) != 0);
   if (__pyx_t_1) {
 
-    /* "numina/array/peaks/kernels.pyx":68
+    /* "numina/array/peaks/kernels.pyx":63
  *     # flat values
  *     if mcount > limit:
  *         return_value[0] = 0.0             # <<<<<<<<<<<<<<
@@ -1405,7 +1399,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
     (__pyx_v_return_value[0]) = 0.0;
 
-    /* "numina/array/peaks/kernels.pyx":69
+    /* "numina/array/peaks/kernels.pyx":64
  *     if mcount > limit:
  *         return_value[0] = 0.0
  *         return 1             # <<<<<<<<<<<<<<
@@ -1415,7 +1409,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
     __pyx_r = 1;
     goto __pyx_L0;
 
-    /* "numina/array/peaks/kernels.pyx":67
+    /* "numina/array/peaks/kernels.pyx":62
  *     # Reject peak if it has too much
  *     # flat values
  *     if mcount > limit:             # <<<<<<<<<<<<<<
@@ -1424,7 +1418,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   }
 
-  /* "numina/array/peaks/kernels.pyx":71
+  /* "numina/array/peaks/kernels.pyx":66
  *         return 1
  * 
  *     return_value[0] = 1.0             # <<<<<<<<<<<<<<
@@ -1433,7 +1427,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
  */
   (__pyx_v_return_value[0]) = 1.0;
 
-  /* "numina/array/peaks/kernels.pyx":72
+  /* "numina/array/peaks/kernels.pyx":67
  * 
  *     return_value[0] = 1.0
  *     return 1             # <<<<<<<<<<<<<<
@@ -1443,7 +1437,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   __pyx_r = 1;
   goto __pyx_L0;
 
-  /* "numina/array/peaks/kernels.pyx":21
+  /* "numina/array/peaks/kernels.pyx":16
  * 
  * # Kernel function is the same
  * cdef int _kernel_function(double* buffer, int filter_size,             # <<<<<<<<<<<<<<
@@ -1457,7 +1451,7 @@ static int __pyx_f_6numina_5array_5peaks_8_kernels__kernel_function(double *__py
   return __pyx_r;
 }
 
-/* "numina/array/peaks/kernels.pyx":75
+/* "numina/array/peaks/kernels.pyx":70
  * 
  * 
  * cdef void _destructor_cobj(void* cobject, void *kernel_data):             # <<<<<<<<<<<<<<
@@ -1469,7 +1463,7 @@ static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cobj(CYTHON_UNUS
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("_destructor_cobj", 0);
 
-  /* "numina/array/peaks/kernels.pyx":76
+  /* "numina/array/peaks/kernels.pyx":71
  * 
  * cdef void _destructor_cobj(void* cobject, void *kernel_data):
  *     free(kernel_data)             # <<<<<<<<<<<<<<
@@ -1478,7 +1472,7 @@ static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cobj(CYTHON_UNUS
  */
   free(__pyx_v_kernel_data);
 
-  /* "numina/array/peaks/kernels.pyx":75
+  /* "numina/array/peaks/kernels.pyx":70
  * 
  * 
  * cdef void _destructor_cobj(void* cobject, void *kernel_data):             # <<<<<<<<<<<<<<
@@ -1490,7 +1484,7 @@ static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cobj(CYTHON_UNUS
   __Pyx_RefNannyFinishContext();
 }
 
-/* "numina/array/peaks/kernels.pyx":79
+/* "numina/array/peaks/kernels.pyx":74
  * 
  * 
  * cdef void _destructor_cap(object cap):             # <<<<<<<<<<<<<<
@@ -1504,17 +1498,17 @@ static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cap(PyObject *__
   void *__pyx_t_1;
   __Pyx_RefNannySetupContext("_destructor_cap", 0);
 
-  /* "numina/array/peaks/kernels.pyx":81
+  /* "numina/array/peaks/kernels.pyx":76
  * cdef void _destructor_cap(object cap):
  *     cdef void *cdata
  *     cdata = PyCapsule_GetContext(cap)             # <<<<<<<<<<<<<<
  *     free(cdata)
  * 
  */
-  __pyx_t_1 = PyCapsule_GetContext(__pyx_v_cap); if (unlikely(__pyx_t_1 == ((void *)NULL) && PyErr_Occurred())) __PYX_ERR(0, 81, __pyx_L1_error)
+  __pyx_t_1 = PyCapsule_GetContext(__pyx_v_cap); if (unlikely(__pyx_t_1 == ((void *)NULL) && PyErr_Occurred())) __PYX_ERR(0, 76, __pyx_L1_error)
   __pyx_v_cdata = __pyx_t_1;
 
-  /* "numina/array/peaks/kernels.pyx":82
+  /* "numina/array/peaks/kernels.pyx":77
  *     cdef void *cdata
  *     cdata = PyCapsule_GetContext(cap)
  *     free(cdata)             # <<<<<<<<<<<<<<
@@ -1523,7 +1517,7 @@ static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cap(PyObject *__
  */
   free(__pyx_v_cdata);
 
-  /* "numina/array/peaks/kernels.pyx":79
+  /* "numina/array/peaks/kernels.pyx":74
  * 
  * 
  * cdef void _destructor_cap(object cap):             # <<<<<<<<<<<<<<
@@ -1539,12 +1533,12 @@ static void __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cap(PyObject *__
   __Pyx_RefNannyFinishContext();
 }
 
-/* "numina/array/peaks/kernels.pyx":86
+/* "numina/array/peaks/kernels.pyx":80
  * 
- * if PY_MAJOR_VERSION < 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
  * 
- *         cdef object result
+ * def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef object result
  */
 
 /* Python wrapper */
@@ -1585,7 +1579,7 @@ static PyObject *__pyx_pw_6numina_5array_5peaks_8_kernels_1kernel_peak_function(
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "kernel_peak_function") < 0)) __PYX_ERR(0, 86, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "kernel_peak_function") < 0)) __PYX_ERR(0, 80, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -1598,19 +1592,19 @@ static PyObject *__pyx_pw_6numina_5array_5peaks_8_kernels_1kernel_peak_function(
       }
     }
     if (values[0]) {
-      __pyx_v_threshold = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_threshold == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 86, __pyx_L3_error)
+      __pyx_v_threshold = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_threshold == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 80, __pyx_L3_error)
     } else {
       __pyx_v_threshold = ((double)0.0);
     }
     if (values[1]) {
-      __pyx_v_fpeak = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_fpeak == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 86, __pyx_L3_error)
+      __pyx_v_fpeak = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_fpeak == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 80, __pyx_L3_error)
     } else {
       __pyx_v_fpeak = ((int)1);
     }
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("kernel_peak_function", 0, 0, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 86, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("kernel_peak_function", 0, 0, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 80, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("numina.array.peaks._kernels.kernel_peak_function", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -1630,293 +1624,101 @@ static PyObject *__pyx_pf_6numina_5array_5peaks_8_kernels_kernel_peak_function(C
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   PyObject *__pyx_t_2 = NULL;
-  __Pyx_RefNannySetupContext("kernel_peak_function", 0);
-
-  /* "numina/array/peaks/kernels.pyx":91
- *         cdef double *data
- * 
- *         data = <double*>malloc(2 * sizeof(double))             # <<<<<<<<<<<<<<
- *         if data is NULL:
- *             raise MemoryError()
- */
-  __pyx_v_data = ((double *)malloc((2 * (sizeof(double)))));
-
-  /* "numina/array/peaks/kernels.pyx":92
- * 
- *         data = <double*>malloc(2 * sizeof(double))
- *         if data is NULL:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
- * 
- */
-  __pyx_t_1 = ((__pyx_v_data == NULL) != 0);
-  if (unlikely(__pyx_t_1)) {
-
-    /* "numina/array/peaks/kernels.pyx":93
- *         data = <double*>malloc(2 * sizeof(double))
- *         if data is NULL:
- *             raise MemoryError()             # <<<<<<<<<<<<<<
- * 
- *         data[0] = threshold
- */
-    PyErr_NoMemory(); __PYX_ERR(0, 93, __pyx_L1_error)
-
-    /* "numina/array/peaks/kernels.pyx":92
- * 
- *         data = <double*>malloc(2 * sizeof(double))
- *         if data is NULL:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
- * 
- */
-  }
-
-  /* "numina/array/peaks/kernels.pyx":95
- *             raise MemoryError()
- * 
- *         data[0] = threshold             # <<<<<<<<<<<<<<
- *         # A value of 1 allows a peak with 2 equal pixels
- *         data[1] = fpeak
- */
-  (__pyx_v_data[0]) = __pyx_v_threshold;
-
-  /* "numina/array/peaks/kernels.pyx":97
- *         data[0] = threshold
- *         # A value of 1 allows a peak with 2 equal pixels
- *         data[1] = fpeak             # <<<<<<<<<<<<<<
- * 
- *         result = PyCObject_FromVoidPtrAndDesc(&_kernel_function,
- */
-  (__pyx_v_data[1]) = __pyx_v_fpeak;
-
-  /* "numina/array/peaks/kernels.pyx":99
- *         data[1] = fpeak
- * 
- *         result = PyCObject_FromVoidPtrAndDesc(&_kernel_function,             # <<<<<<<<<<<<<<
- *                                               data,
- *                                               &_destructor_cobj)
- */
-  __pyx_t_2 = PyCObject_FromVoidPtrAndDesc((&__pyx_f_6numina_5array_5peaks_8_kernels__kernel_function), __pyx_v_data, (&__pyx_f_6numina_5array_5peaks_8_kernels__destructor_cobj)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 99, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  __pyx_v_result = __pyx_t_2;
-  __pyx_t_2 = 0;
-
-  /* "numina/array/peaks/kernels.pyx":103
- *                                               &_destructor_cobj)
- * 
- *         return result             # <<<<<<<<<<<<<<
- * 
- * 
- */
-  __Pyx_XDECREF(__pyx_r);
-  __Pyx_INCREF(__pyx_v_result);
-  __pyx_r = __pyx_v_result;
-  goto __pyx_L0;
-
-  /* "numina/array/peaks/kernels.pyx":86
- * 
- * if PY_MAJOR_VERSION < 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
- * 
- *         cdef object result
- */
-
-  /* function exit code */
-  __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
-  __Pyx_AddTraceback("numina.array.peaks._kernels.kernel_peak_function", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __pyx_r = NULL;
-  __pyx_L0:;
-  __Pyx_XDECREF(__pyx_v_result);
-  __Pyx_XGIVEREF(__pyx_r);
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-/* "numina/array/peaks/kernels.pyx":107
- * 
- * if PY_MAJOR_VERSION >= 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
- * 
- *         cdef object result
- */
-
-/* Python wrapper */
-static PyObject *__pyx_pw_6numina_5array_5peaks_8_kernels_3kernel_peak_function(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_6numina_5array_5peaks_8_kernels_3kernel_peak_function = {"kernel_peak_function", (PyCFunction)__pyx_pw_6numina_5array_5peaks_8_kernels_3kernel_peak_function, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_6numina_5array_5peaks_8_kernels_3kernel_peak_function(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  double __pyx_v_threshold;
-  int __pyx_v_fpeak;
-  PyObject *__pyx_r = 0;
-  __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("kernel_peak_function (wrapper)", 0);
-  {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_threshold,&__pyx_n_s_fpeak,0};
-    PyObject* values[2] = {0,0};
-    if (unlikely(__pyx_kwds)) {
-      Py_ssize_t kw_args;
-      const Py_ssize_t pos_args = PyTuple_GET_SIZE(__pyx_args);
-      switch (pos_args) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-      kw_args = PyDict_Size(__pyx_kwds);
-      switch (pos_args) {
-        case  0:
-        if (kw_args > 0) {
-          PyObject* value = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_threshold);
-          if (value) { values[0] = value; kw_args--; }
-        }
-        CYTHON_FALLTHROUGH;
-        case  1:
-        if (kw_args > 0) {
-          PyObject* value = __Pyx_PyDict_GetItemStr(__pyx_kwds, __pyx_n_s_fpeak);
-          if (value) { values[1] = value; kw_args--; }
-        }
-      }
-      if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "kernel_peak_function") < 0)) __PYX_ERR(0, 107, __pyx_L3_error)
-      }
-    } else {
-      switch (PyTuple_GET_SIZE(__pyx_args)) {
-        case  2: values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
-        CYTHON_FALLTHROUGH;
-        case  1: values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
-        CYTHON_FALLTHROUGH;
-        case  0: break;
-        default: goto __pyx_L5_argtuple_error;
-      }
-    }
-    if (values[0]) {
-      __pyx_v_threshold = __pyx_PyFloat_AsDouble(values[0]); if (unlikely((__pyx_v_threshold == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 107, __pyx_L3_error)
-    } else {
-      __pyx_v_threshold = ((double)0.0);
-    }
-    if (values[1]) {
-      __pyx_v_fpeak = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_fpeak == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 107, __pyx_L3_error)
-    } else {
-      __pyx_v_fpeak = ((int)1);
-    }
-  }
-  goto __pyx_L4_argument_unpacking_done;
-  __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("kernel_peak_function", 0, 0, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 107, __pyx_L3_error)
-  __pyx_L3_error:;
-  __Pyx_AddTraceback("numina.array.peaks._kernels.kernel_peak_function", __pyx_clineno, __pyx_lineno, __pyx_filename);
-  __Pyx_RefNannyFinishContext();
-  return NULL;
-  __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_6numina_5array_5peaks_8_kernels_2kernel_peak_function(__pyx_self, __pyx_v_threshold, __pyx_v_fpeak);
-
-  /* function exit code */
-  __Pyx_RefNannyFinishContext();
-  return __pyx_r;
-}
-
-static PyObject *__pyx_pf_6numina_5array_5peaks_8_kernels_2kernel_peak_function(CYTHON_UNUSED PyObject *__pyx_self, double __pyx_v_threshold, int __pyx_v_fpeak) {
-  PyObject *__pyx_v_result = 0;
-  double *__pyx_v_data;
-  PyObject *__pyx_r = NULL;
-  __Pyx_RefNannyDeclarations
-  int __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
   int __pyx_t_3;
   __Pyx_RefNannySetupContext("kernel_peak_function", 0);
 
-  /* "numina/array/peaks/kernels.pyx":112
- *         cdef double *data
+  /* "numina/array/peaks/kernels.pyx":85
+ *     cdef double *data
  * 
- *         data = <double*>malloc(2 * sizeof(double))             # <<<<<<<<<<<<<<
- *         if data is NULL:
- *             raise MemoryError()
+ *     data = <double*>malloc(2 * sizeof(double))             # <<<<<<<<<<<<<<
+ *     if data is NULL:
+ *         raise MemoryError()
  */
   __pyx_v_data = ((double *)malloc((2 * (sizeof(double)))));
 
-  /* "numina/array/peaks/kernels.pyx":113
+  /* "numina/array/peaks/kernels.pyx":86
  * 
- *         data = <double*>malloc(2 * sizeof(double))
- *         if data is NULL:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
+ *     data = <double*>malloc(2 * sizeof(double))
+ *     if data is NULL:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
  * 
  */
   __pyx_t_1 = ((__pyx_v_data == NULL) != 0);
   if (unlikely(__pyx_t_1)) {
 
-    /* "numina/array/peaks/kernels.pyx":114
- *         data = <double*>malloc(2 * sizeof(double))
- *         if data is NULL:
- *             raise MemoryError()             # <<<<<<<<<<<<<<
+    /* "numina/array/peaks/kernels.pyx":87
+ *     data = <double*>malloc(2 * sizeof(double))
+ *     if data is NULL:
+ *         raise MemoryError()             # <<<<<<<<<<<<<<
  * 
- *         data[0] = threshold
+ *     data[0] = threshold
  */
-    PyErr_NoMemory(); __PYX_ERR(0, 114, __pyx_L1_error)
+    PyErr_NoMemory(); __PYX_ERR(0, 87, __pyx_L1_error)
 
-    /* "numina/array/peaks/kernels.pyx":113
+    /* "numina/array/peaks/kernels.pyx":86
  * 
- *         data = <double*>malloc(2 * sizeof(double))
- *         if data is NULL:             # <<<<<<<<<<<<<<
- *             raise MemoryError()
+ *     data = <double*>malloc(2 * sizeof(double))
+ *     if data is NULL:             # <<<<<<<<<<<<<<
+ *         raise MemoryError()
  * 
  */
   }
 
-  /* "numina/array/peaks/kernels.pyx":116
- *             raise MemoryError()
+  /* "numina/array/peaks/kernels.pyx":89
+ *         raise MemoryError()
  * 
- *         data[0] = threshold             # <<<<<<<<<<<<<<
- *         # A value of 1 allows a peak with 2 equal pixels
- *         data[1] = fpeak
+ *     data[0] = threshold             # <<<<<<<<<<<<<<
+ *     # A value of 1 allows a peak with 2 equal pixels
+ *     data[1] = fpeak
  */
   (__pyx_v_data[0]) = __pyx_v_threshold;
 
-  /* "numina/array/peaks/kernels.pyx":118
- *         data[0] = threshold
- *         # A value of 1 allows a peak with 2 equal pixels
- *         data[1] = fpeak             # <<<<<<<<<<<<<<
+  /* "numina/array/peaks/kernels.pyx":91
+ *     data[0] = threshold
+ *     # A value of 1 allows a peak with 2 equal pixels
+ *     data[1] = fpeak             # <<<<<<<<<<<<<<
  * 
- *         result = PyCapsule_New(&_kernel_function,
+ *     result = PyCapsule_New(&_kernel_function,
  */
   (__pyx_v_data[1]) = __pyx_v_fpeak;
 
-  /* "numina/array/peaks/kernels.pyx":120
- *         data[1] = fpeak
+  /* "numina/array/peaks/kernels.pyx":93
+ *     data[1] = fpeak
  * 
- *         result = PyCapsule_New(&_kernel_function,             # <<<<<<<<<<<<<<
- *                                NULL, # if we set a name here, generic_f doesn't work
- *                                _destructor_cap)
+ *     result = PyCapsule_New(&_kernel_function,             # <<<<<<<<<<<<<<
+ *                            NULL, # if we set a name here, generic_f doesn't work
+ *                            _destructor_cap)
  */
-  __pyx_t_2 = PyCapsule_New((&__pyx_f_6numina_5array_5peaks_8_kernels__kernel_function), NULL, __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cap); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 120, __pyx_L1_error)
+  __pyx_t_2 = PyCapsule_New((&__pyx_f_6numina_5array_5peaks_8_kernels__kernel_function), NULL, __pyx_f_6numina_5array_5peaks_8_kernels__destructor_cap); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 93, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_v_result = __pyx_t_2;
   __pyx_t_2 = 0;
 
-  /* "numina/array/peaks/kernels.pyx":124
- *                                _destructor_cap)
+  /* "numina/array/peaks/kernels.pyx":97
+ *                            _destructor_cap)
  * 
- *         PyCapsule_SetContext(result, data)             # <<<<<<<<<<<<<<
+ *     PyCapsule_SetContext(result, data)             # <<<<<<<<<<<<<<
  * 
- *         return result
+ *     return result
  */
-  __pyx_t_3 = PyCapsule_SetContext(__pyx_v_result, __pyx_v_data); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 124, __pyx_L1_error)
+  __pyx_t_3 = PyCapsule_SetContext(__pyx_v_result, __pyx_v_data); if (unlikely(__pyx_t_3 == ((int)-1))) __PYX_ERR(0, 97, __pyx_L1_error)
 
-  /* "numina/array/peaks/kernels.pyx":126
- *         PyCapsule_SetContext(result, data)
+  /* "numina/array/peaks/kernels.pyx":99
+ *     PyCapsule_SetContext(result, data)
  * 
- *         return result             # <<<<<<<<<<<<<<
+ *     return result             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_result);
   __pyx_r = __pyx_v_result;
   goto __pyx_L0;
 
-  /* "numina/array/peaks/kernels.pyx":107
+  /* "numina/array/peaks/kernels.pyx":80
  * 
- * if PY_MAJOR_VERSION >= 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
  * 
- *         cdef object result
+ * def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef object result
  */
 
   /* function exit code */
@@ -1983,8 +1785,8 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 36, __pyx_L1_error)
-  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(0, 93, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 31, __pyx_L1_error)
+  __pyx_builtin_MemoryError = __Pyx_GetBuiltinName(__pyx_n_s_MemoryError); if (!__pyx_builtin_MemoryError) __PYX_ERR(0, 87, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -1994,29 +1796,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
-  /* "numina/array/peaks/kernels.pyx":86
+  /* "numina/array/peaks/kernels.pyx":80
  * 
- * if PY_MAJOR_VERSION < 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
  * 
- *         cdef object result
+ * def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef object result
  */
-  __pyx_tuple_ = PyTuple_Pack(4, __pyx_n_s_threshold, __pyx_n_s_fpeak, __pyx_n_s_result, __pyx_n_s_data); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 86, __pyx_L1_error)
+  __pyx_tuple_ = PyTuple_Pack(4, __pyx_n_s_threshold, __pyx_n_s_fpeak, __pyx_n_s_result, __pyx_n_s_data); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple_);
   __Pyx_GIVEREF(__pyx_tuple_);
-  __pyx_codeobj__2 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple_, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_peaks_kernels_pyx, __pyx_n_s_kernel_peak_function, 86, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__2)) __PYX_ERR(0, 86, __pyx_L1_error)
-
-  /* "numina/array/peaks/kernels.pyx":107
- * 
- * if PY_MAJOR_VERSION >= 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
- * 
- *         cdef object result
- */
-  __pyx_tuple__3 = PyTuple_Pack(4, __pyx_n_s_threshold, __pyx_n_s_fpeak, __pyx_n_s_result, __pyx_n_s_data); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 107, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__3);
-  __Pyx_GIVEREF(__pyx_tuple__3);
-  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__3, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_peaks_kernels_pyx, __pyx_n_s_kernel_peak_function, 107, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) __PYX_ERR(0, 107, __pyx_L1_error)
+  __pyx_codeobj__2 = (PyObject*)__Pyx_PyCode_New(2, 0, 4, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple_, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_numina_array_peaks_kernels_pyx, __pyx_n_s_kernel_peak_function, 80, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__2)) __PYX_ERR(0, 80, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -2169,8 +1959,7 @@ static int __pyx_pymod_exec__kernels(PyObject *__pyx_pyinit_module)
 #endif
 #endif
 {
-  int __pyx_t_1;
-  PyObject *__pyx_t_2 = NULL;
+  PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannyDeclarations
   #if CYTHON_PEP489_MULTI_PHASE_INIT
   if (__pyx_m && __pyx_m == __pyx_pyinit_module) return 0;
@@ -2269,89 +2058,17 @@ if (!__Pyx_RefNanny) {
   if (__Pyx_patch_abc() < 0) __PYX_ERR(0, 2, __pyx_L1_error)
   #endif
 
-  /* "numina/array/peaks/kernels.pyx":7
+  /* "numina/array/peaks/kernels.pyx":80
  * 
  * 
- * if PY_MAJOR_VERSION >= 3:             # <<<<<<<<<<<<<<
- *     # PyCapsule exits in Py3 and Py2.7
- *     # But scipy use PyCObject in Py2.7
+ * def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
+ * 
+ *     cdef object result
  */
-  __pyx_t_1 = ((PY_MAJOR_VERSION >= 3) != 0);
-  if (__pyx_t_1) {
-  }
-
-  /* "numina/array/peaks/kernels.pyx":16
- *     from cpython.pycapsule cimport PyCapsule_SetContext
- * 
- * if PY_MAJOR_VERSION < 3:             # <<<<<<<<<<<<<<
- *     from cpython.cobject cimport PyCObject_FromVoidPtrAndDesc
- * 
- */
-  __pyx_t_1 = ((PY_MAJOR_VERSION < 3) != 0);
-  if (__pyx_t_1) {
-  }
-
-  /* "numina/array/peaks/kernels.pyx":85
- * 
- * 
- * if PY_MAJOR_VERSION < 3:             # <<<<<<<<<<<<<<
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):
- * 
- */
-  __pyx_t_1 = ((PY_MAJOR_VERSION < 3) != 0);
-  if (__pyx_t_1) {
-
-    /* "numina/array/peaks/kernels.pyx":86
- * 
- * if PY_MAJOR_VERSION < 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
- * 
- *         cdef object result
- */
-    __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_6numina_5array_5peaks_8_kernels_1kernel_peak_function, NULL, __pyx_n_s_numina_array_peaks__kernels); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 86, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_kernel_peak_function, __pyx_t_2) < 0) __PYX_ERR(0, 86, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-    /* "numina/array/peaks/kernels.pyx":85
- * 
- * 
- * if PY_MAJOR_VERSION < 3:             # <<<<<<<<<<<<<<
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):
- * 
- */
-  }
-
-  /* "numina/array/peaks/kernels.pyx":106
- * 
- * 
- * if PY_MAJOR_VERSION >= 3:             # <<<<<<<<<<<<<<
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):
- * 
- */
-  __pyx_t_1 = ((PY_MAJOR_VERSION >= 3) != 0);
-  if (__pyx_t_1) {
-
-    /* "numina/array/peaks/kernels.pyx":107
- * 
- * if PY_MAJOR_VERSION >= 3:
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):             # <<<<<<<<<<<<<<
- * 
- *         cdef object result
- */
-    __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_6numina_5array_5peaks_8_kernels_3kernel_peak_function, NULL, __pyx_n_s_numina_array_peaks__kernels); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 107, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_2);
-    if (PyDict_SetItem(__pyx_d, __pyx_n_s_kernel_peak_function, __pyx_t_2) < 0) __PYX_ERR(0, 107, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-
-    /* "numina/array/peaks/kernels.pyx":106
- * 
- * 
- * if PY_MAJOR_VERSION >= 3:             # <<<<<<<<<<<<<<
- *     def kernel_peak_function(double threshold=0.0, int fpeak=1):
- * 
- */
-  }
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_6numina_5array_5peaks_8_kernels_1kernel_peak_function, NULL, __pyx_n_s_numina_array_peaks__kernels); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_kernel_peak_function, __pyx_t_1) < 0) __PYX_ERR(0, 80, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "numina/array/peaks/kernels.pyx":2
  * 
@@ -2359,16 +2076,16 @@ if (!__Pyx_RefNanny) {
  * 
  * from libc.stdlib cimport malloc, free
  */
-  __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_2) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
-  __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
+  __pyx_t_1 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_test, __pyx_t_1) < 0) __PYX_ERR(0, 2, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /*--- Wrapped vars code ---*/
 
   goto __pyx_L0;
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_2);
+  __Pyx_XDECREF(__pyx_t_1);
   if (__pyx_m) {
     if (__pyx_d) {
       __Pyx_AddTraceback("init numina.array.peaks._kernels", 0, __pyx_lineno, __pyx_filename);

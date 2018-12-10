@@ -1384,8 +1384,9 @@ def arccalibration_direct(wv_master,
         # There must be enough points to compute reasonable Cook distances
         if nfit <= poly_degree_wfit + 3:
             nremoved = 0
-            print("nfit=", nfit)
-            print("=> Skipping outliers detection using Cook distance!")
+            if abs(debugplot) >= 10:
+                print("nfit=", nfit)
+                print("=> Skipping outliers detection using Cook distance!")
         else:
             poly, yres, reject = polfit_residuals_with_cook_rejection(
                 x=xfit, y=yfit, deg=poly_degree_wfit,
@@ -1828,6 +1829,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
+
             def handle_close(evt):
                 global xmin_previous
                 global xmax_previous

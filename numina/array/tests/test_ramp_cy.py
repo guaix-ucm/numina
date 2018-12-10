@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -106,7 +106,9 @@ class RampReadoutAxisTestCase(unittest.TestCase):
     def test_dtypes0(self):
         '''Test output is float64 by default'''
         inttypes = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
-        floattypes = ['float32', 'float64', 'float128']
+        floattypes = ['float32', 'float64']
+        if hasattr(numpy, 'float128'):
+            floattypes.append('float128')
         mdtype = numpy.dtype('uint8')
         ddtype = numpy.dtype('float64')
         rows = 3
@@ -285,6 +287,24 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(FollowUpTheRampTestCase))
     return suite
+
+
+def test_simple():
+
+    a = numpy.ones((1,1))
+    base = 2400 * numpy.ones((1, 1))
+    n = 5
+    slope = 2.8
+    cube = numpy.empty((n,1,1))
+    dt = 0.1
+    # times are: [i * dt]
+    for i in range(n):
+        cube[i] = base + slope * dt * a * i
+
+    m = ramp_array(cube, ti=dt*(n-1))
+
+    assert numpy.allclose(m[0][0,0], slope)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')

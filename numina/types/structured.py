@@ -130,6 +130,10 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
 
         objl = self.convert_in(obj)
 
+        # FIXME: this is too complex
+        if isinstance(objl, self.__class__):
+            return objl.update_meta_info()
+
         try:
             with open(objl, 'r') as fd:
                 state = json.load(fd)
