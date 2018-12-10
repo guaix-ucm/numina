@@ -1,13 +1,6 @@
-===================
-Numina Installation
-===================
-
-This is Numina, the data reduction package used by the following GTC
-instruments: EMIR, FRIDA, MEGARA and MIRADAS.
-
-Numina is distributed under GNU GPL, either version 3 of the License, 
-or (at your option) any later version. See the file LICENSE.txt 
-for details.
+============
+Installation
+============
 
 Requirements
 ------------
@@ -30,10 +23,6 @@ For Pyhton 2.7, the following compatibility packages are required:
 The following packages are optional:
  - `sphinx`_  to build the documentation
  - `pytest`_  for testing
-
-Webpage: https://guaix.fis.ucm.es/projects/numina
-
-Maintainer: sergiopr@fis.ucm.es
 
 Stable version
 --------------
