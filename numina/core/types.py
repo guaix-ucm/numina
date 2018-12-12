@@ -9,7 +9,7 @@ import numina.types.datatype as datatype
 
 
 warnings.warn('Module deprecated, use numina.types instead',
-              DeprecationWarning)
+              DeprecationWarning, stacklevel=2)
 
 
 sys.modules['numina.core.types.datatype'] = datatype

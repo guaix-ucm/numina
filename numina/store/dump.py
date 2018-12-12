@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2015 Universidad Complutense de Madrid
+# Copyright 2010-2018 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-import warnings
 
 try:
     from functools import singledispatch
@@ -25,8 +24,6 @@ from numina.types.array import dump_numpy_array
 def dump(tag, obj, where):
 
     if hasattr(tag, '__numina_dump__'):
-        msg = "Usage of '__numina_dump__' is deprecated, use '_datatype_dump' instead"
-        warnings.warn(msg, DeprecationWarning)
         return tag.__numina_dump__(obj, where)
 
     if hasattr(tag, '_datatype_dump'):

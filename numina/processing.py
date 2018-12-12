@@ -73,7 +73,8 @@ class Corrector(node.Node):
         if hasattr(self, 'run'):
             img = self.run(img)
         else:
-            warnings.warn("use method 'run' instead of '_run'", DeprecationWarning)
+            warnings.warn("use method 'run' instead of '_run'", DeprecationWarning,
+                          stacklevel=2)
             img = self.run(img)
 
         return img

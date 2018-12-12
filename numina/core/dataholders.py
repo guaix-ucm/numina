@@ -138,7 +138,7 @@ class Product(Result):
         )
 
         import warnings
-        warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning)
+        warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
 
     def __repr__(self):
         return 'Product(type=%r, dest=%r)' % (self.type, self.dest)

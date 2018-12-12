@@ -40,7 +40,7 @@ def fully_qualified_name(obj, sep='.'):
 
     warnings.warn(
         "use numina.utils.fqn.fully_qualified_name instead",
-        DeprecationWarning
+        DeprecationWarning, stacklevel=2
     )
     import numina.util.fqn as fqn
 

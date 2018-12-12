@@ -241,7 +241,7 @@ class InstrumentDRP(object):
 
     def configuration_selector(self, obsres):
         warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
-                      DeprecationWarning)
+                      DeprecationWarning, stacklevel=2)
         return self.select_configuration(obsres)
 
     def product_label(self, tipo):
