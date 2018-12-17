@@ -73,7 +73,7 @@ def print_instrument(instrument, modes=True):
         print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
     if modes and instrument.modes:
         print(' has observing modes:')
-        for mode in instrument.modes:
+        for mode in instrument.modes.values():
             print("  {0.name!r} ({0.key})".format(mode))
 
 
