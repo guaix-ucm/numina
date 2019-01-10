@@ -52,6 +52,7 @@ class Pipeline(object):
 
         args = entry.get('args', ())
         kwargs = entry.get('kwargs', {})
+        links = entry.get('links', {})
 
         recipe = Cls.__new__(Cls, *args, **kwargs)
         recipe.__init__(*args, **kwargs)
@@ -313,53 +314,6 @@ class ProductEntry(object):
         msg = 'ProductEntry(name="{}", mode="{}", field="{}")'.format(
             self.name, self.mode, self.field)
         return msg
-
-
-class InstrumentConfiguration(object):
-
-    def __init__(self, instrument):
-        self.instrument = instrument
-        self.name = 'config'
-        self.uuid = ''
-        self.date_start = 0
-        self.date_end = 0
-        self.components = {}
-
-    def get(self, path, **kwds):
-        # split key
-        vals = path.split('.')
-        component = vals[0]
-        key = vals[1]
-        conf = self.components[component]
-        return conf.get(key, **kwds)
-
-
-class ConfigurationEntry(object):
-    def __init__(self, values, depends):
-        self.values = values
-        self.depends = depends
-
-    def get(self, **kwds):
-        result = self.values
-        for dep in self.depends:
-            key = kwds[dep]
-            result = result[key]
-        return result
-
-
-class ComponentConfigurations(object):
-
-    def __init__(self):
-        self.name = 'config'
-        self.uuid = ''
-        self.data_start = 0
-        self.data_end = 0
-        self.component = 'component'
-        self.configurations = {}
-
-    def get(self, key, **kwds):
-        conf = self.configurations[key]
-        return conf.get(**kwds)
 
 
 class ObservingMode(object):

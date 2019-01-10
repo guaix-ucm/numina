@@ -63,10 +63,10 @@ def print_instrument(instrument, modes=True):
         if ic == 'default':
             # skip default configuration
             continue
-        msg = " has configuration '{}' uuid={}".format(conf.name, ic)
+        msg = " has configuration '{}' uuid={}".format(conf.description, ic)
         print(msg)
     default_conf = instrument.configurations['default']
-    msg = " default is '{}'".format(default_conf.name)
+    msg = " default is '{}'".format(default_conf.description)
     print(msg)
     print(" has datamodel '{}'".format(objimport.fully_qualified_name(instrument.datamodel)))
     for _, pl in instrument.pipelines.items():
