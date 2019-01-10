@@ -16,7 +16,7 @@ def test_load_confs_0():
 
 
 def test_load_confs_1():
-    """Test the loader returns a valid config when values is empty"""
+    """Test the loader returns a valid config when 'values' is empty"""
     
     package = 'clodiadrp'
     node = {
@@ -33,4 +33,4 @@ def test_load_confs_1():
 
     insconf = result1['default']
     assert insconf.instrument == 'EMPTY'
-    assert insconf.name == 'config'
+    assert insconf.name == 'EMPTY'

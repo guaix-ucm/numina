@@ -11,7 +11,6 @@
 
 import pkgutil
 import importlib
-import os
 
 import yaml
 import six
@@ -324,69 +323,3 @@ class DefaultLoader(object):
         fcomp = StringIO(data.decode('utf-8'))
         return fcomp
 
-
-def build_instrument_config(uuid, loader):
-
-    fp = loader.build_instrument_fp(uuid)
-
-    mm = load_instrument_configuration_from_file(fp, loader=loader)
-    return mm
-
-
-def load_ce_from_file(fp):
-    import json
-    from .pipeline import ConfigurationEntry
-    contents = json.load(fp)
-
-    if contents['type'] != 'configuration':
-        raise ValueError('type is not configuration')
-
-    key = contents['name']
-    confs = contents['configurations']
-    val = confs[key]
-    mm = ConfigurationEntry(val['values'], val['depends'])
-    return mm
-
-
-def load_cc_from_file(fp, loader):
-    from .pipeline import ComponentConfigurations, ConfigurationEntry
-    import json
-    contents = json.load(fp)
-    mm = ComponentConfigurations()
-    if contents['type'] != 'component':
-        raise ValueError('type is not component')
-    mm.component = contents['name']
-    mm.name = contents['description']
-    mm.uuid = contents['uuid']
-    mm.data_start = 0
-    mm.data_end = 0
-    for key, val in contents['configurations'].items():
-        if 'uuid' in val:
-            # remote component
-            fp = loader.build_component_fp(val['uuid'])
-            mm.configurations[key] = load_ce_from_file(fp)
-        else:
-            mm.configurations[key] = ConfigurationEntry(val['values'], val['depends'])
-    return mm
-
-
-def load_instrument_configuration_from_file(fp, loader):
-    import json
-
-    contents = json.load(fp)
-    if contents['type'] != 'instrument':
-        raise ValueError('type is not instrument')
-
-    mm = InstrumentConfiguration.__new__(InstrumentConfiguration)
-
-    mm.instrument = contents['name']
-    mm.name = contents['description']
-    mm.uuid = contents['uuid']
-    mm.date_start = convert.convert_date(contents['date_start'])
-    mm.date_end = convert.convert_date(contents['date_end'])
-    mm.components = {}
-    for cname, cuuid in contents['components'].items():
-        fcomp = loader.build_component_fp(cuuid)
-        rr = load_cc_from_file(fcomp, loader=loader)
-        mm.components[cname] = rr
-    return mm

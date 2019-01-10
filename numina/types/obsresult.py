@@ -1,4 +1,4 @@
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,7 +12,7 @@ import warnings
 import six
 from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
-from numina.core.pipeline import InstrumentConfiguration
+from numina.core.insconf import InstrumentConfiguration
 from numina.types.qc import QC
 from .frame import DataFrameType
 from .datatype import DataType
