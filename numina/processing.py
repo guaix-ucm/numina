@@ -102,7 +102,7 @@ class BadPixelCorrector(Corrector):
         _logger.debug('correcting bad pixel mask in %s', imgid)
 
         data = self.datamodel.get_data(img)
-        newdata = bpm.process_bpm_median(data, self.bpm, hwin=2, wwin=2, fill=0)
+        newdata = bpm.process_bpm_median(data, self.bpm, hwin=2, wwin=2, fill=0, reuse_values=True)
         # newdata = array.fixpix(data, self.bpm)
         # FIXME: this breaks datamodel abstraction
         img['primary'].data = newdata
