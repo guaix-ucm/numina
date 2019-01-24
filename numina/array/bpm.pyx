@@ -1,30 +1,19 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
-# 
+# Copyright 2016-2019 Universidad Complutense de Madrid
+#
 # This file is part of Numina
-# 
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
 
-from libc.stdlib cimport malloc, free
-
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cpython.pycapsule cimport PyCapsule_IsValid
 from cpython.pycapsule cimport PyCapsule_GetPointer
 from cpython.pycapsule cimport PyCapsule_GetContext
 from cython.operator cimport dereference as deref
+
 cimport cython
-from cpython cimport bool
 
 import numpy as np
 cimport numpy as np
@@ -48,29 +37,20 @@ ctypedef int (*CombineFunc)(double*, double*, size_t, double*[3], void*)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _process_bpm_intl(object method, image_t[:,:] arr, np.uint8_t[:,:] badpix, np.double_t[:,:] res,
-                      size_t hwin=2, size_t wwin=2, double fill=0.0):
+                      size_t hwin=2, size_t wwin=2, double fill=0.0, reuse_values=False):
     '''Loop over the mask over a window, border is filled with 'fill' value.'''
     cdef:
         size_t xr = arr.shape[1]
         size_t yr = arr.shape[0]
-        size_t x, y, xx, yy
+        size_t ii, x, y, xx, yy
+        size_t wsize = (2*hwin+1) * (2*wwin+1)
         int status
-        char bp
         size_t bsize = 0
-        double *buff1
-        double *buff2
+        double *buff[2]
         double* pvalues[3]
-        CombineFunc function
-        void *vdata
+        CombineFunc function = NULL
+        void *vdata = NULL
 
-    buff1 = <double *>malloc((2*hwin+1) * (2*wwin+1) * sizeof(double))
-    buff2 = <double *>malloc((2*hwin+1) * (2*wwin+1) * sizeof(double))
-    pvalues[0] = <double *>malloc(sizeof(double))
-    pvalues[1] = <double *>malloc(sizeof(double))
-    pvalues[2] = <double *>malloc(sizeof(double))
-
-    function = NULL
-    vdata = NULL
 
     if not PyCapsule_IsValid(method, "numina.cmethod"):
         raise TypeError("parameter is not a valid capsule")
@@ -78,39 +58,61 @@ def _process_bpm_intl(object method, image_t[:,:] arr, np.uint8_t[:,:] badpix, n
     function = <CombineFunc>PyCapsule_GetPointer(method, "numina.cmethod")
     vdata = PyCapsule_GetContext(method)
 
-    for x in range(xr):
-        for y in range(yr):
-            bp = badpix[y, x]
+    processed = np.zeros_like(badpix, dtype='uint8')
+    cdef np.uint8_t[:, ::1] processed_view = processed
 
-            if bp == 0:
-                # Skip over good pixels
-                res[y,x] = <np.double_t>arr[y, x]
-            else:
-                # For bad pixels, use a window
-                for xx in range(x-wwin, x+wwin+1):
-                    for yy in range(y-hwin, y+hwin+1):
-                        if xx < 0 or yy < 0 or xx >= xr or yy >= yr:
-                            buff1[bsize] = fill
-                            buff2[bsize] = 1.0
-                            bsize += 1
-                        elif badpix[yy, xx] == 0:
-                            buff1[bsize] = arr[yy, xx]
-                            buff2[bsize] = 1.0
-                            bsize += 1
-                        else:
-                            continue
-                # Compute value using buff1, buff2
+    try:
+        # Init memory
+        for ii in range(2):
+            buff[ii] = <double *> PyMem_Malloc(wsize * sizeof(double))
+            if not buff[ii]:
+                raise MemoryError()
 
-                status = function(buff1, buff2, bsize, pvalues, vdata)
+        for ii in range(3):
+            pvalues[ii] = <double *> PyMem_Malloc(sizeof(double))
+            if not pvalues[ii]:
+                raise MemoryError()
 
-                res[y,x] = <np.double_t>deref(pvalues[0])
-                # reset buffer
-                bsize = 0
+        for x in range(xr):
+            for y in range(yr):
+                bp = badpix[y, x]
 
-    # dealocate buffer on exit
-    free(buff1)
-    free(buff2)
-    free(pvalues[0])
-    free(pvalues[1])
-    free(pvalues[2])
-    return res
+                if bp == 0:
+                    # Skip over good pixels
+                    res[y, x] = <np.double_t>arr[y, x]
+                    processed_view[y, x] = 1
+                else:
+                    # For bad pixels, use a window
+                    for xx in range(x-wwin, x+wwin+1):
+                        for yy in range(y-hwin, y+hwin+1):
+                            if xx < 0 or yy < 0 or xx >= xr or yy >= yr:
+                                buff[0][bsize] = fill
+                                buff[1][bsize] = 1.0
+                                bsize += 1
+                            elif badpix[yy, xx] == 0:
+                                buff[0][bsize] = arr[yy, xx]
+                                buff[1][bsize] = 1.0
+                                bsize += 1
+                            elif reuse_values and processed_view[yy, xx] == 1:
+                                buff[0][bsize] = res[yy, xx]
+                                buff[1][bsize] = 1.0
+                                bsize += 1
+                            else:
+                                continue
+
+                    # Compute values
+                    if bsize > 0:
+                        status = function(buff[0], buff[1], bsize, pvalues, vdata)
+                        res[y,x] = <np.double_t>deref(pvalues[0])
+                        processed_view[y, x] = 1
+                    else:
+                        res[y,x] = fill
+                    # reset buffers
+                    bsize = 0
+        return res, processed
+    finally:
+        # dealocate memory on exit
+        for ii in range(2):
+            PyMem_Free(buff[ii])
+        for ii in range(3):
+            PyMem_Free(pvalues[ii])

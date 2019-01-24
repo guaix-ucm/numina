@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -20,7 +20,7 @@ from numina.array._bpm import _process_bpm_intl
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 
-def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
+def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, subs=False):
 
     # FIXME: we are not considering variance extension
     # If arr is not in native byte order, the cython extension won't work
@@ -33,16 +33,19 @@ def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0):
     # Casting, Cython doesn't support well type bool
     cmask = numpy.where(mask > 0, 1, 0).astype('uint8')
 
-    _process_bpm_intl(method, narr, cmask, out, hwin=hwin, wwin=wwin, fill=fill)
-    return out
+    _, proc = _process_bpm_intl(method, narr, cmask, out, hwin=hwin, wwin=wwin, fill=fill, reuse_values=reuse_values)
+    if subs:
+        return out, proc
+    else:
+        return out
 
 
-def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0):
+def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, subs=False):
     import numina.array._combine
 
     method = numina.array._combine.median_method()
 
-    return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill)
+    return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill, reuse_values=reuse_values, subs=subs)
 
 
 def main(args=None):
@@ -98,7 +101,8 @@ def main(args=None):
             # apply bad pixel mask
             hdulist_image[args.extnum].data = process_bpm_median(
                 arr=image2d,
-                mask=image2d_bpm
+                mask=image2d_bpm,
+                reuse_values=True
             )
 
         # save output FITS file
