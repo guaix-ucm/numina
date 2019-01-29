@@ -40,7 +40,8 @@ Additional packages are optionally required:
    benchmarks of certain algorithms
 
 Webpage: https://github.com/guaix-ucm/numina
-Maintainer: sergiopr@fis.ucm.es
+
+Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 
 
 Stable version

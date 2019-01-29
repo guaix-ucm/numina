@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,6 @@
 
 import pkgutil
 import importlib
-import os
 
 import yaml
 import six
@@ -21,7 +20,7 @@ from numina.util.objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
-from .pipeline import InstrumentConfiguration
+from .insconf import InstrumentConfiguration, instrument_loader
 from .pipeline import ProductEntry
 from .query import ResultOf
 from .taggers import get_tags_from_full_ob
@@ -173,9 +172,6 @@ def load_confs(package, node, confclass=None):
     if confclass is None:
         loader = DefaultLoader(modpath=modpath)
 
-        def confclass(uuid):
-            return build_instrument_config(uuid, loader)
-
     default_entry = node.get('default')
     tagger = node.get('tagger')
     if tagger:
@@ -187,9 +183,10 @@ def load_confs(package, node, confclass=None):
     confs = {}
     if values:
         for uuid in values:
-            confs[uuid] = confclass(uuid)
+            fname = 'instrument-{}.json'.format(uuid)
+            confs[uuid] = instrument_loader(modpath, fname)
     else:
-        confs['default'] = InstrumentConfiguration('EMPTY')
+        confs['default'] = InstrumentConfiguration.create_null()
         default_entry = 'default'
 
     if default_entry:
@@ -242,6 +239,7 @@ def load_base(name, node):
     recipes = {}
     for key in node:
         recipes[key] = load_recipe(key, node[key])
+    # print(recipes)
     return recipes
 
 
@@ -291,22 +289,6 @@ def load_instrument(package, node, confclass=None):
     return ins
 
 
-class PathLoader(object):
-    def __init__(self, inspath, compath):
-        self.inspath = inspath
-        self.compath = compath
-
-    def build_component_fp(self, key):
-        fname = 'component-%s.json' % key
-        fcomp = open(os.path.join(self.compath, fname))
-        return fcomp
-
-    def build_instrument_fp(self, key):
-        fname = 'instrument-%s.json' % key
-        fcomp = open(os.path.join(self.inspath, fname))
-        return fcomp
-
-
 class DefaultLoader(object):
     def __init__(self, modpath):
         self.modpath = modpath
@@ -324,69 +306,3 @@ class DefaultLoader(object):
         fcomp = StringIO(data.decode('utf-8'))
         return fcomp
 
-
-def build_instrument_config(uuid, loader):
-
-    fp = loader.build_instrument_fp(uuid)
-
-    mm = load_instrument_configuration_from_file(fp, loader=loader)
-    return mm
-
-
-def load_ce_from_file(fp):
-    import json
-    from .pipeline import ConfigurationEntry
-    contents = json.load(fp)
-
-    if contents['type'] != 'configuration':
-        raise ValueError('type is not configuration')
-
-    key = contents['name']
-    confs = contents['configurations']
-    val = confs[key]
-    mm = ConfigurationEntry(val['values'], val['depends'])
-    return mm
-
-
-def load_cc_from_file(fp, loader):
-    from .pipeline import ComponentConfigurations, ConfigurationEntry
-    import json
-    contents = json.load(fp)
-    mm = ComponentConfigurations()
-    if contents['type'] != 'component':
-        raise ValueError('type is not component')
-    mm.component = contents['name']
-    mm.name = contents['description']
-    mm.uuid = contents['uuid']
-    mm.data_start = 0
-    mm.data_end = 0
-    for key, val in contents['configurations'].items():
-        if 'uuid' in val:
-            # remote component
-            fp = loader.build_component_fp(val['uuid'])
-            mm.configurations[key] = load_ce_from_file(fp)
-        else:
-            mm.configurations[key] = ConfigurationEntry(val['values'], val['depends'])
-    return mm
-
-
-def load_instrument_configuration_from_file(fp, loader):
-    import json
-
-    contents = json.load(fp)
-    if contents['type'] != 'instrument':
-        raise ValueError('type is not instrument')
-
-    mm = InstrumentConfiguration.__new__(InstrumentConfiguration)
-
-    mm.instrument = contents['name']
-    mm.name = contents['description']
-    mm.uuid = contents['uuid']
-    mm.date_start = convert.convert_date(contents['date_start'])
-    mm.date_end = convert.convert_date(contents['date_end'])
-    mm.components = {}
-    for cname, cuuid in contents['components'].items():
-        fcomp = loader.build_component_fp(cuuid)
-        rr = load_cc_from_file(fcomp, loader=loader)
-        mm.components[cname] = rr
-    return mm

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,7 +9,7 @@
 
 import pytest
 
-import numina.core.pipeline
+import numina.core.insconf
 from numina.exceptions import NoResultFound
 from numina.tests.drptest import create_drp_test
 
@@ -44,7 +44,7 @@ def test_search_instrument_configuration(basedictdal):
 
     res = basedictdal.search_instrument_configuration('TEST1', 'default')
 
-    assert isinstance(res, numina.core.pipeline.InstrumentConfiguration)
+    assert isinstance(res, numina.core.insconf.InstrumentConfiguration)
 
     with pytest.raises(KeyError):
         basedictdal.search_instrument_configuration('TEST1', 'missing')
@@ -65,7 +65,7 @@ def test_search_instrument_configuration_from_ob(basedictdal):
 
     res = basedictdal.search_instrument_configuration_from_ob(ob)
 
-    assert isinstance(res, numina.core.pipeline.InstrumentConfiguration)
+    assert isinstance(res, numina.core.insconf.InstrumentConfiguration)
 
     ob = numina.core.ObservationResult(mode='TEST1')
     ob.instrument = 'TEST1'

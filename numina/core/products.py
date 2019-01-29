@@ -2,7 +2,7 @@
 
 import warnings
 
-warnings.warn("deprecated, use numina.types instead", DeprecationWarning)
+warnings.warn("deprecated, use numina.types instead", DeprecationWarning, stacklevel=2)
 
 from numina.types.array import ArrayNType
 from numina.types.array import ArrayType

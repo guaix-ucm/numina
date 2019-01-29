@@ -44,13 +44,13 @@ def test_load_method_deprecated():
     assert obj + 2 == load(tag, obj)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 4),
-                    reason="https://github.com/pytest-dev/pytest/issues/840")
-def test_dump_method_deprecated_warning(recwarn):
-    warnings.simplefilter('always')
-    test_load_method_deprecated()
-
-    assert recwarn.pop(DeprecationWarning)
+# @pytest.mark.skipif(sys.version_info < (3, 4),
+#                     reason="https://github.com/pytest-dev/pytest/issues/840")
+# def test_dump_method_deprecated_warning(recwarn):
+#     warnings.simplefilter('always')
+#     test_load_method_deprecated()
+#
+#     assert recwarn.pop(DeprecationWarning)
 
 
 def test_load_method_register():
