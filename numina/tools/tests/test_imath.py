@@ -1,4 +1,5 @@
 
+import six
 
 from ..imath import main
 
@@ -14,4 +15,4 @@ def test_imath_works(capsys):
     out, err = capsys.readouterr()
     # out = out.split("\n")
     # out.sort()
-    assert isinstance(out, str)
+    assert isinstance(out, six.text_type)
