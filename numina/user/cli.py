@@ -96,7 +96,11 @@ def main(args=None):
         help="do not activate GTC compatibility code"
         )
 
-    parser.set_defaults(command=None)
+    # Due to a problem with argparse
+    # this command blocks the defaults of the subparsers
+    # in argparse of Pyhton < 2.7.9
+    # https://bugs.python.org/issue9351
+    # parser.set_defaults(command=None)
 
     subparsers = parser.add_subparsers(
         title='Targets',
