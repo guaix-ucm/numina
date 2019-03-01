@@ -141,6 +141,7 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 
 def periodic_corr1d(sp_reference, sp_offset,
                     fminmax=None,
+                    naround_zero=None,
                     plottitle=None,
                     pdf=None,
                     debugplot=0):
@@ -156,6 +157,11 @@ def periodic_corr1d(sp_reference, sp_offset,
     fminmax : tuple of floats or None
         Minimum and maximum frequencies to be used. If None, no
         frequency filtering is employed.
+    naround_zero : int
+        Half width of the window (around zero offset) to look for
+        the correlation peak. If None, the whole correlation
+        spectrum is employed. Otherwise, the peak will be sought
+        in the interval [-naround_zero, +naround_zero].
     plottitle : str
         Optional plot title.
     pdf : PdfFile object or None
@@ -228,10 +234,18 @@ def periodic_corr1d(sp_reference, sp_offset,
         else:
             pause_debugplot(debugplot=debugplot, pltshow=True)
 
-    corr = np.fft.ifft(np.fft.fft(sp_offset_filtmask) * \
+    corr = np.fft.ifft(np.fft.fft(sp_offset_filtmask) *
                        np.fft.fft(sp_reference_filtmask).conj()).real
     corr = corr[isort]
-    ixpeak = corr.argmax()
+
+    # determine correlation peak
+    if naround_zero is None:
+        iminpeak = 0
+        imaxpeak = naxis1
+    else:
+        iminpeak = max(int(naxis1 / 2 - naround_zero), 0)
+        imaxpeak = min(int(naxis1 / 2 + naround_zero), naxis1)
+    ixpeak = corr[iminpeak:imaxpeak].argmax() + iminpeak
 
     # fit correlation peak with 2nd order polynomial
     nfit = 7
@@ -267,11 +281,18 @@ def periodic_corr1d(sp_reference, sp_offset,
                        title=plottitle,
                        xlim=(-naxis1/2, naxis1/2), show=False)
         ax.axvline(offset, color='grey', linestyle='dashed')
-        coffset="(offset={0:6.2f} pixels)".format(offset)
+        coffset = "(offset:{0:6.2f} pixels)".format(offset)
         ax.text(0, 1, coffset,
                 horizontalalignment='left',
                 verticalalignment='top',
                 transform=ax.transAxes)
+        if naround_zero is not None:
+            cwindow = "(peak region: [{},{}] pixels)".format(-naround_zero,
+                                                             naround_zero)
+            ax.text(0, 0.95, cwindow,
+                    horizontalalignment='left',
+                    verticalalignment='top',
+                    transform=ax.transAxes)
         # inset plot
         inset_ax = inset_axes(
             ax,
@@ -280,7 +301,10 @@ def periodic_corr1d(sp_reference, sp_offset,
             loc=1
         )
         inset_ax.plot(xcorr, corr)
-        inset_ax.set_xlim([-50,50])
+        if naround_zero is None:
+            inset_ax.set_xlim([-naround_zero, naround_zero])
+        else:
+            inset_ax.set_xlim([-50, 50])
         if lpeak_ok:
             xplot = np.arange(-nmed, nmed, 0.5)
             yplot = poly_peak(xplot)

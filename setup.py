@@ -163,7 +163,6 @@ def setup_package():
             "Programming Language :: C++",
             "Programming Language :: Cython",
             "Programming Language :: Python :: 2.7",
-            "Programming Language :: Python :: 3.4",
             "Programming Language :: Python :: 3.5",
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",
@@ -179,7 +178,7 @@ def setup_package():
         long_description=open('README.rst').read()
         )
 
-    # For actins line egg_info and --version NumPy is not required
+    # For actions like "egg_info" and "--version", numpy is not required
     if '--help' in sys.argv[1:] or \
       sys.argv[1] in ('--help-commands', 'egg_info', '--version'):
         pass

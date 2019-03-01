@@ -32,7 +32,7 @@ def fit_offset_and_rotation(coords0, coords1):
 
     Notes
     ------
-    Fit offset and rotation using Kabsch's algorithm[1]_ [2]_
+    Fit offset and rotation using Kabsch's algorithm [1]_ [2]_
 
     .. [1] Kabsch algorithm: https://en.wikipedia.org/wiki/Kabsch_algorithm
 
