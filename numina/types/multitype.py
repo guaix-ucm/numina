@@ -28,6 +28,11 @@ class MultiType(object):
 
     def query(self, name, dal, ob, options=None):
 
+        try:
+            return self.query_on_ob(name, ob)
+        except nexcep.NoResultFound:
+            pass
+
         # Results for subtypes
         results = []
         faillures = []
@@ -50,14 +55,26 @@ class MultiType(object):
         else:
             raise nexcep.NoResultFound
 
+    def query_on_ob(self, name, obsres):
+        # First check if the requirement is embedded
+        # in the observation result
+        # It can in ob.requirements
+        # or directly in the structure (as in GTC)
+        if name in obsres.requirements:
+            content = obsres.requirements[name]
+            value = self._datatype_load(content)
+            return value
+        try:
+            return getattr(obsres, name)
+        except AttributeError:
+            raise nexcep.NoResultFound("MultiType.query_on_ob")
+
+
     def on_query_not_found(self, notfound):
         pass
 
     def convert_in(self, obj):
-        if self._current:
-            return self._current.convert_in(obj)
-
-        raise ValueError('No query performed, current type is not set')
+        return obj
 
     def tag_names(self):
         if self._current:
