@@ -94,12 +94,12 @@ class Structured3(BaseStructuredCalibration):
         self.struct3 = state['struct3']
 
 
-def test_convert_in():
-
-    multi = MultiType(TypeA, TypeB)
-
-    with pytest.raises(ValueError):
-        multi.convert_in(None)
+# def test_convert_in():
+#
+#     multi = MultiType(TypeA, TypeB)
+#
+#     with pytest.raises(ValueError):
+#         multi.convert_in(None)
 
 
 def test_validate1():
