@@ -341,7 +341,7 @@ class Parameter(Requirement):
 
     def convert(self, val):
         """Convert input values to type values."""
-        pre = self.type.convert(val)
+        pre = super(Parameter, self).convert(val)
 
         if self.custom_validator is not None:
             post = self.custom_validator(pre)
