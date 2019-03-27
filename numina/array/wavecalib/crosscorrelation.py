@@ -301,7 +301,7 @@ def periodic_corr1d(sp_reference, sp_offset,
             loc=1
         )
         inset_ax.plot(xcorr, corr)
-        if naround_zero is None:
+        if naround_zero is not None:
             inset_ax.set_xlim([-naround_zero, naround_zero])
         else:
             inset_ax.set_xlim([-50, 50])
