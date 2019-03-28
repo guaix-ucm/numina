@@ -10,7 +10,7 @@
 from __future__ import division
 from __future__ import print_function
 
-from mpl_toolkits.axes_grid.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 from numpy.polynomial import Polynomial
 
@@ -45,16 +45,22 @@ def filtmask(sp, fmin=0.02, fmax=0.15, debugplot=0):
     xf = np.fft.fftfreq(sp.size)
     yf = np.fft.fft(sp)
     if abs(debugplot) in (21, 22):
-        ximplotxy(xf, yf.real, xlim=(0, 0.51),
-                  plottype='semilog', debugplot=debugplot)
+        iok = np.where(xf > 0)
+        ximplotxy(xf[iok], yf[iok].real,
+                  plottype='loglog',
+                  xlabel='frequency', ylabel='power',
+                  title='before masking', debugplot=debugplot)
 
     cut = (np.abs(xf) > fmax)
     yf[cut] = 0.0
     cut = (np.abs(xf) < fmin)
     yf[cut] = 0.0
     if abs(debugplot) in (21, 22):
-        ximplotxy(xf, yf.real, xlim=(0, 0.51),
-                  plottype='semilog', debugplot=debugplot)
+        iok = np.where(xf > 0)
+        ximplotxy(xf[iok], yf[iok].real,
+                  plottype='loglog',
+                  xlabel='frequency', ylabel='power',
+                  title='after masking', debugplot=debugplot)
 
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
@@ -142,6 +148,7 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 def periodic_corr1d(sp_reference, sp_offset,
                     fminmax=None,
                     naround_zero=None,
+                    norm_spectra=False,
                     plottitle=None,
                     pdf=None,
                     debugplot=0):
@@ -162,6 +169,10 @@ def periodic_corr1d(sp_reference, sp_offset,
         the correlation peak. If None, the whole correlation
         spectrum is employed. Otherwise, the peak will be sought
         in the interval [-naround_zero, +naround_zero].
+    norm_spectra : bool
+        If True, the filtered spectra are normalized before computing
+        the correlation function. This can be important when comparing
+        the peak value of this function using different spectra.
     plottitle : str
         Optional plot title.
     pdf : PdfFile object or None
@@ -186,6 +197,9 @@ def periodic_corr1d(sp_reference, sp_offset,
     if sp_reference.shape != sp_offset.shape:
         raise ValueError("x and y shapes are different")
 
+    if plottitle is None:
+        plottitle = ' '
+
     naxis1 = len(sp_reference)
 
     xcorr = np.arange(naxis1)
@@ -197,9 +211,11 @@ def periodic_corr1d(sp_reference, sp_offset,
 
     if fminmax is not None:
         fmin, fmax = fminmax
-        sp_reference_filtmask = filtmask(sp_reference, fmin=fmin, fmax=fmax)
-        sp_offset_filtmask = filtmask(sp_offset, fmin=fmin, fmax=fmax)
-        if abs(debugplot) % 10 != 0:
+        sp_reference_filtmask = filtmask(sp_reference, fmin=fmin, fmax=fmax,
+                                         debugplot=debugplot)
+        sp_offset_filtmask = filtmask(sp_offset, fmin=fmin, fmax=fmax,
+                                      debugplot=debugplot)
+        if abs(debugplot) in (21, 22):
             from numina.array.display.matplotlib_qt import plt
             xdum = np.arange(naxis1) + 1
             # reference spectrum
@@ -219,10 +235,10 @@ def periodic_corr1d(sp_reference, sp_offset,
             ax.legend()
             plt.show()
     else:
-        sp_reference_filtmask = np.copy(sp_reference)
-        sp_offset_filtmask = np.copy(sp_offset)
+        sp_reference_filtmask = sp_reference
+        sp_offset_filtmask = sp_offset
 
-    if (abs(debugplot) % 10 != 0) or (pdf is not None):
+    if (abs(debugplot) in (21, 22)) or (pdf is not None):
         xdum = np.arange(naxis1) + 1
         ax = ximplotxy(xdum, sp_reference_filtmask, show=False,
                        title=plottitle,
@@ -234,8 +250,39 @@ def periodic_corr1d(sp_reference, sp_offset,
         else:
             pause_debugplot(debugplot=debugplot, pltshow=True)
 
-    corr = np.fft.ifft(np.fft.fft(sp_offset_filtmask) *
-                       np.fft.fft(sp_reference_filtmask).conj()).real
+    # normalize spectra if required
+    if norm_spectra:
+        sp_reference_norm = np.copy(sp_reference_filtmask)
+        sp_offset_norm = np.copy(sp_offset_filtmask)
+        sp_dum = np.concatenate((sp_reference_norm, sp_offset_norm))
+        spmin = min(sp_dum)
+        spmax = max(sp_dum)
+        idum = np.where(sp_reference_norm > 0)
+        sp_reference_norm[idum] /= spmax
+        idum = np.where(sp_reference_norm < 0)
+        sp_reference_norm[idum] /= -spmin
+        idum = np.where(sp_offset_norm > 0)
+        sp_offset_norm[idum] /= spmax
+        idum = np.where(sp_offset_norm < 0)
+        sp_offset_norm[idum] /= -spmin
+    else:
+        sp_reference_norm = sp_reference_filtmask
+        sp_offset_norm = sp_offset_filtmask
+
+    if (abs(debugplot) in (21, 22)) or (pdf is not None):
+        xdum = np.arange(naxis1) + 1
+        ax = ximplotxy(xdum, sp_reference_norm, show=False,
+                       title=plottitle + '[normalized]',
+                       label='reference spectrum')
+        ax.plot(xdum, sp_offset_norm, label='offset spectrum')
+        ax.legend()
+        if pdf is not None:
+            pdf.savefig()
+        else:
+            pause_debugplot(debugplot=debugplot, pltshow=True)
+
+    corr = np.fft.ifft(np.fft.fft(sp_offset_norm) *
+                       np.fft.fft(sp_reference_norm).conj()).real
     corr = corr[isort]
 
     # determine correlation peak
@@ -282,14 +329,14 @@ def periodic_corr1d(sp_reference, sp_offset,
                        xlim=(-naxis1/2, naxis1/2), show=False)
         ax.axvline(offset, color='grey', linestyle='dashed')
         coffset = "(offset:{0:6.2f} pixels)".format(offset)
-        ax.text(0, 1, coffset,
+        ax.text(0.01, 0.99, coffset,
                 horizontalalignment='left',
                 verticalalignment='top',
                 transform=ax.transAxes)
         if naround_zero is not None:
             cwindow = "(peak region: [{},{}] pixels)".format(-naround_zero,
                                                              naround_zero)
-            ax.text(0, 0.95, cwindow,
+            ax.text(0.01, 0.93, cwindow,
                     horizontalalignment='left',
                     verticalalignment='top',
                     transform=ax.transAxes)
@@ -316,6 +363,7 @@ def periodic_corr1d(sp_reference, sp_offset,
         if pdf is not None:
             pdf.savefig()
         else:
-            pause_debugplot(debugplot=debugplot, pltshow=True)
+            pause_debugplot(debugplot=debugplot,
+                            tight_layout=False, pltshow=True)
 
     return offset, fpeak
