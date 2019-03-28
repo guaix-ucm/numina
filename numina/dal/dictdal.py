@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,16 +13,17 @@ import os
 import logging
 import json
 from itertools import chain
-import datetime
 
 import six
 import yaml
+
 import numina.store
 import numina.store.gtc.load as gtcload
 from numina.types.frame import DataFrameType
 from numina.core.oresult import obsres_from_dict
 from numina.exceptions import NoResultFound
-from numina.util.fqn import fully_qualified_name
+from numina.instrument.assembly import assembly_instrument
+
 from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter
@@ -38,13 +39,14 @@ class BaseDictDAL(AbsDrpDAL):
 
     _RESERVED_MODE_NAMES = ['nulo', 'container', 'root', 'raiz']
 
-    def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None):
+    def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None, components=None):
         super(BaseDictDAL, self).__init__(drps)
         # Check that the structure of the base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
         self.req_table = req_table
         self.extra_data = extra_data if extra_data else {}
+        self.components = components if components else {}
 
     def search_oblock_from_id(self, obsid):
         try:
@@ -160,15 +162,24 @@ class BaseDictDAL(AbsDrpDAL):
 
         if configuration:
             # override instrument configuration
-            obsres.configuration = self.search_instrument_configuration(
-                obsres.instrument,
-                configuration
-            )
+            # obsres.configuration = self.search_instrument_configuration(
+            #     obsres.instrument,
+            #     configuration
+            #)
+            pass
         else:
             # Insert Instrument configuration
-            obsres.configuration = this_drp.configuration_selector(obsres)
+            pass
+            # obsres.configuration = this_drp.configuration_selector(obsres)
+        key, date_obs, keyname = this_drp.select_profile(obsres)
+        obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
+        obsres.profile = obsres.configuration
+
         _logger.debug('obsres_from_oblock_id %s END', obsid)
         return obsres
+
+    def assembly_instrument(self, keyval, date, by_key='name'):
+        return assembly_instrument(self.components, keyval, date, by_key=by_key)
 
     def search_result_id(self, node_id, tipo, field):
         cobsres = self.obsres_from_oblock_id(node_id)
@@ -182,18 +193,17 @@ class BaseDictDAL(AbsDrpDAL):
 
         try:
             field_file = result_contents[field]
+            st = StoredProduct(
+                id=node_id,
+                content=numina.store.load(tipo, os.path.join(rdir, field_file)),
+                tags={}
+            )
+            return st
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
             # Python 2.7 compatibility
             six.raise_from(NoResultFound(msg), err)
             # raise NoResultFound(msg) from err
-
-        st = StoredProduct(
-            id=node_id,
-            content=numina.store.load(tipo, os.path.join(rdir, field_file)),
-            tags={}
-        )
-        return st
 
     def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
@@ -253,7 +263,7 @@ class DictDAL(BaseDictDAL):
 
 
 class Dict2DAL(BaseDictDAL):
-    def __init__(self, drps, obtable, base, extra_data=None):
+    def __init__(self, drps, obtable, base, extra_data=None, components=None):
 
         prod_table = base.get('products', {})
 
@@ -262,7 +272,10 @@ class Dict2DAL(BaseDictDAL):
         else:
             req_table = base.get('requirements', {})
 
-        super(Dict2DAL, self).__init__(drps, obtable, prod_table, req_table, extra_data)
+        super(Dict2DAL, self).__init__(
+            drps, obtable, prod_table, req_table,
+            extra_data, components=components
+        )
 
     def new_task_id(self, request, request_params):
         if request == 'reduce':
@@ -318,11 +331,10 @@ def resultsdir_default(basedir, obsid):
     return resultsdir
 
 
-
 class HybridDAL(Dict2DAL):
     """A DAL that can read files from directory structure"""
 
-    def __init__(self, drps, obtable, base, extra_data=None, basedir=None):
+    def __init__(self, drps, obtable, base, extra_data=None, components=None, basedir=None):
 
         self.rootdir = base.get("rootdir", "")
 
@@ -345,8 +357,11 @@ class HybridDAL(Dict2DAL):
             for ch in children:
                 obdict[ch]['parent'] = ob['id']
 
-        super(HybridDAL, self).__init__(drps, obdict, base, extra_data)
-
+        super(HybridDAL, self).__init__(
+            drps, obdict, base,
+            extra_data=extra_data,
+            components=components
+        )
 
     def add_obs(self, obtable):
 
@@ -478,18 +493,19 @@ class HybridDAL(Dict2DAL):
             else:
                 content = None
 
+            st = StoredProduct(
+                id=node_id,
+                content=content,
+                tags={}
+            )
+            return st
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
             # Python 2.7 compatibility
             six.raise_from(NoResultFound(msg), err)
             # raise NoResultFound(msg) from err
 
-        st = StoredProduct(
-            id=node_id,
-            content=content,
-            tags={}
-        )
-        return st
+
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
 
@@ -610,7 +626,6 @@ class HybridDAL(Dict2DAL):
         state = super(HybridDAL, self).dump_data()
         state['rootdir'] = self.rootdir
         return state
-
 
     def new_task_id(self, request, request_params):
         if request == 'reduce':

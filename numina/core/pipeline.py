@@ -291,6 +291,37 @@ class InstrumentDRP(object):
             logger.debug('no match, using default configuration')
             return self.configurations['default']
 
+    def select_profile(self, obresult):
+        """Select instrument profile based on OB"""
+
+        logger = logging.getLogger(__name__)
+        logger.debug('calling default profile selector')
+        # check configuration
+        insconf = obresult.configuration
+        if insconf != 'default':
+            key = insconf
+            date_obs = None
+            keyname = 'uuid'
+        else:
+            # get first possible image
+            ref = obresult.get_sample_frame()
+            if ref is None:
+                key = obresult.instrument
+                date_obs = None
+                keyname = 'name'
+            else:
+                extr = self.datamodel.extractor_map['fits']
+
+                date_obs = extr.extract('observation_date', ref)
+                key = extr.extract('insconf', ref)
+                if key is not None:
+                    keyname = 'uuid'
+                else:
+                    key = extr.extract('instrument', ref)
+                    keyname = 'name'
+
+        return key, date_obs, keyname
+
     def get_recipe_object(self, mode_name, pipeline_name='default'):
         """Build a recipe object from a given mode name"""
         active_mode = self.modes[mode_name]

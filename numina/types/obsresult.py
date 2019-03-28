@@ -10,9 +10,11 @@
 import warnings
 
 import six
+
 from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
-from numina.core.insconf import InstrumentConfiguration
+# import numina.core.instrument.insconf as insconf
+
 from numina.types.qc import QC
 from .frame import DataFrameType
 from .datatype import DataType
@@ -67,28 +69,6 @@ class ObservationResultType(DataType):
 
     def on_query_not_found(self, notfound):
         six.raise_from(NoResultFound('unable to complete ObservationResult'), notfound)
-
-
-class InstrumentConfigurationType(DataType):
-    """The type of InstrumentConfiguration."""
-
-    def __init__(self):
-        super(InstrumentConfigurationType, self).__init__(
-            ptype=InstrumentConfiguration
-            )
-
-    def validate(self, obj):
-        return True
-
-    def query(self, name, dal, ob, options=None):
-        if not isinstance(ob.configuration, InstrumentConfiguration):
-            warnings.warn(RuntimeWarning, 'instrument configuration not configured')
-            return {}
-        else:
-            return ob.configuration
-
-    def on_query_not_found(self, notfound):
-        raise notfound
 
 
 class QualityControlProduct(DataType):

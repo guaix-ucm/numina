@@ -9,8 +9,8 @@
 
 import numpy
 
-from .device import HWDevice
-from .efficiency import Efficiency
+from numina.instrument.hwdevice import HWDevice
+from numina.instrument.simulation.efficiency import Efficiency
 
 
 class VirtualDetector(object):

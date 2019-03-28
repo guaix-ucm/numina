@@ -19,7 +19,8 @@ expecte0 = [""]
 
 expecte1 = ["Instrument: TEST1",
             " version is '1'",
-            " default is 'Default configuration'",
+            " has configuration 'Old configuration' uuid=6ad5dc90-6b15-43b7-abb5-b07340e19f41",
+            " has configuration 'Default configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96",
             " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
             ""
@@ -28,12 +29,13 @@ expecte1 = ["Instrument: TEST1",
 
 expecte2 = ["Instrument: TEST2",
             " version is '{}'".format(numina.__version__),
-            " default is 'Default configuration'",
             " has datamodel 'numina.datamodel.DataModel'",
+            " has configuration 'Default configuration' uuid=9c21b315-9231-4fe0-a276-5043b064a3a8",
             " has pipeline 'default', version 1",
             "Instrument: TEST1",
             " version is '1'",
-            " default is 'Default configuration'",
+            " has configuration 'Old configuration' uuid=6ad5dc90-6b15-43b7-abb5-b07340e19f41",
+            " has configuration 'Default configuration' uuid=225fcaf2-7f6f-49cc-972a-70fd0aee8e96",
             " has datamodel 'numina.datamodel.DataModel'",
             " has pipeline 'default', version 1",
             ""
@@ -60,12 +62,11 @@ def mockreturn2():
     return numina.drps.drpbase.DrpGeneric(drps)
 
 
-@pytest.mark.parametrize("drpsfunc, expected",
-                         [(mockreturn0, expecte0),
-                          (mockreturn1, expecte1),
-                          (mockreturn2, expecte2)
-                          ]
-                         )
+@pytest.mark.parametrize("drpsfunc, expected",[
+    (mockreturn0, expecte0),
+    (mockreturn1, expecte1),
+    (mockreturn2, expecte2)
+])
 def test_show_instrument(capsys, monkeypatch, drpsfunc, expected):
     """Test that no instruments are shown"""
 

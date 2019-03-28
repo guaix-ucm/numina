@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,6 +15,7 @@ from numina.tests.drptest import create_drp_test
 from ..backend import Backend
 from numina.exceptions import NoResultFound
 import numina.types.qc as qc
+import numina.instrument.assembly as asb
 
 
 @pytest.fixture
@@ -97,8 +98,11 @@ def backend():
     gentable['requirements'] = {}
     gentable['results'] = results_table
     #gentable['oblocks'] = ob_table
+    # Load instrument profiles
+    pkg_paths = ['numina.drps.tests.configs']
+    store = asb.load_paths_store(pkg_paths)
 
-    base = Backend(drps, gentable)
+    base = Backend(drps, gentable, components=store)
     base.add_obs(ob_table)
 
     return base
@@ -170,7 +174,7 @@ def test_build_recipe_result(backend, tmpdir):
     import astropy.io.fits as fits
     import json
     from numina.types.dataframe import DataFrame
-    from numina.types.structured import BaseStructuredCalibration, writeto
+    from numina.types.structured import BaseStructuredCalibration
     from numina.util.context import working_directory
 
     resd = {}

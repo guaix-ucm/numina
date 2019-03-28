@@ -1,0 +1,10 @@
+{
+  "description": "Old configuration",
+  "uuid": "6ad5dc90-6b15-43b7-abb5-b07340e19f41",
+  "date_start": "2014-06-01T12:00:00.0",
+  "date_end": "2016-06-01T12:00:00.0",
+  "type": "instrument",
+  "name": "TEST1",
+  "components": [
+  ]
+}

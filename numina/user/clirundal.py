@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -10,9 +10,7 @@
 """User command line interface of Numina."""
 
 import sys
-import os
 import logging
-import datetime
 
 import yaml
 
@@ -23,6 +21,7 @@ from numina.dal.dictdal import HybridDAL
 from numina.dal.backend import Backend
 from numina.util.context import working_directory
 from numina.util.fqn import fully_qualified_name
+import numina.instrument.assembly as asbl
 
 from .baserun import run_recipe
 from .helpers import DataManager
@@ -33,17 +32,27 @@ DEFAULT_RECIPE_LOGGER = 'numina.recipes'
 _logger = logging.getLogger("numina")
 
 
-def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None):
-    drps = numina.drps.get_system_drps()
-    backend = HybridDAL(drps, [], loaded_data, loaded_data_extra)
+def process_format_version_1(loaded_obs, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
+    backend = HybridDAL(
+        sys_drps, [], loaded_data,
+        extra_data=loaded_data_extra,
+        components=com_store
+    )
     backend.add_obs(loaded_obs)
     return backend
 
 
-def process_format_version_2(loaded_obs, loaded_data, loaded_data_extra=None):
-    drps = numina.drps.get_system_drps()
+def process_format_version_2(loaded_obs, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
     loaded_db = loaded_data['database']
-    backend = Backend(drps, loaded_db, loaded_data_extra)
+    backend = Backend(
+        sys_drps, loaded_db,
+        extra_data=loaded_data_extra,
+        components=com_store
+    )
     backend.rootdir = loaded_data.get('rootdir', '')
     backend.add_obs(loaded_obs)
     return backend
@@ -111,7 +120,7 @@ def mode_run_common_obs(args, extra_args):
     _logger.info('control format version %d', control_format)
 
     if control_format == 1:
-        _backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra)
+        _backend = process_format_version_1(loaded_obs, loaded_data, loaded_data_extra, args.profilepath)
         datamanager = DataManager(args.basedir, args.datadir, _backend)
         datamanager.workdir_tmpl = "obsid{obsid}_work"
         datamanager.resultdir_tmpl = "obsid{obsid}_results"
@@ -120,7 +129,7 @@ def mode_run_common_obs(args, extra_args):
         datamanager.task_file = 'task.yaml'
 
     elif control_format == 2:
-        _backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra)
+        _backend = process_format_version_2(loaded_obs, loaded_data, loaded_data_extra, args.profilepath)
         datamanager = DataManager(args.basedir, args.datadir, _backend)
     else:
         print('Unsupported format', control_format, 'in', args.reqs)

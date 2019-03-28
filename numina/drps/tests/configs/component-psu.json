@@ -1,0 +1,21 @@
+{
+  "description": "Test component PATTRI Slit Unit",
+  "uuid": "41fa8884-2ea3-42c3-98a6-a17a29c990cf",
+  "date_start": null,
+  "date_end": null,
+  "type": "component",
+  "name": "PSU",
+  "components": [
+    {"name": "Bar", "id":  "BarL_1"},
+    {"name": "Bar", "id":  "BarL_2"},
+    {"name": "Bar", "id":  "BarR_1"},
+    {"name": "Bar", "id":  "BarR_2"}
+  ],
+  "properties": [
+    {"id": "csupos", "depends": [], "values":  444},
+    {"id": "box0", "depends": [], "values":  1},
+    {"id": "box1", "depends": ["val"], "values": {"A":  453, "B":  7126}},
+    {"id": "spaces", "name": "Box"},
+    {"id": "other", "uuid": "86a6e008-8d3d-456f-89f8-09ff0c7f7c57"}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Wheel_Model1",
+  "type": "component",
+  "description": "Wheel for testing",
+  "uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5",
+  "date_start": null,
+  "date_end": null,
+  "components": [
+  ],
+  "properties": [
+    {"id": "slots", "depends": [], "values": 8}
+  ]
+}

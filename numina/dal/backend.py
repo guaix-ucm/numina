@@ -120,7 +120,7 @@ class StoredResult(object):
 class Backend(Dict2DAL):
 
     # FIXME: most code here is duplicated with HybridDal
-    def __init__(self, drps, base, extra_data=None, basedir=None):
+    def __init__(self, drps, base, extra_data=None, basedir=None, components=None):
 
         self.rootdir = base.get("rootdir", "")
         self.ob_ids = []
@@ -154,7 +154,7 @@ class Backend(Dict2DAL):
         self.db_tables['products'] = base.get('products', {})
         self.db_tables['products_index'] = base.get('products_index', [])
 
-        super(Backend, self).__init__(drps, obdict, base, extra_data)
+        super(Backend, self).__init__(drps, obdict, base, extra_data, components=components)
 
         self.db_tables['oblocks'] = self.ob_table
         self.db_tables['requirements'] = self.req_table

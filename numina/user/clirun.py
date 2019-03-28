@@ -58,6 +58,11 @@ def register(subparsers, config):
         help='name of an instrument configuration'
         )
     parser_run.add_argument(
+        '--profile-path', dest='profilepath',
+        default=None,
+        help='location of the instrument profiles'
+        )
+    parser_run.add_argument(
         '-p', '--pipeline', dest='pipe_name',
         default='default', help='name of a pipeline'
         )

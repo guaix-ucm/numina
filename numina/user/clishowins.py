@@ -13,6 +13,7 @@ from __future__ import print_function
 
 import numina.drps
 import numina.util.objimport as objimport
+import numina.instrument.assembly as asbl
 
 
 def register(subparsers, config):
@@ -27,7 +28,12 @@ def register(subparsers, config):
         '-o', '--observing-modes',
         action='store_true', dest='om',
         help='list observing modes of each instrument')
-
+    # TODO: this could be the same option for run
+    parser_show_ins.add_argument(
+        '--profile-path', dest='profilepath',
+        default=None,
+        help='location of the instrument profiles'
+        )
 #    parser_show_ins.add_argument('--verbose', '-v', action='count')
 
     parser_show_ins.add_argument(
@@ -40,34 +46,34 @@ def register(subparsers, config):
 
 def show_instruments(args, extra_args):
 
-    mm = numina.drps.get_system_drps()
+    sys_drps = numina.drps.get_system_drps()
+    prof_store = asbl.load_panoply_store(sys_drps, args.profilepath)
 
     if args.name:
         for name in args.name:
             try:
-                drp = mm.query_by_name(name)
-                print_instrument(drp, modes=args.om)
+                drp = sys_drps.query_by_name(name)
+                print_instrument(drp, prof_store, modes=args.om)
             except KeyError:
                 print_no_instrument(name)
     else:
-        drps = mm.query_all()
+        drps = sys_drps.query_all()
         for drp in drps.values():
-            print_instrument(drp, modes=args.om)
+            print_instrument(drp, prof_store, modes=args.om)
 
 
-def print_instrument(instrument, modes=True):
+def print_instrument(instrument, prof_store, modes=True):
     print('Instrument:', instrument.name)
-    msg = " version is '{}'".format(instrument.version)
-    print(msg)
-    for ic, conf in instrument.configurations.items():
-        if ic == 'default':
-            # skip default configuration
-            continue
-        msg = " has configuration '{}' uuid={}".format(conf.description, ic)
-        print(msg)
-    default_conf = instrument.configurations['default']
-    msg = " default is '{}'".format(default_conf.description)
-    print(msg)
+    print(" version is '{}'".format(instrument.version))
+    for key, val in prof_store.items():
+        etype = val['type']
+        name = val['name']
+        if etype == 'instrument' and name == instrument.name:
+            desc = val['description']
+            uuid = val['uuid']
+            msg = " has configuration '{}' uuid={}".format(desc, uuid)
+            print(msg)
+
     print(" has datamodel '{}'".format(objimport.fully_qualified_name(instrument.datamodel)))
     for _, pl in instrument.pipelines.items():
         print(' has pipeline {0.name!r}, version {0.version}'.format(pl))

@@ -1,0 +1,11 @@
+{
+ "name": "RobotModel",
+ "description": "Model for the Robot",
+ "type": "setup",
+ "date_end": null,
+ "date_start": "2017-11-08T12:00:00",
+ "uuid": "a7358f24-6ce7-4851-a197-d6515e0592f5",
+ "values": {
+   "ypos": [-1,-2,-3,-4,-5,-6,-7]
+ }
+}

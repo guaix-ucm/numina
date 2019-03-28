@@ -1,0 +1,14 @@
+{
+  "description": "Test instrument CLODIA",
+  "uuid": "44077557-32ab-43f2-8f2a-5ddb813c03df",
+  "date_start": "2016-06-01T12:00:00.0",
+  "date_end": null,
+  "type": "instrument",
+  "name": "CLODIA",
+  "components": [
+    {"name": "PSU"},
+    {"name": "RobotPos", "id": "robot"},
+    {"name": "Detector_Model1", "id": "detector"},
+    {"uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5", "id": "wheel"}
+  ]
+}

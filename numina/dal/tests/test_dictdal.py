@@ -9,9 +9,9 @@
 
 import pytest
 
-import numina.core.insconf
 from numina.exceptions import NoResultFound
 from numina.tests.drptest import create_drp_test
+import numina.core
 
 from ..dictdal import BaseDictDAL
 from ..stored import ObservingBlock, StoredProduct
@@ -20,8 +20,8 @@ from ..stored import ObservingBlock, StoredProduct
 @pytest.fixture
 def basedictdal():
 
-    drps = create_drp_test(['drptest1.yaml'])
-
+    test_drps = create_drp_test(['drptest1.yaml'])
+    # com_store = asbl.load_panoply_store(test_drps)
     ob_table = {
         2: dict(id=2, instrument='TEST1', mode="mode1", images=[], children=[], parent=None, facts=None),
         3: dict(id=2, instrument='TEST1', mode="mode2", images=[], children=[], parent=None, facts=None),
@@ -35,25 +35,30 @@ def basedictdal():
         ]
     }
 
-    base = BaseDictDAL(drps, ob_table, prod_table, {})
-
+    base = BaseDictDAL(test_drps, ob_table, prod_table, req_table={})
     return base
 
 
 def test_search_instrument_configuration(basedictdal):
+    import numina.instrument.generic
 
-    res = basedictdal.search_instrument_configuration('TEST1', 'default')
+    res = basedictdal.search_instrument_configuration('TEST1', '2017-10-01 12:00:00')
 
-    assert isinstance(res, numina.core.insconf.InstrumentConfiguration)
+    assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
+
+    res = basedictdal.search_instrument_configuration('TEST1', '2017-10-01 12:00:00')
+
+    assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
+
+    with pytest.raises(ValueError):
+        basedictdal.search_instrument_configuration('TEST1', '2011-10-01 12:00:00')
 
     with pytest.raises(KeyError):
-        basedictdal.search_instrument_configuration('TEST1', 'missing')
-
-    with pytest.raises(KeyError):
-        basedictdal.search_instrument_configuration('TEST2', 'default')
+        basedictdal.search_instrument_configuration('TEST2', '2011-10-01 12:00:00')
 
 
 def test_search_instrument_configuration_from_ob(basedictdal):
+    import numina.instrument.generic
 
     ob = numina.core.ObservationResult(mode=None)
 
@@ -62,17 +67,44 @@ def test_search_instrument_configuration_from_ob(basedictdal):
 
     ob = numina.core.ObservationResult(mode='TEST1')
     ob.instrument = 'TEST1'
-
     res = basedictdal.search_instrument_configuration_from_ob(ob)
 
-    assert isinstance(res, numina.core.insconf.InstrumentConfiguration)
+    assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
 
     ob = numina.core.ObservationResult(mode='TEST1')
     ob.instrument = 'TEST1'
     ob.configuration = 'missing'
 
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         basedictdal.search_instrument_configuration_from_ob(ob)
+
+    ob = numina.core.ObservationResult(mode='TEST1')
+    ob.instrument = 'TEST1'
+    ob.configuration = 'missing'
+
+    with pytest.raises(ValueError):
+        basedictdal.search_instrument_configuration_from_ob(ob)
+
+
+def test_search_instrument_configuration_from_ob2(basedictdal):
+    import numina.instrument.generic
+
+    ob = numina.core.ObservationResult(instrument='TEST1', mode='TEST1')
+    ob.configuration = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
+
+    insconf = basedictdal.search_instrument_configuration_from_ob(ob)
+    assert str(insconf.origin.uuid) == '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
+
+
+def test_search_instrument_configuration_from_ob3(basedictdal):
+    import numina.instrument.generic
+
+    ob = numina.core.ObservationResult(instrument='TEST1', mode='TEST1')
+    ob.configuration = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
+
+    insconf = basedictdal.search_instrument_configuration_from_ob(ob)
+    assert str(insconf.origin.uuid) == '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
+
 
 
 def test_search_oblock(basedictdal):

@@ -7,8 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.simulation.wheel import Wheel
-from numina.simulation.optics import Stop, Open
+from .wheel import Wheel
+from ..simulation.optics import Stop, Open
 
 
 class Shutter(Wheel):

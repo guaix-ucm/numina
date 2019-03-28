@@ -23,15 +23,18 @@ class AbsDrpDAL(DALInterface):
         super(AbsDrpDAL, self).__init__()
         self.drps = drps
 
-    def search_instrument_configuration_from_ob(self, ob):
-        ins = ob.instrument
-        name = ob.configuration
-        return self.search_instrument_configuration(ins, name)
+    def search_instrument_configuration_from_ob(self, obsres):
+        from numina.instrument.assembly import assembly_instrument
+        this_drp = self.drps.query_by_name(obsres.instrument)
+        key, date_obs, keyname = this_drp.select_profile(obsres)
+        ins = assembly_instrument(this_drp.configurations, key, date_obs, by_key=keyname)
+        return ins
 
-    def search_instrument_configuration(self, ins, name):
-        drp = self.drps.query_by_name(ins)
-        this_configuration = drp.configurations[name]
-        return this_configuration
+    def search_instrument_configuration(self, keyval, value, by_key='name'):
+        from numina.instrument.assembly import assembly_instrument
+        drp = self.drps.query_by_name(keyval)
+        ins = assembly_instrument(drp.configurations, keyval, value, by_key=by_key)
+        return ins
 
     def search_recipe(self, ins, mode, pipeline):
         drp = self.drps.query_by_name(ins)

@@ -1,0 +1,13 @@
+{
+  "name": "Bar",
+  "type": "component",
+  "description": "Bar in Configurable Slit Unit",
+  "uuid": "510efa03-c266-4202-8a4d-d5799af49d9d",
+  "date_start": "2014-01-01T12:00:00",
+  "date_end": null,
+  "components": [
+  ],
+  "properties": [
+    {"id": "csupos", "depends": [], "values":  444}
+  ]
+}
