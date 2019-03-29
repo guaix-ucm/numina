@@ -462,7 +462,7 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
 
     # normalize each spectrum dividing by its median
     flux_obj /= np.median(flux_obj)
-    flux_ref /= np.median(flux_ref:wv_obj)
+    flux_ref /= np.median(flux_ref)
 
     # plot initial resampled spectra
     if abs(debugplot) in (21, 22):
