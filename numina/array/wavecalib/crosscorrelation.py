@@ -372,7 +372,7 @@ def periodic_corr1d(sp_reference, sp_offset,
 
 
 def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
-                       sigmalist, fminmax=None, naround_zero=None,
+                       sigmalist, fpixminmax=None, naround_zero=None,
                        ax1=None, ax2=None,
                        debugplot=0):
     """Compute broadening to match 'sp_obj' with 'sp_ref'.
@@ -401,9 +401,14 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         Flux of the reference spectrum.
     sigmalist : numpy array or list
         Sigma broadening (in pixels).
-    fminmax : tuple of floats or None
-        Minimum and maximum frequencies to be used. If None, no
-        frequency filtering is employed.
+    fpixminmax : tuple of floats or None
+        Number of subintervals in which the pixel range (in the
+        wavelength direction) is divided in order to determine
+        de frequency filtering. If None, no frequency filtering is
+        employed. For example, a tuple (8, 1000) means that the
+        lower frequency cut is set to 8/npix, whereas the upper
+        frequency cut is set to 1000/npix, being npix the number of
+        pixels in the wavelength direction.
     naround_zero : int
         Half width of the window (around zero offset) to look for
         the correlation peak. If None, the whole correlation
@@ -455,6 +460,10 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
     flux_obj = funinterp_obj(wv)
     flux_ref = funinterp_ref(wv)
 
+    # normalize each spectrum dividing by its median
+    flux_obj /= np.median(flux_obj)
+    flux_ref /= np.median(flux_ref:wv_obj)
+
     # plot initial resampled spectra
     if abs(debugplot) in (21, 22):
         ax = ximplotxy(wv, flux_ref,
@@ -466,8 +475,10 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         pause_debugplot(debugplot=debugplot, pltshow=True)
 
     # set parameters for periodic_corr1d
-    if fminmax is None:
-        fminmax = (8/wv.size, 1000/wv.size)
+    if fpixminmax is None:
+        fminmax = None
+    else:
+        fminmax = (fpixminmax[0]/wv.size, fpixminmax[1]/wv.size)
     if naround_zero is None:
         naround_zero = int(wv.size/20)
 
