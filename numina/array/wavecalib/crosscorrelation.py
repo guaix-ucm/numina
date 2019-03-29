@@ -13,6 +13,8 @@ from __future__ import print_function
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 from numpy.polynomial import Polynomial
+from scipy.interpolate import interp1d
+from scipy.ndimage.filters import gaussian_filter
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
@@ -367,3 +369,153 @@ def periodic_corr1d(sp_reference, sp_offset,
                             tight_layout=False, pltshow=True)
 
     return offset, fpeak
+
+
+def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
+                       sigmalist, fminmax=None, naround_zero=None,
+                       ax1=None, ax2=None,
+                       debugplot=0):
+    """Compute broadening to match 'sp_obj' with 'sp_ref'.
+
+    The reference spectrum 'sp_ref' should have a better spectral
+    resolution than the object spectrum 'sp_obj'.
+
+    It is assumed that the wavelength arrays are provided in
+    ascending order.
+
+    The wavelength sampling 'wv_ref' and 'wv_ref' can be different.
+
+    The comparison is performed in the common wavelength
+    interval. Within this interval, both spectra are linearly
+    resampled to the result of merging 'wv_obj' and 'wv_ref'.
+
+    Parameters
+    ----------
+    wv_obj : numpy array
+        Wavelength sampling of the object spectrum.
+    sp_obj : numpy array
+        Flux of the object spectrum.
+    wv_ref : numpy array
+        Wavelength sampling of the reference spectrum.
+    sp_ref : numpy array
+        Flux of the reference spectrum.
+    sigmalist : numpy array or list
+        Sigma broadening (in pixels).
+    fminmax : tuple of floats or None
+        Minimum and maximum frequencies to be used. If None, no
+        frequency filtering is employed.
+    naround_zero : int
+        Half width of the window (around zero offset) to look for
+        the correlation peak. If None, the whole correlation
+        spectrum is employed. Otherwise, the peak will be sought
+        in the interval [-naround_zero, +naround_zero].
+    ax1 : matplotlib Axes object
+        If not none, this plot represents the offset and fpeak
+        variation as a function of sigma.
+    ax2 : matplotlib Axes object
+        If not none, this plot represents the two input spectra and
+        the broadened reference spectrum.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
+
+    Results
+    -------
+    offset_broad : float
+        Offset (in pixels) between the two input spectra measured
+        at the sigma value where fpeak is maximum.
+    sigma_broad : float
+        Sigma (in pixels) for which fpeak is maximum.
+    sp_ref_broad : numpy array
+        Reference spectrum broadened with sigma_broad (at the original
+        wavelength sampling).
+
+    """
+
+    # determine wether there is an intersection between the two
+    # wavelength ranges
+    minmax_obj = [min(wv_obj), max(wv_obj)]
+    minmax_ref = [min(wv_ref), max(wv_ref)]
+    minimum_max = min(minmax_obj[1], minmax_ref[1])
+    maximum_min = max(minmax_obj[0], minmax_ref[0])
+    overlap = minimum_max - maximum_min
+    if overlap <= 0:
+        raise ValueError("Wavelength ranges of the two spectra don't overlap!")
+
+    # merge wavelength ranges (removing duplicates)
+    wv = np.unique(np.sort(np.concatenate((wv_obj, wv_ref))))
+    # truncate to common interval
+    wv = wv[(wv >= maximum_min) * (wv <= minimum_max)]
+
+    # linear interpolation of input spectrum using the merged
+    # wavelength sampling
+    funinterp_obj = interp1d(wv_obj, sp_obj, kind='linear')
+    funinterp_ref = interp1d(wv_ref, sp_ref, kind='linear')
+    flux_obj = funinterp_obj(wv)
+    flux_ref = funinterp_ref(wv)
+
+    # plot initial resampled spectra
+    if abs(debugplot) in (21, 22):
+        ax = ximplotxy(wv, flux_ref,
+                       xlabel='wavelength (Angstrom)',
+                       ylabel='flux (arbitrary units)',
+                       label='flux_ref', show=False)
+        ax.plot(wv, flux_obj, label='flux_obj')
+        ax.legend()
+        pause_debugplot(debugplot=debugplot, pltshow=True)
+
+    # set parameters for periodic_corr1d
+    if fminmax is None:
+        fminmax = (8/wv.size, 1000/wv.size)
+    if naround_zero is None:
+        naround_zero = int(wv.size/20)
+
+    nsigmas = len(list(sigmalist))
+    offset = np.zeros(nsigmas)
+    fpeak = np.zeros(nsigmas)
+    for i, sigma in enumerate(sigmalist):
+        # broaden reference spectrum
+        flux_ref_broad = gaussian_filter(flux_ref, sigma)
+        # plot the two spectra
+        if abs(debugplot) in (21, 22):
+            ax = ximplotxy(wv, flux_ref_broad,
+                           xlabel='wavelength (Angstrom)',
+                           ylabel='flux (arbitrary units)',
+                           label='flux_ref', show=False)
+            ax.plot(wv, flux_obj, label='flux_obj')
+            ax.set_title('sigma: ' + str(sigma) + ' pixels')
+            ax.legend()
+            pause_debugplot(debugplot=debugplot, pltshow=True)
+        # periodic correlation between the two spectra
+        offset[i], fpeak[i] = periodic_corr1d(
+            flux_ref_broad, flux_obj,
+            fminmax=fminmax,
+            naround_zero=naround_zero,
+            norm_spectra=True,
+            debugplot=debugplot
+        )
+
+    if ax1 is not None:
+        ax1.plot(sigmalist, offset,
+                 color='C0', marker='o', linestyle='', label='offset')
+        ax1.set_xlabel('sigma (pixels)')
+        ax1.set_ylabel('offset (pixels)', color='C0')
+        ax1_ = ax1.twinx()
+        ax1_.plot(sigmalist, fpeak,
+                  color='C1', marker='o', linestyle='', label='fpeak')
+        ax1_.set_ylabel('fpeak', color='C1')
+
+    offset_broad = offset[np.argmax(fpeak)]
+    sigma_broad = sigmalist[np.argmax(fpeak)]
+    sp_ref_broad = gaussian_filter(sp_ref, sigma_broad)
+
+    if ax2 is not None:
+        ax2.plot(wv_obj, sp_obj, label='sp_obj')
+        ax2.plot(wv_ref, sp_ref, color='#aaaaaa', label='sp_ref')
+        ax2.plot(wv_ref, sp_ref_broad, label='sp_ref_broad')
+        ax2.set_xlabel('wavelength (Angstrom)')
+        ax2.set_ylabel('flux (arbitrary units)')
+        ax2.legend()
+
+    return offset_broad, sigma_broad, sp_ref_broad
