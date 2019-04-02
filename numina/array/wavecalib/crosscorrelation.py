@@ -267,21 +267,20 @@ def periodic_corr1d(sp_reference, sp_offset,
         sp_offset_norm[idum] /= spmax
         idum = np.where(sp_offset_norm < 0)
         sp_offset_norm[idum] /= -spmin
+        if (abs(debugplot) in (21, 22)) or (pdf is not None):
+            xdum = np.arange(naxis1) + 1
+            ax = ximplotxy(xdum, sp_reference_norm, show=False,
+                           title=plottitle + ' [normalized]',
+                           label='reference spectrum')
+            ax.plot(xdum, sp_offset_norm, label='offset spectrum')
+            ax.legend()
+            if pdf is not None:
+                pdf.savefig()
+            else:
+                pause_debugplot(debugplot=debugplot, pltshow=True)
     else:
         sp_reference_norm = sp_reference_filtmask
         sp_offset_norm = sp_offset_filtmask
-
-    if (abs(debugplot) in (21, 22)) or (pdf is not None):
-        xdum = np.arange(naxis1) + 1
-        ax = ximplotxy(xdum, sp_reference_norm, show=False,
-                       title=plottitle + '[normalized]',
-                       label='reference spectrum')
-        ax.plot(xdum, sp_offset_norm, label='offset spectrum')
-        ax.legend()
-        if pdf is not None:
-            pdf.savefig()
-        else:
-            pause_debugplot(debugplot=debugplot, pltshow=True)
 
     corr = np.fft.ifft(np.fft.fft(sp_offset_norm) *
                        np.fft.fft(sp_reference_norm).conj()).real
