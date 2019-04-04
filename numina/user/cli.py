@@ -144,7 +144,8 @@ def main(args=None):
         logging.config.dictConfig(numina_cli_logconf)
 
     _logger.debug('Numina simple recipe runner version %s', __version__)
-    if args.command:
+    command = getattr(args, 'command', None)
+    if command is not None:
         args.command(args, extra_args)
 
 
