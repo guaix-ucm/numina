@@ -12,41 +12,7 @@
 from lmfit import Minimizer, Parameters
 import numpy as np
 from scipy.interpolate import LSQUnivariateSpline
-from scipy.interpolate import splrep, splev
 
-
-def get_xyknots_from_params(params):
-    """Auxiliary function to get xknot and yknot from params object.
-
-    Parameters
-    ----------
-    params : :class:`~lmfit.parameter.Parameters`
-        Parameters object with X and Y knot location.
-
-    Returns
-    -------
-    xknot : numpy array
-        X location of the knots.
-    yknot : numpy array
-        Y location of the knots.
-
-    """
-
-    nparams = len(params)
-
-    if nparams % 2 != 0:
-        raise ValueError('Unexpected number of values in Parameters object')
-
-    nknots = nparams // 2
-
-    xknot = np.zeros(nknots)
-    yknot = np.zeros(nknots)
-
-    for i in range(nknots):
-        xknot[i] = params['xknot{:03d}'.format(i + 1)].value
-        yknot[i] = params['yknot{:03d}'.format(i + 1)].value
-
-    return xknot, yknot
 
 class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
     """Extend scipy.interpolate.LSQUnivariateSpline.
@@ -54,7 +20,8 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
     """
 
     def __init__(self, x, y, t, w=None, bbox=(None, None),
-                 k=3, ext=0, check_finite=False):
+                 k=3, ext=0, check_finite=False, adaptive=True,
+                 tolerance=1E-7):
         """One-dimensional spline with explicit internal knots.
 
         This is actually a wrapper of
@@ -101,12 +68,13 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
             result in problems (crashes, non-termination or non-sensical
             results) if the inputs do contain infinities or NaNs.
             Default is True.
-        normalised : bool, optional
-            Whether to normalise the input arrays before fitting,
-            following the procedure described in Appendix B1 of
-            Cardiel (2009). See:
+        adaptive : bool, optional
+            Whether to optimise knot location following the procedure
+            described in Cardiel (2009); see:
             http://cdsads.u-strasbg.fr/abs/2009MNRAS.396..680C
             Default is True.
+        tolerance : float, optional
+            Tolerance for Nelder-Mead minimisation process.
 
         """
 
@@ -132,29 +100,101 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
             if not all(np.diff(x) > 0.0):
                 raise ValueError('x array must be strictly increasing')
 
+        # initial inner knot location (equidistant or fixed)
         try:
             nknots = int(t)
             if nknots > 0:
                 xmin = x[0]
                 xmax = x[-1]
                 deltax = (xmax - xmin) / float(nknots + 1)
-                xknots = np.zeros(nknots)
+                xknot = np.zeros(nknots)
                 for i in range(nknots):
-                    xknots[i] = (xmin + float(i + 1) * deltax)
+                    xknot[i] = (xmin + float(i + 1) * deltax)
             else:
-                xknots = np.array([])
-
+                xknot = np.array([])
         except:
-            xknots = np.asarray(t)
+            xknot = np.asarray(t)
             if check_finite:
-                if not np.isfinite(xknots).all():
+                if not np.isfinite(xknot).all():
                     raise ValueError('Interior knots must not contain '
                                      'NaNs or infs.')
+                if xknot.ndim != 1:
+                    raise ValueError('t array must have dimension 1')
+            nknots = len(xknot)
 
+        # adaptive knots
+        if nknots > 0 and adaptive:
+            xknot_backup = xknot.copy()
+            def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
+                spl = LSQUnivariateSpline(
+                    x=xnor,
+                    y=ynor,
+                    t=[item.value for item in params.values()],
+                    w=w,
+                    bbox=bbox,
+                    k=k,
+                    ext=ext,
+                    check_finite=False
+                )
+                return spl.get_residual()
+
+            # normalise the x and y arrays to the [-1, +1] interval
+            xmin = x[0]
+            xmax = x[-1]
+            ymin = np.min(y)
+            ymax = np.max(y)
+            bx = 2.0 / (xmax - xmin)
+            cx = (xmin + xmax) / (xmax - xmin)
+            by = 2.0 / (ymax - ymin)
+            cy = (ymin + ymax) / (ymax - ymin)
+            xnor = bx * np.asarray(x) - cx
+            ynor = by * np.asarray(y) - cy
+            xknotnor = bx * xknot - cx
+            params = Parameters()
+            for i in range(nknots):
+                if i == 0:
+                    xminknot = bx * x[0] - cx
+                    xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
+                elif i == nknots - 1:
+                    xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
+                    xmaxknot = bx * x[-1] - cx
+                else:
+                    xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
+                    xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
+                params.add(
+                    name='xknot{:03d}'.format(i),
+                    value=xknotnor[i],
+                    min=xminknot,
+                    max=xmaxknot,
+                    vary=True
+                )
+            self._params = params.copy()
+            fitter = Minimizer(
+                userfcn=fun_residuals,
+                params=params,
+                fcn_args=(xnor, ynor, w, bbox, k, ext)
+            )
+            try:
+                self._result = fitter.scalar_minimize(
+                    method='Nelder-Mead',
+                    tol=tolerance
+                )
+                xknot = [item.value for item in self._result.params.values()]
+                xknot = (np.asarray(xknot) + cx) / bx
+            except:
+                print('Error when fitting adaptive splines. '
+                      'Reverting to initial knot location.')
+                xknot = xknot_backup.copy()
+                self._result = None
+        else:
+            self._params = None
+            self._result = None
+
+        # final fit
         super(AdaptiveLSQUnivariateSpline, self).__init__(
             x=x,
             y=y,
-            t=xknots,
+            t=xknot,
             w=w,
             bbox=bbox,
             k=k,
