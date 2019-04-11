@@ -14,6 +14,22 @@ import numpy as np
 from scipy.interpolate import LSQUnivariateSpline
 
 
+def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
+    """Compute fit residuals"""
+
+    spl = LSQUnivariateSpline(
+        x=xnor,
+        y=ynor,
+        t=[item.value for item in params.values()],
+        w=w,
+        bbox=bbox,
+        k=k,
+        ext=ext,
+        check_finite=False
+    )
+    return spl.get_residual()
+
+
 class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
     """Extend scipy.interpolate.LSQUnivariateSpline.
 
@@ -112,7 +128,7 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                     xknot[i] = (xmin + float(i + 1) * deltax)
             else:
                 xknot = np.array([])
-        except:
+        except ValueError:
             xknot = np.asarray(t)
             if check_finite:
                 if not np.isfinite(xknot).all():
@@ -125,18 +141,6 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
         # adaptive knots
         if nknots > 0 and adaptive:
             xknot_backup = xknot.copy()
-            def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
-                spl = LSQUnivariateSpline(
-                    x=xnor,
-                    y=ynor,
-                    t=[item.value for item in params.values()],
-                    w=w,
-                    bbox=bbox,
-                    k=k,
-                    ext=ext,
-                    check_finite=False
-                )
-                return spl.get_residual()
 
             # normalise the x and y arrays to the [-1, +1] interval
             xmin = x[0]
@@ -181,7 +185,7 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                 )
                 xknot = [item.value for item in self._result.params.values()]
                 xknot = (np.asarray(xknot) + cx) / bx
-            except:
+            except ValueError:
                 print('Error when fitting adaptive splines. '
                       'Reverting to initial knot location.')
                 xknot = xknot_backup.copy()
@@ -201,4 +205,3 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
             ext=ext,
             check_finite=False
         )
-
