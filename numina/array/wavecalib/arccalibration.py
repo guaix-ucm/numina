@@ -15,7 +15,7 @@ from __future__ import print_function
 import itertools
 import numpy as np
 from numpy.polynomial import Polynomial
-import scipy.misc
+from scipy.special import comb
 
 from ..display.iofunctions import readi
 from ..display.iofunctions import readf
@@ -376,7 +376,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     # Verify that the number of triplets coincides with the expected
     # value.
     ntriplets_master = len(triplets_master_list)
-    if ntriplets_master == scipy.misc.comb(nlines_master, 3, exact=True):
+    if ntriplets_master == comb(nlines_master, 3, exact=True):
         if abs(debugplot) >= 10:
             print('>>> Total number of lines in master table:', 
                   nlines_master)
