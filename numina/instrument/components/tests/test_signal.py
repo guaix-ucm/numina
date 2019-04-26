@@ -5,6 +5,7 @@ from ..signal import Signal
 def cb1(arg1):
     return arg1
 
+
 def cb2(arg2):
     return 0
 

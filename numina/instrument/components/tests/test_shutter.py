@@ -3,23 +3,6 @@ import pytest
 
 from ..shutter import Shutter
 
-
-class Testigo(object):
-
-    __test__ = False  # avoid pytest collection
-
-    def __init__(self):
-        self.clear()
-
-    def func(self, pos):
-        self.called = True
-        self.callpos = pos
-
-    def clear(self):
-        self.callpos = None
-        self.called = False
-
-
 @pytest.fixture
 def shutter_dev():
     wheel = Shutter()
