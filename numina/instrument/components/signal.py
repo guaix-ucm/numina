@@ -8,26 +8,29 @@
 #
 
 import traceback
-
+import collections
 
 class Signal(object):
     """Signal used for callbacks."""
     def __init__(self):
-        self.callbacks = []
+        self.callbacks = collections.OrderedDict()
+        self._cid_counter = 0
 
     def connect(self, callback):
-        self.callbacks.append(callback)
-        return len(self.callbacks) - 1
+        self._cid_counter += 1
+        cid = self._cid_counter
+        self.callbacks[cid] = callback
+        return cid
 
     def delete(self, idx):
-        self.callbacks.pop(idx)
+        del self.callbacks[idx]
 
     def emit(self, *args, **kwds):
-        for c in self.callbacks:
+        result = []
+        for cid, cb in self.callbacks.items():
             try:
-                res = c(*args, **kwds)
-                # we can use the result value
-                # to disable this callback...
-                # not yet implemented
+                res = cb(*args, **kwds)
+                result.append((cid, res))
             except TypeError:
                 traceback.print_exc()
+        return result
