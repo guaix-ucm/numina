@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -39,7 +39,7 @@ def import_object(path):
 def fully_qualified_name(obj, sep='.'):
 
     warnings.warn(
-        "use numina.utils.fqn.fully_qualified_name instead",
+        "use numina.util.fqn.fully_qualified_name instead",
         DeprecationWarning, stacklevel=2
     )
     import numina.util.fqn as fqn

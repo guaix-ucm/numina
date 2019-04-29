@@ -12,7 +12,7 @@
 from __future__ import print_function
 
 import numina.drps
-import numina.util.objimport as objimport
+import numina.util.fqn as objimport
 import numina.instrument.assembly as asbl
 
 
