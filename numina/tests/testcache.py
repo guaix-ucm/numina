@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,7 +13,8 @@
 import os
 import sys
 import tempfile
-import contextlib
+
+import numina.util.context as cntx
 
 from astropy.utils import data
 
@@ -50,25 +51,11 @@ def user_cache_dir(appname=None):
     return path
 
 
-@contextlib.contextmanager
-def environ_context(cache_dir):
-    """Context manager for environment"""
-    old_val = os.environ.get('XDG_CACHE_HOME', None)
-    os.environ['XDG_CACHE_HOME'] = cache_dir
-
-    yield
-
-    if old_val is not None:
-        os.environ['XDG_CACHE_HOME'] = old_val
-    else:
-        del os.environ['XDG_CACHE_HOME']
-
-
 def download_cache(url, cache=True):
     """Get a tempfile from an URL"""
     cache_dir = user_cache_dir('numina')
 
-    with environ_context(cache_dir):
+    with cntx.environ(XDG_CACHE_HOME=cache_dir):
         fs = open(data.download_file(url, cache=cache), 'rb')
         with tempfile.NamedTemporaryFile(delete=False) as fd:
             block = fs.read()
