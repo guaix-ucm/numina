@@ -243,12 +243,12 @@ class InstrumentDRP(object):
     def configuration_selector(self, obsres):
         warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
                       DeprecationWarning, stacklevel=2)
-        return self.select_configuration(obsres)
+        return self.select_configuration_old(obsres)
 
     def product_label(self, tipo):
         return tipo.name()
 
-    def select_configuration(self, obresult):
+    def select_configuration_old(self, obresult):
         """Select instrument configuration based on OB"""
 
         logger = logging.getLogger(__name__)
@@ -291,6 +291,9 @@ class InstrumentDRP(object):
             logger.debug('no match, using default configuration')
             return self.configurations['default']
 
+    def select_configuration(self, obresult):
+        return self.select_profile(obresult)
+
     def select_profile(self, obresult):
         """Select instrument profile based on OB"""
 
@@ -304,21 +307,27 @@ class InstrumentDRP(object):
             keyname = 'uuid'
         else:
             # get first possible image
-            ref = obresult.get_sample_frame()
-            if ref is None:
+            img = obresult.get_sample_frame()
+            if img is None:
                 key = obresult.instrument
                 date_obs = None
                 keyname = 'name'
             else:
-                extr = self.datamodel.extractor_map['fits']
+                return self.select_profile_image(img)
+        return key, date_obs, keyname
 
-                date_obs = extr.extract('observation_date', ref)
-                key = extr.extract('insconf', ref)
-                if key is not None:
-                    keyname = 'uuid'
-                else:
-                    key = extr.extract('instrument', ref)
-                    keyname = 'name'
+    def select_profile_image(self, img):
+        """Select instrument profile based on FITS"""
+
+        extr = self.datamodel.extractor_map['fits']
+
+        date_obs = extr.extract('observation_date', img)
+        key = extr.extract('insconf', img)
+        if key is not None:
+            keyname = 'uuid'
+        else:
+            key = extr.extract('instrument', img)
+            keyname = 'name'
 
         return key, date_obs, keyname
 
