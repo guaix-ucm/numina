@@ -23,7 +23,7 @@ class UndefinedOrigin(object):
 
 
 class ElementOrigin(object):
-    def __init__(self, name, uuid, date_start, date_end=None, description=""):
+    def __init__(self, name, uuid, date_start=None, date_end=None, description=""):
         self.name = name
 
         if isinstance(uuid, six.string_types):

@@ -61,6 +61,10 @@ class ComponentGeneric(DeviceBase):
             return getattr(dev, prop)
 
     def __getattr__(self, item):
+        if item == 'uuid':
+            if self.origin is not None:
+                return self.origin.uuid
+            
         if item in self.properties:
             prop_entry = self.properties[item]
             value = prop_entry.get(**self._internal_state)
