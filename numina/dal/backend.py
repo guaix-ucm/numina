@@ -317,7 +317,7 @@ class Backend(Dict2DAL):
 
         instrument = obsres.instrument
 
-        conf = obsres.configuration.uuid
+        conf = str(obsres.configuration.origin.uuid)
 
         drp = self.drps.query_by_name(instrument)
         label = drp.product_label(tipo)
@@ -509,7 +509,7 @@ class Backend(Dict2DAL):
 
         instrument = obsres.instrument
 
-        conf = obsres.configuration.uuid
+        conf = str(obsres.configuration.origin.uuid)
 
         drp = self.drps.query_by_name(instrument)
         label = drp.product_label(tipo)
