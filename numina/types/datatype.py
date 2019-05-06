@@ -118,7 +118,10 @@ class PlainPythonType(DataType):
     """Data type for Python basic types."""
     def __init__(self, ref=None, validator=None):
         stype = type(ref)
-        default = stype()
+        if ref is None:
+            default = None
+        else:
+            default = stype()
 
         if validator is None:
             self.custom_validator = None
