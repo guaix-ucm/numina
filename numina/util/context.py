@@ -33,7 +33,7 @@ def ignored(*exceptions):
 
 @contextlib.contextmanager
 def environ(**keys):
-    """Context manager that recors environment"""
+    """Context manager that records environment"""
     old_vals = {key: os.environ.get(key, None) for key in keys}
     os.environ.update(keys)
     try:

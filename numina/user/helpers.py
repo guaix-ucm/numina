@@ -68,7 +68,7 @@ class DataManager(object):
 
     def serializer(self, data, fd):
         if self.serial_format == 'yaml':
-            self.serializer_json(data, fd)
+            self.serializer_yaml(data, fd)
         elif self.serial_format == 'json':
             self.serializer_json(data, fd)
         else:
@@ -83,23 +83,7 @@ class DataManager(object):
         yaml.dump(data, fd)
 
     def store_result_to(self, result, storage):
-        import numina.store
-
-        saveres = {}
-        saveres['values'] = {}
-        # FIXME: workaround for QC, this should be managed elsewhere
-        if hasattr(result, 'qc'):
-            saveres['qc'] = result.qc
-
-        saveres_v = saveres['values']
-        for key, prod in result.stored().items():
-            # FIXME: workaround for QC, this should be managed elsewhere
-            if key == 'qc':
-                continue
-            val = getattr(result, key)
-            storage.destination = "{}".format(prod.dest)
-            saveres_v[key] = numina.store.dump(prod.type, val, storage)
-
+        saveres = result.store_to(storage)
         return saveres
 
     def store_task(self, task):
@@ -119,7 +103,7 @@ class DataManager(object):
             with open(self.result_file, 'w+') as fd:
                 self.serializer(result_repr, fd)
 
-            with open(self.storage.task, 'w+') as fd:
+            with open(self.task_file, 'w+') as fd:
                 self.serializer(task_repr, fd)
 
         self.backend.update_task(task)

@@ -13,6 +13,7 @@ import os
 import logging
 import json
 from itertools import chain
+import uuid
 
 import operator
 
@@ -48,6 +49,12 @@ def read_fits(filename):
     return df.DataFrame(frame=fits.open(filename))
 
 
+def read_fits_later(filename):
+    import numina.types.dataframe as df
+    import os.path
+    return df.DataFrame(filename=os.path.abspath(filename))
+
+
 def is_json(filename, **kwargs):
     return filename.endswith('.json')
 
@@ -69,7 +76,6 @@ def read_yaml(filename):
 
     with open(filename) as fd:
         base = yaml.load(fd)
-
     return read_structured(base)
 
 
@@ -85,7 +91,7 @@ def read_structured(data):
 
 
 def unserial(value):
-    checkers = [(is_fits, read_fits), (is_json, read_json), (is_yaml, read_yaml)]
+    checkers = [(is_fits, read_fits_later), (is_json, read_json), (is_yaml, read_yaml)]
     if isinstance(value, six.string_types):
         for check_type, conv in checkers:
             if check_type(value):
@@ -100,6 +106,7 @@ class StoredResult(object):
     """Recover the RecipeResult values stored in the Backend"""
     def __init__(self):
         self.qc = QC.UNKNOWN
+        self.uuid = uuid.UUID('00000000-0000-0000-0000-000000000000')
 
     @classmethod
     def load_data(cls, state):
@@ -109,10 +116,14 @@ class StoredResult(object):
     
     def _from_dict(self, state):
         self.qc = QC[state.get('qc', 'UNKNOWN')]
+        if 'uuid' in state:
+            self.uuid = uuid.UUID(state['uuid'])
+
         values = state.get('values', {})
         if isinstance(values, list):
             values = {o['name']: o['content'] for o in values}
         for key, val in values.items():
+            print('paso por aqui')
             loaded = unserial(val)
             setattr(self, key, loaded)
 
@@ -122,7 +133,7 @@ class Backend(Dict2DAL):
     # FIXME: most code here is duplicated with HybridDal
     def __init__(self, drps, base, extra_data=None, basedir=None, components=None):
 
-        self.rootdir = base.get("rootdir", "")
+        self.rootdir = base.get("rootdir", ".")
         self.ob_ids = []
 
         if basedir is None:
@@ -230,10 +241,11 @@ class Backend(Dict2DAL):
         result_reg = {
             'id': newix,
             'task_id': task.id,
-            # 'values': [],
+            'uuid': str(task.result.uuid),
             'qc': task.result.qc.name,
             'mode': task.request_runinfo['mode'],
             'instrument': task.request_runinfo['instrument'],
+            'pipeline': task.request_runinfo['pipeline'],
             'time_create': task.time_end.strftime('%FT%T'),
             'time_obs': '',
             'recipe_class': task.request_runinfo['recipe_class'],
@@ -246,16 +258,6 @@ class Backend(Dict2DAL):
 
 
         for key, prod in result.stored().items():
-            if prod.dest == 'qc':
-                continue
-
-            # This is the same contained in result_file
-            # val = {}
-            # val['name'] = prod.dest
-            # val['type'] = prod.type.name()
-            # val['type_fqn'] = fully_qualified_name(prod.type)
-            # val['content'] = serialized['values'][key]
-            # result_reg['values'].append(val)
 
             DB_PRODUCT_KEYS = [
                 'instrument',
@@ -416,23 +418,16 @@ class Backend(Dict2DAL):
             if s_can:
                 result_reg = s_can[0]
                 directory = result_reg.get('result_dir', '')
-                field_files = result_reg['values']
-                for field_entry in field_files:
-                    if field_entry['name'] == field:
-                        break
-                else:
-                    raise NoResultFound('no field {} found'.format(field))
-
-                type_fqn = field_entry['type_fqn']
-
-                type_class = import_object(type_fqn)
-                type_obj = type_class()
-
-                content = None
-                if field_entry:
-                    if field_entry['content']:
-                        filename = os.path.join(directory, field_entry['content'])
-                        content = numina.store.load(type_obj, filename)
+                # change directory to open result file
+                with working_directory(os.path.join(self.basedir, directory)):
+                    print(os.getcwd())
+                    with open('result.json') as fd:
+                        data = json.load(fd)
+                        stored_result = StoredResult.load_data(data)
+                try:
+                    content = getattr(stored_result, field)
+                except AttributeError:
+                    raise NoResultFound('no field {} found in result'.format(field))
 
                 st = StoredProduct(
                     id=result_reg['id'],
@@ -566,16 +561,12 @@ class Backend(Dict2DAL):
 
     def build_recipe_result(self, result_id):
         result_reg = self.db_tables['results'][result_id]
-        result_dir = result_reg.get('result_dir', '')
-        with working_directory(result_dir):
-            return StoredResult.load_data(result_reg)
-
-    def build_recipe_result2(self, result_id):
-        result_reg = self.db_tables['results'][result_id]
         result_file = result_reg['result_file']
         result_dir = result_reg.get('result_dir', '')
-        with open(result_file) as fd:
-            import json
-            data = json.load(fd)
-            with working_directory(result_dir):
+
+        with working_directory(os.path.join(self.basedir, result_dir)):
+            with open('result.json') as fd:
+                import json
+                data = json.load(fd)
+                print('loaded data', data)
                 return StoredResult.load_data(data)

@@ -48,8 +48,6 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
     obresult : ObservationResult, requirement
 
-    qc : QualityControl, result, QC.GOOD by default
-
     logger :
          recipe logger
 

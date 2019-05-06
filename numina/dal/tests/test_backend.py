@@ -8,6 +8,8 @@
 #
 
 import os.path
+import json
+import uuid
 
 import pytest
 
@@ -16,10 +18,53 @@ from ..backend import Backend
 from numina.exceptions import NoResultFound
 import numina.types.qc as qc
 import numina.instrument.assembly as asb
+from numina.util.context import working_directory
+
+
+def create_simple_frame():
+    from numina.types.frame import DataFrame
+    import astropy.io.fits as fits
+
+    simple_img = fits.HDUList([fits.PrimaryHDU()])
+    simple_frame = DataFrame(frame=simple_img)
+    return simple_frame
+
+
+def create_simple_structured():
+    from numina.types.structured import BaseStructuredCalibration
+
+    obj = BaseStructuredCalibration()
+    obj.quality_control = qc.QC.BAD
+    return obj
+
+
+def repeat_my(result_content, result_dir, result_name, storage):
+    import numina.store
+
+    with working_directory(result_dir):
+        saveres = dict(
+            qc=result_content['qc'],
+            uuid=result_content['uuid'],
+            values={}
+        )
+        saveres_v = saveres['values']
+
+        result_values = result_content['values']
+        for key, obj in result_values.items():
+            obj = result_values[key]
+            storage.destination = key
+            saveres_v[key] = numina.store.dump(obj, obj, storage)
+
+        with open(result_name, 'w') as fd:
+            json.dump(saveres, fd)
+
+
+class Storage(object):
+    destination = ''
 
 
 @pytest.fixture
-def backend():
+def backend(tmpdir):
 
     drps = create_drp_test(['drpclodia.yaml'])
     name = 'CLODIA'
@@ -55,15 +100,8 @@ def backend():
             'task_id': 1,
             'time_create': '2018-07-24T19:12:01',
             'result_dir': 'dum1',
+            'result_file': 'dum1/result.json',
             'qc': 'GOOD',
-            'values': [
-                {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
-                 'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
-                {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
-                 'type_fqn': 'numina.types.frame.DataFrameType'},
-                {'content': 'calib.json', 'name': 'calib', 'type': 'Other',
-                 'type_fqn': 'numina.types.frame.Other'},
-            ]
         },
         2: {'id': 2,
             'instrument': name,
@@ -74,7 +112,6 @@ def backend():
             'time_create': '2018-07-24T19:12:09',
             'result_file': 'dum2/result.json',
             'result_dir': 'dum2',
-            'values': [],
         },
         3: {'id': 3,
             'instrument': name,
@@ -84,12 +121,7 @@ def backend():
             'time_create': '2018-07-24T19:12:11',
             'qc': 'GOOD',
             'result_dir': 'dum3',
-            'values': [
-                {'content': 'reduced_rss.fits', 'name': 'reduced_rss',
-                 'type': 'DataFrameType', 'type_fqn': 'numina.types.frame.DataFrameType'},
-                {'content': 'reduced_image.fits', 'name': 'reduced_image', 'type': 'DataFrameType',
-                 'type_fqn': 'numina.types.frame.DataFrameType'},
-            ]
+            'result_file': 'dum3/result.json',
         },
     }
 
@@ -102,7 +134,46 @@ def backend():
     pkg_paths = ['numina.drps.tests.configs']
     store = asb.load_paths_store(pkg_paths)
 
-    base = Backend(drps, gentable, components=store)
+    storage = Storage()
+    result_name = 'result.json'
+
+    result1_dir = tmpdir.mkdir('dum1')
+    result1_values = dict(
+        calib=create_simple_structured(),
+        reduced_rss=create_simple_frame(),
+        reduced_image=create_simple_frame()
+    )
+    result1_content = dict(
+        qc='GOOD',
+        values=result1_values,
+        uuid='10000000-10000000-10000000-10000000'
+    )
+    repeat_my(result1_content, str(result1_dir), result_name, storage)
+
+    result2_dir = tmpdir.mkdir('dum2')
+
+    result2_values = dict(calib=create_simple_structured())
+    result2_content = dict(
+        qc='BAD',
+        values=result2_values,
+        uuid='20000000-20000000-20000000-20000000'
+    )
+    repeat_my(result2_content, str(result2_dir), result_name, storage)
+
+    result3_dir = tmpdir.mkdir('dum3')
+
+    result3_values = dict(
+        reduced_rss='reduced_rss.fits',
+        reduced_image='reduced_image.fits'
+    )
+    result3_content = dict(
+        qc='BAD',
+        values=result3_values,
+        uuid='30000000-30000000-30000000-30000000'
+    )
+    repeat_my(result3_content, str(result3_dir), result_name, storage)
+
+    base = Backend(drps, gentable, components=store, basedir=str(tmpdir))
     base.add_obs(ob_table)
 
     return base
@@ -155,7 +226,10 @@ def test_search_result_id(backend):
     res = backend.search_result_id(node_id, tipo, field, mode=None)
 
     assert isinstance(res.content, DataFrame)
-    assert res.content.filename == os.path.join('dum3', 'reduced_rss.fits')
+    print(res.content.filename)
+    print(backend.basedir)
+    relpath = os.path.relpath(res.content.filename, backend.basedir)
+    assert relpath == os.path.join('dum3', 'reduced_rss.fits')
 
 
 def test_search_result_id_notfound(backend):
@@ -169,47 +243,12 @@ def test_search_result_id_notfound(backend):
         backend.search_result_id(node_id, tipo, field, mode=None)
 
 
-def test_build_recipe_result(backend, tmpdir):
-    import numina.store
-    import astropy.io.fits as fits
-    import json
+def test_build_recipe_result(backend):
     from numina.types.dataframe import DataFrame
     from numina.types.structured import BaseStructuredCalibration
-    from numina.util.context import working_directory
 
-    resd = {}
-    resd['qc'] = 'BAD'
-    saveres = {}
-    resd['values'] = saveres
-    obj = BaseStructuredCalibration()
-    obj.quality_control = qc.QC.BAD
-
-    resdir = tmpdir.mkdir('dum1')
-
-    class ResultR(object):
-        pass
-
-    class Storage(object):
-        pass
-
-    storage = Storage()
-
-    res = ResultR()
-    res.calib = obj
-    res.reduced_rss = DataFrame(frame=fits.HDUList([fits.PrimaryHDU()]))
-    res.reduced_image = DataFrame(frame=fits.HDUList([fits.PrimaryHDU()]))
-
-    with working_directory(str(resdir)):
-        for key in ['calib', 'reduced_image', 'reduced_rss']:
-            obj = getattr(res, key)
-            storage.destination = key
-            saveres[key] = numina.store.dump(obj, obj, storage)
-
-        p = resdir.join("result.json")
-        p.write(json.dumps(resd))
-
-    with working_directory(str(tmpdir)):
-        res = backend.build_recipe_result(result_id=1)
+    obj_uuid = '10000000-10000000-10000000-10000000'
+    res = backend.build_recipe_result(result_id=1)
 
     assert res.qc == qc.QC.GOOD
 
@@ -222,47 +261,17 @@ def test_build_recipe_result(backend, tmpdir):
     assert hasattr(res, 'calib')
     assert isinstance(res.calib, BaseStructuredCalibration)
 
+    assert res.uuid == uuid.UUID(obj_uuid)
 
-def test_build_recipe_result2(backend, tmpdir):
-    import numina.store
+
+def test_build_recipe_result2(backend):
     from numina.types.structured import BaseStructuredCalibration
-    from numina.util.context import working_directory
-    import json
-
-    resd = {}
-    resd['qc'] = 'BAD'
-    saveres = {}
-    resd['values'] = saveres
-    obj = BaseStructuredCalibration()
-    obj.quality_control = qc.QC.BAD
-    obj_uuid = obj.uuid
-
-    resdir = tmpdir.mkdir('dum2')
-
-    class Storage(object):
-        pass
-
-    storage = Storage()
-    storage.destination = 'calib'
-
-    with working_directory(str(resdir)):
-        saveres['calib'] = numina.store.dump(obj, obj, storage)
-
-        p = resdir.join("result.json")
-        p.write(json.dumps(resd))
-
-    with working_directory(str(tmpdir)):
-        res = backend.build_recipe_result2(result_id=2)
+    obj_uuid = '20000000-20000000-20000000-20000000'
+    res = backend.build_recipe_result(result_id=2)
 
     assert res.qc == qc.QC.BAD
-
-    #assert hasattr(res, 'reduced_rss')
-    #assert isinstance(res.reduced_rss, DataFrame)
-
-    #assert hasattr(res, 'reduced_image')
-    #assert isinstance(res.reduced_image, DataFrame)
 
     assert hasattr(res, 'calib')
     assert isinstance(res.calib, BaseStructuredCalibration)
 
-    assert res.calib.uuid == obj_uuid
+    assert res.uuid == uuid.UUID(obj_uuid)
