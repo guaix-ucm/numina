@@ -91,7 +91,7 @@ def backend(tmpdir):
              'content': {'demo2': 3}, 'ob': 15}
         ]
     }
-
+    result_name = 'result.json'
     results_table = {
         1: {'id': 1,
             'instrument': name,
@@ -100,7 +100,7 @@ def backend(tmpdir):
             'task_id': 1,
             'time_create': '2018-07-24T19:12:01',
             'result_dir': 'dum1',
-            'result_file': 'dum1/result.json',
+            'result_file': result_name,
             'qc': 'GOOD',
         },
         2: {'id': 2,
@@ -110,7 +110,7 @@ def backend(tmpdir):
             'task_id': 2,
             'qc': 'BAD',
             'time_create': '2018-07-24T19:12:09',
-            'result_file': 'dum2/result.json',
+            'result_file': result_name,
             'result_dir': 'dum2',
         },
         3: {'id': 3,
@@ -121,7 +121,7 @@ def backend(tmpdir):
             'time_create': '2018-07-24T19:12:11',
             'qc': 'GOOD',
             'result_dir': 'dum3',
-            'result_file': 'dum3/result.json',
+            'result_file': result_name,
         },
     }
 

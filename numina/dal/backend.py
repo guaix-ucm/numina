@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -251,7 +251,7 @@ class Backend(Dict2DAL):
             'recipe_fqn': task.request_runinfo['recipe_fqn'],
             'oblock_id': task.request_params['oblock_id'],
             'result_dir': res_dir,
-            'result_file': os.path.join(res_dir, filename)
+            'result_file': filename
         }
         self.db_tables['results'][newix] = result_reg
 
@@ -417,10 +417,10 @@ class Backend(Dict2DAL):
             if s_can:
                 result_reg = s_can[0]
                 directory = result_reg.get('result_dir', '')
+                filename = result_reg['result_file']
                 # change directory to open result file
                 with working_directory(os.path.join(self.basedir, directory)):
-                    print(os.getcwd())
-                    with open('result.json') as fd:
+                    with open(filename) as fd:
                         data = json.load(fd)
                         stored_result = StoredResult.load_data(data)
                 try:
@@ -555,7 +555,6 @@ class Backend(Dict2DAL):
                 # ignore these OBs
                 continue
 
-
             yield obs_id
 
     def build_recipe_result(self, result_id):
@@ -564,8 +563,7 @@ class Backend(Dict2DAL):
         result_dir = result_reg.get('result_dir', '')
 
         with working_directory(os.path.join(self.basedir, result_dir)):
-            # FIXME: hardcoded
-            with open('result.json') as fd:
+            with open(result_file) as fd:
                 import json
                 data = json.load(fd)
                 return StoredResult.load_data(data)
