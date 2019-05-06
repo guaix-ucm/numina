@@ -15,7 +15,6 @@ from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
 # import numina.core.instrument.insconf as insconf
 
-from numina.types.qc import QC
 from .frame import DataFrameType
 from .datatype import DataType
 
@@ -69,11 +68,3 @@ class ObservationResultType(DataType):
 
     def on_query_not_found(self, notfound):
         six.raise_from(NoResultFound('unable to complete ObservationResult'), notfound)
-
-
-class QualityControlProduct(DataType):
-    def __init__(self):
-        super(QualityControlProduct, self).__init__(
-            ptype=QC,
-            default=QC.UNKNOWN
-            )
