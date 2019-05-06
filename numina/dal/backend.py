@@ -123,7 +123,6 @@ class StoredResult(object):
         if isinstance(values, list):
             values = {o['name']: o['content'] for o in values}
         for key, val in values.items():
-            print('paso por aqui')
             loaded = unserial(val)
             setattr(self, key, loaded)
 
@@ -565,8 +564,8 @@ class Backend(Dict2DAL):
         result_dir = result_reg.get('result_dir', '')
 
         with working_directory(os.path.join(self.basedir, result_dir)):
+            # FIXME: hardcoded
             with open('result.json') as fd:
                 import json
                 data = json.load(fd)
-                print('loaded data', data)
                 return StoredResult.load_data(data)

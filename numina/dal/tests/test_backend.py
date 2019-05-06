@@ -226,8 +226,6 @@ def test_search_result_id(backend):
     res = backend.search_result_id(node_id, tipo, field, mode=None)
 
     assert isinstance(res.content, DataFrame)
-    print(res.content.filename)
-    print(backend.basedir)
     relpath = os.path.relpath(res.content.filename, backend.basedir)
     assert relpath == os.path.join('dum3', 'reduced_rss.fits')
 
