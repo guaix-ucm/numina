@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2018 Universidad Complutense de Madrid
+# Copyright 2014-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -71,27 +71,7 @@ def drpmocker(monkeypatch):
     return DRPMocker(monkeypatch)
 
 
-def pytest_addoption(parser):
-    parser.addoption("--run-remote", action="store_true", default=False,
-                     help="run tests with online data")
-
-
-def pytest_configure(config):
-    # register an additional marker
-    config.addinivalue_line(
-        "markers",
-        "remote: mark test to run with online data"
-        )
-
-
 def pytest_report_header(config):
     if not HAS_BENCHMARCK:
         return "pytest-benchmark not installed"
     return ""
-
-
-def pytest_runtest_setup(item):
-    if ('remote' in item.keywords and
-            not item.config.getoption("--run-remote")):
-        
-        pytest.skip("need --run-remote option to run")

@@ -150,7 +150,7 @@ def setup_package():
             ],
             },
         setup_requires=['numpy'],
-        tests_require=['pytest'],
+        tests_require=['pytest', 'pytest-remotedata'],
         install_requires=[
             'setuptools>=36.2.1',
             'six>=1.7',
