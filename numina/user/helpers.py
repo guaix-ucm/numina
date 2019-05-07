@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -88,7 +88,8 @@ class DataManager(object):
 
     def store_task(self, task):
 
-        result_dir = task.request_runinfo['results_dir']
+        result_dir_rel = task.request_runinfo['results_dir']
+        result_dir = os.path.join(self.basedir, result_dir_rel)
 
         with working_directory(result_dir):
             _logger.info('storing task and result')
@@ -143,8 +144,8 @@ class ProcessingTask(object):
         self.request_runinfo = {}
         self.state = 0
 
-    def store(self, where):
-
+    def _store(self, where):
+        # FIXME: remove if not used
         # save to disk the RecipeResult part and return the file to save it
         result_repr = self.result.store_to(where)
 
@@ -407,42 +408,105 @@ class DiskStorageDefault(object):
             return completed_task.store(self)
 
 
-def init_datastore_file(controlfile):
+def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+    import numina.instrument.assembly as asbl
+    from numina.dal.dictdal import HybridDAL
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
+    backend = HybridDAL(
+        sys_drps, [], loaded_data,
+        extra_data=loaded_data_extra,
+        basedir=basedir,
+        components=com_store
+    )
+    return backend
 
-    _logger.info('reading control from %s', controlfile)
-    with open(controlfile, 'r') as fd:
-        loaded_data = yaml.load(fd)
+
+def process_format_version_2(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+    import numina.instrument.assembly as asbl
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
+    loaded_db = loaded_data['database']
+    backend = Backend(
+        sys_drps, loaded_db,
+        extra_data=loaded_data_extra,
+        basedir=basedir,
+        components=com_store
+    )
+    backend.rootdir = loaded_data.get('rootdir', '')
+    return backend
+
+
+def create_datamanager(reqfile, basedir, datadir, extra_control=None, profile_path_extra=None):
+    if reqfile:
+        _logger.info('reading control from %s', reqfile)
+        with open(reqfile, 'r') as fd:
+            loaded_data = yaml.safe_load(fd)
+    else:
+        _logger.info('no control file')
+        loaded_data = {}
+
+    if extra_control:
+        _logger.info('extra control %s', extra_control)
+        loaded_data_extra = parse_as_yaml(extra_control)
+    else:
+        loaded_data_extra = None
 
     control_format = loaded_data.get('version', 1)
     _logger.info('control format version %d', control_format)
 
-    if control_format == 2:
-        drps = numina.drps.get_system_drps()
-        loaded_db = loaded_data['database']
-        backend = Backend(drps, loaded_db, {})
-        backend.rootdir = loaded_data.get('rootdir', '')
-        datadir = 'data'
-        basedir = 'some'
-
-        datamanager = DataManager(basedir, datadir, backend)
-        return datamanager
+    if control_format == 1:
+        _backend = process_format_version_1(basedir, loaded_data, loaded_data_extra, profile_path_extra)
+        datamanager = DataManager(basedir, datadir, _backend)
+        datamanager.workdir_tmpl = "obsid{obsid}_work"
+        datamanager.resultdir_tmpl = "obsid{obsid}_results"
+    elif control_format == 2:
+        _backend = process_format_version_2(basedir, loaded_data, loaded_data_extra, profile_path_extra)
+        datamanager = DataManager(basedir, datadir, _backend)
     else:
+        print('Unsupported format', control_format, 'in', reqfile)
         raise ValueError
+    return datamanager
 
 
-def load_observations(obfile):
+def load_observations(obfiles, is_session=False):
+    """Observing mode processing mode of numina."""
 
+    # Loading observation result if exists
     loaded_obs = []
-    with open(obfile) as fd:
-        sess = []
-        for doc in yaml.load_all(fd):
-            enabled = doc.get('enabled', True)
-            docid = doc['id']
-            requirements = doc.get('requirements', {})
-            sess.append(
-                dict(id=docid, enabled=enabled,
-                                 requirements=requirements)
-            )
-            loaded_obs.append(doc)
+    sessions = []
 
-    return loaded_obs
+    for obfile in obfiles:
+        with open(obfile) as fd:
+            if is_session:
+                _logger.info("session file from %r", obfile)
+                sess = yaml.safe_load(fd)
+                sessions.append(sess['session'])
+            else:
+                _logger.info("observation results from %r", obfile)
+                sess = []
+                for doc in yaml.safe_load_all(fd):
+                    enabled = doc.get('enabled', True)
+                    docid = doc['id']
+                    requirements = doc.get('requirements', {})
+                    sess.append(dict(id=docid, enabled=enabled,
+                                     requirements=requirements))
+                    if enabled:
+                        _logger.debug("load observation result with id %s", docid)
+                    else:
+                        _logger.debug("skip observation result with id %s", docid)
+
+                    loaded_obs.append(doc)
+
+            sessions.append(sess)
+    return sessions, loaded_obs
+
+
+def parse_as_yaml(strdict):
+    """Parse a dictionary of strings as if yaml reads it"""
+    interm = ""
+    for key, val in strdict.items():
+        interm = "%s: %s, %s" % (key, val, interm)
+    fin = '{%s}' % interm
+
+    return yaml.load(fin)

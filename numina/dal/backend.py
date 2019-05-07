@@ -51,7 +51,7 @@ def read_fits(filename):
 
 def read_fits_later(filename):
     import numina.types.dataframe as df
-    return df.DataFrame(filename=filename)
+    return df.DataFrame(filename=os.path.abspath(filename))
 
 
 def is_json(filename, **kwargs):
