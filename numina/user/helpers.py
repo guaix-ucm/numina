@@ -169,10 +169,10 @@ class BaseWorkEnvironment(object):
         self.basedir = basedir
 
         self.workdir_rel = workdir
-        self.workdir = os.path.abspath(workdir)
+        self.workdir = os.path.abspath(os.path.join(self.basedir, workdir))
 
         self.resultsdir_rel = resultsdir
-        self.resultsdir = os.path.abspath(resultsdir)
+        self.resultsdir = os.path.abspath(os.path.join(self.basedir, resultsdir))
 
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
