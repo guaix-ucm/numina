@@ -20,43 +20,26 @@ from numina.exceptions import NoResultFound
 import numina.types.qc as qc
 import numina.instrument.assembly as asb
 from numina.util.context import working_directory
+import numina.tests.simpleobj as simpleobj
 
 
-def create_simple_frame():
-    from numina.types.frame import DataFrame
-    import astropy.io.fits as fits
-
-    simple_img = fits.HDUList([fits.PrimaryHDU()])
-    simple_frame = DataFrame(frame=simple_img)
-    return simple_frame
-
-
-def create_simple_structured():
-    from numina.types.structured import BaseStructuredCalibration
-
-    obj = BaseStructuredCalibration()
-    obj.quality_control = qc.QC.BAD
-    return obj
-
-
-def repeat_my(result_content, result_dir, result_name):
+def repeat_my(result_content, result_name):
     import numina.store
 
-    with working_directory(result_dir):
-        saveres = dict(
-            qc=result_content['qc'],
-            uuid=result_content['uuid'],
-            values={}
-        )
-        saveres_v = saveres['values']
+    saveres = dict(
+        qc=result_content['qc'],
+        uuid=result_content['uuid'],
+        values={}
+    )
+    saveres_v = saveres['values']
 
-        result_values = result_content['values']
-        for key, obj in result_values.items():
-            obj = result_values[key]
-            saveres_v[key] = numina.store.dump(obj, obj, key)
+    result_values = result_content['values']
+    for key, obj in result_values.items():
+        obj = result_values[key]
+        saveres_v[key] = numina.store.dump(obj, obj, key)
 
-        with open(result_name, 'w') as fd:
-            json.dump(saveres, fd, indent=2, cls=ExtEncoder)
+    with open(result_name, 'w') as fd:
+        json.dump(saveres, fd, indent=2, cls=ExtEncoder)
 
 
 @pytest.fixture
@@ -130,31 +113,32 @@ def backend(tmpdir):
     pkg_paths = ['numina.drps.tests.configs']
     store = asb.load_paths_store(pkg_paths)
 
-
     result_name = 'result.json'
 
     result1_dir = tmpdir.mkdir('dum1')
     result1_values = dict(
-        calib=create_simple_structured(),
-        reduced_rss=create_simple_frame(),
-        reduced_image=create_simple_frame()
+        calib=simpleobj.create_simple_structured(),
+        reduced_rss=simpleobj.create_simple_frame(),
+        reduced_image=simpleobj.create_simple_frame()
     )
     result1_content = dict(
         qc='GOOD',
         values=result1_values,
         uuid='10000000-10000000-10000000-10000000'
     )
-    repeat_my(result1_content, str(result1_dir), result_name)
+    with working_directory(str(result1_dir)):
+        repeat_my(result1_content, result_name)
 
     result2_dir = tmpdir.mkdir('dum2')
 
-    result2_values = dict(calib=create_simple_structured())
+    result2_values = dict(calib=simpleobj.create_simple_structured())
     result2_content = dict(
         qc='BAD',
         values=result2_values,
         uuid='20000000-20000000-20000000-20000000'
     )
-    repeat_my(result2_content, str(result2_dir), result_name)
+    with working_directory(str(result2_dir)):
+        repeat_my(result2_content, result_name)
 
     result3_dir = tmpdir.mkdir('dum3')
 
@@ -167,7 +151,8 @@ def backend(tmpdir):
         values=result3_values,
         uuid='30000000-30000000-30000000-30000000'
     )
-    repeat_my(result3_content, str(result3_dir), result_name)
+    with working_directory(str(result3_dir)):
+        repeat_my(result3_content, result_name)
 
     base = Backend(drps, gentable, components=store, basedir=str(tmpdir))
     base.add_obs(ob_table)
