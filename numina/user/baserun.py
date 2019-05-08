@@ -68,7 +68,7 @@ def run_job(datastore, obsid, copy_files=True):
 
     # We should control here any possible failure
     try:
-        run_task_reduce(datastore, task)
+        return run_task_reduce(datastore, task)
     finally:
         datastore.store_task(task)
 
