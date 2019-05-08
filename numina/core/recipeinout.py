@@ -124,7 +124,7 @@ class RecipeResult(RecipeResultBase):
     def store_to(self, where):
         saveres = super(RecipeResult, self).store_to(where)
 
-        saveres['qc'] = self.qc
+        saveres['qc'] = self.qc.name
         saveres['uuid'] = str(self.uuid)
         return saveres
 

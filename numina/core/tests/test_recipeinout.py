@@ -66,7 +66,7 @@ def test_store_to(qc):
 
     expected_result = {
         'values': {'param1': None, 'param2': None},
-        'qc': qc, # 'uuid': '00000000-0000-0000-0000-000000000000'
+        'qc': qc.name, # 'uuid': '00000000-0000-0000-0000-000000000000'
     }
 
     class Storage(object):
