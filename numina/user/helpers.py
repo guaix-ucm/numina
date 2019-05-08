@@ -44,8 +44,6 @@ class DataManager(object):
         self.result_file = 'result.json'
         self.task_file = 'task.json'
 
-        self.storage = DiskStorageBase()
-
     def insert_obs(self, loaded_obs):
         self.backend.add_obs(loaded_obs)
 
@@ -143,24 +141,6 @@ class ProcessingTask(object):
         self.request_params = {}
         self.request_runinfo = {}
         self.state = 0
-
-    def _store(self, where):
-        # FIXME: remove if not used
-        # save to disk the RecipeResult part and return the file to save it
-        result_repr = self.result.store_to(where)
-
-        import json
-        with open(where.result, 'w+') as fd:
-            json.dump(result_repr, fd, indent=2, cls=ExtEncoder)
-
-        task_repr = self.__dict__.copy()
-        # Change result structure by filename
-        task_repr['result'] = where.result
-
-        with open(where.task, 'w+') as fd:
-            yaml.dump(task_repr, fd)
-
-        return where.task
 
 
 class BaseWorkEnvironment(object):
@@ -364,48 +344,6 @@ def make_sure_file_exists(path):
     except (OSError, IOError) as exception:
         if exception.errno != errno.EEXIST:
             raise
-
-
-class DiskStorageBase(object):
-    def __init__(self):
-        super(DiskStorageBase, self).__init__()
-        self.result = 'result.yaml'
-        self.task = 'task.yaml'
-        self.idx = 1
-
-    def get_next_basename(self, ext):
-        fname = 'product_%03d%s' % (self.idx, ext)
-        self.idx = self.idx + 1
-        return fname
-
-    def store(self, completed_task, resultsdir):
-        """Store the values of the completed task."""
-
-        with working_directory(resultsdir):
-            _logger.info('storing result')
-            return completed_task.store(self)
-
-
-class DiskStorageDefault(object):
-    # TODO: Deprecate
-    def __init__(self, resultsdir):
-        super(DiskStorageDefault, self).__init__()
-        self.result = 'result.yaml'
-        self.task = 'task.yaml'
-        self.resultsdir = resultsdir
-        self.idx = 1
-
-    def get_next_basename(self, ext):
-        fname = 'product_%03d%s' % (self.idx, ext)
-        self.idx = self.idx + 1
-        return fname
-
-    def store(self, completed_task):
-        """Store the values of the completed task."""
-
-        with working_directory(self.resultsdir):
-            _logger.info('storing result')
-            return completed_task.store(self)
 
 
 def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None):

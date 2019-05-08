@@ -119,23 +119,35 @@ class DataFrameType(DataType):
             return result
 
 
+def get_filename_dataframe(obj, where):
+    # save fits file
+    if obj is None or obj.frame is None:
+        return None
+    elif obj.filename:
+        return obj.filename
+    else:
+        return get_filename_hdulist(obj, where)
+
+
+def get_filename_hdulist(hdul, hint):
+    ext = '.fits'
+
+    if isinstance(hint, str):
+        filename = hint + ext
+    elif callable(hint):
+        filename = hint(hdul)
+    else:
+        raise ValueError('hint is neither string nor callable')
+    return filename
+
+
 def dump_dataframe(obj, where):
     # save fits file
-    if obj is None:
-        return None
-    if obj.frame is None:
-        # assume filename contains a FITS file
-        return None
-    else:
-        if obj.filename:
-            filename = obj.filename
-        elif 'FILENAME' in obj.frame[0].header:
-            filename = obj.frame[0].header['FILENAME']
-        elif hasattr(where, 'destination'):
-            filename = where.destination + '.fits'
-        else:
-            filename = where.get_next_basename('.fits')
+
+    fname = get_filename_dataframe(obj, where)
+
+    if fname:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            obj.frame.writeto(filename, overwrite=True, output_verify='warn')
-        return filename
+            obj.frame.writeto(fname, overwrite=True, output_verify='warn')
+    return fname

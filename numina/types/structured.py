@@ -133,7 +133,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
     @classmethod
     def _datatype_dump(cls, obj, where):
 
-        filename = where.destination + '.json'
+        filename = where + '.json'
         writeto(obj, filename)
         return filename
 

@@ -100,8 +100,7 @@ class RecipeResultBase(with_metaclass(RecipeResultType, RecipeInOut)):
         saveres_v = saveres['values']
         for key, prod in self.stored().items():
             val = getattr(self, key)
-            where.destination = "{}".format(prod.dest)
-            saveres_v[key] = numina.store.dump(prod.type, val, where)
+            saveres_v[key] = numina.store.dump(prod.type, val, prod.dest)
 
         return saveres
 

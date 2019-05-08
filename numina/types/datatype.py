@@ -194,12 +194,11 @@ class ListOfType(DataType):
 
     def _datatype_dump(self, objs, where):
         result = []
-        old_dest = where.destination
+        old_dest = where
         for idx, obj in enumerate(objs, start=self.index):
-            where.destination = '{}{}'.format(old_dest, idx)
-            res = self.internal._datatype_dump(obj, where)
+            n_where = '{}{}'.format(old_dest, idx)
+            res = self.internal._datatype_dump(obj, n_where)
             result.append(res)
-        where.destination = old_dest
         return result
 
     def __str__(self):

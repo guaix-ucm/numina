@@ -48,9 +48,23 @@ class ArrayNType(ArrayType):
         self.N = dimensions
 
 
+def get_filename_obj(hdul, hint, ext):
+
+    if isinstance(hint, str):
+        filename = hint + ext
+    elif callable(hint):
+        filename = hint(hdul)
+    else:
+        raise ValueError('"hint" is neither string nor callable')
+    return filename
+
+
+def get_filename_numpy_array(obj, where):
+    filename = get_filename_obj(obj, where, '.txt')
+    return filename
+
+
 def dump_numpy_array(obj, where):
-    # FIXME:
-    #filename = where.get_next_basename('.txt')
-    filename = where.destination + '.txt'
+    filename = get_filename_numpy_array(obj, where)
     numpy.savetxt(filename, obj)
     return filename

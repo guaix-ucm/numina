@@ -13,6 +13,7 @@ import uuid
 
 import pytest
 
+from numina.util.jsonencoder import ExtEncoder
 from numina.tests.drptest import create_drp_test
 from ..backend import Backend
 from numina.exceptions import NoResultFound
@@ -38,7 +39,7 @@ def create_simple_structured():
     return obj
 
 
-def repeat_my(result_content, result_dir, result_name, storage):
+def repeat_my(result_content, result_dir, result_name):
     import numina.store
 
     with working_directory(result_dir):
@@ -52,15 +53,10 @@ def repeat_my(result_content, result_dir, result_name, storage):
         result_values = result_content['values']
         for key, obj in result_values.items():
             obj = result_values[key]
-            storage.destination = key
-            saveres_v[key] = numina.store.dump(obj, obj, storage)
+            saveres_v[key] = numina.store.dump(obj, obj, key)
 
         with open(result_name, 'w') as fd:
-            json.dump(saveres, fd)
-
-
-class Storage(object):
-    destination = ''
+            json.dump(saveres, fd, indent=2, cls=ExtEncoder)
 
 
 @pytest.fixture
@@ -134,7 +130,7 @@ def backend(tmpdir):
     pkg_paths = ['numina.drps.tests.configs']
     store = asb.load_paths_store(pkg_paths)
 
-    storage = Storage()
+
     result_name = 'result.json'
 
     result1_dir = tmpdir.mkdir('dum1')
@@ -148,7 +144,7 @@ def backend(tmpdir):
         values=result1_values,
         uuid='10000000-10000000-10000000-10000000'
     )
-    repeat_my(result1_content, str(result1_dir), result_name, storage)
+    repeat_my(result1_content, str(result1_dir), result_name)
 
     result2_dir = tmpdir.mkdir('dum2')
 
@@ -158,7 +154,7 @@ def backend(tmpdir):
         values=result2_values,
         uuid='20000000-20000000-20000000-20000000'
     )
-    repeat_my(result2_content, str(result2_dir), result_name, storage)
+    repeat_my(result2_content, str(result2_dir), result_name)
 
     result3_dir = tmpdir.mkdir('dum3')
 
@@ -171,7 +167,7 @@ def backend(tmpdir):
         values=result3_values,
         uuid='30000000-30000000-30000000-30000000'
     )
-    repeat_my(result3_content, str(result3_dir), result_name, storage)
+    repeat_my(result3_content, str(result3_dir), result_name)
 
     base = Backend(drps, gentable, components=store, basedir=str(tmpdir))
     base.add_obs(ob_table)

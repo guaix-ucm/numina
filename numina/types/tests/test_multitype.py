@@ -187,22 +187,14 @@ def test_load_multitype(tmpdir):
     filename2 = prefix2 + '.json'
     filename3 = prefix3 + '.json'
 
-    class A(object):
-        pass
-
-    a = A()
-
     obj1 = Structured1()
     obj2 = Structured2()
     obj3 = Structured3()
 
     with cntx.working_directory(str(tmpdir)):
-        a.destination = prefix1
-        numina.store.dump(obj1, obj1, a)
-        a.destination = prefix2
-        numina.store.dump(obj2, obj2, a)
-        a.destination = prefix3
-        numina.store.dump(obj3, obj3, a)
+        numina.store.dump(obj1, obj1, prefix1)
+        numina.store.dump(obj2, obj2, prefix2)
+        numina.store.dump(obj3, obj3, prefix3)
 
     with cntx.working_directory(str(tmpdir)):
 
