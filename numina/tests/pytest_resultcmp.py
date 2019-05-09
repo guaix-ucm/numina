@@ -153,10 +153,8 @@ def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
         # Check extensions
         if ext == '.fits':
             from astropy.io.fits.diff import FITSDiff
-            # FIXME: 'NUM-DK' ## This keyword should not be here
             ignore_keywords = [
-                'HISTORY', 'UUID',
-                'NUM-DK' ## This keyword should not be here
+                'HISTORY', 'UUID','NUMXVER'
             ]
             diff = FITSDiff(
                 fname1, fname2, rtol=rtol, atol=atol,
