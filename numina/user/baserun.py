@@ -25,17 +25,20 @@ from numina.util.context import working_directory
 _logger = logging.getLogger(__name__)
 
 
-def run_reduce(datastore, obsid, copy_files=True):
+def run_reduce(datastore, obsid, requirements=None, copy_files=True):
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
-    request_params = {}
+    request_params = dict()
 
     request_params['oblock_id'] = obsid
     request_params["pipeline"] = 'default' #  args.pipe_name
     request_params["instrument_configuration"] = 'default'  # args.insconf
     request_params["intermediate_results"] = True
     request_params["copy_files"] = copy_files
+    requirements = {} if requirements is None else requirements
+    request_params["requirements"] = requirements
+
 
     logger_control = dict(
         default=__name__,
@@ -71,10 +74,11 @@ def run_task_reduce(task, datastore):
         obsres = datastore.backend.obsres_from_oblock_id(
             obsid, configuration=configuration
         )
+        # Inject requirements passed from above
+        obsres.requirements = task.request_params['requirements']
+        obsres.pipeline = task.request_params["pipeline"]
+        _logger.debug("pipeline is %s", obsres.pipeline)
 
-        pipe_name = task.request_params["pipeline"]
-        _logger.debug("pipeline is %s", pipe_name)
-        obsres.pipeline = pipe_name
         recipe = datastore.backend.search_recipe_from_ob(obsres)
         _logger.debug('recipe class is %s', recipe.__class__)
 
