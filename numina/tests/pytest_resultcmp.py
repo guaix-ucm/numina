@@ -16,6 +16,7 @@ import shutil
 import pytest
 
 import numina.util.context as ctx
+from numina.util.jsonencoder import ExtEncoder
 
 
 class ResultCompPlugin(object):
@@ -74,7 +75,7 @@ class ResultCompPlugin(object):
 
                     import json
                     with open('result.json', 'w') as fd:
-                        json.dump(manifest, fd)
+                        json.dump(manifest, fd, indent=2, cls=ExtEncoder)
 
                 if baseline_remote:
                     # baseline_file_ref = _download_file(reference_dir + filename)
