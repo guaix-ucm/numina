@@ -125,21 +125,20 @@ def pytest_report_header(config):
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup("general")
-    group.addoption('--resultcmp', action='store_true',
-                    help="Enable comparison of recipe results to reference results stored")
-    group.addoption('--resultcmp-generate-path',
+    parser.addoption('--resultcmp', action='store_true',
+                    help="enable comparison of recipe results to reference results stored")
+    parser.addoption('--resultcmp-generate-path',
                     help="directory to generate reference files in, relative to location where py.test is run", action='store')
-    group.addoption('--resultcmp-reference-path',
+    parser.addoption('--resultcmp-reference-path',
                     help="directory containing reference files, relative to location where py.test is run", action='store')
 
 
 def pytest_configure(config):
 
     config.getini('markers').append(
-        'result_compare: Apply to tests that provide recipe results to compare with a baseline')
+        'result_compare: Apply to tests that provide recipe results to compare with a reference')
 
-    if config.getoption("--resultcmp") or config.getoption("--resultcmp-generate-path") is not None:
+    if config.getoption("--resultcmp", default=False) or config.getoption("--resultcmp-generate-path", default=None) is not None:
 
         reference_dir = config.getoption("--resultcmp-reference-path")
         generate_dir = config.getoption("--resultcmp-generate-path")
