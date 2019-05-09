@@ -15,36 +15,17 @@ import datetime
 import logging
 import os
 import contextlib
-import errno
-import shutil
-import pickle
 
-import six
-import yaml
 
-from numina import __version__
 import numina.exceptions
-from numina.util.context import working_directory
 from numina.util.fqn import fully_qualified_name
-from numina.util.jsonencoder import ExtEncoder
-from numina.types.frame import DataFrameType
 from numina.util.context import working_directory
 
 
 _logger = logging.getLogger(__name__)
 
 
-class ReductionBlock(object):
-    def __init__(self):
-        self.id = 1
-        self.instrument = None
-        self.mode = None
-        self.pipeline = 'default'
-        self.instrument_configuration = None
-        self.requirements = {}
-
-
-def run_job(datastore, obsid, copy_files=True):
+def run_reduce(datastore, obsid, copy_files=True):
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
@@ -68,15 +49,12 @@ def run_job(datastore, obsid, copy_files=True):
 
     # We should control here any possible failure
     try:
-        return run_task_reduce(datastore, task)
+        return run_task_reduce(task, datastore)
     finally:
         datastore.store_task(task)
 
 
-def run_task_reduce(datastore, task):
-
-    task.request_runinfo['runner'] = 'numina'
-    task.request_runinfo['runner_version'] = __version__
+def run_task_reduce(task, datastore):
 
     obsid = task.request_params['oblock_id']
     configuration = task.request_params["instrument_configuration"]
@@ -119,7 +97,6 @@ def run_task_reduce(datastore, task):
             _logger.error("During recipe input construction")
             _logger.error("%s", err)
             raise
-            # sys.exit(0)
 
         _logger.debug('recipe input created')
         # Show the actual inputs
@@ -138,7 +115,6 @@ def run_task_reduce(datastore, task):
     task.request_runinfo['recipe_fqn'] = fully_qualified_name(recipe.__class__)
     task.request_runinfo['recipe_version'] = recipe.__version__
 
-
     # Copy files
     workenv.sane_work()
     if task.request_params["copy_files"]:
@@ -148,106 +124,6 @@ def run_task_reduce(datastore, task):
         workenv.adapt_obsres(obsres)
 
     logger_control = task.request_params['logger_control']
-    with logger_manager(logger_control, workenv.resultsdir):
-        with working_directory(workenv.workdir):
-            completed_task = run_recipe_timed(task, recipe, rinput)
-
-    datastore.store_task(completed_task)
-    return completed_task
-
-
-def run_reduce(datastore, obsid, copy_files=True):
-    """Observing mode processing mode of numina."""
-
-    request = 'reduce'
-    request_params = {}
-
-    rb = ReductionBlock()
-    rb.id = obsid
-
-    request_params['oblock_id'] = rb.id
-    request_params["pipeline"] = rb.pipeline
-    request_params["instrument_configuration"] = rb.instrument_configuration
-
-    logger_control = dict(
-        default=__name__,
-        logfile='processing.log',
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        enabled=True
-    )
-    request_params['logger_control'] = logger_control
-
-    task = datastore.backend.new_task(request, request_params)
-    task.request = request
-    task.request_params = request_params
-
-    task.request_runinfo['runner'] = 'numina'
-    task.request_runinfo['runner_version'] = __version__
-
-    _logger.info("procesing OB with id={}".format(obsid))
-    workenv = datastore.create_workenv(task)
-
-    task.request_runinfo["results_dir"] = workenv.resultsdir_rel
-    task.request_runinfo["work_dir"] = workenv.workdir_rel
-
-    # Roll back to cwd after leaving the context
-    with working_directory(workenv.datadir):
-
-        obsres = datastore.backend.obsres_from_oblock_id(obsid, configuration=rb.instrument_configuration)
-
-        _logger.debug("pipeline from CLI is %r", rb.pipeline)
-        pipe_name = rb.pipeline
-        obsres.pipeline = pipe_name
-        recipe = datastore.backend.search_recipe_from_ob(obsres)
-        _logger.debug('recipe class is %s', recipe.__class__)
-
-        # Enable intermediate results by default
-        _logger.debug('enable intermediate results')
-        recipe.intermediate_results = True
-
-        # Update runinfo
-        _logger.debug('update recipe runinfo')
-        recipe.runinfo['runner'] = 'numina'
-        recipe.runinfo['runner_version'] = __version__
-        recipe.runinfo['task_id'] = task.id
-        recipe.runinfo['data_dir'] = workenv.datadir
-        recipe.runinfo['work_dir'] = workenv.workdir
-        recipe.runinfo['results_dir'] = workenv.resultsdir
-
-        _logger.debug('recipe created')
-
-        try:
-            rinput = recipe.build_recipe_input(obsres, datastore.backend)
-        except (ValueError, numina.exceptions.ValidationError) as err:
-            _logger.error("During recipe input construction")
-            _logger.error("%s", err)
-            raise
-            # sys.exit(0)
-
-        _logger.debug('recipe input created')
-        # Show the actual inputs
-        for key in recipe.requirements():
-            v = getattr(rinput, key)
-            _logger.debug("recipe requires %r, value is %s", key, v)
-
-        for req in recipe.products().values():
-            _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
-
-    # Load recipe control and recipe parameters from file
-    task.request_runinfo['instrument'] = obsres.instrument
-    task.request_runinfo['mode'] = obsres.mode
-    task.request_runinfo['recipe_class'] = recipe.__class__.__name__
-    task.request_runinfo['recipe_fqn'] = fully_qualified_name(recipe.__class__)
-    task.request_runinfo['recipe_version'] = recipe.__version__
-
-    # Copy files
-    workenv.sane_work()
-    if copy_files:
-        _logger.debug('copy files to work directory')
-        workenv.copyfiles_stage1(obsres)
-        workenv.copyfiles_stage2(rinput)
-        workenv.adapt_obsres(obsres)
-
     with logger_manager(logger_control, workenv.resultsdir):
         with working_directory(workenv.workdir):
             completed_task = run_recipe_timed(task, recipe, rinput)

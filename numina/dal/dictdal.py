@@ -19,14 +19,14 @@ import yaml
 
 import numina.store
 import numina.store.gtc.load as gtcload
-from numina.types.frame import DataFrameType
 from numina.core.oresult import obsres_from_dict
 from numina.exceptions import NoResultFound
 from numina.instrument.assembly import assembly_instrument
+from numina.util.context import working_directory
 
 from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
-from .stored import StoredProduct, StoredParameter
+from .stored import StoredProduct, StoredParameter, StoredResult
 from .diskfiledal import build_product_path
 from .utils import tags_are_valid
 
@@ -284,6 +284,7 @@ class Dict2DAL(BaseDictDAL):
 
     def new_task(self, request, request_params):
 
+        from numina import __version__
         from numina.user.helpers import ProcessingTask
 
         newidx =  self.new_task_id(request, request_params)
@@ -292,7 +293,8 @@ class Dict2DAL(BaseDictDAL):
         task.id = newidx
         task.request = request
         task.request_params = request_params
-
+        task.request_runinfo['runner'] = 'numina'
+        task.request_runinfo['runner_version'] = __version__
         return task
 
     def update_task(self, task):
@@ -318,7 +320,6 @@ class Dict2DAL(BaseDictDAL):
         return state
 
 
-# FIXME: this is a workaround
 def workdir_default(basedir, obsid):
     workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
     workdir = os.path.abspath(workdir)
@@ -331,41 +332,23 @@ def resultsdir_default(basedir, obsid):
     return resultsdir
 
 
-class HybridDAL(Dict2DAL):
-    """A DAL that can read files from directory structure"""
+class BaseHybridDAL(Dict2DAL):
 
-    def __init__(self, drps, obtable, base, extra_data=None, components=None, basedir=None):
+    def __init__(self, drps, obtable, base, extra_data=None, basedir=None, components=None):
 
         self.rootdir = base.get("rootdir", "")
+        self.ob_ids = []
 
         if basedir is None:
             self.basedir = os.getcwd()
         else:
             self.basedir = basedir
 
-        # Preprocessing
-        obdict = {}
-        self.ob_ids = []
-        for ob in obtable:
-            obid = ob['id']
-            self.ob_ids.append(obid)
-            obdict[obid] = ob
-
-        # Update parents
-        for ob in obdict.values():
-            children = ob.get('children', [])
-            for ch in children:
-                obdict[ch]['parent'] = ob['id']
-
-        super(HybridDAL, self).__init__(
-            drps, obdict, base,
-            extra_data=extra_data,
-            components=components
+        super(BaseHybridDAL, self).__init__(
+            drps, obtable, base, extra_data=extra_data, components=components
         )
 
     def add_obs(self, obtable):
-
-        # Preprocessing
         obdict = {}
         for ob in obtable:
             obid = ob['id']
@@ -374,7 +357,7 @@ class HybridDAL(Dict2DAL):
                 self.ob_ids.append(obid)
                 obdict[obid] = ob
             else:
-                print(obid, 'is already in table')
+                _logger.warning('oblock_id=%s is already in table', obid)
         # Update parents
         for ob in obdict.values():
             children = ob.get('children', [])
@@ -392,45 +375,7 @@ class HybridDAL(Dict2DAL):
             return self._search_prod_table(name, tipo, obsres)
 
     def _search_prod_table(self, name, tipo, obsres):
-        """Returns the first coincidence..."""
-
-        instrument = obsres.instrument
-
-        conf = str(obsres.configuration.origin.uuid)
-
-        drp = self.drps.query_by_name(instrument)
-        label = drp.product_label(tipo)
-        # Strip () is present
-        if label.endswith("()"):
-            label_alt = label[:-2]
-        else:
-            label_alt = label
-
-        # search results of these OBs
-        for prod in self.prod_table[instrument]:
-            pk = prod['type']
-            pt = prod['tags']
-            if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, obsres.tags):
-                # this is a valid product
-                # We have found the result, no more checks
-                # Make a copy
-                rprod = dict(prod)
-
-                if 'content' in prod:
-                    path = prod['content']
-                else:
-                    # Build path
-                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
-                _logger.debug("path is %s", path)
-                rprod['content'] = numina.store.load(tipo, path)
-                return StoredProduct(**rprod)
-        else:
-            # Not in table, try file directly
-            _logger.debug("%s not in table, try file directly", tipo)
-            path = self.build_product_path(drp, conf, name, tipo, obsres)
-            _logger.debug("path is %s", path)
-            content = self.product_loader(tipo, name, path)
-            return StoredProduct(id=0, content=content, tags=obsres.tags)
+        raise NotImplementedError
 
     def search_result(self, name, tipo, obsres, resultid=None):
 
@@ -443,6 +388,49 @@ class HybridDAL(Dict2DAL):
                 raise NoResultFound("resultid not found")
         prod = self._search_result(name, tipo, obsres, resultid)
         return prod
+
+    def _search_result(self, name, tipo, obsres, resultid):
+        """Returns the first coincidence..."""
+
+        instrument = obsres.instrument
+
+        conf = str(obsres.configuration.origin.uuid)
+
+        drp = self.drps.query_by_name(instrument)
+        label = drp.product_label(tipo)
+
+        # search results of these OBs
+        for prod in self.prod_table[instrument]:
+            pid = prod['id']
+            if pid == resultid:
+                # this is a valid product
+                # We have found the result, no more checks
+                # Make a copy
+                rprod = dict(prod)
+
+                if 'content' in prod:
+                    path = prod['content']
+                else:
+                    # Build path
+                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+                _logger.debug("path is %s", path)
+                rprod['content'] = self.product_loader(tipo, name, path)
+                return StoredProduct(**rprod)
+        else:
+            msg = 'result with id %s not found' % (resultid, )
+            raise NoResultFound(msg)
+
+    def product_loader(self, tipo, name, path):
+        path, kind = path
+        if kind == 0:
+            return numina.store.load(tipo, path)
+        else:
+            # GTC load
+            with open(path) as fd:
+                data = json.load(fd)
+                inter = gtcload.build_result(data)
+                elem = inter['elements']
+                return elem[name]
 
     def search_previous_obsres(self, obsres, node=None):
 
@@ -468,44 +456,7 @@ class HybridDAL(Dict2DAL):
         return reversed(self.ob_ids[:idx])
 
     def search_result_id(self, node_id, tipo, field, mode=None):
-        cobsres = self.obsres_from_oblock_id(node_id)
-
-        if mode is not None:
-            # mode must match
-            if cobsres.mode != mode:
-                msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
-                raise NoResultFound(msg)
-
-        rdir = resultsdir_default(self.basedir, node_id)
-        # FIXME: hardcoded
-        taskfile = os.path.join(rdir, 'task.yaml')
-        resfile = os.path.join(rdir, 'result.yaml')
-        result_contents = yaml.load(open(resfile))
-        if 'values' in result_contents:
-            result_contents = result_contents['values']
-        task_contents = yaml.load(open(taskfile))
-
-        try:
-            field_file = result_contents[field]
-            if field_file is not None:
-                filename = os.path.join(rdir, field_file)
-                content = numina.store.load(DataFrameType(), filename)
-            else:
-                content = None
-
-            st = StoredProduct(
-                id=node_id,
-                content=content,
-                tags={}
-            )
-            return st
-        except KeyError as err:
-            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
-            # Python 2.7 compatibility
-            six.raise_from(NoResultFound(msg), err)
-            # raise NoResultFound(msg) from err
-
-
+        raise NotImplementedError
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
 
@@ -562,52 +513,9 @@ class HybridDAL(Dict2DAL):
         # FIXME: Implement
         raise NoResultFound
 
-    def _search_result(self, name, tipo, obsres, resultid):
-        """Returns the first coincidence..."""
-
-        instrument = obsres.instrument
-
-        conf = str(obsres.configuration.origin.uuid)
-
-        drp = self.drps.query_by_name(instrument)
-        label = drp.product_label(tipo)
-
-        # search results of these OBs
-        for prod in self.prod_table[instrument]:
-            pid = prod['id']
-            if pid == resultid:
-                # this is a valid product
-                # We have found the result, no more checks
-                # Make a copy
-                rprod = dict(prod)
-
-                if 'content' in prod:
-                    path = prod['content']
-                else:
-                    # Build path
-                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
-                _logger.debug("path is %s", path)
-                rprod['content'] = self.product_loader(tipo, name, path)
-                return StoredProduct(**rprod)
-        else:
-            msg = 'result with id %s not found' % (resultid, )
-            raise NoResultFound(msg)
-
     def build_product_path(self, drp, conf, name, tipo, obsres):
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
         return path
-
-    def product_loader(self, tipo, name, path):
-        path, kind = path
-        if kind == 0:
-            return numina.store.load(tipo, path)
-        else:
-            # GTC load
-            with open(path) as fd:
-                data = json.load(fd)
-                inter = gtcload.build_result(data)
-                elem = inter['elements']
-                return elem[name]
 
     def search_session_ids(self):
         for obs_id in self.ob_ids:
@@ -622,25 +530,124 @@ class HybridDAL(Dict2DAL):
             yield obs_id
 
     def dump_data(self):
-        state = {}
-        state = super(HybridDAL, self).dump_data()
+        state = super(BaseHybridDAL, self).dump_data()
         state['rootdir'] = self.rootdir
         return state
 
-    def new_task_id(self, request, request_params):
-        if request == 'reduce':
-            return request_params.get('oblock_id', 1)
-        return 1
 
-    def new_task(self, request, request_params):
+class HybridDAL(BaseHybridDAL):
+    """A DAL that can read files from directory structure"""
 
-        from numina.user.helpers import ProcessingTask
+    def __init__(self, drps, obtable, base, extra_data=None, components=None, basedir=None):
 
-        newidx =  self.new_task_id(request, request_params)
-        _logger.debug('create task=%s', newidx)
-        task = ProcessingTask()
-        task.id = newidx
-        task.request = request
-        task.request_params = request_params
+        temp_ob_ids = []
+        # Preprocessing
+        obdict = {}
+        for ob in obtable:
+            obid = ob['id']
+            temp_ob_ids.append(obid)
+            obdict[obid] = ob
 
-        return task
+        # Update parents
+        for ob in obdict.values():
+            children = ob.get('children', [])
+            for ch in children:
+                obdict[ch]['parent'] = ob['id']
+
+        super(HybridDAL, self).__init__(
+            drps, obdict, base,
+            extra_data=extra_data,
+            basedir=basedir,
+            components=components
+        )
+        # This field does not exist until super is called
+        self.ob_ids = temp_ob_ids
+
+    def _search_prod_table(self, name, tipo, obsres):
+        """Returns the first coincidence..."""
+
+        instrument = obsres.instrument
+
+        conf = str(obsres.configuration.origin.uuid)
+
+        drp = self.drps.query_by_name(instrument)
+        label = drp.product_label(tipo)
+        # Strip () is present
+        if label.endswith("()"):
+            label_alt = label[:-2]
+        else:
+            label_alt = label
+
+        # search results of these OBs
+        for prod in self.prod_table[instrument]:
+            pk = prod['type']
+            pt = prod['tags']
+            if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, obsres.tags):
+                # this is a valid product
+                # We have found the result, no more checks
+                # Make a copy
+                rprod = dict(prod)
+
+                if 'content' in prod:
+                    path = prod['content']
+                else:
+                    # Build path
+                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+                _logger.debug("path is %s", path)
+                rprod['content'] = numina.store.load(tipo, path)
+                return StoredProduct(**rprod)
+        else:
+            # Not in table, try file directly
+            _logger.debug("%s not in table, try file directly", tipo)
+            path = self.build_product_path(drp, conf, name, tipo, obsres)
+            _logger.debug("path is %s", path)
+            content = self.product_loader(tipo, name, path)
+            return StoredProduct(id=0, content=content, tags=obsres.tags)
+
+    def search_result_id(self, node_id, tipo, field, mode=None):
+        cobsres = self.obsres_from_oblock_id(node_id)
+
+        if mode is not None:
+            # mode must match
+            if cobsres.mode != mode:
+                msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
+                raise NoResultFound(msg)
+
+        try:
+            directory = resultsdir_default(self.basedir, node_id)
+
+            # change directory to open result file
+            with working_directory(os.path.join(self.basedir, directory)):
+
+                # Try to open both
+                filename_yaml = 'result.yaml'
+                filename_json = 'result.json'
+                if os.path.exists(filename_yaml):
+                    with open('result') as fd:
+                        result_data = yaml.safe_load(fd)
+                elif os.path.exists(filename_json):
+                    with open('result') as fd:
+                        result_data = json.load(fd)
+                else:
+                    raise ValueError('result.yaml or result.json not found in {}'.format(directory))
+
+                stored_result = StoredResult.load_data(result_data)
+
+                try:
+                    content = getattr(stored_result, field)
+                except AttributeError:
+                    raise NoResultFound('no field {} found in result'.format(field))
+
+                st = StoredProduct(
+                    id=node_id,
+                    content=content,
+                    tags={}
+                )
+                return st
+        except KeyError as err:
+            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
+            # Python 2.7 compatibility
+            six.raise_from(NoResultFound(msg), err)
+            # raise NoResultFound(msg) from err
+
+

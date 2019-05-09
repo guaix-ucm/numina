@@ -80,8 +80,8 @@ class DataManager(object):
         import yaml
         yaml.dump(data, fd)
 
-    def store_result_to(self, result, storage):
-        saveres = result.store_to(storage)
+    def store_result_to(self, result):
+        saveres = result.store_to(None)
         return saveres
 
     def store_task(self, task):
@@ -93,7 +93,7 @@ class DataManager(object):
             _logger.info('storing task and result')
 
             # save to disk the RecipeResult part and return the file to save it
-            result_repr = self.store_result_to(task.result, self.storage)
+            result_repr = self.store_result_to(task.result)
 
             task_repr = task.__dict__.copy()
             # Change result structure by filename
@@ -139,8 +139,13 @@ class ProcessingTask(object):
         self.time_end = 0
         self.request = "reduce"
         self.request_params = {}
-        self.request_runinfo = {}
+        self.request_runinfo = self._init_runinfo()
         self.state = 0
+
+    @classmethod
+    def _init_runinfo(cls):
+        request_runinfo = dict(runner='unknown', runner_version='unknown')
+        return request_runinfo
 
 
 class BaseWorkEnvironment(object):
