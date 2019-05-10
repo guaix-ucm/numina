@@ -73,12 +73,12 @@ class ObservationResult(ObservingBlock):
         return origin
 
     def get_sample_frame(self):
-        """Return first available image in observation result"""
+        """Return first available frame in observation result"""
         for frame in self.frames:
-            return frame.open()
+            return frame
 
         for res in self.results.values():
-            return res.open()
+            return res
 
         return None
 

@@ -307,13 +307,13 @@ class InstrumentDRP(object):
             keyname = 'uuid'
         else:
             # get first possible image
-            img = obresult.get_sample_frame()
-            if img is None:
+            sample_frame = obresult.get_sample_frame()
+            if sample_frame is None:
                 key = obresult.instrument
                 date_obs = None
                 keyname = 'name'
             else:
-                return self.select_profile_image(img)
+                return self.select_profile_image(sample_frame.open())
         return key, date_obs, keyname
 
     def select_profile_image(self, img):
