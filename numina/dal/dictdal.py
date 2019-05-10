@@ -160,20 +160,17 @@ class BaseDictDAL(AbsDrpDAL):
             obsres = selected_mode.build_ob(obsres, self)
             obsres = selected_mode.tag_ob(obsres)
 
-        if configuration:
-            # override instrument configuration
-            # obsres.configuration = self.search_instrument_configuration(
-            #     obsres.instrument,
-            #     configuration
-            #)
-            pass
-        else:
-            # Insert Instrument configuration
-            pass
-            # obsres.configuration = this_drp.configuration_selector(obsres)
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
         obsres.profile = obsres.configuration
+
+        auto_configure = True
+        sample_frame = obsres.get_sample_frame()
+        if auto_configure and sample_frame is not None:
+            _logger.debug('configuring instrument with frame')
+            obsres.profile.configure_with_image(sample_frame.open())
+        else:
+            _logger.debug('no configuring instrument with frame')
 
         _logger.debug('obsres_from_oblock_id %s END', obsid)
         return obsres
@@ -532,6 +529,7 @@ class BaseHybridDAL(Dict2DAL):
     def dump_data(self):
         state = super(BaseHybridDAL, self).dump_data()
         state['rootdir'] = self.rootdir
+        state['ob_ids'] = self.ob_ids
         return state
 
 
