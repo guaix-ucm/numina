@@ -92,21 +92,23 @@ class DataManager(object):
         with working_directory(result_dir):
             _logger.info('storing task and result')
 
-            # save to disk the RecipeResult part and return the file to save it
-            result_repr = self.store_result_to(task.result)
-
             task_repr = task.__dict__.copy()
-            # Change result structure by filename
-            task_repr['result'] = self.result_file
 
-            with open(self.result_file, 'w+') as fd:
-                self.serializer(result_repr, fd)
+            # save to disk the RecipeResult part and return the file to save it
+            if task.result is not None:
+                result_repr = self.store_result_to(task.result)
+                # Change result structure by filename
+                task_repr['result'] = self.result_file
+
+                with open(self.result_file, 'w+') as fd:
+                    self.serializer(result_repr, fd)
 
             with open(self.task_file, 'w+') as fd:
                 self.serializer(task_repr, fd)
 
         self.backend.update_task(task)
-        self.backend.update_result(task, result_repr, self.result_file)
+        if task.result is not None:
+            self.backend.update_result(task, result_repr, self.result_file)
 
     def create_workenv(self, task):
 
