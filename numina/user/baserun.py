@@ -25,7 +25,7 @@ from numina.util.context import working_directory
 _logger = logging.getLogger(__name__)
 
 
-def run_reduce(datastore, obsid, requirements=None, copy_files=True):
+def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=True):
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
@@ -38,7 +38,6 @@ def run_reduce(datastore, obsid, requirements=None, copy_files=True):
     request_params["copy_files"] = copy_files
     requirements = {} if requirements is None else requirements
     request_params["requirements"] = requirements
-
 
     logger_control = dict(
         default=__name__,
@@ -67,6 +66,7 @@ def run_task_reduce(task, datastore):
     workenv = datastore.create_workenv(task)
     task.request_runinfo["results_dir"] = workenv.resultsdir_rel
     task.request_runinfo["work_dir"] = workenv.workdir_rel
+    workenv.sane_work()
 
     # Roll back to cwd after leaving the context
     with working_directory(workenv.datadir):
@@ -132,7 +132,7 @@ def run_task_reduce(task, datastore):
         with working_directory(workenv.workdir):
             completed_task = run_recipe_timed(task, recipe, rinput)
 
-    datastore.store_task(completed_task)
+    # datastore.store_task(completed_task)
     return completed_task
 
 
@@ -168,15 +168,19 @@ def logger_manager(logger_control, result_dir):
 def run_recipe_timed(task, recipe, rinput):
     """Run the recipe and count the time it takes."""
     _logger.info('running recipe')
-    now1 = datetime.datetime.now()
     task.state = 1
-    task.time_start = now1
+    task.time_start = datetime.datetime.now()
     #
-    result = recipe(rinput)
-    _logger.info('result: %r', result)
-    task.result = result
-    #
-    now2 = datetime.datetime.now()
-    task.state = 2
-    task.time_end = now2
+    try:
+        task.result = recipe(rinput)
+        task.state = 2
+        _logger.info('result: %r', task.result)
+    except Exception:
+        task.state = 3
+        raise
+    finally:
+        task.time_end = datetime.datetime.now()
     return task
+
+
+
