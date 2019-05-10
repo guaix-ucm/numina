@@ -73,8 +73,8 @@ class Backend(BaseHybridDAL):
 
         self.db_tables['oblocks'] = self.ob_table
         self.db_tables['requirements'] = self.req_table
+        self.db_tables['oblocks_index'] = self.ob_ids
         self.prod_table = self.db_tables['products']
-        # self.db_tables['obsi'] = self.ob_ids
 
     def dump_data(self):
         state = {}
