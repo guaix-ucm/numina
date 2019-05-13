@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -134,18 +134,29 @@ class Expression(object):
     def map_tree(visitor, tree):
         return map_tree(visitor, tree)
 
-    def fill_placeholders(self, tags):
+    def fill_placeholders(self, **kwargs):
         """Substitute Placeholder nodes by its value in tags"""
         def change_p_node_tags(node, children):
-            if isinstance(node, Placeholder):
-                value = ConstExpr(tags[node.name])
-                return value
+            if isinstance(node, Placeholder) and (node.name in kwargs):
+                return ConstExpr(kwargs[node.name])
             else:
                 return node.clone(children)
 
         return map_tree(change_p_node_tags, self)
 
     fill_tags = fill_placeholders
+
+    def eval(self, **kwargs):
+
+        def eval_nodes(node, children):
+            if isinstance(node, BinaryExpr):
+                return node.operator(children[0], children[1])
+            if isinstance(node, UnaryExpr):
+                return node.operator(children[0])
+            else:
+                return node.eval(**kwargs)
+
+        return map_tree(eval_nodes, self)
 
     def clone(self, children):
         raise NotImplementedError
@@ -169,6 +180,12 @@ class TagRepr(AtomicExpr):
     def clone(self, nodes):
         return self
 
+    def eval(self, **kwargs):
+        if self.value in kwargs:
+            return kwargs[self.value]
+        else:
+            return self
+
     def __repr__(self):
         return "TagRepr(%s)" % self.name
 
@@ -178,6 +195,9 @@ class Placeholder(AtomicExpr):
     def __init__(self, name):
         super(Placeholder, self).__init__(name, name)
         self._places.add(name)
+
+    def __repr__(self):
+        return "Placeholder(%s)" % self.name
 
     def clone(self, nodes):
         return self
@@ -193,6 +213,9 @@ class ConstExpr(AtomicExpr):
 
     def __repr__(self):
         return "ConstExpr(%s)" % self.value
+
+    def eval(self, **kwargs):
+        return self.value
 
 
 ConstExprTrue = ConstExpr(True)
@@ -216,25 +239,29 @@ class UnaryExpr(CompoundExpr):
 
 
 class BinaryExpr(CompoundExpr):
-    def __init__(self, lhs, rhs, oper):
+    def __init__(self, lhs, rhs, oper, op_rep):
         super(BinaryExpr, self).__init__(lhs, rhs)
         self.lhs = self.nodes[0]
         self.rhs = self.nodes[1]
         self.operator = oper
+        self.op_rep = op_rep
 
     def clone(self, nodes):
         new = self.__class__(nodes[0], nodes[1])
         return new
 
+    def __str__(self):
+        return "({} {} {})".format(str(self.lhs), self.op_rep, str(self.rhs))
+
 
 class PredAnd(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredAnd, self).__init__(lhs, rhs, operator.and_)
+        super(PredAnd, self).__init__(lhs, rhs, operator.and_, 'AND')
 
 
 class PredOr(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredOr, self).__init__(lhs, rhs, operator.or_)
+        super(PredOr, self).__init__(lhs, rhs, operator.or_, 'OR')
 
 
 class PredNot(UnaryExpr):
@@ -244,32 +271,32 @@ class PredNot(UnaryExpr):
 
 class PredEq(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredEq, self).__init__(lhs, rhs, operator.eq)
+        super(PredEq, self).__init__(lhs, rhs, operator.eq, '==')
 
 
 class PredGt(BinaryExpr):
     def __init__(self, key, value):
-        super(PredGt, self).__init__(key, value, operator.gt)
+        super(PredGt, self).__init__(key, value, operator.gt, '>')
 
 
 class PredGe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredGe, self).__init__(key, value, operator.ge)
+        super(PredGe, self).__init__(key, value, operator.ge, '>=')
 
 
 class PredLe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredLe, self).__init__(key, value, operator.le)
+        super(PredLe, self).__init__(key, value, operator.le, '<=')
 
 
 class PredLt(BinaryExpr):
     def __init__(self, key, value):
-        super(PredLt, self).__init__(key, value, operator.lt)
+        super(PredLt, self).__init__(key, value, operator.lt, '<')
 
 
 class PredNe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredNe, self).__init__(key, value, operator.ne)
+        super(PredNe, self).__init__(key, value, operator.ne, '!=')
 
 
 class ConstraintAdapter(object):

@@ -3,7 +3,7 @@ import pytest
 import numina.core.tagexpr as tagexpr
 
 
-def test_tagexpresion1():
+def test_tag_expresion1():
 
     mode_tags = {'vph': 'MR-I', 'insmode': 'LCB'}
 
@@ -20,17 +20,17 @@ def test_tagexpresion1():
     assert isinstance(expr2, tagexpr.Expression)
     assert isinstance(expr3, tagexpr.Expression)
 
-    expr11 = expr1.fill_placeholders(mode_tags)
+    expr11 = expr1.fill_placeholders(**mode_tags)
     assert len(expr11.places()) == 0
 
-    expr21 = expr2.fill_placeholders(mode_tags)
+    expr21 = expr2.fill_placeholders(**mode_tags)
     assert len(expr21.places()) == 0
 
-    with pytest.raises(KeyError):
-        expr3.fill_placeholders(mode_tags)
+    # with pytest.raises(KeyError):
+    #    expr3.fill_placeholders(**mode_tags)
 
 
-def test_tagexpresion_filter1():
+def test_tag_expresion_filter1():
 
     insmode = tagexpr.TagRepr("insmode")
     vph = tagexpr.TagRepr("vph")
@@ -59,3 +59,25 @@ def test_tagexpresion_filter1():
     assert res[8].value == "MOS"
     assert isinstance(res[9], tagexpr.PredNe)
     assert isinstance(res[10], tagexpr.PredAnd)
+
+    expr2 = expr1.fill_placeholders(insmode='LCB')
+    assert expr2.eval(insmode='LCB', vph='LR-I') == True
+
+
+def test_tag_expresion_filter2():
+
+    insmode = tagexpr.TagRepr("insmode")
+    vph = tagexpr.TagRepr("vph")
+    temp = tagexpr.TagRepr("temp")
+    p_ = tagexpr.Placeholder
+
+    expr1 = (vph == p_("vph")) & (insmode == p_("insmode")) & (temp >= p_("temp"))
+    expr2 = expr1.fill_placeholders(insmode='LCB', vph='LR-I', temp=22.4)
+
+    assert expr2.eval(insmode='LCB', vph='LR-I', temp=22.4)
+
+    assert expr2.eval(insmode='LCB', vph='LR-I', temp=24.4)
+
+    assert expr2.eval(insmode='LCB', vph='LR-I', temp=20.0) == False
+
+    assert expr2.eval(insmode='MOS', vph='LR-I', temp=23.0) == False

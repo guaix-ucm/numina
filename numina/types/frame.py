@@ -111,7 +111,8 @@ class DataFrameType(DataType):
                     result[field] = ext.extract(field, hdulist)
 
                 tags = result['tags']
-                for field in self.tags_keys:
+                #for field in self.tags_keys:
+                for field in self.names_t:
                     tags[field] = ext.extract(field, hdulist)
 
                 return result

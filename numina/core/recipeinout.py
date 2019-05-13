@@ -85,6 +85,14 @@ class RecipeInOut(object):
         for check in checkers:
             check.check(self)
 
+    @classmethod
+    def tag_names(cls):
+        qfields = set()
+        for key, req in cls.stored().items():
+            tag_n = req.tag_names()
+            qfields.update(tag_n)
+        return qfields
+
 
 class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     """RecipeInput base class"""

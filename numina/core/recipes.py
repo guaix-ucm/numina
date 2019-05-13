@@ -120,6 +120,10 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     def products(cls):
         return cls.RecipeResult.stored()
 
+    @classmethod
+    def tag_names(cls):
+        return cls.RecipeInput.tag_names()
+
     def run(self, recipe_input):
         return self.create_result()
 
