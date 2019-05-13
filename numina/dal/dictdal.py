@@ -621,10 +621,10 @@ class HybridDAL(BaseHybridDAL):
                 filename_yaml = 'result.yaml'
                 filename_json = 'result.json'
                 if os.path.exists(filename_yaml):
-                    with open('result') as fd:
+                    with open(filename_yaml) as fd:
                         result_data = yaml.safe_load(fd)
                 elif os.path.exists(filename_json):
-                    with open('result') as fd:
+                    with open(filename_json) as fd:
                         result_data = json.load(fd)
                 else:
                     raise ValueError('result.yaml or result.json not found in {}'.format(directory))
