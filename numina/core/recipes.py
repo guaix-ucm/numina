@@ -228,16 +228,12 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
             obsres = ob
 
         # Get tags_names per REQ
-        self.logger.debug('getting query fields per REQ')
-        qfields = set()
-        for key, req in self.requirements().items():
-            tag_n = req.tag_names()
-            self.logger.debug("%s has these query fields %s", key, tag_n)
-            qfields.update(tag_n)
+        self.logger.debug('getting query fields of the recipe')
+        qfields = self.tag_names()
+        self.logger.debug("recipe has these query fields %s", qfields)
 
         if obsres.tags is None:
-            self.logger.debug('running recipe tagger')
-            self.logger.debug('with query fields %s', qfields)
+            self.logger.debug('running recipe tagger with query fields %s', qfields)
             if qfields:
                 obsres.tags = self.obsres_extractor(obsres, qfields)
             else:

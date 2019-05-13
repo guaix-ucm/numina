@@ -74,8 +74,8 @@ def run_task_reduce(task, datastore):
         obsres = datastore.backend.obsres_from_oblock_id(
             obsid, configuration=configuration
         )
-        # Inject requirements passed from above
-        obsres.requirements = task.request_params['requirements']
+        # Merge requirements passed from above
+        obsres.requirements.update(task.request_params['requirements'])
         obsres.pipeline = task.request_params["pipeline"]
         _logger.debug("pipeline is %s", obsres.pipeline)
 
