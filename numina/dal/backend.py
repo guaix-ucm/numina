@@ -183,6 +183,7 @@ class Backend(BaseHybridDAL):
                     'time_create': task.time_end.strftime('%FT%T'),
                     'time_obs': ometa['observation_date'].strftime('%FT%T'),
                     'tags': ometa['tags'],
+                    'uuid': ometa['uuid'],
                     'oblock_id': task.request_params['oblock_id'],
                     'type': prod.type.name(),
                     'type_fqn': fully_qualified_name(prod.type),
