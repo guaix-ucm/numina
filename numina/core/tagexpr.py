@@ -119,13 +119,31 @@ class Expression(object):
         if isinstance(other, CompoundExpr):
             return PredOr(self, other)
 
+        if isinstance(other, bool):
+            if other:
+                return True
+            else:
+                return other
+
         return NotImplemented
+
+    def __ror__(self, other):
+        return self.__or__(other)
 
     def __and__(self, other):
         if isinstance(other, CompoundExpr):
             return PredAnd(self, other)
 
+        if isinstance(other, bool):
+            if other:
+                return self
+            else:
+                return False
+
         return NotImplemented
+
+    def __rand__(self, other):
+        return self.__and__(other)
 
     def __invert__(self):
         return PredNot(self)
