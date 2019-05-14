@@ -271,7 +271,7 @@ class BaseWorkEnvironment(object):
                 )
 
                 dest = os.path.join(self.workdir, value.filename)
-                install_if_needed(value.filename, complete, self.workdir)
+                install_if_needed(value.filename, complete, dest)
 
     def copyfiles_stage1(self, obsres):
         return self.installfiles_stage1(obsres, action='copy')
