@@ -93,6 +93,10 @@ def register(subparsers, config):
         help='do not copy observation result and requirement files'
         )
     parser_run.add_argument(
+        '--link-files', action="store_false", dest="copy_files",
+        help='do not copy observation result and requirement files'
+        )
+    parser_run.add_argument(
         '--dump-control', action="store_true",
         help='save the modified task control file'
     )
