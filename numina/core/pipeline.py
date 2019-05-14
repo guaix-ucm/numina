@@ -255,7 +255,8 @@ class InstrumentDRP(object):
         logger.debug('calling default configuration selector')
 
         # get first possible image
-        ref = obresult.get_sample_frame()
+        ref_frame = obresult.get_sample_frame()
+        ref = ref_frame.open()
         extr = self.datamodel.extractor_map['fits']
         if ref:
             # get INSCONF configuration
