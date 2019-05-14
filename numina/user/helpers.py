@@ -270,6 +270,7 @@ class BaseWorkEnvironment(object):
                     os.path.join(self.datadir, value.filename)
                 )
 
+                dest = os.path.join(self.workdir, value.filename)
                 install_if_needed(value.filename, complete, self.workdir)
 
     def copyfiles_stage1(self, obsres):
