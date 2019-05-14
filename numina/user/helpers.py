@@ -200,9 +200,12 @@ class BaseWorkEnvironment(object):
 
         self.copyfiles_stage2(reqs)
 
-    def copyfiles_stage1(self, obsres):
+    def installfiles_stage1(self, obsres, action='copy'):
         import astropy.io.fits as fits
-        _logger.debug('copying files from observation result')
+
+        install_if_needed = self._calc_install_if_needed(action)
+
+        _logger.debug('installing files from observation result')
         tails = []
         sources = []
         for f in obsres.images:
@@ -232,11 +235,48 @@ class BaseWorkEnvironment(object):
             dest = os.path.join(self.workdir, key)
             # Update filename in DataFrame
             obj.filename = dest
-            self.copy_if_needed(key, src, dest)
+            install_if_needed(key, src, dest)
 
         if obsres.results:
-            _logger.warning("not copying files in 'results")
+            _logger.warning("not installing files in 'results")
         return obsres
+
+    def _calc_install_if_needed(self, action):
+        if action not in ['copy', 'link']: # , 'symlink', 'hardlink']:
+            raise ValueError("{} action is not allowed".format(action))
+
+        _logger.debug('installing files with "{}"'.format(action))
+
+        if action == 'copy':
+            install_if_needed = self.copy_if_needed
+        elif action == 'link':
+            install_if_needed = self.link_if_needed
+        else:
+            raise ValueError("{} action is not allowed".format(action))
+        return install_if_needed
+
+    def installfiles_stage2(self, reqs, action='copy'):
+        _logger.debug('installing files from requirements')
+
+        install_if_needed = self._calc_install_if_needed(action)
+
+        for _, req in reqs.stored().items():
+            if isinstance(req.type, DataFrameType):
+                value = getattr(reqs, req.dest)
+                if value is None:
+                    continue
+
+                complete = os.path.abspath(
+                    os.path.join(self.datadir, value.filename)
+                )
+
+                install_if_needed(value.filename, complete, self.workdir)
+
+    def copyfiles_stage1(self, obsres):
+        return self.installfiles_stage1(obsres, action='copy')
+
+    def linkfiles_stage1(self, obsres):
+        return self.installfiles_stage1(obsres, action='link')
 
     def check_duplicates(self, tails):
         seen = set()
@@ -249,18 +289,10 @@ class BaseWorkEnvironment(object):
         return dupes
 
     def copyfiles_stage2(self, reqs):
-        _logger.debug('copying files from requirements')
-        for _, req in reqs.stored().items():
-            if isinstance(req.type, DataFrameType):
-                value = getattr(reqs, req.dest)
-                if value is None:
-                    continue
+        return self.installfiles_stage2(reqs, action='copy')
 
-                complete = os.path.abspath(
-                    os.path.join(self.datadir, value.filename)
-                )
-
-                self.copy_if_needed(value.filename, complete, self.workdir)
+    def linkfiles_stage2(self, reqs):
+        return self.installfiles_stage2(reqs, action='link')
 
     def copy_if_needed(self, key, src, dest):
 
@@ -294,6 +326,15 @@ class BaseWorkEnvironment(object):
             _logger.debug('save hashes')
             with open(self.index_file, 'wb') as fd:
                 pickle.dump(self.hashes, fd)
+
+    def link_if_needed(self, key, src, dest):
+        _logger.debug('linking %r to %r', key, self.workdir)
+        try:
+            # Remove destination
+            os.remove(dest)
+        except OSError:
+            pass
+        os.symlink(src, dest)
 
     def adapt_obsres(self, obsres):
         """Adapt obsres after file copy"""

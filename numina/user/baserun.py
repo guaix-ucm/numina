@@ -25,7 +25,7 @@ from numina.util.context import working_directory
 _logger = logging.getLogger(__name__)
 
 
-def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=True):
+def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=False):
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
@@ -120,12 +120,16 @@ def run_task_reduce(task, datastore):
     task.request_runinfo['recipe_version'] = recipe.__version__
 
     # Copy files
-    workenv.sane_work()
     if task.request_params["copy_files"]:
+        install_action = 'copy'
         _logger.debug('copy files to work directory')
-        workenv.copyfiles_stage1(obsres)
-        workenv.copyfiles_stage2(rinput)
-        workenv.adapt_obsres(obsres)
+    else:
+        install_action = 'link'
+        _logger.debug('link files to work directory')
+
+    workenv.installfiles_stage1(obsres, action=install_action)
+    workenv.installfiles_stage2(rinput, action=install_action)
+    workenv.adapt_obsres(obsres)
 
     logger_control = task.request_params['logger_control']
     with logger_manager(logger_control, workenv.resultsdir):
