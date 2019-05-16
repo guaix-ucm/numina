@@ -225,9 +225,10 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         qfields = self.tag_names()
         self.logger.debug('running recipe tagger with query fields: %s', qfields)
         if qfields:
-            obsres.tags = self.obsres_extractor(obsres, qfields)
+            obsres.tags = self.extract_tags_from_obsres(obsres, qfields)
         else:
             obsres.tags = {}
+        self.logger.debug('obsres tags are: %s', obsres.tags)
 
         for key, req in self.requirements().items():
 
@@ -242,20 +243,22 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
 
         return self.create_input(**result)
 
-    def obsres_extractor(self, obsres, tag_keys):
-        fits_extractor = self.datamodel.extractor_map['fits']
-
+    def extract_tags_from_obsres(self, obsres, tag_keys):
         ref_img = obsres.get_sample_frame().open()
+        final_tags = self.extract_tags_from_ref(ref_img, tag_keys, base=obsres.labels)
+        return final_tags
 
+    def extract_tags_from_ref(self, ref, tag_keys, base=None):
+
+        base = base or {}
+        fits_extractor = self.datamodel.extractor_map['fits']
         final_tags = {}
         for key in tag_keys:
 
-            if key in obsres.labels:
-                final_tags[key] = obsres.labels[key]
+            if key in base:
+                final_tags[key] = base[key]
             else:
-                final_tags[key]= fits_extractor.extract(key, ref_img)
-
-        self.logger.debug("calling obsres_extractor, %s", final_tags)
+                final_tags[key]= fits_extractor.extract(key, ref)
         return final_tags
 
 
