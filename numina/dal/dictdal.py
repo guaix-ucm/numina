@@ -19,7 +19,7 @@ import yaml
 
 import numina.store
 import numina.store.gtc.load as gtcload
-from numina.core.oresult import obsres_from_dict
+from numina.core.oresult import obsres_from_dict, oblock_from_dict
 from numina.exceptions import NoResultFound
 from numina.instrument.assembly import assembly_instrument
 from numina.util.context import working_directory
@@ -138,20 +138,33 @@ class BaseDictDAL(AbsDrpDAL):
                 msg = 'name %s compatible with tags %r not found' % (req.dest, tags)
                 raise NoResultFound(msg)
 
+    def oblock_from_id(self, obsid):
+
+        este = self.ob_table[obsid]
+        oblock = oblock_from_dict(este)
+
+        return oblock
+
     def obsres_from_oblock_id(self, obsid, as_mode=None, configuration=None):
         """"
         Override instrument configuration if configuration is not None
         """
 
-        este = self.ob_table[obsid]
-        obsres = obsres_from_dict(este)
+        oblock = self.oblock_from_id(obsid)
 
-        return self.obsres_from_oblock(obsres, as_mode, configuration)
+        return self.obsres_from_oblock(oblock, as_mode)
 
-    def obsres_from_oblock(self, obsres, as_mode=None, configuration=None):
+
+    def obsres_from_oblock(self, oblock, as_mode=None):
+
+        from numina.core.oresult import ObservationResult
+
+        # Internal copy
+        obsres = ObservationResult.__new__(ObservationResult)
+        obsres.__dict__ = oblock.__dict__
 
         obsres.mode = as_mode or obsres.mode
-        _logger.debug("obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)
+        _logger.debug("obsres_from_oblock_2 id='%s', mode='%s' START", obsres.id, obsres.mode)
 
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
@@ -165,9 +178,15 @@ class BaseDictDAL(AbsDrpDAL):
             selected_mode = this_drp.modes[obsres.mode]
 
         if selected_mode:
+            # This is used if we pass a option here or
+            # if mode.build_ob_options is defined in the mode class
+            # seems useless
             obsres = selected_mode.build_ob(obsres, self)
+            # Not needed, all the information is obtained from
+            # the requirements
             obsres = selected_mode.tag_ob(obsres)
 
+        _logger.debug('assembly instrument model')
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
         obsres.profile = obsres.configuration
@@ -175,10 +194,10 @@ class BaseDictDAL(AbsDrpDAL):
         auto_configure = True
         sample_frame = obsres.get_sample_frame()
         if auto_configure and sample_frame is not None:
-            _logger.debug('configuring instrument with frame')
+            _logger.debug('configuring instrument model with image')
             obsres.profile.configure_with_image(sample_frame.open())
         else:
-            _logger.debug('no configuring instrument with frame')
+            _logger.debug('no configuring instrument model')
         return obsres
 
     def assembly_instrument(self, keyval, date, by_key='name'):

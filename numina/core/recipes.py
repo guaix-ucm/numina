@@ -23,15 +23,15 @@ import functools
 
 from six import with_metaclass
 from astropy.io import fits
-from numina.util.jsonencoder import ExtEncoder
 
+from numina.util.jsonencoder import ExtEncoder
+from numina.datamodel import DataModel
 from .. import __version__
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult, ObservingBlock
 from ..exceptions import NoResultFound
-from .taggers import get_tags_from_full_ob
 
 
 class BaseRecipe(with_metaclass(RecipeType, object)):
@@ -54,6 +54,7 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
     """
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
+    datamodel = DataModel()
     # Recipe own logger
     logger = logging.getLogger('numina.recipes.numina')
 
@@ -214,12 +215,6 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
                     new_or = ObservationResult()
                     new_or.__dict__ = ob.__dict__
                     obsres = req.query(dal, new_or, options=query_option)
-                    tagger = self.mode.tagger
-                    if tagger is not None:
-                        self.logger.debug('Use mode tagger to fill tags in OB')
-                        obsres.tags = tagger(obsres)
-                    else:
-                        obsres.tags = None
                     break
             else:
                 # nothing to do
@@ -227,17 +222,12 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         else:
             obsres = ob
 
-        # Get tags_names per REQ
-        self.logger.debug('getting query fields of the recipe')
         qfields = self.tag_names()
-        self.logger.debug("recipe has these query fields %s", qfields)
-
-        if obsres.tags is None:
-            self.logger.debug('running recipe tagger with query fields %s', qfields)
-            if qfields:
-                obsres.tags = self.obsres_extractor(obsres, qfields)
-            else:
-                obsres.tags = {}
+        self.logger.debug('running recipe tagger with query fields: %s', qfields)
+        if qfields:
+            obsres.tags = self.obsres_extractor(obsres, qfields)
+        else:
+            obsres.tags = {}
 
         for key, req in self.requirements().items():
 
@@ -253,7 +243,20 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         return self.create_input(**result)
 
     def obsres_extractor(self, obsres, tag_keys):
-        return get_tags_from_full_ob(obsres, reqtags=tag_keys)
+        fits_extractor = self.datamodel.extractor_map['fits']
+
+        ref_img = obsres.get_sample_frame().open()
+
+        final_tags = {}
+        for key in tag_keys:
+
+            if key in obsres.labels:
+                final_tags[key] = obsres.labels[key]
+            else:
+                final_tags[key]= fits_extractor.extract(key, ref_img)
+
+        self.logger.debug("calling obsres_extractor, %s", final_tags)
+        return final_tags
 
 
 def timeit(method):

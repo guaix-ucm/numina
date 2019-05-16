@@ -19,6 +19,7 @@ from ..backend import Backend
 from numina.exceptions import NoResultFound
 import numina.types.qc as qc
 import numina.instrument.assembly as asb
+import numina.core.oresult
 from numina.util.context import working_directory
 import numina.tests.simpleobj as simpleobj
 
@@ -160,6 +161,15 @@ def backend(tmpdir):
     return base
 
 
+@pytest.fixture
+def backend_empty(tmpdir):
+    drps = create_drp_test(['drpclodia.yaml'])
+    pkg_paths = ['numina.drps.tests.configs']
+    store = asb.load_paths_store(pkg_paths)
+    base = Backend(drps, {}, components=store, basedir=str(tmpdir))
+    return base
+
+
 def test_skip_reserved(backend):
 
     ss_ids = list(backend.search_session_ids())
@@ -185,6 +195,7 @@ def test_parent_inserted(backend):
 def test_previous_obsid(backend):
 
     obsres = backend.search_oblock_from_id(5)
+    print(type(obsres))
     previd = backend.search_previous_obsres(obsres, node='prev')
     assert list(previd) == [4, 3, 2, 1]
 
@@ -254,3 +265,25 @@ def test_build_recipe_result2(backend):
     assert isinstance(res.calib, BaseStructuredCalibration)
 
     assert res.uuid == uuid.UUID(obj_uuid)
+
+
+def test_ago(backend_empty):
+
+    ob1 = {'id': 100, 'instrument': 'CLODIA', 'mode': 'image', 'labels': {'obsid_wl': 400}}
+    ob2 = {'id': 200, 'instrument': 'CLODIA', 'mode': 'image', 'labels': {'obsid_wl': 400}}
+    ob3 = {'id': 300, 'instrument': 'CLODIA', 'mode': 'image'}
+    ob4 = {'id': 400, 'instrument': 'CLODIA', 'mode': 'image'}
+
+    backend_empty.add_obs([ob1, ob2, ob3, ob4])
+
+    oblock1 = backend_empty.oblock_from_id(100)
+    assert isinstance(oblock1, numina.core.oresult.ObservingBlock)
+
+    assert oblock1.labels == ob1['labels']
+
+    oblock2 = backend_empty.oblock_from_id(200)
+    assert isinstance(oblock2, numina.core.oresult.ObservingBlock)
+
+    obsres1 = backend_empty.obsres_from_oblock(oblock1)
+
+    assert isinstance(obsres1, numina.core.oresult.ObservationResult)

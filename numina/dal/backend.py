@@ -12,15 +12,11 @@
 import os
 import logging
 import json
-from itertools import chain
-import uuid
-
 import operator
 
 import six
-import numina.store
-import numina.store.gtc.load as gtcload
 
+import numina.store
 from numina.exceptions import NoResultFound
 from numina.util.fqn import fully_qualified_name
 from numina.util.context import working_directory
@@ -32,6 +28,23 @@ from .utils import tags_are_valid
 
 
 _logger = logging.getLogger(__name__)
+
+
+class BackendTable(object):
+    def __init__(self):
+        self.table_contents = {}
+        self.table_index = []
+
+    def new_id(self):
+        if self.table_index:
+            newidx = self.table_index[-1] + 1
+        else:
+            newidx = 1
+        self.table_index.append(newidx)
+        return newidx
+
+    def insert(self, prodid, prod_reg):
+        self.table_contents[prodid] = prod_reg
 
 
 class Backend(BaseHybridDAL):
@@ -50,7 +63,7 @@ class Backend(BaseHybridDAL):
                 temp_ob_ids.append(ob['id'])
                 obdict[ob['id']] = ob
         else:
-            raise TypeError
+            raise TypeError("'oblocks' must be a list or a dictionary")
 
         self.db_tables = {}
 
@@ -69,8 +82,8 @@ class Backend(BaseHybridDAL):
             basedir=basedir,
             components=components
         )
+        
         self.ob_ids = temp_ob_ids
-
         self.db_tables['oblocks'] = self.ob_table
         self.db_tables['requirements'] = self.req_table
         self.db_tables['oblocks_index'] = self.ob_ids
@@ -159,7 +172,6 @@ class Backend(BaseHybridDAL):
             'result_file': filename
         }
         self.db_tables['results'][newix] = result_reg
-
 
         for key, prod in result.stored().items():
 

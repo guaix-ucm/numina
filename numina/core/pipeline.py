@@ -387,6 +387,8 @@ class ObservingMode(object):
 
     def tag_ob(self, partial):
         if self.tagger is not None:
+            warnings.warn("per mode taggers are deprecated, recipe requirements provide al required informatation",
+                          DeprecationWarning, stacklevel=2)
             partial.tags = self.tagger(partial)
         return partial
 
