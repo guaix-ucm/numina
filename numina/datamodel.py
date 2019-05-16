@@ -258,6 +258,9 @@ def get_imgid_header(hdr, prefix=True):
     if 'UUID' in hdr:
         pre = 'uuid:{}'
         value = hdr['UUID']
+    elif 'EMIRUUID' in hdr:  # EMIRISM
+        pre = 'uuid:{}'
+        value = hdr['EMIRUUID']
     elif 'DATE-OBS' in hdr:
         pre = 'dateobs:{}'
         value = hdr['DATE-OBS']
