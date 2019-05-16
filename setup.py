@@ -159,6 +159,7 @@ def setup_package():
             'scipy>=0.19', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',
+            'contextlib2;python_version<"3.5"',
             'python-dateutil', 'lmfit'
         ],
         zip_safe=False,
