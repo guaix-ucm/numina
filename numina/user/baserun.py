@@ -36,6 +36,8 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
     request_params["instrument_configuration"] = 'default'  # args.insconf
     request_params["intermediate_results"] = True
     request_params["copy_files"] = copy_files
+    request_params["mode"] = as_mode
+
     requirements = {} if requirements is None else requirements
     request_params["requirements"] = requirements
 
@@ -60,6 +62,7 @@ def run_task_reduce(task, datastore):
 
     obsid = task.request_params['oblock_id']
     configuration = task.request_params["instrument_configuration"]
+    as_mode = task.request_params["mode"]
 
     _logger.info("procesing OB with id={}".format(obsid))
 
@@ -72,7 +75,7 @@ def run_task_reduce(task, datastore):
     with working_directory(workenv.datadir):
 
         obsres = datastore.backend.obsres_from_oblock_id(
-            obsid, configuration=configuration
+            obsid, as_mode=as_mode, configuration=configuration
         )
         # Merge requirements passed from above
         obsres.requirements.update(task.request_params['requirements'])

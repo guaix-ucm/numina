@@ -138,23 +138,31 @@ class BaseDictDAL(AbsDrpDAL):
                 msg = 'name %s compatible with tags %r not found' % (req.dest, tags)
                 raise NoResultFound(msg)
 
-    def obsres_from_oblock_id(self, obsid, configuration=None):
+    def obsres_from_oblock_id(self, obsid, as_mode=None, configuration=None):
         """"
         Override instrument configuration if configuration is not None
         """
+
         este = self.ob_table[obsid]
         obsres = obsres_from_dict(este)
-        _logger.debug("obsres_from_oblock_id id='%s', mode='%s' START", obsid, obsres.mode)
+
+        return self.obsres_from_oblock(obsres, as_mode, configuration)
+
+    def obsres_from_oblock(self, obsres, as_mode=None, configuration=None):
+
+        obsres_mode = as_mode or obsres.mode
+        _logger.debug("obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)
+
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
         except KeyError:
             raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
 
         # Reserved names
-        if obsres.mode in self._RESERVED_MODE_NAMES:
+        if obsres_mode in self._RESERVED_MODE_NAMES:
             selected_mode = None # null mode
         else:
-            selected_mode = this_drp.modes[obsres.mode]
+            selected_mode = this_drp.modes[obsres_mode]
 
         if selected_mode:
             obsres = selected_mode.build_ob(obsres, self)
@@ -171,8 +179,6 @@ class BaseDictDAL(AbsDrpDAL):
             obsres.profile.configure_with_image(sample_frame.open())
         else:
             _logger.debug('no configuring instrument with frame')
-
-        _logger.debug('obsres_from_oblock_id %s END', obsid)
         return obsres
 
     def assembly_instrument(self, keyval, date, by_key='name'):
