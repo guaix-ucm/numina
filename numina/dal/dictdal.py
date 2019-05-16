@@ -150,7 +150,7 @@ class BaseDictDAL(AbsDrpDAL):
 
     def obsres_from_oblock(self, obsres, as_mode=None, configuration=None):
 
-        obsres_mode = as_mode or obsres.mode
+        obsres.mode = as_mode or obsres.mode
         _logger.debug("obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)
 
         try:
@@ -159,10 +159,10 @@ class BaseDictDAL(AbsDrpDAL):
             raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
 
         # Reserved names
-        if obsres_mode in self._RESERVED_MODE_NAMES:
+        if obsres.mode in self._RESERVED_MODE_NAMES:
             selected_mode = None # null mode
         else:
-            selected_mode = this_drp.modes[obsres_mode]
+            selected_mode = this_drp.modes[obsres.mode]
 
         if selected_mode:
             obsres = selected_mode.build_ob(obsres, self)
