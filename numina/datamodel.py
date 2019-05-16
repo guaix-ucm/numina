@@ -264,6 +264,9 @@ def get_imgid_header(hdr, prefix=True):
     elif 'DATE-OBS' in hdr:
         pre = 'dateobs:{}'
         value = hdr['DATE-OBS']
+    elif 'TSUTC1' in hdr:   # EMIRISM
+        pre = 'tsutc:{:16.5f}'
+        value = hdr['TSUTC1']
     elif 'checksum' in hdr:
         pre = 'checksum:{}'
         value = hdr['checksum']
