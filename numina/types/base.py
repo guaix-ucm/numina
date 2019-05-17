@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -80,13 +80,7 @@ class DataTypeBase(object):
                                                result_desc=options)
             return value.content
 
-        if self.isproduct():
-            # if not, the normal query
-            prod = dal.search_product(name, self, obsres)
-            return prod.content
-        else:
-            param = dal.search_parameter(name, self, obsres)
-            return param.content
+        return self.query_on_dal(name, dal, obsres, options=options)
 
     def query_on_ob(self, key, ob):
         # First check if the requirement is embedded
@@ -101,6 +95,21 @@ class DataTypeBase(object):
             return getattr(ob, key)
         except AttributeError:
             raise NoResultFound("DataType.query_on_ob")
+
+    def query_on_dal(self, name, dal, obsres, options=None):
+        multi_query = False
+        saved = obsres.tags
+        if isinstance(obsres.tags, list):
+            obsres.tags = obsres.tags[0]
+
+        try:
+            if self.isproduct():
+                res = dal.search_product(name, self, obsres)
+            else:
+                res = dal.search_parameter(name, self, obsres)
+            return res.content
+        finally:
+            obsres.tags = saved
 
     def on_query_not_found(self, notfound):
         pass

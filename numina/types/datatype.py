@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -132,18 +132,6 @@ class PlainPythonType(DataType):
 
         super(PlainPythonType, self).__init__(stype, default=default)
 
-    def query(self, name, dal, ob, options=True):
-
-        try:
-            return self.query_on_ob(name, ob)
-        except NoResultFound:
-            pass
-
-        #param = dal.search_param_req_tags(req, ob.instrument,
-        #                                      ob.mode, ob.tags, ob.pipeline)
-        param = dal.search_parameter(name, self, ob)
-        return param.content
-
     def convert(self, obj):
         pre = self.internal_type(obj)
 
@@ -160,7 +148,8 @@ class PlainPythonType(DataType):
 
 class ListOfType(DataType):
     """Data type for lists of other types."""
-    def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False):
+    def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False,
+                 multi_query=None):
         from numina.core.validator import range_validator
         stype = list
         if inspect.isclass(ref):
@@ -173,6 +162,13 @@ class ListOfType(DataType):
         self.nmax = nmax
         self.accept_scalar = accept_scalar
         self.len_validator = range_validator(minval=nmin, maxval=nmax)
+
+        # If multi_query is True, we perform N queries concatednated into a list
+        # If multi_query is False, we perform 1 query to obtain directly a list
+        if multi_query is None:
+            self.multi_query = self.internal.isproduct()
+        else:
+            self.multi_query = multi_query
 
     def convert(self, obj):
         if not isinstance(obj, collections.Iterable):
@@ -204,3 +200,46 @@ class ListOfType(DataType):
     def __str__(self):
         sclass = type(self).__name__
         return "%s[%s]" % (sclass, self.internal)
+
+    def query_on_ob(self, key, ob):
+        # First check if the requirement is embedded
+        # in the observation result
+        # It can in ob.requirements
+        # or directly in the structure (as in GTC)
+
+        if key in ob.requirements:
+            contents = ob.requirements[key]
+            values = [self.internal._datatype_load(content) for content in contents]
+            return values
+        try:
+            return getattr(ob, key)
+        except AttributeError:
+            raise NoResultFound("ListOfType.query_on_ob")
+
+    def query_on_dal(self, name, dal, obsres, options=None):
+
+        if self.multi_query:
+            saved = obsres.tags
+            if not isinstance(obsres.tags, list):
+                obsres.tags = [obsres.tags]
+
+            try:
+                multi_results = []
+                for sub_tags in obsres.tags:
+                    obsres.tags = sub_tags
+                    try:
+                        sub_result = self.internal.query_on_dal(name, dal, obsres, options=options)
+                    except NoResultFound as notfound:
+                        sub_result = self.internal.default()
+
+                    multi_results.append(sub_result)
+                return multi_results
+            finally:
+                obsres.tags = saved
+        else:
+
+            # We expect this to return a list
+            return self.internal.query_on_dal(
+                name, dal, obsres,
+                options=options
+            )
