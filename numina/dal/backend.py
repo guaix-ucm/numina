@@ -23,8 +23,6 @@ from numina.util.context import working_directory
 
 from .dictdal import BaseHybridDAL
 from .stored import StoredProduct, StoredResult
-from .diskfiledal import build_product_path
-from .utils import tags_are_valid
 
 
 _logger = logging.getLogger(__name__)
@@ -92,7 +90,6 @@ class Backend(BaseHybridDAL):
     def dump_data(self):
         state = {}
         state['version'] = 2
-        state['rootdir'] = self.rootdir
         database = {}
         state['database'] = database
         for name, val in self.db_tables.items():
@@ -223,35 +220,30 @@ class Backend(BaseHybridDAL):
             iter_over = self.prod_table.values()
         else:
             iter_over = self.prod_table
-
+        pred_func = tipo.query_expr.fill_placeholders(**obsres.tags)
         for prod in iter_over:
             pi = prod['instrument']
             pk = prod['type']
             pt = prod['tags']
-            if pi == instrument and ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, obsres.tags):
-                # this is a valid product
-                # We have found the result, no more checks
-                # Make a copy
-                rprod = dict(prod)
 
-                if 'content' in prod:
+            if pi == instrument and ((pk == label) or (pk == label_alt)):
+                pred_val = pred_func.eval(**pt)
+                # pred_val must be boolean to check if it is valid
+                # if the expression is incomplete it may be non-bool
+                if pred_val:
+                    # this is a valid product
+                    # We have found the result, no more checks
+                    # Make a copy
+                    rprod = dict(prod)
                     path = prod['content']
-                else:
-                    # Build path
-                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
-                _logger.debug("path is %s", path)
-                # Check if path is absolute
-                if not os.path.isabs(path):
-                    path = os.path.join(self.basedir, path)
-                rprod['content'] = numina.store.load(tipo, path)
-                return StoredProduct(**rprod)
+                    # Check if path is absolute
+                    if not os.path.isabs(path):
+                        path = os.path.join(self.basedir, path)
+                    rprod['content'] = numina.store.load(tipo, path)
+                    return StoredProduct(**rprod)
         else:
-            # Not in table, try file directly
-            _logger.debug("%s not in table, try file directly", tipo)
-            path = self.build_product_path(drp, conf, name, tipo, obsres)
-            _logger.debug("path is %s", path)
-            content = self.product_loader(tipo, name, path)
-            return StoredProduct(id=0, content=content, tags=obsres.tags)
+            msg = 'type {} compatible with tags {} not found'.format(label_alt, obsres.tags)
+            raise NoResultFound(msg)
 
     def search_result_id(self, node_id, tipo, field, mode=None):
         cobsres = self.obsres_from_oblock_id(node_id)
