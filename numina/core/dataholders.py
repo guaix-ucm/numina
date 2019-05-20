@@ -334,8 +334,7 @@ class Parameter(Requirement):
                                 nmin=nmin, nmax=nmax,
                                 accept_scalar=accept_scalar
                                 )
-        msg = 'parameter {} {} {}'.format(mtype, default, destination)
-        print(msg)
+
         super(Parameter, self).__init__(
             mtype, description, destination=destination,
             optional=optional, default=default,
