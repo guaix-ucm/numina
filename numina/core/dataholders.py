@@ -250,6 +250,8 @@ def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):
             next_ = value[0]
         final = _recursive_type(next_, accept_scalar=accept_scalar)
         return dt.ListOfType(final, nmin=nmin, nmax=nmax, accept_scalar=accept_scalar)
+    elif isinstance(value, dict):
+        return dt.PlainPythonType(value)
     elif isinstance(value, (bool, str, int, float, complex)):
         next_ = value
         return dt.PlainPythonType(next_)
@@ -332,7 +334,8 @@ class Parameter(Requirement):
                                 nmin=nmin, nmax=nmax,
                                 accept_scalar=accept_scalar
                                 )
-
+        msg = 'parameter {} {} {}'.format(mtype, default, destination)
+        print(msg)
         super(Parameter, self).__init__(
             mtype, description, destination=destination,
             optional=optional, default=default,
