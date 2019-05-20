@@ -44,13 +44,26 @@ def basic_processing_with_combination_frames(
         method=combine.mean, method_kwargs=None,
         errors=True, prolog=None):
 
-    with contextlib.ExitStack() as stack:
-        hduls = [stack.enter_context(dframe.open()) for dframe in frames]
-        result = combine_imgs(hduls, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
+    result = combine_frames(
+        frames, method=method, method_kwargs=method_kwargs,
+        errors=errors, prolog=prolog
+    )
 
     hdulist = reduction_flow(result)
 
     return hdulist
+
+
+def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
+
+    with contextlib.ExitStack() as stack:
+        hduls = [stack.enter_context(dframe.open()) for dframe in frames]
+        result = combine_imgs(
+            hduls, method=method, method_kwargs=method_kwargs,
+            errors=errors, prolog=prolog
+        )
+
+    return result
 
 
 def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
