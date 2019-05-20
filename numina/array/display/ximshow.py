@@ -329,10 +329,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     plt.colorbar(im_show, shrink=1.0, label=cbar_label,
                  orientation=cbar_orientation)
     if title is not None:
-        if wavecalib:
-            ax.set_title(title + "\n\n")
-        else:
-            ax.set_title(title)
+        ax.set_title(title)
 
     if ds9regfile is not None:
         overplot_ds9reg(ds9regfile.name, ax)
