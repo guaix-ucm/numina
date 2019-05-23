@@ -117,7 +117,7 @@ def test_param_accept_scalar():
     assert result == [1]
 
     assert isinstance(some.type, ListOfType)
-    assert isinstance(some.type.internal, PlainPythonType)
+    assert isinstance(some.type.node_type, PlainPythonType)
     assert some.type.internal_type is list
 
 

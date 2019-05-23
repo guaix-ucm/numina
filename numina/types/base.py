@@ -10,7 +10,6 @@
 import inspect
 
 from numina.util.parser import parse_arg_line
-from numina.exceptions import NoResultFound
 from numina.datamodel import DataModel
 
 
@@ -67,52 +66,6 @@ class DataTypeBase(object):
 
     def _datatype_load(self, obj):
         return obj
-
-    def query(self, name, dal, obsres, options=None):
-        from numina.core.query import ResultOf
-        try:
-            return self.query_on_ob(name, obsres)
-        except NoResultFound:
-            pass
-
-        if isinstance(options, ResultOf):
-            value = dal.search_result_relative(name, self, obsres,
-                                               result_desc=options)
-            return value.content
-
-        return self.query_on_dal(name, dal, obsres, options=options)
-
-    def query_on_ob(self, key, ob):
-        # First check if the requirement is embedded
-        # in the observation result
-        # It can in ob.requirements
-        # or directly in the structure (as in GTC)
-        if key in ob.requirements:
-            content = ob.requirements[key]
-            value = self._datatype_load(content)
-            return value
-        try:
-            return getattr(ob, key)
-        except AttributeError:
-            raise NoResultFound("DataType.query_on_ob")
-
-    def query_on_dal(self, name, dal, obsres, options=None):
-        multi_query = False
-        saved = obsres.tags
-        if isinstance(obsres.tags, list):
-            obsres.tags = obsres.tags[0]
-
-        try:
-            if self.isproduct():
-                res = dal.search_product(name, self, obsres)
-            else:
-                res = dal.search_parameter(name, self, obsres)
-            return res.content
-        finally:
-            obsres.tags = saved
-
-    def on_query_not_found(self, notfound):
-        pass
 
     def query_constraints(self):
         from numina.core.query import Constraint

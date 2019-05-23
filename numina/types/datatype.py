@@ -11,7 +11,6 @@ import inspect
 import collections
 
 from numina.exceptions import ValidationError
-from numina.exceptions import NoResultFound
 from .base import DataTypeBase
 from .typedialect import dialect_info
 
@@ -20,11 +19,14 @@ class DataType(DataTypeBase):
     """Base class for input/output types of recipes.
 
     """
-    def __init__(self, ptype, default=None, **kwds):
+    def __init__(self, ptype, node_type=None, default=None, **kwds):
         super(DataType, self).__init__(**kwds)
+        self.node_type = node_type
         self.internal_type = ptype
         self.internal_dialect = dialect_info(self)
         self.internal_default = default
+        self.internal_scalar = True
+        self.multi_query = False
 
     def convert(self, obj):
         """Basic conversion to internal type
@@ -70,13 +72,6 @@ class DataType(DataTypeBase):
         result = {'fqn': key, 'python': self.internal_type, 'type': tipo}
         self.internal_dialect[dialect] = result
         return result
-
-    @classmethod
-    def isconfiguration(cls):
-        return False
-
-    def potential_tags(self):
-        return {}
 
     def descriptive_name(self):
         return self.name()
@@ -148,25 +143,26 @@ class PlainPythonType(DataType):
 
 class ListOfType(DataType):
     """Data type for lists of other types."""
-    def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False,
+    def __init__(self, ref, default=None, index=0, nmin=None, nmax=None, accept_scalar=False,
                  multi_query=None):
         from numina.core.validator import range_validator
         stype = list
         if inspect.isclass(ref):
-            self.internal = ref()
+            node_type = ref()
         else:
-            self.internal = ref
-        super(ListOfType, self).__init__(stype)
+            node_type = ref
+        super(ListOfType, self).__init__(stype, node_type=node_type, default=default)
+        self.internal_scalar = False
         self.index = index
         self.nmin = nmin
         self.nmax = nmax
         self.accept_scalar = accept_scalar
         self.len_validator = range_validator(minval=nmin, maxval=nmax)
 
-        # If multi_query is True, we perform N queries concatednated into a list
+        # If multi_query is True, we perform N queries concatenated into a list
         # If multi_query is False, we perform 1 query to obtain directly a list
         if multi_query is None:
-            self.multi_query = self.internal.isproduct()
+            self.multi_query = self.node_type.isproduct()
         else:
             self.multi_query = multi_query
 
@@ -178,13 +174,13 @@ class ListOfType(DataType):
                 raise TypeError("The object received should be iterable"
                                 " or the type modified to accept scalar values")
 
-        result = [self.internal.convert(o) for o in obj]
+        result = [self.node_type.convert(o) for o in obj]
         self.len_validator(len(result))
         return result
 
     def validate(self, obj):
         for o in obj:
-            self.internal.validate(o)
+            self.node_type.validate(o)
         self.len_validator(len(obj))
         return True
 
@@ -193,53 +189,13 @@ class ListOfType(DataType):
         old_dest = where
         for idx, obj in enumerate(objs, start=self.index):
             n_where = '{}{}'.format(old_dest, idx)
-            res = self.internal._datatype_dump(obj, n_where)
+            res = self.node_type._datatype_dump(obj, n_where)
             result.append(res)
         return result
 
+    def _datatype_load(self, objs):
+        return [self.node_type._datatype_load(obj) for obj in objs]
+
     def __str__(self):
         sclass = type(self).__name__
-        return "%s[%s]" % (sclass, self.internal)
-
-    def query_on_ob(self, key, ob):
-        # First check if the requirement is embedded
-        # in the observation result
-        # It can in ob.requirements
-        # or directly in the structure (as in GTC)
-
-        if key in ob.requirements:
-            contents = ob.requirements[key]
-            values = [self.internal._datatype_load(content) for content in contents]
-            return values
-        try:
-            return getattr(ob, key)
-        except AttributeError:
-            raise NoResultFound("ListOfType.query_on_ob")
-
-    def query_on_dal(self, name, dal, obsres, options=None):
-
-        if self.multi_query:
-            saved = obsres.tags
-            if not isinstance(obsres.tags, list):
-                obsres.tags = [obsres.tags]
-
-            try:
-                multi_results = []
-                for sub_tags in obsres.tags:
-                    obsres.tags = sub_tags
-                    try:
-                        sub_result = self.internal.query_on_dal(name, dal, obsres, options=options)
-                    except NoResultFound as notfound:
-                        sub_result = self.internal.default()
-
-                    multi_results.append(sub_result)
-                return multi_results
-            finally:
-                obsres.tags = saved
-        else:
-
-            # We expect this to return a list
-            return self.internal.query_on_dal(
-                name, dal, obsres,
-                options=options
-            )
+        return "%s[%s]" % (sclass, self.node_type)

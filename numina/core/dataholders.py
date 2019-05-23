@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,9 +14,11 @@ Recipe requirements
 import inspect
 import numina.exceptions
 import collections
+import contextlib
 
 import six
 
+from numina.exceptions import NoResultFound
 import numina.types.datatype as dt
 from .validator import as_list as deco_as_list
 from .query import Ignore
@@ -144,6 +146,28 @@ class Product(Result):
         return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
 
 
+@contextlib.contextmanager
+def tags_as_scalar(obsres):
+    saved = obsres.tags
+    if isinstance(obsres.tags, list):
+        obsres.tags = obsres.tags[0]
+    try:
+        yield obsres
+    finally:
+        obsres.tags = saved
+
+
+@contextlib.contextmanager
+def tags_as_list(obsres):
+    saved = obsres.tags
+    if not isinstance(obsres.tags, list):
+        obsres.tags = [obsres.tags]
+    try:
+        yield obsres
+    finally:
+        obsres.tags = saved
+
+
 class Requirement(EntryHolder):
     """Requirement holder for RecipeInput.
 
@@ -188,7 +212,17 @@ class Requirement(EntryHolder):
     def query_options(self):
         return self.query_opts
 
+    def _check_dest_is_set(self):
+        if self.dest is None:
+            raise ValueError("destination value is not set, "
+                             "use the constructor to set destination='value' "
+                             "explicitly")
+
     def query(self, dal, obsres, options=None):
+        from numina.core.query import ResultOf
+
+        self._check_dest_is_set()
+
         # query opts
         if options is not None:
             # Starting with True/False
@@ -201,16 +235,84 @@ class Requirement(EntryHolder):
             # we do not perform any query
             return self.default
 
-        if self.dest is None:
-            raise ValueError("destination value is not set, "
-                             "use the constructor to set destination='value' "
-                             "explicitly")
+        try:
+            return self.query_on_ob(obsres)
+        except NoResultFound:
+            pass
 
-        val = self.type.query(self.dest, dal, obsres, options=self.query_opts)
-        return val
+        if isinstance(options, ResultOf):
+            value = dal.search_result_relative(self.dest, self.type, obsres,
+                                                   result_desc=self.query_opts)
+            return value.content
+
+        return self.query_on_dal(dal, obsres, options=options)
+
+    def query_on_dal(self, dal, obsres, options=None):
+        return self.query_on_dal_rec(self.type, dal, obsres, options=options)
+
+    def query_on_dal_rec(self, this_type, dal, obsres, options=None):
+        import numina.types.multitype as mt
+
+        mtype = isinstance(this_type, mt.MultiType)
+        next_type = this_type.node_type
+        scalar = this_type.internal_scalar
+
+        if mtype:
+            faillures = []
+            for next_type in this_type.node_type:
+
+                try:
+                    result = self.query_on_dal_rec(next_type, dal, obsres, options=options)
+                    this_type._current = next_type
+                    return result
+                except NoResultFound as notfound:
+                    faillures.append((next_type, notfound))
+            else:
+                # Not found
+                for subtype, notfound in faillures:
+                    pass # subtype.on_query_not_found(notfound)
+                raise NoResultFound
+
+        if not scalar and this_type.multi_query:
+
+            with tags_as_list(obsres) as obsres:
+                query_tags = obsres.tags
+                result = []
+                for idx, tags in enumerate(query_tags):
+                    obsres.tags = tags
+                    res = self.query_on_dal_rec(next_type, dal, obsres, options=options)
+                    result.append(res)
+                return result
+        else:
+            with tags_as_scalar(obsres) as obsres:
+                result = self.query_on_dal_base(this_type, dal, obsres, options=options)
+                return result
+
+    def query_on_dal_base(self, next_type, dal, obsres, options=None):
+        if next_type.isproduct():
+            value = dal.search_product(self.dest, next_type, obsres, options=options)
+        else:
+            value = dal.search_parameter(self.dest, next_type, obsres, options=options)
+        return value.content
 
     def on_query_not_found(self, notfound):
-        self.type.on_query_not_found(notfound)
+        pass
+
+    def query_on_ob(self, ob):
+        self._check_dest_is_set()
+        # First check if the requirement is embedded
+        # in the observation result
+        # It can in ob.requirements
+        # or directly in the structure (as in GTC)
+        key = self.dest
+        if key in ob.requirements:
+            content = ob.requirements[key]
+            value = self.type._datatype_load(content)
+            return value
+        try:
+            return getattr(ob, key)
+        except AttributeError:
+            raise NoResultFound("Requirement.query_on_ob")
 
     def __repr__(self):
         sclass = type(self).__name__
