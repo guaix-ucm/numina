@@ -163,6 +163,7 @@ def periodic_corr1d(sp_reference, sp_offset,
                     zero_padding=0,
                     naround_zero=None,
                     norm_spectra=False,
+                    nfit_peak=7,
                     plottitle=None,
                     pdf=None,
                     debugplot=0):
@@ -193,6 +194,10 @@ def periodic_corr1d(sp_reference, sp_offset,
         If True, the filtered spectra are normalized before computing
         the correlation function. This can be important when comparing
         the peak value of this function using different spectra.
+    nfit_peak : int
+        Total number of points (must be odd!) around the peak of the
+        crosscorrelation function to be employed to estimate the peak
+        location (using a fit to a second order polynomial).
     plottitle : str
         Optional plot title.
     pdf : PdfFile object or None
@@ -218,6 +223,8 @@ def periodic_corr1d(sp_reference, sp_offset,
         raise ValueError("x and y shapes are different")
     if zero_padding < 0:
         raise ValueError("zero_padding={} must be >= 0".format(zero_padding))
+    if nfit_peak % 2 == 0:
+        nfit_peak += 1
 
     if plottitle is None:
         plottitle = ' '
@@ -243,10 +250,11 @@ def periodic_corr1d(sp_reference, sp_offset,
         sp_offset_filtmask = sp_offset
 
     naxis1 = len(sp_reference_filtmask)
-    xcorr = np.arange(naxis1)
+    xcorr = np.arange(naxis1, dtype=int)
     naxis1_half = int(naxis1 / 2)
+    naxis1_half_remainder = naxis1 % 2
     for i in range(naxis1_half):
-        xcorr[i + naxis1_half] -= naxis1
+        xcorr[i + naxis1_half + naxis1_half_remainder] -= naxis1
     isort = xcorr.argsort()
     xcorr = xcorr[isort]
 
@@ -322,25 +330,27 @@ def periodic_corr1d(sp_reference, sp_offset,
     # determine correlation peak
     if naround_zero is None:
         iminpeak = 0
-        imaxpeak = naxis1
+        imaxpeak = naxis1 - 1
     else:
-        iminpeak = max(int(naxis1 / 2 - naround_zero), 0)
-        imaxpeak = min(int(naxis1 / 2 + naround_zero), naxis1)
-    ixpeak = corr[iminpeak:imaxpeak].argmax() + iminpeak
+        izero = np.where(xcorr == 0)[0][0]
+        iminpeak = max(izero - naround_zero, 0)
+        imaxpeak = min(izero + naround_zero, naxis1 - 1)
+    ixpeak = corr[iminpeak:(imaxpeak + 1)].argmax() + iminpeak
 
     # fit correlation peak with 2nd order polynomial
-    nfit = 7
-    nmed = nfit // 2
+    nmed = nfit_peak // 2
     imin = ixpeak - nmed
     imax = ixpeak + nmed
     lpeak_ok = True
     if imin < 0 or imax > len(corr):
+        x_fit = np.zeros(nfit_peak)
+        y_fit = np.zeros(nfit_peak)
         x_refined_peak = 0
         y_refined_peak = 0
         lpeak_ok = False
         poly_peak = Polynomial([0.0])
     else:
-        x_fit = np.arange(-nmed, nmed + 1, dtype=np.float)
+        x_fit = xcorr[imin:(imax+1)].astype(float)
         y_fit = corr[imin:(imax+1)]
         poly_peak = Polynomial.fit(x_fit, y_fit, 2)
         poly_peak = Polynomial.cast(poly_peak)
@@ -350,9 +360,8 @@ def periodic_corr1d(sp_reference, sp_offset,
         else:
             x_refined_peak = 0.0
         y_refined_peak = poly_peak(x_refined_peak)
-        x_refined_peak += ixpeak
 
-    offset = x_refined_peak - naxis1_half
+    offset = x_refined_peak
     fpeak = y_refined_peak
 
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
@@ -387,12 +396,11 @@ def periodic_corr1d(sp_reference, sp_offset,
         else:
             inset_ax.set_xlim([-50, 50])
         if lpeak_ok:
-            xplot = np.arange(-nmed, nmed, 0.5)
+            xplot = np.linspace(xcorr[imin], xcorr[imax], num=50)
             yplot = poly_peak(xplot)
-            xplot += ixpeak - naxis1_half
             inset_ax.plot(xplot, yplot, '-')
-            inset_ax.plot([x_refined_peak - naxis1_half],
-                          [y_refined_peak], 'o')
+            inset_ax.plot(x_fit, y_fit, 'o')
+            inset_ax.plot([x_refined_peak], [y_refined_peak], 'o')
         inset_ax.axvline(offset, color='grey', linestyle='dashed')
         if pdf is not None:
             pdf.savefig()
