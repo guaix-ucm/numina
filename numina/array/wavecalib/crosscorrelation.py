@@ -21,7 +21,10 @@ from numina.array.display.ximplotxy import ximplotxy
 from numina.modeling.gaussbox import gauss_box_model
 
 
-def filtmask(sp, fmin=0.02, fmax=0.15, debugplot=0):
+def filtmask(sp, fmin, fmax,
+             frac_cosbell=0.1,
+             zero_padding=0,
+             debugplot=0):
     """Filter spectrum in Fourier space and apply cosine bell.
 
     Parameters
@@ -70,17 +73,23 @@ def filtmask(sp, fmin=0.02, fmax=0.15, debugplot=0):
         ximplotxy(xdum, sp_filt, title="filtered median spectrum",
                   debugplot=debugplot)
 
-    sp_filtmask = sp_filt * cosinebell(sp_filt.size, 0.1)
+    # cosine bell
+    sp_filtmask = sp_filt * cosinebell(sp_filt.size, frac_cosbell)
+
+    # zero padding
+    if zero_padding > 0:
+        sp_filtmask = np.concatenate((sp_filtmask, np.zeros(zero_padding)))
+
     if abs(debugplot) in (21, 22):
-        xdum = np.arange(1, sp_filt.size + 1)
+        xdum = np.arange(1, sp_filtmask.size + 1)
         ximplotxy(xdum, sp_filtmask,
-                  title="filtered and masked median spectrum",
+                  title="filtered and masked (cosine bell) median spectrum",
                   debugplot=debugplot)
 
     return sp_filtmask
 
 
-def cosinebell(n, fraction):
+def cosinebell(n, frac_cosbell):
     """Return a cosine bell spanning n pixels, masking a fraction of pixels
 
     Parameters
@@ -93,7 +102,7 @@ def cosinebell(n, fraction):
     """
 
     mask = np.ones(n)
-    nmasked = int(fraction * n)
+    nmasked = int(frac_cosbell * n)
     for i in range(nmasked):
         yval = 0.5 * (1 - np.cos(np.pi * float(i) / float(nmasked)))
         mask[i] = yval
@@ -149,6 +158,8 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 
 def periodic_corr1d(sp_reference, sp_offset,
                     fminmax=None,
+                    frac_cosbell=0.1,
+                    zero_padding=0,
                     naround_zero=None,
                     norm_spectra=False,
                     plottitle=None,
@@ -166,6 +177,12 @@ def periodic_corr1d(sp_reference, sp_offset,
     fminmax : tuple of floats or None
         Minimum and maximum frequencies to be used. If None, no
         frequency filtering is employed.
+    frac_cosbell : float
+        Fraction of spectrum where the cosine bell falls to zero
+        (applied only when 'fminmax' is not None).
+    zero_padding : int
+        Number of extended pixels set to zero (applied only when
+        'fminmax' is not None)
     naround_zero : int
         Half width of the window (around zero offset) to look for
         the correlation peak. If None, the whole correlation
@@ -198,12 +215,33 @@ def periodic_corr1d(sp_reference, sp_offset,
         raise ValueError("Invalid array dimensions")
     if sp_reference.shape != sp_offset.shape:
         raise ValueError("x and y shapes are different")
+    if zero_padding < 0:
+        raise ValueError("zero_padding={} must be >= 0".format(zero_padding))
 
     if plottitle is None:
         plottitle = ' '
 
-    naxis1 = len(sp_reference)
+    if fminmax is not None:
+        fmin, fmax = fminmax
+        sp_reference_filtmask = filtmask(
+            sp_reference,
+            fmin=fmin,
+            fmax=fmax,
+            frac_cosbell=frac_cosbell,
+            zero_padding=zero_padding,
+            debugplot=debugplot)
+        sp_offset_filtmask = filtmask(
+            sp_offset,
+            fmin=fmin,
+            fmax=fmax,
+            frac_cosbell=frac_cosbell,
+            zero_padding=zero_padding,
+            debugplot=debugplot)
+    else:
+        sp_reference_filtmask = sp_reference
+        sp_offset_filtmask = sp_offset
 
+    naxis1 = len(sp_reference_filtmask)
     xcorr = np.arange(naxis1)
     naxis1_half = int(naxis1 / 2)
     for i in range(naxis1_half):
@@ -211,34 +249,28 @@ def periodic_corr1d(sp_reference, sp_offset,
     isort = xcorr.argsort()
     xcorr = xcorr[isort]
 
-    if fminmax is not None:
-        fmin, fmax = fminmax
-        sp_reference_filtmask = filtmask(sp_reference, fmin=fmin, fmax=fmax,
-                                         debugplot=debugplot)
-        sp_offset_filtmask = filtmask(sp_offset, fmin=fmin, fmax=fmax,
-                                      debugplot=debugplot)
-        if abs(debugplot) in (21, 22):
-            from numina.array.display.matplotlib_qt import plt
-            xdum = np.arange(naxis1) + 1
-            # reference spectrum
-            ax = ximplotxy(xdum, sp_reference, show=False,
-                           title='reference spectrum',
-                           label='original spectrum')
-            ax.plot(xdum, sp_reference_filtmask,
+    if abs(debugplot) in (21, 22):
+        from numina.array.display.matplotlib_qt import plt
+        xdum = np.arange(len(sp_reference)) + 1
+        xdumf = np.arange(len(sp_reference_filtmask)) + 1
+        # reference spectrum
+        ax = ximplotxy(xdum, sp_reference, show=False,
+                       title='reference spectrum',
+                       label='original spectrum')
+        if fminmax is not None:
+            ax.plot(xdumf, sp_reference_filtmask,
                     label='filtered and masked spectrum')
-            ax.legend()
-            plt.show()
-            # offset spectrum
-            ax = ximplotxy(xdum, sp_offset, show=False,
-                           title='offset spectrum',
-                           label='original spectrum')
-            ax.plot(xdum, sp_offset_filtmask,
+        ax.legend()
+        plt.show()
+        # offset spectrum
+        ax = ximplotxy(xdum, sp_offset, show=False,
+                       title='offset spectrum',
+                       label='original spectrum')
+        if fminmax is not None:
+            ax.plot(xdumf, sp_offset_filtmask,
                     label='filtered and masked spectrum')
-            ax.legend()
-            plt.show()
-    else:
-        sp_reference_filtmask = sp_reference
-        sp_offset_filtmask = sp_offset
+        ax.legend()
+        plt.show()
 
     if (abs(debugplot) in (21, 22)) or (pdf is not None):
         xdum = np.arange(naxis1) + 1
@@ -403,7 +435,7 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
     fpixminmax : tuple of floats or None
         Number of subintervals in which the pixel range (in the
         wavelength direction) is divided in order to determine
-        de frequency filtering. If None, no frequency filtering is
+        the frequency filtering. If None, no frequency filtering is
         employed. For example, a tuple (8, 1000) means that the
         lower frequency cut is set to 8/npix, whereas the upper
         frequency cut is set to 1000/npix, being npix the number of
