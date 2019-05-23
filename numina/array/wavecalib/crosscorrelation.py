@@ -50,9 +50,9 @@ def filtmask(sp, fmin, fmax,
     xf = np.fft.fftfreq(sp.size)
     yf = np.fft.fft(sp)
     if abs(debugplot) in (21, 22):
-        iok = np.where(xf > 0)
+        iok = np.where(xf >= 0)
         ximplotxy(xf[iok], yf[iok].real,
-                  plottype='loglog',
+                  plottype='semilogy',
                   xlabel='frequency', ylabel='power',
                   title='before masking', debugplot=debugplot)
 
@@ -61,16 +61,16 @@ def filtmask(sp, fmin, fmax,
     cut = (np.abs(xf) < fmin)
     yf[cut] = 0.0
     if abs(debugplot) in (21, 22):
-        iok = np.where(xf > 0)
+        iok = np.where(xf >= 0)
         ximplotxy(xf[iok], yf[iok].real,
-                  plottype='loglog',
+                  plottype='semilogy',
                   xlabel='frequency', ylabel='power',
                   title='after masking', debugplot=debugplot)
 
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
         xdum = np.arange(1, sp_filt.size + 1)
-        ximplotxy(xdum, sp_filt, title="filtered median spectrum",
+        ximplotxy(xdum, sp_filt, title="filtered spectrum",
                   debugplot=debugplot)
 
     # cosine bell
@@ -83,7 +83,8 @@ def filtmask(sp, fmin, fmax,
     if abs(debugplot) in (21, 22):
         xdum = np.arange(1, sp_filtmask.size + 1)
         ximplotxy(xdum, sp_filtmask,
-                  title="filtered and masked (cosine bell) median spectrum",
+                  title="filtered and masked (cosine bell, zero padding)"
+                        " spectrum",
                   debugplot=debugplot)
 
     return sp_filtmask
