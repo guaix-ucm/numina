@@ -542,6 +542,7 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         offset[i], fpeak[i] = periodic_corr1d(
             flux_ref_broad, flux_obj,
             fminmax=fminmax,
+            zero_padding=2*naround_zero,
             naround_zero=naround_zero,
             norm_spectra=True,
             debugplot=debugplot
