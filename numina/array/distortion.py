@@ -404,6 +404,8 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
         Offset in the X direction.
     yoffset : float
         Offset in the Y direction.
+    resampling : int
+        1: nearest neighbour, 2: flux preserving interpolation.
 
     Returns
     -------
@@ -416,3 +418,40 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
     bij = np.array([-yoffset, 0.0, 1.0], dtype=float)
     image2d_shifted = rectify2d(image2d, aij, bij, resampling=resampling)
     return image2d_shifted
+
+
+def rotate_image2d(image2d, theta_deg, xcenter, ycenter, resampling=2):
+    """Shift image applying arbitray X and Y offsets.
+
+    Parameters
+    ----------
+    image2d : 2d numpy array
+        Initial image.
+    theta_deg : float
+        Rotation angle (positive values correspond to counter-clockwise
+        angles).
+    xcenter : float
+        X coordinate of center of rotation, in pixel coordinates (i.e.,
+        the image X coordinates run from 0.5 to NAXIS1+0.5).
+    yoffset : float
+        Y coordinate of center of rotation, in pixel coordinates (i.e.,
+        the image Y coordinates run from 0.5 to NAXIS2+0.5).
+    resampling : int
+        1: nearest neighbour, 2: flux preserving interpolation.
+
+    Returns
+    -------
+    image2d_shifted : 2d numpy array
+        Rectified image.
+
+    """
+
+    theta_rad = theta_deg * np.pi/180
+    costheta = np.cos(theta_rad)
+    sintheta = np.sin(theta_rad)
+    xc = xcenter - 1.0
+    yc = ycenter - 1.0
+    aij = [-xc*costheta-yc*sintheta+xc, costheta, sintheta]
+    bij = [xc*sintheta-yc*costheta+yc, -sintheta, costheta]
+    image2d_rotated = rectify2d(image2d, aij, bij, resampling=resampling)
+    return image2d_rotated
