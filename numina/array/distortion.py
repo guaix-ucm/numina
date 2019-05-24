@@ -26,8 +26,8 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     """Compute image distortion transformation.
 
     This function computes the following 2D transformation:
-    x_orig = sum[i=0:order]( sum[j=0:j]( a_ij * x_rect**(i - j) * y_rect**j ))
-    y_orig = sum[i=0:order]( sum[j=0:j]( b_ij * x_rect**(i - j) * y_rect**j ))
+    x_orig = sum[i=0:order]( sum[j=0:i]( a_ij * x_rect**(i - j) * y_rect**j ))
+    y_orig = sum[i=0:order]( sum[j=0:i]( b_ij * x_rect**(i - j) * y_rect**j ))
 
     Parameters
     ----------
@@ -184,8 +184,8 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
 def fmap(order, aij, bij, x, y):
     """Evaluate the 2D polynomial transformation.
 
-    u = sum[i=0:order]( sum[j=0:j]( a_ij * x**(i - j) * y**j ))
-    v = sum[i=0:order]( sum[j=0:j]( b_ij * x**(i - j) * y**j ))
+    u = sum[i=0:order]( sum[j=0:i]( a_ij * x**(i - j) * y**j ))
+    v = sum[i=0:order]( sum[j=0:i]( b_ij * x**(i - j) * y**j ))
 
     Parameters
     ----------
@@ -281,8 +281,8 @@ def rectify2d(image2d, aij, bij, resampling,
     """Rectify image applying the provided 2D transformation.
 
     The rectified image correspond to the transformation given by:
-        u = sum[i=0:order]( sum[j=0:j]( a_ij * x**(i - j) * y**j ))
-        v = sum[i=0:order]( sum[j=0:j]( b_ij * x**(i - j) * y**j ))
+        u = sum[i=0:order]( sum[j=0:i]( a_ij * x**(i - j) * y**j ))
+        v = sum[i=0:order]( sum[j=0:i]( b_ij * x**(i - j) * y**j ))
 
     Parameters
     ----------
@@ -391,3 +391,28 @@ def rectify2d(image2d, aij, bij, resampling,
 
     # return result
     return image2d_rect
+
+
+def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
+    """Shift image applying arbitray X and Y offsets.
+
+    Parameters
+    ----------
+    image2d : 2d numpy array
+        Initial image.
+    xoffset : float
+        Offset in the X direction.
+    yoffset : float
+        Offset in the Y direction.
+
+    Returns
+    -------
+    image2d_shifted : 2d numpy array
+        Rectified image.
+
+    """
+
+    aij = np.array([-xoffset, 1.0, 0.0], dtype=float)
+    bij = np.array([-yoffset, 0.0, 1.0], dtype=float)
+    image2d_shifted = rectify2d(image2d, aij, bij, resampling=resampling)
+    return image2d_shifted
