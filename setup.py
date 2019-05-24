@@ -160,7 +160,7 @@ def setup_package():
             'matplotlib',
             'enum34;python_version<"3.4"',
             'contextlib2;python_version<"3.5"',
-            'python-dateutil', 'lmfit'
+            'python-dateutil', 'lmfit', 'scikit-image'
         ],
         zip_safe=False,
         classifiers=[
