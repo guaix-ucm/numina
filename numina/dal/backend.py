@@ -47,8 +47,10 @@ class BackendTable(object):
 
 class Backend(BaseHybridDAL):
 
-    def __init__(self, drps, base, extra_data=None, basedir=None, components=None):
+    def __init__(self, drps, base, extra_data=None, basedir=None, components=None,
+                 filename=None):
 
+        self.filename = filename
         temp_ob_ids = []
         obtable = base.get('oblocks', {})
         if isinstance(obtable, dict):
@@ -96,13 +98,18 @@ class Backend(BaseHybridDAL):
             database[name] = val
         return state
 
-    @staticmethod
-    def new_id(table_index):
+    def dump_to_file(self):
+        if self.filename:
+            with open(self.filename, 'w') as fp:
+                self.dump(fp)
+
+    def new_id(self, table_index):
         if table_index:
             newidx = table_index[-1] + 1
         else:
             newidx = 1
         table_index.append(newidx)
+        self.dump_to_file()
         return newidx
 
     def new_task_id(self, request, request_params):
@@ -130,7 +137,7 @@ class Backend(BaseHybridDAL):
         }
         _logger.debug('insert task=%d in backend', task.id)
         self.db_tables['tasks'][task.id] = task_reg
-
+        self.dump_to_file()
         return task
 
     def update_task(self, task):
@@ -142,6 +149,7 @@ class Backend(BaseHybridDAL):
         task_reg['request'] = task.request
         task_reg['request_params'] = task.request_params
         task_reg['request_runinfo'] = task.request_runinfo
+        self.dump_to_file()
 
     def update_result(self, task, serialized, filename):
         _logger.debug('update result of task=%d in backend', task.id)
@@ -199,6 +207,7 @@ class Backend(BaseHybridDAL):
                     'content': os.path.join(res_dir, serialized['values'][key])
                 }
                 self.db_tables['products'][newprod] = prod_reg
+        self.dump_to_file()
 
     def _search_prod_table(self, name, tipo, obsres):
         """Returns the first coincidence..."""

@@ -411,7 +411,8 @@ def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profi
     return backend
 
 
-def process_format_version_2(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
+                             profile_path_extra=None, filename=None):
     import numina.instrument.assembly as asbl
     sys_drps = numina.drps.get_system_drps()
     com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
@@ -420,13 +421,16 @@ def process_format_version_2(basedir, loaded_data, loaded_data_extra=None, profi
         sys_drps, loaded_db,
         extra_data=loaded_data_extra,
         basedir=basedir,
-        components=com_store
+        components=com_store,
+        filename=filename
     )
     backend.rootdir = loaded_data.get('rootdir', '')
     return backend
 
 
-def create_datamanager(reqfile, basedir, datadir, extra_control=None, profile_path_extra=None):
+def create_datamanager(reqfile, basedir, datadir,
+                       extra_control=None, profile_path_extra=None,
+                       persist=True):
     if reqfile:
         _logger.info('reading control from %s', reqfile)
         with open(reqfile, 'r') as fd:
@@ -450,7 +454,16 @@ def create_datamanager(reqfile, basedir, datadir, extra_control=None, profile_pa
         datamanager.workdir_tmpl = "obsid{obsid}_work"
         datamanager.resultdir_tmpl = "obsid{obsid}_results"
     elif control_format == 2:
-        _backend = process_format_version_2(basedir, loaded_data, loaded_data_extra, profile_path_extra)
+        if persist:
+            pname = reqfile
+        else:
+            pname = None
+        _backend = process_format_version_2(basedir, loaded_data,
+                                            loaded_data_extra,
+                                            profile_path_extra,
+                                            filename=pname)
+
+
         datamanager = DataManager(basedir, datadir, _backend)
     else:
         print('Unsupported format', control_format, 'in', reqfile)
