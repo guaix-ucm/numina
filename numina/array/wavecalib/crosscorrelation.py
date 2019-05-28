@@ -24,6 +24,7 @@ from numina.modeling.gaussbox import gauss_box_model
 def filtmask(sp, fmin, fmax,
              frac_cosbell=0.1,
              zero_padding=0,
+             sp_label='spectrum',
              debugplot=0):
     """Filter spectrum in Fourier space and apply cosine bell.
 
@@ -35,6 +36,14 @@ def filtmask(sp, fmin, fmax,
         Minimum frequency to be employed.
     fmax : float
         Maximum frequency to be employed.
+    frac_cosbell : float
+        Fraction of spectrum where the cosine bell falls to zero
+        (applied only when 'fminmax' is not None).
+    zero_padding : int
+        Number of extended pixels set to zero (applied only when
+        'fminmax' is not None).
+    sp_label : str
+        Additional string to be attached to labels in legends.
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
@@ -70,7 +79,7 @@ def filtmask(sp, fmin, fmax,
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
         xdum = np.arange(1, sp_filt.size + 1)
-        ximplotxy(xdum, sp_filt, title="filtered spectrum",
+        ximplotxy(xdum, sp_filt, title="filtered " + sp_label,
                   debugplot=debugplot)
 
     # cosine bell
@@ -83,8 +92,8 @@ def filtmask(sp, fmin, fmax,
     if abs(debugplot) in (21, 22):
         xdum = np.arange(1, sp_filtmask.size + 1)
         ximplotxy(xdum, sp_filtmask,
-                  title="filtered and masked (cosine bell, zero padding)"
-                        " spectrum",
+                  title="filtered and masked (cosine bell, zero padding) " +
+                        sp_label,
                   debugplot=debugplot)
 
     return sp_filtmask
@@ -164,6 +173,7 @@ def periodic_corr1d(sp_reference, sp_offset,
                     naround_zero=None,
                     norm_spectra=False,
                     nfit_peak=7,
+                    sp_label='spectrum',
                     plottitle=None,
                     pdf=None,
                     debugplot=0):
@@ -184,7 +194,7 @@ def periodic_corr1d(sp_reference, sp_offset,
         (applied only when 'fminmax' is not None).
     zero_padding : int
         Number of extended pixels set to zero (applied only when
-        'fminmax' is not None)
+        'fminmax' is not None).
     naround_zero : int
         Half width of the window (around zero offset) to look for
         the correlation peak. If None, the whole correlation
@@ -198,6 +208,8 @@ def periodic_corr1d(sp_reference, sp_offset,
         Total number of points (must be odd!) around the peak of the
         crosscorrelation function to be employed to estimate the peak
         location (using a fit to a second order polynomial).
+    sp_label : str
+        Additional string to be attached to labels in legends.
     plottitle : str
         Optional plot title.
     pdf : PdfFile object or None
@@ -237,6 +249,7 @@ def periodic_corr1d(sp_reference, sp_offset,
             fmax=fmax,
             frac_cosbell=frac_cosbell,
             zero_padding=zero_padding,
+            sp_label=sp_label,
             debugplot=debugplot)
         sp_offset_filtmask = filtmask(
             sp_offset,
@@ -244,6 +257,7 @@ def periodic_corr1d(sp_reference, sp_offset,
             fmax=fmax,
             frac_cosbell=frac_cosbell,
             zero_padding=zero_padding,
+            sp_label=sp_label,
             debugplot=debugplot)
     else:
         sp_reference_filtmask = sp_reference
@@ -264,20 +278,20 @@ def periodic_corr1d(sp_reference, sp_offset,
         xdumf = np.arange(len(sp_reference_filtmask)) + 1
         # reference spectrum
         ax = ximplotxy(xdum, sp_reference, show=False,
-                       title='reference spectrum',
-                       label='original spectrum')
+                       title='reference ' + sp_label,
+                       label='original ' + sp_label)
         if fminmax is not None:
             ax.plot(xdumf, sp_reference_filtmask,
-                    label='filtered and masked spectrum')
+                    label='filtered and masked ' + sp_label)
         ax.legend()
         plt.show()
         # offset spectrum
         ax = ximplotxy(xdum, sp_offset, show=False,
-                       title='offset spectrum',
-                       label='original spectrum')
+                       title='offset ' + sp_label,
+                       label='original ' + sp_label)
         if fminmax is not None:
             ax.plot(xdumf, sp_offset_filtmask,
-                    label='filtered and masked spectrum')
+                    label='filtered and masked ' + sp_label)
         ax.legend()
         plt.show()
 
@@ -285,8 +299,8 @@ def periodic_corr1d(sp_reference, sp_offset,
         xdum = np.arange(naxis1) + 1
         ax = ximplotxy(xdum, sp_reference_filtmask, show=False,
                        title=plottitle,
-                       label='reference spectrum')
-        ax.plot(xdum, sp_offset_filtmask, label='offset spectrum')
+                       label='reference ' + sp_label)
+        ax.plot(xdum, sp_offset_filtmask, label='offset ' + sp_label)
         ax.legend()
         if pdf is not None:
             pdf.savefig()
@@ -312,8 +326,8 @@ def periodic_corr1d(sp_reference, sp_offset,
             xdum = np.arange(naxis1) + 1
             ax = ximplotxy(xdum, sp_reference_norm, show=False,
                            title=plottitle + ' [normalized]',
-                           label='reference spectrum')
-            ax.plot(xdum, sp_offset_norm, label='offset spectrum')
+                           label='reference ' + sp_label)
+            ax.plot(xdum, sp_offset_norm, label='offset ' + sp_label)
             ax.legend()
             if pdf is not None:
                 pdf.savefig()
