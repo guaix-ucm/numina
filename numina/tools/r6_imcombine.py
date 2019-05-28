@@ -5,10 +5,12 @@ from __future__ import print_function
 
 import argparse
 from astropy.io import fits
+import datetime
 import numpy as np
 import sys
 
 from numina.array.display.fileinfo import list_fileinfo_from_txt
+from numina.processing.combine import combine
 from .subsets_of_fileinfo_from_txt import subsets_of_fileinfo_from_txt
 
 
@@ -135,11 +137,16 @@ def main(args=None):
                         help='filename of output FITS image, or @ symbol')
     parser.add_argument('--method',
                         help='Combination method: sum (default), ' +
-                             'mean, median, abba, abba_partial',
+                             'mean, median, sigmaclip, abba, abba_partial',
                         default='sum',
                         type=str,
-                        choices=['sum', 'mean', 'median', 'abba',
-                                 'abba_partial'])
+                        choices=['sum', 'mean', 'median', 'sigmaclip',
+                                 'abba', 'abba_partial'])
+    parser.add_argument('--method_kwargs',
+                        help='Arguments for method sigmaclip; must be a'
+                             'Python dictionary between double quotes, e.g.: '
+                             '"{' + "'high': 2.5, 'low': 2.5}" +'")',
+                        type=str)
     parser.add_argument('--extnum',
                         help='Extension number in input files (note that ' +
                              'first extension is 1 = default value)',
@@ -232,6 +239,23 @@ def main(args=None):
             # average result when required
             if args.method == 'mean':
                 image2d /= number_of_files
+        elif args.method == 'sigmaclip':
+            list_data = []
+            for i in range(number_of_files):
+                infile = list_of_files[i]
+                print("<--" + infile + " (image " + str(i + 1) + " of " +
+                      str(number_of_files) + ')')
+                hdulist = fits.open(infile)
+                data = hdulist[extnum].data
+                if i == 0:
+                    image_header_first_frame = hdulist[extnum].header
+                hdulist.close()
+                list_data.append(data)
+            if args.method_kwargs is None:
+                image2d = combine.sigmaclip(list_data)[0]
+            else:
+                method_kwargs = eval(args.method_kwargs)
+                image2d = combine.sigmaclip(list_data, **method_kwargs)[0]
         elif args.method == 'median':
             # declare temporary cube to store all the images
             image3d = np.zeros((number_of_files, naxis2[0], naxis1[0]),
@@ -264,14 +288,26 @@ def main(args=None):
 
         # save results (except for ABBA combinations, which results
         # have already been saved)
-        if args.method in ['sum', 'mean', 'median']:
+        if args.method in ['sum', 'mean', 'median', 'sigmaclip']:
             if args.noheader:
-                image_header_first_frame = None
+                image_header = fits.Header()
+            else:
+                image_header = image_header_first_frame
             if abs(args.debugplot) >= 10:
                 print("==> Generating output file: " + output_fits_filename +
                       "...")
-            hdu = fits.PrimaryHDU(image2d.astype(np.float),
-                                  image_header_first_frame)
+            image_header.add_history("---")
+            image_header.add_history("Image generated using:")
+            image_header.add_history(" ".join(sys.argv))
+            image_header.add_history("---")
+            image_header.add_history('Combination time: {}'.format(
+                datetime.datetime.utcnow().isoformat()))
+            image_header.add_history("Contents of {} file:".format(
+                args.input_list))
+            for i in range(number_of_files):
+                image_header.add_history(list_of_files[i])
+            image_header.add_history("---")
+            hdu = fits.PrimaryHDU(image2d.astype(np.float), image_header)
             hdu.writeto(output_fits_filename, overwrite=(not args.noclobber))
 
 
