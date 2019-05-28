@@ -95,7 +95,7 @@ class Combine(BaseRecipe):
             obreq = self.requirements()['obresult']
             qoptions = qry.ResultOf(field=result['field'])
 
-            obsres = obreq.type.query("obresult", dal, obsres, options=qoptions)
+            obsres = obreq.query(dal, obsres, options=qoptions)
             result['obresult'] = obsres
 
         rinput = self.create_input(**result)
