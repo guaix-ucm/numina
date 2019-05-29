@@ -416,7 +416,8 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
 
     aij = np.array([-xoffset, 1.0, 0.0], dtype=float)
     bij = np.array([-yoffset, 0.0, 1.0], dtype=float)
-    image2d_shifted = rectify2d(image2d, aij, bij, resampling=resampling)
+    image2d_shifted = rectify2d(image2d.astype('double'),
+                                aij, bij, resampling=resampling)
     return image2d_shifted
 
 
@@ -453,5 +454,6 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, resampling=2):
     yc = ycenter - 1.0
     aij = [-xc*costheta-yc*sintheta+xc, costheta, sintheta]
     bij = [xc*sintheta-yc*costheta+yc, -sintheta, costheta]
-    image2d_rotated = rectify2d(image2d, aij, bij, resampling=resampling)
+    image2d_rotated = rectify2d(image2d.astype('double'), aij, bij,
+                                resampling=resampling)
     return image2d_rotated
