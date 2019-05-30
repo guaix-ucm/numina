@@ -549,6 +549,135 @@ def ximshow_file(singlefile,
             return ax
 
 
+def jimshow(image2d,
+            ax=None,
+            title=None,
+            vmin=None, vmax=None,
+            image_bbox=None,
+            xlabel='image pixel in the X direction',
+            ylabel='image pixel in the Y direction',
+            crpix1=None, crval1=None, cdelt1=None,
+            grid=False,
+            cmap='hot',
+            cbar=False,
+            cbar_label='Number of counts',
+            cbar_orientation='horizontal'):
+    """Auxiliary function to display a numpy 2d array via axes object.
+
+    Parameters
+    ----------
+    image2d : 2d numpy array, float
+        2d image to be displayed.
+    ax : axes object
+        Matplotlib axes instance. Note that this value is also
+        employed as output.
+    title : string
+        Plot title.
+    vmin : float
+        Background value. If None, the minimum zcut is employed.
+    vmax : float
+        Foreground value. If None, the maximum zcut is employed.
+    image_bbox : tuple (4 integers)
+        Image rectangle to be displayed, with indices given by
+        (nc1,nc2,ns1,ns2), which correspond to the numpy array:
+        image2d[(ns1-1):ns2,(nc1-1):nc2].
+    xlabel : string
+        X-axis label.
+    ylabel : string
+        Y-axis label.
+    crpix1 : float or None
+        CRPIX1 parameter corresponding to wavelength calibration in
+        the X direction.
+    crval1 : float or None
+        CRVAL1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cdelt1 : float or None
+        CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    grid : bool
+        If True, overplot grid.
+    cmap : string
+        Color map to be employed.
+    cbar : bool
+        If True, display colorbar.
+    cbar_label : string
+        Color bar label.
+    cbar_orientation : string
+        Color bar orientation: valid options are 'horizontal' or
+        'vertical'.
+
+    Returns
+    -------
+    ax : axes object
+        Matplotlib axes instance. Note that this value must also
+        be provided as input.
+
+    """
+
+    if ax is None:
+        raise ValueError('ax=None is not valid in this function')
+
+    naxis2_, naxis1_ = image2d.shape
+
+    if image_bbox is None:
+        nc1, nc2, ns1, ns2 = 1, naxis1_, 1, naxis2_
+    else:
+        nc1, nc2, ns1, ns2 = image_bbox
+    if 1 <= nc1 <= nc2 <= naxis1_:
+        pass
+    else:
+        raise ValueError("Invalid bounding box limits")
+    if 1 <= ns1 <= ns2 <= naxis2_:
+        pass
+    else:
+        raise ValueError("Invalid bounding box limits")
+
+    # plot limits
+    xmin = float(nc1) - 0.5
+    xmax = float(nc2) + 0.5
+    ymin = float(ns1) - 0.5
+    ymax = float(ns2) + 0.5
+
+    image2d_region = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
+
+    if vmin is None or vmax is None:
+        z1, z2 = ZScaleInterval().get_limits(image2d_region)
+    else:
+        z1, z2 = None, None
+
+    if vmin is None:
+        vmin = z1
+    if vmax is None:
+        vmax = z2
+
+    im_show = ax.imshow(
+        image2d_region,
+        cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax,
+        interpolation="nearest", origin="low",
+        extent=[xmin, xmax, ymin, ymax]
+    )
+    if cbar:
+        import matplotlib.pyplot as plt
+        plt.colorbar(im_show, shrink=1.0,
+                     label=cbar_label, orientation=cbar_orientation,
+                     ax=ax)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(grid)
+    if title is not None:
+        ax.set_title(title)
+
+    if crval1 is not None and cdelt1 is not None:
+        if crpix1 is None:
+            crpix1 = 1.0
+        xminwv = crval1 + (xmin - crpix1) * cdelt1
+        xmaxwv = crval1 + (xmax - crpix1) * cdelt1
+        ax2 = ax.twiny()
+        ax2.grid(False)
+        ax2.set_xlim(xminwv, xmaxwv)
+        ax2.set_xlabel('Wavelength (Angstroms)')
+
+
 def main(args=None):
 
     # parse command-line options
