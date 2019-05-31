@@ -212,8 +212,6 @@ def periodic_corr1d(sp_reference, sp_offset,
         raise ValueError("Invalid array dimensions")
     if sp_reference.shape != sp_offset.shape:
         raise ValueError("x and y shapes are different")
-    if zero_padding < 0:
-        raise ValueError("zero_padding={} must be >= 0".format(zero_padding))
     if nfit_peak % 2 == 0:
         nfit_peak += 1
 
