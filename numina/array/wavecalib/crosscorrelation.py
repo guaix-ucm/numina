@@ -22,8 +22,6 @@ from numina.modeling.gaussbox import gauss_box_model
 
 
 def filtmask(sp, fmin, fmax,
-             frac_cosbell=0.1,
-             zero_padding=0,
              sp_label='spectrum',
              debugplot=0):
     """Filter spectrum in Fourier space and apply cosine bell.
@@ -36,12 +34,6 @@ def filtmask(sp, fmin, fmax,
         Minimum frequency to be employed.
     fmax : float
         Maximum frequency to be employed.
-    frac_cosbell : float
-        Fraction of spectrum where the cosine bell falls to zero
-        (applied only when 'fminmax' is not None).
-    zero_padding : int
-        Number of extended pixels set to zero (applied only when
-        'fminmax' is not None).
     sp_label : str
         Additional string to be attached to labels in legends.
     debugplot : int
@@ -50,8 +42,8 @@ def filtmask(sp, fmin, fmax,
 
     Returns
     -------
-    sp_filtmask : numpy array
-        Filtered and masked spectrum
+    sp_filt : numpy array
+        Filtered spectrum
 
     """
 
@@ -82,21 +74,7 @@ def filtmask(sp, fmin, fmax,
         ximplotxy(xdum, sp_filt, title="filtered " + sp_label,
                   debugplot=debugplot)
 
-    # cosine bell
-    sp_filtmask = sp_filt * cosinebell(sp_filt.size, frac_cosbell)
-
-    # zero padding
-    if zero_padding > 0:
-        sp_filtmask = np.concatenate((sp_filtmask, np.zeros(zero_padding)))
-
-    if abs(debugplot) in (21, 22):
-        xdum = np.arange(1, sp_filtmask.size + 1)
-        ximplotxy(xdum, sp_filtmask,
-                  title="filtered and masked (cosine bell, zero padding) " +
-                        sp_label,
-                  debugplot=debugplot)
-
-    return sp_filtmask
+    return sp_filt
 
 
 def cosinebell(n, frac_cosbell):
@@ -106,7 +84,7 @@ def cosinebell(n, frac_cosbell):
     ----------
     n : int
         Number of pixels.
-    fraction : float
+    frac_cosbell : float
         Length fraction over which the data will be masked.
 
     """
@@ -167,9 +145,10 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 
 
 def periodic_corr1d(sp_reference, sp_offset,
+                    remove_mean=False,
+                    frac_cosbell=None,
+                    zero_padding=None,
                     fminmax=None,
-                    frac_cosbell=0.1,
-                    zero_padding=0,
                     naround_zero=None,
                     norm_spectra=False,
                     nfit_peak=7,
@@ -186,15 +165,15 @@ def periodic_corr1d(sp_reference, sp_offset,
     sp_offset : numpy array
         Spectrum which offset is going to be measured relative to the
         reference spectrum.
+    remove_mean : bool
+        If True, remove mean from input spectra.
+    frac_cosbell : float or None
+        Fraction of spectrum where the cosine bell falls to zero.
+    zero_padding : int or None
+        Number of extended pixels set to zero.
     fminmax : tuple of floats or None
         Minimum and maximum frequencies to be used. If None, no
         frequency filtering is employed.
-    frac_cosbell : float
-        Fraction of spectrum where the cosine bell falls to zero
-        (applied only when 'fminmax' is not None).
-    zero_padding : int
-        Number of extended pixels set to zero (applied only when
-        'fminmax' is not None).
     naround_zero : int
         Half width of the window (around zero offset) to look for
         the correlation peak. If None, the whole correlation
@@ -241,27 +220,59 @@ def periodic_corr1d(sp_reference, sp_offset,
     if plottitle is None:
         plottitle = ' '
 
+    # remove mean
+    if remove_mean:
+        sp_reference_m = sp_reference - np.mean(sp_reference)
+        sp_offset_m = sp_offset - np.mean(sp_offset)
+    else:
+        sp_reference_m = sp_reference.copy()
+        sp_offset_m = sp_offset.copy()
+
+    # cosine bell
+    if frac_cosbell is not None:
+        if frac_cosbell < 0.0 or frac_cosbell > 0.5:
+            raise ValueError('Invalid frac_cosbell: {}'.format(frac_cosbell))
+        sp_reference_mb = sp_reference_m * cosinebell(
+            sp_reference_m.size, frac_cosbell
+        )
+        sp_offset_mb = sp_offset_m * cosinebell(
+            sp_offset_m.size, frac_cosbell
+        )
+    else:
+        sp_reference_mb = sp_reference_m
+        sp_offset_mb = sp_offset_m
+
+    # zero padding
+    if zero_padding is not None:
+        if zero_padding < 0:
+            raise ValueError('Invalid zero_padding: {}'.format(zero_padding))
+        sp_reference_mbz = np.concatenate(
+            (sp_reference_mb, np.zeros(zero_padding))
+        )
+        sp_offset_mbz = np.concatenate(
+            (sp_offset_mb, np.zeros(zero_padding))
+        )
+    else:
+        sp_reference_mbz = sp_reference_mb
+        sp_offset_mbz = sp_offset_mb
+
     if fminmax is not None:
         fmin, fmax = fminmax
         sp_reference_filtmask = filtmask(
-            sp_reference,
+            sp_reference_mbz,
             fmin=fmin,
             fmax=fmax,
-            frac_cosbell=frac_cosbell,
-            zero_padding=zero_padding,
             sp_label=sp_label,
             debugplot=debugplot)
         sp_offset_filtmask = filtmask(
-            sp_offset,
+            sp_offset_mbz,
             fmin=fmin,
             fmax=fmax,
-            frac_cosbell=frac_cosbell,
-            zero_padding=zero_padding,
             sp_label=sp_label,
             debugplot=debugplot)
     else:
-        sp_reference_filtmask = sp_reference
-        sp_offset_filtmask = sp_offset
+        sp_reference_filtmask = sp_reference_mbz
+        sp_offset_filtmask = sp_offset_mbz
 
     naxis1 = len(sp_reference_filtmask)
     xcorr = np.arange(naxis1, dtype=int)
@@ -280,18 +291,18 @@ def periodic_corr1d(sp_reference, sp_offset,
         ax = ximplotxy(xdum, sp_reference, show=False,
                        title='reference ' + sp_label,
                        label='original ' + sp_label)
-        if fminmax is not None:
+        if remove_mean or frac_cosbell or zero_padding or fminmax:
             ax.plot(xdumf, sp_reference_filtmask,
-                    label='filtered and masked ' + sp_label)
+                    label='processed ' + sp_label)
         ax.legend()
         plt.show()
         # offset spectrum
         ax = ximplotxy(xdum, sp_offset, show=False,
                        title='offset ' + sp_label,
                        label='original ' + sp_label)
-        if fminmax is not None:
+        if remove_mean or frac_cosbell or zero_padding or fminmax:
             ax.plot(xdumf, sp_offset_filtmask,
-                    label='filtered and masked ' + sp_label)
+                    label='processed ' + sp_label)
         ax.legend()
         plt.show()
 
@@ -426,7 +437,13 @@ def periodic_corr1d(sp_reference, sp_offset,
 
 
 def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
-                       sigmalist, fpixminmax=None, naround_zero=None,
+                       sigmalist,
+                       remove_mean=False,
+                       frac_cosbell=None,
+                       zero_padding=None,
+                       fpixminmax=None,
+                       naround_zero=None,
+                       nfit_peak=None,
                        ax1=None, ax2=None,
                        debugplot=0):
     """Compute broadening to match 'sp_obj' with 'sp_ref'.
@@ -455,6 +472,12 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         Flux of the reference spectrum.
     sigmalist : numpy array or list
         Sigma broadening (in pixels).
+    remove_mean : bool
+        If True, remove mean from input spectra.
+    frac_cosbell : float or None
+        Fraction of spectrum where the cosine bell falls to zero.
+    zero_padding : int or None
+        Number of extended pixels set to zero.
     fpixminmax : tuple of floats or None
         Number of subintervals in which the pixel range (in the
         wavelength direction) is divided in order to determine
@@ -463,11 +486,13 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         lower frequency cut is set to 8/npix, whereas the upper
         frequency cut is set to 1000/npix, being npix the number of
         pixels in the wavelength direction.
-    naround_zero : int
+    naround_zero : int or None
         Half width of the window (around zero offset) to look for
-        the correlation peak. If None, the whole correlation
-        spectrum is employed. Otherwise, the peak will be sought
-        in the interval [-naround_zero, +naround_zero].
+        the correlation peak.
+    nfit_peak : int
+        Total number of points (must be odd!) around the peak of the
+        crosscorrelation function to be employed to estimate the peak
+        location (using a fit to a second order polynomial).
     ax1 : matplotlib Axes object
         If not none, this plot represents the offset and fpeak
         variation as a function of sigma.
@@ -479,7 +504,7 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
 
-    Results
+    Returns
     -------
     offset_broad : float
         Offset (in pixels) between the two input spectra measured
@@ -533,8 +558,6 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         fminmax = None
     else:
         fminmax = (fpixminmax[0]/wv.size, fpixminmax[1]/wv.size)
-    if naround_zero is None:
-        naround_zero = int(wv.size/20)
 
     nsigmas = len(list(sigmalist))
     offset = np.zeros(nsigmas)
@@ -555,9 +578,12 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         # periodic correlation between the two spectra
         offset[i], fpeak[i] = periodic_corr1d(
             flux_ref_broad, flux_obj,
+            remove_mean=remove_mean,
+            frac_cosbell=frac_cosbell,
+            zero_padding=zero_padding,
             fminmax=fminmax,
-            zero_padding=2*naround_zero,
             naround_zero=naround_zero,
+            nfit_peak=nfit_peak,
             norm_spectra=True,
             debugplot=debugplot
         )
