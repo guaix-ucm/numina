@@ -439,7 +439,7 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
                        remove_mean=False,
                        frac_cosbell=None,
                        zero_padding=None,
-                       fpixminmax=None,
+                       fminmax=None,
                        naround_zero=None,
                        nfit_peak=None,
                        ax1=None, ax2=None,
@@ -476,14 +476,9 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         Fraction of spectrum where the cosine bell falls to zero.
     zero_padding : int or None
         Number of extended pixels set to zero.
-    fpixminmax : tuple of floats or None
-        Number of subintervals in which the pixel range (in the
-        wavelength direction) is divided in order to determine
-        the frequency filtering. If None, no frequency filtering is
-        employed. For example, a tuple (8, 1000) means that the
-        lower frequency cut is set to 8/npix, whereas the upper
-        frequency cut is set to 1000/npix, being npix the number of
-        pixels in the wavelength direction.
+    fminmax : tuple of floats or None
+        Minimum and maximum frequencies to be used. If None, no
+        frequency filtering is employed.
     naround_zero : int or None
         Half width of the window (around zero offset) to look for
         the correlation peak.
@@ -550,12 +545,6 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         ax.plot(wv, flux_obj, label='flux_obj')
         ax.legend()
         pause_debugplot(debugplot=debugplot, pltshow=True)
-
-    # set parameters for periodic_corr1d
-    if fpixminmax is None:
-        fminmax = None
-    else:
-        fminmax = (fpixminmax[0]/wv.size, fpixminmax[1]/wv.size)
 
     nsigmas = len(list(sigmalist))
     offset = np.zeros(nsigmas)
