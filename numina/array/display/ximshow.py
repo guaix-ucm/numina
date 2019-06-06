@@ -367,6 +367,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 
 def ximshow_file(singlefile,
+                 args_extnum=1,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_ds9reg=None,
@@ -379,6 +380,8 @@ def ximshow_file(singlefile,
     ----------
     singlefile : string
         Name of the FITS file to be displayed.
+    args_extnum : int
+        Extension number (1 for first extension ---default---).
     args_cbar_label : string
         Color bar label.
     args_cbar_orientation : string
@@ -439,9 +442,10 @@ def ximshow_file(singlefile,
         geometry = x_geom, y_geom, dx_geom, dy_geom
 
     # read input FITS file
+    extnum = args_extnum - 1
     hdulist = fits.open(singlefile)
-    image_header = hdulist[0].header
-    image2d = hdulist[0].data
+    image_header = hdulist[extnum].header
+    image2d = hdulist[extnum].data
     hdulist.close()
 
     naxis1 = image_header['naxis1']
@@ -692,6 +696,10 @@ def main(args=None):
                         nargs="+")
 
     # optional arguments
+    parser.add_argument('--extnum',
+                        help='Extension number in input files (note that ' +
+                             'first extension is 1 = default value)',
+                        default=1, type=int)
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
@@ -733,6 +741,7 @@ def main(args=None):
 
     for myfile in list_fits_files:
         ximshow_file(singlefile=myfile,
+                     args_extnum=args.extnum,
                      args_z1z2=args.z1z2,
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,
