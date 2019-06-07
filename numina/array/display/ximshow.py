@@ -17,6 +17,7 @@ import numpy as np
 from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
+from .fileinfo import check_extnum
 from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
 
@@ -367,7 +368,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 
 def ximshow_file(singlefile,
-                 args_extnum=1,
+                 extnum=1,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_ds9reg=None,
@@ -380,8 +381,8 @@ def ximshow_file(singlefile,
     ----------
     singlefile : string
         Name of the FITS file to be displayed.
-    args_extnum : int
-        Extension number (1 for first extension ---default---).
+    extnum : int
+        Extension number: 1 for first extension (default).
     args_cbar_label : string
         Color bar label.
     args_cbar_orientation : string
@@ -442,10 +443,11 @@ def ximshow_file(singlefile,
         geometry = x_geom, y_geom, dx_geom, dy_geom
 
     # read input FITS file
-    extnum = args_extnum - 1
     hdulist = fits.open(singlefile)
-    image_header = hdulist[extnum].header
-    image2d = hdulist[extnum].data
+    if extnum is None or extnum < 1 or extnum > len(hdulist):
+        raise ValueError('Unexpected extension number {}'.format(extnum))
+    image_header = hdulist[extnum - 1].header
+    image2d = hdulist[extnum - 1].data
     hdulist.close()
 
     naxis1 = image_header['naxis1']
@@ -577,9 +579,9 @@ def jimshow(image2d,
         employed as output.
     title : string
         Plot title.
-    vmin : float
+    vmin : float, 'min', or None
         Background value. If None, the minimum zcut is employed.
-    vmax : float
+    vmax : float, 'max', or None
         Foreground value. If None, the maximum zcut is employed.
     image_bbox : tuple (4 integers)
         Image rectangle to be displayed, with indices given by
@@ -651,8 +653,12 @@ def jimshow(image2d,
 
     if vmin is None:
         vmin = z1
+    elif vmin == 'min':
+        vmin = image2d_region.min()
     if vmax is None:
         vmax = z2
+    elif vmax == 'max':
+        vmax = image2d_region.max()
 
     im_show = ax.imshow(
         image2d_region,
@@ -725,11 +731,29 @@ def main(args=None):
                         choices = [0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
+    if abs(args.debugplot) in [21, 22]:
+        print('>> args.filename: ', args.filename)
+
     if len(args.filename) == 1:
-        list_fits_files = [tmp.filename for
-                           tmp in list_fileinfo_from_txt(args.filename[0])]
+        list_fits_files = []
+        list_extnum = []
+        for tmp in list_fileinfo_from_txt(args.filename[0]):
+            list_fits_files.append(tmp.filename)
+            list_extnum.append(tmp.extnum)
     else:
-        list_fits_files = args.filename
+        list_fits_files = []
+        list_extnum = []
+        for tmp in args.filename:
+            tmpfile, tmpextnum = check_extnum(tmp)
+            for tmptmp in list_fileinfo_from_txt(tmpfile):
+                list_fits_files.append(tmptmp.filename)
+                list_extnum.append(tmpextnum)
+
+    list_extnum = [args.extnum if dum is None else dum for dum in list_extnum]
+
+    if abs(args.debugplot) in [21, 22]:
+        print('>> Filenames.: ', list_fits_files)
+        print('>> Extensions: ', list_extnum)
 
     # read pdffile
     if args.pdffile is not None:
@@ -739,9 +763,11 @@ def main(args=None):
         from numina.array.display.matplotlib_qt import plt
         pdf = None
 
-    for myfile in list_fits_files:
+    for myfile, extnum in zip(list_fits_files, list_extnum):
+        if extnum is None:
+            extnum = args.extnum
         ximshow_file(singlefile=myfile,
-                     args_extnum=args.extnum,
+                     extnum=extnum,
                      args_z1z2=args.z1z2,
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,

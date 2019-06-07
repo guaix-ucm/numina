@@ -31,8 +31,9 @@ class FileInfo(object):
 
     """
 
-    def __init__(self, filename, fileinfo=None):
+    def __init__(self, filename, extnum=None, fileinfo=None):
         self.filename = filename
+        self.extnum = extnum
         self.fileinfo = fileinfo
 
     def __str__(self):
@@ -40,9 +41,45 @@ class FileInfo(object):
 
         output = "<FileInfo instance>\n" + \
                  "- filename: " + self.filename + "\n" + \
+                 "- extnum..: " + self.extnum + "\n" + \
                  "- fileinfo: " + str(self.fileinfo)
 
         return output
+
+
+def check_extnum(filename):
+    """Return extension number when given as filename.fits[extnum]
+
+    Parameters
+    ----------
+    filename : string
+        File name.
+
+    Returns
+    -------
+    filename : string
+        File name without the extension number (if initially present).
+    extnum : int or None
+        Extension number.
+
+    """
+
+    extnum = None
+    if filename[-1] == ']':
+        leftbracket = filename.rfind('[')
+        if leftbracket != -1:
+            cdum = filename[(leftbracket + 1):-1]
+            if len(cdum) > 0:
+                try:
+                    extnum = int(cdum)
+                except ValueError:
+                    raise ValueError("Invalid extension number {}".format(
+                        filename[(leftbracket + 1):-1]
+                    ))
+                # remove extension number from file name
+                filename = filename[:leftbracket]
+
+    return filename, extnum
 
 
 def list_fileinfo_from_txt(filename):
@@ -68,8 +105,18 @@ def list_fileinfo_from_txt(filename):
         # check for wildcards
         list_fits_files = glob.glob(filename)
         if len(list_fits_files) == 0:
-            raise ValueError("File " + filename + " not found!")
+            # check for extension at the end of the file name
+            tmpfile, tmpextnum = check_extnum(filename)
+            list_fits_files = glob.glob(tmpfile)
+            if len(list_fits_files) == 0:
+                raise ValueError("File " + filename + " not found!")
+            else:
+                list_fits_files.sort()
+                output = [FileInfo(tmpfile, tmpextnum) for
+                          tmpfile in list_fits_files]
+                return output
         else:
+            list_fits_files.sort()
             output = [FileInfo(tmpfile) for tmpfile in list_fits_files]
             return output
 
@@ -83,13 +130,23 @@ def list_fileinfo_from_txt(filename):
                 if line[0] not in ['#', '@']:
                     tmplist = line.split()
                     tmpfile = tmplist[0]
+                    tmpextnum = None
                     if len(tmplist) > 1:
                         tmpinfo = tmplist[1:]
                     else:
                         tmpinfo = None
                     if not os.path.isfile(tmpfile):
-                        raise ValueError("File " + tmpfile + " not found!")
-                    output.append(FileInfo(tmpfile, tmpinfo))
+                        # check for extension
+                        tmpfile, tmpextnum = check_extnum(tmpfile)
+                        if tmpextnum is None:
+                            raise ValueError("File {} not found".format(
+                                tmpfile))
+                        else:
+                            if not os.path.isfile(tmpfile):
+                                raise ValueError("File {} not found".format(
+                                    tmpfile))
+
+                    output.append(FileInfo(tmpfile, tmpextnum, tmpinfo))
     else:
         output = [FileInfo(filename)]
 
