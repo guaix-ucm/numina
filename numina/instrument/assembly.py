@@ -15,7 +15,15 @@ import collections
 import numina.util.objimport
 
 import pkg_resources
+
+# Try to use isoparse ISO-8601, if not available
+# use generic parser
 import dateutil.parser
+
+try:
+    isoparse = dateutil.parser.isoparse
+except AttributeError:
+    isoparse = dateutil.parser.parse
 
 import numina.instrument.configorigin as cf
 # from numina.core.instrument.configorigin import ElementOrigin
@@ -126,7 +134,7 @@ def find_instrument(comp_store, name, date):
 def find_element(comp_store, etype, keyval, date, by_key='name'):
 
     if isinstance(date, str):
-        datet = dateutil.parser.isoparse(date)
+        datet = isoparse(date)
     else:
         datet = date
 

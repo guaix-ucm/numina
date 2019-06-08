@@ -14,6 +14,13 @@
 import dateutil
 import uuid as uuidmod
 
+# Try to use isoparse ISO-8601, if not available
+# use generic parser
+try:
+    isoparse = dateutil.parser.isoparse
+except AttributeError:
+    isoparse = dateutil.parser.parse
+
 import six
 
 
@@ -37,7 +44,7 @@ class ElementOrigin(object):
     @staticmethod
     def _isoparse(date):
         if isinstance(date, six.string_types):
-            return dateutil.parser.isoparse(date)
+            return isoparse(date)
         else:
             return date
 
@@ -75,12 +82,12 @@ class ElementOrigin(object):
         desc = kwargs.get('description', "")
         uuid = kwargs['uuid']
         if kwargs['date_start']:
-            date_start = dateutil.parser.isoparse(kwargs['date_start'])
+            date_start = isoparse(kwargs['date_start'])
         else:
             date_start = None
 
         if kwargs['date_end']:
-            date_end = dateutil.parser.isoparse(kwargs['date_end'])
+            date_end = isoparse(kwargs['date_end'])
         else:
             date_end = None
         return ElementOrigin(name, uuid, date_start, date_end, desc)
