@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,6 +13,7 @@
 import numina.core
 import numina.types.product as prod
 import numina.types.frame as frame
+import numina.core.requirements as reqs
 
 
 class MasterBias(prod.DataProductMixin, frame.DataFrameType):
@@ -20,6 +21,10 @@ class MasterBias(prod.DataProductMixin, frame.DataFrameType):
 
 
 class MasterDark(prod.DataProductMixin, frame.DataFrameType):
+    pass
+
+
+class ImageTest(frame.DataFrameType):
     pass
 
 
@@ -33,3 +38,17 @@ class BiasRecipe(numina.core.BaseRecipe):
 
 class DarkRecipe(numina.core.BaseRecipe):
     master_dark = numina.core.Result(MasterDark)
+
+
+class ImageRecipe(numina.core.BaseRecipe):
+    obresult = reqs.ObservationResultRequirement()
+    master_bias = numina.core.Requirement(MasterBias, "Master Bias")
+    master_dark = numina.core.Requirement(MasterDark, "Master Dark")
+    result_image = numina.core.Result(ImageTest)
+
+
+class ImageRecipeCom(numina.core.BaseRecipe):
+    obresult = reqs.ObservationResultRequirement()
+    accum_in = numina.core.Requirement(ImageTest, 'previous accum')
+    result_image = numina.core.Result(ImageTest)
+    accum = numina.core.Result(ImageTest)
