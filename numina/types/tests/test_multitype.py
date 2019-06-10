@@ -124,7 +124,7 @@ def test_validate2():
     multi = MultiType(TypeA, TypeB)
 
     # Simulate valid query
-    multi._current = multi.node_type[0]
+    multi.internal_type = multi.node_type[0]
 
     # testing with selection of the internal type
     # It should validate TypeA only
@@ -148,7 +148,7 @@ def test_tag_names1():
 def test_tag_names2():
 
     multi = MultiType(TypeA, TypeB)
-    multi._current = multi.node_type[1]
+    multi.internal_type = multi.node_type[1]
 
     assert multi.tag_names() == ['domeB']
 
