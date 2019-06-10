@@ -22,10 +22,11 @@ class MultiType(dt.DataType):
             node_type.append(obj)
 
         super(MultiType, self).__init__(ptype=None, node_type=node_type)
+        self.current_node = None
 
     def validate(self, obj):
-        if self.internal_type:
-            return self.internal_type.validate(obj)
+        if self.current_node:
+            return self.current_node.validate(obj)
         else:
             faillures = []
             for subtype in self.node_type:
@@ -38,13 +39,13 @@ class MultiType(dt.DataType):
                 raise nexcep.ValidationError(obj, internal_m)
 
     def isproduct(self):
-        if self.internal_type:
-            return self.internal_type.isproduct()
+        if self.current_node:
+            return self.current_node.isproduct()
         return True
 
     def tag_names(self):
-        if self.internal_type:
-            return self.internal_type.tag_names()
+        if self.current_node:
+            return self.current_node.tag_names()
         else:
             join = []
             for subtype in self.node_type:
@@ -75,7 +76,7 @@ class MultiType(dt.DataType):
         # Results for subtypes
         results = []
         faillures = []
-        for subtype in self.internal_type:
+        for subtype in self.node_type:
             try:
                 result = subtype.query(name, dal, ob, options=options)
                 results.append((subtype, result))
@@ -89,7 +90,7 @@ class MultiType(dt.DataType):
         if results:
             # Select the first, for the moment
             subtype, result = results[0]
-            self.internal_type = subtype
+            self.current_node = subtype
             return result
         else:
             raise nexcep.NoResultFound
