@@ -213,7 +213,22 @@ def load_recipe(name, node):
         recipe['class'] = node
     if 'args' in recipe:
         recipe['args'] = tuple(recipe['args'])
+    if 'links' in recipe:
+        recipe['links'] = load_link(recipe['links'])
     return recipe
+
+
+def load_link(node):
+    """Build a ResultOf query from dict"""
+    result = {}
+    for key, opt_dict in node.items():
+
+        if 'result_of' in opt_dict:
+            fields = opt_dict['result_of']
+            result[key] = ResultOf(**fields)
+        else:
+            pass
+    return result
 
 
 def load_base(name, node):

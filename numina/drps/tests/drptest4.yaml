@@ -1,0 +1,35 @@
+name: TEST4
+version: "1"
+configurations:
+  path: numina.drps.tests.configs
+modes:
+  - description: Bias
+    key: bias
+    name: Bias
+    summary: Summary of Bias recipe
+  - description: Dark
+    key: dark
+    name: Dark
+    summary: Summary of Dark recipe
+  - description: Image level1
+    key: image_b
+    name: ImageBase
+    summary: Summary of Image1 recipe
+  - description: Image level2
+    key: image_c
+    name: ImageCombine
+    summary: Summary of Image2 recipe
+pipelines:
+  default:
+    recipes:
+      bias: numina.tests.recipes.BiasRecipe
+      dark: numina.tests.recipes.DarkRecipe
+      image_b: numina.tests.recipes.ImageRecipe
+      image_c:
+        class: numina.tests.recipes.ImageRecipeCom
+        links:
+          obresult:
+            result_of: {field: ImageBase.result_image, node: children}
+          accum_in:
+            result_of: {field: ImageCombine.accum, node: prev-rel}
+    version: 1

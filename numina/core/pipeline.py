@@ -53,6 +53,8 @@ class Pipeline(object):
         args = entry.get('args', ())
         kwargs = entry.get('kwargs', {})
         links = entry.get('links', {})
+        if links:
+            kwargs['query_options'] = links
 
         recipe = Cls.__new__(Cls, *args, **kwargs)
         recipe.__init__(*args, **kwargs)
