@@ -21,8 +21,11 @@ class DataType(DataTypeBase):
     """
     def __init__(self, ptype, node_type=None, default=None, **kwds):
         super(DataType, self).__init__(**kwds)
-        self.node_type = node_type
         self.internal_type = ptype
+        if node_type is None:
+            self.node_type = [self.internal_type]
+        else:
+            self.node_type = node_type
         self.internal_dialect = dialect_info(self)
         self.internal_default = default
         self.internal_scalar = True
