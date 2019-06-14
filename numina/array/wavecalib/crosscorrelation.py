@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,7 +24,7 @@ from numina.modeling.gaussbox import gauss_box_model
 def filtmask(sp, fmin, fmax,
              sp_label='spectrum',
              debugplot=0):
-    """Filter spectrum in Fourier space and apply cosine bell.
+    """Filter spectrum in Fourier space.
 
     Parameters
     ----------
@@ -70,9 +70,13 @@ def filtmask(sp, fmin, fmax,
 
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
+        from numina.array.display.matplotlib_qt import plt
         xdum = np.arange(1, sp_filt.size + 1)
-        ximplotxy(xdum, sp_filt, title="filtered " + sp_label,
-                  debugplot=debugplot)
+        ax = ximplotxy(xdum, sp, title="filtering " + sp_label,
+                       label='original', show=False)
+        ax.plot(xdum, sp_filt, label='filtered')
+        ax.legend()
+        plt.show()
 
     return sp_filt
 
