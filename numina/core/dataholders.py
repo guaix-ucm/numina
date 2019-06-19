@@ -209,8 +209,13 @@ class Requirement(EntryHolder):
     def convert(self, val):
         return self.type.convert_in(val)
 
-    def query_options(self):
-        return self.query_opts
+    def query_options(self, options=None):
+
+        if options:
+            effective_options = options
+        else:
+            effective_options = self.query_opts
+        return effective_options
 
     def _check_dest_is_set(self):
         if self.dest is None:
@@ -223,15 +228,9 @@ class Requirement(EntryHolder):
 
         self._check_dest_is_set()
 
-        # query opts
-        if options is not None:
-            # Starting with True/False
-            perform_query = options
-            if not perform_query:
-                # we do not perform any query
-                return self.default
+        q_options = self.query_options(options)
 
-        if isinstance(self.query_opts, Ignore):
+        if isinstance(q_options, Ignore):
             # we do not perform any query
             return self.default
 
@@ -240,12 +239,12 @@ class Requirement(EntryHolder):
         except NoResultFound:
             pass
 
-        if isinstance(options, ResultOf):
+        if isinstance(q_options, ResultOf):
             value = dal.search_result_relative(self.dest, self.type, obsres,
-                                                   result_desc=self.query_opts)
+                                                   result_desc=q_options)
             return value.content
 
-        return self.query_on_dal(dal, obsres, options=options)
+        return self.query_on_dal(dal, obsres, options=q_options)
 
     def query_on_dal(self, dal, obsres, options=None):
         return self.query_on_dal_rec(self.type, dal, obsres, options=options)
