@@ -126,11 +126,13 @@ def setup_package():
                 'drptest1.yaml',
                 'drptest2.yaml',
                 'drptest3.yaml',
+                'drptest4.yaml',
                 'drpclodia.yaml',
             ],
             'numina.drps.tests.configs': [
                 'instrument-*.json',
                 'component-*.json',
+                'properties-*.json',
                 'setup-*.json'
             ],
         },
