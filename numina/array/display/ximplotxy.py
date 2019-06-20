@@ -44,7 +44,8 @@ def ximplotxy(x, y, fmt=None, plottype=None,
     fmt : str, optional
         Format string for quickly setting basic line properties.
     plottype : string
-        Plot type. It can be 'semilog' or normal (default).
+        Plot type. It can be 'loglog', 'semilogx', 'semilogy' or None
+        (default, non-logarithmic plot).
     xlim : tuple of floats
         Tuple defining the x-axis range.
     ylim : tuple of floats
@@ -83,16 +84,28 @@ def ximplotxy(x, y, fmt=None, plottype=None,
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    if plottype == 'semilog':
+    if plottype == 'loglog':
+        if fmt is None:
+            ax.loglog(x, y, **kwargs)
+        else:
+            ax.loglog(x, y, fmt, **kwargs)
+    elif plottype == 'semilogx':
+        if fmt is None:
+            ax.semilogx(x, y, **kwargs)
+        else:
+            ax.semilogx(x, y, fmt, **kwargs)
+    elif plottype == 'semilogy':
         if fmt is None:
             ax.semilogy(x, y, **kwargs)
         else:
             ax.semilogy(x, y, fmt, **kwargs)
-    else:
+    elif plottype == None:
         if fmt is None:
             ax.plot(x, y, **kwargs)
         else:
             ax.plot(x, y, fmt, **kwargs)
+    else:
+        raise ValueError('Invalid plottype: ' + str(plottype))
 
     if xlim is not None:
         ax.set_xlim(xlim[0], xlim[1])

@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,7 @@ import uuid
 
 import numpy
 
-from numina.core.qc import QC
+from numina.types.qc import QC
 
 from .datatype import DataType
 from .product import DataProductMixin

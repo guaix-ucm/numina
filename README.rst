@@ -2,7 +2,7 @@
 Numina
 ======
 
-|zenodo| |docs| 
+|zenodo| |docs| |pypi|
 
 .. image:: https://travis-ci.org/guaix-ucm/numina.svg?branch=master
     :target: https://travis-ci.org/guaix-ucm/numina
@@ -97,3 +97,8 @@ if you type `make`
 
 .. |zenodo| image:: https://zenodo.org/badge/doi/10.5281/zenodo.593638.svg
    :target: https://doi.org/10.5281/zenodo.593638
+
+
+.. |pypi| image:: https://badge.fury.io/py/numina.svg
+    :target: https://badge.fury.io/py/numina
+

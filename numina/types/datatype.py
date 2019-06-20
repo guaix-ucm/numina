@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,6 @@ import inspect
 import collections
 
 from numina.exceptions import ValidationError
-from numina.exceptions import NoResultFound
 from .base import DataTypeBase
 from .typedialect import dialect_info
 
@@ -20,11 +19,14 @@ class DataType(DataTypeBase):
     """Base class for input/output types of recipes.
 
     """
-    def __init__(self, ptype, default=None, **kwds):
+    def __init__(self, ptype, node_type=None, default=None, **kwds):
         super(DataType, self).__init__(**kwds)
+        self.node_type = node_type
         self.internal_type = ptype
         self.internal_dialect = dialect_info(self)
         self.internal_default = default
+        self.internal_scalar = True
+        self.multi_query = False
 
     def convert(self, obj):
         """Basic conversion to internal type
@@ -70,13 +72,6 @@ class DataType(DataTypeBase):
         result = {'fqn': key, 'python': self.internal_type, 'type': tipo}
         self.internal_dialect[dialect] = result
         return result
-
-    @classmethod
-    def isconfiguration(cls):
-        return False
-
-    def potential_tags(self):
-        return {}
 
     def descriptive_name(self):
         return self.name()
@@ -130,7 +125,10 @@ class PlainPythonType(DataType):
     """Data type for Python basic types."""
     def __init__(self, ref=None, validator=None):
         stype = type(ref)
-        default = stype()
+        if ref is None:
+            default = None
+        else:
+            default = stype()
 
         if validator is None:
             self.custom_validator = None
@@ -140,18 +138,6 @@ class PlainPythonType(DataType):
             raise TypeError('validator must be callable or None')
 
         super(PlainPythonType, self).__init__(stype, default=default)
-
-    def query(self, name, dal, ob, options=True):
-
-        try:
-            return self.query_on_ob(name, ob)
-        except NoResultFound:
-            pass
-
-        #param = dal.search_param_req_tags(req, ob.instrument,
-        #                                      ob.mode, ob.tags, ob.pipeline)
-        param = dal.search_parameter(name, self, ob)
-        return param.content
 
     def convert(self, obj):
         pre = self.internal_type(obj)
@@ -169,19 +155,28 @@ class PlainPythonType(DataType):
 
 class ListOfType(DataType):
     """Data type for lists of other types."""
-    def __init__(self, ref, index=0, nmin=None, nmax=None, accept_scalar=False):
+    def __init__(self, ref, default=None, index=0, nmin=None, nmax=None, accept_scalar=False,
+                 multi_query=None):
         from numina.core.validator import range_validator
         stype = list
         if inspect.isclass(ref):
-            self.internal = ref()
+            node_type = ref()
         else:
-            self.internal = ref
-        super(ListOfType, self).__init__(stype)
+            node_type = ref
+        super(ListOfType, self).__init__(stype, node_type=node_type, default=default)
+        self.internal_scalar = False
         self.index = index
         self.nmin = nmin
         self.nmax = nmax
         self.accept_scalar = accept_scalar
         self.len_validator = range_validator(minval=nmin, maxval=nmax)
+
+        # If multi_query is True, we perform N queries concatenated into a list
+        # If multi_query is False, we perform 1 query to obtain directly a list
+        if multi_query is None:
+            self.multi_query = self.node_type.isproduct()
+        else:
+            self.multi_query = multi_query
 
     def convert(self, obj):
         if not isinstance(obj, collections.Iterable):
@@ -191,26 +186,28 @@ class ListOfType(DataType):
                 raise TypeError("The object received should be iterable"
                                 " or the type modified to accept scalar values")
 
-        result = [self.internal.convert(o) for o in obj]
+        result = [self.node_type.convert(o) for o in obj]
         self.len_validator(len(result))
         return result
 
     def validate(self, obj):
         for o in obj:
-            self.internal.validate(o)
+            self.node_type.validate(o)
         self.len_validator(len(obj))
         return True
 
     def _datatype_dump(self, objs, where):
         result = []
-        old_dest = where.destination
+        old_dest = where
         for idx, obj in enumerate(objs, start=self.index):
-            where.destination = '{}{}'.format(old_dest, idx)
-            res = self.internal._datatype_dump(obj, where)
+            n_where = '{}{}'.format(old_dest, idx)
+            res = self.node_type._datatype_dump(obj, n_where)
             result.append(res)
-        where.destination = old_dest
         return result
+
+    def _datatype_load(self, objs):
+        return [self.node_type._datatype_load(obj) for obj in objs]
 
     def __str__(self):
         sclass = type(self).__name__
-        return "%s[%s]" % (sclass, self.internal)
+        return "%s[%s]" % (sclass, self.node_type)

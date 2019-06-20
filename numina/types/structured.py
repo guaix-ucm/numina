@@ -1,4 +1,4 @@
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -6,9 +6,12 @@
 # License-Filename: LICENSE.txt
 #
 
+
 import json
 import uuid
 import datetime
+
+import six.moves.builtins as builtins
 
 import numina.types.product
 import numina.types.datatype
@@ -16,11 +19,42 @@ from numina.ext.gtc import DF
 import numina.util.convert as conv
 from numina.util.jsonencoder import ExtEncoder
 from numina.util.fqn import fully_qualified_name
+from numina.util.objimport import import_object
 
 
 def writeto(obj, name):
-    with open(name, 'w') as fd:
+    with builtins.open(name, 'w') as fd:
         json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
+
+
+def open(name):
+    """"
+    name: str or file or file-like or pathlib.Path
+        File to be opened
+    """
+    with builtins.open(name, mode='r') as fd:
+        data = json.load(fd)
+    return loads(data)
+
+
+def load(fd):
+    """"
+    fd: file or file-like
+        File to be opened
+    """
+    data = json.load(fd)
+    return loads(data)
+
+
+def loads(data):
+    # FIXME: duplicated
+    if 'type_fqn' in data:
+        type_fqn = data['type_fqn']
+        cls = import_object(type_fqn)
+        obj = cls.__new__(cls)
+        obj.__setstate__(data)
+        return obj
+    return data
 
 
 class BaseStructuredCalibration(numina.types.product.DataProductMixin,
@@ -99,14 +133,14 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
     @classmethod
     def _datatype_dump(cls, obj, where):
 
-        filename = where.destination + '.json'
+        filename = where + '.json'
         writeto(obj, filename)
         return filename
 
     @classmethod
     def _datatype_load(cls, obj):
         try:
-            with open(obj, 'r') as fd:
+            with builtins.open(obj, 'r') as fd:
                 state = json.load(fd)
         except IOError as e:
             raise e
@@ -135,7 +169,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
             return objl.update_meta_info()
 
         try:
-            with open(objl, 'r') as fd:
+            with builtins.open(objl, mode='r') as fd:
                 state = json.load(fd)
         except IOError as e:
             raise e

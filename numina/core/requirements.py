@@ -11,7 +11,9 @@
 Recipe requirement holders
 """
 
+import six
 
+import numina.exceptions
 import numina.types.obsresult as obtypes
 
 from .dataholders import Requirement
@@ -32,19 +34,27 @@ class ObservationResultRequirement(Requirement):
         msg = fmt % (sclass, self.dest, self.description)
         return msg
 
+    def query(self, dal, obsres, options=None):
+        from numina.core.query import ResultOf
 
-class InstrumentConfigurationRequirement(Requirement):
-    """The Recipe requires the configuration of the instrument."""
-    def __init__(self):
+        q_options = self.query_options(options)
 
-        super(InstrumentConfigurationRequirement, self).__init__(
-            obtypes.InstrumentConfigurationType,
-            "Instrument Configuration",
-            validation=False
-            )
+        if isinstance(q_options, ResultOf):
+            dest_field = 'frames'
+            dest_type = list
+            # Field to insert the results
+            if not hasattr(obsres, dest_field):
+                setattr(obsres, dest_field, dest_type())
 
-    def __repr__(self):
-        sclass = type(self).__name__
-        fmt = "%s(dest=%r, description='%s')"
-        msg = fmt % (sclass, self.dest, self.description)
-        return msg
+            dest_obj = getattr(obsres, dest_field)
+
+            values = dal.search_result_relative(self.dest, self.type, obsres,
+                                                result_desc=q_options)
+
+            for partial in values:
+                dest_obj.append(partial.content)
+
+        return obsres
+
+    def on_query_not_found_from_type(self, notfound):
+        six.raise_from(numina.exceptions.NoResultFound('unable to complete ObservationResult'), notfound)

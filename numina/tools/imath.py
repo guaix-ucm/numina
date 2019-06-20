@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,23 +19,24 @@ import sys
 
 from numina.array.display.ximshow import ximshow_file
 
-from .arg_file_is_new import arg_file_is_new
 
-
-def compute_operation(file1, file2, operation, output, display,
-                      args_z1z2, args_bbox, args_keystitle, args_geometry):
+def compute_operation(file1, file2, operation, output, overwrite,
+                      display, args_z1z2, args_bbox, args_keystitle,
+                      args_geometry):
     """Compute output = file1 operation file2.
 
     Parameters
     ----------
     file1 : file object
         First FITS file.
-    file2 : file object
-        Second FITS file.
+    file2 : file object or float
+        Second FITS file or float number.
     operation : string
         Mathematical operation.
     output : file object
         Output FITS file.
+    overwrite : bool
+        If True, the output file can be overwritten.
     display : string
         Character string indication whether the images are displayed.
         Valid values are 'all', 'result' and 'none' (default).
@@ -54,6 +55,7 @@ def compute_operation(file1, file2, operation, output, display,
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[0].header
         image1 = hdulist[0].data.astype(np.float)
+    naxis = image_header1['naxis']
     naxis1 = image_header1['naxis1']
     naxis2 = image_header1['naxis2']
 
@@ -65,22 +67,46 @@ def compute_operation(file1, file2, operation, output, display,
                      args_geometry=args_geometry,
                      debugplot=12)
 
-    # read second FITS file
-    with fits.open(file2) as hdulist:
-        image_header2 = hdulist[0].header
-        image2 = hdulist[0].data.astype(np.float)
-    naxis1_ = image_header2['naxis1']
-    naxis2_ = image_header2['naxis2']
+    # read second FITS file or number
+    try:
+        with fits.open(file2) as hdulist:
+            image_header2 = hdulist[0].header
+            image2 = hdulist[0].data.astype(np.float)
+            naxis_ = image_header2['naxis']
+            naxis1_ = image_header2['naxis1']
+            naxis2_ = image_header2['naxis2']
+            filename = file2
+    except FileNotFoundError:
+        image2 = np.zeros((naxis2, naxis1), dtype=np.float)
+        image2 += float(file2)
+        naxis_ = naxis
+        naxis1_ = naxis1
+        naxis2_ = naxis2
+        filename = 'constant=' + str(file2)
 
     # if required, display file2
     if display == 'all':
-        ximshow_file(file2.name,
+        ximshow_file(filename,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
                      debugplot=12)
 
-    # check dimensions
+    # second image is a single image row
+    if naxis1 == naxis1_ and naxis2 > naxis2_:
+        if naxis2_ == 1:
+            image2 = np.tile(image2, naxis2).reshape((naxis2, naxis1))
+            naxis2_ = naxis2
+
+    # second image is a single image column
+    if naxis2 == naxis2_ and naxis1 > naxis1_:
+        if naxis1_ == 1:
+            image2 = np.repeat(image2, naxis1).reshape((naxis2, naxis1))
+            naxis1_ = naxis1
+
+    # additional dimension checks
+    if naxis != naxis_:
+        raise ValueError("NAXIS1 values are different.")
     if naxis1 != naxis1_:
         raise ValueError("NAXIS1 values are different.")
     if naxis2 != naxis2_:
@@ -91,7 +117,7 @@ def compute_operation(file1, file2, operation, output, display,
         solution = image1 + image2
     elif operation == "-":
         solution = image1 - image2
-    elif operation == "*":
+    elif operation == "x":
         solution = image1 * image2
     elif operation == "/":
         solution = image1 / image2
@@ -100,11 +126,11 @@ def compute_operation(file1, file2, operation, output, display,
 
     # save output file
     hdu = fits.PrimaryHDU(solution.astype(np.float), image_header1)
-    hdu.writeto(output, overwrite=True)
+    hdu.writeto(output, overwrite=overwrite)
 
     # if required, display result
     if display in ['all', 'result']:
-        ximshow_file(output.name,
+        ximshow_file(output,
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
@@ -124,14 +150,17 @@ def main(args=None):
     parser.add_argument("operation",
                         help="Arithmetic operation",
                         type=str,
-                        choices=['+', '-', '*', '/'])
+                        choices=['+', '-', 'x', '/'])
     parser.add_argument("file2",
-                        help="Second FITS image",
-                        type=argparse.FileType('rb'))
-    # optional arguments
+                        help="Second FITS image or number",
+                        type=str)
     parser.add_argument("output",
                         help="Output FITS image",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
+                        type=str)
+    # optional arguments
+    parser.add_argument("--overwrite",
+                        help="Overwrite output file if already exists",
+                        action="store_true")
     parser.add_argument("--display",
                         help="Display images: all, result, none (default)",
                         default="none",
@@ -158,7 +187,7 @@ def main(args=None):
 
     # compute operation
     compute_operation(args.file1, args.file2,
-                      args.operation, args.output,
+                      args.operation, args.output, args.overwrite,
                       args.display,
                       args.z1z2, args.bbox, args.keystitle, args.geometry)
 

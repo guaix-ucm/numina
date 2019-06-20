@@ -126,10 +126,14 @@ def setup_package():
                 'drptest1.yaml',
                 'drptest2.yaml',
                 'drptest3.yaml',
+                'drptest4.yaml',
                 'drpclodia.yaml',
             ],
             'numina.drps.tests.configs': [
-                'instrument-default.json'
+                'instrument-*.json',
+                'component-*.json',
+                'properties-*.json',
+                'setup-*.json'
             ],
         },
         #ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7],
@@ -140,13 +144,17 @@ def setup_package():
                 'numina-bpm = numina.array.bpm:main',
                 'numina-check_wlcalib = numina.array.wavecalib.check_wlcalib:main',
                 'numina-imath = numina.tools.imath:main',
+                'numina-r6-addnf = numina.tools.r6_addnf:main',
+                'numina-r6-imcombine = numina.tools.r6_imcombine:main',
+                'numina-r6-insert_keyword = numina.tools.r6_insert_keyword:main',
+                'numina-r6-replace_image = numina.tools.r6_replace_image:main',
                 'numina-wavecalib = numina.array.wavecalib.__main__:main',
                 'numina-ximshow = numina.array.display.ximshow:main',
                 'numina-ximplotxy = numina.array.display.ximplotxy:main',
             ],
             },
         setup_requires=['numpy'],
-        tests_require=['pytest'],
+        tests_require=['pytest', 'pytest-remotedata'],
         install_requires=[
             'setuptools>=36.2.1',
             'six>=1.7',
@@ -155,7 +163,8 @@ def setup_package():
             'scipy>=0.19', 'PyYaml',
             'matplotlib',
             'enum34;python_version<"3.4"',
-            'python-dateutil'
+            'contextlib2;python_version<"3.5"',
+            'python-dateutil', 'lmfit', 'scikit-image'
         ],
         zip_safe=False,
         classifiers=[

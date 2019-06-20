@@ -94,12 +94,12 @@ class Structured3(BaseStructuredCalibration):
         self.struct3 = state['struct3']
 
 
-def test_convert_in():
-
-    multi = MultiType(TypeA, TypeB)
-
-    with pytest.raises(ValueError):
-        multi.convert_in(None)
+# def test_convert_in():
+#
+#     multi = MultiType(TypeA, TypeB)
+#
+#     with pytest.raises(ValueError):
+#         multi.convert_in(None)
 
 
 def test_validate1():
@@ -124,7 +124,7 @@ def test_validate2():
     multi = MultiType(TypeA, TypeB)
 
     # Simulate valid query
-    multi._current = multi.type_options[0]
+    multi.current_node = multi.node_type[0]
 
     # testing with selection of the internal type
     # It should validate TypeA only
@@ -148,7 +148,7 @@ def test_tag_names1():
 def test_tag_names2():
 
     multi = MultiType(TypeA, TypeB)
-    multi._current = multi.type_options[1]
+    multi.current_node = multi.node_type[1]
 
     assert multi.tag_names() == ['domeB']
 
@@ -187,22 +187,14 @@ def test_load_multitype(tmpdir):
     filename2 = prefix2 + '.json'
     filename3 = prefix3 + '.json'
 
-    class A(object):
-        pass
-
-    a = A()
-
     obj1 = Structured1()
     obj2 = Structured2()
     obj3 = Structured3()
 
     with cntx.working_directory(str(tmpdir)):
-        a.destination = prefix1
-        numina.store.dump(obj1, obj1, a)
-        a.destination = prefix2
-        numina.store.dump(obj2, obj2, a)
-        a.destination = prefix3
-        numina.store.dump(obj3, obj3, a)
+        numina.store.dump(obj1, obj1, prefix1)
+        numina.store.dump(obj2, obj2, prefix2)
+        numina.store.dump(obj3, obj3, prefix3)
 
     with cntx.working_directory(str(tmpdir)):
 

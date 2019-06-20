@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -10,6 +10,8 @@
 import pytest
 
 from numina.tests.drptest import create_drp_test
+import numina.instrument.assembly as asb
+
 from ..dictdal import HybridDAL
 
 @pytest.fixture
@@ -44,8 +46,10 @@ def hybriddal():
     gentable = {}
     gentable['products'] = prod_table
     gentable['requirements'] = {}
-
-    base = HybridDAL(drps, ob_table, gentable, {})
+    # Load instrument profiles
+    pkg_paths = ['numina.drps.tests.configs']
+    store = asb.load_paths_store(pkg_paths)
+    base = HybridDAL(drps, ob_table, gentable, {}, components=store)
 
     return base
 

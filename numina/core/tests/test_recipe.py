@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,8 +18,8 @@ from ..recipeinout import RecipeInput, RecipeResult
 from ..requirements import ObservationResultRequirement
 from ..dataholders import Result
 from ..requirements import Requirement
-from numina.types.obsresult import QualityControlProduct
 from numina.types.qc import QC
+from numina.types.datatype import PlainPythonType
 
 
 class PruebaRecipe1(BaseRecipe):
@@ -76,12 +76,12 @@ def test_metaclass():
     assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
 
 
-def test_recipe_with_autoqc():
+def test_recipe_with_autofield():
 
-    class RecipeTestAutoQC(BaseRecipe):
-        qc82h = Result(QualityControlProduct, destination='qc')
+    class RecipeTestAutoField(BaseRecipe):
+        qc82h = Result(float, destination='qc')
 
-    class RecipeTest(RecipeTestAutoQC):
+    class RecipeTest(RecipeTestAutoField):
         obsresult = ObservationResultRequirement()
         someresult = Result(int, 'Some integer')
 
@@ -105,10 +105,10 @@ def test_recipe_with_autoqc():
 
     qc = RecipeTest.RecipeResult.stored()['qc']
 
-    assert isinstance(qc.type, QualityControlProduct)
+    assert isinstance(qc.type, PlainPythonType)
 
 
-def test_recipe_without_autoqc():
+def test_recipe_without_autofield():
 
     class RecipeTest(BaseRecipe):
         obsresult = ObservationResultRequirement()

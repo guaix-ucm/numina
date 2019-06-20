@@ -30,3 +30,17 @@ def ignored(*exceptions):
     except exceptions:
         pass
 
+
+@contextlib.contextmanager
+def environ(**keys):
+    """Context manager that records environment"""
+    old_vals = {key: os.environ.get(key, None) for key in keys}
+    os.environ.update(keys)
+    try:
+        yield
+    finally:
+        for key, val in old_vals.items():
+            if val is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = val

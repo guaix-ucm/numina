@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,6 +11,8 @@
 """
 Recipe inputs and outputs
 """
+
+import uuid
 
 from six import with_metaclass
 
@@ -38,8 +40,8 @@ class RecipeInOut(object):
         sclass = type(self).__name__
         full = []
         for key, val in self.stored().items():
-            full.append('%s=%r' % (key, val))
-        return '%s(%s)' % (sclass, ', '.join(full))
+            full.append('{0}={1!r}'.format(key, val))
+        return '{}({})'.format(sclass, ', '.join(full))
 
     def _finalize(self, all_msg_errors=None):
         """Access all the instance descriptors
@@ -83,59 +85,77 @@ class RecipeInOut(object):
         for check in checkers:
             check.check(self)
 
+    @classmethod
+    def tag_names(cls):
+        qfields = set()
+        for key, req in cls.stored().items():
+            tag_n = req.tag_names()
+            qfields.update(tag_n)
+        return qfields
+
 
 class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
     """RecipeInput base class"""
     pass
 
 
-class RecipeResult(with_metaclass(RecipeResultType, RecipeInOut)):
+class RecipeResultBase(with_metaclass(RecipeResultType, RecipeInOut)):
     """The result of a Recipe."""
 
     def store_to(self, where):
 
-        saveres = {}
-        saveres['values'] = {}
-        # FIXME: workaround for QC, this should be managed elsewhere
-        if hasattr(self, 'qc'):
-            saveres['qc'] = self.qc
-
+        saveres = dict(values={})
         saveres_v = saveres['values']
         for key, prod in self.stored().items():
-            # FIXME: workaround for QC, this should be managed elsewhere
-            if key == 'qc':
-                continue
             val = getattr(self, key)
-            where.destination = "{}".format(prod.dest)
-            saveres_v[key] = numina.store.dump(prod.type, val, where)
+            saveres_v[key] = numina.store.dump(prod.type, val, prod.dest)
 
         return saveres
 
 
-class RecipeResultQC(RecipeResult):
+class RecipeResult(RecipeResultBase):
+
     def __init__(self, *args, **kwds):
 
         # Extract QC if available
         self.qc = numina.types.qc.QC.UNKNOWN
+        self.uuid = uuid.uuid1()
+
+        # qc is not passed further
         if 'qc' in kwds:
             self.qc = kwds['qc']
             del kwds['qc']
 
-        super(RecipeResultQC, self).__init__(*args, **kwds)
+        super(RecipeResult, self).__init__(*args, **kwds)
 
     def store_to(self, where):
+        saveres = super(RecipeResult, self).store_to(where)
 
-        saveres = super(RecipeResultQC, self).store_to(where)
-
-        saveres['qc'] = self.qc
+        saveres['qc'] = self.qc.name
+        saveres['uuid'] = str(self.uuid)
         return saveres
+
+    def time_it(self, time1, time2):
+        import numina.types.dataframe as dataframe
+        values = self.attrs()
+        for k, spec in self.stored().items():
+            value = values[k]
+            # Store for Images..
+            if isinstance(value, dataframe.DataFrame):
+                hdul = value.open()
+                self.add_computation_time(hdul, time1, time2)
+
+    def add_computation_time(self, img, time1, time2):
+        img[0].header['NUMUTC1'] = time1.isoformat()
+        img[0].header['NUMUTC2'] = time2.isoformat()
+        return img
 
 
 class define_result(object):
     """Recipe decorator."""
     def __init__(self, resultClass):
         if not issubclass(resultClass, RecipeResult):
-            msg = '%r does not derive from RecipeResult' % resultClass
+            msg = '{0!r} does not derive from RecipeResult'.format(resultClass)
             raise TypeError(msg)
         self.klass = resultClass
 
@@ -146,12 +166,11 @@ class define_result(object):
 
 class define_input(object):
     """Recipe decorator."""
-    def __init__(self, inputClass):
-        if not issubclass(inputClass, RecipeInput):
-            fmt = '%r does not derive from RecipeInput'
-            msg = fmt % inputClass
+    def __init__(self, input_class):
+        if not issubclass(input_class, RecipeInput):
+            msg = '{0!r} does not derive from RecipeInput'.format(input_class)
             raise TypeError(msg)
-        self.klass = inputClass
+        self.klass = input_class
 
     def __call__(self, klass):
         klass.RecipeInput = self.klass

@@ -15,7 +15,7 @@ from __future__ import print_function
 import itertools
 import numpy as np
 from numpy.polynomial import Polynomial
-import scipy.misc
+from scipy.special import comb
 
 from ..display.iofunctions import readi
 from ..display.iofunctions import readf
@@ -376,7 +376,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     # Verify that the number of triplets coincides with the expected
     # value.
     ntriplets_master = len(triplets_master_list)
-    if ntriplets_master == scipy.misc.comb(nlines_master, 3, exact=True):
+    if ntriplets_master == comb(nlines_master, 3, exact=True):
         if abs(debugplot) >= 10:
             print('>>> Total number of lines in master table:', 
                   nlines_master)
@@ -1846,8 +1846,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             set_window_geometry(geometry)
 
             grid = plt.GridSpec(2, 1)
-            grid.update(left=0.08, right=0.98,
-                        bottom=0.10, top=0.95, hspace=0.01)
+            grid.update(left=0.10, right=0.98,
+                        bottom=0.10, top=0.90, hspace=0.01)
 
             # differences between linear fit and fitted polynomial
             # polynomial fit
@@ -1882,28 +1882,28 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                              color='tab:gray', label='ignored')
                 ax1.plot(xpol, ypol, 'c-', label='fit')
             ax1.set_ylabel('polynomial - linear fit ' + r'($\AA$)')
-            ax1.text(0, 1, 'CRVAL1 (' + r'$\AA$' + '):' +
+            ax1.text(0.01, 0.99, 'CRVAL1 (' + r'$\AA$' + '):' +
                      str(round(crval1_linear, decimal_places)),
                      horizontalalignment='left',
                      verticalalignment='top',
                      transform=ax1.transAxes)
-            ax1.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel):' +
+            ax1.text(0.01, 0.91, 'CDELT1 (' + r'$\AA$' + '/pixel):' +
                      str(round(cdelt1_linear, decimal_places)),
-                     horizontalalignment='right',
-                     verticalalignment='bottom',
+                     horizontalalignment='left',
+                     verticalalignment='top',
                      transform=ax1.transAxes)
-            ax1.text(1, 1, 'robust_std (' + r'$\AA$' + '):' +
+            ax1.text(0.99, 0.99, 'robust std (' + r'$\AA$' + '):' +
                      str(round(yres_summary['robust_std'], decimal_places)),
                      horizontalalignment='right',
                      verticalalignment='top',
                      transform=ax1.transAxes)
-            ax1.text(0.5, 1, 'No. points (total / used): ' +
+            ax1.text(0.5, 0.55, 'No. points (total / used): ' +
                      str(nlines_ok) + ' / ' +
                      str(yres_summary['npoints']),
                      horizontalalignment='center',
                      verticalalignment='top',
                      transform=ax1.transAxes)
-            ax1.text(0.5, 0, 'Polynomial degree: ' + str(poldeg_effective),
+            ax1.text(0.5, 0.4, 'Polynomial degree: ' + str(poldeg_effective),
                      horizontalalignment='center',
                      verticalalignment='bottom',
                      transform=ax1.transAxes)
@@ -1911,7 +1911,9 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 ax1.set_title('Refined wavelength calibration')
             else:
                 ax1.set_title(plottitle)
-            ax1.legend(numpoints=1)
+            ax1.legend(numpoints=1, ncol=3, fancybox=True,
+                       loc='lower center')
+            #           bbox_to_anchor=(0.5, 1.00))
 
             # lower plot
             if local_ylogscale:

@@ -20,11 +20,10 @@ from numina.util.objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
-from .insconf import InstrumentConfiguration, instrument_loader
+# from .instrument.insconf import InstrumentConfiguration, instrument_loader
 from .pipeline import ProductEntry
 from .query import ResultOf
 from .taggers import get_tags_from_full_ob
-import numina.util.convert as convert
 
 
 def check_section(node, section, keys=None):
@@ -43,7 +42,7 @@ def drp_load(package, resource, confclass=None):
 
 def drp_load_data(package, data, confclass=None):
     """Load the DRPS from data."""
-    drpdict = yaml.load(data)
+    drpdict = yaml.safe_load(data)
     ins = load_instrument(package, drpdict, confclass=confclass)
     if ins.version == 'undefined':
         pkg = importlib.import_module(package)
@@ -160,42 +159,27 @@ def load_pipelines(instrument, node):
 
 
 def load_confs(package, node, confclass=None):
-    keys = ['values']
+    import numina.instrument.assembly as asbl
+    keys = []
     check_section(node, 'configurations', keys=keys)
 
     path = node.get('path')
     if path:
         modpath = path
     else:
-        modpath = "%s.instrument.configs" % package
+        modpath = "{}.instrument.configs".format(package)
 
     if confclass is None:
         loader = DefaultLoader(modpath=modpath)
 
-    default_entry = node.get('default')
     tagger = node.get('tagger')
     if tagger:
         ins_tagger = import_object(tagger)
     else:
         ins_tagger = None
 
-    values = node['values']
-    confs = {}
-    if values:
-        for uuid in values:
-            fname = 'instrument-{}.json'.format(uuid)
-            confs[uuid] = instrument_loader(modpath, fname)
-    else:
-        confs['default'] = InstrumentConfiguration.create_null()
-        default_entry = 'default'
-
-    if default_entry:
-        confs['default'] = confs[default_entry]
-    else:
-        if 'default' not in confs:
-            # Choose the first if is not already defined
-            confs['default'] = confs[values[0]]
-    return confs, ins_tagger
+    confs = asbl.load_paths_store([modpath])
+    return confs, ins_tagger, modpath
 
 
 def load_pipeline(instrument, name, node):
@@ -229,7 +213,22 @@ def load_recipe(name, node):
         recipe['class'] = node
     if 'args' in recipe:
         recipe['args'] = tuple(recipe['args'])
+    if 'links' in recipe:
+        recipe['links'] = load_link(recipe['links'])
     return recipe
+
+
+def load_link(node):
+    """Build a ResultOf query from dict"""
+    result = {}
+    for key, opt_dict in node.items():
+
+        if 'result_of' in opt_dict:
+            fields = opt_dict['result_of']
+            result[key] = ResultOf(**fields)
+        else:
+            pass
+    return result
 
 
 def load_base(name, node):
@@ -280,12 +279,17 @@ def load_instrument(package, node, confclass=None):
         trans['version'] = node['version']
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node)
-    confs, custom_selector = load_confs(package, conf_node, confclass=confclass)
+    confs, custom_selector, modpath = load_confs(package, conf_node, confclass=confclass)
+    # trans['configurations'] = confs
     trans['configurations'] = confs
     ins = InstrumentDRP(**trans)
-    # add bound method
+    # idiom to add a bound method
     if custom_selector:
         ins.select_configuration = custom_selector.__get__(ins)
+    # Add package name
+    ins.package = package
+    # Add profile path
+    ins.profiles = modpath
     return ins
 
 

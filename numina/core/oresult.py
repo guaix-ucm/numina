@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,6 +28,7 @@ class ObservingBlock(object):
         self.configuration = 'default'
         self.prodid = None
         self.tags = {}
+        self.labels = {}
         self.results = {}
         self.requirements = {}
 
@@ -73,12 +74,12 @@ class ObservationResult(ObservingBlock):
         return origin
 
     def get_sample_frame(self):
-        """Return first available image in observation result"""
+        """Return first available frame in observation result"""
         for frame in self.frames:
-            return frame.open()
+            return frame
 
         for res in self.results.values():
-            return res.open()
+            return res
 
         return None
 
@@ -91,6 +92,34 @@ def dataframe_from_list(values):
         return DataFrame(frame=values)
     else:
         return None
+
+
+def oblock_from_dict(values):
+    """Build a ObservingBlock object from a dictionary."""
+
+    obsres = ObservingBlock()
+
+    ikey = 'frames'
+    # Workaround
+    if 'images' in values:
+        ikey = 'images'
+
+    obsres.id = values.get('id', 1)
+    obsres.mode = values['mode']
+    obsres.instrument = values['instrument']
+    obsres.configuration = values.get('configuration', 'default')
+    obsres.pipeline = values.get('pipeline', 'default')
+    obsres.children = values.get('children',  [])
+    obsres.parent = values.get('parent', None)
+    obsres.results = values.get('results', {})
+    obsres.labels = values.get('labels', {})
+    obsres.requirements = values.get('requirements', {})
+    try:
+        obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
+    except Exception:
+        obsres.frames = []
+
+    return obsres
 
 
 def obsres_from_dict(values):
@@ -111,6 +140,7 @@ def obsres_from_dict(values):
     obsres.children = values.get('children',  [])
     obsres.parent = values.get('parent', None)
     obsres.results = values.get('results', {})
+    obsres.labels = values.get('labels', {})
     obsres.requirements = values.get('requirements', {})
     try:
         obsres.frames = [dataframe_from_list(val) for val in values[ikey]]

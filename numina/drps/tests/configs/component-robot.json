@@ -1,0 +1,12 @@
+{
+  "name": "RobotPos",
+  "type": "component",
+  "description": "Component for testing",
+  "uuid": "2ec1cc18-ab34-48e0-ac25-7483c254f5d2",
+  "class": "numina.drps.tests.comps.RobotPos",
+  "date_start": null,
+  "date_end": null,
+  "setup": [
+    {"name": "RobotModel", "id": "robotmodel"}
+ ]
+}

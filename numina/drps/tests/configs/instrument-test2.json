@@ -1,0 +1,10 @@
+{
+  "description": "Default configuration",
+  "uuid": "9c21b315-9231-4fe0-a276-5043b064a3a8",
+  "date_start": "2012-06-01T12:00:00.0",
+  "date_end": null,
+  "type": "instrument",
+  "name": "TEST2",
+  "components": [
+  ]
+}

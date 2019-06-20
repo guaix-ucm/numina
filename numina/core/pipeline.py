@@ -53,6 +53,8 @@ class Pipeline(object):
         args = entry.get('args', ())
         kwargs = entry.get('kwargs', {})
         links = entry.get('links', {})
+        if links:
+            kwargs['query_options'] = links
 
         recipe = Cls.__new__(Cls, *args, **kwargs)
         recipe.__init__(*args, **kwargs)
@@ -243,19 +245,20 @@ class InstrumentDRP(object):
     def configuration_selector(self, obsres):
         warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
                       DeprecationWarning, stacklevel=2)
-        return self.select_configuration(obsres)
+        return self.select_configuration_old(obsres)
 
     def product_label(self, tipo):
         return tipo.name()
 
-    def select_configuration(self, obresult):
+    def select_configuration_old(self, obresult):
         """Select instrument configuration based on OB"""
 
         logger = logging.getLogger(__name__)
         logger.debug('calling default configuration selector')
 
         # get first possible image
-        ref = obresult.get_sample_frame()
+        ref_frame = obresult.get_sample_frame()
+        ref = ref_frame.open()
         extr = self.datamodel.extractor_map['fits']
         if ref:
             # get INSCONF configuration
@@ -290,6 +293,46 @@ class InstrumentDRP(object):
         else:
             logger.debug('no match, using default configuration')
             return self.configurations['default']
+
+    def select_configuration(self, obresult):
+        return self.select_profile(obresult)
+
+    def select_profile(self, obresult):
+        """Select instrument profile based on OB"""
+
+        logger = logging.getLogger(__name__)
+        logger.debug('calling default profile selector')
+        # check configuration
+        insconf = obresult.configuration
+        if insconf != 'default':
+            key = insconf
+            date_obs = None
+            keyname = 'uuid'
+        else:
+            # get first possible image
+            sample_frame = obresult.get_sample_frame()
+            if sample_frame is None:
+                key = obresult.instrument
+                date_obs = None
+                keyname = 'name'
+            else:
+                return self.select_profile_image(sample_frame.open())
+        return key, date_obs, keyname
+
+    def select_profile_image(self, img):
+        """Select instrument profile based on FITS"""
+
+        extr = self.datamodel.extractor_map['fits']
+
+        date_obs = extr.extract('observation_date', img)
+        key = extr.extract('insconf', img)
+        if key is not None:
+            keyname = 'uuid'
+        else:
+            key = extr.extract('instrument', img)
+            keyname = 'name'
+
+        return key, date_obs, keyname
 
     def get_recipe_object(self, mode_name, pipeline_name='default'):
         """Build a recipe object from a given mode name"""
@@ -346,6 +389,8 @@ class ObservingMode(object):
 
     def tag_ob(self, partial):
         if self.tagger is not None:
+            warnings.warn("per mode taggers are deprecated, recipe requirements provide al required informatation",
+                          DeprecationWarning, stacklevel=2)
             partial.tags = self.tagger(partial)
         return partial
 

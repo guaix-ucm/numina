@@ -10,7 +10,7 @@
 from .recipes import BaseRecipe
 from .recipeinout import RecipeInput, RecipeResult
 from .pipeline import InstrumentDRP, Pipeline
-from .insconf import InstrumentConfiguration
+# from .instrument.insconf import InstrumentConfiguration
 from .pipeline import ObservingMode
 from .pipelineload import drp_load
 from .dataholders import Parameter, Requirement

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -44,8 +44,6 @@ class DataManager(object):
         self.result_file = 'result.json'
         self.task_file = 'task.json'
 
-        self.storage = DiskStorageBase()
-
     def insert_obs(self, loaded_obs):
         self.backend.add_obs(loaded_obs)
 
@@ -68,7 +66,7 @@ class DataManager(object):
 
     def serializer(self, data, fd):
         if self.serial_format == 'yaml':
-            self.serializer_json(data, fd)
+            self.serializer_yaml(data, fd)
         elif self.serial_format == 'json':
             self.serializer_json(data, fd)
         else:
@@ -82,48 +80,35 @@ class DataManager(object):
         import yaml
         yaml.dump(data, fd)
 
-    def store_result_to(self, result, storage):
-        import numina.store
-
-        saveres = {}
-        saveres['values'] = {}
-        # FIXME: workaround for QC, this should be managed elsewhere
-        if hasattr(result, 'qc'):
-            saveres['qc'] = result.qc
-
-        saveres_v = saveres['values']
-        for key, prod in result.stored().items():
-            # FIXME: workaround for QC, this should be managed elsewhere
-            if key == 'qc':
-                continue
-            val = getattr(result, key)
-            storage.destination = "{}".format(prod.dest)
-            saveres_v[key] = numina.store.dump(prod.type, val, storage)
-
+    def store_result_to(self, result):
+        saveres = result.store_to(None)
         return saveres
 
     def store_task(self, task):
 
-        result_dir = task.request_runinfo['results_dir']
+        result_dir_rel = task.request_runinfo['results_dir']
+        result_dir = os.path.join(self.basedir, result_dir_rel)
 
         with working_directory(result_dir):
             _logger.info('storing task and result')
 
-            # save to disk the RecipeResult part and return the file to save it
-            result_repr = self.store_result_to(task.result, self.storage)
-
             task_repr = task.__dict__.copy()
-            # Change result structure by filename
-            task_repr['result'] = self.result_file
 
-            with open(self.result_file, 'w+') as fd:
-                self.serializer(result_repr, fd)
+            # save to disk the RecipeResult part and return the file to save it
+            if task.result is not None:
+                result_repr = self.store_result_to(task.result)
+                # Change result structure by filename
+                task_repr['result'] = self.result_file
 
-            with open(self.storage.task, 'w+') as fd:
+                with open(self.result_file, 'w+') as fd:
+                    self.serializer(result_repr, fd)
+
+            with open(self.task_file, 'w+') as fd:
                 self.serializer(task_repr, fd)
 
         self.backend.update_task(task)
-        self.backend.update_result(task, result_repr, self.result_file)
+        if task.result is not None:
+            self.backend.update_result(task, result_repr, self.result_file)
 
     def create_workenv(self, task):
 
@@ -156,26 +141,13 @@ class ProcessingTask(object):
         self.time_end = 0
         self.request = "reduce"
         self.request_params = {}
-        self.request_runinfo = {}
+        self.request_runinfo = self._init_runinfo()
         self.state = 0
 
-    def store(self, where):
-
-        # save to disk the RecipeResult part and return the file to save it
-        result_repr = self.result.store_to(where)
-
-        import json
-        with open(where.result, 'w+') as fd:
-            json.dump(result_repr, fd, indent=2, cls=ExtEncoder)
-
-        task_repr = self.__dict__.copy()
-        # Change result structure by filename
-        task_repr['result'] = where.result
-
-        with open(where.task, 'w+') as fd:
-            yaml.dump(task_repr, fd)
-
-        return where.task
+    @classmethod
+    def _init_runinfo(cls):
+        request_runinfo = dict(runner='unknown', runner_version='unknown')
+        return request_runinfo
 
 
 class BaseWorkEnvironment(object):
@@ -185,10 +157,10 @@ class BaseWorkEnvironment(object):
         self.basedir = basedir
 
         self.workdir_rel = workdir
-        self.workdir = os.path.abspath(workdir)
+        self.workdir = os.path.abspath(os.path.join(self.basedir, workdir))
 
         self.resultsdir_rel = resultsdir
-        self.resultsdir = os.path.abspath(resultsdir)
+        self.resultsdir = os.path.abspath(os.path.join(self.basedir, resultsdir))
 
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
@@ -228,9 +200,12 @@ class BaseWorkEnvironment(object):
 
         self.copyfiles_stage2(reqs)
 
-    def copyfiles_stage1(self, obsres):
+    def installfiles_stage1(self, obsres, action='copy'):
         import astropy.io.fits as fits
-        _logger.debug('copying files from observation result')
+
+        install_if_needed = self._calc_install_if_needed(action)
+
+        _logger.debug('installing files from observation result')
         tails = []
         sources = []
         for f in obsres.images:
@@ -260,11 +235,51 @@ class BaseWorkEnvironment(object):
             dest = os.path.join(self.workdir, key)
             # Update filename in DataFrame
             obj.filename = dest
-            self.copy_if_needed(key, src, dest)
+            install_if_needed(key, src, dest)
 
         if obsres.results:
-            _logger.warning("not copying files in 'results")
+            _logger.warning("not installing files in 'results")
         return obsres
+
+    def _calc_install_if_needed(self, action):
+        if action not in ['copy', 'link']: # , 'symlink', 'hardlink']:
+            raise ValueError("{} action is not allowed".format(action))
+
+        _logger.debug('installing files with "{}"'.format(action))
+
+        if action == 'copy':
+            install_if_needed = self.copy_if_needed
+        elif action == 'link':
+            install_if_needed = self.link_if_needed
+        else:
+            raise ValueError("{} action is not allowed".format(action))
+        return install_if_needed
+
+    def installfiles_stage2(self, reqs, action='copy'):
+        _logger.debug('installing files from requirements')
+
+        install_if_needed = self._calc_install_if_needed(action)
+
+        for _, req in reqs.stored().items():
+            if isinstance(req.type, DataFrameType):
+                value = getattr(reqs, req.dest)
+                if value is None:
+                    continue
+
+                complete = os.path.abspath(
+                    os.path.join(self.datadir, value.filename)
+                )
+
+                head, tail = os.path.split(value.filename)
+                dest = os.path.join(self.workdir, tail)
+
+                install_if_needed(value.filename, complete, dest)
+
+    def copyfiles_stage1(self, obsres):
+        return self.installfiles_stage1(obsres, action='copy')
+
+    def linkfiles_stage1(self, obsres):
+        return self.installfiles_stage1(obsres, action='link')
 
     def check_duplicates(self, tails):
         seen = set()
@@ -277,18 +292,10 @@ class BaseWorkEnvironment(object):
         return dupes
 
     def copyfiles_stage2(self, reqs):
-        _logger.debug('copying files from requirements')
-        for _, req in reqs.stored().items():
-            if isinstance(req.type, DataFrameType):
-                value = getattr(reqs, req.dest)
-                if value is None:
-                    continue
+        return self.installfiles_stage2(reqs, action='copy')
 
-                complete = os.path.abspath(
-                    os.path.join(self.datadir, value.filename)
-                )
-
-                self.copy_if_needed(value.filename, complete, self.workdir)
+    def linkfiles_stage2(self, reqs):
+        return self.installfiles_stage2(reqs, action='link')
 
     def copy_if_needed(self, key, src, dest):
 
@@ -322,6 +329,15 @@ class BaseWorkEnvironment(object):
             _logger.debug('save hashes')
             with open(self.index_file, 'wb') as fd:
                 pickle.dump(self.hashes, fd)
+
+    def link_if_needed(self, key, src, dest):
+        _logger.debug('linking %r to %r', key, self.workdir)
+        try:
+            # Remove destination
+            os.remove(dest)
+        except OSError:
+            pass
+        os.symlink(src, dest)
 
     def adapt_obsres(self, obsres):
         """Adapt obsres after file copy"""
@@ -381,84 +397,118 @@ def make_sure_file_exists(path):
             raise
 
 
-class DiskStorageBase(object):
-    def __init__(self):
-        super(DiskStorageBase, self).__init__()
-        self.result = 'result.yaml'
-        self.task = 'task.yaml'
-        self.idx = 1
-
-    def get_next_basename(self, ext):
-        fname = 'product_%03d%s' % (self.idx, ext)
-        self.idx = self.idx + 1
-        return fname
-
-    def store(self, completed_task, resultsdir):
-        """Store the values of the completed task."""
-
-        with working_directory(resultsdir):
-            _logger.info('storing result')
-            return completed_task.store(self)
+def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+    import numina.instrument.assembly as asbl
+    from numina.dal.dictdal import HybridDAL
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
+    backend = HybridDAL(
+        sys_drps, [], loaded_data,
+        extra_data=loaded_data_extra,
+        basedir=basedir,
+        components=com_store
+    )
+    return backend
 
 
-class DiskStorageDefault(object):
-    # TODO: Deprecate
-    def __init__(self, resultsdir):
-        super(DiskStorageDefault, self).__init__()
-        self.result = 'result.yaml'
-        self.task = 'task.yaml'
-        self.resultsdir = resultsdir
-        self.idx = 1
-
-    def get_next_basename(self, ext):
-        fname = 'product_%03d%s' % (self.idx, ext)
-        self.idx = self.idx + 1
-        return fname
-
-    def store(self, completed_task):
-        """Store the values of the completed task."""
-
-        with working_directory(self.resultsdir):
-            _logger.info('storing result')
-            return completed_task.store(self)
+def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
+                             profile_path_extra=None, filename=None):
+    import numina.instrument.assembly as asbl
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
+    loaded_db = loaded_data['database']
+    backend = Backend(
+        sys_drps, loaded_db,
+        extra_data=loaded_data_extra,
+        basedir=basedir,
+        components=com_store,
+        filename=filename
+    )
+    backend.rootdir = loaded_data.get('rootdir', '')
+    return backend
 
 
-def init_datastore_file(controlfile):
+def create_datamanager(reqfile, basedir, datadir,
+                       extra_control=None, profile_path_extra=None,
+                       persist=True):
+    if reqfile:
+        _logger.info('reading control from %s', reqfile)
+        with open(reqfile, 'r') as fd:
+            loaded_data = yaml.safe_load(fd)
+    else:
+        _logger.info('no control file')
+        loaded_data = {}
 
-    _logger.info('reading control from %s', controlfile)
-    with open(controlfile, 'r') as fd:
-        loaded_data = yaml.load(fd)
+    if extra_control:
+        _logger.info('extra control %s', extra_control)
+        loaded_data_extra = parse_as_yaml(extra_control)
+    else:
+        loaded_data_extra = None
 
     control_format = loaded_data.get('version', 1)
     _logger.info('control format version %d', control_format)
 
-    if control_format == 2:
-        drps = numina.drps.get_system_drps()
-        loaded_db = loaded_data['database']
-        backend = Backend(drps, loaded_db, {})
-        backend.rootdir = loaded_data.get('rootdir', '')
-        datadir = 'data'
-        basedir = 'some'
+    if control_format == 1:
+        _backend = process_format_version_1(basedir, loaded_data, loaded_data_extra, profile_path_extra)
+        datamanager = DataManager(basedir, datadir, _backend)
+        datamanager.workdir_tmpl = "obsid{obsid}_work"
+        datamanager.resultdir_tmpl = "obsid{obsid}_results"
+    elif control_format == 2:
+        if persist:
+            pname = reqfile
+        else:
+            pname = None
+        _backend = process_format_version_2(basedir, loaded_data,
+                                            loaded_data_extra,
+                                            profile_path_extra,
+                                            filename=pname)
 
-        datamanager = DataManager(basedir, datadir, backend)
-        return datamanager
+
+        datamanager = DataManager(basedir, datadir, _backend)
     else:
+        print('Unsupported format', control_format, 'in', reqfile)
         raise ValueError
+    return datamanager
 
 
-def load_observations(obfile):
+def load_observations(obfiles, is_session=False):
+    """Observing mode processing mode of numina."""
 
+    # Loading observation result if exists
     loaded_obs = []
-    with open(obfile) as fd:
-        sess = []
-        for doc in yaml.load_all(fd):
-            enabled = doc.get('enabled', True)
-            docid = doc['id']
-            requirements = doc.get('requirements', {})
-            sess.append(
-                dict(id=docid, enabled=enabled,
-                                 requirements=requirements)
-            )
-            loaded_obs.append(doc)
+    sessions = []
 
-    return loaded_obs
+    for obfile in obfiles:
+        with open(obfile) as fd:
+            if is_session:
+                _logger.info("session file from %r", obfile)
+                sess = yaml.safe_load(fd)
+                sessions.append(sess['session'])
+            else:
+                _logger.info("observation results from %r", obfile)
+                sess = []
+                for doc in yaml.safe_load_all(fd):
+                    enabled = doc.get('enabled', True)
+                    docid = doc['id']
+                    requirements = doc.get('requirements', {})
+                    sess.append(dict(id=docid, enabled=enabled,
+                                     requirements=requirements))
+                    if enabled:
+                        _logger.debug("load observation result with id %s", docid)
+                    else:
+                        _logger.debug("skip observation result with id %s", docid)
+
+                    loaded_obs.append(doc)
+
+            sessions.append(sess)
+    return sessions, loaded_obs
+
+
+def parse_as_yaml(strdict):
+    """Parse a dictionary of strings as if yaml reads it"""
+    interm = ""
+    for key, val in strdict.items():
+        interm = "%s: %s, %s" % (key, val, interm)
+    fin = '{%s}' % interm
+
+    return yaml.load(fin)

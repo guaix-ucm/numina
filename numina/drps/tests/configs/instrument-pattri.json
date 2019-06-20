@@ -1,0 +1,14 @@
+{
+  "description": "Test instrument PATTRI",
+  "uuid": "43273e8c-4071-4a73-a6b4-40c2f07cf054",
+  "date_start": "2016-06-01T12:00:00.0",
+  "date_end": null,
+  "type": "instrument",
+  "name": "PATTRI",
+  "components": [
+    {"name": "PSU"},
+    {"name": "RobotPos", "id": "robot"},
+    {"name": "Detector_Model1", "id": "detector"},
+    {"uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5", "id": "wheel"}
+  ]
+}

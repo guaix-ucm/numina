@@ -17,6 +17,7 @@ import numpy as np
 from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
+from .fileinfo import check_extnum
 from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
 
@@ -329,10 +330,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     plt.colorbar(im_show, shrink=1.0, label=cbar_label,
                  orientation=cbar_orientation)
     if title is not None:
-        if wavecalib:
-            ax.set_title(title + "\n\n")
-        else:
-            ax.set_title(title)
+        ax.set_title(title)
 
     if ds9regfile is not None:
         overplot_ds9reg(ds9regfile.name, ax)
@@ -370,6 +368,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 
 def ximshow_file(singlefile,
+                 extnum=1,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_ds9reg=None,
@@ -382,6 +381,8 @@ def ximshow_file(singlefile,
     ----------
     singlefile : string
         Name of the FITS file to be displayed.
+    extnum : int
+        Extension number: 1 for first extension (default).
     args_cbar_label : string
         Color bar label.
     args_cbar_orientation : string
@@ -443,8 +444,10 @@ def ximshow_file(singlefile,
 
     # read input FITS file
     hdulist = fits.open(singlefile)
-    image_header = hdulist[0].header
-    image2d = hdulist[0].data
+    if extnum is None or extnum < 1 or extnum > len(hdulist):
+        raise ValueError('Unexpected extension number {}'.format(extnum))
+    image_header = hdulist[extnum - 1].header
+    image2d = hdulist[extnum - 1].data
     hdulist.close()
 
     naxis1 = image_header['naxis1']
@@ -552,6 +555,139 @@ def ximshow_file(singlefile,
             return ax
 
 
+def jimshow(image2d,
+            ax=None,
+            title=None,
+            vmin=None, vmax=None,
+            image_bbox=None,
+            xlabel='image pixel in the X direction',
+            ylabel='image pixel in the Y direction',
+            crpix1=None, crval1=None, cdelt1=None,
+            grid=False,
+            cmap='hot',
+            cbar=False,
+            cbar_label='Number of counts',
+            cbar_orientation='horizontal'):
+    """Auxiliary function to display a numpy 2d array via axes object.
+
+    Parameters
+    ----------
+    image2d : 2d numpy array, float
+        2d image to be displayed.
+    ax : axes object
+        Matplotlib axes instance. Note that this value is also
+        employed as output.
+    title : string
+        Plot title.
+    vmin : float, 'min', or None
+        Background value. If None, the minimum zcut is employed.
+    vmax : float, 'max', or None
+        Foreground value. If None, the maximum zcut is employed.
+    image_bbox : tuple (4 integers)
+        Image rectangle to be displayed, with indices given by
+        (nc1,nc2,ns1,ns2), which correspond to the numpy array:
+        image2d[(ns1-1):ns2,(nc1-1):nc2].
+    xlabel : string
+        X-axis label.
+    ylabel : string
+        Y-axis label.
+    crpix1 : float or None
+        CRPIX1 parameter corresponding to wavelength calibration in
+        the X direction.
+    crval1 : float or None
+        CRVAL1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cdelt1 : float or None
+        CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    grid : bool
+        If True, overplot grid.
+    cmap : string
+        Color map to be employed.
+    cbar : bool
+        If True, display colorbar.
+    cbar_label : string
+        Color bar label.
+    cbar_orientation : string
+        Color bar orientation: valid options are 'horizontal' or
+        'vertical'.
+
+    Returns
+    -------
+    ax : axes object
+        Matplotlib axes instance. Note that this value must also
+        be provided as input.
+
+    """
+
+    if ax is None:
+        raise ValueError('ax=None is not valid in this function')
+
+    naxis2_, naxis1_ = image2d.shape
+
+    if image_bbox is None:
+        nc1, nc2, ns1, ns2 = 1, naxis1_, 1, naxis2_
+    else:
+        nc1, nc2, ns1, ns2 = image_bbox
+    if 1 <= nc1 <= nc2 <= naxis1_:
+        pass
+    else:
+        raise ValueError("Invalid bounding box limits")
+    if 1 <= ns1 <= ns2 <= naxis2_:
+        pass
+    else:
+        raise ValueError("Invalid bounding box limits")
+
+    # plot limits
+    xmin = float(nc1) - 0.5
+    xmax = float(nc2) + 0.5
+    ymin = float(ns1) - 0.5
+    ymax = float(ns2) + 0.5
+
+    image2d_region = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
+
+    if vmin is None or vmax is None:
+        z1, z2 = ZScaleInterval().get_limits(image2d_region)
+    else:
+        z1, z2 = None, None
+
+    if vmin is None:
+        vmin = z1
+    elif vmin == 'min':
+        vmin = image2d_region.min()
+    if vmax is None:
+        vmax = z2
+    elif vmax == 'max':
+        vmax = image2d_region.max()
+
+    im_show = ax.imshow(
+        image2d_region,
+        cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax,
+        interpolation="nearest", origin="low",
+        extent=[xmin, xmax, ymin, ymax]
+    )
+    if cbar:
+        import matplotlib.pyplot as plt
+        plt.colorbar(im_show, shrink=1.0,
+                     label=cbar_label, orientation=cbar_orientation,
+                     ax=ax)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(grid)
+    if title is not None:
+        ax.set_title(title)
+
+    if crval1 is not None and cdelt1 is not None:
+        if crpix1 is None:
+            crpix1 = 1.0
+        xminwv = crval1 + (xmin - crpix1) * cdelt1
+        xmaxwv = crval1 + (xmax - crpix1) * cdelt1
+        ax2 = ax.twiny()
+        ax2.grid(False)
+        ax2.set_xlim(xminwv, xmaxwv)
+        ax2.set_xlabel('Wavelength (Angstroms)')
+
+
 def main(args=None):
 
     # parse command-line options
@@ -566,6 +702,10 @@ def main(args=None):
                         nargs="+")
 
     # optional arguments
+    parser.add_argument('--extnum',
+                        help='Extension number in input files (note that ' +
+                             'first extension is 1 = default value)',
+                        default=1, type=int)
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
@@ -591,11 +731,29 @@ def main(args=None):
                         choices = [0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
+    if abs(args.debugplot) in [21, 22]:
+        print('>> args.filename: ', args.filename)
+
     if len(args.filename) == 1:
-        list_fits_files = [tmp.filename for
-                           tmp in list_fileinfo_from_txt(args.filename[0])]
+        list_fits_files = []
+        list_extnum = []
+        for tmp in list_fileinfo_from_txt(args.filename[0]):
+            list_fits_files.append(tmp.filename)
+            list_extnum.append(tmp.extnum)
     else:
-        list_fits_files = args.filename
+        list_fits_files = []
+        list_extnum = []
+        for tmp in args.filename:
+            tmpfile, tmpextnum = check_extnum(tmp)
+            for tmptmp in list_fileinfo_from_txt(tmpfile):
+                list_fits_files.append(tmptmp.filename)
+                list_extnum.append(tmpextnum)
+
+    list_extnum = [args.extnum if dum is None else dum for dum in list_extnum]
+
+    if abs(args.debugplot) in [21, 22]:
+        print('>> Filenames.: ', list_fits_files)
+        print('>> Extensions: ', list_extnum)
 
     # read pdffile
     if args.pdffile is not None:
@@ -605,8 +763,11 @@ def main(args=None):
         from numina.array.display.matplotlib_qt import plt
         pdf = None
 
-    for myfile in list_fits_files:
+    for myfile, extnum in zip(list_fits_files, list_extnum):
+        if extnum is None:
+            extnum = args.extnum
         ximshow_file(singlefile=myfile,
+                     extnum=extnum,
                      args_z1z2=args.z1z2,
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,

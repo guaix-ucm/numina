@@ -42,6 +42,7 @@ class DataProductMixin(DataTypeBase):
 
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""
+        import astropy.io.fits as fits
         result = {}
         if isinstance(obj, dict):
             try:
@@ -51,10 +52,13 @@ class DataProductMixin(DataTypeBase):
         elif isinstance(obj, DataFrame):
             with obj.open() as hdulist:
                 qc = self.datamodel.get_quality_control(hdulist)
+        elif isinstance(obj, fits.HDUList):
+            qc = self.datamodel.get_quality_control(obj)
         else:
             qc = QC.UNKNOWN
 
         result['quality_control'] = qc
+
         other = super(DataProductMixin, self).extract_db_info(obj, keys)
         result.update(other)
         return result

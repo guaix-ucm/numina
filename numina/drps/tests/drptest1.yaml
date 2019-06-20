@@ -2,8 +2,6 @@ name: TEST1
 version: "1"
 configurations:
   path: numina.drps.tests.configs
-  values:
-  - default
 modes:
   - description: A recipe that always fails
     key: fail
@@ -24,6 +22,10 @@ modes:
     summary: Summary of Dark recipe
     tagger:
        - KEY3
+  - description: Image
+    key: image
+    name: Image
+    summary: Summary of Image recipe
 pipelines:
   default:
       recipes:
@@ -33,6 +35,7 @@ pipelines:
              simulate_error: True
           dark: numina.tests.recipes.DarkRecipe
           fail: numina.core.utils.AlwaysFailRecipe
+          image: numina.tests.recipes.ImageRecipe
       products:
           MasterBias: numina.tests.recipes.MasterBias
       provides:

@@ -58,6 +58,11 @@ def register(subparsers, config):
         help='name of an instrument configuration'
         )
     parser_run.add_argument(
+        '--profile-path', dest='profilepath',
+        default=None,
+        help='location of the instrument profiles'
+        )
+    parser_run.add_argument(
         '-p', '--pipeline', dest='pipe_name',
         default='default', help='name of a pipeline'
         )
@@ -85,6 +90,10 @@ def register(subparsers, config):
         )
     parser_run.add_argument(
         '--not-copy-files', action="store_false", dest="copy_files",
+        help='do not copy observation result and requirement files'
+        )
+    parser_run.add_argument(
+        '--link-files', action="store_false", dest="copy_files",
         help='do not copy observation result and requirement files'
         )
     parser_run.add_argument(

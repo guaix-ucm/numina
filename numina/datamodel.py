@@ -244,3 +244,38 @@ class DataModel(object):
         """Obtain quality control flag from the image."""
         fits_extractor = self.extractor_map['fits']
         return fits_extractor.extract('quality_control', img)
+
+
+def get_imgid(img, prefix=True):
+
+    hdr = img[0].header
+    return get_imgid_header(hdr, prefix=prefix)
+
+
+def get_imgid_header(hdr, prefix=True):
+
+    base = "{}"
+    if 'UUID' in hdr:
+        pre = 'uuid:{}'
+        value = hdr['UUID']
+    elif 'EMIRUUID' in hdr:  # EMIRISM
+        pre = 'uuid:{}'
+        value = hdr['EMIRUUID']
+    elif 'DATE-OBS' in hdr:
+        pre = 'dateobs:{}'
+        value = hdr['DATE-OBS']
+    elif 'TSUTC1' in hdr:   # EMIRISM
+        pre = 'tsutc:{:16.5f}'
+        value = hdr['TSUTC1']
+    elif 'checksum' in hdr:
+        pre = 'checksum:{}'
+        value = hdr['checksum']
+    elif 'filename' in hdr:
+        pre = 'file:{}'
+        value = hdr['filename']
+    else:
+        raise ValueError('no method to identity image')
+    if prefix:
+        return pre.format(value)
+    else:
+        return base.format(value)

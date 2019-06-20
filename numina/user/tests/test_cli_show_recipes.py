@@ -12,6 +12,7 @@ drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
 drpdata2 = pkgutil.get_data('numina.drps.tests', 'drptest2.yaml')
 
 
+# def test_show_recipes(capsys, monkeypatch):
 def test_show_recipes(capsys, monkeypatch):
     """Test that one instrument is shown"""
 
@@ -45,6 +46,15 @@ def test_show_recipes(capsys, monkeypatch):
                 "  obs mode: dark",
                 " requirements:",
                 "",
+                "Recipe: numina.tests.recipes.ImageRecipe",
+                " instrument: TEST1",
+                "  pipeline: default",
+                "  obs mode: image",
+                " requirements:",
+                "  obresult type='ObservationResultType()' [Observation Result]",
+                "  master_bias type='MasterBias' [Master Bias]",
+                "  master_dark type='MasterDark' [Master Dark]",
+                "",
                 ""
                 ]
 
@@ -53,6 +63,9 @@ def test_show_recipes(capsys, monkeypatch):
     out = out.split("\n")
     out.sort()
     expected.sort()
+    print('NN')
+    print(out)
+    print(expected)
     assert out == expected
 
 
@@ -89,6 +102,15 @@ def test_show_2_instruments(capsys, monkeypatch):
                 u'  obs mode: dark',
                 u' requirements:',
                 u'',
+                u"Recipe: numina.tests.recipes.ImageRecipe",
+                u" instrument: TEST1",
+                u"  pipeline: default",
+                u"  obs mode: image",
+                u" requirements:",
+                u"  obresult type='ObservationResultType()' [Observation Result]",
+                u"  master_bias type='MasterBias' [Master Bias]",
+                u"  master_dark type='MasterDark' [Master Dark]",
+                u"",
                 u'Recipe: numina.tests.recipes.DarkRecipe',
                 u' instrument: TEST2',
                 u'  pipeline: default',
