@@ -126,10 +126,14 @@ def setup_package():
                 'drptest1.yaml',
                 'drptest2.yaml',
                 'drptest3.yaml',
+                'drptest4.yaml',
                 'drpclodia.yaml',
             ],
             'numina.drps.tests.configs': [
-                'instrument-default.json'
+                'instrument-*.json',
+                'component-*.json',
+                'properties-*.json',
+                'setup-*.json'
             ],
         },
         #ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7],
