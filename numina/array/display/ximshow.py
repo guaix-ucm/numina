@@ -13,6 +13,7 @@ from __future__ import print_function
 import argparse
 from astropy.io import fits
 import numpy as np
+import re
 
 from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
@@ -428,7 +429,12 @@ def ximshow_file(singlefile,
     elif args_z1z2 == "minmax":
         z1z2 = "minmax"
     else:
-        tmp_str = args_z1z2.split(",")
+        if args_z1z2[0] == '[':
+            tmp_str = args_z1z2[1:]
+        else:
+            tmp_str = args_z1z2
+        tmp_str = re.sub(']', '', tmp_str)
+        tmp_str = tmp_str.split(",")
         z1z2 = float(tmp_str[0]), float(tmp_str[1])
 
     # read geometry
@@ -707,7 +713,8 @@ def main(args=None):
                              'first extension is 1 = default value)',
                         default=1, type=int)
     parser.add_argument("--z1z2",
-                        help="tuple z1,z2, minmax or None (use zscale)")
+                        help="tuple [z1,z2], minmax or None (use zscale)",
+                        type=str)
     parser.add_argument("--bbox",
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--firstpix",
