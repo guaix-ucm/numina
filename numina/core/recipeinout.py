@@ -13,12 +13,16 @@ Recipe inputs and outputs
 """
 
 import uuid
+import logging
 
 from six import with_metaclass
 
 from .metaclass import RecipeInputType, RecipeResultType
 import numina.store.dump
 import numina.types.qc
+
+
+_logger = logging.getLogger(__name__)
 
 
 class RecipeInOut(object):
@@ -74,6 +78,7 @@ class RecipeInOut(object):
 
         for key, req in self.stored().items():
             val = getattr(self, key)
+            _logger.debug('validate %s with a value of %s', req, val)
             req.validate(val)
 
         # Run checks defined in __checkers__

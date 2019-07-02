@@ -105,6 +105,10 @@ def register(subparsers, config):
         help='use the obresult file as a session file'
     )
     parser_run.add_argument(
+        '--validate', action="store_true",
+        help='validate inputs and results of recipes'
+    )
+    parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'
         )

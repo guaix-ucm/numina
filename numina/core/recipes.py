@@ -64,6 +64,8 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         recipe.mode = kwargs.get('mode', 'UNKNOWN')
         recipe.pipeline = kwargs.get('pipeline', 'default')
         recipe.intermediate_results = kwargs.get('intermediate_results', False)
+        recipe.validate_inputs = kwargs.get('validate_inputs', False)
+        recipe.validate_results = kwargs.get('validate_results', False)
         recipe.runinfo = cls.create_default_runinfo()
         recipe.runinfo.update(kwargs.get('runinfo', {}))
         recipe.environ = {}
@@ -80,7 +82,8 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         if 'version' in kwds:
             self.__version__ = kwds['version']
 
-        base_kwds = ['instrument', 'mode', 'runinfo', 'intermediate_results']
+        base_kwds = ['instrument', 'mode', 'runinfo', 'intermediate_results',
+                     'validate_inputs']
         for kwd in base_kwds:
             if kwd in kwds:
                 setattr(self, kwd, kwds[kwd])
@@ -146,19 +149,28 @@ class BaseRecipe(with_metaclass(RecipeType, object)):
         a RecipeResult object or an error
         """
 
+        # Optional input validation
+        if self.validate_inputs:
+            self.validate_input(recipe_input)
+
         result = self.run(recipe_input)
 
         # Update QC in the result
         self.run_qc(recipe_input, result)
 
+        if self.validate_results:
+            self.validate_result(result)
+
         return result
 
     def validate_input(self, recipe_input):
         """"Validate the input of the recipe"""
+        self.logger.debug('start validating input')
         recipe_input.validate()
 
     def validate_result(self, recipe_result):
         """Validate the result of the recipe"""
+        self.logger.debug('start validating result')
         recipe_result.validate()
 
     def save_intermediate_img(self, img, name):

@@ -47,7 +47,10 @@ def mode_run_common_obs(args, extra_args):
 
     for job in jobs:
 
-        run_reduce(datamanager,  job['id'], copy_files=args.copy_files)
+        run_reduce(
+            datamanager, job['id'], copy_files=args.copy_files,
+            validate_inputs=args.validate, validate_results=args.validate
+        )
 
     if args.dump_control:
         _logger.debug('dump control status')
