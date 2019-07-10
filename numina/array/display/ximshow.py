@@ -715,6 +715,96 @@ def jimshow(image2d,
         ax2.set_xlabel('Wavelength (Angstroms)')
 
 
+def jimshowfile(filename,
+            extnum=1,
+            ax=None,
+            title=None,
+            vmin=None, vmax=None,
+            image_bbox=None,
+            xlabel='image pixel in the X direction',
+            ylabel='image pixel in the Y direction',
+            crpix1=None, crval1=None, cdelt1=None,
+            grid=False,
+            cmap='hot',
+            cbar=False,
+            cbar_label='Number of counts',
+            cbar_orientation='horizontal'):
+    """Auxiliary function to display a FITS image via axes object.
+
+    Parameters
+    ----------
+    filename : string
+        Input FITS file name.
+    extnum : int
+        Extension number (1: primary)
+    ax : axes object
+        Matplotlib axes instance. Note that this value is also
+        employed as output.
+    title : string
+        Plot title.
+    vmin : float, 'min', or None
+        Background value. If None, the minimum zcut is employed.
+    vmax : float, 'max', or None
+        Foreground value. If None, the maximum zcut is employed.
+    image_bbox : tuple (4 integers)
+        Image rectangle to be displayed, with indices given by
+        (nc1,nc2,ns1,ns2), which correspond to the numpy array:
+        image2d[(ns1-1):ns2,(nc1-1):nc2].
+    xlabel : string
+        X-axis label.
+    ylabel : string
+        Y-axis label.
+    crpix1 : float or None
+        CRPIX1 parameter corresponding to wavelength calibration in
+        the X direction.
+    crval1 : float or None
+        CRVAL1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cdelt1 : float or None
+        CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    grid : bool
+        If True, overplot grid.
+    cmap : string
+        Color map to be employed.
+    cbar : bool
+        If True, display colorbar.
+    cbar_label : string
+        Color bar label.
+    cbar_orientation : string
+        Color bar orientation: valid options are 'horizontal' or
+        'vertical'.
+
+    Returns
+    -------
+    ax : axes object
+        Matplotlib axes instance. Note that this value must also
+        be provided as input.
+
+    """
+
+    # read input FITS file
+    hdulist = fits.open(filename)
+    if extnum is None or extnum < 1 or extnum > len(hdulist):
+        raise ValueError('Unexpected extension number {}'.format(extnum))
+    image2d = hdulist[extnum - 1].data
+    hdulist.close()
+
+    return jimshow(image2d,
+            ax=ax,
+            title=title,
+            vmin=vmin, vmax=vmax,
+            image_bbox=image_bbox,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            crpix1=crpix1, crval1=crval1, cdelt1=cdelt1,
+            grid=grid,
+            cmap=cmap,
+            cbar=cbar,
+            cbar_label=cbar_label,
+            cbar_orientation=cbar_orientation)
+
+
 def main(args=None):
 
     # parse command-line options
