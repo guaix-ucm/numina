@@ -38,10 +38,11 @@ def ximshow_jupyter(image2d, **args):
 def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
-            image_bbox=None, first_pixel=(1,1),
+            image_bbox=None, first_pixel=(1, 1),
             crpix1=None, crval1=None, cdelt1=None,
             ds9regfile=None,
-            geometry=(0, 0, 640, 480), tight_layout=True,
+            geometry=(0, 0, 640, 480), figuredict=None,
+            tight_layout=True,
             debugplot=0, using_jupyter=False):
     """Auxiliary function to display a numpy 2d array.
 
@@ -85,6 +86,9 @@ def ximshow(image2d, title=None, show=True,
         x, y, dx, dy values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
+    figuredict: dictionary
+        Parameters for ptl.figure(). Useful for pdf output.
+        For example: --figuredict "{'figsize': (8, 10), 'dpi': 100}"
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
@@ -302,7 +306,11 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
 
     # display image
-    fig = plt.figure()
+    if figuredict is None:
+        fig = plt.figure()
+    else:
+        fig = plt.figure(**figuredict)
+
     ax = fig.add_subplot(111)
     ax.autoscale(False)
     ax.set_xlabel('image pixel in the X direction')
@@ -373,7 +381,9 @@ def ximshow_file(singlefile,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_keystitle=None, args_ds9reg=None,
-                 args_geometry="0,0,640,480", pdf=None, show=True,
+                 args_geometry="0,0,640,480", pdf=None,
+                 args_figuredict=None,
+                 show=True,
                  debugplot=None,
                  using_jupyter=False):
     """Function to execute ximshow() as called from command line.
@@ -404,6 +414,9 @@ def ximshow_file(singlefile,
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
+    args_figuredict : string containing a dictionary
+        Parameters for ptl.figure(). Useful for pdf output.
+        For example: --figuredict "{'figsize': (8, 10), 'dpi': 100}"
     show : bool
         If True, the function shows the displayed image. Otherwise
         the function just invoke the plt.imshow() function and
@@ -533,6 +546,11 @@ def ximshow_file(singlefile,
         ns0 = int(tmp_firstpix[1])
 
     # display image
+    if args_figuredict is None:
+        figuredict = None
+    else:
+        figuredict = eval(args_figuredict)
+
     ax = ximshow(image2d=image2d, show=False,
                  cbar_label=args_cbar_label,
                  cbar_orientation=args_cbar_orientation,
@@ -545,11 +563,14 @@ def ximshow_file(singlefile,
                  cdelt1=cdelt1,
                  ds9regfile=args_ds9reg,
                  geometry=geometry,
+                 figuredict=figuredict,
                  debugplot=debugplot,
                  using_jupyter=using_jupyter)
 
     if pdf is not None:
         if show:
+            from numina.array.display.matplotlib_qt import plt
+            plt.tight_layout()
             pdf.savefig()
         else:
             return ax
@@ -731,11 +752,15 @@ def main(args=None):
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
                         type=argparse.FileType('w'))
+    parser.add_argument("--figuredict",
+                        help="string with dictionary of parameters for"
+                             "plt.figure()",
+                        type=str)
     parser.add_argument("--debugplot",
                         help="Integer indicating plotting/debugging" +
                              " (default=12)",
                         default=12, type=int,
-                        choices = [0, 1, 2, 10, 11, 12, 21, 22])
+                        choices=[0, 1, 2, 10, 11, 12, 21, 22])
     args = parser.parse_args(args)
 
     if abs(args.debugplot) in [21, 22]:
@@ -782,6 +807,7 @@ def main(args=None):
                      args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,
                      pdf=pdf,
+                     args_figuredict=args.figuredict,
                      debugplot=args.debugplot)
 
     if pdf is not None:
