@@ -21,6 +21,8 @@ _logger = logging.getLogger(__name__)
 
 def register(subparsers, config):
 
+    task_control_base = config.get('run', 'task_control')
+
     parser_verify = subparsers.add_parser(
         'verify',
         help='verify a observation result'
@@ -89,6 +91,11 @@ def register(subparsers, config):
         help='use the obresult file as a session file'
     )
     parser_verify.add_argument(
+        '--validate', action="store_true",
+        help='validate inputs and results of recipes'
+    )
+    parser_verify.add_argument(
+        'obsresult', nargs='+',
         '--obs', action="store_true",
         help='validate files in OBs'
     )
@@ -101,6 +108,25 @@ def register(subparsers, config):
 
 
 def verify(args, extra_args):
+
+    # Loading observation result if exists
+    sessions, loaded_obs = load_observations(args.obsresult, args.session)
+
+    datamanager = create_datamanager(args.reqs, args.basedir, args.datadir, extra_args.extra_control)
+    datamanager.backend.add_obs(loaded_obs)
+
+    # Start processing
+    jobs = []
+    for session in sessions:
+        for job in session:
+            if job['enabled']:
+                jobs.append(job)
+
+    for job in jobs:
+        run_verify(
+            datamanager, job['id'], copy_files=args.copy_files,
+            validate_inputs=args.validate, validate_results=args.validate
+        )
     if args.obs:
         # verify as oblocks
         # Loading observation result if exists
@@ -141,6 +167,7 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
     """Verify raw images"""
 
     configuration = 'default'
+    _logger.info("verify OB with id={}".format(obsid))
     _logger.info(f"verify OB with id={obsid}")
 
     # Roll back to cwd after leaving the context
