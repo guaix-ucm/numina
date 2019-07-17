@@ -75,16 +75,18 @@ class DataFrameType(DataType):
 
     def validate(self, value):
         """validate"""
+        # value must be None or convertible to HDUList
         # obj can be None or a DataFrame
         if value is None:
             return True
         else:
-            try:
-                with value.open() as hdulist:
-                    self.validate_hdulist(hdulist)
-            except Exception:
-                _type, exc, tb = sys.exc_info()
-                six.reraise(ValidationError, exc, tb)
+            if isinstance(value, fits.HDUList):
+                hdulist = value
+            else:
+                hdulist = value.open()
+
+            self.validate_hdulist(hdulist)
+
 
     def validate_hdulist(self, hdulist):
         pass

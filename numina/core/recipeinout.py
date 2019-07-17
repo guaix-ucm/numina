@@ -78,8 +78,12 @@ class RecipeInOut(object):
 
         for key, req in self.stored().items():
             val = getattr(self, key)
-            _logger.debug('validate %s with a value of %s', req, val)
-            req.validate(val)
+            _logger.info('validate %s with a value of %s', req, val)
+            try:
+                req.validate(val)
+                _logger.info('validation passed')
+            except Exception as error:
+                _logger.warning('validation failed with error %s', error)
 
         # Run checks defined in __checkers__
         self._run_checks()

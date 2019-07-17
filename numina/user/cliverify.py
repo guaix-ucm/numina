@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -93,11 +93,11 @@ def register(subparsers, config):
         help='use the obresult file as a session file'
     )
     parser_verify.add_argument(
-        '--validate', action="store_true",
-        help='validate inputs and results of recipes'
+        '--obs', action="store_true",
+        help='validate files in OBs'
     )
     parser_verify.add_argument(
-        'obsresult', nargs='+',
+        'files', nargs='+',
         help='file with the observation result'
     )
 
@@ -105,30 +105,50 @@ def register(subparsers, config):
 
 
 def verify(args, extra_args):
+    import numina.core.config as cfg
+    import astropy.io.fits as fits
+    import numina.util.context as ctx
 
-    # Loading observation result if exists
-    sessions, loaded_obs = load_observations(args.obsresult, args.session)
+    if args.obs:
+        # verify as oblocks
+        # Loading observation result if exists
+        sessions, loaded_obs = load_observations(args.files, args.session)
+        datamanager = create_datamanager(None, args.basedir, args.datadir)
+        datamanager.backend.add_obs(loaded_obs)
 
-    datamanager = create_datamanager(args.reqs, args.basedir, args.datadir, extra_args.extra_control)
-    datamanager.backend.add_obs(loaded_obs)
+        # Start processing
+        jobs = []
+        for session in sessions:
+            for job in session:
+                if job['enabled']:
+                    jobs.append(job)
 
-    # Start processing
-    jobs = []
-    for session in sessions:
-        for job in session:
-            if job['enabled']:
-                jobs.append(job)
+        for job in jobs:
+            run_verify(
+                datamanager, job['id'], copy_files=args.copy_files,
+                validate_inputs=True, validate_results=True
+            )
+    else:
+        # This function loads the recipes
+        datamanager = create_datamanager(None, args.basedir, args.datadir)
+        for file in args.files:
+            _logger.info('checking {}'.format(file))
+            try:
+                result = check_file(file)
+            except Exception as error:
+                result = False
+                #_logger.warning('with error {}'.format(error))
+            _logger.info('checked {}, valid={}'.format(file, result))
+            # print('done')
 
-    for job in jobs:
-        run_verify(
-            datamanager, job['id'], copy_files=args.copy_files,
-            validate_inputs=args.validate, validate_results=args.validate
-        )
+    return 0
 
 
 def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=False,
                validate_inputs=False, validate_results=False):
     """Verify raw images"""
+
+    import numina.core.config as cfg
 
     configuration = 'default'
     _logger.info("verify OB with id={}".format(obsid))
@@ -139,12 +159,113 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
         obsres = datastore.backend.obsres_from_oblock_id(
             obsid, as_mode=as_mode, configuration=configuration
         )
-        print('OBSRES', obsres.frames)
-        print('OBSRES', obsres.__dict__)
-        print(obsres.mode)
-        print(obsres.profile)
-        print(obsres.configuration)
+
+        thisdrp = datastore.backend.drps.query_by_name(obsres.instrument)
+
+        msg = 'the mode of this obsres is {}.{}'.format(obsres.instrument, obsres.mode)
+        _logger.info(msg)
+
+        for v in thisdrp.modes.values():
+            if v.key == obsres.mode:
+                mode_obj = v
+                break
+        else:
+            raise ValueError('unrecognized mode {}'.format(obsres.mode))
+
+        image_is = mode_obj.rawimage
+
         for f in obsres.frames:
             with f.open() as hdulist:
-                print('verify', f)
-                print('verify', hdulist[0].header['date-obs'])
+                _logger.debug('checking {}'.format(f.filename))
+                try:
+                    check_image(hdulist, astype=image_is)
+                except:
+                    pass
+        _logger.info('Checking that individual images are valid for this mode')
+        mode_obj.validate(obsres)
+        #
+
+
+def check_file(filename, astype=None, level=None):
+    import json
+    import yaml
+    import astropy.io.fits as fits
+
+    json_ext = ['.json']
+    fits_ext = ['.fits', '.fits.gz', '.fit']
+    yaml_ext = ['.yaml', '.yml']
+
+    fname, ext = os.path.splitext(filename)
+
+    if ext in json_ext:
+        # print('as json')
+        with open(filename) as fd:
+            obj = json.load(fd)
+        return check_json(obj, astype=astype, level=level)
+    elif ext in fits_ext:
+        # print('as fits')
+        with fits.open(filename) as img:
+            return check_image(img, astype=None)
+    elif ext in yaml_ext:
+        with open(filename) as fd:
+            obj = list(yaml.safe_load_all(fd))
+        return check_yaml(obj, astype=astype, level=level)
+    else:
+        print('ignoring {}'.format(filename))
+        return True
+
+
+def check_json(obj, astype=None, level=None):
+    import numina.core.config as cfg
+
+    if 'instrument' in obj:
+        instrument = obj['instrument']
+        return cfg.check(instrument, obj)
+    else:
+        print("no 'instrument' field in object")
+        # Try to check with other schema
+        return False
+
+
+def check_yaml(obj, astype=None, level=None):
+    #import numina.core.config as cfg
+
+    #import jsonschema
+    #import json
+    # try to verify as obsblock
+    # path = "/home/spr/devel/guaix/numina/schemas/oblock-schema.json"
+    # with open(path) as fd:
+    #     schema = json.load(fd)
+    #     jsonschema.validate(obj, schema=schema)
+    pass
+
+
+def check_image(hdulist, astype=None, level=None):
+
+    import numina.core.config as cfg
+    # Determine the instrument name
+    hdr = hdulist[0].header
+    instrument = hdr['INSTRUME']
+    return cfg.check(instrument, hdulist, astype=astype, level=level)
+
+
+def convert_headers(hdulist):
+    headers = [convert_header(hdu.header) for hdu in hdulist]
+    return headers
+
+
+def convert_header(header):
+    hdu_v = {}
+    hdu_c = {}
+    hdu_o = []
+    hdu_repr = {'values': hdu_v, 'comments': hdu_c, 'ordering': hdu_o}
+
+    for card in header.cards:
+        key = card.keyword
+        value = card.value
+        comment = card.comment
+        hdu_v[key] = value
+        hdu_c[key] = comment
+        hdu_o.append(key)
+
+    return hdu_repr

@@ -361,17 +361,18 @@ class ProductEntry(object):
 
 class ObservingMode(object):
     """Observing modes of an Instrument."""
-    def __init__(self):
+    def __init__(self, instrument=''):
         self.name = ''
         self.key = ''
-        self.instrument = ''
+        self.instrument = instrument
         self.summary = ''
         self.description = ''
         self.tagger = None
         self.validator = None
         self.build_ob_options = None
+        self.rawimage = None
 
-    def validate(self):
+    def validate(self, obsres):
         return True
 
     def build_ob(self, partial_ob, backend, options=None):

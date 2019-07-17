@@ -112,7 +112,7 @@ def run_task_reduce(task, datastore):
 
         _logger.debug('recipe input created')
         # Show the actual inputs
-        for key in recipe.requirements():
+        for key, req in recipe.requirements().items():
             v = getattr(rinput, key)
             _logger.debug("recipe requires %r, value is %s", key, v)
 

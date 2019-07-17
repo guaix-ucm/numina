@@ -70,6 +70,7 @@ def main(args=None):
                 register = entry.load()
                 subcmd_load.append(register)
             except Exception as error:
+                print('exception loading plugin {}'.format(entry), file=sys.stderr)
                 print(error, file=sys.stderr)
 
     parser = argparse.ArgumentParser(

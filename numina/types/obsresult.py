@@ -29,7 +29,7 @@ def _obtain_validator_for(instrument, mode_key):
     if mode.validator:
         return mode.validator
     else:
-        return lambda obj: True
+        return lambda mode, obj: True
 
 
 class ObservationResultType(DataType):
@@ -45,4 +45,4 @@ class ObservationResultType(DataType):
     def validate(self, obj):
         # super(ObservationResultType, self).validate(obj)
         validator = _obtain_validator_for(obj.instrument, obj.mode)
-        return validator(obj)
+        return validator(self, obj)

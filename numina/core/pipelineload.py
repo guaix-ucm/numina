@@ -50,10 +50,10 @@ def drp_load_data(package, data, confclass=None):
     return ins
 
 
-def load_modes(node):
+def load_modes(node, confclass=None):
     """Load all observing modes"""
     if isinstance(node, list):
-        values = [load_mode(child) for child in node]
+        values = [load_mode(child, confclass) for child in node]
         keys = [mode.key for mode in values]
         return dict(zip(keys,values))
     elif isinstance(node, dict):
@@ -62,9 +62,11 @@ def load_modes(node):
     else:
         raise NotImplementedError
 
-def load_mode(node):
+def load_mode(node, confclass=None):
     """Load one observing mdode"""
     obs_mode = ObservingMode()
+    if confclass is not None:
+        node = confclass.mode_loader(node)
     obs_mode.__dict__.update(node)
 
     # handle validator
@@ -278,7 +280,7 @@ def load_instrument(package, node, confclass=None):
     if 'version' in node:
         trans['version'] = node['version']
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
-    trans['modes'] = load_modes(mode_node)
+    trans['modes'] = load_modes(mode_node, confclass)
     confs, custom_selector, modpath = load_confs(package, conf_node, confclass=confclass)
     # trans['configurations'] = confs
     trans['configurations'] = confs
