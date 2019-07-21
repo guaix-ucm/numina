@@ -1,4 +1,4 @@
-# Copyright 2008-2017 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,8 +15,9 @@ from .datatype import DataType
 
 class ArrayType(DataType):
     """A type of array."""
-    def __init__(self, default=None):
+    def __init__(self, fmt='%.18e', default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
+        self.fmt = fmt
 
     def convert(self, obj):
         return self.convert_to_array(obj)
@@ -25,7 +26,7 @@ class ArrayType(DataType):
         return numpy.array(obj)
 
     def _datatype_dump(self, obj, where):
-        return dump_numpy_array(obj, where)
+        return dump_numpy_array(obj, where, self.fmt)
 
     def _datatype_load(self, obj):
         if isinstance(obj, six.string_types):
@@ -64,7 +65,7 @@ def get_filename_numpy_array(obj, where):
     return filename
 
 
-def dump_numpy_array(obj, where):
+def dump_numpy_array(obj, where, fmt='%.18e'):
     filename = get_filename_numpy_array(obj, where)
-    numpy.savetxt(filename, obj)
+    numpy.savetxt(filename, obj, fmt=fmt)
     return filename
