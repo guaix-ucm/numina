@@ -139,13 +139,26 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
         obsres = datastore.backend.obsres_from_oblock_id(
             obsid, as_mode=as_mode, configuration=configuration
         )
-        print('OBSRES', obsres.frames)
-        print('OBSRES', obsres.__dict__)
-        print(obsres.mode)
-        print(obsres.profile)
-        print(obsres.configuration)
-        from jsonschema import validate
+
         import json
+        import numina.frame.schema as SC
+        path1 = "/home/spr/devel/guaix/numina/schemas/image2.json"
+        with open(path1) as fd:
+            skd = json.load(fd)
+
+        for f in obsres.frames:
+            with f.open() as hdulist:
+                print('verify', f)
+                SC.validate(hdulist[0].header, schema=skd['hdus']['primary'])
+                isbias = hdulist[0].header['OBSMODE'] == 'MegaraBiasImage'
+                if isbias:
+                    pass
+                else:
+                    SC.validate(hdulist['fibers'].header, schema=skd['hdus']['fibers'])
+        return 0
+
+
+        from jsonschema import validate
 
         path1 = "/home/spr/devel/guaix/numina/schemas/image1.json"
         with open(path1) as fd:
@@ -154,12 +167,16 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
         for f in obsres.frames:
             with f.open() as hdulist:
                 print('verify', f)
-                print('verify', hdulist[0].header['date-obs'])
-                mm = convert_header(hdulist[0].header)
+                mm = convert_headers(hdulist)
                 validate(mm, schema=schema)
-            break
+                print(mm)
 
         header_conv = []
+
+
+def convert_headers(hdulist):
+    headers = [convert_header(hdu.header) for hdu in hdulist]
+    return headers
 
 
 def convert_header(header):
