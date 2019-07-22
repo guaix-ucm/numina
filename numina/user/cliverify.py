@@ -152,8 +152,13 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
         obsres = datastore.backend.obsres_from_oblock_id(
             obsid, as_mode=as_mode, configuration=configuration
         )
-
-        thisdrp = datastore.backend.drps.query_by_name(obsres.instrument)
+        print('OBSRES', obsres.frames)
+        print('OBSRES', obsres.__dict__)
+        print(obsres.mode)
+        print(obsres.profile)
+        print(obsres.configuration)
+        from jsonschema import validate
+        import json
 
         msg = 'the mode of this obsres is {}.{}'.format(obsres.instrument, obsres.mode)
         _logger.info(msg)
@@ -235,6 +240,11 @@ def check_image(hdulist, astype=None, level=None):
     hdr = hdulist[0].header
     instrument = hdr['INSTRUME']
     cfg.check(instrument, hdulist, astype=astype, level=level)
+
+
+def convert_headers(hdulist):
+    headers = [convert_header(hdu.header) for hdu in hdulist]
+    return headers
 
 
 def convert_headers(hdulist):
