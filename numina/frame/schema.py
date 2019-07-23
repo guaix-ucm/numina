@@ -161,6 +161,42 @@ types_table = {
 }
 
 
+class SchemeKeyword(object):
+    def __init__(self, *args, **kwargs):
+        types_table = {
+            'string': str,
+            'number': float,
+            'integer': int,
+            'bool': bool
+        }
+
+        self.key = "key"
+        self.required = kwargs.get('required', True)
+        self.enum = kwargs.get('enum', None)
+        self.value = kwargs.get('value', None)
+        self.type = kwargs.get('type', None)
+        self.type_p = types_table.get(self.type, None)
+
+    def validate(self, value):
+        sname = 'titlw'
+        key = "ky"
+        if self.required:
+            if value is None:
+                msg = 'required keyword %r missing from header' % key
+                raise SchemaValidationError(sname, msg)
+        if self.type:
+            if not isinstance(value, self.type_p):
+                raise SchemaValidationError(
+                    sname, 'keyword %r is required to have a value of type %r'
+                           '; got a value of type %r instead' %
+                           (key, self.type_p.__name__, type(value).__name__))
+
+
+class SchemeKeywordString(SchemeKeyword):
+    def __init__(self, *args, **kwargs):
+        super(SchemeKeywordString, self).__init__(*args, **kwargs)
+
+
 def validate(header, schema):
     sname = schema.get('title', 'schema')
     schema_keys = schema.get('keywords', {})
