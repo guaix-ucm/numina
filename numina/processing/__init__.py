@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -89,11 +89,15 @@ TagOptionalCorrector = Corrector
 class BadPixelCorrector(Corrector):
     """A Node that corrects a frame from bad pixels."""
 
-    def __init__(self, badpixelmask, datamodel=None, calibid='calibid-unknown', dtype='float32'):
+    def __init__(self, badpixelmask, datamodel=None,
+                 calibid='calibid-unknown',
+                 dtype='float32', hwin=2, wwin=2):
 
         super(BadPixelCorrector, self).__init__(datamodel, calibid, dtype)
 
         self.bpm = badpixelmask
+        self.hwin = hwin
+        self.wwin = wwin
 
     def run(self, img):
         import numina.array.bpm as bpm
@@ -102,7 +106,10 @@ class BadPixelCorrector(Corrector):
         _logger.debug('correcting bad pixel mask in %s', imgid)
 
         data = self.datamodel.get_data(img)
-        newdata = bpm.process_bpm_median(data, self.bpm, hwin=2, wwin=2, fill=0, reuse_values=True)
+        newdata = bpm.process_bpm_median(
+            data, self.bpm, hwin=self.hwin, wwin=self.wwin,
+            fill=0, reuse_values=True
+        )
         # newdata = array.fixpix(data, self.bpm)
         # FIXME: this breaks datamodel abstraction
         img['primary'].data = newdata
