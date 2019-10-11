@@ -73,20 +73,15 @@ def trace(arr, x, y, axis=0, background=0.0,
     return result
 
 
-def trace_limit_min(col, step, hs):
+def tracing_limits(size, col, step, hs):
     m = col % step
     k0 = ((hs + step - m) / step)
-    r = int(math.floor(k0))
-    xx_start = r * step + m
-    return xx_start
-
-
-def trace_limit_max(col, step, hs, size):
-    m = col % step
-    k0 = ((size - hs - step - m) / step)
-    r = int(math.ceil(k0))
-    xx_start = r * step + m
-    return xx_start
+    r0 = int(math.floor(k0))
+    xx_start = r0 * step + m
+    k1 = ((size - hs - step - m) / step)
+    r1 = int(math.ceil(k1))
+    xx_end = r1 * step + m
+    return xx_start, xx_end
 
 
 def axis_to_dispaxis(axis):

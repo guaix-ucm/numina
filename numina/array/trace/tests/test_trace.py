@@ -15,7 +15,7 @@ from numpy.testing import assert_allclose
 
 from ..traces import trace
 from ..traces import axis_to_dispaxis
-from ..traces import trace_limit_max, trace_limit_min
+from ..traces import tracing_limits
 
 
 def test_axis_to_dispaxis():
@@ -79,20 +79,15 @@ def helper_lim_max(col, step, hs, size):
     return col
 
 
-@pytest.mark.parametrize("col", list(range(1998, 2003)))
-@pytest.mark.parametrize("step", [1,2,3])
-@pytest.mark.parametrize("hs", [1,2,3])
-def _test_lower_limit(col, step,hs):
-    vcalc = trace_limit_min(col, step, hs)
-    vreal = helper_lim_min(col, step, hs)
-    assert vcalc == vreal
-
-
-@pytest.mark.parametrize("col", list(range(1998, 2003)))
-@pytest.mark.parametrize("step", [1,2,3])
-@pytest.mark.parametrize("hs", [1,2,3])
 @pytest.mark.parametrize("size", [4096, 4097])
-def test_upper_limit(col, step,hs, size):
-    vcalc = trace_limit_max(col, step, hs, size)
-    vreal = helper_lim_max(col, step, hs, size)
-    assert vcalc == vreal
+@pytest.mark.parametrize("col", list(range(1998, 2003)))
+@pytest.mark.parametrize("step", [1,2,3])
+@pytest.mark.parametrize("hs", [1,2,3])
+def test_lower_limit(size, col, step,hs):
+    vcalc_min, vcalc_max = tracing_limits(size, col, step, hs)
+
+    vreal_min = helper_lim_min(col, step, hs)
+    vreal_max = helper_lim_max(col, step, hs, size)
+
+    assert vcalc_min == vreal_min
+    assert vcalc_max == vreal_max
