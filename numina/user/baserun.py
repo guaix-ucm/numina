@@ -186,7 +186,6 @@ def run_recipe_timed(task, recipe, rinput):
     try:
         task.result = recipe(rinput)
         task.state = 2
-        _logger.info('result: %r', task.result)
     except Exception:
         task.state = 3
         raise
