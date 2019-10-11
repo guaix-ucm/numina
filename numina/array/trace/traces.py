@@ -7,6 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 
+from __future__ import division
+
 import math
 
 from ..utils import coor_to_pix
