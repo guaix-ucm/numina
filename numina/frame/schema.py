@@ -371,6 +371,9 @@ class SchemeKeywordString(SchemeKeyword):
         super(SchemeKeywordString, self).__init__(*args, **kwargs)
 
 
+
+
+
 def validate(header, schema):
     sname = schema.get('title', 'schema')
     schema_keys = schema.get('keywords', {})
