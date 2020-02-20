@@ -18,13 +18,14 @@ import logging.config
 import os
 import sys
 
+import pkg_resources
 import yaml
 from backports.entry_points_selectable import entry_points
 
 from numina import __version__
+
 from .xdgdirs import xdg_config_home
 from .logconf import LOGCONF
-
 
 _logger = logging.getLogger("numina")
 
