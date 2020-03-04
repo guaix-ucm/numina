@@ -25,8 +25,56 @@ from ..stats import summary
 from numina.visualization import ZScaleInterval
 
 
+GLOBAL_ASPECT = 'auto'
+GLOBAL_GEOMETRY = '0,0,800,600'
 dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
+
+
+def check_wavelength_scale(crval1, cdelt1, ctype1, cunit1):
+    """Check for wavelength calibration in the X axis.
+
+    Parameters
+    ----------
+    crval1 : float or None
+        CRVAL1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cdelt1 : float or None
+        CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    ctype1 : str or None
+        CTYPE1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cunit1 : str or None
+        CUNIT1 parameter corresponding to wavelength calibration in
+        the X direction.
+
+    Returns
+    -------
+    result : bool
+        True in the wavelength calibration has been set.
+        False otherwise.
+
+    """
+    result = False
+
+    if ctype1 is None and cunit1 is None:
+        return result
+
+    if ctype1 is not None:
+        if 'wavelength' in ctype1.lower():
+            result = True
+    if cunit1 is not None:
+        if 'angstrom' in cunit1.lower():
+            result = True
+
+    if result:
+        if crval1 is not None and cdelt1 is not None:
+            pass
+        else:
+            result = False
+
+    return result
 
 
 def ximshow_jupyter(image2d, **args):
@@ -39,9 +87,10 @@ def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation=None,
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1, 1),
-            crpix1=None, crval1=None, cdelt1=None,
+            aspect=GLOBAL_ASPECT,
+            crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
             ds9regfile=None,
-            geometry=(0, 0, 640, 480), figuredict=None,
+            geometry=GLOBAL_GEOMETRY, figuredict=None,
             tight_layout=True,
             debugplot=0, using_jupyter=False):
     """Auxiliary function to display a numpy 2d array.
@@ -71,6 +120,9 @@ def ximshow(image2d, title=None, show=True,
         image2d[(ns1-1):ns2,(nc1-1):nc2].
     first_pixel : tuple (2 integers)
         (x0,y0) coordinates of pixel at origin.
+    aspect : str
+        Control de aspect ratio of the axes. Valid values are 'equal'
+        and 'auto'.
     crpix1 : float or None
         CRPIX1 parameter corresponding to wavelength calibration in
         the X direction.
@@ -80,9 +132,15 @@ def ximshow(image2d, title=None, show=True,
     cdelt1 : float or None
         CDELT1 parameter corresponding to wavelength calibration in
         the X direction.
+    ctype1 : str or None
+        CTYPE1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cunit1 : str or None
+        CUNIT1 parameter corresponding to wavelength calibration in
+        the X direction.
     ds9regfile : file handler
         Ds9 region file to be overplotted.
-    geometry : tuple (4 integers) or None
+    geometry : str or None
         x, y, dx, dy values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
@@ -120,7 +178,9 @@ def ximshow(image2d, title=None, show=True,
     naxis2_, naxis1_ = image2d.shape
 
     # check if wavelength calibration is provided
-    wavecalib = crval1 is not None and cdelt1 is not None
+    wavecalib = check_wavelength_scale(
+        crval1=crval1, cdelt1=1, ctype1=ctype1, cunit1=cunit1
+    )
 
     # read bounding box limits
     if image_bbox is None:
@@ -223,6 +283,7 @@ Display statistical summary.....: .
 Set foreground by keyboard......: m
 Set background by keyboard......: n
 Activate/deactivate ds9 regions.: a
+Change aspect ratio.............: =
 Constrain pan/zoom to x axis....: hold x when panning/zooming with mouse
 Constrain pan/zoom to y axis....: hold y when panning/zooming with mouse
 Preserve aspect ratio...........: hold CONTROL when panning/zooming with mouse
@@ -264,6 +325,15 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             print("Type (blindly!) vmax <return>")
             dum_str = ''
             dum_par = "vmax"
+        elif event.key == "=":
+            if ax.get_aspect() == 'equal':
+                aspect = 'auto'
+            else:
+                aspect = 'equal'
+            ax.set_aspect(aspect)
+            plt.tight_layout()
+            plt.show(block=False)
+            plt.pause(0.001)
         elif event.key == "enter":
             if dum_par == "vmin":
                 try:
@@ -328,7 +398,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     else:
         z1, z2 = z1z2
     im_show = plt.imshow(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2],
-                         cmap=cmap, aspect='auto',
+                         cmap=cmap, aspect=aspect,
                          vmin=z1, vmax=z2,
                          interpolation='nearest', origin='low',
                          extent=[xmin, xmax, ymin, ymax])
@@ -345,7 +415,14 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         overplot_ds9reg(ds9regfile.name, ax)
 
     # set the geometry
-    set_window_geometry(geometry)
+    if geometry is not None:
+        tmp_str = geometry.split(",")
+        x_geom = int(tmp_str[0])
+        y_geom = int(tmp_str[1])
+        dx_geom = int(tmp_str[2])
+        dy_geom = int(tmp_str[3])
+        geometry_tuple = x_geom, y_geom, dx_geom, dy_geom
+        set_window_geometry(geometry_tuple)
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
@@ -380,8 +457,9 @@ def ximshow_file(singlefile,
                  extnum=1,
                  args_cbar_label=None, args_cbar_orientation=None,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
+                 args_aspect=GLOBAL_ASPECT,
                  args_keystitle=None, args_ds9reg=None,
-                 args_geometry="0,0,640,480", pdf=None,
+                 args_geometry=GLOBAL_GEOMETRY, pdf=None,
                  args_figuredict=None,
                  show=True,
                  debugplot=None,
@@ -405,12 +483,16 @@ def ximshow_file(singlefile,
         String providing the bounding box tuple: nc1, nc2, ns1, ns2
     args_firstpix : string or None
         String providing the coordinates of lower left pixel.
+        args_aspect : str
+    args_aspect : str
+        Control de aspect ratio of the axes. Valid values are 'equal'
+        and 'auto'.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
     args_ds9reg : file handler
         Ds9 region file to be overplotted.
     args_geometry : string or None
-        Tuple x,y,dx,dy to define the window geometry. This
+        x, y, dx, dy to define the window geometry. This
         information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
@@ -450,17 +532,6 @@ def ximshow_file(singlefile,
         tmp_str = tmp_str.split(",")
         z1z2 = float(tmp_str[0]), float(tmp_str[1])
 
-    # read geometry
-    if args_geometry is None:
-        geometry = None
-    else:
-        tmp_str = args_geometry.split(",")
-        x_geom = int(tmp_str[0])
-        y_geom = int(tmp_str[1])
-        dx_geom = int(tmp_str[2])
-        dy_geom = int(tmp_str[3])
-        geometry = x_geom, y_geom, dx_geom, dy_geom
-
     # read input FITS file
     hdulist = fits.open(singlefile)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
@@ -488,6 +559,14 @@ def ximshow_file(singlefile,
         cdelt1 = image_header['cdelt1']
     else:
         cdelt1 = None
+    if 'ctype1' in image_header:
+        ctype1 = image_header['ctype1']
+    else:
+        ctype1 = None
+    if 'cunit1' in image_header:
+        cunit1 = image_header['cunit1']
+    else:
+        cunit1 = None
 
     # title for plot
     title = singlefile
@@ -558,11 +637,14 @@ def ximshow_file(singlefile,
                  z1z2=z1z2,
                  image_bbox=(nc1, nc2, ns1, ns2),
                  first_pixel=(nc0, ns0),
+                 aspect=args_aspect,
                  crpix1=crpix1,
                  crval1=crval1,
                  cdelt1=cdelt1,
+                 ctype1=ctype1,
+                 cunit1=cunit1,
                  ds9regfile=args_ds9reg,
-                 geometry=geometry,
+                 geometry=args_geometry,
                  figuredict=figuredict,
                  debugplot=debugplot,
                  using_jupyter=using_jupyter)
@@ -587,9 +669,10 @@ def jimshow(image2d,
             title=None,
             vmin=None, vmax=None,
             image_bbox=None,
+            aspect=GLOBAL_ASPECT,
             xlabel='image pixel in the X direction',
             ylabel='image pixel in the Y direction',
-            crpix1=None, crval1=None, cdelt1=None,
+            crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
             grid=False,
             cmap='hot',
             cbar=False,
@@ -614,6 +697,9 @@ def jimshow(image2d,
         Image rectangle to be displayed, with indices given by
         (nc1,nc2,ns1,ns2), which correspond to the numpy array:
         image2d[(ns1-1):ns2,(nc1-1):nc2].
+    aspect : str
+        Control de aspect ratio of the axes. Valid values are 'equal'
+        and 'auto'.
     xlabel : string
         X-axis label.
     ylabel : string
@@ -626,6 +712,12 @@ def jimshow(image2d,
         the X direction.
     cdelt1 : float or None
         CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    ctype1 : str or None
+        CTYPE1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cunit1 : str or None
+        CUNIT1 parameter corresponding to wavelength calibration in
         the X direction.
     grid : bool
         If True, overplot grid.
@@ -689,7 +781,7 @@ def jimshow(image2d,
 
     im_show = ax.imshow(
         image2d_region,
-        cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax,
+        cmap=cmap, aspect=aspect, vmin=vmin, vmax=vmax,
         interpolation="nearest", origin="low",
         extent=[xmin, xmax, ymin, ymax]
     )
@@ -704,7 +796,10 @@ def jimshow(image2d,
     if title is not None:
         ax.set_title(title)
 
-    if crval1 is not None and cdelt1 is not None:
+    wavecalib = check_wavelength_scale(
+        crval1=crval1, cdelt1=1, ctype1=ctype1, cunit1=cunit1
+    )
+    if wavecalib:
         if crpix1 is None:
             crpix1 = 1.0
         xminwv = crval1 + (xmin - crpix1) * cdelt1
@@ -716,19 +811,20 @@ def jimshow(image2d,
 
 
 def jimshowfile(filename,
-            extnum=1,
-            ax=None,
-            title=None,
-            vmin=None, vmax=None,
-            image_bbox=None,
-            xlabel='image pixel in the X direction',
-            ylabel='image pixel in the Y direction',
-            crpix1=None, crval1=None, cdelt1=None,
-            grid=False,
-            cmap='hot',
-            cbar=False,
-            cbar_label='Number of counts',
-            cbar_orientation='horizontal'):
+                extnum=1,
+                ax=None,
+                title=None,
+                vmin=None, vmax=None,
+                image_bbox=None,
+                aspect=GLOBAL_ASPECT,
+                xlabel='image pixel in the X direction',
+                ylabel='image pixel in the Y direction',
+                crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
+                grid=False,
+                cmap='hot',
+                cbar=False,
+                cbar_label='Number of counts',
+                cbar_orientation='horizontal'):
     """Auxiliary function to display a FITS image via axes object.
 
     Parameters
@@ -750,6 +846,9 @@ def jimshowfile(filename,
         Image rectangle to be displayed, with indices given by
         (nc1,nc2,ns1,ns2), which correspond to the numpy array:
         image2d[(ns1-1):ns2,(nc1-1):nc2].
+    aspect : str
+        Control de aspect ratio of the axes. Valid values are 'equal'
+        and 'auto'.
     xlabel : string
         X-axis label.
     ylabel : string
@@ -762,6 +861,12 @@ def jimshowfile(filename,
         the X direction.
     cdelt1 : float or None
         CDELT1 parameter corresponding to wavelength calibration in
+        the X direction.
+    ctype1 : str or None
+        CTYPE1 parameter corresponding to wavelength calibration in
+        the X direction.
+    cunit1 : str or None
+        CUNIT1 parameter corresponding to wavelength calibration in
         the X direction.
     grid : bool
         If True, overplot grid.
@@ -791,18 +896,20 @@ def jimshowfile(filename,
     hdulist.close()
 
     return jimshow(image2d,
-            ax=ax,
-            title=title,
-            vmin=vmin, vmax=vmax,
-            image_bbox=image_bbox,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            crpix1=crpix1, crval1=crval1, cdelt1=cdelt1,
-            grid=grid,
-            cmap=cmap,
-            cbar=cbar,
-            cbar_label=cbar_label,
-            cbar_orientation=cbar_orientation)
+                   ax=ax,
+                   title=title,
+                   vmin=vmin, vmax=vmax,
+                   image_bbox=image_bbox,
+                   aspect=aspect,
+                   xlabel=xlabel,
+                   ylabel=ylabel,
+                   crpix1=crpix1, crval1=crval1, cdelt1=cdelt1,
+                   ctype1=ctype1, cunit1=cunit1,
+                   grid=grid,
+                   cmap=cmap,
+                   cbar=cbar,
+                   cbar_label=cbar_label,
+                   cbar_orientation=cbar_orientation)
 
 
 def main(args=None):
@@ -830,6 +937,10 @@ def main(args=None):
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--firstpix",
                         help="coordinates of lower left pixel: nc0, ns0")
+    parser.add_argument("--aspect",
+                        help="aspect ratio (equal or auto)",
+                        type=str,
+                        choices=['equal', 'auto'], default=GLOBAL_ASPECT)
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
@@ -837,8 +948,8 @@ def main(args=None):
                         help="ds9 region file to be overplotted",
                         type=argparse.FileType('rt'))
     parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy",
-                        default="0,0,640,480")
+                        help='string "x,y,dx,dy"',
+                        default=GLOBAL_GEOMETRY)
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
                         type=argparse.FileType('w'))
@@ -893,6 +1004,7 @@ def main(args=None):
                      args_z1z2=args.z1z2,
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,
+                     args_aspect=args.aspect,
                      args_keystitle=args.keystitle,
                      args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,
