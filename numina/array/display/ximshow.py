@@ -327,10 +327,9 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             dum_par = "vmax"
         elif event.key == "=":
             if ax.get_aspect() == 'equal':
-                aspect = 'auto'
+                ax.set_aspect('auto')
             else:
-                aspect = 'equal'
-            ax.set_aspect(aspect)
+                ax.set_aspect('equal')
             plt.tight_layout()
             plt.show(block=False)
             plt.pause(0.001)
