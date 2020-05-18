@@ -174,21 +174,7 @@ class DataModel(object):
              Identification of the image
 
         """
-        imgid = img.filename()
-
-        # More heuristics here...
-        # get FILENAME keyword, CHECKSUM, for example...
-        hdr = self.get_header(img)
-        if 'checksum' in hdr:
-            return hdr['checksum']
-
-        if 'filename' in hdr:
-            return hdr['filename']
-
-        if not imgid:
-            imgid = repr(img)
-
-        return imgid
+        return get_imgid(img, prefix=False)
 
     def get_darktime(self, img):
         """Obtain DARKTIME"""
@@ -247,13 +233,35 @@ class DataModel(object):
 
 
 def get_imgid(img, prefix=True):
+    """Obtain a unique identifier of the image.
 
+    Parameters
+    ----------
+    img : astropy.io.fits.HDUList
+
+    Returns
+    -------
+    str:
+         Identification of the image
+
+    """
     hdr = img[0].header
     return get_imgid_header(hdr, prefix=prefix)
 
 
 def get_imgid_header(hdr, prefix=True):
+    """Obtain a unique identifier of the image.
 
+    Parameters
+    ----------
+    hdr : astropy.io.fits.Header
+
+    Returns
+    -------
+    str:
+         Identification of the image
+
+    """
     base = "{}"
     if 'UUID' in hdr:
         pre = 'uuid:{}'
