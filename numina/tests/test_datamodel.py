@@ -100,7 +100,7 @@ def test_ginfo():
         'observation_date': date_obs,
         'blckuuid': '1',
         'block_uuid': 1,
-        'imgid': 'RfAdUd2cRd9cRd9c',
+        'imgid': uuid_str,
         'insconf': 'v1', 'insconf_uuid': 'v1'
     }
 
@@ -109,5 +109,6 @@ def test_ginfo():
     datamodel = DataModel('CLODIA')
 
     imgid_chsum = datamodel.gather_info_hdu(img)
-
+    print(imgid_chsum)
+    #assert False
     assert imgid_chsum == ref
