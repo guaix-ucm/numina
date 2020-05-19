@@ -7,9 +7,9 @@ resources:
     name: OpenAstronomy/azure-pipelines-templates
     ref: master
 trigger:
-  branches:
-    include:
-    - '*'
+#  branches:
+#    include:
+#    - '*'
   tags:
     include:
     - 'v*'
@@ -19,7 +19,7 @@ jobs:
     ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}:
       pypi_connection_name: 'guaix-ucm'
     targets:
-    - sdist
+#    - sdist
     - wheels_linux
     - wheels_macos
-    - wheels_windows
+#    - wheels_windows
