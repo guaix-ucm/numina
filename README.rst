@@ -20,7 +20,7 @@ details.
 Requirements
 ------------
 
-Python 2.7 or 3.4 (or greater) is required. Numina requires the following
+Python 2.7 or 3.6 (or greater) is required. Numina requires the following
 packages installed in order to work properly:
 
  - setuptools (http://pythonhosted.org/setuptools/)
@@ -30,14 +30,15 @@ packages installed in order to work properly:
  - astropy >= 2 (http://www.astropy.org/)
  - PyYaml (http://pyyaml.org/)
  - dateutil (https://pypi.org/project/python-dateutil/)
- 
+ - lmfit (https://lmfit.github.io/lmfit-py/)
+ - scikit-image (https://scikit-image.org/)
+
 The documentation of the project is generated using Sphinx (http://sphinx.pocoo.org/)
 
 Additional packages are optionally required:
  - sphinx (http://sphinx-doc.org) to build the documentation
  - pytest (http://pytest.org) for testing
- - pytest-benchmark (https://github.com/ionelmc/pytest-benchmark/) for 
-   benchmarks of certain algorithms
+
 
 Webpage: https://github.com/guaix-ucm/numina
 
