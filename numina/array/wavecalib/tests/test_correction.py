@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 import numpy
 import astropy.io.fits as fits
@@ -28,15 +30,30 @@ def create_header1():
     return hdr
 
 
+@pytest.mark.skipif(sys.version_info < (3, 5), reason="requires python3.5 or higher")
 def test_add_barycentric():
-    hdr = create_header1()
+    import astropy.wcs
+    import astropy.time
+    from astropy.coordinates import SkyCoord, EarthLocation
+    import astropy.constants as cons
 
+    hdr = create_header1()
     hdr = header_add_barycentric_correction(hdr, key='b')
 
+    # Get main WCS
+    wcs0 = astropy.wcs.WCS(hdr)
+
+    gtc = EarthLocation.from_geocentric(wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
+    date_obs = astropy.time.Time(wcs0.wcs.dateobs, format='fits')
+    # if frame='fk5', we need to pass the epoch and equinox
+    sc = SkyCoord(ra=hdr['RADEG'], dec=hdr['DECDEG'], unit='deg')
+    rv = sc.radial_velocity_correction(obstime=date_obs, location=gtc)
+    factor = (1 + rv / cons.c).to('').value
+
     # velocity
-    rv = -7114.518753399715
+    rv = rv.to('m / s').value
     # (1 + rv / c)
-    factor = 0.9999762685198925
+    #factor = 0.9999762685198925
 
     assert hdr['WCSNAMEB'] == 'Barycentric correction'
     assert hdr['CTYPE1B'] == hdr['CTYPE1']
