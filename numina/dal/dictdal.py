@@ -672,5 +672,3 @@ class HybridDAL(BaseHybridDAL):
             # Python 2.7 compatibility
             six.raise_from(NoResultFound(msg), err)
             # raise NoResultFound(msg) from err
-
-

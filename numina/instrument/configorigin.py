@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -25,11 +25,13 @@ import six
 
 
 class UndefinedOrigin(object):
+    """Origin not defined"""
     def is_valid_date(self, cdate):
         return True
 
 
 class ElementOrigin(object):
+    """Description of the origin of a particular configuration"""
     def __init__(self, name, uuid, date_start=None, date_end=None, description=""):
         self.name = name
 
@@ -49,6 +51,7 @@ class ElementOrigin(object):
             return date
 
     def is_valid_date(self, cdate):
+        """Check if the element if valid for a given date"""
 
         if cdate is None:
             return True
