@@ -254,7 +254,7 @@ def get_imgid(img, prefix=True):
         warnings.warn("no method to identity image", RuntimeWarning)
         value = repr(img)
         pre = 'py:{}'
-        base = {}
+        base = '{}'
         if prefix:
             return pre.format(value)
         else:
