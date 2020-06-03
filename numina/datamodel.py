@@ -9,6 +9,8 @@
 
 from __future__ import print_function
 
+import warnings
+
 import numina.util.convert as conv
 
 
@@ -246,7 +248,17 @@ def get_imgid(img, prefix=True):
 
     """
     hdr = img[0].header
-    return get_imgid_header(hdr, prefix=prefix)
+    try:
+        return get_imgid_header(hdr, prefix=prefix)
+    except ValueError:
+        warnings.warn("no method to identity image", RuntimeWarning)
+        value = repr(img)
+        pre = 'py:{}'
+        base = {}
+        if prefix:
+            return pre.format(value)
+        else:
+            return base.format(value)
 
 
 def get_imgid_header(hdr, prefix=True):
