@@ -42,7 +42,7 @@ def mode_run_common_obs(args, extra_args):
     jobs = []
     for session in sessions:
         for job in session:
-            if job['enabled']:
+            if job['enabled'] or job['id'] in args.enable:
                 jobs.append(job)
 
     for job in jobs:

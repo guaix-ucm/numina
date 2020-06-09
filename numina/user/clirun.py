@@ -97,6 +97,10 @@ def register(subparsers, config):
         help='do not copy observation result and requirement files'
         )
     parser_run.add_argument(
+        '-e', '--enable', action='append', default=[],
+        help='enable blocks by id'
+    )
+    parser_run.add_argument(
         '--dump-control', action="store_true",
         help='save the modified task control file'
     )
