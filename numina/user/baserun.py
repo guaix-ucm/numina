@@ -116,6 +116,10 @@ def run_task_reduce(task, datastore):
             v = getattr(rinput, key)
             _logger.debug("recipe requires %r, value is %s", key, v)
 
+        for key,val in obsres.requirements.items():
+            if key not in recipe.requirements():
+                _logger.warning('"{}: {}" present in OB requirements, but not used'.format(key, val))
+
         for req in recipe.products().values():
             _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
 
