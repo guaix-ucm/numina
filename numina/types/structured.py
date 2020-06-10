@@ -159,6 +159,10 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
         meta_info['origin'] = {}
         return meta_info
 
+    def extract_tags(self, obj):
+        """Extract tags"""
+        return obj.tags
+
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""
 

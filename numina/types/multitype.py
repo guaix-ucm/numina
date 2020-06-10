@@ -52,6 +52,16 @@ class MultiType(dt.DataType):
                 join.extend(subtype.tag_names())
             return join
 
+    def extract_tags(self, obj):
+        """Extract tags from obj"""
+        if self.current_node:
+            return self.current_node.extract_tags(obj)
+        else:
+            # FIXME: unknown type
+            for subtype in self.node_type:
+                return subtype.extract_tags(obj)
+            return {}
+
     def descriptive_name(self):
         start, remain = self.node_type[0], self.node_type[1:]
         build_str = [start.descriptive_name()]
