@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -30,8 +30,19 @@ class RecipeInOut(object):
     def __init__(self, *args, **kwds):
         super(RecipeInOut, self).__init__()
         # Used to hold set values
-        self._numina_desc_val = {}
+        # Use this to avoid infinite recursion
+        super(RecipeInOut, self).__setattr__('_numina_desc_val', {})
+        # instead of this
+        # self._numina_desc_val = {}
         all_msg_errors = []
+
+        # memorize aliases
+        super(RecipeInOut, self).__setattr__('_aliases', {})
+
+        for key, req in self.stored().items():
+            if req.alias:
+                self._aliases[req.alias] = req
+
         for key, val in kwds.items():
             try:
                 setattr(self, key, kwds[key])
@@ -40,12 +51,30 @@ class RecipeInOut(object):
 
         self._finalize(all_msg_errors)
 
+
     def __repr__(self):
         sclass = type(self).__name__
         full = []
         for key, val in self.stored().items():
             full.append('{0}={1!r}'.format(key, val))
         return '{}({})'.format(sclass, ', '.join(full))
+
+    def __getattr__(self, item):
+        # This method might be called before _aliases is initialized
+        if item in self.__dict__.get('_aliases', {}):
+            ref = self.__dict__['_aliases'][item]
+            return getattr(self, ref.dest)
+        else:
+            msg = "'{}' object has no attribute '{}'".format(self.__class__.__name__, item)
+            raise AttributeError(msg)
+
+    def __setattr__(self, item, value):
+        # This method might be called before _aliases is initialized
+        if item in self.__dict__.get('_aliases', {}):
+            ref = self.__dict__['_aliases'][item]
+            return setattr(self, ref.dest, value)
+        else:
+            super(RecipeInOut, self).__setattr__(item, value)
 
     def _finalize(self, all_msg_errors=None):
         """Access all the instance descriptors
