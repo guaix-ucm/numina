@@ -98,7 +98,7 @@ def register(subparsers, config):
         )
     parser_run.add_argument(
         '-e', '--enable', action='append', default=[],
-        help='enable blocks by id'
+        metavar='BLOCKID', help='enable blocks by id'
     )
     parser_run.add_argument(
         '--dump-control', action="store_true",

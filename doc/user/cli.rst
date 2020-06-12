@@ -20,7 +20,7 @@ The :program:`numina` script has several options:
 
 .. option:: -l filename
 
-   A file con configuration options for logging.
+   A file with configuration options for logging.
 
 Options for run
 ===============
@@ -33,7 +33,7 @@ It is called like this::
 
 .. program:: numina run
 
-.. option:: --instrument 'name'
+.. option:: -i, --instrument INSCONF
 
    Name of one of the predefined instrument configurations.
 
@@ -41,7 +41,7 @@ It is called like this::
 
    Name of one of the predefined pipelines.
    
-.. option:: --requirements filename
+.. option::  -r, --requirements filename
 
    File with the description of the parameters of the recipe.
       
@@ -65,10 +65,26 @@ It is called like this::
 .. option:: --cleanup
 
    Remove intermediate and temporal files created by the recipe.
-   
+
+.. option:: --not-copy-files
+
+   perform linking instead of copying files in the work dir
+
+.. option:: --link-files
+
+   perform linking instead of copying files in the work dir
+
+.. option:: -e, --enable BLOCKID
+
+   enable a block listed in the observation result
+
+.. option:: --validate
+
+   validate inputs and results of recipes
+
 .. option:: observing_result filename
 
-   Filename contaning the description of the observation result.
+   Filename containing the description of the observation result.
 
 Options for show-instruments
 ============================
