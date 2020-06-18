@@ -155,7 +155,7 @@ def main(args=None):
                     # Ignore logging.PlaceHolder objects
                     logger.setLevel(logging.DEBUG)
 
-    _logger.debug('Numina simple recipe runner version %s', __version__)
+    _logger.info('Numina simple recipe runner version %s', __version__)
     command = getattr(args, 'command', None)
     if command is not None:
         args.command(args, extra_args)
