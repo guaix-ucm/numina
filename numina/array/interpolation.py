@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,14 +11,16 @@
 
 import numpy as np
 
+
 class SteffenInterpolator(object):
-    """A monotonic piecewise cubic 1-d interpolator.
+    """
+    A monotonic piecewise cubic 1-d interpolator.
 
     A monotonic piecewise cubic interpolator based on
     Steffen, M., Astronomy & Astrophysics, 239, 443-450 (1990)
 
-    `x` and `y` are arrays of values used to approximate some function f:
-    `y = f(x)`.  This class returns an object whose call method uses
+    `x` and `y` are arrays of values used to approximate some function f: `y = f(x)`.
+    This class returns an object whose call method uses
     monotonic cubic splines to find the value of new points.
 
     Parameters
@@ -27,7 +29,7 @@ class SteffenInterpolator(object):
         A 1-D array of real values, sorted monotonically increasing.
     y : (N,), array_like
         A 1-D array of real values.
-    yp_0 : float. optional
+    yp_0 : float, optional
         The value of the derivative in the first sample.
     yp_N : float, optional
         The value of the derivative in the last sample.
@@ -45,10 +47,10 @@ class SteffenInterpolator(object):
         Default is 'raise'.
     fill_value : float, optional
         If provided, then this value will be used to fill in for requested
-        points outside of the data range when `extrapolation`is set to "const".
+        points outside of the data range when `extrapolation`is set to `const`.
         If not provided, then the default is NaN.
-    """
 
+    """
     def __init__(self, x, y, yp_0=0.0, yp_N=0.0, extrapolate='raise', fill_value=np.nan):
 
         # 'zeros' is a shortcut
@@ -59,7 +61,7 @@ class SteffenInterpolator(object):
         self.fill_value = fill_value
         self._extrapolation(extrapolate)
 
-        # Compute all coeficients
+        # Compute all coefficients
 
         N = len(x)
 
@@ -102,7 +104,7 @@ class SteffenInterpolator(object):
         self._x = x
 
     def _extrapolation(self, extrapolate):
-        """Check permited values of extrapolation."""
+        """Check permitted values of extrapolation."""
         modes = ['extrapolate',
                  'raise',
                  'const',
@@ -255,7 +257,7 @@ class SteffenInterpolator(object):
 
         return below_bounds, above_bounds
 
-# A posible optimization if the points are in a regular grid
+# A possible optimization if the points are in a regular grid
 # Is a bit faster (~2 times)
 
 # class SteffenInterpolatorGrid(SteffenInterpolator):
