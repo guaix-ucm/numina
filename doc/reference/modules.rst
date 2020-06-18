@@ -12,8 +12,10 @@ Numina modules
    drps
    exceptions
    frame
+   instrument
    logger
    modeling
+   processing
    qa
    store
    treedict
