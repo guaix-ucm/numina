@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,7 +21,23 @@ from numina.tools.arg_file_is_new import arg_file_is_new
 
 
 def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, subs=False):
+    """
 
+    Parameters
+    ----------
+    method
+    arr
+    mask
+    hwin
+    wwin
+    fill
+    reuse_values
+    subs
+
+    Returns
+    -------
+
+    """
     # FIXME: we are not considering variance extension
     # If arr is not in native byte order, the cython extension won't work
     if arr.dtype.byteorder != '=':
@@ -41,6 +57,22 @@ def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, s
 
 
 def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, subs=False):
+    """
+
+    Parameters
+    ----------
+    arr
+    mask
+    hwin
+    wwin
+    fill
+    reuse_values
+    subs
+
+    Returns
+    -------
+
+    """
     import numina.array._combine
 
     method = numina.array._combine.median_method()
@@ -79,7 +111,7 @@ def main(args=None):
                         help="Display full command line",
                         action="store_true")
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=args)
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')

@@ -17,6 +17,9 @@ from numina.types.dataframe import DataFrame
 
 
 class ObservingBlock(object):
+    """
+    Description of an observing block
+    """
     def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         self.id = 1
         self.instrument = instrument
@@ -70,6 +73,16 @@ class ObservationResult(ObservingBlock):
         )
 
     def metadata_with(self, datamodel):
+        """
+
+        Parameters
+        ----------
+        datamodel
+
+        Returns
+        -------
+
+        """
         origin = {}
         imginfo = datamodel.gather_info_oresult(self)
         origin['info'] = imginfo

@@ -19,11 +19,32 @@ from scipy.interpolate import UnivariateSpline
 
 
 def json_deserial_func_u(args):
+    """
+    Rebuild UnivariateSpline
+
+    Parameters
+    ----------
+    args
+
+    Returns
+    -------
+    UnivariateSpline
+    """
     # rebuild UnivariateSpline
     return UnivariateSpline._from_tck(args)
 
 
 def json_deserial_func_p(args):
+    """
+    Rebuild Polynomial
+    Parameters
+    ----------
+    args
+
+    Returns
+    -------
+    nppol.Polynomial
+    """
     if args:
         value = nppol.Polynomial(args)
     else:

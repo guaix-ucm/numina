@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -101,12 +101,15 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0, fpeak=0):
 def return_weights(window_width):
     """
 
-    :param window_width: Int, odd number
-    Width of the window (greater or equal than 3) to seek for the peaks.
-    :return: ndarray
-    Matrix needed to interpolate 'window_width' points
+    Parameters
+    ----------
+    window_width : int
+       Odd number greater than 3, width of the window to seek for the peaks.
+    Returns
+    -------
+    ndarray :
+           Matrix needed to interpolate 'window_width' points
     """
-
     _check_window_width(window_width)
 
     try:
@@ -120,12 +123,16 @@ def return_weights(window_width):
 def generate_weights(window_width):
     """
 
-    :param window_width: Int, odd number
-    Width of the window (greater or equal than 3) to seek for the peaks.
-    :return: ndarray
-    Matrix needed to interpolate 'window_width' points
-    """
+    Parameters
+    ----------
+    window_width : int
+                Odd number greater than 3, width of the window to seek for the peaks.
 
+    Returns
+    -------
+    ndarray :
+           Matrix needed to interpolate 'window_width' points
+    """
     _check_window_width(window_width)
 
     evenly_spaced = numpy.linspace(-1, 1, window_width)

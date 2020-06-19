@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2015 Universidad Complutense de Madrid
+# Copyright 2013-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Recenter routines'''
+"""Recenter routines"""
 
 from __future__ import division
 
@@ -56,15 +56,29 @@ def _centering_centroid_loop_xy(data, center_xy, box):
 
 def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3,
                        maxdist=10.0):
-    '''
-        returns x, y, background, status, message
+    """
+    Computes centroid around point
+
+    Parameters
+    ----------
+    data
+    xi
+    yi
+    box
+    nloop
+    toldist
+    maxdist
+
+    Returns
+    -------
+        x, y, background, status, message
 
         status is:
           * 0: not recentering
           * 1: recentering successful
           * 2: maximum distance reached
           * 3: not converged
-    '''
+    """
 
     # Store original center
     cxy = (xi, yi)

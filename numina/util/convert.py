@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018 Universidad Complutense de Madrid
+# Copyright 2017-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -22,6 +22,17 @@ except AttributeError:
 
 
 def convert_date(value):
+    """
+    Convert any string to datetime
+
+    Parameters
+    ----------
+    value : str or datetime
+
+    Returns
+    -------
+
+    """
     if isinstance(value, datetime.datetime):
         return value
     if value:
@@ -31,6 +42,18 @@ def convert_date(value):
 
 
 def convert_qc(value):
+    """
+    Convert string to QC
+
+    Parameters
+    ----------
+    value : str
+
+    Returns
+    -------
+    numina.types.qc.QC
+
+    """
     from numina.types.qc import QC
     if value:
         if isinstance(value, QC):

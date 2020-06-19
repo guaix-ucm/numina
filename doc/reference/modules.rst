@@ -6,7 +6,7 @@ Numina modules
 .. toctree::
 
    array
-   core
+   core/index
    dal
    datamodel
    drps

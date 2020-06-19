@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2018 Universidad Complutense de Madrid
+# Copyright 2010-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -22,6 +22,18 @@ from numina.types.array import dump_numpy_array
 
 @singledispatch
 def dump(tag, obj, where):
+    """
+
+    Parameters
+    ----------
+    tag
+    obj
+    where
+
+    Returns
+    -------
+
+    """
 
     if hasattr(tag, '__numina_dump__'):
         return tag.__numina_dump__(obj, where)

@@ -24,12 +24,11 @@ With virtualenv (in Python 2.7)::
 
 Activate the Environment
 ------------------------
-Once the environment is created, you need to activate it. Just go to `bin/` folder
-created under `numinaenv and source the
+Once the environment is created, you need to activate it. The activation script in
+in the `bin/` folder created under `numinaenv. Just source the
 script `activate`::
 
-  cd numinaenv/bin
-  source activate
+  source numinaenv/bin/activate
   (numinaenv) $
 
 Notice that the prompt changes once you have activated the environment. To
@@ -57,6 +56,13 @@ You can also update numina, if your environment contains already a installed ver
 
     (numinaenv) $ pip install -U numina
 
+You can also install directly from the `git` repository. `pip` can access individual
+branches, particular commits or just the latest code. For example this will install
+the latest development version::
+
+    (numinaenv) $ pip install git+https://github.com/guaix-ucm/numina.git
+
+Check the `pip` documentation for the syntax of other types of packages sources.
 
 Test the installation
 ---------------------
@@ -66,7 +72,7 @@ We can test the installation by running the ``numina`` command:
 ::
 
     (numinaenv) $ numina
-    DEBUG: Numina simple recipe runner version 0.20
+    INFO: Numina simple recipe runner version 0.20
 
 
 .. _virtualenv: https://virtualenv.pypa.io/

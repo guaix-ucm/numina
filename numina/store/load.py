@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2018 Universidad Complutense de Madrid
+# Copyright 2010-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,6 +15,17 @@ except ImportError:
 
 @singledispatch
 def load(tag, obj):
+    """
+
+    Parameters
+    ----------
+    tag
+    obj
+
+    Returns
+    -------
+
+    """
 
     if hasattr(tag, '__numina_load__'):
         return tag.__numina_load__(obj)

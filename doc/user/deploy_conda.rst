@@ -79,6 +79,20 @@ We can also update numina, if your environment contains already a installed vers
 
     (numinaenv) $ conda update numina
 
+If you need to install the development version, you can download the source code and
+proceed following the instructions in xxxx.
+
+Other possibility is using `pip`. It can access individual
+branches, particular commits or just the latest code. For example this will install
+the latest development version::
+
+    (numinaenv) $ pip install git+https://github.com/guaix-ucm/numina.git
+
+Check the `pip` documentation for the syntax of other types of packages sources.
+
+.. warning:: Issues can arise with packages installed with `pip` in `conda` environments.
+              See https://www.anaconda.com/blog/using-pip-in-a-conda-environment for details.
+
 
 Test the installation
 ---------------------
@@ -88,7 +102,7 @@ We can test the installation by running the ``numina`` command:
 ::
 
     (numinaenv) $ numina
-    DEBUG: Numina simple recipe runner version 0.20
+    INFO: Numina simple recipe runner version 0.20
 
 
 .. _virtualenv: https://virtualenv.pypa.io/

@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -63,4 +63,3 @@ def get_tags_from_full_ob(ob, reqtags=None):
                 raise ValueError(msg)
 
     return alltags
-

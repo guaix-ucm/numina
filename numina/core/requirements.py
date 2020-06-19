@@ -35,6 +35,18 @@ class ObservationResultRequirement(Requirement):
         return msg
 
     def query(self, dal, obsres, options=None):
+        """
+
+        Parameters
+        ----------
+        dal
+        obsres
+        options
+
+        Returns
+        -------
+
+        """
         from numina.core.query import ResultOf
 
         q_options = self.query_options(options)
@@ -57,4 +69,14 @@ class ObservationResultRequirement(Requirement):
         return obsres
 
     def on_query_not_found_from_type(self, notfound):
+        """
+
+        Parameters
+        ----------
+        notfound
+
+        Returns
+        -------
+
+        """
         six.raise_from(numina.exceptions.NoResultFound('unable to complete ObservationResult'), notfound)
