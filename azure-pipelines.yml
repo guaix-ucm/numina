@@ -7,9 +7,9 @@ resources:
     name: OpenAstronomy/azure-pipelines-templates
     ref: master
 trigger:
-#  branches:
-#    include:
-#    - '*'
+  branches:
+    include:
+    - '*'
   tags:
     include:
     - 'v*'
