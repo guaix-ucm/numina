@@ -1,4 +1,7 @@
 include AUTHORS.rst
+include numina/array/trace/Trace.h
+include numina/array/trace/fitter.h
+recursive-include numina *.pyx
 include src/*.h
 include src/*.pyx
 include src/nirproc.cpp
