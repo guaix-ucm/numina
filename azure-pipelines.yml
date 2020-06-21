@@ -17,9 +17,9 @@ jobs:
 - template: publish.yml@OpenAstronomy
   parameters:
     ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}:
-      pypi_connection_name: 'guaix-ucm'
+      pypi_connection_name: 'pypi_numina'
     targets:
-#    - sdist
+    - sdist
     - wheels_linux
     - wheels_macos
 #    - wheels_windows
