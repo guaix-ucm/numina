@@ -27,13 +27,6 @@ def generate_extensions():
 
     extensions.append(ext1)
 
-    ext2 = Extension('numina.array._ufunc',
-                     ['src/ufunc.cc',
-                      ],
-                     include_dirs=[numpy_include])
-
-    extensions.append(ext2)
-
     # try to handle gracefully Cython
     try:
         from Cython.Distutils import build_ext
