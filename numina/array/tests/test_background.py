@@ -1,6 +1,4 @@
 
-import sys
-
 import numpy
 import numpy.random
 import pytest
@@ -37,7 +35,7 @@ def test_back_crowded():
     assert numpy.allclose(r, res)
 
 
-@pytest.mark.xfail(sys.version_info.major==2, reason='something broken in python27')
+@pytest.mark.xfail
 def test_background_map():
     numpy.random.seed(seed=938483)
     bck = numpy.random.normal(1100, 32, (512,512))
