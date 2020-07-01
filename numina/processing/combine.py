@@ -144,7 +144,7 @@ def main(args=None):
     errors = args.errors
     with contextlib.ExitStack() as stack:
         hduls = [stack.enter_context(fits.open(fname)) for fname in args.image]
-        result = combine_imgs(hduls, method=combine.mean, errors=errors, prolog=None)
+        result = combine_imgs(hduls, method=method, errors=errors, prolog=None)
 
     result.writeto(args.output, overwrite=True)
 
