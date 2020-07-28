@@ -399,7 +399,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     im_show = plt.imshow(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2],
                          cmap=cmap, aspect=aspect,
                          vmin=z1, vmax=z2,
-                         interpolation='nearest', origin='low',
+                         interpolation='nearest', origin='lower',
                          extent=[xmin, xmax, ymin, ymax])
     if cbar_label is None:
         cbar_label = "Number of counts"
@@ -777,7 +777,7 @@ def jimshow(image2d,
     im_show = ax.imshow(
         image2d_region,
         cmap=cmap, aspect=aspect, vmin=vmin, vmax=vmax,
-        interpolation="nearest", origin="low",
+        interpolation="nearest", origin="lower",
         extent=[xmin, xmax, ymin, ymax]
     )
     if cbar_orientation in ['horizontal', 'vertical']:
