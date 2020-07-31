@@ -1,8 +1,29 @@
-name: Build wheel
+name: Build wheels and upload to PyPI
 on:
   workflow_dispatch
 
 jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.7'
+
+      # we could use this also
+      # python -m pep517.build --source .
+      - name: Build sdist
+        run: python setup.py sdist
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: numina-wheels
+          path: ./dist/*.tar.gz
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -33,7 +54,7 @@ jobs:
           path: ./wheelhouse/*.whl
         
   upload_pypi:
-    needs: [build_wheels]
+    needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'v'
     #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
