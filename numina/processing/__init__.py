@@ -18,7 +18,7 @@ from astropy.io import fits
 
 import numina.array as array
 import numina.util.node as node
-from numina.datamodel import DataModel
+import numina.datamodel as dm
 
 
 _logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ def promote_hdu(hdu, totype='float32'):
     return hdu
 
 
-class SimpleDataModel(DataModel):
+class SimpleDataModel(dm.DataModel):
     """Model of the Data being processed"""
     pass
 
@@ -79,8 +79,8 @@ class Corrector(node.Node):
 
         return img
 
-    def get_imgid(self, img):
-        return self.datamodel.get_imgid(img)
+    def get_imgid(self, img, prefix=False):
+        return dm.get_imgid(img, prefix=prefix)
 
 
 TagOptionalCorrector = Corrector
