@@ -30,6 +30,6 @@ jobs:
           
       - uses: actions/upload-artifact@v2
         with:
-          name: pyemir-tutorials-docs
+          name: numina-wheels
           path: ./wheelhouse/*.whl
         
