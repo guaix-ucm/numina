@@ -21,7 +21,7 @@ jobs:
 # Pip is not doing it
 install:
   - pip install $DEPS
-  - pip install .[tests]
+  - pip install .[test]
   - |
     if [[ $COVERAGE == true ]]; then
       pip install codeclimate-test-reporter coveralls
