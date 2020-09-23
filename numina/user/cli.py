@@ -27,7 +27,7 @@ from numina import __version__
 from numina.util.context import ignored
 
 from .xdgdirs import xdg_config_home
-from .logconf import numina_cli_logconf
+from .logconf import LOGCONF
 
 _logger = logging.getLogger("numina")
 
@@ -144,16 +144,12 @@ def main(args=None):
             logconf = yaml.load(logfile)
             logging.config.dictConfig(logconf)
     except configparser.Error:
-        logging.config.dictConfig(numina_cli_logconf)
+        logging.config.dictConfig(LOGCONF)
 
     if args.debug:
-        # If we ask for debug, set level DEBUG
-        # in all loggers that start with numina
-        for name, logger in logging.root.manager.loggerDict.items():
-            if name.startswith('numina'):
-                with ignored(AttributeError):
-                    # Ignore logging.PlaceHolder objects
-                    logger.setLevel(logging.DEBUG)
+        _logger.setLevel(logging.DEBUG)
+        for h in _logger.handlers:
+            h.setLevel(logging.DEBUG)
 
     _logger.info('Numina simple recipe runner version %s', __version__)
     command = getattr(args, 'command', None)
