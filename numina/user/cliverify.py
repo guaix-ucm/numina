@@ -23,8 +23,6 @@ _logger = logging.getLogger(__name__)
 
 def register(subparsers, config):
 
-    task_control_base = config.get('run', 'task_control')
-
     parser_verify = subparsers.add_parser(
         'verify',
         help='verify a observation result'
@@ -33,11 +31,11 @@ def register(subparsers, config):
     parser_verify.set_defaults(command=verify)
 
     parser_verify.add_argument(
-        '-c', '--task-control', dest='reqs', default=task_control_base,
+        '-c', '--task-control', dest='reqs',
         help='configuration file of the processing task', metavar='FILE'
     )
     parser_verify.add_argument(
-        '-r', '--requirements', dest='reqs', default=task_control_base,
+        '-r', '--requirements', dest='reqs',
         help='alias for --task-control', metavar='FILE'
     )
     parser_verify.add_argument(
@@ -105,10 +103,6 @@ def register(subparsers, config):
 
 
 def verify(args, extra_args):
-    import numina.core.config as cfg
-    import astropy.io.fits as fits
-    import numina.util.context as ctx
-
     if args.obs:
         # verify as oblocks
         # Loading observation result if exists
@@ -137,7 +131,7 @@ def verify(args, extra_args):
                 result = check_file(file)
             except Exception as error:
                 result = False
-                #_logger.warning('with error {}'.format(error))
+                # _logger.warning('with error {}'.format(error))
             _logger.info('checked {}, valid={}'.format(file, result))
             # print('done')
 
@@ -147,8 +141,6 @@ def verify(args, extra_args):
 def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=False,
                validate_inputs=False, validate_results=False):
     """Verify raw images"""
-
-    import numina.core.config as cfg
 
     configuration = 'default'
     _logger.info("verify OB with id={}".format(obsid))
@@ -228,10 +220,10 @@ def check_json(obj, astype=None, level=None):
 
 
 def check_yaml(obj, astype=None, level=None):
-    #import numina.core.config as cfg
+    # import numina.core.config as cfg
 
-    #import jsonschema
-    #import json
+    # import jsonschema
+    # import json
     # try to verify as obsblock
     # path = "/home/spr/devel/guaix/numina/schemas/oblock-schema.json"
     # with open(path) as fd:
