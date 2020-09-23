@@ -138,7 +138,7 @@ def test_search_recipe(basedictdal):
 
 def test_search_prod_obsid(basedictdal):
 
-    with pytest.raises(KeyError):
+    with pytest.raises(NoResultFound):
         basedictdal.search_prod_obsid('FAIL', 1, 'default')
 
     with pytest.raises(NoResultFound):
