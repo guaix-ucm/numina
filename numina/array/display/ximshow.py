@@ -103,9 +103,9 @@ def ximshow(image2d, title=None, show=True,
         Plot title.
     cbar_label : string
         Color bar label.
-    cbar_orientation : string
+    cbar_orientation : string or None
         Color bar orientation: valid options are 'horizontal' or
-        'vertical'.
+        'vertical' (or None for no color bar).
     show : bool
         If True, the function shows the displayed image. Otherwise
         the function just invoke the plt.imshow() function and
@@ -279,7 +279,7 @@ Toggle fullscreen...............: ctrl + f
 Close plot......................: ctrl + w
 Set zscale......................: /
 Set bg=min and fg=max values....: ,
-Display statistical summary.....: .
+Display statistical summary.....: ;
 Set foreground by keyboard......: m
 Set background by keyboard......: n
 Activate/deactivate ds9 regions.: a
@@ -314,7 +314,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             dum_par = ''
             plt.show(block=False)
             plt.pause(0.001)
-        elif event.key == ".":
+        elif event.key == ";":
             subimage2d = get_current_zoom(ax, debug=True)
             summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
@@ -403,10 +403,9 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                          extent=[xmin, xmax, ymin, ymax])
     if cbar_label is None:
         cbar_label = "Number of counts"
-    if cbar_orientation is None:
-        cbar_orientation = "horizontal"
-    plt.colorbar(im_show, shrink=1.0, label=cbar_label,
-                 orientation=cbar_orientation)
+    if cbar_orientation in ["horizontal", "vertical"]:
+        plt.colorbar(im_show, shrink=1.0, label=cbar_label,
+                     orientation=cbar_orientation)
     if title is not None:
         ax.set_title(title)
 
@@ -473,9 +472,9 @@ def ximshow_file(singlefile,
         Extension number: 1 for first extension (default).
     args_cbar_label : string
         Color bar label.
-    args_cbar_orientation : string
+    args_cbar_orientation : string or None
         Color bar orientation: valid options are 'horizontal' or
-        'vertical'.
+        'vertical' (or None for no color bar).
     args_z1z2 : string or None
         String providing the image cuts tuple: z1, z2, minmax of None
     args_bbox : string or None
@@ -674,7 +673,6 @@ def jimshow(image2d,
             crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
             grid=False,
             cmap='hot',
-            cbar=False,
             cbar_label='Number of counts',
             cbar_orientation='horizontal'):
     """Auxiliary function to display a numpy 2d array via axes object.
@@ -722,13 +720,11 @@ def jimshow(image2d,
         If True, overplot grid.
     cmap : string
         Color map to be employed.
-    cbar : bool
-        If True, display colorbar.
     cbar_label : string
         Color bar label.
-    cbar_orientation : string
+    cbar_orientation : string or None
         Color bar orientation: valid options are 'horizontal' or
-        'vertical'.
+        'vertical' (or None for no color bar).
 
     Returns
     -------
@@ -784,7 +780,7 @@ def jimshow(image2d,
         interpolation="nearest", origin="lower",
         extent=[xmin, xmax, ymin, ymax]
     )
-    if cbar:
+    if cbar_orientation in ['horizontal', 'vertical']:
         import matplotlib.pyplot as plt
         plt.colorbar(im_show, shrink=1.0,
                      label=cbar_label, orientation=cbar_orientation,
@@ -821,7 +817,6 @@ def jimshowfile(filename,
                 crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
                 grid=False,
                 cmap='hot',
-                cbar=False,
                 cbar_label='Number of counts',
                 cbar_orientation='horizontal'):
     """Auxiliary function to display a FITS image via axes object.
@@ -871,13 +866,11 @@ def jimshowfile(filename,
         If True, overplot grid.
     cmap : string
         Color map to be employed.
-    cbar : bool
-        If True, display colorbar.
     cbar_label : string
         Color bar label.
-    cbar_orientation : string
+    cbar_orientation : string or None
         Color bar orientation: valid options are 'horizontal' or
-        'vertical'.
+        'vertical' (or None for no color bar).
 
     Returns
     -------
@@ -906,7 +899,6 @@ def jimshowfile(filename,
                    ctype1=ctype1, cunit1=cunit1,
                    grid=grid,
                    cmap=cmap,
-                   cbar=cbar,
                    cbar_label=cbar_label,
                    cbar_orientation=cbar_orientation)
 
@@ -940,6 +932,14 @@ def main(args=None):
                         help="aspect ratio (equal or auto)",
                         type=str,
                         choices=['equal', 'auto'], default=GLOBAL_ASPECT)
+    parser.add_argument("--cbar_label",
+                        help="color bar label",
+                        type=str, default='Number of counts')
+    parser.add_argument("--cbar_orientation",
+                        help="color bar orientation",
+                        type=str,
+                        choices=['horizontal', 'vertical', None],
+                        default='horizontal')
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
                              "key1,key2,...keyn.'format'")
@@ -1004,6 +1004,8 @@ def main(args=None):
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,
                      args_aspect=args.aspect,
+                     args_cbar_label=args.cbar_label,
+                     args_cbar_orientation=args.cbar_orientation,
                      args_keystitle=args.keystitle,
                      args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,

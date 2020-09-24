@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -55,6 +55,20 @@ def basic_processing_with_combination_frames(
 
 
 def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
+    """
+
+    Parameters
+    ----------
+    frames
+    method
+    method_kwargs
+    errors
+    prolog
+
+    Returns
+    -------
+
+    """
 
     with contextlib.ExitStack() as stack:
         hduls = [stack.enter_context(dframe.open()) for dframe in frames]
@@ -67,6 +81,20 @@ def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True,
 
 
 def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
+    """
+
+    Parameters
+    ----------
+    hduls
+    method
+    method_kwargs
+    errors
+    prolog
+
+    Returns
+    -------
+
+    """
 
     _logger = logging.getLogger(__name__)
 
@@ -144,11 +172,10 @@ def main(args=None):
     errors = args.errors
     with contextlib.ExitStack() as stack:
         hduls = [stack.enter_context(fits.open(fname)) for fname in args.image]
-        result = combine_imgs(hduls, method=combine.mean, errors=errors, prolog=None)
+        result = combine_imgs(hduls, method=method, errors=errors, prolog=None)
 
     result.writeto(args.output, overwrite=True)
 
 
 if __name__ == '__main__':
-
     main()

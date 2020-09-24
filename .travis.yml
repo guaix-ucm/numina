@@ -1,31 +1,41 @@
 language: python
 
+os: linux
+
 cache: pip
 
-matrix:
+jobs:
   include:
     - python: "2.7"
-      env: DEPS="numpy"
+      env: DEPS="numpy>=1.16 Cython"
     - python: "3.5"
-      env: DEPS="numpy"
+      env: DEPS="numpy>=1.16 Cython"
     - python: "3.6"
-      env: DEPS="numpy"
+      env: DEPS="numpy>=1.16 Cython"
     - python: "3.7"
-      env: DEPS="numpy>=1.16" COVERAGE=true
+      env: DEPS="numpy>=1.16 Cython" COVERAGE=true
     - python: "3.8"
-      env: DEPS="numpy"
+      env: DEPS="numpy>=1.16 Cython"
 
+# Have to install manually numpy>=1.16 for astropy
+# Pip is not doing it
 install:
   - pip install $DEPS
-  - pip install -r pip-requirements-dev.txt
-  - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
-  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
+  - pip install .[test]
+  - |
+    if [[ $COVERAGE == true ]]; then
+      pip install codeclimate-test-reporter coveralls
+    fi
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
-script: 
-  - py.test numina
-  - if [[ $COVERAGE == true ]]; then coverage run --source numina -m py.test; fi
+script:
+  - |
+    if [[ $COVERAGE == true ]]; then
+      coverage run --source numina -m pytest
+    else
+      pytest -v numina
+    fi
 
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi

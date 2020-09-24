@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,13 +11,14 @@
 """Default logging configuration for Numina CLI."""
 
 
-numina_cli_logconf = {
+LOGCONF = {
     'version': 1,
     'formatters': {
         'simple': {'format': '%(levelname)s: %(message)s'},
         'state': {'format': '%(asctime)s - %(message)s'},
         'unadorned': {'format': '%(message)s'},
         'detailed': {'format': '%(name)s %(levelname)s %(message)s'},
+        'extended': {'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'}
         },
     'handlers': {
         'unadorned_console': {
@@ -27,6 +28,7 @@ numina_cli_logconf = {
         'simple_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+            'level': 'INFO'
             },
         'simple_console_warnings_only': {
             'class': 'logging.StreamHandler',
@@ -36,27 +38,28 @@ numina_cli_logconf = {
         'detailed_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'detailed',
+            'level': 'INFO'
             },
+        'processing_file': {
+            'class': 'logging.FileHandler',
+            'formatter': 'extended',
+            'filename': 'processing.log',
+            'mode': 'w'
+        }
         },
     'loggers': {
         'numina': {
             'handlers': ['simple_console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False
-            },
-        'numina.dal': {
-            'handlers': ['detailed_console'],
-            'level': 'INFO',
-            'propagate': False
-            },
-        'numina.recipes': {
-            'handlers': ['detailed_console'],
-            'level': 'INFO',
-            'propagate': False
-            },
+            }
+#        'customdrp': {
+#            'handlers': ['detailed_console'],
+#            'level': 'DEBUG',
+#            'propagate': False
+#            }
         },
     'root': {
-        'handlers': ['detailed_console'],
-        'level': 'INFO'
+        'handlers': ['simple_console_warnings_only']
         }
     }

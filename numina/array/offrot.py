@@ -15,9 +15,9 @@ import numpy.linalg as linalg
 
 
 def fit_offset_and_rotation(coords0, coords1):
-    """Fit a rotation and a traslation between two sets points.
+    """Fit a rotation and a translation between two sets points.
 
-    Fit a rotation matrix and a traslation bewtween two matched sets
+    Fit a rotation matrix and a translation between two matched sets
     consisting of M N-dimensional points
 
     Parameters

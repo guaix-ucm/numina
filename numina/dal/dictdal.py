@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -57,7 +57,7 @@ class BaseDictDAL(AbsDrpDAL):
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         """Returns the first coincidence..."""
-        ins_prod = self.prod_table[ins]
+        ins_prod = self.prod_table.get(ins, [])
 
         # search results of these OBs
         for prod in ins_prod:
@@ -88,7 +88,8 @@ class BaseDictDAL(AbsDrpDAL):
             label_alt = label
 
         # search results of these OBs
-        for prod in self.prod_table[ins]:
+        ptable = self.prod_table.get(ins, [])
+        for prod in ptable:
             pk = prod['type'] 
             pt = prod['tags']
             if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, tags):
@@ -154,7 +155,6 @@ class BaseDictDAL(AbsDrpDAL):
 
         return self.obsres_from_oblock(oblock, as_mode)
 
-
     def obsres_from_oblock(self, oblock, as_mode=None):
 
         from numina.core.oresult import ObservationResult
@@ -173,7 +173,7 @@ class BaseDictDAL(AbsDrpDAL):
 
         # Reserved names
         if obsres.mode in self._RESERVED_MODE_NAMES:
-            selected_mode = None # null mode
+            selected_mode = None  # null mode
         else:
             selected_mode = this_drp.modes[obsres.mode]
 
@@ -309,7 +309,7 @@ class Dict2DAL(BaseDictDAL):
         from numina import __version__
         from numina.user.helpers import ProcessingTask
 
-        newidx =  self.new_task_id(request, request_params)
+        newidx = self.new_task_id(request, request_params)
         _logger.debug('create task=%s', newidx)
         task = ProcessingTask()
         task.id = newidx
@@ -422,7 +422,8 @@ class BaseHybridDAL(Dict2DAL):
         label = drp.product_label(tipo)
 
         # search results of these OBs
-        for prod in self.prod_table[instrument]:
+        ptable = self.prod_table.get(instrument, [])
+        for prod in ptable:
             pid = prod['id']
             if pid == resultid:
                 # this is a valid product
@@ -543,9 +544,7 @@ class BaseHybridDAL(Dict2DAL):
         for obs_id in self.ob_ids:
             obdict = self.ob_table[obs_id]
             enabled = obdict.get('enabled', True)
-            if ((not enabled) or
-                    obdict['mode'] in self._RESERVED_MODE_NAMES
-            ):
+            if (not enabled) or obdict['mode'] in self._RESERVED_MODE_NAMES:
                 # ignore these OBs
                 continue
 
@@ -602,7 +601,8 @@ class HybridDAL(BaseHybridDAL):
             label_alt = label
 
         # search results of these OBs
-        for prod in self.prod_table[instrument]:
+        ptable = self.prod_table.get(instrument, [])
+        for prod in ptable:
             pk = prod['type']
             pt = prod['tags']
             if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, obsres.tags):

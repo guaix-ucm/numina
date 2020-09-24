@@ -22,7 +22,6 @@ def complete_config(config):
 
     values = {
         'basedir': os.getcwd(),
-        'task_control': 'control.yaml',
     }
 
     for k, v in values.items():
@@ -35,8 +34,6 @@ def register(subparsers, config):
 
     complete_config(config)
 
-    task_control_base = config.get('run', 'task_control')
-
     parser_run = subparsers.add_parser(
         'run',
         help='process a observation result'
@@ -45,11 +42,11 @@ def register(subparsers, config):
     parser_run.set_defaults(command=mode_run_obsmode)
 
     parser_run.add_argument(
-        '-c', '--task-control', dest='reqs', default=task_control_base,
+        '-c', '--task-control', dest='reqs',
         help='configuration file of the processing task', metavar='FILE'
         )
     parser_run.add_argument(
-        '-r', '--requirements', dest='reqs', default=task_control_base,
+        '-r', '--requirements', dest='reqs',
         help='alias for --task-control', metavar='FILE'
         )
     parser_run.add_argument(
