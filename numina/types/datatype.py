@@ -206,6 +206,12 @@ class ListOfType(DataType):
         return result
 
     def _datatype_load(self, objs):
+        if not isinstance(objs, collections.Iterable):
+            if self.accept_scalar:
+                objs = [objs]
+            else:
+                raise TypeError("The object received should be iterable"
+                                " or the type modified to accept scalar values")
         return [self.node_type._datatype_load(obj) for obj in objs]
 
     def __str__(self):

@@ -42,12 +42,15 @@ def mode_run_common_obs(args, extra_args):
     jobs = []
     for session in sessions:
         for job in session:
-            if job['enabled']:
+            if job['enabled'] or job['id'] in args.enable:
                 jobs.append(job)
 
     for job in jobs:
 
-        run_reduce(datamanager,  job['id'], copy_files=args.copy_files)
+        run_reduce(
+            datamanager, job['id'], copy_files=args.copy_files,
+            validate_inputs=args.validate, validate_results=args.validate
+        )
 
     if args.dump_control:
         _logger.debug('dump control status')

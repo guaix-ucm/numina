@@ -228,3 +228,24 @@ def test_empty_list_iter():
 
     value = some.convert(["A", 34.2])
     assert value == ["A", 34.2]
+
+
+def test_param_bool1():
+    """Test bool argument"""
+
+    value1 = True
+    value2 = False
+
+    class RR(RecipeInput):
+        some = Parameter(value1, '')
+
+    rr = RR()
+
+    assert rr.some == value1
+
+    class RR(RecipeInput):
+        some = Parameter(value2, '')
+
+    rr = RR(some=value2)
+
+    assert rr.some == value2

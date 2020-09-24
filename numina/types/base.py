@@ -132,5 +132,9 @@ class DataTypeBase(object):
         result = self.create_db_info()
         return result
 
+    def extract_tags(self, obj):
+        """Create metadata structure"""
+        return {}
+
     def tag_names(self):
         return self.names_t

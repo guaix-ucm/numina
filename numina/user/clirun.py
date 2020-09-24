@@ -97,12 +97,20 @@ def register(subparsers, config):
         help='do not copy observation result and requirement files'
         )
     parser_run.add_argument(
+        '-e', '--enable', action='append', default=[],
+        metavar='BLOCKID', help='enable blocks by id'
+    )
+    parser_run.add_argument(
         '--dump-control', action="store_true",
         help='save the modified task control file'
     )
     parser_run.add_argument(
         '--session', action="store_true",
         help='use the obresult file as a session file'
+    )
+    parser_run.add_argument(
+        '--validate', action="store_true",
+        help='validate inputs and results of recipes'
     )
     parser_run.add_argument(
         'obsresult', nargs='+',

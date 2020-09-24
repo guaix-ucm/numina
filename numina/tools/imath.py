@@ -20,9 +20,13 @@ import sys
 from numina.array.display.ximshow import ximshow_file
 
 
-def compute_operation(file1, file2, operation, output, overwrite,
-                      display, args_z1z2, args_bbox, args_keystitle,
-                      args_geometry):
+def compute_operation(file1, file2, operation, output,
+                      overwrite=True,
+                      display='none',
+                      args_z1z2=None,
+                      args_bbox=None,
+                      args_keystitle=None,
+                      args_geometry=None):
     """Compute output = file1 operation file2.
 
     Parameters

@@ -6,14 +6,16 @@ Numina modules
 .. toctree::
 
    array
-   core
+   core/index
    dal
    datamodel
    drps
    exceptions
    frame
+   instrument
    logger
    modeling
+   processing
    qa
    store
    treedict

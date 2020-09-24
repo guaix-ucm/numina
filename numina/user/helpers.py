@@ -25,6 +25,7 @@ import numina.drps
 from numina.dal.backend import Backend
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
+from numina.types.qc import QC
 from numina.util.context import working_directory
 
 
@@ -90,12 +91,20 @@ class DataManager(object):
         result_dir = os.path.join(self.basedir, result_dir_rel)
 
         with working_directory(result_dir):
-            _logger.info('storing task and result')
 
             task_repr = task.__dict__.copy()
 
             # save to disk the RecipeResult part and return the file to save it
             if task.result is not None:
+                uuid = task.result.uuid
+                qc = task.result.qc
+                _logger.info('storing result uuid=%s, quality=%s', uuid, qc)
+                if qc != QC.GOOD:
+                    for key, val in task.result.stored().items():
+                        val = getattr(task.result, key)
+                        if hasattr(val, 'quality_control'):
+                            _logger.info('with field %s=%s, quality=%s', key, val, val.quality_control)
+
                 result_repr = self.store_result_to(task.result)
                 # Change result structure by filename
                 task_repr['result'] = self.result_file
@@ -103,6 +112,8 @@ class DataManager(object):
                 with open(self.result_file, 'w+') as fd:
                     self.serializer(result_repr, fd)
 
+            tid = task.id
+            _logger.info('storing task id=%s', tid)
             with open(self.task_file, 'w+') as fd:
                 self.serializer(task_repr, fd)
 

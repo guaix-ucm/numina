@@ -13,6 +13,7 @@ def test_bias_corrector():
     data = numpy.zeros((10, 10)) + 600
     result = numpy.zeros((10, 10)) + 400
     hdu = fits.PrimaryHDU(data)
+    hdu.header['DATE-OBS'] = '2010-03-11T04:34:12'
     hdul = fits.HDUList([hdu])
     newhdul = corrector.run(hdul)
 
@@ -28,6 +29,7 @@ def test_dark_corrector():
     data = numpy.zeros((10, 10)) + 102.0
     result = numpy.zeros((10, 10)) + 100.0
     hdu = fits.PrimaryHDU(data)
+    hdu.header['DATE-OBS'] = '2010-03-11T04:34:12'
     hdul = fits.HDUList([hdu])
     newhdul = corrector.run(hdul)
 

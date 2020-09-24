@@ -23,13 +23,28 @@ from numina.util.objimport import import_object
 
 
 def writeto(obj, name):
+    """
+    Write a BaseStructuredCalibration to a named file
+
+    Parameters
+    ----------
+    obj : BaseStructuredCalibration
+    name : str or file or file-like or pathlib.Path
+
+
+    Returns
+    -------
+
+    """
     with builtins.open(name, 'w') as fd:
         json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
 
 
 def open(name):
     """"
-    name: str or file or file-like or pathlib.Path
+    Open a JSON file as a structured object
+
+    name : str or file or file-like or pathlib.Path
         File to be opened
     """
     with builtins.open(name, mode='r') as fd:
@@ -39,8 +54,10 @@ def open(name):
 
 def load(fd):
     """"
+    Load a JSON file as a structured object
+
     fd: file or file-like
-        File to be opened
+      File to be opened
     """
     data = json.load(fd)
     return loads(data)
@@ -158,6 +175,10 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
         meta_info['recipe_version'] = 'unknown'
         meta_info['origin'] = {}
         return meta_info
+
+    def extract_tags(self, obj):
+        """Extract tags"""
+        return obj.tags
 
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""

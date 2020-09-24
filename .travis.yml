@@ -5,13 +5,19 @@ cache: pip
 matrix:
   include:
     - python: "2.7"
+      env: DEPS="numpy"
     - python: "3.5"
-      env: COVERAGE=true
+      env: DEPS="numpy"
     - python: "3.6"
+      env: DEPS="numpy"
+    - python: "3.7"
+      env: DEPS="numpy>=1.16" COVERAGE=true
+    - python: "3.8"
+      env: DEPS="numpy"
 
 install:
+  - pip install $DEPS
   - pip install -r pip-requirements-dev.txt
-  - pip list
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   # Build in place so we can run tests

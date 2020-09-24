@@ -44,3 +44,30 @@ def environ(**keys):
                 del os.environ[key]
             else:
                 os.environ[key] = val
+
+
+@contextlib.contextmanager
+def manage_fits(list_of_frame):
+    """Manage a list of FITS resources"""
+
+    import astropy.io.fits as fits
+    import numina.types.dataframe as df
+
+    refs = []
+    for frame in list_of_frame:
+        if isinstance(frame, str):
+            ref = fits.open(frame)
+            refs.append(ref)
+        elif isinstance(frame, fits.HDUList):
+            refs.append(frame)
+        elif isinstance(frame, df.DataFrame):
+            ref = frame.open()
+            refs.append(ref)
+        else:
+            refs.append(frame)
+    try:
+        yield refs
+    finally:
+        # release
+        for obj in refs:
+            obj.close()

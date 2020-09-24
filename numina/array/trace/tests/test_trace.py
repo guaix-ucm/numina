@@ -1,13 +1,11 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-'''Unit test for trace'''
 
 from __future__ import division
 
@@ -17,6 +15,7 @@ from numpy.testing import assert_allclose
 
 from ..traces import trace
 from ..traces import axis_to_dispaxis
+from ..traces import tracing_limits
 
 
 def test_axis_to_dispaxis():
@@ -61,8 +60,34 @@ def test_trace_simple(benchmark, gauss):
 
 
 def test_trace_bug_27():
-    '''Trace doesn't work with a flat peak'''
+    """Trace doesn't work with a flat peak"""
     arr = np.zeros((100, 100))
     arr[47:52, 12:90] = 100.0
     mm = trace(arr, 50, 50)
     assert mm.shape[0] >= 1
+
+
+def helper_lim_min(col, step, hs):
+    while col > hs + step:
+        col += -1 * step
+    return col
+
+
+def helper_lim_max(col, step, hs, size):
+    while col + step + hs < size:
+        col += step
+    return col
+
+
+@pytest.mark.parametrize("size", [4096, 4097])
+@pytest.mark.parametrize("col", list(range(1998, 2003)))
+@pytest.mark.parametrize("step", [1,2,3])
+@pytest.mark.parametrize("hs", [1,2,3])
+def test_lower_limit(size, col, step,hs):
+    vcalc_min, vcalc_max = tracing_limits(size, col, step, hs)
+
+    vreal_min = helper_lim_min(col, step, hs)
+    vreal_max = helper_lim_max(col, step, hs, size)
+
+    assert vcalc_min == vreal_min
+    assert vcalc_max == vreal_max

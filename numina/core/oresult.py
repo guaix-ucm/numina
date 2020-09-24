@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,6 +17,9 @@ from numina.types.dataframe import DataFrame
 
 
 class ObservingBlock(object):
+    """
+    Description of an observing block
+    """
     def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         self.id = 1
         self.instrument = instrument
@@ -32,6 +35,15 @@ class ObservingBlock(object):
         self.results = {}
         self.requirements = {}
 
+    def get_sample_frame(self):
+        """Return first available frame in observation result"""
+        for frame in self.frames:
+            return frame
+
+        for res in self.results.values():
+            return res
+
+        return None
 
 class ObservationResult(ObservingBlock):
     """The result of a observing block.
@@ -61,6 +73,16 @@ class ObservationResult(ObservingBlock):
         )
 
     def metadata_with(self, datamodel):
+        """
+
+        Parameters
+        ----------
+        datamodel
+
+        Returns
+        -------
+
+        """
         origin = {}
         imginfo = datamodel.gather_info_oresult(self)
         origin['info'] = imginfo
@@ -72,16 +94,6 @@ class ObservationResult(ObservingBlock):
             origin['observation_date'] = first['observation_date']
             origin['frames'] = [img['imgid'] for img in imginfo]
         return origin
-
-    def get_sample_frame(self):
-        """Return first available frame in observation result"""
-        for frame in self.frames:
-            return frame
-
-        for res in self.results.values():
-            return res
-
-        return None
 
 
 def dataframe_from_list(values):

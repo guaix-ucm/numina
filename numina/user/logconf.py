@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -23,12 +23,10 @@ numina_cli_logconf = {
         'unadorned_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'unadorned',
-            'level': 'DEBUG'
             },
         'simple_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
-            'level': 'DEBUG'
             },
         'simple_console_warnings_only': {
             'class': 'logging.StreamHandler',
@@ -38,23 +36,22 @@ numina_cli_logconf = {
         'detailed_console': {
             'class': 'logging.StreamHandler',
             'formatter': 'detailed',
-            'level': 'DEBUG'
             },
         },
     'loggers': {
         'numina': {
             'handlers': ['simple_console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False
             },
         'numina.dal': {
             'handlers': ['detailed_console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False
             },
         'numina.recipes': {
             'handlers': ['detailed_console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False
             },
         },
@@ -63,4 +60,3 @@ numina_cli_logconf = {
         'level': 'INFO'
         }
     }
-

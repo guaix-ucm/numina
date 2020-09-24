@@ -25,7 +25,8 @@ from numina.util.context import working_directory
 _logger = logging.getLogger(__name__)
 
 
-def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=False):
+def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=False,
+               validate_inputs=False, validate_results=False):
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
@@ -35,6 +36,8 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
     request_params["pipeline"] = 'default' #  args.pipe_name
     request_params["instrument_configuration"] = 'default'  # args.insconf
     request_params["intermediate_results"] = True
+    request_params["validate_results"] = validate_results
+    request_params["validate_inputs"] = validate_inputs
     request_params["copy_files"] = copy_files
     request_params["mode"] = as_mode
 
@@ -86,6 +89,8 @@ def run_task_reduce(task, datastore):
         _logger.debug('recipe class is %s', recipe.__class__)
 
         recipe.intermediate_results = task.request_params["intermediate_results"]
+        recipe.validate_inputs = task.request_params["validate_inputs"]
+        recipe.validate_results = task.request_params["validate_results"]
 
         # Update runinfo
         recipe.runinfo['runner'] = task.request_runinfo['runner']
@@ -107,9 +112,13 @@ def run_task_reduce(task, datastore):
 
         _logger.debug('recipe input created')
         # Show the actual inputs
-        for key in recipe.requirements():
+        for key, req in recipe.requirements().items():
             v = getattr(rinput, key)
             _logger.debug("recipe requires %r, value is %s", key, v)
+
+        for key,val in obsres.requirements.items():
+            if key not in recipe.requirements():
+                _logger.warning('"{}: {}" present in OB requirements, but not used'.format(key, val))
 
         for req in recipe.products().values():
             _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
@@ -181,7 +190,6 @@ def run_recipe_timed(task, recipe, rinput):
     try:
         task.result = recipe(rinput)
         task.state = 2
-        _logger.info('result: %r', task.result)
     except Exception:
         task.state = 3
         raise

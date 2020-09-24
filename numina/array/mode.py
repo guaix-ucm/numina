@@ -1,7 +1,7 @@
 #
 # -*- coding: utf8 -*-
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,7 +19,7 @@ import numpy as np
 # HSM method
 # http://www.davidbickel.com/
 def mode_half_sample(a, is_sorted=False):
-    '''
+    """
     Estimate the mode using the Half Sample mode.
 
     A method to estimate the mode, as described in
@@ -32,15 +32,15 @@ def mode_half_sample(a, is_sorted=False):
     Example
     =======
 
-    >> import numpy as np
-    >> np.random.seed(1392838)
-    >> a = np.random.normal(1000, 200, size=1000)
-    >> a[:100] = np.random.normal(2000, 300, size=100)
-    >> b = np.sort(a)
-    >> mode_half_sample(b, is_sorted=True)
+    >>> import numpy as np
+    >>> np.random.seed(1392838)
+    >>> a = np.random.normal(1000, 200, size=1000)
+    >>> a[:100] = np.random.normal(2000, 300, size=100)
+    >>> b = np.sort(a)
+    >>> mode_half_sample(b, is_sorted=True)
     1041.9327885039545
 
-    '''
+    """
 
     a = np.asanyarray(a)
 

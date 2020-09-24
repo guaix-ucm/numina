@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,6 +15,7 @@ import inspect
 import numina.exceptions
 import collections
 import contextlib
+import warnings
 
 import six
 
@@ -26,7 +27,7 @@ from .query import Ignore
 
 class EntryHolder(object):
     def __init__(self, tipo, description, destination, optional,
-                 default, choices=None, validation=True):
+                 default, choices=None, validation=True, alias=None):
 
         super(EntryHolder, self).__init__()
 
@@ -45,6 +46,7 @@ class EntryHolder(object):
         self.default = default
         self.choices = choices
         self.validation = validation
+        self.alias = alias
 
     def __get__(self, instance, owner):
         """Getter of the descriptor protocol."""
@@ -139,7 +141,6 @@ class Product(Result):
             choices=choices
         )
 
-        import warnings
         warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
 
     def __repr__(self):
@@ -192,14 +193,17 @@ class Requirement(EntryHolder):
     choices : list of values, optional
         The possible values of the inputs. Any other value will raise
         an exception
+    alias : str, optional
+        Alternative name of the field in the RecipeInput object.
     """
 
     def __init__(self, rtype, description, destination=None, optional=False,
-                 default=None, choices=None, validation=True, query_opts=None):
+                 default=None, choices=None, validation=True, query_opts=None,
+                 alias=None):
         super(Requirement, self).__init__(
             rtype, description, destination=destination,
             optional=optional, default=default, choices=choices,
-            validation=validation
+            validation=validation, alias=alias
             )
 
         self.query_opts = query_opts
@@ -257,7 +261,7 @@ class Requirement(EntryHolder):
         scalar = this_type.internal_scalar
 
         if mtype:
-            faillures = []
+            failures = []
             for next_type in this_type.node_type:
 
                 try:
@@ -265,10 +269,10 @@ class Requirement(EntryHolder):
                     this_type._current = next_type
                     return result
                 except NoResultFound as notfound:
-                    faillures.append((next_type, notfound))
+                    failures.append((next_type, notfound))
             else:
                 # Not found
-                for subtype, notfound in faillures:
+                for subtype, notfound in failures:
                     pass # subtype.on_query_not_found(notfound)
                 raise NoResultFound
 
@@ -303,8 +307,21 @@ class Requirement(EntryHolder):
         # in the observation result
         # It can in ob.requirements
         # or directly in the structure (as in GTC)
+
+        # Check if key and alias are both defined and emit a warning
+        dest_d = self.dest in ob.requirements
+        alias_d = self.alias in ob.requirements
+
         key = self.dest
-        if key in ob.requirements:
+        if dest_d:
+            if alias_d:
+                msg = "Both '{}' and alias '{}' are defined".format(self.dest, self.alias)
+                warnings.warn(msg, RuntimeWarning)
+        else:
+            if alias_d:
+                key = self.alias
+
+        if alias_d or dest_d:
             content = ob.requirements[key]
             value = self.type._datatype_load(content)
             return value
@@ -394,11 +411,14 @@ class Parameter(Requirement):
         If nelem is '*', the list can contain any number of objects. If is '+',
         the list must contain at least 1 element. With a number, the list must
         contain that number of elements.
+    alias : str, optional
+        Alternative name of the field in the RecipeInput object.
     """
     def __init__(self, value, description, destination=None, optional=True,
                  choices=None, validation=True, validator=None,
                  accept_scalar=False,
                  as_list=False, nelem=None,
+                 alias=None
                  ):
 
         if nelem is not None:
@@ -439,7 +459,8 @@ class Parameter(Requirement):
         super(Parameter, self).__init__(
             mtype, description, destination=destination,
             optional=optional, default=default,
-            choices=choices, validation=validation
+            choices=choices, validation=validation,
+            alias=alias
             )
 
     def convert(self, val):

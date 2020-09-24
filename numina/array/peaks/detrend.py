@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,21 @@ import numpy
 
 
 def detrend(arr, x=None, deg=5, tol=1e-3, maxloop=10):
-    """Compute a baseline trend of a signal"""
+    """
+    Compute a baseline trend of a signal
+
+    Parameters
+    ----------
+    arr
+    x
+    deg
+    tol
+    maxloop
+
+    Returns
+    -------
+
+    """
 
     xx = numpy.arange(len(arr)) if x is None else x
     base = arr.copy()

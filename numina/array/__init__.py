@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -10,7 +10,6 @@
 from __future__ import print_function
 
 import numpy
-from scipy import asarray, zeros_like, minimum, maximum
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
@@ -46,16 +45,16 @@ def subarray_match(shape, ref, sshape, sref=None):
 
     """
     # Reference point in im
-    ref1 = asarray(ref, dtype='int')
+    ref1 = numpy.asarray(ref, dtype='int')
 
     if sref is not None:
-        ref2 = asarray(sref, dtype='int')
+        ref2 = numpy.asarray(sref, dtype='int')
     else:
-        ref2 = zeros_like(ref1)
+        ref2 = numpy.zeros_like(ref1)
 
     offset = ref1 - ref2
-    urc1 = minimum(offset + asarray(sshape) - 1, asarray(shape) - 1)
-    blc1 = maximum(offset, 0)
+    urc1 = numpy.minimum(offset + numpy.asarray(sshape) - 1, numpy.asarray(shape) - 1)
+    blc1 = numpy.maximum(offset, 0)
     urc2 = urc1 - offset
     blc2 = blc1 - offset
 
@@ -76,8 +75,8 @@ def subarray_match(shape, ref, sshape, sref=None):
 
 def combine_shape(shapes, offsets):
     # Computing final array size and new offsets
-    sharr = asarray(shapes)
-    offarr = asarray(offsets)
+    sharr = numpy.asarray(shapes)
+    offarr = numpy.asarray(offsets)
     ucorners = offarr + sharr
     ref = offarr.min(axis=0)
     finalshape = tuple(ucorners.max(axis=0) - ref)

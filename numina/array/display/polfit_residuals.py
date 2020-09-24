@@ -24,6 +24,7 @@ def polfit_residuals(
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=False,
+        show=True,
         geometry=(0,0,640,480),
         debugplot=0):
     """Polynomial fit with display of residuals and additional work with R.
@@ -65,6 +66,9 @@ def polfit_residuals(
     use_r : bool
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
+    show : bool
+        If True, the function shows the displayed image. Otherwise
+        plt.show() is expected to be executed outside.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     debugplot : int
@@ -275,7 +279,8 @@ def polfit_residuals(
         if title is not None:
             plt.title(title)
 
-        pause_debugplot(debugplot, pltshow=True, tight_layout=True)
+        if show:
+            pause_debugplot(debugplot, pltshow=show, tight_layout=True)
 
     # return result
     return poly, yres
@@ -287,6 +292,7 @@ def polfit_residuals_with_sigma_rejection(
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
+        show=True,
         geometry=(0,0,640,480),
         debugplot=0):
     """Polynomial fit with iterative rejection of points.
@@ -329,6 +335,9 @@ def polfit_residuals_with_sigma_rejection(
     use_r : bool
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
+    show : bool
+        If True, the function shows the displayed image. Otherwise
+        plt.show() is expected to be executed outside.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     debugplot : int
@@ -398,6 +407,7 @@ def polfit_residuals_with_sigma_rejection(
                                           xlabel=xlabel, ylabel=ylabel,
                                           title=title,
                                           use_r=use_r,
+                                          show=show,
                                           geometry=geometry,
                                           debugplot=debugplot)
         else:
@@ -450,6 +460,7 @@ def polfit_residuals_with_sigma_rejection(
                                           xlabel=xlabel, ylabel=ylabel,
                                           title=title,
                                           use_r=use_r,
+                                          show=show,
                                           geometry=geometry,
                                           debugplot=debugplot)
         else:
@@ -466,6 +477,7 @@ def polfit_residuals_with_cook_rejection(
         xlim=None, ylim=None,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
+        show=True,
         geometry=(0,0,640,480),
         debugplot=0):
     """Polynomial fit with iterative rejection of points.
@@ -508,6 +520,9 @@ def polfit_residuals_with_cook_rejection(
     use_r : bool
         If True, the function computes several fits, using R, to
         polynomials of degree deg, deg+1 and deg+2 (when possible).
+    show : bool
+        If True, the function shows the displayed image. Otherwise
+        plt.show() is expected to be executed outside.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     debugplot : int
@@ -561,6 +576,7 @@ def polfit_residuals_with_cook_rejection(
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
+                                      show=show,
                                       geometry=geometry,
                                       debugplot=debugplot)
         return poly, yres, reject
@@ -579,6 +595,7 @@ def polfit_residuals_with_cook_rejection(
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
+                                      show=show,
                                       geometry=geometry,
                                       debugplot=debugplot)
         npoints_effective = npoints - np.sum(reject)

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,6 +11,7 @@ from .device import DeviceBase
 
 
 class ElementBase(object):
+    """Base class for objects in component collection"""
     def __init__(self, name, origin=None):
         self.name = name
         self.origin = origin
@@ -20,6 +21,7 @@ class ElementBase(object):
 
 
 class PropertiesGeneric(ElementBase):
+    """Class representing a properties component"""
     def __init__(self, name, properties=None, origin=None):
         super(PropertiesGeneric, self).__init__(name, origin=origin)
 
@@ -31,6 +33,7 @@ class PropertiesGeneric(ElementBase):
 
 
 class ComponentGeneric(DeviceBase):
+    """Class representing a device component"""
     def __init__(self, name, properties=None, origin=None, parent=None):
         super(ComponentGeneric, self).__init__(
             name, origin=origin, parent=parent
@@ -73,7 +76,7 @@ class ComponentGeneric(DeviceBase):
             raise AttributeError("component has no attribute '{}'".format(item))
 
     def depends_on(self):
-        # Compute the dependecies for me and my children
+        """Compute the dependencies for me and my children"""
         mydepends = set([])
 
         mydepends.update(self.my_depends())
@@ -89,7 +92,7 @@ class ComponentGeneric(DeviceBase):
             self._internal_state[key] = hdr[key]
 
     def my_depends(self):
-        # Compute the dependencies for me
+        """Compute the dependencies for me"""
         mydepends = set([])
         for prop in self.properties.values():
             mydepends.update(prop.depends)
@@ -97,10 +100,12 @@ class ComponentGeneric(DeviceBase):
 
 
 class InstrumentGeneric(ComponentGeneric):
+    """Class representing a instrument component"""
     pass
 
 
 class SetupGeneric(ElementBase):
+    """Class representing a setup component"""
     def __init__(self, name, origin=None):
         super(SetupGeneric, self).__init__(name, origin=origin)
         self.values = {}

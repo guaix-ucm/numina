@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2020 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,6 +13,9 @@ import collections
 
 
 class TreeDict(collections.MutableMapping):
+    """
+    Hierarchical dictionary
+    """
     def __init__(self, *args, **keywords):
         self._data = dict(*args, **keywords)
 

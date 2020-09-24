@@ -15,8 +15,11 @@ in order to work properly:
  - `astropy <http://www.astropy.org>`_
  - `PyYaml <http://http://pyyaml.org/>`_
  - `matplotlib <https://matplotlib.org/>`_
+ - `scikit-image <https://scikit-image.org/>`_
+ - `lmfit <https://lmfit.github.io/lmfit-py/>`_
  - `python-dateutil <https://pypi.org/project/python-dateutil>`_
  - `enum34 <https://pypi.org/project/enum34/>`_  (Python 2.7 only)
+ - `contextlib2 <https://pypi.org/project/contextlib2/>`_  (Python 2.7 only)
 
 Cython is required if you build the code from the development repository:
 
@@ -26,6 +29,7 @@ The following packages are optional, for building documentation and testing:
 
  - `sphinx`_  to build the documentation
  - `pytest`_  for testing
+ - `pytest-remotedata <https://github.com/astropy/pytest-remotedata>`_ for testing with remote datasets
 
 
 Installing numina
@@ -73,7 +77,7 @@ See :ref:`deploy_conda` for details.
 Building from source
 --------------------
 
-You may end up building from source if there is not a precompiled version
+You may end up building from source if there is not a stable precompiled version
 of numina for your platform or if you are doing development based on numina.
 
 Prerequisites
@@ -86,14 +90,14 @@ the translated files are included, and hence do not require Cython.
 
 
 The released sources of numina can be downloaded from PyPI. If you require instead
-the he development version, it can can be checked out with::
+the development version, it can can be checked out with::
 
     git clone https://github.com/guaix-ucm/numina.git
 
-Building ad installing
-++++++++++++++++++++++
+Building and installing
+++++++++++++++++++++++++
 
-To build numina run::
+To build numina, run::
 
     python setup.py build
 
@@ -103,9 +107,9 @@ To build numina run::
                 export MACOSX_DEPLOYMENT_TARGET=10.9
 
 
-To install numina run::
+To install numina, run::
 
-    python setup.py build
+    python setup.py install
 
 
 If you get an error about insufficient permissions to install, you are probably trying to access

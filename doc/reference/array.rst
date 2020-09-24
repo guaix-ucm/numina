@@ -311,7 +311,10 @@ Once the module is created and loaded, a sample session would be:
 :mod:`numina.array.peaks` --- Peak finding
 ======================================================
 
-.. automodule:: numina.array.peaks
+.. automodule:: numina.array.peaks.peakdet
+   :members:
+
+.. automodule:: numina.array.peaks.detrend
    :members:
 
 
@@ -328,7 +331,7 @@ Once the module is created and loaded, a sample session would be:
    :members:
 
 
-:mod:`numina.array.stats` ---
+:mod:`numina.array.stats` --- Statistical utilities
 ======================================================
 
 .. automodule:: numina.array.stats
@@ -339,6 +342,10 @@ Once the module is created and loaded, a sample session would be:
 
 .. automodule:: numina.array.trace.traces
    :members:
+
+.. automodule:: numina.array.trace.extract
+   :members:
+
 
 :mod:`numina.array.wavecalib` --- Wavelength calibration
 =========================================================

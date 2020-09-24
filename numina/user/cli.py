@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -22,7 +22,9 @@ import six.moves.configparser as configparser
 import pkg_resources
 import yaml
 
+
 from numina import __version__
+from numina.util.context import ignored
 
 from .xdgdirs import xdg_config_home
 from .logconf import numina_cli_logconf
@@ -68,6 +70,7 @@ def main(args=None):
                 register = entry.load()
                 subcmd_load.append(register)
             except Exception as error:
+                print('exception loading plugin {}'.format(entry), file=sys.stderr)
                 print(error, file=sys.stderr)
 
     parser = argparse.ArgumentParser(
@@ -109,7 +112,7 @@ def main(args=None):
 
     # Init subcommands
     cmds = ['clishowins', 'clishowom', 'clishowrecip',
-            'clirun', 'clirunrec']
+            'clirun', 'clirunrec', 'cliverify']
     for cmd in cmds:
         cmd_mod = import_module('.%s' % (cmd, ), 'numina.user')
         register = getattr(cmd_mod, 'register', None)
@@ -143,7 +146,16 @@ def main(args=None):
     except configparser.Error:
         logging.config.dictConfig(numina_cli_logconf)
 
-    _logger.debug('Numina simple recipe runner version %s', __version__)
+    if args.debug:
+        # If we ask for debug, set level DEBUG
+        # in all loggers that start with numina
+        for name, logger in logging.root.manager.loggerDict.items():
+            if name.startswith('numina'):
+                with ignored(AttributeError):
+                    # Ignore logging.PlaceHolder objects
+                    logger.setLevel(logging.DEBUG)
+
+    _logger.info('Numina simple recipe runner version %s', __version__)
     command = getattr(args, 'command', None)
     if command is not None:
         args.command(args, extra_args)
