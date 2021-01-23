@@ -5,7 +5,7 @@ Installation
 Requirements
 ------------
 
-Python 2.7 or Python >= 3.5 is required. Additionally the following packages are required
+Python >= 3.6 is required. Additionally the following packages are required
 in order to work properly:
 
  - `setuptools <http://pythonhosted.org/setuptools/>`_
@@ -18,8 +18,6 @@ in order to work properly:
  - `scikit-image <https://scikit-image.org/>`_
  - `lmfit <https://lmfit.github.io/lmfit-py/>`_
  - `python-dateutil <https://pypi.org/project/python-dateutil>`_
- - `enum34 <https://pypi.org/project/enum34/>`_  (Python 2.7 only)
- - `contextlib2 <https://pypi.org/project/contextlib2/>`_  (Python 2.7 only)
 
 Cython is required if you build the code from the development repository:
 

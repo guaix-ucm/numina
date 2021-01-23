@@ -6,10 +6,6 @@ cache: pip
 
 jobs:
   include:
-    - python: "2.7"
-      env: DEPS="numpy>=1.16 Cython"
-    - python: "3.5"
-      env: DEPS="numpy>=1.16 Cython"
     - python: "3.6"
       env: DEPS="numpy>=1.16 Cython"
     - python: "3.7"
