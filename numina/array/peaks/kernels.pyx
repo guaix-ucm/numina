@@ -12,7 +12,7 @@ from cpython.pycapsule cimport PyCapsule_SetContext
 cdef int _kernel_function(double* buffer, int filter_size,
                           double* return_value, void* cb):
     cdef double* data = <double*> cb
-    cdef int nmed = filter_size / 2
+    cdef int nmed = filter_size // 2
     cdef int i = 0
     cdef int start = 0
     cdef int mcount = 0
