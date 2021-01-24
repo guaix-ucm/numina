@@ -9,10 +9,10 @@
 
 """An implementation of hierarchical dictionary."""
 
-import collections
+import collections.abc
 
 
-class TreeDict(collections.MutableMapping):
+class TreeDict(collections.abc.MutableMapping):
     """
     Hierarchical dictionary
     """

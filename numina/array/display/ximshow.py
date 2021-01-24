@@ -1,14 +1,11 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 from astropy.io import fits
@@ -168,10 +165,10 @@ def ximshow(image2d, title=None, show=True,
         plt.ioff()
 
     # protections
-    if type(image2d) is not np.ndarray:
+    if not isinstance(image2d, np.ndarray):
         raise ValueError("image2d=" + str(image2d) +
                          " must be a numpy.ndarray")
-    elif image2d.ndim is not 2:
+    elif image2d.ndim != 2:
         raise ValueError("image2d.ndim=" + str(image2d.dim) +
                          " must be 2")
 

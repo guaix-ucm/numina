@@ -1,14 +1,11 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import division
-from __future__ import print_function
 
 import numpy as np
 from numpy.polynomial import Polynomial
@@ -47,9 +44,9 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 
     """
 
-    if type(sx) is not np.ndarray:
+    if not isinstance(sx, np.ndarray):
         raise ValueError("sx=" + str(sx) + " must be a numpy.ndarray")
-    elif sx.ndim is not 1:
+    elif sx.ndim != 1:
         raise ValueError("sx.ndim=" + str(sx.ndim) + " must be 1")
 
     sx_shape = sx.shape

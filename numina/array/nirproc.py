@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,8 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-
-from __future__ import division
 
 import math
 

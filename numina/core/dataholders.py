@@ -13,7 +13,7 @@ Recipe requirements
 
 import inspect
 import numina.exceptions
-import collections
+import collections.abc
 import contextlib
 import warnings
 
@@ -429,7 +429,7 @@ class Parameter(Requirement):
             decl_list = False
             nmin = nmax = None
 
-        is_scalar = not isinstance(value, collections.Iterable)
+        is_scalar = not isinstance(value, collections.abc.Iterable)
 
         if is_scalar and decl_list:
             accept_scalar = True
