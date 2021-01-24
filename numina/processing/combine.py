@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,12 +14,7 @@ from __future__ import division
 import datetime
 import logging
 import uuid
-
-try:
-    import contextlib2 as contextlib  # python 2.7 compatibility
-except ImportError:
-    import contextlib
-
+import contextlib
 
 from astropy.io import fits
 
@@ -148,12 +143,6 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, pr
 
 def main(args=None):
     import argparse
-    try:
-        import contextlib2 as contextlib  # python 2.7 compatibility
-    except ImportError:
-        import contextlib
-
-    import astropy.io.fits as fits
 
     parser = argparse.ArgumentParser(prog='combine')
     parser.add_argument('-o', '--output', default='combined.fits')
