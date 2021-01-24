@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2018 Universidad Complutense de Madrid
+# Copyright 2010-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,12 +11,11 @@
 import abc
 import logging
 
-from six import with_metaclass
 
 _logger = logging.getLogger(__name__)
 
 
-class Node(with_metaclass(abc.ABCMeta, object)):
+class Node(metaclass=abc.ABCMeta):
     """An elemental operation in a Flow."""
 
     def __init__(self, ninputs=1, noutputs=1):

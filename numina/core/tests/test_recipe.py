@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,8 +9,6 @@
 
 
 """Unit test for RecipeBase."""
-
-from six import with_metaclass
 
 from ..metarecipes import RecipeType
 from ..recipes import BaseRecipe
@@ -45,7 +43,7 @@ class PruebaRecipe1(BaseRecipe):
 
 def test_metaclass_empty_base():
 
-    class RecipeTest(with_metaclass(RecipeType, object)):
+    class RecipeTest(metaclass=RecipeType):
         pass
 
     assert hasattr(RecipeTest, 'RecipeInput')
@@ -63,7 +61,7 @@ def test_metaclass_empty_base():
 
 def test_metaclass():
 
-    class RecipeTest(with_metaclass(RecipeType, object)):
+    class RecipeTest(metaclass=RecipeType):
         obsresult = ObservationResultRequirement()
         someresult = Result(int, 'Some integer')
 
@@ -208,4 +206,3 @@ def test_run_base():
 
     assert result.qc == QC.BAD
     assert result.someresult == 100
-

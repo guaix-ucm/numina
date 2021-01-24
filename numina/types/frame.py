@@ -1,4 +1,4 @@
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -6,11 +6,8 @@
 # License-Filename: LICENSE.txt
 #
 
-
-import sys
 import warnings
 
-import six
 from astropy.io import fits
 
 
@@ -61,7 +58,7 @@ class DataFrameType(DataType):
         # We accept None representing No Image
         if obj is None:
             return None
-        elif isinstance(obj, six.string_types):
+        elif isinstance(obj, str):
             return DataFrame(filename=obj)
         elif isinstance(obj, DataFrame):
             return obj

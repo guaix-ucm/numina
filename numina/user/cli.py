@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,22 +9,20 @@
 
 """User command line interface of Numina."""
 
-from __future__ import print_function
 
 import logging
 import logging.config
 import argparse
 import os
 import sys
+import configparser
 from importlib import import_module
 
-import six.moves.configparser as configparser
 import pkg_resources
 import yaml
 
 
 from numina import __version__
-from numina.util.context import ignored
 
 from .xdgdirs import xdg_config_home
 from .logconf import LOGCONF
@@ -36,7 +34,7 @@ def main(args=None):
     """Entry point for the Numina CLI."""
 
     # Configuration args from a text file
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser()
 
     # Building programatically
     config.add_section('numina')

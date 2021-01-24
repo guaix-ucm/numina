@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,8 +14,6 @@ Recipe inputs and outputs
 
 import uuid
 import logging
-
-from six import with_metaclass
 
 from .metaclass import RecipeInputType, RecipeResultType
 import numina.store.dump
@@ -50,7 +48,6 @@ class RecipeInOut(object):
                 all_msg_errors.append(err.args[0])
 
         self._finalize(all_msg_errors)
-
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -132,12 +129,12 @@ class RecipeInOut(object):
         return qfields
 
 
-class RecipeInput(with_metaclass(RecipeInputType, RecipeInOut)):
+class RecipeInput(RecipeInOut, metaclass=RecipeInputType):
     """RecipeInput base class"""
     pass
 
 
-class RecipeResultBase(with_metaclass(RecipeResultType, RecipeInOut)):
+class RecipeResultBase(RecipeInOut, metaclass=RecipeResultType):
     """The result of a Recipe."""
 
     def store_to(self, where):

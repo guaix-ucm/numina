@@ -1,6 +1,5 @@
 Cython
 numpy
-six
 scipy
 astropy
 PyYaml

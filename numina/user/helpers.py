@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,7 +18,6 @@ import errno
 import shutil
 import pickle
 
-import six
 import yaml
 
 import numina.drps
@@ -176,10 +175,7 @@ class BaseWorkEnvironment(object):
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
 
-        if six.PY2:
-            index_base = "index-2.pkl"
-        else:
-            index_base = "index.pkl"
+        index_base = "index.pkl"
 
         self.index_file = os.path.join(self.workdir, index_base)
         self.hashes = {}

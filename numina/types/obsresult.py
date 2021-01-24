@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,11 +7,6 @@
 #
 
 
-import warnings
-
-import six
-
-from numina.exceptions import NoResultFound
 from numina.core.oresult import ObservationResult
 # import numina.core.instrument.insconf as insconf
 
@@ -29,7 +24,7 @@ def _obtain_validator_for(instrument, mode_key):
     if mode.validator:
         return mode.validator
     else:
-        return lambda mode, obj: True
+        return lambda mod, obj: True
 
 
 class ObservationResultType(DataType):

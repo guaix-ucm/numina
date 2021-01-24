@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,7 +9,6 @@
 
 """Results of the Observing Blocks"""
 
-import six
 
 from astropy.io import fits
 
@@ -44,6 +43,7 @@ class ObservingBlock(object):
             return res
 
         return None
+
 
 class ObservationResult(ObservingBlock):
     """The result of a observing block.
@@ -98,9 +98,9 @@ class ObservationResult(ObservingBlock):
 
 def dataframe_from_list(values):
     """Build a DataFrame object from a list."""
-    if(isinstance(values, six.string_types)):
+    if isinstance(values, str):
         return DataFrame(filename=values)
-    elif(isinstance(values, fits.HDUList)):
+    elif isinstance(values, fits.HDUList):
         return DataFrame(frame=values)
     else:
         return None

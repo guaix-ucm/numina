@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,8 +13,6 @@ import os
 import logging
 import json
 import operator
-
-import six
 
 import numina.store
 from numina.exceptions import NoResultFound
@@ -295,9 +293,7 @@ class Backend(BaseHybridDAL):
                 raise NoResultFound(msg)
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
-            # Python 2.7 compatibility
-            six.raise_from(NoResultFound(msg), err)
-            # raise NoResultFound(msg) from err
+            raise NoResultFound(msg) from err
 
     def search_session_ids(self):
         for obs_id in self.ob_ids:

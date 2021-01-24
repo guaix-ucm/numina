@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,6 @@
 
 
 import numpy
-import six
 
 from .datatype import DataType
 
@@ -29,7 +28,7 @@ class ArrayType(DataType):
         return dump_numpy_array(obj, where, self.fmt)
 
     def _datatype_load(self, obj):
-        if isinstance(obj, six.string_types):
+        if isinstance(obj, str):
             # if is a string, it may be a pathname, try to load it
 
             # heuristics, by extension

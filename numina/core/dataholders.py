@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,8 +16,6 @@ import numina.exceptions
 import collections
 import contextlib
 import warnings
-
-import six
 
 from numina.exceptions import NoResultFound
 import numina.types.datatype as dt
@@ -244,8 +242,9 @@ class Requirement(EntryHolder):
             pass
 
         if isinstance(q_options, ResultOf):
-            value = dal.search_result_relative(self.dest, self.type, obsres,
-                                                   result_desc=q_options)
+            value = dal.search_result_relative(
+                self.dest, self.type, obsres, result_desc=q_options
+            )
             return value.content
 
         return self.query_on_dal(dal, obsres, options=q_options)
@@ -273,7 +272,7 @@ class Requirement(EntryHolder):
             else:
                 # Not found
                 for subtype, notfound in failures:
-                    pass # subtype.on_query_not_found(notfound)
+                    pass  # subtype.on_query_not_found(notfound)
                 raise NoResultFound
 
         if not scalar and this_type.multi_query:
@@ -350,7 +349,7 @@ def _process_nelem(nlem):
         return False, (None, None)
     if isinstance(nlem, int):
         return True, (nlem, nlem)
-    if isinstance(nlem, six.string_types):
+    if isinstance(nlem, str):
         if nlem == '*':
             return True, (0, None)
         if nlem == '+':

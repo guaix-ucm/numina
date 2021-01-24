@@ -9,7 +9,6 @@ Python >= 3.6 is required. Additionally the following packages are required
 in order to work properly:
 
  - `setuptools <http://pythonhosted.org/setuptools/>`_
- - `six <http://pythonhosted.org/six/>`_
  - `numpy <http://numpy.scipy.org/>`_ 
  - `scipy <http://www.scipy.org>`_
  - `astropy <http://www.astropy.org>`_

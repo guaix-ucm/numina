@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,8 +11,6 @@
 
 import os
 import logging
-
-import six
 
 from numina.util.objimport import import_object
 
@@ -74,7 +72,7 @@ def read_structured(data):
 
 def unserial(value):
     checkers = [(is_fits, read_fits_later), (is_json, read_json), (is_yaml, read_yaml)]
-    if isinstance(value, six.string_types):
+    if isinstance(value, str):
         for check_type, conv in checkers:
             if check_type(value):
                 return conv(value)

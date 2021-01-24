@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -10,7 +10,6 @@
 import unittest
 import itertools
 
-from six.moves import range
 import numpy
 
 import numina.array.combine as c
@@ -390,6 +389,7 @@ def test_suite():
     suite.addTest(unittest.makeSuite(MinMaxTestCase))
     suite.addTest(unittest.makeSuite(QuantileClipTestCase))
     return suite
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')

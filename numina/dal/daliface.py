@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2017 Universidad Complutense de Madrid
+# Copyright 2014-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,10 +11,8 @@
 
 from abc import ABCMeta, abstractmethod
 
-from six import with_metaclass
 
-
-class DALInterface(with_metaclass(ABCMeta, object)):
+class DALInterface(metaclass=ABCMeta):
     """Abstract Base Class for DAL"""
 
     @abstractmethod

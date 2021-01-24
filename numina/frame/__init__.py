@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,6 @@
 #
 
 import warnings
-import six
 from astropy.io import fits
 
 import numina.array
@@ -73,7 +72,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
                 scale=1, fill=0.0, overwrite=True, conserve=True, dtype=None):
 
     close_on_exit = False
-    if isinstance(fitsfile, six.string_types):
+    if isinstance(fitsfile, str):
         hdulist = fits.open(fitsfile, mode='readonly')
         close_on_exit = True
     else:

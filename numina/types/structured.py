@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,7 @@ import json
 import uuid
 import datetime
 
-import six.moves.builtins as builtins
+import builtins
 
 import numina.types.product
 import numina.types.datatype
@@ -145,7 +145,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
             return "{}()".format(sclass)
 
     def writeto(self, name):
-        return  writeto(self, name)
+        return writeto(self, name)
 
     @classmethod
     def _datatype_dump(cls, obj, where):

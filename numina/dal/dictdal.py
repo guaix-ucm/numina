@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2020 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,7 +14,6 @@ import logging
 import json
 from itertools import chain
 
-import six
 import yaml
 
 import numina.store
@@ -223,9 +222,7 @@ class BaseDictDAL(AbsDrpDAL):
             return st
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
-            # Python 2.7 compatibility
-            six.raise_from(NoResultFound(msg), err)
-            # raise NoResultFound(msg) from err
+            raise NoResultFound(msg) from err
 
     def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
@@ -669,6 +666,4 @@ class HybridDAL(BaseHybridDAL):
                 return st
         except KeyError as err:
             msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
-            # Python 2.7 compatibility
-            six.raise_from(NoResultFound(msg), err)
-            # raise NoResultFound(msg) from err
+            raise NoResultFound(msg) from err

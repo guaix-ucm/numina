@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,6 @@
 Recipe requirement holders
 """
 
-import six
 
 import numina.exceptions
 import numina.types.obsresult as obtypes
@@ -79,4 +78,4 @@ class ObservationResultRequirement(Requirement):
         -------
 
         """
-        six.raise_from(numina.exceptions.NoResultFound('unable to complete ObservationResult'), notfound)
+        raise numina.exceptions.NoResultFound('unable to complete ObservationResult') from notfound
