@@ -4,6 +4,10 @@ os: linux
 
 cache: pip
 
+env:
+  global:
+    - PYTHONDEVMODE=1
+
 jobs:
   include:
     - python: "3.6"
@@ -11,6 +15,8 @@ jobs:
     - python: "3.7"
       env: DEPS="numpy>=1.16 Cython" COVERAGE=true
     - python: "3.8"
+      env: DEPS="numpy>=1.16 Cython"
+    - python: "3.9"
       env: DEPS="numpy>=1.16 Cython"
 
 # Have to install manually numpy>=1.16 for astropy
