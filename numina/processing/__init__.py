@@ -115,8 +115,8 @@ class BadPixelCorrector(Corrector):
         img['primary'].data = newdata
         hdr = img['primary'].header
         hdr['NUM-BPM'] = self.calibid
-        hdr['history'] = 'BPM correction with {}'.format(self.calibid)
-        hdr['history'] = 'BPM correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'BPM correction with {self.calibid}'
+        hdr['history'] = f'BPM correction time {datetime.datetime.utcnow().isoformat()}'
         return img
 
 
@@ -152,9 +152,9 @@ class BiasCorrector(Corrector):
             img[1].data = variance
         hdr = img['primary'].header
         hdr['NUM-BS'] = self.calibid
-        hdr['history'] = 'Bias correction with {}'.format(self.calibid)
-        hdr['history'] = 'Bias image mean is {}'.format(self.bias_stats)
-        hdr['history'] = 'Bias correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Bias correction with {self.calibid}'
+        hdr['history'] = f'Bias image mean is {self.bias_stats}'
+        hdr['history'] = f'Bias correction time {datetime.datetime.utcnow().isoformat()}'
         return img
 
 
@@ -193,8 +193,8 @@ class DarkCorrector(Corrector):
             img[1].data = variance
         hdr = img['primary'].header
         hdr['NUM-DK'] = self.calibid
-        hdr['history'] = 'Dark correction with {}'.format(self.calibid)
-        hdr['history'] = 'Dark correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Dark correction with {self.calibid}'
+        hdr['history'] = f'Dark correction time {datetime.datetime.utcnow().isoformat()}'
         return img
 
 
@@ -222,8 +222,8 @@ class NonLinearityCorrector(Corrector):
         img[0].data = data
         hdr = self.datamodel.get_header(img)
         hdr['NUM-LIN'] = self.calibid
-        hdr['history'] = 'Non-linearity correction with {}'.format(self.calibid)
-        hdr['history'] = 'Non-linearity correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Non-linearity correction with {self.calibid}'
+        hdr['history'] = f'Non-linearity correction time {datetime.datetime.utcnow().isoformat()}'
         return img
 
 
@@ -254,9 +254,9 @@ class FlatFieldCorrector(Corrector):
         img[0].data = data
         hdr = img['primary'].header
         hdr['NUM-FF'] = self.calibid
-        hdr['history'] = 'Flat-field correction with {}'.format(self.calibid)
-        hdr['history'] = 'Flat-field correction time {}'.format(datetime.datetime.utcnow().isoformat())
-        hdr['history'] = 'Flat-field correction mean {}'.format(self.flat_stats)
+        hdr['history'] = f'Flat-field correction with {self.calibid}'
+        hdr['history'] = f'Flat-field correction time {datetime.datetime.utcnow().isoformat()}'
+        hdr['history'] = f'Flat-field correction mean {self.flat_stats}'
         return img
 
 
@@ -290,9 +290,9 @@ class SkyCorrector(Corrector):
             img[0].data = data
             hdr = img['primary'].header
             hdr['NUM-SK'] = self.calibid
-            hdr['history'] = 'Sky subtraction with {}'.format(self.calibid)
-            hdr['history'] = 'Sky subtraction time {}'.format(datetime.datetime.utcnow().isoformat())
-            hdr['history'] = 'Sky subtraction mean {}'.format(self.calib_stats)
+            hdr['history'] = f'Sky subtraction with {self.calibid}'
+            hdr['history'] = f'Sky subtraction time {datetime.datetime.utcnow().isoformat()}'
+            hdr['history'] = f'Sky subtraction mean {self.calib_stats}'
         else:
             _logger.debug('skip sky correction in %s', imgid)
         return img
@@ -336,6 +336,6 @@ class DivideByExposure(Corrector):
                 pass
 
             hdr['NUM-EXP'] = etime
-            hdr['history'] = 'Divided by exposure {}'.format(etime)
-            hdr['history'] = 'Divided by exposure {}'.format(datetime.datetime.utcnow().isoformat())
+            hdr['history'] = f'Divided by exposure {etime}'
+            hdr['history'] = f'Divided by exposure {datetime.datetime.utcnow().isoformat()}'
         return img

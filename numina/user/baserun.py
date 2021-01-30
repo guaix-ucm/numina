@@ -98,7 +98,7 @@ def run_task_reduce(task, datastore):
     configuration = task.request_params["instrument_configuration"]
     as_mode = task.request_params["mode"]
 
-    _logger.info("procesing OB with id={}".format(obsid))
+    _logger.info(f"procesing OB with id={obsid}")
 
     workenv = datastore.create_workenv(task)
     task.request_runinfo["results_dir"] = workenv.resultsdir_rel
@@ -149,7 +149,7 @@ def run_task_reduce(task, datastore):
 
         for key, val in obsres.requirements.items():
             if key not in recipe.requirements():
-                _logger.warning('"{}: {}" present in OB requirements, but not used'.format(key, val))
+                _logger.warning(f'"{key}: {val}" present in OB requirements, but not used')
 
         for req in recipe.products().values():
             _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)

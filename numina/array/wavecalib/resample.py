@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -92,9 +92,13 @@ def rebin(a, *args):
     shape = a.shape
     len_shape = len(shape)
     factor = np.asarray(shape) // np.asarray(args)
+    # ev_list = ['a.reshape('] + \
+    #           ['args[%d], factor[%d], ' % (i, i) for i in range(len_shape)] + \
+    #           [')'] + ['.mean(%d)' % (i+1) for i in range(len_shape)]
+    # FIXME: this construction is weird
     ev_list = ['a.reshape('] + \
-              ['args[%d], factor[%d], ' % (i, i) for i in range(len_shape)] + \
-              [')'] + ['.mean(%d)' % (i+1) for i in range(len_shape)]
+              [f'args[{idx}], factor[{idx}], ' for idx in range(len_shape)] + \
+              [')'] + [f'.mean({idx + 1})' for idx in range(len_shape)]
     # print(''.join(ev_list))
     return eval(''.join(ev_list))
 

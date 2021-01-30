@@ -181,7 +181,7 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                     xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
                     xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
                 params.add(
-                    name='xknot{:03d}'.format(i),
+                    name=f'xknot{i:03d}',
                     value=xknotnor[i],
                     min=xminknot,
                     max=xmaxknot,

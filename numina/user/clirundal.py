@@ -26,7 +26,7 @@ def mode_run_common(args, extra_args, mode):
     elif mode == 'obs':
         return mode_run_common_obs(args, extra_args)
     else:
-        raise ValueError('Not valid run mode {0}'.format(mode))
+        raise ValueError(f'Not valid run mode {mode}')
 
 
 def mode_run_common_obs(args, extra_args):

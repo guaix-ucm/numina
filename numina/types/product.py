@@ -34,7 +34,7 @@ class DataProductMixin(DataTypeBase):
     def name(self):
         """Unique name of the datatype"""
         sclass = type(self).__name__
-        return "%s" % (sclass,)
+        return f"{sclass}"
 
     def query_constraints(self):
         import numina.core.query

@@ -41,7 +41,7 @@ class Carrousel(HWDevice):
 
     def move_to(self, pos):
         if pos >= self._capacity or pos < 0:
-            raise ValueError('Position %d out of bounds' % pos)
+            raise ValueError(f'Position {pos:d} out of bounds')
 
         if pos != self._pos:
             self._pos = pos
@@ -61,7 +61,7 @@ class Carrousel(HWDevice):
                 else:
                     pass
         else:
-            raise ValueError('No object named %s' % name)
+            raise ValueError(f'No object named {name}')
 
     @property
     def position(self):

@@ -138,7 +138,7 @@ class PlainPythonType(DataType):
 
     def __str__(self):
         sclass = type(self).__name__
-        return "%s[%s]" % (sclass, self.internal_type)
+        return f"{sclass}[{self.internal_type}]"
 
 
 class ListOfType(DataType):
@@ -188,7 +188,7 @@ class ListOfType(DataType):
         result = []
         old_dest = where
         for idx, obj in enumerate(objs, start=self.index):
-            n_where = '{}{}'.format(old_dest, idx)
+            n_where = f'{old_dest}{idx}'
             res = self.node_type._datatype_dump(obj, n_where)
             result.append(res)
         return result
@@ -204,4 +204,4 @@ class ListOfType(DataType):
 
     def __str__(self):
         sclass = type(self).__name__
-        return "%s[%s]" % (sclass, self.node_type)
+        return f"{sclass}[{self.node_type}]"

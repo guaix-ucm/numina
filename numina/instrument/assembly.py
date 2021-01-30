@@ -55,7 +55,7 @@ def get_default_class(etype):
     elif etype == 'properties':
         return repre.PropertiesGeneric
     else:
-        raise ValueError('no class for {}'.format(etype))
+        raise ValueError(f'no class for {etype}')
 
 
 _default_class = {}
@@ -214,7 +214,7 @@ def find_element(comp_store, etype, keyval, date, by_key='name'):
                 # print('date not valid', datet, val['origin'].date_start, val['origin'].date_end)
                 pass
     else:
-        raise ValueError("Not found {} {}={} for date={}".format(etype, by_key, keyval, date))
+        raise ValueError(f"Not found {etype} {by_key}={keyval} for date={date}")
 
 
 def assembly_instrument(comp_store, keyval, date, by_key='name'):
@@ -286,7 +286,7 @@ def assembly_element(comp_store, etype, tmpl, date, dest=None, by_key='name'):
                                    by_key='uuid')
             setup_objects[res.name] = res
         else:
-            raise ValueError('error in setup: {}'.format(c))
+            raise ValueError(f'error in setup: {c}')
 
     # Load config objects
     prop_objects = {}
@@ -315,7 +315,7 @@ def assembly_element(comp_store, etype, tmpl, date, dest=None, by_key='name'):
                                        by_key='uuid')
                 confe = res.properties[key]
             else:
-                raise ValueError('error in properties: {}'.format(entry))
+                raise ValueError(f'error in properties: {entry}')
 
         prop_objects[key] = confe
 
@@ -347,7 +347,7 @@ def assembly_element(comp_store, etype, tmpl, date, dest=None, by_key='name'):
             res = assembly_element(comp_store, 'component', c['uuid'], date, dest=cid,
                                    by_key='uuid')
         else:
-            raise ValueError('error in components: {}'.format(c))
+            raise ValueError(f'error in components: {c}')
 
         res.set_parent(iml)
 

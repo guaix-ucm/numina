@@ -105,7 +105,7 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, pr
     if 'dtype' not in method_kwargs:
         method_kwargs['dtype'] = 'float32'
 
-    _logger.info("stacking %d images using '%s'", cnum, method.__name__)
+    _logger.info(f"stacking {cnum:d} images using '{method.__name__}'")
     combined_data = method([d[0].data for d in hduls], **method_kwargs)
 
     hdu = fits.PrimaryHDU(combined_data[0], header=base_header)
@@ -113,11 +113,11 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, pr
     if prolog:
         _logger.debug('write prolog')
         hdu.header['history'] = prolog
-    hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
-    hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+    hdu.header['history'] = f"Combined {cnum:d} images using '{method.__name__}'"
+    hdu.header['history'] = f'Combination time {datetime.datetime.utcnow().isoformat()}'
 
     for img in hduls:
-        hdu.header['history'] = "Image {}".format(get_imgid(img))
+        hdu.header['history'] = f"Image {get_imgid(img)}"
 
     prevnum = base_header.get('NUM-NCOM', 1)
     hdu.header['NUM-NCOM'] = prevnum * cnum
@@ -156,7 +156,7 @@ def main(args=None):
     elif args.method == 'median':
         method = combine.median
     else:
-        raise ValueError('wrong method {}'.format(args.method))
+        raise ValueError(f'wrong method {args.method}')
 
     errors = args.errors
     with contextlib.ExitStack() as stack:

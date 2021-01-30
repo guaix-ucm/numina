@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -610,9 +610,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         if coeff_refined is not None:
             for idum, fdum in \
                     enumerate(zip(coeff_ini, coeff_refined)):
-                print(">>> coef#" + str(idum) + ':  ', end='')
-                print("%+.8E  -->  %+.8E" % (decimal.Decimal(fdum[0]),
-                                         decimal.Decimal(fdum[1])))
+                print(f">>> coef#{idum}:  ", end='')
+                print(f"{decimal.Decimal(fdum[0]):+.8E}  -->  {decimal.Decimal(fdum[1]):+.8E}")
 
     return coeff_refined
 

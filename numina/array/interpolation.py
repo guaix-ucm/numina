@@ -110,7 +110,7 @@ class SteffenInterpolator(object):
                  'const',
                  'border']
         if extrapolate not in modes:
-            msg = 'invalid extrapolation mode {}'.format(extrapolate)
+            msg = f'invalid extrapolation mode {extrapolate}'
             raise ValueError(msg)
 
         if extrapolate == 'raise':
@@ -215,7 +215,7 @@ class SteffenInterpolator(object):
         elif der >= 4:
             return self._poly_eval_4(u, ids)
         else:
-            raise ValueError("der={} is impossible".format(der))
+            raise ValueError(f"der={der} is impossible")
 
     def _poly_eval_0(self, u, ids):
         """Evaluate internal polynomial."""

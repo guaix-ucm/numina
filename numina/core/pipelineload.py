@@ -30,7 +30,7 @@ def check_section(node, section, keys=None):
     if keys:
         for key in keys:
             if key not in node:
-                raise ValueError('Missing key %r inside %r node' % (key, section))
+                raise ValueError(f'Missing key {key!r} inside {section!r} node')
 
 
 def drp_load(package, resource, confclass=None):
@@ -169,7 +169,7 @@ def load_confs(package, node, confclass=None):
     if path:
         modpath = path
     else:
-        modpath = "{}.instrument.configs".format(package)
+        modpath = f"{package}.instrument.configs"
 
     if confclass is None:
         _loader = DefaultLoader(modpath=modpath)
@@ -300,11 +300,11 @@ class DefaultLoader(object):
         self.modpath = modpath
 
     def build_component_fp(self, key):
-        fname = 'component-%s.json' % key
+        fname = f'component-{key}.json'
         return self.build_type_fp(fname)
 
     def build_instrument_fp(self, key):
-        fname = 'instrument-%s.json' % key
+        fname = f'instrument-{key}.json'
         return self.build_type_fp(fname)
 
     def build_type_fp(self, fname):

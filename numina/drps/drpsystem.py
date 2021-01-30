@@ -40,7 +40,7 @@ class DrpSystem(DrpGeneric):
             if drpins.name == name:
                 return drpins
         else:
-            raise KeyError('{}'.format(name))
+            raise KeyError(f'{name}')
 
     @classmethod
     def iload(cls, entry_point='numina.pipeline.1'):

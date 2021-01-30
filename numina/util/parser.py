@@ -46,9 +46,9 @@ def parse_arg_line(fargs):
             raise ValueError("malformed")
         key = p[:fe]
         val = p[fe + 1:]
-        tok = "'{}': {}".format(key, val)
+        tok = f"'{key}': {val}"
         result.append(tok)
     tokj = ','.join(result)
-    result = "{{ {0} }}".format(tokj)
+    result = f"{{ {tokj} }}"
     state = ast.literal_eval(result)
     return state

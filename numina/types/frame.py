@@ -67,7 +67,7 @@ class DataFrameType(DataType):
         elif isinstance(obj, fits.PrimaryHDU):
             return DataFrame(frame=fits.HDUList([obj]))
         else:
-            msg = 'object of type %r cannot be converted to DataFrame' % obj
+            msg = f'object of type {obj!r} cannot be converted to DataFrame'
             raise TypeError(msg)
 
     def validate(self, value):

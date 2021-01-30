@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -71,7 +71,7 @@ def _inspect_method(value):
         try:
             return _method_map[value], True
         except KeyError:
-            print('invalid method {}'.format(value))
+            print(f'invalid method {value}')
             raise
     elif isinstance(value, collections.Sequence):
         return value, False
@@ -150,17 +150,17 @@ def combine(method, images, masks=None, dtype=None,
 
     if method_name != "":
         #_logger.info("Combined %d images using '%s'", nimages, method.__name__)
-        hdu1.header['history'] = "Combined %d images using '%s'" % (nimages, method)
+        hdu1.header['history'] = f"Combined {nimages:d} images using '{method}'"
     else:
-        hdu1.header['history'] = "Combined %d images" % (nimages,)
+        hdu1.header['history'] = f"Combined {nimages:d} images"
 
-    hdu1.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+    hdu1.header['history'] = f'Combination time {datetime.datetime.utcnow().isoformat()}'
 
     if datamodel is None:
         datamodel = numina.datamodel.DataModel()
 
     for idx, img in enumerate(images, start=1):
-        hdu1.header['history'] = "Image{} {}".format(idx, datamodel.get_imgid(img))
+        hdu1.header['history'] = f"Image{idx} {datamodel.get_imgid(img)}"
 
     prevnum = base_header.get('NUM-NCOM', 1)
 

@@ -249,7 +249,7 @@ class Backend(BaseHybridDAL):
                     rprod['content'] = numina.store.load(tipo, path)
                     return StoredProduct(**rprod)
         else:
-            msg = 'type {} compatible with tags {} not found'.format(label_alt, obsres.tags)
+            msg = f'type {label_alt} compatible with tags {obsres.tags} not found'
             raise NoResultFound(msg)
 
     def search_result_id(self, node_id, tipo, field, mode=None):
@@ -258,7 +258,7 @@ class Backend(BaseHybridDAL):
         if mode is not None:
             # mode must match
             if cobsres.mode != mode:
-                msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
+                msg = f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
                 raise NoResultFound(msg)
 
         try:
@@ -280,7 +280,7 @@ class Backend(BaseHybridDAL):
                 try:
                     content = getattr(stored_result, field)
                 except AttributeError:
-                    raise NoResultFound('no field {} found in result'.format(field))
+                    raise NoResultFound(f'no field {field} found in result')
 
                 st = StoredProduct(
                     id=result_reg['id'],
@@ -289,10 +289,10 @@ class Backend(BaseHybridDAL):
                 )
                 return st
             else:
-                msg = "result of mode '{}' id={} not found".format(field, node_id)
+                msg = f"result of mode '{field}' id={node_id} not found"
                 raise NoResultFound(msg)
         except KeyError as err:
-            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
+            msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
             raise NoResultFound(msg) from err
 
     def search_session_ids(self):

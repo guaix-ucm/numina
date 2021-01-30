@@ -31,7 +31,7 @@ class ResultOf(QueryModifier):
         self.field = field
 
         if node not in ['children', 'prev', 'prev-rel', 'last']:
-            raise ValueError("value '{}' not allowed for node".format(node))
+            raise ValueError(f"value '{node}' not allowed for node")
 
         self.node = node
         if self.node == 'children':
@@ -53,7 +53,7 @@ class ResultOf(QueryModifier):
             self.mode = splitm[0]
             self.attr = splitm[1]
         else:
-            raise ValueError('malformed desc: %s' % field)
+            raise ValueError(f'malformed desc: {field}')
 
 
 class Ignore(QueryModifier):

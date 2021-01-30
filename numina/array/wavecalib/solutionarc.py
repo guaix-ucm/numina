@@ -128,7 +128,7 @@ class WavecalFeature(object):
                 if math.isinf(value):
                     value = 1e50
                     warnings.warn(
-                        'Converting {}=inf to {}'.format(k, value),
+                        f'Converting {k}=inf to {value}',
                         RuntimeWarning
                     )
 

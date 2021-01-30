@@ -53,8 +53,8 @@ class RecipeInOut(object):
         sclass = type(self).__name__
         full = []
         for key, val in self.stored().items():
-            full.append('{0}={1!r}'.format(key, val))
-        return '{}({})'.format(sclass, ', '.join(full))
+            full.append(f'{key}={val!r}')
+        return f"{sclass}({', '.join(full)})"
 
     def __getattr__(self, item):
         # This method might be called before _aliases is initialized
@@ -62,7 +62,7 @@ class RecipeInOut(object):
             ref = self.__dict__['_aliases'][item]
             return getattr(self, ref.dest)
         else:
-            msg = "'{}' object has no attribute '{}'".format(self.__class__.__name__, item)
+            msg = f"'{self.__class__.__name__}' object has no attribute '{item}'"
             raise AttributeError(msg)
 
     def __setattr__(self, item, value):
@@ -190,7 +190,7 @@ class define_result(object):
     """Recipe decorator."""
     def __init__(self, resultClass):
         if not issubclass(resultClass, RecipeResult):
-            msg = '{0!r} does not derive from RecipeResult'.format(resultClass)
+            msg = f'{resultClass!r} does not derive from RecipeResult'
             raise TypeError(msg)
         self.klass = resultClass
 
@@ -203,7 +203,7 @@ class define_input(object):
     """Recipe decorator."""
     def __init__(self, input_class):
         if not issubclass(input_class, RecipeInput):
-            msg = '{0!r} does not derive from RecipeInput'.format(input_class)
+            msg = f'{input_class!r} does not derive from RecipeInput'
             raise TypeError(msg)
         self.klass = input_class
 

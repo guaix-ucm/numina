@@ -61,7 +61,7 @@ class EntryHolder(object):
         try:
             cval = self.convert(value)
             if self.choices and (cval not in self.choices):
-                errmsg = '{} not in {}'.format(cval, self.choices)
+                errmsg = f'{cval} not in {self.choices}'
                 raise numina.exceptions.ValidationError(errmsg)
         except (ValueError, TypeError, numina.exceptions.ValidationError) as err:
 
@@ -72,7 +72,7 @@ class EntryHolder(object):
                 errmsg = err.args[0]
                 rem = err.args[1:]
 
-            msg = '"{}": {}'.format(self.dest, errmsg)
+            msg = f'"{self.dest}": {errmsg}'
             newargs = (msg, ) + rem
             err.args = newargs
             raise
@@ -113,7 +113,7 @@ class Result(EntryHolder):
 #            raise TypeError('type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Result(type=%r, dest=%r)' % (self.type, self.dest)
+        return f'Result(type={self.type!r}, dest={self.dest!r})'
 
     def convert(self, val):
         return self.type.convert_out(val)
@@ -142,7 +142,7 @@ class Product(Result):
         warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
 
     def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
+        return f'Product(type={self.type!r}, dest={self.dest!r})'
 
 
 @contextlib.contextmanager
@@ -314,7 +314,7 @@ class Requirement(EntryHolder):
         key = self.dest
         if dest_d:
             if alias_d:
-                msg = "Both '{}' and alias '{}' are defined".format(self.dest, self.alias)
+                msg = f"Both '{self.dest}' and alias '{self.alias}' are defined"
                 warnings.warn(msg, RuntimeWarning)
         else:
             if alias_d:
@@ -355,7 +355,7 @@ def _process_nelem(nlem):
         if nlem == '+':
             return True, (1, None)
 
-    raise ValueError('value {} is invalid'.format(nlem))
+    raise ValueError(f'value {nlem} is invalid')
 
 
 def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):

@@ -217,7 +217,7 @@ class InstrumentDRP(object):
         try:
             return pipe.who_provides(product)
         except KeyError:
-            raise ValueError('no mode provides %s' % product)
+            raise ValueError(f'no mode provides {product}')
 
     def search_mode_provides(self, product, pipeline='default'):
         """Search the mode that provides a given product"""
@@ -228,7 +228,7 @@ class InstrumentDRP(object):
             if obj.name() == product:
                 return ProductEntry(obj.name(), mode.key, field)
         else:
-            raise ValueError('no mode provides %s' % product)
+            raise ValueError(f'no mode provides {product}')
 
     def iterate_mode_provides(self, modes, pipeline):
         """Return the mode that provides a given product"""
@@ -240,7 +240,7 @@ class InstrumentDRP(object):
                     if provide.type.isproduct():
                         yield provide.type, mode, key
             except KeyError:
-                warnings.warn('Mode {} has not recipe'.format(mode_key))
+                warnings.warn(f'Mode {mode_key} has not recipe')
 
     def configuration_selector(self, obsres):
         warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
@@ -275,7 +275,7 @@ class InstrumentDRP(object):
                         if conf.name == result:
                             return conf
                     else:
-                        raise KeyError('insconf {} does not match any config'.format(result))
+                        raise KeyError(f'insconf {result} does not match any config')
 
             # If not, try to match by DATE
             date_obs = extr.extract('observation_date', ref)
@@ -396,4 +396,4 @@ class ObservingMode(object):
         return partial
 
     def __repr__(self):
-        return "ObservingMode(name={})".format(self.name)
+        return f"ObservingMode(name={self.name})"

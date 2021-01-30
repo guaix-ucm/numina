@@ -15,14 +15,14 @@ import numina.array
 
 def get_hdu_shape(header):
     ndim = header['naxis']
-    return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
+    return tuple(header.get(f'NAXIS{i:d}') for i in range(1, ndim + 1))
 
 
 def custom_slice_to_str(slc):
     if slc.step is None:
-        return '%i:%i' % (slc.start, slc.stop)
+        return f'{slc.start:d}:{slc.stop:d}'
     else:
-        return '%i:%i:%i' % (slc.start, slc.stop, slc.step)
+        return f'{slc.start:d}:{slc.stop:d}:{slc.step:d}'
 
 
 def custom_region_to_str(region):

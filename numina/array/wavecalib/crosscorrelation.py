@@ -233,7 +233,7 @@ def periodic_corr1d(sp_reference, sp_offset,
     # cosine bell
     if frac_cosbell is not None:
         if frac_cosbell < 0.0 or frac_cosbell > 0.5:
-            raise ValueError('Invalid frac_cosbell: {}'.format(frac_cosbell))
+            raise ValueError(f'Invalid frac_cosbell: {frac_cosbell}')
         sp_reference_mb = sp_reference_m * cosinebell(
             sp_reference_m.size, frac_cosbell
         )
@@ -247,7 +247,7 @@ def periodic_corr1d(sp_reference, sp_offset,
     # zero padding
     if zero_padding is not None:
         if zero_padding < 0:
-            raise ValueError('Invalid zero_padding: {}'.format(zero_padding))
+            raise ValueError(f'Invalid zero_padding: {zero_padding}')
         sp_reference_mbz = np.concatenate(
             (sp_reference_mb, np.zeros(zero_padding))
         )
@@ -398,14 +398,13 @@ def periodic_corr1d(sp_reference, sp_offset,
                        title=plottitle,
                        xlim=(-naxis1/2, naxis1/2), show=False)
         ax.axvline(offset, color='grey', linestyle='dashed')
-        coffset = "(offset:{0:6.2f} pixels)".format(offset)
+        coffset = f"(offset:{offset:6.2f} pixels)"
         ax.text(0.01, 0.99, coffset,
                 horizontalalignment='left',
                 verticalalignment='top',
                 transform=ax.transAxes)
         if naround_zero is not None:
-            cwindow = "(peak region: [{},{}] pixels)".format(-naround_zero,
-                                                             naround_zero)
+            cwindow = f"(peak region: [{-naround_zero},{naround_zero}] pixels)"
             ax.text(0.01, 0.93, cwindow,
                     horizontalalignment='left',
                     verticalalignment='top',

@@ -36,7 +36,7 @@ class Dal(object):
             elif stype.name() == 'Other':
                 return numina.dal.stored.StoredProduct(id=100, content=24, tags={})
             else:
-                raise numina.exceptions.NoResultFound('{} not found'.format(stype.name()))
+                raise numina.exceptions.NoResultFound(f'{stype.name()} not found')
         else:
             return numina.dal.stored.StoredProduct(id=1, content=2, tags={})
 

@@ -28,7 +28,7 @@ expecte1 = ["Instrument: TEST1",
 
 
 expecte2 = ["Instrument: TEST2",
-            " version is '{}'".format(numina.__version__),
+            f" version is '{numina.__version__}'",
             " has datamodel 'numina.datamodel.DataModel'",
             " has configuration 'Default configuration' uuid=9c21b315-9231-4fe0-a276-5043b064a3a8",
             " has pipeline 'default', version 1",

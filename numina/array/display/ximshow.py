@@ -530,7 +530,7 @@ def ximshow_file(singlefile,
     # read input FITS file
     hdulist = fits.open(singlefile)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError('Unexpected extension number {}'.format(extnum))
+        raise ValueError(f'Unexpected extension number {extnum}')
     image_header = hdulist[extnum - 1].header
     image2d = hdulist[extnum - 1].data
     hdulist.close()
@@ -880,7 +880,7 @@ def jimshowfile(filename,
     # read input FITS file
     hdulist = fits.open(filename)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError('Unexpected extension number {}'.format(extnum))
+        raise ValueError(f'Unexpected extension number {extnum}')
     image2d = hdulist[extnum - 1].data
     hdulist.close()
 

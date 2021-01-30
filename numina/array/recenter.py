@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2020 Universidad Complutense de Madrid
+# Copyright 2013-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -95,14 +95,14 @@ def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3,
         # if we are to far away from the initial point, break
         dst = distance.euclidean(origin, nxy)
         if dst > maxdist:
-            msg = 'maximum distance (%5.2f) from origin reached' % maxdist
+            msg = f'maximum distance ({maxdist:5.2f}) from origin reached'
             return cxy[0], cxy[1], back, 2, msg
 
         # check convergence
         dst = distance.euclidean(nxy, cxy)
         if dst < toldist:
-            return nxy[0], nxy[1], back, 1, 'converged in iteration %i' % i
+            return nxy[0], nxy[1], back, 1, f'converged in iteration {i}'
         else:
             cxy = nxy
 
-    return nxy[0], nxy[1], back, 3, 'not converged in %i iterations' % nloop
+    return nxy[0], nxy[1], back, 3, f'not converged in {nloop} iterations'

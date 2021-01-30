@@ -106,7 +106,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
 
     @property
     def calibid(self):
-        return 'uuid:{}'.format(self.uuid)
+        return f'uuid:{self.uuid}'
 
     @property
     def default(self):
@@ -140,9 +140,9 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin,
     def __str__(self):
         sclass = type(self).__name__
         if self.instrument != 'unknown':
-            return "{}(instrument={}, uuid={})".format(sclass, self.instrument, self.uuid)
+            return f"{sclass}(instrument={self.instrument}, uuid={self.uuid})"
         else:
-            return "{}()".format(sclass)
+            return f"{sclass}()"
 
     def writeto(self, name):
         return writeto(self, name)

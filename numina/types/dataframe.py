@@ -34,9 +34,9 @@ class DataFrame(object):
 
     def __repr__(self):
         if self.frame is None:
-            return "DataFrame(filename=%r)" % self.filename
+            return f"DataFrame(filename={self.filename!r})"
         elif self.filename is None:
-            return "DataFrame(frame=%r)" % self.frame
+            return f"DataFrame(frame={self.frame!r})"
         else:
             fmt = "DataFrame(filename=%r, frame=%r)"
             return fmt % (self.filename, self.frame)

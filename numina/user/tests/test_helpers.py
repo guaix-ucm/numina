@@ -13,9 +13,9 @@ def test_work1(tmpdir):
     work = WorkEnvironment(obsid, basedir=basedir)
     work.sane_work()
 
-    assert work.workdir == os.path.join(basedir, "obsid%d_work" % obsid)
+    assert work.workdir == os.path.join(basedir, f"obsid{obsid}_work")
     assert work.basedir == basedir
-    assert work.resultsdir == os.path.join(basedir, "obsid%d_results" % obsid)
+    assert work.resultsdir == os.path.join(basedir, f"obsid{obsid}_results")
 
     index_base = "index.pkl"
     assert work.index_file == os.path.join(work.workdir, index_base)
