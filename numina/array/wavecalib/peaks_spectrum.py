@@ -169,7 +169,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
         # it is important to create a copy in the next instruction in
         # order to avoid modifying the original array when normalizing
         # the data to be fitted
-        y_fit = np.copy(sx[j1:j2])
+        y_fit = np.copy(sx[j1:j2].astype(float))
         sx_peak_flux = y_fit.max()
         if sx_peak_flux != 0:
             y_fit /= sx_peak_flux  # normalize to maximum value
