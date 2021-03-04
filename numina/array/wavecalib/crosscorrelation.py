@@ -545,10 +545,10 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         nsamples = int((wv_max - wv_min) / min_delta_wv + 0.5) + 1
         wv = np.linspace(wv_min, wv_max, num=nsamples)
         print('WARNING (compute_broadening): Interpolation required:')
-        print('  wv_min..: {}'.format(wv_min))
-        print('  wv_max..: {}'.format(wv_max))
-        print('  step....: {}'.format(min_delta_wv))
-        print('  nsamples: {}'.format(nsamples))
+        print(f'  wv_min..: {wv_min}')
+        print(f'  wv_max..: {wv_max}')
+        print(f'  step....: {min_delta_wv}')
+        print(f'  nsamples: {nsamples}')
 
     # linear interpolation of input spectrum using the merged
     # wavelength sampling
