@@ -459,7 +459,10 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
 
     The comparison is performed in the common wavelength
     interval. Within this interval, both spectra are linearly
-    resampled to the result of merging 'wv_obj' and 'wv_ref'.
+    resampled to the result of merging 'wv_obj' and 'wv_ref',
+    using for this purpose a constant wavelength increment
+    (selected from the minimum wavelength step present in any
+    of the two input wavelength arrays).
 
     Parameters
     ----------
@@ -527,6 +530,25 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
     wv = np.unique(np.sort(np.concatenate((wv_obj, wv_ref))))
     # truncate to common interval
     wv = wv[(wv >= maximum_min) * (wv <= minimum_max)]
+    # check whether the sampling is constant
+    delta_wv = list(set(np.diff(wv)))
+    if np.allclose(delta_wv, delta_wv[0], rtol=1e-05, atol=1e-08):
+        # nothing to do
+        pass
+    else:
+        # linear resampling using the smallest step in any of the input arrays
+        min_delta_wv_obj = min(list(set(np.diff(wv_obj))))
+        min_delta_wv_ref = min(list(set(np.diff(wv_ref))))
+        min_delta_wv = min(min_delta_wv_obj, min_delta_wv_ref)
+        wv_min = wv[0]
+        wv_max = wv[-1]
+        nsamples = int((wv_max - wv_min) / min_delta_wv + 0.5) + 1
+        wv = np.linspace(wv_min, wv_max, num=nsamples)
+        print('WARNING (compute_broadening): Interpolation required:')
+        print('  wv_min..: {}'.format(wv_min))
+        print('  wv_max..: {}'.format(wv_max))
+        print('  step....: {}'.format(min_delta_wv))
+        print('  nsamples: {}'.format(nsamples))
 
     # linear interpolation of input spectrum using the merged
     # wavelength sampling

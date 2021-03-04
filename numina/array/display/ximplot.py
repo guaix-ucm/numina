@@ -57,7 +57,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
     if type(ycut) is not np.ndarray:
         raise ValueError("ycut=" + str(ycut) +
                          " must be a numpy.ndarray")
-    elif ycut.ndim is not 1:
+    elif ycut.ndim != 1:
         raise ValueError("ycut.ndim=" + str(ycut.dim) +
                          " must be 1")
 
