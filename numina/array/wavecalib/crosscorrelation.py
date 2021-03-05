@@ -55,7 +55,7 @@ def filtmask(sp, fmin, fmax,
         ximplotxy(xf[iok], yf[iok].real,
                   plottype='semilogy',
                   xlabel='frequency', ylabel='power',
-                  title='before masking', debugplot=debugplot)
+                  title=sp_label+' (before masking)', debugplot=debugplot)
 
     cut = (np.abs(xf) > fmax)
     yf[cut] = 0.0
@@ -66,7 +66,7 @@ def filtmask(sp, fmin, fmax,
         ximplotxy(xf[iok], yf[iok].real,
                   plottype='semilogy',
                   xlabel='frequency', ylabel='power',
-                  title='after masking', debugplot=debugplot)
+                  title=sp_label+' (after masking)', debugplot=debugplot)
 
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
@@ -264,13 +264,13 @@ def periodic_corr1d(sp_reference, sp_offset,
             sp_reference_mbz,
             fmin=fmin,
             fmax=fmax,
-            sp_label=sp_label,
+            sp_label='reference ' + sp_label,
             debugplot=debugplot)
         sp_offset_filtmask = filtmask(
             sp_offset_mbz,
             fmin=fmin,
             fmax=fmax,
-            sp_label=sp_label,
+            sp_label='offset ' + sp_label,
             debugplot=debugplot)
     else:
         sp_reference_filtmask = sp_reference_mbz
@@ -544,11 +544,12 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         wv_max = wv[-1]
         nsamples = int((wv_max - wv_min) / min_delta_wv + 0.5) + 1
         wv = np.linspace(wv_min, wv_max, num=nsamples)
-        print('WARNING (compute_broadening): Interpolation required:')
-        print(f'  wv_min..: {wv_min}')
-        print(f'  wv_max..: {wv_max}')
-        print(f'  step....: {min_delta_wv}')
-        print(f'  nsamples: {nsamples}')
+        if abs(debugplot) >= 10:
+            print('WARNING (compute_broadening): Interpolation required:')
+            print(f'  wv_min..: {wv_min}')
+            print(f'  wv_max..: {wv_max}')
+            print(f'  step....: {min_delta_wv}')
+            print(f'  nsamples: {nsamples}')
 
     # linear interpolation of input spectrum using the merged
     # wavelength sampling
