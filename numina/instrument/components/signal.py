@@ -10,6 +10,7 @@
 import traceback
 import collections
 
+
 class Signal(object):
     """Signal used for callbacks."""
     def __init__(self):

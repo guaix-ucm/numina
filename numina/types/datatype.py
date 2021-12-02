@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,7 @@
 #
 
 import inspect
-import collections
+import collections.abc
 
 from numina.exceptions import ValidationError
 from .base import DataTypeBase
@@ -167,7 +167,7 @@ class ListOfType(DataType):
             self.multi_query = multi_query
 
     def convert(self, obj):
-        if not isinstance(obj, collections.Iterable):
+        if not isinstance(obj, collections.abc.Iterable):
             if self.accept_scalar:
                 obj = [obj]
             else:
@@ -194,7 +194,7 @@ class ListOfType(DataType):
         return result
 
     def _datatype_load(self, objs):
-        if not isinstance(objs, collections.Iterable):
+        if not isinstance(objs, collections.abc.Iterable):
             if self.accept_scalar:
                 objs = [objs]
             else:
