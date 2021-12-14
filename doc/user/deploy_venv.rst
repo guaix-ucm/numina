@@ -17,10 +17,6 @@ In order to create a virtual environment called e.g. numinaenv using venv::
 
     python3 -m venv numinaenv
 
-With virtualenv (in Python 2.7)::
-
-    virtualenv numinaenv
-
 
 Activate the Environment
 ------------------------

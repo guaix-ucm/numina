@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2020 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,7 +14,6 @@ import logging
 import json
 from itertools import chain
 
-import six
 import yaml
 
 import numina.store
@@ -53,7 +52,7 @@ class BaseDictDAL(AbsDrpDAL):
             ob = self.ob_table[obsid]
             return ObservingBlock(**ob)
         except KeyError:
-            raise NoResultFound("oblock with id %d not found" % obsid)
+            raise NoResultFound(f"oblock with id {obsid} not found")
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         """Returns the first coincidence..."""
@@ -65,7 +64,7 @@ class BaseDictDAL(AbsDrpDAL):
                 # We have found the result, no more checks
                 return StoredProduct(**prod)
         else:
-            raise NoResultFound('result for ob %i not found' % obsid)
+            raise NoResultFound(f'result for ob {obsid} not found')
 
     def search_prod_req_tags(self, req, ins, tags, pipeline):
         if req.dest in self.extra_data:
@@ -100,7 +99,7 @@ class BaseDictDAL(AbsDrpDAL):
                 rprod['content'] = numina.store.load(tipo, prod['content'])
                 return StoredProduct(**rprod)
         else:
-            msg = 'type %s compatible with tags %r not found' % (tipo, tags)
+            msg = f'type {tipo} compatible with tags {tags!r} not found'
             raise NoResultFound(msg)
 
     def search_param_req(self, req, instrument, mode, pipeline):
@@ -116,7 +115,7 @@ class BaseDictDAL(AbsDrpDAL):
             content = StoredParameter(value)
             return content
         else:
-            raise NoResultFound("No parameters for %s mode, pipeline %s", mode, pipeline)
+            raise NoResultFound(f"No parameters for {mode} mode, pipeline {pipeline}")
 
     def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
@@ -136,7 +135,7 @@ class BaseDictDAL(AbsDrpDAL):
                     content = StoredParameter(value)
                     return content
             else:
-                msg = 'name %s compatible with tags %r not found' % (req.dest, tags)
+                msg = f'name {req.dest} compatible with tags {tags!r} not found'
                 raise NoResultFound(msg)
 
     def oblock_from_id(self, obsid):
@@ -169,7 +168,7 @@ class BaseDictDAL(AbsDrpDAL):
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
         except KeyError:
-            raise ValueError('no DRP for instrument {}'.format(obsres.instrument))
+            raise ValueError(f'no DRP for instrument {obsres.instrument}')
 
         # Reserved names
         if obsres.mode in self._RESERVED_MODE_NAMES:
@@ -222,10 +221,8 @@ class BaseDictDAL(AbsDrpDAL):
             )
             return st
         except KeyError as err:
-            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
-            # Python 2.7 compatibility
-            six.raise_from(NoResultFound(msg), err)
-            # raise NoResultFound(msg) from err
+            msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
+            raise NoResultFound(msg) from err
 
     def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
@@ -264,7 +261,7 @@ class BaseDictDAL(AbsDrpDAL):
                     content = StoredParameter(value)
                     return content
             else:
-                msg = 'name %s compatible with tags %r not found' % (name, tags)
+                msg = f'name {name} compatible with tags {tags!r} not found'
                 raise NoResultFound(msg)
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
@@ -343,13 +340,13 @@ class Dict2DAL(BaseDictDAL):
 
 
 def workdir_default(basedir, obsid):
-    workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
+    workdir = os.path.join(basedir, f'obsid{obsid}_work')
     workdir = os.path.abspath(workdir)
     return workdir
 
 
 def resultsdir_default(basedir, obsid):
-    resultsdir = os.path.join(basedir, 'obsid{}_results'.format(obsid))
+    resultsdir = os.path.join(basedir, f'obsid{obsid}_results')
     resultsdir = os.path.abspath(resultsdir)
     return resultsdir
 
@@ -440,7 +437,7 @@ class BaseHybridDAL(Dict2DAL):
                 rprod['content'] = self.product_loader(tipo, name, path)
                 return StoredProduct(**rprod)
         else:
-            msg = 'result with id %s not found' % (resultid, )
+            msg = f'result with id {resultid} not found'
             raise NoResultFound(msg)
 
     def product_loader(self, tipo, name, path):
@@ -529,7 +526,7 @@ class BaseHybridDAL(Dict2DAL):
             except NoResultFound:
                 pass
         else:
-            msg = 'unknown node type {}'.format(result_node)
+            msg = f'unknown node type {result_node}'
             raise TypeError(msg)
 
     def search_result_last(self, name, tipo, result_desc):
@@ -633,7 +630,7 @@ class HybridDAL(BaseHybridDAL):
         if mode is not None:
             # mode must match
             if cobsres.mode != mode:
-                msg = "requested mode '{}' and obsmode '{}' do not match".format(mode, cobsres.mode)
+                msg = f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
                 raise NoResultFound(msg)
 
         try:
@@ -652,14 +649,14 @@ class HybridDAL(BaseHybridDAL):
                     with open(filename_json) as fd:
                         result_data = json.load(fd)
                 else:
-                    raise ValueError('result.yaml or result.json not found in {}'.format(directory))
+                    raise ValueError(f'result.yaml or result.json not found in {directory}')
 
                 stored_result = StoredResult.load_data(result_data)
 
                 try:
                     content = getattr(stored_result, field)
                 except AttributeError:
-                    raise NoResultFound('no field {} found in result'.format(field))
+                    raise NoResultFound(f'no field {field} found in result')
 
                 st = StoredProduct(
                     id=node_id,
@@ -668,7 +665,5 @@ class HybridDAL(BaseHybridDAL):
                 )
                 return st
         except KeyError as err:
-            msg = "field '{}' not found in result of mode '{}' id={}".format(field, cobsres.mode, node_id)
-            # Python 2.7 compatibility
-            six.raise_from(NoResultFound(msg), err)
-            # raise NoResultFound(msg) from err
+            msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
+            raise NoResultFound(msg) from err

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,6 @@
 #
 
 import warnings
-import six
 from astropy.io import fits
 
 import numina.array
@@ -16,14 +15,14 @@ import numina.array
 
 def get_hdu_shape(header):
     ndim = header['naxis']
-    return tuple(header.get('NAXIS%d' % i) for i in range(1, ndim + 1))
+    return tuple(header.get(f'NAXIS{i:d}') for i in range(1, ndim + 1))
 
 
 def custom_slice_to_str(slc):
     if slc.step is None:
-        return '%i:%i' % (slc.start, slc.stop)
+        return f'{slc.start:d}:{slc.stop:d}'
     else:
-        return '%i:%i:%i' % (slc.start, slc.stop, slc.step)
+        return f'{slc.start:d}:{slc.stop:d}:{slc.step:d}'
 
 
 def custom_region_to_str(region):
@@ -73,7 +72,7 @@ def resize_fits(fitsfile, newfilename, newshape, region, window=None,
                 scale=1, fill=0.0, overwrite=True, conserve=True, dtype=None):
 
     close_on_exit = False
-    if isinstance(fitsfile, six.string_types):
+    if isinstance(fitsfile, str):
         hdulist = fits.open(fitsfile, mode='readonly')
         close_on_exit = True
     else:

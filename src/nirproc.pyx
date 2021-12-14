@@ -17,6 +17,8 @@
 # along with Numina.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+#cython: language_level=3
+
 include "procdefs.pyx"
 include "rampproc.pyx"
 include "fowlerproc.pyx"

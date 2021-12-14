@@ -1,14 +1,11 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 from astropy.io import fits
@@ -168,10 +165,10 @@ def ximshow(image2d, title=None, show=True,
         plt.ioff()
 
     # protections
-    if type(image2d) is not np.ndarray:
+    if not isinstance(image2d, np.ndarray):
         raise ValueError("image2d=" + str(image2d) +
                          " must be a numpy.ndarray")
-    elif image2d.ndim is not 2:
+    elif image2d.ndim != 2:
         raise ValueError("image2d.ndim=" + str(image2d.dim) +
                          " must be 2")
 
@@ -533,7 +530,7 @@ def ximshow_file(singlefile,
     # read input FITS file
     hdulist = fits.open(singlefile)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError('Unexpected extension number {}'.format(extnum))
+        raise ValueError(f'Unexpected extension number {extnum}')
     image_header = hdulist[extnum - 1].header
     image2d = hdulist[extnum - 1].data
     hdulist.close()
@@ -883,7 +880,7 @@ def jimshowfile(filename,
     # read input FITS file
     hdulist = fits.open(filename)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError('Unexpected extension number {}'.format(extnum))
+        raise ValueError(f'Unexpected extension number {extnum}')
     image2d = hdulist[extnum - 1].data
     hdulist.close()
 

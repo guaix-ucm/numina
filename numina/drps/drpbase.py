@@ -31,11 +31,11 @@ class DrpBase(object):
             if drpins.name == entryname:
                 return True
             else:
-                msg = 'Entry name "{}" and DRP name "{}" differ'.format(entryname, drpins.name)
+                msg = f'Entry name "{entryname}" and DRP name "{drpins.name}" differ'
                 warnings.warn(msg, RuntimeWarning)
                 return False
         else:
-            msg = 'Object {0!r} does not contain a valid DRP'.format(drpins)
+            msg = f'Object {drpins!r} does not contain a valid DRP'
             warnings.warn(msg, RuntimeWarning)
             return False
 

@@ -1,6 +1,4 @@
 
-from __future__ import print_function
-
 from setuptools import setup, Extension
 
 import sys
@@ -105,14 +103,12 @@ def setup_package():
     META_DATA = dict(
         setup_requires=['numpy'],
         tests_require=[
-            'pytest<3.7; python_version<"3"',
-            'pytest>=6; python_version>="3"',
+            'pytest>=6',
             'pytest-remotedata'
         ],
         extras_require={
           'test': [
-            'pytest<3.7; python_version<"3"',
-            'pytest>=6; python_version>="3"',
+            'pytest>=6',
             'pytest-remotedata'
             ]
         },

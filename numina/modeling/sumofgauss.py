@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,16 +14,16 @@ from astropy.modeling import Fittable1DModel, Parameter
 def sum_of_gaussian_factory(N):
     """Return a model of the sum of N Gaussians and a constant background."""
 
-    name = "SumNGauss%d" % N
+    name = f"SumNGauss{N:d}"
     attr = {}
 
     # parameters
     for i in range(N):
-        key = "amplitude_%d" % i
+        key = f"amplitude_{i:d}"
         attr[key] = Parameter(key)
-        key = "center_%d" % i
+        key = f"center_{i:d}"
         attr[key] = Parameter(key)
-        key = "stddev_%d" % i
+        key = f"stddev_{i:d}"
         attr[key] = Parameter(key)
 
     attr['background'] = Parameter('background', default=0.0)

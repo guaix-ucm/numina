@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,15 +9,13 @@
 
 
 import datetime
-import contextlib
-import collections
+import collections.abc
 import uuid
 
 import numpy
 import astropy.io.fits as fits
 
 import numina.array.combine as C
-
 from numina.frame.schema import SchemaKeyword as Keyword
 
 
@@ -71,9 +69,9 @@ def _inspect_method(value):
         try:
             return _method_map[value], True
         except KeyError:
-            print('invalid method {}'.format(value))
+            print(f'invalid method {value}')
             raise
-    elif isinstance(value, collections.Sequence):
+    elif isinstance(value, collections.abc.Sequence):
         return value, False
     elif isinstance(value, Keyword):
         return _ExtractKeyword(value), True
@@ -97,7 +95,7 @@ def combine(method, images, masks=None, dtype=None,
         intl_masks = [None for _ in images]
     elif isinstance(masks, Extension):
         intl_masks = [img[masks.name].data for img in images]
-    elif isinstance(masks, collections.Sequence):
+    elif isinstance(masks, collections.abc.Sequence):
         intl_masks = [mask[0].data for mask in masks]
     else:
         raise TypeError('mask in invalid')
@@ -107,14 +105,14 @@ def combine(method, images, masks=None, dtype=None,
 
     # Processing region
     if region is None:
-        region = Ellipsis # meaning arr[...]
+        region = Ellipsis  # meaning arr[...]
 
     # processing zeros, scales and weights
     num_values = dict(zeros=None, scales=None, weights=None)
     arg_values = dict(zeros=zeros, scales=scales, weights=weights)
 
     for key in num_values:
-        arg = arg_values[key] # locals()[key]
+        arg = arg_values[key]  # locals()[key]
         value_arg, arg_is_func = _inspect_method(arg)
         if arg_is_func:
             num_values[key] = [value_arg(img, mask, region) for img, mask in zip(images, intl_masks)]
@@ -142,25 +140,25 @@ def combine(method, images, masks=None, dtype=None,
     hdu1 = fits.PrimaryHDU(data=out[0], header=base_header)
     list_of_hdu = [hdu1]
 
-    #_logger.debug('update result header')
+    # _logger.debug('update result header')
     prolog = ""
     if prolog:
-        #_logger.debug('write prolog')
+        # _logger.debug('write prolog')
         hdu1.header['history'] = prolog
 
     if method_name != "":
-        #_logger.info("Combined %d images using '%s'", nimages, method.__name__)
-        hdu1.header['history'] = "Combined %d images using '%s'" % (nimages, method)
+        # _logger.info("Combined %d images using '%s'", nimages, method.__name__)
+        hdu1.header['history'] = f"Combined {nimages:d} images using '{method}'"
     else:
-        hdu1.header['history'] = "Combined %d images" % (nimages,)
+        hdu1.header['history'] = f"Combined {nimages:d} images"
 
-    hdu1.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+    hdu1.header['history'] = f'Combination time {datetime.datetime.utcnow().isoformat()}'
 
     if datamodel is None:
         datamodel = numina.datamodel.DataModel()
 
     for idx, img in enumerate(images, start=1):
-        hdu1.header['history'] = "Image{} {}".format(idx, datamodel.get_imgid(img))
+        hdu1.header['history'] = f"Image{idx} {datamodel.get_imgid(img)}"
 
     prevnum = base_header.get('NUM-NCOM', 1)
 

@@ -26,7 +26,7 @@ def test_oresult1():
         hdu.header['UUID'] = '1'
         hdu.header['DATE-OBS'] = '2018-04-12T22:44:12.3'
         hdu.header['INSCONF'] = 'v1'
-        hdu.header['FILENAME'] = 'img{}.fits'.format(i)
+        hdu.header['FILENAME'] = f'img{i}.fits'
         hdu.header['EXPTIME'] = 3.0
 
         hdulist = fits.HDUList(hdu)

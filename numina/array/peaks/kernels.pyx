@@ -1,11 +1,7 @@
 
-from cpython.version cimport PY_MAJOR_VERSION, PY_VERSION_HEX
+#cython: language_level=3
 
 from libc.stdlib cimport malloc, free
-
-# PyCapsule exits in Py3 and Py2.7
-# But scipy use PyCObject in Py2.7
-# and PyCapsule in Py3
 
 from cpython.pycapsule cimport PyCapsule_New
 from cpython.pycapsule cimport PyCapsule_GetContext
@@ -16,7 +12,7 @@ from cpython.pycapsule cimport PyCapsule_SetContext
 cdef int _kernel_function(double* buffer, int filter_size,
                           double* return_value, void* cb):
     cdef double* data = <double*> cb
-    cdef int nmed = filter_size / 2
+    cdef int nmed = filter_size // 2
     cdef int i = 0
     cdef int start = 0
     cdef int mcount = 0

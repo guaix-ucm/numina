@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,10 +11,9 @@
 
 import pkgutil
 import importlib
+from io import StringIO
 
 import yaml
-import six
-from six import StringIO
 
 from numina.util.objimport import import_object
 from .pipeline import ObservingMode
@@ -31,7 +30,7 @@ def check_section(node, section, keys=None):
     if keys:
         for key in keys:
             if key not in node:
-                raise ValueError('Missing key %r inside %r node' % (key, section))
+                raise ValueError(f'Missing key {key!r} inside {section!r} node')
 
 
 def drp_load(package, resource, confclass=None):
@@ -55,12 +54,13 @@ def load_modes(node, confclass=None):
     if isinstance(node, list):
         values = [load_mode(child, confclass) for child in node]
         keys = [mode.key for mode in values]
-        return dict(zip(keys,values))
+        return dict(zip(keys, values))
     elif isinstance(node, dict):
         values = {key: load_mode(child) for key, child in node}
         return values
     else:
         raise NotImplementedError
+
 
 def load_mode(node, confclass=None):
     """Load one observing mdode"""
@@ -95,7 +95,7 @@ def load_mode_tagger(obs_mode, node):
             return get_tags_from_full_ob(obsres, reqtags=ntagger)
 
         obs_mode.tagger = full_tagger
-    elif isinstance(ntagger, six.string_types):
+    elif isinstance(ntagger, str):
         # load function
         obs_mode.tagger = import_object(ntagger)
     else:
@@ -169,10 +169,10 @@ def load_confs(package, node, confclass=None):
     if path:
         modpath = path
     else:
-        modpath = "{}.instrument.configs".format(package)
+        modpath = f"{package}.instrument.configs"
 
     if confclass is None:
-        loader = DefaultLoader(modpath=modpath)
+        _loader = DefaultLoader(modpath=modpath)
 
     tagger = node.get('tagger')
     if tagger:
@@ -207,7 +207,7 @@ def load_recipe(name, node):
 
     recipe = {'class': ''}
 
-    keys =  ['class']
+    keys = ['class']
     if isinstance(node, dict):
         check_section(node, name, keys=keys)
         recipe = node
@@ -235,8 +235,8 @@ def load_link(node):
 
 def load_base(name, node):
 
-    #keys = ['recipes', 'version']
-    #check_section(node, 'pipeline', keys=keys)
+    # keys = ['recipes', 'version']
+    # check_section(node, 'pipeline', keys=keys)
     recipes = {}
     for key in node:
         recipes[key] = load_recipe(key, node[key])
@@ -300,15 +300,14 @@ class DefaultLoader(object):
         self.modpath = modpath
 
     def build_component_fp(self, key):
-        fname = 'component-%s.json' % key
+        fname = f'component-{key}.json'
         return self.build_type_fp(fname)
 
     def build_instrument_fp(self, key):
-        fname = 'instrument-%s.json' % key
+        fname = f'instrument-{key}.json'
         return self.build_type_fp(fname)
 
     def build_type_fp(self, fname):
         data = pkgutil.get_data(self.modpath, fname)
         fcomp = StringIO(data.decode('utf-8'))
         return fcomp
-

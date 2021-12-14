@@ -126,13 +126,13 @@ def verify(args, extra_args):
         # This function loads the recipes
         datamanager = create_datamanager(None, args.basedir, args.datadir)
         for file in args.files:
-            _logger.info('checking {}'.format(file))
+            _logger.info(f'checking {file}')
             try:
                 result = check_file(file)
             except Exception as error:
                 result = False
                 # _logger.warning('with error {}'.format(error))
-            _logger.info('checked {}, valid={}'.format(file, result))
+            _logger.info(f'checked {file}, valid={result}')
             # print('done')
 
     return 0
@@ -143,7 +143,7 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
     """Verify raw images"""
 
     configuration = 'default'
-    _logger.info("verify OB with id={}".format(obsid))
+    _logger.info(f"verify OB with id={obsid}")
 
     # Roll back to cwd after leaving the context
     with working_directory(datastore.datadir):
@@ -154,7 +154,7 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
 
         thisdrp = datastore.backend.drps.query_by_name(obsres.instrument)
 
-        msg = 'the mode of this obsres is {}.{}'.format(obsres.instrument, obsres.mode)
+        msg = f'the mode of this obsres is {obsres.instrument}.{obsres.mode}'
         _logger.info(msg)
 
         for v in thisdrp.modes.values():
@@ -162,13 +162,13 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
                 mode_obj = v
                 break
         else:
-            raise ValueError('unrecognized mode {}'.format(obsres.mode))
+            raise ValueError(f'unrecognized mode {obsres.mode}')
 
         image_is = mode_obj.rawimage
 
         for f in obsres.frames:
             with f.open() as hdulist:
-                _logger.debug('checking {}'.format(f.filename))
+                _logger.debug(f'checking {f.filename}')
                 try:
                     check_image(hdulist, astype=image_is)
                 except:
@@ -203,7 +203,7 @@ def check_file(filename, astype=None, level=None):
             obj = list(yaml.safe_load_all(fd))
         return check_yaml(obj, astype=astype, level=level)
     else:
-        print('ignoring {}'.format(filename))
+        print(f'ignoring {filename}')
         return True
 
 

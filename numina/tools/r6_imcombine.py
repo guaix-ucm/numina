@@ -302,8 +302,7 @@ def main(args=None):
             image_header.add_history("---")
             image_header.add_history('Combination time: {}'.format(
                 datetime.datetime.utcnow().isoformat()))
-            image_header.add_history("Contents of {} file:".format(
-                args.input_list))
+            image_header.add_history(f"Contents of {args.input_list} file:")
             for i in range(number_of_files):
                 image_header.add_history(list_of_files[i])
             image_header.add_history("---")

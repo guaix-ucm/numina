@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -64,23 +64,23 @@ def show_instruments(args, extra_args):
 
 def print_instrument(instrument, prof_store, modes=True):
     print('Instrument:', instrument.name)
-    print(" version is '{}'".format(instrument.version))
+    print(f" version is '{instrument.version}'")
     for key, val in prof_store.items():
         etype = val['type']
         name = val['name']
         if etype == 'instrument' and name == instrument.name:
             desc = val['description']
             uuid = val['uuid']
-            msg = " has configuration '{}' uuid={}".format(desc, uuid)
+            msg = f" has configuration '{desc}' uuid={uuid}"
             print(msg)
 
-    print(" has datamodel '{}'".format(objimport.fully_qualified_name(instrument.datamodel)))
+    print(f" has datamodel '{objimport.fully_qualified_name(instrument.datamodel)}'")
     for _, pl in instrument.pipelines.items():
-        print(' has pipeline {0.name!r}, version {0.version}'.format(pl))
+        print(f' has pipeline {pl.name!r}, version {pl.version}')
     if modes and instrument.modes:
         print(' has observing modes:')
         for mode in instrument.modes.values():
-            print("  {0.name!r} ({0.key})".format(mode))
+            print(f"  {mode.name!r} ({mode.key})")
 
 
 def print_no_instrument(name):

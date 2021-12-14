@@ -205,7 +205,7 @@ class TagRepr(AtomicExpr):
             return self
 
     def __repr__(self):
-        return "TagRepr(%s)" % self.name
+        return f"TagRepr({self.name})"
 
 
 class Placeholder(AtomicExpr):
@@ -215,7 +215,7 @@ class Placeholder(AtomicExpr):
         self._places.add(name)
 
     def __repr__(self):
-        return "Placeholder(%s)" % self.name
+        return f"Placeholder({self.name})"
 
     def clone(self, nodes):
         return self
@@ -230,7 +230,7 @@ class ConstExpr(AtomicExpr):
         return self
 
     def __repr__(self):
-        return "ConstExpr(%s)" % self.value
+        return f"ConstExpr({self.value})"
 
     def eval(self, **kwargs):
         return self.value
@@ -269,7 +269,7 @@ class BinaryExpr(CompoundExpr):
         return new
 
     def __str__(self):
-        return "({} {} {})".format(str(self.lhs), self.op_rep, str(self.rhs))
+        return f"({str(self.lhs)} {self.op_rep} {str(self.rhs)})"
 
 
 class PredAnd(BinaryExpr):
@@ -326,7 +326,7 @@ class ConstraintAdapter(object):
         self.oper = oper
 
     def __repr__(self):
-        return "ConstraintAdapter(key=%s, value=%s, %s, type=%s)" % (self.key, self.value, self.oper, self.type)
+        return f"ConstraintAdapter(key={self.key}, value={self.value}, {self.oper}, type={self.type})"
 
 
 def condition_terminal(tree):

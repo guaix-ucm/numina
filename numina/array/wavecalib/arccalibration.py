@@ -1336,7 +1336,7 @@ def arccalibration_direct(wv_master,
             print('\n>>> Polynomial filtering...')
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
-            raise ValueError("Insufficient number of points for fit, nfit={}".format(nfit))
+            raise ValueError(f"Insufficient number of points for fit, nfit={nfit}")
         # Note: do not use weighted fit because the weights can be very
         # different and the fit is, in practice, forced to pass through
         # some points while ignoring other points. Sometimes this leads to

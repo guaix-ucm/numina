@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,22 +9,20 @@
 
 """User command line interface of Numina."""
 
-from __future__ import print_function
 
 import logging
 import logging.config
 import argparse
 import os
 import sys
+import configparser
 from importlib import import_module
 
-import six.moves.configparser as configparser
 import pkg_resources
 import yaml
 
 
 from numina import __version__
-from numina.util.context import ignored
 
 from .xdgdirs import xdg_config_home
 from .logconf import LOGCONF
@@ -36,7 +34,7 @@ def main(args=None):
     """Entry point for the Numina CLI."""
 
     # Configuration args from a text file
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser()
 
     # Building programatically
     config.add_section('numina')
@@ -70,7 +68,7 @@ def main(args=None):
                 register = entry.load()
                 subcmd_load.append(register)
             except Exception as error:
-                print('exception loading plugin {}'.format(entry), file=sys.stderr)
+                print(f'exception loading plugin {entry}', file=sys.stderr)
                 print(error, file=sys.stderr)
 
     parser = argparse.ArgumentParser(
@@ -114,7 +112,7 @@ def main(args=None):
     cmds = ['clishowins', 'clishowom', 'clishowrecip',
             'clirun', 'clirunrec', 'cliverify']
     for cmd in cmds:
-        cmd_mod = import_module('.%s' % (cmd, ), 'numina.user')
+        cmd_mod = import_module(f'.{cmd}', 'numina.user')
         register = getattr(cmd_mod, 'register', None)
         if register is not None:
             register(subparsers, config)
@@ -151,7 +149,7 @@ def main(args=None):
         for h in _logger.handlers:
             h.setLevel(logging.DEBUG)
 
-    _logger.info('Numina simple recipe runner version %s', __version__)
+    _logger.info(f'Numina simple recipe runner version {__version__}')
     command = getattr(args, 'command', None)
     if command is not None:
         args.command(args, extra_args)

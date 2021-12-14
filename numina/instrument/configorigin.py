@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,8 +21,6 @@ try:
 except AttributeError:
     isoparse = dateutil.parser.parse
 
-import six
-
 
 class UndefinedOrigin(object):
     """Origin not defined"""
@@ -35,7 +33,7 @@ class ElementOrigin(object):
     def __init__(self, name, uuid, date_start=None, date_end=None, description=""):
         self.name = name
 
-        if isinstance(uuid, six.string_types):
+        if isinstance(uuid, str):
             self.uuid = uuidmod.UUID(uuid)
 
         self.date_start = self._isoparse(date_start)
@@ -45,7 +43,7 @@ class ElementOrigin(object):
 
     @staticmethod
     def _isoparse(date):
-        if isinstance(date, six.string_types):
+        if isinstance(date, str):
             return isoparse(date)
         else:
             return date

@@ -139,12 +139,10 @@ def list_fileinfo_from_txt(filename):
                         # check for extension
                         tmpfile, tmpextnum = check_extnum(tmpfile)
                         if tmpextnum is None:
-                            raise ValueError("File {} not found".format(
-                                tmpfile))
+                            raise ValueError(f"File {tmpfile} not found")
                         else:
                             if not os.path.isfile(tmpfile):
-                                raise ValueError("File {} not found".format(
-                                    tmpfile))
+                                raise ValueError(f"File {tmpfile} not found")
 
                     output.append(FileInfo(tmpfile, tmpextnum, tmpinfo))
     else:

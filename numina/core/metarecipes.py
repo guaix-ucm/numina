@@ -71,12 +71,12 @@ class RecipeType(type):
 
     @classmethod
     def create_inpt_class(cls, classname, base, attributes):
-        return cls.create_gen_class('%sInput' % classname,
+        return cls.create_gen_class(f'{classname}Input',
                                     base, attributes)
 
     @classmethod
     def create_prod_class(cls, classname, base, attributes):
-        return cls.create_gen_class('%sResult' % classname,
+        return cls.create_gen_class(f'{classname}Result',
                                     base, attributes)
 
 
@@ -90,7 +90,7 @@ def generate_docs(klass):
     doc = getattr(klass, '__doc__', None)
 
     if doc is None or doc == '':
-        doc = "%s documentation." % klass.__name__
+        doc = f"{klass.__name__} documentation."
 
     if len(klass.stored()):
         doc = doc + '\n\n' + attrh
@@ -114,15 +114,15 @@ def generate_docs(klass):
 
         if y.optional:
             if y.default_value():
-                modo = "%s, optional, default=%s" % (modo, y.default)
+                modo = f"{modo}, optional, default={y.default}"
             else:
-                modo = "%s, optional" % (modo,)
+                modo = f"{modo}, optional"
 
         descript = y.description
         if descript:
-            field = "%s : %s, %s\n %s\n" % (key, tipo, modo, descript)
+            field = f"{key} : {tipo}, {modo}\n {descript}\n"
         else:
-            field = "%s : %s, %s\n" % (key, tipo, modo)
+            field = f"{key} : {tipo}, {modo}\n"
         doc = doc + field
 
     klass.__doc__ = doc

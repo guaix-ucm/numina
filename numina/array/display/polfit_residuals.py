@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -104,7 +104,7 @@ def polfit_residuals(
     if reject is not None:
         if npoints != reject.size:
             raise ValueError("x.size != reject.size")
-    if type(deg) not in [np.int, np.int64]:
+    if type(deg) not in [int, np.int64]:
         raise ValueError("deg=" + str(deg) +
                          " is not a valid integer")
 
@@ -557,7 +557,7 @@ def polfit_residuals_with_cook_rejection(
     npoints = x.size
     if npoints != y.size:
         raise ValueError("x.size != y.size")
-    if type(deg) not in [np.int, np.int64]:
+    if type(deg) not in [int, np.int64]:
         raise ValueError("deg=" + str(deg) +
                          " is not a valid integer")
     if deg >= npoints:
@@ -565,7 +565,7 @@ def polfit_residuals_with_cook_rejection(
                          " can't be fitted with npoints=" + str(npoints))
 
     # initialize boolean rejection array
-    reject = np.zeros(npoints, dtype=np.bool)
+    reject = np.zeros(npoints, dtype=bool)
 
     # if there is no room to remove two points, compute a fit without
     # rejection

@@ -124,13 +124,13 @@ def compare_eq_sequence(left, right):
     explanation = []
     for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
-            explanation += ["At index {} diff: {!r} != {!r}".format(i, left[i], right[i])]
+            explanation += [f"At index {i} diff: {left[i]!r} != {right[i]!r}"]
             break
     if len(left) > len(right):
-        explanation += ["Left contains more items, first extra item: {}".format(left[len(right)])
+        explanation += [f"Left contains more items, first extra item: {left[len(right)]}"
         ]
     elif len(left) < len(right):
-        explanation += ["Right contains more items, first extra item: {}".format(right[len(left)])
+        explanation += [f"Right contains more items, first extra item: {right[len(left)]}"
         ]
     return explanation
 

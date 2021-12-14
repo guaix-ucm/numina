@@ -60,7 +60,7 @@ class DataLoaders:
             if (mmtype == mtype) and is_func(pathname):
                 return func(pathname)
         else:
-            raise TypeError('nothing loads {}'.format(pathname))
+            raise TypeError(f'nothing loads {pathname}')
 
     def __call__(self, pathname):
         return self.dispatch(pathname)

@@ -29,10 +29,10 @@ class PixelInterval1D(object):
         for name in ['pix1', 'pix2']:
             value = locals()[name]
             if not isinstance(value, numbers.Integral):
-                raise TypeError("'{}' must be integer in axis {}".format(name, axis))
+                raise TypeError(f"'{name}' must be integer in axis {axis}")
 
         if pix2 < pix1:
-            raise ValueError("'pix2' must be >= 'pix1' in axis {}".format(axis))
+            raise ValueError(f"'pix2' must be >= 'pix1' in axis {axis}")
 
         self.pix1 = pix1
         self.pix2 = pix2

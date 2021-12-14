@@ -106,8 +106,7 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
         except OSError as msg:
             _logger.debug("%s", msg)
     else:
-        msg = 'type %s compatible with tags %r not found' % (
-            label, ob.tags)
+        msg = f'type {label} compatible with tags {ob.tags!r} not found'
         _logger.info("%s", msg)
         raise NoResultFound(msg)
 
@@ -163,7 +162,6 @@ class DiskFileDAL(object):
                 #msg = 'type %s compatible with tags %r not found' % (klass, ob.tags)
                 #raise NoResultFound(msg)
         else:
-            msg = 'type %s compatible with tags %r not found' % (
-                    klass, ob.tags)
+            msg = f'type {klass} compatible with tags {ob.tags!r} not found'
             print(msg)
             raise NoResultFound(msg)

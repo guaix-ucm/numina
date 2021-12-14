@@ -66,7 +66,7 @@ class MultiType(dt.DataType):
         start, remain = self.node_type[0], self.node_type[1:]
         build_str = [start.descriptive_name()]
         for x in remain:
-            field = "or {}".format(x.descriptive_name())
+            field = f"or {x.descriptive_name()}"
             build_str.append(field)
         return " ".join(build_str)
 
@@ -78,7 +78,7 @@ class MultiType(dt.DataType):
             except KeyError:
                 faillures.append(subtype)
         else:
-            msg = "types {} cannot load 'obj'".format(faillures)
+            msg = f"types {faillures} cannot load 'obj'"
             raise TypeError(msg)
 
     def _query_on_dal(self, name, dal, ob, options=None):

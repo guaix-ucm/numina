@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,12 +12,6 @@ from __future__ import division
 from itertools import product
 
 from numpy.lib.stride_tricks import as_strided as ast
-import six
-
-if six.PY2:
-    from itertools import imap
-else:
-    imap = map
 
 
 def blockgen1d(block, size):
@@ -46,11 +40,11 @@ def blockgen1d(block, size):
         else:
             result = []
             d = int(b - a) // 2
-            for i in imap(numblock, [blk, blk], [(a, a + d), (a + d, b)]):
+            for i in map(numblock, [blk, blk], [(a, a + d), (a + d, b)]):
                 result.extend(i)
             return result
 
-    return [slice(*l) for l in numblock(block, (0, size))]
+    return [slice(*ll) for ll in numblock(block, (0, size))]
 
 
 def blockgen(blocks, shape):
@@ -64,10 +58,10 @@ def blockgen(blocks, shape):
 
     Example:
 
-        >>> blocks = (500, 512)
-        >>> shape = (1040, 1024)
-        >>> for i in blockgen(blocks, shape):
-        ...     print i
+        >>> iblocks = (500, 512)
+        >>> ishape = (1040, 1024)
+        >>> for reg in blockgen(iblocks, ishape):
+        ...     print(reg)
         (slice(0, 260, None), slice(0, 512, None))
         (slice(0, 260, None), slice(512, 1024, None))
         (slice(260, 520, None), slice(0, 512, None))

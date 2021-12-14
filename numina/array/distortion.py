@@ -66,10 +66,8 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
 
     # normalize ranges dividing by the maximum, so that the transformation
     # fit will be computed with data points with coordinates in the range [0,1]
-    x_scale = 1.0 / np.concatenate((x_orig,
-                                    x_rect)).max()
-    y_scale = 1.0 / np.concatenate((y_orig,
-                                    y_rect)).max()
+    x_scale = 1.0 / np.concatenate((x_orig, x_rect)).max()
+    y_scale = 1.0 / np.concatenate((y_orig, y_rect)).max()
     x_orig_scaled = x_orig * x_scale
     y_orig_scaled = y_orig * y_scale
     x_inter_scaled = x_rect * x_scale
@@ -156,14 +154,10 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
             ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
                     horizontalalignment='center',
                     verticalalignment='bottom', color='grey')
-        xmin = np.concatenate((x_orig_scaled,
-                               x_inter_scaled)).min()
-        xmax = np.concatenate((x_orig_scaled,
-                               x_inter_scaled)).max()
-        ymin = np.concatenate((y_orig_scaled,
-                               y_inter_scaled)).min()
-        ymax = np.concatenate((y_orig_scaled,
-                               y_inter_scaled)).max()
+        xmin = np.concatenate((x_orig_scaled, x_inter_scaled)).min()
+        xmax = np.concatenate((x_orig_scaled, x_inter_scaled)).max()
+        ymin = np.concatenate((y_orig_scaled, y_inter_scaled)).min()
+        ymax = np.concatenate((y_orig_scaled, y_inter_scaled)).max()
         dx = xmax - xmin
         xmin -= dx / 20
         xmax += dx / 20
@@ -269,8 +263,7 @@ def order_fmap(ncoef):
             order += 1
             if order > NMAX_ORDER:
                 print('No. of coefficients: ', ncoef)
-                raise ValueError("order > " + str(NMAX_ORDER) +
-                                 " not implemented")
+                raise ValueError("order > " + str(NMAX_ORDER) + " not implemented")
     return order
 
 
@@ -384,8 +377,7 @@ def rectify2d(image2d, aij, bij, resampling,
         ixx = np.repeat(np.arange(naxis1out), naxis2out)
         iyy = np.tile(np.arange(naxis2out), (naxis1out,))
         # rectified image (using cython function)
-        image2d_rect = _resample(image2d, xxx, yyy, ixx, iyy,
-                                 naxis1out, naxis2out)
+        image2d_rect = _resample(image2d, xxx, yyy, ixx, iyy, naxis1out, naxis2out)
     else:
         raise ValueError("Sorry, resampling method must be 1 or 2")
 
@@ -421,7 +413,7 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
     return image2d_shifted
 
 
-def rotate_image2d(image2d, theta_deg, xcenter, ycenter, resampling=2):
+def rotate_image2d(image2d, theta_deg, xcenter, ycenter, fscale=1.0, resampling=2):
     """Shift image applying arbitray X and Y offsets.
 
     Parameters
@@ -434,9 +426,11 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, resampling=2):
     xcenter : float
         X coordinate of center of rotation, in pixel coordinates (i.e.,
         the image X coordinates run from 0.5 to NAXIS1+0.5).
-    yoffset : float
+    ycenter : float
         Y coordinate of center of rotation, in pixel coordinates (i.e.,
         the image Y coordinates run from 0.5 to NAXIS2+0.5).
+    fscale : float
+        Scale factor (1.0: no change in scale).
     resampling : int
         1: nearest neighbour, 2: flux preserving interpolation.
 
@@ -447,13 +441,13 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, resampling=2):
 
     """
 
+    f = 1/fscale
     theta_rad = theta_deg * np.pi/180
     costheta = np.cos(theta_rad)
     sintheta = np.sin(theta_rad)
     xc = xcenter - 1.0
     yc = ycenter - 1.0
-    aij = [-xc*costheta-yc*sintheta+xc, costheta, sintheta]
-    bij = [xc*sintheta-yc*costheta+yc, -sintheta, costheta]
-    image2d_rotated = rectify2d(image2d.astype('double'), aij, bij,
-                                resampling=resampling)
+    aij = [-f*xc*costheta-f*yc*sintheta+xc, f*costheta, f*sintheta]
+    bij = [f*xc*sintheta-f*yc*costheta+yc, -f*sintheta, f*costheta]
+    image2d_rotated = rectify2d(image2d.astype('double'), aij, bij, resampling=resampling)
     return image2d_rotated

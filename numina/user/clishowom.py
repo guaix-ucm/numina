@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -64,6 +64,6 @@ def show_observingmodes(args, extra_args):
 
 
 def print_obsmode(obsmode, instrument, ins=False):
-    print('Observing Mode: {0.name!r} ({0.key})'.format(obsmode))
+    print(f'Observing Mode: {obsmode.name!r} ({obsmode.key})')
     print(' summary:', obsmode.summary)
     print(' instrument:', instrument.name)

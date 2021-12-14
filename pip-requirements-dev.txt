@@ -7,9 +7,6 @@ matplotlib
 python-dateutil
 Cython
 pytest
-enum34; python_version<'3.4'
-contextlib2; python_version<'3.5'
-six>=1.7
 lmfit
 scikit-image
 

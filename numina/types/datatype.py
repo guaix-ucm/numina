@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,7 @@
 #
 
 import inspect
-import collections
+import collections.abc
 
 from numina.exceptions import ValidationError
 from .base import DataTypeBase
@@ -150,7 +150,7 @@ class PlainPythonType(DataType):
 
     def __str__(self):
         sclass = type(self).__name__
-        return "%s[%s]" % (sclass, self.internal_type)
+        return f"{sclass}[{self.internal_type}]"
 
 
 class ListOfType(DataType):
@@ -179,7 +179,7 @@ class ListOfType(DataType):
             self.multi_query = multi_query
 
     def convert(self, obj):
-        if not isinstance(obj, collections.Iterable):
+        if not isinstance(obj, collections.abc.Iterable):
             if self.accept_scalar:
                 obj = [obj]
             else:
@@ -200,13 +200,13 @@ class ListOfType(DataType):
         result = []
         old_dest = where
         for idx, obj in enumerate(objs, start=self.index):
-            n_where = '{}{}'.format(old_dest, idx)
+            n_where = f'{old_dest}{idx}'
             res = self.node_type._datatype_dump(obj, n_where)
             result.append(res)
         return result
 
     def _datatype_load(self, objs):
-        if not isinstance(objs, collections.Iterable):
+        if not isinstance(objs, collections.abc.Iterable):
             if self.accept_scalar:
                 objs = [objs]
             else:
@@ -216,4 +216,4 @@ class ListOfType(DataType):
 
     def __str__(self):
         sclass = type(self).__name__
-        return "%s[%s]" % (sclass, self.node_type)
+        return f"{sclass}[{self.node_type}]"

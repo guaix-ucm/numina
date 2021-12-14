@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
+#cython: language_level=3
 
 from libc.math cimport floor
 import numpy

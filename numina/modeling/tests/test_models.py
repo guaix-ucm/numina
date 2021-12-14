@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -67,9 +67,9 @@ def test_sum_of_gaussians():
 
     init = {}
     for i in range(N):
-        init['amplitude_%d' % i] = amps[i]
-        init['center_%d' % i] = centers[i]
-        init['stddev_%d' % i] = sigs[i]
+        init[f'amplitude_{i:d}'] = amps[i]
+        init[f'center_{i:d}'] = centers[i]
+        init[f'stddev_{i:d}'] = sigs[i]
     init['background'] = back
 
     KS = modeling.sum_of_gaussian_factory(N)

@@ -68,7 +68,7 @@ class DataLoaders:
             if (mmtype == mtype) and is_func(pathname):
                 return func(pathname)
         else:
-            raise TypeError('nothing handles {}'.format(pathname))
+            raise TypeError(f'nothing handles {pathname}')
 
     def __call__(self, pathname):
         return self.dispatch(pathname)
@@ -91,7 +91,7 @@ class DataChecker:
             func = self._loaders[instrument]
         except KeyError:
             # No function registered
-            warnings.warn("no function for {}".format(instrument))
+            warnings.warn(f"no function for {instrument}")
             return
         return func(hdulist, astype=astype, level=level)
 

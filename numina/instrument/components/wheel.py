@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from six import string_types
 
 from numina.instrument.hwdevice import HWDevice
 from .signal import Signal
@@ -42,7 +41,7 @@ class Carrousel(HWDevice):
 
     def move_to(self, pos):
         if pos >= self._capacity or pos < 0:
-            raise ValueError('Position %d out of bounds' % pos)
+            raise ValueError(f'Position {pos:d} out of bounds')
 
         if pos != self._pos:
             self._pos = pos
@@ -54,7 +53,7 @@ class Carrousel(HWDevice):
         # find pos of object with name
         for idx, item in enumerate(self._container):
             if item:
-                if isinstance(item, string_types):
+                if isinstance(item, str):
                     if item == name:
                         return self.move_to(idx)
                 elif item.name == name:
@@ -62,7 +61,7 @@ class Carrousel(HWDevice):
                 else:
                     pass
         else:
-            raise ValueError('No object named %s' % name)
+            raise ValueError(f'No object named {name}')
 
     @property
     def position(self):
@@ -71,7 +70,7 @@ class Carrousel(HWDevice):
     def init_config_info(self):
         info = super(Carrousel, self).init_config_info()
         if self._current:
-            if isinstance(self._current, string_types):
+            if isinstance(self._current, str):
                 selected = self._current
             else:
                 try:
@@ -86,7 +85,7 @@ class Carrousel(HWDevice):
     @property
     def label(self):
         if self._current:
-            if isinstance(self._current, string_types):
+            if isinstance(self._current, str):
                 lab = self._current
             else:
                 lab = self._current.name
@@ -105,7 +104,7 @@ class Wheel(Carrousel):
         super(Wheel, self).__init__(capacity, name=name, parent=parent)
 
     def turn(self):
-        self._pos = (self._pos + 1) %  self._capacity
+        self._pos = (self._pos + 1) % self._capacity
         self._current = self._container[self._pos]
         self.changed.emit(self._pos)
         self.moved.emit(self._pos)

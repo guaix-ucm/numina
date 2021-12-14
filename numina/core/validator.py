@@ -65,10 +65,10 @@ def range_validator(minval=None, maxval=None):
     """
     def checker_func(value):
         if minval is not None and value < minval:
-            msg = "must be >= {}".format(minval)
+            msg = f"must be >= {minval}"
             raise ValidationError(msg)
         if maxval is not None and value > maxval:
-            msg = "must be <= {}".format(maxval)
+            msg = f"must be <= {maxval}"
             raise ValidationError(msg)
         return value
 

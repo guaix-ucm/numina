@@ -59,18 +59,18 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     if out is None:
         out = hdr
 
-    out['WCSNAME{}'.format(key)] = 'Barycentric correction'
+    out[f'WCSNAME{key}'] = 'Barycentric correction'
     # out['CNAME1{}'.format(key)] = 'AxisV'
-    out['CTYPE1{}'.format(key)] = hdr['CTYPE1']
-    out['CRPIX1{}'.format(key)] = hdr['CRPIX1']
-    out['CRVAL1{}'.format(key)] = hdr['CRVAL1'] * factor
-    out['CDELT1{}'.format(key)] = hdr['CDELT1'] * factor
-    out['CUNIT1{}'.format(key)] = hdr['CUNIT1']
+    out[f'CTYPE1{key}'] = hdr['CTYPE1']
+    out[f'CRPIX1{key}'] = hdr['CRPIX1']
+    out[f'CRVAL1{key}'] = hdr['CRVAL1'] * factor
+    out[f'CDELT1{key}'] = hdr['CDELT1'] * factor
+    out[f'CUNIT1{key}'] = hdr['CUNIT1']
 
     for keyword in ['CRPIX2', 'CRVAL2', 'CDELT2']:
-        out['{}{}'.format(keyword, key)] = hdr['{}'.format(keyword)]
+        out[f'{keyword}{key}'] = hdr[f'{keyword}']
 
-    out['VELOSYS{}'.format(key)] = rv.to('m / s').value
-    out['SPECSYS{}'.format(key)] = 'BARYCENT'
-    out['SSYSOBS{}'.format(key)] = 'TOPOCENT'
+    out[f'VELOSYS{key}'] = rv.to('m / s').value
+    out[f'SPECSYS{key}'] = 'BARYCENT'
+    out[f'SSYSOBS{key}'] = 'TOPOCENT'
     return out

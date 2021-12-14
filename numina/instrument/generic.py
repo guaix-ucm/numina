@@ -73,7 +73,7 @@ class ComponentGeneric(DeviceBase):
             value = prop_entry.get(**self._internal_state)
             return value
         else:
-            raise AttributeError("component has no attribute '{}'".format(item))
+            raise AttributeError(f"component has no attribute '{item}'")
 
     def depends_on(self):
         """Compute the dependencies for me and my children"""

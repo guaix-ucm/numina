@@ -84,16 +84,14 @@ class SchemaKeyword(object):
         if val is None:
             if self.mandatory:
                 raise SchemaValidationError(
-                    sname, 'mandatory keyword %r '
-                    'missing from header' % self.name)
+                    sname, f'mandatory keyword {self.name!r} missing from header')
 
             # In the rest of cases
             return True
         else:
             if not self.valid:
                 raise SchemaValidationError(
-                    sname, 'invalid keyword %r present in header'
-                    % self.name)
+                    sname, f'invalid keyword {self.name!r} present in header')
 
         # Cases here
         # val is not None and key id mandatory or valid
@@ -230,8 +228,7 @@ class SchemaKeywordII(SchemaNode):
             # if not defined, fail
             if hvalue is None:
                 raise SchemaValidationError(
-                    sname, 'required keyword %r '
-                           'missing from header' % key)
+                    sname, f'required keyword {key!r} missing from header')
         else:
             print('keyword not required')
         # check type
@@ -317,7 +314,7 @@ class SchemeKeyword(object):
         key = "ky"
         if self.required:
             if value is None:
-                msg = 'required keyword %r missing from header' % key
+                msg = f'required keyword {key!r} missing from header'
                 raise SchemaValidationError(sname, msg)
         if self.type:
             if not isinstance(value, self.type_p):
@@ -348,8 +345,7 @@ def validate(header, schema):
             # if not defined, fail
             if hvalue is None:
                 raise SchemaValidationError(
-                    sname, 'required keyword %r '
-                           'missing from header' % key)
+                    sname, f'required keyword {key!r} missing from header')
         # check type
         if vtype:
             ptype = types_table[vtype]

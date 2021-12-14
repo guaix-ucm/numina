@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,7 +18,6 @@ import errno
 import shutil
 import pickle
 
-import six
 import yaml
 
 import numina.drps
@@ -176,10 +175,7 @@ class BaseWorkEnvironment(object):
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
 
-        if six.PY2:
-            index_base = "index-2.pkl"
-        else:
-            index_base = "index.pkl"
+        index_base = "index.pkl"
 
         self.index_file = os.path.join(self.workdir, index_base)
         self.hashes = {}
@@ -239,7 +235,7 @@ class BaseWorkEnvironment(object):
                 hdr = fits.getheader(src)
                 img_uuid = hdr['UUID']
                 root, ext = os.path.splitext(tail)
-                key = "{}_{}{}".format(root, img_uuid, ext)
+                key = f"{root}_{img_uuid}{ext}"
 
             else:
                 key = tail
@@ -254,16 +250,16 @@ class BaseWorkEnvironment(object):
 
     def _calc_install_if_needed(self, action):
         if action not in ['copy', 'link']: # , 'symlink', 'hardlink']:
-            raise ValueError("{} action is not allowed".format(action))
+            raise ValueError(f"{action} action is not allowed")
 
-        _logger.debug('installing files with "{}"'.format(action))
+        _logger.debug(f'installing files with "{action}"')
 
         if action == 'copy':
             install_if_needed = self.copy_if_needed
         elif action == 'link':
             install_if_needed = self.link_if_needed
         else:
-            raise ValueError("{} action is not allowed".format(action))
+            raise ValueError(f"{action} action is not allowed")
         return install_if_needed
 
     def installfiles_stage2(self, reqs, action='copy'):
@@ -364,10 +360,10 @@ class WorkEnvironment(BaseWorkEnvironment):
     def __init__(self, obsid, basedir, workdir=None,
                  resultsdir=None, datadir=None):
         if workdir is None:
-            workdir = os.path.join(basedir, 'obsid{}_work'.format(obsid))
+            workdir = os.path.join(basedir, f'obsid{obsid}_work')
 
         if resultsdir is None:
-            resultsdir = os.path.join(basedir, 'obsid{}_results'.format(obsid))
+            resultsdir = os.path.join(basedir, f'obsid{obsid}_results')
 
         if datadir is None:
             datadir = os.path.join(basedir, 'data')
@@ -519,7 +515,7 @@ def parse_as_yaml(strdict):
     """Parse a dictionary of strings as if yaml reads it"""
     interm = ""
     for key, val in strdict.items():
-        interm = "%s: %s, %s" % (key, val, interm)
+        interm = f"{key}: {val}, {interm}"
     fin = '{%s}' % interm
 
     return yaml.load(fin)

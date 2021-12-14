@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,7 +21,6 @@ import logging
 import json
 import functools
 
-from six import with_metaclass
 from astropy.io import fits
 
 from numina.util.jsonencoder import ExtEncoder
@@ -34,7 +33,7 @@ from .oresult import ObservationResult, ObservingBlock
 from ..exceptions import NoResultFound
 
 
-class BaseRecipe(with_metaclass(RecipeType, object)):
+class BaseRecipe(metaclass=RecipeType):
     """Base class for all instrument recipes
 
     Parameters

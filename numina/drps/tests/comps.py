@@ -47,7 +47,7 @@ class RobotPos(HWDevice):
         model = None
         active = True
         for i in range(1, 10 + 1):
-            robo = Robot("arm_{}".format(i), model, active=active)
+            robo = Robot(f"arm_{i}", model, active=active)
             robo.set_parent(self)
 
     # Methods added to read from JSON

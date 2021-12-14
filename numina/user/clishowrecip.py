@@ -109,7 +109,7 @@ def print_requirements(recipe, pad=''):
             dispname = dispname + '=' + str(req.default)
         typ = req.type.descriptive_name()
 
-        print("%s%s type=%r [%s]" % (pad, dispname, typ, req.description))
+        print(f"{pad}{dispname} type={typ!r} [{req.description}]")
 
 
 def print_recipe(recipe, name=None, insname=None,
@@ -132,4 +132,4 @@ def print_recipe(recipe, name=None, insname=None,
         print_requirements(recipe, pad='  ')
         print()
     except Exception as error:
-        warnings.warn('problem {0} with recipe {1!r}'.format(error, recipe))
+        warnings.warn(f'problem {error} with recipe {recipe!r}')

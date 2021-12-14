@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2021 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,11 +13,9 @@ Recipe requirements
 
 import inspect
 import numina.exceptions
-import collections
+import collections.abc
 import contextlib
 import warnings
-
-import six
 
 from numina.exceptions import NoResultFound
 import numina.types.datatype as dt
@@ -63,7 +61,7 @@ class EntryHolder(object):
         try:
             cval = self.convert(value)
             if self.choices and (cval not in self.choices):
-                errmsg = '{} not in {}'.format(cval, self.choices)
+                errmsg = f'{cval} not in {self.choices}'
                 raise numina.exceptions.ValidationError(errmsg)
         except (ValueError, TypeError, numina.exceptions.ValidationError) as err:
 
@@ -74,7 +72,7 @@ class EntryHolder(object):
                 errmsg = err.args[0]
                 rem = err.args[1:]
 
-            msg = '"{}": {}'.format(self.dest, errmsg)
+            msg = f'"{self.dest}": {errmsg}'
             newargs = (msg, ) + rem
             err.args = newargs
             raise
@@ -115,7 +113,7 @@ class Result(EntryHolder):
 #            raise TypeError('type must be of class DataProduct')
 
     def __repr__(self):
-        return 'Result(type=%r, dest=%r)' % (self.type, self.dest)
+        return f'Result(type={self.type!r}, dest={self.dest!r})'
 
     def convert(self, val):
         return self.type.convert_out(val)
@@ -144,7 +142,7 @@ class Product(Result):
         warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
 
     def __repr__(self):
-        return 'Product(type=%r, dest=%r)' % (self.type, self.dest)
+        return f'Product(type={self.type!r}, dest={self.dest!r})'
 
 
 @contextlib.contextmanager
@@ -244,8 +242,9 @@ class Requirement(EntryHolder):
             pass
 
         if isinstance(q_options, ResultOf):
-            value = dal.search_result_relative(self.dest, self.type, obsres,
-                                                   result_desc=q_options)
+            value = dal.search_result_relative(
+                self.dest, self.type, obsres, result_desc=q_options
+            )
             return value.content
 
         return self.query_on_dal(dal, obsres, options=q_options)
@@ -273,7 +272,7 @@ class Requirement(EntryHolder):
             else:
                 # Not found
                 for subtype, notfound in failures:
-                    pass # subtype.on_query_not_found(notfound)
+                    pass  # subtype.on_query_not_found(notfound)
                 raise NoResultFound
 
         if not scalar and this_type.multi_query:
@@ -315,7 +314,7 @@ class Requirement(EntryHolder):
         key = self.dest
         if dest_d:
             if alias_d:
-                msg = "Both '{}' and alias '{}' are defined".format(self.dest, self.alias)
+                msg = f"Both '{self.dest}' and alias '{self.alias}' are defined"
                 warnings.warn(msg, RuntimeWarning)
         else:
             if alias_d:
@@ -350,13 +349,13 @@ def _process_nelem(nlem):
         return False, (None, None)
     if isinstance(nlem, int):
         return True, (nlem, nlem)
-    if isinstance(nlem, six.string_types):
+    if isinstance(nlem, str):
         if nlem == '*':
             return True, (0, None)
         if nlem == '+':
             return True, (1, None)
 
-    raise ValueError('value {} is invalid'.format(nlem))
+    raise ValueError(f'value {nlem} is invalid')
 
 
 def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):
@@ -430,7 +429,7 @@ class Parameter(Requirement):
             decl_list = False
             nmin = nmax = None
 
-        is_scalar = not isinstance(value, collections.Iterable)
+        is_scalar = not isinstance(value, collections.abc.Iterable)
 
         if is_scalar and decl_list:
             accept_scalar = True

@@ -30,7 +30,7 @@ class DeviceBase(object):
             del self.parent.children[self.name]
         if newparent:
             if self.name in newparent.children:
-                raise ValueError('{0.name} already registered with newparent'.format(self))
+                raise ValueError(f'{self.name} already registered with newparent')
             else:
                 newparent.children[self.name] = self
                 self.parent = newparent

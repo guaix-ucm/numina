@@ -78,7 +78,7 @@ class DataTypeBase(object):
 
     def __repr__(self):
         sclass = type(self).__name__
-        return "%s()" % (sclass, )
+        return f"{sclass}()"
 
     def name(self):
         """Unique name of the datatype"""

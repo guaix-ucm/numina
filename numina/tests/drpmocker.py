@@ -16,7 +16,7 @@ import numina.core.pipelineload as pload
 
 def create_mock_entry_point(monkeypatch, entry_name, drploader):
 
-    loader = "%s.loader" % entry_name
+    loader = f"{entry_name}.loader"
 
     ep = pkg_resources.EntryPoint(entry_name, loader)
 
