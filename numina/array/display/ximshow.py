@@ -8,6 +8,8 @@
 #
 
 import argparse
+
+import matplotlib
 from astropy.io import fits
 import numpy as np
 import re
@@ -416,8 +418,17 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         y_geom = int(tmp_str[1])
         dx_geom = int(tmp_str[2])
         dy_geom = int(tmp_str[3])
-        geometry_tuple = x_geom, y_geom, dx_geom, dy_geom
-        set_window_geometry(geometry_tuple)
+        backend = matplotlib.get_backend()
+        if backend == 'TkAgg':
+            plt.get_current_fig_manager().resize(x_geom, y_geom)
+            plt.get_current_fig_manager().window.wm_geometry(f"+{dx_geom}+{dy_geom}")
+        elif backend == 'MacOSX':
+            plt.get_current_fig_manager().resize(x_geom, y_geom)
+        elif backend == 'Qt5Agg':
+            geometry_tuple = x_geom, y_geom, dx_geom, dy_geom
+            set_window_geometry(geometry_tuple)
+        else:
+            pass
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
