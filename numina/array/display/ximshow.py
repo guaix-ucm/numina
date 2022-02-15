@@ -81,7 +81,7 @@ def ximshow_jupyter(image2d, **args):
 
 
 def ximshow(image2d, title=None, show=True,
-            cbar_label=None, cbar_orientation=None,
+            cbar_label=None, cbar_orientation='None',
             z1z2=None, cmap="hot",
             image_bbox=None, first_pixel=(1, 1),
             aspect=GLOBAL_ASPECT,
@@ -100,9 +100,9 @@ def ximshow(image2d, title=None, show=True,
         Plot title.
     cbar_label : string
         Color bar label.
-    cbar_orientation : string or None
+    cbar_orientation : string
         Color bar orientation: valid options are 'horizontal' or
-        'vertical' (or None for no color bar).
+        'vertical' (or 'None' for no color bar).
     show : bool
         If True, the function shows the displayed image. Otherwise
         the function just invoke the plt.imshow() function and
@@ -450,7 +450,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 def ximshow_file(singlefile,
                  extnum=1,
-                 args_cbar_label=None, args_cbar_orientation=None,
+                 args_cbar_label=None, args_cbar_orientation='None',
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_aspect=GLOBAL_ASPECT,
                  args_keystitle=None, args_ds9reg=None,
@@ -469,9 +469,9 @@ def ximshow_file(singlefile,
         Extension number: 1 for first extension (default).
     args_cbar_label : string
         Color bar label.
-    args_cbar_orientation : string or None
+    args_cbar_orientation : string
         Color bar orientation: valid options are 'horizontal' or
-        'vertical' (or None for no color bar).
+        'vertical' (or 'None' for no color bar).
     args_z1z2 : string or None
         String providing the image cuts tuple: z1, z2, minmax of None
     args_bbox : string or None
@@ -719,9 +719,9 @@ def jimshow(image2d,
         Color map to be employed.
     cbar_label : string
         Color bar label.
-    cbar_orientation : string or None
+    cbar_orientation : string
         Color bar orientation: valid options are 'horizontal' or
-        'vertical' (or None for no color bar).
+        'vertical' (or 'None' for no color bar).
 
     Returns
     -------
@@ -865,9 +865,9 @@ def jimshowfile(filename,
         Color map to be employed.
     cbar_label : string
         Color bar label.
-    cbar_orientation : string or None
+    cbar_orientation : string
         Color bar orientation: valid options are 'horizontal' or
-        'vertical' (or None for no color bar).
+        'vertical' (or 'None' for no color bar).
 
     Returns
     -------
@@ -935,7 +935,7 @@ def main(args=None):
     parser.add_argument("--cbar_orientation",
                         help="color bar orientation",
                         type=str,
-                        choices=['horizontal', 'vertical', None],
+                        choices=['horizontal', 'vertical', 'None'],
                         default='horizontal')
     parser.add_argument("--keystitle",
                         help="tuple of FITS keywords.format: " +
