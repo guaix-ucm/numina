@@ -10,17 +10,17 @@ def get_extensions():
     extensions = []
 
     ext1 = Extension('numina.array._combine',
-                     ['src/combinemodule.cc',
-                      'src/operations.cc',
-                      'src/nu_combine_methods.cc',
-                      'src/nu_combine.cc'
+                     ['numina/array/src/combinemodule.cc',
+                      'numina/array/src/operations.cc',
+                      'numina/array/src/nu_combine_methods.cc',
+                      'numina/array/src/nu_combine.cc'
                       ],
                      include_dirs=[numpy_include])
 
     extensions.append(ext1)
 
     ext3 = Extension('numina.array._nirproc',
-                     ['src/nirproc.pyx'],
+                     ['numina/array/src/nirproc.pyx'],
                      include_dirs=[numpy_include],
                      language='c++'
                      )
