@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Universidad Complutense de Madrid
+ * Copyright 2008-2022 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -169,10 +169,10 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
   PyArray_Descr* descr = NULL;
 
   // Conversion for inputs
-  std::auto_ptr<ImageHandler> image_handler(new ImageHandler(images, size, NPY_DOUBLE));
+  std::unique_ptr<ImageHandler> image_handler(new ImageHandler(images, size, NPY_DOUBLE));
 
   // Conversion for masks (if they exist)
-  std::auto_ptr<Handler> mask_handler;
+  std::unique_ptr<Handler> mask_handler;
 
   // Mask handler
   if (masks == NULL) {
