@@ -122,12 +122,3 @@ class FixpixTestCase(unittest.TestCase):
         data2 = array.fixpix(data, mask)
         for i, v in zip(data2[:, 1], [2.0, 5.0, 8.0]):
             self.assertAlmostEqual(i, v)
-
-
-def test_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(ArrayTestCase))
-    return suite
-
-if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')

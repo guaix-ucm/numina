@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2021 Universidad Complutense de Madrid
+# Copyright 2008-2022 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -381,15 +381,3 @@ class QuantileClipTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, 0.0)
         for v in r[2].flat:
             self.assertAlmostEqual(v, 15.0)
-
-
-def test_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(CombineTestCase))
-    suite.addTest(unittest.makeSuite(MinMaxTestCase))
-    suite.addTest(unittest.makeSuite(QuantileClipTestCase))
-    return suite
-
-
-if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')

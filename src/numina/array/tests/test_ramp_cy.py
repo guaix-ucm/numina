@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2014 Universidad Complutense de Madrid
+# Copyright 2008-2022 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -281,12 +281,3 @@ class RampReadoutAxisTestCase(unittest.TestCase):
             self.assertEqual(xx, yy)
         # for xx, yy in zip(res[4].flat, res4.flat):
         #    self.assertEqual(xx, yy)
-
-
-def test_suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(FollowUpTheRampTestCase))
-    return suite
-
-if __name__ == '__main__':
-    unittest.main(defaultTest='test_suite')
