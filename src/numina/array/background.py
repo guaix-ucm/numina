@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2022 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,7 +15,6 @@
 
 import numpy
 import scipy.ndimage as ndimage
-import scipy.ndimage.filters as ndfilter
 
 
 def _interpolation(z, sx, sy, mx, my):
@@ -82,7 +81,7 @@ def create_background_map(data, bsx, bsy):
     z = numpy.array(comp)
     z.shape = (mx, my)
     # median filter
-    ndfilter.median_filter(z, size=(3, 3), output=z)
+    ndimage.median_filter(z, size=(3, 3), output=z)
 
     # Interpolate to the original size
     new = _interpolation(z, sx, sy, mx, my)

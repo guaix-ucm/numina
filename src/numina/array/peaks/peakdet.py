@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2020 Universidad Complutense de Madrid
+# Copyright 2015-2022 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,11 +16,11 @@ Functions to find peaks in 1D arrays and subpixel positions
 import numpy
 from numpy import dot
 from numpy.linalg import inv
-from scipy.ndimage.filters import generic_filter
+from scipy.ndimage import generic_filter
 from ._kernels import kernel_peak_function
 
 
-WW = {}
+WW = dict()
 WW[3] = numpy.array([[1.11022302e-16, 1.00000000e+00, 1.11022302e-16],
                      [-5.00000000e-01, 0.00000000e+00, 5.00000000e-01],
                      [5.00000000e-01, -1.00000000e+00, 5.00000000e-01]])
@@ -30,7 +30,7 @@ WW[5] = numpy.array([[-0.08571429, 0.34285714, 0.48571429, 0.34285714, -0.085714
                      [0.57142857, -0.28571429, -0.57142857, -0.28571429, 0.57142857]])
 
 WW[7] = numpy.array([[-9.52380952e-02, 1.42857143e-01, 2.85714286e-01, 3.33333333e-01,
-                      2.85714286e-01, 1.42857143e-01,-9.52380952e-02],
+                      2.85714286e-01, 1.42857143e-01, -9.52380952e-02],
                      [-3.21428571e-01, -2.14285714e-01, -1.07142857e-01, -6.79728382e-18,
                       1.07142857e-01, 2.14285714e-01, 3.21428571e-01],
                      [5.35714286e-01, 5.55111512e-17, -3.21428571e-01, -4.28571429e-01,
@@ -46,7 +46,7 @@ WW[9] = numpy.array([[-0.09090909, 0.06060606, 0.16883117, 0.23376623, 0.2554112
 
 def _check_window_width(window_width):
     """Check `window_width` is odd and >=3"""
-    if (window_width<3) or (window_width % 2 == 0):
+    if (window_width < 3) or (window_width % 2 == 0):
         raise ValueError('Window width must be an odd number and >=3')
 
 
@@ -88,7 +88,7 @@ def find_peaks_indexes(arr, window_width=5, threshold=0.0, fpeak=0):
 
     _check_window_width(window_width)
 
-    if (fpeak<0 or fpeak + 1 >= window_width):
+    if fpeak < 0 or fpeak + 1 >= window_width:
         raise ValueError('fpeak must be in the range 0- window_width - 2')
 
     kernel_peak = kernel_peak_function(threshold, fpeak)

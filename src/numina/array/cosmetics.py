@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2022 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -123,7 +123,7 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
 
     if mode == 'region':
         _logger.info('computing median in boxes of %r', nmed)
-        ratio_med = scipy.ndimage.filters.median_filter(ratio, size=nmed)
+        ratio_med = scipy.ndimage.median_filter(ratio, size=nmed)
         # subtracting the median map
         ratio[gmask] -= ratio_med[gmask]
     else:
@@ -222,7 +222,7 @@ def comp_ratio(img1, img2, mask):
     return ratio, mask3
 
 
-def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev=2.0):
+def cosmetics(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0, siglev=2.0):
     """Find cosmetic defects in a detector using two flat field images.
 
     Two arrays representing flat fields of different exposure times are
@@ -239,7 +239,7 @@ def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev
     The ratio image is then normalized with this standard deviation.
 
     The values in the ratio above `uppercut` are flagged as hot pixels,
-    and those below '-lowercut` are flagged as dead pixels in the output mask.
+    and those below `-lowercut` are flagged as dead pixels in the output mask.
 
     :parameter flat1: an array representing a flat illuminated exposure.
     :parameter flat2: an array representing a flat illuminated exposure.
@@ -256,7 +256,7 @@ def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev
         flat1 = numpy.ones_like(flat2)
 
     if type(mask) is not numpy.ndarray:
-        mask=numpy.zeros(flat1.shape,dtype='int')
+        mask = numpy.zeros(flat1.shape, dtype='int')
 
     ratio, mask = comp_ratio(flat1, flat2, mask)
     fratio1 = ratio[~mask]
@@ -268,11 +268,10 @@ def cosmetics(flat1, flat2 = None, mask=None, lowercut=6.0, uppercut=6.0, siglev
     return mask_final
 
 
-
 if __name__ == "__main__":
     flat1 = numpy.zeros((2, 2))
     flat1[0] = 1
     flat2 = flat1
-    mascara = cosmetics(flat1,flat2)
-    print (mascara)
-    print (mascara.sum())
+    mascara = cosmetics(flat1, flat2)
+    print(mascara)
+    print(mascara.sum())
