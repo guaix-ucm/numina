@@ -46,7 +46,11 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
     request_params["requirements"] = requirements
 
     formater_extended = LOGCONF['formatters']['extended']
-    handler_file = LOGCONF['handlers']['processing_file']['filename']
+
+    # If we put the name of logging it in LOGCONF, the file is created when
+    # logging system is initialized, we don't want that
+    # handler_file = LOGCONF['handlers']['processing_file']['filename']
+    handler_file = "processing.log"
     logger_control = dict(
         default=__name__,
         root_levels=['numina'],
@@ -70,7 +74,7 @@ def config_recipe_logger(root_level_logger, ref_logger='numina'):
 
     The recipe formatter is 'detailed'
     The logger is set to DEBUG (this is needed by the FileHandler later
-    The StreamHandler is set to the same level as the the logger of numina
+    The StreamHandler is set to the same level as the logger of numina
 
     """
     numina_logger = logging.getLogger(ref_logger)

@@ -40,12 +40,6 @@ LOGCONF = {
             'formatter': 'detailed',
             'level': 'INFO'
             },
-        'processing_file': {
-            'class': 'logging.FileHandler',
-            'formatter': 'extended',
-            'filename': 'processing.log',
-            'mode': 'w'
-        }
         },
     'loggers': {
         'numina': {
