@@ -1,8 +1,19 @@
+#
+# Copyright 2008-2023 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
+
 from __future__ import division
 from __future__ import print_function
 
 from copy import deepcopy
+import numbers
 import numpy as np
+
 from numpy.polynomial import Polynomial
 
 from numina.array.display.polfit_residuals import polfit_residuals
@@ -83,7 +94,7 @@ class CCDLine:
                     "w=" + str(w) + " must be None or a numpy.ndarray")
             if w.size != x.size:
                 raise ValueError("w.size != x.size")
-        if type(deg) not in [int, np.int32, np.int64]:
+        if not isinstance(deg, numbers.Integral):
             raise ValueError("deg=" + str(deg) +
                              " is not a valid integer")
 

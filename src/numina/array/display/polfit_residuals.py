@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,6 +11,8 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
+import numbers
+
 import numpy as np
 from numpy.polynomial import Polynomial
 
@@ -104,7 +106,7 @@ def polfit_residuals(
     if reject is not None:
         if npoints != reject.size:
             raise ValueError("x.size != reject.size")
-    if type(deg) not in [int, np.int32, np.int64]:
+    if not isinstance(deg, numbers.Integral):
         raise ValueError("deg=" + str(deg) +
                          " is not a valid integer")
 
@@ -372,7 +374,7 @@ def polfit_residuals_with_sigma_rejection(
     npoints = x.size
     if npoints != y.size:
         raise ValueError("x.size != y.size")
-    if type(deg) not in [int, np.int32, np.int64]:
+    if not isinstance(deg, numbers.Integral):
         raise ValueError("deg=" + str(deg) +
                          " is not a valid integer")
     if deg >= npoints:
@@ -557,7 +559,7 @@ def polfit_residuals_with_cook_rejection(
     npoints = x.size
     if npoints != y.size:
         raise ValueError("x.size != y.size")
-    if type(deg) not in [int, np.int32, np.int64]:
+    if not isinstance(deg, numbers.Integral):
         raise ValueError("deg=" + str(deg) +
                          " is not a valid integer")
     if deg >= npoints:

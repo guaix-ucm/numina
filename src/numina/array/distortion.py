@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -341,7 +341,7 @@ def rectify2d(image2d, aij, bij, resampling,
         yy = np.repeat(i, len(j))
         # compute pixel coordinates in original (distorted) image
         xxx, yyy = fmap(order, aij, bij, xx, yy)
-        # round to nearest integer and cast to integer; note that the
+        # round to the nearest integer and cast to integer; note that the
         # rounding still provides a float, so the casting is required
         ixxx = np.rint(xxx).astype(int)
         iyyy = np.rint(yyy).astype(int)
