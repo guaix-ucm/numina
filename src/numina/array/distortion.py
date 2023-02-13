@@ -332,9 +332,9 @@ def rectify2d(image2d, aij, bij, resampling,
 
     if resampling == 1:
         # pixel coordinates (rectified image); since the fmap function
-        # below requires floats, these arrays must use dtype=np.float
-        j = np.arange(0, naxis1out, dtype=np.float) - ioffx
-        i = np.arange(0, naxis2out, dtype=np.float) - ioffy
+        # below requires floats, these arrays must use dtype=float
+        j = np.arange(0, naxis1out, dtype=float) - ioffx
+        i = np.arange(0, naxis2out, dtype=float) - ioffy
         # the cartesian product of the previous 1D arrays could be stored
         # as np.transpose([xx,yy]), where xx and yy are computed as follows
         xx = np.tile(j, (len(i),))
@@ -343,19 +343,19 @@ def rectify2d(image2d, aij, bij, resampling,
         xxx, yyy = fmap(order, aij, bij, xx, yy)
         # round to nearest integer and cast to integer; note that the
         # rounding still provides a float, so the casting is required
-        ixxx = np.rint(xxx).astype(np.int)
-        iyyy = np.rint(yyy).astype(np.int)
+        ixxx = np.rint(xxx).astype(int)
+        iyyy = np.rint(yyy).astype(int)
         # determine pixel coordinates within available image
         lxxx = np.logical_and(ixxx >= 0, ixxx < naxis1)
         lyyy = np.logical_and(iyyy >= 0, iyyy < naxis2)
         lok = np.logical_and(lxxx, lyyy)
         # assign pixel values to rectified image
-        ixx = xx.astype(np.int)[lok]
-        iyy = yy.astype(np.int)[lok]
+        ixx = xx.astype(int)[lok]
+        iyy = yy.astype(int)[lok]
         ixxx = ixxx[lok]
         iyyy = iyyy[lok]
         # initialize result
-        image2d_rect = np.zeros((naxis2out, naxis1out), dtype=np.float)
+        image2d_rect = np.zeros((naxis2out, naxis1out), dtype=float)
         # rectified image
         image2d_rect[iyy + ioffy, ixx + ioffx] = image2d[iyyy, ixxx]
     elif resampling == 2:

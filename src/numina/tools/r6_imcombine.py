@@ -71,19 +71,19 @@ def compute_abba_result(list_of_fileinfo, outfile, extnum=0, noheader=False,
 
     # initialize outpuf array(s)
     if save_partial:
-        result_ini = np.zeros((naxis2, naxis1), dtype=np.float)
-        result_end = np.zeros((naxis2, naxis1), dtype=np.float)
+        result_ini = np.zeros((naxis2, naxis1), dtype=float)
+        result_end = np.zeros((naxis2, naxis1), dtype=float)
     else:
         result_ini = None
         result_end = None
-    result = np.zeros((naxis2, naxis1), dtype=np.float)
+    result = np.zeros((naxis2, naxis1), dtype=float)
 
     # read the four images and compute arithmetic combination
     for i in range(4):
         if abs(debugplot) >= 10:
             print('Reading ' + list_of_fileinfo[i].filename + '...')
         hdulist = fits.open(list_of_fileinfo[i].filename)
-        image2d = hdulist[extnum].data.astype(np.float)
+        image2d = hdulist[extnum].data.astype(float)
         hdulist.close()
         if i == 0:
             if save_partial:
@@ -110,15 +110,15 @@ def compute_abba_result(list_of_fileinfo, outfile, extnum=0, noheader=False,
     if save_partial:
         if abs(debugplot) >= 10:
             print("==> Generating output file: " + outfile + "_sub1.fits...")
-        hdu = fits.PrimaryHDU(result_ini.astype(np.float), image_header)
+        hdu = fits.PrimaryHDU(result_ini.astype(float), image_header)
         hdu.writeto(outfile + '_sub1.fits', overwrite=True)
         if abs(debugplot) >= 10:
             print("==> Generating output file: " + outfile + "_sub2.fits...")
-        hdu = fits.PrimaryHDU(result_end.astype(np.float), image_header)
+        hdu = fits.PrimaryHDU(result_end.astype(float), image_header)
         hdu.writeto(outfile + '_sub2.fits', overwrite=True)
     if abs(debugplot) >= 10:
         print("==> Generating output file: " + outfile + ".fits...")
-    hdu = fits.PrimaryHDU(result.astype(np.float), image_header)
+    hdu = fits.PrimaryHDU(result.astype(float), image_header)
     hdu.writeto(outfile + '.fits', overwrite=True)
 
 
@@ -198,8 +198,8 @@ def main(args=None):
         number_of_files = len(list_of_files)
 
         # declare auxiliary arrays to store image basic parameters
-        naxis1 = np.zeros(number_of_files, dtype=np.int)
-        naxis2 = np.zeros(number_of_files, dtype=np.int)
+        naxis1 = np.zeros(number_of_files, dtype=int)
+        naxis2 = np.zeros(number_of_files, dtype=int)
 
         # read basic parameters for all the images
         for i in range(number_of_files):
@@ -224,7 +224,7 @@ def main(args=None):
         image2d = None                   # avoid PyCharm warning
 
         if args.method in ['sum', 'mean']:
-            image2d = np.zeros((naxis2[0], naxis1[0]), dtype=np.float)
+            image2d = np.zeros((naxis2[0], naxis1[0]), dtype=float)
             # add all the individual images
             for i in range(number_of_files):
                 infile = list_of_files[i]
@@ -259,7 +259,7 @@ def main(args=None):
         elif args.method == 'median':
             # declare temporary cube to store all the images
             image3d = np.zeros((number_of_files, naxis2[0], naxis1[0]),
-                               dtype=np.float)
+                               dtype=float)
             # read all the individual images
             for i in range(number_of_files):
                 infile = list_of_files[i]
@@ -306,7 +306,7 @@ def main(args=None):
             for i in range(number_of_files):
                 image_header.add_history(list_of_files[i])
             image_header.add_history("---")
-            hdu = fits.PrimaryHDU(image2d.astype(np.float), image_header)
+            hdu = fits.PrimaryHDU(image2d.astype(float), image_header)
             hdu.writeto(output_fits_filename, overwrite=(not args.noclobber))
 
 

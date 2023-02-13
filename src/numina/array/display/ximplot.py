@@ -85,7 +85,7 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
     if plot_coord:
         xmin = -0.5
         xmax = (naxis1_ - 1) + 0.5
-        xcut = np.arange(naxis1_, dtype=np.float)
+        xcut = np.arange(naxis1_, dtype=float)
         ax.set_xlabel('image array index in the X direction')
         ax.set_ylabel('pixel value')
     else:

@@ -79,21 +79,21 @@ def main(args=None):
 
         # if there are offsets between the images, check that all
         # the numbers are provided
-        offsets = np.zeros(number_of_files, dtype=np.int)
+        offsets = np.zeros(number_of_files, dtype=int)
         if args.offsetcol is not None:
             for i in range(number_of_files):
                 offsets[i] = list_of_infos[i][args.offsetcol - 2]
 
         # if there are multiplicative factors, check that all
         # the numbers are provided
-        multfactors = np.ones(number_of_files, dtype=np.float)
+        multfactors = np.ones(number_of_files, dtype=float)
         if args.factorcol is not None:
             for i in range(number_of_files):
                 multfactors[i] = list_of_infos[i][args.factorcol - 2]
 
         # declare auxiliary arrays to store image basic parameters
-        naxis1 = np.zeros(number_of_files, dtype=np.int)
-        naxis2 = np.zeros(number_of_files, dtype=np.int)
+        naxis1 = np.zeros(number_of_files, dtype=int)
+        naxis2 = np.zeros(number_of_files, dtype=int)
 
         # read basic parameters for all the images
         for i in range(number_of_files):
@@ -116,7 +116,7 @@ def main(args=None):
 
         # declare output arrays
         image2d = np.zeros((naxis2[0], naxis1[0]))
-        image2d_nsum = np.zeros((naxis2[0], naxis1[0]), dtype=np.int)
+        image2d_nsum = np.zeros((naxis2[0], naxis1[0]), dtype=int)
 
         image_header_first_frame = None    # avoid PyCharm warning
 

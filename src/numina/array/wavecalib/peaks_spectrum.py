@@ -149,7 +149,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
 
     for iline in range(len(ixpeaks)):
         jmax = ixpeaks[iline]
-        x_fit = np.arange(-nmed, nmed+1, dtype=np.float)
+        x_fit = np.arange(-nmed, nmed+1, dtype=float)
         # prevent possible problem when fitting a line too near to any
         # of the borders of the spectrum
         j1 = jmax - nmed
@@ -236,7 +236,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
                          "\n(method=" + final_method + ")")
             plt.plot(x_fit, y_fit, "bo")
             x_plot = np.linspace(start=-nmed, stop=nmed, num=1000,
-                                 dtype=np.float)
+                                 dtype=float)
             if final_method == "poly2":
                 y_plot = poly_funct(x_plot)
             elif final_method == "gaussian":

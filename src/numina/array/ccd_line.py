@@ -83,7 +83,7 @@ class CCDLine:
                     "w=" + str(w) + " must be None or a numpy.ndarray")
             if w.size != x.size:
                 raise ValueError("w.size != x.size")
-        if type(deg) not in [np.int, np.int64]:
+        if type(deg) not in [int, np.int32, np.int64]:
             raise ValueError("deg=" + str(deg) +
                              " is not a valid integer")
 

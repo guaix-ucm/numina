@@ -58,7 +58,7 @@ def compute_operation(file1, file2, operation, output,
     # read first FITS file
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[0].header
-        image1 = hdulist[0].data.astype(np.float)
+        image1 = hdulist[0].data.astype(float)
     naxis = image_header1['naxis']
     naxis1 = image_header1['naxis1']
     naxis2 = image_header1['naxis2']
@@ -75,13 +75,13 @@ def compute_operation(file1, file2, operation, output,
     try:
         with fits.open(file2) as hdulist:
             image_header2 = hdulist[0].header
-            image2 = hdulist[0].data.astype(np.float)
+            image2 = hdulist[0].data.astype(float)
             naxis_ = image_header2['naxis']
             naxis1_ = image_header2['naxis1']
             naxis2_ = image_header2['naxis2']
             filename = file2
     except FileNotFoundError:
-        image2 = np.zeros((naxis2, naxis1), dtype=np.float)
+        image2 = np.zeros((naxis2, naxis1), dtype=float)
         image2 += float(file2)
         naxis_ = naxis
         naxis1_ = naxis1
@@ -129,7 +129,7 @@ def compute_operation(file1, file2, operation, output,
         raise ValueError("Unexpected operation=" + str(operation))
 
     # save output file
-    hdu = fits.PrimaryHDU(solution.astype(np.float), image_header1)
+    hdu = fits.PrimaryHDU(solution.astype(float), image_header1)
     hdu.writeto(output, overwrite=overwrite)
 
     # if required, display result
