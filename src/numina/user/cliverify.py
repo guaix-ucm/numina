@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,10 +9,8 @@
 
 """User command line interface of Numina, verify functionality."""
 
-from __future__ import print_function
-
-import os
 import logging
+import os
 
 from .helpers import create_datamanager, load_observations
 from numina.util.context import working_directory

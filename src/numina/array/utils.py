@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2020 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,9 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Utility routines'''
-
-from __future__ import division
+"""Utility routines"""
 
 import math
 

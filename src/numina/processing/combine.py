@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,8 +8,6 @@
 #
 
 """Combination routines"""
-
-from __future__ import division
 
 import datetime
 import logging

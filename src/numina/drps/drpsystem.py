@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,8 +8,6 @@
 #
 
 """DRP system-wide loader"""
-
-from __future__ import print_function
 
 import sys
 import pkg_resources

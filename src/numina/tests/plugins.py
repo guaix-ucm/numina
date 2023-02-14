@@ -1,13 +1,11 @@
 #
-# Copyright 2014-2019 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import print_function
 
 import os
 import tarfile

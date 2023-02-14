@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2021 Universidad Complutense de Madrid
+# Copyright 2013-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,8 +8,6 @@
 #
 
 """Recenter routines"""
-
-from __future__ import division
 
 import numpy
 from scipy.spatial import distance

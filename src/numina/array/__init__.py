@@ -1,13 +1,11 @@
 #
-# Copyright 2008-2020 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import print_function
 
 import numpy
 from scipy.interpolate import interp1d
@@ -93,10 +91,10 @@ def combine_shapes(shapes, refs, order='rc'):
     rfarr = numpy.asarray(refs)
 
     if order == 'xy':
-        rfarr = rfarr[:,::-1]
+        rfarr = rfarr[:, ::-1]
 
     offarr = rfarr - rfarr[0]
-    lower_corners = -offarr # coordinate of the lower corner
+    lower_corners = -offarr  # coordinate of the lower corner
 
     # Coordinates with respect to 0
     baseref = lower_corners.min(axis=0)

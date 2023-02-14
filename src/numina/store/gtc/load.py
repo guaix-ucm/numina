@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,8 +8,6 @@
 #
 
 """Load RecipeResults from GTC's result.json files"""
-
-from __future__ import print_function
 
 import os.path
 

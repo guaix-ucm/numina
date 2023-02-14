@@ -7,9 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import division
-from __future__ import print_function
-
 from copy import deepcopy
 import numbers
 import numpy as np

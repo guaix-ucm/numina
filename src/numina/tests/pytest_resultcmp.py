@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,11 +7,9 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import print_function
-
 import os
-import tempfile
 import shutil
+import tempfile
 
 import pytest
 

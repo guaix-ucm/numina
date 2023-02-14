@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,10 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-
 """Visualization utilities."""
-
-from __future__ import division
 
 from astropy.visualization import BaseInterval
 import numpy as np

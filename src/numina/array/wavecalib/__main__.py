@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,9 +8,6 @@
 #
 
 """Compute the wavelength calibration of a particular spectrum."""
-
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 from astropy.io import fits

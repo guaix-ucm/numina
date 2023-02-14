@@ -1,5 +1,11 @@
-from __future__ import division
-from __future__ import print_function
+#
+# Copyright 2015-2023 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
 
 import sys
 

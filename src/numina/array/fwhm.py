@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2016 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,8 +8,6 @@
 #
 
 """FWHM calculation"""
-
-from __future__ import division
 
 import numpy as np
 import scipy.interpolate as itpl

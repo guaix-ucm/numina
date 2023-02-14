@@ -7,9 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import division
-from __future__ import print_function
-
 import numpy as np
 
 from .matplotlib_qt import set_window_geometry

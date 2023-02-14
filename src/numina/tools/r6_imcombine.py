@@ -1,13 +1,11 @@
 """Combine several FITS images listed in a TXT file"""
 
-from __future__ import division
-from __future__ import print_function
-
 import argparse
-from astropy.io import fits
 import datetime
-import numpy as np
 import sys
+
+from astropy.io import fits
+import numpy as np
 
 from numina.array.display.fileinfo import list_fileinfo_from_txt
 from numina.processing.combine import combine

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,12 +9,11 @@
 
 """Fix points in an image given by a bad pixel mask """
 
-from __future__ import division
-
 import argparse
+import sys
+
 from astropy.io import fits
 import numpy
-import sys
 
 from numina.array._bpm import _process_bpm_intl
 from numina.tools.arg_file_is_new import arg_file_is_new

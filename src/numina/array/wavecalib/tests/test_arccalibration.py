@@ -7,9 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import division
-from __future__ import print_function
-
 import pytest
 import numpy as np
 from numpy.polynomial import polynomial

@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,9 +8,6 @@
 #
 
 """Utility classes and functions to employ R from python using rpy2."""
-
-from __future__ import division
-from __future__ import print_function
 
 import numpy as np
 from scipy.misc import comb

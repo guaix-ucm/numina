@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,8 +9,6 @@
 
 
 """User command line interface of Numina."""
-
-from __future__ import print_function
 
 import warnings
 

@@ -1,14 +1,11 @@
 #
-# Copyright 2014-2015 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_allclose

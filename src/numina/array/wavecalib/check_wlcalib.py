@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,9 +8,6 @@
 #
 
 """Supervised quality control of wavelength calibration"""
-
-from __future__ import division
-from __future__ import print_function
 
 import argparse
 import astropy.io.fits as fits
