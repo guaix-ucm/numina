@@ -2,7 +2,7 @@
 Numina
 ======
 
-|zenodo| |docs| |pypi| |travis| |coveralls|
+|zenodo| |docs| |pypi| 
 
 This is Numina, the data reduction package used by the following
 Gran Telescopio Canarias instruments: EMIR, FRIDA, MEGARA and MIRADAS.
@@ -40,10 +40,3 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
     :target: https://badge.fury.io/py/numina
     :alt: Numina's PyPI version
 
-.. |travis| image:: https://img.shields.io/travis/guaix-ucm/numina/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
-    :target: https://travis-ci.org/guaix-ucm/numina
-    :alt: Numina's Travis CI Status
-
-.. |coveralls| image:: https://coveralls.io/repos/guaix-ucm/numina/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/guaix-ucm/numina?branch=master
-     :alt: Numina's Coverall Status
