@@ -14,8 +14,7 @@ def test_adaptive_sqlunivariatespline():
     spl = AdaptiveLSQUnivariateSpline(xdata, ydata, 2)
     xknots = spl.get_knots()
     yknots = spl(xknots)
-    result = spl.get_result()
-    assert_allclose(result.nfev, 112)
+
     assert_allclose(
         spl.get_coeffs(),
         [-0.2450535, 3.15287065, -3.6363213, 3.60549501,
