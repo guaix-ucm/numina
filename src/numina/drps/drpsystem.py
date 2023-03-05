@@ -9,8 +9,8 @@
 
 """DRP system-wide loader"""
 
+import importlib.metadata
 import sys
-import pkg_resources
 
 from .drpbase import DrpGeneric
 
@@ -44,7 +44,7 @@ class DrpSystem(DrpGeneric):
     def iload(cls, entry_point='numina.pipeline.1'):
         """Load all available DRPs in 'entry_point'."""
 
-        for entry in pkg_resources.iter_entry_points(group=entry_point):
+        for entry in importlib.metadata.entry_points(group=entry_point):
             try:
                 drp_loader = entry.load()
                 drpins = drp_loader()

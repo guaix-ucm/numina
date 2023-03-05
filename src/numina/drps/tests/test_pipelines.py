@@ -1,5 +1,5 @@
 
-import pkg_resources
+import importlib.metadata
 import pkgutil
 
 from numina.drps.drpsystem import DrpSystem
@@ -21,17 +21,17 @@ def test_fake_pipeline(monkeypatch):
     def mockreturn(group=None):
 
         def fake_loader():
-            confs = None
-            modes = None
+            confs = dict()
+            modes = dict()
             pipelines = {'default': Pipeline('default', {}, 1)}
             fake = InstrumentDRP('FAKE', confs, modes, pipelines)
             return fake
 
-        ep = pkg_resources.EntryPoint('fake', 'fake.loader')
+        ep = importlib.metadata.EntryPoint('fake', 'fake.loader', 'numina.pipelines.1')
         monkeypatch.setattr(ep, 'load', lambda: fake_loader)
         return [ep]
 
-    monkeypatch.setattr(pkg_resources, 'iter_entry_points', mockreturn)
+    monkeypatch.setattr(importlib.metadata, 'entry_points', mockreturn)
 
     alldrps = DrpSystem().load().query_all()
     for k, v in alldrps.items():

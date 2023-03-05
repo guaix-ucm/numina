@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2021 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -10,22 +10,21 @@
 """User command line interface of Numina."""
 
 
-import logging
-import logging.config
 import argparse
-import os
-import sys
 import configparser
 from importlib import import_module
+import importlib.metadata
+import logging
+import logging.config
+import os
+import sys
 
-import pkg_resources
 import yaml
 
-
 from numina import __version__
-
 from .xdgdirs import xdg_config_home
 from .logconf import LOGCONF
+
 
 _logger = logging.getLogger("numina")
 
@@ -61,7 +60,7 @@ def main(args=None):
     subcmd_load = []
 
     if not args0.disable_plugins:
-        for entry in pkg_resources.iter_entry_points(
+        for entry in importlib.metadata.entry_points(
                 group='numina.plugins.1'
         ):
             try:
