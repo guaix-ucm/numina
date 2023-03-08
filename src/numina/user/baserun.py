@@ -14,8 +14,6 @@ import datetime
 import logging
 import os
 
-
-
 import numina.exceptions
 from numina.user.logconf import LOGCONF
 from numina.util.fqn import fully_qualified_name
@@ -68,6 +66,7 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
         datastore.store_task(task)
 
 
+@contextlib.contextmanager
 def config_recipe_logger(root_level_logger, ref_logger='numina'):
     """Configure root level logger for recipe.
 
@@ -78,21 +77,30 @@ def config_recipe_logger(root_level_logger, ref_logger='numina'):
     """
     numina_logger = logging.getLogger(ref_logger)
     recipe_logger = logging.getLogger(root_level_logger)
+    # Save state of logger
+    save_level = recipe_logger.getEffectiveLevel()
     recipe_logger.setLevel(logging.DEBUG)
+    save_propagate = recipe_logger.propagate
     recipe_logger.propagate = False
 
     # create formatter
     formater_dd = LOGCONF['formatters']['detailed']
-
     detailed_formatter = logging.Formatter(fmt=formater_dd.get('format'))
-    # create handler, ingnoring configuration here
+    # create handler, ignoring configuration here
     #handerl_dd = numina_cli_logconf['handlers']['detailed_console']
     #handerl_dd_level =
     sh = logging.StreamHandler()
     sh.setLevel(numina_logger.getEffectiveLevel())
     sh.setFormatter(detailed_formatter)
     recipe_logger.addHandler(sh)
-    return recipe_logger
+
+    try:
+        yield recipe_logger
+    finally:
+        # Restore state
+        recipe_logger.removeHandler(sh)
+        recipe_logger.propagate = save_propagate
+        recipe_logger.setLevel(save_level)
 
 
 def run_task_reduce(task, datastore):
@@ -180,12 +188,12 @@ def run_task_reduce(task, datastore):
 
     logger_control = task.request_params['logger_control']
     # configure recipe root level
-    config_recipe_logger(root_level_logger)
-    logger_control['root_levels'].append(root_level_logger)
-    # Add file logging
-    with logger_manager(logger_control, workenv.resultsdir):
-        with working_directory(workenv.workdir):
-            completed_task = run_recipe_timed(task, recipe, rinput)
+    with config_recipe_logger(root_level_logger):
+        logger_control['root_levels'].append(root_level_logger)
+        # Add file logging
+        with logger_manager(logger_control, workenv.resultsdir):
+            with working_directory(workenv.workdir):
+                completed_task = run_recipe_timed(task, recipe, rinput)
 
     # datastore.store_task(completed_task)
     return completed_task
