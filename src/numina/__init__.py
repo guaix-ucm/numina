@@ -13,7 +13,7 @@
 
 import logging
 
-from .version import version
+from ._version import version
 
 __version__ = version
 
