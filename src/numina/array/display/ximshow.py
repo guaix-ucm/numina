@@ -25,7 +25,7 @@ from numina.visualization import ZScaleInterval
 
 
 GLOBAL_ASPECT = 'auto'
-GLOBAL_GEOMETRY = '0,0,800,600'
+GLOBAL_GEOMETRY = '1024,768,0,0'
 dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
 
@@ -140,7 +140,7 @@ def ximshow(image2d, title=None, show=True,
     ds9regfile : file handler
         Ds9 region file to be overplotted.
     geometry : str or None
-        x, y, dx, dy values employed to set the window geometry.
+        xwidth, ywidth, xini, yini values employed to set the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     figuredict: dictionary
@@ -414,21 +414,20 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     # set the geometry
     if geometry is not None:
         tmp_str = geometry.split(",")
-        x_geom = int(tmp_str[0])
-        y_geom = int(tmp_str[1])
-        dx_geom = int(tmp_str[2])
-        dy_geom = int(tmp_str[3])
+        xwidth_geom = int(tmp_str[0])
+        ywidth_geom = int(tmp_str[1])
+        xini_geom = int(tmp_str[2])
+        yini_geom = int(tmp_str[3])
         backend = matplotlib.get_backend()
         if backend == 'TkAgg':
-            plt.get_current_fig_manager().resize(x_geom, y_geom)
-            plt.get_current_fig_manager().window.wm_geometry(f"+{dx_geom}+{dy_geom}")
-        elif backend == 'MacOSX':
-            plt.get_current_fig_manager().resize(x_geom, y_geom)
+            plt.get_current_fig_manager().resize(xwidth_geom, ywidth_geom)
+            plt.get_current_fig_manager().window.wm_geometry(f"+{xini_geom}+{yini_geom}")
         elif backend == 'Qt5Agg':
-            geometry_tuple = x_geom, y_geom, dx_geom, dy_geom
+            geometry_tuple = xwidth_geom, ywidth_geom, xini_geom, yini_geom
             set_window_geometry(geometry_tuple)
         else:
-            pass
+            print(f'WARNING: geometry {geometry} ignored with backend {backend}')
+            print('(you can try the TkAgg backend instead)')
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
