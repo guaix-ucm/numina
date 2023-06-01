@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,12 +24,13 @@ def fit_theil_sen(x, y):
     Parameters
     ----------
     x : array_like, shape (M,)
-        X coordinate array.
+        X coordinate array. This array must be sorted.
     y : array_like, shape (M,) or (M,K)
         Y coordinate array. If the array is two dimensional, each column of
         the array is independently fitted sharing the same x-coordinates. In
         this last case, the returned intercepts and slopes are also 1d numpy
-        arrays.
+        arrays. This array must be properly sorted to match the same order
+        as the input X coordinate array.
 
     Returns
     -------
@@ -53,6 +54,10 @@ def fit_theil_sen(x, y):
 
     if xx.ndim != 1:
         raise ValueError('Input arrays have unexpected dimensions')
+
+    diff = xx[1:] - x[:-1]
+    if not numpy.all(diff > 0):
+        raise ValueError('The input arrays must be sorted')
 
     if y1.ndim == 1:
         if len(y1) != n:
