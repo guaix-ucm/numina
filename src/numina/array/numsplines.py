@@ -172,11 +172,14 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
             params = Parameters()
             for i in range(nknots):
                 if i == 0:
-                    xminknot = bx * x[0] - cx
-                    xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
+                    xminknot = xnor[0]
+                    if nknots == 1:
+                        xmaxknot = xnor[-1]
+                    else:
+                        xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
                 elif i == nknots - 1:
                     xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
-                    xmaxknot = bx * x[-1] - cx
+                    xmaxknot = xnor[-1]
                 else:
                     xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
                     xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
