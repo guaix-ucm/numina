@@ -10,16 +10,27 @@
 """A class to mock the DRP loading process."""
 
 import importlib.metadata
+import sys
 
+import backports.entry_points_selectable
 import numina.core.pipelineload as pload
 
 
 def create_mock_entry_point(monkeypatch, entry_name, drploader):
 
     value = f"{entry_name}.loader"
-    group = ""
+    group = "numina.pipeline.1"
 
-    ep = importlib.metadata.EntryPoint(entry_name, value, group)
+    # In python >= 3.11 EntryPoint is inmutable
+    # and we cannot use monkeypatch
+    # We remove __setattr__ that raises an exception
+    if not sys.version_info < (3, 11):
+        try:
+            delattr(importlib.metadata.EntryPoint, '__setattr__')
+        except AttributeError:
+            pass
+
+    ep = importlib.metadata.EntryPoint(name=entry_name, value=value, group=group)
 
     monkeypatch.setattr(ep, 'load', lambda: drploader)
 
@@ -31,8 +42,7 @@ class DRPMocker(object):
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
         self._eps = []
-
-        basevalue = importlib.metadata.entry_points
+        basevalue = backports.entry_points_selectable.entry_points
         # Use the mocker only for 'numina.pipeline.1'
         def mockreturn(group, name=None):
             if group == 'numina.pipeline.1':
@@ -40,7 +50,7 @@ class DRPMocker(object):
             else:
                 return basevalue(group=group, name=name)
 
-        self.monkeypatch.setattr(importlib.metadata, 'entry_points', mockreturn)
+        self.monkeypatch.setattr(backports.entry_points_selectable, 'entry_points', mockreturn)
 
     def add_drp(self, name, loader):
 

@@ -9,8 +9,9 @@
 
 """DRP system-wide loader"""
 
-import importlib.metadata
 import sys
+
+import backports.entry_points_selectable as beps
 
 from .drpbase import DrpGeneric
 
@@ -24,7 +25,7 @@ class DrpSystem(DrpGeneric):
 
     def load(self):
         """Load all available DRPs in 'entry_point'."""
-
+        print("LOAD")
         for drpins in self.iload(self.entry):
             self.drps[drpins.name] = drpins
 
@@ -44,7 +45,7 @@ class DrpSystem(DrpGeneric):
     def iload(cls, entry_point='numina.pipeline.1'):
         """Load all available DRPs in 'entry_point'."""
 
-        for entry in importlib.metadata.entry_points(group=entry_point):
+        for entry in beps.entry_points(group=entry_point):
             try:
                 drp_loader = entry.load()
                 drpins = drp_loader()

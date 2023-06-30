@@ -2,6 +2,8 @@
 import importlib.metadata
 import pkgutil
 
+import backports.entry_points_selectable
+
 from numina.drps.drpsystem import DrpSystem
 from numina.core.pipeline import InstrumentDRP, Pipeline
 
@@ -27,11 +29,11 @@ def test_fake_pipeline(monkeypatch):
             fake = InstrumentDRP('FAKE', confs, modes, pipelines)
             return fake
 
-        ep = importlib.metadata.EntryPoint('fake', 'fake.loader', 'numina.pipelines.1')
+        ep = importlib.metadata.EntryPoint(name='fake', value='fake.loader', group='numina.pipelines.1')
         monkeypatch.setattr(ep, 'load', lambda: fake_loader)
         return [ep]
 
-    monkeypatch.setattr(importlib.metadata, 'entry_points', mockreturn)
+    monkeypatch.setattr(backports.entry_points_selectable, 'entry_points', mockreturn)
 
     alldrps = DrpSystem().load().query_all()
     for k, v in alldrps.items():

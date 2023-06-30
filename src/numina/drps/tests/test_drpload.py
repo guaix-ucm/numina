@@ -131,7 +131,7 @@ def test_drpsys_bad_file(capsys, drpmocker):
     expected_msg = [
         '',
         "Error is:  Missing key 'modes' inside 'root' node",
-        "Problem loading EntryPoint(name='TEST3', value='TEST3.loader', group='')"
+        "Problem loading EntryPoint(name='TEST3', value='TEST3.loader', group='numina.pipeline.1')"
     ]
 
     out, err = capsys.readouterr()

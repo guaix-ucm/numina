@@ -13,13 +13,13 @@
 import argparse
 import configparser
 from importlib import import_module
-import importlib.metadata
 import logging
 import logging.config
 import os
 import sys
 
 import yaml
+from backports.entry_points_selectable import entry_points
 
 from numina import __version__
 from .xdgdirs import xdg_config_home
@@ -60,7 +60,7 @@ def main(args=None):
     subcmd_load = []
 
     if not args0.disable_plugins:
-        for entry in importlib.metadata.entry_points(
+        for entry in entry_points(
                 group='numina.plugins.1'
         ):
             try:
