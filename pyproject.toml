@@ -1,8 +1,82 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools >= 45", "setuptools_scm[toml]>=6.2",
+requires = ["setuptools >= 61.0.0", "setuptools_scm[toml]>=6.2",
     "wheel", "cython", "numpy >= 1.20"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "numina"
+dynamic = ["version"]
+description = "Astronomy data reduction library"
+readme = "README.rst"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+  {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
+]
+classifiers = [
+    "Programming Language :: C",
+    "Programming Language :: C++",
+    "Programming Language :: Cython",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+
+dependencies = [
+   "setuptools>=39.2",
+   "numpy >= 1.20",
+   "astropy",
+   "scipy",
+   "PyYaml",
+   "matplotlib",
+   "python-dateutil",
+   "lmfit",
+   "scikit-image",
+   "backports.entry_points_selectable",  # required only with python < 3.10a7
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6",
+    "pytest-remotedata",
+]
+docs = [
+    "sphinx",
+]
+
+[project.urls]
+Homepage = "https://github.com/guaix-ucm/numina"
+Repository = "https://github.com/guaix-ucm/numina.git"
+Documentation = "https://numina.readthedocs.io/en/stable/"
+
+[project.scripts]
+numina = "numina.user.cli:main"
+numina-apply_integer_offsets = "numina.array.wavecalib.apply_integer_offsets:main"
+numina-bpm = "numina.array.bpm:main"
+numina-check_wlcalib = "numina.array.wavecalib.check_wlcalib:main"
+numina-imath = "numina.tools.imath:main"
+numina-r6-addnf = "numina.tools.r6_addnf:main"
+numina-r6-imcombine = "numina.tools.r6_imcombine:main"
+numina-r6-insert_keyword = "numina.tools.r6_insert_keyword:main"
+numina-r6-replace_image = "numina.tools.r6_replace_image:main"
+numina-wavecalib = "numina.array.wavecalib.__main__:main"
+numina-ximshow = "numina.array.display.ximshow:main"
+numina-ximplotxy = "numina.array.display.ximplotxy:main"
+
 [tool.setuptools_scm]
 write_to = "src/numina/_version.py"
+
+# without this, still works, performs autodetection
+[tool.setuptools.packages.find]
+where = ["src"]
