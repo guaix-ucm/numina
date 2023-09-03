@@ -96,7 +96,7 @@ def register(subparsers, config):
     )
     parser_verify.add_argument(
         'obsresult', nargs='+',
-        '--obs', action="store_true",
+        action="store_true",
         help='validate files in OBs'
     )
     parser_verify.add_argument(
