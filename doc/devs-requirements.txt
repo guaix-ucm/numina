@@ -4,4 +4,3 @@ scipy
 astropy
 PyYaml
 matplotlib
-sphinx<7.0.0
