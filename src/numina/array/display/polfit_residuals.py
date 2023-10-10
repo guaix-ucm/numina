@@ -25,7 +25,9 @@ def polfit_residuals(
         use_r=False,
         show=True,
         geometry=(0,0,640,480),
-        debugplot=0):
+        debugplot=0,
+        pdffile=None,
+):
     """Polynomial fit with display of residuals and additional work with R.
 
     Parameters
@@ -74,6 +76,9 @@ def polfit_residuals(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    pdffile : str or None
+        Output PDF file name to save plot. This option is only
+        employed when a plot has been generated.
 
     Return
     ------
@@ -278,6 +283,10 @@ def polfit_residuals(
         if title is not None:
             plt.title(title)
 
+        # save PDF file
+        if pdffile is not None:
+            plt.savefig(pdffile, pad_inches = 0.02, bbox_inches = 'tight')
+
         if show:
             pause_debugplot(debugplot, pltshow=show, tight_layout=True)
 
@@ -293,7 +302,9 @@ def polfit_residuals_with_sigma_rejection(
         use_r=None,
         show=True,
         geometry=(0,0,640,480),
-        debugplot=0):
+        debugplot=0,
+        pdffile=None
+):
     """Polynomial fit with iterative rejection of points.
 
     This function makes use of function polfit_residuals for display
@@ -343,6 +354,9 @@ def polfit_residuals_with_sigma_rejection(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    pdffile : str or None
+        Output PDF file name to save plot. This option is only
+        employed when a plot has been generated.
 
     Return
     ------
@@ -391,7 +405,8 @@ def polfit_residuals_with_sigma_rejection(
                                       title=title,
                                       use_r=use_r,
                                       geometry=geometry,
-                                      debugplot=debugplot)
+                                      debugplot=debugplot,
+                                      pdffile=pdffile)
         return poly, yres, reject
 
     # main loop to reject points iteratively
@@ -461,7 +476,8 @@ def polfit_residuals_with_sigma_rejection(
                                           use_r=use_r,
                                           show=show,
                                           geometry=geometry,
-                                          debugplot=debugplot)
+                                          debugplot=debugplot,
+                                          pdffile=pdffile)
         else:
             if abs(debugplot) >= 10:
                 print(' ')
@@ -478,7 +494,9 @@ def polfit_residuals_with_cook_rejection(
         use_r=None,
         show=True,
         geometry=(0,0,640,480),
-        debugplot=0):
+        debugplot=0,
+        pdffile=None
+):
     """Polynomial fit with iterative rejection of points.
 
     This function makes use of function polfit_residuals for display
@@ -528,6 +546,9 @@ def polfit_residuals_with_cook_rejection(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    pdffile : str or None
+        Output PDF file name to save plot. This option is only
+        employed when a plot has been generated.
 
     Return
     ------
@@ -577,7 +598,8 @@ def polfit_residuals_with_cook_rejection(
                                       use_r=use_r,
                                       show=show,
                                       geometry=geometry,
-                                      debugplot=debugplot)
+                                      debugplot=debugplot,
+                                      pdffile=pdffile)
         return poly, yres, reject
 
     # main loop to reject points iteratively
@@ -596,7 +618,8 @@ def polfit_residuals_with_cook_rejection(
                                       use_r=use_r,
                                       show=show,
                                       geometry=geometry,
-                                      debugplot=debugplot)
+                                      debugplot=debugplot,
+                                      pdffile=pdffile)
         npoints_effective = npoints - np.sum(reject)
         residual_variance = np.sum(yres*yres)/float(npoints_effective-deg-1)
         # check that there is room to remove two points with the
@@ -700,6 +723,9 @@ def main(args=None):
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy",
                         default="0,0,640,480")
+    parser.add_argument("--pdffile",
+                        help="Output PDF file name (default=None)",
+                        default=None, type=str)
     args = parser.parse_args(args)
 
     # ASCII file
@@ -717,6 +743,9 @@ def main(args=None):
 
     # times_sigma_cook
     times_sigma_cook = args.times_sigma_cook
+
+    # output PDF file name
+    pdffile = args.pdffile
 
     # geometry
     if args.geometry is None:
@@ -742,16 +771,16 @@ def main(args=None):
 
     # plot fit and residuals
     if times_sigma_reject is None and times_sigma_cook is None:
-        polfit_residuals(x, y, polydeg, geometry=geometry, debugplot=12)
+        polfit_residuals(x, y, polydeg, geometry=geometry, debugplot=12, pdffile=pdffile)
     elif times_sigma_reject is not None:
         polfit_residuals_with_sigma_rejection(
             x, y, polydeg, times_sigma_reject,
-            geometry=geometry, debugplot=12
+            geometry=geometry, debugplot=12, pdffile=pdffile
         )
     elif times_sigma_cook is not None:
         polfit_residuals_with_cook_rejection(
             x, y, polydeg, times_sigma_cook,
-            geometry=geometry, debugplot=12
+            geometry=geometry, debugplot=12, pdffile=pdffile
         )
 
 
