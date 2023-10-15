@@ -67,7 +67,7 @@ cdef void _destructor_cobj(void* cobject, void *kernel_data):
     free(kernel_data)
 
 
-cdef void _destructor_cap(object cap):
+cdef void _destructor_cap(object cap) noexcept:
     cdef void *cdata
     cdata = PyCapsule_GetContext(cap)
     free(cdata)
