@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2021 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -152,7 +152,8 @@ def combine(method, images, masks=None, dtype=None,
     else:
         hdu1.header['history'] = f"Combined {nimages:d} images"
 
-    hdu1.header['history'] = f'Combination time {datetime.datetime.utcnow().isoformat()}'
+    t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    hdu1.header['history'] = f'Combination time {t_str}'
 
     if datamodel is None:
         datamodel = numina.datamodel.DataModel()

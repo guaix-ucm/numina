@@ -112,7 +112,8 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, pr
         _logger.debug('write prolog')
         hdu.header['history'] = prolog
     hdu.header['history'] = f"Combined {cnum:d} images using '{method.__name__}'"
-    hdu.header['history'] = f'Combination time {datetime.datetime.utcnow().isoformat()}'
+    t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    hdu.header['history'] = f'Combination time {t_str}'
 
     for img in hduls:
         hdu.header['history'] = f"Image {get_imgid(img)}"

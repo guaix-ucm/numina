@@ -144,7 +144,7 @@ class ProcessingTask(object):
         self.result = None
         self.id = 1
 
-        self.time_create = datetime.datetime.utcnow()
+        self.time_create = datetime.datetime.now(datetime.timezone.utc)
         self.time_start = 0
         self.time_end = 0
         self.request = "reduce"

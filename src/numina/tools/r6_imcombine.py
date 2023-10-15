@@ -298,8 +298,8 @@ def main(args=None):
             image_header.add_history("Image generated using:")
             image_header.add_history(" ".join(sys.argv))
             image_header.add_history("---")
-            image_header.add_history('Combination time: {}'.format(
-                datetime.datetime.utcnow().isoformat()))
+            t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            image_header.add_history(f'Combination time: {t_str}')
             image_header.add_history(f"Contents of {args.input_list} file:")
             for i in range(number_of_files):
                 image_header.add_history(list_of_files[i])

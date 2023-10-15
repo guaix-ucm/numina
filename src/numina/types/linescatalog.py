@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -41,7 +41,7 @@ class LinesCatalog(DataProductType):
         result['tags'] = {}
         result['type'] = 'LinesCatalog'
         result['uuid'] = str(uuid.uuid1())
-        result['observation_date'] = datetime.datetime.utcnow()
+        result['observation_date'] = datetime.datetime.now(datetime.timezone.utc)
         result['quality_control'] = QC.GOOD
         result['origin'] = {}
 

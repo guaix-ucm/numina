@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2021 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -281,9 +281,9 @@ def timeit(method):
     @functools.wraps(method)
     def timed_method(self, rinput):
 
-        time_start = datetime.datetime.utcnow()
+        time_start = datetime.datetime.now(datetime.timezone.utc)
         result = method(self, rinput)
-        time_end = datetime.datetime.utcnow()
+        time_end = datetime.datetime.now(datetime.timezone.utc)
         result.time_it(time_start, time_end)
         self.logger.info('total time measured')
         return result
