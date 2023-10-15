@@ -7,24 +7,14 @@
 # License-Filename: LICENSE.txt
 #
 
-
-import os.path
-import json
 import collections
+import json
+import os.path
 
-import numina.util.objimport
-
+from dateutil.parser import isoparse
 import pkg_resources
 
-# Try to use isoparse ISO-8601, if not available
-# use generic parser
-import dateutil.parser
-
-try:
-    isoparse = dateutil.parser.isoparse
-except AttributeError:
-    isoparse = dateutil.parser.parse
-
+import numina.util.objimport
 import numina.instrument.configorigin as cf
 import numina.instrument.generic
 # from numina.core.instrument.configorigin import ElementOrigin

@@ -40,7 +40,7 @@ dependencies = [
    "scipy",
    "PyYaml",
    "matplotlib",
-   "python-dateutil",
+   "python-dateutil >= 2.7.0",
    "lmfit",
    "scikit-image",
    "backports.entry_points_selectable",  # required only with python < 3.10a7
