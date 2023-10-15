@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,11 +8,12 @@
 #
 
 import collections
+import itertools
 import json
-import os.path
+import pathlib
 
 from dateutil.parser import isoparse
-import pkg_resources
+import importlib_resources
 
 import numina.util.objimport
 import numina.instrument.configorigin as cf
@@ -75,11 +76,12 @@ def load_resources_pkg(pkgname, configs):
 
     valid_paths = []
 
-    for res in pkg_resources.resource_listdir(pkgname, configs):
-        if res.endswith('.json'):
-            valid_paths.append(res)
-    fname = pkg_resources.resource_filename(pkgname, configs)
-    return ComponentCollection(fname, valid_paths)
+    for res in importlib_resources.files('{}.{}'.format(pkgname, configs)).iterdir():
+        if res.suffix == '.json':
+            valid_paths.append(res.name)
+
+    dirpath = importlib_resources.files(pkgname) / configs
+    return ComponentCollection(dirpath, valid_paths)
 
 
 def load_resources_dir(dirname):
@@ -101,11 +103,12 @@ def load_comp_store(comp_collection):
     dict
     """
     comp_store = {}
-    for p in comp_collection.paths:
-        with open(os.path.join(comp_collection.dirname, p)) as fd:
-            cont = json.load(fd)
-            cont['origin'] = cf.ElementOrigin.create_from_dict(cont)
-            comp_store[p] = cont
+    for entry in comp_collection.dirname.iterfiles():
+        if entry.name in comp_collection.paths:
+            with open(entry) as fd:
+                cont = json.load(fd)
+                cont['origin'] = cf.ElementOrigin.create_from_dict(cont)
+                comp_store[entry.name] = cont
     return comp_store
 
 
@@ -136,36 +139,24 @@ def load_paths_store(pkg_paths=None, file_paths=None):
     -------
     dict
     """
-    import os
+
     comp_store = {}
-
-    elements = []
-
     # Prepare file paths
     if file_paths is None:
         file_paths = []
     if pkg_paths is None:
         pkg_paths = []
 
-    for fpath in file_paths:
-        elements.append((fpath, os.listdir, (fpath, )))
+    paths1 = [pathlib.Path(fpath) for fpath in file_paths]
+    paths2 = [importlib_resources.files(ppath) for ppath in pkg_paths]
 
-    # DRP paths
-    for ppath in pkg_paths:
-        splitp = ppath.split('.')
-        pkgname = '.'.join(splitp[:-1])
-        configs = splitp[-1]
-        dirname = pkg_resources.resource_filename(pkgname, configs)
-        elements.append((dirname, pkg_resources.resource_listdir, (pkgname, configs)))
-
-    # Load everything
-    for dirname, func_resource, args in elements:
-        for res in func_resource(*args):
-            if res.endswith('.json'):
-                with open(os.path.join(dirname, res)) as fd:
+    for path in itertools.chain(paths1, paths2):
+        for obj in path.iterdir():
+            if obj.suffix == '.json':
+                with open(obj) as fd:
                     cont = json.load(fd)
                     cont['origin'] = cf.ElementOrigin.create_from_dict(cont)
-                    comp_store[res] = cont
+                    comp_store[obj.name] = cont
 
     return comp_store
 

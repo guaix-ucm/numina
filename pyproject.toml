@@ -34,16 +34,16 @@ classifiers = [
 ]
 
 dependencies = [
-   "setuptools>=39.2",
-   "numpy >= 1.20",
-   "astropy",
-   "scipy",
-   "PyYaml",
-   "matplotlib",
-   "python-dateutil >= 2.7.0",
-   "lmfit",
-   "scikit-image",
-   "backports.entry_points_selectable",  # required only with python < 3.10a7
+    "numpy >= 1.20",
+    "astropy",
+    "scipy",
+    "PyYaml",
+    "matplotlib",
+    "python-dateutil >= 2.7.0",
+    "lmfit",
+    "scikit-image",
+    "importlib_resources",  # required with python < 3.9
+    "backports.entry_points_selectable",  # required only with python < 3.10a7
 ]
 
 [project.optional-dependencies]
