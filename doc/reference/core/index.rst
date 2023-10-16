@@ -7,4 +7,3 @@
    oresult
    pipeline
    recipes
-   other
