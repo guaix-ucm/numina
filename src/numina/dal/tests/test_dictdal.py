@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -29,9 +29,12 @@ def basedictdal():
 
     prod_table = {
         'TEST1': [
-            {'id': 1, 'type': 'DemoType1', 'tags': {}, 'content': {'demo1': 1}, 'ob': 2},
-            {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
-            {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
+            {'id': 1, 'type': 'DemoType1', 'tags': {},
+                'content': {'demo1': 1}, 'ob': 2},
+            {'id': 2, 'type': 'DemoType2', 'tags': {
+                'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
+            {'id': 3, 'type': 'DemoType2', 'tags': {
+                'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
         ]
     }
 
@@ -42,19 +45,23 @@ def basedictdal():
 def test_search_instrument_configuration(basedictdal):
     import numina.instrument.generic
 
-    res = basedictdal.search_instrument_configuration('TEST1', '2017-10-01 12:00:00')
+    res = basedictdal.search_instrument_configuration(
+        'TEST1', '2017-10-01 12:00:00')
 
     assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
 
-    res = basedictdal.search_instrument_configuration('TEST1', '2017-10-01 12:00:00')
+    res = basedictdal.search_instrument_configuration(
+        'TEST1', '2017-10-01 12:00:00')
 
     assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
 
     with pytest.raises(ValueError):
-        basedictdal.search_instrument_configuration('TEST1', '2011-10-01 12:00:00')
+        basedictdal.search_instrument_configuration(
+            'TEST1', '2011-10-01 12:00:00')
 
     with pytest.raises(KeyError):
-        basedictdal.search_instrument_configuration('TEST2', '2011-10-01 12:00:00')
+        basedictdal.search_instrument_configuration(
+            'TEST2', '2011-10-01 12:00:00')
 
 
 def test_search_instrument_configuration_from_ob(basedictdal):
@@ -106,7 +113,6 @@ def test_search_instrument_configuration_from_ob3(basedictdal):
     assert str(insconf.origin.uuid) == '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
 
 
-
 def test_search_oblock(basedictdal):
 
     with pytest.raises(NoResultFound):
@@ -149,12 +155,10 @@ def test_search_prod_obsid(basedictdal):
 
 
 def test_search_prod_req_tags1(basedictdal):
-    import numina.core
 
     class DemoType1(object):
         def name(self):
             return "DemoType1"
-
 
     req = numina.core.Requirement(DemoType1, description='Demo1 Requirement')
     ins = 'TEST1'
@@ -169,12 +173,10 @@ def test_search_prod_req_tags1(basedictdal):
 
 
 def test_search_prod_req_tags2(basedictdal):
-    import numina.core
 
     class DemoType2(object):
         def name(self):
             return "DemoType2"
-
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
@@ -189,12 +191,10 @@ def test_search_prod_req_tags2(basedictdal):
 
 
 def test_search_prod_req_tags3(basedictdal):
-    import numina.core
 
     class DemoType2(object):
         def name(self):
             return "DemoType2"
-
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
@@ -205,12 +205,9 @@ def test_search_prod_req_tags3(basedictdal):
 
 
 def test_search_prod_req_tags4(basedictdal):
-    import numina.core
-
     class DemoType2(object):
         def name(self):
             return "DemoType2"
-
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'

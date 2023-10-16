@@ -55,4 +55,4 @@ def _(tag, obj, where):
 dump.register(numpy.ndarray, lambda t, o, w: dump_numpy_array(o, w))
 
 
-dump.register(DataFrame, lambda t,o,w: dump_dataframe(o, w))
+dump.register(DataFrame, lambda t, o, w: dump_dataframe(o, w))

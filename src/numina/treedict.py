@@ -16,6 +16,7 @@ class TreeDict(collections.abc.MutableMapping):
     """
     Hierarchical dictionary
     """
+
     def __init__(self, *args, **keywords):
         self._data = dict(*args, **keywords)
 

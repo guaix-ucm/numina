@@ -30,7 +30,8 @@ def create_mock_entry_point(monkeypatch, entry_name, drploader):
         except AttributeError:
             pass
 
-    ep = importlib.metadata.EntryPoint(name=entry_name, value=value, group=group)
+    ep = importlib.metadata.EntryPoint(
+        name=entry_name, value=value, group=group)
 
     monkeypatch.setattr(ep, 'load', lambda: drploader)
 
@@ -39,18 +40,21 @@ def create_mock_entry_point(monkeypatch, entry_name, drploader):
 
 class DRPMocker(object):
     """Mocks the DRP loading process for testing."""
+
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
         self._eps = []
         basevalue = backports.entry_points_selectable.entry_points
         # Use the mocker only for 'numina.pipeline.1'
+
         def mockreturn(group, name=None):
             if group == 'numina.pipeline.1':
                 return self._eps
             else:
                 return basevalue(group=group, name=name)
 
-        self.monkeypatch.setattr(backports.entry_points_selectable, 'entry_points', mockreturn)
+        self.monkeypatch.setattr(
+            backports.entry_points_selectable, 'entry_points', mockreturn)
 
     def add_drp(self, name, loader):
 

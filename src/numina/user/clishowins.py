@@ -18,7 +18,7 @@ def register(subparsers, config):
     parser_show_ins = subparsers.add_parser(
         'show-instruments',
         help='show registered instruments'
-        )
+    )
 
     parser_show_ins.set_defaults(command=show_instruments,
                                  verbose=0, what='om')
@@ -31,13 +31,13 @@ def register(subparsers, config):
         '--profile-path', dest='profilepath',
         default=None,
         help='location of the instrument profiles'
-        )
+    )
 #    parser_show_ins.add_argument('--verbose', '-v', action='count')
 
     parser_show_ins.add_argument(
         'name', nargs='*', default=None,
         help='filter instruments by name'
-        )
+    )
 
     return parser_show_ins
 
@@ -72,7 +72,8 @@ def print_instrument(instrument, prof_store, modes=True):
             msg = f" has configuration '{desc}' uuid={uuid}"
             print(msg)
 
-    print(f" has datamodel '{objimport.fully_qualified_name(instrument.datamodel)}'")
+    print(
+        f" has datamodel '{objimport.fully_qualified_name(instrument.datamodel)}'")
     for _, pl in instrument.pipelines.items():
         print(f' has pipeline {pl.name!r}, version {pl.version}')
     if modes and instrument.modes:
@@ -83,5 +84,3 @@ def print_instrument(instrument, prof_store, modes=True):
 
 def print_no_instrument(name):
     print('No instrument named:', name)
-
-

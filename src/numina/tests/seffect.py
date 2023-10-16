@@ -7,6 +7,7 @@ Decorates a function to call another
 
 class FuncCall(object):
     """Record a function call"""
+
     def __init__(self):
         self.clear()
 
@@ -23,6 +24,7 @@ class FuncCall(object):
 
 def side_effect(effect_func):
     import functools
+
     def side_effect_decorator(func):
         @functools.wraps(func)
         def func_wrapper(*args, **kwargs):

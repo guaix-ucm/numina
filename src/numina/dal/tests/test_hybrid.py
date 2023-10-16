@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2019 Universidad Complutense de Madrid
+# Copyright 2018-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,6 +13,7 @@ from numina.tests.drptest import create_drp_test
 import numina.instrument.assembly as asb
 
 from ..dictdal import HybridDAL
+
 
 @pytest.fixture
 def hybriddal():
@@ -29,7 +30,8 @@ def hybriddal():
         dict(id=5, instrument=name, mode="image", images=[], children=[]),
         dict(id=30, instrument=name, mode="mosaic", images=[], children=[2, 3]),
         dict(id=40, instrument=name, mode="mosaic", images=[], children=[4, 5]),
-        dict(id=400, instrument=name, mode="raiz", images=[], children=[30 ,40]),
+        dict(id=400, instrument=name, mode="raiz",
+             images=[], children=[30, 40]),
     ]
 
     prod_table = {

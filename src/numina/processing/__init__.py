@@ -64,8 +64,10 @@ class Corrector(node.Node):
     def __call__(self, img):
         if img[0].data.dtype in ['<u2', '>u2', '=u2']:
             # FIXME: this is a GCS problem
-            _logger.debug('change dtype to float32, old is %s',
-                         img[0].data.dtype)
+            _logger.debug(
+                'change dtype to float32, old is %s',
+                img[0].data.dtype
+            )
             img = promote_hdulist(img)
         if hasattr(self, 'run'):
             img = self.run(img)
@@ -125,7 +127,8 @@ class BiasCorrector(Corrector):
 
         self.update_variance = True if biasvar else False
 
-        super(BiasCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super(BiasCorrector, self).__init__(
+            datamodel=datamodel, calibid=calibid, dtype=dtype)
         self.bias_stats = biasmap.mean()
         self.biasmap = biasmap
         self.biasvar = biasvar

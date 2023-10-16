@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-import pytest
 import numpy as np
 from numpy.polynomial import polynomial
 
@@ -16,7 +15,7 @@ from ..arccalibration import arccalibration_direct
 from ..arccalibration import fit_list_of_wvfeatures
 
 try:
-    import matplotlib
+    import matplotlib  # noqa: F401
 
     HAVE_PLOTS = True
 except ImportError:
@@ -162,7 +161,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
 
     # ---
 
-    nlines_master = wv_master.size
+    # nlines_master = wv_master.size
 
     crval1_arc = wv_ini_arc
     cdelt1_arc = (wv_end_arc - wv_ini_arc) / float(naxis1_arc - 1)
@@ -221,8 +220,8 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         c1_arc = (wv_end_arc - wv_ini_arc - 4 * delta_lambda) / float(
             naxis1_arc - 1)
         c2_arc = 4 * delta_lambda / float(naxis1_arc - 1) ** 2
-        xpos_arc = (
-        -c1_arc + np.sqrt(c1_arc ** 2 - 4 * c2_arc * (c0_arc - wv_arc)))
+        xpos_arc = (-c1_arc + np.sqrt(c1_arc ** 2 -
+                    4 * c2_arc * (c0_arc - wv_arc)))
         xpos_arc /= 2 * c2_arc
         xpos_arc += 1  # convert from 0,...,(NAXIS1-1) to 1,...,NAXIS1
 
@@ -348,9 +347,7 @@ def simulate_arc(wv_ini_master, wv_end_master, wv_master,
         axbis.set_xlabel('pixel position in arc spectrum')
         plt.show(block=False)
 
-    return nlines_arc, xpos_arc, crval1_arc, cdelt1_arc, \
-           c0_arc, c1_arc, c2_arc, \
-           ipos_wv_arc, coeff_original
+    return nlines_arc, xpos_arc, crval1_arc, cdelt1_arc, c0_arc, c1_arc, c2_arc, ipos_wv_arc, coeff_original
 
 
 # -----------------------------------------------------------------------------
@@ -404,14 +401,13 @@ def execute_arccalibration(my_seed=432, wv_ini_master=3000, wv_end_master=7000,
     ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
         gen_triplets_master(wv_master)
 
-    nlines_arc, xpos_arc, crval1_arc, cdelt1_arc, \
-    c0_arc, c1_arc, c2_arc, ipos_wv_arc, coeff_original = \
-        simulate_arc(wv_ini_master, wv_end_master, wv_master,
-                     wv_ini_arc, wv_end_arc, naxis1_arc,
-                     prob_line_master_in_arc,
-                     delta_xpos_min_arc, delta_lambda, error_xpos_arc,
-                     poly_degree, fraction_unknown_lines,
-                     ldebug=ldebug, lplot=lplot)
+    nlines_arc, xpos_arc, crval1_arc, cdelt1_arc, c0_arc, c1_arc, c2_arc, ipos_wv_arc, coeff_original = \
+        simulate_arc(
+            wv_ini_master, wv_end_master, wv_master,
+            wv_ini_arc, wv_end_arc, naxis1_arc,
+            prob_line_master_in_arc, delta_xpos_min_arc, delta_lambda, error_xpos_arc,
+            poly_degree, fraction_unknown_lines, ldebug=ldebug, lplot=lplot
+        )
 
     if wv_ini_search is None:
         wv_ini_search = wv_ini_master - 0.1 * (wv_end_master - wv_ini_master)
@@ -459,10 +455,12 @@ def test__execute_notebook_example(ldebug=False, lplot=False):
 
     coeff_expected = np.array([3.99875794e+03, 9.59950578e-01, 1.72739867e-05])
     assert np.allclose(solution_wv.coeff, coeff_expected)
-    assert np.allclose(solution_wv.cr_linear.crval, 3999.7179085283897)  # 3996.42717772)
+    assert np.allclose(solution_wv.cr_linear.crval,
+                       3999.7179085283897)  # 3996.42717772)
     assert np.allclose(solution_wv.cr_linear.crmin, 3999.7179085283897)
     assert np.allclose(solution_wv.cr_linear.crmax, 4999.8604201544294)
-    assert np.allclose(solution_wv.cr_linear.cdelt, 0.97765641410170068)  # 0.978303317095)
+    assert np.allclose(solution_wv.cr_linear.cdelt,
+                       0.97765641410170068)  # 0.978303317095)
 
     print("TEST: test__execute_notebook_example... OK")
 
@@ -480,10 +478,12 @@ def test__execute_simple_case(ldebug=False, lplot=False):
 
     coeff_expected = np.array([2.99467778e+03, 3.89781863e+00, 1.22960881e-05])
     assert np.allclose(solution_wv.coeff, coeff_expected)
-    assert np.allclose(solution_wv.cr_linear.crval, 2998.5756138701254)  # 2995.4384155)
+    assert np.allclose(solution_wv.cr_linear.crval,
+                       2998.5756138701254)  # 2995.4384155)
     assert np.allclose(solution_wv.cr_linear.crmin, 2998.5756138701254)
     assert np.allclose(solution_wv.cr_linear.crmax, 6998.9374406492443)
-    assert np.allclose(solution_wv.cr_linear.cdelt, 3.9104221180636549)  # 3.91231531392)
+    assert np.allclose(solution_wv.cr_linear.cdelt,
+                       3.9104221180636549)  # 3.91231531392)
 
     print("TEST: test__execute_simple_case... OK")
 

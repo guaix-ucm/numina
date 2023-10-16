@@ -7,15 +7,15 @@
 # License-Filename: LICENSE.txt
 #
 
-from .recipes import BaseRecipe
-from .recipeinout import RecipeInput, RecipeResult
-from .pipeline import InstrumentDRP, Pipeline
+from .recipes import BaseRecipe  # noqa: F401
+from .recipeinout import RecipeInput, RecipeResult  # noqa: F401
+from .pipeline import InstrumentDRP, Pipeline  # noqa: F401
 # from .instrument.insconf import InstrumentConfiguration
-from .pipeline import ObservingMode
-from .pipelineload import drp_load
-from .dataholders import Parameter, Requirement
-from .dataholders import Result, Product
-from .oresult import ObservationResult
-from numina.types.product import DataProductType
-from numina.types.frame import DataFrameType
-from numina.types.dataframe import DataFrame
+from .pipeline import ObservingMode  # noqa: F401
+from .pipelineload import drp_load  # noqa: F401
+from .dataholders import Parameter, Requirement  # noqa: F401
+from .dataholders import Result, Product  # noqa: F401
+from .oresult import ObservationResult  # noqa: F401
+from numina.types.product import DataProductType  # noqa: F401
+from numina.types.frame import DataFrameType  # noqa: F401
+from numina.types.dataframe import DataFrame  # noqa: F401

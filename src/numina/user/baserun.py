@@ -87,8 +87,8 @@ def config_recipe_logger(root_level_logger, ref_logger='numina'):
     formater_dd = LOGCONF['formatters']['detailed']
     detailed_formatter = logging.Formatter(fmt=formater_dd.get('format'))
     # create handler, ignoring configuration here
-    #handerl_dd = numina_cli_logconf['handlers']['detailed_console']
-    #handerl_dd_level =
+    # handerl_dd = numina_cli_logconf['handlers']['detailed_console']
+    # handerl_dd_level =
     sh = logging.StreamHandler()
     sh.setLevel(numina_logger.getEffectiveLevel())
     sh.setFormatter(detailed_formatter)
@@ -160,10 +160,12 @@ def run_task_reduce(task, datastore):
 
         for key, val in obsres.requirements.items():
             if key not in recipe.requirements():
-                _logger.warning(f'"{key}: {val}" present in OB requirements, but not used')
+                _logger.warning(
+                    f'"{key}: {val}" present in OB requirements, but not used')
 
         for req in recipe.products().values():
-            _logger.debug('recipe provides %s, %s', req.type.__class__.__name__, req.description)
+            _logger.debug('recipe provides %s, %s',
+                          req.type.__class__.__name__, req.description)
 
     # Load recipe control and recipe parameters from file
     task.request_runinfo['instrument'] = obsres.instrument
@@ -222,7 +224,7 @@ def logger_manager(logger_control, result_dir):
         fh = logging.NullHandler()
 
     root_levels = logger_control['root_levels']
-    recipe_loggers =  []
+    recipe_loggers = []
     for lname in root_levels:
         recipe_logger = logging.getLogger(lname)
         recipe_logger.setLevel(logging.DEBUG)

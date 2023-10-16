@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,9 +9,9 @@
 
 """Unit test for logger"""
 
-import logging 
+import logging
 
-from  ..logger import FITSHistoryHandler, log_to_history
+from ..logger import FITSHistoryHandler, log_to_history
 
 import pytest
 from astropy.io import fits
@@ -46,9 +46,9 @@ def test_fits_history_handler(logger_fits):
     logger.info(logtext2)
     hheaders = history_header['HISTORY']
 
-    assert(hheaders[0] == logtext1)
-    assert(hheaders[1] == logtext2[:72])
-    assert(hheaders[2] == logtext2[72:])
+    assert hheaders[0] == logtext1
+    assert hheaders[1] == logtext2[:72]
+    assert hheaders[2] == logtext2[72:]
 
 
 def test_logger_decorator():

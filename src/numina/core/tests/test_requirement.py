@@ -34,7 +34,8 @@ def test_query1():
 
 def test_query11():
 
-    req = Requirement(rtype=numina.types.datatype.PlainPythonType(1), description="", destination='req_int')
+    req = Requirement(rtype=numina.types.datatype.PlainPythonType(
+        1), description="", destination='req_int')
 
     dal = Dal()
 

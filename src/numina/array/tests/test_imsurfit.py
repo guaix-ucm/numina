@@ -23,13 +23,14 @@ def calc_ws(xx, yy):
     ]
     return res
 
+
 @pytest.mark.parametrize("steps", [100, 458])
 @pytest.mark.parametrize("order, results", [
     (1, [456.0, 0.3, -0.9]),
     (2, [1.0, 0.1, 12, 3.0, -11.8, 9.2]),
     (3, [456.0, 0.3, -0.9, 0.03, -0.01, 0.07, 0.0, -10, 0.0, 0.04]),
     (4, [-11.0, -1.5, -0.1, 0.14, -15.03,
-         0.07,0.448, -0.28, 1.4, 1.24,
+         0.07, 0.448, -0.28, 1.4, 1.24,
          -3.2, -1.2, 2.24, -8.1, -0.03])
 ])
 def test_fit(order, results, steps):
@@ -46,4 +47,3 @@ def test_fit(order, results, steps):
     z = sum(dd)
     results, = imsurfit(z, order=order)
     assert numpy.allclose(results0, results)
-

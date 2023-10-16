@@ -12,6 +12,7 @@ class DepLink(object):
     """
     Dependency Link
     """
+
     def __init__(self, node, weight=1):
         self.node = node
         self.weight = weight
@@ -19,6 +20,7 @@ class DepLink(object):
 
 class DepNode(object):
     """Dependency Node"""
+
     def __init__(self, name, links=None):
         self.name = name
         self.links = [] if links is None else links
@@ -44,11 +46,11 @@ def visit_node(node, visited, level=1):
 
     """
     # filler = 3 * level * "-"
-    for l in node.links:
+    for nlk in node.links:
         # print filler, "> link,",level,", w=",l.weight, " dest=", l.node.name
         # print filler, ">", l.node.name
-        if l.node.name in visited:
+        if nlk.node.name in visited:
             continue
         else:
-            visited.append(l.node.name)
-        visit_node(l.node, visited, level+1)
+            visited.append(nlk.node.name)
+        visit_node(nlk.node, visited, level+1)

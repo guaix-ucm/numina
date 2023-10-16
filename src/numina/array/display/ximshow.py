@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -421,12 +421,14 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         backend = matplotlib.get_backend()
         if backend == 'TkAgg':
             plt.get_current_fig_manager().resize(xwidth_geom, ywidth_geom)
-            plt.get_current_fig_manager().window.wm_geometry(f"+{xini_geom}+{yini_geom}")
+            plt.get_current_fig_manager().window.wm_geometry(
+                f"+{xini_geom}+{yini_geom}")
         elif backend == 'Qt5Agg':
             geometry_tuple = xwidth_geom, ywidth_geom, xini_geom, yini_geom
             set_window_geometry(geometry_tuple)
         else:
-            print(f'WARNING: geometry {geometry} ignored with backend {backend}')
+            print(
+                f'WARNING: geometry {geometry} ignored with backend {backend}')
             print('(you can try the TkAgg backend instead)')
 
     # connect keypress event with function responsible for
@@ -999,7 +1001,7 @@ def main(args=None):
         from matplotlib.backends.backend_pdf import PdfPages
         pdf = PdfPages(args.pdffile.name)
     else:
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_qt import plt  # noqa: F401
         pdf = None
 
     for myfile, extnum in zip(list_fits_files, list_extnum):

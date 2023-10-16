@@ -1,5 +1,4 @@
 
-import pytest
 import numina.core.tagexpr as tagexpr
 
 
@@ -61,7 +60,7 @@ def test_tag_expresion_filter1():
     assert isinstance(res[10], tagexpr.PredAnd)
 
     expr2 = expr1.fill_placeholders(insmode='LCB')
-    assert expr2.eval(insmode='LCB', vph='LR-I') == True
+    assert expr2.eval(insmode='LCB', vph='LR-I') is True
 
 
 def test_tag_expresion_filter2():
@@ -71,13 +70,14 @@ def test_tag_expresion_filter2():
     temp = tagexpr.TagRepr("temp")
     p_ = tagexpr.Placeholder
 
-    expr1 = (vph == p_("vph")) & (insmode == p_("insmode")) & (temp >= p_("temp"))
+    expr1 = (vph == p_("vph")) & (
+        insmode == p_("insmode")) & (temp >= p_("temp"))
     expr2 = expr1.fill_placeholders(insmode='LCB', vph='LR-I', temp=22.4)
 
     assert expr2.eval(insmode='LCB', vph='LR-I', temp=22.4)
 
     assert expr2.eval(insmode='LCB', vph='LR-I', temp=24.4)
 
-    assert expr2.eval(insmode='LCB', vph='LR-I', temp=20.0) == False
+    assert expr2.eval(insmode='LCB', vph='LR-I', temp=20.0) is False
 
-    assert expr2.eval(insmode='MOS', vph='LR-I', temp=23.0) == False
+    assert expr2.eval(insmode='MOS', vph='LR-I', temp=23.0) is False

@@ -41,7 +41,8 @@ class LinesCatalog(DataProductType):
         result['tags'] = {}
         result['type'] = 'LinesCatalog'
         result['uuid'] = str(uuid.uuid1())
-        result['observation_date'] = datetime.datetime.now(datetime.timezone.utc)
+        result['observation_date'] = datetime.datetime.now(
+            datetime.timezone.utc)
         result['quality_control'] = QC.GOOD
         result['origin'] = {}
 

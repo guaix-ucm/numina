@@ -16,6 +16,7 @@ from .unserial import unserial
 
 class StoredProduct(object):
     """A product returned from the DAL"""
+
     def __init__(self, id, content, tags, **kwds):
         self.id = id
         self.content = content
@@ -24,6 +25,7 @@ class StoredProduct(object):
 
 class StoredParameter(object):
     """A parameter returned from the DAL"""
+
     def __init__(self, content):
         self.content = content
 

@@ -4,6 +4,7 @@ from numina.array.peaks.detrend import detrend
 
 numpy.random.seed(12812818)
 
+
 def test_compute_trend():
     numpy.random.seed(12812818)
 

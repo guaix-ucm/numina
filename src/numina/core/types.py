@@ -4,7 +4,7 @@ import sys
 import warnings
 
 
-from numina.types.datatype import ListOfType, DataType
+from numina.types.datatype import ListOfType, DataType  # noqa: F401
 import numina.types.datatype as datatype
 
 

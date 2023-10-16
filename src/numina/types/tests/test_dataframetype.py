@@ -1,5 +1,5 @@
 
-from ..frame import  DataFrameType
+from ..frame import DataFrameType
 from ..dataframe import DataFrame
 
 
@@ -25,9 +25,5 @@ def test_dataframe_convert_string():
 
 
 def test_dataframe_validate_none():
-
     datatype = DataFrameType()
-
-    obj = 'filename.fits'
-
     assert datatype.validate(None)

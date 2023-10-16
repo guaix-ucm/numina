@@ -28,7 +28,8 @@ def create_solution(orig):
         features.append(m)
 
     cr_linear = CrLinear(**orig['cr_linear'])
-    mm = SolutionArcCalibration(features, orig['coeff'], orig['residual_std'], cr_linear)
+    mm = SolutionArcCalibration(
+        features, orig['coeff'], orig['residual_std'], cr_linear)
     return mm
 
 

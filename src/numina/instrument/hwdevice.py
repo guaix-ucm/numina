@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -29,7 +29,7 @@ class HWDevice(DeviceBase):
             if isinstance(prop, property):
                 try:
                     meta[key] = getattr(self, key).value
-                except:
+                except Exception:
                     meta[key] = getattr(self, key)
         return meta
 

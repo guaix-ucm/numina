@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,6 +19,3 @@ def fully_qualified_name(obj, sep='.'):
         return obj.__module__ + sep + obj.__name__
     else:
         return obj.__module__ + sep + obj.__class__.__name__
-
-
-

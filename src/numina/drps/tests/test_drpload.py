@@ -139,4 +139,3 @@ def test_drpsys_bad_file(capsys, drpmocker):
     err.sort()
 
     assert err == expected_msg
-

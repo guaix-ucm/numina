@@ -35,7 +35,7 @@ def apply_integer_offsets(image2d, offx, offy):
     """
 
     # protections
-    if type(offx) != int or type(offy) != int:
+    if not isinstance(offx, int) or isinstance(offy, int):
         raise ValueError('Invalid non-integer offsets')
 
     # image dimensions
@@ -45,8 +45,8 @@ def apply_integer_offsets(image2d, offx, offy):
     image2d_shifted = np.zeros((naxis2, naxis1))
 
     # handle negative and positive shifts accordingly
-    non = lambda s: s if s < 0 else None
-    mom = lambda s: max(0,s)
+    def non(s): return s if s < 0 else None  # noqa: E731
+    def mom(s): return max(0, s)  # noqa: E731
 
     # shift image
     image2d_shifted[mom(offy):non(offy), mom(offx):non(offx)] = \

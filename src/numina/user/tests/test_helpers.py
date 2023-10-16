@@ -24,4 +24,3 @@ def test_work1(tmpdir):
     assert os.path.isdir(work.resultsdir)
     assert os.path.isdir(work.basedir)
     assert os.path.isfile(work.index_file)
-

@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,4 +28,3 @@ class EnclosedGaussian(Fittable1DModel):
         d_amplitude = -t + 1.0
         d_stddev = -amplitude * t * z / stddev
         return [d_amplitude, d_stddev]
-

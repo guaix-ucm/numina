@@ -17,7 +17,7 @@ import pytest
 if "pytest_benchmark" in sys.modules:
     HAS_BENCHMARCK = True
 else:
-    from .nobenchmark import benchmark
+    from .nobenchmark import benchmark  # noqa: F401
     HAS_BENCHMARCK = False
 
 
@@ -80,12 +80,13 @@ def datamanager_remote(tmp_path_factory, request):
     req_base = getattr(request.module, 'TEST_SET_HOST', req_base_default)
     req_tarname = getattr(request.module, 'TEST_SET_FILE')
     req_datadir = getattr(request.module, 'TEST_SET_DATADIR', 'data')
-    req_control = getattr(request.module, 'TEST_SET_CONTROL', "control_v2.yaml")
+    req_control = getattr(
+        request.module, 'TEST_SET_CONTROL', "control_v2.yaml")
 
     basedir = tmp_path_factory.mktemp('manager')
 
     datadir = basedir / req_datadir  # pathlib syntax
-    reqfile  = basedir / req_control
+    reqfile = basedir / req_control
 
     if req_tarname is None:
         raise ValueError('Undefined TEST_SET_FILE')
@@ -123,12 +124,20 @@ def pytest_report_header(config):
 
 
 def pytest_addoption(parser):
-    parser.addoption('--resultcmp', action='store_true',
-                    help="enable comparison of recipe results to reference results stored")
-    parser.addoption('--resultcmp-generate-path',
-                    help="directory to generate reference files in, relative to location where py.test is run", action='store')
-    parser.addoption('--resultcmp-reference-path',
-                    help="directory containing reference files, relative to location where py.test is run", action='store')
+    parser.addoption(
+        '--resultcmp', action='store_true',
+        help="enable comparison of recipe results to reference results stored"
+    )
+    parser.addoption(
+        '--resultcmp-generate-path',
+        help="directory to generate reference files in, relative to location where py.test is run",
+        action='store'
+    )
+    parser.addoption(
+        '--resultcmp-reference-path',
+        help="directory containing reference files, relative to location where py.test is run",
+        action='store'
+    )
 
 
 def pytest_configure(config):
@@ -136,13 +145,15 @@ def pytest_configure(config):
     config.getini('markers').append(
         'result_compare: Apply to tests that provide recipe results to compare with a reference')
 
-    if config.getoption("--resultcmp", default=False) or config.getoption("--resultcmp-generate-path", default=None) is not None:
+    if config.getoption("--resultcmp", default=False) \
+            or config.getoption("--resultcmp-generate-path", default=None) is not None:
 
         reference_dir = config.getoption("--resultcmp-reference-path")
         generate_dir = config.getoption("--resultcmp-generate-path")
 
         if reference_dir is not None and generate_dir is not None:
-            warnings.warn("Ignoring --resultcmp-reference-path since --resultcmp-generate-path is set")
+            warnings.warn(
+                "Ignoring --resultcmp-reference-path since --resultcmp-generate-path is set")
 
         if reference_dir is not None:
             reference_dir = os.path.abspath(reference_dir)

@@ -50,7 +50,7 @@ def main(args=None):
         prog='numina',
         epilog="For detailed help pass --help to a target",
         add_help=False
-        )
+    )
 
     parser0.add_argument('--disable-plugins', action='store_true')
 
@@ -74,27 +74,27 @@ def main(args=None):
         description='Command line interface of Numina',
         prog='numina',
         epilog="For detailed help pass --help to a target"
-        )
+    )
 
     parser.add_argument('--disable-plugins', action='store_true',
                         help='disable plugin loading')
     parser.add_argument(
         '-l', action="store", dest="logging", metavar="FILE",
         help="FILE with logging configuration"
-        )
+    )
     parser.add_argument(
         '-d', '--debug',
         action="store_true",
         dest="debug", default=False,
         help="make lots of noise"
-        )
+    )
 
     parser.add_argument(
         '--standalone',
         action="store_true",
         dest="standalone", default=False,
         help="do not activate GTC compatibility code"
-        )
+    )
 
     # Due to a problem with argparse
     # this command blocks the defaults of the subparsers
@@ -105,7 +105,7 @@ def main(args=None):
     subparsers = parser.add_subparsers(
         title='Targets',
         description='These are valid commands you can ask numina to do.'
-        )
+    )
 
     # Init subcommands
     cmds = ['clishowins', 'clishowom', 'clishowrecip',

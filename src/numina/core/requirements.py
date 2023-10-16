@@ -20,12 +20,13 @@ from .dataholders import Requirement
 
 class ObservationResultRequirement(Requirement):
     """The Recipe requires the result of an observation."""
+
     def __init__(self, query_opts=None):
 
         super(ObservationResultRequirement, self).__init__(
             obtypes.ObservationResultType, "Observation Result",
             query_opts=query_opts
-            )
+        )
 
     def __repr__(self):
         sclass = type(self).__name__
@@ -78,4 +79,5 @@ class ObservationResultRequirement(Requirement):
         -------
 
         """
-        raise numina.exceptions.NoResultFound('unable to complete ObservationResult') from notfound
+        raise numina.exceptions.NoResultFound(
+            'unable to complete ObservationResult') from notfound

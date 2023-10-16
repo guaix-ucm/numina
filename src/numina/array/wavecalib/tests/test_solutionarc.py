@@ -6,7 +6,7 @@ import pytest
 from ..arccalibration import WavecalFeature
 
 
-features =  [
+features = [
     {'category': 'A', 'xpos': 100.0, 'reference': 3210.0,
      'wavelength': 3100.0, 'line_ok': True, 'ypos': 0.0, 'peak': 0.0,
      'funcost': 12.0, 'fwhm': 0.0,
@@ -24,7 +24,6 @@ features =  [
      'funcost': float('inf'), 'fwhm': 0.0,
      'lineid': 4}
 ]
-
 
 
 def create_features(orig):

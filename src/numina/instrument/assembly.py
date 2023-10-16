@@ -56,7 +56,8 @@ _default_class['setup'] = numina.instrument.generic.InstrumentGeneric
 _default_class['properties'] = numina.instrument.generic.InstrumentGeneric
 
 
-ComponentCollection = collections.namedtuple('ComponentCollection', 'dirname paths')
+ComponentCollection = collections.namedtuple(
+    'ComponentCollection', 'dirname paths')
 
 
 def load_resources_pkg(pkgname, configs):
@@ -85,8 +86,6 @@ def load_resources_pkg(pkgname, configs):
 
 
 def load_resources_dir(dirname):
-
-    valid_paths = []
     raise NotImplementedError
     # return ComponentCollection(dirname, valid_paths)
 
@@ -195,7 +194,8 @@ def find_element(comp_store, etype, keyval, date, by_key='name'):
                 # print('date not valid', datet, val['origin'].date_start, val['origin'].date_end)
                 pass
     else:
-        raise ValueError(f"Not found {etype} {by_key}={keyval} for date={date}")
+        raise ValueError(
+            f"Not found {etype} {by_key}={keyval} for date={date}")
 
 
 def assembly_instrument(comp_store, keyval, date, by_key='name'):
@@ -260,7 +260,8 @@ def assembly_element(comp_store, etype, tmpl, date, dest=None, by_key='name'):
     for c in somed.get('setup', []):
         cid = c.get("id")
         if 'name' in c:
-            res = assembly_element(comp_store, 'setup', c['name'], date, dest=cid)
+            res = assembly_element(comp_store, 'setup',
+                                   c['name'], date, dest=cid)
             setup_objects[res.name] = res
         elif 'uuid' in c:
             res = assembly_element(comp_store, 'setup', c['uuid'], date, dest=cid,
@@ -288,7 +289,8 @@ def assembly_element(comp_store, etype, tmpl, date, dest=None, by_key='name'):
                 depends = entry['depends']
                 confe = repre.PropertyEntry(values, depends)
             elif 'name' in entry:
-                res = assembly_element(comp_store, 'properties', entry['name'], date)
+                res = assembly_element(
+                    comp_store, 'properties', entry['name'], date)
                 confe = res.properties[key]
             elif 'uuid' in entry:
 
@@ -323,7 +325,8 @@ def assembly_element(comp_store, etype, tmpl, date, dest=None, by_key='name'):
         # Use 'id' as name, if present
         cid = c.get("id")
         if 'name' in c:
-            res = assembly_element(comp_store, 'component', c['name'], date, dest=cid)
+            res = assembly_element(
+                comp_store, 'component', c['name'], date, dest=cid)
         elif 'uuid' in c:
             res = assembly_element(comp_store, 'component', c['uuid'], date, dest=cid,
                                    by_key='uuid')

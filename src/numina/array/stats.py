@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -52,7 +52,7 @@ def summary(x, rm_nan=False, debug=False):
     Parameters
     ----------
     x : 1d numpy array, float
-        Input array with values which statistical properties are 
+        Input array with values which statistical properties are
         requested.
     rm_nan : bool
         If True, filter out NaN values before computing statistics.
@@ -90,15 +90,15 @@ def summary(x, rm_nan=False, debug=False):
     npoints = len(xx)
     ok = npoints > 0
     result = {
-        'npoints' : npoints,
-        'minimum' : np.min(xx) if ok else 0,
-        'percentile25' : np.percentile(xx, 25) if ok else 0,
-        'median' : np.percentile(xx, 50) if ok else 0,
-        'mean' : np.mean(xx) if ok else 0,
+        'npoints': npoints,
+        'minimum': np.min(xx) if ok else 0,
+        'percentile25': np.percentile(xx, 25) if ok else 0,
+        'median': np.percentile(xx, 50) if ok else 0,
+        'mean': np.mean(xx) if ok else 0,
         'percentile75': np.percentile(xx, 75) if ok else 0,
-        'maximum' : np.max(xx) if ok else 0,
+        'maximum': np.max(xx) if ok else 0,
         'std': np.std(xx) if ok else 0,
-        'robust_std' : robust_std(xx) if ok else 0,
+        'robust_std': robust_std(xx) if ok else 0,
         'percentile15': np.percentile(xx, 15.86553) if ok else 0,
         'percentile84': np.percentile(xx, 84.13447) if ok else 0
     }
@@ -122,4 +122,3 @@ def summary(x, rm_nan=False, debug=False):
         print('>>> ========================================')
 
     return result
-

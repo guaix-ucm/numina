@@ -15,6 +15,7 @@ from numina.instrument.simulation.efficiency import Efficiency
 
 class VirtualDetector(object):
     """Each of the channels."""
+
     def __init__(self, base, geom, directfun, readpars):
 
         self.base = base
@@ -32,7 +33,8 @@ class VirtualDetector(object):
 
         # We could use different RON and BIAS in each section
         for section in [self.trim, self.pcol, self.ocol, self.orow]:
-            final[section] = self.readpars.bias + numpy.random.normal(final[section], self.readpars.ron)
+            final[section] = self.readpars.bias + \
+                numpy.random.normal(final[section], self.readpars.ron)
 
         return final
 

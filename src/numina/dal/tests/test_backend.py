@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2019 Universidad Complutense de Madrid
+# Copyright 2018-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -58,7 +58,8 @@ def backend(tmpdir):
         dict(id=5, instrument=name, mode="image", images=[], children=[]),
         dict(id=30, instrument=name, mode="mosaic", images=[], children=[2, 3]),
         dict(id=40, instrument=name, mode="mosaic", images=[], children=[4, 5]),
-        dict(id=400, instrument=name, mode="raiz", images=[], children=[30 , 40]),
+        dict(id=400, instrument=name, mode="raiz",
+             images=[], children=[30, 40]),
     ]
 
     prod_table = {
@@ -81,8 +82,7 @@ def backend(tmpdir):
             'time_create': '2018-07-24T19:12:01',
             'result_dir': 'dum1',
             'result_file': result_name,
-            'qc': 'GOOD',
-        },
+            'qc': 'GOOD', },
         2: {'id': 2,
             'instrument': name,
             'mode': "sky",
@@ -91,8 +91,7 @@ def backend(tmpdir):
             'qc': 'BAD',
             'time_create': '2018-07-24T19:12:09',
             'result_file': result_name,
-            'result_dir': 'dum2',
-        },
+            'result_dir': 'dum2', },
         3: {'id': 3,
             'instrument': name,
             'mode': "image",
@@ -101,15 +100,14 @@ def backend(tmpdir):
             'time_create': '2018-07-24T19:12:11',
             'qc': 'GOOD',
             'result_dir': 'dum3',
-            'result_file': result_name,
-        },
+            'result_file': result_name, },
     }
 
     gentable = {}
     gentable['products'] = prod_table
     gentable['requirements'] = {}
     gentable['results'] = results_table
-    #gentable['oblocks'] = ob_table
+    # gentable['oblocks'] = ob_table
     # Load instrument profiles
     pkg_paths = ['numina.drps.tests.configs']
     store = asb.load_paths_store(pkg_paths)
@@ -269,8 +267,10 @@ def test_build_recipe_result2(backend):
 
 def test_ago(backend_empty):
 
-    ob1 = {'id': 100, 'instrument': 'CLODIA', 'mode': 'image', 'labels': {'obsid_wl': 400}}
-    ob2 = {'id': 200, 'instrument': 'CLODIA', 'mode': 'image', 'labels': {'obsid_wl': 400}}
+    ob1 = {'id': 100, 'instrument': 'CLODIA',
+           'mode': 'image', 'labels': {'obsid_wl': 400}}
+    ob2 = {'id': 200, 'instrument': 'CLODIA',
+           'mode': 'image', 'labels': {'obsid_wl': 400}}
     ob3 = {'id': 300, 'instrument': 'CLODIA', 'mode': 'image'}
     ob4 = {'id': 400, 'instrument': 'CLODIA', 'mode': 'image'}
 

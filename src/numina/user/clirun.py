@@ -30,6 +30,7 @@ def complete_config(config):
 
     return config
 
+
 def register(subparsers, config):
 
     complete_config(config)
@@ -37,62 +38,62 @@ def register(subparsers, config):
     parser_run = subparsers.add_parser(
         'run',
         help='process a observation result'
-        )
+    )
 
     parser_run.set_defaults(command=mode_run_obsmode)
 
     parser_run.add_argument(
         '-c', '--task-control', dest='reqs',
         help='configuration file of the processing task', metavar='FILE'
-        )
+    )
     parser_run.add_argument(
         '-r', '--requirements', dest='reqs',
         help='alias for --task-control', metavar='FILE'
-        )
+    )
     parser_run.add_argument(
         '-i', '--instrument', dest='insconf',
         default=None,
         help='name of an instrument configuration'
-        )
+    )
     parser_run.add_argument(
         '--profile-path', dest='profilepath',
         default=None,
         help='location of the instrument profiles'
-        )
+    )
     parser_run.add_argument(
         '-p', '--pipeline', dest='pipe_name',
         default='default', help='name of a pipeline'
-        )
+    )
     parser_run.add_argument(
         '--basedir', action="store", dest="basedir",
         default=os.getcwd(),
         help='path to create the following directories'
-        )
+    )
     parser_run.add_argument(
         '--datadir', action="store", dest="datadir",
         default='data',
         help='path to directory containing pristine data'
-        )
+    )
     parser_run.add_argument(
         '--resultsdir', action="store", dest="resultsdir",
         help='path to directory to store results'
-        )
+    )
     parser_run.add_argument(
         '--workdir', action="store", dest="workdir",
         help='path to directory containing intermediate files'
-        )
+    )
     parser_run.add_argument(
         '--cleanup', action="store_true", dest="cleanup",
         default=False, help='cleanup workdir on exit [disabled]'
-        )
+    )
     parser_run.add_argument(
         '--not-copy-files', action="store_false", dest="copy_files",
         help='do not copy observation result and requirement files'
-        )
+    )
     parser_run.add_argument(
         '--link-files', action="store_false", dest="copy_files",
         help='do not copy observation result and requirement files'
-        )
+    )
     parser_run.add_argument(
         '-e', '--enable', action='append', default=[],
         metavar='BLOCKID', help='enable blocks by id'
@@ -112,7 +113,7 @@ def register(subparsers, config):
     parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'
-        )
+    )
 
     return parser_run
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -66,7 +66,7 @@ def test_store_to(qc):
 
     expected_result = {
         'values': {'param1': None, 'param2': None},
-        'qc': qc.name, # 'uuid': '00000000-0000-0000-0000-000000000000'
+        'qc': qc.name,  # 'uuid': '00000000-0000-0000-0000-000000000000'
     }
 
     class Storage(object):

@@ -115,7 +115,8 @@ def combine(method, images, masks=None, dtype=None,
         arg = arg_values[key]  # locals()[key]
         value_arg, arg_is_func = _inspect_method(arg)
         if arg_is_func:
-            num_values[key] = [value_arg(img, mask, region) for img, mask in zip(images, intl_masks)]
+            num_values[key] = [value_arg(img, mask, region)
+                               for img, mask in zip(images, intl_masks)]
         else:
             num_values[key] = value_arg
         if num_values[key] is not None:

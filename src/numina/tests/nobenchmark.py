@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -17,8 +17,7 @@ def _no_bench_func(method, *args, **kwds):
 @pytest.fixture
 def benchmark():
     """Mock function used if pytest-benchmark is not installed.
-    
+
     For actual benchmarking install pytest-benchmark
     """
     return _no_bench_func
-   

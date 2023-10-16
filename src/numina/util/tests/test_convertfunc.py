@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,8 +8,6 @@
 #
 
 """Test convert strings to functions in data load """
-
-import pytest
 
 import numpy
 import numpy.polynomial.polynomial as nppol

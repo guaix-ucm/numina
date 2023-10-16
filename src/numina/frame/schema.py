@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2018 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -55,6 +55,7 @@ def _from_ipt(value):
 
 class SchemaKeyword(object):
     """A keyword in the schema"""
+
     def __init__(self, name, mandatory=False, valid=True,
                  value=None):
         self.name = name
@@ -64,7 +65,7 @@ class SchemaKeyword(object):
             raise SchemaDefinitionError(
                 "keyword 'cannot be 'mandatory' and "
                 "'not valid'"
-                )
+            )
         self.choose = False
         self.valcheck = False
         self.value = None
@@ -130,6 +131,7 @@ class SchemaKeyword(object):
 
 class Schema(object):
     """A FITS schema"""
+
     def __init__(self, sc):
         self.kwl = []
         self.extend(sc)
@@ -147,7 +149,7 @@ class Schema(object):
             sk = SchemaKeyword(
                 k, mandatory=mandatory,
                 valid=valid, value=value
-                )
+            )
             self.kwl.append(sk)
 
 
@@ -157,6 +159,7 @@ types_table = {
     'integer': int,
     'bool': bool
 }
+
 
 class SchemaNode(object):
     def __init__(self, *args, **kwargs):
@@ -196,7 +199,8 @@ class SchemaExtension(SchemaNode):
                 # both must match
                 if state['groups'][self.group] != self.matched:
                     msg = 'matched group {} differs from state group {}'
-                    raise ValueError(msg.format(self.matched, state['groups'][self.group]))
+                    raise ValueError(msg.format(
+                        self.matched, state['groups'][self.group]))
 
         for key, val in self.children_obj.items():
             val.validate_req(value, state)
@@ -213,7 +217,6 @@ class SchemaKeywordII(SchemaNode):
 
         # if enum_t is a list, and group is set
         # matched must be a list of the same length
-
 
     def validate_req(self, value, state):
         print('validate keyword', self.title)
@@ -245,14 +248,12 @@ class SchemaKeywordII(SchemaNode):
                 match = self.enum_t.index(hvalue)
                 matched_val = self.matched[match]
 
-
             except ValueError:
                 raise SchemaValidationError(
                     sname,
                     'keyword %r is required to have one of the values %r; '
                     'got %r instead' %
                     (self.title, self.enum_t, hvalue))
-
 
         if self.value_t:
             matched_val = self.matched
@@ -263,7 +264,6 @@ class SchemaKeywordII(SchemaNode):
                     'got %r instead' %
                     (key, self.value_t, hvalue))
 
-
         if self.group is not None:
             print('this node has group', self.group)
             print('matched', self.matched)
@@ -271,7 +271,8 @@ class SchemaKeywordII(SchemaNode):
                 # both must match
                 if state['groups'][self.group] != matched_val:
                     msg = 'matched group {} differs from state group {}'
-                    raise ValueError(msg.format(matched_val, state['groups'][self.group]))
+                    raise ValueError(msg.format(
+                        matched_val, state['groups'][self.group]))
                 else:
                     msg = 'matched group {} = value from state group {}'
                     print(msg.format(matched_val, state['groups'][self.group]))
@@ -329,9 +330,6 @@ class SchemeKeywordString(SchemeKeyword):
         super(SchemeKeywordString, self).__init__(*args, **kwargs)
 
 
-
-
-
 def validate(header, schema):
     sname = schema.get('title', 'schema')
     schema_keys = schema.get('keywords', {})
@@ -387,4 +385,3 @@ def validate_image(image, schema):
                 print('required ext', extname, 'not present')
             else:
                 print('not required ext', extname, 'not present')
-

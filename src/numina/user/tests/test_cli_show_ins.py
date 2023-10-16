@@ -62,7 +62,7 @@ def mockreturn2():
     return numina.drps.drpbase.DrpGeneric(drps)
 
 
-@pytest.mark.parametrize("drpsfunc, expected",[
+@pytest.mark.parametrize("drpsfunc, expected", [
     (mockreturn0, expecte0),
     (mockreturn1, expecte1),
     (mockreturn2, expecte2)

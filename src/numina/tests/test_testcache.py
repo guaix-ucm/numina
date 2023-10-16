@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,6 +12,7 @@ import os
 import pytest
 
 from .testcache import user_cache_dir
+
 
 @pytest.mark.skipif(sys.platform != 'linux2',
                     reason="runs only in linux")
@@ -30,7 +31,7 @@ def test_user_cache_dir_linux_home(monkeypatch, tmpdir):
         os.makedirs(expected)
 
     assert user_cache_dir("numina") == expected
-    assert os.path.exists(os.path.join(expected,'astropy'))
+    assert os.path.exists(os.path.join(expected, 'astropy'))
 
 
 @pytest.mark.skipif(sys.platform != 'linux2',
@@ -50,7 +51,7 @@ def test_user_cache_dir_linux_xdg(monkeypatch, tmpdir):
     expected = os.path.join(cachedir, 'numina')
 
     assert user_cache_dir("numina") == expected
-    assert os.path.exists(os.path.join(expected,'astropy'))
+    assert os.path.exists(os.path.join(expected, 'astropy'))
 
 
 @pytest.mark.skipif(sys.platform != 'darwin',
@@ -70,7 +71,7 @@ def test_user_cache_dir_darwin_home(monkeypatch, tmpdir):
         os.makedirs(expected)
 
     assert user_cache_dir("numina") == expected
-    assert os.path.exists(os.path.join(expected,'astropy'))
+    assert os.path.exists(os.path.join(expected, 'astropy'))
 
 
 @pytest.mark.skipif(sys.platform != 'darwin',
@@ -90,4 +91,4 @@ def test_user_cache_dir_darwin_xdg(monkeypatch, tmpdir):
     expected = os.path.join(cachedir, 'numina')
 
     assert user_cache_dir("numina") == expected
-    assert os.path.exists(os.path.join(expected,'astropy'))
+    assert os.path.exists(os.path.join(expected, 'astropy'))

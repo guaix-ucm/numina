@@ -59,4 +59,3 @@ class GaussBox(Fittable1DModel):
     @staticmethod
     def fit_deriv(x, amplitude, mean, stddev, hpix):
         return gauss_box_model_deriv(x, amplitude, mean, stddev, hpix)
-

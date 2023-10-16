@@ -7,7 +7,7 @@ from ..device import DeviceBase
 def test_device_base():
     dev = DeviceBase('dev1')
 
-    assert dev.is_configured == False
+    assert dev.is_configured is False
 
 
 def test_device_parent1():
@@ -26,7 +26,7 @@ def test_device_parent1():
 def test_device_parent2():
 
     base = DeviceBase('base')
-    other1_1 = DeviceBase('other1', parent=base)
+    other1_1 = DeviceBase('other1', parent=base)  # noqa: F841
     other1_2 = DeviceBase('other1')
 
     # Duplicated name in tree

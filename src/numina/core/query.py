@@ -70,7 +70,8 @@ def basic_mode_builder(mode, partial_ob, backend, options=None):
         result_type = options.result_type
         name = 'relative_result'
         logger.debug('query, children id: %s', partial_ob.children)
-        val = backend.search_result_relative(name, result_type, partial_ob, result_desc=options)
+        val = backend.search_result_relative(
+            name, result_type, partial_ob, result_desc=options)
         if val is None:
             logger.debug('query, children id: %s, no result')
         for r in val:

@@ -7,7 +7,7 @@ from ..pipelineload import load_confs
 @pytest.mark.xfail(reason="fix this later")
 def test_load_confs_1():
     """Test the loader returns a valid config when 'values' is empty"""
-    
+
     package = 'clodiadrp'
     node = {
         'values': {}

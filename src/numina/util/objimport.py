@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -10,7 +10,6 @@
 """Import objects by name"""
 
 import importlib
-import inspect
 import warnings
 
 
@@ -45,5 +44,3 @@ def fully_qualified_name(obj, sep='.'):
     import numina.util.fqn as fqn
 
     return fqn.fully_qualified_name(obj, sep)
-
-

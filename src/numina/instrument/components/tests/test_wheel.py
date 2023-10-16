@@ -81,7 +81,7 @@ def test_move_signals(carrousel_dev, pos):
 
     # Check call values
     assert moved_cb.side_effect.args == (0,)
-    assert changed_cb.side_effect.called == False
+    assert changed_cb.side_effect.called is False
 
     # Clear last call values
     changed_cb.side_effect.clear()
@@ -138,7 +138,7 @@ def test_turn(wheel_dev, pos):
 
 
 @pytest.mark.parametrize("pos", [1, 2])
-def test_move_signals(carrousel_dev, pos):
+def test_move_signals2(carrousel_dev, pos):
 
     @record_call
     def changed_cb(pos):
@@ -162,7 +162,7 @@ def test_move_signals(carrousel_dev, pos):
     # Check call values
     assert moved_cb.side_effect.called
     assert moved_cb.side_effect.args == (0, )
-    assert changed_cb.side_effect.called == False
+    assert changed_cb.side_effect.called is False
     # assert moved_cb.callpos == 0
 
     # Clear last call values

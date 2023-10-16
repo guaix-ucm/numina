@@ -3,6 +3,7 @@ import pytest
 
 from ..shutter import Shutter
 
+
 @pytest.fixture
 def shutter_dev():
     wheel = Shutter()

@@ -12,7 +12,7 @@ def test_robust_std():
 
 
 def test_robust_std_2d():
-    xdata = numpy.arange(20).reshape((5,4))
+    xdata = numpy.arange(20).reshape((5, 4))
 
     sigmag = robust_std(xdata)
 

@@ -35,7 +35,8 @@ def mode_run_common_obs(args, extra_args):
     # Loading observation result if exists
     sessions, loaded_obs = load_observations(args.obsresult, args.session)
 
-    datamanager = create_datamanager(args.reqs, args.basedir, args.datadir, extra_args.extra_control)
+    datamanager = create_datamanager(
+        args.reqs, args.basedir, args.datadir, extra_args.extra_control)
     datamanager.backend.add_obs(loaded_obs)
 
     # Start processing

@@ -31,7 +31,7 @@ class FowlerTestCase(unittest.TestCase):
         self.sron = 1.0
 
     def test_exception(self):
-        '''Test we raise exceptions for invalid inputs in Fowler mode.'''
+        """Test we raise exceptions for invalid inputs in Fowler mode."""
 
         # Dimension must be 3
         self.assertRaises(ValueError, fowler_array,
@@ -60,7 +60,7 @@ class FowlerTestCase(unittest.TestCase):
                           self.fdata, ron=0)
 
     def test_saturation0(self):
-        '''Test we count correctly saturated pixels in Fowler mode.'''
+        """Test we count correctly saturated pixels in Fowler mode."""
 
         # No points
         self.data[:] = 50000  # - 32768
@@ -85,7 +85,7 @@ class FowlerTestCase(unittest.TestCase):
             self.assertEqual(v, self.blank)
 
     def test_saturation1(self):
-        '''Test we count correctly saturated pixels in Fowler mode.'''
+        """Test we count correctly saturated pixels in Fowler mode."""
 
         saturation = 50000
         self.data[7:, ...] = saturation
@@ -107,7 +107,7 @@ class FowlerTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, 5)
 
     def test_dtypes0(self):
-        '''Test output is float64 by default'''
+        """Test output is float64 by default"""
         inttypes = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
         floattypes = ['float32', 'float64', ]
         if hasattr(numpy, 'float128'):
@@ -137,7 +137,7 @@ class FowlerTestCase(unittest.TestCase):
             self.assertIs(res[3].dtype, mdtype)
 
     def test_badpixel0(self):
-        '''Test we ignore badpixels in Fowler mode.'''
+        """Test we ignore badpixels in Fowler mode."""
         mask_val = 2
         self.emptybp[...] = mask_val
 
@@ -159,7 +159,7 @@ class FowlerTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, self.blank)
 
     def test_badpixel1(self):
-        '''Test we handle correctly None badpixel mask.'''
+        """Test we handle correctly None badpixel mask."""
         self.emptybp[...] = 0
         values = [2343, 2454, 2578, 2661, 2709, 24311, 24445,
                   24405, 24612, 24707]
@@ -223,25 +223,25 @@ class FowlerTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, mean)
 
     def test_badpixel2(self):
-        '''Test we don't accept badpixel mask with incompatible shape.'''
+        """Test we don't accept badpixel mask with incompatible shape."""
         self.assertRaises(ValueError, fowler_array, self.fdata,
                           badpixels=numpy.empty((10, 10)))
         self.assertRaises(ValueError, fowler_array, self.fdata,
                           badpixels=numpy.empty((1, 1, 1)))
 
     def test_badpixel3(self):
-        '''Test we don't accept badpixel mask with incompatible dtype.'''
+        """Test we don't accept badpixel mask with incompatible dtype."""
         self.assertRaises(ValueError, fowler_array, self.fdata,
                           badpixels=numpy.empty((1, 1), dtype='int'))
 
     def test_results1(self):
-        '''Test we obtain correct values in Fowler mode'''
+        """Test we obtain correct values in Fowler mode"""
 
         data = numpy.zeros((10, 4, 5), dtype='int32')
         vals = numpy.array([10, 13, 15, 17, 20, 411, 412, 414, 417, 422])
         ovals = vals[5:] - vals[:5]
         mean = ovals.mean()
-        var = ovals.var()
+        # var = ovals.var()
 
         for i in range(10):
             data[i, ...] = vals[i]

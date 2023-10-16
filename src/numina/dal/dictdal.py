@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,7 +18,7 @@ import yaml
 
 import numina.store
 import numina.store.gtc.load as gtcload
-from numina.core.oresult import obsres_from_dict, oblock_from_dict
+from numina.core.oresult import oblock_from_dict
 from numina.exceptions import NoResultFound
 from numina.instrument.assembly import assembly_instrument
 from numina.util.context import working_directory
@@ -89,7 +89,7 @@ class BaseDictDAL(AbsDrpDAL):
         # search results of these OBs
         ptable = self.prod_table.get(ins, [])
         for prod in ptable:
-            pk = prod['type'] 
+            pk = prod['type']
             pt = prod['tags']
             if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, tags):
                 # this is a valid product
@@ -115,7 +115,8 @@ class BaseDictDAL(AbsDrpDAL):
             content = StoredParameter(value)
             return content
         else:
-            raise NoResultFound(f"No parameters for {mode} mode, pipeline {pipeline}")
+            raise NoResultFound(
+                f"No parameters for {mode} mode, pipeline {pipeline}")
 
     def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
@@ -163,7 +164,8 @@ class BaseDictDAL(AbsDrpDAL):
         obsres.__dict__ = oblock.__dict__
 
         obsres.mode = as_mode or obsres.mode
-        _logger.debug("obsres_from_oblock_2 id='%s', mode='%s' START", obsres.id, obsres.mode)
+        _logger.debug(
+            "obsres_from_oblock_2 id='%s', mode='%s' START", obsres.id, obsres.mode)
 
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
@@ -207,16 +209,17 @@ class BaseDictDAL(AbsDrpDAL):
 
         rdir = resultsdir_default(self.basedir, node_id)
         # FIXME: hardcoded
-        taskfile = os.path.join(rdir, 'task.yaml')
+        # taskfile = os.path.join(rdir, 'task.yaml')
         resfile = os.path.join(rdir, 'result.yaml')
-        result_contents = yaml.load(open(resfile))
-        task_contents = yaml.load(open(taskfile))
+        result_contents = yaml.safe_load(open(resfile))
+        # task_contents = yaml.safe_load(open(taskfile))
 
         try:
             field_file = result_contents[field]
             st = StoredProduct(
                 id=node_id,
-                content=numina.store.load(tipo, os.path.join(rdir, field_file)),
+                content=numina.store.load(
+                    tipo, os.path.join(rdir, field_file)),
                 tags={}
             )
             return st
@@ -416,7 +419,7 @@ class BaseHybridDAL(Dict2DAL):
         conf = str(obsres.configuration.origin.uuid)
 
         drp = self.drps.query_by_name(instrument)
-        label = drp.product_label(tipo)
+        # label = drp.product_label(tipo)
 
         # search results of these OBs
         ptable = self.prod_table.get(instrument, [])
@@ -432,7 +435,8 @@ class BaseHybridDAL(Dict2DAL):
                     path = prod['content']
                 else:
                     # Build path
-                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+                    path = build_product_path(
+                        drp, self.rootdir, conf, name, tipo, obsres)
                 _logger.debug("path is %s", path)
                 rprod['content'] = self.product_loader(tipo, name, path)
                 return StoredProduct(**rprod)
@@ -510,7 +514,8 @@ class BaseHybridDAL(Dict2DAL):
             for previd in self.search_previous_obsres(obsres, node=result_node):
                 # print('searching in node', previd)
                 try:
-                    st = self.search_result_id(previd, tipo, result_field, mode=result_mode)
+                    st = self.search_result_id(
+                        previd, tipo, result_field, mode=result_mode)
                     return st
                 except NoResultFound:
                     pass
@@ -612,7 +617,8 @@ class HybridDAL(BaseHybridDAL):
                     path = prod['content']
                 else:
                     # Build path
-                    path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+                    path = build_product_path(
+                        drp, self.rootdir, conf, name, tipo, obsres)
                 _logger.debug("path is %s", path)
                 rprod['content'] = numina.store.load(tipo, path)
                 return StoredProduct(**rprod)
@@ -649,7 +655,8 @@ class HybridDAL(BaseHybridDAL):
                     with open(filename_json) as fd:
                         result_data = json.load(fd)
                 else:
-                    raise ValueError(f'result.yaml or result.json not found in {directory}')
+                    raise ValueError(
+                        f'result.yaml or result.json not found in {directory}')
 
                 stored_result = StoredResult.load_data(result_data)
 

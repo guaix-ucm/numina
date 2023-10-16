@@ -20,7 +20,7 @@ def process_node(node):
     value = node['value']
     mname = node['name']
     typeid = node['typeid']
-    if typeid == 52: # StructDataValue
+    if typeid == 52:  # StructDataValue
         obj = {}
         for el in value['elements']:
             key, val = process_node(el)
@@ -37,10 +37,10 @@ def process_node(node):
             obj = newobj
     elif typeid == 9:
         data = value['data']
-        dim = value['dimension']
-        shape = dim['height'], dim['width']
+        # dim = value['dimension']
+        # shape = dim['height'], dim['width']
         obj = data
-    elif typeid == 90: # StructDataValueList
+    elif typeid == 90:  # StructDataValueList
         obj = []
         for el in value:
             sobj = {}
@@ -49,7 +49,7 @@ def process_node(node):
                 sobj[key] = val
             obj.append(sobj)
 
-    elif typeid == 45: # Frame
+    elif typeid == 45:  # Frame
         obj = dataframe.DataFrame(frame=os.path.abspath(value['path']))
     else:
         obj = value
@@ -60,7 +60,7 @@ def process_node(node):
 def build_result(data):
     """Create a dictionary with the contents of result.json"""
     more = {}
-    for key, value  in data.items():
+    for key, value in data.items():
         if key != 'elements':
             newnode = value
         else:
@@ -72,6 +72,7 @@ def build_result(data):
         more[key] = newnode
 
     return more
+
 
 if __name__ == '__main__':
 

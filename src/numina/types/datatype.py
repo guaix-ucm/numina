@@ -19,6 +19,7 @@ class DataType(DataTypeBase):
     """Base class for input/output types of recipes.
 
     """
+
     def __init__(self, ptype, node_type=None, default=None, **kwds):
         super(DataType, self).__init__(**kwds)
         self.node_type = node_type
@@ -79,24 +80,14 @@ class DataType(DataTypeBase):
 
 class AutoDataType(DataType):
     """Data type for types that are its own python type"""
+
     def __init__(self, *args, **kwargs):
         super(AutoDataType, self).__init__(ptype=self.__class__, **kwargs)
 
 
 class AnyType(DataType):
     """Type representing anything"""
-    def __init__(self):
-        super(AnyType, self).__init__(ptype=self.__class__)
 
-    def convert(self, obj):
-        return obj
-
-    def validate(self, obj):
-        return True
-
-
-class AnyType(DataType):
-    """Type representing anything"""
     def __init__(self):
         super(AnyType, self).__init__(ptype=self.__class__)
 
@@ -109,6 +100,7 @@ class AnyType(DataType):
 
 class NullType(DataType):
     """Data type for None."""
+
     def __init__(self):
         super(NullType, self).__init__(type(None))
 
@@ -123,6 +115,7 @@ class NullType(DataType):
 
 class PlainPythonType(DataType):
     """Data type for Python basic types."""
+
     def __init__(self, ref=None, validator=None):
         stype = type(ref)
         if ref is None:
@@ -155,6 +148,7 @@ class PlainPythonType(DataType):
 
 class ListOfType(DataType):
     """Data type for lists of other types."""
+
     def __init__(self, ref, default=None, index=0, nmin=None, nmax=None, accept_scalar=False,
                  multi_query=None):
         from numina.core.validator import range_validator
@@ -163,7 +157,8 @@ class ListOfType(DataType):
             node_type = ref()
         else:
             node_type = ref
-        super(ListOfType, self).__init__(stype, node_type=node_type, default=default)
+        super(ListOfType, self).__init__(
+            stype, node_type=node_type, default=default)
         self.internal_scalar = False
         self.index = index
         self.nmin = nmin

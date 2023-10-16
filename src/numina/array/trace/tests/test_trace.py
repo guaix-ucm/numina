@@ -26,7 +26,7 @@ def test_axis_to_dispaxis():
 
 @pytest.mark.parametrize("gauss", [1, 0])
 def test_trace_simple(benchmark, gauss):
-    '''Test a simple trace'''
+    """Test a simple trace"""
     arr = np.zeros((100, 100))
 
     arr[47, 45:55] = 10.0
@@ -36,10 +36,13 @@ def test_trace_simple(benchmark, gauss):
     if gauss:
         result = np.array(
             [[44., 48.02061133, 33.36466379], [45., 48.02061133, 66.72932758],
-             [46., 48.02061133, 100.09399137], [47., 48.02061133, 100.09399137],
+             [46., 48.02061133, 100.09399137], [
+                 47., 48.02061133, 100.09399137],
              [48., 48., 100.], [49., 48.02061133, 100.09399137],
-             [50., 48.02061133, 100.09399137], [51., 48.02061133, 100.09399137],
-             [52., 48.02061133, 100.09399137], [53., 48.02061133, 100.09399137],
+             [50., 48.02061133, 100.09399137], [
+                 51., 48.02061133, 100.09399137],
+             [52., 48.02061133, 100.09399137], [
+                 53., 48.02061133, 100.09399137],
              [54., 48.02061133, 66.72932758], [55., 48.02061133, 33.36466379]])
     else:
         result = np.empty((12, 3))
@@ -51,7 +54,7 @@ def test_trace_simple(benchmark, gauss):
         result[[1, 10], 2] = 66.66853933
         result[4, 2] = 100.0
 
-    mm = benchmark(trace,arr, 48.0, 48.0, step=1, gauss=gauss)
+    mm = benchmark(trace, arr, 48.0, 48.0, step=1, gauss=gauss)
 
     assert mm.shape == (12, 3)
     assert_allclose(mm, result)
@@ -79,9 +82,9 @@ def helper_lim_max(col, step, hs, size):
 
 @pytest.mark.parametrize("size", [4096, 4097])
 @pytest.mark.parametrize("col", list(range(1998, 2003)))
-@pytest.mark.parametrize("step", [1,2,3])
-@pytest.mark.parametrize("hs", [1,2,3])
-def test_lower_limit(size, col, step,hs):
+@pytest.mark.parametrize("step", [1, 2, 3])
+@pytest.mark.parametrize("hs", [1, 2, 3])
+def test_lower_limit(size, col, step, hs):
     vcalc_min, vcalc_max = tracing_limits(size, col, step, hs)
 
     vreal_min = helper_lim_min(col, step, hs)

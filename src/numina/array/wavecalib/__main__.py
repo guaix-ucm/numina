@@ -683,11 +683,9 @@ def main(args=None):
 
     # determine refined peak location in array coordinates, i.e.,
     # from 0 to (naxis - 1)
-    plottitle = os.path.basename(args.fitsfile.name) + \
-                ' [{}, {}:{}],  line list: {}'.format(
-                    args.method, ns1, ns2,
-                    os.path.basename(args.wv_master_file)
-                )
+    plottitle0 = ' [{}, {}:{}],  line list: {}'.format(
+        args.method, ns1, ns2, os.path.basename(args.wv_master_file))
+    plottitle = os.path.basename(args.fitsfile.name) + plottitle0
     fxpeaks, sxpeaks = find_fxpeaks(
         sp=sp,
         times_sigma_threshold=args.times_sigma_threshold,

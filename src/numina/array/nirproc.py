@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2021 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -48,7 +48,7 @@ def fowler_array(fowlerdata, ti=0.0, ts=0.0, gain=1.0, ron=1.0,
 
     .. math::
 
-        \\mathrm{var}(S_{F1}) =\\frac{2\sigma_R^2}{N_p}
+        \\mathrm{var}(S_{F1}) =\\frac{2\\sigma_R^2}{N_p}
 
     and other for the photon noise:
 

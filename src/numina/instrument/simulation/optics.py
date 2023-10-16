@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,6 +9,7 @@
 
 
 import numpy
+
 
 class Stop(object):
     def __init__(self, name):

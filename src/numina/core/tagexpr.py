@@ -60,6 +60,7 @@ def filter_tree(condition, tree):
 
 class Expression(object):
     """Base class for expressions"""
+
     def __init__(self, *args):
 
         self.nodes = []
@@ -87,7 +88,7 @@ class Expression(object):
         return self._places
 
     def is_terminal(self):
-        "True for leaf nodes"
+        """True for leaf nodes"""
         return len(self.nodes) == 0
 
     def copy(self):
@@ -182,6 +183,7 @@ class Expression(object):
 
 class AtomicExpr(Expression):
     """"Atomic expression"""
+
     def __init__(self, name, value):
         super(AtomicExpr, self).__init__()
         self.name = name
@@ -189,7 +191,8 @@ class AtomicExpr(Expression):
 
 
 class TagRepr(AtomicExpr):
-    "A representation of a Tag"
+    """A representation of a Tag"""
+
     def __init__(self, name, metadata=None):
         super(TagRepr, self).__init__(name, name)
         self.metadata = metadata or {}
@@ -210,6 +213,7 @@ class TagRepr(AtomicExpr):
 
 class Placeholder(AtomicExpr):
     """A representation of a value expected to be substituted"""
+
     def __init__(self, name):
         super(Placeholder, self).__init__(name, name)
         self._places.add(name)
@@ -223,6 +227,7 @@ class Placeholder(AtomicExpr):
 
 class ConstExpr(AtomicExpr):
     """A representation of a constant value"""
+
     def __init__(self, value):
         super(ConstExpr, self).__init__("ConstExpr", value)
 
@@ -319,6 +324,7 @@ class PredNe(BinaryExpr):
 
 class ConstraintAdapter(object):
     """For GTC"""
+
     def __init__(self, key, value, oper):
         self.key = key
         self.value = value
@@ -347,7 +353,7 @@ def query_expr_from_attr(attrs):
     if len(attrs) == 0:
         return ConstExprTrue
     exprs = []
-    #for name, dtype in descs:
+    # for name, dtype in descs:
     for attr in attrs:
         metadata = {'type': attr.type, 'description': attr.description}
         lhs = TagRepr(attr.name, metadata=metadata)

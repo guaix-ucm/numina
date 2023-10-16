@@ -21,6 +21,7 @@ import numina.datamodel
 
 class Pipeline(object):
     """Base class for pipelines."""
+
     def __init__(self, instrument, name, recipes, version=1, products=None, provides=None):
         self.instrument = instrument
         self.name = name
@@ -104,7 +105,7 @@ class Pipeline(object):
 
     def load_product_from_name(self, label):
 
-        short, _ =   numina.util.parser.split_type_name(label)
+        short, _ = numina.util.parser.split_type_name(label)
         klass = self.load_product_class(short)
         return klass.from_name(label)
 
@@ -114,15 +115,15 @@ class Pipeline(object):
         requires = {}
         provides = {}
         for mode, r in self.recipes.items():
-            l = self.load_recipe_object(mode)
+            robj = self.load_recipe_object(mode)
 
-            for field, vv in l.requirements().items():
+            for field, vv in robj.requirements().items():
                 if vv.type.isproduct():
                     name = vv.type.name()
                     pe = ProductEntry(name, mode, field)
                     requires[name] = pe
 
-            for field, vv in l.products().items():
+            for field, vv in robj.products().items():
                 if vv.type.isproduct():
                     name = vv.type.name()
                     pe = ProductEntry(name, mode, field)
@@ -149,8 +150,8 @@ class Pipeline(object):
             thisnode = numina.core.deptree.DepNode(thismode)
             modes[thismode] = thisnode
 
-        l = self.load_recipe_object(thismode)
-        for field, vv in l.requirements().items():
+        robj = self.load_recipe_object(thismode)
+        for field, vv in robj.requirements().items():
             if vv.type.isproduct():
 
                 result = self.who_provides(vv.type.name())
@@ -196,6 +197,7 @@ class InstrumentDRP(object):
        pipeline : dict of Pipeline
 
     """
+
     def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None, version='undefined'):
         self.name = name
         self.configurations = configurations
@@ -275,7 +277,8 @@ class InstrumentDRP(object):
                         if conf.name == result:
                             return conf
                     else:
-                        raise KeyError(f'insconf {result} does not match any config')
+                        raise KeyError(
+                            f'insconf {result} does not match any config')
 
             # If not, try to match by DATE
             date_obs = extr.extract('observation_date', ref)
@@ -361,6 +364,7 @@ class ProductEntry(object):
 
 class ObservingMode(object):
     """Observing modes of an Instrument."""
+
     def __init__(self, instrument=''):
         self.name = ''
         self.key = ''
@@ -382,7 +386,8 @@ class ObservingMode(object):
         if isinstance(mod, numina.core.query.ResultOf):
             result_type = mod.result_type
             name = 'relative_result'
-            val = backend.search_result_relative(name, result_type, partial_ob, result_desc=mod)
+            val = backend.search_result_relative(
+                name, result_type, partial_ob, result_desc=mod)
             for r in val:
                 partial_ob.results[r.id] = r.content
 

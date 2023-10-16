@@ -234,7 +234,8 @@ class BaseRecipe(metaclass=RecipeType):
             obsres = ob
 
         qfields = self.tag_names()
-        self.logger.debug('running recipe tagger with query fields: %s', qfields)
+        self.logger.debug(
+            'running recipe tagger with query fields: %s', qfields)
         if qfields:
             obsres.tags = self.extract_tags_from_obsres(obsres, qfields)
         else:
@@ -256,7 +257,8 @@ class BaseRecipe(metaclass=RecipeType):
 
     def extract_tags_from_obsres(self, obsres, tag_keys):
         ref_img = obsres.get_sample_frame().open()
-        final_tags = self.extract_tags_from_ref(ref_img, tag_keys, base=obsres.labels)
+        final_tags = self.extract_tags_from_ref(
+            ref_img, tag_keys, base=obsres.labels)
         return final_tags
 
     def extract_tags_from_ref(self, ref, tag_keys, base=None):
@@ -269,7 +271,7 @@ class BaseRecipe(metaclass=RecipeType):
             if key in base:
                 final_tags[key] = base[key]
             else:
-                final_tags[key]= fits_extractor.extract(key, ref)
+                final_tags[key] = fits_extractor.extract(key, ref)
         return final_tags
 
 

@@ -82,7 +82,7 @@ def test_extrapolation_zeros():
         return x * (12*np.sin(x)-3)-0.3*x**2*(8*np.cos(3.1*x)-3) / (x+23.4)
 
     xi = np.arange(0, 6.0)
-    yi = 1.0+ 3 * xi
+    yi = 1.0 + 3 * xi
 
     sti = SteffenInterpolator(xi, yi, extrapolate='zeros')
 
@@ -158,7 +158,7 @@ def test_conditions_in_borders():
         return x * (12*np.sin(x)-3)-0.3*x**2*(8*np.cos(3.1*x)-3) / (x+23.4)
 
     xi = np.arange(0, 6.0)
-    yi = 1.0+ 3 * xi
+    yi = 1.0 + 3 * xi
 
     with pytest.raises(ValueError):
         SteffenInterpolator(xi, yi, yp_0=200)

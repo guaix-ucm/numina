@@ -12,8 +12,6 @@
 
 import warnings
 
-import yaml
-
 import numina
 import numina.drps
 from numina.user.clishowins import print_no_instrument
@@ -23,14 +21,14 @@ def register(subparsers, config):
     parser_show_rec = subparsers.add_parser(
         'show-recipes',
         help='show information of recipes'
-        )
+    )
 
     parser_show_rec.set_defaults(command=show_recipes, template=False)
 
     parser_show_rec.add_argument(
         '-i', '--instrument',
         help='filter recipes by instrument'
-        )
+    )
     parser_show_rec.add_argument(
         '-m', '--mode',
         help='filter recipes by mode name'
@@ -40,7 +38,7 @@ def register(subparsers, config):
     parser_show_rec.add_argument(
         'name', nargs='*', default=None,
         help='filter recipes by name'
-        )
+    )
 
     return parser_show_rec
 
@@ -63,10 +61,10 @@ def show_recipes(args, extra_args):
     # predicates
     preds = []
     if args.name:
-        pred1 = lambda mode_rec: mode_rec[1]['class'] in args.name
+        def pred1(mode_rec): return mode_rec[1]['class'] in args.name  # noqa: E731
         preds.append(pred1)
     if args.mode:
-        pred1 = lambda mode_rec: mode_rec[0] == args.mode
+        def pred1(mode_rec): return mode_rec[0] == args.mode  # noqa: E731
         preds.append(pred1)
 
     for name, theins in res:
@@ -87,7 +85,7 @@ def show_recipes(args, extra_args):
                             insname=theins.name,
                             pipename=pipe.name,
                             modename=mode
-                            )
+                        )
         else:
             print_no_instrument(name)
 

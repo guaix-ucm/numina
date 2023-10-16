@@ -1,9 +1,4 @@
 
-import sys
-import warnings
-
-import pytest
-
 from ..dump import dump
 
 
@@ -70,4 +65,3 @@ def test_dump_method_register():
     where = ""
 
     assert obj + 3 == dump(tag, obj, where)
-

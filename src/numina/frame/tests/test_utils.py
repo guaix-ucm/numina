@@ -7,12 +7,12 @@ from numina.frame.utils import copy_img
 
 def test_copy_img():
 
-    hdu1 = fits.PrimaryHDU(data=[1,2,3])
+    hdu1 = fits.PrimaryHDU(data=[1, 2, 3])
 
     hdr2 = fits.Header({'A': 1})
-    hdu2 = fits.ImageHDU(data=[3.0,4.3,999], header=hdr2)
+    hdu2 = fits.ImageHDU(data=[3.0, 4.3, 999], header=hdr2)
 
-    hdu3 = fits.ImageHDU(data=[[1,2,3,4,5]])
+    hdu3 = fits.ImageHDU(data=[[1, 2, 3, 4, 5]])
 
     hdul = fits.HDUList([hdu1, hdu2, hdu3])
 

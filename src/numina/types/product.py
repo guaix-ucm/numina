@@ -1,4 +1,4 @@
-# Copyright 2008-2018 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -91,6 +91,7 @@ class DataProductTag(DataProductMixin):
             be removed in 1.0
 
     """
+
     def __init__(self, *args, **kwargs):
         warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'",
                       DeprecationWarning)
@@ -115,13 +116,11 @@ if __name__ == '__main__':
     import numina.util.namespace as nm
     import numina.core.tagexpr as tagexpr
 
-
     class TagsNamespace(nm.Namespace):
 
         @staticmethod
         def p_(name):
             return tagexpr.Placeholder(name)
-
 
     class Tagged(object):
 

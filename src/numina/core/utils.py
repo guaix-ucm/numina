@@ -62,7 +62,8 @@ class Combine(BaseRecipe):
 
     obresult = ObservationResultRequirement()
     method = dh.Parameter('mean', "Method of combination")
-    method_kwargs = dh.Parameter({}, "Arguments passed to the combination method")
+    method_kwargs = dh.Parameter(
+        {}, "Arguments passed to the combination method")
     field = dh.Parameter('image', "Extract field of previous result")
     result = dh.Result(DataFrameType)
 

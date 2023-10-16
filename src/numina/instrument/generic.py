@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,6 +12,7 @@ from .device import DeviceBase
 
 class ElementBase(object):
     """Base class for objects in component collection"""
+
     def __init__(self, name, origin=None):
         self.name = name
         self.origin = origin
@@ -22,6 +23,7 @@ class ElementBase(object):
 
 class PropertiesGeneric(ElementBase):
     """Class representing a properties component"""
+
     def __init__(self, name, properties=None, origin=None):
         super(PropertiesGeneric, self).__init__(name, origin=origin)
 
@@ -34,6 +36,7 @@ class PropertiesGeneric(ElementBase):
 
 class ComponentGeneric(DeviceBase):
     """Class representing a device component"""
+
     def __init__(self, name, properties=None, origin=None, parent=None):
         super(ComponentGeneric, self).__init__(
             name, origin=origin, parent=parent
@@ -67,7 +70,7 @@ class ComponentGeneric(DeviceBase):
         if item == 'uuid':
             if self.origin is not None:
                 return self.origin.uuid
-            
+
         if item in self.properties:
             prop_entry = self.properties[item]
             value = prop_entry.get(**self._internal_state)
@@ -106,6 +109,7 @@ class InstrumentGeneric(ComponentGeneric):
 
 class SetupGeneric(ElementBase):
     """Class representing a setup component"""
+
     def __init__(self, name, origin=None):
         super(SetupGeneric, self).__init__(name, origin=origin)
         self.values = {}

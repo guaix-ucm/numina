@@ -7,9 +7,9 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Unit test for visualization module'''
+"""Unit test for visualization module"""
 
-from  ..visualization import ZScaleInterval
+from ..visualization import ZScaleInterval
 
 import pytest
 
@@ -31,6 +31,7 @@ def test_zscale_interval(narray):
     res = (250.43783329355836, 347.76843337965028)
     assert_allclose(z12, res)
 
+
 def test_zscale_interval_contrast_030(narray):
 
     zscale = ZScaleInterval(contrast=0.30)
@@ -38,12 +39,14 @@ def test_zscale_interval_contrast_030(narray):
     res = (257.46025418257619, 342.5343627342458)
     assert_allclose(z12, res)
 
+
 def test_zscale_interval_contrast_0(narray):
 
     zscale = ZScaleInterval(contrast=0)
     z12 = zscale.get_limits(narray)
     res = (287.23619217566056, 312.75842474116143)
     assert_allclose(z12, res)
+
 
 def test_zscale_interval_contrast_minmax():
 

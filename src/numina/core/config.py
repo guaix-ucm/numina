@@ -29,7 +29,7 @@ def load_json(pathname):
 
 
 @load.register('application/json', numina.core.dataload.is_json_structured, priority=5)
-def load_json(pathname):
+def load_json(pathname):  # noqa: F811
     import json
     from numina.util.objimport import import_object
 
@@ -65,6 +65,7 @@ _describe_keys = [
     'quality_control'
 ]
 
+
 @describe.register('image/fits', priority=20)
 def describe_fits_0(pathname):
     import astropy.io.fits as fits
@@ -73,7 +74,7 @@ def describe_fits_0(pathname):
         instrument = prim.get("INSTRUME", "unknown")
         obsmode = prim.get("OBSMODE", "unknown")
 
-        return (instrument, obsmode)
+        return instrument, obsmode
 
 
 @describe.register('application/json',
@@ -90,4 +91,4 @@ def describe_json(pathname):
     cls = import_object(type_fqn)
     obj = cls.__new__(cls)
     obj.__setstate__(data)
-    return (obj.instrument, "TBD")
+    return obj.instrument, "TBD"

@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,7 +14,8 @@ class Namespace(object):
     >>> nm = Namespace(a=1, b="field")
     >>> nm.a == 1
     >>> nm.b == "field"
-    
+
     """
+
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

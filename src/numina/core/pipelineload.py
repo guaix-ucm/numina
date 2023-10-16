@@ -30,7 +30,8 @@ def check_section(node, section, keys=None):
     if keys:
         for key in keys:
             if key not in node:
-                raise ValueError(f'Missing key {key!r} inside {section!r} node')
+                raise ValueError(
+                    f'Missing key {key!r} inside {section!r} node')
 
 
 def drp_load(package, resource, confclass=None):
@@ -172,7 +173,7 @@ def load_confs(package, node, confclass=None):
         modpath = f"{package}.instrument.configs"
 
     if confclass is None:
-        _loader = DefaultLoader(modpath=modpath)
+        _loader = DefaultLoader(modpath=modpath)  # noqa: F841
 
     tagger = node.get('tagger')
     if tagger:
@@ -281,7 +282,8 @@ def load_instrument(package, node, confclass=None):
         trans['version'] = node['version']
     trans['pipelines'] = load_pipelines(node['name'], pipe_node)
     trans['modes'] = load_modes(mode_node, confclass)
-    confs, custom_selector, modpath = load_confs(package, conf_node, confclass=confclass)
+    confs, custom_selector, modpath = load_confs(
+        package, conf_node, confclass=confclass)
     # trans['configurations'] = confs
     trans['configurations'] = confs
     ins = InstrumentDRP(**trans)

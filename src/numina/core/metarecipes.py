@@ -16,6 +16,7 @@ from .requirements import Requirement
 _RECIPE_RESULT_NAME = 'RecipeResult'
 _RECIPE_INPUT_NAME = 'RecipeInput'
 
+
 class RecipeType(type):
     """Metaclass for Recipe."""
     def __new__(cls, classname, parents, attributes):
@@ -33,11 +34,15 @@ class RecipeType(type):
             else:
                 filter_attr[name] = val
 
-        BaseRecipeResult = cls.get_base_class(RecipeResult, parents, attributes, _RECIPE_RESULT_NAME)
-        BaseRecipeInput = cls.get_base_class(RecipeInput, parents, attributes, _RECIPE_INPUT_NAME)
+        BaseRecipeResult = cls.get_base_class(
+            RecipeResult, parents, attributes, _RECIPE_RESULT_NAME)
+        BaseRecipeInput = cls.get_base_class(
+            RecipeInput, parents, attributes, _RECIPE_INPUT_NAME)
 
-        ReqsClass = cls.create_inpt_class(classname, BaseRecipeInput, filter_reqs)
-        ResultClass = cls.create_prod_class(classname, BaseRecipeResult, filter_prods)
+        ReqsClass = cls.create_inpt_class(
+            classname, BaseRecipeInput, filter_reqs)
+        ResultClass = cls.create_prod_class(
+            classname, BaseRecipeResult, filter_prods)
 
         filter_attr[_RECIPE_RESULT_NAME] = ResultClass
         filter_attr[_RECIPE_INPUT_NAME] = ReqsClass

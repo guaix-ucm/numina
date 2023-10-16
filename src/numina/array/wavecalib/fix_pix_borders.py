@@ -27,8 +27,8 @@ def find_pix_borders(sp, sought_value):
     -------
     jmin, jmax : tuple (integers)
         Valid spectrum region (in array coordinates, from 0 to
-        NAXIS1 - 1). If the values of all the pixels in the spectrum 
-        are equal to 'sought_value', the returned values are jmin=-1 
+        NAXIS1 - 1). If the values of all the pixels in the spectrum
+        are equal to 'sought_value', the returned values are jmin=-1
         and jmax=naxis1.
 
     """

@@ -17,6 +17,7 @@ class DataTypeBase(object):
     """Base class for input/output types of recipes.
 
     """
+
     def __init__(self, *args, **kwds):
         import numina.core.tagexpr as tagexpr
 

@@ -17,7 +17,8 @@ def test_split_type_name():
 
 def test_parse_arg():
 
-    assert parse_arg_line("a=1, b='2', c=True") == {"a": 1, "b": "2", "c": True}
+    assert parse_arg_line("a=1, b='2', c=True") == {
+        "a": 1, "b": "2", "c": True}
 
 
 def test_parse_arg_empty():

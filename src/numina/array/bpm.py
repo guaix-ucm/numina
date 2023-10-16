@@ -48,7 +48,8 @@ def process_bpm(method, arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, s
     # Casting, Cython doesn't support well type bool
     cmask = numpy.where(mask > 0, 1, 0).astype('uint8')
 
-    _, proc = _process_bpm_intl(method, narr, cmask, out, hwin=hwin, wwin=wwin, fill=fill, reuse_values=reuse_values)
+    _, proc = _process_bpm_intl(
+        method, narr, cmask, out, hwin=hwin, wwin=wwin, fill=fill, reuse_values=reuse_values)
     if subs:
         return out, proc
     else:

@@ -23,7 +23,7 @@ def user_cache_dir(appname=None):
     if sys.platform.startswith('java'):
         import platform
         os_name = platform.java_ver()[3][0]
-        if os_name.startswith('Windows'): # "Windows XP", "Windows 7", etc.
+        if os_name.startswith('Windows'):  # "Windows XP", "Windows 7", etc.
             system = 'win32'
         elif os_name.startswith('Mac'):
             system = 'darwin'
@@ -43,7 +43,8 @@ def user_cache_dir(appname=None):
             if appname in os.environ['XDG_CACHE_HOME']:
                 path = os.environ['XDG_CACHE_HOME'].split(appname)[0]
             else:
-                path = os.getenv('XDG_CACHE_HOME', os.path.expanduser('~/.cache'))
+                path = os.getenv('XDG_CACHE_HOME',
+                                 os.path.expanduser('~/.cache'))
         if appname:
             path = os.path.join(path, appname)
     if not os.path.exists(os.path.join(path, 'astropy')):

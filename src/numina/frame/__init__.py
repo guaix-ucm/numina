@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2021 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -32,7 +32,7 @@ def custom_region_to_str(region):
 
 def resize_hdu(hdu, newshape, region, window=None, fill=0.0,
                scale=1, conserve=True, dtype=None):
-    from numina.array import resize_array
+    # from numina.array import resize_array
 
     basedata = hdu.data
     newdata = numina.array.resize_array(

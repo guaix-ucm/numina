@@ -205,7 +205,7 @@ def zerocombine(arrays, masks, dtype=None, scales=None):
 
 
 def sum(arrays, masks=None, dtype=None, out=None,
-         zeros=None, scales=None):
+        zeros=None, scales=None):
     """Combine arrays by addition, with masks and offsets.
 
     Arrays and masks are a list of array objects. All input arrays

@@ -18,6 +18,7 @@ from astropy.io import fits
 
 class FITSHistoryHandler(logging.Handler):
     """Logging handler using HISTORY FITS cards"""
+
     def __init__(self, header):
         logging.Handler.__init__(self)
         self.header = header

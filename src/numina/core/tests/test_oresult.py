@@ -33,6 +33,6 @@ def test_oresult1():
         ob.frames.append(dataframe.DataFrame(frame=hdulist))
 
     meta = ob.metadata_with(datamodel)
-    
+
     assert meta['block_uuid'] == '1'
     assert len(meta['info']) == 3

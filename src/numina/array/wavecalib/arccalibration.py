@@ -375,9 +375,9 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     ntriplets_master = len(triplets_master_list)
     if ntriplets_master == comb(nlines_master, 3, exact=True):
         if abs(debugplot) >= 10:
-            print('>>> Total number of lines in master table:', 
+            print('>>> Total number of lines in master table:',
                   nlines_master)
-            print('>>> Number of triplets in master table...:', 
+            print('>>> Number of triplets in master table...:',
                   ntriplets_master)
     else:
         raise ValueError('Invalid number of combinations')
@@ -547,7 +547,7 @@ def arccalibration_direct(wv_master,
                           xpos_arc,
                           naxis1_arc,
                           crpix1,
-                          wv_ini_search, 
+                          wv_ini_search,
                           wv_end_search,
                           wvmin_useful=None,
                           wvmax_useful=None,
@@ -696,7 +696,7 @@ def arccalibration_direct(wv_master,
             j_loc_max = ntriplets_master
 
         if abs(debugplot) >= 10:
-            print(i, ratio_arc_min, ratio_arc, ratio_arc_max, 
+            print(i, ratio_arc_min, ratio_arc, ratio_arc_max,
                   j_loc_min, j_loc_max)
 
         # each triplet from the master list provides a potential
@@ -707,7 +707,7 @@ def arccalibration_direct(wv_master,
             cdelt1_temp = (wv_master[j3]-wv_master[j1])/dist13
             crval1_temp = wv_master[j2]-(xpos_arc[i2]-crpix1)*cdelt1_temp
             crmin1_temp = crval1_temp + float(1-crpix1)*cdelt1_temp
-            crmax1_temp = crval1_temp + float(naxis1_arc-crpix1)*cdelt1_temp
+            # crmax1_temp = crval1_temp + float(naxis1_arc-crpix1)*cdelt1_temp
             # check that CRMIN1 and CRMAX1 are within the valid limits
             if wv_ini_search <= crmin1_temp <= wv_end_search \
                     and cdelt1_temp <= cdelt1_max:
@@ -793,7 +793,7 @@ def arccalibration_direct(wv_master,
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
-        # with different color for each arc triplet and overplotting 
+        # with different color for each arc triplet and overplotting
         # the arc triplet number
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -802,7 +802,7 @@ def arccalibration_direct(wv_master,
         ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
                    c=itriplet_search)
         for i in range(len(itriplet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
+            ax.text(cdelt1_search_norm[i], crval1_search_norm[i],
                     str(int(itriplet_search[i])), fontsize=6)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
@@ -822,7 +822,7 @@ def arccalibration_direct(wv_master,
         ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
                    c=itriplet_search)
         for i in range(len(clabel_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
+            ax.text(cdelt1_search_norm[i], crval1_search_norm[i],
                     clabel_search[i], fontsize=6)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
@@ -840,7 +840,7 @@ def arccalibration_direct(wv_master,
         ax = fig.add_subplot(111)
         ax.set_xlabel('normalized cdelt1')
         ax.set_ylabel('normalized crval1')
-        ax.errorbar(cdelt1_search_norm, crval1_search_norm, 
+        ax.errorbar(cdelt1_search_norm, crval1_search_norm,
                     xerr=error_cdelt1_search_norm,
                     yerr=error_crval1_search_norm,
                     fmt='none')
@@ -884,7 +884,7 @@ def arccalibration_direct(wv_master,
         #
         clabel_dum = [k for (k, v) in zip(clabel_search, ldum) if v]
         clabel_layered_list.append(clabel_dum)
-    
+
     if abs(debugplot) >= 10:
         print('>>> Total number of potential solutions: ' +
               str(sum(ntriplets_layered_list)) + " (double check ==) " +
@@ -956,7 +956,7 @@ def arccalibration_direct(wv_master,
         ax = fig.add_subplot(111)
         ax.set_xlabel('normalized cdelt1')
         ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, 
+        ax.scatter(cdelt1_search_norm, crval1_search_norm,
                    s=2000/funcost_search, c=itriplet_search, alpha=0.2)
         xmin = -0.05
         xmax = 1.05
@@ -981,10 +981,10 @@ def arccalibration_direct(wv_master,
         ax = fig.add_subplot(111)
         ax.set_xlabel('normalized cdelt1')
         ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, 
+        ax.scatter(cdelt1_search_norm, crval1_search_norm,
                    s=2000/funcost_search, c=itriplet_search, alpha=0.2)
         for i in range(len(itriplet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], 
+            ax.text(cdelt1_search_norm[i], crval1_search_norm[i],
                     str(int(itriplet_search[i])), fontsize=6)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
@@ -1115,7 +1115,7 @@ def arccalibration_direct(wv_master,
                 list_of_wvfeatures[i].lineid = j1
                 list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
                 list_of_wvfeatures[i].reference = wv_master[j1]
-    
+
     if abs(debugplot) >= 10:
         print('\n* Including category A lines:')
         for i in range(nlines_arc):
@@ -1313,7 +1313,7 @@ def arccalibration_direct(wv_master,
                 # do not uncomment the next line:
                 # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
-    
+
     if abs(debugplot) >= 10:
         if nremoved > 0:
             print('\n* Removing category T lines:')
@@ -1333,7 +1333,8 @@ def arccalibration_direct(wv_master,
             print('\n>>> Polynomial filtering...')
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
-            raise ValueError(f"Insufficient number of points for fit, nfit={nfit}")
+            raise ValueError(
+                f"Insufficient number of points for fit, nfit={nfit}")
         # Note: do not use weighted fit because the weights can be very
         # different and the fit is, in practice, forced to pass through
         # some points while ignoring other points. Sometimes this leads to

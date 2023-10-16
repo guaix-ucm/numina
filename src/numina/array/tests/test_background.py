@@ -21,7 +21,6 @@ def test_back2():
     assert numpy.allclose(r, res)
 
 
-
 def test_back_crowded():
     res = (318.5390526053346, 73.37968420177819)
     bdata = 300 * numpy.ones((50, 50))
@@ -38,7 +37,7 @@ def test_back_crowded():
 @pytest.mark.xfail
 def test_background_map():
     numpy.random.seed(seed=938483)
-    bck = numpy.random.normal(1100, 32, (512,512))
+    bck = numpy.random.normal(1100, 32, (512, 512))
     nd, ns = create_background_map(bck, 8, 8)
     res = (1100.055068749893, 31.478283226675636)
     assert numpy.allclose([nd.mean(), ns.mean()], res)

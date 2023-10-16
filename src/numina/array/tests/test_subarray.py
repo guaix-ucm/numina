@@ -37,9 +37,9 @@ def test_combine_shapes2():
     # refs must go in (z,y,x) order...
     fshape = (128, 182)
     refs = [(33, 22), (12, 78), (5, 5)]
-    #refs = [(0, 0), (5, 0), (0, 0)]
+    # refs = [(0, 0), (5, 0), (0, 0)]
 
-    off = [(ref[0] - refs[0][0], ref[1] - refs[0][1]) for ref in refs]
+    # off = [(ref[0] - refs[0][0], ref[1] - refs[0][1]) for ref in refs]
 
     arrn = [numpy.zeros(shape, dtype='int') for shape in shapes]
 
@@ -54,6 +54,6 @@ def test_combine_shapes2():
     final = numpy.zeros(finalshape, dtype='int')
 
     for arr, sl in zip(arrn, slices):
-        final[sl] +=  arr
+        final[sl] += arr
 
     assert final[finalref] == (value1 + value2) * len(shapes)

@@ -43,7 +43,8 @@ def test_add_barycentric():
     # Get main WCS
     wcs0 = astropy.wcs.WCS(hdr)
 
-    gtc = EarthLocation.from_geocentric(wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
+    gtc = EarthLocation.from_geocentric(
+        wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
     date_obs = astropy.time.Time(wcs0.wcs.dateobs, format='fits')
     # if frame='fk5', we need to pass the epoch and equinox
     sc = SkyCoord(ra=hdr['RADEG'], dec=hdr['DECDEG'], unit='deg')
@@ -53,7 +54,7 @@ def test_add_barycentric():
     # velocity
     rv = rv.to('m / s').value
     # (1 + rv / c)
-    #factor = 0.9999762685198925
+    # factor = 0.9999762685198925
 
     assert hdr['WCSNAMEB'] == 'Barycentric correction'
     assert hdr['CTYPE1B'] == hdr['CTYPE1']

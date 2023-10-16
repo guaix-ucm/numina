@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2017 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,7 @@
 
 
 from .daliface import DALInterface
-from numina.exceptions import NoResultFound
+from numina.exceptions import NoResultFound  # noqa: F401
 
 
 class AbsDAL(DALInterface):
@@ -27,13 +27,15 @@ class AbsDrpDAL(DALInterface):
         from numina.instrument.assembly import assembly_instrument
         this_drp = self.drps.query_by_name(obsres.instrument)
         key, date_obs, keyname = this_drp.select_profile(obsres)
-        ins = assembly_instrument(this_drp.configurations, key, date_obs, by_key=keyname)
+        ins = assembly_instrument(
+            this_drp.configurations, key, date_obs, by_key=keyname)
         return ins
 
     def search_instrument_configuration(self, keyval, value, by_key='name'):
         from numina.instrument.assembly import assembly_instrument
         drp = self.drps.query_by_name(keyval)
-        ins = assembly_instrument(drp.configurations, keyval, value, by_key=by_key)
+        ins = assembly_instrument(
+            drp.configurations, keyval, value, by_key=by_key)
         return ins
 
     def search_recipe(self, ins, mode, pipeline):

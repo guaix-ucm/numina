@@ -61,7 +61,8 @@ class FileFinderGTC(FileFinder):
 
     def candidates(self, directory):
         base = [('result.json', 1)]
-        other = [(m, 0) for m in super(FileFinderGTC, self).candidates(directory)]
+        other = [(m, 0)
+                 for m in super(FileFinderGTC, self).candidates(directory)]
         base.extend(other)
         return base
 
@@ -120,7 +121,7 @@ class DiskFileDAL(object):
 
     def search_product(self, name, tipo, ob):
         klass = tipo.__class__
-        print ('Init search ', name, tipo, tipo.__class__)
+        print('Init search ', name, tipo, tipo.__class__)
 
         try:
             res = self.drp.query_provides(tipo.__class__)
@@ -131,10 +132,12 @@ class DiskFileDAL(object):
         # search results of these OBs
         # build path based in combinations of tags
         for com in _combinations(ob.tags.values()):
-            directory = os.path.join(self.rootdir, ob.instrument, self.conf, label, *com)
+            directory = os.path.join(
+                self.rootdir, ob.instrument, self.conf, label, *com)
             print('search in', directory)
             try:
-                files_s = [filename for filename in sorted(os.listdir(directory))]
+                files_s = [filename for filename in sorted(
+                    os.listdir(directory))]
                 print("files_s", files_s)
                 for fname in files_s:
                     loadpath = os.path.join(directory, fname)
@@ -143,11 +146,11 @@ class DiskFileDAL(object):
                         print("is regular file ", loadpath)
                         if DAL_USE_OFFLINE_CALIBS:
                             content = load(tipo, loadpath)
-                        #else:
-                            #data = json.load(open(loadpath))
-                            #result = process_result(data)
-                            #key = self._field_to_extract[klass]
-                            #content = result[key]
+                        # else:
+                            # data = json.load(open(loadpath))
+                            # result = process_result(data)
+                            # key = self._field_to_extract[klass]
+                            # content = result[key]
                             return StoredProduct(id=files_s[-1], content=content, tags=ob.tags)
                         else:
                             print("not ready")
@@ -155,8 +158,8 @@ class DiskFileDAL(object):
                         print("is not regular file ", loadpath)
             except OSError as msg:
                 print(msg)
-                #msg = 'type %s compatible with tags %r not found' % (klass, ob.tags)
-                #raise NoResultFound(msg)
+                # msg = 'type %s compatible with tags %r not found' % (klass, ob.tags)
+                # raise NoResultFound(msg)
         else:
             msg = f'type {klass} compatible with tags {ob.tags!r} not found'
             print(msg)

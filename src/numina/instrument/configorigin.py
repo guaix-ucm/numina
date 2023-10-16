@@ -24,12 +24,14 @@ except AttributeError:
 
 class UndefinedOrigin(object):
     """Origin not defined"""
+
     def is_valid_date(self, cdate):
         return True
 
 
 class ElementOrigin(object):
     """Description of the origin of a particular configuration"""
+
     def __init__(self, name, uuid, date_start=None, date_end=None, description=""):
         self.name = name
 

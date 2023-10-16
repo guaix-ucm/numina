@@ -35,6 +35,7 @@ class KeyDefinition(object):
 
 class FITSKeyExtractor(object):
     """Extract values from FITS images"""
+
     def __init__(self, values):
         self.map = {}
         for key, entry in values.items():
@@ -145,8 +146,8 @@ class DataModel(object):
             'imgid': self.get_imgid,
             'insconf': 'INSCONF',
             'blckuuid': lambda x: '1',
-            'insconf_uuid': 'insconf', # Alias
-            'block_uuid': 'blckuuid', # Alias
+            'insconf_uuid': 'insconf',  # Alias
+            'block_uuid': 'blckuuid',  # Alias
         }
 
     def get_data(self, img):

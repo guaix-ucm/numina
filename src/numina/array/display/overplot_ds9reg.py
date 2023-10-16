@@ -40,19 +40,20 @@ def overplot_ds9reg(filename, ax):
                 color = line[i+6:i+13]
             else:
                 color = "green"
-            ax.plot([x1,x2], [y1,y2], '-', color=color)
+            ax.plot([x1, x2], [y1, y2], '-', color=color)
         elif line[0:4] == "text":
             line_fields = line.split()
             x0 = float(line_fields[1])
             y0 = float(line_fields[2])
-            text=line_fields[3][1:-1]
+            text = line_fields[3][1:-1]
             if "color" in line:
                 i = line.find("color=")
                 color = line[i+6:i+13]
             else:
                 color = "green"
             ax.text(x0, y0, text, fontsize=8,
-                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
+                    bbox=dict(boxstyle="round,pad=0.1",
+                              fc="white", ec="grey", ),
                     color=color, fontweight='bold', backgroundcolor='white',
                     ha='center')
         else:

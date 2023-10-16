@@ -14,7 +14,7 @@ def test_environ_context1():
 
     is_in = 'OOO_CACHE_HOME' in os.environ
 
-    assert is_in == False
+    assert is_in is False
 
 
 def test_environ_context2():

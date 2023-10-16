@@ -8,8 +8,9 @@ import numpy
 import numina.types.qc as qc
 from ..datamodel import DataModel
 
+
 def create_test_data():
-    return numpy.ones((10,10), dtype='int32')
+    return numpy.ones((10, 10), dtype='int32')
 
 
 def create_test_image(hdr=None):
@@ -109,6 +110,4 @@ def test_ginfo():
     datamodel = DataModel('CLODIA')
 
     imgid_chsum = datamodel.gather_info_hdu(img)
-    print(imgid_chsum)
-    #assert False
     assert imgid_chsum == ref

@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -29,7 +29,7 @@ def test_empty_ob():
 
 def test_init_ob():
 
-    img1 = fits.PrimaryHDU(data=[1,2,3])
+    img1 = fits.PrimaryHDU(data=[1, 2, 3])
     frame1 = DataFrame(frame=fits.HDUList(img1))
 
     ob = ObservationResult()
@@ -41,12 +41,12 @@ def test_init_ob():
 
 def test_header_key1_ob():
 
-    img1 = fits.PrimaryHDU(data=[1,2,3], header=fits.Header())
+    img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img1.header['FILTER'] = 'FILTER-A'
     img1.header['READM'] = 'MOD1'
     frame1 = DataFrame(frame=fits.HDUList(img1))
 
-    img2 = fits.PrimaryHDU(data=[1,2,3], header=fits.Header())
+    img2 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img2.header['FILTER'] = 'FILTER-A'
     img1.header['READM'] = 'MOD2'
     frame2 = DataFrame(frame=fits.HDUList(img1))
@@ -60,11 +60,11 @@ def test_header_key1_ob():
 
 def test_header_key1_mis():
 
-    img1 = fits.PrimaryHDU(data=[1,2,3], header=fits.Header())
+    img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img1.header['FILTER'] = 'FILTER-A'
     frame1 = DataFrame(frame=fits.HDUList(img1))
 
-    img2 = fits.PrimaryHDU(data=[1,2,3], header=fits.Header())
+    img2 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img2.header['FILTER'] = 'FILTER-B'
     frame2 = DataFrame(frame=fits.HDUList(img2))
 
@@ -77,12 +77,12 @@ def test_header_key1_mis():
 
 def test_header_key2_ob():
 
-    img1 = fits.PrimaryHDU(data=[1,2,3], header=fits.Header())
+    img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img1.header['FILTER'] = 'FILTER-A'
     img1.header['READM'] = 'MOD1'
     frame1 = DataFrame(frame=fits.HDUList(img1))
 
-    img2 = fits.PrimaryHDU(data=[1,2,3], header=fits.Header())
+    img2 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img2.header['FILTER'] = 'FILTER-A'
     img1.header['READM'] = 'MOD1'
     frame2 = DataFrame(frame=fits.HDUList(img1))

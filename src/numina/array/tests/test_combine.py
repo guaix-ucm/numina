@@ -31,14 +31,16 @@ class CombineTestCase(unittest.TestCase):
         """Test CombineError is raised for different operations."""
 
         # method is not valid
-        self.assertRaises(TypeError, c.generic_combine, "dum", self.validImages)
+        self.assertRaises(TypeError, c.generic_combine,
+                          "dum", self.validImages)
 
         # inputs is empty
         self.assertRaises(c.CombineError, c.generic_combine,
                           _c.mean_method, [], out=self.out)
         # images don't have the same shape
         self.assertRaises(c.CombineError, c.generic_combine,
-                          _c.mean_method, [self.validImages[0], self.validBig[0]],
+                          _c.mean_method, [
+                              self.validImages[0], self.validBig[0]],
                           out=self.validOut
                           )
 
@@ -243,6 +245,7 @@ class CombineTestCase(unittest.TestCase):
 
 class MinMaxTestCase(unittest.TestCase):
     """Test case for the minmax rejection method."""
+
     def setUp(self):
         self.nimages = 10
         self.data = [numpy.ones((2, 2))] * self.nimages
@@ -284,6 +287,7 @@ class MinMaxTestCase(unittest.TestCase):
 
 class QuantileClipTestCase(unittest.TestCase):
     """Test case for the quantileclip rejection method."""
+
     def setUp(self):
         self.nimages = 10
         self.data = [numpy.ones((2, 2))] * self.nimages

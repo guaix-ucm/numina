@@ -1,9 +1,4 @@
 
-import sys
-import warnings
-
-import pytest
-
 from ..load import load
 
 
@@ -67,4 +62,3 @@ def test_load_method_register():
     obj = 1
 
     assert obj + 3 == load(tag, obj)
-

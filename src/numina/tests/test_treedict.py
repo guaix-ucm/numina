@@ -7,20 +7,20 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Unit test for treedict'''
+"""Unit test for treedict"""
 
-from  ..treedict import TreeDict
+from ..treedict import TreeDict
+
 
 def test_treedict():
     a = TreeDict()
     a['instrument.name'] = 'iname'
-    assert(a['instrument.name'] == 'iname')
+    assert a['instrument.name'] == 'iname'
 
     de = TreeDict()
     de['val1'] = 'cal1'
     de['val2'] = 2394
 
     a['instrument.detector'] = de
-    assert(a['instrument']['detector']['val2'] == 2394)
-    assert(a['instrument.detector.val2'] == 2394)
-
+    assert a['instrument']['detector']['val2'] == 2394
+    assert a['instrument.detector.val2'] == 2394

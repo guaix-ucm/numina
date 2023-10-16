@@ -260,7 +260,8 @@ def order_fmap(ncoef):
             order += 1
             if order > NMAX_ORDER:
                 print('No. of coefficients: ', ncoef)
-                raise ValueError("order > " + str(NMAX_ORDER) + " not implemented")
+                raise ValueError(
+                    "order > " + str(NMAX_ORDER) + " not implemented")
     return order
 
 
@@ -374,7 +375,8 @@ def rectify2d(image2d, aij, bij, resampling,
         ixx = np.repeat(np.arange(naxis1out), naxis2out)
         iyy = np.tile(np.arange(naxis2out), (naxis1out,))
         # rectified image (using cython function)
-        image2d_rect = _resample(image2d, xxx, yyy, ixx, iyy, naxis1out, naxis2out)
+        image2d_rect = _resample(
+            image2d, xxx, yyy, ixx, iyy, naxis1out, naxis2out)
     else:
         raise ValueError("Sorry, resampling method must be 1 or 2")
 
@@ -446,5 +448,6 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, fscale=1.0, resampling=
     yc = ycenter - 1.0
     aij = [-f*xc*costheta-f*yc*sintheta+xc, f*costheta, f*sintheta]
     bij = [f*xc*sintheta-f*yc*costheta+yc, -f*sintheta, f*costheta]
-    image2d_rotated = rectify2d(image2d.astype('double'), aij, bij, resampling=resampling)
+    image2d_rotated = rectify2d(image2d.astype(
+        'double'), aij, bij, resampling=resampling)
     return image2d_rotated

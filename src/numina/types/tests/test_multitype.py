@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina DRP
 #
@@ -16,6 +16,7 @@ import numina.exceptions
 from ..datatype import DataType
 from ..multitype import MultiType
 from ..structured import BaseStructuredCalibration
+
 
 class AVal(object):
     pass
@@ -144,7 +145,6 @@ def test_tag_names1():
     assert multi.tag_names() == ['domeA', 'domeA2', 'domeB']
 
 
-
 def test_tag_names2():
 
     multi = MultiType(TypeA, TypeB)
@@ -174,7 +174,6 @@ def test_internal_default_optional():
 
 def test_load_multitype(tmpdir):
     import numina.store
-    import os
     import numina.util.context as cntx
 
     multi = MultiType(Structured1, Structured2)

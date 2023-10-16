@@ -19,6 +19,7 @@ class ObservingBlock(object):
     """
     Description of an observing block
     """
+
     def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         self.id = 1
         self.instrument = instrument
@@ -49,6 +50,7 @@ class ObservationResult(ObservingBlock):
     """The result of a observing block.
 
     """
+
     def __init__(self, instrument='UNKNOWN', mode='UNKNOWN'):
         super(ObservationResult, self).__init__(instrument, mode)
 

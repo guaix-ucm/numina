@@ -1,5 +1,5 @@
 
-from ..configorigin import UndefinedOrigin,ElementOrigin
+from ..configorigin import UndefinedOrigin, ElementOrigin
 
 import pytest
 
@@ -53,6 +53,7 @@ _test_vals2 = [
     ("2005-10-10T12:00:00", False),
 ]
 
+
 @pytest.mark.parametrize("origin", [_origin1()])
 @pytest.mark.parametrize("date, result", _test_vals1)
 def test_origin1(origin, date, result):
@@ -85,6 +86,7 @@ def test_create_keys():
     assert origin.date_start.isoformat() == date_start
     assert origin.date_end.isoformat() == date_end
     # assert origin.description == description
+
 
 def test_create_dict():
     values = dict(

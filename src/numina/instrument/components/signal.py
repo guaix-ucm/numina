@@ -13,6 +13,7 @@ import collections
 
 class Signal(object):
     """Signal used for callbacks."""
+
     def __init__(self):
         self.callbacks = collections.OrderedDict()
         self._cid_counter = 0

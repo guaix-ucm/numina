@@ -51,6 +51,7 @@ class SteffenInterpolator(object):
         If not provided, then the default is NaN.
 
     """
+
     def __init__(self, x, y, yp_0=0.0, yp_N=0.0, extrapolate='raise', fill_value=np.nan):
 
         # 'zeros' is a shortcut
@@ -93,7 +94,8 @@ class SteffenInterpolator(object):
         yp[N] = yp_N
         sign_s = np.sign(s)
         min_abs_s = np.minimum(abs_s[1:], abs_s[:-1])
-        yp[1:-1] = (sign_s[1:] + sign_s[:-1]) * np.minimum(min_abs_s, 0.5 * np.abs(p[1:]))
+        yp[1:-1] = (sign_s[1:] + sign_s[:-1]) * \
+            np.minimum(min_abs_s, 0.5 * np.abs(p[1:]))
 
         # Polynomial coefficients
         self._d = y
@@ -235,7 +237,7 @@ class SteffenInterpolator(object):
 
     def _poly_eval_4(self, u, ids):
         """Evaluate internal polynomial."""
-        return u *0.0
+        return u * 0.0
 
     def _check_bounds(self, v):
         """Check which values are out of bounds.
@@ -250,10 +252,10 @@ class SteffenInterpolator(object):
 
         if self.bounds_error and below_bounds.any():
             raise ValueError("A value in x_new is below the interpolation "
-                "range.")
+                             "range.")
         if self.bounds_error and above_bounds.any():
             raise ValueError("A value in x_new is above the interpolation "
-                "range.")
+                             "range.")
 
         return below_bounds, above_bounds
 

@@ -15,7 +15,7 @@ import numpy as np
 
 class ZScaleInterval(BaseInterval):
     """Compute z1 and z2 cuts in a similar way to Iraf.
-    
+
     If the total number of pixels is less than 10, the function simply returns
     the minimum and the maximum values.
 
@@ -56,4 +56,3 @@ class ZScaleInterval(BaseInterval):
             z2 = q500 + zslope * center
 
             return max(z1, vmin), min(z2, vmax)
-

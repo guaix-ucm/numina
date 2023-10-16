@@ -1,21 +1,12 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
-# Numina is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
-# Numina is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Numina.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 import numpy
 
@@ -24,7 +15,8 @@ from .traces import axis_to_dispaxis
 
 
 class Aperture(object):
-    '''Spectroscopic aperture.'''
+    """Spectroscopic aperture."""
+
     def __init__(self, bbox, borders, axis=0, id=None):
         self.bbox = bbox
         self.borders = borders
@@ -34,13 +26,13 @@ class Aperture(object):
 
 
 def extract_simple_rss(arr, borders, axis=0, out=None):
-    
+
     # If arr is not in native byte order, the C-extension won't work
     if arr.dtype.byteorder != '=':
         arr2 = arr.byteswap().newbyteorder()
     else:
         arr2 = arr
-    
+
     if axis == 0:
         arr3 = arr2
     elif axis == 1:
@@ -56,7 +48,7 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
     # Borders contains a list of function objects
     for idx, (b1, b2) in enumerate(borders):
         bb1 = b1(xx)
-        bb1[bb1 < -0.5] = -0.5    
+        bb1[bb1 < -0.5] = -0.5
         bb2 = b2(xx)
         bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
         extract_simple_intl(arr3, xx, bb1, bb2, out[idx])

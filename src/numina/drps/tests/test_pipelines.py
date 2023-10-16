@@ -29,11 +29,13 @@ def test_fake_pipeline(monkeypatch):
             fake = InstrumentDRP('FAKE', confs, modes, pipelines)
             return fake
 
-        ep = importlib.metadata.EntryPoint(name='fake', value='fake.loader', group='numina.pipelines.1')
+        ep = importlib.metadata.EntryPoint(
+            name='fake', value='fake.loader', group='numina.pipelines.1')
         monkeypatch.setattr(ep, 'load', lambda: fake_loader)
         return [ep]
 
-    monkeypatch.setattr(backports.entry_points_selectable, 'entry_points', mockreturn)
+    monkeypatch.setattr(backports.entry_points_selectable,
+                        'entry_points', mockreturn)
 
     alldrps = DrpSystem().load().query_all()
     for k, v in alldrps.items():
@@ -87,4 +89,4 @@ def test_fake_pipeline_alt2(drpmocker):
 
     assert recipe.instrument == "TEST1"
     assert recipe.mode == "bias"
-    assert recipe.simulate_error == True
+    assert recipe.simulate_error is True

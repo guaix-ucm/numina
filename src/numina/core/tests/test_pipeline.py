@@ -3,7 +3,6 @@ import pytest
 
 import numina.core.pipelineload as loader
 
-from numina.tests.recipes import MasterBias, MasterDark
 
 @pytest.fixture(scope='module')
 def drptest():

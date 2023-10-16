@@ -10,13 +10,12 @@
 """Build a LoadableDRP from a yaml file"""
 
 
-from functools import wraps
 import warnings
 import mimetypes
 
 
 def is_fits_megara(pathname):
-    "Check is any FITS"
+    """Check is any FITS"""
     if pathname.endswith('.fits'):
         return True
     else:
@@ -24,7 +23,7 @@ def is_fits_megara(pathname):
 
 
 def is_fits_emir(pathname):
-    "Check is any FITS"
+    """Check is any FITS"""
     if pathname.endswith('.fits'):
         return True
     else:
@@ -32,7 +31,7 @@ def is_fits_emir(pathname):
 
 
 def is_json_structured(pathname):
-    "Check is structured JSON"
+    """Check is structured JSON"""
     import json
     # FIXME: I'm loading everything here
     with open(pathname) as fd:
@@ -51,7 +50,7 @@ class DataLoaders:
     def register(self, mtype, is_func=None, priority=20):
 
         if is_func is None:
-            is_func = lambda p: True
+            def is_func(p): return True  # noqa: E731
 
         def wrapper(func):
             self._loaders.append((priority, mtype, is_func, func))
@@ -100,27 +99,22 @@ class DataChecker:
 
 
 if __name__ == '__main__':
-
-
     load = DataLoaders()
 
     @load.register('image/fits', priority=20)
     def load_fits_0(pathname):
         import astropy.io.fits as fits
         return fits.open(pathname)
-    #
 
     @load.register('image/fits', is_fits_megara, priority=19)
     def load_fits_1(pathname):
         import astropy.io.fits as fits
         return fits.open(pathname)
 
-
     @load.register('image/fits', is_fits_emir, priority=5)
     def load_fits_2(pathname):
         import astropy.io.fits as fits
         return fits.open(pathname)
-
 
     @load.register('application/json', priority=20)
     def load_json(pathname):
@@ -129,7 +123,7 @@ if __name__ == '__main__':
             return json.load(fd)
 
     @load.register('application/json', is_json_structured, priority=5)
-    def load_json(pathname):
+    def load_json(pathname):  # noqa: F811
         import json
         from numina.util.objimport import import_object
 

@@ -143,7 +143,7 @@ def main(args=None):
     parser.add_argument('--method_kwargs',
                         help='Arguments for method sigmaclip; must be a'
                              'Python dictionary between double quotes, e.g.: '
-                             '"{' + "'high': 2.5, 'low': 2.5}" +'")',
+                             '"{' + "'high': 2.5, 'low': 2.5}" + '")',
                         type=str)
     parser.add_argument('--extnum',
                         help='Extension number in input files (note that ' +

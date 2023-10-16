@@ -85,14 +85,14 @@ def slice_create(center, block, start=0, stop=None):
     do = coor_to_pix_1d(center - block)
     up = coor_to_pix_1d(center + block)
 
-    l = max(start, do)
+    lmax = max(start, do)
 
     if stop is not None:
         h = min(up + 1, stop)
     else:
         h = up + 1
 
-    return slice(l, h, 1)
+    return slice(lmax, h, 1)
 
 
 def image_box(center, shape, box):

@@ -18,7 +18,7 @@ def subsets_of_fileinfo_from_txt(filename):
     also ignored. The name of the files comprising each subset will be
     obtained from the first contiguous character string in every
     line (thus, the rest of the line will be discarded).
-    
+
     Parameters
     ----------
     filename : string
@@ -32,9 +32,9 @@ def subsets_of_fileinfo_from_txt(filename):
         of files available. Each value of the dictionary is a
         dictionary with a label (sequential number starting at zero)
         and the list of FileInfo instances within subset.
-        
+
     """
-    
+
     # check for input file
     if not os.path.isfile(filename):
         raise ValueError("File " + filename + " not found!")

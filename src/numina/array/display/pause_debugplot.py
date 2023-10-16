@@ -73,7 +73,7 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
             else:
                 print(optional_prompt, end='')
             sys.stdout.flush()
-            cdummy = sys.stdin.readline().strip()
+            cdummy = sys.stdin.readline().strip()  # noqa: F841
 
     if debugplot_ in [1, 2, 11, 12, 21, 22] and pltclose:
         plt.close()

@@ -17,23 +17,23 @@ def register(subparsers, config):
     parser_show_mode = subparsers.add_parser(
         'show-modes',
         help='show information of observing modes'
-        )
+    )
 
     parser_show_mode.set_defaults(
         command=show_observingmodes,
         verbose=0,
         what='om'
-        )
+    )
 #    parser_show_mode.add_argument('--verbose', '-v', action='count')
     parser_show_mode.add_argument(
         '-i', '--instrument',
         help='filter modes by instrument'
-        )
+    )
 
     parser_show_mode.add_argument(
         'name', nargs='*', default=None,
         help='filter observing modes by name'
-        )
+    )
 
     return parser_show_mode
 

@@ -43,17 +43,17 @@ def test_record_call():
 
     assert testfunc.side_effect.args == ()
     assert testfunc.side_effect.kwargs == {}
-    assert testfunc.side_effect.called == False
-    
+    assert testfunc.side_effect.called is False
+
     assert testfunc(1) == 1
     assert isinstance(testfunc.side_effect, FuncCall)
 
     assert testfunc.side_effect.args == (1,)
     assert testfunc.side_effect.kwargs == {}
-    assert testfunc.side_effect.called == True
+    assert testfunc.side_effect.called is True
 
     testfunc.side_effect.clear()
 
     assert testfunc.side_effect.args == ()
     assert testfunc.side_effect.kwargs == {}
-    assert testfunc.side_effect.called == False
+    assert testfunc.side_effect.called is False

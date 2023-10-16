@@ -88,7 +88,7 @@ def rebin(a, *args):
 
     shape = a.shape
     len_shape = len(shape)
-    factor = np.asarray(shape) // np.asarray(args)
+    factor = np.asarray(shape) // np.asarray(args)  # noqa: F841
     # ev_list = ['a.reshape('] + \
     #           ['args[%d], factor[%d], ' % (i, i) for i in range(len_shape)] + \
     #           [')'] + ['.mean(%d)' % (i+1) for i in range(len_shape)]

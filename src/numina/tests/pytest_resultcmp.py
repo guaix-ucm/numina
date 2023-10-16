@@ -19,6 +19,7 @@ from numina.util.jsonencoder import ExtEncoder
 
 class ResultCompPlugin(object):
     """Plugin to compare the results fo reductions"""
+
     def __init__(self, config, reference_dir=None, generate_dir=None):
         self.config = config
         self.reference_dir = reference_dir
@@ -42,12 +43,14 @@ class ResultCompPlugin(object):
             reference_dir = compare.kwargs.get('reference_dir', None)
             if reference_dir is None:
                 if self.reference_dir is None:
-                    reference_dir = os.path.join(os.path.dirname(item.fspath.strpath), 'reference')
+                    reference_dir = os.path.join(
+                        os.path.dirname(item.fspath.strpath), 'reference')
                 else:
                     reference_dir = self.reference_dir
             else:
                 if not reference_dir.startswith(('http://', 'https://')):
-                    reference_dir = os.path.join(os.path.dirname(item.fspath.strpath), reference_dir)
+                    reference_dir = os.path.join(os.path.dirname(
+                        item.fspath.strpath), reference_dir)
 
             baseline_remote = reference_dir.startswith('http')
 
@@ -80,15 +83,19 @@ class ResultCompPlugin(object):
                     raise NotImplementedError
                 else:
                     baseline_file_ref = os.path.abspath(
-                        os.path.join(os.path.dirname(item.fspath.strpath), reference_dir, destination)
+                        os.path.join(os.path.dirname(
+                            item.fspath.strpath), reference_dir, destination)
                     )
 
                 if not os.path.exists(baseline_file_ref):
-                    exmsg = "File not found for comparison test\nGenerated file:\t{test}\nThis is expected for new tests."
+                    exmsg = "File not found for comparison test\n" \
+                            "Generated file:\t{test}\n" \
+                            "This is expected for new tests."
                     raise Exception(exmsg.format(test=destination))
 
                 # Compare my result with something else
-                identical, msg = compare_result_dirs(baseline_file_ref, result_dir, atol=atol, rtol=rtol)
+                identical, msg = compare_result_dirs(
+                    baseline_file_ref, result_dir, atol=atol, rtol=rtol)
 
                 if identical:
                     shutil.rmtree(result_dir)
@@ -125,10 +132,12 @@ def compare_eq_sequence(left, right):
             explanation += [f"At index {i} diff: {left[i]!r} != {right[i]!r}"]
             break
     if len(left) > len(right):
-        explanation += [f"Left contains more items, first extra item: {left[len(right)]}"
+        explanation += [
+            f"Left contains more items, first extra item: {left[len(right)]}"
         ]
     elif len(left) < len(right):
-        explanation += [f"Right contains more items, first extra item: {right[len(left)]}"
+        explanation += [
+            f"Right contains more items, first extra item: {right[len(left)]}"
         ]
     return explanation
 
@@ -153,7 +162,7 @@ def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
         if ext == '.fits':
             from astropy.io.fits.diff import FITSDiff
             ignore_keywords = [
-                'HISTORY', 'UUID','NUMXVER'
+                'HISTORY', 'UUID', 'NUMXVER'
             ]
             diff = FITSDiff(
                 fname1, fname2, rtol=rtol, atol=atol,

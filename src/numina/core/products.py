@@ -2,10 +2,11 @@
 
 import warnings
 
-warnings.warn("deprecated, use numina.types instead", DeprecationWarning, stacklevel=2)
+from numina.types.array import ArrayNType  # noqa: F401
+from numina.types.array import ArrayType  # noqa: F401
+from numina.types.product import DataProductMixin  # noqa: F401
+from numina.types.product import DataProductTag  # noqa: F401
+from numina.types.linescatalog import LinesCatalog  # noqa: F401
 
-from numina.types.array import ArrayNType
-from numina.types.array import ArrayType
-from numina.types.product import DataProductMixin
-from numina.types.product import DataProductTag
-from numina.types.linescatalog import LinesCatalog
+warnings.warn("deprecated, use numina.types instead",
+              DeprecationWarning, stacklevel=2)

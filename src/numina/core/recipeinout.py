@@ -188,6 +188,7 @@ class RecipeResult(RecipeResultBase):
 
 class define_result(object):
     """Recipe decorator."""
+
     def __init__(self, resultClass):
         if not issubclass(resultClass, RecipeResult):
             msg = f'{resultClass!r} does not derive from RecipeResult'
@@ -201,6 +202,7 @@ class define_result(object):
 
 class define_input(object):
     """Recipe decorator."""
+
     def __init__(self, input_class):
         if not issubclass(input_class, RecipeInput):
             msg = f'{input_class!r} does not derive from RecipeInput'

@@ -14,6 +14,7 @@ from .datatype import DataType
 
 class ArrayType(DataType):
     """A type of array."""
+
     def __init__(self, fmt='%.18e', default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
         self.fmt = fmt

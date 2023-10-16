@@ -292,4 +292,3 @@ def intersection_spectrail_arcline(spectrail, arcline):
     yroot = spectrail.poly_funct(xroot)
 
     return xroot, yroot
-

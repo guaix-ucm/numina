@@ -13,6 +13,7 @@ from numpy.polynomial import Polynomial
 from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
+
 def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     """Find peaks in array.
 
@@ -61,12 +62,12 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
               'pixels will be ignored')
 
     xpeaks = []  # list to store the peaks
-    
+
     if sx_shape[0] < nwinwidth:
         print('find_peaks_spectrum> sx shape......:', sx_shape)
         print('find_peaks_spectrum> nwinwidth.....:', nwinwidth)
         raise ValueError('sx.shape < nwinwidth')
-    
+
     i = nmed
     while i < sx_shape[0] - nmed:
         if sx[i] > threshold:
@@ -93,7 +94,7 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
                 i += 1
         else:
             i += 1
-    
+
     ixpeaks = np.array(xpeaks)
 
     if debugplot >= 10:
@@ -195,7 +196,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None,
                 if coef[2] != 0:
                     refined_peak = -coef[1]/(2.0*coef[2]) + jmax
                 else:
-                   refined_peak = 0.0 + jmax
+                    refined_peak = 0.0 + jmax
             else:
                 refined_peak = 0.0 + jmax
         elif final_method == "gaussian":

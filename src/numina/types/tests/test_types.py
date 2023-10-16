@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,16 +8,17 @@
 #
 
 
-'''Unit test for types'''
+"""Unit test for types"""
 
 from ..datatype import NullType, DataType
 
+
 def test_null_type():
-    '''Test NullType.'''
+    """Test NullType."""
 
     nullt = NullType()
 
-    values = [None, 1, 1.0, [1,2,3], {'a': 1, 'b': 2}]
+    values = [None, 1, 1.0, [1, 2, 3], {'a': 1, 'b': 2}]
 
     for val in values:
         assert nullt.convert(val) is None

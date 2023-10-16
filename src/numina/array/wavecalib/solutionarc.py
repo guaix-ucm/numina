@@ -217,7 +217,7 @@ class SolutionArcCalibration(object):
 
     def __ne__(self, other):
         return not self == other
-    
+
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
 
@@ -237,7 +237,7 @@ class SolutionArcCalibration(object):
         result = self.__dict__.copy()
         result['features'] = [
             feature.__getstate__() for feature in self.features
-            ]
+        ]
         result['cr_linear'] = result['cr_linear'].__getstate__()
         return result
 

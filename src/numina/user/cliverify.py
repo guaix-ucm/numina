@@ -127,7 +127,7 @@ def verify(args, extra_args):
             _logger.info(f'checking {file}')
             try:
                 result = check_file(file)
-            except Exception as error:
+            except Exception:
                 result = False
                 # _logger.warning('with error {}'.format(error))
             _logger.info(f'checked {file}, valid={result}')
@@ -169,7 +169,7 @@ def run_verify(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
                 _logger.debug(f'checking {f.filename}')
                 try:
                     check_image(hdulist, astype=image_is)
-                except:
+                except Exception:
                     pass
         _logger.info('Checking that individual images are valid for this mode')
         mode_obj.validate(obsres)

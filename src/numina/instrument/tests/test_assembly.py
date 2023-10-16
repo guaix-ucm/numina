@@ -77,7 +77,8 @@ def test_comp_psu_vals(pattri_ins):
     assert pattri_ins.get_value('PSU.csupos') == 444
     assert pattri_ins.get_value('PSU.box1', val='B') == 7126
     assert pattri_ins.get_value('PSU.spaces', insmode="Mode_B") == []
-    assert pattri_ins.get_value('PSU.other', tag0='tag0_A', tag1='tag1_Y') == [-2]
+    assert pattri_ins.get_value(
+        'PSU.other', tag0='tag0_A', tag1='tag1_Y') == [-2]
 
 
 def test_comp_psu_comps(pattri_ins):
@@ -90,8 +91,8 @@ def test_comp_psu_comps(pattri_ins):
 def test_comp_robo_comps(pattri_ins):
     assert pattri_ins.get_property('robot.arm_1.angle') == 0
     assert pattri_ins.get_property('robot.arm_1.angle') == 0
-    assert pattri_ins.get_property('robot.arm_9.active') == True
+    assert pattri_ins.get_property('robot.arm_9.active') is True
     pattri_ins.get_device('robot.arm_8').active = False
-    assert pattri_ins.get_property('robot.arm_8.active') == False
+    assert pattri_ins.get_property('robot.arm_8.active') is False
     dev = pattri_ins.get_device('robot.arm_8')
     dev.get_property('active')

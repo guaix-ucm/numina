@@ -7,6 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from .enclosed import EnclosedGaussian
-from .gaussbox import GaussBox
-from .sumofgauss import sum_of_gaussian_factory
+from .enclosed import EnclosedGaussian  # noqa: F401
+from .gaussbox import GaussBox  # noqa: F401
+from .sumofgauss import sum_of_gaussian_factory  # noqa: F401

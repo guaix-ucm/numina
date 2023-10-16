@@ -81,22 +81,22 @@ def check_extnum(filename):
 
 def list_fileinfo_from_txt(filename):
     """Returns a list of FileInfo instances if filename is a TXT file.
-    
+
     Parameters
     ----------
     filename : string
         Name of a file (wildcards are acceptable) or a TXT file
         containing a list of files. Empty Lines, and lines starting by
         a hash or a at symbol in the TXT file are ignored.
-    
+
     Returns
     -------
     output : list of FileInfo instances
         List of FileInfo instances containing the name of the files
         and additional file information.
-        
+
     """
-    
+
     # check for input file
     if not os.path.isfile(filename):
         # check for wildcards
@@ -160,6 +160,7 @@ def main(args=None):
     list_fileinfo = list_fileinfo_from_txt(args.txt_file)
     for item in list_fileinfo:
         print(item)
+
 
 if __name__ == "__main__":
 

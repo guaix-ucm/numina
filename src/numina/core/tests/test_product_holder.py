@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,7 @@
 #
 
 
-'''Unit test for types'''
+"""Unit test for types"""
 
 from numina.types.datatype import DataType
 from ..dataholders import Result

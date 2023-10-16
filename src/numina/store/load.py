@@ -13,6 +13,7 @@ try:
 except ImportError:
     from pkgutil import simplegeneric as singledispatch
 
+
 @singledispatch
 def load(tag, obj):
     """
@@ -34,4 +35,3 @@ def load(tag, obj):
         return tag._datatype_load(obj)
 
     return obj
-

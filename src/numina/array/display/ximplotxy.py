@@ -24,9 +24,8 @@ def ximplotxy_jupyter(x, y, fmt=None, **args):
         return ximplotxy(x, y, fmt, using_jupyter=using_jupyter, **args)
 
 
-
 def ximplotxy(x, y, fmt=None, plottype=None,
-              xlim=None, ylim=None, 
+              xlim=None, ylim=None,
               xlabel=None, ylabel=None, title=None,
               show=True, geometry=(0, 0, 640, 480), tight_layout=True,
               debugplot=0, using_jupyter=False,
@@ -96,7 +95,7 @@ def ximplotxy(x, y, fmt=None, plottype=None,
             ax.semilogy(x, y, **kwargs)
         else:
             ax.semilogy(x, y, fmt, **kwargs)
-    elif plottype == None:
+    elif plottype is None:
         if fmt is None:
             ax.plot(x, y, **kwargs)
         else:

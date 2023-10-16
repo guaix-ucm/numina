@@ -38,7 +38,8 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     # Header must contain RADEG and DECDEG
 
     if 'OBSGEO-X' not in hdr:
-        warnings.warn('OBSGEO- keywords not defined, using default values for GTC', RuntimeWarning)
+        warnings.warn(
+            'OBSGEO- keywords not defined, using default values for GTC', RuntimeWarning)
         # Geocentric coordinates of GTC
         hdr['OBSGEO-X'] = 5327285.0921
         hdr['OBSGEO-Y'] = -1718777.1125
@@ -49,7 +50,8 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     if wcs0.wcs.spec == -1:
         # We don't have a spec axis
         raise TypeError('Header does not contain spectral axis')
-    gtc = EarthLocation.from_geocentric(wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
+    gtc = EarthLocation.from_geocentric(
+        wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
     date_obs = astropy.time.Time(wcs0.wcs.dateobs, format='fits')
     # if frame='fk5', we need to pass the epoch and equinox
     sc = SkyCoord(ra=hdr['RADEG'], dec=hdr['DECDEG'], unit='deg')

@@ -24,6 +24,7 @@ class PixelInterval1D(object):
     axis : int
 
     """
+
     def __init__(self, pix1, pix2, axis=0):
 
         for name in ['pix1', 'pix2']:
@@ -115,9 +116,11 @@ class PixelInterval(object):
     args : N tuples of integer pairs (pix1, pix2)
 
     """
+
     def __init__(self, *args):
         self.ndim = len(args)
-        self.intervals = [PixelInterval1D(a, b, axis) for axis, (a, b) in enumerate(args)]
+        self.intervals = [PixelInterval1D(a, b, axis)
+                          for axis, (a, b) in enumerate(args)]
 
     @property
     def shape(self):
@@ -149,14 +152,16 @@ class PixelInterval(object):
 
     def union(self, other):
         if self.ndim == other.ndim:
-            intl = [s.union(o) for s,o in zip(self.intervals, other.intervals)]
+            intl = [s.union(o)
+                    for s, o in zip(self.intervals, other.intervals)]
             return self.from_intervals(intl)
         else:
             raise NotImplementedError
 
     def intersection(self, other):
         if self.ndim == other.ndim:
-            intl = [s.intersection(o) for s,o in zip(self.intervals, other.intervals)]
+            intl = [s.intersection(o) for s, o in zip(
+                self.intervals, other.intervals)]
             return self.from_intervals(intl)
         else:
             raise NotImplementedError
@@ -198,6 +203,7 @@ class BoundingBox(PixelInterval):
     ix1, ix2, iy1, iy2 : int
 
     """
+
     def __init__(self, ix1, ix2, iy1, iy2):
         newargs = (iy1, iy2), (ix1, ix2)
         super(BoundingBox, self).__init__(*newargs)

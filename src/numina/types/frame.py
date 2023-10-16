@@ -10,11 +10,8 @@ import warnings
 
 from astropy.io import fits
 
-
-from numina.exceptions import ValidationError
 from numina.ext.gtc import DF
 from numina.frame.schema import Schema
-
 from .dataframe import DataFrame
 from .datatype import DataType
 
@@ -24,8 +21,8 @@ _base_schema = {
         'READMODE': {'valid': True},
         'EXPTIME': {'value': float},
         'NUMINAID': {'value': int}
-        }
     }
+}
 
 
 class DataFrameType(DataType):
@@ -84,7 +81,6 @@ class DataFrameType(DataType):
 
             self.validate_hdulist(hdulist)
 
-
     def validate_hdulist(self, hdulist):
         pass
 
@@ -110,7 +106,7 @@ class DataFrameType(DataType):
                     result[field] = ext.extract(field, hdulist)
 
                 tags = result['tags']
-                #for field in self.tags_keys:
+                # for field in self.tags_keys:
                 for field in self.names_t:
                     tags[field] = ext.extract(field, hdulist)
 

@@ -24,7 +24,7 @@ def polfit_residuals(
         xlabel=None, ylabel=None, title=None,
         use_r=False,
         show=True,
-        geometry=(0,0,640,480),
+        geometry=(0, 0, 640, 480),
         debugplot=0,
         pdffile=None,
 ):
@@ -285,7 +285,7 @@ def polfit_residuals(
 
         # save PDF file
         if pdffile is not None:
-            plt.savefig(pdffile, pad_inches = 0.02, bbox_inches = 'tight')
+            plt.savefig(pdffile, pad_inches=0.02, bbox_inches='tight')
 
         if show:
             pause_debugplot(debugplot, pltshow=show, tight_layout=True)
@@ -301,7 +301,7 @@ def polfit_residuals_with_sigma_rejection(
         xlabel=None, ylabel=None, title=None,
         use_r=None,
         show=True,
-        geometry=(0,0,640,480),
+        geometry=(0, 0, 640, 480),
         debugplot=0,
         pdffile=None
 ):
@@ -493,7 +493,7 @@ def polfit_residuals_with_cook_rejection(
         xlabel=None, ylabel=None, title=None,
         use_r=None,
         show=True,
-        geometry=(0,0,640,480),
+        geometry=(0, 0, 640, 480),
         debugplot=0,
         pdffile=None
 ):
@@ -758,7 +758,6 @@ def main(args=None):
         dy_geom = int(tmp_str[3])
         geometry = x_geom, y_geom, dx_geom, dy_geom
 
-
     # check
     if times_sigma_reject is not None and times_sigma_cook is not None:
         raise ValueError("ERROR: times_sigma_reject and times_sigma_cook" +
@@ -771,7 +770,8 @@ def main(args=None):
 
     # plot fit and residuals
     if times_sigma_reject is None and times_sigma_cook is None:
-        polfit_residuals(x, y, polydeg, geometry=geometry, debugplot=12, pdffile=pdffile)
+        polfit_residuals(x, y, polydeg, geometry=geometry,
+                         debugplot=12, pdffile=pdffile)
     elif times_sigma_reject is not None:
         polfit_residuals_with_sigma_rejection(
             x, y, polydeg, times_sigma_reject,

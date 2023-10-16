@@ -229,5 +229,6 @@ def block_view(arr, block=(3, 3)):
     # simple shape and strides computations may seem at first strange
     # unless one is able to recognize the 'tuple additions' involved ;-)
     shape = (arr.shape[0] // block[0], arr.shape[1] // block[1]) + block
-    strides = (block[0] * arr.strides[0], block[1] * arr.strides[1]) + arr.strides
+    strides = (block[0] * arr.strides[0], block[1]
+               * arr.strides[1]) + arr.strides
     return ast(arr, shape=shape, strides=strides)

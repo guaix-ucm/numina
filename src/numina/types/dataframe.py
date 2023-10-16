@@ -7,15 +7,16 @@
 # License-Filename: LICENSE.txt
 #
 
-'''
+"""
 Basic Data Products
-'''
+"""
 
 from astropy.io import fits
 
 
 class DataFrame(object):
-    '''A handle to a image in disk or in memory.'''
+    """A handle to a image in disk or in memory."""
+
     def __init__(self, frame=None, filename=None):
         if frame is None and filename is None:
             raise ValueError('only one in frame and filename can be None')

@@ -44,8 +44,8 @@ def trace(arr, x, y, axis=0, background=0.0,
         A nx3 array, with x,y,p of each point in the trace
     """
 
-    i,j = coor_to_pix([x, y], order='xy')
-    value = arr[i,j]
+    i, j = coor_to_pix([x, y], order='xy')
+    value = arr[i, j]
 
     # If arr is not in native byte order, the C-extension won't work
 
@@ -66,7 +66,7 @@ def trace(arr, x, y, axis=0, background=0.0,
 
     if axis == 1:
         # Flip X,Y columns
-        return result[:,::-1]
+        return result[:, ::-1]
 
     return result
 

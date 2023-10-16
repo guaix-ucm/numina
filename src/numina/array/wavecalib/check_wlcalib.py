@@ -237,7 +237,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             raise ValueError("ERROR: interative use of this function is not "
                              "possible when debugplot=", debugplot)
 
-   # interactive and pdf are incompatible
+    # interactive and pdf are incompatible
     if interactive:
         if pdf is not None:
             raise ValueError("ERROR: interactive use of this function is not "
@@ -307,7 +307,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 if nlines_ok > poldeg_residuals:
                     poldeg_effective = poldeg_residuals
                 else:
-                    poldeg_effective = nlines_ok  - 1
+                    poldeg_effective = nlines_ok - 1
 
                 # fit polynomial to residuals
                 polyres, yresres, reject = \
@@ -557,8 +557,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     loop = False
                 else:
                     print(wv_master)
-                    expected_value = fxpeaks_wv[ioption - 1] + \
-                                     polyres(fxpeaks_wv[ioption - 1])
+                    expected_value = fxpeaks_wv[ioption -
+                                                1] + polyres(fxpeaks_wv[ioption - 1])
                     print(">>> Current expected wavelength: ", expected_value)
                     delta_wv_max = ntimes_match_wv * cdelt1
                     close_value = match_wv_arrays(
@@ -580,7 +580,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         npoints_used = npoints_total - npoints_removed
         if abs(debugplot) >= 10:
             print('>>> Npoints (total / used / removed)..:',
-                npoints_total, npoints_used, npoints_removed)
+                  npoints_total, npoints_used, npoints_removed)
         if npoints_used < min_nlines_to_refine:
             print('Warning: number of lines insuficient to refine '
                   'wavelength calibration!')
@@ -593,11 +593,11 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 copc = 'y'
         if copc == 'y':
             coeff_refined = update_poly_wlcalib(
-                    coeff_ini=coeff_ini,
-                    coeff_residuals=polyres.coef,
-                    naxis1_ini=naxis1_ini,
-                    debugplot=0
-                )
+                coeff_ini=coeff_ini,
+                coeff_residuals=polyres.coef,
+                naxis1_ini=naxis1_ini,
+                debugplot=0
+            )
         else:
             coeff_refined = np.array(coeff_ini)
     else:
@@ -608,7 +608,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             for idum, fdum in \
                     enumerate(zip(coeff_ini, coeff_refined)):
                 print(f">>> coef#{idum}:  ", end='')
-                print(f"{decimal.Decimal(fdum[0]):+.8E}  -->  {decimal.Decimal(fdum[1]):+.8E}")
+                print(
+                    f"{decimal.Decimal(fdum[0]):+.8E}  -->  {decimal.Decimal(fdum[1]):+.8E}")
 
     return coeff_refined
 

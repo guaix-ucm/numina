@@ -102,12 +102,13 @@ class EntryHolder(object):
 
 class Result(EntryHolder):
     """Result holder for RecipeResult."""
+
     def __init__(self, ptype, description="", validation=True,
                  destination=None, optional=False, default=None, choices=None):
         super(Result, self).__init__(
             ptype, description, destination=destination, optional=optional,
             default=default, choices=choices, validation=validation
-            )
+        )
 
 #        if not isinstance(self.type, DataProductType):
 #            raise TypeError('type must be of class DataProduct')
@@ -139,7 +140,8 @@ class Product(Result):
             choices=choices
         )
 
-        warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
+        warnings.warn("The 'Product' class was renamed to 'Result'",
+                      DeprecationWarning, stacklevel=2)
 
     def __repr__(self):
         return f'Product(type={self.type!r}, dest={self.dest!r})'
@@ -202,7 +204,7 @@ class Requirement(EntryHolder):
             rtype, description, destination=destination,
             optional=optional, default=default, choices=choices,
             validation=validation, alias=alias
-            )
+        )
 
         self.query_opts = query_opts
 
@@ -264,7 +266,8 @@ class Requirement(EntryHolder):
             for next_type in this_type.node_type:
 
                 try:
-                    result = self.query_on_dal_rec(next_type, dal, obsres, options=options)
+                    result = self.query_on_dal_rec(
+                        next_type, dal, obsres, options=options)
                     this_type._current = next_type
                     return result
                 except NoResultFound as notfound:
@@ -282,19 +285,23 @@ class Requirement(EntryHolder):
                 result = []
                 for idx, tags in enumerate(query_tags):
                     obsres.tags = tags
-                    res = self.query_on_dal_rec(next_type, dal, obsres, options=options)
+                    res = self.query_on_dal_rec(
+                        next_type, dal, obsres, options=options)
                     result.append(res)
                 return result
         else:
             with tags_as_scalar(obsres) as obsres:
-                result = self.query_on_dal_base(this_type, dal, obsres, options=options)
+                result = self.query_on_dal_base(
+                    this_type, dal, obsres, options=options)
                 return result
 
     def query_on_dal_base(self, next_type, dal, obsres, options=None):
         if next_type.isproduct():
-            value = dal.search_product(self.dest, next_type, obsres, options=options)
+            value = dal.search_product(
+                self.dest, next_type, obsres, options=options)
         else:
-            value = dal.search_parameter(self.dest, next_type, obsres, options=options)
+            value = dal.search_parameter(
+                self.dest, next_type, obsres, options=options)
         return value.content
 
     def on_query_not_found(self, notfound):
@@ -413,6 +420,7 @@ class Parameter(Requirement):
     alias : str, optional
         Alternative name of the field in the RecipeInput object.
     """
+
     def __init__(self, value, description, destination=None, optional=True,
                  choices=None, validation=True, validator=None,
                  accept_scalar=False,
@@ -460,7 +468,7 @@ class Parameter(Requirement):
             optional=optional, default=default,
             choices=choices, validation=validation,
             alias=alias
-            )
+        )
 
     def convert(self, val):
         """Convert input values to type values."""

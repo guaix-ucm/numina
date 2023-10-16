@@ -22,6 +22,7 @@ class FlowError(Exception):
 
 class SerialFlow(node.Node):
     """A flow where Nodes are executed sequentially."""
+
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
         self.nodeseq = nodeseq
@@ -58,6 +59,7 @@ class SerialFlow(node.Node):
 
 class ParallelFlow(node.Node):
     """A flow where Nodes are executed in parallel."""
+
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
         nin = sum((f.ninputs for f in nodeseq), 0)

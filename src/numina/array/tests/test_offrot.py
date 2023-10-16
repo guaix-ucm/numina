@@ -52,6 +52,7 @@ def test_off_rot_fb():
     assert numpy.allclose(off2, off_a)
     assert numpy.allclose(numpy.transpose(rot), rot2)
 
+
 def test_off_rot_182():
     p2 = [(1444.96997070312, 468.980010986328),
           (1352.80004882812, 1517.91003417969)]

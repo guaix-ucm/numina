@@ -11,7 +11,7 @@ import numpy
 from scipy.interpolate import interp1d
 import scipy.ndimage as ndimage
 
-from .blocks import blockgen1d, blockgen
+from .blocks import blockgen1d, blockgen  # noqa: F401
 from .imsurfit import FitOne
 
 
@@ -51,7 +51,8 @@ def subarray_match(shape, ref, sshape, sref=None):
         ref2 = numpy.zeros_like(ref1)
 
     offset = ref1 - ref2
-    urc1 = numpy.minimum(offset + numpy.asarray(sshape) - 1, numpy.asarray(shape) - 1)
+    urc1 = numpy.minimum(offset + numpy.asarray(sshape) -
+                         1, numpy.asarray(shape) - 1)
     blc1 = numpy.maximum(offset, 0)
     urc2 = urc1 - offset
     blc2 = blc1 - offset
@@ -66,9 +67,9 @@ def subarray_match(shape, ref, sshape, sref=None):
     s = tuple(valid_slice(b, u) for b, u in zip(blc2, urc2))
 
     if not all(f) or not all(s):
-        return (None, None)
+        return None, None
 
-    return (f, s)
+    return f, s
 
 
 def combine_shape(shapes, offsets):
@@ -79,7 +80,7 @@ def combine_shape(shapes, offsets):
     ref = offarr.min(axis=0)
     finalshape = tuple(ucorners.max(axis=0) - ref)
     offsetsp = offarr - ref
-    return (finalshape, offsetsp)
+    return finalshape, offsetsp
 
 
 def combine_shapes(shapes, refs, order='rc'):
@@ -118,7 +119,7 @@ def combine_shapes(shapes, refs, order='rc'):
     if order == 'xy':
         ref_final_0 = ref_final_0[::-1]
 
-    return (finalshape, subshapes, tuple(ref_final_0))
+    return finalshape, subshapes, tuple(ref_final_0)
 
 
 def resize_array(data, finalshape, region, window=None,
@@ -269,7 +270,6 @@ def correct_nonlinearity(data, polynomial, dtype='float32'):
 
 
 def compute_sky_advanced(data, omasks):
-    from numina.array.combine import median
     d = data[0]
     m = omasks[0]
     median_sky = numpy.median(d[m == 0])

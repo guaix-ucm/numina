@@ -20,7 +20,7 @@ def test_invalid_instrument1():
         pass
 
     drpbase = DrpBase()
-    assert drpbase.instrumentdrp_check(Something(), 'TEST1') == False
+    assert drpbase.instrumentdrp_check(Something(), 'TEST1') is False
 
 
 def test_invalid_instrument1_warning():
@@ -34,7 +34,7 @@ def test_invalid_instrument2():
 
     drpbase = DrpBase()
     res = drpbase.instrumentdrp_check(insdrp, 'TEST1')
-    assert res == False
+    assert res is False
 
 
 @pytest.mark.xfail(reason="warning seems unreliable")

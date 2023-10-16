@@ -67,7 +67,7 @@ def test_param_check():
 def test_param_choices1():
 
     value1 = 1
-    choices = [1,2,3,4]
+    choices = [1, 2, 3, 4]
     value2 = 2
 
     class RR(RecipeInput):
@@ -135,7 +135,7 @@ def test_param_as_list2():
     """Test list of tuples"""
     some = Parameter([(0, 0)], 'List of coordinates')
     result = some.convert([(3, 4), (1, 1)])
-    assert result == [[3,4], [1,1]]
+    assert result == [[3, 4], [1, 1]]
 
 
 @pytest.mark.xfail
@@ -143,11 +143,11 @@ def test_param_as_list3():
     """Test list of tuples"""
     some = Parameter([(0, 0)], 'List of coordinates')
     result = some.convert([(3, 4), (1, 1)])
-    assert result == [(3,4), (1,1)]
+    assert result == [(3, 4), (1, 1)]
 
 
 @pytest.mark.parametrize("nelem, allowed, not_allowed", [
-    ('*', [[], [1], [2,3,4]], []),
+    ('*', [[], [1], [2, 3, 4]], []),
     ('+', [[1], [2, 3, 4]], [[]]),
     (1, [[1]], [[], [3.1, 34.0, 4]])
 ])

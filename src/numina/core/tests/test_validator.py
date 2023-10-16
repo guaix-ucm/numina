@@ -109,7 +109,7 @@ def test_as_list2():
     (range_validator(minval=2, maxval=3), [2, 2.5, 3], [-4, -1, 100])
 ])
 def test_range_validator3(validator, allowed, not_allowed):
-    "Range validators"
+    """Range validators"""
 
     for val in allowed:
         assert val == validator(val)

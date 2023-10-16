@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,6 +14,7 @@ import json
 
 class RunCounter(object):
     """Run number counter"""
+
     def __init__(self, template, last=1):
         self.template = template
         self.last = last
@@ -27,6 +28,7 @@ class RunCounter(object):
 
 class PersistentRunCounter(RunCounter):
     """Persistent run number counter"""
+
     def __init__(self, template, last=1, pstore='index.json',):
 
         last = self.load(pstore, last)
@@ -65,7 +67,7 @@ class PersistentRunCounter(RunCounter):
 def extract(header, meta, path, key, selector=None, default=None):
     m = meta
     if selector is None:
-        selector = lambda x: x
+        def selector(x): return x  # noqa: E731
     try:
         for part in path:
             m = m[part]
@@ -79,7 +81,7 @@ def extract(header, meta, path, key, selector=None, default=None):
 def extractm(meta, path, selector=None):
     m = meta
     if selector is None:
-        selector = lambda x: x
+        def selector(x): return x  # noqa: E731
     for part in path:
         m = m[part]
     return selector(m)
@@ -89,8 +91,8 @@ if __name__ == '__main__':
 
     with PersistentRunCounter('r00%04d') as p:
         for i in range(10):
-            print (p.runstring())
+            print(p.runstring())
 
     with PersistentRunCounter('r00%04d') as p:
         for i in range(10):
-            print (p.runstring())
+            print(p.runstring())

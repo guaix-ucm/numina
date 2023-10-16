@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2021 Universidad Complutense de Madrid
+# Copyright 2010-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -36,7 +36,7 @@ class Node(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def __call__(self, img):
-        _args = self.obtain_tuple(img)
+        self.obtain_tuple(img)
         return self.run(img)
 
     def obtain_tuple(self, arg):
@@ -50,8 +50,9 @@ class Node(metaclass=abc.ABCMeta):
 
 class AdaptorNode(Node):
     """A :class:`Node` that runs a function."""
+
     def __init__(self, work, ninputs=1, noutputs=1):
-        '''work is a function object'''
+        """work is a function object"""
         super(AdaptorNode, self).__init__(ninputs, noutputs)
         self.work = work
 
@@ -61,6 +62,7 @@ class AdaptorNode(Node):
 
 class IdNode(Node):
     """A Node that returns its inputs."""
+
     def __init__(self):
         """Identity"""
         super(IdNode, self).__init__()
@@ -71,6 +73,7 @@ class IdNode(Node):
 
 class OutputSelector(Node):
     """A Node that returns part of the results."""
+
     def __init__(self, ninputs, indexes):
         noutputs = len(indexes)
         super(OutputSelector, self).__init__(ninputs, noutputs)

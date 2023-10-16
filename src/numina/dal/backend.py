@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -80,7 +80,7 @@ class Backend(BaseHybridDAL):
             basedir=basedir,
             components=components
         )
-        
+
         self.ob_ids = temp_ob_ids
         self.db_tables['oblocks'] = self.ob_table
         self.db_tables['requirements'] = self.req_table
@@ -117,7 +117,7 @@ class Backend(BaseHybridDAL):
     def new_result_id(self):
         newidx = self.new_id(self.db_tables['results_index'])
         return newidx
-    
+
     def new_product_id(self):
         newidx = self.new_id(self.db_tables['products_index'])
         return newidx
@@ -189,7 +189,8 @@ class Backend(BaseHybridDAL):
                 newprod = self.new_product_id()
                 _logger.debug('product_id=%d in backend', newprod)
                 internal_value = getattr(result, key)
-                ometa = prod.type.extract_db_info(internal_value, DB_PRODUCT_KEYS)
+                ometa = prod.type.extract_db_info(
+                    internal_value, DB_PRODUCT_KEYS)
                 prod_reg = {
                     'id': newprod,
                     'result_id': newix,
@@ -212,7 +213,7 @@ class Backend(BaseHybridDAL):
 
         instrument = obsres.instrument
 
-        conf = str(obsres.configuration.origin.uuid)
+        # conf = str(obsres.configuration.origin.uuid)
 
         drp = self.drps.query_by_name(instrument)
         label = drp.product_label(tipo)
@@ -267,7 +268,8 @@ class Backend(BaseHybridDAL):
                 if node_id == val['oblock_id']:
                     candidates.append(val)
 
-            s_can = sorted(candidates, key=operator.itemgetter('time_create'), reverse=True)
+            s_can = sorted(candidates, key=operator.itemgetter(
+                'time_create'), reverse=True)
             if s_can:
                 result_reg = s_can[0]
                 directory = result_reg.get('result_dir', '')
@@ -299,9 +301,7 @@ class Backend(BaseHybridDAL):
         for obs_id in self.ob_ids:
             obdict = self.ob_table[obs_id]
             enabled = obdict.get('enabled', True)
-            if ((not enabled) or
-                    obdict['mode'] in self._RESERVED_MODE_NAMES
-            ):
+            if (not enabled) or (obdict['mode'] in self._RESERVED_MODE_NAMES):
                 # ignore these OBs
                 continue
 

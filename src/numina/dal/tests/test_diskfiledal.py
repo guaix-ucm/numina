@@ -36,10 +36,10 @@ def test_check_ff(tmpdir):
     assert valid
 
     invalid = m.check(str(newdir), fname2)
-    assert invalid == False
+    assert invalid is False
 
     invalid = m.check(str(newdir), fname2)
-    assert invalid == False
+    assert invalid is False
 
 
 def test_candidates_ffg(tmpdir):

@@ -50,7 +50,7 @@ class DataManager(object):
         loaded_obs = []
         with open(obfile) as fd:
             sess = []
-            for doc in yaml.load_all(fd):
+            for doc in yaml.safe_load_all(fd):
                 enabled = doc.get('enabled', True)
                 docid = doc['id']
                 requirements = doc.get('requirements', {})
@@ -100,7 +100,8 @@ class DataManager(object):
                     for key, val in task.result.stored().items():
                         val = getattr(task.result, key)
                         if hasattr(val, 'quality_control'):
-                            _logger.info('with field %s=%s, quality=%s', key, val, val.quality_control)
+                            _logger.info('with field %s=%s, quality=%s',
+                                         key, val, val.quality_control)
 
                 result_repr = self.store_result_to(task.result)
                 # Change result structure by filename
@@ -168,7 +169,8 @@ class BaseWorkEnvironment(object):
         self.workdir = os.path.abspath(os.path.join(self.basedir, workdir))
 
         self.resultsdir_rel = resultsdir
-        self.resultsdir = os.path.abspath(os.path.join(self.basedir, resultsdir))
+        self.resultsdir = os.path.abspath(
+            os.path.join(self.basedir, resultsdir))
 
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
@@ -193,12 +195,14 @@ class BaseWorkEnvironment(object):
         make_sure_file_exists(self.index_file)
 
         # make_sure_path_doesnot_exist(self.resultsdir)
-        _logger.debug('check resultsdir to store results %r', self.resultsdir_rel)
+        _logger.debug('check resultsdir to store results %r',
+                      self.resultsdir_rel)
         make_sure_path_exists(self.resultsdir)
 
     def copyfiles(self, obsres, reqs):
 
-        _logger.info('copying files from %r to %r', self.datadir_rel, self.workdir_rel)
+        _logger.info('copying files from %r to %r',
+                     self.datadir_rel, self.workdir_rel)
 
         if obsres:
             self.copyfiles_stage1(obsres)
@@ -215,7 +219,8 @@ class BaseWorkEnvironment(object):
         sources = []
         for f in obsres.images:
             if not os.path.isabs(f.filename):
-                complete = os.path.abspath(os.path.join(self.datadir, f.filename))
+                complete = os.path.abspath(
+                    os.path.join(self.datadir, f.filename))
             else:
                 complete = f.filename
             head, tail = os.path.split(complete)
@@ -247,7 +252,7 @@ class BaseWorkEnvironment(object):
         return obsres
 
     def _calc_install_if_needed(self, action):
-        if action not in ['copy', 'link']: # , 'symlink', 'hardlink']:
+        if action not in ['copy', 'link']:  # , 'symlink', 'hardlink']:
             raise ValueError(f"{action} action is not allowed")
 
         _logger.debug(f'installing files with "{action}"')
@@ -365,7 +370,8 @@ class WorkEnvironment(BaseWorkEnvironment):
 
         if datadir is None:
             datadir = os.path.join(basedir, 'data')
-        super(WorkEnvironment, self).__init__(datadir, basedir, workdir, resultsdir)
+        super(WorkEnvironment, self).__init__(
+            datadir, basedir, workdir, resultsdir)
 
 
 def compute_md5sum_file(filename):
@@ -395,7 +401,7 @@ def make_sure_path_exists(path):
 
 def make_sure_file_exists(path):
     try:
-        with open(path, 'a') as fd:
+        with open(path, 'a'):
             pass
     except (OSError, IOError) as exception:
         if exception.errno != errno.EEXIST:
@@ -454,7 +460,8 @@ def create_datamanager(reqfile, basedir, datadir,
     _logger.info('control format version %d', control_format)
 
     if control_format == 1:
-        _backend = process_format_version_1(basedir, loaded_data, loaded_data_extra, profile_path_extra)
+        _backend = process_format_version_1(
+            basedir, loaded_data, loaded_data_extra, profile_path_extra)
         datamanager = DataManager(basedir, datadir, _backend)
         datamanager.workdir_tmpl = "obsid{obsid}_work"
         datamanager.resultdir_tmpl = "obsid{obsid}_results"
@@ -467,7 +474,6 @@ def create_datamanager(reqfile, basedir, datadir,
                                             loaded_data_extra,
                                             profile_path_extra,
                                             filename=pname)
-
 
         datamanager = DataManager(basedir, datadir, _backend)
     else:
@@ -499,9 +505,11 @@ def load_observations(obfiles, is_session=False):
                     sess.append(dict(id=docid, enabled=enabled,
                                      requirements=requirements))
                     if enabled:
-                        _logger.debug("load observation result with id %s", docid)
+                        _logger.debug(
+                            "load observation result with id %s", docid)
                     else:
-                        _logger.debug("skip observation result with id %s", docid)
+                        _logger.debug(
+                            "skip observation result with id %s", docid)
 
                     loaded_obs.append(doc)
 
@@ -516,4 +524,4 @@ def parse_as_yaml(strdict):
         interm = f"{key}: {val}, {interm}"
     fin = '{%s}' % interm
 
-    return yaml.load(fin)
+    return yaml.safe_load(fin)

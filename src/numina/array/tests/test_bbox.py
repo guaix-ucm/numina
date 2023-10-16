@@ -156,12 +156,12 @@ def test_pixin4():
 
 
 def test_pixin5():
-    bb = bbox.PixelInterval((2,2), (1, 1))
+    bb = bbox.PixelInterval((2, 2), (1, 1))
     assert bb.shape == (0, 0)
     assert bb.slice == (slice(2, 2, None), slice(1, 1, None))
 
     import numpy as np
-    a =  np.zeros((10, 10))
+    a = np.zeros((10, 10))
     assert (a[bb.slice].shape) == bb.shape
 
 
@@ -214,7 +214,7 @@ def test_pixin10():
     bb = bbox.PixelInterval((2, 80), (1, 3))
     assert bb.ndim == 2
 
-    bb = bbox.PixelInterval((2, 80), (1, 1), (4,4))
+    bb = bbox.PixelInterval((2, 80), (1, 1), (4, 4))
     assert bb.ndim == 3
 
     bb = bbox.PixelInterval()

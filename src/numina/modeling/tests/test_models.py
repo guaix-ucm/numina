@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2021 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,7 @@
 #
 
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
+from numpy.testing import assert_allclose
 
 from ... import modeling
 
