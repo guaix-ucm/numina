@@ -1,6 +1,6 @@
 name: Build wheels and upload to PyPI
-on:
-  workflow_dispatch
+
+on: workflow_dispatch
 
 jobs:
   build_sdist:
