@@ -1,5 +1,5 @@
-# Build package wheels - upload to PyPI
-name: Build wheels - upload to PyPI
+# Build package wheels and upload to PyPI
+name: Build wheels and upload to PyPI
 
 on: 
   workflow_dispatch
