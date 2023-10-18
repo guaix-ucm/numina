@@ -35,8 +35,8 @@ def apply_integer_offsets(image2d, offx, offy):
     """
 
     # protections
-    if not isinstance(offx, int) or isinstance(offy, int):
-        raise ValueError('Invalid non-integer offsets')
+    if not isinstance(offx, int) or not isinstance(offy, int):
+        raise ValueError(f'Invalid non-integer offsets: {offx=} of type {type(offx)}, {offy=} of type {type(offy)}')
 
     # image dimensions
     naxis2, naxis1 = image2d.shape
