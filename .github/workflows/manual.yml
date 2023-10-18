@@ -1,4 +1,5 @@
-name: Build wheels and upload to Test PyPI
+# Build package wheels - upload to Test PyPI
+name: Build wheels - upload to Test PyPI
 on:
   workflow_dispatch
 
