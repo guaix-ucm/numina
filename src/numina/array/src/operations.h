@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2023 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -295,7 +295,7 @@ inline std::pair<Iterator, Iterator> reject_min_max(Iterator begin,
 // if the first component of the first is less than the first component
 // of the second std::pair
 template<typename T, typename U>
-struct LessPair1st : public std::binary_function<T,U,bool> {
+struct LessPair1st {
   bool operator()(const T& a, const U& b) const {
     return a.first < b.first;
   }
@@ -305,7 +305,7 @@ struct LessPair1st : public std::binary_function<T,U,bool> {
 // is inside the range (low, high)
 // equivalent to return (low < x.first) && (high > x.first);
 template<typename T>
-class RangePair1st : public std::unary_function<T,bool> {
+class RangePair1st {
 public:
   RangePair1st(double low, double high) : m_low(low), m_high(high)
   {}
