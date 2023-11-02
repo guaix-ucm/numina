@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2023 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include "nu_combine_defs.h"
-#include "functional.h"
 #include "operations.h"
 #include "zip_iterator.h"
 
