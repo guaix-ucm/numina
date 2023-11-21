@@ -109,7 +109,7 @@ def main(args=None):
     )
 
     # Init subcommands
-    cmds = ['clishowins', 'clishowom', 'clishowrecip',
+    cmds = ['clidentify','clishowins', 'clishowom', 'clishowrecip',
             'clirun', 'clirunrec', 'cliverify']
     for cmd in cmds:
         cmd_mod = import_module(f'.{cmd}', 'numina.user')
