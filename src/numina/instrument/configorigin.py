@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2021 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,15 +11,8 @@
 """Description of the origin of different configurations"""
 
 
-import dateutil
+from dateutil.parser import isoparse
 import uuid as uuidmod
-
-# Try to use isoparse ISO-8601, if not available
-# use generic parser
-try:
-    isoparse = dateutil.parser.isoparse
-except AttributeError:
-    isoparse = dateutil.parser.parse
 
 
 class UndefinedOrigin(object):

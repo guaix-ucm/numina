@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,13 +12,6 @@
 import datetime
 
 import dateutil.parser
-
-# Try to use isoparse ISO-8601, if not available
-# use generic parser
-try:
-    isoparse = dateutil.parser.isoparse
-except AttributeError:
-    isoparse = dateutil.parser.parse
 
 
 def convert_date(value):
@@ -36,7 +29,7 @@ def convert_date(value):
     if isinstance(value, datetime.datetime):
         return value
     if value:
-        return isoparse(value)
+        return dateutil.parser.isoparse(value)
     else:
         return None
 
