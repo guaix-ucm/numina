@@ -20,9 +20,6 @@ _logger = logging.getLogger(__name__)
 
 
 def register(subparsers, config):
-
-    task_control_base = config.get('run', 'task_control')
-
     parser_verify = subparsers.add_parser(
         'verify',
         help='verify a observation result'
@@ -93,11 +90,6 @@ def register(subparsers, config):
     parser_verify.add_argument(
         '--validate', action="store_true",
         help='validate inputs and results of recipes'
-    )
-    parser_verify.add_argument(
-        'obsresult', nargs='+',
-        action="store_true",
-        help='validate files in OBs'
     )
     parser_verify.add_argument(
         'files', nargs='+',
