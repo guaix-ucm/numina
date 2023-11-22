@@ -25,17 +25,16 @@ class DrpSystem(DrpGeneric):
 
     def load(self):
         """Load all available DRPs in 'entry_point'."""
-        print("LOAD")
         for drpins in self.iload(self.entry):
             self.drps[drpins.name] = drpins
 
         return self
 
     @classmethod
-    def load_drp(self, name, entry_point='numina.pipeline.1'):
+    def load_drp(cls, name, entry_point='numina.pipeline.1'):
         """Load all available DRPs in 'entry_point'."""
 
-        for drpins in self.iload(entry_point):
+        for drpins in cls.iload(entry_point):
             if drpins.name == name:
                 return drpins
         else:
