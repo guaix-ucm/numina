@@ -9,6 +9,8 @@
 
 """Visualization utilities."""
 
+import warnings
+
 from astropy.visualization import BaseInterval
 import numpy as np
 
@@ -33,6 +35,11 @@ class ZScaleInterval(BaseInterval):
     """
 
     def __init__(self, contrast=0.25):
+        warnings.warn(
+            'Use astropy.visualization.ZScaleInterval',
+            DeprecationWarning, stacklevel=2
+        )
+
         self.contrast = contrast
 
     def get_limits(self, values):

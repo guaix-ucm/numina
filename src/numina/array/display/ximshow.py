@@ -11,6 +11,7 @@ import argparse
 
 import matplotlib
 from astropy.io import fits
+from astropy.visualization import ZScaleInterval
 import numpy as np
 import re
 
@@ -20,8 +21,6 @@ from .fileinfo import list_fileinfo_from_txt
 from .fileinfo import check_extnum
 from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
-
-from numina.visualization import ZScaleInterval
 
 
 GLOBAL_ASPECT = 'auto'
