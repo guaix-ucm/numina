@@ -99,8 +99,7 @@ def main(args=None):
 
     # Due to a problem with argparse
     # this command blocks the defaults of the subparsers
-    # in argparse of Pyhton < 2.7.9
-    # https://bugs.python.org/issue9351
+    # https://github.com/python/cpython/issues/53597
     # parser.set_defaults(command=None)
 
     subparsers = parser.add_subparsers(
