@@ -18,12 +18,10 @@ import logging.config
 import os
 import sys
 
-import pkg_resources
 import yaml
 from backports.entry_points_selectable import entry_points
 
 from numina import __version__
-
 from .xdgdirs import xdg_config_home
 from .logconf import LOGCONF
 
@@ -108,7 +106,7 @@ def main(args=None):
     )
 
     # Init subcommands
-    cmds = ['clidentify','clishowins', 'clishowom', 'clishowrecip',
+    cmds = ['clidentify', 'clishowins', 'clishowom', 'clishowrecip',
             'clirun', 'clirunrec']
     for cmd in cmds:
         cmd_mod = import_module(f'.{cmd}', 'numina.user')
@@ -138,7 +136,7 @@ def main(args=None):
             loggingf = config.get('numina', 'logging')
 
         with open(loggingf) as logfile:
-            logconf = yaml.load(logfile)
+            logconf = yaml.safe_load(logfile)
             logging.config.dictConfig(logconf)
     except configparser.Error:
         logging.config.dictConfig(LOGCONF)

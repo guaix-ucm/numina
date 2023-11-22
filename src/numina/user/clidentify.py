@@ -11,8 +11,6 @@
 
 import logging
 
-from numina.core.verify import check_image
-
 
 _logger = logging.getLogger(__name__)
 
