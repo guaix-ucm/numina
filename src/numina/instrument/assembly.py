@@ -161,7 +161,7 @@ def load_paths_store(pkg_paths=None, file_paths=None):
 
 
 def find_instrument(comp_store, name, date):
-    """"
+    """
     Find instrument in the component collection
 
     Raises
@@ -173,7 +173,7 @@ def find_instrument(comp_store, name, date):
 
 
 def find_element(comp_store, etype, keyval, date, by_key='name'):
-    """"
+    """
     Find component in the component collection
 
     Raises
@@ -202,7 +202,7 @@ def assembly_instrument(comp_store, keyval, date, by_key='name'):
     """
     Assembly an instrument configuration object.
 
-    Create a instrument object from a store of configurations using
+    Create an instrument object from a store of configurations using
     either the UUID of the configuration or the date of the configuration
 
     Parameters
