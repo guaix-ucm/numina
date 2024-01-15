@@ -29,7 +29,7 @@ def register(subparsers, config):
     return parser_identify
 
 
-def identify(args, extra_args):
+def identify(args, extra_args, config):
 
     # This function loads the recipes
     import numina.drps

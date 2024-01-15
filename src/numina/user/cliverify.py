@@ -99,12 +99,13 @@ def register(subparsers, config):
     return parser_verify
 
 
-def verify(args, extra_args):
+def verify(args, extra_args, config):
 
     # Loading observation result if exists
     sessions, loaded_obs = load_observations(args.obsresult, args.session)
 
-    datamanager = create_datamanager(args.reqs, args.basedir, args.datadir, extra_args.extra_control)
+    datamanager = create_datamanager(config, args.reqs, args.basedir, args.datadir,
+                                     extra_args.extra_control)
     datamanager.backend.add_obs(loaded_obs)
 
     # Start processing
@@ -123,7 +124,7 @@ def verify(args, extra_args):
         # verify as oblocks
         # Loading observation result if exists
         sessions, loaded_obs = load_observations(args.files, args.session)
-        datamanager = create_datamanager(None, args.basedir, args.datadir)
+        datamanager = create_datamanager(config, None, args.basedir, args.datadir)
         datamanager.backend.add_obs(loaded_obs)
 
         # Start processing
@@ -140,7 +141,7 @@ def verify(args, extra_args):
             )
     else:
         # This function loads the recipes
-        datamanager = create_datamanager(None, args.basedir, args.datadir)
+        datamanager = create_datamanager(config, None, args.basedir, args.datadir)
         for file in args.files:
             _logger.info(f'checking {file}')
             try:

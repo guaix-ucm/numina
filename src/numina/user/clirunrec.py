@@ -62,5 +62,5 @@ def register(subparsers, config):
     return parser_run_recipe
 
 
-def mode_run_recipe(args, extra_args):
+def mode_run_recipe(args, extra_args, config):
     mode_run_common(args, extra_args, mode='rec')

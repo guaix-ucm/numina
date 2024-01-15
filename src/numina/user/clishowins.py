@@ -42,7 +42,7 @@ def register(subparsers, config):
     return parser_show_ins
 
 
-def show_instruments(args, extra_args):
+def show_instruments(args, extra_args, config):
 
     sys_drps = numina.drps.get_system_drps()
     prof_store = asbl.load_panoply_store(sys_drps, args.profilepath)

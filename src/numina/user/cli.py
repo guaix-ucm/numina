@@ -34,10 +34,16 @@ def main(args=None):
     # Configuration args from a text file
     config = configparser.ConfigParser()
 
-    # Building programatically
-    config.add_section('numina')
-    config.set('numina', 'format', 'yaml')
-
+    baseconf = {
+        'numina': {
+            'format': 'yaml'
+        },
+        'tool.run': {
+            'workdir_tmpl': "obsid{obsid}_work",
+            'resultdir_tmpl': "obsid{obsid}_results",
+        }
+    }
+    config.read_dict(baseconf)
     # Custom values
     config.read([
         os.path.join(xdg_config_home, 'numina/numina.cfg'),
@@ -148,8 +154,9 @@ def main(args=None):
 
     _logger.info(f'Numina simple recipe runner version {__version__}')
     command = getattr(args, 'command', None)
+
     if command is not None:
-        args.command(args, extra_args)
+        args.command(args, extra_args, config)
 
 
 def process_unknown_arguments(unknowns):

@@ -16,25 +16,23 @@ from .clirundal import mode_run_common
 
 def complete_config(config):
     """Complete config with default values"""
-
-    if not config.has_section('run'):
-        config.add_section('run')
+    secname = 'tool.run'
+    if not config.has_section(secname):
+        config.add_section(secname)
 
     values = {
         'basedir': os.getcwd(),
     }
 
     for k, v in values.items():
-        if not config.has_option('run', k):
-            config.set('run', k, v)
+        if not config.has_option(secname, k):
+            config.set(secname, k, v)
 
     return config
 
 
 def register(subparsers, config):
-
     complete_config(config)
-
     parser_run = subparsers.add_parser(
         'run',
         help='process a observation result'
@@ -118,5 +116,5 @@ def register(subparsers, config):
     return parser_run
 
 
-def mode_run_obsmode(args, extra_args):
-    mode_run_common(args, extra_args, mode='obs')
+def mode_run_obsmode(args, extra_args, config):
+    mode_run_common(args, extra_args, config, mode='obs')

@@ -43,7 +43,7 @@ def register(subparsers, config):
     return parser_show_rec
 
 
-def show_recipes(args, extra_args):
+def show_recipes(args, extra_args, config):
 
     drpsys = numina.drps.get_system_drps()
 

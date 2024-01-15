@@ -105,7 +105,8 @@ def datamanager_remote(tmp_path_factory, request):
         os.remove(downloaded.name)
 
     # Insert OBS in the control file....
-    dm = create_datamanager(reqfile, basedir, datadir)
+    config = {}
+    dm = create_datamanager(config, reqfile, basedir, datadir)
 
     # This is not really needed...
     # If everything is in the file already

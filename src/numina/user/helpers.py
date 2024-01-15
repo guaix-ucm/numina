@@ -439,9 +439,12 @@ def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
     return backend
 
 
-def create_datamanager(reqfile, basedir, datadir,
+def create_datamanager(config, reqfile, basedir, datadir,
                        extra_control=None, profile_path_extra=None,
                        persist=True):
+
+    section = config['tools.run']
+
     if reqfile:
         _logger.info('reading control from %s', reqfile)
         with open(reqfile, 'r') as fd:
@@ -463,8 +466,8 @@ def create_datamanager(reqfile, basedir, datadir,
         _backend = process_format_version_1(
             basedir, loaded_data, loaded_data_extra, profile_path_extra)
         datamanager = DataManager(basedir, datadir, _backend)
-        datamanager.workdir_tmpl = "obsid{obsid}_work"
-        datamanager.resultdir_tmpl = "obsid{obsid}_results"
+        datamanager.workdir_tmpl = section['workdir_tmpl']
+        datamanager.resultdir_tmpl = section['resultdir_tmpl']
     elif control_format == 2:
         if persist:
             pname = reqfile

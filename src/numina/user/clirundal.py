@@ -18,24 +18,24 @@ from .helpers import create_datamanager, load_observations
 _logger = logging.getLogger(__name__)
 
 
-def mode_run_common(args, extra_args, mode):
+def mode_run_common(args, extra_args, config, mode):
     # FIXME: implement 'recipe' run mode
     if mode == 'rec':
         print('Mode not implemented yet')
         return 1
     elif mode == 'obs':
-        return mode_run_common_obs(args, extra_args)
+        return mode_run_common_obs(args, extra_args, config)
     else:
         raise ValueError(f'Not valid run mode {mode}')
 
 
-def mode_run_common_obs(args, extra_args):
+def mode_run_common_obs(args, extra_args, config):
     """Observing mode processing mode of numina."""
 
     # Loading observation result if exists
     sessions, loaded_obs = load_observations(args.obsresult, args.session)
 
-    datamanager = create_datamanager(
+    datamanager = create_datamanager(config,
         args.reqs, args.basedir, args.datadir, extra_args.extra_control)
     datamanager.backend.add_obs(loaded_obs)
 
