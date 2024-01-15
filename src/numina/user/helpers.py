@@ -29,7 +29,7 @@ from numina.util.context import working_directory
 _logger = logging.getLogger(__name__)
 
 
-class DataManager(object):
+class DataManager:
     def __init__(self, basedir, datadir, backend):
         self.basedir = basedir
         self.datadir = datadir
@@ -39,8 +39,8 @@ class DataManager(object):
         self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
         self.serial_format = 'json'
 
-        self.result_file = 'result.json'
-        self.task_file = 'task.json'
+        self.resultfile_tmpl = 'result.json'
+        self.taskfile_tmpl = 'task.json'
 
     def insert_obs(self, loaded_obs):
         self.backend.add_obs(loaded_obs)
@@ -87,6 +87,14 @@ class DataManager(object):
         result_dir_rel = task.request_runinfo['results_dir']
         result_dir = os.path.join(self.basedir, result_dir_rel)
 
+        values = dict(
+            obsid=task.request_params['oblock_id'],
+            taskid=task.id
+        )
+
+        result_file = self.resultfile_tmpl.format(**values)
+        task_file = self.taskfile_tmpl.format(**values)
+
         with working_directory(result_dir):
 
             task_repr = task.__dict__.copy()
@@ -105,19 +113,19 @@ class DataManager(object):
 
                 result_repr = self.store_result_to(task.result)
                 # Change result structure by filename
-                task_repr['result'] = self.result_file
+                task_repr['result'] = result_file
 
-                with open(self.result_file, 'w+') as fd:
+                with open(result_file, 'w+') as fd:
                     self.serializer(result_repr, fd)
 
             tid = task.id
             _logger.info('storing task id=%s', tid)
-            with open(self.task_file, 'w+') as fd:
+            with open(task_file, 'w+') as fd:
                 self.serializer(task_repr, fd)
 
         self.backend.update_task(task)
         if task.result is not None:
-            self.backend.update_result(task, result_repr, self.result_file)
+            self.backend.update_result(task, result_repr, result_file)
 
     def create_workenv(self, task):
 
@@ -129,7 +137,7 @@ class DataManager(object):
         work_dir = self.workdir_tmpl.format(**values)
         result_dir = self.resultdir_tmpl.format(**values)
 
-        workenv = BaseWorkEnvironment(
+        workenv = WorkEnvironment(
             self.datadir,
             self.basedir,
             work_dir,
@@ -139,7 +147,7 @@ class DataManager(object):
         return workenv
 
 
-class ProcessingTask(object):
+class ProcessingTask:
     def __init__(self):
 
         self.result = None
@@ -159,7 +167,7 @@ class ProcessingTask(object):
         return request_runinfo
 
 
-class BaseWorkEnvironment(object):
+class WorkEnvironment:
     def __init__(self, datadir, basedir, workdir,
                  resultsdir):
 
@@ -359,21 +367,6 @@ class BaseWorkEnvironment(object):
         return obsres
 
 
-class WorkEnvironment(BaseWorkEnvironment):
-    def __init__(self, obsid, basedir, workdir=None,
-                 resultsdir=None, datadir=None):
-        if workdir is None:
-            workdir = os.path.join(basedir, f'obsid{obsid}_work')
-
-        if resultsdir is None:
-            resultsdir = os.path.join(basedir, f'obsid{obsid}_results')
-
-        if datadir is None:
-            datadir = os.path.join(basedir, 'data')
-        super(WorkEnvironment, self).__init__(
-            datadir, basedir, workdir, resultsdir)
-
-
 def compute_md5sum_file(filename):
     import hashlib
     md5 = hashlib.md5()
@@ -439,11 +432,13 @@ def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
     return backend
 
 
-def create_datamanager(config, reqfile, basedir, datadir,
+def create_datamanager(config, reqfile,
                        extra_control=None, profile_path_extra=None,
                        persist=True):
 
-    section = config['tools.run']
+    section = config['tool.run']
+    basedir = section['basedir']
+    datadir = section['datadir']
 
     if reqfile:
         _logger.info('reading control from %s', reqfile)
@@ -468,6 +463,8 @@ def create_datamanager(config, reqfile, basedir, datadir,
         datamanager = DataManager(basedir, datadir, _backend)
         datamanager.workdir_tmpl = section['workdir_tmpl']
         datamanager.resultdir_tmpl = section['resultdir_tmpl']
+        datamanager.resultfile_tmpl = section['resultfile_tmpl']
+        datamanager.taskfile_tmpl = section['taskfile_tmpl']
     elif control_format == 2:
         if persist:
             pname = reqfile

@@ -41,6 +41,11 @@ def main(args=None):
         'tool.run': {
             'workdir_tmpl': "obsid{obsid}_work",
             'resultdir_tmpl': "obsid{obsid}_results",
+            'resultfile_tmpl': 'result.json',
+            'taskfile_tmpl': 'task.json',
+            'datadir': 'data',
+            'copy_files': False,
+            'validate': False,
         }
     }
     config.read_dict(baseconf)

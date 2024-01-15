@@ -51,12 +51,10 @@ def register(subparsers, config):
     )
     parser_verify.add_argument(
         '--basedir', action="store", dest="basedir",
-        default=os.getcwd(),
         help='path to create the following directories'
     )
     parser_verify.add_argument(
         '--datadir', action="store", dest="datadir",
-        default='data',
         help='path to directory containing pristine data'
     )
     parser_verify.add_argument(
@@ -72,11 +70,11 @@ def register(subparsers, config):
         default=False, help='cleanup workdir on exit [disabled]'
     )
     parser_verify.add_argument(
-        '--not-copy-files', action="store_false", dest="copy_files",
+        '--not-copy-files', action="store_const", dest="copy_files", const=False,
         help='do not copy observation result and requirement files'
     )
     parser_verify.add_argument(
-        '--link-files', action="store_false", dest="copy_files",
+        '--link-files', action="store_const", dest="copy_files", const=False,
         help='do not copy observation result and requirement files'
     )
     parser_verify.add_argument(
@@ -88,7 +86,7 @@ def register(subparsers, config):
         help='use the obresult file as a session file'
     )
     parser_verify.add_argument(
-        '--validate', action="store_true",
+        '--validate', action="store_const", const=True,
         help='validate inputs and results of recipes'
     )
     parser_verify.add_argument(
@@ -104,8 +102,13 @@ def verify(args, extra_args, config):
     # Loading observation result if exists
     sessions, loaded_obs = load_observations(args.obsresult, args.session)
 
-    datamanager = create_datamanager(config, args.reqs, args.basedir, args.datadir,
-                                     extra_args.extra_control)
+    # Override like this
+    if args.basedir:
+        config['tool.run']['basedir'] = args.basedir
+    if args.datadir:
+        config['tool.run']['datadir'] = args.datadir
+
+    datamanager = create_datamanager(config, args.reqs, extra_args.extra_control)
     datamanager.backend.add_obs(loaded_obs)
 
     # Start processing

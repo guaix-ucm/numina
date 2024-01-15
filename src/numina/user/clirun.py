@@ -64,12 +64,10 @@ def register(subparsers, config):
     )
     parser_run.add_argument(
         '--basedir', action="store", dest="basedir",
-        default=os.getcwd(),
         help='path to create the following directories'
     )
     parser_run.add_argument(
         '--datadir', action="store", dest="datadir",
-        default='data',
         help='path to directory containing pristine data'
     )
     parser_run.add_argument(
@@ -85,11 +83,11 @@ def register(subparsers, config):
         default=False, help='cleanup workdir on exit [disabled]'
     )
     parser_run.add_argument(
-        '--not-copy-files', action="store_false", dest="copy_files",
+        '--not-copy-files', action="store_const", dest="copy_files", const=False,
         help='do not copy observation result and requirement files'
     )
     parser_run.add_argument(
-        '--link-files', action="store_false", dest="copy_files",
+        '--link-files', action="store_const", dest="copy_files", const=False,
         help='do not copy observation result and requirement files'
     )
     parser_run.add_argument(
@@ -105,7 +103,7 @@ def register(subparsers, config):
         help='use the obresult file as a session file'
     )
     parser_run.add_argument(
-        '--validate', action="store_true",
+        '--validate', action="store_const", const=True,
         help='validate inputs and results of recipes'
     )
     parser_run.add_argument(

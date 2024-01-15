@@ -35,8 +35,17 @@ def mode_run_common_obs(args, extra_args, config):
     # Loading observation result if exists
     sessions, loaded_obs = load_observations(args.obsresult, args.session)
 
-    datamanager = create_datamanager(config,
-        args.reqs, args.basedir, args.datadir, extra_args.extra_control)
+    # Override like this
+    if args.basedir:
+        config['tool.run']['basedir'] = args.basedir
+    if args.datadir:
+        config['tool.run']['datadir'] = args.datadir
+    if args.copy_files:
+        config['tool.run']['copy_files'] = args.copy_files
+    if args.validate:
+        config['tool.run']['validate'] = args.validate
+
+    datamanager = create_datamanager(config, args.reqs, extra_args.extra_control)
     datamanager.backend.add_obs(loaded_obs)
 
     # Start processing
@@ -46,11 +55,12 @@ def mode_run_common_obs(args, extra_args, config):
             if job['enabled'] or job['id'] in args.enable:
                 jobs.append(job)
 
+    copy_files = config['tool.run']['copy_files']
+    validate = config['tool.run']['validate']
     for job in jobs:
-
         run_reduce(
-            datamanager, job['id'], copy_files=args.copy_files,
-            validate_inputs=args.validate, validate_results=args.validate
+            datamanager, job['id'], copy_files=copy_files,
+            validate_inputs=validate, validate_results=validate
         )
 
     if args.dump_control:
