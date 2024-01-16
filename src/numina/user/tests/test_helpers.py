@@ -1,7 +1,7 @@
 
 import os.path
 
-from ..helpers import BaseWorkEnvironment
+from ..helpers import WorkEnvironment
 
 
 def test_work1(tmpdir):
@@ -11,7 +11,7 @@ def test_work1(tmpdir):
     data = 'data'
     workdir = 'a'
     resultsdir = 'b'
-    work = BaseWorkEnvironment(data, basedir, workdir, resultsdir)
+    work = WorkEnvironment(data, basedir, workdir, resultsdir)
     work.sane_work()
 
     assert work.workdir == os.path.join(basedir, workdir)

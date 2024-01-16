@@ -50,10 +50,11 @@ def main(args=None):
     }
     config.read_dict(baseconf)
     # Custom values
-    config.read([
+    read_files = config.read([
         os.path.join(xdg_config_home, 'numina/numina.cfg'),
         '.numina.cfg'
     ])
+    _logger.debug(f'Reading config files {read_files}')
 
     parser0 = argparse.ArgumentParser(
         description='Command line interface of Numina',
@@ -92,6 +93,12 @@ def main(args=None):
         '-l', action="store", dest="logging", metavar="FILE",
         help="FILE with logging configuration"
     )
+
+    parser.add_argument(
+        '-c', action="store", dest="config", metavar="FILE",
+        help="FILE with configuration"
+    )
+
     parser.add_argument(
         '-d', '--debug',
         action="store_true",
@@ -139,6 +146,10 @@ def main(args=None):
     if args.standalone:
         import numina.ext.gtc
         numina.ext.gtc.ignore_gtc_check()
+
+    # Config file from command line
+    if args.config is not None:
+        config.read_file(open(args.config))
 
     try:
         if args.logging is not None:
