@@ -18,8 +18,10 @@ import logging.config
 import os
 import sys
 
-import yaml
 from backports.entry_points_selectable import entry_points
+import importlib_resources
+import yaml
+
 
 from numina import __version__
 from .xdgdirs import xdg_config_home
@@ -33,23 +35,11 @@ def main(args=None):
 
     # Configuration args from a text file
     config = configparser.ConfigParser()
+    # Load base config here
+    basecfg = importlib_resources.files().joinpath('numina.cfg')
+    config.read_file(basecfg.open())
 
-    baseconf = {
-        'numina': {
-            'format': 'yaml'
-        },
-        'tool.run': {
-            'workdir_tmpl': "obsid{obsid}_work",
-            'resultdir_tmpl': "obsid{obsid}_results",
-            'resultfile_tmpl': 'result.json',
-            'taskfile_tmpl': 'task.json',
-            'datadir': 'data',
-            'copy_files': False,
-            'validate': False,
-        }
-    }
-    config.read_dict(baseconf)
-    # Custom values
+    # Extend with custom values
     read_files = config.read([
         os.path.join(xdg_config_home, 'numina/numina.cfg'),
         '.numina.cfg'
