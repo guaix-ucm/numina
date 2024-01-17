@@ -28,14 +28,13 @@ def basedictdal():
     }
 
     prod_table = {
-        'TEST1': [
-            {'id': 1, 'type': 'DemoType1', 'tags': {},
-                'content': {'demo1': 1}, 'ob': 2},
-            {'id': 2, 'type': 'DemoType2', 'tags': {
-                'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
-            {'id': 3, 'type': 'DemoType2', 'tags': {
-                'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
-        ]
+        'TEST1': {
+            '225fcaf2-7f6f-49cc-972a-70fd0aee8e96': [
+                {'id': 1, 'type': 'DemoType1', 'tags': {}, 'content': {'demo1': 1}, 'ob': 2},
+                {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
+                {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
+            ]
+        }
     }
 
     base = BaseDictDAL(test_drps, ob_table, prod_table, req_table={})
@@ -156,15 +155,16 @@ def test_search_prod_obsid(basedictdal):
 
 def test_search_prod_req_tags1(basedictdal):
 
-    class DemoType1(object):
+    class DemoType1:
         def name(self):
             return "DemoType1"
 
     req = numina.core.Requirement(DemoType1, description='Demo1 Requirement')
     ins = 'TEST1'
+    version = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
     tags = {}
     pipeline = 'default'
-    res = basedictdal.search_prod_req_tags(req, ins, tags, pipeline)
+    res = basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
     assert isinstance(res, StoredProduct)
     assert res.id == 1
     assert res.content == {'demo1': 1}
@@ -174,15 +174,16 @@ def test_search_prod_req_tags1(basedictdal):
 
 def test_search_prod_req_tags2(basedictdal):
 
-    class DemoType2(object):
+    class DemoType2:
         def name(self):
             return "DemoType2"
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
+    version = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
     tags = {'field2': 'A'}
     pipeline = 'default'
-    res = basedictdal.search_prod_req_tags(req, ins, tags, pipeline)
+    res = basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
     assert isinstance(res, StoredProduct)
     assert res.id == 2
     assert res.content == {'demo2': 2}
@@ -192,28 +193,30 @@ def test_search_prod_req_tags2(basedictdal):
 
 def test_search_prod_req_tags3(basedictdal):
 
-    class DemoType2(object):
+    class DemoType2:
         def name(self):
             return "DemoType2"
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
+    version = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
     tags = {'field2': 'C'}
     pipeline = 'default'
     with pytest.raises(NoResultFound):
-        basedictdal.search_prod_req_tags(req, ins, tags, pipeline)
+        basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
 
 
 def test_search_prod_req_tags4(basedictdal):
-    class DemoType2(object):
+    class DemoType2:
         def name(self):
             return "DemoType2"
 
     req = numina.core.Requirement(DemoType2, description='Demo2 Requirement')
     ins = 'TEST1'
+    version = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
     tags = {}
     pipeline = 'default'
-    res = basedictdal.search_prod_req_tags(req, ins, tags, pipeline)
+    res = basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
     assert isinstance(res, StoredProduct)
     assert res.id == 2
     assert res.content == {'demo2': 2}

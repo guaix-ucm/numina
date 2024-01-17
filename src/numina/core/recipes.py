@@ -203,7 +203,6 @@ class BaseRecipe(metaclass=RecipeType):
 
     def build_recipe_input(self, ob, dal):
         """Build a RecipeInput object."""
-
         result = {}
         # We have to decide if the ob input
         # is a plain description (ObservingBlock)

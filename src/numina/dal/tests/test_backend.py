@@ -63,14 +63,13 @@ def backend(tmpdir):
     ]
 
     prod_table = {
-        'TEST1': [
-            {'id': 1, 'type': 'DemoType1', 'tags': {},
-             'content': {'demo1': 1}, 'ob': 2},
-            {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'},
-             'content': {'demo2': 2}, 'ob': 14},
-            {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'},
-             'content': {'demo2': 3}, 'ob': 15}
-        ]
+        'TEST1': {
+            '225fcaf2-7f6f-49cc-972a-70fd0aee8e96': [
+                {'id': 1, 'type': 'DemoType1', 'tags': {}, 'content': {'demo1': 1}, 'ob': 2},
+                {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
+                {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
+            ]
+        }
     }
     result_name = 'result.json'
     results_table = {

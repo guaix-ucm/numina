@@ -56,25 +56,24 @@ class BaseDictDAL(AbsDrpDAL):
 
     def search_prod_obsid(self, ins, obsid, pipeline):
         """Returns the first coincidence..."""
-        ins_prod = self.prod_table.get(ins, [])
-
-        # search results of these OBs
-        for prod in ins_prod:
-            if prod['ob'] == obsid:
-                # We have found the result, no more checks
-                return StoredProduct(**prod)
+        ins_prod = self.prod_table.get(ins, {})
+        for profile, prof_prod in ins_prod.items():
+            for prod in prof_prod:
+                if prod['ob'] == obsid:
+                    # We have found the result, no more checks
+                    return StoredProduct(**prod)
         else:
             raise NoResultFound(f'result for ob {obsid} not found')
 
-    def search_prod_req_tags(self, req, ins, tags, pipeline):
+    def search_prod_req_tags(self, req, ins, version, tags, pipeline):
         if req.dest in self.extra_data:
             val = self.extra_data[req.dest]
             content = numina.store.load(req.type, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
-            return self.search_prod_type_tags(req.type, ins, tags, pipeline)
+            return self.search_prod_type_tags(req.type, ins, version, tags, pipeline)
 
-    def search_prod_type_tags(self, tipo, ins, tags, pipeline):
+    def search_prod_type_tags(self, tipo, ins, version, tags, pipeline):
         """Returns the first coincidence..."""
 
         drp = self.drps.query_by_name(ins)
@@ -87,7 +86,8 @@ class BaseDictDAL(AbsDrpDAL):
             label_alt = label
 
         # search results of these OBs
-        ptable = self.prod_table.get(ins, [])
+        ins_table = self.prod_table.get(ins, {})
+        ptable = ins_table.get(version, [])
         for prod in ptable:
             pk = prod['type']
             pt = prod['tags']
@@ -179,7 +179,7 @@ class BaseDictDAL(AbsDrpDAL):
             selected_mode = this_drp.modes[obsres.mode]
 
         if selected_mode:
-            # This is used if we pass a option here or
+            # This is used if we pass an option here or
             # if mode.build_ob_options is defined in the mode class
             # seems useless
             obsres = selected_mode.build_ob(obsres, self)
@@ -187,16 +187,16 @@ class BaseDictDAL(AbsDrpDAL):
             # the requirements
             obsres = selected_mode.tag_ob(obsres)
 
-        _logger.debug('assembly instrument model')
+        _logger.debug('assembly instrument model, auto detection')
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
-        obsres.profile = obsres.configuration
+        obsres.profile = obsres.configuration.origin.uuid
 
         auto_configure = True
         sample_frame = obsres.get_sample_frame()
         if auto_configure and sample_frame is not None:
-            _logger.debug('configuring instrument model with image')
-            obsres.profile.configure_with_image(sample_frame.open())
+            _logger.debug('configuring instrument model with image from obsres')
+            obsres.configuration.configure_with_image(sample_frame.open())
         else:
             _logger.debug('no configuring instrument model')
         return obsres
@@ -230,15 +230,15 @@ class BaseDictDAL(AbsDrpDAL):
     def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         ins = obsres.instrument
+        profile = obsres.profile
         tags = obsres.tags
         pipeline = obsres.pipeline
-
         if name in self.extra_data:
             val = self.extra_data[name]
             content = numina.store.load(tipo, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
-            return self.search_prod_type_tags(tipo, ins, tags, pipeline)
+            return self.search_prod_type_tags(tipo, ins, profile, tags, pipeline)
 
     def search_parameter(self, name, tipo, obsres, options=None):
         # returns StoredProduct
@@ -422,7 +422,8 @@ class BaseHybridDAL(Dict2DAL):
         # label = drp.product_label(tipo)
 
         # search results of these OBs
-        ptable = self.prod_table.get(instrument, [])
+        ins_tab = self.prod_table.get(instrument, {})
+        ptable = ins_tab.get(conf, [])
         for prod in ptable:
             pid = prod['id']
             if pid == resultid:
@@ -603,7 +604,8 @@ class HybridDAL(BaseHybridDAL):
             label_alt = label
 
         # search results of these OBs
-        ptable = self.prod_table.get(instrument, [])
+        ins_table = self.prod_table.get(instrument, {})
+        ptable = ins_table.get(conf, [])
         for prod in ptable:
             pk = prod['type']
             pt = prod['tags']

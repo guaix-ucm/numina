@@ -32,7 +32,7 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
 
     request_params['oblock_id'] = obsid
     request_params["pipeline"] = 'default'  # args.pipe_name
-    request_params["instrument_configuration"] = 'default'  # args.insconf
+    request_params["instrument_configuration"] = 'auto'  # args.insconf
     request_params["intermediate_results"] = True
     request_params["validate_results"] = validate_results
     request_params["validate_inputs"] = validate_inputs
@@ -106,7 +106,7 @@ def config_recipe_logger(root_level_logger, ref_logger='numina'):
 def run_task_reduce(task, datastore):
 
     obsid = task.request_params['oblock_id']
-    configuration = task.request_params["instrument_configuration"]
+    request_profile = task.request_params["instrument_configuration"]
     as_mode = task.request_params["mode"]
 
     _logger.info(f"procesing OB with id={obsid}")
@@ -120,8 +120,10 @@ def run_task_reduce(task, datastore):
     with working_directory(workenv.datadir):
 
         obsres = datastore.backend.obsres_from_oblock_id(
-            obsid, as_mode=as_mode, configuration=configuration
+            obsid, as_mode=as_mode, configuration=request_profile
         )
+        _logger.debug("instrument profile is %s", obsres.profile)
+        task.request_params["instrument_configuration"] = obsres.profile
         # Merge requirements passed from above
         obsres.requirements.update(task.request_params['requirements'])
         obsres.pipeline = task.request_params["pipeline"]
