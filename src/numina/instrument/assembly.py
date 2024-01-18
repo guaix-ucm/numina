@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2023 Universidad Complutense de Madrid
+# Copyright 2019-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,6 +12,7 @@ import itertools
 import json
 import pathlib
 
+import attrs
 from dateutil.parser import isoparse
 import importlib_resources
 
@@ -55,12 +56,13 @@ _default_class['component'] = numina.instrument.generic.InstrumentGeneric
 _default_class['setup'] = numina.instrument.generic.InstrumentGeneric
 _default_class['properties'] = numina.instrument.generic.InstrumentGeneric
 
+@attrs.define
+class ComponentCollection:
+    dirname = attrs.field()
+    paths: attrs.field()
 
-ComponentCollection = collections.namedtuple(
-    'ComponentCollection', 'dirname paths')
 
-
-def load_resources_pkg(pkgname, configs):
+def load_resources_pkg(pkgname: str, configs: str) -> ComponentCollection:
     """
     Gather the path of the components
 
@@ -78,7 +80,7 @@ def load_resources_pkg(pkgname, configs):
     valid_paths = []
 
     for res in importlib_resources.files('{}.{}'.format(pkgname, configs)).iterdir():
-        if res.suffix == '.json':
+        if importlib_resources.as_file(res).suffix == '.json':
             valid_paths.append(res.name)
 
     dirpath = importlib_resources.files(pkgname) / configs
@@ -90,7 +92,7 @@ def load_resources_dir(dirname):
     # return ComponentCollection(dirname, valid_paths)
 
 
-def load_comp_store(comp_collection):
+def load_comp_store(comp_collection: ComponentCollection) -> dict:
     """
 
     Parameters
@@ -111,7 +113,7 @@ def load_comp_store(comp_collection):
     return comp_store
 
 
-def load_panoply_store(sys_drps=None, defpath=None):
+def load_panoply_store(sys_drps=None, defpath=None) -> dict:
     if defpath is None:
         file_paths = []
     else:
@@ -126,7 +128,7 @@ def load_panoply_store(sys_drps=None, defpath=None):
     return load_paths_store(pkg_paths, file_paths)
 
 
-def load_paths_store(pkg_paths=None, file_paths=None):
+def load_paths_store(pkg_paths=None, file_paths=None) -> dict:
     """
 
     Parameters
