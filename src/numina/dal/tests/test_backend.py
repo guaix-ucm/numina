@@ -68,6 +68,10 @@ def backend(tmpdir):
                 {'id': 1, 'type': 'DemoType1', 'tags': {}, 'content': {'demo1': 1}, 'ob': 2},
                 {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
                 {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
+            ],
+            '6ad5dc90-6b15-43b7-abb5-b07340e19f41': [
+                {'id': 33, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 9}, 'ob': 25}
+
             ]
         }
     }

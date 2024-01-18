@@ -69,7 +69,7 @@ def print_instrument(instrument, prof_store, modes=True):
         if etype == 'instrument' and name == instrument.name:
             desc = val['description']
             uuid = val['uuid']
-            msg = f" has configuration '{desc}' uuid={uuid}"
+            msg = f" has profile '{desc}' uuid={uuid}"
             print(msg)
 
     print(
