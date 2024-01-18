@@ -65,15 +65,15 @@ class BaseDictDAL(AbsDrpDAL):
         else:
             raise NoResultFound(f'result for ob {obsid} not found')
 
-    def search_prod_req_tags(self, req, ins, version, tags, pipeline):
+    def search_prod_req_tags(self, req, ins, profile, tags, pipeline):
         if req.dest in self.extra_data:
             val = self.extra_data[req.dest]
             content = numina.store.load(req.type, val)
             return StoredProduct(id=0, tags={}, content=content)
         else:
-            return self.search_prod_type_tags(req.type, ins, version, tags, pipeline)
+            return self.search_prod_type_tags(req.type, ins, profile, tags, pipeline)
 
-    def search_prod_type_tags(self, tipo, ins, version, tags, pipeline):
+    def search_prod_type_tags(self, tipo, ins, profile, tags, pipeline):
         """Returns the first coincidence..."""
 
         drp = self.drps.query_by_name(ins)
@@ -87,7 +87,7 @@ class BaseDictDAL(AbsDrpDAL):
 
         # search results of these OBs
         ins_table = self.prod_table.get(ins, {})
-        ptable = ins_table.get(version, [])
+        ptable = ins_table.get(profile, [])
         for prod in ptable:
             pk = prod['type']
             pt = prod['tags']
@@ -102,9 +102,10 @@ class BaseDictDAL(AbsDrpDAL):
             msg = f'type {tipo} compatible with tags {tags!r} not found'
             raise NoResultFound(msg)
 
-    def search_param_req(self, req, instrument, mode, pipeline):
+    def search_param_req(self, req, instrument, profile, mode, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
-        req_table_insi_pipe = req_table_ins.get(pipeline, {})
+        req_table_ins_p = req_table_ins.get(profile, {})
+        req_table_insi_pipe = req_table_ins_p.get(pipeline, {})
         mode_keys = req_table_insi_pipe.get(mode, {})
         if req.dest in self.extra_data:
             value = self.extra_data[req.dest]
@@ -118,9 +119,10 @@ class BaseDictDAL(AbsDrpDAL):
             raise NoResultFound(
                 f"No parameters for {mode} mode, pipeline {pipeline}")
 
-    def search_param_req_tags(self, req, instrument, mode, tags, pipeline):
+    def search_param_req_tags(self, req, instrument, profile, mode, tags, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
-        req_table_insi_pipe = req_table_ins.get(pipeline, {})
+        req_table_ins_p = req_table_ins.get(profile, {})
+        req_table_insi_pipe = req_table_ins_p.get(pipeline, {})
         mode_list = req_table_insi_pipe.get(mode, [])
         if req.dest in self.extra_data:
             value = self.extra_data[req.dest]
@@ -165,7 +167,7 @@ class BaseDictDAL(AbsDrpDAL):
 
         obsres.mode = as_mode or obsres.mode
         _logger.debug(
-            "obsres_from_oblock_2 id='%s', mode='%s' START", obsres.id, obsres.mode)
+            "obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)
 
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
@@ -190,7 +192,8 @@ class BaseDictDAL(AbsDrpDAL):
         _logger.debug('assembly instrument model, auto detection')
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
-        obsres.profile = obsres.configuration.origin.uuid
+        obsres.profile = str(obsres.configuration.origin.uuid)
+        _logger.debug(f'instrument profile is {obsres.profile}')
 
         auto_configure = True
         sample_frame = obsres.get_sample_frame()
@@ -243,12 +246,15 @@ class BaseDictDAL(AbsDrpDAL):
     def search_parameter(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         instrument = obsres.instrument
+        profile = obsres.profile
         mode = obsres.mode
         tags = obsres.tags
         pipeline = obsres.pipeline
 
         req_table_ins = self.req_table.get(instrument, {})
-        req_table_insi_pipe = req_table_ins.get(pipeline, {})
+        req_table_ins_p = req_table_ins.get(profile, {})
+        req_table_insi_pipe = req_table_ins_p.get(pipeline, {})
+
         mode_list = req_table_insi_pipe.get(mode, [])
         if name in self.extra_data:
             value = self.extra_data[name]
@@ -343,12 +349,14 @@ class Dict2DAL(BaseDictDAL):
 
 
 def workdir_default(basedir, obsid):
+    # FIXME: hardcoded
     workdir = os.path.join(basedir, f'obsid{obsid}_work')
     workdir = os.path.abspath(workdir)
     return workdir
 
 
 def resultsdir_default(basedir, obsid):
+    # FIXME: hardcoded
     resultsdir = os.path.join(basedir, f'obsid{obsid}_results')
     resultsdir = os.path.abspath(resultsdir)
     return resultsdir
@@ -415,15 +423,14 @@ class BaseHybridDAL(Dict2DAL):
         """Returns the first coincidence..."""
 
         instrument = obsres.instrument
-
-        conf = str(obsres.configuration.origin.uuid)
+        profile = obsres.profile
 
         drp = self.drps.query_by_name(instrument)
         # label = drp.product_label(tipo)
 
         # search results of these OBs
         ins_tab = self.prod_table.get(instrument, {})
-        ptable = ins_tab.get(conf, [])
+        ptable = ins_tab.get(profile, [])
         for prod in ptable:
             pid = prod['id']
             if pid == resultid:
@@ -437,8 +444,8 @@ class BaseHybridDAL(Dict2DAL):
                 else:
                     # Build path
                     path = build_product_path(
-                        drp, self.rootdir, conf, name, tipo, obsres)
-                _logger.debug("path is %s", path)
+                        drp, self.rootdir, profile, name, tipo, obsres)
+                _logger.debug("searching product in path: %s", path)
                 rprod['content'] = self.product_loader(tipo, name, path)
                 return StoredProduct(**rprod)
         else:
