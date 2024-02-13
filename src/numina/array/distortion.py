@@ -16,7 +16,7 @@ from numina.array._clippix import _resample
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 
-NMAX_ORDER = 4
+NMAX_ORDER = 7
 
 
 def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
@@ -74,41 +74,136 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     if order == 1:
         a_matrix = np.vstack([np.ones(npoints),
                               x_inter_scaled,
-                              y_inter_scaled]).T
+                              y_inter_scaled]
+                             ).T
     elif order == 2:
         a_matrix = np.vstack([np.ones(npoints),
                               x_inter_scaled,
                               y_inter_scaled,
                               x_inter_scaled ** 2,
-                              x_inter_scaled * y_orig_scaled,
-                              y_inter_scaled ** 2]).T
+                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
+                              y_inter_scaled ** 2]
+                             ).T
     elif order == 3:
         a_matrix = np.vstack([np.ones(npoints),
                               x_inter_scaled,
                               y_inter_scaled,
                               x_inter_scaled ** 2,
-                              x_inter_scaled * y_orig_scaled,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
                               y_inter_scaled ** 2,
                               x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled,
-                              x_inter_scaled * y_inter_scaled ** 2,
-                              y_inter_scaled ** 3]).T
+                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
+                              y_inter_scaled ** 3]
+                             ).T
     elif order == 4:
         a_matrix = np.vstack([np.ones(npoints),
                               x_inter_scaled,
                               y_inter_scaled,
                               x_inter_scaled ** 2,
-                              x_inter_scaled * y_orig_scaled,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
                               y_inter_scaled ** 2,
                               x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled,
-                              x_inter_scaled * y_inter_scaled ** 2,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
                               y_inter_scaled ** 3,
                               x_inter_scaled ** 4,
                               x_inter_scaled ** 3 * y_inter_scaled ** 1,
                               x_inter_scaled ** 2 * y_inter_scaled ** 2,
                               x_inter_scaled ** 1 * y_inter_scaled ** 3,
-                              y_inter_scaled ** 4]).T
+                              y_inter_scaled ** 4]
+                             ).T
+    elif order == 5:
+        a_matrix = np.vstack([np.ones(npoints),
+                              x_inter_scaled,
+                              y_inter_scaled,
+                              x_inter_scaled ** 2,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
+                              y_inter_scaled ** 2,
+                              x_inter_scaled ** 3,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
+                              y_inter_scaled ** 3,
+                              x_inter_scaled ** 4,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
+                              y_inter_scaled ** 4,
+                              x_inter_scaled ** 5,
+                              x_inter_scaled ** 4 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 3,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 4,
+                              y_inter_scaled ** 5],
+                             ).T
+    elif order == 6:
+        a_matrix = np.vstack([np.ones(npoints),
+                              x_inter_scaled,
+                              y_inter_scaled,
+                              x_inter_scaled ** 2,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
+                              y_inter_scaled ** 2,
+                              x_inter_scaled ** 3,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
+                              y_inter_scaled ** 3,
+                              x_inter_scaled ** 4,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
+                              y_inter_scaled ** 4,
+                              x_inter_scaled ** 5,
+                              x_inter_scaled ** 4 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 3,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 4,
+                              y_inter_scaled ** 5,
+                              x_inter_scaled ** 6,
+                              x_inter_scaled ** 5 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 4 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 3,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 4,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 5,
+                              y_inter_scaled ** 6],
+                             ).T
+    elif order == 7:
+        a_matrix = np.vstack([np.ones(npoints),
+                              x_inter_scaled,
+                              y_inter_scaled,
+                              x_inter_scaled ** 2,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
+                              y_inter_scaled ** 2,
+                              x_inter_scaled ** 3,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
+                              y_inter_scaled ** 3,
+                              x_inter_scaled ** 4,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
+                              y_inter_scaled ** 4,
+                              x_inter_scaled ** 5,
+                              x_inter_scaled ** 4 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 3,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 4,
+                              y_inter_scaled ** 5,
+                              x_inter_scaled ** 6,
+                              x_inter_scaled ** 5 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 4 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 3,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 4,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 5,
+                              y_inter_scaled ** 6,
+                              x_inter_scaled ** 7,
+                              x_inter_scaled ** 6 * y_inter_scaled ** 1,
+                              x_inter_scaled ** 5 * y_inter_scaled ** 2,
+                              x_inter_scaled ** 4 * y_inter_scaled ** 3,
+                              x_inter_scaled ** 3 * y_inter_scaled ** 4,
+                              x_inter_scaled ** 2 * y_inter_scaled ** 5,
+                              x_inter_scaled ** 1 * y_inter_scaled ** 6,
+                              y_inter_scaled ** 7],
+                             ).T
     else:
         raise ValueError("Invalid order=" + str(order))
     poltrans = transform.PolynomialTransform(
@@ -376,8 +471,7 @@ def rectify2d(image2d, aij, bij, resampling,
         iyy = np.tile(np.arange(naxis2out), (naxis1out,))
         # rectified image (using cython function)
         # Important: the cython code expects the 2D array of float64 numbers
-        image2d_rect = _resample(
-            image2d.astype(float), xxx, yyy, ixx, iyy, naxis1out, naxis2out)
+        image2d_rect = _resample(image2d.astype(float), xxx, yyy, ixx, iyy, naxis1out, naxis2out)
     else:
         raise ValueError("Sorry, resampling method must be 1 or 2")
 
@@ -408,8 +502,7 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
 
     aij = np.array([-xoffset, 1.0, 0.0], dtype=float)
     bij = np.array([-yoffset, 0.0, 1.0], dtype=float)
-    image2d_shifted = rectify2d(image2d.astype('double'),
-                                aij, bij, resampling=resampling)
+    image2d_shifted = rectify2d(image2d, aij, bij, resampling=resampling)
     return image2d_shifted
 
 
@@ -449,6 +542,5 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, fscale=1.0, resampling=
     yc = ycenter - 1.0
     aij = [-f*xc*costheta-f*yc*sintheta+xc, f*costheta, f*sintheta]
     bij = [f*xc*sintheta-f*yc*costheta+yc, -f*sintheta, f*costheta]
-    image2d_rotated = rectify2d(image2d.astype(
-        'double'), aij, bij, resampling=resampling)
+    image2d_rotated = rectify2d(image2d, aij, bij, resampling=resampling)
     return image2d_rotated
