@@ -375,8 +375,9 @@ def rectify2d(image2d, aij, bij, resampling,
         ixx = np.repeat(np.arange(naxis1out), naxis2out)
         iyy = np.tile(np.arange(naxis2out), (naxis1out,))
         # rectified image (using cython function)
+        # Important: the cython code expects the 2D array of float64 numbers
         image2d_rect = _resample(
-            image2d, xxx, yyy, ixx, iyy, naxis1out, naxis2out)
+            image2d.astype(float), xxx, yyy, ixx, iyy, naxis1out, naxis2out)
     else:
         raise ValueError("Sorry, resampling method must be 1 or 2")
 
