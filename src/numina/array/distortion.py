@@ -310,6 +310,82 @@ def fmap(order, aij, bij, x, y):
     return u, v
 
 
+def coef_fmap_fixed_x(order, aij, bij, x_value):
+    """Return coefficients for 1D polynomial, fixing x.
+
+    Parameters
+    ----------
+    order : int
+        Order of the 2D polynomial transformation.
+    aij : numpy array
+        Polynomial coefficents corresponding to a_ij.
+    bij : numpy array
+        Polynomial coefficents corresponding to b_ij.
+    x_value : float
+        Fixed x value.
+
+    Returns
+    -------
+    coeff_u : numpy array
+        Polynomial coefficients of the 1D polynomial corresponding
+        to the U coordinate.
+    coeff_v : numpy array
+        Polynomial coefficients of the 1D polynomial corresponding
+        to the U coordinate.
+
+    """
+
+    coeff_u = np.zeros(order + 1)
+    coeff_v = np.zeros(order + 1)
+
+    k = 0
+    for i in range(order + 1):
+        for j in range(i + 1):
+            coeff_u[j] += aij[k] * x_value ** (i - j)
+            coeff_v[j] += bij[k] * x_value ** (i - j)
+            k += 1
+
+    return coeff_u, coeff_v
+
+
+def coef_fmap_fixed_y(order, aij, bij, y_value):
+    """Return coefficients for 1D polynomial, fixing y.
+
+    Parameters
+    ----------
+    order : int
+        Order of the 2D polynomial transformation.
+    aij : numpy array
+        Polynomial coefficents corresponding to a_ij.
+    bij : numpy array
+        Polynomial coefficents corresponding to b_ij.
+    y_value : float
+        Fixed y value.
+
+    Returns
+    -------
+    coeff_u : numpy array
+        Polynomial coefficients of the 1D polynomial corresponding
+        to the U coordinate.
+    coeff_v : numpy array
+        Polynomial coefficients of the 1D polynomial corresponding
+        to the U coordinate.
+
+    """
+
+    coeff_u = np.zeros(order + 1)
+    coeff_v = np.zeros(order + 1)
+
+    k = 0
+    for i in range(order + 1):
+        for j in range(i + 1):
+            coeff_u[i - j] += aij[k] * y_value ** j
+            coeff_v[i - j] += bij[k] * y_value ** j
+            k += 1
+
+    return coeff_u, coeff_v
+
+
 def ncoef_fmap(order):
     """Expected number of coefficients in a 2D transformation of a given order.
 
