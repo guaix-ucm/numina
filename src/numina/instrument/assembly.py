@@ -7,7 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-import collections
 import itertools
 import json
 import pathlib
@@ -55,6 +54,7 @@ _default_class['instrument'] = numina.instrument.generic.InstrumentGeneric
 _default_class['component'] = numina.instrument.generic.InstrumentGeneric
 _default_class['setup'] = numina.instrument.generic.InstrumentGeneric
 _default_class['properties'] = numina.instrument.generic.InstrumentGeneric
+
 
 @attrs.define
 class ComponentCollection:
