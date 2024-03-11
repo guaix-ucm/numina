@@ -75,7 +75,7 @@ def broadsp_gaussian_velocity_linearwv(crval1, cdelt1, flux, fwhm_velocity, tsig
     sigma_pix = (sigma_wave / cdelt1).value
 
     # apply varying Gaussian broadening
-    broadened_flux = apply_guassian_broadening_linearwv(
+    broadened_flux = apply_gaussian_broadening_linearwv(
         flux=flux,
         sigma_pix=sigma_pix,
         tsigma=tsigma
