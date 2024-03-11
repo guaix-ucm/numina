@@ -12,10 +12,10 @@
 import astropy.constants as const
 import astropy.units as u
 import numpy as np
-from scipy.ndimage import gaussian_filter1d, convolve
+from scipy.ndimage import gaussian_filter1d
 
 
-def broadsp_gaussian_linearwv(crval1, cdelt1, flux, fwhm_velocity, tsigma=5.0):
+def broadsp_gaussian_velocity_linearwv(crval1, cdelt1, flux, fwhm_velocity, tsigma=5.0):
     """Apply a Gaussian broadening to a spectrum.
 
     The method assumes that the spectrum is linearly calibrated
@@ -74,20 +74,59 @@ def broadsp_gaussian_linearwv(crval1, cdelt1, flux, fwhm_velocity, tsigma=5.0):
     # varying sigma for each pixel (pixel units)
     sigma_pix = (sigma_wave / cdelt1).value
 
-    # kernel size (pixel units; integer values)
-    initial_kernel_size_intpix = (2 * sigma_pix * tsigma).astype(int) + 1
-    # force the kernel size to be odd
-    kernel_size_intpix = np.where(
-        initial_kernel_size_intpix % 2 == 0,
-        initial_kernel_size_intpix + 1,
-        initial_kernel_size_intpix
+    # apply varying Gaussian broadening
+    broadened_flux = apply_guassian_broadening_linearwv(
+        flux=flux,
+        sigma_pix=sigma_pix,
+        tsigma=tsigma
     )
+
+    return broadened_flux
+
+
+def apply_gaussian_broadening_linearwv(flux, sigma_pix, tsigma):
+    """Apply a Gaussian broadening to a data array.
+
+    The value of the Gaussian sigma is arbitrary for each pixel.
+    In particular, this function is well suited to convolve a spectrum
+    with the Gaussian kernel corresponding to a fixed velocity
+    dispersion (which leads to a varying sigma in pixel units).
+
+    When 'sigma_pix' is constant for all the pixels, this function
+    returns the same result as scipy.ndimage.gaussian_filter1d(...)
+    when in the latter the parameter 'mode' is set to 'constant'
+    (with constant=0).
+
+    Parameters
+    ----------
+    flux : ndarray
+        Data array corresponding to the spectrum to be broadened.
+    sigma_pix : ndarray
+        Gaussian kernel width (in float pixel units).
+    tsigma : float
+        Times sigma to extend the computation of the Gaussian
+        broadening.
+
+    Returns
+    -------
+    broadened_flux : ndarray
+        Broadened data array.
+
+    """
+
+    naxis1 = len(flux)
+    if len(sigma_pix) != naxis1:
+        raise ValueError(f'Incompatible array sizes: {len(flux)=}, {len(sigma_pix)=}')
 
     # broaden spectrum
     broadened_flux = np.zeros(naxis1)
     for i in range(naxis1):
-        # select kernel size
-        kernel_size = kernel_size_intpix[i]
+        # kernel size
+        initial_kernel_size_intpix = (2 * sigma_pix[i] * tsigma).astype(int) + 1
+        if initial_kernel_size_intpix % 2 == 0:
+            kernel_size = initial_kernel_size_intpix + 1
+        else:
+            kernel_size = initial_kernel_size_intpix
         # location of the kernel center
         kcenter = kernel_size // 2
         # generate array of zeros an insert 1.0 in the central pixel
