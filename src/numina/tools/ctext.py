@@ -15,6 +15,7 @@ def ctext(s=None,
           bg=None,
           under=False,
           rev=False,
+          faint=False,
           bold=False):
     """Return coloured string using ANSI Escape Sequences
 
@@ -33,6 +34,8 @@ def ctext(s=None,
         If True, add underline style.
     rev : bool
         If True, add reverse style.
+    faint : bool
+        If True, add dim/faint style.
     bold : bool
         If True, add bold style
 
@@ -78,6 +81,8 @@ def ctext(s=None,
         style_list.append('\x1B[4m')
     if rev:
         style_list.append('\x1B[7m')
+    if faint:
+        style_list.append('\x1B[2m')
     if bold:
         style_list.append('\x1B[1m')
 
