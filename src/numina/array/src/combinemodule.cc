@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Universidad Complutense de Madrid
+ * Copyright 2008-2024 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -46,14 +46,14 @@ static PyObject* CombineError;
 
 // Convenience check function
 static inline int check_1d_array(PyObject* array, size_t nimages, const char* name) {
-  if (PyArray_NDIM(array) != 1)
+  if (PyArray_NDIM((PyArrayObject*)array) != 1)  //  error: cannot convert ‘PyObject*’ {aka ‘_object*’} to ‘const PyArrayObject*’
   {
-    PyErr_Format(CombineError, "%s dimension %i != 1", name, PyArray_NDIM(array));
+    PyErr_Format(CombineError, "%s dimension %i != 1", name, PyArray_NDIM((PyArrayObject*)array));
     return 0;
   }
-  if (PyArray_SIZE(array) != (npy_intp)nimages)
+  if (PyArray_SIZE((PyArrayObject*)array) != (npy_intp)nimages) //  cannot convert ‘PyObject*’ {aka ‘_object*’} to ‘const PyArrayObject*’
   {
-    PyErr_Format(CombineError, "%s size %zd != number of images", name, PyArray_SIZE(array));
+    PyErr_Format(CombineError, "%s size %zd != number of images", name, PyArray_SIZE((PyArrayObject*)array));
     return 0;
   }
   return 1;
@@ -154,11 +154,11 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       zbuffer[ui] = 0.0;
   }
   else {
-    zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_IN_ARRAY);
+    zeros_arr = PyArray_FROM_OTF(zeros, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
     if (!check_1d_array(zeros, nimages, "zeros"))
       goto exit;
 
-    zbuffer = (double*)PyArray_DATA(zeros_arr);
+    zbuffer = (double*)PyArray_DATA((PyArrayObject*)zeros_arr);
   }
 
   if (scales == Py_None) {
@@ -171,11 +171,11 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       sbuffer[ui] = 1.0;
   }
   else {
-    scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_IN_ARRAY);
+    scales_arr = PyArray_FROM_OTF(scales, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
     if (!check_1d_array(scales_arr, nimages, "scales"))
       goto exit;
 
-    sbuffer = (double*)PyArray_DATA(scales_arr);
+    sbuffer = (double*)PyArray_DATA((PyArrayObject*)scales_arr);
   }
 
   if (weights == Py_None) {
@@ -188,11 +188,11 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
       wbuffer[ui] = 1.0;
   }
   else {
-    weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_IN_ARRAY);
+    weights_arr = PyArray_FROM_OTF(weights, NPY_DOUBLE, NPY_ARRAY_IN_ARRAY);
     if (!check_1d_array(weights, nimages, "weights"))
       goto exit;
 
-    wbuffer = (double*)PyArray_DATA(weights_arr);
+    wbuffer = (double*)PyArray_DATA((PyArrayObject*)weights_arr);
   }
 
   if (masks == Py_None) {

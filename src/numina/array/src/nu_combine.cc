@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2022 Universidad Complutense de Madrid
+ * Copyright 2008-2024 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -74,12 +74,12 @@ public:
   {
 
     // Conversion for images
-    PyArray_Descr* descr = PyArray_DESCR(m_frames[0]);
+    PyArray_Descr* descr = PyArray_DESCR((PyArrayObject*)m_frames[0]);
     // Convert from the array totype
     m_converter = PyArray_GetCastFunc(descr, totype);
     // Swap bytes
     m_swap = descr->f->copyswap;
-    m_need_to_swap = PyArray_ISBYTESWAPPED(m_frames[0]);
+    m_need_to_swap = PyArray_ISBYTESWAPPED((PyArrayObject*)m_frames[0]);
 
     std::transform(m_frames, m_frames + m_size, m_iters.begin(), &My_PyArray_IterNew);
   }
@@ -117,17 +117,17 @@ bool NU_combine_image_check(PyObject* exception, PyObject* image,
       return false;
     }
 
-    int image_ndim = PyArray_NDIM(image);
+    int image_ndim = PyArray_NDIM((PyArrayObject*)image);
 
-    if (PyArray_NDIM(ref) != image_ndim) {
+    if (PyArray_NDIM((PyArrayObject*)ref) != image_ndim) {
       PyErr_Format(exception,
           "item %zd in %s list has inconsistent number of axes", index, name);
       return false;
     }
 
     for(int i = 0; i < image_ndim; ++i) {
-      int image_dim_i = PyArray_DIM(image, i);
-      if (PyArray_DIM(ref, i) != image_dim_i) {
+      int image_dim_i = PyArray_DIM((PyArrayObject*)image, i);
+      if (PyArray_DIM((PyArrayObject*)ref, i) != image_dim_i) {
         PyErr_Format(exception,
             "item %zd in %s list has inconsistent dimension (%i) in axis %i", index, name, image_dim_i, i);
         return false;
@@ -135,7 +135,7 @@ bool NU_combine_image_check(PyObject* exception, PyObject* image,
     }
 
     // checking dtype is the same
-    if (not PyArray_EquivArrTypes(typeref, image)) {
+    if (not PyArray_EquivArrTypes((PyArrayObject*)typeref, (PyArrayObject*)image)) {
       PyErr_Format(exception,
           "item %zd in %s list has inconsistent dtype", index, name);
       return false;
@@ -172,15 +172,19 @@ int NU_generic_combine(PyObject** images, PyObject** masks, size_t size,
   }
 
   // Conversion for outputs
-  descr = PyArray_DESCR(out[0]);
+  descr = PyArray_DESCR((PyArrayObject*)out[0]);
   // Swap bytes
+  /*
+  f is a table of functions specific for each data descriptor
+  of type PyArray_ArrFuncs
+  */
   PyArray_CopySwapFunc* out_swap = descr->f->copyswap;
   // Inverse cast
   PyArray_Descr* descr_to = PyArray_DescrFromType(NPY_DOUBLE);
   // We cast from double to the type of out array
   PyArray_VectorUnaryFunc* out_converter = PyArray_GetCastFunc(descr_to,
-      PyArray_TYPE(out[0]));
-  bool out_need_to_swap = PyArray_ISBYTESWAPPED(out[0]);
+      PyArray_TYPE((PyArrayObject*)out[0]));
+  bool out_need_to_swap = PyArray_ISBYTESWAPPED((PyArrayObject*)out[0]);
 
   // A buffer used to store intermediate results during swapping
   char buffer[NPY_BUFSIZE];
