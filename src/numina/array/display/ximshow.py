@@ -386,7 +386,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
     ax.grid(False)
-    if z1z2 is None:
+    if z1z2 in ["zscale", None]:
         z1, z2 = ZScaleInterval().get_limits(
             image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
         )
@@ -488,7 +488,8 @@ def ximshow_file(singlefile,
         Color bar orientation: valid options are 'horizontal' or
         'vertical' (or 'None' for no color bar).
     args_z1z2 : string or None
-        String providing the image cuts tuple: z1, z2, minmax of None
+        String providing the image cuts tuple: z1, z2, minmax, zscale
+        or None
     args_bbox : string or None
         String providing the bounding box tuple: nc1, nc2, ns1, ns2
     args_firstpix : string or None
@@ -529,7 +530,7 @@ def ximshow_file(singlefile,
     """
 
     # read z1, z2
-    if args_z1z2 is None:
+    if args_z1z2 in ["zscale", "None", None]:
         z1z2 = None
     elif args_z1z2 == "minmax":
         z1z2 = "minmax"
@@ -935,7 +936,7 @@ def main(args=None):
                              'first extension is 1 = default value)',
                         default=1, type=int)
     parser.add_argument("--z1z2",
-                        help="tuple [z1,z2], minmax or None (use zscale)",
+                        help="tuple [z1,z2], minmax, zscale or None (=zscale)",
                         type=str)
     parser.add_argument("--bbox",
                         help="bounding box tuple: nc1,nc2,ns1,ns2")
