@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -24,7 +24,7 @@ from ..stats import summary
 
 
 GLOBAL_ASPECT = 'auto'
-GLOBAL_GEOMETRY = '1024,768,0,0'
+GLOBAL_GEOMETRY = '1024,768,0,0'  # xwidth,ywidth,xorigin,yorigin
 dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
 
@@ -83,7 +83,7 @@ def ximshow_jupyter(image2d, **args):
 
 def ximshow(image2d, title=None, show=True,
             cbar_label=None, cbar_orientation='None',
-            z1z2=None, cmap="hot",
+            z1z2=None, cmap='hot',
             image_bbox=None, first_pixel=(1, 1),
             aspect=GLOBAL_ASPECT,
             crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
@@ -139,7 +139,8 @@ def ximshow(image2d, title=None, show=True,
     ds9regfile : file handler
         Ds9 region file to be overplotted.
     geometry : str or None
-        xwidth, ywidth, xini, yini values employed to set the window geometry.
+        xwidth, ywidth, xorigin, yorigin values employed to set the
+        window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     figuredict: dictionary
@@ -461,6 +462,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
 def ximshow_file(singlefile,
                  extnum=1,
+                 args_cmap=None,
                  args_cbar_label=None, args_cbar_orientation='None',
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_aspect=GLOBAL_ASPECT,
@@ -478,6 +480,8 @@ def ximshow_file(singlefile,
         Name of the FITS file to be displayed.
     extnum : int
         Extension number: 1 for first extension (default).
+    args_cmap : string
+        Matplotlib color map.
     args_cbar_label : string
         Color bar label.
     args_cbar_orientation : string
@@ -498,8 +502,8 @@ def ximshow_file(singlefile,
     args_ds9reg : file handler
         Ds9 region file to be overplotted.
     args_geometry : string or None
-        x, y, dx, dy to define the window geometry. This
-        information is ignored if args_pdffile is not None.
+        xwidth, ywidth, xorigin, yorigin to define the window geometry.
+        This information is ignored if args_pdffile is not None.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
     args_figuredict : string containing a dictionary
@@ -637,6 +641,7 @@ def ximshow_file(singlefile,
         figuredict = eval(args_figuredict)
 
     ax = ximshow(image2d=image2d, show=False,
+                 cmap=args_cmap,
                  cbar_label=args_cbar_label,
                  cbar_orientation=args_cbar_orientation,
                  title=title,
@@ -940,6 +945,9 @@ def main(args=None):
                         help="aspect ratio (equal or auto)",
                         type=str,
                         choices=['equal', 'auto'], default=GLOBAL_ASPECT)
+    parser.add_argument("--cmap",
+                        help="color map",
+                        type=str, default='hot')
     parser.add_argument("--cbar_label",
                         help="color bar label",
                         type=str, default='Number of counts')
@@ -955,7 +963,7 @@ def main(args=None):
                         help="ds9 region file to be overplotted",
                         type=argparse.FileType('rt'))
     parser.add_argument("--geometry",
-                        help='string "x,y,dx,dy"',
+                        help='string "xwidth,ywidth,xorigin,yorigin"',
                         default=GLOBAL_GEOMETRY)
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
@@ -1012,6 +1020,7 @@ def main(args=None):
                      args_bbox=args.bbox,
                      args_firstpix=args.firstpix,
                      args_aspect=args.aspect,
+                     args_cmap=args.cmap,
                      args_cbar_label=args.cbar_label,
                      args_cbar_orientation=args.cbar_orientation,
                      args_keystitle=args.keystitle,
