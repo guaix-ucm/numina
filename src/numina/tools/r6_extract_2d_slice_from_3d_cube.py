@@ -188,8 +188,14 @@ def main(args=None):
     parser.add_argument("--debug", help="Debug", action="store_true")
 
     args = parser.parse_args(args=args)
+
+    if len(sys.argv) == 1:
+        parser.print_usage()
+        raise SystemExit()
+
     if args.debug:
-        print(args._get_kwargs())
+        for arg, value in vars(args).items():
+            print(f'{arg}: {value}')
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')

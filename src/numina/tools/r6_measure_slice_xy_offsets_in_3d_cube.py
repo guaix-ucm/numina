@@ -55,7 +55,7 @@ def compute_i1i2(i, naxis3, binning_naxis3):
     return i1, i2
 
 
-def compute_slice_xy_offsets_in_3d_cube(
+def measure_slice_xy_offsets_in_3d_cube(
         data3d,
         npoints_along_naxis3=100,
         polydeg=2,
@@ -291,6 +291,11 @@ def main(args=None):
     parser.add_argument("--debug", help="Debug", action="store_true")
 
     args = parser.parse_args(args=args)
+
+    if len(sys.argv) == 1:
+        parser.print_usage()
+        raise SystemExit()
+
     if args.debug:
         for arg, value in vars(args).items():
             print(f'{arg}: {value}')
@@ -301,7 +306,7 @@ def main(args=None):
     with fits.open(args.input) as hdul:
         data3d = hdul[0].data
 
-    delta_x_array, delta_y_array = compute_slice_xy_offsets_in_3d_cube(
+    delta_x_array, delta_y_array = measure_slice_xy_offsets_in_3d_cube(
         data3d=data3d,
         npoints_along_naxis3=args.npoints,
         polydeg=args.polydeg,
