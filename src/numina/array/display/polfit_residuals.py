@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -27,6 +27,7 @@ def polfit_residuals(
         geometry=(0, 0, 640, 480),
         debugplot=0,
         pdffile=None,
+        fig=None
 ):
     """Polynomial fit with display of residuals and additional work with R.
 
@@ -79,6 +80,8 @@ def polfit_residuals(
     pdffile : str or None
         Output PDF file name to save plot. This option is only
         employed when a plot has been generated.
+    fig : `~matplotlib.figure.Figure`
+        If not None, use this object to generate plot.
 
     Return
     ------
@@ -202,7 +205,8 @@ def polfit_residuals(
             srejected = mysize[reject]
 
         from numina.array.display.matplotlib_qt import plt
-        fig = plt.figure()
+        if fig is None:
+            fig = plt.figure()
 
         set_window_geometry(geometry)
 
@@ -303,7 +307,8 @@ def polfit_residuals_with_sigma_rejection(
         show=True,
         geometry=(0, 0, 640, 480),
         debugplot=0,
-        pdffile=None
+        pdffile=None,
+        fig=None
 ):
     """Polynomial fit with iterative rejection of points.
 
@@ -357,6 +362,8 @@ def polfit_residuals_with_sigma_rejection(
     pdffile : str or None
         Output PDF file name to save plot. This option is only
         employed when a plot has been generated.
+    fig : `~matplotlib.figure.Figure`
+        If not None, use this object to generate plot.
 
     Return
     ------
@@ -406,7 +413,8 @@ def polfit_residuals_with_sigma_rejection(
                                       use_r=use_r,
                                       geometry=geometry,
                                       debugplot=debugplot,
-                                      pdffile=pdffile)
+                                      pdffile=pdffile,
+                                      fig=fig)
         return poly, yres, reject
 
     # main loop to reject points iteratively
@@ -423,7 +431,8 @@ def polfit_residuals_with_sigma_rejection(
                                           use_r=use_r,
                                           show=show,
                                           geometry=geometry,
-                                          debugplot=debugplot)
+                                          debugplot=debugplot,
+                                          fig=fig)
         else:
             poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject)
         # check that there is room to remove a point with the current
@@ -477,7 +486,8 @@ def polfit_residuals_with_sigma_rejection(
                                           show=show,
                                           geometry=geometry,
                                           debugplot=debugplot,
-                                          pdffile=pdffile)
+                                          pdffile=pdffile,
+                                          fig=fig)
         else:
             if abs(debugplot) >= 10:
                 print(' ')
@@ -495,7 +505,8 @@ def polfit_residuals_with_cook_rejection(
         show=True,
         geometry=(0, 0, 640, 480),
         debugplot=0,
-        pdffile=None
+        pdffile=None,
+        fig=None
 ):
     """Polynomial fit with iterative rejection of points.
 
@@ -549,6 +560,8 @@ def polfit_residuals_with_cook_rejection(
     pdffile : str or None
         Output PDF file name to save plot. This option is only
         employed when a plot has been generated.
+    fig : `~matplotlib.figure.Figure`
+        If not None, use this object to generate plot.
 
     Return
     ------
@@ -599,7 +612,8 @@ def polfit_residuals_with_cook_rejection(
                                       show=show,
                                       geometry=geometry,
                                       debugplot=debugplot,
-                                      pdffile=pdffile)
+                                      pdffile=pdffile,
+                                      fig=fig)
         return poly, yres, reject
 
     # main loop to reject points iteratively
@@ -619,7 +633,8 @@ def polfit_residuals_with_cook_rejection(
                                       show=show,
                                       geometry=geometry,
                                       debugplot=debugplot,
-                                      pdffile=pdffile)
+                                      pdffile=pdffile,
+                                      fig=fig)
         npoints_effective = npoints - np.sum(reject)
         residual_variance = np.sum(yres*yres)/float(npoints_effective-deg-1)
         # check that there is room to remove two points with the
