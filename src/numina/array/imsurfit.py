@@ -122,6 +122,22 @@ def imsurfit(data, order, output_fit=False):
     return (polycoeff,)
 
 
+def vertex_of_quadratic(coeffs):
+    C = coeffs[1]
+    D = coeffs[2]
+    A = coeffs[3]
+    E = coeffs[4]
+    B = coeffs[5]
+
+    det = 4 * A * B - E**2
+    if det <= 0:
+        raise ValueError('quadratic has no maximum')
+
+    xm = -(2*B*C - D*E) / det
+    ym = -(2*A*D - C*E) / det
+    return xm, ym
+
+
 class FitOne(object):
     def __init__(self, x, y, z):
         """Fit a plane to a region using least squares."""
