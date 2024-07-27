@@ -153,7 +153,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
                 raise ValueError(f"Unexpected {wavecal=}")
 
         header_output['history'] = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        header_output['comment'] = 'Image created with r6_extract_2d_slice_from_3d_cube.py'
+        header_output['comment'] = 'Image created with extract_2d_slice_from_3d_cube.py'
         header_output['comment'] = 'with the following arguments:'
         header_output['comment'] = f'input: {input}'
         header_output['comment'] = f'axis: {axis}'
