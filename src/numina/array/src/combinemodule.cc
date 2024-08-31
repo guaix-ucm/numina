@@ -12,6 +12,8 @@
 
 #define PY_ARRAY_UNIQUE_SYMBOL combine_ARRAY_API
 #include <numpy/arrayobject.h>
+#include <vector>
+#include <algorithm>
 
 #include "nu_combine_methods.h"
 #include "nu_combine.h"
@@ -61,56 +63,70 @@ static inline int check_1d_array(PyObject* array, size_t nimages, const char* na
 
 static PyObject* py_generic_combine(PyObject *self, PyObject *args)
 {
-  /* Arguments */
+  /* Inputs */
   PyObject *images = NULL;
+  PyObject *images_seq = NULL;
+  Py_ssize_t nimages = 0;
+  /* masks */
   PyObject *masks = NULL;
-  // Output has one dimension more than the inputs, of size
-  // OUTDIM
-  const Py_ssize_t OUTDIM = NU_COMBINE_OUTDIM;
-  PyObject *out[NU_COMBINE_OUTDIM] = {NULL, NULL, NULL};
-  PyObject* fnc = NULL;
-
+  PyObject *masks_seq = NULL;
+  Py_ssize_t nmasks = 0;
+  /* outputs */
+  PyObject *out_res = NULL;
+  PyObject *out_var = NULL;
+  PyObject *out_pix = NULL;
+  Py_ssize_t nout = 3;
+  Py_ssize_t ui;
+  /* scales, zeros and weights */
   PyObject* scales = NULL;
   PyObject* zeros = NULL;
   PyObject* weights = NULL;
-
-
-  PyObject *images_seq = NULL;
-  PyObject *masks_seq = NULL;
   PyObject* zeros_arr = NULL;
   PyObject* scales_arr = NULL;
   PyObject* weights_arr = NULL;
 
-  void *func = (void*)NU_mean_function;
-  void *data = NULL;
+  /* Capsule */
+  PyObject* fnc = NULL;
+  void *capsule_func = (void*)NU_mean_function;
+  void *capsule_data = NULL;
 
-  Py_ssize_t nimages = 0;
-  Py_ssize_t nmasks = 0;
-  Py_ssize_t ui = 0;
-
-  PyObject** allimages = NULL;
-  PyObject** allmasks = NULL;
+  PyObject** tmp_list = NULL;
 
   double* zbuffer = NULL;
   double* sbuffer = NULL;
   double* wbuffer = NULL;
 
-  int ok = PyArg_ParseTuple(args,
-      "OOO!O!O!|OOOO:generic_combine",
-      &fnc,
-      &images,
-      &PyArray_Type, &out[0],
-      &PyArray_Type, &out[1],
-      &PyArray_Type, &out[2],
-      &masks,
-      &zeros,
-      &scales,
-      &weights);
+  /* Iterator */
+  PyArray_Descr* dtype_res = NULL;
+  PyArray_Descr* dtype_pix = NULL;
+  npy_uint32 iflags;
+  std::vector<npy_uint32> op_flags;
+  std::vector<PyArray_Descr*> op_dtypes;
+  std::vector<PyObject*> ops;
+  NpyIter *iter = NULL;
+  NpyIter_IterNextFunc *iternext;
+  char** dataptr;
 
-  if (!ok)
-  {
-    goto exit;
-  }
+  /* NU_generic_combine */
+  std::vector<double> data2;
+  std::vector<double> wdata;
+
+  int outval;
+
+  outval = PyArg_ParseTuple(args,
+      "OOO!O!O!|OOOO:generic_combine",
+      &fnc, /* capsule */
+      &images, /* sequence of images */
+      &PyArray_Type, &out_res, /* result */
+      &PyArray_Type, &out_var, /* variance */
+      &PyArray_Type, &out_pix, /* npix */
+      &masks, /* sequence of masks */
+      &zeros, /* sequence of zeros */
+      &scales,/* sequence of scales */
+      &weights /* sequence of weights */
+      );
+
+  if (!outval) return NULL;
 
   images_seq = PySequence_Fast(images, "expected a sequence");
   nimages = PySequence_Size(images_seq);
@@ -119,20 +135,14 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     PyErr_Format(CombineError, "data list is empty");
     goto exit;
   }
-
-  // Converted to an array of pointers
-  allimages = PySequence_Fast_ITEMS(images_seq);
-
-  // Checking for images
-  for(ui = 0; ui < nimages; ++ui) {
-    if (!NU_combine_image_check(CombineError, allimages[ui], allimages[0], allimages[0], "data", ui))
+  if (masks != NULL && masks != Py_None) {
+    masks_seq = PySequence_Fast(masks, "expected a sequence");
+    nmasks = PySequence_Size(masks_seq);
+    if (nmasks != nimages) {
+      PyErr_Format(CombineError,
+          "number of images (%zd) and masks (%zd) is different", nimages, nmasks);
       goto exit;
-  }
-
-  // Checking for outputs
-  for(ui = 0; ui < OUTDIM; ++ui) {
-    if (!NU_combine_image_check(CombineError, out[ui], allimages[0], out[0], "output", ui))
-      goto exit;
+    }
   }
 
   if (!PyCapsule_IsValid(fnc, "numina.cmethod")) {
@@ -140,11 +150,11 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     goto exit;
   }
 
-  func = PyCapsule_GetPointer(fnc, "numina.cmethod");
-  data = PyCapsule_GetContext(fnc);
+  capsule_func = PyCapsule_GetPointer(fnc, "numina.cmethod");
+  capsule_data = PyCapsule_GetContext(fnc);
 
   // Checking zeros, scales and weights
-  if (zeros == Py_None) {
+  if (zeros == Py_None  || zeros == NULL) {
     zbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
     if (zbuffer == NULL) {
       PyErr_NoMemory();
@@ -161,7 +171,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     zbuffer = (double*)PyArray_DATA((PyArrayObject*)zeros_arr);
   }
 
-  if (scales == Py_None) {
+  if (scales == Py_None || scales == NULL) {
     sbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
     if (sbuffer == NULL) {
       PyErr_NoMemory();
@@ -178,7 +188,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     sbuffer = (double*)PyArray_DATA((PyArrayObject*)scales_arr);
   }
 
-  if (weights == Py_None) {
+  if (weights == Py_None || weights == NULL) {
     wbuffer = (double*)PyMem_Malloc(nimages * sizeof(double));
     if (wbuffer == NULL) {
       PyErr_NoMemory();
@@ -195,31 +205,92 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args)
     wbuffer = (double*)PyArray_DATA((PyArrayObject*)weights_arr);
   }
 
-  if (masks == Py_None) {
-    allmasks = NULL;
+  dtype_res = PyArray_DescrFromType(NPY_DOUBLE);
+  dtype_pix = PyArray_DescrFromType(NPY_INT);
+  /* Inputs */
+  tmp_list = PySequence_Fast_ITEMS(images_seq);
+  std::copy(tmp_list, tmp_list + nimages, std::back_inserter(ops));
+  std::fill_n(std::back_inserter(op_flags), nimages, NPY_ITER_READONLY | NPY_ITER_NBO);
+  std::fill_n(std::back_inserter(op_dtypes), nimages, dtype_res);
+  /* outputs */
+  ops.push_back(out_res);
+  ops.push_back(out_var);
+  ops.push_back(out_pix);
+  op_dtypes.push_back(dtype_res);
+  op_dtypes.push_back(dtype_res);
+  op_dtypes.push_back(dtype_pix);
+  std::fill_n(std::back_inserter(op_flags), nout, NPY_ITER_WRITEONLY | NPY_ITER_NBO| NPY_ITER_ALIGNED);
+  /* masks */
+  if (nmasks != 0) {
+    tmp_list = PySequence_Fast_ITEMS(masks_seq);
+    std::copy(tmp_list, tmp_list + nmasks, std::back_inserter(ops));
+    std::fill_n(std::back_inserter(op_flags), nmasks, NPY_ITER_READONLY | NPY_ITER_NBO);
+    std::fill_n(std::back_inserter(op_dtypes), nmasks, dtype_pix);
   }
-  else {
-    // Checking the masks
-    masks_seq = PySequence_Fast(masks, "expected a sequence");
-    nmasks = PySequence_Size(masks_seq);
 
-    if (nimages != nmasks) {
-      PyErr_Format(CombineError, "number of images (%zd) and masks (%zd) is different", nimages, nmasks);
+  iter = NpyIter_MultiNew(nimages + nout + nmasks, (PyArrayObject**)(&ops[0]),
+                  NPY_ITER_BUFFERED,
+                  NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
+                  &op_flags[0], &op_dtypes[0]);
+  Py_DECREF(dtype_res);
+  Py_DECREF(dtype_pix);
+  op_dtypes.resize(0); /* clean up */
+
+  if (iter == NULL) {
       goto exit;
-    }
-
-    allmasks = PySequence_Fast_ITEMS(masks_seq);
-
-    for(ui = 0; ui < nimages; ++ui) {
-      if (!NU_combine_image_check(CombineError, allmasks[ui], allimages[0], allmasks[0], "masks", ui))
-        goto exit;
-    }
   }
 
-  if(!NU_generic_combine(allimages, allmasks, nimages, out,
-      (CombineFunc)func, data, zbuffer, sbuffer, wbuffer)
-    )
-    goto exit;
+  iternext = NpyIter_GetIterNext(iter, NULL);
+  dataptr = NpyIter_GetDataPtrArray(iter);
+
+  data2.reserve(nimages);
+  wdata.reserve(nimages);
+
+  do {
+      double* p_val;
+      double converted;
+      double* pvalues[3];
+      int ncalc;
+
+      for(int ii = 0; ii < nimages; ++ii) {
+        npy_bool m_val = NPY_FALSE;
+
+        if(wbuffer[ii] < 0)
+          continue;
+
+        if(nmasks == nimages) {
+           m_val = (* (int*)dataptr[nimages + nout + ii]) > 0;
+        }
+
+        if (m_val == NPY_TRUE)
+          continue;
+
+        p_val = (double*)dataptr[ii];
+        converted = (*p_val - zbuffer[ii]) / (sbuffer[ii]);
+        data2.push_back(converted);
+        wdata.push_back(wbuffer[ii]);
+      }
+
+      // And pass the data to the combine method
+      if (data2.size() > 0) {
+          outval = ((CombineFunc)capsule_func)(&data2[0], &wdata[0], data2.size(), pvalues, capsule_data);
+          if(!outval) {
+             PyErr_SetString(PyExc_RuntimeError, "unknown error in combine method");
+             NpyIter_Deallocate(iter);
+             goto exit;
+          }
+        ncalc = (*pvalues[2]);
+        memcpy(dataptr[nimages], pvalues[0], sizeof(double));
+        memcpy(dataptr[nimages + 1], pvalues[1], sizeof(double));
+        memcpy(dataptr[nimages + 2], &ncalc, sizeof(int));
+    }
+    data2.clear();
+    wdata.clear();
+
+
+    } while(iternext(iter));
+
+  NpyIter_Deallocate(iter);
 
 exit:
   Py_XDECREF(images_seq);
