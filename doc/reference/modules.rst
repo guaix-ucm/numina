@@ -22,6 +22,5 @@ Numina modules
    types
    user
    util
-   visualization
    xdgdirs
    
