@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2023 Universidad Complutense de Madrid
+ * Copyright 2008-2024 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -215,7 +215,8 @@ inline std::pair<typename std::iterator_traits<Iterator1>::value_type,
 
   const T mu = weighted_mean(begin, end, weights);
   const T m = mu * std::distance(begin, end);
-  const T v = weighted_population_variance(begin, end, weights, mu) * std::distance(begin, end);
+  const T v = weighted_population_variance(begin, end, weights, mu) *
+    std::distance(begin, end) * std::distance(begin, end);
   return std::make_pair(m, v);
 }
 
