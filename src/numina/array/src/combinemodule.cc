@@ -225,7 +225,7 @@ static PyObject* py_generic_combine(PyObject *self, PyObject *args, PyObject *kw
 
   iter = NpyIter_MultiNew(nimages + nout + nmasks, (PyArrayObject**)(&ops[0]),
                   NPY_ITER_BUFFERED,
-                  NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
+                  NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                   &op_flags[0], &op_dtypes[0]);
   Py_DECREF(dtype_res);
   Py_DECREF(dtype_pix);
