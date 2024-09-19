@@ -14,12 +14,14 @@ import errno
 import logging
 import os
 import pickle
+import pkgutil
 import shutil
 
 import yaml
 
 import numina.drps
 from numina.dal.backend import Backend
+from numina.dal.dictdal import HybridDAL
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
 from numina.types.qc import QC
@@ -401,9 +403,8 @@ def make_sure_file_exists(path):
             raise
 
 
-def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None):
+def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None) -> HybridDAL:
     import numina.instrument.assembly as asbl
-    from numina.dal.dictdal import HybridDAL
     sys_drps = numina.drps.get_system_drps()
     com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
     backend = HybridDAL(
@@ -416,7 +417,7 @@ def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profi
 
 
 def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
-                             profile_path_extra=None, filename=None):
+                             profile_path_extra=None, filename=None) -> Backend:
     import numina.instrument.assembly as asbl
     sys_drps = numina.drps.get_system_drps()
     com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
@@ -434,7 +435,7 @@ def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
 
 def create_datamanager(config, reqfile,
                        extra_control=None, profile_path_extra=None,
-                       persist=True):
+                       persist=True) -> DataManager:
 
     section = config['tool.run']
     basedir = section['basedir']
@@ -477,8 +478,39 @@ def create_datamanager(config, reqfile,
 
         datamanager = DataManager(basedir, datadir, _backend)
     else:
-        print('Unsupported format', control_format, 'in', reqfile)
-        raise ValueError
+        msg = f'Unsupported format {control_format} in {reqfile}'
+        raise ValueError(msg)
+
+    # This should go before we load CL file
+    # load additional reduction defaults
+    for ins, drp in datamanager.backend.drps.query_all().items():
+        pkg = f"{drp.package}.recipes"
+        resource = "configs.yaml"
+        try:
+            data = pkgutil.get_data(pkg, resource)
+            values = yaml.safe_load(data)
+            # insert requirements
+            reqs = values.get('requirements', {})
+            reqs_ins = reqs.get(ins, {})
+            for prof_name in reqs_ins:
+                node_pln = reqs_ins[prof_name]
+                for pln_name in node_pln:
+                    node_obs = node_pln[pln_name]
+                    for obs_name in node_obs:
+                        params = node_obs[obs_name]
+                        # Set instrument if not defined
+                        n1 = datamanager.backend.req_table.setdefault(ins, {})
+                        # Set instrumental profile if not defined
+                        n2 = n1.setdefault(prof_name, {})
+                        # Set pipeline if not defined
+                        n3 = n2.setdefault(pln_name, {})
+                        # Insert params
+                        n3[obs_name] = params
+
+        except FileNotFoundError:
+            # if the file doesn't exist, we ignore it
+            pass
+
     return datamanager
 
 
