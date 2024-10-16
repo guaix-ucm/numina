@@ -49,13 +49,6 @@ def get_default_class(etype):
         raise ValueError(f'no class for {etype}')
 
 
-_default_class = {}
-_default_class['instrument'] = numina.instrument.generic.InstrumentGeneric
-_default_class['component'] = numina.instrument.generic.InstrumentGeneric
-_default_class['setup'] = numina.instrument.generic.InstrumentGeneric
-_default_class['properties'] = numina.instrument.generic.InstrumentGeneric
-
-
 @attrs.define
 class ComponentCollection:
     dirname = attrs.field()
@@ -217,7 +210,7 @@ def assembly_instrument(comp_store, keyval, date, by_key='name'):
     Returns
     -------
     InstrumentGeneric
-        a instrument configuration
+        an instrument configuration
     """
     return assembly_element(comp_store, 'instrument', keyval, date, by_key=by_key)
 
