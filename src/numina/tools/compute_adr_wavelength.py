@@ -181,6 +181,7 @@ def compute_adr_wavelength(
 
     return differential_refraction
 
+
 def main(args=None):
 
     # parse command-line options
@@ -238,7 +239,7 @@ def main(args=None):
         ) * wave_unit
 
     if args.reference_wave_vacuum is None:
-        reference_wave_vacuum = (wave_vacuum[0] + wave_vacuum[-1] ) / 2
+        reference_wave_vacuum = (wave_vacuum[0] + wave_vacuum[-1]) / 2
         print(f'Using reference_wave_vacuum={reference_wave_vacuum}')
     else:
         reference_wave_vacuum = args.reference_wave_vacuum * wave_unit
@@ -250,14 +251,14 @@ def main(args=None):
         temperature=args.temperature * u.Celsius,
         pressure_mm=args.pressure,
         pressure_water_vapor_mm=args.pressure_water_vapor,
-        debug = args.debug
+        debug=args.debug
     )
 
     result = QTable()
     result['Wavelength'] = wave_vacuum
-    result['Wavelength'].info.format= f'.{args.ndecimal_wave}f'
+    result['Wavelength'].info.format = f'.{args.ndecimal_wave}f'
     result['ADR'] = differential_refraction
-    result['ADR'].info.format= f'.{args.ndecimal_adr}f'
+    result['ADR'].info.format = f'.{args.ndecimal_adr}f'
     result.pprint_all()
 
     if args.plots:
@@ -265,7 +266,7 @@ def main(args=None):
         ax.plot(wave_vacuum, differential_refraction, '.')
         ax.set_xlabel(f'Wavelength ({wave_unit})')
         ax.set_ylabel(f'Atmospheric Differential Refraction ({differential_refraction.unit})')
-        ax.set_title(f'Airmass: {args.airmass}, reference wave: {reference_wave_vacuum}\n'+
+        ax.set_title(f'Airmass: {args.airmass}, reference wave: {reference_wave_vacuum}\n' +
                      f'Temperature: {args.temperature} deg Celsius, Pressure: {args.pressure} mmHg\n' +
                      f'Water Vapor Pressure: {args.pressure_water_vapor} mmHg')
         ax.axhline(0, linestyle='--', color='grey')

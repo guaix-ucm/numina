@@ -118,7 +118,7 @@ def measure_slice_xy_offsets_in_3d_cube(
     if npoints_along_naxis3 > naxis3:
         if debug:
             print(f'WARNING: {npoints_along_naxis3=} > {naxis3=}')
-            print(f'         forcing npoints_along_naxis3 = naxis3')
+            print('         forcing npoints_along_naxis3 = naxis3')
         npoints_along_naxis3 = naxis3
 
     # reference slice for the first iteration
