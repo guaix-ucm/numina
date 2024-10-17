@@ -43,6 +43,7 @@ dependencies = [
     'python-dateutil>=2.7.0',
     'lmfit',
     'scikit-image',
+    'importlib_resources',  # required with python < 3.9
     'backports.entry_points_selectable',  # required only with python < 3.10a7
 ]
 

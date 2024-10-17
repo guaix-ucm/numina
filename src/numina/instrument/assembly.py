@@ -7,13 +7,13 @@
 # License-Filename: LICENSE.txt
 #
 
-import importlib.resources
 import itertools
 import json
 import pathlib
 
 import attrs
 from dateutil.parser import isoparse
+import importlib_resources
 
 import numina.util.objimport
 import numina.instrument.configorigin as cf
@@ -72,11 +72,11 @@ def load_resources_pkg(pkgname: str, configs: str) -> ComponentCollection:
 
     valid_paths = []
 
-    for res in importlib.resources.files('{}.{}'.format(pkgname, configs)).iterdir():
-        if importlib.resources.as_file(res).suffix == '.json':
+    for res in importlib_resources.files('{}.{}'.format(pkgname, configs)).iterdir():
+        if importlib_resources.as_file(res).suffix == '.json':
             valid_paths.append(res.name)
 
-    dirpath = importlib.resources.files(pkgname) / configs
+    dirpath = importlib_resources.files(pkgname) / configs
     return ComponentCollection(dirpath, valid_paths)
 
 
@@ -142,7 +142,7 @@ def load_paths_store(pkg_paths=None, file_paths=None) -> dict:
         pkg_paths = []
 
     paths1 = [pathlib.Path(fpath) for fpath in file_paths]
-    paths2 = [importlib.resources.files(ppath) for ppath in pkg_paths]
+    paths2 = [importlib_resources.files(ppath) for ppath in pkg_paths]
 
     for path in itertools.chain(paths1, paths2):
         for obj in path.iterdir():

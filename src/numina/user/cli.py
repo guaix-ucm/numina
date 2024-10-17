@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,13 +13,13 @@
 import argparse
 import configparser
 from importlib import import_module
-import importlib.resources
 import logging
 import logging.config
 import os
 import sys
 
 from backports.entry_points_selectable import entry_points
+import importlib_resources
 import yaml
 
 
@@ -36,7 +36,7 @@ def main(args=None):
     # Configuration args from a text file
     config = configparser.ConfigParser()
     # Load base config here
-    basecfg = importlib.resources.files().joinpath('numina.cfg')
+    basecfg = importlib_resources.files().joinpath('numina.cfg')
     config.read_file(basecfg.open())
 
     # Extend with custom values
