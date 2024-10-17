@@ -600,7 +600,7 @@ class HybridDAL(BaseHybridDAL):
 
         instrument = obsres.instrument
 
-        conf = str(obsres.configuration.origin.uuid)
+        profile = obsres.profile
 
         drp = self.drps.query_by_name(instrument)
         label = drp.product_label(tipo)
@@ -612,7 +612,7 @@ class HybridDAL(BaseHybridDAL):
 
         # search results of these OBs
         ins_table = self.prod_table.get(instrument, {})
-        ptable = ins_table.get(conf, [])
+        ptable = ins_table.get(profile, [])
         for prod in ptable:
             pk = prod['type']
             pt = prod['tags']
@@ -627,14 +627,14 @@ class HybridDAL(BaseHybridDAL):
                 else:
                     # Build path
                     path = build_product_path(
-                        drp, self.rootdir, conf, name, tipo, obsres)
+                        drp, self.rootdir, profile, name, tipo, obsres)
                 _logger.debug("path is %s", path)
                 rprod['content'] = numina.store.load(tipo, path)
                 return StoredProduct(**rprod)
         else:
             # Not in table, try file directly
             _logger.debug("%s not in table, try file directly", tipo)
-            path = self.build_product_path(drp, conf, name, tipo, obsres)
+            path = self.build_product_path(drp, profile, name, tipo, obsres)
             _logger.debug("path is %s", path)
             content = self.product_loader(tipo, name, path)
             return StoredProduct(id=0, content=content, tags=obsres.tags)

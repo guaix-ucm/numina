@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,14 +12,14 @@ import warnings
 import numina.util.convert as conv
 
 
-class QueryAttribute(object):
+class QueryAttribute:
     def __init__(self, name, tipo, description=""):
         self.name = name
         self.type = tipo
         self.description = description
 
 
-class KeyDefinition(object):
+class KeyDefinition:
     def __init__(self, key, ext=None, default=None, convert=None):
         self.key = key
         self.ext = 0 if ext is None else ext
@@ -33,7 +33,7 @@ class KeyDefinition(object):
         return value
 
 
-class FITSKeyExtractor(object):
+class FITSKeyExtractor:
     """Extract values from FITS images"""
 
     def __init__(self, values):
@@ -75,7 +75,7 @@ class FITSKeyExtractor(object):
         return extractor(hdulist)
 
 
-class DataModel(object):
+class DataModel:
     """Model of the Data being processed
 
     Parameters
@@ -250,7 +250,7 @@ def get_imgid(img, prefix=True):
     try:
         return get_imgid_header(hdr, prefix=prefix)
     except ValueError:
-        warnings.warn("no method to identity image", RuntimeWarning)
+        warnings.warn("no method to identify image", RuntimeWarning)
         value = repr(img)
         pre = 'py:{}'
         base = '{}'

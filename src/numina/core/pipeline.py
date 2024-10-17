@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -19,7 +19,7 @@ import numina.util.parser
 import numina.datamodel
 
 
-class Pipeline(object):
+class Pipeline:
     """Base class for pipelines."""
 
     def __init__(self, instrument, name, recipes, version=1, products=None, provides=None):
@@ -185,7 +185,7 @@ class Pipeline(object):
         return allmodes[mode]
 
 
-class InstrumentDRP(object):
+class InstrumentDRP:
     """Description of an Instrument Data Reduction Pipeline
 
     Parameters
@@ -194,7 +194,7 @@ class InstrumentDRP(object):
            Name of the instrument
        configurations : dict of InstrumentConfiguration
        modes : dict of ObservingModes
-       pipeline : dict of Pipeline
+       pipelines : dict of Pipeline
 
     """
 
@@ -306,8 +306,9 @@ class InstrumentDRP(object):
         logger = logging.getLogger(__name__)
         logger.debug('calling default profile selector')
         # check configuration
-        insconf = obresult.configuration
-        if insconf != 'default':
+        insconf = obresult.profile
+        if insconf != 'default' and insconf != '00000000-0000-0000-0000-000000000000':
+            # Using profile as a UUID
             key = insconf
             date_obs = None
             keyname = 'uuid'
@@ -345,7 +346,7 @@ class InstrumentDRP(object):
         return recipe
 
 
-class ProductEntry(object):
+class ProductEntry:
     def __init__(self, name, mode, field, alias=None):
         self.name = name
         self.mode = mode
@@ -362,7 +363,7 @@ class ProductEntry(object):
         return msg
 
 
-class ObservingMode(object):
+class ObservingMode:
     """Observing modes of an Instrument."""
 
     def __init__(self, instrument=''):
@@ -395,7 +396,7 @@ class ObservingMode(object):
 
     def tag_ob(self, partial):
         if self.tagger is not None:
-            warnings.warn("per mode taggers are deprecated, recipe requirements provide al required informatation",
+            warnings.warn("per mode taggers are deprecated, recipe requirements provide al required information",
                           DeprecationWarning, stacklevel=2)
             partial.tags = self.tagger(partial)
         return partial

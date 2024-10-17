@@ -256,22 +256,26 @@ class BaseRecipe(metaclass=RecipeType):
 
     def extract_tags_from_obsres(self, obsres, tag_keys):
         ref_img = obsres.get_sample_frame().open()
-        final_tags = self.extract_tags_from_ref(
-            ref_img, tag_keys, base=obsres.labels)
+        final_tags = extract_tags_from_img(
+            ref_img, tag_keys, self.datamodel, base=obsres.labels)
         return final_tags
 
     def extract_tags_from_ref(self, ref, tag_keys, base=None):
+        return extract_tags_from_img(ref, tag_keys, self.datamodel, base=base)
 
-        base = base or {}
-        fits_extractor = self.datamodel.extractor_map['fits']
-        final_tags = {}
-        for key in tag_keys:
 
-            if key in base:
-                final_tags[key] = base[key]
-            else:
-                final_tags[key] = fits_extractor.extract(key, ref)
-        return final_tags
+def extract_tags_from_img(img, tag_keys, datamodel, base=None):
+
+    base = base or {}
+    fits_extractor = datamodel.extractor_map['fits']
+    final_tags = {}
+    for key in tag_keys:
+
+        if key in base:
+            final_tags[key] = base[key]
+        else:
+            final_tags[key] = fits_extractor.extract(key, img)
+    return final_tags
 
 
 def timeit(method):

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,15 +16,17 @@ import os
 
 import numina.exceptions
 from numina.user.logconf import LOGCONF
-from numina.util.fqn import fully_qualified_name
+
 from numina.util.context import working_directory
+from numina.util.fqn import fully_qualified_name
+from numina.user.helpers import ProcessingTask, DataManager
 
 
 _logger = logging.getLogger(__name__)
 
 
-def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=False,
-               validate_inputs=False, validate_results=False):
+def run_reduce(datastore: DataManager, obsid, as_mode=None, requirements=None, copy_files=False,
+               validate_inputs=False, validate_results=False) -> ProcessingTask:
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
@@ -66,44 +68,7 @@ def run_reduce(datastore, obsid, as_mode=None, requirements=None, copy_files=Fal
         datastore.store_task(task)
 
 
-@contextlib.contextmanager
-def config_recipe_logger(root_level_logger, ref_logger='numina'):
-    """Configure root level logger for recipe.
-
-    The recipe formatter is 'detailed'
-    The logger is set to DEBUG (this is needed by the FileHandler later
-    The StreamHandler is set to the same level as the logger of numina
-
-    """
-    numina_logger = logging.getLogger(ref_logger)
-    recipe_logger = logging.getLogger(root_level_logger)
-    # Save state of logger
-    save_level = recipe_logger.getEffectiveLevel()
-    recipe_logger.setLevel(logging.DEBUG)
-    save_propagate = recipe_logger.propagate
-    recipe_logger.propagate = False
-
-    # create formatter
-    formater_dd = LOGCONF['formatters']['detailed']
-    detailed_formatter = logging.Formatter(fmt=formater_dd.get('format'))
-    # create handler, ignoring configuration here
-    # handerl_dd = numina_cli_logconf['handlers']['detailed_console']
-    # handerl_dd_level =
-    sh = logging.StreamHandler()
-    sh.setLevel(numina_logger.getEffectiveLevel())
-    sh.setFormatter(detailed_formatter)
-    recipe_logger.addHandler(sh)
-
-    try:
-        yield recipe_logger
-    finally:
-        # Restore state
-        recipe_logger.removeHandler(sh)
-        recipe_logger.propagate = save_propagate
-        recipe_logger.setLevel(save_level)
-
-
-def run_task_reduce(task, datastore):
+def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingTask:
 
     obsid = task.request_params['oblock_id']
     request_profile = task.request_params["instrument_configuration"]
@@ -119,6 +84,9 @@ def run_task_reduce(task, datastore):
     # Roll back to cwd after leaving the context
     with working_directory(workenv.datadir):
 
+        # here the configuration object has been updated
+        # and configured with one image
+        # if we have a ResultOf, ObservingMode.build_ob will insert results
         obsres = datastore.backend.obsres_from_oblock_id(
             obsid, as_mode=as_mode, configuration=request_profile
         )
@@ -148,6 +116,7 @@ def run_task_reduce(task, datastore):
         _logger.debug('recipe created')
 
         try:
+            # here the tags have been updated
             rinput = recipe.build_recipe_input(obsres, datastore.backend)
         except (ValueError, numina.exceptions.ValidationError) as err:
             _logger.error("During recipe input construction")
@@ -203,6 +172,23 @@ def run_task_reduce(task, datastore):
     return completed_task
 
 
+def run_recipe_timed(task: ProcessingTask, recipe, rinput) -> ProcessingTask:
+    """Run the recipe and count the time it takes."""
+    _logger.info('running recipe')
+    task.state = 1
+    task.time_start = datetime.datetime.now()
+    #
+    try:
+        task.result = recipe(rinput)
+        task.state = 2
+    except Exception:
+        task.state = 3
+        raise
+    finally:
+        task.time_end = datetime.datetime.now()
+    return task
+
+
 @contextlib.contextmanager
 def logger_manager(logger_control, result_dir):
     """"Add a FileHandler to existing loggers
@@ -239,18 +225,38 @@ def logger_manager(logger_control, result_dir):
             recipe_logger.removeHandler(fh)
 
 
-def run_recipe_timed(task, recipe, rinput):
-    """Run the recipe and count the time it takes."""
-    _logger.info('running recipe')
-    task.state = 1
-    task.time_start = datetime.datetime.now()
-    #
+@contextlib.contextmanager
+def config_recipe_logger(root_level_logger, ref_logger='numina'):
+    """Configure root level logger for recipe.
+
+    The recipe formatter is 'detailed'
+    The logger is set to DEBUG (this is needed by the FileHandler later
+    The StreamHandler is set to the same level as the logger of numina
+
+    """
+    numina_logger = logging.getLogger(ref_logger)
+    recipe_logger = logging.getLogger(root_level_logger)
+    # Save state of logger
+    save_level = recipe_logger.getEffectiveLevel()
+    recipe_logger.setLevel(logging.DEBUG)
+    save_propagate = recipe_logger.propagate
+    recipe_logger.propagate = False
+
+    # create formatter
+    formater_dd = LOGCONF['formatters']['detailed']
+    detailed_formatter = logging.Formatter(fmt=formater_dd.get('format'))
+    # create handler, ignoring configuration here
+    # handerl_dd = numina_cli_logconf['handlers']['detailed_console']
+    # handerl_dd_level =
+    sh = logging.StreamHandler()
+    sh.setLevel(numina_logger.getEffectiveLevel())
+    sh.setFormatter(detailed_formatter)
+    recipe_logger.addHandler(sh)
+
     try:
-        task.result = recipe(rinput)
-        task.state = 2
-    except Exception:
-        task.state = 3
-        raise
+        yield recipe_logger
     finally:
-        task.time_end = datetime.datetime.now()
-    return task
+        # Restore state
+        recipe_logger.removeHandler(sh)
+        recipe_logger.propagate = save_propagate
+        recipe_logger.setLevel(save_level)

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -79,14 +79,7 @@ def test_search_instrument_configuration_from_ob(basedictdal):
 
     ob = numina.core.ObservationResult(mode='TEST1')
     ob.instrument = 'TEST1'
-    ob.configuration = 'missing'
-
-    with pytest.raises(ValueError):
-        basedictdal.search_instrument_configuration_from_ob(ob)
-
-    ob = numina.core.ObservationResult(mode='TEST1')
-    ob.instrument = 'TEST1'
-    ob.configuration = 'missing'
+    ob.profile = 'missing'
 
     with pytest.raises(ValueError):
         basedictdal.search_instrument_configuration_from_ob(ob)
@@ -96,7 +89,7 @@ def test_search_instrument_configuration_from_ob2(basedictdal):
     import numina.instrument.generic
 
     ob = numina.core.ObservationResult(instrument='TEST1', mode='TEST1')
-    ob.configuration = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
+    ob.profile = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
 
     insconf = basedictdal.search_instrument_configuration_from_ob(ob)
     assert str(insconf.origin.uuid) == '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
@@ -106,7 +99,7 @@ def test_search_instrument_configuration_from_ob3(basedictdal):
     import numina.instrument.generic
 
     ob = numina.core.ObservationResult(instrument='TEST1', mode='TEST1')
-    ob.configuration = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
+    ob.profile = '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
 
     insconf = basedictdal.search_instrument_configuration_from_ob(ob)
     assert str(insconf.origin.uuid) == '225fcaf2-7f6f-49cc-972a-70fd0aee8e96'
