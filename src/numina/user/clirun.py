@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2016 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -37,8 +37,6 @@ def register(subparsers, config):
         'run',
         help='process a observation result'
     )
-
-    parser_run.set_defaults(command=mode_run_obsmode)
 
     parser_run.add_argument(
         '-c', '--task-control', dest='reqs',
@@ -83,11 +81,7 @@ def register(subparsers, config):
         default=False, help='cleanup workdir on exit [disabled]'
     )
     parser_run.add_argument(
-        '--not-copy-files', action="store_const", dest="copy_files", const=False,
-        help='do not copy observation result and requirement files'
-    )
-    parser_run.add_argument(
-        '--link-files', action="store_const", dest="copy_files", const=False,
+        '--link-files', '--not-copy-files', action="store_const", dest="copy_files", const=False,
         help='do not copy observation result and requirement files'
     )
     parser_run.add_argument(
@@ -106,10 +100,21 @@ def register(subparsers, config):
         '--validate', action="store_const", const=True,
         help='validate inputs and results of recipes'
     )
+    group_strict = parser_run.add_mutually_exclusive_group()
+    group_strict.add_argument(
+        '--strict-reqs', action="store_true",
+        help='end the program if a requirement name is not matched by the recipe'
+    )
+    group_strict.add_argument(
+        '--loose-reqs', action="store_false", dest='strict_reqs',
+        help='warn if a requirement name is not matched by the recipe'
+    )
     parser_run.add_argument(
         'obsresult', nargs='+',
         help='file with the observation result'
     )
+
+    parser_run.set_defaults(command=mode_run_obsmode, strict_reqs=True)
 
     return parser_run
 

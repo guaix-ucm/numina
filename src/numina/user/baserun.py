@@ -26,7 +26,7 @@ _logger = logging.getLogger(__name__)
 
 
 def run_reduce(datastore: DataManager, obsid, as_mode=None, requirements=None, copy_files=False,
-               validate_inputs=False, validate_results=False) -> ProcessingTask:
+               validate_inputs=False, validate_results=False, strict_inputs=False) -> ProcessingTask:
     """Observing mode processing mode of numina."""
 
     request = 'reduce'
@@ -38,6 +38,7 @@ def run_reduce(datastore: DataManager, obsid, as_mode=None, requirements=None, c
     request_params["intermediate_results"] = True
     request_params["validate_results"] = validate_results
     request_params["validate_inputs"] = validate_inputs
+    request_params["strict_inputs"] = strict_inputs
     request_params["copy_files"] = copy_files
     request_params["mode"] = as_mode
 
@@ -125,14 +126,18 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
 
         _logger.debug('recipe input created')
         # Show the actual inputs
+        for key, val in obsres.requirements.items():
+            if key not in recipe.requirements():
+                msg = f'"{key}: {val}" present in OB requirements, but not used'
+                if task.request_params['strict_inputs']:
+                    _logger.error(msg)
+                    raise ValueError(msg)
+                else:
+                    _logger.warning(msg)
+
         for key, req in recipe.requirements().items():
             v = getattr(rinput, key)
             _logger.debug("recipe requires %r, value is %s", key, v)
-
-        for key, val in obsres.requirements.items():
-            if key not in recipe.requirements():
-                _logger.warning(
-                    f'"{key}: {val}" present in OB requirements, but not used')
 
         for req in recipe.products().values():
             _logger.debug('recipe provides %s, %s',

@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2019 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -44,6 +44,8 @@ def mode_run_common_obs(args, extra_args, config):
         config['tool.run']['copy_files'] = str(args.copy_files)
     if args.validate:
         config['tool.run']['validate'] = str(args.validate)
+    if hasattr(args, "strict_reqs"):
+        config['tool.run']['strict_reqs'] = str(args.strict_reqs)
 
     datamanager = create_datamanager(config, args.reqs, extra_args.extra_control)
     datamanager.backend.add_obs(loaded_obs)
@@ -57,13 +59,16 @@ def mode_run_common_obs(args, extra_args, config):
 
     copy_files = config['tool.run'].getboolean('copy_files')
     validate = config['tool.run'].getboolean('validate')
-    for job in jobs:
-        run_reduce(
-            datamanager, job['id'], copy_files=copy_files,
-            validate_inputs=validate, validate_results=validate
-        )
-
-    if args.dump_control:
-        _logger.debug('dump control status')
-        with open('control_dump.yaml', 'w') as fp:
-            datamanager.backend.dump(fp)
+    strict_inputs = config['tool.run'].getboolean('strict_reqs')
+    try:
+        for job in jobs:
+            run_reduce(
+                datamanager, job['id'], copy_files=copy_files,
+                validate_inputs=validate, validate_results=validate,
+                strict_inputs=strict_inputs
+            )
+    finally:
+        if args.dump_control:
+            _logger.debug('dump control status')
+            with open('control_dump.yaml', 'w') as fp:
+                datamanager.backend.dump(fp)
