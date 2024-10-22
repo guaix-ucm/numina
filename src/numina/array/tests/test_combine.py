@@ -212,3 +212,14 @@ def test_combine_median2():
     assert numpy.allclose(out0, rres)
     assert numpy.allclose(out1, rvar)
     assert numpy.allclose(out2, len(inputs))
+
+
+@pytest.mark.xfail
+def test_combine_maxargs():
+    """Testing silly numpy max args limit"""
+    # Inputs
+    input1 = numpy.array([[1, 2, 3, -4]])
+    inputs = [input1] * 100
+
+    out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
+    assert numpy.allclose(out0, input1)
