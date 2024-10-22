@@ -15,7 +15,7 @@ import sys
 from astropy.io import fits
 import numpy
 
-from numina.array._bpm import _process_bpm_intl
+from numina.array._bpm import _process_bpm_intl  # noqa
 from numina.tools.arg_file_is_new import arg_file_is_new
 
 
@@ -73,9 +73,9 @@ def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, su
     -------
 
     """
-    import numina.array._combine
+    import numina.array._combine2  # noqa
 
-    method = numina.array._combine.median_method()
+    method = numina.array._combine2.median_method()
 
     return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill, reuse_values=reuse_values, subs=subs)
 

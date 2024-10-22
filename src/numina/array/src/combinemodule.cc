@@ -508,7 +508,7 @@ static PyMethodDef module_functions[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "_combine",     /* m_name */
+    "_combine2",     /* m_name */
     combine__doc__,  /* m_doc */
     -1,                  /* m_size */
     module_functions,    /* m_methods */
@@ -518,7 +518,7 @@ static struct PyModuleDef moduledef = {
     NULL,                /* m_free */
 };
 
-PyMODINIT_FUNC PyInit__combine(void)
+PyMODINIT_FUNC PyInit__combine2(void)
 {
    PyObject *m;
    m = PyModule_Create(&moduledef);
@@ -532,7 +532,7 @@ PyMODINIT_FUNC PyInit__combine(void)
      * A different base class can be used as base of the exception
      * passing something instead of NULL
      */
-     CombineError = PyErr_NewException("_combine.CombineError", NULL, NULL);
+     CombineError = PyErr_NewException("_combine2.CombineError", NULL, NULL);
    }
    Py_INCREF(CombineError);
    PyModule_AddObject(m, "CombineError", CombineError);

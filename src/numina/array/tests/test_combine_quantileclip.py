@@ -10,7 +10,7 @@
 import unittest
 import numpy
 
-import numina.array.combine as c
+import numina.array.combine2 as c
 
 
 class QuantileClipTestCase(unittest.TestCase):

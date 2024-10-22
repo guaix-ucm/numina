@@ -10,7 +10,7 @@
 import numpy
 import pytest
 
-import numina.array._combine as _c
+import numina.array._combine2 as _c
 
 
 def test_error1():

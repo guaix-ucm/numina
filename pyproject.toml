@@ -1,7 +1,7 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = ["setuptools >= 61.0.0", "setuptools_scm[toml]>=6.2",
-    "wheel", "cython >= 3", "numpy>=1.22"]
+    "wheel", "cython >= 3", "numpy>=1.22,<2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -35,7 +35,7 @@ classifiers = [
 
 dependencies = [
     'attrs',
-    'numpy>=1.22',
+    'numpy>=1.22,<2',
     'astropy',
     'scipy',
     'PyYaml',
@@ -85,3 +85,5 @@ write_to = "src/numina/_version.py"
 # without this, still works, performs autodetection
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]

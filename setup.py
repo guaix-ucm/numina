@@ -9,8 +9,8 @@ def get_extensions():
     extensions = []
     np_api_min = ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")
 
-    ext1 = Extension('numina.array._combine',
-                     ['src/numina/array/src/combinemodule.cc',
+    ext1 = Extension('numina.array._combine1',
+                     ['src/numina/array/src/combinemodule1.cc',
                       'src/numina/array/src/operations.cc',
                       'src/numina/array/src/nu_combine_methods.cc',
                       'src/numina/array/src/nu_combine.cc'
@@ -19,6 +19,18 @@ def get_extensions():
                      include_dirs=[numpy_include])
 
     extensions.append(ext1)
+
+    ext1b = Extension('numina.array._combine2',
+                     ['src/numina/array/src/combinemodule.cc',
+                      'src/numina/array/src/operations.cc',
+                      'src/numina/array/src/nu_combine_methods.cc',
+                      'src/numina/array/src/nu_combine.cc'
+                      ],
+                     define_macros=[np_api_min],
+                     include_dirs=[numpy_include])
+
+    extensions.append(ext1b)
+
 
     ext3 = Extension('numina.array._nirproc',
                      ['src/numina/array/src/nirproc.pyx'],
