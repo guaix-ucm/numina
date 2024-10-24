@@ -4,7 +4,7 @@ import pytest
 
 from numina.array.peaks import peakdet
 
-from .._kernels import kernel_peak_function
+from .._kernels import kernel_peak_function  # noqa
 
 
 def test_pycapsule():
@@ -1212,14 +1212,14 @@ def test_peak_refine(benchmark, spectrum):
     assert numpy.allclose(peakpos[0], resultado_nuevo)
 
 
-@pytest.mark.xfail(raises=ValueError)
 def test_peak_finding_window_odd(spectrum):
-    peakdet.find_peaks_indexes(spectrum, 4)
+    with pytest.raises(ValueError):
+        peakdet.find_peaks_indexes(spectrum, 4)
 
 
-@pytest.mark.xfail(raises=ValueError)
 def test_peak_finding_window_small(spectrum):
-    peakdet.find_peaks_indexes(spectrum, 1)
+    with pytest.raises(ValueError):
+        peakdet.find_peaks_indexes(spectrum, 1)
 
 
 @pytest.mark.parametrize("peaks", [[20, 10, 0, 0, 0, 0, 0, 21],
@@ -1253,24 +1253,19 @@ def test_peak_index_1_index(benchmark):
     assert numpy.allclose(peaks_result, result)
 
 
-@pytest.mark.xfail(raises=ValueError)
 def test_exception_fpeak_negative(spectrum):
-    peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=-100)
+    with pytest.raises(ValueError):
+        peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=-100)
 
 
-@pytest.mark.xfail(raises=ValueError)
 def test_exception_fpeak_limit(spectrum):
-    peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=2)
+    with pytest.raises(ValueError):
+        peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=2)
 
 
-@pytest.mark.xfail(raises=ValueError)
-def test_exception_fpeak_limit1(spectrum):
-    peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=1)
-
-
-@pytest.mark.xfail(raises=ValueError)
 def test_exception_fpeak_limit2(spectrum):
-    peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=4)
+    with pytest.raises(ValueError):
+        peakdet.find_peaks_indexes(spectrum, window_width=3, fpeak=4)
 
 
 def test_fpeak_1():

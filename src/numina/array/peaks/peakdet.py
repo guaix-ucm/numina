@@ -17,7 +17,7 @@ import numpy
 from numpy import dot
 from numpy.linalg import inv
 from scipy.ndimage import generic_filter
-from ._kernels import kernel_peak_function
+from ._kernels import kernel_peak_function  # noqa
 
 
 WW = dict()

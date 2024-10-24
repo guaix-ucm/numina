@@ -37,7 +37,6 @@ def test_invalid_instrument2():
     assert res is False
 
 
-@pytest.mark.xfail(reason="warning seems unreliable")
 def test_invalid_instrument2_warning():
 
     insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', {}, {}, [], [])
