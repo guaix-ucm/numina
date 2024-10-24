@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2023 Universidad Complutense de Madrid
+ * Copyright 2008-2024 Universidad Complutense de Madrid
  *
  * This file is part of Numina
  *
@@ -8,9 +8,10 @@
  *
  */
 
-#include <memory>
-#include <functional>
+#include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <utility>
 
 #include "nu_combine_defs.h"
 #include "operations.h"
@@ -124,6 +125,15 @@ int NU_sigmaclip_function(double *data, double *weights,
     double c_std = 0.0;
     size_t nc_size = size;
 
+    if (size == 0) {
+      *out[0] = 0.0;
+      *out[1] = 0.0;
+      *out[2] = 0;
+
+      return 1;
+    }
+
+
     do {
       ValuePair r = average_central_tendency(data, data + nc_size, weights);
 
@@ -133,12 +143,15 @@ int NU_sigmaclip_function(double *data, double *weights,
 
       const double low = c_mean - c_std * slow;
       const double high = c_mean + c_std * shigh;
-      ned = partition(beg, ned, RangePair1st<ZIter::value_type>(low, high));
+
+      if (beg != ned) {
+        ned = std::partition(beg, ned, RangePair1st<ZIter::value_type>(low, high));
+      }
 
       nc_size = std::distance(beg, ned);
       // We stop when std == 0, all the points would be reject otherwise
       // or when no points are removed in the iteration
-    } while (c_std > 0 && (nc_size != size));
+    } while ((c_std > 0) && (nc_size > 0) && (nc_size != size));
 
     *out[0] = c_mean;
     *out[1] = c_std;
