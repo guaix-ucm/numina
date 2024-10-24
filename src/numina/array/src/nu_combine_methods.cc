@@ -24,8 +24,6 @@
 
 using Numina::ZipIterator;
 using Numina::make_zip_iterator;
-using Numina::LessPair1st;
-using Numina::RangePair1st;
 using Numina::average_central_tendency;
 using Numina::sum_central_tendency;
 using Numina::average_central_tendency_clip;
@@ -98,7 +96,9 @@ int NU_minmax_function(double *data, double *weights,
 
   ZIterPair result = reject_min_max(make_zip_iterator(data, weights),
       make_zip_iterator(data + size, weights + size), nmin, nmax,
-      LessPair1st<typename ZIter::value_type, typename ZIter::value_type>()
+      [](const ValuePair& em1, const ValuePair& em2) {
+         return em1.first < em2.first;
+      }
   );
 
   *out[2] = result.second - result.first;
@@ -145,7 +145,9 @@ int NU_sigmaclip_function(double *data, double *weights,
       const double high = c_mean + c_std * shigh;
 
       if (beg != ned) {
-        ned = std::partition(beg, ned, RangePair1st<ZIter::value_type>(low, high));
+        ned = std::partition(beg, ned, [low, high](const auto& em) {
+            return (low < em.first()) && (high > em.first());
+        });
       }
 
       nc_size = std::distance(beg, ned);
