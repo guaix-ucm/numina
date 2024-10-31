@@ -216,10 +216,31 @@ def test_combine_median2():
 
 @pytest.mark.xfail
 def test_combine_maxargs():
-    """Testing silly numpy max args limit"""
+    """Testing numpy max args limit (with 1 iter impl)"""
+    # Inputs
+    input1 = numpy.array([[1, 2, 3, -4]])
+    inputs = [input1] * 100
+
+    out0, out1, out2 = _c.generic_combine_1iter(_c.median_method(), inputs)
+    assert numpy.allclose(out0, input1)
+
+
+def test_combine_miter_maxargs():
+    """Testing numpy max args limit"""
     # Inputs
     input1 = numpy.array([[1, 2, 3, -4]])
     inputs = [input1] * 100
 
     out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
     assert numpy.allclose(out0, input1)
+
+
+def test_combine_miter_maxargs2():
+    """Testing numpy max args limit with larger images"""
+    # Inputs
+    input1 = numpy.zeros((512, 512))
+    inputs = [input1] * 100
+
+    out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
+    assert numpy.allclose(out0, input1)
+
