@@ -8,6 +8,7 @@ def get_extensions():
 
     extensions = []
     np_api_min = ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")
+    extra_compile_args_cpp=["-std=c++17"]
 
     ext1 = Extension('numina.array._combine1',
                      ['src/numina/array/src/combinemodule1.cc',
@@ -16,6 +17,7 @@ def get_extensions():
                       'src/numina/array/src/nu_combine.cc'
                       ],
                      define_macros=[np_api_min],
+                     extra_compile_args=extra_compile_args_cpp,
                      include_dirs=[numpy_include])
 
     extensions.append(ext1)
@@ -27,6 +29,7 @@ def get_extensions():
                       'src/numina/array/src/nu_combine.cc'
                       ],
                      define_macros=[np_api_min],
+                     extra_compile_args=extra_compile_args_cpp,
                      include_dirs=[numpy_include])
 
     extensions.append(ext1b)
@@ -35,6 +38,7 @@ def get_extensions():
     ext3 = Extension('numina.array._nirproc',
                      ['src/numina/array/src/nirproc.pyx'],
                      define_macros=[np_api_min],
+                     extra_compile_args=extra_compile_args_cpp,
                      include_dirs=[numpy_include],
                      language='c++'
                      )
@@ -45,6 +49,7 @@ def get_extensions():
                      ['src/numina/array/trace/traces.pyx',
                       'src/numina/array/trace/Trace.cpp'],
                      define_macros=[np_api_min],
+                     extra_compile_args=extra_compile_args_cpp,
                      include_dirs=[numpy_include],
                      language='c++')
     extensions.append(ext4)
@@ -52,6 +57,7 @@ def get_extensions():
     ext5 = Extension('numina.array.trace._extract',
                      ['src/numina/array/trace/extract.pyx'],
                      define_macros=[np_api_min],
+                     extra_compile_args=extra_compile_args_cpp,
                      include_dirs=[numpy_include],
                      language='c++')
     extensions.append(ext5)
@@ -65,6 +71,7 @@ def get_extensions():
     ext7 = Extension('numina.array._bpm',
                      ['src/numina/array/bpm.pyx'],
                      define_macros=[np_api_min],
+                     extra_compile_args=extra_compile_args_cpp,
                      include_dirs=[numpy_include],
                      language='c++')
     extensions.append(ext7)
