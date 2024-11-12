@@ -12,17 +12,11 @@
 
 import numpy
 
-import numina.array._combine1 as intl_combine
-import numina.array._combine2 as intl_combine2
+import numina.array._combine as intl  # noqa
 
 
-CombineError = intl_combine.CombineError
-mean_method = intl_combine2.mean_method
-
-
-def mean(arrays, masks=None, dtype=None, out=None,
-         zeros=None, scales=None,
-         weights=None):
+def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
+         out_var=None, out_pix=None, zeros=None, scales=None, weights=None):
     """Combine arrays using the mean, with masks and offsets.
 
     Arrays and masks are a list of array objects. All input arrays
@@ -54,15 +48,12 @@ def mean(arrays, masks=None, dtype=None, out=None,
                 [ 2. ,  2. ]]])
 
     """
-    return generic_combine(intl_combine2.mean_method(), arrays, masks=masks,
-                           dtype=dtype, out=out,
-                           zeros=zeros, scales=scales,
-                           weights=weights)
+    return generic_combine(intl.mean_method(), arrays, masks=masks, dtype=dtype, out=out, out_res=out_res,
+                           out_var=out_var, out_pix=out_pix, zeros=zeros, scales=scales, weights=weights)
 
 
-def median(arrays, masks=None, dtype=None, out=None,
-           zeros=None, scales=None,
-           weights=None):
+def median(arrays, masks=None, dtype=None, out=None, out_res=None,
+           out_var=None, out_pix=None, zeros=None, scales=None, weights=None):
     """Combine arrays using the median, with masks.
 
     Arrays and masks are a list of array objects. All input arrays
@@ -81,14 +72,13 @@ def median(arrays, masks=None, dtype=None, out=None,
     :return: median, variance of the median and number of points stored
     """
 
-    return generic_combine(intl_combine2.median_method(), arrays, masks=masks,
-                           dtype=dtype, out=out,
+    return generic_combine(intl.median_method(), arrays, masks=masks, dtype=dtype, out=out,
+                           out_res=out_res, out_var=out_var, out_pix=out_pix,
                            zeros=zeros, scales=scales, weights=weights)
 
 
-def sigmaclip(arrays, masks=None, dtype=None, out=None,
-              zeros=None, scales=None, weights=None,
-              low=3., high=3.):
+def sigmaclip(arrays, masks=None, dtype=None, out=None, out_res=None, out_var=None,
+              out_pix=None, zeros=None, scales=None, weights=None, low=3.0, high=3.0):
     """Combine arrays using the sigma-clipping, with masks.
 
     Inputs and masks are a list of array objects. All input arrays
@@ -108,13 +98,11 @@ def sigmaclip(arrays, masks=None, dtype=None, out=None,
     :return: mean, variance of the mean and number of points stored
     """
 
-    return generic_combine(intl_combine2.sigmaclip_method(low, high), arrays,
-                           masks=masks, dtype=dtype, out=out,
-                           zeros=zeros, scales=scales, weights=weights)
+    return generic_combine(intl.sigmaclip_method(low, high), arrays, out=out, dtype=dtype, out_res=out_res,
+                           out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales, weights=weights)
 
 
-def minmax(arrays, masks=None, dtype=None, out=None, zeros=None,
-           scales=None, weights=None, nmin=1, nmax=1):
+def minmax(arrays, masks=None, dtype=None, zeros=None, scales=None, weights=None, nmin=1, nmax=1):
     """Combine arrays using mix max rejection, with masks.
 
     Inputs and masks are a list of array objects. All input arrays
@@ -134,14 +122,12 @@ def minmax(arrays, masks=None, dtype=None, out=None, zeros=None,
     :return: mean, variance of the mean and number of points stored
     """
 
-    return generic_combine(intl_combine2.minmax_method(nmin, nmax), arrays,
-                           masks=masks, dtype=dtype, out=out,
+    return generic_combine(intl.minmax_method(nmin, nmax), arrays, dtype=dtype,
                            zeros=zeros, scales=scales, weights=weights)
 
 
-def quantileclip(arrays, masks=None, dtype=None, out=None,
-                 zeros=None, scales=None, weights=None,
-                 fclip=0.10):
+def quantileclip(arrays, masks=None, out_res=None, out_var=None, out_pix=None, out=None,
+                 dtype=None, zeros=None, scales=None, weights=None, fclip=0.10):
     """Combine arrays using the sigma-clipping, with masks.
 
     Inputs and masks are a list of array objects. All input arrays
@@ -154,18 +140,16 @@ def quantileclip(arrays, masks=None, dtype=None, out=None,
 
     :param arrays: a list of arrays
     :param masks: a list of mask arrays, True values are masked
-    :param dtype: data type of the output
     :param out: optional output, with one more axis than the input arrays
     :param fclip: fraction of points removed on both ends. Maximum is 0.4 (80% of points rejected)
     :return: mean, variance of the mean and number of points stored
     """
-    return generic_combine(intl_combine2.quantileclip_method(fclip), arrays,
-                           masks=masks, dtype=dtype, out=out,
+    return generic_combine(intl.quantileclip_method(fclip), arrays, masks=masks, out=out, dtype=dtype,
+                           out_res=out_res, out_var=out_var, out_pix=out_pix,
                            zeros=zeros, scales=scales, weights=weights)
 
 
-def flatcombine(arrays, masks=None, dtype=None, scales=None,
-                low=3.0, high=3.0, blank=1.0):
+def flatcombine(arrays, masks=None, scales=None, dtype=None, low=3.0, high=3.0, blank=1.0):
     """Combine flat arrays.
 
     :param arrays: a list of arrays
@@ -176,9 +160,7 @@ def flatcombine(arrays, masks=None, dtype=None, scales=None,
     :return: mean, variance of the mean and number of points stored
     """
 
-    result = sigmaclip(arrays, masks=masks,
-                       dtype=dtype, scales=scales,
-                       low=low, high=high)
+    result = sigmaclip(arrays, masks=masks, dtype=dtype, scales=scales, low=low, high=high)
 
     # Substitute values <= 0 by blank
     mm = result[0] <= 0
@@ -189,7 +171,7 @@ def flatcombine(arrays, masks=None, dtype=None, scales=None,
     return result
 
 
-def zerocombine(arrays, masks, dtype=None, scales=None):
+def zerocombine(arrays, masks, scales=None, dtype=None):
     """Combine zero arrays.
 
     :param arrays: a list of arrays
@@ -199,14 +181,12 @@ def zerocombine(arrays, masks, dtype=None, scales=None):
     :return: median, variance of the median and number of points stored
     """
 
-    result = median(arrays, masks=masks,
-                    dtype=dtype, scales=scales)
+    result = median(arrays, masks=masks, scales=scales, dtype=dtype)
 
     return result
 
 
-def sum(arrays, masks=None, dtype=None, out=None,
-        zeros=None, scales=None):
+def sum(arrays, masks=None, out_res=None, out_var=None, out_pix=None, out=None, dtype=None, zeros=None, scales=None):
     """Combine arrays by addition, with masks and offsets.
 
     Arrays and masks are a list of array objects. All input arrays
@@ -219,7 +199,6 @@ def sum(arrays, masks=None, dtype=None, out=None,
 
     :param arrays: a list of arrays
     :param masks: a list of mask arrays, True values are masked
-    :param dtype: data type of the output
     :param out: optional output, with one more axis than the input arrays
     :return: sum, variance of the sum and number of points stored
 
@@ -238,45 +217,23 @@ def sum(arrays, masks=None, dtype=None, out=None,
                 [ 2. ,  2. ]]])
 
     """
-    return generic_combine(intl_combine2.sum_method(), arrays, masks=masks,
-                           dtype=dtype, out=out,
-                           zeros=zeros, scales=scales)
+    return generic_combine(intl.sum_method(), arrays, out=out, dtype=dtype, out_res=out_res,
+                           out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def generic_combine(method, arrays, masks=None, dtype=None,
-                    out=None, zeros=None, scales=None, weights=None):
-    """Stack arrays using different methods.
+def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, out=None,
+                    dtype=None, masks=None, zeros=None, scales=None, weights=None):
 
-    :param method: the combination method
-    :type method: PyCObject
-    :param arrays: a list of arrays
-    :param masks: a list of mask arrays, True values are masked
-    :param dtype: data type of the output
-    :param zeros:
-    :param scales:
-    :param weights:
-    :return: median, variance of the median and number of points stored
-    """
-
-    arrays = [numpy.asarray(arr, dtype=dtype) for arr in arrays]
-    if masks is not None:
-        masks = [numpy.asarray(msk) for msk in masks]
-
-    if out is None:
-        # Creating out if needed
-        # We need three numbers
-        try:
-            outshape = (3,) + tuple(arrays[0].shape)
-            out = numpy.zeros(outshape, dtype)
-        except AttributeError:
-            raise TypeError('First element in arrays does '
-                            'not have .shape attribute')
+    # Trying to use all the arguments
+    if out is not None:
+        out_res = out[0]
+        out_var = out[1]
+        out_pix = out[2]
     else:
-        out = numpy.asanyarray(out)
+        if dtype is not None and len(arrays) > 0:
+            out_res = numpy.empty_like(arrays[0], dtype=dtype)
+            out_var = numpy.empty_like(arrays[0], dtype=dtype)
+            out_pix = numpy.empty_like(arrays[0], dtype=dtype)
 
-    intl_combine.generic_combine(
-        method, arrays,
-        out[0], out[1], out[2],
-        masks, zeros, scales, weights
-    )
-    return out
+    return intl.generic_combine(method, arrays, out_res=out_res, out_var=out_var,
+                                out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)

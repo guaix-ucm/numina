@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -73,9 +73,9 @@ def process_bpm_median(arr, mask, hwin=2, wwin=2, fill=0, reuse_values=False, su
     -------
 
     """
-    import numina.array._combine2  # noqa
+    import numina.array._combine  # noqa
 
-    method = numina.array._combine2.median_method()
+    method = numina.array._combine.median_method()
 
     return process_bpm(method, arr, mask, hwin=hwin, wwin=wwin, fill=fill, reuse_values=reuse_values, subs=subs)
 

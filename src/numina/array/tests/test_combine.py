@@ -10,7 +10,7 @@
 import numpy
 import pytest
 
-import numina.array._combine2 as _c
+import numina.array._combine as _c
 
 
 def test_error1():
@@ -243,4 +243,3 @@ def test_combine_miter_maxargs2():
 
     out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
     assert numpy.allclose(out0, input1)
-

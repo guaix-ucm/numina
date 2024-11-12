@@ -1,7 +1,6 @@
 
 import numpy
 import numpy.random
-import pytest
 
 from ..background import background_estimator
 from ..background import create_background_map
