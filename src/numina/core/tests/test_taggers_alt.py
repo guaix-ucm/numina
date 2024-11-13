@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2024 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,40 +14,32 @@ import pytest
 
 import astropy.io.fits as fits
 
-from numina.datamodel import DataModel
 from numina.types.dataframe import DataFrame
 from ..oresult import ObservationResult
-from ..taggers import extract_tags_from_obsres
+from ..taggers import get_tags_from_full_ob
 
 
-@pytest.fixture
-def my_datamodel():
-    mappings = {'filter': 'filter', 'read_mode': 'readm'}
-    model = DataModel('TEST', mappings=mappings)
-    return model
-
-
-def test_empty_ob(my_datamodel):
+def test_empty_ob():
 
     ob = ObservationResult()
-    tags = extract_tags_from_obsres(ob, tag_keys=[], datamodel=my_datamodel)
+    tags = get_tags_from_full_ob(ob)
 
     assert len(tags) == 0
 
 
-def test_init_ob(my_datamodel):
+def test_init_ob():
 
     img1 = fits.PrimaryHDU(data=[1, 2, 3])
     frame1 = DataFrame(frame=fits.HDUList(img1))
 
     ob = ObservationResult()
     ob.frames = [frame1]
-    tags = extract_tags_from_obsres(ob, tag_keys=[], datamodel=my_datamodel)
+    tags = get_tags_from_full_ob(ob)
 
     assert len(tags) == 0
 
 
-def test_header_key1_ob(my_datamodel):
+def test_header_key1_ob():
 
     img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img1.header['FILTER'] = 'FILTER-A'
@@ -61,13 +53,13 @@ def test_header_key1_ob(my_datamodel):
 
     ob = ObservationResult()
     ob.frames = [frame1, frame2]
-    tags = extract_tags_from_obsres(ob, tag_keys=['filter'], datamodel=my_datamodel)
+    tags = get_tags_from_full_ob(ob, reqtags=['FILTER'])
 
-    assert tags == {'filter': 'FILTER-A'}
+    assert tags == {'FILTER': 'FILTER-A'}
 
 
-def test_header_key1_mis(my_datamodel):
-    """Test extract_tags raises ValueError if there is a missmatch"""
+def test_header_key1_mis():
+
     img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img1.header['FILTER'] = 'FILTER-A'
     frame1 = DataFrame(frame=fits.HDUList(img1))
@@ -80,27 +72,10 @@ def test_header_key1_mis(my_datamodel):
     ob.frames = [frame1, frame2]
 
     with pytest.raises(ValueError):
-        extract_tags_from_obsres(ob, tag_keys=['filter'], datamodel=my_datamodel)
+        get_tags_from_full_ob(ob, reqtags=['FILTER'])
 
 
-def test_header_key1_mis_no_strict(my_datamodel):
-    """Test extract_tags returns is struct is false"""
-    img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
-    img1.header['FILTER'] = 'FILTER-A'
-    frame1 = DataFrame(frame=fits.HDUList(img1))
-
-    img2 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
-    img2.header['FILTER'] = 'FILTER-B'
-    frame2 = DataFrame(frame=fits.HDUList(img2))
-
-    ob = ObservationResult()
-    ob.frames = [frame1, frame2]
-
-    tags = extract_tags_from_obsres(ob, tag_keys=['filter'], datamodel=my_datamodel, strict=False)
-    assert tags == {'filter': 'FILTER-A'}
-
-
-def test_header_key2_ob(my_datamodel):
+def test_header_key2_ob():
 
     img1 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img1.header['FILTER'] = 'FILTER-A'
@@ -114,6 +89,6 @@ def test_header_key2_ob(my_datamodel):
 
     ob = ObservationResult()
     ob.frames = [frame1, frame2]
-    tags = extract_tags_from_obsres(ob, tag_keys=['filter', 'read_mode'], datamodel=my_datamodel)
+    tags = get_tags_from_full_ob(ob, reqtags=['FILTER', 'READM'])
 
-    assert tags == {'filter': 'FILTER-A', 'read_mode': 'MOD1'}
+    assert tags == {'FILTER': 'FILTER-A', 'READM': 'MOD1'}

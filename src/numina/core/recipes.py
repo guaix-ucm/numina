@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2024 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,10 +16,9 @@ A recipe is a class that complies with the *reduction recipe API*:
 
 """
 
-
-import logging
-import json
 import functools
+import json
+import logging
 
 from astropy.io import fits
 
@@ -31,6 +30,7 @@ from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
 from .oresult import ObservationResult, ObservingBlock
 from ..exceptions import NoResultFound
+from numina.core.taggers import extract_tags_from_obsres, extract_tags_from_img
 
 
 class BaseRecipe(metaclass=RecipeType):
@@ -236,7 +236,7 @@ class BaseRecipe(metaclass=RecipeType):
         self.logger.debug(
             'running recipe tagger with query fields: %s', qfields)
         if qfields:
-            obsres.tags = self.extract_tags_from_obsres(obsres, qfields)
+            obsres.tags = extract_tags_from_obsres(obsres, qfields, self.datamodel, strict=True)
         else:
             obsres.tags = {}
         self.logger.debug('obsres tags are: %s', obsres.tags)
@@ -254,28 +254,8 @@ class BaseRecipe(metaclass=RecipeType):
 
         return self.create_input(**result)
 
-    def extract_tags_from_obsres(self, obsres, tag_keys):
-        ref_img = obsres.get_sample_frame().open()
-        final_tags = extract_tags_from_img(
-            ref_img, tag_keys, self.datamodel, base=obsres.labels)
-        return final_tags
-
     def extract_tags_from_ref(self, ref, tag_keys, base=None):
         return extract_tags_from_img(ref, tag_keys, self.datamodel, base=base)
-
-
-def extract_tags_from_img(img, tag_keys, datamodel, base=None):
-
-    base = base or {}
-    fits_extractor = datamodel.extractor_map['fits']
-    final_tags = {}
-    for key in tag_keys:
-
-        if key in base:
-            final_tags[key] = base[key]
-        else:
-            final_tags[key] = fits_extractor.extract(key, img)
-    return final_tags
 
 
 def timeit(method):

@@ -53,7 +53,7 @@ class FITSKeyExtractor:
                     hduname = 0
                     convert = None
                 else:
-                    raise ValueError
+                    raise ValueError(f"a tuple in FITSKeyExtractor must have 2-3 fields, has {len(entry)} instead")
 
                 newval = KeyDefinition(
                     keyname,
