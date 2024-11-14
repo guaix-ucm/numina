@@ -21,10 +21,10 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Cache tox
         id: cache-tox
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .tox
-          key: tox-${{ matrix.python }}-${{ hashFiles('pyproject.toml', 'setup.cfg') }}
+          key: tox-${{ matrix.python }}-${{ matrix.os }}-${{ hashFiles('pyproject.toml', 'setup.cfg') }}
       - name: Install tox
         run: pip install tox
       - name: Run tox
