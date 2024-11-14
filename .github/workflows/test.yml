@@ -5,17 +5,18 @@ on: workflow_dispatch
 
 jobs:
   test:
-    name: Test ${{ matrix.python }} 
+    name: Test ${{ matrix.python }} on ${{ matrix.os }}
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: ["macos-latest", "ubuntu-latest"]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup python for test ${{ matrix.python }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
       - name: Cache tox
@@ -24,7 +25,7 @@ jobs:
         with:
           path: .tox
           key: tox-${{ matrix.python }}-${{ hashFiles('pyproject.toml', 'setup.cfg') }}
-      - name: Install tox and any other packages
+      - name: Install tox
         run: pip install tox
       - name: Run tox
         # Run tox using the version of Python in `PATH`
