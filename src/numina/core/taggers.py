@@ -52,7 +52,6 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
         for frame in itertools.chain(obsres.frames, obsres.results.values()):
             this_tags = extract_tags_from_img(
                 frame.open(), tag_keys, datamodel, base=obsres.labels)
-            print('this_tags', this_tags)
             if this_tags != final_tags:
                 raise ValueError(f"tags in image {frame} are {this_tags} ! = {final_tags}")
 
