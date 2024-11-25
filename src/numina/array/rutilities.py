@@ -10,7 +10,7 @@
 """Utility classes and functions to employ R from python using rpy2."""
 
 import numpy as np
-from scipy.misc import comb
+from scipy.special import comb
 import rpy2.robjects as ro
 from rpy2.robjects.packages import importr
 
