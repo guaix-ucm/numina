@@ -141,14 +141,10 @@ def polfit_residuals(
         from ..rutilities import LinearModelYvsX
         print("\n>>> Total number of points:", nfitted)
         # using orthogonal polynomials
-        for delta_deg in [2, 1, 0]:
-            deg_eff = deg + delta_deg
-            if deg_eff <= nfitted - 1:
-                myfit = LinearModelYvsX(x=xfitted, y=yfitted, degree=deg_eff,
-                                        raw=False)
-                print(">>> Fit with R, using orthogonal polynomials:")
-                print(myfit.summary)
-                pause_debugplot(debugplot)
+        myfit = LinearModelYvsX(x=xfitted, y=yfitted, degree=deg, raw=False)
+        print(">>> Fit with R, using orthogonal polynomials:")
+        print(myfit.summary)
+        pause_debugplot(debugplot)
         # fit using raw polynomials
         myfit = LinearModelYvsX(x=xfitted, y=yfitted, degree=deg, raw=True)
         print(">>> Fit with R, using raw polynomials:")
