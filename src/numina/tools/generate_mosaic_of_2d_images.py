@@ -107,7 +107,7 @@ def main(args=None):
     # save result
     hdu = fits.PrimaryHDU(mosaic.astype(np.float32))
     hdu.header.extend(wcs_mosaic.to_header(), update=True)
-    hdu_footprint = fits.ImageHDU(data=footprint_mosaic)
+    hdu_footprint = fits.ImageHDU(data=footprint_mosaic.astype(np.uint8))
     hdu_footprint.header['EXTNAME'] = 'FOOTPRINT'
     hdul = fits.HDUList([hdu, hdu_footprint])
     if verbose:
