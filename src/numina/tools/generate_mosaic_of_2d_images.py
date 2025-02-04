@@ -59,19 +59,19 @@ def main(args=None):
         file_content = f.read().splitlines()
 
     # list of HDU
-    list_of_hdu = []
+    list_of_hdu2d = []
     for fname in file_content:
         if len(fname) > 0:
             if fname[0] not in ['#']:
                 print(f'Reading: {fname}')
                 with fits.open(fname) as hdul:
-                    list_of_hdu.append(hdul[extnum].copy())
+                    list_of_hdu2d.append(hdul[extnum].copy())
                     if verbose:
                         print(f"{hdul[extnum].header['NAXIS1']=}")
                         print(f"{hdul[extnum].header['NAXIS2']=}")
 
     # compute optimal WCS for combined image
-    wcs_mosaic, shape_mosaic = find_optimal_celestial_wcs(list_of_hdu)
+    wcs_mosaic, shape_mosaic = find_optimal_celestial_wcs(list_of_hdu2d)
     if verbose:
         print(f'{wcs_mosaic=}')
         print(f'{shape_mosaic=}')
@@ -80,14 +80,14 @@ def main(args=None):
 
     if method == 'interp':
         mosaic, footprint_mosaic = reproject_and_coadd(
-            list_of_hdu,
+            list_of_hdu2d,
             wcs_mosaic,
             shape_out=shape_mosaic,
             reproject_function=reproject_interp,
         )
     elif method == 'adaptive':
         mosaic, footprint_mosaic = reproject_and_coadd(
-            list_of_hdu,
+            list_of_hdu2d,
             wcs_mosaic,
             shape_out=shape_mosaic,
             reproject_function=reproject_adaptive,
@@ -96,7 +96,7 @@ def main(args=None):
         )
     elif method == 'exact':
         mosaic, footprint_mosaic = reproject_and_coadd(
-            list_of_hdu,
+            list_of_hdu2d,
             wcs_mosaic,
             shape_out=shape_mosaic,
             reproject_function=reproject_exact,
@@ -109,6 +109,7 @@ def main(args=None):
     hdu.header.extend(wcs_mosaic.to_header(), update=True)
     hdu_footprint = fits.ImageHDU(data=footprint_mosaic.astype(np.uint8))
     hdu_footprint.header['EXTNAME'] = 'FOOTPRINT'
+    hdu_footprint.header.extend(wcs_mosaic.to_header(), update=True)
     hdul = fits.HDUList([hdu, hdu_footprint])
     if verbose:
         print(f'Saving: {output_filename}')
