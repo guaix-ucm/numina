@@ -1,5 +1,5 @@
 #
-# Copyright 2024 Universidad Complutense de Madrid
+# Copyright 2024-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Compute 32bits-array size in a human-readable format"""
+"""Compute array sizes in a human-readable format"""
 
 from astropy.units import Unit
 
@@ -28,6 +28,26 @@ def array_size_32bits(array):
     if array.dtype == 'float64':
         size_in_bytes /= 2
     elif array.dtype == 'float32':
+        pass
+    else:
+        raise ValueError(f'Invalid {array.dtype=}')
+    for s in 'EPTGMk':
+        size = bytes_to(size_in_bytes, to=s)
+        if size > 1:
+            return size * Unit(f'{s}byte')
+    raise ValueError(f'Size: {size_in_bytes} bytes is too large!')
+
+
+def array_size_8bits(array):
+    """Return 8bits-array size in a human-readable format"""
+    size_in_bytes = array.__sizeof__()
+    if array.dtype == 'float64':
+        size_in_bytes /= 8
+    elif array.dtype == 'float32':
+        size_in_bytes /= 4
+    elif array.dtype == 'uint16':
+        size_in_bytes /= 2
+    elif array.dtype == 'uint8':
         pass
     else:
         raise ValueError(f'Invalid {array.dtype=}')
