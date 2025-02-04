@@ -94,17 +94,12 @@ def main(args=None):
                 raise ValueError('ERROR: spectral sampling is different!')
 
     # compute optimal 2D WCS for combined image
-    list_of_hdu2d = []
+    list_of_inputs = []
     for hdu in list_of_hdu3d:
         header3d = hdu.header
-        data3d = hdu.data
         wcs2d = WCS(header3d).sub([WCSSUB_CELESTIAL])
-        data2d = np.sum(data3d, axis=0)
-        hdu2d = fits.PrimaryHDU(data2d)
-        hdu2d.header.extend(wcs2d.to_header(), update=True)
-        list_of_hdu2d.append(hdu2d)
-
-    wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_hdu2d)
+        list_of_inputs.append( ( (header3d['NAXIS2'], header3d['NAXIS1']), wcs2d) )
+    wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
     if verbose:
         print(f'\n{wcs_mosaic2d=}')
         print(f'\n{shape_mosaic2d=}')
