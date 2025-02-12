@@ -94,6 +94,9 @@ def main(args=None):
                             hdu2d_mask = hdul[extname_mask].copy()
                             if verbose:
                                 print(f'image mask: {extname_mask}')
+                            bitpix_mask = hdu2d_mask.header['BITPIX']
+                            if bitpix_mask != 8:
+                                raise ValueError(f'BITPIX (mask): {bitpix_mask} is not 8')
                             if hdu2d_image.data.shape != hdu2d_mask.data.shape:
                                 raise ValueError(f'Shape of {extname_image} and {extname_mask} are different!')
                         else:
