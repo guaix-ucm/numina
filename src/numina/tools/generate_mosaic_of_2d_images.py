@@ -44,16 +44,9 @@ def generate_mosaic_of_2d_images(
 ):
     """Combine 2D images using their WCS information.
 
-    Note that this function assumes that a list of HDU images and
-    masks are available. If the masks have not been initially
-    computed, it is possible to use the function
-    'generate_mosaic_of_2d_images_without_masks()'
-    which determines a particular mask for each individual image,
-    prior to the combination, looking for np.nan values.
-
     Parameters
     ----------
-    list_of_hdu2d_images : list
+    list_of_hdu2d_images : list of HDU images
         List of 2D HDU instances containing the images to be combined.
     list_of_hdu2d_masks : list or None
         List of 2D HDU instances containing the masks associated to
@@ -80,6 +73,12 @@ def generate_mosaic_of_2d_images(
         images and masks.
     """
 
+    # protections
+    if not isinstance(list_of_hdu2d_images, list):
+        raise TypeError('list_of_hdu2d_images must be a list')
+    if not isinstance(list_of_hdu2d_masks, list) and list_of_hdu2d_masks is not None:
+        raise TypeError('list_of_hdu2d_masks must be a list or None')
+
     nimages = len(list_of_hdu2d_images)
     if verbose:
         print(f'Total number of images to be combined: {nimages}')
@@ -87,6 +86,7 @@ def generate_mosaic_of_2d_images(
     if nimages < 1:
         raise ValueError('Number of images = 0')
 
+    # check masks and generate them if not present
     if list_of_hdu2d_masks is None:
         list_of_hdu2d_masks = []
         for hdu2d_image in list_of_hdu2d_images:
@@ -97,6 +97,11 @@ def generate_mosaic_of_2d_images(
         if len(list_of_hdu2d_images) != len(list_of_hdu2d_masks):
             raise ValueError(f'Unexpected {len(list_of_hdu2d_images)=} != {len(list_of_hdu2d_masks)=}')
 
+    # check compatibility between image and mask dimensions
+    for hdu2d_image, hdu2d_mask in zip(list_of_hdu2d_images, list_of_hdu2d_masks):
+        if hdu2d_image.shape != hdu2d_mask.shape:
+            raise ValueError(f'Unexpected shape {hdu2d_image.shape=} != {hdu2d_mask.shape=}')
+
     # compute optimal WCS for combined image
     wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_hdu2d_images)
     if verbose:
@@ -104,7 +109,7 @@ def generate_mosaic_of_2d_images(
         print(f'{shape_mosaic2d=}')
     naxis2_mosaic, naxis1_mosaic = shape_mosaic2d
 
-    # transform individual images and store result in auxiliary 3D cube
+    # transform individual images and store result in auxiliary 3D masked cube
     shape3d = nimages, naxis2_mosaic, naxis1_mosaic
     stack3d = ma.array(np.zeros(shape3d), mask=np.full(shape3d, fill_value=False))
 
@@ -221,7 +226,7 @@ def main(args=None):
                         help='Extension name for image in input files. Default value: PRIMARY',
                         default='PRIMARY', type=str)
     parser.add_argument('--extname_mask',
-                        help='Extension name for mask in input files. Default None=use np.nan',
+                        help="Extension name for mask in input files. Default 'None': use np.nan in image",
                         default=None, type=str)
     parser.add_argument("--combination_function", help='Combination function. Default: mean',
                         type=str, default='mean', choices=COMBINATION_FUNCTIONS)
