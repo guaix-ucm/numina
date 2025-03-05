@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 from astropy.coordinates import SkyCoord, Angle
-from astropy.units import Unit
+from astropy.units import Unit, Quantity
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
 import numpy as np
@@ -17,6 +17,7 @@ def plot_north_east_arrows(
         ax,
         wcs2d,
         arrow_length,
+        scale_length=None,
         scale_location=1,
         fits_criterion=False,
         color='grey',
@@ -34,6 +35,8 @@ def plot_north_east_arrows(
         Instance of a 2D `astropy.wcs.WCS`.
     arrow_length : Quantity
         Arrow length with units.
+    scale_length : Quantity, optional
+        If None, 'arrow_length' is assumed.
     scale_location : int
         Location of the scale (with the same length as the NE arrows).
         0: do not plot ruler
@@ -56,6 +59,13 @@ def plot_north_east_arrows(
         If True, display additional information.
     """
 
+    # protections
+    if scale_length is None:
+        scale_length = arrow_length
+    if not isinstance(arrow_length, Quantity):
+        raise TypeError("arrow_length must be a Quantity")
+    if not isinstance(scale_length, Quantity):
+        raise TypeError("scale_length must be a Quantity")
     if not isinstance(wcs2d, WCS):
         raise TypeError("wcs2d must be a WCS object.")
     if scale_location not in [0, 1, 2, 3, 4]:
@@ -99,7 +109,7 @@ def plot_north_east_arrows(
         # check the scale is the same in both axis
         if np.isclose(pixel_scales[0], pixel_scales[1]):
             pixel_scale = pixel_scales[0] * Unit('deg')
-            scale_pixels = arrow_length / pixel_scale
+            scale_pixels = scale_length / pixel_scale
             if scale_location in [1, 4]:
                 x_scale_max = xmax - dx / 20
                 x_scale_min = x_scale_max - scale_pixels
@@ -113,10 +123,16 @@ def plot_north_east_arrows(
 
             if color_scale is None:
                 color_scale = color
-            ax.plot(np.array([x_scale_min, x_scale_max]),np.array([y_scale, y_scale]), color=color)
-            ax.plot(np.array([x_scale_min, x_scale_min]),np.array([y_scale-dy/80, y_scale+dy/80]), color=color)
-            ax.plot(np.array([x_scale_max, x_scale_max]),np.array([y_scale-dy/80, y_scale+dy/80]), color=color)
+            ax.plot(np.array([x_scale_min, x_scale_max]),
+                    np.array([y_scale, y_scale]),
+                    color=color_scale)
+            ax.plot(np.array([x_scale_min, x_scale_min]),
+                    np.array([y_scale-dy/80, y_scale+dy/80]),
+                    color=color_scale)
+            ax.plot(np.array([x_scale_max, x_scale_max]),
+                    np.array([y_scale-dy/80, y_scale+dy/80]),
+                    color=color_scale)
             scale_font_size = ax.xaxis.get_label().get_fontsize() * fontsize_scale_relative_factor
-            ax.text((x_scale_min + x_scale_max) / 2, y_scale + 0.01*dy,
-                    f'{arrow_length}', fontsize=scale_font_size,
+            ax.text((x_scale_min + x_scale_max) / 2, y_scale + 0.02*dy,
+                    f'{scale_length}', fontsize=scale_font_size,
                     ha='center', va='bottom', color=color_scale)
