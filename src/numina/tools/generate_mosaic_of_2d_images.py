@@ -299,7 +299,7 @@ def main(args=None):
                             print(f'generating mask from np.nan values')
                     if verbose:
                         print(f'Number of masked pixels / total: {np.sum(hdu2d_mask.data)} / {hdu2d_mask.size}')
-                    # store tuple with image and associated footprint
+                    # store image and associated footprint
                     list_of_hdu2d_images.append(hdu2d_image)
                     list_of_hdu2d_masks.append(hdu2d_mask)
 
