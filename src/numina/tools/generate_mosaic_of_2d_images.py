@@ -66,7 +66,7 @@ def generate_mosaic_of_2d_images(
         Masked array containing the combined image and the resulting
         mask.
     wcs_mosaic2d: astropy.wcs.WCS
-        WCS instance representing the World Coordinate System of the
+        Instance representing the World Coordinate System of the
         combined image.
     stack3d : numpy.ma.MaskedArray
         Stacked masked array containing the individual reprojected
@@ -109,7 +109,8 @@ def generate_mosaic_of_2d_images(
         print(f'{shape_mosaic2d=}')
     naxis2_mosaic, naxis1_mosaic = shape_mosaic2d
 
-    # transform individual images and store result in auxiliary 3D masked cube
+    # we are transforming the individual images and storing the result
+    # in an auxiliary 3D masked cube
     shape3d = nimages, naxis2_mosaic, naxis1_mosaic
     stack3d = ma.array(np.zeros(shape3d), mask=np.full(shape3d, fill_value=False))
 
