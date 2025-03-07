@@ -20,6 +20,7 @@ import sys
 
 from .compute_adr_wavelength import compute_adr_wavelength
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
+from .ctext import ctext
 
 
 def include_adrtheor_in_3d_cube(
@@ -189,7 +190,7 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
+            print(ctext(f'{arg}: {value}', faint=True))
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')

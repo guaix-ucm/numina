@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
+from .ctext import ctext
 
 def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
     """Auxiliary function to plot reference wavelengths
@@ -152,7 +153,7 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
+            print(ctext(f'{arg}: {value}', faint=True))
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')

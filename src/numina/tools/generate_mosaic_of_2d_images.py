@@ -31,6 +31,8 @@ from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
 import sys
 
+from .ctext import ctext
+
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
@@ -122,30 +124,30 @@ def generate_mosaic_of_2d_images(
         hdu2d_mask = list_of_hdu2d_masks[i]
         if reproject_method == 'interp':
             image2d_resampled, footprint_image2d_resampled = reproject_interp(
-                hdu2d_image,
-                wcs_mosaic2d,
+                input_data=hdu2d_image,
+                output_projection=wcs_mosaic2d,
                 shape_out=shape_mosaic2d
             )
             if hdu2d_mask is not None:
                 mask2d_resampled, _ = reproject_interp(
-                    hdu2d_mask,
-                    wcs_mosaic2d,
+                    input_data=hdu2d_mask,
+                    output_projection=wcs_mosaic2d,
                     shape_out=shape_mosaic2d
                 )
             else:
                 mask2d_resampled = None
         elif reproject_method == 'adaptive':
             image2d_resampled, footprint_image2d_resampled = reproject_adaptive(
-                hdu2d_image,
-                wcs_mosaic2d,
+                input_data=hdu2d_image,
+                output_projection=wcs_mosaic2d,
                 shape_out=shape_mosaic2d,
                 conserve_flux=True,
                 kernel='Gaussian'
             )
             if hdu2d_mask is not None:
                 mask2d_resampled, _ = reproject_adaptive(
-                    hdu2d_mask,
-                    wcs_mosaic2d,
+                    input_data=hdu2d_mask,
+                    output_projection=wcs_mosaic2d,
                     shape_out=shape_mosaic2d,
                     conserve_flux=True,
                     kernel='Gaussian'
@@ -154,14 +156,14 @@ def generate_mosaic_of_2d_images(
                 mask2d_resampled = None
         elif reproject_method == 'exact':
             image2d_resampled, footprint_image2d_resampled = reproject_exact(
-                hdu2d_image,
-                wcs_mosaic2d,
+                input_data=hdu2d_image,
+                output_projection=wcs_mosaic2d,
                 shape_out=shape_mosaic2d,
             )
             if hdu2d_mask is not None:
                 mask2d_resampled, _ = reproject_exact(
-                    hdu2d_mask,
-                    wcs_mosaic2d,
+                    input_data=hdu2d_mask,
+                    output_projection=wcs_mosaic2d,
                     shape_out=shape_mosaic2d,
                 )
             else:
@@ -217,9 +219,9 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser()
     parser.add_argument("input_list",
-                        help="TXT file with list of 2D images to be combined")
+                        help="TXT file with list of 2D images to be combined", type=str)
     parser.add_argument('output_filename',
-                        help='filename of output FITS image')
+                        help='filename of output FITS image', type=str)
     parser.add_argument('--reproject_method',
                         help='Reprojection method (interp, adaptive, exact)',
                         type=str, choices=REPROJECT_METHODS, default='adaptive')
@@ -242,6 +244,14 @@ def main(args=None):
                         action="store_true")
 
     args = parser.parse_args(args)
+
+    if len(sys.argv) == 1:
+        parser.print_usage()
+        raise SystemExit()
+
+    if args.verbose:
+        for arg, value in vars(args).items():
+            print(ctext(f'{arg}: {value}', faint=True))
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')

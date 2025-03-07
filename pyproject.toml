@@ -65,6 +65,7 @@ Documentation = "https://numina.readthedocs.io/en/stable/"
 
 [project.scripts]
 numina = "numina.user.cli:main"
+numina-adr_correction_from_extension_in_3d_cube = "numina.tools.adr_correction_from_extension_in_3d_cube:main"
 numina-apply_integer_offsets = "numina.array.wavecalib.apply_integer_offsets:main"
 numina-bpm = "numina.array.bpm:main"
 numina-check_wlcalib = "numina.array.wavecalib.check_wlcalib:main"
