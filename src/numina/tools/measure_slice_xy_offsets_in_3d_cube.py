@@ -1,5 +1,5 @@
 #
-# Copyright 2024 Universidad Complutense de Madrid
+# Copyright 2024-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -59,11 +59,12 @@ def measure_slice_xy_offsets_in_3d_cube(
         data3d,
         npoints_along_naxis3=100,
         polydeg=2,
+        times_sigma_reject=3.0,
         islice_reference=None,
         iterate=True,
         method=1,
         plots=False,
-        debug=False
+        verbose=False
 ):
     """Compute (X, Y) offsets of the slices in a 3D datacube
 
@@ -78,15 +79,18 @@ def measure_slice_xy_offsets_in_3d_cube(
         Data cube.
     npoints_along_naxis3 : int
         Number of equidistant points along NAXIS3 for which the offsets
-        in (X,Y) are calculated. Practically, a binning is performed
+        in (X,Y) are calculated. In practice, a binning is performed
         along NAXIS3, where the number of slices to be summed in each
         bin is NAXIS3 / npoints_along_naxis3.
     polydeg : int
         Polynomial degree to fit distortion along NAXIS3.
-    islice_reference: int
-        Slice number (array index) to derive the initial reference
+    times_sigma_reject : float
+        Times sigma to reject measured offsets when fitting the
+        polynomial.
+    islice_reference: int or None
+        Pixel along NAXIS3 number to derive the initial reference
         binned slice. If None, the central location along NAXIS3 is
-        employed.
+        employed. It must be a number from 1 to NAXIS3.
     iterate : bool
         If it's True, the procedure is repeated twice. In the first
         iteration, the binned slice centered at islice_refence is
@@ -101,7 +105,7 @@ def measure_slice_xy_offsets_in_3d_cube(
         and exhibits smaller residuals than method 2.
     plots : bool
         If True, plot intermediate results.
-    debug : bool
+    verbose : bool
         If True, display intermediate information.
 
     Returns
@@ -110,13 +114,19 @@ def measure_slice_xy_offsets_in_3d_cube(
         Offsets in X direction (pixels), evaluated along NAXIS3.
     delta_y_array : `~numpy.ndarray`
         Ofssets in Y direction (pixels), evaluated along NAXIS3.
+    i1_ref : int
+        First slice to derive the reference slice. The slice interval
+        corresponds to [i1_ref:i2_ref] following the FITS convention.
+    i2_ref : int
+        Last slice to derive the reference slice. The slice interval
+        corresponds to [i1_ref:i2_ref] following the FITS convention.
 
     """
 
     naxis3, naxis2, naxis1 = data3d.shape
 
     if npoints_along_naxis3 > naxis3:
-        if debug:
+        if verbose:
             print(f'WARNING: {npoints_along_naxis3=} > {naxis3=}')
             print('         forcing npoints_along_naxis3 = naxis3')
         npoints_along_naxis3 = naxis3
@@ -124,13 +134,13 @@ def measure_slice_xy_offsets_in_3d_cube(
     # reference slice for the first iteration
     if islice_reference is None:
         islice_reference = naxis3 // 2
-        if debug:
+        if verbose:
             print(f'WARNING: setting {islice_reference=}')
 
-    if islice_reference < 0:
-        raise ValueError(f'Unexpected {islice_reference=} < 0')
-    if islice_reference >= naxis3:
-        raise ValueError(f'Unexpected {islice_reference=} >= {naxis3=}')
+    if islice_reference < 1:
+        raise ValueError(f'Unexpected {islice_reference=} < 1')
+    if islice_reference > naxis3:
+        raise ValueError(f'Unexpected {islice_reference=} > {naxis3=}')
 
     # bin width along NAXIS3
     binning_naxis3 = naxis3 / npoints_along_naxis3
@@ -138,7 +148,7 @@ def measure_slice_xy_offsets_in_3d_cube(
         islice_array = np.arange(naxis3)
     else:
         islice_array = np.linspace(binning_naxis3 / 2, naxis3 - binning_naxis3 / 2, npoints_along_naxis3).astype(int)
-    if debug:
+    if verbose:
         print(f'{binning_naxis3=}')
 
     niterations = 1
@@ -151,10 +161,12 @@ def measure_slice_xy_offsets_in_3d_cube(
     # main loop in number of iteration
     delta_x_array = None
     delta_y_array = None
+    i1_ref = None
+    i2_ref = None
     for iteration in range(niterations):
         # compute reference binned slice
         if iteration == 0:
-            i1_ref, i2_ref = compute_i1i2(islice_reference, naxis3, binning_naxis3)
+            i1_ref, i2_ref = compute_i1i2(islice_reference-1, naxis3, binning_naxis3)
             slice_reference = np.mean(data3d_work[i1_ref:i2_ref, :, :], axis=0)
         else:
             data3d_corrected = np.zeros_like(data3d_work)
@@ -169,14 +181,16 @@ def measure_slice_xy_offsets_in_3d_cube(
             i2_ref = naxis3
             slice_reference = np.mean(data3d_corrected[i1_ref:i2_ref, :, :], axis=0)
             # del data3d_corrected
-        if debug:
-            print(f'iteration: {iteration} --> {i1_ref=}, {i2_ref=}')
+        if verbose:
+            # FITS convention
+            print(f'iteration: {iteration} --> reference slice in [{i1_ref+1}:[{i2_ref}]')
         if plots:
             fig, ax = plt.subplots()
             ax.imshow(slice_reference, origin='lower')
             ax.set_xlabel('Array index (NAXIS1 direction)')
             ax.set_ylabel('Array index (NAXIS2 direction)')
-            ax.set_title(f'slice_reference\n(i1_ref: {i1_ref}, i2_ref: {i2_ref}, iteration {iteration})')
+            # FITS convention
+            ax.set_title(f'slice_reference along NAXIS3\n(i1_ref: {i1_ref+1}, i2_ref: {i2_ref}, iteration {iteration})')
             plt.tight_layout()
             plt.show()
 
@@ -256,12 +270,12 @@ def measure_slice_xy_offsets_in_3d_cube(
                 x=xfit,
                 y=yfit,
                 deg=polydeg,
-                times_sigma_reject=3.0,
+                times_sigma_reject=times_sigma_reject,
                 title=title,
                 debugplot=debugplot,
                 fig=fig
             )
-            if debug:
+            if verbose:
                 print(f'{title} -> {poly=}')
             if plots:
                 plt.tight_layout()
@@ -272,23 +286,30 @@ def measure_slice_xy_offsets_in_3d_cube(
             else:
                 delta_y_array = result
 
-    return delta_x_array, delta_y_array
+    return delta_x_array, delta_y_array, i1_ref+1, i2_ref   # FITS convention
 
 
 def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Determine (X,Y) offsets between slices along NAXIS3")
-    parser.add_argument("input", help="Input FITS file")
+    parser.add_argument("input", help="Input 3D FITS file")
     parser.add_argument("npoints", help="Number of points along NAXIS3", type=int)
-    parser.add_argument("--output", help="Output FITS file")
+    parser.add_argument("--extname", help="Output extension name to store result (default None)",
+                        type=str, default='None')
     parser.add_argument("--polydeg", help="Polynomial degree to fit distortion", type=int, default=2)
-    parser.add_argument("--islice_reference", help="Array index corresponding to the reference slice", type=int)
+    parser.add_argument("--times_sigma_reject",
+                        help="Times sigma to reject fitted offsets (default 3.0)",
+                        type=float, default=3.0)
+    parser.add_argument("--islice_reference",
+                        help="Initial pixel corresponding to the reference slice (from 1 to NAXIS3)",
+                        type=int)
     parser.add_argument("--iterate", help="Force one iteration", action="store_true")
-    parser.add_argument("--method", help="Method (1: skimage, 2: scipy)", type=int, choices=[1, 2], default=1)
+    parser.add_argument("--method", help="Method (1: skimage, 2: scipy)",
+                        type=int, choices=[1, 2], default=1)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument("--debug", help="Debug", action="store_true")
+    parser.add_argument("--verbose", help="Display intermediate information", action="store_true")
 
     args = parser.parse_args(args=args)
 
@@ -296,41 +317,67 @@ def main(args=None):
         parser.print_usage()
         raise SystemExit()
 
-    if args.debug:
+    if args.verbose:
         for arg, value in vars(args).items():
             print(f'{arg}: {value}')
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
+    # protections
+    extname = args.extname.upper()
+    if len(extname) > 8:
+        raise ValueError(f"Extension '{extname}' must be less than 9 characters")
+
     with fits.open(args.input) as hdul:
         data3d = hdul[0].data
 
-    delta_x_array, delta_y_array = measure_slice_xy_offsets_in_3d_cube(
+    delta_x_array, delta_y_array, i1_ref, i2_ref = measure_slice_xy_offsets_in_3d_cube(
         data3d=data3d,
         npoints_along_naxis3=args.npoints,
         polydeg=args.polydeg,
+        times_sigma_reject=args.times_sigma_reject,
         islice_reference=args.islice_reference,
         iterate=args.iterate,
         method=args.method,
         plots=args.plots,
-        debug=args.debug
+        verbose=args.verbose
     )
 
     naxis3, naxis2, axis1 = data3d.shape
 
-    if args.output is not None:
-        # save result as a FITS file with a 2D array:
-        # first row: delta_x_array
-        # second row: delta_y_array
-        arrayout = np.zeros((2, naxis3))
-        arrayout[0, :] = delta_x_array
-        arrayout[1, :] = delta_y_array
-        hdu = fits.PrimaryHDU(arrayout.astype(np.float32))
-        hdul = fits.HDUList([hdu])
-        if args.debug:
-            print(f'Saving file {args.output}')
-        hdul.writeto(args.output, overwrite='yes')
+    if extname != 'NONE':
+        if args.verbose:
+            print(f'Updating file {args.input}')
+        # binary table to store result
+        col1 = fits.Column(name='Delta_x', format='D', array=delta_x_array, unit='pixel')
+        col2 = fits.Column(name='Delta_y', format='D', array=delta_y_array, unit='pixel')
+        hdu_result = fits.BinTableHDU.from_columns([col1, col2])
+        hdu_result.name = extname.upper()
+        hdu_result.header['METHOD'] = (args.method, '1: skimage, 2: scipy')
+        hdu_result.header['POLYDEG'] = (args.polydeg, 'Polynomial degree to fit distortion')
+        hdu_result.header['TSIGMA'] = (args.times_sigma_reject, 'Times sigma to reject fitted offsets')
+        hdu_result.header['NP_FIT'] = (args.npoints, 'Number of points along NAXIS3')
+        hdu_result.header['ITERATE'] = (args.iterate, 'Iterate procedure (T: True, F: False)')
+        if args.islice_reference is not None:
+            i0_ref = args.islice_reference
+        else:
+            i0_ref = -1
+        hdu_result.header['I0_REF'] = (i0_ref, 'Initial pixel for reference slice (-1: None)')
+        hdu_result.header['I1_REF'] = (i1_ref, 'First pixel of reference slice')
+        hdu_result.header['I2_REF'] = (i2_ref, 'Last pixel of reference slice')
+        # open and update existing FITS file
+        hdul = fits.open(args.input, mode='update')
+        if extname in hdul:
+            if args.verbose:
+                print(f"Updating extension '{extname}'")
+            hdul[extname] = hdu_result
+        else:
+            if args.verbose:
+                print(f"Adding new extension '{extname}'")
+            hdul.append(hdu_result)
+        hdul.flush()
+        hdul.close()
 
     if args.plots:
         fig, axarr = plt.subplots(nrows=2, ncols=1, figsize=(6.4, 6.4))
@@ -341,6 +388,7 @@ def main(args=None):
             ax.axhline(0, linestyle='--', color='grey')
             ax.set_xlabel('Array index (along NAXIS3)')
             ax.set_ylabel(f'delta_{label}_array (pixels)')
+            ax.set_title(f'Reference slices in [{i1_ref}:{i2_ref}]')
         plt.suptitle(args.input)
         plt.tight_layout()
         plt.show()
