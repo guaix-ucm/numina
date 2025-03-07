@@ -11,6 +11,8 @@
 
 import argparse
 from astropy.io import fits
+import astropy.units as u
+from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import shift
@@ -23,6 +25,7 @@ import numina.array.imsurfit as imsurfit
 from numina.array.imsurfit import vertex_of_quadratic
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 import numina.array.utils as utils
+from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
 
 
 def compute_i1i2(i, naxis3, binning_naxis3):
@@ -293,7 +296,7 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Determine (X,Y) offsets between slices along NAXIS3")
-    parser.add_argument("input", help="Input 3D FITS file")
+    parser.add_argument("filename", help="Input 3D FITS file")
     parser.add_argument("npoints", help="Number of points along NAXIS3", type=int)
     parser.add_argument("--extname", help="Output extension name to store result (default None)",
                         type=str, default='None')
@@ -308,8 +311,8 @@ def main(args=None):
     parser.add_argument("--method", help="Method (1: skimage, 2: scipy)",
                         type=int, choices=[1, 2], default=1)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
     parser.add_argument("--verbose", help="Display intermediate information", action="store_true")
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)
 
@@ -329,8 +332,12 @@ def main(args=None):
     if len(extname) > 8:
         raise ValueError(f"Extension '{extname}' must be less than 9 characters")
 
-    with fits.open(args.input) as hdul:
+    with fits.open(args.filename) as hdul:
+        primary_header = hdul[0].header
         data3d = hdul[0].data
+
+    if primary_header['NAXIS'] != 3:
+        raise ValueError(f"Expected NAXIS=3 not found in PRIMARY HDU")
 
     delta_x_array, delta_y_array, i1_ref, i2_ref = measure_slice_xy_offsets_in_3d_cube(
         data3d=data3d,
@@ -344,11 +351,10 @@ def main(args=None):
         verbose=args.verbose
     )
 
-    naxis3, naxis2, axis1 = data3d.shape
-
+    # save result in extension
     if extname != 'NONE':
         if args.verbose:
-            print(f'Updating file {args.input}')
+            print(f'Updating file {args.filename}')
         # binary table to store result
         col1 = fits.Column(name='Delta_x', format='D', array=delta_x_array, unit='pixel')
         col2 = fits.Column(name='Delta_y', format='D', array=delta_y_array, unit='pixel')
@@ -366,8 +372,14 @@ def main(args=None):
         hdu_result.header['I0_REF'] = (i0_ref, 'Initial pixel for reference slice (-1: None)')
         hdu_result.header['I1_REF'] = (i1_ref, 'First pixel of reference slice')
         hdu_result.header['I2_REF'] = (i2_ref, 'Last pixel of reference slice')
+        wcs3d = WCS(primary_header)
+        naxis1, naxis2, naxis3 = wcs3d.pixel_shape
+        wave = wcs3d.spectral.pixel_to_world(np.arange(naxis3))
+        reference_vacuum_wavelength = (wave[i1_ref-1] + wave[i2_ref-1]) / 2
+        hdu_result.header['REFEWAVE'] = (reference_vacuum_wavelength.to(u.m).value,
+                                         'Reference vacuum wavelength (m)')
         # open and update existing FITS file
-        hdul = fits.open(args.input, mode='update')
+        hdul = fits.open(args.filename, mode='update')
         if extname in hdul:
             if args.verbose:
                 print(f"Updating extension '{extname}'")
@@ -379,19 +391,10 @@ def main(args=None):
         hdul.flush()
         hdul.close()
 
+    # display results
     if args.plots:
-        fig, axarr = plt.subplots(nrows=2, ncols=1, figsize=(6.4, 6.4))
-        xplot = np.arange(naxis3)
-        for iplot, yplot, label in zip(range(2), [delta_x_array, delta_y_array], 'xy'):
-            ax = axarr[iplot]
-            ax.plot(xplot, yplot, '.')
-            ax.axhline(0, linestyle='--', color='grey')
-            ax.set_xlabel('Array index (along NAXIS3)')
-            ax.set_ylabel(f'delta_{label}_array (pixels)')
-            ax.set_title(f'Reference slices in [{i1_ref}:{i2_ref}]')
-        plt.suptitle(args.input)
-        plt.tight_layout()
-        plt.show()
+        suptitle = f"file: {args.filename} (extension: {extname})\nreference slices in [{i1_ref}:{i2_ref}]"
+        compare_adr_extensions_in_3d_cube(args.filename, extname1=extname, extname2=None, suptitle=suptitle)
 
 
 if __name__ == "__main__":
