@@ -25,11 +25,10 @@ REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 
 
 def apply_adr_correction_from_extension_in_3d_cube(
-        inputfile,
+        hdul,
         extname_adr,
         extname_mask,
         final_celestial_wcs,
-        outputfile,
         reproject_method,
         verbose=False,
 ):
@@ -37,8 +36,8 @@ def apply_adr_correction_from_extension_in_3d_cube(
 
     Parameters
     ----------
-    inputfile : str, file-like or `pathlib.Path`
-        Input FITS filename.
+    input_hdul : `astropy.io.fits.HDUList`
+        Input HDUList instance.
     extname_adr : str
         FITS extension name with ADR correction data.
     extname_mask : str
@@ -47,55 +46,57 @@ def apply_adr_correction_from_extension_in_3d_cube(
     final_celestial_wcs : str, file-like, `pathlib.Path` or None
         FITS filename with final celestial WCS. If None,
         compute output celestial WCS for current 3D cube.
-    outputfile : str, file-like or `pathlib.Path`
-        Output FITS filename.
     reproject_method : str
         Reprojection method. See 'REPROJECT_METHODS' above.
     verbose : bool
         If True, display additional information.
-    """
-    with fits.open(inputfile) as hdul:
-        if verbose:
-            print(hdul.info())
-        primary_header = hdul[0].header
-        if primary_header["NAXIS"] != 3:
-            raise ValueError("Expected NAXIS=3 not found in PRIMARY HDU")
-        # read 3D cube
-        data3d = hdul[0].data.copy()
-        # read ADR data
-        if extname_adr not in hdul:
-            raise ValueError(f"Extension '{extname_adr}' not found in FITS file.")
-        else:
-            if verbose:
-                print(f'Reading ADR correction from {extname_adr} extension')
-            table_adrcross = hdul[extname_adr].data.copy()
-        # read mask or generate one from np.nan
-        if extname_mask is None:
-            hdu3d_mask = None
-        else:
-            if extname_mask not in hdul:
-                raise ValueError(f"Extension '{extname_mask}' not found in FITS file.")
-            else:
-                if verbose:
-                    print(f'Reading mask from {extname_mask} extension')
-                hdu3d_mask = hdul[extname_mask]
-                bitpix_mask = hdu3d_mask.header['BITPIX']
-                if bitpix_mask != 8:
-                    raise ValueError(f"BITPIX (mask): {bitpix_mask} is not 8")
-                if data3d.shape != hdu3d_mask.data.shape:
-                    raise ValueError(f"Shape of PRIMARY and {extname_mask} are different")
-        # generate mask from np.nan when necessary
-        if hdu3d_mask is None:
-            if verbose:
-                print("Generating mask from np.nan in PRIMARY HDU")
-            mask3d = np.isnan(data3d).astype(np.uint8)
-        else:
-            mask3d = hdu3d_mask.data.copy()
-        num_masked_pixels_in_data3d = mask3d.sum()
-        if verbose:
-            print(f"Number of masked pixels in the input 3D array: {num_masked_pixels_in_data3d}")
 
-    # generate 3D WCS object
+    Returns
+    -------
+    output_hdul : `astropy.io.fits.HDUList`
+        Instance of HDUList with two HDU:
+        - PRIMARY: corrected image
+        - MASK: array with masked pixels
+    """
+    primary_header = hdul[0].header
+    if primary_header["NAXIS"] != 3:
+        raise ValueError("Expected NAXIS=3 not found in PRIMARY HDU")
+    # read 3D data cube
+    data3d = hdul[0].data.copy()
+    # read ADR data
+    if extname_adr not in hdul:
+        raise ValueError(f"Extension '{extname_adr}' not found in FITS file.")
+    else:
+        if verbose:
+            print(f'Reading ADR correction from {extname_adr} extension')
+        table_adrcross = hdul[extname_adr].data.copy()
+    # read mask or generate one from np.nan
+    if extname_mask is None:
+        hdu3d_mask = None
+    else:
+        if extname_mask not in hdul:
+            raise ValueError(f"Extension '{extname_mask}' not found in FITS file.")
+        else:
+            if verbose:
+                print(f'Reading mask from {extname_mask} extension')
+            hdu3d_mask = hdul[extname_mask]
+            bitpix_mask = hdu3d_mask.header['BITPIX']
+            if bitpix_mask != 8:
+                raise ValueError(f"BITPIX (mask): {bitpix_mask} is not 8")
+            if data3d.shape != hdu3d_mask.data.shape:
+                raise ValueError(f"Shape of PRIMARY and {extname_mask} are different")
+    # generate mask from np.nan when necessary
+    if hdu3d_mask is None:
+        if verbose:
+            print("Generating mask from np.nan in PRIMARY HDU")
+        mask3d = np.isnan(data3d).astype(np.uint8)
+    else:
+        mask3d = hdu3d_mask.data.copy()
+    num_masked_pixels_in_data3d = mask3d.sum()
+    if verbose:
+        print(f"Number of masked pixels in the input 3D array: {num_masked_pixels_in_data3d}")
+
+    # input 3D WCS
     wcs3d = WCS(primary_header)
     naxis1, naxis2, naxis3 = wcs3d.pixel_shape
 
@@ -265,16 +266,15 @@ def apply_adr_correction_from_extension_in_3d_cube(
     hdu_mask = fits.ImageHDU(data=array3d_corrected.mask.astype(np.uint8))
     hdu_mask.header['EXTNAME'] = 'MASK'
     hdu_mask.header.update(header3d_corrected)
-    hdul = fits.HDUList([hdu, hdu_mask])
-    if verbose:
-        print(f"\nSaving file: {outputfile}")
-    hdul.writeto(outputfile, overwrite=True)
+    output_hdul = fits.HDUList([hdu, hdu_mask])
+
+    return output_hdul
 
 
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube")
-    parser.add_argument("input", help="Input 3D FITS file", type=str)
+    parser.add_argument("inputfile", help="Input 3D FITS file", type=str)
     parser.add_argument("--extname_adr", help="Name of the extension with ADR correction",
                         type=str, default=None)
     parser.add_argument("--extname_mask",
@@ -321,15 +321,21 @@ def main(args=None):
     if args.output is None:
         raise ValueError("You must specify an output filename with --output")
 
-    apply_adr_correction_from_extension_in_3d_cube(
-        inputfile=args.input,
-        extname_adr=extname_adr,
-        extname_mask=extname_mask,
-        final_celestial_wcs=args.final_celestial_wcs,
-        outputfile=args.output,
-        reproject_method=args.reproject_method,
-        verbose=args.verbose
-    )
+    with fits.open(args.inputfile) as input_hdul:
+        if args.verbose:
+            print(input_hdul.info())
+        output_hdul = apply_adr_correction_from_extension_in_3d_cube(
+            hdul=input_hdul,
+            extname_adr=extname_adr,
+            extname_mask=extname_mask,
+            final_celestial_wcs=args.final_celestial_wcs,
+            reproject_method=args.reproject_method,
+            verbose=args.verbose
+        )
+
+    if args.verbose:
+        print(f"\nSaving file: {args.output}")
+    output_hdul.writeto(args.output, overwrite=True)
 
 
 if __name__ == '__main__':
