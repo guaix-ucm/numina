@@ -90,6 +90,14 @@ def world_to_pixel(inputfile, sky, wave, extnum, verbose=False):
 
 
 def main(args=None):
+    """
+    Usage example:
+    $ numina-world_to_pixel file.fits \
+      --sky 'SkyCoord(0*u.arcsec, 0*u.arcsec)'
+      --wave '1.9344e-06*u.m'
+
+    The sky and wavelenght coordinates must be provided with units.
+    """
     parser = argparse.ArgumentParser(description="Remmove extension from FITS file")
     parser.add_argument("inputfile", help="Input FITS file", type=str)
     parser.add_argument("--sky", help="Celestial coordinate", type=str, default=None)
