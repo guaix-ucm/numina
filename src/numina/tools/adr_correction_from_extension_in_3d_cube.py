@@ -255,12 +255,15 @@ def apply_adr_correction_from_extension_in_3d_cube(
             f'{item}2',
             (f'{item}3', header_spectral[f'{item}1'], header_spectral.comments[f'{item}1']),
             after=True)
+    # IMPORTANT: CDELT3 needs to be recomputed
+    # (one option is to use PC3_3 if CDELT3=1; another one is to compute 1 pixel increment)
+    header3d_corrected['CDELT3'] =  wcs3d.spectral.pixel_to_world(2).value - wcs3d.spectral.pixel_to_world(1).value
     if verbose:
         print("\nheader3d_corrected:")
         for line in header3d_corrected.cards:
             print(line)
 
-    # save result
+    # generate result
     hdu = fits.PrimaryHDU(array3d_corrected.data.astype(np.float32))
     hdu.header.update(header3d_corrected)
     hdu_mask = fits.ImageHDU(data=array3d_corrected.mask.astype(np.uint8))
@@ -333,6 +336,7 @@ def main(args=None):
             verbose=args.verbose
         )
 
+    # save result
     if args.verbose:
         print(f"\nSaving file: {args.output}")
     output_hdul.writeto(args.output, overwrite=True)
