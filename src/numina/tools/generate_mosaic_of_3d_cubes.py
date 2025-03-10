@@ -14,26 +14,31 @@ The combination is performed preserving the spectral axis (NAXIS3).
 
 import argparse
 from astropy.io import fits
-from astropy.wcs import WCS, WCSSUB_CELESTIAL, WCSSUB_SPECTRAL
+from astropy.wcs import WCS
 import numpy as np
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
-from reproject.mosaicking import find_optimal_celestial_wcs, reproject_and_coadd
+from reproject.mosaicking import find_optimal_celestial_wcs
 import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
+from .ctext import ctext
 
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
+# ToDo: revisar generación de wcs_mosaic3d final (mezcla de CELESTIAL y SPECTRAL)
+#       Ver 20240722_atmospheric_differential_refraction/correct_adr.ipynb
 # ToDo: hacer uso de combination_function
-# ToDo: implementar correct_adr
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
         list_of_hdu3d_masks,
+        islice1,
+        islice2,
+        final_celestial_wcs,
         reproject_method,
         combination_function,
-        correct_adr,
+        output_celestial_2d_wcs,
         verbose
 ):
     """Combine 3D cubes using their WCS information.
@@ -47,16 +52,19 @@ def generate_mosaic_of_3d_cubes(
         the images to be combined. If this list is None, this function
         computes a particular mask for each 3D image prior to the
         combination, looking for np.nan values.
+    islice1 : int
+        First slice to be combined (from 1 to NAXIS3).
+    islice2 : int or None
+        Last slice to be combined (from 1 to NAXIS3).
+    final_celestial_wcs : str, file-like, `pathlib.Path` or None
+        FITS filename with final celestial WCS. If None,
+        compute output celestial WCS for current list of 3D cubes.
     reproject_method : str
         Reprojection method. See 'REPROJECT_METHODS' above.
     combination_function : str
         Combination function. See 'COMBINATION_FUNCTIONS' above.
-    correct_adr : bool
-        If True, correct for ADR before combination. In this case
-        the combination is performed slice by slice (slow method).
-        When this parameter is False, the combination is performed
-        cube by cube, which is faster.
-
+    output_celestial_2d_wcs : str, file-like, `pathlib.Path` or None
+        Path to output 2D celestial WCS.
     verbose : bool
         If True, display additional information.
 
@@ -102,29 +110,43 @@ def generate_mosaic_of_3d_cubes(
     wcs1d_spectral_ini = None
     for i, hdu in enumerate(list_of_hdu3d_images):
         if i == 0:
-            wcs1d_spectral_ini = WCS(hdu.header).sub([WCSSUB_SPECTRAL])
+            wcs1d_spectral_ini = WCS(hdu.header).spectral
         else:
-            wcs1d_spectral = WCS(hdu.header).sub([WCSSUB_SPECTRAL])
+            wcs1d_spectral = WCS(hdu.header).spectral
             if wcs1d_spectral.__str__() != wcs1d_spectral_ini.__str__():
                 print(f'{list_of_hdu3d_images[i]}')
                 raise ValueError('ERROR: spectral sampling is different!')
 
-    # compute optimal 2D WCS (celestial part) for combined image
-    list_of_inputs = []
-    for hdu in list_of_hdu3d_images:
-        header3d = hdu.header
-        wcs2d = WCS(header3d).sub([WCSSUB_CELESTIAL])
-        list_of_inputs.append( ( (header3d['NAXIS2'], header3d['NAXIS1']), wcs2d) )
-    wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
+    # optimal 2D WCS (celestial part) for combined image
+    if final_celestial_wcs is None:
+        # compute final celestial WCS for the ensemble of 3D cubes
+        list_of_inputs = []
+        for hdu in list_of_hdu3d_images:
+            header3d = hdu.header
+            wcs2d = WCS(header3d).celestial
+            list_of_inputs.append( ( (header3d['NAXIS2'], header3d['NAXIS1']), wcs2d) )
+        wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
+    else:
+        # make use of an external celestial WCS projection
+        with fits.open(final_celestial_wcs) as hdul_mosaic2d:
+            wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
+            shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
     if verbose:
         print(f'\n{wcs_mosaic2d=}')
         print(f'\n{shape_mosaic2d=}')
+    if output_celestial_2d_wcs is not None:
+        header_2d_wcs = wcs_mosaic2d.to_header()
+        hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
+        hdu.writeto(output_celestial_2d_wcs, overwrite=True)
 
     # generate 3D mosaic
     if verbose:
         print(f'Reprojection method: {reproject_method}')
     wcs3d = WCS(list_of_hdu3d_images[0].header)
-    naxis3_mosaic3d = wcs3d.pixel_shape[-1]
+    naxis3_mosaic3d_ini = wcs3d.pixel_shape[-1]
+    if islice2 is None:
+        islice2 = naxis3_mosaic3d_ini
+    naxis3_mosaic3d = islice2 - islice1 + 1
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     footprint3d = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
@@ -136,9 +158,10 @@ def generate_mosaic_of_3d_cubes(
 
     nimages = len(list_of_hdu3d_images)
     for i in range(nimages):
-        data_ini3d = list_of_hdu3d_images[i].data
+        # select [islice1:islice2] following FITS convention
+        data_ini3d = list_of_hdu3d_images[i].data[(islice1-1):islice2]
         wcs_ini3d = WCS(list_of_hdu3d_images[i].header)
-        wcs_ini2d = wcs_ini3d.sub([WCSSUB_CELESTIAL])
+        wcs_ini2d = wcs_ini3d.celestial
         if reproject_method == 'interp':
             temp3d, footprint_temp3d = reproject_interp(
                 (data_ini3d, wcs_ini2d),
@@ -168,6 +191,8 @@ def generate_mosaic_of_3d_cubes(
     valid_region = footprint3d > 0
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
 
+    input("Solve ToDo here...!")
+    # ToDo: ver cómo ajustar el WCS spectral para tener en cuenta que hemos usamos [islice1:islice2]
     # generate resulting 3D WCS object
     wcs_mosaic3d = WCS(naxis=3)
     wcs_mosaic3d.wcs.crpix = [wcs_mosaic2d.wcs.crpix[0], wcs_mosaic2d.wcs.crpix[1], wcs1d_spectral_ini.wcs.crpix[0]]
@@ -189,9 +214,16 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser()
     parser.add_argument("input_list",
-                        help="TXT file with list of 3D images to be combined")
+                        help="TXT file with list of 3D images to be combined", type=str)
     parser.add_argument('output_filename',
-                        help='filename of output FITS image')
+                        help='filename of output FITS image', type=str)
+    parser.add_argument("--islice1", help="First slice (from 1 to NAXIS3), default 1",
+                        type=int, default=1)
+    parser.add_argument("--islice2", help="Last slice (from 1 to NAXIS3), default NAXIS3",
+                        type=int, default=None)
+    parser.add_argument("--final_celestial_wcs",
+                        help="Final celestial WCS projection. Default None (compute for current 3D cube)",
+                        type=str, default=None)
     parser.add_argument('--reproject_method',
                         help='Reprojection method (interp, adaptive, exact)',
                         type=str, choices=REPROJECT_METHODS, default='adaptive')
@@ -203,9 +235,9 @@ def main(args=None):
                         default=None, type=str)
     parser.add_argument("--combination_function", help='Combination function. Default: mean',
                         type=str, default='mean', choices=COMBINATION_FUNCTIONS)
-    parser.add_argument("--correct_adr",
-                        help="Correct ADR for output image.",
-                        action='store_true')
+    parser.add_argument("--output_celestial_2d_wcs",
+                        help="filename for output celestial 2D WCS",
+                        type=str, default=None)
     parser.add_argument("--verbose",
                         help="Display intermediate information",
                         action="store_true")
@@ -215,14 +247,30 @@ def main(args=None):
 
     args = parser.parse_args(args)
 
+    if len(sys.argv) == 1:
+        parser.print_usage()
+        raise SystemExit()
+
+    if args.verbose:
+        for arg, value in vars(args).items():
+            print(ctext(f'{arg}: {value}', faint=True))
+
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
     input_list = args.input_list
     output_filename = args.output_filename
+    islice1 = args.islice1
+    islice2 = args.islice2
+    if islice1 < 0:
+        raise ValueError('islice1 must be >= 0')
+    if islice2 is not None:
+        if islice2 < islice1:
+            raise ValueError('islice2 must be >= islice1')
+    final_celestial_wcs = args.final_celestial_wcs
     reproject_method = args.reproject_method
     combination_function = args.combination_function
-    correct_adr = args.correct_adr
+    output_celestial_2d_wcs = args.output_celestial_2d_wcs
     verbose = args.verbose
 
     # define extensions for image and mask
@@ -281,9 +329,12 @@ def main(args=None):
     mosaic3d_cube_by_cube, footprint3d, wcs_mosaic3d = generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images=list_of_hdu3d_images,
         list_of_hdu3d_masks=list_of_hdu3d_masks,
+        islice1=islice1,
+        islice2=islice2,
+        final_celestial_wcs=final_celestial_wcs,
         reproject_method=reproject_method,
         combination_function=combination_function,
-        correct_adr=correct_adr,
+        output_celestial_2d_wcs=output_celestial_2d_wcs,
         verbose=verbose
     )
 

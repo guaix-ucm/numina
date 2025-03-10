@@ -28,6 +28,7 @@ def apply_adr_correction_from_extension_in_3d_cube(
         inputfile,
         extname_adr,
         extname_mask,
+        final_celestial_wcs,
         outputfile,
         reproject_method,
         verbose=False,
@@ -43,6 +44,9 @@ def apply_adr_correction_from_extension_in_3d_cube(
     extname_mask : str
         FITS extension name with mask. If 'None', use np.nan in
         image data.
+    final_celestial_wcs : str, file-like, `pathlib.Path` or None
+        FITS filename with final celestial WCS. If None,
+        compute output celestial WCS for current 3D cube.
     outputfile : str, file-like or `pathlib.Path`
         Output FITS filename.
     reproject_method : str
@@ -101,7 +105,7 @@ def apply_adr_correction_from_extension_in_3d_cube(
     x_center_ifu, y_center_ifu = wcs3d.celestial.wcs.crpix  # FITS convention
     center_ifu_coord = wcs3d.celestial.pixel_to_world(
         x_center_ifu - 1.0,  # Python convention
-        y_center_ifu - 1.0  # Python convention
+        y_center_ifu - 1.0   # Python convention
     )
     if verbose:
         print(f'Center IFU coord: {center_ifu_coord}')
@@ -109,21 +113,28 @@ def apply_adr_correction_from_extension_in_3d_cube(
     y_center_ifu_corrected = y_center_ifu + delta_y_center_ifu
 
     # optimal celestial WCS for corrected cube
-    wcs2d_blue = wcs3d.celestial.deepcopy()
-    wcs2d_blue.wcs.crpix = np.array([x_center_ifu_corrected[0], y_center_ifu_corrected[0]])
-    if verbose:
-        print(f"\nwcs2d_blue:\n{wcs2d_blue}")
-    wcs2d_red = wcs3d.celestial.deepcopy()
-    wcs2d_red.wcs.crpix = np.array([x_center_ifu_corrected[-1], y_center_ifu_corrected[-1]])
-    if verbose:
-        print(f"\nwcs2d_red:\n{wcs2d_red}")
-    wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(
-        input_data=[
-            ((naxis2, naxis1), wcs2d_blue),
-            ((naxis2, naxis1), wcs2d_red)
-        ],
-        auto_rotate=False
-    )
+    if final_celestial_wcs is None:
+        # compute final celestial WCS for this 3D cube
+        wcs2d_blue = wcs3d.celestial.deepcopy()
+        wcs2d_blue.wcs.crpix = np.array([x_center_ifu_corrected[0], y_center_ifu_corrected[0]])
+        if verbose:
+            print(f"\nwcs2d_blue:\n{wcs2d_blue}")
+        wcs2d_red = wcs3d.celestial.deepcopy()
+        wcs2d_red.wcs.crpix = np.array([x_center_ifu_corrected[-1], y_center_ifu_corrected[-1]])
+        if verbose:
+            print(f"\nwcs2d_red:\n{wcs2d_red}")
+        wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(
+            input_data=[
+                ((naxis2, naxis1), wcs2d_blue),
+                ((naxis2, naxis1), wcs2d_red)
+            ],
+            auto_rotate=False
+        )
+    else:
+        # make use of an external celestial WCS projection
+        with fits.open(final_celestial_wcs) as hdul_mosaic2d:
+            wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
+            shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
     if verbose:
         print(f"\nwcs_mosaic2d:\n{wcs_mosaic2d}")
         print(f"shape_mosaic2d: {shape_mosaic2d}")
@@ -270,6 +281,9 @@ def main(args=None):
                         help="Name of the extension with mask in input 3D cube. "
                         "Default 'None': use np.nan in image",
                         default=None, type=str)
+    parser.add_argument("--final_celestial_wcs",
+                        help="Final celestial WCS projection. Default None (compute for current 3D cube)",
+                        type=str, default=None)
     parser.add_argument("--output", help="Output filename",
                         type=str, default=None)
     parser.add_argument('--reproject_method',
@@ -311,6 +325,7 @@ def main(args=None):
         inputfile=args.input,
         extname_adr=extname_adr,
         extname_mask=extname_mask,
+        final_celestial_wcs=args.final_celestial_wcs,
         outputfile=args.output,
         reproject_method=args.reproject_method,
         verbose=args.verbose
