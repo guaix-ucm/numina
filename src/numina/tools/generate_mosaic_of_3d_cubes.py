@@ -27,8 +27,6 @@ REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
-# ToDo: revisar generación de wcs_mosaic3d final (mezcla de CELESTIAL y SPECTRAL)
-#       Ver 20240722_atmospheric_differential_refraction/correct_adr.ipynb
 # ToDo: hacer uso de combination_function
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
@@ -70,12 +68,10 @@ def generate_mosaic_of_3d_cubes(
 
     Returns
     -------
-    mosaic : numpy.ma.MaskedArray
-        Masked array containing the combined image and the resulting
-        mask.
-    wcs_mosaic3d: astropy.wcs.WCS
-        Instance representing the World Coordinate System of the
-        combined image.
+    output_hdul : `astropy.io.fits.HDUList`
+        Instance of HDUList with two HDU:
+        - PRIMARY: mosaic image
+        - FOOTPRINT: array with final footprint
     """
     # protections
     if not isinstance(list_of_hdu3d_images, list):
@@ -139,9 +135,7 @@ def generate_mosaic_of_3d_cubes(
         hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
         hdu.writeto(output_celestial_2d_wcs, overwrite=True)
 
-    # generate 3D mosaic
-    if verbose:
-        print(f'Reprojection method: {reproject_method}')
+    # initialize arrays to store combination
     wcs3d = WCS(list_of_hdu3d_images[0].header)
     naxis3_mosaic3d_ini = wcs3d.pixel_shape[-1]
     if islice2 is None:
@@ -149,13 +143,16 @@ def generate_mosaic_of_3d_cubes(
     naxis3_mosaic3d = islice2 - islice1 + 1
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
-    footprint3d = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
+    footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     if verbose:
         print(f'\nNAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}')
         size1 = array_size_32bits(mosaic3d_cube_by_cube)
         size2 = array_size_8bits(footprint3d)
         print(f'Combined image will require {size1 + size2:.2f}')
 
+    # generate 3D mosaic
+    if verbose:
+        print(f'Reprojection method: {reproject_method}')
     nimages = len(list_of_hdu3d_images)
     for i in range(nimages):
         # select [islice1:islice2] following FITS convention
@@ -191,22 +188,35 @@ def generate_mosaic_of_3d_cubes(
     valid_region = footprint3d > 0
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
 
-    input("Solve ToDo here...!")
-    # ToDo: ver cómo ajustar el WCS spectral para tener en cuenta que hemos usamos [islice1:islice2]
     # generate resulting 3D WCS object
-    wcs_mosaic3d = WCS(naxis=3)
-    wcs_mosaic3d.wcs.crpix = [wcs_mosaic2d.wcs.crpix[0], wcs_mosaic2d.wcs.crpix[1], wcs1d_spectral_ini.wcs.crpix[0]]
-    wcs_mosaic3d.wcs.cdelt = [wcs_mosaic2d.wcs.cdelt[0], wcs_mosaic2d.wcs.cdelt[1], wcs1d_spectral_ini.wcs.cdelt[0]]
-    wcs_mosaic3d.wcs.crval = [wcs_mosaic2d.wcs.crval[0], wcs_mosaic2d.wcs.crval[1], wcs1d_spectral_ini.wcs.crval[0]]
-    wcs_mosaic3d.wcs.ctype = [wcs_mosaic2d.wcs.ctype[0], wcs_mosaic2d.wcs.ctype[1], wcs1d_spectral_ini.wcs.ctype[0]]
-    # include the appropriate values of the PC matrix
-    wcs_mosaic3d.wcs.pc = np.eye(3)
-    wcs_mosaic3d.wcs.pc[0:2, 0:2] = wcs_mosaic2d.wcs.pc
-    wcs_mosaic3d.wcs.pc[2, 2] = wcs1d_spectral_ini.wcs.pc[0, 0]
+    header3d_corrected = wcs_mosaic2d.to_header()
+    header_spectral = wcs3d.spectral.to_header()
+    header3d_corrected['WCSAXES'] = 3
+    for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
+        # insert {item}3 after {item}2 to preserve the order in the header
+        header3d_corrected.insert(
+            f'{item}2',
+            (f'{item}3', header_spectral[f'{item}1'], header_spectral.comments[f'{item}1']),
+            after=True)
+    # fix slice in the spectral direction
+    if header3d_corrected['CRPIX3'] != 1:
+        raise ValueError(f"Expected CRPIX3=1 but got {header3d_corrected['CRPIX3']=}")
+    # important: update CRVAL3
+    header3d_corrected['CRVAL3'] = wcs3d.spectral.pixel_to_world(islice1 - 1).value
     if verbose:
-        print(f'\n{wcs_mosaic3d=}')
+        print("\nheader3d_corrected:")
+        for line in header3d_corrected.cards:
+            print(line)
 
-    return mosaic3d_cube_by_cube, footprint3d, wcs_mosaic3d
+    # generate result
+    hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
+    hdu.header.update(header3d_corrected)
+    hdu_footprint = fits.ImageHDU(footprint3d.astype(np.uint8))
+    hdu_footprint.header['EXTNAME'] = 'FOOTPRINT'
+    hdu_footprint.header.update(header3d_corrected)
+    output_hdul = fits.HDUList([hdu, hdu_footprint])
+
+    return output_hdul
 
 
 def main(args=None):
@@ -326,7 +336,8 @@ def main(args=None):
                     list_of_hdu3d_masks.append(hdu3d_mask)
 
     # combine images
-    mosaic3d_cube_by_cube, footprint3d, wcs_mosaic3d = generate_mosaic_of_3d_cubes(
+    #mosaic3d_cube_by_cube, footprint3d, wcs_mosaic3d = generate_mosaic_of_3d_cubes(
+    output_hdul = generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images=list_of_hdu3d_images,
         list_of_hdu3d_masks=list_of_hdu3d_masks,
         islice1=islice1,
@@ -339,15 +350,9 @@ def main(args=None):
     )
 
     # save result
-    hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
-    hdu.header.extend(wcs_mosaic3d.to_header(), update=True)
-    hdu_footprint = fits.ImageHDU(data=footprint3d.astype(np.uint8))
-    hdu_footprint.header['EXTNAME'] = 'FOOTPRINT'
-    hdu_footprint.header.extend(wcs_mosaic3d.to_header(), update=True)
-    hdul = fits.HDUList([hdu, hdu_footprint])
     if verbose:
         print(f'Saving: {output_filename}')
-    hdul.writeto(output_filename, overwrite='yes')
+    output_hdul.writeto(output_filename, overwrite='yes')
 
 
 if __name__ == "__main__":
