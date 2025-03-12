@@ -103,14 +103,17 @@ def generate_mosaic_of_3d_cubes(
             raise ValueError(f'Unexpected shape {hdu3d_image.shape=} != {hdu3d_mask.shape=}')
 
     # check the wavelength sampling is the same in all the images
-    wcs1d_spectral_ini = None
+    wave_ini = None
     for i, hdu in enumerate(list_of_hdu3d_images):
+        wcs1d_spectral = WCS(hdu.header).spectral
         if i == 0:
-            wcs1d_spectral_ini = WCS(hdu.header).spectral
+            wave_ini = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
+            print(wave_ini)
         else:
-            wcs1d_spectral = WCS(hdu.header).spectral
-            if wcs1d_spectral.__str__() != wcs1d_spectral_ini.__str__():
-                print(f'{list_of_hdu3d_images[i]}')
+            wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
+            if not np.all(np.isclose(wave_ini, wave)):
+                print(f'{wave_ini=}')
+                print(f'{wave=}')
                 raise ValueError('ERROR: spectral sampling is different!')
 
     # optimal 2D WCS (celestial part) for combined image
@@ -201,7 +204,9 @@ def generate_mosaic_of_3d_cubes(
     # fix slice in the spectral direction
     if header3d_corrected['CRPIX3'] != 1:
         raise ValueError(f"Expected CRPIX3=1 but got {header3d_corrected['CRPIX3']=}")
-    # important: update CRVAL3
+    # important: update CDELT3 and CRVAL3
+    header3d_corrected['CDELT3'] = wcs3d.spectral.pixel_to_world(islice1).value - \
+                                   wcs3d.spectral.pixel_to_world(islice1 - 1).value
     header3d_corrected['CRVAL3'] = wcs3d.spectral.pixel_to_world(islice1 - 1).value
     if verbose:
         print("\nheader3d_corrected:")
