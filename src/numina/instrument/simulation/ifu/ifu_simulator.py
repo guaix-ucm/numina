@@ -35,7 +35,6 @@ from .save_image2d_detector_method0 import save_image2d_detector_method0
 from .save_image2d_rss import save_image2d_rss
 from .set_wavelength_unit_and_range import set_wavelength_unit_and_range
 from .update_image2d_rss_detector_method0 import update_image2d_rss_detector_method0
-from .update_image2d_rss_method1 import update_image2d_rss_method1
 
 
 pp = pprint.PrettyPrinter(indent=1, sort_dicts=False)
@@ -546,9 +545,7 @@ def ifu_simulator(wcs3d, header_keys,
         naxis1_ifu=naxis1_ifu,
         nslices=nslices,
         dict_ifu2detector=dict_ifu2detector,
-        wv_crpix1=wv_crpix1,
-        wv_crval1=wv_crval1,
-        wv_cdelt1=wv_cdelt1,
+        wcs3d=wcs3d,
         noparallel_computation=noparallel_computation,
         verbose=verbose
     )

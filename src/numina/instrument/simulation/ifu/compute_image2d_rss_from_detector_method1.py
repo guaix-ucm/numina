@@ -11,6 +11,7 @@ from joblib import Parallel, delayed
 import numpy as np
 import time
 
+from numina.instrument.simulation.ifu.define_3d_wcs import get_wvparam_from_wcs3d
 from numina.tools.ctext import ctext
 
 from .update_image2d_rss_method1 import update_image2d_rss_method1
@@ -22,9 +23,7 @@ def compute_image2d_rss_from_detector_method1(
         naxis1_ifu,
         nslices,
         dict_ifu2detector,
-        wv_crpix1,
-        wv_crval1,
-        wv_cdelt1,
+        wcs3d,
         noparallel_computation=False,
         verbose=False
 ):
@@ -35,21 +34,17 @@ def compute_image2d_rss_from_detector_method1(
     ----------
     image2d_detector_method0 : numpy.ndarray
         The input detector image.
-    naxis1_detector : int
+    naxis1_detector : `~astropy.units.Quantity`
         Number of pixels in the first axis of the detector image
         (dispersion direction)
-    naxis1_ifu : int
+    naxis1_ifu : `~astropy.units.Quantity`
         Number of pixels in the first axis of the IFU image.
     nslices : int
         Number of slices in the IFU image.
     dict_ifu2detector : dict
         Dictionary mapping IFU slices to detector pixels.
-    wv_crpix1 : float
-        Reference pixel for the first axis of the wavelength image.
-    wv_crval1 : float
-        Reference value for the first axis of the wavelength image.
-    wv_cdelt1 : float
-        Increment for the first axis of the wavelength image.
+    wcs3d : `~astropy.wcs.WCS`
+        WCS object for the 3D image.
     noparallel_computation : bool, optional
         If True, do not use parallel computation. Default is False.
     verbose : bool, optional
@@ -63,6 +58,9 @@ def compute_image2d_rss_from_detector_method1(
 
     if verbose:
         print(ctext('\n* Computing image2d RSS (method 1)', fg='green'))
+
+    # get WCS parameters
+    wv_cunit1, wv_crpix1, wv_crval1, wv_cdelt1 = get_wvparam_from_wcs3d(wcs3d)
 
     # initialize image
     image2d_rss_method1 = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value))
