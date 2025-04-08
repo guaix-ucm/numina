@@ -97,7 +97,8 @@ def generate_image2d_method0_ifu(
 
     # save FITS file
     if len(prefix_intermediate_fits) > 0:
-        hdu = fits.PrimaryHDU(image2d_method0_ifu.astype(np.uint16))
+        # use float to avoid saturation problem
+        hdu = fits.PrimaryHDU(image2d_method0_ifu.astype(np.float32))
         pos0 = len(hdu.header) - 1
         hdu.header.extend(wcs2d.to_header(), update=True)
         hdu.header.update(header_keys)
