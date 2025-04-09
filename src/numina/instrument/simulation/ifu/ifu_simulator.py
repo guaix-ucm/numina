@@ -15,7 +15,6 @@ import json
 import numpy as np
 import os
 import pprint
-from scipy.signal import convolve2d
 import time
 import yaml
 

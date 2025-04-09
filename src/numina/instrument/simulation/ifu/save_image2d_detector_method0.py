@@ -38,6 +38,8 @@ def save_image2d_detector_method0(
         # spectroscopic 2D image in the detector
         # --------------------------------------
         if bitpix == 16:
+            # avoid overflow
+            image2d_detector_method0[image2d_detector_method0 > 65535] = 65535
             # round to integer and save as BITPIX=16 (unsigned short)
             hdu = fits.PrimaryHDU(np.round(image2d_detector_method0).astype(np.uint16))
         else:
