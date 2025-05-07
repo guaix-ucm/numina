@@ -21,19 +21,19 @@ from numina.datamodel import get_imgid
 
 
 def basic_processing_with_combination(
-        rinput, reduction_flow,
+        rinput, reduction_flows,
         method=combine.mean, method_kwargs=None,
         errors=True, prolog=None):
 
     return basic_processing_with_combination_frames(
-        rinput.obresult.frames, reduction_flow,
+        rinput.obresult.frames, reduction_flows,
         method=method, method_kwargs=method_kwargs,
         errors=errors, prolog=prolog
     )
 
 
 def basic_processing_with_combination_frames(
-        frames, reduction_flow,
+        frames, reduction_flows,
         method=combine.mean, method_kwargs=None,
         errors=True, prolog=None):
 
@@ -41,6 +41,12 @@ def basic_processing_with_combination_frames(
         frames, method=method, method_kwargs=method_kwargs,
         errors=errors, prolog=prolog
     )
+
+    if isinstance(reduction_flows, list):
+        # FIXME: handling a list, we use only the first element
+        reduction_flow = reduction_flows[0]
+    else:
+        reduction_flow = reduction_flows
 
     hdulist = reduction_flow(result)
 
