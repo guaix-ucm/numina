@@ -1545,10 +1545,10 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     # been verified (this flag avoids duplication)
     wv_unused = np.ones_like(wv_expected_all_peaks, dtype=bool)
 
-    # initialize to np.infty array to store minimum distance to already
+    # initialize to np.inf array to store minimum distance to already
     # identified line
     minimum_delta_wv = np.ones_like(wv_expected_all_peaks, dtype=float)
-    minimum_delta_wv *= np.infty
+    minimum_delta_wv *= np.inf
 
     # since it is likely that len(wv_master) < len(wv_expected_all_peaks),
     # it is more convenient to execute the search in the following order

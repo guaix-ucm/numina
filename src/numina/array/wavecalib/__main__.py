@@ -653,11 +653,11 @@ def main(args=None):
 
     # clip master arc line lists to expected wavelength range
     if args.wvmin is None:
-        wvmin = -np.infty
+        wvmin = -np.inf
     else:
         wvmin = args.wvmin
     if args.wvmax is None:
-        wvmax = np.infty
+        wvmax = np.inf
     else:
         wvmax = args.wvmax
 
@@ -731,11 +731,11 @@ def main(args=None):
 
     # clip master arc line lists to useful wavelength range
     if args.wvmin_useful is None:
-        wvmin = -np.infty
+        wvmin = -np.inf
     else:
         wvmin = args.wvmin_useful
     if args.wvmax_useful is None:
-        wvmax = np.infty
+        wvmax = np.inf
     else:
         wvmax = args.wvmax_useful
 
