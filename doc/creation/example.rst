@@ -53,13 +53,13 @@ ignore files such as README or LICENSE as they are not relevant here)::
     clodiadrp
     |-- clodiadrp
     |   |-- __init__.py
-    |-- setup.py
+    |-- pyproject.toml
 
 From here the steps are:
 
 1.  Create a configuration yaml file.
 2.  Create a loader file.
-3.  Link the *entry_point* option in the *setup.py* with the loader file.
+3.  Link the *entry_point* option in *pyproject.toml* with the loader file.
 4.  Create the Pipeline's Recipes.
 
 In the following we will continue with the same example as previously.
@@ -118,13 +118,6 @@ The entry `pipelines` contains only one pipeline, called *default* by convention
 recipes, each related to one observing mode by means of the filed *key*. For the moment we haven't developed any recipe,
 so the value of each key (*clodiadrp.recipes.recipe*) doesn't exist yet.
 
-.. note::
-
-    This file has to be included in `package_data` inside `setup.py` to be distributed
-    with the package, see
-    `Installing Package Data <https://docs.python.org/3/distutils/setupscript.html#installing-package-data>`_
-    for details.
-
 Loader File
 ***********
 Create a new loader file in the root folder named *loader.py* with the
@@ -142,23 +135,17 @@ following information:
 Create entry point
 ******************
 Once we have created the *loader.py* file, the only thing we have to do is to
-make CLODIA visible to Numina/GCS. To do so, just modify the *setup.py* file to add an
-entry point.
+make CLODIA visible to Numina. To do so, just modify the *pyproject.toml* file to add an entry point.
 
-.. code-block:: python
+.. code-block:: toml
 
-    from setuptools import setup
+    [project.entry-points."numina.pipeline.1"]
+    CLODIA = "clodiadrp.loader:drp_load"
 
-    setup(name='clodiadrp',
-          entry_points = {
-            'numina.pipeline.1': ['CLODIA = clodiadrp.loader:drp_load'],
-            },
-    )
-
-Both the Numina CLI tool and GCS check this particular entry point. They call the function provided
+The Numina CLI tool checks this particular entry point. They call the function provided
 by the entry point. The function :func:`~numina.core.pipelineload.drp_load` reads and parses the YAML file and
 creates an object of class :class:`~numina.core.pipeline.InstrumentDRP` for each recipes it founds.
-These objects are used by Numina CLI and GCS to discover the available Instrument Reduction Pipelines.
+These objects are used by Numina CLI to discover the available Instrument Reduction Pipelines.
 
 At this stage, the file layout is as follows::
 
@@ -167,7 +154,7 @@ At this stage, the file layout is as follows::
     |   |-- __init__.py
     |   |-- loader.py
     |   |-- drp.yaml
-    |-- setup.py
+    |-- pyproject.toml
 
 
 .. note::
@@ -193,7 +180,7 @@ a dedicated subpackage for recipes `clodiadrp.recipes` and a module for each rec
     |   |   |-- bias.py
     |   |   |-- flat.py
     |   |   |-- image.py
-    |-- setup.py
+    |-- pyproject.toml
 
 
 Recipes must provide three things: 1) a description of the inputs of the recipe; 2) a description of the products of the recipe and 3) a *run* method
@@ -360,7 +347,7 @@ data products. We start by adding a new module `products`::
     |   |   |-- bias.py
     |   |   |-- flat.py
     |   |   |-- image.py
-    |-- setup.py
+    |-- pyproject.toml
 
 We have two types of images that are products of recipes that can be required by other recipes: **master bias**
 and **master flat**. We represent this by creating two new types derived
