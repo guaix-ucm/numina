@@ -5,28 +5,18 @@ Installation
 Requirements
 ------------
 
-Python >= 3.6 is required. Additionally the following packages are required
+Python >= 3.9 is required. Additionally the following packages are required
 in order to work properly:
 
- - `setuptools <http://pythonhosted.org/setuptools/>`_
- - `numpy <http://numpy.scipy.org/>`_ 
+ - `numpy <http://numpy.scipy.org/>`_ 1.22 or later
  - `scipy <http://www.scipy.org>`_
  - `astropy <http://www.astropy.org>`_
  - `PyYaml <http://http://pyyaml.org/>`_
  - `matplotlib <https://matplotlib.org/>`_
  - `scikit-image <https://scikit-image.org/>`_
  - `lmfit <https://lmfit.github.io/lmfit-py/>`_
+ - `reproject <https://reproject.readthedocs.io/en/stable/>`_
  - `python-dateutil <https://pypi.org/project/python-dateutil>`_
-
-Cython is required if you build the code from the development repository:
-
- - `Cython <https://cython.org/>`_
-
-The following packages are optional, for building documentation and testing:
-
- - `sphinx`_  to build the documentation
- - `pytest`_  for testing
- - `pytest-remotedata <https://github.com/astropy/pytest-remotedata>`_ for testing with remote datasets
 
 
 Installing numina
@@ -53,7 +43,7 @@ Pip will download all the required dependencies and a precompiled versión of nu
 Pip can install packages in different locations. You can use the ``--user`` option
 to install packages in your home directory.
 
-Our recomended option is to perform isolated installations
+Our recommended option is to perform isolated installations
 using virtualenv or venv. See :ref:`deploy_venv` for details.
 
 .. warning:: Do not use ``sudo pip`` unless you *really really* know what you are doing.
@@ -82,56 +72,23 @@ Prerequisites
 You will need a compiler suite and the development headers of Python and Numpy.
 
 If you are building the development version of numina, you will also need Cython
-to translate Cython code into C/C++. If your source code is from a release,
-the translated files are included, and hence do not require Cython.
+to translate Cython code into C/C++.
 
-
-The released sources of numina can be downloaded from PyPI. If you require instead
-the development version, it can can be checked out with::
+The development version can can be checked out with::
 
     git clone https://github.com/guaix-ucm/numina.git
 
 Building and installing
 ++++++++++++++++++++++++
 
-To build numina, run::
+To build and install numina, run::
 
-    python setup.py build
+    pip install .
 
-.. note:: In macOS Mojave, the compilation will fail unless the following
-            environment variable is defined::
+You can all install the package in "editable" mode, including the "-e" option::
 
-                export MACOSX_DEPLOYMENT_TARGET=10.9
+    pip install -e .
 
-
-To install numina, run::
-
-    python setup.py install
-
-
-If you get an error about insufficient permissions to install, you are probably trying to access
-directories owned by root. Try instead::
-
-    python setup.py install --user
-
-or perform the installation inside an isolated environment, such as conda or venv.
-
-
-.. warning:: Do not ``sudo python setup.py install`` unless you really really know what you are doing.
-
-
-Building the documentation
---------------------------
-The Numina documentation is base on `sphinx`_. With the package installed, the 
-html documentation can be built from the `doc` directory::
-
-  $ cd doc
-  $ make html
-  
-The documentation will be copied to a directory under `build/sphinx`.
-  
-The documentation can be built in different formats. The complete list will appear
-if you type `make` 
   
 .. _virtualenv: https://virtualenv.pypa.io/
 .. _sphinx: http://sphinx.pocoo.org

@@ -32,7 +32,7 @@ If not, you will need the add the path to the command, like:
 In this guide we will write the commands without the full path, for simplicity.
 
 Once conda is installed according to the corresponding miniconda or anaconda
-instructions, the steps to instal numina under conda are:
+instructions, the steps to install numina under conda are:
 
 Create a conda environment
 --------------------------
@@ -45,7 +45,7 @@ subdirectory ``./envs`` in your conda tree)::
 The Pyhton interpreter used in this environment is the same version
 currently used by conda. You can select a different version with::
 
-    conda create --name numinaenv python=3.6
+    conda create --name numinaenv python=3.10
 
 
 Activate the environment
