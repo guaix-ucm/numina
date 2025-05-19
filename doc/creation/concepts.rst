@@ -189,23 +189,16 @@ Format of the requirement file (version 1)
 
     version: 1
     products:
-      EMIR:
-       - {id: 1, content: 'file1.fits', type: 'MasterFlat', tags: {'filter': 'J'}, ob: 200}
-       - {id: 4, content: 'file4.fits', type: 'MasterBias', tags: {'readmode': 'cds'}, ob: 400}
       MEGARA:
-       - {id: 1, content: 'file1.fits', type: 'MasterFlat', tags: {'vph': 'LR1'}, ob: 1200}
-       - {id: 2, content: 'file2.yml', type: 'TraceMap', tags: {'vph': 'LR2', 'readmode': 'fast'}, ob: 1203}
-    requirements:
-      EMIR:
-        default:
-           TEST6:
-              pinhole_nominal_positions: [ [0, 1], [0 , 1]]
-              box_half_size: 5
-           TEST9:
-              median_filter_size: 5
-    MEGARA:
-        default:
-           mos_image: {}
+        ca3558e3-e50d-4bbc-86bd-da50a0998a48:
+        - {id: 2, type: 'ReferenceExtinctionTable', tags: {}, content: 'extinction_LP.txt'}
+    requirements:        
+      MEGARA:
+        ca3558e3-e50d-4bbc-86bd-da50a0998a48:
+          default:
+            MegaraArcCalibration:
+              - {name: nlines, tags: {vph: LR-U, speclamp: ThAr, insmode: LCB}, content: [25,25]}
+              - {name: nlines, tags: {vph: LR-U, speclamp: ThAr, insmode: MOS}, content: [25,25]}
 
 
 Format of the requirement file
