@@ -27,7 +27,7 @@ from .compute_image3d_ifu_from_rss_method1 import compute_image3d_ifu_from_rss_m
 from .generate_image2d_method0_ifu import generate_image2d_method0_ifu
 from .generate_geometry_for_scene_block import generate_geometry_for_scene_block
 from .generate_image3d_method0_ifu import generate_image3d_method0_ifu
-from .generate_spectrum_for_scene_block import generate_spectrum_for_scene_blok
+from .generate_spectrum_for_scene_block import generate_spectrum_for_scene_block
 from .load_atmosphere_transmission_curve import load_atmosphere_transmission_curve
 from .raise_valueerror import raise_ValueError
 from .save_image2d_detector_method0 import save_image2d_detector_method0
@@ -254,7 +254,7 @@ def ifu_simulator(wcs3d, header_keys,
                     verbose=verbose
                 )
                 # generate spectrum
-                simulated_wave = generate_spectrum_for_scene_blok(
+                simulated_wave = generate_spectrum_for_scene_block(
                     scene_fname=scene_fname,
                     scene_block=scene_block,
                     faux_dict=faux_dict,
