@@ -15,6 +15,7 @@ The combination is performed preserving the spectral axis (NAXIS3).
 import argparse
 from astropy.io import fits
 from astropy.wcs import WCS
+from astropy.wcs.utils import proj_plane_pixel_scales
 import numpy as np
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
@@ -27,7 +28,7 @@ REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
-# ToDo: hacer uso de combination_function
+# TODO: hacer uso de combination_function
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
         list_of_hdu3d_masks,
@@ -120,11 +121,17 @@ def generate_mosaic_of_3d_cubes(
     if final_celestial_wcs is None:
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
-        for hdu in list_of_hdu3d_images:
+        for i, hdu in enumerate(list_of_hdu3d_images):
             header3d = hdu.header
             wcs2d = WCS(header3d).celestial
+            scales = proj_plane_pixel_scales(wcs2d)
+            if verbose:
+                print(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
             list_of_inputs.append( ( (header3d['NAXIS2'], header3d['NAXIS1']), wcs2d) )
         wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
+        scales = proj_plane_pixel_scales(wcs_mosaic2d)
+        if verbose:
+            print(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
     else:
         # make use of an external celestial WCS projection
         with fits.open(final_celestial_wcs) as hdul_mosaic2d:
