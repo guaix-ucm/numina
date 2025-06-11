@@ -14,6 +14,7 @@ The combination is performed preserving the spectral axis (NAXIS3).
 
 import argparse
 from astropy.io import fits
+import astropy.units as u
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
 import numpy as np
@@ -28,12 +29,88 @@ REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
+def resample_wave_3dcube(hdu3d_image, crval3out, cdelt3out, naxis3out):
+    """Resample a 3D cube to a new wavelength sampling.
+
+    The celestial WCS is preserved, and the spectral WCS is modified.
+
+    Parameters
+    ----------
+    hdu3d_image : `astropy.io.fits.ImageHDU`
+        HDU instance with the 3D image to be resampled.
+    crval3out : `astropy.units.Quantity`
+        Minimum wavelength for the output image.
+    cdelt3out : `astropy.units.Quantity`
+        Wavelength step for the output image.
+    naxis3out : int or None
+        Number of slices in the output image.
+    Returns
+    -------
+    resampled_hdu : `astropy.io.fits.ImageHDU`
+        Resampled HDU instance with the 3D image.
+    """
+    naxis3, naxis2, naxis1 = hdu3d_image.data.shape
+
+    # initial pixel borders in the spectral axis
+    old_wcs1d_spectral = WCS(hdu3d_image.header).spectral
+    old_wl_borders = old_wcs1d_spectral.pixel_to_world(np.arange(naxis3+1)-0.5)
+    # modify slightly the first and last values to avoid numerical issues
+    deltawave = old_wl_borders[1] - old_wl_borders[0]
+    old_wl_borders[0] = old_wl_borders[0] - deltawave/1E6
+    deltawave = old_wl_borders[-1] - old_wl_borders[-2]
+    old_wl_borders[-1] = old_wl_borders[-1] + deltawave/1E6
+
+    # final pixel borders in the spectral axis
+    new_wl_borders = crval3out + cdelt3out * (np.arange(naxis3out + 1) -0.5) * u.pix
+
+    # resample the 3D cube (see wavecal.py in teareduce for reference)
+    resampled_data = np.zeros((naxis3out, naxis2, naxis1), dtype=hdu3d_image.data.dtype)
+    for i in range(naxis1):
+        for j in range(naxis2):
+            # resample each slice
+            data_slice = hdu3d_image.data[:, j, i]
+            accum_flux = np.zeros(naxis3 + 1)
+            accum_flux[1:] = np.cumsum(data_slice)
+            flux_borders = np.interp(
+                x=new_wl_borders.value,
+                xp=old_wl_borders.value,
+                fp=accum_flux,
+                left=np.nan, 
+                right=np.nan
+            )
+            resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
+
+    # create new HDU with resampled data
+    resampled_hdu = fits.PrimaryHDU(data=resampled_data)
+    wcs2d_resampled = WCS(hdu3d_image.header).celestial
+    header3d_resampled = wcs2d_resampled.to_header()
+    header_spectral_resampled = old_wcs1d_spectral.to_header()
+    header_spectral_resampled['CRVAL1'] = crval3out.to(u.m).value
+    header3d_resampled['WCSAXES'] = 3
+    for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
+        # insert {item}3 after {item}2 to preserve the order in the header
+        header3d_resampled.insert(
+            f'{item}2',
+            (f'{item}3', header_spectral_resampled[f'{item}1'], header_spectral_resampled.comments[f'{item}1']),
+            after=True)
+    header3d_resampled.insert(
+        'PC2_2', 
+        ('PC3_3', cdelt3out.to(u.m/u.pix).value, header_spectral_resampled.comments['PC1_1']),
+        after=True
+    )
+    resampled_hdu.header.update(header3d_resampled)
+    
+    return resampled_hdu
+
+
 # TODO: hacer uso de combination_function
+# TODO: hacer uso de list_of_hdu3d_masks (ver generate_mosaic_of_2d_images.py)
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
         list_of_hdu3d_masks,
-        islice1,
-        islice2,
+        crval3out,
+        cdelt3out,
+        naxis3out,
         final_celestial_wcs,
         reproject_method,
         combination_function,
@@ -51,10 +128,16 @@ def generate_mosaic_of_3d_cubes(
         the images to be combined. If this list is None, this function
         computes a particular mask for each 3D image prior to the
         combination, looking for np.nan values.
-    islice1 : int
-        First slice to be combined (from 1 to NAXIS3).
-    islice2 : int or None
-        Last slice to be combined (from 1 to NAXIS3).
+    crval3out : `astropy.units.Quantity` or None
+        Minimum wavelength (in m) for the output image. If None,
+        use the minimum wavelength of the input images.
+    cdelt3out : `astropy.units.Quantity` or None
+        Wavelength step (in m/pixel) for the output image. If None,
+        the output image will use the minimum wavelength step of the input images.
+    naxis3out : int or None
+        Number of slices in the output image. If None, the output image
+        will have the required number of slices to cover the full wavelength
+        range of the input images.
     final_celestial_wcs : str, file-like, `pathlib.Path` or None
         FITS filename with final celestial WCS. If None,
         compute output celestial WCS for current list of 3D cubes.
@@ -103,21 +186,50 @@ def generate_mosaic_of_3d_cubes(
         if hdu3d_image.shape != hdu3d_mask.shape:
             raise ValueError(f'Unexpected shape {hdu3d_image.shape=} != {hdu3d_mask.shape=}')
 
-    # check the wavelength sampling is the same in all the images
-    wave_ini = None
+    # compute crval3out, cdelt3out and naxis3out if not provided
+    crval3out_ = None
+    wavemax = None   # maximum wavelength (at the center of the last pixel)
+    cdelt3out_ = None
     for i, hdu in enumerate(list_of_hdu3d_images):
         wcs1d_spectral = WCS(hdu.header).spectral
-        if i == 0:
-            wave_ini = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
-            print(wave_ini)
+        wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
+        if crval3out_ is None:
+            crval3out_ = wave[0]
         else:
-            wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
-            if not np.all(np.isclose(wave_ini, wave)):
-                print(f'{wave_ini=}')
-                print(f'{wave=}')
-                raise ValueError('ERROR: spectral sampling is different!')
+            if wave[0] < crval3out_:
+                crval3out_ = wave[0]
+        if wavemax is None:
+            wavemax = wave[-1]
+        else:
+            if wave[-1] > wavemax:
+                wavemax = wave[-1]
+        if cdelt3out_ is None:
+            cdelt3out_ = np.diff(wave).min()
+        else:
+            if np.diff(wave).min() < cdelt3out_:
+                cdelt3out_ = np.diff(wave).min()
+    if crval3out is None:
+        crval3out = crval3out_
+    if cdelt3out is None:
+        cdelt3out = cdelt3out_ / u.pix
+    if naxis3out is None:
+        naxis3out = int(np.round((wavemax.value - crval3out.value) / cdelt3out.value)) + 1
+    wavemax = crval3out + cdelt3out * (naxis3out - 1) * u.pix
+    # define 1D WCS for the spectral axis of the mosaic
+    header_spectral_mosaic = fits.Header()
+    header_spectral_mosaic['NAXIS'] = 1
+    header_spectral_mosaic['NAXIS1'] = naxis3out
+    header_spectral_mosaic['CRPIX1'] = 1.0
+    header_spectral_mosaic['CDELT1'] = cdelt3out.to(u.m/u.pix).value
+    header_spectral_mosaic['CRVAL1'] = crval3out.to(u.m).value
+    header_spectral_mosaic['CUNIT1'] = 'm'
+    header_spectral_mosaic['CTYPE1'] = 'WAVE'
+    wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
+    if verbose:
+        print(f'\n{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n')
+        print(f'{wcs1d_spectral_mosaic=}')
 
-    # optimal 2D WCS (celestial part) for combined image
+    # optimal 2D WCS (celestial part) for combined mosaic
     if final_celestial_wcs is None:
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
@@ -146,11 +258,7 @@ def generate_mosaic_of_3d_cubes(
         hdu.writeto(output_celestial_2d_wcs, overwrite=True)
 
     # initialize arrays to store combination
-    wcs3d = WCS(list_of_hdu3d_images[0].header)
-    naxis3_mosaic3d_ini = wcs3d.pixel_shape[-1]
-    if islice2 is None:
-        islice2 = naxis3_mosaic3d_ini
-    naxis3_mosaic3d = islice2 - islice1 + 1
+    naxis3_mosaic3d = naxis3out
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
@@ -159,15 +267,16 @@ def generate_mosaic_of_3d_cubes(
         size1 = array_size_32bits(mosaic3d_cube_by_cube)
         size2 = array_size_8bits(footprint3d)
         print(f'Combined image will require {size1 + size2:.2f}')
+        input('Press Enter to continue...')
 
     # generate 3D mosaic
     if verbose:
         print(f'Reprojection method: {reproject_method}')
     nimages = len(list_of_hdu3d_images)
     for i in range(nimages):
-        # select [islice1:islice2] following FITS convention
-        data_ini3d = list_of_hdu3d_images[i].data[(islice1-1):islice2]
-        wcs_ini3d = WCS(list_of_hdu3d_images[i].header)
+        single_hdu3d = resample_wave_3dcube(list_of_hdu3d_images[i], crval3out, cdelt3out, naxis3out)
+        data_ini3d = single_hdu3d.data
+        wcs_ini3d = WCS(single_hdu3d.header)
         wcs_ini2d = wcs_ini3d.celestial
         if reproject_method == 'interp':
             temp3d, footprint_temp3d = reproject_interp(
@@ -199,26 +308,18 @@ def generate_mosaic_of_3d_cubes(
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
 
     # generate resulting 3D WCS object
+    header_spectral_single = WCS(list_of_hdu3d_images[0].header).spectral.to_header()  # to get keyword comments
     header3d_corrected = wcs_mosaic2d.to_header()
-    header_spectral = wcs3d.spectral.to_header()
     header3d_corrected['WCSAXES'] = 3
     for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
         # insert {item}3 after {item}2 to preserve the order in the header
         header3d_corrected.insert(
             f'{item}2',
-            (f'{item}3', header_spectral[f'{item}1'], header_spectral.comments[f'{item}1']),
+            (f'{item}3', header_spectral_mosaic[f'{item}1'], header_spectral_single.comments[f'{item}1']),
             after=True)
     # fix slice in the spectral direction
     if header3d_corrected['CRPIX3'] != 1:
         raise ValueError(f"Expected CRPIX3=1 but got {header3d_corrected['CRPIX3']=}")
-    # important: update CDELT3 and CRVAL3
-    header3d_corrected['CDELT3'] = wcs3d.spectral.pixel_to_world(islice1).value - \
-                                   wcs3d.spectral.pixel_to_world(islice1 - 1).value
-    header3d_corrected['CRVAL3'] = wcs3d.spectral.pixel_to_world(islice1 - 1).value
-    if verbose:
-        print("\nheader3d_corrected:")
-        for line in header3d_corrected.cards:
-            print(line)
 
     # generate result
     hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
@@ -239,10 +340,11 @@ def main(args=None):
                         help="TXT file with list of 3D images to be combined", type=str)
     parser.add_argument('output_filename',
                         help='filename of output FITS image', type=str)
-    parser.add_argument("--islice1", help="First slice (from 1 to NAXIS3), default 1",
-                        type=int, default=1)
-    parser.add_argument("--islice2", help="Last slice (from 1 to NAXIS3), default NAXIS3",
-                        type=int, default=None)
+    parser.add_argument("--crval3out", help="Minimum wavelength (in m) for the output image",
+                        type=float, default=None)
+    parser.add_argument("--cdelt3out", help="Wavelength step (in m/pixel) for the output image",
+                        type=float, default=None)
+    parser.add_argument("--naxis3out", help="Number of slices in the output image", type=int, default=None)
     parser.add_argument("--final_celestial_wcs",
                         help="Final celestial WCS projection. Default None (compute for current 3D cube)",
                         type=str, default=None)
@@ -282,13 +384,13 @@ def main(args=None):
 
     input_list = args.input_list
     output_filename = args.output_filename
-    islice1 = args.islice1
-    islice2 = args.islice2
-    if islice1 < 0:
-        raise ValueError('islice1 must be >= 0')
-    if islice2 is not None:
-        if islice2 < islice1:
-            raise ValueError('islice2 must be >= islice1')
+    crval3out = args.crval3out
+    if crval3out is not None:
+        crval3out = crval3out * u.m
+    cdelt3out = args.cdelt3out
+    if cdelt3out is not None:
+        cdelt3out = cdelt3out * u.m / u.pix
+    naxis3out = args.naxis3out
     final_celestial_wcs = args.final_celestial_wcs
     reproject_method = args.reproject_method
     combination_function = args.combination_function
@@ -352,8 +454,9 @@ def main(args=None):
     output_hdul = generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images=list_of_hdu3d_images,
         list_of_hdu3d_masks=list_of_hdu3d_masks,
-        islice1=islice1,
-        islice2=islice2,
+        crval3out=crval3out,
+        cdelt3out=cdelt3out,
+        naxis3out=naxis3out,
         final_celestial_wcs=final_celestial_wcs,
         reproject_method=reproject_method,
         combination_function=combination_function,
