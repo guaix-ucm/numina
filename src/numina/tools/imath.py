@@ -17,6 +17,7 @@ import sys
 
 from astropy.io import fits
 import numpy as np
+import pathlib
 
 from numina.array.display.ximshow import ximshow_file
 
@@ -126,6 +127,8 @@ def compute_operation(file1, file2, operation, output,
         solution = image1 * image2
     elif operation == "/":
         solution = image1 / image2
+    elif operation == "=":
+        solution = image2.copy()
     else:
         raise ValueError("Unexpected operation=" + str(operation))
 
@@ -155,7 +158,7 @@ def main(args=None):
     parser.add_argument("operation",
                         help="Arithmetic operation",
                         type=str,
-                        choices=['+', '-', 'x', '/'])
+                        choices=['+', '-', 'x', '/', '='])
     parser.add_argument("file2",
                         help="Second FITS image or number",
                         type=str)
@@ -187,8 +190,13 @@ def main(args=None):
 
     args = parser.parse_args(args=args)
 
+
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    if not args.overwrite and pathlib.Path(args.output).exists():
+        print(f"Output file {args.output} already exists. Use --overwrite to overwrite it.")
+        sys.exit(1)
 
     # compute operation
     compute_operation(args.file1, args.file2,
