@@ -56,7 +56,30 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
 
     default_wv_unit = wv_lincal.default_wavelength_unit
 
-    # define FITS header
+    # Define FITS header
+    # Note: when using CDi_j keywords, there is no need to define CDELTi
+    #       keywords, since they are ignored by astropy.wcs.WCS.
+    #
+    #       The FITS standard defined 
+    #       in https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf 
+    #       (page 30) states that there are three possible conventions:
+    #       1. The CDi_j keywords: represent a full linear transformation matrix, 
+    #          including rotation, scaling, and possible distortion. Used when you 
+    #          want to describe the complete transformation in a single matrix.
+    #       2. The PCi_j + CDELTi keywords: PCi_j should represent a rotation 
+    #          and distortion matrix without units, meaning it should be normalized.
+    #          The CDELTi keywords should represent the pixel scale in the
+    #          corresponding axis, with units.
+    #       3. CDELTi + ROTA2 keywords (not recommended anymore).
+    #       A potential problem with the returned wcs3d object is that
+    #       when using wcs3d.to_header() the CDi_j keywords are replaced by
+    #       PCi_j and CDELTi keywords. This is actually a problem because
+    #       the PCi_j keywords are not defined in the FITS standard (the
+    #       resulting matrix should be normalized, which is not; see
+    #       https://github.com/astropy/astropy/issues/1084 for more details).
+    #       A possible solution is to define a custom wcs_to_header_using_cd_keywords(wcs3d)
+    #       function that returns the header with CDi_j keywords.
+    #       This function should be used instead of wcs3d.to_header().
     header = fits.Header()
     header['NAXIS'] = 3
     header['NAXIS1'] = int(naxis1_ifu.value)
@@ -87,6 +110,35 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
         print(f'\n{wcs3d}')
 
     return wcs3d
+
+
+def wcs_to_header_using_cd_keywords(wcs3d):
+    """Return WCS header using CDi_j keywords.
+
+    This function is a workaround to avoid the problem with the
+    astropy.wcs.WCS.to_header() method that replaces CDi_j keywords
+    with PCi_j and CDELTi keywords.
+
+    Parameters
+    ----------
+    wcs3d : `~astropy.wcs.wcs.WCS`
+        WCS of the data cube.
+
+    Returns
+    -------
+    header : `~astropy.io.fits.header.Header`
+        FITS header with CDi_j keywords.
+    """
+    header = wcs3d.to_header()
+
+    # Replace PCi_j with CDi_j keywords and remove CDELTi keywords.
+    list_of_pc_keys = [key for key in header.keys() if key.startswith('PC')]
+    for key in list_of_pc_keys:
+        header.rename_keyword(key, f'CD{key[2]}_{key[4]}')
+    for key in ['CDELT1', 'CDELT2', 'CDELT3']:
+        if key in header:
+            del header[key]
+    return header
 
 
 def get_wvparam_from_wcs3d(wcs3d):

@@ -14,6 +14,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 
+from .define_3d_wcs import wcs_to_header_using_cd_keywords
+
 
 def generate_image2d_method0_ifu(
         wcs3d,
@@ -100,7 +102,7 @@ def generate_image2d_method0_ifu(
         # use float to avoid saturation problem
         hdu = fits.PrimaryHDU(image2d_method0_ifu.astype(np.float32))
         pos0 = len(hdu.header) - 1
-        hdu.header.extend(wcs2d.to_header(), update=True)
+        hdu.header.extend(wcs_to_header_using_cd_keywords(wcs2d), update=True)
         hdu.header.update(header_keys)
         hdu.header.insert(
             pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))

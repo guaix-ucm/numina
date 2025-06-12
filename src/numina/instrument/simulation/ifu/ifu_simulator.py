@@ -21,6 +21,7 @@ import yaml
 from numina.tools.ctext import ctext
 
 from .define_3d_wcs import get_wvparam_from_wcs3d
+from .define_3d_wcs import wcs_to_header_using_cd_keywords
 from .display_skycalc import display_skycalc
 from .compute_image2d_rss_from_detector_method1 import compute_image2d_rss_from_detector_method1
 from .compute_image3d_ifu_from_rss_method1 import compute_image3d_ifu_from_rss_method1
@@ -575,7 +576,7 @@ def ifu_simulator(wcs3d, header_keys,
     if len(prefix_intermediate_fits) > 0:
         hdu = fits.PrimaryHDU(image3d_ifu_method1.astype(np.float32))
         pos0 = len(hdu.header) - 1
-        hdu.header.extend(wcs3d.to_header(), update=True)
+        hdu.header.extend(wcs_to_header_using_cd_keywords(wcs3d), update=True)
         hdu.header.update(header_keys)
         hdu.header.insert(
             pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))

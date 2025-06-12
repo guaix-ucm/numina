@@ -13,6 +13,7 @@ import astropy.units as u
 import numpy as np
 
 from .define_3d_wcs import get_wvparam_from_wcs3d
+from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
 
 def save_image2d_rss(
@@ -69,7 +70,7 @@ def save_image2d_rss(
         else:
             raise ValueError(f'Unsupported BITPIX value: {bitpix}')
         pos0 = len(hdu.header) - 1
-        hdu.header.extend(wcs2d.to_header(), update=True)
+        hdu.header.extend(wcs_to_header_using_cd_keywords(wcs2d), update=True)
         hdu.header.update(header_keys)
         hdu.header.insert(
             pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))

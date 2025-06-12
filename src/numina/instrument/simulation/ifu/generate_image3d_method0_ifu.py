@@ -10,6 +10,7 @@
 from astropy.io import fits
 import numpy as np
 
+from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
 def generate_image3d_method0_ifu(
         wcs3d,
@@ -67,7 +68,7 @@ def generate_image3d_method0_ifu(
     if len(prefix_intermediate_fits) > 0:
         hdu = fits.PrimaryHDU(image3d_method0_ifu.astype(np.uint16))
         pos0 = len(hdu.header) - 1
-        hdu.header.extend(wcs3d.to_header(), update=True)
+        hdu.header.extend(wcs_to_header_using_cd_keywords(wcs3d), update=True)
         hdu.header.update(header_keys)
         hdu.header.insert(
             pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
