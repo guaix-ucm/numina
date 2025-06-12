@@ -8,8 +8,6 @@
 #
 
 """Generate a 3D mosaic from individual 3D cubes.
-
-The combination is performed preserving the spectral axis (NAXIS3).
 """
 
 import argparse
@@ -24,87 +22,15 @@ import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
 from .ctext import ctext
+from .resample_wave_3d_cube import resample_wave_3d_cube
 
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
-def resample_wave_3dcube(hdu3d_image, crval3out, cdelt3out, naxis3out):
-    """Resample a 3D cube to a new wavelength sampling.
-
-    The celestial WCS is preserved, and the spectral WCS is modified.
-
-    Parameters
-    ----------
-    hdu3d_image : `astropy.io.fits.ImageHDU`
-        HDU instance with the 3D image to be resampled.
-    crval3out : `astropy.units.Quantity`
-        Minimum wavelength for the output image.
-    cdelt3out : `astropy.units.Quantity`
-        Wavelength step for the output image.
-    naxis3out : int or None
-        Number of slices in the output image.
-    Returns
-    -------
-    resampled_hdu : `astropy.io.fits.ImageHDU`
-        Resampled HDU instance with the 3D image.
-    """
-    naxis3, naxis2, naxis1 = hdu3d_image.data.shape
-
-    # initial pixel borders in the spectral axis
-    old_wcs1d_spectral = WCS(hdu3d_image.header).spectral
-    old_wl_borders = old_wcs1d_spectral.pixel_to_world(np.arange(naxis3+1)-0.5)
-    # modify slightly the first and last values to avoid numerical issues
-    deltawave = old_wl_borders[1] - old_wl_borders[0]
-    old_wl_borders[0] = old_wl_borders[0] - deltawave/1E6
-    deltawave = old_wl_borders[-1] - old_wl_borders[-2]
-    old_wl_borders[-1] = old_wl_borders[-1] + deltawave/1E6
-
-    # final pixel borders in the spectral axis
-    new_wl_borders = crval3out + cdelt3out * (np.arange(naxis3out + 1) -0.5) * u.pix
-
-    # resample the 3D cube (see wavecal.py in teareduce for reference)
-    resampled_data = np.zeros((naxis3out, naxis2, naxis1), dtype=hdu3d_image.data.dtype)
-    for i in range(naxis1):
-        for j in range(naxis2):
-            # resample each slice
-            data_slice = hdu3d_image.data[:, j, i]
-            accum_flux = np.zeros(naxis3 + 1)
-            accum_flux[1:] = np.cumsum(data_slice)
-            flux_borders = np.interp(
-                x=new_wl_borders.value,
-                xp=old_wl_borders.value,
-                fp=accum_flux,
-                left=np.nan, 
-                right=np.nan
-            )
-            resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
-
-    # create new HDU with resampled data
-    resampled_hdu = fits.PrimaryHDU(data=resampled_data)
-    wcs2d_resampled = WCS(hdu3d_image.header).celestial
-    header3d_resampled = wcs2d_resampled.to_header()
-    header_spectral_resampled = old_wcs1d_spectral.to_header()
-    header_spectral_resampled['CRVAL1'] = crval3out.to(u.m).value
-    header3d_resampled['WCSAXES'] = 3
-    for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
-        # insert {item}3 after {item}2 to preserve the order in the header
-        header3d_resampled.insert(
-            f'{item}2',
-            (f'{item}3', header_spectral_resampled[f'{item}1'], header_spectral_resampled.comments[f'{item}1']),
-            after=True)
-    header3d_resampled.insert(
-        'PC2_2', 
-        ('PC3_3', cdelt3out.to(u.m/u.pix).value, header_spectral_resampled.comments['PC1_1']),
-        after=True
-    )
-    resampled_hdu.header.update(header3d_resampled)
-    
-    return resampled_hdu
-
-
 # TODO: hacer uso de combination_function
 # TODO: hacer uso de list_of_hdu3d_masks (ver generate_mosaic_of_2d_images.py)
+# TODO: metodo 'adaptive': ¿es necesario usar Gaussian kernel?
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
         list_of_hdu3d_masks,
@@ -215,7 +141,7 @@ def generate_mosaic_of_3d_cubes(
     if naxis3out is None:
         naxis3out = int(np.round((wavemax.value - crval3out.value) / cdelt3out.value)) + 1
     wavemax = crval3out + cdelt3out * (naxis3out - 1) * u.pix
-    # define 1D WCS for the spectral axis of the mosaic
+    # define 1D WCS for the spectral axis of the combined mosaic
     header_spectral_mosaic = fits.Header()
     header_spectral_mosaic['NAXIS'] = 1
     header_spectral_mosaic['NAXIS1'] = naxis3out
@@ -274,7 +200,7 @@ def generate_mosaic_of_3d_cubes(
         print(f'Reprojection method: {reproject_method}')
     nimages = len(list_of_hdu3d_images)
     for i in range(nimages):
-        single_hdu3d = resample_wave_3dcube(list_of_hdu3d_images[i], crval3out, cdelt3out, naxis3out)
+        single_hdu3d = resample_wave_3d_cube(list_of_hdu3d_images[i], crval3out, cdelt3out, naxis3out)
         data_ini3d = single_hdu3d.data
         wcs_ini3d = WCS(single_hdu3d.header)
         wcs_ini2d = wcs_ini3d.celestial
@@ -335,9 +261,11 @@ def generate_mosaic_of_3d_cubes(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Generate a 3D mosaic from individual 3D cubes."
+    )
     parser.add_argument("input_list",
-                        help="TXT file with list of 3D images to be combined", type=str)
+                        help="TXT file with list of 3D images to be combined or single FITS file", type=str)
     parser.add_argument('output_filename',
                         help='filename of output FITS image', type=str)
     parser.add_argument("--crval3out", help="Minimum wavelength (in m) for the output image",
@@ -404,9 +332,12 @@ def main(args=None):
         if extname_mask.lower() == 'none':
             extname_mask = None
 
-    # read input file with list of 3D images to be combined
-    with open(input_list) as f:
-        file_content = f.read().splitlines()
+    # check if input file is a single FITS file or a list
+    if input_list.endswith('.fits'):
+        file_content = [input_list]
+    else:
+        with open(input_list) as f:
+            file_content = f.read().splitlines()
 
     # list of HDU
     list_of_hdu3d_images = []
@@ -471,5 +402,4 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-
     main()
