@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2023 Universidad Complutense de Madrid
+# Copyright 2019-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,10 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Auxiliary script to perform binary image arithmetic."""
+"""Auxiliary script to perform binary image arithmetic.
+
+The computation is performed casting to np.float32.
+"""
 
 import argparse
 import sys
@@ -56,7 +59,7 @@ def compute_operation(file1, file2, operation, output,
     # read first FITS file
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[0].header
-        image1 = hdulist[0].data.astype(float)
+        image1 = hdulist[0].data.astype(np.float32)
     naxis = image_header1['naxis']
     naxis1 = image_header1['naxis1']
     naxis2 = image_header1['naxis2']
@@ -73,13 +76,13 @@ def compute_operation(file1, file2, operation, output,
     try:
         with fits.open(file2) as hdulist:
             image_header2 = hdulist[0].header
-            image2 = hdulist[0].data.astype(float)
+            image2 = hdulist[0].data.astype(np.float32)
             naxis_ = image_header2['naxis']
             naxis1_ = image_header2['naxis1']
             naxis2_ = image_header2['naxis2']
             filename = file2
     except FileNotFoundError:
-        image2 = np.zeros((naxis2, naxis1), dtype=float)
+        image2 = np.zeros((naxis2, naxis1), dtype=np.float32)
         image2 += float(file2)
         naxis_ = naxis
         naxis1_ = naxis1
@@ -108,7 +111,7 @@ def compute_operation(file1, file2, operation, output,
 
     # additional dimension checks
     if naxis != naxis_:
-        raise ValueError("NAXIS1 values are different.")
+        raise ValueError("NAXIS values are different.")
     if naxis1 != naxis1_:
         raise ValueError("NAXIS1 values are different.")
     if naxis2 != naxis2_:
@@ -127,7 +130,7 @@ def compute_operation(file1, file2, operation, output,
         raise ValueError("Unexpected operation=" + str(operation))
 
     # save output file
-    hdu = fits.PrimaryHDU(solution.astype(float), image_header1)
+    hdu = fits.PrimaryHDU(solution.astype(np.float32), image_header1)
     hdu.writeto(output, overwrite=overwrite)
 
     # if required, display result
