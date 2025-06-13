@@ -77,8 +77,8 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
     #       the PCi_j keywords are not defined in the FITS standard (the
     #       resulting matrix should be normalized, which is not; see
     #       https://github.com/astropy/astropy/issues/1084 for more details).
-    #       A possible solution is to define a custom wcs_to_header_using_cd_keywords(wcs3d)
-    #       function that returns the header with CDi_j keywords.
+    #       A possible solution is to define a custom wcs_to_header_using_cd_keywords()
+    #       function that returns the header with CDi_j keywords (see below).
     #       This function should be used instead of wcs3d.to_header().
     header = fits.Header()
     header['NAXIS'] = 3
@@ -112,7 +112,7 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
     return wcs3d
 
 
-def wcs_to_header_using_cd_keywords(wcs3d):
+def wcs_to_header_using_cd_keywords(wcs):
     """Return WCS header using CDi_j keywords.
 
     This function is a workaround to avoid the problem with the
@@ -121,23 +121,25 @@ def wcs_to_header_using_cd_keywords(wcs3d):
 
     Parameters
     ----------
-    wcs3d : `~astropy.wcs.wcs.WCS`
-        WCS of the data cube.
+    wcs : `~astropy.wcs.wcs.WCS`
+        WCS object.
 
     Returns
     -------
     header : `~astropy.io.fits.header.Header`
         FITS header with CDi_j keywords.
     """
-    header = wcs3d.to_header()
+    header = wcs.to_header()
 
     # Replace PCi_j with CDi_j keywords and remove CDELTi keywords.
     list_of_pc_keys = [key for key in header.keys() if key.startswith('PC')]
-    for key in list_of_pc_keys:
-        header.rename_keyword(key, f'CD{key[2]}_{key[4]}')
-    for key in ['CDELT1', 'CDELT2', 'CDELT3']:
-        if key in header:
-            del header[key]
+    list_of_pc_keys.sort()  # Sort list of keys to ensure consistent order
+    if len(list_of_pc_keys) > 0:
+        for key in list_of_pc_keys:
+            header.rename_keyword(key, f'CD{key[2]}_{key[4]}')
+        for key in ['CDELT1', 'CDELT2', 'CDELT3']:
+            if key in header:
+                del header[key]
     return header
 
 
