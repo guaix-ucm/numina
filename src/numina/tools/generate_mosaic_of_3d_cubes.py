@@ -157,6 +157,8 @@ def generate_mosaic_of_3d_cubes(
 
     # optimal 2D WCS (celestial part) for combined mosaic
     if final_celestial_wcs is None:
+        if verbose:
+            print(f'\nCelestial scales:')
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
         for i, hdu in enumerate(list_of_hdu3d_images):
