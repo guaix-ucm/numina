@@ -31,6 +31,8 @@ from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
 import sys
 
+from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
+
 from .ctext import ctext
 
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
@@ -93,7 +95,7 @@ def generate_mosaic_of_2d_images(
         list_of_hdu2d_masks = []
         for hdu2d_image in list_of_hdu2d_images:
             hdu2d_mask = fits.ImageHDU(data=np.isnan(hdu2d_image.data).astype(np.uint8))
-            hdu2d_mask.header.extend(WCS(hdu2d_image.header).to_header(), update=True)
+            hdu2d_mask.header.extend(wcs_to_header_using_cd_keywords(WCS(hdu2d_image.header)), update=True)
             list_of_hdu2d_masks.append(hdu2d_mask)
     else:
         if len(list_of_hdu2d_images) != len(list_of_hdu2d_masks):
@@ -305,7 +307,7 @@ def main(args=None):
                     # generate mask from np.nan when necessary
                     if hdu2d_mask is None:
                         hdu2d_mask = fits.ImageHDU(data=np.isnan(hdu2d_image.data).astype(np.uint8))
-                        hdu2d_mask.header.extend(WCS(hdu2d_image.header).to_header(), update=True)
+                        hdu2d_mask.header.extend(wcs_to_header_using_cd_keywords(WCS(hdu2d_image.header)), update=True)
                         if verbose:
                             print(f'generating mask from np.nan values')
                     if verbose:
@@ -325,10 +327,10 @@ def main(args=None):
 
     # save result
     hdu = fits.PrimaryHDU(mosaic.data.astype(np.float32))
-    hdu.header.extend(wcs_mosaic2d.to_header(), update=True)
+    hdu.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
     hdu_mask = fits.ImageHDU(data=mosaic.mask.astype(np.uint8))
     hdu_mask.header['EXTNAME'] = 'MASK'
-    hdu_mask.header.extend(wcs_mosaic2d.to_header(), update=True)
+    hdu_mask.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
     hdul = fits.HDUList([hdu, hdu_mask])
     if verbose:
         print(f'\nSaving combined 2D image: {output_filename}')
@@ -337,10 +339,10 @@ def main(args=None):
     # save 3D stack if requested
     if output_3d_stack is not None:
         hdu = fits.PrimaryHDU(stack3d.data.astype(np.float32))
-        hdu.header.extend(wcs_mosaic2d.to_header(), update=True)
+        hdu.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
         hdu_mask = fits.ImageHDU(data=stack3d.mask.astype(np.uint8))
         hdu_mask.header['EXTNAME'] = 'MASK'
-        hdu_mask.header.extend(wcs_mosaic2d.to_header(), update=True)
+        hdu_mask.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
         hdul = fits.HDUList([hdu, hdu_mask])
         if verbose:
             print(f'Saving 3D stack.........: {output_3d_stack}')
