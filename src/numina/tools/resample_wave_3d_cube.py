@@ -68,21 +68,25 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     new_wl_borders = crval3out + cdelt3out * (np.arange(naxis3out + 1) - 0.5) * u.pix
 
     # resample the 3D cube (see wavecal.py in teareduce for reference)
-    resampled_data = np.zeros((naxis3out, naxis2, naxis1), dtype=hdu3d_image.data.dtype)
-    for i in range(naxis1):
-        for j in range(naxis2):
-            # resample each slice
-            data_slice = hdu3d_image.data[:, j, i]
-            accum_flux = np.zeros(naxis3 + 1)
-            accum_flux[1:] = np.cumsum(data_slice)
-            flux_borders = np.interp(
-                x=new_wl_borders.value,
-                xp=old_wl_borders.value,
-                fp=accum_flux,
-                left=np.nan, 
-                right=np.nan
-            )
-            resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
+    resampled_data = np.zeros((naxis3out, naxis2, naxis1))
+    if np.all(np.allclose(old_wl_borders, new_wl_borders)):
+        # if the old and new wavelength borders are the same, just copy the data
+        resampled_data = hdu3d_image.data.astype(np.float32)
+    else:
+        for i in range(naxis1):
+            for j in range(naxis2):
+                # resample each spectrum independently
+                data_spectrum = hdu3d_image.data[:, j, i]
+                accum_flux = np.zeros(naxis3 + 1)
+                accum_flux[1:] = np.cumsum(data_spectrum)
+                flux_borders = np.interp(
+                    x=new_wl_borders.value,
+                    xp=old_wl_borders.value,
+                    fp=accum_flux,
+                    left=np.nan, 
+                    right=np.nan
+                )
+                resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
 
     # create new HDU with resampled data
     resampled_hdu = fits.PrimaryHDU(data=resampled_data)
