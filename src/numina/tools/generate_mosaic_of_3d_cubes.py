@@ -21,6 +21,8 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
+from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
+
 from .ctext import ctext
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
@@ -33,15 +35,15 @@ COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigma
 # TODO: metodo 'adaptive': ¿es necesario usar Gaussian kernel?
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
-        list_of_hdu3d_masks,
         crval3out,
         cdelt3out,
         naxis3out,
-        final_celestial_wcs,
+        desired_celestial_2d_wcs,
         reproject_method,
         combination_function,
         output_celestial_2d_wcs,
-        verbose
+        footprint=False,
+        verbose=False
 ):
     """Combine 3D cubes using their WCS information.
 
@@ -49,11 +51,6 @@ def generate_mosaic_of_3d_cubes(
     ----------
     list_of_hdu3d_images : list of HDU images
         List of 3D HDU instances containing the images to be combined.
-    list_of_hdu3d_masks : list or None
-        List of 3D HDU instances containing the masks associated to
-        the images to be combined. If this list is None, this function
-        computes a particular mask for each 3D image prior to the
-        combination, looking for np.nan values.
     crval3out : `astropy.units.Quantity` or None
         Minimum wavelength (in m) for the output image. If None,
         use the minimum wavelength of the input images.
@@ -64,15 +61,17 @@ def generate_mosaic_of_3d_cubes(
         Number of slices in the output image. If None, the output image
         will have the required number of slices to cover the full wavelength
         range of the input images.
-    final_celestial_wcs : str, file-like, `pathlib.Path` or None
-        FITS filename with final celestial WCS. If None,
-        compute output celestial WCS for current list of 3D cubes.
+    desired_celestial_2d_wcs : str, file-like, `pathlib.Path` or None
+        FITS filename with desired 2D celestial WCS. If None,
+        compute output 2D celestial WCS for current list of 3D cubes.
     reproject_method : str
         Reprojection method. See 'REPROJECT_METHODS' above.
     combination_function : str
         Combination function. See 'COMBINATION_FUNCTIONS' above.
     output_celestial_2d_wcs : str, file-like, `pathlib.Path` or None
         Path to output 2D celestial WCS.
+    footprint : bool
+        If True, generate a FOOTPRINT extension with the final footprint.
     verbose : bool
         If True, display additional information.
 
@@ -86,8 +85,14 @@ def generate_mosaic_of_3d_cubes(
     # protections
     if not isinstance(list_of_hdu3d_images, list):
         raise TypeError('list_of_hdu3d_images must be a list')
-    if not isinstance(list_of_hdu3d_masks, list) and list_of_hdu3d_masks is not None:
-        raise TypeError('list_of_hdu3d_masks must be a list or None')
+    if len(list_of_hdu3d_images) < 1:
+        raise ValueError('list_of_hdu3d_images must contain at least one HDU')
+    if crval3out is not None and not isinstance(crval3out, u.Quantity):
+        raise TypeError('crval3out must be an astropy Quantity')
+    if cdelt3out is not None and not isinstance(cdelt3out, u.Quantity):
+        raise TypeError('cdelt3out must be an astropy Quantity')
+    if naxis3out is not None and not isinstance(naxis3out, int):
+        raise TypeError('naxis3out must be an integer')
 
     nimages = len(list_of_hdu3d_images)
     if verbose:
@@ -95,22 +100,6 @@ def generate_mosaic_of_3d_cubes(
 
     if nimages < 1:
         raise ValueError('Number of images = 0')
-
-    # check masks and generate them if not present
-    if list_of_hdu3d_masks is None:
-        list_of_hdu3d_masks = []
-        for hdu3d_image in list_of_hdu3d_images:
-            hdu3d_mask = fits.ImageHDU(data=np.isnan(hdu3d_image.data).astype(np.uint8))
-            hdu3d_mask.header.extend(WCS(hdu3d_image.header).to_header(), update=True)
-            list_of_hdu3d_masks.append(hdu3d_mask)
-    else:
-        if len(list_of_hdu3d_images) != len(list_of_hdu3d_masks):
-            raise ValueError(f'Unexpected {len(list_of_hdu3d_images)=} != {len(list_of_hdu3d_masks)=}')
-
-    # check compatibility between image and mask dimensions
-    for hdu3d_image, hdu3d_mask in zip(list_of_hdu3d_images, list_of_hdu3d_masks):
-        if hdu3d_image.shape != hdu3d_mask.shape:
-            raise ValueError(f'Unexpected shape {hdu3d_image.shape=} != {hdu3d_mask.shape=}')
 
     # compute crval3out, cdelt3out and naxis3out if not provided
     crval3out_ = None
@@ -156,7 +145,7 @@ def generate_mosaic_of_3d_cubes(
         print(f'{wcs1d_spectral_mosaic=}')
 
     # optimal 2D WCS (celestial part) for combined mosaic
-    if final_celestial_wcs is None:
+    if desired_celestial_2d_wcs is None:
         if verbose:
             print(f'\nCelestial scales:')
         # compute final celestial WCS for the ensemble of 3D cubes
@@ -174,7 +163,9 @@ def generate_mosaic_of_3d_cubes(
             print(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
     else:
         # make use of an external celestial WCS projection
-        with fits.open(final_celestial_wcs) as hdul_mosaic2d:
+        if verbose:
+            print(ctext(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}', fg='green'))
+        with fits.open(desired_celestial_2d_wcs) as hdul_mosaic2d:
             wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
             shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
     if verbose:
@@ -183,6 +174,8 @@ def generate_mosaic_of_3d_cubes(
     if output_celestial_2d_wcs is not None:
         header_2d_wcs = wcs_mosaic2d.to_header()
         hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
+        if verbose:
+            print(f'Saving resulting celestial 2D WCS to: {output_celestial_2d_wcs}')
         hdu.writeto(output_celestial_2d_wcs, overwrite=True)
 
     # initialize arrays to store combination
@@ -192,10 +185,10 @@ def generate_mosaic_of_3d_cubes(
     footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     if verbose:
         print(f'\nNAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}')
-        size1 = array_size_32bits(mosaic3d_cube_by_cube)
-        size2 = array_size_8bits(footprint3d)
-        print(f'Combined image will require {size1 + size2:.2f}')
-        input('Press Enter to continue...')
+        size_output = array_size_32bits(mosaic3d_cube_by_cube)
+        if footprint:
+            size_output += array_size_8bits(footprint3d)
+        print(ctext(f'Combined image will require {size_output:.2f}', fg='red'))
 
     # generate 3D mosaic
     if verbose:
@@ -252,10 +245,13 @@ def generate_mosaic_of_3d_cubes(
     # generate result
     hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
     hdu.header.update(header3d_corrected)
-    hdu_footprint = fits.ImageHDU(footprint3d.astype(np.uint8))
-    hdu_footprint.header['EXTNAME'] = 'FOOTPRINT'
-    hdu_footprint.header.update(header3d_corrected)
-    output_hdul = fits.HDUList([hdu, hdu_footprint])
+    if footprint:
+        hdu_footprint = fits.ImageHDU(footprint3d.astype(np.uint8))
+        hdu_footprint.header['EXTNAME'] = 'FOOTPRINT'
+        hdu_footprint.header.update(header3d_corrected)
+        output_hdul = fits.HDUList([hdu, hdu_footprint])
+    else:
+        output_hdul = fits.HDUList([hdu])
 
     return output_hdul
 
@@ -275,8 +271,8 @@ def main(args=None):
     parser.add_argument("--cdelt3out", help="Wavelength step (in m/pixel) for the output image",
                         type=float, default=None)
     parser.add_argument("--naxis3out", help="Number of slices in the output image", type=int, default=None)
-    parser.add_argument("--final_celestial_wcs",
-                        help="Final celestial WCS projection. Default None (compute for current 3D cube)",
+    parser.add_argument("--desired_celestial_2d_wcs",
+                        help="Desired 2D celestial WCS projection. Default None (compute for current 3D cube combination)",
                         type=str, default=None)
     parser.add_argument('--reproject_method',
                         help='Reprojection method (interp, adaptive, exact)',
@@ -284,14 +280,14 @@ def main(args=None):
     parser.add_argument('--extname_image',
                         help='Extension name for image in input files. Default value: PRIMARY',
                         default='PRIMARY', type=str)
-    parser.add_argument('--extname_mask',
-                        help="Extension name for mask in input files. Default 'None': use np.nan in image",
-                        default=None, type=str)
     parser.add_argument("--combination_function", help='Combination function. Default: mean',
                         type=str, default='mean', choices=COMBINATION_FUNCTIONS)
     parser.add_argument("--output_celestial_2d_wcs",
-                        help="filename for output celestial 2D WCS",
+                        help="filename for output 2D celestial WCS",
                         type=str, default=None)
+    parser.add_argument("--footprint",
+                        help="Generate a FOOTPRINT extension with the final footprint",
+                        action="store_true")
     parser.add_argument("--verbose",
                         help="Display intermediate information",
                         action="store_true")
@@ -321,18 +317,15 @@ def main(args=None):
     if cdelt3out is not None:
         cdelt3out = cdelt3out * u.m / u.pix
     naxis3out = args.naxis3out
-    final_celestial_wcs = args.final_celestial_wcs
+    desired_celestial_2d_wcs = args.desired_celestial_2d_wcs
     reproject_method = args.reproject_method
     combination_function = args.combination_function
     output_celestial_2d_wcs = args.output_celestial_2d_wcs
+    footprint = args.footprint
     verbose = args.verbose
 
     # define extensions for image and mask
     extname_image = args.extname_image
-    extname_mask = args.extname_mask
-    if extname_mask is not None:
-        if extname_mask.lower() == 'none':
-            extname_mask = None
 
     # check if input file is a single FITS file or a list
     if input_list.endswith('.fits'):
@@ -343,7 +336,6 @@ def main(args=None):
 
     # list of HDU
     list_of_hdu3d_images = []
-    list_of_hdu3d_masks = []
     for fname in file_content:
         if len(fname) > 0:
             if fname[0] not in ['#']:
@@ -356,44 +348,19 @@ def main(args=None):
                         print(f"{hdu3d_image.header['NAXIS1']=}")
                         print(f"{hdu3d_image.header['NAXIS2']=}")
                         print(f"{hdu3d_image.header['NAXIS3']=}")
-                    if extname_mask is not None:
-                        if extname_mask in hdul:
-                            hdu3d_mask = hdul[extname_mask].copy()
-                            if verbose:
-                                print(f'image mask: {extname_mask}')
-                            bitpix_mask = hdu3d_mask.header['BITPIX']
-                            if bitpix_mask != 8:
-                                raise ValueError(f'BITPIX (mask): {bitpix_mask} is not 8')
-                            if hdu3d_image.data.shape != hdu3d_mask.data.shape:
-                                raise ValueError(f'Shape of {extname_image} and {extname_mask} are different!')
-                        else:
-                            hdu3d_mask = None
-                    else:
-                        hdu3d_mask = None
-                    # generate mask from np.nan when necessary
-                    if hdu3d_mask is None:
-                        hdu3d_mask = fits.ImageHDU(data=np.isnan(hdu3d_image.data).astype(np.uint8))
-                        hdu3d_mask.header.extend(WCS(hdu3d_image.header).to_header(), update=True)
-                        if verbose:
-                            print(f'generating mask from np.nan values')
-                    if verbose:
-                        print(f'Number of masked pixels / total: {np.sum(hdu3d_mask.data)} / {hdu3d_mask.size}')
-                    # store image and associated footprint
-                    list_of_hdu3d_images.append(hdul[extname_image].copy())
-                    list_of_hdu3d_masks.append(hdu3d_mask)
+                list_of_hdu3d_images.append(hdu3d_image)
 
     # combine images
-    #mosaic3d_cube_by_cube, footprint3d, wcs_mosaic3d = generate_mosaic_of_3d_cubes(
     output_hdul = generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images=list_of_hdu3d_images,
-        list_of_hdu3d_masks=list_of_hdu3d_masks,
         crval3out=crval3out,
         cdelt3out=cdelt3out,
         naxis3out=naxis3out,
-        final_celestial_wcs=final_celestial_wcs,
+        desired_celestial_2d_wcs=desired_celestial_2d_wcs,
         reproject_method=reproject_method,
         combination_function=combination_function,
         output_celestial_2d_wcs=output_celestial_2d_wcs,
+        footprint=footprint,
         verbose=verbose
     )
 
