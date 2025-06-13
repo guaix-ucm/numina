@@ -221,12 +221,14 @@ def generate_mosaic_of_3d_cubes(
             )
         else:
             raise ValueError(f'Unexpected {reproject_method=}')
-        valid_region = footprint_temp3d > 0
+        valid_region = (footprint_temp3d > 0)
         mosaic3d_cube_by_cube[valid_region] += temp3d[valid_region]
         footprint3d += footprint_temp3d
 
-    valid_region = footprint3d > 0
+    valid_region = (footprint3d > 0)
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
+    invalid_region = (footprint3d == 0)
+    mosaic3d_cube_by_cube[invalid_region] = np.nan  # set invalid pixels to NaN
 
     # generate resulting 3D WCS object
     header_spectral_single = WCS(list_of_hdu3d_images[0].header).spectral.to_header()  # to get keyword comments
