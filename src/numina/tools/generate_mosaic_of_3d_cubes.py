@@ -29,7 +29,6 @@ from .resample_wave_3d_cube import resample_wave_3d_cube
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 
 
-# TODO: hacer uso de list_of_hdu3d_masks (ver generate_mosaic_of_2d_images.py)
 # TODO: metodo 'adaptive': ¿es necesario usar Gaussian kernel?
 def generate_mosaic_of_3d_cubes(
         list_of_hdu3d_images,
@@ -273,7 +272,7 @@ def main(args=None):
                         type=str, default=None)
     parser.add_argument('--reproject_method',
                         help='Reprojection method (interp, adaptive, exact)',
-                        type=str, choices=REPROJECT_METHODS, default='adaptive')
+                        type=str, choices=REPROJECT_METHODS, default=None)
     parser.add_argument('--extname_image',
                         help='Extension name for image in input files. Default value: PRIMARY',
                         default='PRIMARY', type=str)
@@ -314,6 +313,8 @@ def main(args=None):
     naxis3out = args.naxis3out
     desired_celestial_2d_wcs = args.desired_celestial_2d_wcs
     reproject_method = args.reproject_method
+    if reproject_method not in REPROJECT_METHODS:
+        raise ValueError(f'Unexpected reproject_method: {reproject_method}. Expected one of {REPROJECT_METHODS}')
     output_celestial_2d_wcs = args.output_celestial_2d_wcs
     footprint = args.footprint
     verbose = args.verbose
