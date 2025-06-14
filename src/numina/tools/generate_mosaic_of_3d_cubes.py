@@ -27,10 +27,8 @@ from .ctext import ctext
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
-COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
-# TODO: hacer uso de combination_function
 # TODO: hacer uso de list_of_hdu3d_masks (ver generate_mosaic_of_2d_images.py)
 # TODO: metodo 'adaptive': ¿es necesario usar Gaussian kernel?
 def generate_mosaic_of_3d_cubes(
@@ -40,7 +38,6 @@ def generate_mosaic_of_3d_cubes(
         naxis3out,
         desired_celestial_2d_wcs,
         reproject_method,
-        combination_function,
         output_celestial_2d_wcs,
         footprint=False,
         verbose=False
@@ -66,8 +63,6 @@ def generate_mosaic_of_3d_cubes(
         compute output 2D celestial WCS for current list of 3D cubes.
     reproject_method : str
         Reprojection method. See 'REPROJECT_METHODS' above.
-    combination_function : str
-        Combination function. See 'COMBINATION_FUNCTIONS' above.
     output_celestial_2d_wcs : str, file-like, `pathlib.Path` or None
         Path to output 2D celestial WCS.
     footprint : bool
@@ -282,8 +277,6 @@ def main(args=None):
     parser.add_argument('--extname_image',
                         help='Extension name for image in input files. Default value: PRIMARY',
                         default='PRIMARY', type=str)
-    parser.add_argument("--combination_function", help='Combination function. Default: mean',
-                        type=str, default='mean', choices=COMBINATION_FUNCTIONS)
     parser.add_argument("--output_celestial_2d_wcs",
                         help="filename for output 2D celestial WCS",
                         type=str, default=None)
@@ -321,7 +314,6 @@ def main(args=None):
     naxis3out = args.naxis3out
     desired_celestial_2d_wcs = args.desired_celestial_2d_wcs
     reproject_method = args.reproject_method
-    combination_function = args.combination_function
     output_celestial_2d_wcs = args.output_celestial_2d_wcs
     footprint = args.footprint
     verbose = args.verbose
@@ -360,7 +352,6 @@ def main(args=None):
         naxis3out=naxis3out,
         desired_celestial_2d_wcs=desired_celestial_2d_wcs,
         reproject_method=reproject_method,
-        combination_function=combination_function,
         output_celestial_2d_wcs=output_celestial_2d_wcs,
         footprint=footprint,
         verbose=verbose
