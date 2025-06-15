@@ -18,8 +18,10 @@ import sys
 
 from .ctext import ctext
 
+from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
-def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
+
+def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=False):
     """Resample a 3D cube to a new wavelength sampling.
 
     The celestial WCS is preserved, and the spectral WCS is modified.
@@ -34,6 +36,8 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
         Wavelength step for the output image.
     naxis3out : int
         Number of slices in the output image.
+    verbose : bool, optional
+        If True, display intermediate information.
 
     Returns
     -------
@@ -67,12 +71,20 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     # final pixel borders in the spectral axis
     new_wl_borders = crval3out + cdelt3out * (np.arange(naxis3out + 1) - 0.5) * u.pix
 
-    # resample the 3D cube (see wavecal.py in teareduce for reference)
-    resampled_data = np.zeros((naxis3out, naxis2, naxis1))
-    if np.all(np.allclose(old_wl_borders, new_wl_borders)):
+    resample_needed = True
+    if naxis3 == naxis3out:
         # if the old and new wavelength borders are the same, just copy the data
-        resampled_data = hdu3d_image.data.astype(np.float32)
-    else:
+        if np.all(np.allclose(old_wl_borders, new_wl_borders)):
+            resampled_data = hdu3d_image.data.astype(np.float32)
+            resample_needed = False
+            if verbose:
+                print("Old and new wavelength borders are the same. Copying data without resampling.")
+
+    if resample_needed:
+        if verbose:
+            print("Resampling the 3D cube...", end=' ')
+        # resample the 3D cube (see wavecal.py in teareduce for reference)
+        resampled_data = np.zeros((naxis3out, naxis2, naxis1))
         for i in range(naxis1):
             for j in range(naxis2):
                 # resample each spectrum independently
@@ -87,27 +99,35 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
                     right=np.nan
                 )
                 resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
+        if verbose:
+            print("resampling completed!")
 
     # create new HDU with resampled data
-    resampled_hdu = fits.PrimaryHDU(data=resampled_data)
+    resampled_hdu = fits.PrimaryHDU(data=resampled_data.astype(np.float32))
     wcs2d_resampled = WCS(hdu3d_image.header).celestial
-    header3d_resampled = wcs2d_resampled.to_header()
-    header_spectral_resampled = old_wcs1d_spectral.to_header()
+    header3d_resampled = wcs_to_header_using_cd_keywords(wcs2d_resampled)
+    header3d_resampled['NAXIS'] = 3
+    header_spectral_resampled = wcs_to_header_using_cd_keywords(old_wcs1d_spectral)
     header_spectral_resampled['CRVAL1'] = crval3out.to(u.m).value
     header3d_resampled['WCSAXES'] = 3
-    for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
+    for item in ['CRPIX', 'CD', 'CUNIT', 'CTYPE', 'CRVAL']:
         # insert {item}3 after {item}2 to preserve the order in the header
+        if item == 'CD':
+            keybefore = f'{item}2_2'
+            keyafter = f'{item}3_3'
+            keyvalue = header_spectral_resampled[f'{item}1_1']
+            keycomment = header_spectral_resampled.comments[f'{item}1_1']
+        else:
+            keybefore = f'{item}2'
+            keyafter = f'{item}3'
+            keyvalue = header_spectral_resampled[f'{item}1']
+            keycomment = header_spectral_resampled.comments[f'{item}1']
         header3d_resampled.insert(
-            f'{item}2',
-            (f'{item}3', header_spectral_resampled[f'{item}1'], header_spectral_resampled.comments[f'{item}1']),
-            after=True)
-    if 'PC1_1' in header3d_resampled:
-        header3d_resampled.insert(
-            'PC2_2', 
-            ('PC3_3', cdelt3out.to(u.m/u.pix).value, header_spectral_resampled.comments['PC1_1']),
+            keybefore,
+            (keyafter, keyvalue, keycomment),
             after=True
         )
-        header3d_resampled['CDELT3'] = 1.0
+
     resampled_hdu.header.update(header3d_resampled)
     
     return resampled_hdu
@@ -188,7 +208,13 @@ def main(args=None):
         if verbose:
             print(f"Assuming {naxis3out=}.")
 
-    resampled_hdu = resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out)
+    resampled_hdu = resample_wave_3d_cube(
+        hdu3d_image=hdu3d_image, 
+        crval3out=crval3out, 
+        cdelt3out=cdelt3out, 
+        naxis3out=naxis3out,
+        verbose=verbose
+    )
 
     if verbose:
         print(f'Saving: {output_file}')
