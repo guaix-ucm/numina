@@ -137,8 +137,9 @@ def wcs_to_header_using_cd_keywords(wcs):
     if len(list_of_pc_keys) > 0:
         for key in list_of_pc_keys:
             header.rename_keyword(key, f'CD{key[2]}_{key[4]}')
-        for key in ['CDELT1', 'CDELT2', 'CDELT3']:
-            if key in header:
+        list_of_cdelt_keys = [key for key in header.keys() if key.startswith('CDELT')]
+        if len(list_of_cdelt_keys) > 0:
+            for key in list_of_cdelt_keys:
                 del header[key]
     return header
 
