@@ -8,7 +8,6 @@
 #
 
 """Define a 3D WCS"""
-# ToDo: this module should be moved to numina
 
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
@@ -186,7 +185,7 @@ def get_wvparam_from_wcs3d(wcs3d):
 
 
 def header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(wcs2d_celestial, wcs1d_spectral):
-    """Merge 2D celestial WCS and 1D spectral WCS into a single 3D WCS.
+    """Merge 2D celestial WCS and 1D spectral WCS into a single header.
 
     This function merges a 2D celestial WCS and a 1D spectral WCS into
     a single 3D WCS header. The celestial WCS is assumed to be in the 
