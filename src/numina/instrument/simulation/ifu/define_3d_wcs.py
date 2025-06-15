@@ -141,6 +141,13 @@ def wcs_to_header_using_cd_keywords(wcs):
         if len(list_of_cdelt_keys) > 0:
             for key in list_of_cdelt_keys:
                 del header[key]
+    else:
+        # If no PCi_j keywords are present, rename CDELTi as CDi_i keywords
+        list_of_cdelt_keys = [key for key in header.keys() if key.startswith('CDELT')]
+        if len(list_of_cdelt_keys) > 0:
+            for key in list_of_cdelt_keys:
+                header.rename_keyword(key, f'CD{key[5]}_{key[5]}')
+                header.comments[f'CD{key[5]}_{key[5]}'] = 'Coordinate transformation matrix element'
     return header
 
 
@@ -176,3 +183,55 @@ def get_wvparam_from_wcs3d(wcs3d):
     wv_cdelt1 = wcs3d.wcs.cd[2, 2] * wv_cunit1 / u.pix
 
     return wv_cunit1, wv_crpix1, wv_crval1, wv_cdelt1
+
+
+def header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(wcs2d_celestial, wcs1d_spectral):
+    """Merge 2D celestial WCS and 1D spectral WCS into a single 3D WCS.
+
+    This function merges a 2D celestial WCS and a 1D spectral WCS into
+    a single 3D WCS header. The celestial WCS is assumed to be in the 
+    first two axes (NAXIS1 and NAXIS2), and the spectral WCS is assumed 
+    to be in the third axis (NAXIS3). The resulting header contains the 
+    necessary keywords to describe the 3D WCS, including the celestial 
+    coordinates and the spectral wavelength information.
+
+    The returned value is the FITS header and not a WCS object, 
+    so to avoid astropy.wcs.WCS replacing the CDi_j keywords 
+    with PCi_j and CDELTi keywords.
+
+    Parameters
+    ----------
+    wcs2d_celestial : `~astropy.wcs.wcs.WCS`
+        2D celestial WCS.
+    wcs1d_spectral : `~astropy.wcs.wcs.WCS`
+        1D spectral WCS.
+
+    Returns
+    -------
+    header3d : `~astropy.io.fits.header.Header`
+        FITS header with the merged WCS information.
+    """
+
+    header3d = wcs_to_header_using_cd_keywords(wcs2d_celestial)
+    header3d['NAXIS'] = 3
+    header_spectral = wcs_to_header_using_cd_keywords(wcs1d_spectral)
+    header3d['WCSAXES'] = 3
+    for item in ['CRPIX', 'CD', 'CUNIT', 'CTYPE', 'CRVAL']:
+        # insert {item}3 after {item}2 to preserve the order in the header
+        if item == 'CD':
+            keybefore = f'{item}2_2'
+            keyafter = f'{item}3_3'
+            keyvalue = header_spectral[f'{item}1_1']
+            keycomment = header_spectral.comments[f'{item}1_1']
+        else:
+            keybefore = f'{item}2'
+            keyafter = f'{item}3'
+            keyvalue = header_spectral[f'{item}1']
+            keycomment = header_spectral.comments[f'{item}1']
+        header3d.insert(
+            keybefore,
+            (keyafter, keyvalue, keycomment),
+            after=True
+        )
+
+    return header3d

@@ -16,11 +16,13 @@ import astropy.units as u
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
 import numpy as np
+from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
 import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
+from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
 from .ctext import ctext
@@ -31,7 +33,8 @@ REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 
 # TODO: metodo 'adaptive': ¿es necesario usar Gaussian kernel?
 def generate_mosaic_of_3d_cubes(
-        list_of_hdu3d_images,
+        list_of_fits_files,
+        extname_image,
         crval3out,
         cdelt3out,
         naxis3out,
@@ -45,8 +48,10 @@ def generate_mosaic_of_3d_cubes(
 
     Parameters
     ----------
-    list_of_hdu3d_images : list of HDU images
-        List of 3D HDU instances containing the images to be combined.
+    list_of_fits_files : list of str
+        List of paths to FITS files containing the 3D cubes to be combined.
+    extname_image : str
+        Extension name for the image in input files.
     crval3out : `astropy.units.Quantity` or None
         Minimum wavelength (in m) for the output image. If None,
         use the minimum wavelength of the input images.
@@ -77,10 +82,8 @@ def generate_mosaic_of_3d_cubes(
         - FOOTPRINT: array with final footprint
     """
     # protections
-    if not isinstance(list_of_hdu3d_images, list):
-        raise TypeError('list_of_hdu3d_images must be a list')
-    if len(list_of_hdu3d_images) < 1:
-        raise ValueError('list_of_hdu3d_images must contain at least one HDU')
+    if not isinstance(list_of_fits_files, list):
+        raise TypeError('list_of_fits_files must be a list')
     if crval3out is not None and not isinstance(crval3out, u.Quantity):
         raise TypeError('crval3out must be an astropy Quantity')
     if cdelt3out is not None and not isinstance(cdelt3out, u.Quantity):
@@ -88,7 +91,7 @@ def generate_mosaic_of_3d_cubes(
     if naxis3out is not None and not isinstance(naxis3out, int):
         raise TypeError('naxis3out must be an integer')
 
-    nimages = len(list_of_hdu3d_images)
+    nimages = len(list_of_fits_files)
     if verbose:
         print(f'Total number of images to be combined: {nimages}')
 
@@ -99,9 +102,15 @@ def generate_mosaic_of_3d_cubes(
     crval3out_ = None
     wavemax = None   # maximum wavelength (at the center of the last pixel)
     cdelt3out_ = None
-    for i, hdu in enumerate(list_of_hdu3d_images):
-        wcs1d_spectral = WCS(hdu.header).spectral
-        wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
+    for fname in list_of_fits_files:
+        with fits.open(fname) as hdul:
+            if extname_image not in hdul:
+                    raise ValueError(f'Expected {extname_image} extension not found')
+            hdu = hdul[extname_image]
+            if verbose:
+                print(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
+            wcs1d_spectral = WCS(hdu.header).spectral
+            wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
         if crval3out_ is None:
             crval3out_ = wave[0]
         else:
@@ -135,7 +144,7 @@ def generate_mosaic_of_3d_cubes(
     header_spectral_mosaic['CTYPE1'] = 'WAVE'
     wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
     if verbose:
-        print(f'\n{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n')
+        print(f'\n{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax  =}\n')
         print(f'{wcs1d_spectral_mosaic=}')
 
     # optimal 2D WCS (celestial part) for combined mosaic
@@ -144,7 +153,9 @@ def generate_mosaic_of_3d_cubes(
             print(f'\nCelestial scales:')
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
-        for i, hdu in enumerate(list_of_hdu3d_images):
+        for i, fname in enumerate(list_of_fits_files):
+            with fits.open(fname) as hdul:
+                hdu = hdul[extname_image]
             header3d = hdu.header
             wcs2d = WCS(header3d).celestial
             scales = proj_plane_pixel_scales(wcs2d)
@@ -166,7 +177,7 @@ def generate_mosaic_of_3d_cubes(
         print(f'\n{wcs_mosaic2d=}')
         print(f'\n{shape_mosaic2d=}')
     if output_celestial_2d_wcs is not None:
-        header_2d_wcs = wcs_mosaic2d.to_header()
+        header_2d_wcs = wcs_to_header_using_cd_keywords(wcs_mosaic2d)
         hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
         if verbose:
             print(f'Saving resulting celestial 2D WCS to: {output_celestial_2d_wcs}')
@@ -187,9 +198,18 @@ def generate_mosaic_of_3d_cubes(
     # generate 3D mosaic
     if verbose:
         print(f'Reprojection method: {reproject_method}')
-    nimages = len(list_of_hdu3d_images)
-    for i in range(nimages):
-        single_hdu3d = resample_wave_3d_cube(list_of_hdu3d_images[i], crval3out, cdelt3out, naxis3out)
+    for fname in list_of_fits_files:
+        if verbose:
+            print(f'\n* Working with: {fname}')
+        with fits.open(fname) as hdul:
+            hdu = hdul[extname_image]
+            single_hdu3d = resample_wave_3d_cube(
+                hdu3d_image=hdu,
+                crval3out=crval3out,
+                cdelt3out=cdelt3out,
+                naxis3out=naxis3out,
+                verbose=verbose
+            )
         data_ini3d = single_hdu3d.data
         wcs_ini3d = WCS(single_hdu3d.header)
         wcs_ini2d = wcs_ini3d.celestial
@@ -223,23 +243,13 @@ def generate_mosaic_of_3d_cubes(
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
     invalid_region = (footprint3d == 0)
     mosaic3d_cube_by_cube[invalid_region] = np.nan  # set invalid pixels to NaN
-
-    # generate resulting 3D WCS object
-    header_spectral_single = WCS(list_of_hdu3d_images[0].header).spectral.to_header()  # to get keyword comments
-    header3d_corrected = wcs_mosaic2d.to_header()
-    header3d_corrected['WCSAXES'] = 3
-    for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
-        # insert {item}3 after {item}2 to preserve the order in the header
-        header3d_corrected.insert(
-            f'{item}2',
-            (f'{item}3', header_spectral_mosaic[f'{item}1'], header_spectral_single.comments[f'{item}1']),
-            after=True)
-    # fix slice in the spectral direction
-    if header3d_corrected['CRPIX3'] != 1:
-        raise ValueError(f"Expected CRPIX3=1 but got {header3d_corrected['CRPIX3']=}")
-
+ 
     # generate result
     hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
+    header3d_corrected = header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(
+        wcs2d_celestial=wcs_mosaic2d,
+        wcs1d_spectral=wcs1d_spectral_mosaic
+    )
     hdu.header.update(header3d_corrected)
     if footprint:
         hdu_footprint = fits.ImageHDU(footprint3d.astype(np.uint8))
@@ -329,25 +339,19 @@ def main(args=None):
         with open(input_list) as f:
             file_content = f.read().splitlines()
 
-    # list of HDU
-    list_of_hdu3d_images = []
+    list_of_fits_files = []
     for fname in file_content:
         if len(fname) > 0:
             if fname[0] not in ['#']:
-                print(f'\n* Reading: {fname}')
-                with fits.open(fname) as hdul:
-                    if extname_image not in hdul:
-                        raise ValueError(f'Expected {extname_image} extension not found')
-                    hdu3d_image = hdul[extname_image].copy()
-                    if verbose:
-                        print(f"{hdu3d_image.header['NAXIS1']=}")
-                        print(f"{hdu3d_image.header['NAXIS2']=}")
-                        print(f"{hdu3d_image.header['NAXIS3']=}")
-                list_of_hdu3d_images.append(hdu3d_image)
+                list_of_fits_files.append(fname)
 
+    if len(list_of_fits_files) < 1:
+        raise ValueError(f'No valid FITS files found in {input_list}. Please check the file content.')
+    
     # combine images
     output_hdul = generate_mosaic_of_3d_cubes(
-        list_of_hdu3d_images=list_of_hdu3d_images,
+        list_of_fits_files=list_of_fits_files,
+        extname_image=extname_image,
         crval3out=crval3out,
         cdelt3out=cdelt3out,
         naxis3out=naxis3out,
