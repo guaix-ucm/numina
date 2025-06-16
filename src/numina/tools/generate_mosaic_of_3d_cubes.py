@@ -40,6 +40,7 @@ def generate_mosaic_of_3d_cubes(
         naxis3out,
         desired_celestial_2d_wcs,
         reproject_method,
+        parallel,
         output_celestial_2d_wcs,
         footprint=False,
         verbose=False
@@ -67,6 +68,8 @@ def generate_mosaic_of_3d_cubes(
         compute output 2D celestial WCS for current list of 3D cubes.
     reproject_method : str
         Reprojection method. See 'REPROJECT_METHODS' above.
+    parallel : bool
+        If True, use parallel processing for reprojection.
     output_celestial_2d_wcs : str, file-like, `pathlib.Path` or None
         Path to output 2D celestial WCS.
     footprint : bool
@@ -217,7 +220,8 @@ def generate_mosaic_of_3d_cubes(
             temp3d, footprint_temp3d = reproject_interp(
                 (data_ini3d, wcs_ini2d),
                 wcs_mosaic2d,
-                shape_out=shape_mosaic2d
+                shape_out=shape_mosaic2d,
+                parallel=parallel
             )
         elif reproject_method == 'adaptive':
             temp3d, footprint_temp3d = reproject_adaptive(
@@ -225,13 +229,15 @@ def generate_mosaic_of_3d_cubes(
                 wcs_mosaic2d,
                 shape_out=shape_mosaic2d,
                 conserve_flux=True,
-                kernel='Gaussian'
+                kernel='Gaussian',
+                parallel=parallel
             )
         elif reproject_method == 'exact':
             temp3d, footprint_temp3d = reproject_exact(
                 (data_ini3d, wcs_ini2d),
                 wcs_mosaic2d,
-                shape_out=shape_mosaic2d
+                shape_out=shape_mosaic2d,
+                parallel=parallel
             )
         else:
             raise ValueError(f'Unexpected {reproject_method=}')
@@ -282,7 +288,10 @@ def main(args=None):
                         type=str, default=None)
     parser.add_argument('--reproject_method',
                         help='Reprojection method (interp, adaptive, exact)',
-                        type=str, choices=REPROJECT_METHODS, default=None)
+                        type=str, choices=REPROJECT_METHODS, default='adaptive')
+    parser.add_argument('--parallel',
+                        help='Use parallel processing for reprojection',
+                        action='store_true')
     parser.add_argument('--extname_image',
                         help='Extension name for image in input files. Default value: PRIMARY',
                         default='PRIMARY', type=str)
@@ -323,6 +332,7 @@ def main(args=None):
     naxis3out = args.naxis3out
     desired_celestial_2d_wcs = args.desired_celestial_2d_wcs
     reproject_method = args.reproject_method
+    parallel = args.parallel
     if reproject_method not in REPROJECT_METHODS:
         raise ValueError(f'Unexpected reproject_method: {reproject_method}. Expected one of {REPROJECT_METHODS}')
     output_celestial_2d_wcs = args.output_celestial_2d_wcs
@@ -357,6 +367,7 @@ def main(args=None):
         naxis3out=naxis3out,
         desired_celestial_2d_wcs=desired_celestial_2d_wcs,
         reproject_method=reproject_method,
+        parallel=parallel,
         output_celestial_2d_wcs=output_celestial_2d_wcs,
         footprint=footprint,
         verbose=verbose
