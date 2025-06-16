@@ -15,6 +15,7 @@ from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
+from datetime import datetime
 import numpy as np
 from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
@@ -31,7 +32,6 @@ from .resample_wave_3d_cube import resample_wave_3d_cube
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 
 
-# TODO: metodo 'adaptive': ¿es necesario usar Gaussian kernel?
 def generate_mosaic_of_3d_cubes(
         list_of_fits_files,
         extname_image,
@@ -200,6 +200,7 @@ def generate_mosaic_of_3d_cubes(
 
     # generate 3D mosaic
     for fname in list_of_fits_files:
+        time_ini = datetime.now()
         if verbose:
             print(f'\n* Working with: {fname}')
         with fits.open(fname) as hdul:
@@ -244,6 +245,9 @@ def generate_mosaic_of_3d_cubes(
         valid_region = (footprint_temp3d > 0)
         mosaic3d_cube_by_cube[valid_region] += temp3d[valid_region]
         footprint3d += footprint_temp3d
+        time_end = datetime.now()
+        if verbose:
+            print(f'Processing time for {fname}: {time_end - time_ini}')
 
     valid_region = (footprint3d > 0)
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
@@ -270,6 +274,7 @@ def generate_mosaic_of_3d_cubes(
 
 def main(args=None):
 
+    time_ini = datetime.now()
     # parse command-line options
     parser = argparse.ArgumentParser(
         description="Generate a 3D mosaic from individual 3D cubes."
@@ -353,6 +358,8 @@ def main(args=None):
     for fname in file_content:
         if len(fname) > 0:
             if fname[0] not in ['#']:
+                if not Path(fname).is_file():
+                    raise ValueError(f'File {fname} does not exist or is not a valid file.')
                 list_of_fits_files.append(fname)
 
     if len(list_of_fits_files) < 1:
@@ -378,6 +385,10 @@ def main(args=None):
         print(f'Saving: {output_filename}')
     output_hdul.writeto(output_filename, overwrite='yes')
 
+    time_end = datetime.now()
+    if verbose:
+        print(f'\nTotal time: {time_end - time_ini}')
+        print('Done!')
 
 if __name__ == "__main__":
     main()
