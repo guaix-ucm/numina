@@ -196,8 +196,6 @@ def generate_mosaic_of_3d_cubes(
         print(ctext(f'Combined image will require {size_output:.2f}', fg='red'))
 
     # generate 3D mosaic
-    if verbose:
-        print(f'Reprojection method: {reproject_method}')
     for fname in list_of_fits_files:
         if verbose:
             print(f'\n* Working with: {fname}')
@@ -213,6 +211,8 @@ def generate_mosaic_of_3d_cubes(
         data_ini3d = single_hdu3d.data
         wcs_ini3d = WCS(single_hdu3d.header)
         wcs_ini2d = wcs_ini3d.celestial
+        if verbose:
+            print(f'Celestial WCS reprojection method: {reproject_method}')
         if reproject_method == 'interp':
             temp3d, footprint_temp3d = reproject_interp(
                 (data_ini3d, wcs_ini2d),

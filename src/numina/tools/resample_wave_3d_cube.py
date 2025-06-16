@@ -79,11 +79,12 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
             resampled_data = hdu3d_image.data.astype(np.float32)
             resample_needed = False
             if verbose:
-                print("Old and new wavelength borders are the same. Copying data without resampling.")
+                print("Old and new wavelength borders are the same.\n"
+                      "-> Copying original data without spectral resampling.")
 
     if resample_needed:
         if verbose:
-            print("Resampling the 3D cube...", end=' ')
+            print("Spectral resampling of the original 3D cube...", end=' ')
         # resample the 3D cube (see wavecal.py in teareduce for reference)
         resampled_data = np.zeros((naxis3out, naxis2, naxis1))
         for i in range(naxis1):
