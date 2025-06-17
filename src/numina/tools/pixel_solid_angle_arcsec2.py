@@ -18,10 +18,11 @@ from scipy.ndimage import median_filter
 from spherical_geometry.polygon import SphericalPolygon
 import sys
 
+from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .ctext import ctext
 
 
-def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None):
+def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, verbose=False):
     """Compute the solid angle (arcsec**2) of every pixel.
     
     This function computes the solid angle for each pixel in a 2D image.
@@ -39,14 +40,16 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None):
         Number of pixels along the first axis (NAXIS1).
     naxis2 : int
         Number of pixels along the second axis (NAXIS2).
-    kernel_size : int, optional
-        Size of the kernel for smoothing the result using a median filter.
-        If None, no smoothing is applied.
     method : int, optional
         Method to compute the solid angle.
         1: Use spherical polygons (slow).
         2: Use spherical polygons with a different approach (slow).
         3: Use spherical coordinates and distances (fast, default).
+    kernel_size : int, optional
+        Size of the kernel for smoothing the result using a median filter.
+        If None, no smoothing is applied.
+    verbose : bool, optional
+        If True, display intermediate information.
 
     Returns
     -------
@@ -54,6 +57,9 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None):
         2D array with the solid angle (arcsec**2) for each pixel in
         the input image.
     """
+
+    if verbose:
+        print(f"Computing solid angle for {naxis1} x {naxis2} pixels using method {method}.")
 
     # X, Y coordinates (2D image array, following the FITS criterium)
     # corresponding to the four corners of all the image pixels
@@ -76,7 +82,7 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None):
         # Use spherical polygons to compute the solid angle
         result_spherical = result_spherical.reshape(naxis2 + 1, naxis1 + 1)
         result = np.zeros((naxis2, naxis1))
-        for i in tqdm(range(naxis2)):
+        for i in tqdm(range(naxis2), desc="NAXIS2", disable=not verbose):
             for j in range(naxis1):
                 polygon = SphericalPolygon.from_radec(
                     lon=[result_spherical[i, j].ra.rad,
@@ -94,7 +100,7 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None):
         # Use spherical polygons with a different approach to compute the solid angle
         result_spherical = result_spherical.reshape(naxis2 + 1, naxis1 + 1)
         result = np.zeros((naxis2, naxis1))   
-        for i in tqdm(range(naxis2)):
+        for i in tqdm(range(naxis2), desc="NAXIS2", disable=not verbose):
             for j in range(naxis1):
                 dist1a = result_spherical[i, j].separation(result_spherical[i, j + 1]).arcsec
                 dist1b = result_spherical[i + 1, j].separation(result_spherical[i + 1, j + 1]).arcsec
@@ -131,6 +137,8 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None):
 
     # smooth result
     if kernel_size is not None:
+        if verbose:
+            print(f"Applying median filter with kernel size {kernel_size}.")
         result = median_filter(result, size=kernel_size, mode='nearest')
 
     return result
@@ -180,6 +188,7 @@ def main(args=None):
     extname = args.extname
     kernel_size = args.kernel_size
     method = args.method
+    verbose = args.verbose
 
     with fits.open(input_file) as hdul:
         if extname not in hdul:
@@ -204,19 +213,14 @@ def main(args=None):
         naxis1=naxis1,
         naxis2=naxis2,
         method=method,
-        kernel_size=kernel_size
+        kernel_size=kernel_size,
+        verbose=verbose
     )
-
-    if args.verbose:
-        print(f"Computed solid angle for {naxis1} x {naxis2} pixels using method {method}.")
-        if kernel_size is not None:
-            print(f"Applied median filter with kernel size {kernel_size}.")
     
     # Create a new FITS HDU with the solid angle data
     solid_angle_hdu = fits.PrimaryHDU(data=result.astype(np.float32))
     header = solid_angle_hdu.header
-    header['HISTORY'] = 'Solid angle in arcsec^2 for each pixel.'
-
+    add_script_info_to_fits_history(header, args)
     if args.verbose:
         print(f"Saving solid angle data to {output_file}.")
     solid_angle_hdu.writeto(output_file, overwrite=True)
