@@ -39,5 +39,3 @@ def add_script_info_to_fits_history(header, args):
     header.add_history(f'$ {Path(sys.argv[0]).name}')
     for arg, value in vars(args).items():
         header.add_history(f'--{arg} {value}')
-
-    return header
