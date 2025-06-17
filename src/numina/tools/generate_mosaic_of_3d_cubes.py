@@ -26,6 +26,7 @@ from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
+from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .ctext import ctext
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
@@ -381,6 +382,7 @@ def main(args=None):
     )
 
     # save result
+    add_script_info_to_fits_history(output_hdul[0].header, args)
     if verbose:
         print(f'Saving: {output_filename}')
     output_hdul.writeto(output_filename, overwrite='yes')

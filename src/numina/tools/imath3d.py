@@ -18,8 +18,9 @@ from astropy.io import fits
 import numpy as np
 import pathlib
 
+from .add_script_info_to_fits_history import add_script_info_to_fits_history
 
-def compute_operation(file1, file2, operation, output, extname1, extname2, overwrite=True):
+def compute_operation(file1, file2, operation, extname1, extname2):
     """Compute output = file1 operation file2.
 
     Parameters
@@ -30,14 +31,15 @@ def compute_operation(file1, file2, operation, output, extname1, extname2, overw
         Second FITS file or float number.
     operation : string
         Mathematical operation.
-    output : file object
-        Output FITS file.
     extname1 : str
         Extension name of the first FITS file (default: 'PRIMARY').
     extname2 : str
         Extension name of the second FITS file (default: 'PRIMARY').
-    overwrite : bool
-        If True, the output file can be overwritten.
+
+    Returns
+    -------
+    solution : `numpy.ndarray`
+        Resulting 3D image after applying the operation.
     """
 
     # read first FITS file
@@ -92,9 +94,7 @@ def compute_operation(file1, file2, operation, output, extname1, extname2, overw
     else:
         raise ValueError("Unexpected operation=" + str(operation))
 
-    # save output file
-    hdu = fits.PrimaryHDU(solution.astype(np.float32), image_header1)
-    hdu.writeto(output, overwrite=overwrite)
+    return solution
 
 
 def main(args=None):
@@ -141,15 +141,18 @@ def main(args=None):
         sys.exit(1)
 
     # compute operation
-    compute_operation(
+    solution = compute_operation(
         file1=args.file1, 
         file2=args.file2,
         operation=args.operation, 
-        output=args.output,
         extname1=args.extname1,
         extname2=args.extname2,
-        overwrite=args.overwrite
     )
+
+    # save output file
+    hdu = fits.PrimaryHDU(solution.astype(np.float32))
+    add_script_info_to_fits_history(hdu.header, args)
+    hdu.writeto(args.output, overwrite=args.overwrite)
 
 
 if __name__ == "__main__":
