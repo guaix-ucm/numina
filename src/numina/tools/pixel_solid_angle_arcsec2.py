@@ -146,7 +146,7 @@ def main(args=None):
             print(f"{naxis2=}")
             print(f"Celestial coordinates WCS:\n{wcs}")
 
-    result = pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, args.kernel_size)
+    result = pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, kernel_size)
 
     solid_angle_hdu = fits.PrimaryHDU(data=result.astype(np.float32))
     header = solid_angle_hdu.header
