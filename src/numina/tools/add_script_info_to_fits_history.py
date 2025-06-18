@@ -10,6 +10,7 @@
 
 from astropy.io import fits
 from datetime import datetime
+from io import BufferedReader
 from pathlib import Path
 import platform
 import sys
@@ -38,4 +39,7 @@ def add_script_info_to_fits_history(header, args):
     header.add_history(f'Python: {sys.executable}')
     header.add_history(f'$ {Path(sys.argv[0]).name}')
     for arg, value in vars(args).items():
+        # filename read as argparse.FileType()
+        if isinstance(value, BufferedReader):
+            value = value.name if hasattr(value, 'name') else str(value)
         header.add_history(f'--{arg} {value}')
