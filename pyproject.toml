@@ -82,6 +82,7 @@ numina-measure_slice_xy_offsets_in_3d_cube = "numina.tools.measure_slice_xy_offs
 numina-pixel_solid_angle_arcsec2 = "numina.tools.pixel_solid_angle_arcsec2:main"
 numina-pixel_to_world = "numina.tools.pixel_to_world:main"
 numina-resample_wave_3d_cube = "numina.tools.resample_wave_3d_cube:main"
+numina-sp3d_with_ds9 = "numina.tools.sp3d_with_ds9:main"
 numina-stack_hdus = "numina.tools.stack_hdus:main"
 numina-world_to_pixel = "numina.tools.world_to_pixel:main"
 numina-wavecalib = "numina.array.wavecalib.__main__:main"
