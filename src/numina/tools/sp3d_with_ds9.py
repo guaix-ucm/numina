@@ -242,9 +242,11 @@ def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave,
     with open('tmp_regions_ds9.reg', 'wt', encoding='ascii') as f:
         for line in lines:
             f.write(line + '\n')
-    ds9cmd('xpaset -p ds9 region delete')
-    ds9cmd('xpaset -p ds9 region load tmp_regions_ds9.reg')
-
+    try:
+        ds9cmd('xpaset -p ds9 region delete')
+        ds9cmd('xpaset -p ds9 region load tmp_regions_ds9.reg')
+    except ValueError as exc:
+        print(f'WARNING: {exc}')
     # Update splot
     update_splot(
         data=data,
@@ -347,7 +349,11 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
     last_key_pos = [None, None, None]
     ix1, ix2, iy1, iy2 = None, None, None, None  # avoid PyCharm warning
     while loop:
-        key, x, y = ds9cmd('xpaget ds9 iexam key coordinate image').split()
+        try:
+            key, x, y = ds9cmd('xpaget ds9 iexam key coordinate image').split()
+        except ValueError as exc:
+            if verbose:
+                print(f'WARNING: {exc}')
         if key in ['s', 'c', 'r', 'a', 'x']:
             x = str(round(float(x)))
             y = str(round(float(y)))
@@ -421,9 +427,11 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
         elif key == 'h':
             display_help_menu(plot_render)
         elif key == 'q':
-            loop =False
-            if verbose:
-                print('Selection of pixels finished!')
+            cquit = input('Do you want to quit? (y/[n]) ')
+            if cquit.lower() in ['y', 'yes']:
+                loop = False
+                if verbose:
+                    print('Selection of pixels finished!')
 
     if plot_render in ['matplotlib', 'both']:
         # keep the splot open after updates
