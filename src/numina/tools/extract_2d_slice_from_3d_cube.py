@@ -78,30 +78,39 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
         raise ValueError(f'{i1=} must be <= {i2=}')
 
     if axis == 1:
+        if np.any(np.isnan(data[:, :, (i1 - 1):i2])):
+            print(f'Warning: NaN values found in input data for axis {axis} '
+                  f'between pixels {i1} and {i2}. They will be ignored.')
         if method == "sum":
-            slice2d = np.sum(data[:, :, (i1-1):i2], axis=2, keepdims=False)
+            slice2d = np.nansum(data[:, :, (i1 - 1):i2], axis=2, keepdims=False)
         elif method == "mean":
-            slice2d = np.mean(data[:, :, (i1 - 1):i2], axis=2, keepdims=False)
+            slice2d = np.nanmean(data[:, :, (i1 - 1):i2], axis=2, keepdims=False)
         elif method == "median":
-            slice2d = np.median(data[:, :, (i1 - 1):i2], axis=2, keepdims=False)
+            slice2d = np.nanmedian(data[:, :, (i1 - 1):i2], axis=2, keepdims=False)
         else:
             raise ValueError(f'Unexpected {method=}')
     elif axis == 2:
+        if np.any(np.isnan(data[:, (i1 - 1):i2, :])):
+            print(f'Warning: NaN values found in input data for axis {axis} '
+                  f'between pixels {i1} and {i2}. They will be ignored.')
         if method == "sum":
-            slice2d = np.sum(data[:, (i1-1):i2, :], axis=1, keepdims=False)
+            slice2d = np.nansum(data[:, (i1 - 1):i2, :], axis=1, keepdims=False)
         elif method == "mean":
-            slice2d = np.mean(data[:, (i1 - 1):i2, :], axis=1, keepdims=False)
+            slice2d = np.nanmean(data[:, (i1 - 1):i2, :], axis=1, keepdims=False)
         elif method == "median":
-            slice2d = np.median(data[:, (i1 - 1):i2, :], axis=1, keepdims=False)
+            slice2d = np.nanmedian(data[:, (i1 - 1):i2, :], axis=1, keepdims=False)
         else:
             raise ValueError(f'Unexpected {method=}')
     else:
+        if np.any(np.isnan(data[(i1 - 1):i2, :, :])):
+            print(f'Warning: NaN values found in input data for axis {axis} '
+                  f'between pixels {i1} and {i2}. They will be ignored.')
         if method == "sum":
-            slice2d = np.sum(data[(i1-1):i2, :, :], axis=0, keepdims=False)
+            slice2d = np.nansum(data[(i1 - 1):i2, :, :], axis=0, keepdims=False)
         elif method == "mean":
-            slice2d = np.mean(data[(i1-1):i2, :, :], axis=0, keepdims=False)
+            slice2d = np.nanmean(data[(i1 - 1):i2, :, :], axis=0, keepdims=False)
         elif method == "median":
-            slice2d = np.median(data[(i1-1):i2, :, :], axis=0, keepdims=False)
+            slice2d = np.nanmedian(data[(i1 - 1):i2, :, :], axis=0, keepdims=False)
         else:
             raise ValueError(f'Unexpected {method=}')
 
