@@ -199,5 +199,40 @@ int NU_quantileclip_function(double *data, double *weights,
 }
 
 
+int NU_crmean_function(double *data, double *weights,
+    size_t size, double *out[NU_COMBINE_OUTDIM], void *func_data)
+{
+  double* fdata = (double*) func_data;
+
+  double& gain = *fdata;
+  double& ron = *(fdata + 1);
+  double& nsig = *(fdata + 2);
+
+  if (size < 3) {
+    *out[0] = 0;
+    *out[1] = 0;
+    *out[2] = 0;
+    return 1;
+  }
+
+  ValuePair res = average_central_tendency(data, data + size, weights);
+  double n_expect = *std::min_element(data, data + size);
+  double c_std = sqrt(res.second);
+  double s_expect = sqrt(ron*ron + n_expect / gain);
+
+  if (c_std > nsig * s_expect) {
+  //min
+    *out[0] = n_expect;
+    *out[1] = 0.832 * std::pow(size, -0.148) * c_std; // Why ?? Ask Nico (copilot)
+    *out[2] = 1;
+  }
+  else {
+    *out[0] = res.first;
+    *out[1] = res.second;
+    *out[2] = size;
+  }
+  return 1;
+}
+
 
 

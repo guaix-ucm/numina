@@ -923,6 +923,57 @@ py_method_quantileclip(PyObject *obj, PyObject *args) {
   return cap;
 }
 
+static PyObject *
+py_method_crmean(PyObject *obj, PyObject *args) {
+  double gain = 1;
+  double ron = 0;
+  double nsig = 3;
+  double *funcdata = NULL;
+  PyObject *cap;
+
+  if (!PyArg_ParseTuple(args, "ddd", &gain, &ron, &nsig))
+    return NULL;
+
+  if (gain <= 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter gain, must be positive");
+    return NULL;
+  }
+
+  if (ron < 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter ron, must be >= 0");
+    return NULL;
+  }
+
+ if (nsig <= 0) {
+    PyErr_SetString(PyExc_ValueError, "invalid parameter nsig, must be positive");
+    return NULL;
+  }
+
+
+  cap = PyCapsule_New((void*) NU_crmean_function, "numina.cmethod", NU_destructor);
+  if (cap == NULL)
+    return NULL;
+
+  funcdata = (double*)PyMem_Malloc(3 * sizeof(double));
+  if (funcdata == NULL) {
+    Py_DECREF(cap);
+    return PyErr_NoMemory();
+  }
+
+  funcdata[0] = gain;
+  funcdata[1] = ron;
+  funcdata[2] = nsig;
+
+  if (PyCapsule_SetContext(cap, funcdata))
+  {
+    PyMem_Free(funcdata);
+    Py_DECREF(cap);
+    return NULL;
+  }
+
+  return cap;
+}
+
 int NU_debug_function(double *data, double *weights,
     size_t size, double *out[3], void *func_data)
 {
@@ -949,6 +1000,7 @@ static PyMethodDef module_functions[] = {
     {"minmax_method", py_method_minmax, METH_VARARGS, ""},
     {"sigmaclip_method", py_method_sigmaclip, METH_VARARGS, ""},
     {"quantileclip_method", py_method_quantileclip, METH_VARARGS, ""},
+    {"crmean_method", py_method_crmean, METH_VARARGS, ""},
     {"debug_method", py_method_debug, METH_VARARGS, ""},
     {"sum_method", py_method_sum, METH_NOARGS, ""},
     { NULL, NULL, 0, NULL } /* sentinel */

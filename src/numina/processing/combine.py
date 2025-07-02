@@ -152,16 +152,15 @@ def main(args=None):
     parser = argparse.ArgumentParser(prog='combine')
     parser.add_argument('-o', '--output', default='combined.fits')
     parser.add_argument('-e', '--errors', default=False, action='store_true')
-    parser.add_argument('--method', default='mean', choices=['mean', 'median'])
+    parser.add_argument('--method', default='mean')
     parser.add_argument('image', nargs='+')
     args = parser.parse_args(args)
 
-    if args.method == 'mean':
-        method = combine.mean
-    elif args.method == 'median':
-        method = combine.median
-    else:
-        raise ValueError(f'wrong method {args.method}')
+    try:
+        method = getattr(combine, args.method)
+    except AttributeError:
+        print(f'wrong method {args.method}')
+        raise
 
     errors = args.errors
     with contextlib.ExitStack() as stack:

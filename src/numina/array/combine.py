@@ -220,6 +220,11 @@ def sum(arrays, masks=None, out_res=None, out_var=None, out_pix=None, out=None, 
     return generic_combine(intl.sum_method(), arrays, out=out, dtype=dtype, out_res=out_res,
                            out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
+def crmean(arrays, masks=None, dtype=None, out=None, out_res=None,
+         out_var=None, out_pix=None, zeros=None, scales=None, weights=None, gain=1.0, ron=0.0, nsig=3.0):
+    return generic_combine(intl.crmean_method(gain, ron, nsig), arrays, masks=masks, dtype=dtype,
+                           out=out, out_res=out_res,
+                           out_var=out_var, out_pix=out_pix, zeros=zeros, scales=scales, weights=weights)
 
 def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, out=None,
                     dtype=None, masks=None, zeros=None, scales=None, weights=None):
