@@ -165,7 +165,12 @@ def main(args=None):
     )
 
     # save output file
-    hdu = fits.PrimaryHDU(solution.astype(args.dtype))
+    header = fits.getheader(args.file1, args.extname1)
+    if header['naxis1'] != solution.shape[2] or \
+       header['naxis2'] != solution.shape[1] or \
+       header['naxis3'] != solution.shape[0]:
+        raise ValueError("Output image dimensions do not match the input image dimensions.")
+    hdu = fits.PrimaryHDU(solution.astype(args.dtype), header=header)
     add_script_info_to_fits_history(hdu.header, args)
     hdu.writeto(args.output, overwrite=args.overwrite)
 
