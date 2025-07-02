@@ -20,7 +20,7 @@ import pathlib
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 
-def compute_operation(file1, file2, operation, extname1, extname2):
+def compute_operation(file1, file2, operation, extname1, extname2, dtype):
     """Compute output = file1 operation file2.
 
     Parameters
@@ -35,6 +35,8 @@ def compute_operation(file1, file2, operation, extname1, extname2):
         Extension name of the first FITS file (default: 'PRIMARY').
     extname2 : str
         Extension name of the second FITS file (default: 'PRIMARY').
+    dtype : str
+        Data type of the output image.
 
     Returns
     -------
@@ -45,7 +47,7 @@ def compute_operation(file1, file2, operation, extname1, extname2):
     # read first FITS file
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[extname1].header
-        image1 = hdulist[extname1].data.astype(np.float32)
+        image1 = hdulist[extname1].data.astype(dtype)
     naxis = image_header1['naxis']
     if naxis != 3:
         raise ValueError("Input file must be a 3D cube (NAXIS=3).")
@@ -57,14 +59,20 @@ def compute_operation(file1, file2, operation, extname1, extname2):
     try:
         with fits.open(file2) as hdulist:
             image_header2 = hdulist[extname2].header
-            image2 = hdulist[extname2].data.astype(np.float32)
+            image2 = hdulist[extname2].data.astype(dtype)
             naxis_ = image_header2['naxis']
             naxis1_ = image_header2['naxis1']
             naxis2_ = image_header2['naxis2']
             naxis3_ = image_header2['naxis3']
     except FileNotFoundError:
-        image2 = np.zeros((naxis3, naxis2, naxis1), dtype=np.float32)
-        image2 += float(file2)
+        image2 = np.zeros((naxis3, naxis2, naxis1), dtype=dtype)
+        if 'int' in dtype:
+            file2 = int(file2)
+        elif 'float' in dtype:
+            file2 = float(file2)
+        else:
+            raise ValueError(f"Unsupported dtype: {dtype}. Use an integer or float type.")
+        image2 += file2  # if file2 is a number
         naxis_ = naxis
         naxis1_ = naxis1
         naxis2_ = naxis2
@@ -127,6 +135,12 @@ def main(args=None):
     parser.add_argument("--overwrite",
                         help="Overwrite output file if already exists",
                         action="store_true")
+    parser.add_argument("--dtype", 
+                        help="Data type of the output image (default: float32)",
+                        type=str, 
+                        choices=['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64',
+                                 'float32', 'float64'],
+                        default='float32')
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -147,10 +161,11 @@ def main(args=None):
         operation=args.operation, 
         extname1=args.extname1,
         extname2=args.extname2,
+        dtype=args.dtype
     )
 
     # save output file
-    hdu = fits.PrimaryHDU(solution.astype(np.float32))
+    hdu = fits.PrimaryHDU(solution.astype(args.dtype))
     add_script_info_to_fits_history(hdu.header, args)
     hdu.writeto(args.output, overwrite=args.overwrite)
 

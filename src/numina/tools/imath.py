@@ -24,6 +24,7 @@ from numina.array.display.ximshow import ximshow_file
 
 def compute_operation(file1, file2, operation, output,
                       overwrite=True,
+                      dtype='float32',
                       display='none',
                       args_z1z2=None,
                       args_bbox=None,
@@ -43,6 +44,8 @@ def compute_operation(file1, file2, operation, output,
         Output FITS file.
     overwrite : bool
         If True, the output file can be overwritten.
+    dtype : str
+        Data type of the output image. Default is 'float32'.
     display : string
         Character string indication whether the images are displayed.
         Valid values are 'all', 'result' and 'none' (default).
@@ -60,7 +63,7 @@ def compute_operation(file1, file2, operation, output,
     # read first FITS file
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[0].header
-        image1 = hdulist[0].data.astype(np.float32)
+        image1 = hdulist[0].data.astype(dtype)
     naxis = image_header1['naxis']
     naxis1 = image_header1['naxis1']
     naxis2 = image_header1['naxis2']
@@ -83,8 +86,13 @@ def compute_operation(file1, file2, operation, output,
             naxis2_ = image_header2['naxis2']
             filename = file2
     except FileNotFoundError:
-        image2 = np.zeros((naxis2, naxis1), dtype=np.float32)
-        image2 += float(file2)
+        image2 = np.zeros((naxis2, naxis1), dtype=dtype)
+        if 'int' in dtype:
+            image2 += int(file2)
+        elif 'float' in dtype:
+            image2 += float(file2)
+        else:
+            raise ValueError(f"Unsupported dtype: {dtype}. Use an integer or float type.")
         naxis_ = naxis
         naxis1_ = naxis1
         naxis2_ = naxis2
@@ -133,7 +141,7 @@ def compute_operation(file1, file2, operation, output,
         raise ValueError("Unexpected operation=" + str(operation))
 
     # save output file
-    hdu = fits.PrimaryHDU(solution.astype(np.float32), image_header1)
+    hdu = fits.PrimaryHDU(solution.astype(dtype), image_header1)
     hdu.writeto(output, overwrite=overwrite)
 
     # if required, display result
@@ -169,6 +177,12 @@ def main(args=None):
     parser.add_argument("--overwrite",
                         help="Overwrite output file if already exists",
                         action="store_true")
+    parser.add_argument("--dtype", 
+                        help="Data type of the output image (default: float32)",
+                        type=str, 
+                        choices=['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64',
+                                 'float32', 'float64'],
+                        default='float32')
     parser.add_argument("--display",
                         help="Display images: all, result, none (default)",
                         default="none",
@@ -200,7 +214,7 @@ def main(args=None):
 
     # compute operation
     compute_operation(args.file1, args.file2,
-                      args.operation, args.output, args.overwrite,
+                      args.operation, args.output, args.overwrite, args.dtype,
                       args.display,
                       args.z1z2, args.bbox, args.keystitle, args.geometry)
 
