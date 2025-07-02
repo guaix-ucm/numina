@@ -112,7 +112,7 @@ def ximshow(image2d, title=None, show=True,
         Background and foreground values. If None, zcuts are employed.
     cmap : string
         Color map to be employed.
-    image_bbox : tuple (4 integers)
+    image_bbox : tuple (4 integers) or str
         Image rectangle to be displayed, with indices given by
         (nc1,nc2,ns1,ns2), which correspond to the numpy array:
         image2d[(ns1-1):ns2,(nc1-1):nc2].
@@ -187,6 +187,20 @@ def ximshow(image2d, title=None, show=True,
         nc2 = naxis1_
         ns1 = 1
         ns2 = naxis2_
+    elif isinstance(image_bbox, str):
+        tmp_bbox = image_bbox.split(",")
+        nc1 = int(tmp_bbox[0])
+        nc2 = int(tmp_bbox[1])
+        ns1 = int(tmp_bbox[2])
+        ns2 = int(tmp_bbox[3])
+        if nc1 < 1:
+            nc1 = 1
+        if nc2 > naxis1_:
+            nc2 = naxis1_
+        if ns1 < 1:
+            ns1 = 1
+        if ns2 > naxis2_:
+            ns2 = naxis2_
     else:
         nc1, nc2, ns1, ns2 = image_bbox
         if 1 <= nc1 <= nc2 <= naxis1_:

@@ -19,17 +19,47 @@ from astropy.io import fits
 import numpy as np
 import pathlib
 
-from numina.array.display.ximshow import ximshow_file
+from numina.array.display.ximshow import ximshow_file, ximshow
 
 
-def compute_operation(file1, file2, operation, output,
-                      overwrite=True,
-                      dtype='float32',
-                      display='none',
-                      args_z1z2=None,
-                      args_bbox=None,
-                      args_keystitle=None,
-                      args_geometry=None):
+def extnum_from_extname(file, extname):
+    """Get the extension number from the extension name in a FITS file.
+
+    Parameters
+    ----------
+    file : file object
+        FITS file.
+    extname : str
+        Extension name.
+
+    Returns
+    -------
+    int
+        Extension number.
+    """
+    with fits.open(file) as hdulist:
+        for i, hdu in enumerate(hdulist):
+            if hdu.name.lower() == extname.lower():
+                return i
+
+    raise ValueError(f"Extension '{extname}' not found in {file.name}.")
+
+
+def compute_operation(
+    file1,
+    file2,
+    operation,
+    extname1,
+    extname2,
+    output,
+    overwrite=True,
+    dtype='float32',
+    display='none',
+    args_z1z2=None,
+    args_bbox=None,
+    args_keystitle=None,
+    args_geometry=None
+):
     """Compute output = file1 operation file2.
 
     Parameters
@@ -40,6 +70,10 @@ def compute_operation(file1, file2, operation, output,
         Second FITS file or float number.
     operation : string
         Mathematical operation.
+    extname1 : str
+        Extension name of the first FITS file.
+    extname2 : str
+        Extension name of the second FITS file.
     output : file object
         Output FITS file.
     overwrite : bool
@@ -62,30 +96,33 @@ def compute_operation(file1, file2, operation, output,
 
     # read first FITS file
     with fits.open(file1) as hdulist:
-        image_header1 = hdulist[0].header
-        image1 = hdulist[0].data.astype(dtype)
+        image_header1 = hdulist[extname1].header
+        image1 = hdulist[extname1].data.astype(dtype)
     naxis = image_header1['naxis']
     naxis1 = image_header1['naxis1']
     naxis2 = image_header1['naxis2']
 
     # if required, display file1
     if display == 'all':
-        ximshow_file(file1.name,
+        ximshow_file(file1,
+                     extnum=extnum_from_extname(file1, extname1)+1,  # extnum is 1-based in ximshow_file
                      args_z1z2=args_z1z2, args_bbox=args_bbox,
                      args_keystitle=args_keystitle,
                      args_geometry=args_geometry,
                      debugplot=12)
 
     # read second FITS file or number
+    file2_is_a_file = True
     try:
         with fits.open(file2) as hdulist:
-            image_header2 = hdulist[0].header
-            image2 = hdulist[0].data.astype(np.float32)
+            image_header2 = hdulist[extname2].header
+            image2 = hdulist[extname2].data.astype(dtype)
             naxis_ = image_header2['naxis']
             naxis1_ = image_header2['naxis1']
             naxis2_ = image_header2['naxis2']
             filename = file2
     except FileNotFoundError:
+        file2_is_a_file = False
         image2 = np.zeros((naxis2, naxis1), dtype=dtype)
         if 'int' in dtype:
             image2 += int(file2)
@@ -100,11 +137,19 @@ def compute_operation(file1, file2, operation, output,
 
     # if required, display file2
     if display == 'all':
-        ximshow_file(filename,
-                     args_z1z2=args_z1z2, args_bbox=args_bbox,
-                     args_keystitle=args_keystitle,
-                     args_geometry=args_geometry,
-                     debugplot=12)
+        if file2_is_a_file:
+            ximshow_file(file2,
+                         extnum=extnum_from_extname(file2, extname2)+1,  # extnum is 1-based in ximshow_file
+                         args_z1z2=args_z1z2, args_bbox=args_bbox,
+                         args_keystitle=args_keystitle,
+                         args_geometry=args_geometry,
+                         debugplot=12)
+        else:
+            ximshow(image2,
+                    title=filename,
+                    z1z2=args_z1z2, image_bbox=args_bbox,
+                    geometry=args_geometry,
+                    debugplot=12)
 
     # second image is a single image row
     if naxis1 == naxis1_ and naxis2 > naxis2_:
@@ -174,6 +219,12 @@ def main(args=None):
                         help="Output FITS image",
                         type=str)
     # optional arguments
+    parser.add_argument("--extname1", type=str,
+                        help="Extension name of the first FITS file (default: 'PRIMARY').",
+                        default='PRIMARY')
+    parser.add_argument("--extname2", type=str,
+                        help="Extension name of the second FITS file (default: 'PRIMARY').",
+                        default='PRIMARY')
     parser.add_argument("--overwrite",
                         help="Overwrite output file if already exists",
                         action="store_true")
@@ -213,10 +264,21 @@ def main(args=None):
         sys.exit(1)
 
     # compute operation
-    compute_operation(args.file1, args.file2,
-                      args.operation, args.output, args.overwrite, args.dtype,
-                      args.display,
-                      args.z1z2, args.bbox, args.keystitle, args.geometry)
+    compute_operation(
+        file1=args.file1,
+        file2=args.file2,
+        operation=args.operation,
+        extname1=args.extname1,
+        extname2=args.extname2,
+        output=args.output,
+        overwrite=args.overwrite,
+        dtype=args.dtype,
+        display=args.display,
+        args_z1z2=args.z1z2,
+        args_bbox=args.bbox,
+        args_keystitle=args.keystitle,
+        args_geometry=args.geometry
+    )
 
 
 if __name__ == "__main__":
