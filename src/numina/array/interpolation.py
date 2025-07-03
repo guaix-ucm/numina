@@ -150,7 +150,7 @@ class SteffenInterpolator(object):
     def _eval(self, v, in_bounds, der):
         """Eval polynomial inside bounds."""
         result = np.zeros_like(v, dtype='float')
-        x_indices = np.searchsorted(self._x, v, side='rigth')
+        x_indices = np.searchsorted(self._x, v, side='right')
         ids = x_indices[in_bounds] - 1
         u = v[in_bounds] - self._x[ids]
         result[in_bounds] = self._poly_eval(u, ids, der)
@@ -225,7 +225,7 @@ class SteffenInterpolator(object):
 
     def _poly_eval_1(self, u, ids):
         """Evaluate internal polynomial."""
-        return (u * (3*self._a[ids] * u + 2*self._b[ids]) + self._c[ids])
+        return u * (3*self._a[ids] * u + 2*self._b[ids]) + self._c[ids]
 
     def _poly_eval_2(self, u, ids):
         """Evaluate internal polynomial."""
