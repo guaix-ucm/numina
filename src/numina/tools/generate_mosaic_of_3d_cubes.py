@@ -383,6 +383,9 @@ def main(args=None):
 
     # save result
     add_script_info_to_fits_history(output_hdul[0].header, args)
+    output_hdul[0].header.add_history('Contents of --input_list:')
+    for item in list_of_fits_files:
+        output_hdul[0].header.add_history(f'- {item}')
     if verbose:
         print(f'Saving: {output_filename}')
     output_hdul.writeto(output_filename, overwrite='yes')

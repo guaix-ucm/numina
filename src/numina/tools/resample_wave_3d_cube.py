@@ -8,17 +8,19 @@
 #
 """Resample a 3D cube in the wavelength axis (NAXIS3).
 """
+import sys
 
 import argparse
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 import numpy as np
-import sys
 
+from numina.instrument.simulation.ifu.define_3d_wcs \
+    import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
+
+from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .ctext import ctext
-
-from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 
 
 def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=False):
@@ -97,7 +99,7 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
                     x=new_wl_borders.value,
                     xp=old_wl_borders.value,
                     fp=accum_flux,
-                    left=np.nan, 
+                    left=np.nan,
                     right=np.nan
                 )
                 resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
@@ -120,26 +122,27 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
         wcs1d_spectral=wcs1d_spectral_resampled
     )
     resampled_hdu.header.update(header_resampled)
-    
+
     return resampled_hdu
 
 
 def main(args=None):
+    """Main function."""
     parser = argparse.ArgumentParser(
         description="Resample a 3D cube in the wavelength axis (NAXIS3)."
     )
-    parser.add_argument("input_file", type=str, 
+    parser.add_argument("input_file", type=str,
                         help="Input FITS file with the 3D cube.")
-    parser.add_argument("output_file", type=str, 
+    parser.add_argument("output_file", type=str,
                         help="Output FITS file with the resampled 3D cube.")
-    parser.add_argument("--crval3out", type=float, 
+    parser.add_argument("--crval3out", type=float,
                         help="Minimum wavelength for the output image (in meters).")
-    parser.add_argument("--cdelt3out", type=float, 
+    parser.add_argument("--cdelt3out", type=float,
                         help="Wavelength step for the output image (in meters).")
-    parser.add_argument("--naxis3out", type=int, 
+    parser.add_argument("--naxis3out", type=int,
                         help="Number of slices in the output image.")
-    parser.add_argument("--extname", type=str, 
-                        help="Extension name of the input HDU (default: 'PRIMARY').", 
+    parser.add_argument("--extname", type=str,
+                        help="Extension name of the input HDU (default: 'PRIMARY').",
                         default='PRIMARY')
     parser.add_argument("--verbose",
                         help="Display intermediate information",
@@ -181,7 +184,7 @@ def main(args=None):
             print(f"{hdu3d_image.header['NAXIS1']=}")
             print(f"{hdu3d_image.header['NAXIS2']=}")
             print(f"{hdu3d_image.header['NAXIS3']=}")
-    
+
     if crval3out is None or cdelt3out is None:
         wcs1d_spectral = WCS(hdu3d_image.header).spectral
         wave = wcs1d_spectral.pixel_to_world(np.arange(hdu3d_image.data.shape[0]))
@@ -200,13 +203,14 @@ def main(args=None):
             print(f"Assuming {naxis3out=}.")
 
     resampled_hdu = resample_wave_3d_cube(
-        hdu3d_image=hdu3d_image, 
-        crval3out=crval3out, 
-        cdelt3out=cdelt3out, 
+        hdu3d_image=hdu3d_image,
+        crval3out=crval3out,
+        cdelt3out=cdelt3out,
         naxis3out=naxis3out,
         verbose=verbose
     )
 
+    add_script_info_to_fits_history(resampled_hdu.header, args)
     if verbose:
         print(f'Saving: {output_file}')
     resampled_hdu.writeto(output_file, overwrite=True)
