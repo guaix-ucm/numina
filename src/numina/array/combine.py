@@ -13,6 +13,7 @@
 import numpy
 
 import numina.array._combine as intl  # noqa
+from numina.array.mediancr import _mediancr
 
 
 def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
@@ -237,3 +238,9 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
 
     return intl.generic_combine(method, arrays, out_res=out_res, out_var=out_var,
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
+
+
+def mediancr(arrays, threshold=None, boundary_slope=1.0, dilation=1, dtype=None,
+             plots=False, semiwindow=15, maxplots=10):
+    return _mediancr(arrays, threshold=threshold, boundary_slope=boundary_slope, dilation=dilation,
+                     dtype=dtype, plots=plots, semiwindow=semiwindow, maxplots=maxplots)
