@@ -24,13 +24,16 @@ def _mediancr(
         list_arrays,
         gain=None,
         rnoise=None,
+        bias=0.0,
         flatmin=1.0,
         flatmax=1.0,
-        percentile=99.0,
+        times_boundary_extension=3.0,
+        interactive=False,
         dilation=1,
         dtype=np.float32,
-        plots=0,
+        plots=False,
         semiwindow=15,
+        color_scale='minmax',
         maxplots=10
         ):
     """
@@ -53,30 +56,38 @@ def _mediancr(
         The input arrays to be combined.
     gain : float
         The gain value (in e/ADU) of the detector.
+    bias : float, optional
+        The bias value (in ADU) of the detector (default is 0.0).
     rnoise : float
         The readout noise (in ADU) of the detector.
     flatmin : float, optional
         The minimum value for the flat field (default is 0.1).
     flatmax : float, optional
         The maximum value for the flat field (default is 3.0).
-    percentile : float, optional
-        The percentile to compute the numerical boundary for
-        double cosmic ray detection (default is 99.0).
+    times_boundary_extension : float, optional
+        The factor to extend the boundary computed at percentile 98, in
+        units of the difference between the percentiles 98 and 50.
+        This is used to compute the numerical boundary for double
+        cosmic ray detection (default is 3.0).
+    interactive : bool, optional
+        If True, enable interactive mode for plots (default is False).
     dilation : int, optional
         The dilation factor for the double cosmic ray mask (default is 1).
     dtype : data-type, optional
         The desired data type for the output arrays (default is np.float32).
-    plots : int
-        If 0, no plots are generated.
-        If 1, generate diagnostic plots.
-        If 2, generate all plots including the cosmic rays identified (default is 0).
+    plots : bool, optional
+        If True, generate plots with detected double cosmic rays
+        (default is False).
     semiwindow : int, optional
         The semiwindow size to plot the double cosmic rays (default is 15).
-        Only used if `plots` is 2.
+        Only used if `plots` is True.
+    color_scale : str, optional
+        The color scale to use for the plots (default is 'minmax').
+        Valid options are 'minmax' and 'zscale'.
     maxplots : int, optional
         The maximum number of double cosmic rays to plot (default is 10).
         If negative, all detected cosmic rays will be plotted.
-        Only used if `plots` is 2.
+        Only used if `plots` is True.
 
     Returns
     -------
@@ -117,9 +128,9 @@ def _mediancr(
     if rnoise is None:
         raise ValueError("Readout noise must be defined for mediancr combination.")
 
-    # Check that percentile is in the range [0, 100]
-    if not (0 <= percentile <= 100):
-        raise ValueError("Percentile must be in the range [0, 100].")
+    # Check that color_scale is valid
+    if color_scale not in ['minmax', 'zscale']:
+        raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Log the input parameters
     _logger.info("number of input arrays: %d", len(list_arrays))
@@ -127,15 +138,16 @@ def _mediancr(
         _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
     _logger.info("gain for double cosmic ray detection: %f", gain)
     _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
+    _logger.info("bias for double cosmic ray detection: %f", bias)
     _logger.info("flat field minimum: %f", flatmin)
     _logger.info("flat field maximum: %f", flatmax)
-    _logger.info("percentile for numerical boundary: %f", percentile)
+    _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
-    if plots > 0:
-        _logger.info("diagnostic plots will be generated.")
-    if plots == 2:
+    if plots:
         _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
+        _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
+        _logger.info("color scale for plots: %s", color_scale)
 
     # Convert the list of arrays to a 3D numpy array
     image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
@@ -156,9 +168,10 @@ def _mediancr(
     ntest = 100  # number of points along the x-axis for the boundary
     nsimul = 1000  # number of simulations for each point
     nrep_simul = 1000  # number of repetitions for each set of simulations
-    xtest_array = 10**np.linspace(0, np.log10(np.max(min2d)), ntest)  # test values for the x-axis
+    xtest_array = 10**np.linspace(0, np.log10(np.max(min2d) - bias), ntest)  # test values for the x-axis
     xplot_boundary = np.zeros(ntest, dtype=float)  # x values for the boundary
-    yplot_boundary = np.zeros(ntest, dtype=float)  # y values for the boundary
+    yplot_boundary_50 = np.zeros(ntest, dtype=float)  # y values for the boundary
+    yplot_boundary_98 = np.zeros(ntest, dtype=float)  # y values for the boundary
     rng = np.random.default_rng(seed)  # Random number generator for reproducibility
     for i in range(ntest):
         xtest = xtest_array[i]
@@ -167,39 +180,58 @@ def _mediancr(
         median_rep = np.zeros(nrep_simul, dtype=float)
         # Simulate the minimum, median and maximum of the data
         for k in range(nrep_simul):
+            data = np.ones(nsimul, dtype=float) * xtest + bias
+            # Transform data from ADU to electrons, generate Poisson distribution
+            # and transform back from electrons to ADU
             flatfield = rng.uniform(low=flatmin, high=flatmax, size=nsimul)
-            data = np.ones(nsimul, dtype=float) * xtest * flatfield
-            data_with_noise = rng.poisson(lam=data / gain).astype(float)
-            data_with_noise += rng.normal(loc=0, scale=rnoise, size=nsimul)
+            data_with_noise = bias + flatfield * rng.poisson(lam=(data - bias) * gain).astype(float) / gain
+            # Add readout noise
+            if rnoise > 0:
+                data_with_noise += rng.normal(loc=0, scale=rnoise, size=nsimul)
             min_rep[k] = np.min(data_with_noise)
             max_rep[k] = np.max(data_with_noise)
             median_rep[k] = np.median(data_with_noise)
         # Compute the boundary using the requested percentile in the y-axis
-        xplot_boundary[i] = xtest
-        yplot_boundary[i] = np.percentile(median_rep - min_rep, percentile)
+        xplot_boundary[i] = xtest  # np.median(min_rep) - bias
+        yplot_boundary_50[i], yplot_boundary_98[i] = np.percentile(median_rep - min_rep, [50, 98])
+
+    # Fit a polynomial to the boundary points
+    _logger.info("fitting splines to the boundary points...")
+    isort = np.argsort(xplot_boundary)
+    spl50 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary[isort], yplot_boundary_50[isort], t=2)
+    spl98 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary[isort], yplot_boundary_98[isort], t=2)
+    yplot_boundary = spl98(xplot_boundary) + \
+        (spl98(xplot_boundary) - spl50(xplot_boundary)) * times_boundary_extension
 
     # Apply the criterium to detect double cosmic rays
-    xplot = min2d.flatten()
-    yplot = median2d.flatten() - xplot
+    xplot = min2d.flatten() - bias
+    yplot = median2d.flatten() - min2d.flatten()
     flag1 = yplot > np.interp(xplot, xplot_boundary, yplot_boundary)
-    flag2 = max2d.flatten() > 3.0 * rnoise
+    flag2 = max2d.flatten() > bias + 3.0 * rnoise
     flag = np.logical_and(flag1, flag2)
-    if plots > 0:
-        fig, axarr = plt.subplots(ncols=2, figsize=(10, 5))
-        for iplot in range(2):
-            ax = axarr[iplot]
-            ax.plot(xplot, yplot, 'C0,')
-            ax.plot(xplot_boundary, yplot_boundary, 'C1.-', label='Exclusion boundary')
-            ax.plot(xplot[flag], yplot[flag], 'rx', label='Suspected CRs')
-            if iplot == 1:
-                ax.set_xlim(np.min(min2d), 10 * rnoise)
-                ax.set_ylim(-rnoise, 10 * rnoise)
-            ax.set_xlabel('min2d')
-            ax.set_ylabel(r'median2d $-$ min2d')
-            ax.legend(loc=1)
-        plt.tight_layout()
-        _logger.info("saving mediancr_diagnostic.png.")
-        plt.savefig('mediancr_diagnostic.png', dpi=150)
+    fig, ax = plt.subplots()
+    ax.plot(xplot, yplot, 'C0,')
+    ax.plot(xplot_boundary, yplot_boundary_50, 'C3.-', label='percentile 50')
+    ax.plot(xplot_boundary, spl50(xplot_boundary), 'C3--', label='spline fit 50')
+    ax.plot(xplot_boundary, yplot_boundary_98, 'C4.-', label='percentile 98')
+    ax.plot(xplot_boundary, spl98(xplot_boundary), 'C4--', label='spline fit 98')
+    ax.plot(xplot_boundary, yplot_boundary, 'C1.-', label='Exclusion boundary')
+    ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
+    ax.set_xlabel(r'min2d $-$ bias')
+    ax.set_ylabel(r'median2d $-$ min2d')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3)
+    plt.tight_layout()
+    _logger.info("saving mediancr_diagnostic.png.")
+    plt.savefig('mediancr_diagnostic.png', dpi=150)
+    if interactive:
+        _logger.info("Entering interactive mode.")
+        plt.show()
+        answer = input("Press Enter to continue or type 'exit' to quit: ")
+        plt.close(fig)
+        if answer.lower() == 'exit':
+            _logger.info("Exiting program.")
+            raise SystemExit()
+    else:
         plt.close(fig)
 
     # Create a mask for the flagged pixels
@@ -236,7 +268,7 @@ def _mediancr(
     map2d[mask] = 1  # Set the map to 1 for the flagged pixels
 
     # Plot the cosmic rays if requested
-    if plots == 2:
+    if plots:
         # Label the connected pixels as individual cosmic rays
         labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
         _logger.info("number of double cosmic rays (connected pixels) detected: %d", number_cr)
@@ -254,7 +286,7 @@ def _mediancr(
                 ic, jc = k
                 if flag_integer_dilated[ic, jc] == 2:
                     detection_value_ = median2d[ic, jc] - min2d[ic, jc] - \
-                                        np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary)
+                        np.interp(min2d[ic, jc] - bias, xplot_boundary, yplot_boundary)
                     if detection_value_ > detection_value[i-1]:
                         detection_value[i-1] = detection_value_
                         imax_cr[i-1] = ic
@@ -277,15 +309,15 @@ def _mediancr(
             nrows, ncols = 3, 4
             figsize = (13, 9)
         else:
-            _logger.warning("Only the first 9 images will be plotted")
+            _logger.warning("only the first 9 images will be plotted")
             nrows, ncols = 3, 4
             figsize = (13, 9)
             num_plot_max = 9
         pdf = PdfPages('mediancr_identified_cr.pdf')
 
-        _logger.info("Generating plots for double cosmic rays ranked by detection criterium...")
         if maxplots < 0:
             maxplots = number_cr
+        _logger.info(f"generating {maxplots} plots for double cosmic rays ranked by detection criterium...")
         for idum in range(min(number_cr, maxplots)):
             i = isort_cr[idum]
             ijloc = np.argwhere(labels_cr == i + 1)
@@ -303,7 +335,6 @@ def _mediancr(
             j2 = jc + semiwindow
             if j2 >= naxis1:
                 j2 = naxis1 - 1
-            vmin_, vmax_ = tea.zscale(image3d[:, i1:(i2+1), j1:(j2+1)])
             fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
             axarr = axarr.flatten()
             # Important: use interpolation=None instead of interpolation='None' to avoid
@@ -313,7 +344,12 @@ def _mediancr(
             for k in range(num_plot_max):
                 ax = axarr[k]
                 title = title = f'image#{k+1}/{num_images}'
-                tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin_, vmax=vmax_,
+                if color_scale == 'zscale':
+                    vmin, vmax = tea.zscale(image3d[k, i1:(i2+1), j1:(j2+1)])
+                else:
+                    vmin = np.min(image3d[k][i1:(i2+1), j1:(j2+1)])
+                    vmax = np.max(image3d[k][i1:(i2+1), j1:(j2+1)])
+                tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
                            extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
                            title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
             for k in range(3):
@@ -322,7 +358,11 @@ def _mediancr(
                 if k == 0:
                     image2d = median2d
                     title = 'median'
-                    vmin, vmax = vmin_, vmax_
+                    if color_scale == 'zscale':
+                        vmin, vmax = tea.zscale(median2d[i1:(i2+1), j1:(j2+1)])
+                    else:
+                        vmin = np.min(median2d[i1:(i2+1), j1:(j2+1)])
+                        vmax = np.max(median2d[i1:(i2+1), j1:(j2+1)])
                 elif k == 1:
                     image2d = flag_integer_dilated
                     title = 'flag_integer_dilated'
@@ -332,7 +372,11 @@ def _mediancr(
                 elif k == 2:
                     image2d = median2d_corrected
                     title = 'median corrected'
-                    vmin, vmax = vmin_, vmax_
+                    if color_scale == 'zscale':
+                        vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                    else:
+                        vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                        vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
                 else:
                     raise ValueError(f'Unexpected {k=}')
                 tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
@@ -349,7 +393,7 @@ def _mediancr(
             plt.close(fig)
 
         pdf.close()
-        _logger.info("Plot generation complete.")
+        _logger.info("plot generation complete.")
 
     return median2d_corrected, variance2d, map2d
 
@@ -379,15 +423,22 @@ def main(args=None):
     parser.add_argument("--rnoise",
                         help="Readout noise (ADU)",
                         type=float)
+    parser.add_argument("--bias",
+                        help="Detector bias (ADU, default: 0.0)",
+                        type=float, default=0.0)
     parser.add_argument("--flatmin",
                         help="Minimum value for the flat field (default: 1.0)",
                         type=float, default=1.0)
     parser.add_argument("--flatmax",
                         help="Maximum value for the flat field (default: 1.0)",
                         type=float, default=1.0)
-    parser.add_argument("--percentile",
-                        help="Percentile for numerical boundary of double cosmic rays (default: 99.0)",
-                        type=float, default=99.0)
+    parser.add_argument("--times_boundary_extension",
+                        help="Factor to extend the boundary computed at percentile 98 "
+                             "for double cosmic ray detection (default: 3.0)",
+                        type=float, default=3.0)
+    parser.add_argument("--interactive",
+                        help="Interactive mode for diagnostic plot (program will stop after the plot)",
+                        action="store_true")
     parser.add_argument("--dilation",
                         help="Dilation factor for cosmic ray mask",
                         type=int, default=1)
@@ -395,11 +446,14 @@ def main(args=None):
                         help="Output FITS file for the combined array and mask",
                         type=str)
     parser.add_argument("--plots",
-                        help="Generate plots (0=None, 1=diagnostic plots, 2=all plots)",
-                        type=int, choices=[0, 1, 2], default=0)
+                        help="Generate plots with detected double cosmic rays",
+                        action="store_true")
     parser.add_argument("--semiwindow",
                         help="Semiwindow size for plotting double cosmic rays",
                         type=int, default=15)
+    parser.add_argument("--color_scale",
+                        help="Color scale for the plots (default: 'minmax')",
+                        type=str, choices=['minmax', 'zscale'], default='minmax')
     parser.add_argument("--maxplots",
                         help="Maximum number of double cosmic rays to plot (-1 for all)",
                         type=int, default=10)
@@ -439,13 +493,16 @@ def main(args=None):
         list_arrays=list_arrays,
         gain=args.gain,
         rnoise=args.rnoise,
+        bias=args.bias,
         flatmin=args.flatmin,
         flatmax=args.flatmax,
-        percentile=args.percentile,
+        times_boundary_extension=args.times_boundary_extension,
+        interactive=args.interactive,
         dilation=args.dilation,
         dtype=np.float32,
         plots=args.plots,
         semiwindow=args.semiwindow,
+        color_scale=args.color_scale,
         maxplots=args.maxplots
     )
 
