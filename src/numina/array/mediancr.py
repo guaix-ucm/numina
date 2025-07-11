@@ -30,6 +30,7 @@ def _mediancr(
         knots_splfit=3,
         times_boundary_extension=3.0,
         threshold=None,
+        minimum_max2d_rnoise=5.0,
         interactive=False,
         dilation=1,
         dtype=np.float32,
@@ -79,6 +80,9 @@ def _mediancr(
         cosmic ray (default is None). If None, the threshold is computed
         automatically from the minimum boundary value in the numerical
         simulations.
+    minimum_max2d_rnoise : float, optional
+        Minimum value for max2d in readout noise units to flag a pixel
+        as a double cosmic ray (default is 5.0).
     interactive : bool, optional
         If True, enable interactive mode for plots (default is False).
     dilation : int, optional
@@ -153,6 +157,7 @@ def _mediancr(
     _logger.info("flat field maximum: %f", flatmax)
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
+    _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
     _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
@@ -239,7 +244,7 @@ def _mediancr(
     flag1 = yplot > np.interp(xplot, xplot_boundary, yplot_boundary)
     flag2 = yplot > threshold
     flag = np.logical_and(flag1, flag2)
-    flag3 = max2d.flatten() > 3.0 * rnoise
+    flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
     flag = np.logical_and(flag, flag3)
     _logger.info("number of pixels flagged as double cosmic rays: %d", np.sum(flag))
     fig, ax = plt.subplots()
@@ -256,7 +261,7 @@ def _mediancr(
     yknots = spl98(xknots)
     ax.plot(xknots, yknots, 'C4o', label='knots 98')
     ax.plot(xplot_boundary, yplot_boundary, 'C1.-', label='Exclusion boundary')
-    ax.axhline(threshold, color='C1', linestyle='--', label='Threshold')
+    ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
     ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
@@ -266,7 +271,7 @@ def _mediancr(
     _logger.info("saving mediancr_diagnostic.png.")
     plt.savefig('mediancr_diagnostic.png', dpi=150)
     if interactive:
-        _logger.info("Entering interactive mode.")
+        _logger.info("Entering interactive mode (press 'q' to close plot).")
         plt.show()
         answer = input("Press Enter to continue or type 'exit' to quit: ")
         plt.close(fig)
@@ -327,8 +332,10 @@ def _mediancr(
             for k in ijloc:
                 ic, jc = k
                 if flag_integer_dilated[ic, jc] == 2:
-                    detection_value_ = median2d[ic, jc] - min2d[ic, jc] - \
-                        np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary)
+                    detection_value_ = min(
+                        median2d[ic, jc] - min2d[ic, jc] - np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary),
+                        median2d[ic, jc] - min2d[ic, jc] - threshold
+                    )
                     if detection_value_ > detection_value[i-1]:
                         detection_value[i-1] = detection_value_
                         imax_cr[i-1] = ic
@@ -481,6 +488,12 @@ def main(args=None):
                         help="Factor to extend the boundary computed at percentile 98 "
                              "for double cosmic ray detection (default: 3.0)",
                         type=float, default=3.0)
+    parser.add_argument("--threshold",
+                        help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
+                        type=float, default=None)
+    parser.add_argument("--minimum_max2d_rnoise",
+                        help="Minimum value for max2d in rnoise units to flag a pixel (default: 3.0)",
+                        type=float, default=3.0)
     parser.add_argument("--interactive",
                         help="Interactive mode for diagnostic plot (program will stop after the plot)",
                         action="store_true")
@@ -541,7 +554,10 @@ def main(args=None):
         bias=args.bias,
         flatmin=args.flatmin,
         flatmax=args.flatmax,
+        knots_splfit=args.knots_splfit,
         times_boundary_extension=args.times_boundary_extension,
+        threshold=args.threshold,
+        minimum_max2d_rnoise=args.minimum_max2d_rnoise,
         interactive=args.interactive,
         dilation=args.dilation,
         dtype=np.float32,
