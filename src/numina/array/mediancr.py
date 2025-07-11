@@ -27,7 +27,9 @@ def _mediancr(
         bias=0.0,
         flatmin=1.0,
         flatmax=1.0,
+        knots_splfit=3,
         times_boundary_extension=3.0,
+        threshold=None,
         interactive=False,
         dilation=1,
         dtype=np.float32,
@@ -64,11 +66,19 @@ def _mediancr(
         The minimum value for the flat field (default is 0.1).
     flatmax : float, optional
         The maximum value for the flat field (default is 3.0).
+    knots_splfit : int, optional
+        The number of knots for the spline fit to the boundary
+        (default is 3).
     times_boundary_extension : float, optional
         The factor to extend the boundary computed at percentile 98, in
         units of the difference between the percentiles 98 and 50.
         This is used to compute the numerical boundary for double
         cosmic ray detection (default is 3.0).
+    threshold: float, optional
+        Minimum threshold for median2d - min2d to consider a pixel as a
+        cosmic ray (default is None). If None, the threshold is computed
+        automatically from the minimum boundary value in the numerical
+        simulations.
     interactive : bool, optional
         If True, enable interactive mode for plots (default is False).
     dilation : int, optional
@@ -141,6 +151,8 @@ def _mediancr(
     _logger.info("bias for double cosmic ray detection: %f", bias)
     _logger.info("flat field minimum: %f", flatmin)
     _logger.info("flat field maximum: %f", flatmax)
+    _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
+    _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
@@ -153,6 +165,11 @@ def _mediancr(
     image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
     for i, array in enumerate(list_arrays):
         image3d[i] = array.astype(dtype)
+
+    # Subtract the bias from the input arrays
+    if bias != 0.0:
+        _logger.info("subtracting bias from the input arrays: %f", bias)
+        image3d -= bias
 
     # Compute minimum, median, maximum and variance along the first axis
     min2d = np.min(image3d, axis=0)
@@ -168,7 +185,8 @@ def _mediancr(
     ntest = 100  # number of points along the x-axis for the boundary
     nsimul = 1000  # number of simulations for each point
     nrep_simul = 1000  # number of repetitions for each set of simulations
-    xtest_array = 10**np.linspace(0, np.log10(np.max(min2d) - bias), ntest)  # test values for the x-axis
+    # test values for the x-axis: enlarged by flatmax to ensure we cover a wide range
+    xtest_array = 10**np.linspace(0, np.log10(np.max(min2d) * flatmax), ntest)
     xplot_boundary = np.zeros(ntest, dtype=float)  # x values for the boundary
     yplot_boundary_50 = np.zeros(ntest, dtype=float)  # y values for the boundary
     yplot_boundary_98 = np.zeros(ntest, dtype=float)  # y values for the boundary
@@ -180,11 +198,11 @@ def _mediancr(
         median_rep = np.zeros(nrep_simul, dtype=float)
         # Simulate the minimum, median and maximum of the data
         for k in range(nrep_simul):
-            data = np.ones(nsimul, dtype=float) * xtest + bias
+            data = np.ones(nsimul, dtype=float) * xtest
             # Transform data from ADU to electrons, generate Poisson distribution
             # and transform back from electrons to ADU
             flatfield = rng.uniform(low=flatmin, high=flatmax, size=nsimul)
-            data_with_noise = bias + flatfield * rng.poisson(lam=(data - bias) * gain).astype(float) / gain
+            data_with_noise = flatfield * rng.poisson(lam=(data) * gain).astype(float) / gain
             # Add readout noise
             if rnoise > 0:
                 data_with_noise += rng.normal(loc=0, scale=rnoise, size=nsimul)
@@ -192,34 +210,58 @@ def _mediancr(
             max_rep[k] = np.max(data_with_noise)
             median_rep[k] = np.median(data_with_noise)
         # Compute the boundary using the requested percentile in the y-axis
-        xplot_boundary[i] = xtest  # np.median(min_rep) - bias
+        xplot_boundary[i] = np.median(min_rep)
         yplot_boundary_50[i], yplot_boundary_98[i] = np.percentile(median_rep - min_rep, [50, 98])
 
-    # Fit a polynomial to the boundary points
+    # Fit a spline to the boundary points
     _logger.info("fitting splines to the boundary points...")
     isort = np.argsort(xplot_boundary)
-    spl50 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary[isort], yplot_boundary_50[isort], t=2)
-    spl98 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary[isort], yplot_boundary_98[isort], t=2)
+    xplot_boundary = xplot_boundary[isort]
+    yplot_boundary_50 = yplot_boundary_50[isort]
+    yplot_boundary_98 = yplot_boundary_98[isort]
+    spl50 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary, yplot_boundary_50, t=knots_splfit)
+    spl98 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary, yplot_boundary_98, t=knots_splfit)
     yplot_boundary = spl98(xplot_boundary) + \
         (spl98(xplot_boundary) - spl50(xplot_boundary)) * times_boundary_extension
 
+    if threshold is None:
+        # Use the minimum value of the boundary as the threshold
+        threshold = np.min(yplot_boundary)
+        _logger.info("updated threshold for cosmic ray detection: %f", threshold)
+
     # Apply the criterium to detect double cosmic rays
-    xplot = min2d.flatten() - bias
+    xplot = min2d.flatten()
     yplot = median2d.flatten() - min2d.flatten()
+    # The advantage of using np.interp is that it is faster than
+    # using spl50 and spl98 directly, but also because for xplot values
+    # outside the range of xplot_boundary, it will return the value at the
+    # closest boundary point, which is what we want for the exclusion boundary.
     flag1 = yplot > np.interp(xplot, xplot_boundary, yplot_boundary)
-    flag2 = max2d.flatten() > bias + 3.0 * rnoise
+    flag2 = yplot > threshold
     flag = np.logical_and(flag1, flag2)
+    flag3 = max2d.flatten() > 3.0 * rnoise
+    flag = np.logical_and(flag, flag3)
+    _logger.info("number of pixels flagged as double cosmic rays: %d", np.sum(flag))
     fig, ax = plt.subplots()
     ax.plot(xplot, yplot, 'C0,')
+    xmin, xmax = ax.get_xlim()
     ax.plot(xplot_boundary, yplot_boundary_50, 'C3.-', label='percentile 50')
     ax.plot(xplot_boundary, spl50(xplot_boundary), 'C3--', label='spline fit 50')
+    xknots = spl50.get_knots()
+    yknots = spl50(xknots)
+    ax.plot(xknots, yknots, 'C3o', label='knots 50')
     ax.plot(xplot_boundary, yplot_boundary_98, 'C4.-', label='percentile 98')
     ax.plot(xplot_boundary, spl98(xplot_boundary), 'C4--', label='spline fit 98')
+    xknots = spl98.get_knots()
+    yknots = spl98(xknots)
+    ax.plot(xknots, yknots, 'C4o', label='knots 98')
     ax.plot(xplot_boundary, yplot_boundary, 'C1.-', label='Exclusion boundary')
+    ax.axhline(threshold, color='C1', linestyle='--', label='Threshold')
     ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
-    ax.set_xlabel(r'min2d $-$ bias')
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax.set_ylabel(r'median2d $-$ min2d')
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=3)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=3)
     plt.tight_layout()
     _logger.info("saving mediancr_diagnostic.png.")
     plt.savefig('mediancr_diagnostic.png', dpi=150)
@@ -286,7 +328,7 @@ def _mediancr(
                 ic, jc = k
                 if flag_integer_dilated[ic, jc] == 2:
                     detection_value_ = median2d[ic, jc] - min2d[ic, jc] - \
-                        np.interp(min2d[ic, jc] - bias, xplot_boundary, yplot_boundary)
+                        np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary)
                     if detection_value_ > detection_value[i-1]:
                         detection_value[i-1] = detection_value_
                         imax_cr[i-1] = ic
@@ -432,6 +474,9 @@ def main(args=None):
     parser.add_argument("--flatmax",
                         help="Maximum value for the flat field (default: 1.0)",
                         type=float, default=1.0)
+    parser.add_argument("--knots_splfit",
+                        help="Number of inner knots for the spline fit to the boundary (default: 3)",
+                        type=int, default=3)
     parser.add_argument("--times_boundary_extension",
                         help="Factor to extend the boundary computed at percentile 98 "
                              "for double cosmic ray detection (default: 3.0)",

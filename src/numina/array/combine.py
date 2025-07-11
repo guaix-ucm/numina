@@ -240,10 +240,10 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def mediancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0, times_boundary_extension=3.0,
-             interactive=False, dilation=1, dtype=None, plots=False, semiwindow=15, color_scale='minmax',
-             maxplots=10):
+def mediancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0, knots_splfit=3,
+             times_boundary_extension=3.0, threshold=None, interactive=False, dilation=1, dtype=None,
+             plots=False, semiwindow=15, color_scale='minmax', maxplots=10):
     return _mediancr(arrays, gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin, flatmax=flatmax,
-                     times_boundary_extension=times_boundary_extension, interactive=interactive,
-                     dilation=dilation, dtype=dtype, plots=plots, semiwindow=semiwindow,
-                     color_scale=color_scale, maxplots=maxplots)
+                     knots_splfit=knots_splfit, times_boundary_extension=times_boundary_extension,
+                     threshold=threshold, interactive=interactive, dilation=dilation, dtype=dtype,
+                     plots=plots, semiwindow=semiwindow, color_scale=color_scale, maxplots=maxplots)
