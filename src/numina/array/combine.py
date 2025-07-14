@@ -14,6 +14,7 @@ import numpy
 
 import numina.array._combine as intl  # noqa
 from numina.array.mediancr import _mediancr
+import teareduce as tea
 
 
 def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
@@ -240,12 +241,50 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def mediancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0, knots_splfit=3,
-             times_boundary_extension=3.0, threshold=None, minimum_max2d_rnoise=5.0,
-             interactive=False, dilation=1, dtype=None,
-             plots=False, semiwindow=15, color_scale='minmax', maxplots=10):
-    return _mediancr(arrays, gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin, flatmax=flatmax,
-                     knots_splfit=knots_splfit, times_boundary_extension=times_boundary_extension,
-                     threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
-                     interactive=interactive, dilation=dilation, dtype=dtype,
-                     plots=plots, semiwindow=semiwindow, color_scale=color_scale, maxplots=maxplots)
+def mediancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0,
+             knots_splfit=2, nsimulations=10000, times_boundary_extension=1.0, threshold=None,
+             minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
+             dtype=None, plots=False, semiwindow=15, color_scale='minmax',
+             maxplots=10):
+    """Combine arrays using the median but correcting for double cosmic rays."""
+    median2d_corrected, variance2d, map2d, mean2d = _mediancr(
+        arrays, gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin, flatmax=flatmax,
+        knots_splfit=knots_splfit, nsimulations=nsimulations, 
+        times_boundary_extension=times_boundary_extension,
+        threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
+        interactive=interactive, dilation=dilation, dtype=dtype,
+        plots=plots, semiwindow=semiwindow, color_scale=color_scale, maxplots=maxplots
+    )
+
+    return median2d_corrected, variance2d, map2d
+
+
+def meancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0,
+           knots_splfit=2, nsimulations=10000, times_boundary_extension=1.0, threshold=None,
+           minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
+           dtype=None, plots=False, semiwindow=15, color_scale='minmax',
+           maxplots=10):
+    """Combine arrays using the mean but correcting for double cosmic rays."""
+    median2d_corrected, variance2d, map2d, mean2d = _mediancr(
+        arrays, gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin,
+        flatmax=flatmax, knots_splfit=knots_splfit, nsimulations=nsimulations,
+        times_boundary_extension=times_boundary_extension,
+        threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
+        interactive=interactive, dilation=dilation, dtype=dtype,
+        plots=plots, semiwindow=semiwindow, color_scale=color_scale,
+        maxplots=maxplots
+    )
+
+    print("Executing tea.cr2images to correct the mean image (this takes a while)...")
+    mean2d_corrected, _ = tea.cr2images(
+        data1=mean2d,
+        data2=median2d_corrected,
+        tsigma_peak=10.0,
+        tsigma_tail=3.0,
+        debug_level=1,
+        image_region=tea.SliceRegion2D("[3000:3500,3000:3500]", mode='fits'),
+        zoom_region_imshow=tea.SliceRegion2D("[3000:3500,3000:3500]", mode='fits')
+    )
+    print("tea.cr2images executed successfully.")
+
+    return mean2d_corrected, variance2d, map2d

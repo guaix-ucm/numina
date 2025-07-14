@@ -27,8 +27,9 @@ def _mediancr(
         bias=0.0,
         flatmin=1.0,
         flatmax=1.0,
-        knots_splfit=3,
-        times_boundary_extension=3.0,
+        knots_splfit=2,
+        nsimulations=10000,
+        times_boundary_extension=1.0,
         threshold=None,
         minimum_max2d_rnoise=5.0,
         interactive=False,
@@ -69,12 +70,15 @@ def _mediancr(
         The maximum value for the flat field (default is 3.0).
     knots_splfit : int, optional
         The number of knots for the spline fit to the boundary
-        (default is 3).
+        (default is 2).
+    nsimulations : int, optional
+        The number of simulations to perform for each point in the
+        boundary (default is 10000).
     times_boundary_extension : float, optional
         The factor to extend the boundary computed at percentile 98, in
         units of the difference between the percentiles 98 and 50.
         This is used to compute the numerical boundary for double
-        cosmic ray detection (default is 3.0).
+        cosmic ray detection (default is 1.0).
     threshold: float, optional
         Minimum threshold for median2d - min2d to consider a pixel as a
         cosmic ray (default is None). If None, the threshold is computed
@@ -111,6 +115,8 @@ def _mediancr(
         The variance of the input arrays along the first axis.
     map2d : 2D array
         The number of input pixels used to compute the median at each pixel.
+    mean2d : 2D array
+        The simple mean-combined array of the input arrays.
     """
 
     _logger = logging.getLogger(__name__)
@@ -156,6 +162,7 @@ def _mediancr(
     _logger.info("flat field minimum: %f", flatmin)
     _logger.info("flat field maximum: %f", flatmax)
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
+    _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
     _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
@@ -180,6 +187,7 @@ def _mediancr(
     min2d = np.min(image3d, axis=0)
     max2d = np.max(image3d, axis=0)
     median2d = np.median(image3d, axis=0)
+    mean2d = np.mean(image3d, axis=0)
     variance2d = np.var(image3d, axis=0, ddof=1)
     # Number of pixels used to compute the median at each pixel
     map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
@@ -188,8 +196,6 @@ def _mediancr(
     _logger.info("computing numerical boundary for double cosmic ray detection...")
     seed = 1234
     ntest = 100  # number of points along the x-axis for the boundary
-    nsimul = 1000  # number of simulations for each point
-    nrep_simul = 1000  # number of repetitions for each set of simulations
     # test values for the x-axis: enlarged by flatmax to ensure we cover a wide range
     xtest_array = 10**np.linspace(0, np.log10(np.max(min2d) * flatmax), ntest)
     xplot_boundary = np.zeros(ntest, dtype=float)  # x values for the boundary
@@ -198,19 +204,19 @@ def _mediancr(
     rng = np.random.default_rng(seed)  # Random number generator for reproducibility
     for i in range(ntest):
         xtest = xtest_array[i]
-        min_rep = np.zeros(nrep_simul, dtype=float)
-        max_rep = np.zeros(nrep_simul, dtype=float)
-        median_rep = np.zeros(nrep_simul, dtype=float)
+        min_rep = np.zeros(nsimulations, dtype=float)
+        max_rep = np.zeros(nsimulations, dtype=float)
+        median_rep = np.zeros(nsimulations, dtype=float)
         # Simulate the minimum, median and maximum of the data
-        for k in range(nrep_simul):
-            data = np.ones(nsimul, dtype=float) * xtest
+        for k in range(nsimulations):
+            data = np.ones(num_images, dtype=float) * xtest
             # Transform data from ADU to electrons, generate Poisson distribution
             # and transform back from electrons to ADU
-            flatfield = rng.uniform(low=flatmin, high=flatmax, size=nsimul)
+            flatfield = rng.uniform(low=flatmin, high=flatmax, size=num_images)
             data_with_noise = flatfield * rng.poisson(lam=(data) * gain).astype(float) / gain
             # Add readout noise
             if rnoise > 0:
-                data_with_noise += rng.normal(loc=0, scale=rnoise, size=nsimul)
+                data_with_noise += rng.normal(loc=0, scale=rnoise, size=num_images)
             min_rep[k] = np.min(data_with_noise)
             max_rep[k] = np.max(data_with_noise)
             median_rep[k] = np.median(data_with_noise)
@@ -224,6 +230,10 @@ def _mediancr(
     xplot_boundary = xplot_boundary[isort]
     yplot_boundary_50 = yplot_boundary_50[isort]
     yplot_boundary_98 = yplot_boundary_98[isort]
+    ifit = xplot_boundary < np.max(min2d)
+    xplot_boundary = xplot_boundary[ifit]
+    yplot_boundary_50 = yplot_boundary_50[ifit]
+    yplot_boundary_98 = yplot_boundary_98[ifit]
     spl50 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary, yplot_boundary_50, t=knots_splfit)
     spl98 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary, yplot_boundary_98, t=knots_splfit)
     yplot_boundary = spl98(xplot_boundary) + \
@@ -250,17 +260,17 @@ def _mediancr(
     fig, ax = plt.subplots()
     ax.plot(xplot, yplot, 'C0,')
     xmin, xmax = ax.get_xlim()
-    ax.plot(xplot_boundary, yplot_boundary_50, 'C3.-', label='percentile 50')
+    ax.plot(xplot_boundary, yplot_boundary_50, 'C3.', label='percentile 50')
     ax.plot(xplot_boundary, spl50(xplot_boundary), 'C3--', label='spline fit 50')
     xknots = spl50.get_knots()
     yknots = spl50(xknots)
     ax.plot(xknots, yknots, 'C3o', label='knots 50')
-    ax.plot(xplot_boundary, yplot_boundary_98, 'C4.-', label='percentile 98')
+    ax.plot(xplot_boundary, yplot_boundary_98, 'C4.', label='percentile 98')
     ax.plot(xplot_boundary, spl98(xplot_boundary), 'C4--', label='spline fit 98')
     xknots = spl98.get_knots()
     yknots = spl98(xknots)
     ax.plot(xknots, yknots, 'C4o', label='knots 98')
-    ax.plot(xplot_boundary, yplot_boundary, 'C1.-', label='Exclusion boundary')
+    ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Exclusion boundary')
     ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
     ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
     ax.set_xlim(xmin, xmax)
@@ -281,13 +291,14 @@ def _mediancr(
     else:
         plt.close(fig)
 
-    # Create a mask for the flagged pixels
+    # Return if no pixels were flagged as double cosmic rays
     flag = flag.reshape((naxis2, naxis1))
-    flag_integer = flag.astype(np.uint8)
     if not np.any(flag):
         _logger.info("no double cosmic rays detected.")
-        return median2d, variance2d, map2d
+        return median2d, variance2d, map2d, mean2d
 
+    # Convert the flag to an integer array for dilation
+    flag_integer = flag.astype(np.uint8)
     if dilation > 0:
         _logger.info("before dilation: %d pixels flagged as double cosmic rays.", np.sum(flag_integer))
         structure = ndimage.generate_binary_structure(2, 2)
@@ -444,7 +455,7 @@ def _mediancr(
         pdf.close()
         _logger.info("plot generation complete.")
 
-    return median2d_corrected, variance2d, map2d
+    return median2d_corrected, variance2d, map2d, mean2d
 
 
 def main(args=None):
@@ -482,12 +493,15 @@ def main(args=None):
                         help="Maximum value for the flat field (default: 1.0)",
                         type=float, default=1.0)
     parser.add_argument("--knots_splfit",
-                        help="Number of inner knots for the spline fit to the boundary (default: 3)",
-                        type=int, default=3)
+                        help="Number of inner knots for the spline fit to the boundary (default: 2)",
+                        type=int, default=2)
+    parser.add_argument("--nsimulations",
+                        help="Number of simulations for each point in the boundary (default: 10000)",
+                        type=int, default=10000)
     parser.add_argument("--times_boundary_extension",
                         help="Factor to extend the boundary computed at percentile 98 "
-                             "for double cosmic ray detection (default: 3.0)",
-                        type=float, default=3.0)
+                             "for double cosmic ray detection (default: 1.0)",
+                        type=float, default=1.0)
     parser.add_argument("--threshold",
                         help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
                         type=float, default=None)
@@ -547,7 +561,7 @@ def main(args=None):
         raise ValueError("Readout noise must be provided for mediancr combination.")
 
     # Perform the mediancr combination
-    combined_array, variance, map = _mediancr(
+    median2d_corrected, variance, maparray, mean2d = _mediancr(
         list_arrays=list_arrays,
         gain=args.gain,
         rnoise=args.rnoise,
@@ -555,6 +569,7 @@ def main(args=None):
         flatmin=args.flatmin,
         flatmax=args.flatmax,
         knots_splfit=args.knots_splfit,
+        nsimulations=args.nsimulations,
         times_boundary_extension=args.times_boundary_extension,
         threshold=args.threshold,
         minimum_max2d_rnoise=args.minimum_max2d_rnoise,
@@ -569,9 +584,9 @@ def main(args=None):
 
     # Save the combined array and mask to a FITS file
     if args.output:
-        hdu_combined = fits.PrimaryHDU(combined_array)
+        hdu_combined = fits.PrimaryHDU(median2d_corrected.astype(np.float32))
         hdu_variance = fits.ImageHDU(variance.astype(np.float32), name='VARIANCE')
-        hdu_map = fits.ImageHDU(map.astype(np.int16), name='MAP')
+        hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
         hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
         hdul.writeto(args.output, overwrite=True)
         logger.info("Combined array, variance, and map saved to %s", args.output)
