@@ -22,6 +22,7 @@ import teareduce as tea
 
 def _mediancr(
         list_arrays,
+        find_double_cr=True,
         gain=None,
         rnoise=None,
         bias=0.0,
@@ -58,6 +59,10 @@ def _mediancr(
     ----------
     list_arrays : list of 2D arrays
         The input arrays to be combined.
+    find_double_cr : bool, optional
+        If True, apply the double cosmic ray detection algorithm
+        (default is True). If False, the function will only compute
+        the median without detecting double cosmic rays.
     gain : float
         The gain value (in e/ADU) of the detector.
     bias : float, optional
@@ -73,7 +78,7 @@ def _mediancr(
         (default is 2).
     nsimulations : int, optional
         The number of simulations to perform for each point in the
-        boundary (default is 10000).
+        exclusion boundary (default is 10000).
     times_boundary_extension : float, optional
         The factor to extend the boundary computed at percentile 98, in
         units of the difference between the percentiles 98 and 50.
@@ -111,6 +116,8 @@ def _mediancr(
     -------
     median2d_corrected : 2D array
         The median-combined array with double cosmic rays corrected.
+        If `find_double_cr` is False, this is simply the median
+        of the input arrays.
     variance2d : 2D array
         The variance of the input arrays along the first axis.
     map2d : 2D array
@@ -140,38 +147,41 @@ def _mediancr(
             raise ValueError(f"Array {i} has a different shape than the first array.")
     naxis2, naxis1 = list_arrays[0].shape
 
-    # Check that gain is defined
-    if gain is None:
-        raise ValueError("Gain must be defined for mediancr combination.")
-
-    # Check that readout noise is defined
-    if rnoise is None:
-        raise ValueError("Readout noise must be defined for mediancr combination.")
-
-    # Check that color_scale is valid
-    if color_scale not in ['minmax', 'zscale']:
-        raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
-
-    # Log the input parameters
+    # Log the number of input arrays and their shapes
     _logger.info("number of input arrays: %d", len(list_arrays))
     for i, array in enumerate(list_arrays):
         _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
-    _logger.info("gain for double cosmic ray detection: %f", gain)
-    _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
-    _logger.info("bias for double cosmic ray detection: %f", bias)
-    _logger.info("flat field minimum: %f", flatmin)
-    _logger.info("flat field maximum: %f", flatmax)
-    _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
-    _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
-    _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
-    _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
-    _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
-    _logger.info("dtype for output arrays: %s", dtype)
-    _logger.info("dilation factor: %d", dilation)
-    if plots:
-        _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
-        _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
-        _logger.info("color scale for plots: %s", color_scale)
+
+    if find_double_cr:
+        # Check that gain is defined
+        if gain is None:
+            raise ValueError("Gain must be defined for mediancr combination.")
+
+        # Check that readout noise is defined
+        if rnoise is None:
+            raise ValueError("Readout noise must be defined for mediancr combination.")
+
+        # Check that color_scale is valid
+        if color_scale not in ['minmax', 'zscale']:
+            raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
+
+        # Log the input parameters
+        _logger.info("gain for double cosmic ray detection: %f", gain)
+        _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
+        _logger.info("bias for double cosmic ray detection: %f", bias)
+        _logger.info("flat field minimum: %f", flatmin)
+        _logger.info("flat field maximum: %f", flatmax)
+        _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
+        _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
+        _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
+        _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
+        _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
+        _logger.info("dtype for output arrays: %s", dtype)
+        _logger.info("dilation factor: %d", dilation)
+        if plots:
+            _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
+            _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
+            _logger.info("color scale for plots: %s", color_scale)
 
     # Convert the list of arrays to a 3D numpy array
     image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
@@ -191,6 +201,9 @@ def _mediancr(
     variance2d = np.var(image3d, axis=0, ddof=1)
     # Number of pixels used to compute the median at each pixel
     map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
+    if not find_double_cr:
+        _logger.info("find_double_cr is set to False, skipping double cosmic ray detection.")
+        return median2d, variance2d, map2d, mean2d
 
     # Numerical boundary for double cosmic ray detection
     _logger.info("computing numerical boundary for double cosmic ray detection...")
@@ -230,7 +243,7 @@ def _mediancr(
     xplot_boundary = xplot_boundary[isort]
     yplot_boundary_50 = yplot_boundary_50[isort]
     yplot_boundary_98 = yplot_boundary_98[isort]
-    ifit = xplot_boundary < np.max(min2d)
+    ifit = xplot_boundary <= np.max(min2d)
     xplot_boundary = xplot_boundary[ifit]
     yplot_boundary_50 = yplot_boundary_50[ifit]
     yplot_boundary_98 = yplot_boundary_98[ifit]

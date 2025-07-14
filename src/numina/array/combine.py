@@ -241,15 +241,17 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def mediancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0,
+def mediancr(arrays, find_double_cr=True,
+             gain=None, rnoise=None, bias=0.0, flatmin=1.0, flatmax=1.0,
              knots_splfit=2, nsimulations=10000, times_boundary_extension=1.0, threshold=None,
              minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
              dtype=None, plots=False, semiwindow=15, color_scale='minmax',
              maxplots=10):
     """Combine arrays using the median but correcting for double cosmic rays."""
     median2d_corrected, variance2d, map2d, mean2d = _mediancr(
-        arrays, gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin, flatmax=flatmax,
-        knots_splfit=knots_splfit, nsimulations=nsimulations, 
+        arrays, find_double_cr=find_double_cr,
+        gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin, flatmax=flatmax,
+        knots_splfit=knots_splfit, nsimulations=nsimulations,
         times_boundary_extension=times_boundary_extension,
         threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
         interactive=interactive, dilation=dilation, dtype=dtype,
@@ -259,14 +261,16 @@ def mediancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0,
     return median2d_corrected, variance2d, map2d
 
 
-def meancr(arrays, gain, rnoise, bias=0.0, flatmin=1.0, flatmax=1.0,
-           knots_splfit=2, nsimulations=10000, times_boundary_extension=1.0, threshold=None,
-           minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
-           dtype=None, plots=False, semiwindow=15, color_scale='minmax',
-           maxplots=10):
+def medianmeancr(arrays, find_double_cr=True,
+                 gain=None, rnoise=None, bias=0.0, flatmin=1.0, flatmax=1.0,
+                 knots_splfit=2, nsimulations=10000, times_boundary_extension=1.0, threshold=None,
+                 minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
+                 dtype=None, plots=False, semiwindow=15, color_scale='minmax',
+                 maxplots=10):
     """Combine arrays using the mean but correcting for double cosmic rays."""
     median2d_corrected, variance2d, map2d, mean2d = _mediancr(
-        arrays, gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin,
+        arrays, find_double_cr=find_double_cr,
+        gain=gain, rnoise=rnoise, bias=bias, flatmin=flatmin,
         flatmax=flatmax, knots_splfit=knots_splfit, nsimulations=nsimulations,
         times_boundary_extension=times_boundary_extension,
         threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
