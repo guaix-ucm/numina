@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Median combination of arrays avoiding multiple cosmic rays in the same pixel."""
+import inspect
 import logging
 import sys
 
@@ -20,14 +21,82 @@ from scipy import ndimage
 import teareduce as tea
 
 
+def save_mask(mask, filename, extname, locals_items):
+    """Save mask to a FITS file.
+
+    Parameters
+    ----------
+    mask : numpy.ndarray
+        The mask array to save.
+    filename : str
+        The name of the output FITS file.
+    extname : str
+        The extension name for the mask in the FITS file.
+    locals_items : dict
+        Local variables in calling function to filter and log.
+    """
+
+    args = inspect.signature(_mediancr).parameters
+    filtered_args = {k: v for k, v in locals_items if k in args and k not in ['list_arrays']}
+    hdu_mask = fits.PrimaryHDU(mask.astype(np.uint8))
+    hdu_mask.header['EXTNAME'] = extname
+    hdu_mask.header['COMMENT'] = 'Mask for double cosmic rays detected by mediancr'
+    for key, value in filtered_args.items():
+        hdu_mask.header.add_history(f"{key} = {value}")
+    hdulist = fits.HDUList([hdu_mask])
+    hdulist.writeto(filename, overwrite=True)
+
+
+def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
+                    yplot_boundary_50, yplot_boundary_98, spl50, spl98,
+                    threshold, interactive, _logger, png_filename):
+    """Diagnostic plot for the mediancr function.
+    """
+    if png_filename is None:
+        raise ValueError("png_filename must be provided for diagnostic plots.")
+    fig, ax = plt.subplots()
+    ax.plot(xplot, yplot, 'C0,')
+    xmin, xmax = ax.get_xlim()
+    ax.plot(xplot_boundary, yplot_boundary_50, 'C3.', label='percentile 50')
+    ax.plot(xplot_boundary, spl50(xplot_boundary), 'C3--', label='spline fit 50')
+    xknots = spl50.get_knots()
+    yknots = spl50(xknots)
+    ax.plot(xknots, yknots, 'C3o', label='knots 50')
+    ax.plot(xplot_boundary, yplot_boundary_98, 'C4.', label='percentile 98')
+    ax.plot(xplot_boundary, spl98(xplot_boundary), 'C4--', label='spline fit 98')
+    xknots = spl98.get_knots()
+    yknots = spl98(xknots)
+    ax.plot(xknots, yknots, 'C4o', label='knots 98')
+    ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Exclusion boundary')
+    ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
+    ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
+    ax.set_ylabel(r'median2d $-$ min2d')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=3)
+    plt.tight_layout()
+    _logger.info(f"saving {png_filename}.")
+    plt.savefig(png_filename, dpi=150)
+    if interactive:
+        _logger.info("Entering interactive mode (press 'q' to close plot).")
+        plt.show()
+        answer = input("Press Enter to continue or type 'exit' to quit: ")
+        plt.close(fig)
+        if answer.lower() == 'exit':
+            _logger.info("Exiting program.")
+            raise SystemExit()
+    else:
+        plt.close(fig)
+
+
 def _mediancr(
         list_arrays,
-        find_double_cr=True,
         gain=None,
         rnoise=None,
         bias=0.0,
-        flatmin=1.0,
-        flatmax=1.0,
+        flux_variation_min=1.0,
+        flux_variation_max=1.0,
+        ntest=100,
         knots_splfit=2,
         nsimulations=10000,
         times_boundary_extension=1.0,
@@ -35,6 +104,7 @@ def _mediancr(
         minimum_max2d_rnoise=5.0,
         interactive=False,
         dilation=1,
+        compute_meancr=True,
         dtype=np.float32,
         plots=False,
         semiwindow=15,
@@ -59,10 +129,6 @@ def _mediancr(
     ----------
     list_arrays : list of 2D arrays
         The input arrays to be combined.
-    find_double_cr : bool, optional
-        If True, apply the double cosmic ray detection algorithm
-        (default is True). If False, the function will only compute
-        the median without detecting double cosmic rays.
     gain : float
         The gain value (in e/ADU) of the detector.
     bias : float, optional
@@ -73,6 +139,9 @@ def _mediancr(
         The minimum value for the flat field (default is 0.1).
     flatmax : float, optional
         The maximum value for the flat field (default is 3.0).
+    ntest: int, optional
+        The number of points along the x-axis in the diagnostic
+        diagram to sample for the boundary.
     knots_splfit : int, optional
         The number of knots for the spline fit to the boundary
         (default is 2).
@@ -96,6 +165,9 @@ def _mediancr(
         If True, enable interactive mode for plots (default is False).
     dilation : int, optional
         The dilation factor for the double cosmic ray mask (default is 1).
+    compute_meancr: bool, optional
+        If True, apply the same algorithm to compute a mean2d_corrected
+        image, replacing suspected CR by the mediancr values.
     dtype : data-type, optional
         The desired data type for the output arrays (default is np.float32).
     plots : bool, optional
@@ -116,14 +188,16 @@ def _mediancr(
     -------
     median2d_corrected : 2D array
         The median-combined array with double cosmic rays corrected.
-        If `find_double_cr` is False, this is simply the median
-        of the input arrays.
     variance2d : 2D array
         The variance of the input arrays along the first axis.
     map2d : 2D array
         The number of input pixels used to compute the median at each pixel.
-    mean2d : 2D array
-        The simple mean-combined array of the input arrays.
+    mean2d_corrected : 2D array
+        If `compute_meancr` is True, this is the mean-combined array of
+        the input arrays with cosmic rays corrected. Here we use the same
+        method as for the median, but replacing the suspected pixels by
+        the values in `median2d_corrected`. If `compute_meancr` is False,
+        it is simply the mean of the input arrays.
     """
 
     _logger = logging.getLogger(__name__)
@@ -152,36 +226,37 @@ def _mediancr(
     for i, array in enumerate(list_arrays):
         _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
 
-    if find_double_cr:
-        # Check that gain is defined
-        if gain is None:
-            raise ValueError("Gain must be defined for mediancr combination.")
+    # Check that gain is defined
+    if gain is None:
+        raise ValueError("Gain must be defined for mediancr combination.")
 
-        # Check that readout noise is defined
-        if rnoise is None:
-            raise ValueError("Readout noise must be defined for mediancr combination.")
+    # Check that readout noise is defined
+    if rnoise is None:
+        raise ValueError("Readout noise must be defined for mediancr combination.")
 
-        # Check that color_scale is valid
-        if color_scale not in ['minmax', 'zscale']:
-            raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
+    # Check that color_scale is valid
+    if color_scale not in ['minmax', 'zscale']:
+        raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
-        # Log the input parameters
-        _logger.info("gain for double cosmic ray detection: %f", gain)
-        _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
-        _logger.info("bias for double cosmic ray detection: %f", bias)
-        _logger.info("flat field minimum: %f", flatmin)
-        _logger.info("flat field maximum: %f", flatmax)
-        _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
-        _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
-        _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
-        _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
-        _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
-        _logger.info("dtype for output arrays: %s", dtype)
-        _logger.info("dilation factor: %d", dilation)
-        if plots:
-            _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
-            _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
-            _logger.info("color scale for plots: %s", color_scale)
+    # Log the input parameters
+    _logger.info("gain for double cosmic ray detection: %f", gain)
+    _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
+    _logger.info("bias for double cosmic ray detection: %f", bias)
+    _logger.info("flux variation minimum: %f", flux_variation_min)
+    _logger.info("flux variation maximum: %f", flux_variation_max)
+    _logger.info("number of points along the x-axis for the boundary: %d", ntest)
+    _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
+    _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
+    _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
+    _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
+    _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
+    _logger.info("dtype for output arrays: %s", dtype)
+    _logger.info("dilation factor: %d", dilation)
+    _logger.info("compute mean2d for cosmic ray detection: %s", compute_meancr)
+    if plots:
+        _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
+        _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
+        _logger.info("color scale for plots: %s", color_scale)
 
     # Convert the list of arrays to a 3D numpy array
     image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
@@ -201,19 +276,15 @@ def _mediancr(
     variance2d = np.var(image3d, axis=0, ddof=1)
     # Number of pixels used to compute the median at each pixel
     map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
-    if not find_double_cr:
-        _logger.info("find_double_cr is set to False, skipping double cosmic ray detection.")
-        return median2d, variance2d, map2d, mean2d
 
     # Numerical boundary for double cosmic ray detection
     _logger.info("computing numerical boundary for double cosmic ray detection...")
     seed = 1234
-    ntest = 100  # number of points along the x-axis for the boundary
-    # test values for the x-axis: enlarged by flatmax to ensure we cover a wide range
-    xtest_array = 10**np.linspace(0, np.log10(np.max(min2d) * flatmax), ntest)
+    # test values for the x-axis
+    xtest_array = 10**np.linspace(0, np.log10(np.max(max2d)), ntest)
     xplot_boundary = np.zeros(ntest, dtype=float)  # x values for the boundary
-    yplot_boundary_50 = np.zeros(ntest, dtype=float)  # y values for the boundary
-    yplot_boundary_98 = np.zeros(ntest, dtype=float)  # y values for the boundary
+    yplot_boundary_50 = np.zeros(ntest, dtype=float)  # y values for the boundary at percentile 50
+    yplot_boundary_98 = np.zeros(ntest, dtype=float)  # y values for the boundary at percentile 98
     rng = np.random.default_rng(seed)  # Random number generator for reproducibility
     for i in range(ntest):
         xtest = xtest_array[i]
@@ -222,11 +293,11 @@ def _mediancr(
         median_rep = np.zeros(nsimulations, dtype=float)
         # Simulate the minimum, median and maximum of the data
         for k in range(nsimulations):
-            data = np.ones(num_images, dtype=float) * xtest
+            flux_variation = rng.uniform(low=flux_variation_min, high=flux_variation_max, size=num_images)
+            data = np.ones(num_images, dtype=float) * xtest * flux_variation
             # Transform data from ADU to electrons, generate Poisson distribution
             # and transform back from electrons to ADU
-            flatfield = rng.uniform(low=flatmin, high=flatmax, size=num_images)
-            data_with_noise = flatfield * rng.poisson(lam=(data) * gain).astype(float) / gain
+            data_with_noise = rng.poisson(lam=(data) * gain).astype(float) / gain
             # Add readout noise
             if rnoise > 0:
                 data_with_noise += rng.normal(loc=0, scale=rnoise, size=num_images)
@@ -270,205 +341,219 @@ def _mediancr(
     flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
     flag = np.logical_and(flag, flag3)
     _logger.info("number of pixels flagged as double cosmic rays: %d", np.sum(flag))
-    fig, ax = plt.subplots()
-    ax.plot(xplot, yplot, 'C0,')
-    xmin, xmax = ax.get_xlim()
-    ax.plot(xplot_boundary, yplot_boundary_50, 'C3.', label='percentile 50')
-    ax.plot(xplot_boundary, spl50(xplot_boundary), 'C3--', label='spline fit 50')
-    xknots = spl50.get_knots()
-    yknots = spl50(xknots)
-    ax.plot(xknots, yknots, 'C3o', label='knots 50')
-    ax.plot(xplot_boundary, yplot_boundary_98, 'C4.', label='percentile 98')
-    ax.plot(xplot_boundary, spl98(xplot_boundary), 'C4--', label='spline fit 98')
-    xknots = spl98.get_knots()
-    yknots = spl98(xknots)
-    ax.plot(xknots, yknots, 'C4o', label='knots 98')
-    ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Exclusion boundary')
-    ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
-    ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
-    ax.set_xlim(xmin, xmax)
-    ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
-    ax.set_ylabel(r'median2d $-$ min2d')
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=3)
-    plt.tight_layout()
-    _logger.info("saving mediancr_diagnostic.png.")
-    plt.savefig('mediancr_diagnostic.png', dpi=150)
-    if interactive:
-        _logger.info("Entering interactive mode (press 'q' to close plot).")
-        plt.show()
-        answer = input("Press Enter to continue or type 'exit' to quit: ")
-        plt.close(fig)
-        if answer.lower() == 'exit':
-            _logger.info("Exiting program.")
-            raise SystemExit()
-    else:
-        plt.close(fig)
+    diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
+                    yplot_boundary_50, yplot_boundary_98, spl50, spl98,
+                    threshold, interactive, _logger,
+                    png_filename='mediancr_diagnostic.png')
 
-    # Return if no pixels were flagged as double cosmic rays
     flag = flag.reshape((naxis2, naxis1))
     if not np.any(flag):
         _logger.info("no double cosmic rays detected.")
-        return median2d, variance2d, map2d, mean2d
-
-    # Convert the flag to an integer array for dilation
-    flag_integer = flag.astype(np.uint8)
-    if dilation > 0:
-        _logger.info("before dilation: %d pixels flagged as double cosmic rays.", np.sum(flag_integer))
-        structure = ndimage.generate_binary_structure(2, 2)
-        flag_integer_dilated = ndimage.binary_dilation(
-            flag_integer,
-            structure=structure,
-            iterations=dilation
-        ).astype(np.uint8)
-        _logger.info("after dilation: %d pixels flagged as double cosmic rays.", np.sum(flag_integer_dilated))
+        median2d_corrected = median2d
+        mask_mediancr = np.zeros_like(median2d_corrected, dtype=bool)
     else:
-        flag_integer_dilated = flag_integer
-        _logger.info("no dilation applied: %d pixels flagged as double cosmic rays.", np.sum(flag_integer))
-
-    # Set to 2 the pixels that were originally flagged as cosmic rays
-    # (this is to distinguish them from the pixels that were dilated,
-    # which will be set to 1)
-    flag_integer_dilated[flag] = 2
-
-    # Fix the median2d array by replacing the flagged pixels with the minimum value
-    # of the corresponding pixel in the input arrays
-    median2d_corrected = median2d.copy()
-    mask = flag_integer_dilated > 0
-    median2d_corrected[mask] = min2d[mask]
-    variance2d[mask] = 0.0  # Set variance to 0 for the flagged pixels
-    map2d[mask] = 1  # Set the map to 1 for the flagged pixels
-
-    # Plot the cosmic rays if requested
-    if plots:
-        # Label the connected pixels as individual cosmic rays
-        labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
-        _logger.info("number of double cosmic rays (connected pixels) detected: %d", number_cr)
-        # Sort the cosmic rays by global detection criterium
-        _logger.info("sorting cosmic rays by detection criterium...")
-        detection_value = np.zeros(number_cr, dtype=float)
-        imax_cr = np.zeros(number_cr, dtype=int)
-        jmax_cr = np.zeros(number_cr, dtype=int)
-        for i in range(1, number_cr + 1):
-            ijloc = np.argwhere(labels_cr == i)
-            detection_value[i-1] = 0
-            imax_cr[i-1] = -1
-            jmax_cr[i-1] = -1
-            for k in ijloc:
-                ic, jc = k
-                if flag_integer_dilated[ic, jc] == 2:
-                    detection_value_ = min(
-                        median2d[ic, jc] - min2d[ic, jc] - np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary),
-                        median2d[ic, jc] - min2d[ic, jc] - threshold
-                    )
-                    if detection_value_ > detection_value[i-1]:
-                        detection_value[i-1] = detection_value_
-                        imax_cr[i-1] = ic
-                        jmax_cr[i-1] = jc
-        isort_cr = np.argsort(detection_value)[::-1]
-        num_plot_max = num_images
-        # Determine the number of rows and columns for the plot,
-        # considering that we want to plot also 3 additional images:
-        # the median2d, the mask and the median2d_corrected
-        if num_images == 3:
-            nrows, ncols = 2, 3
-            figsize = (10, 6)
-        elif num_images in [4, 5]:
-            nrows, ncols = 2, 4
-            figsize = (13, 6)
-        elif num_images == 6:
-            nrows, ncols = 3, 3
-            figsize = (13, 3)
-        elif num_images in [7, 8, 9]:
-            nrows, ncols = 3, 4
-            figsize = (13, 9)
+        _logger.info("double cosmic rays detected, applying correction...")
+        # Convert the flag to an integer array for dilation
+        flag_integer = flag.astype(np.uint8)
+        if dilation > 0:
+            _logger.info("before dilation: %d pixels flagged as double cosmic rays.", np.sum(flag_integer))
+            structure = ndimage.generate_binary_structure(2, 2)
+            flag_integer_dilated = ndimage.binary_dilation(
+                flag_integer,
+                structure=structure,
+                iterations=dilation
+            ).astype(np.uint8)
+            _logger.info("after dilation: %d pixels flagged as double cosmic rays.", np.sum(flag_integer_dilated))
         else:
-            _logger.warning("only the first 9 images will be plotted")
-            nrows, ncols = 3, 4
-            figsize = (13, 9)
-            num_plot_max = 9
-        pdf = PdfPages('mediancr_identified_cr.pdf')
+            flag_integer_dilated = flag_integer
+            _logger.info("no dilation applied: %d pixels flagged as double cosmic rays.", np.sum(flag_integer))
+        # Set to 2 the pixels that were originally flagged as cosmic rays
+        # (this is to distinguish them from the pixels that were dilated,
+        # which will be set to 1)
+        flag_integer_dilated[flag] = 2
+        # Fix the median2d array by replacing the flagged pixels with the minimum value
+        # of the corresponding pixel in the input arrays
+        median2d_corrected = median2d.copy()
+        mask_mediancr = flag_integer_dilated > 0
+        median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
+        variance2d[mask_mediancr] = 0.0  # Set variance to 0 for the flagged pixels
+        map2d[mask_mediancr] = 1  # Set the map to 1 for the flagged pixels
+        # Plot the cosmic rays if requested
+        if plots:
+            # Label the connected pixels as individual cosmic rays
+            labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
+            _logger.info("number of double cosmic rays (connected pixels) detected: %d", number_cr)
+            # Sort the cosmic rays by global detection criterium
+            _logger.info("sorting cosmic rays by detection criterium...")
+            detection_value = np.zeros(number_cr, dtype=float)
+            imax_cr = np.zeros(number_cr, dtype=int)
+            jmax_cr = np.zeros(number_cr, dtype=int)
+            for i in range(1, number_cr + 1):
+                ijloc = np.argwhere(labels_cr == i)
+                detection_value[i-1] = 0
+                imax_cr[i-1] = -1
+                jmax_cr[i-1] = -1
+                for k in ijloc:
+                    ic, jc = k
+                    if flag_integer_dilated[ic, jc] == 2:
+                        detection_value_ = min(
+                            median2d[ic, jc] - min2d[ic, jc] - np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary),
+                            median2d[ic, jc] - min2d[ic, jc] - threshold
+                        )
+                        if detection_value_ > detection_value[i-1]:
+                            detection_value[i-1] = detection_value_
+                            imax_cr[i-1] = ic
+                            jmax_cr[i-1] = jc
+            isort_cr = np.argsort(detection_value)[::-1]
+            num_plot_max = num_images
+            # Determine the number of rows and columns for the plot,
+            # considering that we want to plot also 3 additional images:
+            # the median2d, the mask and the median2d_corrected
+            if num_images == 3:
+                nrows, ncols = 2, 3
+                figsize = (10, 6)
+            elif num_images in [4, 5]:
+                nrows, ncols = 2, 4
+                figsize = (13, 6)
+            elif num_images == 6:
+                nrows, ncols = 3, 3
+                figsize = (13, 3)
+            elif num_images in [7, 8, 9]:
+                nrows, ncols = 3, 4
+                figsize = (13, 9)
+            else:
+                _logger.warning("only the first 9 images will be plotted")
+                nrows, ncols = 3, 4
+                figsize = (13, 9)
+                num_plot_max = 9
+            pdf = PdfPages('mediancr_identified_cr.pdf')
 
-        if maxplots < 0:
-            maxplots = number_cr
-        _logger.info(f"generating {maxplots} plots for double cosmic rays ranked by detection criterium...")
-        for idum in range(min(number_cr, maxplots)):
-            i = isort_cr[idum]
-            ijloc = np.argwhere(labels_cr == i + 1)
-            ic = int(np.mean(ijloc[:, 0]) + 0.5)
-            jc = int(np.mean(ijloc[:, 1]) + 0.5)
-            i1 = ic - semiwindow
-            if i1 < 0:
-                i1 = 0
-            i2 = ic + semiwindow
-            if i2 >= naxis2:
-                i2 = naxis2 - 1
-            j1 = jc - semiwindow
-            if j1 < 0:
-                j1 = 0
-            j2 = jc + semiwindow
-            if j2 >= naxis1:
-                j2 = naxis1 - 1
-            fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
-            axarr = axarr.flatten()
-            # Important: use interpolation=None instead of interpolation='None' to avoid
-            # having blurred images when opening the PDF file with macos Preview
-            cmap = 'viridis'
-            cblabel = 'Number of counts'
-            for k in range(num_plot_max):
-                ax = axarr[k]
-                title = title = f'image#{k+1}/{num_images}'
-                if color_scale == 'zscale':
-                    vmin, vmax = tea.zscale(image3d[k, i1:(i2+1), j1:(j2+1)])
-                else:
-                    vmin = np.min(image3d[k][i1:(i2+1), j1:(j2+1)])
-                    vmax = np.max(image3d[k][i1:(i2+1), j1:(j2+1)])
-                tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
-                           extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
-                           title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
-            for k in range(3):
-                ax = axarr[k + num_plot_max]
+            if maxplots < 0:
+                maxplots = number_cr
+            _logger.info(f"generating {maxplots} plots for double cosmic rays ranked by detection criterium...")
+            for idum in range(min(number_cr, maxplots)):
+                i = isort_cr[idum]
+                ijloc = np.argwhere(labels_cr == i + 1)
+                ic = int(np.mean(ijloc[:, 0]) + 0.5)
+                jc = int(np.mean(ijloc[:, 1]) + 0.5)
+                i1 = ic - semiwindow
+                if i1 < 0:
+                    i1 = 0
+                i2 = ic + semiwindow
+                if i2 >= naxis2:
+                    i2 = naxis2 - 1
+                j1 = jc - semiwindow
+                if j1 < 0:
+                    j1 = 0
+                j2 = jc + semiwindow
+                if j2 >= naxis1:
+                    j2 = naxis1 - 1
+                fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+                axarr = axarr.flatten()
+                # Important: use interpolation=None instead of interpolation='None' to avoid
+                # having blurred images when opening the PDF file with macos Preview
                 cmap = 'viridis'
-                if k == 0:
-                    image2d = median2d
-                    title = 'median'
+                cblabel = 'Number of counts'
+                for k in range(num_plot_max):
+                    ax = axarr[k]
+                    title = title = f'image#{k+1}/{num_images}'
                     if color_scale == 'zscale':
-                        vmin, vmax = tea.zscale(median2d[i1:(i2+1), j1:(j2+1)])
+                        vmin, vmax = tea.zscale(image3d[k, i1:(i2+1), j1:(j2+1)])
                     else:
-                        vmin = np.min(median2d[i1:(i2+1), j1:(j2+1)])
-                        vmax = np.max(median2d[i1:(i2+1), j1:(j2+1)])
-                elif k == 1:
-                    image2d = flag_integer_dilated
-                    title = 'flag_integer_dilated'
-                    vmin, vmax = 0, 2
-                    cmap = 'plasma'
-                    cblabel = 'flag'
-                elif k == 2:
-                    image2d = median2d_corrected
-                    title = 'median corrected'
-                    if color_scale == 'zscale':
-                        vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                        vmin = np.min(image3d[k][i1:(i2+1), j1:(j2+1)])
+                        vmax = np.max(image3d[k][i1:(i2+1), j1:(j2+1)])
+                    tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
+                               extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
+                               title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
+                for k in range(3):
+                    ax = axarr[k + num_plot_max]
+                    cmap = 'viridis'
+                    if k == 0:
+                        image2d = median2d
+                        title = 'median'
+                        if color_scale == 'zscale':
+                            vmin, vmax = tea.zscale(median2d[i1:(i2+1), j1:(j2+1)])
+                        else:
+                            vmin = np.min(median2d[i1:(i2+1), j1:(j2+1)])
+                            vmax = np.max(median2d[i1:(i2+1), j1:(j2+1)])
+                    elif k == 1:
+                        image2d = flag_integer_dilated
+                        title = 'flag_integer_dilated'
+                        vmin, vmax = 0, 2
+                        cmap = 'plasma'
+                        cblabel = 'flag'
+                    elif k == 2:
+                        image2d = median2d_corrected
+                        title = 'median corrected'
+                        if color_scale == 'zscale':
+                            vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                        else:
+                            vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                            vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
                     else:
-                        vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
-                        vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
-                else:
-                    raise ValueError(f'Unexpected {k=}')
-                tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
-                           extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
-                           title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
-            nplot_missing = nrows * ncols - num_plot_max - 3
-            if nplot_missing > 0:
-                for k in range(nplot_missing):
-                    ax = axarr[-k-1]
-                    ax.axis('off')
-            fig.suptitle(f'CR#{idum+1}/{number_cr}\nMaximum detection parameter: {detection_value[i]:.2f}')
-            plt.tight_layout()
-            pdf.savefig(fig, bbox_inches='tight')
-            plt.close(fig)
+                        raise ValueError(f'Unexpected {k=}')
+                    tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
+                               extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
+                               title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
+                nplot_missing = nrows * ncols - num_plot_max - 3
+                if nplot_missing > 0:
+                    for k in range(nplot_missing):
+                        ax = axarr[-k-1]
+                        ax.axis('off')
+                fig.suptitle(f'CR#{idum+1}/{number_cr}\nMaximum detection parameter: {detection_value[i]:.2f}')
+                plt.tight_layout()
+                pdf.savefig(fig, bbox_inches='tight')
+                plt.close(fig)
 
-        pdf.close()
-        _logger.info("plot generation complete.")
+            pdf.close()
+            _logger.info("plot generation complete.")
 
-    return median2d_corrected, variance2d, map2d, mean2d
+    # Save mask_mediancr
+    _logger.info("Saving mask_mediancr...")
+    save_mask(mask=mask_mediancr, filename='mask_mediancr.fits',
+              extname='MASK_MEDIANCR', locals_items=locals().items())
+
+    if compute_meancr:
+        # Apply the same algorithm but now with mean2d
+        xplot = min2d.flatten()
+        yplot = mean2d.flatten() - min2d.flatten()
+        flag1 = yplot > np.interp(xplot, xplot_boundary, yplot_boundary)
+        flag2 = yplot > threshold
+        flag = np.logical_and(flag1, flag2)
+        flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
+        flag = np.logical_and(flag, flag3)
+        _logger.info("number of pixels flagged as double cosmic rays: %d", np.sum(flag))
+        diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
+                        yplot_boundary_50, yplot_boundary_98, spl50, spl98,
+                        threshold, interactive, _logger,
+                        png_filename='mean2d_diagnostic.png')
+        flag = flag.reshape((naxis2, naxis1))
+        flag_integer = flag.astype(np.uint8)
+        if dilation > 0:
+            _logger.info("before dilation: %d pixels flagged as cosmic rays.", np.sum(flag_integer))
+            structure = ndimage.generate_binary_structure(2, 2)
+            flag_integer_dilated = ndimage.binary_dilation(
+                flag_integer,
+                structure=structure,
+                iterations=dilation
+            ).astype(np.uint8)
+            _logger.info("after dilation: %d pixels flagged as cosmic rays.", np.sum(flag_integer_dilated))
+        else:
+            flag_integer_dilated = flag_integer
+            _logger.info("no dilation applied: %d pixels flagged as cosmic rays.", np.sum(flag_integer))
+        flag_integer_dilated[flag] = 2
+        # Fix the mean2d array by replacing the flagged pixels with the median2d_corrected value
+        mean2d_corrected = mean2d.copy()
+        mask_meancr = flag_integer_dilated > 0
+        mean2d_corrected[mask_meancr] = median2d_corrected[mask_meancr]
+        # Save mask_meancr
+        _logger.info("Saving mask_meancr...")
+        save_mask(mask=mask_meancr, filename='mask_meancr.fits',
+                  extname='MASK_MEANCR', locals_items=locals().items())
+    else:
+        mean2d_corrected = mean2d
+
+    return median2d_corrected, variance2d, map2d, mean2d_corrected
 
 
 def main(args=None):
@@ -499,11 +584,11 @@ def main(args=None):
     parser.add_argument("--bias",
                         help="Detector bias (ADU, default: 0.0)",
                         type=float, default=0.0)
-    parser.add_argument("--flatmin",
-                        help="Minimum value for the flat field (default: 1.0)",
+    parser.add_argument("--flux_variation_min",
+                        help="Minimum value for the flux variation (default: 1.0)",
                         type=float, default=1.0)
-    parser.add_argument("--flatmax",
-                        help="Maximum value for the flat field (default: 1.0)",
+    parser.add_argument("--flux_variation_max",
+                        help="Maximum value for the flux variation (default: 1.0)",
                         type=float, default=1.0)
     parser.add_argument("--knots_splfit",
                         help="Number of inner knots for the spline fit to the boundary (default: 2)",
@@ -579,8 +664,8 @@ def main(args=None):
         gain=args.gain,
         rnoise=args.rnoise,
         bias=args.bias,
-        flatmin=args.flatmin,
-        flatmax=args.flatmax,
+        flux_variation_min=args.flux_variation_min,
+        flux_variation_max=args.flux_variation_max,
         knots_splfit=args.knots_splfit,
         nsimulations=args.nsimulations,
         times_boundary_extension=args.times_boundary_extension,
