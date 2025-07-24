@@ -268,7 +268,7 @@ def _mediancr(
         _logger.info("subtracting bias from the input arrays: %f", bias)
         image3d -= bias
 
-    # Compute minimum, median, maximum and variance along the first axis
+    # Compute minimum, maximum, median, mean and variance along the first axis
     min2d = np.min(image3d, axis=0)
     max2d = np.max(image3d, axis=0)
     median2d = np.median(image3d, axis=0)
@@ -376,8 +376,6 @@ def _mediancr(
         median2d_corrected = median2d.copy()
         mask_mediancr = flag_integer_dilated > 0
         median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
-        variance2d[mask_mediancr] = 0.0  # Set variance to 0 for the flagged pixels
-        map2d[mask_mediancr] = 1  # Set the map to 1 for the flagged pixels
         # Plot the cosmic rays if requested
         if plots:
             # Label the connected pixels as individual cosmic rays
@@ -550,10 +548,192 @@ def _mediancr(
         _logger.info("Saving mask_meancr...")
         save_mask(mask=mask_meancr, filename='mask_meancr.fits',
                   extname='MASK_MEANCR', locals_items=locals().items())
+        variance2d[mask_meancr] = 0.0  # Set variance to 0 for the flagged pixels
+        map2d[mask_meancr] = 1  # Set the map to 1 for the flagged pixels
     else:
+        variance2d[mask_mediancr] = 0.0  # Set variance to 0 for the flagged pixels
+        map2d[mask_mediancr] = 1  # Set the map to 1 for the flagged pixels
         mean2d_corrected = mean2d
 
     return median2d_corrected, variance2d, map2d, mean2d_corrected
+
+
+def _mediancrmask(list_arrays, mask_mediancr_file, dtype=np.float32):
+    """
+    Compute the median and replace masked pixels with the minimum value.
+
+    Parameters
+    ----------
+    list_arrays : list of 2D arrays
+        The input arrays to be combined.
+    mask_mediancr_file : str
+        The filename of the mask array indicating which pixels are masked.
+    dtype : data-type, optional
+        The desired data type for the output arrays (default is np.float32).
+
+    Returns
+    -------
+    median2d_corrected : 2D array
+        The median-combined array with masked pixels replaced by the minimum value.
+    variance2d : 2D array
+        The variance of the input arrays along the first axis.
+    map2d : 2D array
+        The number of input pixels used to compute the median at each pixel.
+    """
+
+    _logger = logging.getLogger(__name__)
+
+    # Check that the input is a list
+    if not isinstance(list_arrays, list):
+        raise TypeError("Input must be a list of arrays.")
+
+    # Read the mask_mediancr file
+    with fits.open(mask_mediancr_file) as hdulist:
+        hdu_mask = hdulist['MASK_MEDIANCR']
+        mask_mediancr = hdu_mask.data.astype(bool)
+
+    # Check that the list (+mask_mediancr) contains numpy 2D arrays
+    if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays + [mask_mediancr]):
+        raise ValueError("All elements in the list must be 2D numpy arrays.")
+
+    # Check that the list contains at least 3 arrays
+    num_images = len(list_arrays)
+    if num_images < 3:
+        raise ValueError("At least 3 images are required for useful mediancrmask combination.")
+
+    # Check that all arrays have the same shape
+    for i, array in enumerate(list_arrays + [mask_mediancr]):
+        if array.shape != list_arrays[0].shape:
+            raise ValueError(f"Array {i} has a different shape than the first array.")
+    naxis2, naxis1 = list_arrays[0].shape
+
+    # Log the number of input arrays and their shapes
+    _logger.info("number of input arrays: %d", len(list_arrays))
+    for i, array in enumerate(list_arrays):
+        _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
+    _logger.info("mask_mediancr shape: %s, dtype: %s", mask_mediancr.shape, mask_mediancr.dtype)
+
+    # Convert the list of arrays to a 3D numpy array
+    image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
+    for i, array in enumerate(list_arrays):
+        image3d[i] = array.astype(dtype)
+
+    # Compute minimum, median and variance along the first axis
+    min2d = np.min(image3d, axis=0)
+    median2d = np.median(image3d, axis=0)
+    variance2d = np.var(image3d, axis=0, ddof=1)
+    # Number of pixels used to compute the median at each pixel
+    map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
+
+    # Replace the masked pixels with the minimum value
+    # of the corresponding pixel in the input arrays
+    _logger.info("replacing %d masked pixels with the minimum value", np.sum(mask_mediancr))
+    median2d_corrected = median2d.copy()
+    mask_mediancr_bool = mask_mediancr.astype(bool)
+    median2d_corrected[mask_mediancr_bool] = min2d[mask_mediancr_bool]
+    # Update the variance and map arrays
+    variance2d[mask_mediancr_bool] = 0.0  # Set variance to 0 for the masked pixels
+    map2d[mask_mediancr_bool] = 1  # Set the map to 1 for the masked pixels
+
+    return median2d_corrected, variance2d, map2d
+
+
+def _meancrmask(list_arrays, mask_mediancr_file, mask_meancr_file, dtype=np.float32):
+    """
+    Compute the mean and replace masked pixels with the mediancr value.
+
+    Parameters
+    ----------
+    list_arrays : list of 2D arrays
+        The input arrays to be combined.
+    mask_mediancr_file : str
+        The filename of the mask array indicating which pixels are masked
+        in the mediancr combination.
+    mask_meancr_file : str
+        The filename of the mask array indicating which pixels are masked
+        in the meancr combination. These pixels are replaced by the mediancr
+        values.
+    dtype : data-type, optional
+        The desired data type for the output arrays (default is np.float32).
+
+    Returns
+    -------
+    mean2d_corrected : 2D array
+        The mean-combined array with masked pixels replaced by the mediancr value.
+    variance2d : 2D array
+        The variance of the input arrays along the first axis.
+    map2d : 2D array
+        The number of input pixels used to compute the mean at each pixel.
+    """
+
+    _logger = logging.getLogger(__name__)
+
+    # Check that the input is a list
+    if not isinstance(list_arrays, list):
+        raise TypeError("Input must be a list of arrays.")
+
+    # Read the mask_mediancr file
+    with fits.open(mask_mediancr_file) as hdulist:
+        hdu_mask = hdulist['MASK_MEDIANCR']
+        mask_mediancr = hdu_mask.data.astype(bool)
+
+    # Read the mask_meancr file
+    with fits.open(mask_meancr_file) as hdulist:
+        hdu_mask = hdulist['MASK_MEANCR']
+        mask_meancr = hdu_mask.data.astype(bool)
+
+    # Check that the list (+mask_mediancr, +mask_meancr) contains numpy 2D arrays
+    if not all(isinstance(array, np.ndarray) and array.ndim == 2
+               for array in list_arrays + [mask_mediancr, mask_meancr]):
+        raise ValueError("All elements in the list must be 2D numpy arrays.")
+
+    # Check that the list contains at least 3 arrays
+    num_images = len(list_arrays)
+    if num_images < 3:
+        raise ValueError("At least 3 images are required for useful meancrmask combination.")
+
+    # Check that all arrays have the same shape
+    for i, array in enumerate(list_arrays + [mask_mediancr, mask_meancr]):
+        if array.shape != list_arrays[0].shape:
+            raise ValueError(f"Array {i} has a different shape than the first array.")
+    naxis2, naxis1 = list_arrays[0].shape
+
+    # Log the number of input arrays and their shapes
+    _logger.info("number of input arrays: %d", len(list_arrays))
+    for i, array in enumerate(list_arrays):
+        _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
+    _logger.info("mask_mediancr shape: %s, dtype: %s", mask_mediancr.shape, mask_mediancr.dtype)
+    _logger.info("mask_meancr shape: %s, dtype: %s", mask_meancr.shape, mask_meancr.dtype)
+
+    # Convert the list of arrays to a 3D numpy array
+    image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
+    for i, array in enumerate(list_arrays):
+        image3d[i] = array.astype(dtype)
+
+    # Compute minimum, median, mean and variance along the first axis
+    min2d = np.min(image3d, axis=0)
+    median2d = np.median(image3d, axis=0)
+    mean2d = np.mean(image3d, axis=0)
+    variance2d = np.var(image3d, axis=0, ddof=1)
+    # Number of pixels used to compute the median at each pixel
+    map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
+
+    # Replace the masked pixels with the minimum value
+    # of the corresponding pixel in the input arrays
+    _logger.info("replacing %d masked pixels in median2d with the minimum value", np.sum(mask_mediancr))
+    median2d_corrected = median2d.copy()
+    mask_mediancr_bool = mask_mediancr.astype(bool)
+    median2d_corrected[mask_mediancr_bool] = min2d[mask_mediancr_bool]
+    # Replace the masked pixels in mean2d with the median2d_corrected value
+    _logger.info("replacing %d masked pixels in mean2d with the median2d_corrected value", np.sum(mask_meancr))
+    mean2d_corrected = mean2d.copy()
+    mask_meancr_bool = mask_meancr.astype(bool)
+    mean2d_corrected[mask_meancr_bool] = median2d_corrected[mask_meancr_bool]
+    # Update the variance and map arrays
+    variance2d[mask_meancr_bool] = 0.0  # Set variance to 0 for the masked pixels
+    map2d[mask_meancr_bool] = 1  # Set the map to 1 for the masked pixels
+
+    return mean2d_corrected, variance2d, map2d
 
 
 def main(args=None):
@@ -569,7 +749,7 @@ def main(args=None):
     logger.info("Starting mediancr combination...")
 
     parser = argparse.ArgumentParser(
-        description="Combine 2D arrays using mediancr method to avoid multiple cosmic rays in the same pixel."
+        description="Combine 2D arrays using mediancr or meancr methods."
     )
 
     parser.add_argument("inputlist",
@@ -590,6 +770,9 @@ def main(args=None):
     parser.add_argument("--flux_variation_max",
                         help="Maximum value for the flux variation (default: 1.0)",
                         type=float, default=1.0)
+    parser.add_argument("--ntest",
+                        help="Number of points along the x-axis for the boundary (default: 100)",
+                        type=int, default=100)
     parser.add_argument("--knots_splfit",
                         help="Number of inner knots for the spline fit to the boundary (default: 2)",
                         type=int, default=2)
@@ -612,6 +795,9 @@ def main(args=None):
     parser.add_argument("--dilation",
                         help="Dilation factor for cosmic ray mask",
                         type=int, default=1)
+    parser.add_argument("--compute_meancr",
+                        help="Apply meancr method, replacing suspected CR in the mean image by mediancr values",
+                        action="store_true")
     parser.add_argument("--output",
                         help="Output FITS file for the combined array and mask",
                         type=str)
@@ -659,13 +845,14 @@ def main(args=None):
         raise ValueError("Readout noise must be provided for mediancr combination.")
 
     # Perform the mediancr combination
-    median2d_corrected, variance, maparray, mean2d = _mediancr(
+    median2d_corrected, variance, maparray, mean2d_corrected = _mediancr(
         list_arrays=list_arrays,
         gain=args.gain,
         rnoise=args.rnoise,
         bias=args.bias,
         flux_variation_min=args.flux_variation_min,
         flux_variation_max=args.flux_variation_max,
+        ntest=args.ntest,
         knots_splfit=args.knots_splfit,
         nsimulations=args.nsimulations,
         times_boundary_extension=args.times_boundary_extension,
@@ -673,6 +860,7 @@ def main(args=None):
         minimum_max2d_rnoise=args.minimum_max2d_rnoise,
         interactive=args.interactive,
         dilation=args.dilation,
+        compute_meancr=args.compute_meancr,
         dtype=np.float32,
         plots=args.plots,
         semiwindow=args.semiwindow,
@@ -682,12 +870,17 @@ def main(args=None):
 
     # Save the combined array and mask to a FITS file
     if args.output:
-        hdu_combined = fits.PrimaryHDU(median2d_corrected.astype(np.float32))
+        if args.compute_meancr:
+            logger.info("Saving combined mean2d_corrected, variance, and map to %s", args.output)
+            hdu_combined = fits.PrimaryHDU(mean2d_corrected.astype(np.float32))
+        else:
+            logger.info("Saving combined median2d_corrected, variance, and map to %s", args.output)
+            hdu_combined = fits.PrimaryHDU(median2d_corrected.astype(np.float32))
         hdu_variance = fits.ImageHDU(variance.astype(np.float32), name='VARIANCE')
         hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
         hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
         hdul.writeto(args.output, overwrite=True)
-        logger.info("Combined array, variance, and map saved to %s", args.output)
+        logger.info("Combined array, variance, and map saved")
 
 
 if __name__ == "__main__":
