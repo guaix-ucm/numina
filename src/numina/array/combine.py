@@ -13,7 +13,7 @@
 import numpy
 
 import numina.array._combine as intl  # noqa
-from numina.array.mediancr import _mediancr, _mediancrmask, _meancrmask
+from numina.array.mediancr import _mediancr, _apply_crmasks
 
 
 def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
@@ -240,17 +240,17 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def mediancr(arrays,
-             gain=None, rnoise=None, bias=0.0,
-             flux_variation_min=1.0, flux_variation_max=1.0,
-             ntest=100, knots_splfit=2, nsimulations=10000,
-             times_boundary_extension=1.0, threshold=None,
-             minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
-             compute_meancr=False,
-             dtype=numpy.float32, plots=False, semiwindow=15, color_scale='minmax',
-             maxplots=10):
-    """Combine arrays using the median but correcting for double cosmic rays."""
-    median2d_corrected, variance2d, map2d, mean2d = _mediancr(
+def maskscr(arrays,
+            gain=None, rnoise=None, bias=0.0,
+            flux_variation_min=1.0, flux_variation_max=1.0,
+            ntest=100, knots_splfit=2, nsimulations=10000,
+            times_boundary_extension=1.0, threshold=None,
+            minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
+            dtype=numpy.float32, seed=1234,
+            plots=False, semiwindow=15, color_scale='minmax',
+            maxplots=10):
+    """Generate HDUList with masks for cosmic ray removal using different methods."""
+    hdul_masks = _mediancr(
         arrays,
         gain=gain, rnoise=rnoise, bias=bias,
         flux_variation_min=flux_variation_min, flux_variation_max=flux_variation_max,
@@ -258,67 +258,13 @@ def mediancr(arrays,
         times_boundary_extension=times_boundary_extension,
         threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
         interactive=interactive, dilation=dilation,
-        compute_meancr=compute_meancr,
-        dtype=dtype, plots=plots, semiwindow=semiwindow, color_scale=color_scale,
+        dtype=dtype, seed=seed,
+        plots=plots, semiwindow=semiwindow, color_scale=color_scale,
         maxplots=maxplots
     )
 
-    return median2d_corrected, variance2d, map2d
+    return hdul_masks
 
 
-def meancr(arrays,
-           gain=None, rnoise=None, bias=0.0,
-           flux_variation_min=1.0, flux_variation_max=1.0,
-           ntest=100, knots_splfit=2, nsimulations=10000,
-           times_boundary_extension=1.0, threshold=None,
-           minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
-           compute_meancr=True,
-           dtype=numpy.float32, plots=False, semiwindow=15, color_scale='minmax',
-           maxplots=10):
-    """Combine arrays using the mean but correcting for double cosmic rays."""
-    median2d_corrected, variance2d, map2d, mean2d_corrected = _mediancr(
-        arrays,
-        gain=gain, rnoise=rnoise, bias=bias,
-        flux_variation_min=flux_variation_min, flux_variation_max=flux_variation_max,
-        ntest=ntest, knots_splfit=knots_splfit, nsimulations=nsimulations,
-        times_boundary_extension=times_boundary_extension,
-        threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
-        interactive=interactive, dilation=dilation,
-        compute_meancr=compute_meancr,
-        dtype=dtype, plots=plots, semiwindow=semiwindow, color_scale=color_scale,
-        maxplots=maxplots
-    )
-
-    return mean2d_corrected, variance2d, map2d
-
-
-def mediancrmask(arrays, mask_mediancr_file=None, dtype=numpy.float32):
-    """Combine arrays using the median, replacing masked pixels by the minimum.
-
-    This function makes use of a mask array previously computed using
-    the mediancr function.
-    """
-    if mask_mediancr_file is None:
-        raise ValueError("A mask array file must be provided for mediancrmask combination.")
-
-    median2d_corrected, variance2d, map2d = _mediancrmask(
-        arrays, mask_mediancr_file=mask_mediancr_file, dtype=dtype)
-
-    return median2d_corrected, variance2d, map2d
-
-
-def meancrmask(arrays, mask_mediancr_file=None, mask_meancr_file=None, dtype=numpy.float32):
-    """Combine arrays using the mean, replacing masked pixels by the mediancr values.
-
-    This function makes use of two mask arrays previously computed using
-    the meancr function.
-    """
-    if mask_mediancr_file is None:
-        raise ValueError("A mask_mediancr_file must be provided for meancrmask combination.")
-    if mask_meancr_file is None:
-        raise ValueError("A mask_meancr_file must be provided for meancrmask combination.")
-
-    mean2d_corrected, variance2d, map2d = _meancrmask(
-        arrays, mask_mediancr_file=mask_mediancr_file, mask_meancr_file=mask_meancr_file, dtype=dtype)
-
-    return mean2d_corrected, variance2d, map2d
+def mediancr(arrays, crmasks, combination, dtype):
+    return _apply_crmasks(arrays, crmasks, combination, dtype)

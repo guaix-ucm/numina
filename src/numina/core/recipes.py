@@ -334,6 +334,7 @@ class BaseRecipe(metaclass=RecipeType):
                 pass
         return metadata
 
+
 def timeit(method):
     """Decorator to measure the time used by the recipe"""
 

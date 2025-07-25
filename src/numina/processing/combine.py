@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -79,7 +79,7 @@ def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True,
     return result
 
 
-def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
+def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None, crmasks=None):
     """
 
     Parameters
@@ -89,6 +89,7 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, pr
     method_kwargs
     errors
     prolog
+    crmasks
 
     Returns
     -------
@@ -110,7 +111,10 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, pr
         method_kwargs['dtype'] = 'float32'
 
     _logger.info(f"stacking {cnum:d} images using '{method.__name__}'")
-    combined_data = method([d[0].data for d in hduls], **method_kwargs)
+    if method.__name__ == 'mediancr':
+        combined_data = method([d[0].data for d in hduls], crmasks=crmasks, **method_kwargs)
+    else:
+        combined_data = method([d[0].data for d in hduls], **method_kwargs)
 
     hdu = fits.PrimaryHDU(combined_data[0], header=base_header)
     _logger.debug('update result header')
