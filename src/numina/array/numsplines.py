@@ -11,7 +11,9 @@
 
 from lmfit import Minimizer, Parameters
 import numpy as np
+from scipy.interpolate import BSpline
 from scipy.interpolate import LSQUnivariateSpline
+from scipy.optimize import minimize
 
 
 def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
@@ -233,3 +235,95 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
         """Return result of minimisation process."""
 
         return self._result
+
+
+def fit_positive_spline(x, y, w=None, n_total_knots=2, derivative_threshold=1e-6):
+    """Fit a spline to data with positive derivative constraint.
+
+    Note that this function uses a B-spline basis and optimizes
+    the coefficients to minimize the weighted mean squared error
+    while ensuring that the derivative of the spline is strictly
+    positive at all points.
+
+    The knots are evenly spaced across the range of `x`, and the
+    degree of the spline is set to 3 (cubic spline).
+
+    Parameters
+    ----------
+    x : array_like
+        Input x-coordinates of the data points.
+    y : array_like
+        Input y-coordinates of the data points.
+    w : array_like, optional
+        Weights for the data points. If None, all points are equally
+        weighted.
+    n_total_knots : int, optional
+        Total number of knots to use in the spline fit. Default is 2.
+    derivative_threshold : float, optional
+        Minimum value for the derivative of the spline to ensure it is
+        strictly positive.
+
+    Returns
+    -------
+    spline_fit : BSpline
+        The fitted B-spline object.
+    knots : array_like
+        The knot vector used in the spline fit.
+    """
+    degree = 3
+
+    if n_total_knots < 2:
+        raise ValueError("n_total_knots must be at least 2.")
+
+    if w is None:
+        w = np.ones_like(x, dtype=float)
+
+    knots = np.linspace(x.min(), x.max(), n_total_knots)
+
+    # Full knot vector
+    t = np.concatenate(([x.min()] * degree, knots, [x.max()] * degree))
+
+    # Number of basis functions
+    n_bases = len(t) - degree - 1
+
+    # Evaluate B-spline basis functions at x
+    def bspline_design_matrix(x, t, k):
+        n = len(t) - k - 1
+        B = np.zeros((len(x), n))
+        for i in range(n):
+            coeff = np.zeros(n)
+            coeff[i] = 1
+            B[:, i] = BSpline(t, coeff, k)(x)
+        return B
+
+    B = bspline_design_matrix(x, t, degree)
+
+    # Define weighted loss function (weighted mean squared error)
+    def weighted_loss(c):
+        y_pred = B @ c
+        return np.mean(w * (y - y_pred)**2)
+
+    # Define constraint: derivative must be strictly positive
+    def make_constraints():
+        x_dense = np.linspace(x.min(), x.max(), 100)
+        return [
+            {
+                'type': 'ineq',
+                'fun': lambda c, xi=xi: BSpline(t, c, degree).derivative()(xi) - derivative_threshold
+            }
+            for xi in x_dense
+        ]
+
+    # Initial guess for coefficients
+    c0 = np.ones(n_bases)
+
+    # Perform constrained optimization
+    constraints = make_constraints()
+    result = minimize(weighted_loss, c0, constraints=constraints, method='SLSQP')
+
+    # Evaluate fitted spline
+    c_opt = result.x
+    spline_fit = BSpline(t, c_opt, degree)
+
+    # Return the fitted spline and knots
+    return spline_fit, knots
