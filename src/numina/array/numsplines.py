@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -237,7 +237,7 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
         return self._result
 
 
-def fit_positive_spline(x, y, w=None, n_total_knots=2, derivative_threshold=1e-6):
+def spline_positive_derivative(x, y, w=None, n_total_knots=2, derivative_threshold=1e-6):
     """Fit a spline to data with positive derivative constraint.
 
     Note that this function uses a B-spline basis and optimizes
