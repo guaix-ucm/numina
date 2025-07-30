@@ -14,19 +14,273 @@ import uuid
 
 import argparse
 from astropy.io import fits
+from datetime import datetime
+import math
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 from scipy import ndimage
 
+from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
 
 VALID_COMBINATIONS = ['mediancr', 'meancr_all', 'meancr_single']
 
 
+def is_valid_number(x):
+    """Check if x is a valid number (not NaN or Inf)."""
+    return isinstance(x, (int, float)) and not math.isnan(x) and not math.isinf(x)
+
+
+def all_valid_numbers(seq):
+    """Check if all elements in seq are valid numbers."""
+    if not isinstance(seq, (list, tuple)):
+        raise TypeError("Input must be a list or tuple.")
+    return all(is_valid_number(x) for x in seq)
+
+
+def remove_isolated_pixels(h):
+    """Remove isolated pixels in a 2D array corresponding to a 2D histogram.
+
+    Parameters
+    ----------
+    h : 2D numpy array
+        The input 2D array (e.g., a histogram).
+
+    Returns
+    -------
+    hclean : 2D numpy array
+        The cleaned 2D array with isolated pixels removed.
+    """
+    if not isinstance(h, np.ndarray) or h.ndim != 2:
+        raise ValueError("Input must be a 2D numpy array.")
+
+    naxis2, naxis1 = h.shape
+    flag = np.zeros_like(h, dtype=float)
+    # Fill isolated holes
+    for i in range(naxis2):
+        for j in range(naxis1):
+            if h[i, j] == 0:
+                k, ktot = 0, 0
+                fsum = 0.0
+                for ii in [i-1, i, i+1]:
+                    if 0 <= ii < naxis2:
+                        for jj in [j-1, j, j+1]:
+                            if 0 <= jj < naxis1:
+                                ktot += 1
+                                if h[ii, jj] != 0:
+                                    k += 1
+                                    fsum += h[ii, jj]
+                if k == ktot - 1:
+                    flag[i, j] = fsum / k
+    hclean = h.copy()
+    print(f'{np.sum(flag > 0)=}')
+    hclean[flag > 0] = flag[flag > 0]
+    # Remove pixels with less than 4 neighbors
+    flag = np.zeros_like(h, dtype=np.uint8)
+    for i in range(naxis2):
+        for j in range(naxis1):
+            if h[i, j] != 0:
+                k = 0
+                for ii in [i-1, i, i+1]:
+                    if 0 <= ii < naxis2:
+                        for jj in [j-1, j, j+1]:
+                            if 0 <= jj < naxis1:
+                                if h[ii, jj] != 0:
+                                    k += 1
+                if k < 5:
+                    flag[i, j] = 1
+    print(f'{np.sum(flag == 1)=}')
+    hclean[flag == 1] = 0
+    # Remove pixels with no neighbor on the left hand side
+    # when moving from left to right in each row
+    for i in range(naxis2):
+        j = 0
+        loop = True
+        while loop:
+            j += 1
+            if j < naxis1:
+                loop = h[i, j] != 0
+            else:
+                loop = False
+        if j < naxis1:
+            hclean[i, j:] = 0
+
+    return hclean
+
+
+def compute_flux_factor(image3d, median2d, _logger, interactive=False,
+                        nxbins_half=50, nybins_half=50,
+                        ymin=0.495, ymax=1.505):
+    """Compute the flux factor for each image based on the median.
+
+    Parameters
+    ----------
+    image3d : 3D numpy array
+        The 3D array containing the images to compute the flux factor.
+        Note that this array contains the original images after
+        subtracting the bias, if any.
+    median2d : 2D numpy array
+        The median of the input arrays.
+    interactive : bool, optional
+        If True, enable interactive mode for plots (default is False).
+    nxbins_half : int, optional
+        Half the number of bins in the x direction (default is 50).
+    nybins_half : int, optional
+        Half the number of bins in the y direction (default is 50).
+    ymin : float, optional
+        Minimum value for the y-axis (default is 0.495).
+    ymax : float, optional
+        Maximum value for the y-axis (default is 1.505).
+
+    Returns
+    -------
+    flux_factor : 1D numpy array
+        The flux factor for each image.
+    """
+    naxis3, naxis2, naxis1 = image3d.shape
+    naxis2_, naxis1_ = median2d.shape
+    if naxis2 != naxis2_ or naxis1 != naxis1_:
+        raise ValueError("image3d and median2d must have the same shape in the last two dimensions.")
+
+    xmin = np.min(median2d)
+    xmax = np.max(median2d)
+    nxbins = 2 * nxbins_half + 1
+    nybins = 2 * nybins_half + 1
+    xbin_edges = np.linspace(xmin, xmax, nxbins + 1)
+    ybin_edges = np.linspace(ymin, ymax, nybins + 1)
+    xbin = (xbin_edges[:-1] + xbin_edges[1:])/2
+    ybin = (ybin_edges[:-1] + ybin_edges[1:])/2
+    extent = [xbin_edges[0], xbin_edges[-1], ybin_edges[0], ybin_edges[-1]]
+
+    cblabel = 'Number of pixels'
+    flux_factor = []
+    for idata, data in enumerate(image3d):
+        ratio = np.divide(data, median2d, out=np.zeros_like(median2d, dtype=float), where=median2d != 0)
+        h, edges = np.histogramdd(
+            sample=(ratio.flatten(), median2d.flatten()),
+            bins=(ybin_edges, xbin_edges)
+        )
+        vmin = np.min(h)
+        if vmin == 0:
+            vmin = 1
+        vmax = np.max(h)
+        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4))
+        tea.imshow(fig, ax1, h, norm=LogNorm(vmin=vmin, vmax=vmax), extent=extent, aspect='auto', cblabel=cblabel)
+        ax1.set_xlabel('pixel value')
+        ax1.set_ylabel('ratio image/median')
+        ax1.set_title(f'Image #{idata+1}')
+        hclean = remove_isolated_pixels(h)
+        tea.imshow(fig, ax2, hclean, norm=LogNorm(vmin=vmin, vmax=vmax), extent=extent, aspect='auto', cblabel=cblabel)
+        ax2.set_xlabel('pixel value')
+        ax2.set_ylabel('ratio image/median')
+        ax2.set_title(f'Image #{idata+1}')
+        xmode = np.zeros(2)
+        ymode = np.zeros(2)
+        for side, imin, imax in zip((0, 1), (0, nybins_half+1), (nybins_half, nybins)):
+            xfit = []
+            yfit = []
+            for i in range(imin, imax):
+                fsum = np.sum(hclean[i, :])
+                if fsum > 0:
+                    pdensity = hclean[i, :] / fsum
+                    perc = (1 - 1 / fsum)
+                    p = np.interp(perc, np.cumsum(pdensity), np.arange(nxbins))
+                    ax2.plot(xbin[int(p+0.5)], ybin[i], '+', color=f'C{side}')
+                    xfit.append(xbin[int(p+0.5)])
+                    yfit.append(ybin[i])
+            xfit = np.array(xfit)
+            yfit = np.array(yfit)
+            splfit = tea.AdaptiveLSQUnivariateSpline(yfit, xfit, t=2, adaptive=True)
+            ax2.plot(splfit(yfit), yfit, f'C{side}-')
+            imax = np.argmax(splfit(yfit)) + imin
+            ymode[side] = ybin[imax]
+            xmode[side] = splfit(ymode[side])
+            ax2.plot(xmode[side], ymode[side], f'C{side}o')
+        if xmode[0] > xmode[1]:
+            imode = 0
+        else:
+            imode = 1
+        ax2.axhline(ymode[imode], color=f'C{imode}')
+        ax2.text(xbin[-5], ymode[imode]+(ybin[-1]-ybin[0])/40, f'{ymode[imode]:.3f}', color=f'C{imode}', ha='right')
+        flux_factor.append(ymode[imode])
+        plt.tight_layout()
+
+        png_filename = f'flux_factor{idata+1}.png'
+        plt.savefig(png_filename, dpi=150)
+        if interactive:
+            _logger.info("Entering interactive mode (press 'q' to close plot).")
+            plt.show()
+            answer = input("Press Enter to continue or type 'exit' to quit: ")
+            plt.close(fig)
+            if answer.lower() == 'exit':
+                _logger.info("Exiting program.")
+                raise SystemExit()
+        else:
+            plt.close(fig)
+
+    if len(flux_factor) != naxis3:
+        raise ValueError(f"Expected {naxis3} flux factors, but got {len(flux_factor)}.")
+
+    flux_factor = np.array(flux_factor, dtype=float)
+    return flux_factor
+
+
+def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, flux_factor, nsimulations):
+    """Estimate the limits for the diagnostic plot.
+
+    Parameters
+    ----------
+    rng : numpy.random.Generator
+        Random number generator for reproducibility.
+    gain : float
+        Gain value (in e/ADU) of the detector.
+    rnoise : float
+        Readout noise (in ADU) of the detector.
+    maxvalue : float
+        Maximum pixel value (in ADU) of the detector after
+        subtracting the bias.
+    num_images : int
+        Number of different exposures.
+    flux_factor : numpy.ndarray
+        Flux factor for the images.
+    nsimulations : int
+        Number of simulations to perform for each corner of the
+        diagnostic plot.
+    """
+    if len(flux_factor) != num_images:
+        raise ValueError(f"flux_factor must have the same length as num_images ({num_images}).")
+
+    xdiag_min = np.zeros(nsimulations, dtype=float)
+    xdiag_max = np.zeros(nsimulations, dtype=float)
+    ydiag_min = np.zeros(nsimulations, dtype=float)
+    ydiag_max = np.zeros(nsimulations, dtype=float)
+    for i in range(nsimulations):
+        # lower limits
+        data = rng.normal(loc=0, scale=rnoise, size=num_images)
+        min1d = np.min(data)
+        median1d = np.median(data)
+        xdiag_min[i] = median1d
+        ydiag_min[i] = median1d - min1d
+        # upper limits
+        lam = np.array([maxvalue] * num_images)
+        data = rng.poisson(lam=lam * gain).astype(float) / gain * flux_factor
+        if rnoise > 0:
+            data += rng.normal(loc=0, scale=rnoise, size=num_images)
+        min1d = np.min(data)
+        median1d = np.median(data)
+        xdiag_max[i] = median1d
+        ydiag_max[i] = median1d - min1d
+    xdiag_min = np.min(xdiag_min)
+    ydiag_min = np.min(ydiag_min)
+    xdiag_max = np.max(xdiag_max)
+    ydiag_max = np.max(ydiag_max)
+    return xdiag_min, xdiag_max, ydiag_min, ydiag_max
+
+
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                    yplot_boundary_50, yplot_boundary_98, spl50, spl98,
                     threshold, ylabel, interactive, _logger, png_filename):
     """Diagnostic plot for the mediancr function.
     """
@@ -35,20 +289,16 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
     fig, ax = plt.subplots()
     ax.plot(xplot, yplot, 'C0,')
     xmin, xmax = ax.get_xlim()
-    ax.plot(xplot_boundary, yplot_boundary_50, 'C3.', label='percentile 50')
-    ax.plot(xplot_boundary, spl50(xplot_boundary), 'C3--', label='spline fit 50')
-    xknots = spl50.get_knots()
-    yknots = spl50(xknots)
-    ax.plot(xknots, yknots, 'C3o', label='knots 50')
-    ax.plot(xplot_boundary, yplot_boundary_98, 'C4.', label='percentile 98')
-    ax.plot(xplot_boundary, spl98(xplot_boundary), 'C4--', label='spline fit 98')
-    xknots = spl98.get_knots()
-    yknots = spl98(xknots)
-    ax.plot(xknots, yknots, 'C4o', label='knots 98')
     ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Exclusion boundary')
     ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
     ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
     ax.set_xlim(xmin, xmax)
+    ymin = 0
+    ymax = np.max(yplot_boundary)
+    dy = ymax - ymin
+    ymin -= dy * 0.05
+    ymax += dy * 0.05
+    ax.set_ylim(ymin, ymax)
     ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax.set_ylabel(ylabel)
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=3)
@@ -72,12 +322,12 @@ def _mediancr(
         gain=None,
         rnoise=None,
         bias=0.0,
-        flux_variation_min=1.0,
-        flux_variation_max=1.0,
+        flux_factor=None,
         ntest=100,
         knots_splfit=2,
         nsimulations=10000,
-        times_boundary_extension=3.0,
+        niter_boundary_extension=1,
+        weight_boundary_extension=10.0,
         threshold=None,
         minimum_max2d_rnoise=5.0,
         interactive=False,
@@ -109,14 +359,15 @@ def _mediancr(
         The input arrays to be combined.
     gain : float
         The gain value (in e/ADU) of the detector.
-    bias : float, optional
-        The bias value (in ADU) of the detector (default is 0.0).
     rnoise : float
         The readout noise (in ADU) of the detector.
-    flatmin : float, optional
-        The minimum value for the flat field (default is 0.1).
-    flatmax : float, optional
-        The maximum value for the flat field (default is 3.0).
+    bias : float, optional
+        The bias value (in ADU) of the detector (default is 0.0).
+    flux_factor : str, list or None, optional
+        The flux factor to consider (default is None).
+        If 'auto', the flux factor is determined automatically.
+        If a list is provided, it should contain a value
+        for each single image in `list_arrays`.
     ntest: int, optional
         The number of points along the x-axis in the diagnostic
         diagram to sample for the boundary.
@@ -126,11 +377,14 @@ def _mediancr(
     nsimulations : int, optional
         The number of simulations to perform for each point in the
         exclusion boundary (default is 10000).
-    times_boundary_extension : float, optional
-        The factor to extend the boundary computed at percentile 98, in
-        units of the difference between the percentiles 98 and 50.
-        This is used to compute the numerical boundary for double
-        cosmic ray detection (default is 1.0).
+    niter_boundary_extension : int, optional
+        The number of iterations for the boundary extension (default is 1).
+    weight_boundary_extension : float, optional
+        The weight for the boundary extension (default is 10.0).
+        In each iteration, the boundary is extended by applying an
+        extra weight to the points above the previous boundary. This
+        extra weight is computed as `weight_boundary_extension**iter`,
+        where `iter` is the current iteration number (starting from 1).
     threshold: float, optional
         Minimum threshold for median2d - min2d to consider a pixel as a
         cosmic ray (default is None). If None, the threshold is computed
@@ -211,6 +465,25 @@ def _mediancr(
     if rnoise is None:
         raise ValueError("Readout noise must be defined for mediancr combination.")
 
+    # Check flux_factor
+    if flux_factor is None:
+        flux_factor = np.ones(num_images, dtype=float)
+    if isinstance(flux_factor, str):
+        if flux_factor.lower() == 'auto':
+            pass  # flux_factor will be set later
+        elif flux_factor.lower() == 'none':
+            flux_factor = np.ones(num_images, dtype=float)
+        else:
+            raise ValueError(f"Invalid flux_factor string: {flux_factor}. Use 'auto' or 'none'.")
+    elif isinstance(flux_factor, list):
+        if len(flux_factor) != num_images:
+            raise ValueError(f"flux_factor must have the same length as the number of images ({num_images}).")
+        if not all_valid_numbers(flux_factor):
+            raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
+        flux_factor = np.array(flux_factor, dtype=float)
+    else:
+        raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
+
     # Check that color_scale is valid
     if color_scale not in ['minmax', 'zscale']:
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
@@ -219,14 +492,15 @@ def _mediancr(
     _logger.info("gain for double cosmic ray detection: %f", gain)
     _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
     _logger.info("bias for double cosmic ray detection: %f", bias)
-    _logger.info("flux variation minimum: %f", flux_variation_min)
-    _logger.info("flux variation maximum: %f", flux_variation_max)
+    _logger.info("flux_factor: %s", str(flux_factor))
     _logger.info("number of points along the x-axis for the boundary: %d", ntest)
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
     _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
-    _logger.info("times boundary extension for double cosmic ray detection: %f", times_boundary_extension)
+    _logger.info("niter for boundary extension: %d", niter_boundary_extension)
+    _logger.info("weight for boundary extension: %f", weight_boundary_extension)
+    _logger.info("number of test points for the boundary: %d", ntest)
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("random seed for reproducibility: %d", seed)
     _logger.info("dilation factor: %d", dilation)
@@ -250,51 +524,153 @@ def _mediancr(
     max2d = np.max(image3d, axis=0)
     median2d = np.median(image3d, axis=0)
     mean2d = np.mean(image3d, axis=0)
+    xplot = min2d.flatten()
+    yplot = median2d.flatten() - min2d.flatten()
 
-    # Numerical boundary for double cosmic ray detection
-    _logger.info("computing numerical boundary for double cosmic ray detection...")
-    # test values for the x-axis
-    xtest_array = 10**np.linspace(0, np.log10(np.max(max2d)), ntest)
-    xplot_boundary = np.zeros(ntest, dtype=float)  # x values for the boundary
-    yplot_boundary_50 = np.zeros(ntest, dtype=float)  # y values for the boundary at percentile 50
-    yplot_boundary_98 = np.zeros(ntest, dtype=float)  # y values for the boundary at percentile 98
+    # If flux_factor is 'auto', compute the corresponding values
+    if isinstance(flux_factor, str) and flux_factor.lower() == 'auto':
+        _logger.info("flux_factor set to 'auto', computing values...")
+        flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive)
+        _logger.info("flux_factor set to %s", str(flux_factor))
+
+    # Estimate limits for the diagnostic plot
     rng = np.random.default_rng(seed)  # Random number generator for reproducibility
-    for i in range(ntest):
-        xtest = xtest_array[i]
-        min_rep = np.zeros(nsimulations, dtype=float)
-        max_rep = np.zeros(nsimulations, dtype=float)
-        median_rep = np.zeros(nsimulations, dtype=float)
-        # Simulate the minimum, median and maximum of the data
-        for k in range(nsimulations):
-            flux_variation = rng.uniform(low=flux_variation_min, high=flux_variation_max, size=num_images)
-            data = np.ones(num_images, dtype=float) * xtest * flux_variation
-            # Transform data from ADU to electrons, generate Poisson distribution
-            # and transform back from electrons to ADU
-            data_with_noise = rng.poisson(lam=(data) * gain).astype(float) / gain
-            # Add readout noise
-            if rnoise > 0:
-                data_with_noise += rng.normal(loc=0, scale=rnoise, size=num_images)
-            min_rep[k] = np.min(data_with_noise)
-            max_rep[k] = np.max(data_with_noise)
-            median_rep[k] = np.median(data_with_noise)
-        # Compute the boundary using the requested percentile in the y-axis
-        xplot_boundary[i] = np.median(min_rep)
-        yplot_boundary_50[i], yplot_boundary_98[i] = np.percentile(median_rep - min_rep, [50, 98])
+    xdiag_min, xdiag_max, ydiag_min, ydiag_max = estimate_diagnostic_limits(
+        rng=rng,
+        gain=gain,
+        rnoise=rnoise,
+        maxvalue=np.max(min2d),
+        num_images=num_images,
+        flux_factor=flux_factor,
+        nsimulations=10000
+    )
+    if np.min(xplot) < xdiag_min:
+        xdiag_min = np.min(xplot)
+    if np.max(xplot) > xdiag_max:
+        xdiag_max = np.max(xplot)
+    _logger.info("xdiag_min=%f", xdiag_min)
+    _logger.info("ydiag_min=%f", ydiag_min)
+    _logger.info("xdiag_max=%f", xdiag_max)
+    _logger.info("ydiag_max=%f", ydiag_max)
 
-    # Fit a spline to the boundary points
-    _logger.info("fitting splines to the boundary points...")
-    isort = np.argsort(xplot_boundary)
-    xplot_boundary = xplot_boundary[isort]
-    yplot_boundary_50 = yplot_boundary_50[isort]
-    yplot_boundary_98 = yplot_boundary_98[isort]
-    ifit = xplot_boundary <= np.max(min2d)
-    xplot_boundary = xplot_boundary[ifit]
-    yplot_boundary_50 = yplot_boundary_50[ifit]
-    yplot_boundary_98 = yplot_boundary_98[ifit]
-    spl50 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary, yplot_boundary_50, t=knots_splfit)
-    spl98 = tea.AdaptiveLSQUnivariateSpline(xplot_boundary, yplot_boundary_98, t=knots_splfit)
-    yplot_boundary = spl98(xplot_boundary) + \
-        (spl98(xplot_boundary) - spl50(xplot_boundary)) * times_boundary_extension
+    # Define binning for the diagnostic plot
+    nbins_xdiag = 100
+    nbins_ydiag = 100
+    bins_xdiag = np.linspace(xdiag_min, xdiag_max, nbins_xdiag + 1)
+    bins_ydiag = np.linspace(0, ydiag_max, nbins_ydiag + 1)
+    xcbins = (bins_xdiag[:-1] + bins_xdiag[1:]) / 2
+    ycbins = (bins_ydiag[:-1] + bins_ydiag[1:]) / 2
+
+    # Create a 2D histogram for the diagnostic plot, using
+    # integers to avoid rounding errors
+    hist2d_accummulated = np.zeros((nbins_ydiag, nbins_xdiag), dtype=int)
+    lam = median2d.copy()
+    lam[lam < 0] = 0  # Avoid negative values
+    for k in range(nsimulations):
+        time_ini = datetime.now()
+        image3d_simul = np.zeros((num_images, naxis2, naxis1))
+        for i in range(num_images):
+            image3d_simul[i] = rng.poisson(lam=lam * flux_factor[i] * gain).astype(float) / gain
+            if rnoise > 0:
+                image3d_simul[i] += rng.normal(loc=0, scale=rnoise, size=(naxis2, naxis1))
+        min2d_simul = np.min(image3d_simul, axis=0)
+        median2d_simul = np.median(image3d_simul, axis=0)
+        xplot_simul = min2d_simul.flatten()
+        yplot_simul = median2d_simul.flatten() - min2d_simul.flatten()
+        hist2d, edges = np.histogramdd(
+            sample=(yplot_simul, xplot_simul),
+            bins=(bins_ydiag, bins_xdiag)
+        )
+        hist2d_accummulated += hist2d.astype(int)
+        time_end = datetime.now()
+        _logger.info("simulation %d/%d, time elapsed: %s", k + 1, nsimulations, time_end - time_ini)
+    # Average the histogram over the number of simulations
+    hist2d_accummulated = hist2d_accummulated.astype(float) / nsimulations
+    # temporal fix
+    if nsimulations > 0:
+        hdu = fits.PrimaryHDU(hist2d_accummulated)
+        hdul = fits.HDUList([hdu])
+        hdul.writeto('hist2d_accummulated.fits', overwrite=True)
+    else:
+        with fits.open('hist2d_accummulated.fits') as hdul:
+            hist2d_accummulated = hdul[0].data
+        nsimulations = 10
+    vmin = np.min(hist2d_accummulated)
+    if vmin == 0:
+        vmin = 1
+    vmax = np.max(hist2d_accummulated)
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4))
+    # Display 2D histogram of the simulated data
+    tea.imshow(fig, ax1, hist2d_accummulated, norm=LogNorm(vmin=vmin, vmax=vmax),
+               extent=[bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]],
+               aspect='auto', cblabel='Number of pixels')
+    # Display 2D histogram of the original data
+    hist2d_original, edges = np.histogramdd(
+        sample=(yplot, xplot),
+        bins=(bins_ydiag, bins_xdiag)
+    )
+    tea.imshow(fig, ax2, hist2d_original, norm=LogNorm(vmin=vmin, vmax=vmax),
+               extent=[bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]],
+               aspect='auto', cblabel='Number of pixels')
+
+    # Determine the exclusion boundary for double cosmic ray detection
+    _logger.info("computing numerical boundary for double cosmic ray detection...")
+    xboundary = []
+    yboundary = []
+    for i in range(nbins_xdiag):
+        fsum = np.sum(hist2d_accummulated[:, i])
+        if fsum > 0:
+            pdensity = hist2d_accummulated[:, i] / fsum
+            perc = (1 - (1 / nsimulations) / fsum)
+            p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
+            xboundary.append(xcbins[i])
+            yboundary.append(ycbins[int(p + 0.5)])
+    ax1.plot(xboundary, yboundary, 'r+')
+    splfit = None  # avoid flake8 warning
+    for iterboundary in range(niter_boundary_extension + 1):
+        wboundary = np.ones_like(xboundary, dtype=float)
+        if iterboundary == 0:
+            label = 'initial fit'
+        else:
+            wboundary[yboundary > splfit(xboundary)] = weight_boundary_extension**iterboundary
+            label = f'iteration {iterboundary}'
+        splfit, knots = spline_positive_derivative(
+            x=np.array(xboundary),
+            y=np.array(yboundary),
+            w=wboundary,
+            n_total_knots=knots_splfit,
+        )
+        ydum = splfit(xcbins)
+        ydum[xcbins < knots[0]] = splfit(knots[0])
+        ydum[xcbins > knots[-1]] = splfit(knots[-1])
+        ax1.plot(xcbins, ydum, '-', color=f'C{iterboundary}', label=label)
+    ax1.set_xlabel(r'min2d $-$ bias')
+    ax1.set_ylabel(r'median2d $-$ min2d')
+    ax1.set_title(f'Simulated data (nsimulations = {nsimulations})')
+    if niter_boundary_extension > 1:
+        ax1.legend()
+    xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
+    yplot_boundary = splfit(xplot_boundary)
+    yplot_boundary[xplot_boundary < knots[0]] = splfit(knots[0])
+    yplot_boundary[xplot_boundary > knots[-1]] = splfit(knots[-1])
+    ax2.plot(xplot_boundary, yplot_boundary, 'r-')
+    ax2.set_xlim(xdiag_min, xdiag_max)
+    ax2.set_ylim(ax1.get_ylim())
+    ax2.set_xlabel(ax1.get_xlabel())
+    ax2.set_ylabel(ax1.get_ylabel())
+    ax2.set_title('Original data')
+    plt.tight_layout()
+    plt.savefig('diagnostic_histogram2d.png', dpi=150)
+    if interactive:
+        _logger.info("Entering interactive mode (press 'q' to close plot).")
+        plt.show()
+        answer = input("Press Enter to continue or type 'exit' to quit: ")
+        plt.close(fig)
+        if answer.lower() == 'exit':
+            _logger.info("Exiting program.")
+            raise SystemExit()
+    else:
+        plt.close(fig)
 
     if threshold is None:
         # Use the minimum value of the boundary as the threshold
@@ -302,13 +678,7 @@ def _mediancr(
         _logger.info("updated threshold for cosmic ray detection: %f", threshold)
 
     # Apply the criterium to detect double cosmic rays
-    xplot = min2d.flatten()
-    yplot = median2d.flatten() - min2d.flatten()
-    # The advantage of using np.interp is that it is faster than
-    # using spl50 and spl98 directly, but also because for xplot values
-    # outside the range of xplot_boundary, it will return the value at the
-    # closest boundary point, which is what we want for the exclusion boundary.
-    flag1 = yplot > np.interp(xplot, xplot_boundary, yplot_boundary)
+    flag1 = yplot > splfit(xplot)
     flag2 = yplot > threshold
     flag = np.logical_and(flag1, flag2)
     flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
@@ -317,7 +687,6 @@ def _mediancr(
     _logger.info("generating diagnostic plot for MEDIANCR...")
     ylabel = r'median2d $-$ min2d'
     diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                    yplot_boundary_50, yplot_boundary_98, spl50, spl98,
                     threshold, ylabel, interactive, _logger,
                     png_filename='diagnostic_mediancr.png')
 
@@ -488,8 +857,12 @@ def _mediancr(
     # Apply the same algorithm but now with mean2d and with each individual array
     for i, array in enumerate([mean2d] + list_arrays):
         xplot = min2d.flatten()
-        yplot = array.flatten() - min2d.flatten()
-        flag1 = yplot > np.interp(xplot, xplot_boundary, yplot_boundary)
+        if i == 0:
+            yplot = array.flatten() - min2d.flatten()
+        else:
+            # For the individual arrays, apply the flux factor
+            yplot = array.flatten()/flux_factor[i-1] - min2d.flatten()
+        flag1 = yplot > splfit(xplot)
         flag2 = yplot > threshold
         flag = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
@@ -509,7 +882,6 @@ def _mediancr(
             png_filename = f'diagnostic_crmask{i}.png'
             ylabel = f'array{i}' + r' $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                        yplot_boundary_50, yplot_boundary_98, spl50, spl98,
                         threshold, ylabel, interactive, _logger,
                         png_filename=png_filename)
         flag = flag.reshape((naxis2, naxis1))
@@ -719,12 +1091,9 @@ def main(args=None):
     parser.add_argument("--bias",
                         help="Detector bias (ADU, default: 0.0)",
                         type=float, default=0.0)
-    parser.add_argument("--flux_variation_min",
-                        help="Minimum value for the flux variation (default: 1.0)",
-                        type=float, default=1.0)
-    parser.add_argument("--flux_variation_max",
-                        help="Maximum value for the flux variation (default: 1.0)",
-                        type=float, default=1.0)
+    parser.add_argument("--flux_factor",
+                        help="Flux factor to be applied to each image",
+                        type=str, default='none')
     parser.add_argument("--ntest",
                         help="Number of points along the x-axis for the boundary (default: 100)",
                         type=int, default=100)
@@ -734,10 +1103,12 @@ def main(args=None):
     parser.add_argument("--nsimulations",
                         help="Number of simulations for each point in the boundary (default: 10000)",
                         type=int, default=10000)
-    parser.add_argument("--times_boundary_extension",
-                        help="Factor to extend the boundary computed at percentile 98 "
-                             "for double cosmic ray detection (default: 1.0)",
-                        type=float, default=1.0)
+    parser.add_argument("--niter_boundary_extension",
+                        help="Number of iterations for the boundary extension (default: 1)",
+                        type=int, default=1)
+    parser.add_argument("--weight_boundary_extension",
+                        help="Weight for the boundary extension (default: 10)",
+                        type=float, default=10.0)
     parser.add_argument("--threshold",
                         help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
                         type=float, default=None)
@@ -808,12 +1179,12 @@ def main(args=None):
         gain=args.gain,
         rnoise=args.rnoise,
         bias=args.bias,
-        flux_variation_min=args.flux_variation_min,
-        flux_variation_max=args.flux_variation_max,
+        flux_factor=args.flux_factor,
         ntest=args.ntest,
         knots_splfit=args.knots_splfit,
         nsimulations=args.nsimulations,
-        times_boundary_extension=args.times_boundary_extension,
+        niter_boundary_extension=args.niter_boundary_extension,
+        weight_boundary_extension=args.weight_boundary_extension,
         threshold=args.threshold,
         minimum_max2d_rnoise=args.minimum_max2d_rnoise,
         interactive=args.interactive,

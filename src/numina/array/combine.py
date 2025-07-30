@@ -241,21 +241,21 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
 
 
 def maskscr(arrays,
-            gain=None, rnoise=None, bias=0.0,
-            flux_variation_min=1.0, flux_variation_max=1.0,
+            gain=None, rnoise=None, bias=0.0, flux_factor=None,
             ntest=100, knots_splfit=2, nsimulations=10000,
-            times_boundary_extension=1.0, threshold=None,
-            minimum_max2d_rnoise=5.0, interactive=False, dilation=1,
+            niter_boundary_extension=1, weight_boundary_extension=10.0,
+            threshold=None, minimum_max2d_rnoise=5.0,
+            interactive=False, dilation=1,
             dtype=numpy.float32, seed=1234,
             plots=False, semiwindow=15, color_scale='minmax',
             maxplots=10):
     """Generate HDUList with masks for cosmic ray removal using different methods."""
     hdul_masks = _mediancr(
         arrays,
-        gain=gain, rnoise=rnoise, bias=bias,
-        flux_variation_min=flux_variation_min, flux_variation_max=flux_variation_max,
+        gain=gain, rnoise=rnoise, bias=bias, flux_factor=flux_factor,
         ntest=ntest, knots_splfit=knots_splfit, nsimulations=nsimulations,
-        times_boundary_extension=times_boundary_extension,
+        niter_boundary_extension=niter_boundary_extension,
+        weight_boundary_extension=weight_boundary_extension,
         threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
         interactive=interactive, dilation=dilation,
         dtype=dtype, seed=seed,
