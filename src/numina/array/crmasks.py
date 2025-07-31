@@ -219,7 +219,9 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     if len(flux_factor) != naxis3:
         raise ValueError(f"Expected {naxis3} flux factors, but got {len(flux_factor)}.")
 
-    flux_factor = np.array(flux_factor, dtype=float)
+    # round the flux factor to 6 decimal places to avoid
+    # unnecessary precision when writting to the FITS header
+    flux_factor = np.round(flux_factor, decimals=6)
     return flux_factor
 
 
@@ -318,7 +320,7 @@ def compute_crmasks(
         weight_boundary_extension=10.0,
         threshold=None,
         minimum_max2d_rnoise=5.0,
-        interactive=False,
+        interactive=True,
         dilation=1,
         dtype=np.float32,
         seed=None,
