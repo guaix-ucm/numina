@@ -317,7 +317,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
         plt.close(fig)
 
 
-def _mediancr(
+def compute_crmasks(
         list_arrays,
         gain=None,
         rnoise=None,
@@ -909,7 +909,7 @@ def _mediancr(
         list_hdu_masks.append(hdu_mask)
 
     # Generate output HDUList with masks
-    args = inspect.signature(_mediancr).parameters
+    args = inspect.signature(compute_crmasks).parameters
     filtered_args = {k: v for k, v in locals().items() if k in args and k not in ['list_arrays']}
     hdu_primary = fits.PrimaryHDU()
     hdu_primary.header['UUID'] = str(uuid.uuid4())
@@ -921,7 +921,7 @@ def _mediancr(
     return hdul_masks
 
 
-def _apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
+def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
     """
     Compute the median and replace masked pixels with the minimum value.
 
@@ -1174,7 +1174,7 @@ def main(args=None):
         raise ValueError("Readout noise must be provided for mediancr combination.")
 
     # Compute the different cosmic ray masks
-    hdul_masks = _mediancr(
+    hdul_masks = compute_crmasks(
         list_arrays=list_arrays,
         gain=args.gain,
         rnoise=args.rnoise,
@@ -1204,7 +1204,7 @@ def main(args=None):
 
     if args.output_combined:
         # Compute the combined array, variance, and map
-        combined, variance, maparray = _apply_crmasks(
+        combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
             hdul_masks=hdul_masks,
             combination=args.combination,
