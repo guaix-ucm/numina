@@ -19,6 +19,7 @@ from datetime import datetime
 import math
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import LogNorm
+from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
@@ -582,6 +583,7 @@ def compute_crmasks(
     hist2d_accummulated = np.zeros((nbins_ydiag, nbins_xdiag), dtype=int)
     lam = median2d.copy()
     lam[lam < 0] = 0  # Avoid negative values
+    _logger.info("computing simulated 2D histogram...")
     for k in range(nsimulations):
         time_ini = datetime.now()
         image3d_simul = np.zeros((num_images, naxis2, naxis1))
@@ -601,23 +603,38 @@ def compute_crmasks(
         _logger.info("simulation %d/%d, time elapsed: %s", k + 1, nsimulations, time_end - time_ini)
     # Average the histogram over the number of simulations
     hist2d_accummulated = hist2d_accummulated.astype(float) / nsimulations
-    vmin = np.min(hist2d_accummulated)
+    vmin = np.min(hist2d_accummulated[hist2d_accummulated > 0])
     if vmin == 0:
         vmin = 1
     vmax = np.max(hist2d_accummulated)
-    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4))
+    cmap1 = plt.get_cmap('cividis_r')
+    cmap2 = plt.get_cmap('viridis')
+    n_colors = 256
+    n_colors2 = int((np.log10(vmax) - np.log10(1.0)) / (np.log10(vmax) - np.log10(vmin)) * n_colors)
+    n_colors2 += 1
+    if n_colors2 > n_colors:
+        n_colors2 = n_colors
+    if n_colors2 < n_colors:
+        n_colors1 = n_colors - n_colors2
+    else:
+        n_colors1 = 0
+    colors1 = cmap1(np.linspace(0, 1, n_colors1))
+    colors2 = cmap2(np.linspace(0, 1, n_colors2))
+    combined_colors = np.vstack((colors1, colors2))
+    combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', combined_colors)
+    norm = LogNorm(vmin=vmin, vmax=vmax)
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10.1, 4.6))
     # Display 2D histogram of the simulated data
-    tea.imshow(fig, ax1, hist2d_accummulated, norm=LogNorm(vmin=vmin, vmax=vmax),
-               extent=[bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]],
-               aspect='auto', cblabel='Number of pixels')
+    extent = [bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]]
+    tea.imshow(fig, ax1, hist2d_accummulated, norm=norm, extent=extent,
+               aspect='auto', cblabel='Number of pixels', cmap=combined_cmap)
     # Display 2D histogram of the original data
     hist2d_original, edges = np.histogramdd(
         sample=(yplot, xplot),
         bins=(bins_ydiag, bins_xdiag)
     )
-    tea.imshow(fig, ax2, hist2d_original, norm=LogNorm(vmin=vmin, vmax=vmax),
-               extent=[bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]],
-               aspect='auto', cblabel='Number of pixels')
+    tea.imshow(fig, ax2, hist2d_original, norm=norm, extent=extent,
+               aspect='auto', cblabel='Number of pixels', cmap=combined_cmap)
 
     # Determine the exclusion boundary for double cosmic ray detection
     _logger.info("computing numerical boundary for double cosmic ray detection...")
@@ -650,6 +667,7 @@ def compute_crmasks(
         ydum[xcbins < knots[0]] = splfit(knots[0])
         ydum[xcbins > knots[-1]] = splfit(knots[-1])
         ax1.plot(xcbins, ydum, '-', color=f'C{iterboundary}', label=label)
+        ax1.plot(knots, splfit(knots), 'o', color=f'C{iterboundary}', markersize=4)
     ax1.set_xlabel(r'min2d $-$ bias')
     ax1.set_ylabel(r'median2d $-$ min2d')
     ax1.set_title(f'Simulated data (nsimulations = {nsimulations})')
