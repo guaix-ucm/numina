@@ -241,12 +241,36 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
 
 
 def mediancr(arrays, crmasks, dtype):
+    """Combine arrays using the median with cosmic ray mask.
+
+    The function returns the median of the input arrays, applying
+    a cosmic ray mask computed to detect cosmis rays hitting more that
+    once in a single pixel. The masked pixels are replaced by the minimum
+    value of the same pixel in the input arrays.
+    """
     return apply_crmasks(arrays, crmasks, combination='mediancr', dtype=dtype)
 
 
 def meancr(arrays, crmasks, dtype):
+    """Combine arrays using the mean with individual cosmic ray masks.
+
+    The function returns the mean of the input arrays, applying
+    a cosmic ray mask computed for each input array. This allows to employ
+    numpy masked arrays to determine the mean of each pixel. For those
+    pixels where the cosmic ray mask is True in all the input arrays,
+    the minimum value of the same pixel in the input arrays is used
+    as the value of the pixel in the output.
+    """
     return apply_crmasks(arrays, crmasks, combination='meancr', dtype=dtype)
 
 
 def meancrt(arrays, crmasks, dtype):
+    """Combine arrays using the mean with a single cosmic ray mask.
+
+    The function returns the mean of the input arrays, applying
+    a cosmic ray mask computed at once, by stacking the input arrays
+    and trying to detect all the cosmic rays in all the exposures piled
+    up in a single image. The masked pixels are replaced by the value
+    of the same pixel when the combination is computed using 'mediancr'.
+    """
     return apply_crmasks(arrays, crmasks, combination='meancrt', dtype=dtype)

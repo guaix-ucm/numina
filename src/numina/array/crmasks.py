@@ -26,6 +26,7 @@ import numpy.ma as ma
 from scipy import ndimage
 
 from numina.array.numsplines import spline_positive_derivative
+from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits_history
 import teareduce as tea
 
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
@@ -311,16 +312,16 @@ def compute_crmasks(
         rnoise=None,
         bias=None,
         flux_factor=None,
-        knots_splfit=2,
+        knots_splfit=3,
         nsimulations=10,
-        niter_boundary_extension=1,
+        niter_boundary_extension=3,
         weight_boundary_extension=10.0,
         threshold=None,
         minimum_max2d_rnoise=5.0,
         interactive=False,
         dilation=1,
         dtype=np.float32,
-        seed=1234,
+        seed=None,
         plots=False,
         semiwindow=15,
         color_scale='minmax',
@@ -354,15 +355,14 @@ def compute_crmasks(
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
     knots_splfit : int, optional
-        The number of knots for the spline fit to the boundary
-        (default is 2).
+        The number of knots for the spline fit to the boundary.
     nsimulations : int, optional
-        The number of simulations to perform for each point in the
-        exclusion boundary (default is 10000).
+        The number of simulations of the each image to compute
+        the exclusion boundary.
     niter_boundary_extension : int, optional
-        The number of iterations for the boundary extension (default is 1).
+        The number of iterations for the boundary extension.
     weight_boundary_extension : float, optional
-        The weight for the boundary extension (default is 10.0).
+        The weight for the boundary extension.
         In each iteration, the boundary is extended by applying an
         extra weight to the points above the previous boundary. This
         extra weight is computed as `weight_boundary_extension**iter`,
@@ -374,15 +374,15 @@ def compute_crmasks(
         simulations.
     minimum_max2d_rnoise : float, optional
         Minimum value for max2d in readout noise units to flag a pixel
-        as a double cosmic ray (default is 5.0).
+        as a double cosmic ray.
     interactive : bool, optional
-        If True, enable interactive mode for plots (default is False).
+        If True, enable interactive mode for plots.
     dilation : int, optional
-        The dilation factor for the double cosmic ray mask (default is 1).
+        The dilation factor for the double cosmic ray mask.
     dtype : data-type, optional
         The desired data type to build the 3D stack (default is np.float32).
-    seed : int, optional
-        The random seed for reproducibility (default is 1234).
+    seed : int or None, optional
+        The random seed for reproducibility.
     plots : bool, optional
         If True, generate plots with detected double cosmic rays
         (default is False).
@@ -514,13 +514,13 @@ def compute_crmasks(
     # Log the input parameters
     _logger.info("flux_factor: %s", str(flux_factor))
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
-    _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
+    _logger.info("number of simulations to compute the exclusion boundary: %d", nsimulations)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
     _logger.info("niter for boundary extension: %d", niter_boundary_extension)
     _logger.info("weight for boundary extension: %f", weight_boundary_extension)
     _logger.info("dtype for output arrays: %s", dtype)
-    _logger.info("random seed for reproducibility: %d", seed)
+    _logger.info("random seed for reproducibility: %s", str(seed))
     _logger.info("dilation factor: %d", dilation)
     if plots:
         _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
@@ -1101,7 +1101,16 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
 
 def main(args=None):
     """
-    Main function to run the mediancr combination.
+    Main function to compute and apply CR masks.
+
+    Since this main function is intended to be run for two different
+    purposes, we are using argparse with subparsers to split the
+    arguments for the two functionalities:
+    - `compute`: to compute the cosmic ray masks.
+    - `apply`: to apply the cosmic ray masks to a list of 2D arrays.
+
+    The main function will parse the command line arguments and call
+    the appropriate function based on the subcommand used.
     """
     logging.basicConfig(
         level=logging.INFO,  # or DEBUG, WARNING, ERROR, CRITICAL
@@ -1115,72 +1124,104 @@ def main(args=None):
         description="Combine 2D arrays using mediancr or meancr methods."
     )
 
-    parser.add_argument("inputlist",
-                        help="Input text file with list of 2D arrays.",
-                        type=str)
-    parser.add_argument("--gain",
-                        help="Detector gain (ADU)",
-                        type=float)
-    parser.add_argument("--rnoise",
-                        help="Readout noise (ADU)",
-                        type=float)
-    parser.add_argument("--bias",
-                        help="Detector bias (ADU, default: 0.0)",
-                        type=float, default=0.0)
-    parser.add_argument("--flux_factor",
-                        help="Flux factor to be applied to each image",
-                        type=str, default='none')
-    parser.add_argument("--knots_splfit",
-                        help="Number of inner knots for the spline fit to the boundary (default: 2)",
-                        type=int, default=2)
-    parser.add_argument("--nsimulations",
-                        help="Number of simulations for each point in the boundary (default: 10000)",
-                        type=int, default=10000)
-    parser.add_argument("--niter_boundary_extension",
-                        help="Number of iterations for the boundary extension (default: 1)",
-                        type=int, default=1)
-    parser.add_argument("--weight_boundary_extension",
-                        help="Weight for the boundary extension (default: 10)",
-                        type=float, default=10.0)
-    parser.add_argument("--threshold",
-                        help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
-                        type=float, default=None)
-    parser.add_argument("--minimum_max2d_rnoise",
-                        help="Minimum value for max2d in rnoise units to flag a pixel (default: 3.0)",
-                        type=float, default=3.0)
-    parser.add_argument("--interactive",
-                        help="Interactive mode for diagnostic plot (program will stop after the plot)",
-                        action="store_true")
-    parser.add_argument("--dilation",
-                        help="Dilation factor for cosmic ray mask",
-                        type=int, default=1)
-    parser.add_argument("--output_masks",
-                        help="Output FITS file for the cosmic ray masks",
-                        type=str)
-    parser.add_argument("--output_combined",
-                        help="Output FITS file for the combined array and mask",
-                        type=str)
-    parser.add_argument("--combination",
-                        help=f"Combination method: {', '.join(VALID_COMBINATIONS)}",
-                        type=str, choices=VALID_COMBINATIONS, default='mediancr')
-    parser.add_argument("--plots",
-                        help="Generate plots with detected double cosmic rays",
-                        action="store_true")
-    parser.add_argument("--semiwindow",
-                        help="Semiwindow size for plotting double cosmic rays",
-                        type=int, default=15)
-    parser.add_argument("--color_scale",
-                        help="Color scale for the plots (default: 'minmax')",
-                        type=str, choices=['minmax', 'zscale'], default='minmax')
-    parser.add_argument("--maxplots",
-                        help="Maximum number of double cosmic rays to plot (-1 for all)",
-                        type=int, default=10)
-    parser.add_argument("--extname",
-                        help="Extension name in the input arrays (default: 'PRIMARY')",
-                        type=str, default='PRIMARY')
+    # Global arguments
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
+
+    # Subparsers for different functionalities
+    subparsers = parser.add_subparsers(
+        dest='command',
+        help="Choose a command to execute.",
+        required=False
+    )
+
+    # Subparser for computing cosmic ray masks
+    parser_compute = subparsers.add_parser(
+        'compute',
+        help="Compute cosmic ray masks from a list of 2D arrays."
+    )
+    parser_compute.add_argument("--inputlist",
+                                help="Input text file with list of 2D arrays.",
+                                type=str,
+                                required=True)
+    parser_compute.add_argument("--gain",
+                                help="Detector gain (ADU)",
+                                type=float)
+    parser_compute.add_argument("--rnoise",
+                                help="Readout noise (ADU)",
+                                type=float)
+    parser_compute.add_argument("--bias",
+                                help="Detector bias (ADU, default: 0.0)",
+                                type=float, default=0.0)
+    parser_compute.add_argument("--flux_factor",
+                                help="Flux factor to be applied to each image",
+                                type=str, default='none')
+    parser_compute.add_argument("--knots_splfit",
+                                help="Number of inner knots for the spline fit to the boundary (default: 3)",
+                                type=int, default=3)
+    parser_compute.add_argument("--nsimulations",
+                                help="Number of simulations to compute exclusion boundary (default: 10)",
+                                type=int, default=10)
+    parser_compute.add_argument("--niter_boundary_extension",
+                                help="Number of iterations for the boundary extension (default: 3)",
+                                type=int, default=3)
+    parser_compute.add_argument("--weight_boundary_extension",
+                                help="Weight for the boundary extension (default: 10)",
+                                type=float, default=10.0)
+    parser_compute.add_argument("--threshold",
+                                help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
+                                type=float, default=None)
+    parser_compute.add_argument("--minimum_max2d_rnoise",
+                                help="Minimum value for max2d in rnoise units to flag a pixel (default: 5.0)",
+                                type=float, default=5.0)
+    parser_compute.add_argument("--interactive",
+                                help="Interactive mode for diagnostic plot (program will stop after the plot)",
+                                action="store_true")
+    parser_compute.add_argument("--dilation",
+                                help="Dilation factor for cosmic ray mask",
+                                type=int, default=1)
+    parser_compute.add_argument("--output_masks",
+                                help="Output FITS file for the cosmic ray masks",
+                                type=str, default='masks.fits')
+    parser_compute.add_argument("--plots",
+                                help="Generate plots with detected double cosmic rays",
+                                action="store_true")
+    parser_compute.add_argument("--semiwindow",
+                                help="Semiwindow size for plotting double cosmic rays",
+                                type=int, default=15)
+    parser_compute.add_argument("--color_scale",
+                                help="Color scale for the plots (default: 'minmax')",
+                                type=str, choices=['minmax', 'zscale'], default='minmax')
+    parser_compute.add_argument("--maxplots",
+                                help="Maximum number of double cosmic rays to plot (-1 for all)",
+                                type=int, default=10)
+    parser_compute.add_argument("--extname",
+                                help="Extension name in the input arrays (default: 'PRIMARY')",
+                                type=str, default='PRIMARY')
+
+    # Subparser for applying cosmic ray masks
+    parser_apply = subparsers.add_parser(
+        'apply',
+        help="Apply cosmic ray masks to a list of 2D arrays."
+    )
+    parser_apply.add_argument("--inputlist",
+                              help="Input text file with list of 2D arrays.",
+                              type=str,
+                              required=True)
+    parser_apply.add_argument("--input_masks",
+                              help="Input FITS file with the cosmic ray masks",
+                              type=str, required=True)
+    parser_apply.add_argument("--output_combined",
+                              help="Output FITS file for the combined array and mask",
+                              type=str, required=True)
+    parser_apply.add_argument("--combination",
+                              help=f"Combination method: {', '.join(VALID_COMBINATIONS)}",
+                              type=str, choices=VALID_COMBINATIONS,
+                              default='mediancr')
+    parser_apply.add_argument("--extname",
+                              help="Extension name in the input arrays (default: 'PRIMARY')",
+                              type=str, default='PRIMARY')
 
     args = parser.parse_args(args)
 
@@ -1194,62 +1235,74 @@ def main(args=None):
     # Read the input list of files, which should contain paths to 2D FITS files,
     # and load the arrays from the specified extension name.
     with open(args.inputlist, 'rt', encoding='utf-8') as f:
-        list_arrays = [fits.getdata(line.strip(), extname=args.extname) for line in f if line.strip()]
+        list_of_fits_files = [line.strip() for line in f if line.strip()]
+    list_arrays = [fits.getdata(file, extname=args.extname) for file in list_of_fits_files]
 
     # Check if the list is empty
     if not list_arrays:
         raise ValueError("The input list is empty. Please provide a valid list of 2D arrays.")
 
-    # Check if gain and rnoise are provided
-    if args.gain is None:
-        raise ValueError("Gain must be provided for mediancr combination.")
-    if args.rnoise is None:
-        raise ValueError("Readout noise must be provided for mediancr combination.")
+    # First task: compute cosmic ray masks
+    if args.command == 'compute':
+        # Check if gain and rnoise are provided
+        if args.gain is None:
+            raise ValueError("Gain must be provided for mediancr combination.")
+        if args.rnoise is None:
+            raise ValueError("Readout noise must be provided for mediancr combination.")
 
-    # Compute the different cosmic ray masks
-    hdul_masks = compute_crmasks(
-        list_arrays=list_arrays,
-        gain=args.gain,
-        rnoise=args.rnoise,
-        bias=args.bias,
-        flux_factor=args.flux_factor,
-        knots_splfit=args.knots_splfit,
-        nsimulations=args.nsimulations,
-        niter_boundary_extension=args.niter_boundary_extension,
-        weight_boundary_extension=args.weight_boundary_extension,
-        threshold=args.threshold,
-        minimum_max2d_rnoise=args.minimum_max2d_rnoise,
-        interactive=args.interactive,
-        dilation=args.dilation,
-        dtype=np.float32,
-        plots=args.plots,
-        semiwindow=args.semiwindow,
-        color_scale=args.color_scale,
-        maxplots=args.maxplots
-    )
-
-    # Save the masks to a FITS file if requested
-    if args.output_masks:
-        logger.info("Saving cosmic ray masks to %s", args.output_masks)
-        hdul_masks.writeto(args.output_masks, overwrite=True)
-        logger.info("Cosmic ray masks saved")
-
-    if args.output_combined:
-        # Compute the combined array, variance, and map
-        combined, variance, maparray = apply_crmasks(
+        # Compute the different cosmic ray masks
+        hdul_masks = compute_crmasks(
             list_arrays=list_arrays,
-            hdul_masks=hdul_masks,
-            combination=args.combination,
-            dtype=np.float32
+            gain=args.gain,
+            rnoise=args.rnoise,
+            bias=args.bias,
+            flux_factor=args.flux_factor,
+            knots_splfit=args.knots_splfit,
+            nsimulations=args.nsimulations,
+            niter_boundary_extension=args.niter_boundary_extension,
+            weight_boundary_extension=args.weight_boundary_extension,
+            threshold=args.threshold,
+            minimum_max2d_rnoise=args.minimum_max2d_rnoise,
+            interactive=args.interactive,
+            dilation=args.dilation,
+            dtype=np.float32,
+            plots=args.plots,
+            semiwindow=args.semiwindow,
+            color_scale=args.color_scale,
+            maxplots=args.maxplots
         )
-        # Save the combined array, variance, and map to a FITS file
-        logger.info("Saving combined array, variance, and map to %s", args.output_combined)
-        hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
-        hdu_variance = fits.ImageHDU(variance.astype(np.float32), name='VARIANCE')
-        hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
-        hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
-        hdul.writeto(args.output_combined, overwrite=True)
-        logger.info("Combined array, variance, and map saved")
+
+        # Save the masks to a FITS file if requested
+        if args.output_masks:
+            logger.info("Saving cosmic ray masks to %s", args.output_masks)
+            hdul_masks.writeto(args.output_masks, overwrite=True)
+            logger.info("Cosmic ray masks saved")
+
+    # Second task: apply cosmic ray masks
+    elif args.command == 'apply':
+        with fits.open(args.input_masks) as hdul_masks:
+            # Compute the combined array, variance, and map
+            combined, variance, maparray = apply_crmasks(
+                list_arrays=list_arrays,
+                hdul_masks=hdul_masks,
+                combination=args.combination,
+                dtype=np.float32
+            )
+            # Save the combined array, variance, and map to a FITS file
+            logger.info("Saving combined array, variance, and map to %s", args.output_combined)
+            hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
+            add_script_info_to_fits_history(hdu_combined.header, args)
+            hdu_combined.header.add_history('Contents of --inputlist:')
+            for item in list_of_fits_files:
+                hdu_combined.header.add_history(f'- {item}')
+            hdu_combined.header.add_history(f"Masks UUID: {hdul_masks[0].header['UUID']}")
+            hdu_variance = fits.ImageHDU(variance.astype(np.float32), name='VARIANCE')
+            hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
+            hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
+            hdul.writeto(args.output_combined, overwrite=True)
+            logger.info("Combined array, variance, and map saved")
+    else:
+        raise ValueError(f"Unknown command: {args.command}.")
 
 
 if __name__ == "__main__":
