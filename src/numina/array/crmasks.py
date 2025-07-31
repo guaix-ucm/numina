@@ -212,13 +212,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         if interactive:
             _logger.info("Entering interactive mode (press 'q' to close plot).")
             plt.show()
-            answer = input("Press Enter to continue or type 'exit' to quit: ")
-            plt.close(fig)
-            if answer.lower() == 'exit':
-                _logger.info("Exiting program.")
-                raise SystemExit()
-        else:
-            plt.close(fig)
+        plt.close(fig)
 
     if len(flux_factor) != naxis3:
         raise ValueError(f"Expected {naxis3} flux factors, but got {len(flux_factor)}.")
@@ -300,20 +294,14 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
     ax.set_ylim(ymin, ymax)
     ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax.set_ylabel(ylabel)
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.25), ncol=3)
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.18), ncol=2)
     plt.tight_layout()
     _logger.info(f"saving {png_filename}.")
     plt.savefig(png_filename, dpi=150)
     if interactive:
         _logger.info("Entering interactive mode (press 'q' to close plot).")
         plt.show()
-        answer = input("Press Enter to continue or type 'exit' to quit: ")
-        plt.close(fig)
-        if answer.lower() == 'exit':
-            _logger.info("Exiting program.")
-            raise SystemExit()
-    else:
-        plt.close(fig)
+    plt.close(fig)
 
 
 def compute_crmasks(
@@ -682,13 +670,8 @@ def compute_crmasks(
     if interactive:
         _logger.info("Entering interactive mode (press 'q' to close plot).")
         plt.show()
-        answer = input("Press Enter to continue or type 'exit' to quit: ")
-        plt.close(fig)
-        if answer.lower() == 'exit':
-            _logger.info("Exiting program.")
-            raise SystemExit()
-    else:
-        plt.close(fig)
+
+    plt.close(fig)
 
     if threshold is None:
         # Use the minimum value of the boundary as the threshold
