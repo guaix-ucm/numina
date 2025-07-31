@@ -13,7 +13,7 @@
 import numpy
 
 import numina.array._combine as intl  # noqa
-from numina.array.mediancr import _mediancr, _apply_crmasks
+from numina.array.crmasks import apply_crmasks
 
 
 def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
@@ -240,31 +240,13 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def maskscr(arrays,
-            gain=None, rnoise=None, bias=0.0, flux_factor=None,
-            ntest=100, knots_splfit=2, nsimulations=10000,
-            niter_boundary_extension=1, weight_boundary_extension=10.0,
-            threshold=None, minimum_max2d_rnoise=5.0,
-            interactive=False, dilation=1,
-            dtype=numpy.float32, seed=1234,
-            plots=False, semiwindow=15, color_scale='minmax',
-            maxplots=10):
-    """Generate HDUList with masks for cosmic ray removal using different methods."""
-    hdul_masks = _mediancr(
-        arrays,
-        gain=gain, rnoise=rnoise, bias=bias, flux_factor=flux_factor,
-        ntest=ntest, knots_splfit=knots_splfit, nsimulations=nsimulations,
-        niter_boundary_extension=niter_boundary_extension,
-        weight_boundary_extension=weight_boundary_extension,
-        threshold=threshold, minimum_max2d_rnoise=minimum_max2d_rnoise,
-        interactive=interactive, dilation=dilation,
-        dtype=dtype, seed=seed,
-        plots=plots, semiwindow=semiwindow, color_scale=color_scale,
-        maxplots=maxplots
-    )
-
-    return hdul_masks
+def mediancr(arrays, crmasks, dtype):
+    return apply_crmasks(arrays, crmasks, combination='mediancr', dtype=dtype)
 
 
-def mediancr(arrays, crmasks, combination, dtype):
-    return _apply_crmasks(arrays, crmasks, combination, dtype)
+def meancr(arrays, crmasks, dtype):
+    return apply_crmasks(arrays, crmasks, combination='meancr', dtype=dtype)
+
+
+def meancrt(arrays, crmasks, dtype):
+    return apply_crmasks(arrays, crmasks, combination='meancrt', dtype=dtype)

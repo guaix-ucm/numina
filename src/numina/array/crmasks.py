@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Median combination of arrays avoiding multiple cosmic rays in the same pixel."""
+import ast
 import inspect
 import logging
 import sys
@@ -26,7 +27,7 @@ from scipy import ndimage
 from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
 
-VALID_COMBINATIONS = ['mediancr', 'meancr_all', 'meancr_single']
+VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
 
 
 def is_valid_number(x):
@@ -76,7 +77,6 @@ def remove_isolated_pixels(h):
                 if k == ktot - 1:
                     flag[i, j] = fsum / k
     hclean = h.copy()
-    print(f'{np.sum(flag > 0)=}')
     hclean[flag > 0] = flag[flag > 0]
     # Remove pixels with less than 4 neighbors
     flag = np.zeros_like(h, dtype=np.uint8)
@@ -92,7 +92,6 @@ def remove_isolated_pixels(h):
                                     k += 1
                 if k < 5:
                     flag[i, j] = 1
-    print(f'{np.sum(flag == 1)=}')
     hclean[flag == 1] = 0
     # Remove pixels with no neighbor on the left hand side
     # when moving from left to right in each row
@@ -321,11 +320,10 @@ def compute_crmasks(
         list_arrays,
         gain=None,
         rnoise=None,
-        bias=0.0,
+        bias=None,
         flux_factor=None,
-        ntest=100,
         knots_splfit=2,
-        nsimulations=10000,
+        nsimulations=10,
         niter_boundary_extension=1,
         weight_boundary_extension=10.0,
         threshold=None,
@@ -340,37 +338,32 @@ def compute_crmasks(
         maxplots=10
         ):
     """
-    Median combination of arrays while avoiding multiple cosmic rays in the same pixel.
+    Computation of cosmic rays masks using several equivalent exposures.
 
-    This function combines a list of 2D numpy arrays using the median method,
-    and applies a cosmic ray detection algorithm to avoid multiple cosmic rays
-    affecting the same pixel. The cosmic ray detection is based on a boundary
-    that is derived numerically making use of the provided gain and readout noise
-    values. The function also supports generating diagnostic plots to visualize
-    the cosmic ray detection process.
-
-    The pixels composing each cosmic ray can be surrounded by a dilation factor,
-    which expands the mask around the detected cosmic ray pixels. Each masked pixel
-    is replaced by the minimum value of the corresponding pixel in the input arrays.
+    This function computes cosmic ray masks from a list of 2D numpy arrays.
+    The cosmic ray detection is based on a boundary that is derived numerically
+    making use of the provided gain and readout noise values. The function
+    also supports generating diagnostic plots to visualize the cosmic ray
+    detection process.
 
     Parameters
     ----------
     list_arrays : list of 2D arrays
         The input arrays to be combined.
-    gain : float
+    gain : 2D array, float or None
         The gain value (in e/ADU) of the detector.
-    rnoise : float
+        If None, it is assumed to be 1.0.
+    rnoise : 2D array, float or None
         The readout noise (in ADU) of the detector.
-    bias : float, optional
-        The bias value (in ADU) of the detector (default is 0.0).
+        If None, it is assumed to be 0.0.
+    bias : 2D array, float or None
+        The bias value (in ADU) of the detector.
+        If None, it is assumed to be 0.0.
     flux_factor : str, list or None, optional
-        The flux factor to consider (default is None).
+        The flux scaling factor for each exposure (default is None).
         If 'auto', the flux factor is determined automatically.
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
-    ntest: int, optional
-        The number of points along the x-axis in the diagnostic
-        diagram to sample for the boundary.
     knots_splfit : int, optional
         The number of knots for the spline fit to the boundary
         (default is 2).
@@ -424,7 +417,7 @@ def compute_crmasks(
         suspected pixels. The extensions are:
         - 'MEDIANCR': Mask for double cosmic rays detected using the
         median combination.
-        - 'MEANCR': Mask for cosmic rays detected when adding all the
+        - 'MEANCRT': Mask for cosmic rays detected when adding all the
         individual arrays. That summed image contains all the cosmic rays.
         of all the images.
         - 'CRMASK1', 'CRMASK2', ...: Masks for cosmic rays detected
@@ -457,13 +450,47 @@ def compute_crmasks(
     for i, array in enumerate(list_arrays):
         _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
 
-    # Check that gain is defined
+    # Define the gain
     if gain is None:
-        raise ValueError("Gain must be defined for mediancr combination.")
+        gain = np.ones((naxis2, naxis1), dtype=float)
+        _logger.info("gain not defined, assuming gain=1.0 for all pixels.")
+    elif isinstance(gain, (float, int)):
+        gain = np.full((naxis2, naxis1), gain, dtype=float)
+        _logger.info("gain defined as a constant value: %f", gain[0, 0])
+    elif isinstance(gain, np.ndarray):
+        if gain.shape != (naxis2, naxis1):
+            raise ValueError(f"gain must have the same shape as the input arrays ({naxis2=}, {naxis1=}).")
+        _logger.info("gain defined as a 2D array with shape: %s", gain.shape)
+    else:
+        raise TypeError(f"Invalid type for gain: {type(gain)}. Must be float, int, or numpy array.")
 
-    # Check that readout noise is defined
+    # Define the readout noise
     if rnoise is None:
-        raise ValueError("Readout noise must be defined for mediancr combination.")
+        rnoise = np.zeros((naxis2, naxis1), dtype=float)
+        _logger.info("readout noise not defined, assuming readout noise=0.0 for all pixels.")
+    elif isinstance(rnoise, (float, int)):
+        rnoise = np.full((naxis2, naxis1), rnoise, dtype=float)
+        _logger.info("readout noise defined as a constant value: %f", rnoise[0, 0])
+    elif isinstance(rnoise, np.ndarray):
+        if rnoise.shape != (naxis2, naxis1):
+            raise ValueError(f"rnoise must have the same shape as the input arrays ({naxis2=}, {naxis1=}).")
+        _logger.info("readout noise defined as a 2D array with shape: %s", rnoise.shape)
+    else:
+        raise TypeError(f"Invalid type for rnoise: {type(rnoise)}. Must be float, int, or numpy array.")
+
+    # Define the bias
+    if bias is None:
+        bias = np.zeros((naxis2, naxis1), dtype=float)
+        _logger.info("bias not defined, assuming bias=0.0 for all pixels.")
+    elif isinstance(bias, (float, int)):
+        bias = np.full((naxis2, naxis1), bias, dtype=float)
+        _logger.info("bias defined as a constant value: %f", bias[0, 0])
+    elif isinstance(bias, np.ndarray):
+        if bias.shape != (naxis2, naxis1):
+            raise ValueError(f"bias must have the same shape as the input arrays ({naxis2=}, {naxis1=}).")
+        _logger.info("bias defined as a 2D array with shape: %s", bias.shape)
+    else:
+        raise TypeError(f"Invalid type for bias: {type(bias)}. Must be float, int, or numpy array.")
 
     # Check flux_factor
     if flux_factor is None:
@@ -473,6 +500,13 @@ def compute_crmasks(
             pass  # flux_factor will be set later
         elif flux_factor.lower() == 'none':
             flux_factor = np.ones(num_images, dtype=float)
+        elif isinstance(ast.literal_eval(flux_factor), list):
+            flux_factor = ast.literal_eval(flux_factor)
+            if len(flux_factor) != num_images:
+                raise ValueError(f"flux_factor must have the same length as the number of images ({num_images}).")
+            if not all_valid_numbers(flux_factor):
+                raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
+            flux_factor = np.array(flux_factor, dtype=float)
         else:
             raise ValueError(f"Invalid flux_factor string: {flux_factor}. Use 'auto' or 'none'.")
     elif isinstance(flux_factor, list):
@@ -489,18 +523,13 @@ def compute_crmasks(
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Log the input parameters
-    _logger.info("gain for double cosmic ray detection: %f", gain)
-    _logger.info("readout noise for double cosmic ray detection: %f", rnoise)
-    _logger.info("bias for double cosmic ray detection: %f", bias)
     _logger.info("flux_factor: %s", str(flux_factor))
-    _logger.info("number of points along the x-axis for the boundary: %d", ntest)
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
     _logger.info("number of simulations for each point in the boundary: %d", nsimulations)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
     _logger.info("niter for boundary extension: %d", niter_boundary_extension)
     _logger.info("weight for boundary extension: %f", weight_boundary_extension)
-    _logger.info("number of test points for the boundary: %d", ntest)
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("random seed for reproducibility: %d", seed)
     _logger.info("dilation factor: %d", dilation)
@@ -515,9 +544,8 @@ def compute_crmasks(
         image3d[i] = array.astype(dtype)
 
     # Subtract the bias from the input arrays
-    if bias != 0.0:
-        _logger.info("subtracting bias from the input arrays: %f", bias)
-        image3d -= bias
+    _logger.info("subtracting bias from the input arrays")
+    image3d -= bias
 
     # Compute minimum, maximum, median, mean and variance along the first axis
     min2d = np.min(image3d, axis=0)
@@ -537,8 +565,8 @@ def compute_crmasks(
     rng = np.random.default_rng(seed)  # Random number generator for reproducibility
     xdiag_min, xdiag_max, ydiag_min, ydiag_max = estimate_diagnostic_limits(
         rng=rng,
-        gain=gain,
-        rnoise=rnoise,
+        gain=np.median(gain),  # Use median value to simplify the computation
+        rnoise=np.median(rnoise),  # Use median value to simplify the computation
         maxvalue=np.max(min2d),
         num_images=num_images,
         flux_factor=flux_factor,
@@ -571,8 +599,7 @@ def compute_crmasks(
         image3d_simul = np.zeros((num_images, naxis2, naxis1))
         for i in range(num_images):
             image3d_simul[i] = rng.poisson(lam=lam * flux_factor[i] * gain).astype(float) / gain
-            if rnoise > 0:
-                image3d_simul[i] += rng.normal(loc=0, scale=rnoise, size=(naxis2, naxis1))
+            image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
         min2d_simul = np.min(image3d_simul, axis=0)
         median2d_simul = np.median(image3d_simul, axis=0)
         xplot_simul = min2d_simul.flatten()
@@ -586,15 +613,6 @@ def compute_crmasks(
         _logger.info("simulation %d/%d, time elapsed: %s", k + 1, nsimulations, time_end - time_ini)
     # Average the histogram over the number of simulations
     hist2d_accummulated = hist2d_accummulated.astype(float) / nsimulations
-    # temporal fix
-    if nsimulations > 0:
-        hdu = fits.PrimaryHDU(hist2d_accummulated)
-        hdul = fits.HDUList([hdu])
-        hdul.writeto('hist2d_accummulated.fits', overwrite=True)
-    else:
-        with fits.open('hist2d_accummulated.fits') as hdul:
-            hist2d_accummulated = hdul[0].data
-        nsimulations = 10
     vmin = np.min(hist2d_accummulated)
     if vmin == 0:
         vmin = 1
@@ -681,7 +699,7 @@ def compute_crmasks(
     flag1 = yplot > splfit(xplot)
     flag2 = yplot > threshold
     flag = np.logical_and(flag1, flag2)
-    flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
+    flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise.flatten()
     flag = np.logical_and(flag, flag3)
     _logger.info("number of pixels flagged as double cosmic rays: %d", np.sum(flag))
     _logger.info("generating diagnostic plot for MEDIANCR...")
@@ -865,7 +883,7 @@ def compute_crmasks(
         flag1 = yplot > splfit(xplot)
         flag2 = yplot > threshold
         flag = np.logical_and(flag1, flag2)
-        flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise
+        flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise.flatten()
         flag = np.logical_and(flag, flag3)
         # for the individual arrays, force the flag to be True if the pixel
         # was flagged as a double cosmic ray when using the mean2d array
@@ -873,7 +891,7 @@ def compute_crmasks(
             flag = np.logical_and(flag, list_hdu_masks[1].data.astype(bool).flatten())
         _logger.info("number of pixels flagged as cosmic rays: %d", np.sum(flag))
         if i == 0:
-            _logger.info("generating diagnostic plot for MEANCR...")
+            _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
             ylabel = r'mean2d $-$ min2d'
 
@@ -902,7 +920,7 @@ def compute_crmasks(
         # Compute mask
         mask = flag_integer_dilated > 0
         if i == 0:
-            name = 'MEANCR'
+            name = 'MEANCRT'
         else:
             name = f'CRMASK{i}'
         hdu_mask = fits.ImageHDU(mask.astype(np.uint8), name=name)
@@ -913,8 +931,18 @@ def compute_crmasks(
     filtered_args = {k: v for k, v in locals().items() if k in args and k not in ['list_arrays']}
     hdu_primary = fits.PrimaryHDU()
     hdu_primary.header['UUID'] = str(uuid.uuid4())
-    hdu_primary.header.add_history("CRMasks generated by mediancr function:")
+    hdu_primary.header.add_history(f"CRMasks generated by {__name__}")
+    hdu_primary.header.add_history(f"at {datetime.now().isoformat()}")
     for key, value in filtered_args.items():
+        if isinstance(value, np.ndarray):
+            if np.unique(value).size == 1:
+                value = value.flatten()[0]
+            elif value.ndim == 1 and len(value) == num_images:
+                value = str(value.tolist())
+            else:
+                value = f'array_shape: {value.shape}'
+        elif isinstance(value, list):
+            value = str(value)
         hdu_primary.header.add_history(f"- {key} = {value}")
 
     hdul_masks = fits.HDUList([hdu_primary] + list_hdu_masks)
@@ -923,7 +951,11 @@ def compute_crmasks(
 
 def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
     """
-    Compute the median and replace masked pixels with the minimum value.
+    Correct cosmic rays applying previously computed masks.
+
+    The pixels composing each cosmic ray can be surrounded by a dilation factor,
+    which expands the mask around the detected cosmic ray pixels. Each masked pixel
+    is replaced by the minimum value of the corresponding pixel in the input arrays.
 
     Parameters
     ----------
@@ -939,10 +971,10 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
         (those equal to 1 in extension 'MEDIANCR' of `hdul_masks`) are
         replaced by the minimum value of the corresponding pixel in the
         input arrays.
-        - 'meancr_all', the mean combination is applied, and masked pixels
-        (those equal to 1 in extension 'MEANCR' of `hdul_masks`) are
+        - 'meancrt', the mean combination is applied, and masked pixels
+        (those equal to 1 in extension 'MEANCRT' of `hdul_masks`) are
         replaced by the mediancr value.
-        - 'meancr_single', the mean combination is applied making use of
+        - 'meancr', the mean combination is applied making use of
         the individual mask of each image (extensions 'CRMASK1', 'CRMASK2',
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
@@ -1004,12 +1036,12 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
     # Apply the requested combination method
     _logger.info("applying combination method: %s", combination)
     _logger.info("using crmasks in %s", hdul_masks[0].header['UUID'])
-    if combination in ['mediancr', 'meancr_all']:
+    if combination in ['mediancr', 'meancrt']:
         # Define the mask_mediancr
         mask_mediancr = hdul_masks['MEDIANCR'].data.astype(bool)
+        _logger.info("applying mask MEDIANCR: %d masked pixels", np.sum(mask_mediancr))
         # Replace the masked pixels with the minimum value
         # of the corresponding pixel in the input arrays
-        _logger.info("replacing %d masked pixels in median2d with the minimum value", np.sum(mask_mediancr))
         median2d_corrected = median2d.copy()
         median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
 
@@ -1020,21 +1052,21 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
         variance2d[mask_mediancr] = 0.0  # Set variance to 0 for the masked pixels
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
         map2d[mask_mediancr] = 1  # Set the map to 1 for the masked pixels
-    elif combination == 'meancr_all':
+    elif combination == 'meancrt':
         # Define the mask_meancr
-        mask_meancr = hdul_masks['MEANCR'].data.astype(bool)
+        mask_meancrt = hdul_masks['MEANCRT'].data.astype(bool)
+        _logger.info("applying mask MEANCRT: %d masked pixels", np.sum(mask_meancrt))
         mean2d = np.mean(image3d, axis=0)
         # Replace the masked pixels in mean2d with the median2d_corrected value
-        _logger.info("replacing %d masked pixels in mean2d with the median2d_corrected value", np.sum(mask_meancr))
         mean2d_corrected = mean2d.copy()
-        mean2d_corrected[mask_meancr] = median2d_corrected[mask_meancr]
+        mean2d_corrected[mask_meancrt] = median2d_corrected[mask_meancrt]
         combined2d = mean2d_corrected
         # Define the variance and map arrays
         variance2d = np.var(image3d, axis=0, ddof=1)
-        variance2d[mask_meancr] = 0.0  # Set variance to 0 for the masked pixels
+        variance2d[mask_meancrt] = 0.0  # Set variance to 0 for the masked pixels
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
-        map2d[mask_meancr] = 1  # Set the map to 1 for the masked pixels
-    elif combination == 'meancr_single':
+        map2d[mask_meancrt] = 1  # Set the map to 1 for the masked pixels
+    elif combination == 'meancr':
         image3d_masked = ma.array(
             np.zeros(shape3d, dtype=dtype),
             mask=np.full(shape3d, fill_value=True, dtype=bool)
@@ -1050,9 +1082,12 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None, dtype=np.float32):
         # Compute the mean of the masked 3D array
         combined2d = ma.mean(image3d_masked, axis=0).data
         # Replace pixels without data with the minimum value
-        if np.any(total_mask == 3):
-            _logger.info("replacing %d pixels without data by the minimum value", np.sum(total_mask == 3))
-            combined2d[total_mask == 3] = min2d[total_mask == 3]
+        mask_nodata = total_mask == num_images
+        if np.any(mask_nodata):
+            _logger.info("replacing %d pixels without data by the minimum value", np.sum(mask_nodata))
+            combined2d[mask_nodata] = min2d[mask_nodata]
+        else:
+            _logger.info("no pixels without data found, no replacement needed")
         # Define the variance and map arrays
         variance2d = ma.var(image3d_masked, axis=0, ddof=1).data
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images - total_mask
@@ -1094,9 +1129,6 @@ def main(args=None):
     parser.add_argument("--flux_factor",
                         help="Flux factor to be applied to each image",
                         type=str, default='none')
-    parser.add_argument("--ntest",
-                        help="Number of points along the x-axis for the boundary (default: 100)",
-                        type=int, default=100)
     parser.add_argument("--knots_splfit",
                         help="Number of inner knots for the spline fit to the boundary (default: 2)",
                         type=int, default=2)
@@ -1180,7 +1212,6 @@ def main(args=None):
         rnoise=args.rnoise,
         bias=args.bias,
         flux_factor=args.flux_factor,
-        ntest=args.ntest,
         knots_splfit=args.knots_splfit,
         nsimulations=args.nsimulations,
         niter_boundary_extension=args.niter_boundary_extension,
