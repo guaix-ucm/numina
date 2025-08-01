@@ -168,7 +168,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         if vmin == 0:
             vmin = 1
         vmax = np.max(h)
-        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10, 4))
+        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 5.5))
         tea.imshow(fig, ax1, h, norm=LogNorm(vmin=vmin, vmax=vmax), extent=extent, aspect='auto', cblabel=cblabel)
         ax1.set_xlabel('pixel value')
         ax1.set_ylabel('ratio image/median')
@@ -189,22 +189,26 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
                     pdensity = hclean[i, :] / fsum
                     perc = (1 - 1 / fsum)
                     p = np.interp(perc, np.cumsum(pdensity), np.arange(nxbins))
-                    ax2.plot(xbin[int(p+0.5)], ybin[i], '+', color=f'C{side}')
+                    ax2.plot(xbin[int(p+0.5)], ybin[i], 'x', color=f'C{side}')
                     xfit.append(xbin[int(p+0.5)])
                     yfit.append(ybin[i])
             xfit = np.array(xfit)
             yfit = np.array(yfit)
-            splfit = tea.AdaptiveLSQUnivariateSpline(yfit, xfit, t=2, adaptive=True)
+            splfit = tea.AdaptiveLSQUnivariateSpline(yfit, xfit, t=2, adaptive=False)
             ax2.plot(splfit(yfit), yfit, f'C{side}-')
-            imax = np.argmax(splfit(yfit)) + imin
-            ymode[side] = ybin[imax]
+            knots = splfit.get_knots()
+            ax2.plot(splfit(knots), knots, f'C{side}o', markersize=4)
+            imax = np.argmax(splfit(yfit))
+            ymode[side] = yfit[imax]
             xmode[side] = splfit(ymode[side])
-            ax2.plot(xmode[side], ymode[side], f'C{side}o')
+            ax2.plot(xmode[side], ymode[side], f'C{side}o', markersize=8)
+            ax2.set_xlim(ax1.get_xlim())
+            ax2.set_ylim(ax1.get_ylim())
         if xmode[0] > xmode[1]:
             imode = 0
         else:
             imode = 1
-        ax2.axhline(ymode[imode], color=f'C{imode}')
+        ax2.axhline(ymode[imode], color=f'C{imode}', linestyle=':')
         ax2.text(xbin[-5], ymode[imode]+(ybin[-1]-ybin[0])/40, f'{ymode[imode]:.3f}', color=f'C{imode}', ha='right')
         flux_factor.append(ymode[imode])
         plt.tight_layout()
@@ -250,6 +254,8 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, flux_fac
     if len(flux_factor) != num_images:
         raise ValueError(f"flux_factor must have the same length as num_images ({num_images}).")
 
+    if maxvalue < 0:
+        maxvalue = 0.0
     xdiag_min = np.zeros(nsimulations, dtype=float)
     xdiag_max = np.zeros(nsimulations, dtype=float)
     ydiag_min = np.zeros(nsimulations, dtype=float)
@@ -292,6 +298,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
     ax.set_xlim(xmin, xmax)
     ymin = 0
     ymax = np.max(yplot_boundary)
+    if threshold > ymax:
+        ymax = threshold
     dy = ymax - ymin
     ymin -= dy * 0.05
     ymax += dy * 0.05
@@ -351,9 +359,11 @@ def compute_crmasks(
     bias : 2D array, float or None
         The bias value (in ADU) of the detector.
         If None, it is assumed to be 0.0.
-    flux_factor : str, list or None, optional
+    flux_factor : str, list, float or None, optional
         The flux scaling factor for each exposure (default is None).
         If 'auto', the flux factor is determined automatically.
+        If None or 'none', it is set to 1.0 for all images.
+        If a float is provided, it is used as the flux factor for all images.
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
     knots_splfit : int, optional
@@ -486,7 +496,7 @@ def compute_crmasks(
     # Check flux_factor
     if flux_factor is None:
         flux_factor = np.ones(num_images, dtype=float)
-    if isinstance(flux_factor, str):
+    elif isinstance(flux_factor, str):
         if flux_factor.lower() == 'auto':
             pass  # flux_factor will be set later
         elif flux_factor.lower() == 'none':
@@ -498,6 +508,8 @@ def compute_crmasks(
             if not all_valid_numbers(flux_factor):
                 raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
             flux_factor = np.array(flux_factor, dtype=float)
+        elif isinstance(ast.literal_eval(flux_factor), (float, int)):
+            flux_factor = np.full(num_images, ast.literal_eval(flux_factor), dtype=float)
         else:
             raise ValueError(f"Invalid flux_factor string: {flux_factor}. Use 'auto' or 'none'.")
     elif isinstance(flux_factor, list):
@@ -625,7 +637,7 @@ def compute_crmasks(
     combined_colors = np.vstack((colors1, colors2))
     combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', combined_colors)
     norm = LogNorm(vmin=vmin, vmax=vmax)
-    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(10.1, 4.6))
+    fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
     # Display 2D histogram of the simulated data
     extent = [bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]]
     tea.imshow(fig, ax1, hist2d_accummulated, norm=norm, extent=extent,
