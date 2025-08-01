@@ -292,7 +292,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
     fig, ax = plt.subplots()
     ax.plot(xplot, yplot, 'C0,')
     xmin, xmax = ax.get_xlim()
-    ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Exclusion boundary')
+    ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
     ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
     ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
     ax.set_xlim(xmin, xmax)
@@ -326,13 +326,13 @@ def compute_crmasks(
         nsimulations=10,
         niter_boundary_extension=3,
         weight_boundary_extension=10.0,
-        threshold=None,
+        threshold=0.0,
         minimum_max2d_rnoise=5.0,
         interactive=True,
         dilation=1,
         dtype=np.float32,
         seed=None,
-        plots=False,
+        plots=True,
         semiwindow=15,
         color_scale='minmax',
         maxplots=10
@@ -370,7 +370,7 @@ def compute_crmasks(
         The number of knots for the spline fit to the boundary.
     nsimulations : int, optional
         The number of simulations of the each image to compute
-        the exclusion boundary.
+        the detection boundary.
     niter_boundary_extension : int, optional
         The number of iterations for the boundary extension.
     weight_boundary_extension : float, optional
@@ -528,7 +528,7 @@ def compute_crmasks(
     # Log the input parameters
     _logger.info("flux_factor: %s", str(flux_factor))
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
-    _logger.info("number of simulations to compute the exclusion boundary: %d", nsimulations)
+    _logger.info("number of simulations to compute the detection boundary: %d", nsimulations)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
     _logger.info("niter for boundary extension: %d", niter_boundary_extension)
@@ -650,7 +650,7 @@ def compute_crmasks(
     tea.imshow(fig, ax2, hist2d_original, norm=norm, extent=extent,
                aspect='auto', cblabel='Number of pixels', cmap=combined_cmap)
 
-    # Determine the exclusion boundary for double cosmic ray detection
+    # Determine the detection boundary for double cosmic ray detection
     _logger.info("computing numerical boundary for double cosmic ray detection...")
     xboundary = []
     yboundary = []
@@ -670,7 +670,7 @@ def compute_crmasks(
             label = 'initial fit'
         else:
             wboundary[yboundary > splfit(xboundary)] = weight_boundary_extension**iterboundary
-            label = f'iteration {iterboundary}'
+            label = f'Iteration {iterboundary}'
         splfit, knots = spline_positive_derivative(
             x=np.array(xboundary),
             y=np.array(yboundary),
@@ -691,12 +691,13 @@ def compute_crmasks(
     yplot_boundary = splfit(xplot_boundary)
     yplot_boundary[xplot_boundary < knots[0]] = splfit(knots[0])
     yplot_boundary[xplot_boundary > knots[-1]] = splfit(knots[-1])
-    ax2.plot(xplot_boundary, yplot_boundary, 'r-')
+    ax2.plot(xplot_boundary, yplot_boundary, 'r-', label='Detection boundary')
     ax2.set_xlim(xdiag_min, xdiag_max)
     ax2.set_ylim(ax1.get_ylim())
     ax2.set_xlabel(ax1.get_xlabel())
     ax2.set_ylabel(ax1.get_ylabel())
     ax2.set_title('Original data')
+    ax2.legend()
     plt.tight_layout()
     plt.savefig('diagnostic_histogram2d.png', dpi=150)
     if interactive:
@@ -1172,16 +1173,16 @@ def main(args=None):
                                 help="Flux factor to be applied to each image",
                                 type=str, default='none')
     parser_compute.add_argument("--knots_splfit",
-                                help="Number of inner knots for the spline fit to the boundary (default: 3)",
+                                help="Total number of knots for the spline fit to the detection boundary (default: 3)",
                                 type=int, default=3)
     parser_compute.add_argument("--nsimulations",
-                                help="Number of simulations to compute exclusion boundary (default: 10)",
+                                help="Number of simulations to compute the detection boundary (default: 10)",
                                 type=int, default=10)
     parser_compute.add_argument("--niter_boundary_extension",
-                                help="Number of iterations for the boundary extension (default: 3)",
+                                help="Number of iterations for the extension of the detection boundary (default: 3)",
                                 type=int, default=3)
     parser_compute.add_argument("--weight_boundary_extension",
-                                help="Weight for the boundary extension (default: 10)",
+                                help="Weight for the detection boundary extension (default: 10)",
                                 type=float, default=10.0)
     parser_compute.add_argument("--threshold",
                                 help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
