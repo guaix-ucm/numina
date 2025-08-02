@@ -240,7 +240,7 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def mediancr(arrays, crmasks, dtype):
+def mediancr(arrays, crmasks, dtype, apply_flux_factor=False):
     """Combine arrays using the median with cosmic ray mask.
 
     The function returns the median of the input arrays, applying
@@ -248,10 +248,10 @@ def mediancr(arrays, crmasks, dtype):
     once in a single pixel. The masked pixels are replaced by the minimum
     value of the same pixel in the input arrays.
     """
-    return apply_crmasks(arrays, crmasks, combination='mediancr', dtype=dtype)
+    return apply_crmasks(arrays, crmasks, combination='mediancr', dtype=dtype, apply_flux_factor=apply_flux_factor)
 
 
-def meancr(arrays, crmasks, dtype):
+def meancr(arrays, crmasks, dtype, apply_flux_factor=False):
     """Combine arrays using the mean with individual cosmic ray masks.
 
     The function returns the mean of the input arrays, applying
@@ -261,10 +261,10 @@ def meancr(arrays, crmasks, dtype):
     the minimum value of the same pixel in the input arrays is used
     as the value of the pixel in the output.
     """
-    return apply_crmasks(arrays, crmasks, combination='meancr', dtype=dtype)
+    return apply_crmasks(arrays, crmasks, combination='meancr', dtype=dtype, apply_flux_factor=apply_flux_factor)
 
 
-def meancrt(arrays, crmasks, dtype):
+def meancrt(arrays, crmasks, dtype, apply_flux_factor=False):
     """Combine arrays using the mean with a single cosmic ray mask.
 
     The function returns the mean of the input arrays, applying
@@ -273,4 +273,4 @@ def meancrt(arrays, crmasks, dtype):
     up in a single image. The masked pixels are replaced by the value
     of the same pixel when the combination is computed using 'mediancr'.
     """
-    return apply_crmasks(arrays, crmasks, combination='meancrt', dtype=dtype)
+    return apply_crmasks(arrays, crmasks, combination='meancrt', dtype=dtype, apply_flux_factor=apply_flux_factor)
