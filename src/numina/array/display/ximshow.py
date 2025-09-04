@@ -317,8 +317,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             plt.pause(0.001)
         elif event.key == ",":
             subimage2d = get_current_zoom(ax, debug=True)
-            new_vmin = subimage2d.min()
-            new_vmax = subimage2d.max()
+            new_vmin = np.nanmin(subimage2d)
+            new_vmax = np.nanmax(subimage2d)
             print(">>> setting cuts to vmin=" + str(new_vmin) +
                   " and vmax=" + str(new_vmax))
             im_show.set_clim(vmin=new_vmin)
@@ -405,8 +405,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
         )
     elif z1z2 == "minmax":
-        z1 = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2].min()
-        z2 = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2].max()
+        z1 = np.nanmin(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2])
+        z2 = np.nanmax(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2])
     else:
         z1, z2 = z1z2
     im_show = plt.imshow(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2],
@@ -796,11 +796,11 @@ def jimshow(image2d,
     if vmin is None:
         vmin = z1
     elif vmin == 'min':
-        vmin = image2d_region.min()
+        vmin = np.nanmin(image2d_region)
     if vmax is None:
         vmax = z2
     elif vmax == 'max':
-        vmax = image2d_region.max()
+        vmax = np.nanmax(image2d_region)
 
     im_show = ax.imshow(
         image2d_region,
