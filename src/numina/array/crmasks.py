@@ -25,6 +25,7 @@ import numpy as np
 import numpy.ma as ma
 from scipy import ndimage
 
+from numina.array.display.plot_hist_step import plot_hist_step
 from numina.array.numsplines import spline_positive_derivative
 from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits_history
 import teareduce as tea
@@ -125,6 +126,8 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         subtracting the bias, if any.
     median2d : 2D numpy array
         The median of the input arrays.
+    _logger : logging.Logger
+        The logger to use for logging.
     interactive : bool, optional
         If True, enable interactive mode for plots (default is False).
     nxbins_half : int, optional
@@ -145,6 +148,39 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     naxis2_, naxis1_ = median2d.shape
     if naxis2 != naxis2_ or naxis1 != naxis1_:
         raise ValueError("image3d and median2d must have the same shape in the last two dimensions.")
+
+    xmin = np.min(median2d)
+    xmax = np.max(median2d)
+    dx = xmax - xmin
+    xminh = xmin - dx / 20
+    xmaxh = xmax + dx / 20
+    bins0 = np.linspace(xmin, xmax, 100)
+    h0, edges0 = np.histogram(median2d.flatten(), bins=bins0)
+    hstep = (edges0[1] - edges0[0])
+    fig, ax = plt.subplots()
+    for i in range(naxis3):
+        xmax_ = np.max(image3d[i])
+        bins = np.arange(xmin, xmax_ + hstep, hstep)
+        h, edges = np.histogram(image3d[i].flatten(), bins=bins)
+        plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
+    plot_hist_step(ax, edges0, h0, color='black', label='Median')
+    ax.set_xlim(xminh, xmaxh)
+    ax.set_xlabel('pixel value')
+    ax.set_ylabel('Number of pixels')
+    ax.set_yscale('log')
+    ax.legend(loc='upper right')
+    plt.tight_layout()
+    plt.show()
+
+    if naxis3 % 2 == 1:
+        argsort = np.argsort(image3d, axis=0)
+        fig, (ax1, ax2) = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(12, 5.5))
+        vmin, vmax = tea.zscale(median2d)
+        tea.imshow(fig, ax1, median2d, vmin=vmin, vmax=vmax, aspect='auto')
+        tea.imshow(fig, ax2, argsort[naxis3//2] + 1, vmin=1, vmax=naxis3, cmap='brg',
+                   cblabel='Image number', aspect='auto')
+        plt.tight_layout()
+        plt.show()
 
     xmin = np.min(median2d)
     xmax = np.max(median2d)
@@ -226,6 +262,22 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     # round the flux factor to 6 decimal places to avoid
     # unnecessary precision when writting to the FITS header
     flux_factor = np.round(flux_factor, decimals=6)
+
+    fig, ax = plt.subplots()
+    for i in range(naxis3):
+        xmax_ = np.max(image3d[i])
+        bins = np.arange(xmin, xmax_ + hstep, hstep)
+        h, edges = np.histogram(image3d[i].flatten() / flux_factor[i], bins=bins)
+        plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
+    plot_hist_step(ax, edges0, h0, color='black', label='Median')
+    ax.set_xlim(xminh, xmaxh)
+    ax.set_xlabel('pixel value')
+    ax.set_ylabel('Number of pixels')
+    ax.set_yscale('log')
+    ax.legend(loc='upper right')
+    plt.tight_layout()
+    plt.show()
+
     return flux_factor
 
 
@@ -761,25 +813,13 @@ def compute_crmasks(
             _logger.info("number of double cosmic rays (connected pixels) detected: %d", number_cr)
             # Sort the cosmic rays by global detection criterium
             _logger.info("sorting cosmic rays by detection criterium...")
+            detection_image1 = yplot - splfit(xplot)
+            detection_image2 = yplot - threshold
+            detection_image = np.minimum(detection_image1, detection_image2).reshape((naxis2, naxis1))
             detection_value = np.zeros(number_cr, dtype=float)
-            imax_cr = np.zeros(number_cr, dtype=int)
-            jmax_cr = np.zeros(number_cr, dtype=int)
             for i in range(1, number_cr + 1):
                 ijloc = np.argwhere(labels_cr == i)
-                detection_value[i-1] = 0
-                imax_cr[i-1] = -1
-                jmax_cr[i-1] = -1
-                for k in ijloc:
-                    ic, jc = k
-                    if flag_integer_dilated[ic, jc] == 2:
-                        detection_value_ = min(
-                            median2d[ic, jc] - min2d[ic, jc] - np.interp(min2d[ic, jc], xplot_boundary, yplot_boundary),
-                            median2d[ic, jc] - min2d[ic, jc] - threshold
-                        )
-                        if detection_value_ > detection_value[i-1]:
-                            detection_value[i-1] = detection_value_
-                            imax_cr[i-1] = ic
-                            jmax_cr[i-1] = jc
+                detection_value[i-1] = np.max(detection_image[ijloc[:, 0], ijloc[:, 1]])
             isort_cr = np.argsort(detection_value)[::-1]
             num_plot_max = num_images
             # Determine the number of rows and columns for the plot,
@@ -910,7 +950,6 @@ def compute_crmasks(
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
             ylabel = r'mean2d $-$ min2d'
-
         else:
             _logger.info(f"generating diagnostic plot for CRMASK{i}...")
             png_filename = f'diagnostic_crmask{i}.png'
