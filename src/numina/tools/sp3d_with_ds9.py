@@ -64,8 +64,8 @@ def init_ds9_plot(fpath, wave):
     """Initialize ds9 line plot."""
     ds9cmd('xpaset -p ds9 plot line {' +
            fpath.name +
-           '} {' + 
-           'Value along NAXIS3 direction' + 
+           '} {' +
+           'Value along NAXIS3 direction' +
            '} {' +
            'Signal' +
            '} xy')
@@ -83,8 +83,8 @@ def init_ds9_plot(fpath, wave):
 
 def update_splot(data, source_mask, continuum_mask, wave,
                  fig, ax, line_objects, firstplot, plot_render):
-    """Update plot with source and continuum spectra
-    
+    """Update plot with source and continuum spectra.
+
     Parameters
     ----------
     data : np.ndarray
@@ -158,8 +158,8 @@ def update_splot(data, source_mask, continuum_mask, wave,
             ds9cmd(f'cat tmp_spectrum_{sptype}.dat | xpaset ds9 plot data xy', pipe=True)
             ds9cmd(f'xpaset -p ds9 plot line color {color}')
             ds9cmd('xpaset -p ds9 plot name {' +
-                f'{sptype}' + cnpix +
-                '}')
+                   f'{sptype}' + cnpix +
+                   '}')
 
     if plot_render in ['matplotlib', 'both']:
         # recompute global Y-axis limits
@@ -263,7 +263,7 @@ def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave,
 
 def display_help_menu(plot_render):
     """Display help text when selecting pixels.
-    
+
     Parameters
     ----------
     plot_render: str
@@ -564,7 +564,7 @@ def main(args=None):
     print('OK!')
 
     # Launch ds9
-    cmd = f'{ds9exec.split()[0]} tmp_collapsed_3D.fits {' '.join(ds9exec.split()[1:])} &'
+    cmd = f"{ds9exec.split()[0]} tmp_collapsed_3D.fits {' '.join(ds9exec.split()[1:])} &"
     if verbose:
         print('Executing:')
         print(cmd)
