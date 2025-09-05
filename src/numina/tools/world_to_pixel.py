@@ -13,7 +13,6 @@ import argparse
 from astropy.coordinates import SkyCoord
 from astropy.units import Unit
 from astropy.io import fits
-import astropy.units as u
 from astropy.wcs import WCS
 import numpy as np
 import sys
@@ -136,4 +135,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
