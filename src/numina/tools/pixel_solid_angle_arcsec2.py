@@ -24,12 +24,12 @@ from .ctext import ctext
 
 def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, verbose=False):
     """Compute the solid angle (arcsec**2) of every pixel.
-    
+
     This function computes the solid angle for each pixel in a 2D image.
     When using WCS with a very small projected pixel size (e.g., 0.01 arcsec),
     Method 2 is recommended but slow. Method 1 is slow and does not
     work well for very small pixel sizes, but we keep the code here for completeness.
-    Method 3 is fast and works well for most cases, but it may not be accurate 
+    Method 3 is fast and works well for most cases, but it may not be accurate
     for very small pixel sizes.
 
     Parameters
@@ -99,7 +99,7 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
     elif method == 2:
         # Use spherical polygons with a different approach to compute the solid angle
         result_spherical = result_spherical.reshape(naxis2 + 1, naxis1 + 1)
-        result = np.zeros((naxis2, naxis1))   
+        result = np.zeros((naxis2, naxis1))
         for i in tqdm(range(naxis2), desc="NAXIS2", disable=not verbose):
             for j in range(naxis1):
                 dist1a = result_spherical[i, j].separation(result_spherical[i, j + 1]).arcsec
@@ -148,18 +148,21 @@ def main(args=None):
     parser = argparse.ArgumentParser(
         description="Compute the solid angle in arcsec^2 for each pixel in a 2D image."
     )
-    parser.add_argument('input_file', type=str, 
+    parser.add_argument('input_file', type=str,
                         help='FITS file containing the image data.')
     parser.add_argument('output_file', type=str,
                         help='Output FITS file to save the solid angle data.')
-    parser.add_argument("--extname", type=str, 
-                        help="Extension name of the input HDU (default: 'PRIMARY').", 
+    parser.add_argument("--extname", type=str,
+                        help="Extension name of the input HDU (default: 'PRIMARY').",
                         default='PRIMARY')
     parser.add_argument("--method", type=int, default=3,
                         help="Method to compute the solid angle:\n"
-                             "1: Use spherical polygons (slow and not recommended for very small pixel sizes).\n"
-                             "2: Use spherical polygons with a different approach (slow but recommended for small pixel sizes).\n"
-                             "3: Use spherical coordinates and distances (fast, default but not recommended for very small pixel sizes).")
+                             "1: Use spherical polygons"
+                             " (slow and not recommended for very small pixel sizes).\n"
+                             "2: Use spherical polygons with a different approach"
+                             " (slow but recommended for small pixel sizes).\n"
+                             "3: Use spherical coordinates and distances"
+                             " (fast, default but not recommended for very small pixel sizes).")
     parser.add_argument("--kernel_size", type=int, default=None,
                         help="Size of the kernel for smoothing the result using a median filter. "
                              "If not specified, no smoothing is applied.")
@@ -216,7 +219,7 @@ def main(args=None):
         kernel_size=kernel_size,
         verbose=verbose
     )
-    
+
     # Create a new FITS HDU with the solid angle data
     solid_angle_hdu = fits.PrimaryHDU(data=result.astype(np.float32))
     header = solid_angle_hdu.header

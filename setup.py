@@ -8,7 +8,7 @@ def get_extensions():
 
     extensions = []
     np_api_min = ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")
-    extra_compile_args_cpp=["-std=c++17"]
+    extra_compile_args_cpp = ["-std=c++17"]
 
     ext1 = Extension('numina.array._combine',
                      ['src/numina/array/src/combinemodule.cc',
