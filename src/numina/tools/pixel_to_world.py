@@ -70,7 +70,7 @@ def main(args=None):
     quote symbol is not necessary if the numbers are given without
     blank spaces.
     """
-    parser = argparse.ArgumentParser(description="Remmove extension from FITS file")
+    parser = argparse.ArgumentParser(description="Convert pixel to world coordinates.")
     parser.add_argument("inputfile", help="Input FITS file", type=str)
     parser.add_argument("--pixel", help="WCS pixel coordinate (comma separated values)", type=str,
                         default=None)
@@ -107,4 +107,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
