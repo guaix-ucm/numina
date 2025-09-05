@@ -10,6 +10,7 @@
 """Compute world_to_pixel.
 """
 import argparse
+from argparse import RawTextHelpFormatter
 from astropy.coordinates import SkyCoord
 from astropy.units import Unit
 from astropy.io import fits
@@ -95,12 +96,17 @@ def main(args=None):
       --sky 'SkyCoord(0*u.arcsec, 0*u.arcsec)'
       --wave '1.9344e-06*u.m'
 
-    The sky and wavelenght coordinates must be provided with units.
+    The sky and wavelength coordinates must be provided with units.
     """
-    parser = argparse.ArgumentParser(description="Remmove extension from FITS file")
+    parser = argparse.ArgumentParser(
+        description="Convert world to pixel coordinates.",
+        formatter_class=RawTextHelpFormatter
+    )
     parser.add_argument("inputfile", help="Input FITS file", type=str)
-    parser.add_argument("--sky", help="Celestial coordinate", type=str, default=None)
-    parser.add_argument("--wave", help="Spectral wavelength", type=str, default=None)
+    parser.add_argument("--sky", help="Celestial coordinate (string)\n"
+                        "e.g. 'SkyCoord(0*u.arcsec, 0*u.arcsec)'", type=str, default=None)
+    parser.add_argument("--wave", help="Spectral wavelength (string)\n"
+                        "e.g. '1.9344e-06*u.m'", type=str, default=None)
     parser.add_argument("--extnum", help="Extension number (default 0=PRIMARY)", type=int, default=0)
     parser.add_argument("--verbose", help="Display intermediate information", action="store_true")
     parser.add_argument("--echo", help="Display full command line", action="store_true")

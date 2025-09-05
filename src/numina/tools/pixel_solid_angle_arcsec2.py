@@ -9,6 +9,7 @@
 """Compute the solid angle in arcsec^2 for each pixel in a 2D image."""
 
 import argparse
+from argparse import RawTextHelpFormatter
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -146,7 +147,8 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
 
 def main(args=None):
     parser = argparse.ArgumentParser(
-        description="Compute the solid angle in arcsec^2 for each pixel in a 2D image."
+        description="Compute the solid angle in arcsec^2 for each pixel in a 2D image.",
+        formatter_class=RawTextHelpFormatter
     )
     parser.add_argument('input_file', type=str,
                         help='FITS file containing the image data.')
@@ -157,15 +159,15 @@ def main(args=None):
                         default='PRIMARY')
     parser.add_argument("--method", type=int, default=3,
                         help="Method to compute the solid angle:\n"
-                             "1: Use spherical polygons"
-                             " (slow and not recommended for very small pixel sizes).\n"
-                             "2: Use spherical polygons with a different approach"
-                             " (slow but recommended for small pixel sizes).\n"
-                             "3: Use spherical coordinates and distances"
-                             " (fast, default but not recommended for very small pixel sizes).")
+                             "1: Use spherical polygons (slow)\n"
+                             "   (not recommended for very small pixel sizes)\n"
+                             "2: Use spherical polygons (different approach, slow)\n"
+                             "   (recommended for small pixel sizes)\n"
+                             "3: Use spherical coordinates and distances (fast)\n"
+                             "   (default, not recommended for very small pixel sizes)")
     parser.add_argument("--kernel_size", type=int, default=None,
-                        help="Size of the kernel for smoothing the result using a median filter. "
-                             "If not specified, no smoothing is applied.")
+                        help="Kernel size for smoothing the result using a median\n"
+                             "filter. If not specified, no smoothing is applied.")
     parser.add_argument("--verbose",
                         help="Display intermediate information",
                         action="store_true")
