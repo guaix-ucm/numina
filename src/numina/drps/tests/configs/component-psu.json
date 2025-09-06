@@ -14,8 +14,11 @@
   "properties": [
     {"id": "csupos", "depends": [], "values":  444},
     {"id": "box0", "depends": [], "values":  1},
-    {"id": "box1", "depends": ["val"], "values": {"A":  453, "B":  7126}},
+    {"id": "box1", "depends": ["filter"], "values": {"U": 134, "B":  453, "V":  7126, "R": 803, "I": -300}},
     {"id": "spaces", "name": "Box"},
-    {"id": "other", "uuid": "86a6e008-8d3d-456f-89f8-09ff0c7f7c57"}
+    {"id": "other", "uuid": "86a6e008-8d3d-456f-89f8-09ff0c7f7c57"},
+    {"id": "tag0", "one_of": ["tag0_A", "tag0_B"], "key": "PSUTAG0", "ext": 0},
+    {"id": "tag1", "one_of": ["tag1_X", "tag1_Y"], "key": "PSUTAG1", "ext": 0},
+    {"id": "mode", "one_of":  ["Mode_A", "Mode_B"], "key": "INSMODE", "ext": 0}
   ]
 }

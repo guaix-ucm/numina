@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,7 @@ import traceback
 import collections
 
 
-class Signal(object):
+class Signal:
     """Signal used for callbacks."""
 
     def __init__(self):

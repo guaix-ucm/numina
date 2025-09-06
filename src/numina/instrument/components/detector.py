@@ -9,11 +9,10 @@
 
 import numpy
 
-from numina.instrument.hwdevice import HWDevice
-from numina.instrument.simulation.efficiency import Efficiency
+from ..hwdevice import HWDevice
 
 
-class VirtualDetector(object):
+class VirtualDetector:
     """Each of the channels."""
 
     def __init__(self, base, geom, directfun, readpars):
@@ -33,8 +32,9 @@ class VirtualDetector(object):
 
         # We could use different RON and BIAS in each section
         for section in [self.trim, self.pcol, self.ocol, self.orow]:
-            final[section] = self.readpars.bias + \
-                numpy.random.normal(final[section], self.readpars.ron)
+            final[section] = self.readpars.bias + numpy.random.normal(
+                final[section], self.readpars.ron
+            )
 
         return final
 
@@ -42,17 +42,17 @@ class VirtualDetector(object):
 class DetectorBase(HWDevice):
     def __init__(self, name, shape, qe=1.0, qe_wl=None, dark=0.0):
 
-        super(DetectorBase, self).__init__(name)
+        super().__init__(name)
 
         self.dshape = shape
         self.pixscale = 15.0e-3
 
-        self._det = numpy.zeros(shape, dtype='float64')
+        self._det = numpy.zeros(shape, dtype="float64")
 
         self.qe = qe
 
         if qe_wl is None:
-            self._qe_wl = Efficiency()
+            self._qe_wl = 1.0
         else:
             self._qe_wl = qe_wl
 
@@ -87,8 +87,8 @@ class DetectorBase(HWDevice):
         return elec_f
 
     def post_readout(self, adu_r):
-        adu_p = numpy.clip(adu_r, 0, 2**16-1)
-        return adu_p.astype('uint16')
+        adu_p = numpy.clip(adu_r, 0, 2**16 - 1)
+        return adu_p.astype("uint16")
 
     def clean_up(self):
         self.reset()

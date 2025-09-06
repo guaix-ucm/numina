@@ -1,4 +1,3 @@
-
 import pytest
 
 from numina.tests.seffect import record_call
@@ -6,14 +5,14 @@ from numina.tests.seffect import record_call
 from ..wheel import Wheel, Carrousel
 
 
-class Disp(object):
+class Disp:
     def __init__(self, name):
         self.name = name
 
 
 @pytest.fixture
 def wheel_dev():
-    wheel = Wheel(3)
+    wheel = Wheel("wheel", 3)
     for idx in range(3):
         wheel.put_in_pos(Disp(idx), idx)
     return wheel
@@ -21,7 +20,7 @@ def wheel_dev():
 
 @pytest.fixture
 def carrousel_dev():
-    wheel = Carrousel(3)
+    wheel = Carrousel("wheel", 3)
     for idx in range(3):
         wheel.put_in_pos(Disp(idx), idx)
     return wheel
@@ -161,7 +160,7 @@ def test_move_signals2(carrousel_dev, pos):
 
     # Check call values
     assert moved_cb.side_effect.called
-    assert moved_cb.side_effect.args == (0, )
+    assert moved_cb.side_effect.args == (0,)
     assert changed_cb.side_effect.called is False
     # assert moved_cb.callpos == 0
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,14 +7,28 @@
 # License-Filename: LICENSE.txt
 #
 
+import typing
+
+from typing_extensions import Self
+
+if typing.TYPE_CHECKING:
+    from numina.instrument.configorigin import ElementOrigin
+    from numina.instrument.hwdevice import DeviceBase
+
 
 from numina.instrument.hwdevice import HWDevice
-from .signal import Signal
+from numina.instrument.signal import Signal
 
 
 class Carrousel(HWDevice):
-    def __init__(self, capacity, name=None, parent=None):
-        super(Carrousel, self).__init__(name=name, parent=parent)
+    def __init__(
+        self,
+        cid,
+        capacity: int,
+        origin: "ElementOrigin | None" = None,
+        parent: "DeviceBase | None" = None,
+    ):
+        super().__init__(name=cid, origin=origin, parent=parent)
         # Container is empty
         self._container = [None] * capacity
         self._capacity = capacity
@@ -32,16 +46,16 @@ class Carrousel(HWDevice):
     def pos(self):
         return self._pos
 
-    def put_in_pos(self, obj, pos):
+    def put_in_pos(self, obj, pos: int):
         if pos >= self._capacity or pos < 0:
-            raise ValueError('position greater than capacity or negative')
+            raise ValueError("position greater than capacity or negative")
 
         self._container[pos] = obj
         self._current = self._container[self._pos]
 
-    def move_to(self, pos):
+    def move_to(self, pos: int):
         if pos >= self._capacity or pos < 0:
-            raise ValueError(f'Position {pos:d} out of bounds')
+            raise ValueError(f"Position {pos:d} out of bounds")
 
         if pos != self._pos:
             self._pos = pos
@@ -61,14 +75,18 @@ class Carrousel(HWDevice):
                 else:
                     pass
         else:
-            raise ValueError(f'No object named {name}')
+            raise ValueError(f"No object named {name}")
 
     @property
     def position(self):
         return self._pos
 
+    @position.setter
+    def position(self, pos: int):
+        self.move_to(pos)
+
     def init_config_info(self):
-        info = super(Carrousel, self).init_config_info()
+        info = super().init_config_info()
         if self._current:
             if isinstance(self._current, str):
                 selected = self._current
@@ -79,7 +97,7 @@ class Carrousel(HWDevice):
                     selected = self.label
         else:
             selected = self.label
-        info['selected'] = selected
+        info["selected"] = selected
         return info
 
     @property
@@ -90,7 +108,7 @@ class Carrousel(HWDevice):
             else:
                 lab = self._current.name
         else:
-            lab = 'Unknown'
+            lab = "Unknown"
 
         return lab
 
@@ -98,10 +116,34 @@ class Carrousel(HWDevice):
     def label(self, name):
         self.select(name)
 
+    @classmethod
+    def from_component(
+        cls,
+        name: str,
+        comp_id: str,
+        origin: "ElementOrigin | None" = None,
+        parent: "DeviceBase | None" = None,
+        properties=None,
+        setup=None,
+    ) -> Self:
+        capacity = 1
+        if setup is not None:
+            capacity = setup.values["capacity"]
+
+        obj = cls.__new__(cls)
+        obj.__init__(comp_id, capacity, origin=origin, parent=parent)
+        return obj
+
 
 class Wheel(Carrousel):
-    def __init__(self, capacity, name=None, parent=None):
-        super(Wheel, self).__init__(capacity, name=name, parent=parent)
+    def __init__(
+        self,
+        cid,
+        capacity,
+        origin: "ElementOrigin | None" = None,
+        parent: "DeviceBase | None" = None,
+    ):
+        super().__init__(cid, capacity, origin=origin, parent=parent)
 
     def turn(self):
         self._pos = (self._pos + 1) % self._capacity

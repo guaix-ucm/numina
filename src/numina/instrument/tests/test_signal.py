@@ -1,4 +1,3 @@
-
 from ..signal import Signal
 
 
@@ -7,6 +6,10 @@ def cb1(arg1):
 
 
 def cb2(arg2):
+    return 0
+
+
+def cb3(arg1, arg2):
     return 0
 
 
@@ -30,3 +33,14 @@ def test_signal_delete():
 
     res = sig.emit(12)
     assert res == [(cid2, 0)]
+
+
+def test_signal_raise(capsys):
+    sig = Signal()
+    sig.connect(cb1)
+    # cb3 produces an error
+    sig.connect(cb3)
+    res = sig.emit(12)
+    captured = capsys.readouterr()
+    assert res == [(1, 12)]
+    assert "TypeError" in captured.err

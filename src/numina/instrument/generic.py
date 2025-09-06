@@ -1,141 +1,114 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
-#
-# This file is part of Numina
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-# License-Filename: LICENSE.txt
-#
+
+from typing import TypeVar, Type, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .configorigin import ElementOrigin
+    from .property import PropertyBase
+    from typing_extensions import Self
 
 from .device import DeviceBase
 
 
-class ElementBase(object):
-    """Base class for objects in component collection"""
-
-    def __init__(self, name, origin=None):
-        self.name = name
-        self.origin = origin
-
-    def set_origin(self, origin):
-        self.origin = origin
-
-
-class PropertiesGeneric(ElementBase):
-    """Class representing a properties component"""
-
-    def __init__(self, name, properties=None, origin=None):
-        super(PropertiesGeneric, self).__init__(name, origin=origin)
-
-        if properties is None:
-            self.properties = {}
-        else:
-            self.properties = properties
-        self.children = {}
-
-
 class ComponentGeneric(DeviceBase):
-    """Class representing a device component"""
+    """Class representing a device component from a file"""
 
-    def __init__(self, name, properties=None, origin=None, parent=None):
-        super(ComponentGeneric, self).__init__(
-            name, origin=origin, parent=parent
-        )
+    _property_names = []
+    _property_readonly = []
+    _property_configurable = []
+    _mappings = {}
 
-        if properties is None:
-            self.properties = {}
-        else:
-            self.properties = properties
-        #
+    def __init__(
+        self,
+        name: str,
+        origin: "ElementOrigin | None" = None,
+        parent: DeviceBase | None = None,
+    ):
+        super().__init__(name, origin=origin, parent=parent)
+        # This attribute is used to store the values of the properties
         self._internal_state = {}
 
-        for prop in self.properties.values():
-            deflts = prop.defaults()
+        for prop_name in self._property_names:
+            deflts = self.__class__.__dict__[prop_name].defaults()
+
             for dk, dv in deflts.items():
                 self._internal_state[dk] = dv
 
-    def get_value(self, path, **state):
-        keys = path.split('.')
-        devce_path = keys[:-1]
-        prop = keys[-1]
+    @classmethod
+    def from_component(
+        cls,
+        name: str,
+        comp_id: str,
+        origin: "ElementOrigin | None" = None,
+        parent: DeviceBase | None = None,
+        properties=None,
+        setup=None,
+    ) -> "Self":
+        class_name = "{base_name}_{name}".format(base_name=cls.__name__, name=name)
+        ncls = make_component_class(class_name, cls, properties=properties)
+        obj = ncls.__new__(ncls)
+        obj.__init__(comp_id, origin, parent)
+        return obj
 
-        dev = self.get_device_seq(devce_path)
-        if prop in dev.properties:
-            propentry = dev.properties[prop]
-            return propentry.get(**state)
-        else:
-            return getattr(dev, prop)
+    def get_value(self, path: str, **state):
+        device_path, prop_name = self.split_path(path)
 
-    def __getattr__(self, item):
-        if item == 'uuid':
-            if self.origin is not None:
-                return self.origin.uuid
-
-        if item in self.properties:
-            prop_entry = self.properties[item]
-            value = prop_entry.get(**self._internal_state)
-            return value
-        else:
-            raise AttributeError(f"component has no attribute '{item}'")
-
-    def depends_on(self):
-        """Compute the dependencies for me and my children"""
-        mydepends = set([])
-
-        mydepends.update(self.my_depends())
-
-        for ch in self.children.values():
-            if hasattr(ch, 'depends_on'):
-                chdepends = ch.depends_on()
-                mydepends.update(chdepends)
-        return mydepends
+        dev = self.get_device_seq(device_path)
+        # save state and restore state
+        current_state = dev.config_info()
+        dev.configure_me(state)
+        value = getattr(dev, prop_name)
+        dev.configure(current_state)
+        return value
 
     def configure_me_with_header(self, hdr):
-        for key in self.my_depends():
-            self._internal_state[key] = hdr[key]
+        for el, key in self._mappings.items():
+            val = key.get_value(hdr)
+            if val is not None:
+                setattr(self, el, val)
 
-    def my_depends(self):
+    def my_depends(self) -> set[str]:
         """Compute the dependencies for me"""
-        mydepends = set([])
-        for prop in self.properties.values():
-            mydepends.update(prop.depends)
-        return mydepends
+        my_deps = set([])
+        for prop_name in self._property_names:
+            depends = self.__class__.__dict__[prop_name].depends
+            my_deps.update(depends)
+        return my_deps
+
+    def get_property_names(self):
+        return self._property_configurable
 
 
 class InstrumentGeneric(ComponentGeneric):
-    """Class representing a instrument component"""
     pass
 
 
-class SetupGeneric(ElementBase):
-    """Class representing a setup component"""
-
-    def __init__(self, name, origin=None):
-        super(SetupGeneric, self).__init__(name, origin=origin)
-        self.values = {}
+CG = TypeVar("CG", bound=ComponentGeneric)
 
 
-class PropertyEntry(object):
-    def __init__(self, values, depends):
-        self.values = values
-        self.depends = depends
+def make_component_class(
+    name: str,
+    baseclass: Type[ComponentGeneric],
+    properties: "dict[str, PropertyBase] | None" = None,
+) -> Type[ComponentGeneric]:
+    # Inject properties as descriptors in the class instance
+    cls = type(name, (baseclass,), {})
 
-    def get(self, **kwds):
-        result = self.values
-        for dep in self.depends:
-            key = kwds[dep]
-            result = result[key]
-        return result
+    cls._property_readonly = []
+    cls._property_configurable = []
+    cls._property_names = []
+    cls._mappings = {}
 
-    def defaults(self):
-        val = {}
-        result = self.values
-        for dep in self.depends:
-            # First key, sorted needed in Python < 3.6
-            key = sorted(result.keys())[0]
-            val[dep] = key
-            result = result[key]
-        return val
-
-
-ConfigurationEntry = PropertyEntry
+    if properties is not None:
+        cls._property_names = list(properties.keys())
+        for p_name, prop in properties.items():
+            if prop.is_readonly:
+                cls._property_readonly.append(p_name)
+            else:
+                cls._property_configurable.append(p_name)
+            if prop.mapping is not None:
+                cls._mappings[p_name] = prop.mapping
+            # This method is not called automatically here
+            prop.__set_name__(cls, p_name)
+            setattr(cls, p_name, prop)
+    return cls

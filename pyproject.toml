@@ -50,6 +50,7 @@ dependencies = [
     'teareduce',
     'importlib_resources',  # required with python < 3.9
     'backports.entry_points_selectable',  # required only with python < 3.10a7
+    'typing-extensions',
 ]
 
 [project.optional-dependencies]

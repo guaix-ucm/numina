@@ -1,4 +1,3 @@
-
 from ..configorigin import UndefinedOrigin, ElementOrigin
 
 import pytest
@@ -12,26 +11,18 @@ def test_undefined_origin():
 def _origin1():
     date_start = "2001-10-10T12:00:00"
     date_end = None
-    name = 'origin'
-    cuuid = 'c27287cd-90d1-417c-8238-f5ff220f818d'
-    origin = ElementOrigin(
-        name, cuuid,
-        date_start=date_start,
-        date_end=date_end
-    )
+    name = "origin"
+    cuuid = "c27287cd-90d1-417c-8238-f5ff220f818d"
+    origin = ElementOrigin(name, cuuid, date_start=date_start, date_end=date_end)
     return origin
 
 
 def _origin2():
     date_start = "2001-10-10T12:00:00"
     date_end = "2002-10-10T12:00:00"
-    name = 'origin'
-    cuuid = 'c27287cd-90d1-417c-8238-f5ff220f818d'
-    origin = ElementOrigin(
-        name, cuuid,
-        date_start=date_start,
-        date_end=date_end
-    )
+    name = "origin"
+    cuuid = "c27287cd-90d1-417c-8238-f5ff220f818d"
+    origin = ElementOrigin(name, cuuid, date_start=date_start, date_end=date_end)
     return origin
 
 
@@ -71,14 +62,11 @@ def test_origin2(origin, date, result):
 def test_create_keys():
     date_start = "2001-10-10T12:00:00"
     date_end = "2002-10-10T12:00:00"
-    name = 'origin'
-    cuuid = 'c27287cd-90d1-417c-8238-f5ff220f818d'
+    name = "origin"
+    cuuid = "c27287cd-90d1-417c-8238-f5ff220f818d"
 
-    origin = ElementOrigin.create_from_keys(
-        name=name,
-        uuid=cuuid,
-        date_start=date_start,
-        date_end=date_end
+    origin = ElementOrigin.from_keys(
+        name=name, uuid=cuuid, date_start=date_start, date_end=date_end
     )
     assert isinstance(origin, ElementOrigin)
     assert origin.name == name
@@ -92,14 +80,14 @@ def test_create_dict():
     values = dict(
         date_start="2001-10-10T12:00:00",
         date_end="2002-10-10T12:00:00",
-        name='origin',
-        uuid='c27287cd-90d1-417c-8238-f5ff220f818d'
+        name="origin",
+        uuid="c27287cd-90d1-417c-8238-f5ff220f818d",
     )
 
-    origin = ElementOrigin.create_from_dict(values)
+    origin = ElementOrigin.from_dict(values)
     assert isinstance(origin, ElementOrigin)
-    assert origin.name == values['name']
-    assert str(origin.uuid) == values['uuid']
-    assert origin.date_start.isoformat() == values['date_start']
-    assert origin.date_end.isoformat() == values['date_end']
-    assert origin.description == values.get('description', '')
+    assert origin.name == values["name"]
+    assert str(origin.uuid) == values["uuid"]
+    assert origin.date_start.isoformat() == values["date_start"]
+    assert origin.date_end.isoformat() == values["date_end"]
+    assert origin.description == values.get("description", "")

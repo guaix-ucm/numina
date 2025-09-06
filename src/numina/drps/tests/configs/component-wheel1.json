@@ -3,11 +3,11 @@
   "type": "component",
   "description": "Wheel for testing",
   "uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5",
+  "class": "numina.drps.tests.wheel.PWheel",
   "date_start": null,
   "date_end": null,
-  "components": [
-  ],
-  "properties": [
-    {"id": "slots", "depends": [], "values": 8}
+  "setup": [
+    {"values":  {"capacity":  5, "filters":  ["U", "B", "V", "R", "I"]}, "id": "wheel"},
+    {"values":  {"filters":  ["U", "B", "V", "R", "I"]}, "id": "filter_db"}
   ]
 }

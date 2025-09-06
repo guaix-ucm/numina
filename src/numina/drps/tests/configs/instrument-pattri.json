@@ -1,7 +1,7 @@
 {
   "description": "Test instrument PATTRI",
   "uuid": "43273e8c-4071-4a73-a6b4-40c2f07cf054",
-  "date_start": "2016-06-01T12:00:00.0",
+  "date_start": "2012-01-07T12:00:00.0",
   "date_end": null,
   "type": "instrument",
   "name": "PATTRI",
@@ -10,5 +10,22 @@
     {"name": "RobotPos", "id": "robot"},
     {"name": "Detector_Model1", "id": "detector"},
     {"uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5", "id": "wheel"}
-  ]
+  ],
+  "properties": [
+    {"id": "mode", "references": "PSU.mode"},
+    {"id": "insmode", "references": "PSU.mode"},
+    {"id": "pos", "references": "wheel.position"},
+    {"id": "filter", "references": "wheel.label"},
+    {"id": "key1", "limits": []},
+    {"id": "key11", "limits": [null, 40], "default": 23},
+    {"id": "key12", "limits": [null, null], "default": 12},
+    {"id": "key13", "limits": [-4, null], "default": 8},
+    {"id": "key14", "limits": [-12, 12]},
+    {"id": "key2", "one_of": ["A", "B"]},
+    {"id": "key3", "one_of": ["A", "B"], "default": "B"},
+    {"id": "tag0", "references": "PSU.tag0"},
+    {"id": "tag1", "references": "PSU.tag1"},
+    {"id": "key20", "depends": ["key2"], "values": {"A": -1.0, "B":  1}},
+    {"id": "key21", "depends": ["tag0"], "values": {"tag0_A": -2.0, "tag0_B":  2}}
+    ]
 }

@@ -8,6 +8,7 @@
   "components": [
   ],
   "properties": [
-    {"id": "csupos", "depends": [], "values":  444}
+    {"id": "const1", "depends": [], "values":  444},
+    {"id": "pos", "limits": [-12, 12]}
   ]
 }
