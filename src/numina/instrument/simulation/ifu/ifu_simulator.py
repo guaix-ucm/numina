@@ -44,6 +44,7 @@ def ifu_simulator(wcs3d, header_keys,
                   naxis1_detector, naxis2_detector, nslices,
                   noversampling_whitelight,
                   scene_fname,
+                  flux_factor,
                   seeing_fwhm_arcsec, seeing_psf,
                   instrument_pa,
                   airmass,
@@ -79,6 +80,9 @@ def ifu_simulator(wcs3d, header_keys,
         light image.
     scene_fname : str
         YAML scene file name.
+    flux_factor : float
+        Flux factor to be applied to the number of photons defined
+        in the scene file.
     seeing_fwhm_arcsec : `~astropy.units.Quantity`
         Seeing FWHM.
     seeing_psf : str
@@ -226,7 +230,7 @@ def ifu_simulator(wcs3d, header_keys,
             if verbose:
                 pp.pprint(scene_block)
 
-            nphotons = int(float(scene_block['nphotons']))
+            nphotons = int(float(scene_block['nphotons']) * flux_factor)
             wavelength_sampling = scene_block['wavelength_sampling']
             if wavelength_sampling not in ['random', 'fixed']:
                 raise_ValueError(f'Unexpected {wavelength_sampling=}')
@@ -234,7 +238,7 @@ def ifu_simulator(wcs3d, header_keys,
             if atmosphere_transmission == "none" and apply_atmosphere_transmission:
                 print(ctext(f'WARNING: {apply_atmosphere_transmission=} when {atmosphere_transmission=}', fg='cyan'))
                 print(f'{atmosphere_transmission=} overrides {apply_atmosphere_transmission=}')
-                print(f'The atmosphere transmission will not be applied!')
+                print('The atmosphere transmission will not be applied!')
                 apply_atmosphere_transmission = False
             apply_seeing = scene_block['apply_seeing']
             if apply_seeing:
@@ -386,9 +390,9 @@ def ifu_simulator(wcs3d, header_keys,
         print(ctext('\n* Computing image3d IFU (method 0)', fg='green'))
     bins_x_ifu = (0.5 + np.arange(naxis1_ifu.value + 1)) * u.pix
     bins_y_ifu = (0.5 + np.arange(naxis2_ifu.value + 1)) * u.pix
-    bins_wave = wv_crval1 \
-                + ((np.arange(naxis2_detector.value + 1) + 1) * u.pix - wv_crpix1) * wv_cdelt1 \
-                - 0.5 * u.pix * wv_cdelt1
+    bins_wave = wv_crval1 + \
+        ((np.arange(naxis2_detector.value + 1) + 1) * u.pix - wv_crpix1) * wv_cdelt1 \
+        - 0.5 * u.pix * wv_cdelt1
     generate_image3d_method0_ifu(
         wcs3d=wcs3d,
         header_keys=header_keys,
@@ -494,7 +498,7 @@ def ifu_simulator(wcs3d, header_keys,
             image2d_flatpix2pix = hdul[0].data
         if np.min(image2d_flatpix2pix) <= 0:
             print(f'- minimum flatpix2pix value: {np.min(image2d_flatpix2pix)}')
-            raise_ValueError(f'Unexpected signal in flatpix2pix <= 0')
+            raise_ValueError('Unexpected signal in flatpix2pix <= 0')
         naxis2_flatpix2pix, naxis1_flatpix2pix = image2d_flatpix2pix.shape
         naxis1_flatpix2pix *= u.pix
         naxis2_flatpix2pix *= u.pix
@@ -517,7 +521,7 @@ def ifu_simulator(wcs3d, header_keys,
     else:
         if verbose:
             print('Skipping adding bias')
-    
+
     # apply Gaussian readout noise to detector image
     if rnoise.value > 0:
         if verbose:
