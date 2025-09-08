@@ -1,5 +1,5 @@
-from ...generic import ComponentGeneric
-from ...hwdevice import HWDevice
+from numina.instrument.generic import ComponentGeneric
+from numina.instrument.hwdevice import HWDevice
 
 
 def test_instrument0(pattri_ins):

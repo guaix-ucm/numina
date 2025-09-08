@@ -3,7 +3,7 @@
   "type": "component",
   "description": "Component for testing",
   "uuid": "2ec1cc18-ab34-48e0-ac25-7483c254f5d2",
-  "class": "numina.drps.tests.robot.RobotPos",
+  "class": "numina.drps.tests.pattridrp.instrument.components.robot.RobotPos",
   "date_start": null,
   "date_end": null,
   "setup": [

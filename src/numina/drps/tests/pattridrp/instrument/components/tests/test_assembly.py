@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from ...assembly import (
+from numina.instrument.assembly import (
     find_element,
     ElementEnum,
     find_instrument,
@@ -10,8 +10,8 @@ from ...assembly import (
     process_properties,
     process_components,
 )
-from ...collection import load_paths_store
-from ...generic import ComponentGeneric
+from numina.instrument.collection import load_paths_store
+from numina.instrument.generic import ComponentGeneric
 
 
 def test_ins_prefix(pattri_ins):

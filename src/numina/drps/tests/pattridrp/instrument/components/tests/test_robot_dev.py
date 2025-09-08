@@ -1,6 +1,6 @@
 import pytest
 
-from numina.drps.tests.robot import RobotPos, Robot
+from numina.drps.tests.pattridrp.instrument.components.robot import RobotPos, Robot
 
 
 def test_robot1(pattri_ins):

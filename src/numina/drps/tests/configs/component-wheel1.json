@@ -3,7 +3,7 @@
   "type": "component",
   "description": "Wheel for testing",
   "uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5",
-  "class": "numina.drps.tests.wheel.PWheel",
+  "class": "numina.drps.tests.pattridrp.instrument.components.wheel.PWheel",
   "date_start": null,
   "date_end": null,
   "setup": [
