@@ -18,23 +18,23 @@ from .signal import Signal
 class Status(enum.Enum):
     """Enum representing the status of the component"""
 
-    STATUS_ACTIVE = 1
-    STATUS_FAILED = 2
-    STATUS_RESETTING = 3
-    STATUS_CONFIGURING = 4
+    ACTIVE = 1
+    FAILED = 2
+    RESETTING = 3
+    CONFIGURING = 4
 
 
 class Transition(enum.Enum):
-    TRANSITION_RESET = 0
-    TRANSITION_END_RESET = 1
-    TRANSITION_CONFIGURE = 2
-    TRANSITION_END_CONFIGURE = 3
-    TRANSITION_ERROR = 4
+    RESET = 0
+    END_RESET = 1
+    CONFIGURE = 2
+    END_CONFIGURE = 3
+    ERROR = 4
 
 
 class State:
     def __init__(self):
-        self.current = Status.STATUS_ACTIVE
+        self.current = Status.ACTIVE
         #
         self.enter_configure = Signal()
         self.exit_configure = Signal()
@@ -47,56 +47,56 @@ class State:
 
     @property
     def is_configuring(self) -> bool:
-        return self.current == Status.STATUS_CONFIGURING
+        return self.current == Status.CONFIGURING
 
     def transition(self, inpt: Transition) -> None:
         match self.current:
-            case Status.STATUS_FAILED:
+            case Status.FAILED:
                 match inpt:
-                    case Transition.TRANSITION_RESET:
+                    case Transition.RESET:
                         self.exit_failed.emit()
-                        self.current = Status.STATUS_RESETTING
+                        self.current = Status.RESETTING
                         self.enter_reset.emit()
                     case _:
                         pass  # No action
-            case Status.STATUS_RESETTING:
+            case Status.RESETTING:
                 match inpt:
-                    case Transition.TRANSITION_RESET:
+                    case Transition.RESET:
                         pass  # No action
-                    case Transition.TRANSITION_END_RESET:
+                    case Transition.END_RESET:
                         self.exit_reset.emit()
-                        self.current = Status.STATUS_ACTIVE
+                        self.current = Status.ACTIVE
                         self.enter_active.emit()
                     case _:
                         self.exit_reset.emit()
-                        self.current = Status.STATUS_FAILED
+                        self.current = Status.FAILED
                         self.enter_failed.emit()
-            case Status.STATUS_CONFIGURING:
+            case Status.CONFIGURING:
                 match inpt:
-                    case Transition.TRANSITION_CONFIGURE:
+                    case Transition.CONFIGURE:
                         pass  # No action
-                    case Transition.TRANSITION_END_CONFIGURE:
-                        self.current = Status.STATUS_ACTIVE
+                    case Transition.END_CONFIGURE:
+                        self.current = Status.ACTIVE
                         self.exit_configure.emit()
                     case _:
-                        self.current = Status.STATUS_FAILED
+                        self.current = Status.FAILED
                         self.enter_failed.emit()
-            case Status.STATUS_ACTIVE:
+            case Status.ACTIVE:
                 match inpt:
-                    case Transition.TRANSITION_CONFIGURE:
-                        self.current = Status.STATUS_CONFIGURING
+                    case Transition.CONFIGURE:
+                        self.current = Status.CONFIGURING
                         self.enter_configure.emit()
-                    case Transition.TRANSITION_RESET:
-                        self.current = Status.STATUS_RESETTING
+                    case Transition.RESET:
+                        self.current = Status.RESETTING
                         self.enter_reset.emit()
                     case _:
-                        self.current = Status.STATUS_FAILED
+                        self.current = Status.FAILED
                         self.enter_failed.emit()
 
     @contextlib.contextmanager
     def managed_configure(self) -> Generator["State", None, None]:
-        self.transition(Transition.TRANSITION_CONFIGURE)
+        self.transition(Transition.CONFIGURE)
         try:
             yield self
         finally:
-            self.transition(Transition.TRANSITION_END_CONFIGURE)
+            self.transition(Transition.END_CONFIGURE)

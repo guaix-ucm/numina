@@ -6,15 +6,15 @@ from ..state import State, Status, Transition
 
 def test_state1():
     state = State()
-    assert state.current == Status.STATUS_ACTIVE
+    assert state.current == Status.ACTIVE
 
 
 def test_configuring():
     state = State()
-    state.transition(Transition.TRANSITION_CONFIGURE)
-    assert state.current == Status.STATUS_CONFIGURING
-    state.transition(Transition.TRANSITION_END_CONFIGURE)
-    assert state.current == Status.STATUS_ACTIVE
+    state.transition(Transition.CONFIGURE)
+    assert state.current == Status.CONFIGURING
+    state.transition(Transition.END_CONFIGURE)
+    assert state.current == Status.ACTIVE
 
 
 def test_configuring2():
@@ -23,17 +23,17 @@ def test_configuring2():
         try:
             raise ValueError()
         except ValueError:
-            state.transition(Transition.TRANSITION_ERROR)
+            state.transition(Transition.ERROR)
 
-    assert state.current == Status.STATUS_FAILED
+    assert state.current == Status.FAILED
 
 
 def test_configuring3():
     state = State()
     with state.managed_configure():
-        assert state.current == Status.STATUS_CONFIGURING
+        assert state.current == Status.CONFIGURING
 
-    assert state.current == Status.STATUS_ACTIVE
+    assert state.current == Status.ACTIVE
 
 
 def test_reset1():
@@ -54,23 +54,23 @@ def test_reset1():
     state.enter_failed.connect(enter_failed_cb)
     state.exit_failed.connect(exit_failed_cb)
     state.enter_reset.connect(enter_reset_cb)
-    state.transition(Transition.TRANSITION_ERROR)
+    state.transition(Transition.ERROR)
 
-    assert state.current == Status.STATUS_FAILED
+    assert state.current == Status.FAILED
     assert enter_failed_cb.side_effect.called is True
     assert exit_failed_cb.side_effect.called is False
     assert enter_reset_cb.side_effect.called is False
 
     for t_name in [
-        Transition.TRANSITION_CONFIGURE,
-        Transition.TRANSITION_END_CONFIGURE,
-        Transition.TRANSITION_END_RESET,
+        Transition.CONFIGURE,
+        Transition.END_CONFIGURE,
+        Transition.END_RESET,
     ]:
         enter_failed_cb.side_effect.clear()
         exit_failed_cb.side_effect.clear()
         enter_reset_cb.side_effect.clear()
         state.transition(t_name)
-        assert state.current == Status.STATUS_FAILED
+        assert state.current == Status.FAILED
         assert enter_failed_cb.side_effect.called is False
         assert exit_failed_cb.side_effect.called is False
         assert enter_reset_cb.side_effect.called is False
@@ -78,8 +78,8 @@ def test_reset1():
     enter_failed_cb.side_effect.clear()
     exit_failed_cb.side_effect.clear()
     enter_reset_cb.side_effect.clear()
-    state.transition(Transition.TRANSITION_RESET)
-    assert state.current == Status.STATUS_RESETTING
+    state.transition(Transition.RESET)
+    assert state.current == Status.RESETTING
     assert enter_failed_cb.side_effect.called is False
     assert exit_failed_cb.side_effect.called is True
     assert enter_reset_cb.side_effect.called is True
@@ -107,21 +107,21 @@ def create_state():
 @pytest.mark.parametrize(
     "t_name",
     [
-        Transition.TRANSITION_CONFIGURE,
-        Transition.TRANSITION_END_CONFIGURE,
+        Transition.CONFIGURE,
+        Transition.END_CONFIGURE,
     ],
 )
 def test_reset_fail(t_name):
 
     state, created_signals = create_state()
 
-    state.transition(Transition.TRANSITION_RESET)
+    state.transition(Transition.RESET)
 
     for n in created_signals:
         created_signals[n].side_effect.clear()
 
     state.transition(t_name)
-    assert state.current == Status.STATUS_FAILED
+    assert state.current == Status.FAILED
 
     called_signals = {}
     for n in created_signals:
@@ -136,13 +136,13 @@ def test_reset_active():
 
     state, created_signals = create_state()
 
-    state.transition(Transition.TRANSITION_RESET)
+    state.transition(Transition.RESET)
 
     for n in created_signals:
         created_signals[n].side_effect.clear()
 
-    state.transition(Transition.TRANSITION_END_RESET)
-    assert state.current == Status.STATUS_ACTIVE
+    state.transition(Transition.END_RESET)
+    assert state.current == Status.ACTIVE
 
     called_signals = {}
     for n in created_signals:
@@ -157,13 +157,13 @@ def test_reset_reset():
 
     state, created_signals = create_state()
 
-    state.transition(Transition.TRANSITION_RESET)
+    state.transition(Transition.RESET)
 
     for n in created_signals:
         created_signals[n].side_effect.clear()
 
-    state.transition(Transition.TRANSITION_RESET)
-    assert state.current == Status.STATUS_RESETTING
+    state.transition(Transition.RESET)
+    assert state.current == Status.RESETTING
 
     called_signals = {}
     for n in created_signals:
@@ -176,14 +176,14 @@ def test_active_reset0():
     """From active to reset"""
     state, created_signals = create_state()
 
-    state.transition(Transition.TRANSITION_RESET)
+    state.transition(Transition.RESET)
 
     called_signals = {}
     for n in created_signals:
         called_signals[n] = False
     called_signals["enter_reset"] = True
 
-    assert state.current == Status.STATUS_RESETTING
+    assert state.current == Status.RESETTING
     for n in called_signals:
         assert created_signals[n].side_effect.called == called_signals[n]
 
@@ -192,14 +192,14 @@ def test_active_config0():
     """From active to configure"""
     state, created_signals = create_state()
 
-    state.transition(Transition.TRANSITION_CONFIGURE)
+    state.transition(Transition.CONFIGURE)
 
     called_signals = {}
     for n in created_signals:
         called_signals[n] = False
     called_signals["enter_configure"] = True
 
-    assert state.current == Status.STATUS_CONFIGURING
+    assert state.current == Status.CONFIGURING
     for n in called_signals:
         assert created_signals[n].side_effect.called == called_signals[n]
 
@@ -208,13 +208,13 @@ def test_config_config():
 
     state, created_signals = create_state()
 
-    state.transition(Transition.TRANSITION_CONFIGURE)
+    state.transition(Transition.CONFIGURE)
 
     for n in created_signals:
         created_signals[n].side_effect.clear()
 
-    state.transition(Transition.TRANSITION_CONFIGURE)
-    assert state.current == Status.STATUS_CONFIGURING
+    state.transition(Transition.CONFIGURE)
+    assert state.current == Status.CONFIGURING
 
     called_signals = {}
     for n in created_signals:

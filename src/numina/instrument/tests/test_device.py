@@ -69,7 +69,7 @@ def test_configure_image():
     obj1 = DeviceBase("obj1")
     obj2 = DeviceBase("obj2", parent=obj1)  # noqa
     obj1.configure_with_image(test_img)
-    assert obj1.state.current == Status.STATUS_ACTIVE
+    assert obj1.state.current == Status.ACTIVE
 
 
 def test_property_names():
