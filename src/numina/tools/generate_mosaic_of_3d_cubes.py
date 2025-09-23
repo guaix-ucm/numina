@@ -109,7 +109,7 @@ def generate_mosaic_of_3d_cubes(
     for fname in list_of_fits_files:
         with fits.open(fname) as hdul:
             if extname_image not in hdul:
-                    raise ValueError(f'Expected {extname_image} extension not found')
+                raise ValueError(f'Expected {extname_image} extension not found')
             hdu = hdul[extname_image]
             if verbose:
                 print(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
@@ -148,13 +148,13 @@ def generate_mosaic_of_3d_cubes(
     header_spectral_mosaic['CTYPE1'] = 'WAVE'
     wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
     if verbose:
-        print(f'\n{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax  =}\n')
+        print(f'\n{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n')
         print(f'{wcs1d_spectral_mosaic=}')
 
     # optimal 2D WCS (celestial part) for combined mosaic
     if desired_celestial_2d_wcs is None:
         if verbose:
-            print(f'\nCelestial scales:')
+            print('\nCelestial scales:')
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
         for i, fname in enumerate(list_of_fits_files):
@@ -165,7 +165,7 @@ def generate_mosaic_of_3d_cubes(
             scales = proj_plane_pixel_scales(wcs2d)
             if verbose:
                 print(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
-            list_of_inputs.append( ( (header3d['NAXIS2'], header3d['NAXIS1']), wcs2d) )
+            list_of_inputs.append(((header3d['NAXIS2'], header3d['NAXIS1']), wcs2d))
         wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
         scales = proj_plane_pixel_scales(wcs_mosaic2d)
         if verbose:
@@ -254,7 +254,7 @@ def generate_mosaic_of_3d_cubes(
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
     invalid_region = (footprint3d == 0)
     mosaic3d_cube_by_cube[invalid_region] = np.nan  # set invalid pixels to NaN
- 
+
     # generate result
     hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
     header3d_corrected = header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(
@@ -290,7 +290,8 @@ def main(args=None):
                         type=float, default=None)
     parser.add_argument("--naxis3out", help="Number of slices in the output image", type=int, default=None)
     parser.add_argument("--desired_celestial_2d_wcs",
-                        help="Desired 2D celestial WCS projection. Default None (compute for current 3D cube combination)",
+                        help="Desired 2D celestial WCS projection. "
+                        "Default None (compute for current 3D cube combination)",
                         type=str, default=None)
     parser.add_argument('--reproject_method',
                         help='Reprojection method (interp, adaptive, exact)',
@@ -365,7 +366,7 @@ def main(args=None):
 
     if len(list_of_fits_files) < 1:
         raise ValueError(f'No valid FITS files found in {input_list}. Please check the file content.')
-    
+
     # combine images
     output_hdul = generate_mosaic_of_3d_cubes(
         list_of_fits_files=list_of_fits_files,
@@ -394,6 +395,7 @@ def main(args=None):
     if verbose:
         print(f'\nTotal time: {time_end - time_ini}')
         print('Done!')
+
 
 if __name__ == "__main__":
     main()

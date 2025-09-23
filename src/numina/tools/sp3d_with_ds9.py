@@ -376,7 +376,7 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
                 ix2 = ix
                 iy1 = iy
                 iy2 = iy
-                #last_key_pos = [key, ix, iy]
+                # last_key_pos = [key, ix, iy]
             if key in ['s', 'c', 'x']:
                 for iy in range(iy1, iy2+1):
                     for ix in range(ix1, ix2+1):
