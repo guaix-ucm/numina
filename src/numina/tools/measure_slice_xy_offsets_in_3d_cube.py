@@ -15,11 +15,11 @@ import astropy.units as u
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.ndimage import shift
 from skimage.registration import phase_cross_correlation
 import sys
 
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
+from numina.array.display import shift_image2d
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
@@ -172,11 +172,11 @@ def measure_slice_xy_offsets_in_3d_cube(
         else:
             data3d_corrected = np.zeros_like(data3d_work)
             for islice in np.arange(naxis3):
-                data3d_corrected[islice, :, :] = shift(
+                data3d_corrected[islice, :, :] = shift_image2d(
                     data3d_work[islice, :, :],
-                    (-delta_y_array[islice], -delta_x_array[islice]),
-                    mode='constant',
-                    cval=0
+                    xoffset=-delta_x_array[islice],
+                    yoffset=-delta_y_array[islice],
+                    mode=2
                 )
             i1_ref = 0
             i2_ref = naxis3
