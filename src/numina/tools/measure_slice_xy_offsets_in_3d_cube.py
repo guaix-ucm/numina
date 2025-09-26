@@ -16,15 +16,12 @@ from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import shift
-from scipy.signal import correlate2d
 from skimage.registration import phase_cross_correlation
 import sys
 
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
-import numina.array.imsurfit as imsurfit
-from numina.array.imsurfit import vertex_of_quadratic
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
-import numina.array.utils as utils
+from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
 from .ctext import ctext
 
@@ -104,7 +101,7 @@ def measure_slice_xy_offsets_in_3d_cube(
     method : int
         Two methods are implemented:
         - method 1: using skimage.registration.phase_cross_correlation
-        - method 2: using scipy.signal.correlated2d
+        - method 2: using scipy.signal.correlate2d
         Both methods seem to yield similar results. Method 1 is faster
         and exhibits smaller residuals than method 2.
     plots : bool
@@ -218,41 +215,10 @@ def measure_slice_xy_offsets_in_3d_cube(
                     overlap_ratio=0.90
                 )
             elif method == 2:
-                corr_self = correlate2d(
-                    in1=slice_reference,
-                    in2=slice_reference,
-                    mode='full',
-                    boundary='fill',
-                    fillvalue=0
+                yx_offsets = yx_offsets_correlate2d(
+                    reference_image=slice_reference,
+                    moving_image=slice_binned
                 )
-                corr = correlate2d(
-                    in1=slice_reference,
-                    in2=slice_binned,
-                    mode='full',
-                    boundary='fill',
-                    fillvalue=0
-                )
-                maxindex_self = np.unravel_index(np.argmax(corr_self), corr_self.shape)
-                maxindex = np.unravel_index(np.argmax(corr), corr.shape)
-                refine_box = 3
-                region_refine_self = utils.image_box(
-                    maxindex_self,
-                    corr_self.shape,
-                    box=(refine_box, refine_box)
-                )
-
-                region_refine = utils.image_box(
-                    maxindex,
-                    corr.shape,
-                    box=(refine_box, refine_box)
-                )
-                coeffs_self, = imsurfit.imsurfit(corr_self[region_refine_self], order=2)
-                coeffs, = imsurfit.imsurfit(corr[region_refine], order=2)
-                xm, ym = vertex_of_quadratic(coeffs_self)
-                maxindex_self += np.asarray([ym, xm])
-                xm, ym = vertex_of_quadratic(coeffs)
-                maxindex += np.asarray([ym, xm])
-                yx_offsets = np.asarray(maxindex) - np.asarray(maxindex_self)
             else:
                 raise ValueError(f'Unexpected {method=}')
             delta_x_slice.append(-yx_offsets[1])
@@ -338,7 +304,7 @@ def main(args=None):
         data3d = hdul[0].data
 
     if primary_header['NAXIS'] != 3:
-        raise ValueError(f"Expected NAXIS=3 not found in PRIMARY HDU")
+        raise ValueError("Expected NAXIS=3 not found in PRIMARY HDU")
 
     delta_x_array, delta_y_array, i1_ref, i2_ref = measure_slice_xy_offsets_in_3d_cube(
         data3d=data3d,
