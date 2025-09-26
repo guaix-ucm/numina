@@ -176,7 +176,7 @@ def measure_slice_xy_offsets_in_3d_cube(
                     data3d_work[islice, :, :],
                     xoffset=-delta_x_array[islice],
                     yoffset=-delta_y_array[islice],
-                    mode=2
+                    resampling=2
                 )
             i1_ref = 0
             i2_ref = naxis3
