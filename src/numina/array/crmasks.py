@@ -390,6 +390,7 @@ def compute_crmasks(
         dtype=np.float32,
         seed=None,
         plots=True,
+        verify_cr=False,
         semiwindow=15,
         color_scale='minmax',
         maxplots=10
@@ -463,7 +464,10 @@ def compute_crmasks(
         The random seed for reproducibility.
     plots : bool, optional
         If True, generate plots with detected double cosmic rays
-        (default is False).
+        (default is True).
+    verify_cr : bool, optional
+        If True, verify the cosmic ray detection by comparing the
+        detected positions with the original images (default is True).
     semiwindow : int, optional
         The semiwindow size to plot the double cosmic rays (default is 15).
         Only used if `plots` is True.
@@ -614,7 +618,8 @@ def compute_crmasks(
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("random seed for reproducibility: %s", str(seed))
     _logger.info("dilation factor: %d", dilation)
-    if plots:
+    _logger.info("verify cosmic ray detection: %s", verify_cr)
+    if plots or verify_cr:
         _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
         _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
         _logger.info("color scale for plots: %s", color_scale)
@@ -911,8 +916,8 @@ def compute_crmasks(
         flag_integer_dilated[flag] = 2
         # Compute mask
         mask_mediancr = flag_integer_dilated > 0
-        # Plot the cosmic rays if requested
-        if plots:
+        # Plot the cosmic rays if requested (or if verify_cr is True)
+        if plots or verify_cr:
             # Fix the median2d array by replacing the flagged pixels with the minimum value
             # of the corresponding pixel in the input arrays
             median2d_corrected = median2d.copy()
@@ -953,7 +958,7 @@ def compute_crmasks(
                 num_plot_max = 9
             pdf = PdfPages('mediancr_identified_cr.pdf')
 
-            if maxplots < 0:
+            if maxplots < 0 or verify_cr:
                 maxplots = number_cr
             _logger.info(f"generating {maxplots} plots for double cosmic rays ranked by detection criterium...")
             for idum in range(min(number_cr, maxplots)):
@@ -1019,6 +1024,14 @@ def compute_crmasks(
                         ax.axis('off')
                 fig.suptitle(f'CR#{idum+1}/{number_cr}\nMaximum detection parameter: {detection_value[i]:.2f}')
                 plt.tight_layout()
+                plt.show(block=False)
+                if verify_cr:
+                    accept_cr = input(f"Accept this cosmic ray detection #{idum+1} ([y]/n)? ")
+                    if accept_cr.lower() == 'n':
+                        _logger.info("removing cosmic ray detection #%d from the mask.\n", idum + 1)
+                        mask_mediancr[labels_cr == i + 1] = False
+                    else:
+                        _logger.info("keeping cosmic ray detection #%d in the mask.", idum + 1)
                 pdf.savefig(fig, bbox_inches='tight')
                 plt.close(fig)
 
