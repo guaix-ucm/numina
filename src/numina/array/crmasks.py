@@ -24,8 +24,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 from scipy import ndimage
+from skimage.registration import phase_cross_correlation
 
 from numina.array.display.plot_hist_step import plot_hist_step
+from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits_history
 import teareduce as tea
@@ -250,6 +252,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         plt.tight_layout()
 
         png_filename = f'flux_factor{idata+1}.png'
+        _logger.info(f"saving {png_filename}.")
         plt.savefig(png_filename, dpi=150)
         if interactive:
             _logger.info("Entering interactive mode (press 'q' to close plot).")
@@ -374,7 +377,9 @@ def compute_crmasks(
         rnoise=None,
         bias=None,
         flux_factor=None,
+        crosscorr_region=None,
         knots_splfit=3,
+        fixed_points_in_boundary=None,
         nsimulations=10,
         niter_boundary_extension=3,
         weight_boundary_extension=10.0,
@@ -418,10 +423,19 @@ def compute_crmasks(
         If a float is provided, it is used as the flux factor for all images.
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
+    crosscorr_region : str, or None
+        The region to use for the 2D cross-correlation to determine
+        the offsets between the individual images and the median image.
+        If None, no offsets are computed and it is assumed that
+        the images are already aligned. The format of the region
+        must follow the FITS convention '[xmin:xmax,ymin:ymax]',
+        where the indices start from 1 to NAXIS[12].
     knots_splfit : int, optional
         The number of knots for the spline fit to the boundary.
+    fixed_points_in_boundary : str, or list or None
+        The fixed points to use for the boundary fitting.
     nsimulations : int, optional
-        The number of simulations of the each image to compute
+        The number of simulations of each set of input images to compute
         the detection boundary.
     niter_boundary_extension : int, optional
         The number of iterations for the boundary extension.
@@ -545,6 +559,15 @@ def compute_crmasks(
     else:
         raise TypeError(f"Invalid type for bias: {type(bias)}. Must be float, int, or numpy array.")
 
+    # Define fixed_points_in_boundary
+    if fixed_points_in_boundary == 'none':
+        fixed_points_in_boundary = None
+    else:
+        fixed_points_in_boundary = list(eval(str(fixed_points_in_boundary)))
+        x_fixed_points_in_boundary = np.array([item[0] for item in fixed_points_in_boundary], dtype=float)
+        y_fixed_points_in_boundary = np.array([item[1] for item in fixed_points_in_boundary], dtype=float)
+        w_fixed_points_in_boundary = np.array([item[2] for item in fixed_points_in_boundary], dtype=float)
+
     # Check flux_factor
     if flux_factor is None:
         flux_factor = np.ones(num_images, dtype=float)
@@ -579,7 +602,10 @@ def compute_crmasks(
 
     # Log the input parameters
     _logger.info("flux_factor: %s", str(flux_factor))
+    _logger.info("crosscorr_region: %s", crosscorr_region if crosscorr_region is not None else "None")
     _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
+    _logger.info("fixed points in the boundary: %s",
+                 str(fixed_points_in_boundary) if fixed_points_in_boundary is not None else "None")
     _logger.info("number of simulations to compute the detection boundary: %d", nsimulations)
     _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
     _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
@@ -616,6 +642,56 @@ def compute_crmasks(
         flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive)
         _logger.info("flux_factor set to %s", str(flux_factor))
 
+    # Compute offsets between each single exposure and the median image
+    if crosscorr_region is None:
+        crossregion = None
+    else:
+        crossregion = tea.SliceRegion2D(crosscorr_region, mode='fits')
+    list_yx_offsets = []
+    for i in range(num_images):
+        if crossregion is None:
+            list_yx_offsets.append((0.0, 0.0))
+        else:
+            reference_image = median2d[crossregion.python]
+            moving_image = image3d[i][crossregion.python] * flux_factor[i]
+            yx_offsets, _, _ = phase_cross_correlation(
+                reference_image=reference_image,
+                moving_image=moving_image,
+                upsample_factor=100,
+                normalization=None  # use None to avoid artifacts with images with many cosmic rays
+            )
+            _logger.info("offsets for image %d: y=%+f, x=%+f", i+1, yx_offsets[0], yx_offsets[1])
+            fig, axarr = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4*1.5, 4.8*1.5))
+            axarr = axarr.flatten()
+            vmin = np.min(reference_image)
+            vmax = np.max(reference_image)
+            tea.imshow(fig, axarr[0], reference_image, vmin=vmin, vmax=vmax,
+                       aspect='auto', title='Median')
+            tea.imshow(fig, axarr[1], moving_image, vmin=vmin, vmax=vmax,
+                       aspect='auto', title=f'Image {i+1}')
+            shifted_image2d = shift_image2d(
+                moving_image,
+                xoffset=yx_offsets[1],
+                yoffset=yx_offsets[0],
+                resampling=2
+            )
+            dumdiff1 = reference_image - moving_image
+            dumdiff2 = reference_image - shifted_image2d
+            vmin = np.percentile(dumdiff1, 5)
+            vmax = np.percentile(dumdiff2, 95)
+            tea.imshow(fig, axarr[2], dumdiff1, vmin=vmin, vmax=vmax,
+                       aspect='auto', title=f'Median - Image {i+1}')
+            tea.imshow(fig, axarr[3], dumdiff2, vmin=vmin, vmax=vmax,
+                       aspect='auto', title=f'Median - Shifted Image {i+1}')
+            plt.tight_layout()
+            png_filename = f'xyoffset_crosscorr_{i+1}.png'
+            _logger.info(f"saving {png_filename}.")
+            plt.savefig(png_filename, dpi=150)
+            if interactive:
+                _logger.info("Entering interactive mode (press 'q' to close plot).")
+                plt.show()
+            list_yx_offsets.append(yx_offsets)
+
     # Estimate limits for the diagnostic plot
     rng = np.random.default_rng(seed)  # Random number generator for reproducibility
     xdiag_min, xdiag_max, ydiag_min, ydiag_max = estimate_diagnostic_limits(
@@ -631,6 +707,10 @@ def compute_crmasks(
         xdiag_min = np.min(xplot)
     if np.max(xplot) > xdiag_max:
         xdiag_max = np.max(xplot)
+    if fixed_points_in_boundary is not None:
+        if np.max(y_fixed_points_in_boundary) > ydiag_max:
+            ydiag_max = np.max(y_fixed_points_in_boundary)
+    ydiag_max *= 1.20  # Add 20% margin to the maximum y limit
     _logger.info("xdiag_min=%f", xdiag_min)
     _logger.info("ydiag_min=%f", ydiag_min)
     _logger.info("xdiag_max=%f", xdiag_max)
@@ -649,12 +729,27 @@ def compute_crmasks(
     hist2d_accummulated = np.zeros((nbins_ydiag, nbins_xdiag), dtype=int)
     lam = median2d.copy()
     lam[lam < 0] = 0  # Avoid negative values
+    lam3d = np.zeros((num_images, naxis2, naxis1))
+    if crosscorr_region is None:
+        for i in range(num_images):
+            lam3d[i] = lam
+    else:
+        _logger.info("xy-shifting median2d to speed up simulations...")
+        for i in range(num_images):
+            _logger.info("shifted image %d/%d -> delta_y=%+f, delta_x=%+f",
+                         i + 1, num_images, -list_yx_offsets[i][0], -list_yx_offsets[i][1])
+            # apply negative offsets to the median image to simulate the
+            # expected individual exposures
+            lam3d[i] = shift_image2d(lam,
+                                     xoffset=-list_yx_offsets[i][1],
+                                     yoffset=-list_yx_offsets[i][0],
+                                     resampling=2)
     _logger.info("computing simulated 2D histogram...")
     for k in range(nsimulations):
         time_ini = datetime.now()
         image3d_simul = np.zeros((num_images, naxis2, naxis1))
         for i in range(num_images):
-            image3d_simul[i] = rng.poisson(lam=lam * flux_factor[i] * gain).astype(float) / gain
+            image3d_simul[i] = rng.poisson(lam=lam3d[i] * flux_factor[i] * gain).astype(float) / gain
             image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
         min2d_simul = np.min(image3d_simul, axis=0)
         median2d_simul = np.median(image3d_simul, axis=0)
@@ -714,6 +809,8 @@ def compute_crmasks(
             p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
             xboundary.append(xcbins[i])
             yboundary.append(ycbins[int(p + 0.5)])
+    xboundary = np.array(xboundary)
+    yboundary = np.array(yboundary)
     ax1.plot(xboundary, yboundary, 'r+')
     splfit = None  # avoid flake8 warning
     for iterboundary in range(niter_boundary_extension + 1):
@@ -723,10 +820,20 @@ def compute_crmasks(
         else:
             wboundary[yboundary > splfit(xboundary)] = weight_boundary_extension**iterboundary
             label = f'Iteration {iterboundary}'
+        if fixed_points_in_boundary is None:
+            xboundary_fit = xboundary
+            yboundary_fit = yboundary
+            wboundary_fit = wboundary
+        else:
+            wboundary_max = np.max(wboundary)
+            xboundary_fit = np.concatenate((xboundary, x_fixed_points_in_boundary))
+            yboundary_fit = np.concatenate((yboundary, y_fixed_points_in_boundary))
+            wboundary_fit = np.concatenate((wboundary, w_fixed_points_in_boundary * wboundary_max))
+        isort = np.argsort(xboundary_fit)
         splfit, knots = spline_positive_derivative(
-            x=np.array(xboundary),
-            y=np.array(yboundary),
-            w=wboundary,
+            x=xboundary_fit[isort],
+            y=yboundary_fit[isort],
+            w=wboundary_fit[isort],
             n_total_knots=knots_splfit,
         )
         ydum = splfit(xcbins)
@@ -738,7 +845,7 @@ def compute_crmasks(
     ax1.set_ylabel(r'median2d $-$ min2d')
     ax1.set_title(f'Simulated data (nsimulations = {nsimulations})')
     if niter_boundary_extension > 1:
-        ax1.legend()
+        ax1.legend(loc=4)
     xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
     yplot_boundary = splfit(xplot_boundary)
     yplot_boundary[xplot_boundary < knots[0]] = splfit(knots[0])
@@ -749,9 +856,11 @@ def compute_crmasks(
     ax2.set_xlabel(ax1.get_xlabel())
     ax2.set_ylabel(ax1.get_ylabel())
     ax2.set_title('Original data')
-    ax2.legend()
+    ax2.legend(loc=4)
     plt.tight_layout()
-    plt.savefig('diagnostic_histogram2d.png', dpi=150)
+    png_filename = 'diagnostic_histogram2d.png'
+    _logger.info(f"saving {png_filename}.")
+    plt.savefig(png_filename, dpi=150)
     if interactive:
         _logger.info("Entering interactive mode (press 'q' to close plot).")
         plt.show()
@@ -870,14 +979,14 @@ def compute_crmasks(
                 # having blurred images when opening the PDF file with macos Preview
                 cmap = 'viridis'
                 cblabel = 'Number of counts'
+                if color_scale == 'zscale':
+                    vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                else:
+                    vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                    vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
                 for k in range(num_plot_max):
                     ax = axarr[k]
                     title = title = f'image#{k+1}/{num_images}'
-                    if color_scale == 'zscale':
-                        vmin, vmax = tea.zscale(image3d[k, i1:(i2+1), j1:(j2+1)])
-                    else:
-                        vmin = np.min(image3d[k][i1:(i2+1), j1:(j2+1)])
-                        vmax = np.max(image3d[k][i1:(i2+1), j1:(j2+1)])
                     tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
                                extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
                                title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
@@ -887,28 +996,20 @@ def compute_crmasks(
                     if k == 0:
                         image2d = median2d
                         title = 'median'
-                        if color_scale == 'zscale':
-                            vmin, vmax = tea.zscale(median2d[i1:(i2+1), j1:(j2+1)])
-                        else:
-                            vmin = np.min(median2d[i1:(i2+1), j1:(j2+1)])
-                            vmax = np.max(median2d[i1:(i2+1), j1:(j2+1)])
+                        vmin_, vmax_ = vmin, vmax
                     elif k == 1:
                         image2d = flag_integer_dilated
                         title = 'flag_integer_dilated'
-                        vmin, vmax = 0, 2
+                        vmin_, vmax_ = 0, 2
                         cmap = 'plasma'
                         cblabel = 'flag'
                     elif k == 2:
                         image2d = median2d_corrected
                         title = 'median corrected'
-                        if color_scale == 'zscale':
-                            vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
-                        else:
-                            vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
-                            vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                        vmin_, vmax_ = vmin, vmax
                     else:
                         raise ValueError(f'Unexpected {k=}')
-                    tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
+                    tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin_, vmax=vmax_,
                                extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
                                title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
                 nplot_missing = nrows * ncols - num_plot_max - 3
