@@ -117,9 +117,9 @@ def remove_isolated_pixels(h):
     return hclean
 
 
-def compute_flux_factor(image3d, median2d, _logger, interactive=False,
-                        nxbins_half=50, nybins_half=50,
-                        ymin=0.495, ymax=1.505):
+def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
+                           nxbins_half=50, nybins_half=50,
+                           ymin=0.495, ymax=1.505):
     """Compute the flux factor for each image based on the median.
 
     Parameters
@@ -145,7 +145,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
 
     Returns
     -------
-    flux_factor : 1D numpy array
+    sb_flux_factor : 1D numpy array
         The flux factor for each image.
     """
     naxis3, naxis2, naxis1 = image3d.shape
@@ -197,7 +197,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     extent = [xbin_edges[0], xbin_edges[-1], ybin_edges[0], ybin_edges[-1]]
 
     cblabel = 'Number of pixels'
-    flux_factor = []
+    sb_flux_factor = []
     for idata, data in enumerate(image3d):
         ratio = np.divide(data, median2d, out=np.zeros_like(median2d, dtype=float), where=median2d != 0)
         h, edges = np.histogramdd(
@@ -250,10 +250,10 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
             imode = 1
         ax2.axhline(ymode[imode], color=f'C{imode}', linestyle=':')
         ax2.text(xbin[-5], ymode[imode]+(ybin[-1]-ybin[0])/40, f'{ymode[imode]:.3f}', color=f'C{imode}', ha='right')
-        flux_factor.append(ymode[imode])
+        sb_flux_factor.append(ymode[imode])
         plt.tight_layout()
 
-        png_filename = f'flux_factor{idata+1}.png'
+        png_filename = f'sb_flux_factor{idata+1}.png'
         _logger.info(f"saving {png_filename}.")
         plt.savefig(png_filename, dpi=150)
         if interactive:
@@ -261,18 +261,18 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
             plt.show()
         plt.close(fig)
 
-    if len(flux_factor) != naxis3:
-        raise ValueError(f"Expected {naxis3} flux factors, but got {len(flux_factor)}.")
+    if len(sb_flux_factor) != naxis3:
+        raise ValueError(f"Expected {naxis3} flux factors, but got {len(sb_flux_factor)}.")
 
     # round the flux factor to 6 decimal places to avoid
     # unnecessary precision when writting to the FITS header
-    flux_factor = np.round(flux_factor, decimals=6)
+    sb_flux_factor = np.round(sb_flux_factor, decimals=6)
 
     fig, ax = plt.subplots()
     for i in range(naxis3):
         xmax_ = np.max(image3d[i])
         bins = np.arange(xmin, xmax_ + hstep, hstep)
-        h, edges = np.histogram(image3d[i].flatten() / flux_factor[i], bins=bins)
+        h, edges = np.histogram(image3d[i].flatten() / sb_flux_factor[i], bins=bins)
         plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
     plot_hist_step(ax, edges0, h0, color='black', label='Median')
     ax.set_xlim(xminh, xmaxh)
@@ -283,10 +283,10 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     plt.tight_layout()
     plt.show()
 
-    return flux_factor
+    return sb_flux_factor
 
 
-def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, flux_factor, nsimulations):
+def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, sb_flux_factor, npixels):
     """Estimate the limits for the diagnostic plot.
 
     Parameters
@@ -302,22 +302,22 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, flux_fac
         subtracting the bias.
     num_images : int
         Number of different exposures.
-    flux_factor : numpy.ndarray
+    sb_flux_factor : numpy.ndarray
         Flux factor for the images.
-    nsimulations : int
+    npixels : int
         Number of simulations to perform for each corner of the
         diagnostic plot.
     """
-    if len(flux_factor) != num_images:
-        raise ValueError(f"flux_factor must have the same length as num_images ({num_images}).")
+    if len(sb_flux_factor) != num_images:
+        raise ValueError(f"sb_flux_factor must have the same length as num_images ({num_images}).")
 
     if maxvalue < 0:
         maxvalue = 0.0
-    xdiag_min = np.zeros(nsimulations, dtype=float)
-    xdiag_max = np.zeros(nsimulations, dtype=float)
-    ydiag_min = np.zeros(nsimulations, dtype=float)
-    ydiag_max = np.zeros(nsimulations, dtype=float)
-    for i in range(nsimulations):
+    xdiag_min = np.zeros(npixels, dtype=float)
+    xdiag_max = np.zeros(npixels, dtype=float)
+    ydiag_min = np.zeros(npixels, dtype=float)
+    ydiag_max = np.zeros(npixels, dtype=float)
+    for i in range(npixels):
         # lower limits
         data = rng.normal(loc=0, scale=rnoise, size=num_images)
         min1d = np.min(data)
@@ -326,7 +326,7 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, flux_fac
         ydiag_min[i] = median1d - min1d
         # upper limits
         lam = np.array([maxvalue] * num_images)
-        data = rng.poisson(lam=lam * gain).astype(float) / gain * flux_factor
+        data = rng.poisson(lam=lam * gain).astype(float) / gain * sb_flux_factor
         if rnoise > 0:
             data += rng.normal(loc=0, scale=rnoise, size=num_images)
         min1d = np.min(data)
@@ -341,7 +341,7 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, flux_fac
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                    threshold, ylabel, interactive, _logger, png_filename):
+                    sb_threshold, ylabel, interactive, _logger, png_filename):
     """Diagnostic plot for the mediancr function.
     """
     if png_filename is None:
@@ -352,9 +352,9 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
         ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
         ymin = 0
         ymax = np.max(yplot_boundary)
-        if threshold is not None:
-            if threshold > ymax:
-                ymax = threshold
+        if sb_threshold is not None:
+            if sb_threshold > ymax:
+                ymax = sb_threshold
         dy = ymax - ymin
         ymin -= dy * 0.05
         ymax += dy * 0.05
@@ -362,8 +362,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
         bbox_to_anchor = (0.5, 1.18)
     else:
         bbox_to_anchor = None
-    if threshold is not None:
-        ax.axhline(threshold, color='gray', linestyle=':', label=f'Threshold ({threshold:.2f})')
+    if sb_threshold is not None:
+        ax.axhline(sb_threshold, color='gray', linestyle=':', label=f'sb_threshold ({sb_threshold:.2f})')
     ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
     ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax.set_ylabel(ylabel)
@@ -427,30 +427,30 @@ def compute_crmasks(
         rnoise=None,
         bias=None,
         crmethod='lacosmic',
+        interactive=True,
+        dilation=1,
+        dtype=np.float32,
+        plots=True,
+        verify_cr=False,
+        semiwindow=15,
+        color_scale='minmax',
+        maxplots=10,
         la_sigclip=None,
         la_psffwhm_x=None,
         la_psffwhm_y=None,
         la_fsmode=None,
         la_psfmodel=None,
         la_psfsize=None,
-        flux_factor=None,
-        crosscorr_region=None,
-        knots_splfit=3,
-        fixed_points_in_boundary=None,
-        nsimulations=10,
-        niter_boundary_extension=3,
-        weight_boundary_extension=10.0,
-        threshold=0.0,
-        minimum_max2d_rnoise=5.0,
-        interactive=True,
-        dilation=1,
-        dtype=np.float32,
-        seed=None,
-        plots=True,
-        verify_cr=False,
-        semiwindow=15,
-        color_scale='minmax',
-        maxplots=10
+        sb_flux_factor=None,
+        sb_crosscorr_region=None,
+        sb_knots_splfit=3,
+        sb_fixed_points_in_boundary=None,
+        sb_nsimulations=10,
+        sb_niter_boundary_extension=3,
+        sb_weight_boundary_extension=10.0,
+        sb_threshold=0.0,
+        sb_minimum_max2d_rnoise=5.0,
+        sb_seed=None
         ):
     """
     Computation of cosmic rays masks using several equivalent exposures.
@@ -485,6 +485,28 @@ def compute_crmasks(
         detection (van Dokkum 2001), as implemented in ccdproc.
         - 'simboundary': use the numerically derived boundary to
         detect cosmic rays in the median combined image.
+    interactive : bool, optional
+        If True, enable interactive mode for plots.
+    dilation : int, optional
+        The dilation factor for the double cosmic ray mask.
+    dtype : data-type, optional
+        The desired data type to build the 3D stack (default is np.float32).
+    plots : bool, optional
+        If True, generate plots with detected double cosmic rays
+        (default is True).
+    verify_cr : bool, optional
+        If True, verify the cosmic ray detection by comparing the
+        detected positions with the original images (default is True).
+    semiwindow : int, optional
+        The semiwindow size to plot the double cosmic rays (default is 15).
+        Only used if `plots` is True.
+    color_scale : str, optional
+        The color scale to use for the plots (default is 'minmax').
+        Valid options are 'minmax' and 'zscale'.
+    maxplots : int, optional
+        The maximum number of double cosmic rays to plot (default is 10).
+        If negative, all detected cosmic rays will be plotted.
+        Only used if `plots` is True.
     la_sigclip : float
         The sigma clipping threshold. Employed when crmethod='lacosmic'.
     la_psffwhm_x : float
@@ -507,67 +529,45 @@ def compute_crmasks(
     la_psfsize : int
         The kernel size to use for the PSF. It must be an odd integer >= 3.
         Employed when crmethod='lacosmic'.
-    flux_factor : str, list, float or None, optional
+    sb_flux_factor : str, list, float or None, optional
         The flux scaling factor for each exposure (default is None).
         If 'auto', the flux factor is determined automatically.
         If None or 'none', it is set to 1.0 for all images.
         If a float is provided, it is used as the flux factor for all images.
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
-    crosscorr_region : str, or None
+    sb_crosscorr_region : str, or None
         The region to use for the 2D cross-correlation to determine
         the offsets between the individual images and the median image.
         If None, no offsets are computed and it is assumed that
         the images are already aligned. The format of the region
         must follow the FITS convention '[xmin:xmax,ymin:ymax]',
         where the indices start from 1 to NAXIS[12].
-    knots_splfit : int, optional
+    sb_knots_splfit : int, optional
         The number of knots for the spline fit to the boundary.
-    fixed_points_in_boundary : str, or list or None
+    sb_fixed_points_in_boundary : str, or list or None
         The fixed points to use for the boundary fitting.
-    nsimulations : int, optional
+    sb_nsimulations : int, optional
         The number of simulations of each set of input images to compute
         the detection boundary.
-    niter_boundary_extension : int, optional
+    sb_niter_boundary_extension : int, optional
         The number of iterations for the boundary extension.
-    weight_boundary_extension : float, optional
+    sb_weight_boundary_extension : float, optional
         The weight for the boundary extension.
         In each iteration, the boundary is extended by applying an
         extra weight to the points above the previous boundary. This
-        extra weight is computed as `weight_boundary_extension**iter`,
+        extra weight is computed as `sb_weight_boundary_extension**iter`,
         where `iter` is the current iteration number (starting from 1).
-    threshold: float, optional
+    sb_threshold: float, optional
         Minimum threshold for median2d - min2d to consider a pixel as a
         cosmic ray (default is None). If None, the threshold is computed
         automatically from the minimum boundary value in the numerical
         simulations.
-    minimum_max2d_rnoise : float, optional
+    sb_minimum_max2d_rnoise : float, optional
         Minimum value for max2d in readout noise units to flag a pixel
         as a double cosmic ray.
-    interactive : bool, optional
-        If True, enable interactive mode for plots.
-    dilation : int, optional
-        The dilation factor for the double cosmic ray mask.
-    dtype : data-type, optional
-        The desired data type to build the 3D stack (default is np.float32).
-    seed : int or None, optional
+    sb_seed : int or None, optional
         The random seed for reproducibility.
-    plots : bool, optional
-        If True, generate plots with detected double cosmic rays
-        (default is True).
-    verify_cr : bool, optional
-        If True, verify the cosmic ray detection by comparing the
-        detected positions with the original images (default is True).
-    semiwindow : int, optional
-        The semiwindow size to plot the double cosmic rays (default is 15).
-        Only used if `plots` is True.
-    color_scale : str, optional
-        The color scale to use for the plots (default is 'minmax').
-        Valid options are 'minmax' and 'zscale'.
-    maxplots : int, optional
-        The maximum number of double cosmic rays to plot (default is 10).
-        If negative, all detected cosmic rays will be plotted.
-        Only used if `plots` is True.
 
     Returns
     -------
@@ -667,44 +667,44 @@ def compute_crmasks(
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
 
-    # Define fixed_points_in_boundary
-    if fixed_points_in_boundary is None:
+    # Define sb_fixed_points_in_boundary
+    if sb_fixed_points_in_boundary is None:
         pass
-    elif fixed_points_in_boundary == 'none':
-        fixed_points_in_boundary = None
+    elif sb_fixed_points_in_boundary == 'none':
+        sb_fixed_points_in_boundary = None
     else:
-        fixed_points_in_boundary = list(eval(str(fixed_points_in_boundary)))
-        x_fixed_points_in_boundary = np.array([item[0] for item in fixed_points_in_boundary], dtype=float)
-        y_fixed_points_in_boundary = np.array([item[1] for item in fixed_points_in_boundary], dtype=float)
-        w_fixed_points_in_boundary = np.array([item[2] for item in fixed_points_in_boundary], dtype=float)
+        sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
+        x_sb_fixed_points_in_boundary = np.array([item[0] for item in sb_fixed_points_in_boundary], dtype=float)
+        y_sb_fixed_points_in_boundary = np.array([item[1] for item in sb_fixed_points_in_boundary], dtype=float)
+        w_sb_fixed_points_in_boundary = np.array([item[2] for item in sb_fixed_points_in_boundary], dtype=float)
 
-    # Check flux_factor
-    if flux_factor is None:
-        flux_factor = np.ones(num_images, dtype=float)
-    elif isinstance(flux_factor, str):
-        if flux_factor.lower() == 'auto':
-            pass  # flux_factor will be set later
-        elif flux_factor.lower() == 'none':
-            flux_factor = np.ones(num_images, dtype=float)
-        elif isinstance(ast.literal_eval(flux_factor), list):
-            flux_factor = ast.literal_eval(flux_factor)
-            if len(flux_factor) != num_images:
-                raise ValueError(f"flux_factor must have the same length as the number of images ({num_images}).")
-            if not all_valid_numbers(flux_factor):
-                raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
-            flux_factor = np.array(flux_factor, dtype=float)
-        elif isinstance(ast.literal_eval(flux_factor), (float, int)):
-            flux_factor = np.full(num_images, ast.literal_eval(flux_factor), dtype=float)
+    # Check sb_flux_factor
+    if sb_flux_factor is None:
+        sb_flux_factor = np.ones(num_images, dtype=float)
+    elif isinstance(sb_flux_factor, str):
+        if sb_flux_factor.lower() == 'auto':
+            pass  # sb_flux_factor will be set later
+        elif sb_flux_factor.lower() == 'none':
+            sb_flux_factor = np.ones(num_images, dtype=float)
+        elif isinstance(ast.literal_eval(sb_flux_factor), list):
+            sb_flux_factor = ast.literal_eval(sb_flux_factor)
+            if len(sb_flux_factor) != num_images:
+                raise ValueError(f"sb_flux_factor must have the same length as the number of images ({num_images}).")
+            if not all_valid_numbers(sb_flux_factor):
+                raise ValueError(f"All elements in sb_flux_factor={sb_flux_factor} must be valid numbers.")
+            sb_flux_factor = np.array(sb_flux_factor, dtype=float)
+        elif isinstance(ast.literal_eval(sb_flux_factor), (float, int)):
+            sb_flux_factor = np.full(num_images, ast.literal_eval(sb_flux_factor), dtype=float)
         else:
-            raise ValueError(f"Invalid flux_factor string: {flux_factor}. Use 'auto' or 'none'.")
-    elif isinstance(flux_factor, list):
-        if len(flux_factor) != num_images:
-            raise ValueError(f"flux_factor must have the same length as the number of images ({num_images}).")
-        if not all_valid_numbers(flux_factor):
-            raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
-        flux_factor = np.array(flux_factor, dtype=float)
+            raise ValueError(f"Invalid sb_flux_factor string: {sb_flux_factor}. Use 'auto' or 'none'.")
+    elif isinstance(sb_flux_factor, list):
+        if len(sb_flux_factor) != num_images:
+            raise ValueError(f"sb_flux_factor must have the same length as the number of images ({num_images}).")
+        if not all_valid_numbers(sb_flux_factor):
+            raise ValueError(f"All elements in sb_flux_factor={sb_flux_factor} must be valid numbers.")
+        sb_flux_factor = np.array(sb_flux_factor, dtype=float)
     else:
-        raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
+        raise ValueError(f"Invalid sb_flux_factor value: {sb_flux_factor}.")
 
     # Check that color_scale is valid
     if color_scale not in ['minmax', 'zscale']:
@@ -713,17 +713,18 @@ def compute_crmasks(
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
     if crmethod == 'simboundary':
-        _logger.info("flux_factor: %s", str(flux_factor))
-        _logger.info("crosscorr_region: %s", crosscorr_region if crosscorr_region is not None else "None")
-        _logger.info("knots for spline fit to the boundary: %d", knots_splfit)
+        _logger.info("sb_flux_factor: %s", str(sb_flux_factor))
+        _logger.info("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
+        _logger.info("knots for spline fit to the boundary: %d", sb_knots_splfit)
         _logger.info("fixed points in the boundary: %s",
-                     str(fixed_points_in_boundary) if fixed_points_in_boundary is not None else "None")
-        _logger.info("number of simulations to compute the detection boundary: %d", nsimulations)
-        _logger.info("threshold for double cosmic ray detection: %s", threshold if threshold is not None else "None")
-        _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", minimum_max2d_rnoise)
-        _logger.info("niter for boundary extension: %d", niter_boundary_extension)
-        _logger.info("random seed for reproducibility: %s", str(seed))
-        _logger.info("weight for boundary extension: %f", weight_boundary_extension)
+                     str(sb_fixed_points_in_boundary) if sb_fixed_points_in_boundary is not None else "None")
+        _logger.info("number of simulations to compute the detection boundary: %d", sb_nsimulations)
+        _logger.info("sb_threshold for double cosmic ray detection: %s",
+                     sb_threshold if sb_threshold is not None else "None")
+        _logger.info("minimum max2d in rnoise units for double cosmic ray detection: %f", sb_minimum_max2d_rnoise)
+        _logger.info("niter for boundary extension: %d", sb_niter_boundary_extension)
+        _logger.info("random seed for reproducibility: %s", str(sb_seed))
+        _logger.info("weight for boundary extension: %f", sb_weight_boundary_extension)
     elif crmethod == 'lacosmic':
         if la_sigclip is None:
             _logger.info("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
@@ -821,31 +822,31 @@ def compute_crmasks(
         _logger.info("generating diagnostic plot for MEDIANCR...")
         ylabel = r'median2d $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary=None, yplot_boundary=None, flag=flag.flatten(),
-                        threshold=None, ylabel=ylabel, interactive=interactive, _logger=_logger,
+                        sb_threshold=None, ylabel=ylabel, interactive=interactive, _logger=_logger,
                         png_filename='diagnostic_mediancr.png')
     elif crmethod == 'simboundary':
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
         # ---------------------------------------------------------------------
-        # If flux_factor is 'auto', compute the corresponding values
-        if isinstance(flux_factor, str) and flux_factor.lower() == 'auto':
-            _logger.info("flux_factor set to 'auto', computing values...")
-            flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive)
-            _logger.info("flux_factor set to %s", str(flux_factor))
+        # If sb_flux_factor is 'auto', compute the corresponding values
+        if isinstance(sb_flux_factor, str) and sb_flux_factor.lower() == 'auto':
+            _logger.info("sb_flux_factor set to 'auto', computing values...")
+            sb_flux_factor = compute_sb_flux_factor(image3d, median2d, _logger, interactive)
+            _logger.info("sb_flux_factor set to %s", str(sb_flux_factor))
 
         # Compute offsets between each single exposure and the median image
-        if crosscorr_region is None:
+        if sb_crosscorr_region is None:
             crossregion = None
         else:
-            crossregion = tea.SliceRegion2D(crosscorr_region, mode='fits')
+            crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits')
         list_yx_offsets = []
         for i in range(num_images):
             if crossregion is None:
                 list_yx_offsets.append((0.0, 0.0))
             else:
                 reference_image = median2d[crossregion.python]
-                moving_image = image3d[i][crossregion.python] * flux_factor[i]
+                moving_image = image3d[i][crossregion.python] * sb_flux_factor[i]
                 yx_offsets, _, _ = phase_cross_correlation(
                     reference_image=reference_image,
                     moving_image=moving_image,
@@ -885,23 +886,23 @@ def compute_crmasks(
                 list_yx_offsets.append(yx_offsets)
 
         # Estimate limits for the diagnostic plot
-        rng = np.random.default_rng(seed)  # Random number generator for reproducibility
+        rng = np.random.default_rng(sb_seed)  # Random number generator for reproducibility
         xdiag_min, xdiag_max, ydiag_min, ydiag_max = estimate_diagnostic_limits(
             rng=rng,
             gain=np.median(gain),  # Use median value to simplify the computation
             rnoise=np.median(rnoise),  # Use median value to simplify the computation
             maxvalue=np.max(min2d),
             num_images=num_images,
-            flux_factor=flux_factor,
-            nsimulations=10000
+            sb_flux_factor=sb_flux_factor,
+            npixels=10000
         )
         if np.min(xplot) < xdiag_min:
             xdiag_min = np.min(xplot)
         if np.max(xplot) > xdiag_max:
             xdiag_max = np.max(xplot)
-        if fixed_points_in_boundary is not None:
-            if np.max(y_fixed_points_in_boundary) > ydiag_max:
-                ydiag_max = np.max(y_fixed_points_in_boundary)
+        if sb_fixed_points_in_boundary is not None:
+            if np.max(y_sb_fixed_points_in_boundary) > ydiag_max:
+                ydiag_max = np.max(y_sb_fixed_points_in_boundary)
         ydiag_max *= 1.20  # Add 20% margin to the maximum y limit
         _logger.info("xdiag_min=%f", xdiag_min)
         _logger.info("ydiag_min=%f", ydiag_min)
@@ -922,7 +923,7 @@ def compute_crmasks(
         lam = median2d.copy()
         lam[lam < 0] = 0  # Avoid negative values
         lam3d = np.zeros((num_images, naxis2, naxis1))
-        if crosscorr_region is None:
+        if sb_crosscorr_region is None:
             for i in range(num_images):
                 lam3d[i] = lam
         else:
@@ -937,12 +938,12 @@ def compute_crmasks(
                                          yoffset=-list_yx_offsets[i][0],
                                          resampling=2)
         _logger.info("computing simulated 2D histogram...")
-        for k in range(nsimulations):
+        for k in range(sb_nsimulations):
             time_ini = datetime.now()
             image3d_simul = np.zeros((num_images, naxis2, naxis1))
             for i in range(num_images):
                 # convert from ADU to electrons to apply Poisson noise, and then back to ADU
-                image3d_simul[i] = rng.poisson(lam=lam3d[i] * flux_factor[i] * gain).astype(float) / gain
+                image3d_simul[i] = rng.poisson(lam=lam3d[i] * sb_flux_factor[i] * gain).astype(float) / gain
                 # add readout noise in ADU
                 image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
             min2d_simul = np.min(image3d_simul, axis=0)
@@ -955,9 +956,9 @@ def compute_crmasks(
             )
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
-            _logger.info("simulation %d/%d, time elapsed: %s", k + 1, nsimulations, time_end - time_ini)
+            _logger.info("simulation %d/%d, time elapsed: %s", k + 1, sb_nsimulations, time_end - time_ini)
         # Average the histogram over the number of simulations
-        hist2d_accummulated = hist2d_accummulated.astype(float) / nsimulations
+        hist2d_accummulated = hist2d_accummulated.astype(float) / sb_nsimulations
         vmin = np.min(hist2d_accummulated[hist2d_accummulated > 0])
         if vmin == 0:
             vmin = 1
@@ -999,7 +1000,7 @@ def compute_crmasks(
             fsum = np.sum(hist2d_accummulated[:, i])
             if fsum > 0:
                 pdensity = hist2d_accummulated[:, i] / fsum
-                perc = (1 - (1 / nsimulations) / fsum)
+                perc = (1 - (1 / sb_nsimulations) / fsum)
                 p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
                 xboundary.append(xcbins[i])
                 yboundary.append(ycbins[int(p + 0.5)])
@@ -1007,28 +1008,28 @@ def compute_crmasks(
         yboundary = np.array(yboundary)
         ax1.plot(xboundary, yboundary, 'r+')
         splfit = None  # avoid flake8 warning
-        for iterboundary in range(niter_boundary_extension + 1):
+        for iterboundary in range(sb_niter_boundary_extension + 1):
             wboundary = np.ones_like(xboundary, dtype=float)
             if iterboundary == 0:
                 label = 'initial fit'
             else:
-                wboundary[yboundary > splfit(xboundary)] = weight_boundary_extension**iterboundary
+                wboundary[yboundary > splfit(xboundary)] = sb_weight_boundary_extension**iterboundary
                 label = f'Iteration {iterboundary}'
-            if fixed_points_in_boundary is None:
+            if sb_fixed_points_in_boundary is None:
                 xboundary_fit = xboundary
                 yboundary_fit = yboundary
                 wboundary_fit = wboundary
             else:
                 wboundary_max = np.max(wboundary)
-                xboundary_fit = np.concatenate((xboundary, x_fixed_points_in_boundary))
-                yboundary_fit = np.concatenate((yboundary, y_fixed_points_in_boundary))
-                wboundary_fit = np.concatenate((wboundary, w_fixed_points_in_boundary * wboundary_max))
+                xboundary_fit = np.concatenate((xboundary, x_sb_fixed_points_in_boundary))
+                yboundary_fit = np.concatenate((yboundary, y_sb_fixed_points_in_boundary))
+                wboundary_fit = np.concatenate((wboundary, w_sb_fixed_points_in_boundary * wboundary_max))
             isort = np.argsort(xboundary_fit)
             splfit, knots = spline_positive_derivative(
                 x=xboundary_fit[isort],
                 y=yboundary_fit[isort],
                 w=wboundary_fit[isort],
-                n_total_knots=knots_splfit,
+                n_total_knots=sb_knots_splfit,
             )
             ydum = splfit(xcbins)
             ydum[xcbins < knots[0]] = splfit(knots[0])
@@ -1037,8 +1038,8 @@ def compute_crmasks(
             ax1.plot(knots, splfit(knots), 'o', color=f'C{iterboundary}', markersize=4)
         ax1.set_xlabel(r'min2d $-$ bias')
         ax1.set_ylabel(r'median2d $-$ min2d')
-        ax1.set_title(f'Simulated data (nsimulations = {nsimulations})')
-        if niter_boundary_extension > 1:
+        ax1.set_title(f'Simulated data (sb_nsimulations = {sb_nsimulations})')
+        if sb_niter_boundary_extension > 1:
             ax1.legend(loc=4)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
         yplot_boundary = splfit(xplot_boundary)
@@ -1061,22 +1062,22 @@ def compute_crmasks(
 
         plt.close(fig)
 
-        if threshold is None:
-            # Use the minimum value of the boundary as the threshold
-            threshold = np.min(yplot_boundary)
-            _logger.info("updated threshold for cosmic ray detection: %f", threshold)
+        if sb_threshold is None:
+            # Use the minimum value of the boundary as the sb_threshold
+            sb_threshold = np.min(yplot_boundary)
+            _logger.info("updated sb_threshold for cosmic ray detection: %f", sb_threshold)
 
         # Apply the criterium to detect double cosmic rays
         flag1 = yplot > splfit(xplot)
-        flag2 = yplot > threshold
+        flag2 = yplot > sb_threshold
         flag = np.logical_and(flag1, flag2)
-        flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise.flatten()
+        flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
         flag = np.logical_and(flag, flag3)
         _logger.info("number of pixels flagged as double cosmic rays: %d", np.sum(flag))
         _logger.info("generating diagnostic plot for MEDIANCR...")
         ylabel = r'median2d $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                        threshold, ylabel, interactive, _logger,
+                        sb_threshold, ylabel, interactive, _logger,
                         png_filename='diagnostic_mediancr.png')
         flag = flag.reshape((naxis2, naxis1))
     else:
@@ -1274,18 +1275,18 @@ def compute_crmasks(
             flag = flag.flatten()
             xplot_boundary = None
             yplot_boundary = None
-            threshold = None
+            sb_threshold = None
         elif crmethod == 'simboundary':
             xplot = min2d.flatten()
             if i == 0:
                 yplot = array.flatten() - min2d.flatten()
             else:
                 # For the individual arrays, apply the flux factor
-                yplot = array.flatten()/flux_factor[i-1] - min2d.flatten()
+                yplot = array.flatten()/sb_flux_factor[i-1] - min2d.flatten()
             flag1 = yplot > splfit(xplot)
-            flag2 = yplot > threshold
+            flag2 = yplot > sb_threshold
             flag = np.logical_and(flag1, flag2)
-            flag3 = max2d.flatten() > minimum_max2d_rnoise * rnoise.flatten()
+            flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
             flag = np.logical_and(flag, flag3)
         else:
             raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
@@ -1303,7 +1304,7 @@ def compute_crmasks(
             png_filename = f'diagnostic_crmask{i}.png'
             ylabel = f'array{i}' + r' $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                        threshold, ylabel, interactive, _logger,
+                        sb_threshold, ylabel, interactive, _logger,
                         png_filename=png_filename)
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
@@ -1334,7 +1335,7 @@ def compute_crmasks(
     filtered_args = {k: v for k, v in locals().items() if k in args and k not in ['list_arrays']}
     hdu_primary = fits.PrimaryHDU()
     hdu_primary.header['UUID'] = str(uuid.uuid4())
-    for i, fluxf in enumerate(flux_factor):
+    for i, fluxf in enumerate(sb_flux_factor):
         hdu_primary.header[f'FLUXF{i+1}'] = fluxf
     hdu_primary.header.add_history(f"CRMasks generated by {__name__}")
     hdu_primary.header.add_history(f"at {datetime.now().isoformat()}")
@@ -1355,7 +1356,7 @@ def compute_crmasks(
 
 
 def apply_crmasks(list_arrays, hdul_masks, combination=None,
-                  dtype=np.float32, apply_flux_factor=False):
+                  dtype=np.float32, apply_sb_flux_factor=False):
     """
     Correct cosmic rays applying previously computed masks.
 
@@ -1385,7 +1386,7 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
         in the input arrays.
-    apply_flux_factor : bool, optional
+    apply_sb_flux_factor : bool, optional
         If True, the flux factor is applied to the suspected pixels when
         correcting cosmic rays. Note that this rescaling is not applied
         to the input arrays as a whole, but only to the pixels
@@ -1435,15 +1436,15 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
         _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
 
     # Read the flux factor from the masks
-    _logger.info("apply_flux_factor: %s", apply_flux_factor)
-    if apply_flux_factor:
-        flux_factor = []
+    _logger.info("apply_sb_flux_factor: %s", apply_sb_flux_factor)
+    if apply_sb_flux_factor:
+        sb_flux_factor = []
         for i in range(num_images):
-            flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
-        flux_factor = np.array(flux_factor, dtype=float)
-        _logger.info("applying flux factor to suspected pixels: %s", str(flux_factor))
+            sb_flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
+        sb_flux_factor = np.array(sb_flux_factor, dtype=float)
+        _logger.info("applying flux factor to suspected pixels: %s", str(sb_flux_factor))
     else:
-        flux_factor = np.ones(num_images, dtype=float)
+        sb_flux_factor = np.ones(num_images, dtype=float)
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)
@@ -1452,7 +1453,7 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
         image3d[i] = array.astype(dtype)
     image3d_rescaled = image3d.copy()
     for i in range(num_images):
-        image3d_rescaled[i, :, :] *= flux_factor[i]
+        image3d_rescaled[i, :, :] *= sb_flux_factor[i]
 
     # Compute minimum and median along the first axis of image3d
     min2d_rescaled = np.min(image3d_rescaled, axis=0)
@@ -1499,7 +1500,7 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
         # Loop through each image and apply the corresponding mask
         total_mask = np.zeros((naxis2, naxis1), dtype=int)
         for i in range(num_images):
-            image3d_masked[i, :, :] = list_arrays[i].astype(dtype) * flux_factor[i]
+            image3d_masked[i, :, :] = list_arrays[i].astype(dtype) * sb_flux_factor[i]
             mask = hdul_masks[f'CRMASK{i+1}'].data
             _logger.info("applying mask %s: %d masked pixels", f'CRMASK{i+1}', np.sum(mask))
             total_mask += mask.astype(int)
@@ -1569,6 +1570,9 @@ def main(args=None):
                                 help="Input text file with list of 2D arrays.",
                                 type=str,
                                 required=True)
+    parser_compute.add_argument("--extname",
+                                help="Extension name in the input arrays (default: 'PRIMARY')",
+                                type=str, default='PRIMARY')
     parser_compute.add_argument("--gain",
                                 help="Detector gain (ADU)",
                                 type=float)
@@ -1578,38 +1582,21 @@ def main(args=None):
     parser_compute.add_argument("--bias",
                                 help="Detector bias (ADU, default: 0.0)",
                                 type=float, default=0.0)
-    parser_compute.add_argument("--flux_factor",
-                                help="Flux factor to be applied to each image",
-                                type=str, default='none')
-    parser_compute.add_argument("--knots_splfit",
-                                help="Total number of knots for the spline fit to the detection boundary (default: 3)",
-                                type=int, default=3)
-    parser_compute.add_argument("--nsimulations",
-                                help="Number of simulations to compute the detection boundary (default: 10)",
-                                type=int, default=10)
-    parser_compute.add_argument("--niter_boundary_extension",
-                                help="Number of iterations for the extension of the detection boundary (default: 3)",
-                                type=int, default=3)
-    parser_compute.add_argument("--weight_boundary_extension",
-                                help="Weight for the detection boundary extension (default: 10)",
-                                type=float, default=10.0)
-    parser_compute.add_argument("--threshold",
-                                help="Minimum threshold for median2d - min2d to flag a pixel (default: None)",
-                                type=float, default=None)
-    parser_compute.add_argument("--minimum_max2d_rnoise",
-                                help="Minimum value for max2d in rnoise units to flag a pixel (default: 5.0)",
-                                type=float, default=5.0)
+    parser_compute.add_argument("--crmethod",
+                                help=f"Cosmic ray detection method: {', '.join(VALID_CRMETHODS)}",
+                                type=str, choices=VALID_CRMETHODS,
+                                default='lacosmic')
     parser_compute.add_argument("--interactive",
                                 help="Interactive mode for diagnostic plot (program will stop after the plot)",
                                 action="store_true")
     parser_compute.add_argument("--dilation",
                                 help="Dilation factor for cosmic ray mask",
                                 type=int, default=1)
-    parser_compute.add_argument("--output_masks",
-                                help="Output FITS file for the cosmic ray masks",
-                                type=str, default='masks.fits')
     parser_compute.add_argument("--plots",
                                 help="Generate plots with detected double cosmic rays",
+                                action="store_true")
+    parser_compute.add_argument("--verify_cr",
+                                help="Verify each detected double cosmic ray interactively",
                                 action="store_true")
     parser_compute.add_argument("--semiwindow",
                                 help="Semiwindow size for plotting double cosmic rays",
@@ -1620,9 +1607,31 @@ def main(args=None):
     parser_compute.add_argument("--maxplots",
                                 help="Maximum number of double cosmic rays to plot (-1 for all)",
                                 type=int, default=10)
-    parser_compute.add_argument("--extname",
-                                help="Extension name in the input arrays (default: 'PRIMARY')",
-                                type=str, default='PRIMARY')
+    parser_compute.add_argument("--output_masks",
+                                help="Output FITS file for the cosmic ray masks",
+                                type=str, default='masks.fits')
+
+    parser_compute.add_argument("--sb_flux_factor",
+                                help="Flux factor to be applied to each image",
+                                type=str, default='none')
+    parser_compute.add_argument("--sb_knots_splfit",
+                                help="Total number of knots for the spline fit to the detection boundary (default: 3)",
+                                type=int, default=3)
+    parser_compute.add_argument("--sb_nsimulations",
+                                help="Number of simulations to compute the detection boundary (default: 10)",
+                                type=int, default=10)
+    parser_compute.add_argument("--sb_niter_boundary_extension",
+                                help="Number of iterations for the extension of the detection boundary (default: 3)",
+                                type=int, default=3)
+    parser_compute.add_argument("--sb_weight_boundary_extension",
+                                help="Weight for the detection boundary extension (default: 10)",
+                                type=float, default=10.0)
+    parser_compute.add_argument("--sb_threshold",
+                                help="Minimum sb_threshold for median2d - min2d to flag a pixel (default: None)",
+                                type=float, default=None)
+    parser_compute.add_argument("--sb_minimum_max2d_rnoise",
+                                help="Minimum value for max2d in rnoise units to flag a pixel (default: 5.0)",
+                                type=float, default=5.0)
 
     # Subparser for applying cosmic ray masks
     parser_apply = subparsers.add_parser(
@@ -1680,20 +1689,22 @@ def main(args=None):
             gain=args.gain,
             rnoise=args.rnoise,
             bias=args.bias,
-            flux_factor=args.flux_factor,
-            knots_splfit=args.knots_splfit,
-            nsimulations=args.nsimulations,
-            niter_boundary_extension=args.niter_boundary_extension,
-            weight_boundary_extension=args.weight_boundary_extension,
-            threshold=args.threshold,
-            minimum_max2d_rnoise=args.minimum_max2d_rnoise,
+            crmethod=args.crmethod,
             interactive=args.interactive,
             dilation=args.dilation,
             dtype=np.float32,
             plots=args.plots,
+            verify_cr=args.verify_cr,
             semiwindow=args.semiwindow,
             color_scale=args.color_scale,
-            maxplots=args.maxplots
+            maxplots=args.maxplots,
+            sb_flux_factor=args.sb_flux_factor,
+            sb_knots_splfit=args.sb_knots_splfit,
+            sb_nsimulations=args.sb_nsimulations,
+            sb_niter_boundary_extension=args.sb_niter_boundary_extension,
+            sb_weight_boundary_extension=args.sb_weight_boundary_extension,
+            sb_threshold=args.sb_threshold,
+            sb_minimum_max2d_rnoise=args.sb_minimum_max2d_rnoise
         )
 
         # Save the masks to a FITS file if requested
