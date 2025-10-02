@@ -37,6 +37,7 @@ dependencies = [
     'attrs',
     'numpy>=1.22',
     'astropy',
+    'ccdproc',
     'scipy',
     'PyYaml',
     'matplotlib',
