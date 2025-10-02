@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
-"""Median combination of arrays avoiding multiple cosmic rays in the same pixel."""
+"""Combination of arrays avoiding multiple cosmic rays in the same pixel."""
 import ast
 import inspect
 import logging
@@ -117,9 +117,9 @@ def remove_isolated_pixels(h):
     return hclean
 
 
-def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
-                           nxbins_half=50, nybins_half=50,
-                           ymin=0.495, ymax=1.505):
+def compute_flux_factor(image3d, median2d, _logger, interactive=False,
+                        nxbins_half=50, nybins_half=50,
+                        ymin=0.495, ymax=1.505):
     """Compute the flux factor for each image based on the median.
 
     Parameters
@@ -145,7 +145,7 @@ def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
 
     Returns
     -------
-    sb_flux_factor : 1D numpy array
+    flux_factor : 1D numpy array
         The flux factor for each image.
     """
     naxis3, naxis2, naxis1 = image3d.shape
@@ -171,10 +171,17 @@ def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
     ax.set_xlim(xminh, xmaxh)
     ax.set_xlabel('pixel value')
     ax.set_ylabel('Number of pixels')
+    ax.set_title('Before applying flux factor')
     ax.set_yscale('log')
     ax.legend(loc='upper right')
     plt.tight_layout()
-    plt.show()
+    png_filename = 'histogram_before_flux_factor.png'
+    _logger.info(f"saving {png_filename}.")
+    plt.savefig(png_filename, dpi=150)
+    if interactive:
+        _logger.info("Entering interactive mode (press 'q' to close plot)")
+        plt.show()
+    plt.close(fig)
 
     if naxis3 % 2 == 1:
         argsort = np.argsort(image3d, axis=0)
@@ -184,7 +191,13 @@ def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
         tea.imshow(fig, ax2, argsort[naxis3//2] + 1, vmin=1, vmax=naxis3, cmap='brg',
                    cblabel='Image number', aspect='auto')
         plt.tight_layout()
-        plt.show()
+        png_filename = 'image_number_to_median.png'
+        _logger.info(f"saving {png_filename}.")
+        plt.savefig(png_filename, dpi=150)
+        if interactive:
+            _logger.info("Entering interactive mode (press 'q' to close plot)")
+            plt.show()
+        plt.close(fig)
 
     xmin = np.min(median2d)
     xmax = np.max(median2d)
@@ -197,7 +210,7 @@ def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
     extent = [xbin_edges[0], xbin_edges[-1], ybin_edges[0], ybin_edges[-1]]
 
     cblabel = 'Number of pixels'
-    sb_flux_factor = []
+    flux_factor = []
     for idata, data in enumerate(image3d):
         ratio = np.divide(data, median2d, out=np.zeros_like(median2d, dtype=float), where=median2d != 0)
         h, edges = np.histogramdd(
@@ -250,43 +263,50 @@ def compute_sb_flux_factor(image3d, median2d, _logger, interactive=False,
             imode = 1
         ax2.axhline(ymode[imode], color=f'C{imode}', linestyle=':')
         ax2.text(xbin[-5], ymode[imode]+(ybin[-1]-ybin[0])/40, f'{ymode[imode]:.3f}', color=f'C{imode}', ha='right')
-        sb_flux_factor.append(ymode[imode])
+        flux_factor.append(ymode[imode])
         plt.tight_layout()
 
-        png_filename = f'sb_flux_factor{idata+1}.png'
+        png_filename = f'flux_factor{idata+1}.png'
         _logger.info(f"saving {png_filename}.")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close plot).")
+            _logger.info("Entering interactive mode (press 'q' to close plot)")
             plt.show()
         plt.close(fig)
 
-    if len(sb_flux_factor) != naxis3:
-        raise ValueError(f"Expected {naxis3} flux factors, but got {len(sb_flux_factor)}.")
+    if len(flux_factor) != naxis3:
+        raise ValueError(f"Expected {naxis3} flux factors, but got {len(flux_factor)}.")
 
     # round the flux factor to 6 decimal places to avoid
     # unnecessary precision when writting to the FITS header
-    sb_flux_factor = np.round(sb_flux_factor, decimals=6)
+    flux_factor = np.round(flux_factor, decimals=6)
 
     fig, ax = plt.subplots()
     for i in range(naxis3):
         xmax_ = np.max(image3d[i])
         bins = np.arange(xmin, xmax_ + hstep, hstep)
-        h, edges = np.histogram(image3d[i].flatten() / sb_flux_factor[i], bins=bins)
+        h, edges = np.histogram(image3d[i].flatten() / flux_factor[i], bins=bins)
         plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
     plot_hist_step(ax, edges0, h0, color='black', label='Median')
     ax.set_xlim(xminh, xmaxh)
     ax.set_xlabel('pixel value')
     ax.set_ylabel('Number of pixels')
+    ax.set_title('After applying flux factor')
     ax.set_yscale('log')
     ax.legend(loc='upper right')
     plt.tight_layout()
-    plt.show()
+    png_filename = 'histogram_after_flux_factor.png'
+    _logger.info(f"saving {png_filename}.")
+    plt.savefig(png_filename, dpi=150)
+    if interactive:
+        _logger.info("Entering interactive mode (press 'q' to close plot)")
+        plt.show()
+    plt.close(fig)
 
-    return sb_flux_factor
+    return flux_factor
 
 
-def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, sb_flux_factor, npixels):
+def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, npixels):
     """Estimate the limits for the diagnostic plot.
 
     Parameters
@@ -302,14 +322,10 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, sb_flux_
         subtracting the bias.
     num_images : int
         Number of different exposures.
-    sb_flux_factor : numpy.ndarray
-        Flux factor for the images.
     npixels : int
         Number of simulations to perform for each corner of the
         diagnostic plot.
     """
-    if len(sb_flux_factor) != num_images:
-        raise ValueError(f"sb_flux_factor must have the same length as num_images ({num_images}).")
 
     if maxvalue < 0:
         maxvalue = 0.0
@@ -326,7 +342,7 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, sb_flux_
         ydiag_min[i] = median1d - min1d
         # upper limits
         lam = np.array([maxvalue] * num_images)
-        data = rng.poisson(lam=lam * gain).astype(float) / gain * sb_flux_factor
+        data = rng.poisson(lam=lam * gain).astype(float) / gain
         if rnoise > 0:
             data += rng.normal(loc=0, scale=rnoise, size=num_images)
         min1d = np.min(data)
@@ -375,7 +391,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
     _logger.info(f"saving {png_filename}.")
     plt.savefig(png_filename, dpi=150)
     if interactive:
-        _logger.info("Entering interactive mode (press 'q' to close plot).")
+        _logger.info("Entering interactive mode (press 'q' to close plot)")
         plt.show()
     plt.close(fig)
 
@@ -427,10 +443,10 @@ def compute_crmasks(
         rnoise=None,
         bias=None,
         crmethod='lacosmic',
+        flux_factor=None,
         interactive=True,
         dilation=1,
         dtype=np.float32,
-        plots=True,
         verify_cr=False,
         semiwindow=15,
         color_scale='minmax',
@@ -441,7 +457,6 @@ def compute_crmasks(
         la_fsmode=None,
         la_psfmodel=None,
         la_psfsize=None,
-        sb_flux_factor=None,
         sb_crosscorr_region=None,
         sb_knots_splfit=3,
         sb_fixed_points_in_boundary=None,
@@ -485,28 +500,30 @@ def compute_crmasks(
         detection (van Dokkum 2001), as implemented in ccdproc.
         - 'simboundary': use the numerically derived boundary to
         detect cosmic rays in the median combined image.
+    flux_factor : str, list, float or None, optional
+        The flux scaling factor for each exposure (default is None).
+        If 'auto', the flux factor is determined automatically.
+        If None or 'none', it is set to 1.0 for all images.
+        If a float is provided, it is used as the flux factor for all images.
+        If a list is provided, it should contain a value
+        for each single image in `list_arrays`.
     interactive : bool, optional
         If True, enable interactive mode for plots.
     dilation : int, optional
         The dilation factor for the double cosmic ray mask.
     dtype : data-type, optional
         The desired data type to build the 3D stack (default is np.float32).
-    plots : bool, optional
-        If True, generate plots with detected double cosmic rays
-        (default is True).
     verify_cr : bool, optional
         If True, verify the cosmic ray detection by comparing the
         detected positions with the original images (default is True).
     semiwindow : int, optional
         The semiwindow size to plot the double cosmic rays (default is 15).
-        Only used if `plots` is True.
     color_scale : str, optional
         The color scale to use for the plots (default is 'minmax').
         Valid options are 'minmax' and 'zscale'.
     maxplots : int, optional
         The maximum number of double cosmic rays to plot (default is 10).
         If negative, all detected cosmic rays will be plotted.
-        Only used if `plots` is True.
     la_sigclip : float
         The sigma clipping threshold. Employed when crmethod='lacosmic'.
     la_psffwhm_x : float
@@ -529,13 +546,6 @@ def compute_crmasks(
     la_psfsize : int
         The kernel size to use for the PSF. It must be an odd integer >= 3.
         Employed when crmethod='lacosmic'.
-    sb_flux_factor : str, list, float or None, optional
-        The flux scaling factor for each exposure (default is None).
-        If 'auto', the flux factor is determined automatically.
-        If None or 'none', it is set to 1.0 for all images.
-        If a float is provided, it is used as the flux factor for all images.
-        If a list is provided, it should contain a value
-        for each single image in `list_arrays`.
     sb_crosscorr_region : str, or None
         The region to use for the 2D cross-correlation to determine
         the offsets between the individual images and the median image.
@@ -663,48 +673,64 @@ def compute_crmasks(
     else:
         raise TypeError(f"Invalid type for bias: {type(bias)}. Must be float, int, or numpy array.")
 
+    # Convert the list of arrays to a 3D numpy array
+    image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
+    for i, array in enumerate(list_arrays):
+        image3d[i] = array.astype(dtype)
+
+    # Subtract the bias from the input arrays
+    _logger.info("subtracting bias from the input arrays")
+    image3d -= bias
+
     # Check crmethod
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
 
-    # Define sb_fixed_points_in_boundary
-    if sb_fixed_points_in_boundary is None:
-        pass
-    elif sb_fixed_points_in_boundary == 'none':
-        sb_fixed_points_in_boundary = None
-    else:
-        sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
-        x_sb_fixed_points_in_boundary = np.array([item[0] for item in sb_fixed_points_in_boundary], dtype=float)
-        y_sb_fixed_points_in_boundary = np.array([item[1] for item in sb_fixed_points_in_boundary], dtype=float)
-        w_sb_fixed_points_in_boundary = np.array([item[2] for item in sb_fixed_points_in_boundary], dtype=float)
-
-    # Check sb_flux_factor
-    if sb_flux_factor is None:
-        sb_flux_factor = np.ones(num_images, dtype=float)
-    elif isinstance(sb_flux_factor, str):
-        if sb_flux_factor.lower() == 'auto':
-            pass  # sb_flux_factor will be set later
-        elif sb_flux_factor.lower() == 'none':
-            sb_flux_factor = np.ones(num_images, dtype=float)
-        elif isinstance(ast.literal_eval(sb_flux_factor), list):
-            sb_flux_factor = ast.literal_eval(sb_flux_factor)
-            if len(sb_flux_factor) != num_images:
-                raise ValueError(f"sb_flux_factor must have the same length as the number of images ({num_images}).")
-            if not all_valid_numbers(sb_flux_factor):
-                raise ValueError(f"All elements in sb_flux_factor={sb_flux_factor} must be valid numbers.")
-            sb_flux_factor = np.array(sb_flux_factor, dtype=float)
-        elif isinstance(ast.literal_eval(sb_flux_factor), (float, int)):
-            sb_flux_factor = np.full(num_images, ast.literal_eval(sb_flux_factor), dtype=float)
+    # Check flux_factor
+    if flux_factor is None:
+        flux_factor = np.ones(num_images, dtype=float)
+    elif isinstance(flux_factor, str):
+        if flux_factor.lower() == 'auto':
+            _logger.info("flux_factor set to 'auto', computing values...")
+            median2d = np.median(image3d, axis=0)
+            flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive)
+            _logger.info("flux_factor set to %s", str(flux_factor))
+        elif flux_factor.lower() == 'none':
+            flux_factor = np.ones(num_images, dtype=float)
+        elif isinstance(ast.literal_eval(flux_factor), list):
+            flux_factor = ast.literal_eval(flux_factor)
+            if len(flux_factor) != num_images:
+                raise ValueError(f"flux_factor must have the same length as the number of images ({num_images}).")
+            if not all_valid_numbers(flux_factor):
+                raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
+            flux_factor = np.array(flux_factor, dtype=float)
+        elif isinstance(ast.literal_eval(flux_factor), (float, int)):
+            flux_factor = np.full(num_images, ast.literal_eval(flux_factor), dtype=float)
         else:
-            raise ValueError(f"Invalid sb_flux_factor string: {sb_flux_factor}. Use 'auto' or 'none'.")
-    elif isinstance(sb_flux_factor, list):
-        if len(sb_flux_factor) != num_images:
-            raise ValueError(f"sb_flux_factor must have the same length as the number of images ({num_images}).")
-        if not all_valid_numbers(sb_flux_factor):
-            raise ValueError(f"All elements in sb_flux_factor={sb_flux_factor} must be valid numbers.")
-        sb_flux_factor = np.array(sb_flux_factor, dtype=float)
+            raise ValueError(f"Invalid flux_factor string: {flux_factor}. Use 'auto' or 'none'.")
+    elif isinstance(flux_factor, list):
+        if len(flux_factor) != num_images:
+            raise ValueError(f"flux_factor must have the same length as the number of images ({num_images}).")
+        if not all_valid_numbers(flux_factor):
+            raise ValueError(f"All elements in flux_factor={flux_factor} must be valid numbers.")
+        flux_factor = np.array(flux_factor, dtype=float)
     else:
-        raise ValueError(f"Invalid sb_flux_factor value: {sb_flux_factor}.")
+        raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
+    _logger.info("flux_factor: %s", str(flux_factor))
+
+    # Apply the flux factor to the input arrays
+    for i in range(num_images):
+        image3d[i] /= flux_factor[i]
+
+    # Compute minimum, maximum, median and mean along the first axis
+    min2d = np.min(image3d, axis=0)
+    max2d = np.max(image3d, axis=0)
+    median2d = np.median(image3d, axis=0)
+    mean2d = np.mean(image3d, axis=0)
+
+    # Compute points for diagnostic diagram of simboundary method
+    xplot = min2d.flatten()
+    yplot = median2d.flatten() - min2d.flatten()
 
     # Check that color_scale is valid
     if color_scale not in ['minmax', 'zscale']:
@@ -713,7 +739,6 @@ def compute_crmasks(
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
     if crmethod == 'simboundary':
-        _logger.info("sb_flux_factor: %s", str(sb_flux_factor))
         _logger.info("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
         _logger.info("knots for spline fit to the boundary: %d", sb_knots_splfit)
         _logger.info("fixed points in the boundary: %s",
@@ -755,29 +780,9 @@ def compute_crmasks(
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
     _logger.info("verify cosmic ray detection: %s", verify_cr)
-    if plots or verify_cr:
-        _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
-        _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
-        _logger.info("color scale for plots: %s", color_scale)
-
-    # Convert the list of arrays to a 3D numpy array
-    image3d = np.zeros((num_images, naxis2, naxis1), dtype=dtype)
-    for i, array in enumerate(list_arrays):
-        image3d[i] = array.astype(dtype)
-
-    # Subtract the bias from the input arrays
-    _logger.info("subtracting bias from the input arrays")
-    image3d -= bias
-
-    # Compute minimum, maximum, median, mean and variance along the first axis
-    min2d = np.min(image3d, axis=0)
-    max2d = np.max(image3d, axis=0)
-    median2d = np.median(image3d, axis=0)
-    mean2d = np.mean(image3d, axis=0)
-
-    # Compute points for diagnostic diagram of simboundary method
-    xplot = min2d.flatten()
-    yplot = median2d.flatten() - min2d.flatten()
+    _logger.info("semiwindow size for plotting double cosmic rays: %d", semiwindow)
+    _logger.info("maximum number of double cosmic rays to plot: %d", maxplots)
+    _logger.info("color scale for plots: %s", color_scale)
 
     if crmethod == 'lacosmic':
         # ---------------------------------------------------------------------
@@ -829,11 +834,16 @@ def compute_crmasks(
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
         # ---------------------------------------------------------------------
-        # If sb_flux_factor is 'auto', compute the corresponding values
-        if isinstance(sb_flux_factor, str) and sb_flux_factor.lower() == 'auto':
-            _logger.info("sb_flux_factor set to 'auto', computing values...")
-            sb_flux_factor = compute_sb_flux_factor(image3d, median2d, _logger, interactive)
-            _logger.info("sb_flux_factor set to %s", str(sb_flux_factor))
+        # Define sb_fixed_points_in_boundary
+        if sb_fixed_points_in_boundary is None:
+            pass
+        elif sb_fixed_points_in_boundary == 'none':
+            sb_fixed_points_in_boundary = None
+        else:
+            sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
+            x_sb_fixed_points_in_boundary = np.array([item[0] for item in sb_fixed_points_in_boundary], dtype=float)
+            y_sb_fixed_points_in_boundary = np.array([item[1] for item in sb_fixed_points_in_boundary], dtype=float)
+            w_sb_fixed_points_in_boundary = np.array([item[2] for item in sb_fixed_points_in_boundary], dtype=float)
 
         # Compute offsets between each single exposure and the median image
         if sb_crosscorr_region is None:
@@ -846,7 +856,7 @@ def compute_crmasks(
                 list_yx_offsets.append((0.0, 0.0))
             else:
                 reference_image = median2d[crossregion.python]
-                moving_image = image3d[i][crossregion.python] * sb_flux_factor[i]
+                moving_image = image3d[i][crossregion.python]
                 yx_offsets, _, _ = phase_cross_correlation(
                     reference_image=reference_image,
                     moving_image=moving_image,
@@ -881,8 +891,9 @@ def compute_crmasks(
                 _logger.info(f"saving {png_filename}.")
                 plt.savefig(png_filename, dpi=150)
                 if interactive:
-                    _logger.info("Entering interactive mode (press 'q' to close plot).")
+                    _logger.info("Entering interactive mode (press 'q' to close plot)")
                     plt.show()
+                plt.close(fig)
                 list_yx_offsets.append(yx_offsets)
 
         # Estimate limits for the diagnostic plot
@@ -893,7 +904,6 @@ def compute_crmasks(
             rnoise=np.median(rnoise),  # Use median value to simplify the computation
             maxvalue=np.max(min2d),
             num_images=num_images,
-            sb_flux_factor=sb_flux_factor,
             npixels=10000
         )
         if np.min(xplot) < xdiag_min:
@@ -943,7 +953,7 @@ def compute_crmasks(
             image3d_simul = np.zeros((num_images, naxis2, naxis1))
             for i in range(num_images):
                 # convert from ADU to electrons to apply Poisson noise, and then back to ADU
-                image3d_simul[i] = rng.poisson(lam=lam3d[i] * sb_flux_factor[i] * gain).astype(float) / gain
+                image3d_simul[i] = rng.poisson(lam=lam3d[i] * gain).astype(float) / gain
                 # add readout noise in ADU
                 image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
             min2d_simul = np.min(image3d_simul, axis=0)
@@ -1057,9 +1067,8 @@ def compute_crmasks(
         _logger.info(f"saving {png_filename}.")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close plot).")
+            _logger.info("Entering interactive mode (press 'q' to close plot)")
             plt.show()
-
         plt.close(fig)
 
         if sb_threshold is None:
@@ -1112,124 +1121,122 @@ def compute_crmasks(
         flag_integer_dilated[flag] = 2
         # Compute mask
         mask_mediancr = flag_integer_dilated > 0
-        # Plot the cosmic rays if requested (or if verify_cr is True)
-        if plots or verify_cr:
-            # Fix the median2d array by replacing the flagged pixels with the minimum value
-            # of the corresponding pixel in the input arrays
-            median2d_corrected = median2d.copy()
-            median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
-            # Label the connected pixels as individual cosmic rays
-            labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
-            _logger.info("number of double cosmic rays (connected pixels) detected: %d", number_cr)
-            # Sort the cosmic rays x coordinate
-            _logger.info("sorting cosmic rays by x coordinate...")
-            xsort_cr = np.zeros(number_cr, dtype=float)
-            for i in range(1, number_cr + 1):
-                ijloc = np.argwhere(labels_cr == i)
-                xsort_cr[i - 1] = np.mean(ijloc[:, 1])
-            isort_cr = np.argsort(xsort_cr)
-            num_plot_max = num_images
-            # Determine the number of rows and columns for the plot,
-            # considering that we want to plot also 3 additional images:
-            # the median2d, the mask and the median2d_corrected
-            if num_images == 3:
-                nrows, ncols = 2, 3
-                figsize = (10, 6)
-            elif num_images in [4, 5]:
-                nrows, ncols = 2, 4
-                figsize = (13, 6)
-            elif num_images == 6:
-                nrows, ncols = 3, 3
-                figsize = (13, 3)
-            elif num_images in [7, 8, 9]:
-                nrows, ncols = 3, 4
-                figsize = (13, 9)
+        # Fix the median2d array by replacing the flagged pixels with the minimum value
+        # of the corresponding pixel in the input arrays
+        median2d_corrected = median2d.copy()
+        median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
+        # Label the connected pixels as individual cosmic rays
+        labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
+        _logger.info("number of double cosmic rays (connected pixels) detected: %d", number_cr)
+        # Sort the cosmic rays x coordinate
+        _logger.info("sorting cosmic rays by x coordinate...")
+        xsort_cr = np.zeros(number_cr, dtype=float)
+        for i in range(1, number_cr + 1):
+            ijloc = np.argwhere(labels_cr == i)
+            xsort_cr[i - 1] = np.mean(ijloc[:, 1])
+        isort_cr = np.argsort(xsort_cr)
+        num_plot_max = num_images
+        # Determine the number of rows and columns for the plot,
+        # considering that we want to plot also 3 additional images:
+        # the median2d, the mask and the median2d_corrected
+        if num_images == 3:
+            nrows, ncols = 2, 3
+            figsize = (10, 6)
+        elif num_images in [4, 5]:
+            nrows, ncols = 2, 4
+            figsize = (13, 6)
+        elif num_images == 6:
+            nrows, ncols = 3, 3
+            figsize = (13, 3)
+        elif num_images in [7, 8, 9]:
+            nrows, ncols = 3, 4
+            figsize = (13, 9)
+        else:
+            _logger.warning("only the first 9 images will be plotted")
+            nrows, ncols = 3, 4
+            figsize = (13, 9)
+            num_plot_max = 9
+        pdf = PdfPages('mediancr_identified_cr.pdf')
+
+        if maxplots < 0 or verify_cr:
+            maxplots = number_cr
+        _logger.info(f"generating {maxplots} plots for multiple cosmic rays")
+        for idum in range(min(number_cr, maxplots)):
+            i = isort_cr[idum]
+            ijloc = np.argwhere(labels_cr == i + 1)
+            ic = int(np.mean(ijloc[:, 0]) + 0.5)
+            jc = int(np.mean(ijloc[:, 1]) + 0.5)
+            i1 = ic - semiwindow
+            if i1 < 0:
+                i1 = 0
+            i2 = ic + semiwindow
+            if i2 >= naxis2:
+                i2 = naxis2 - 1
+            j1 = jc - semiwindow
+            if j1 < 0:
+                j1 = 0
+            j2 = jc + semiwindow
+            if j2 >= naxis1:
+                j2 = naxis1 - 1
+            fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+            axarr = axarr.flatten()
+            # Important: use interpolation=None instead of interpolation='None' to avoid
+            # having blurred images when opening the PDF file with macos Preview
+            cmap = 'viridis'
+            cblabel = 'Number of counts'
+            if color_scale == 'zscale':
+                vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
             else:
-                _logger.warning("only the first 9 images will be plotted")
-                nrows, ncols = 3, 4
-                figsize = (13, 9)
-                num_plot_max = 9
-            pdf = PdfPages('mediancr_identified_cr.pdf')
-
-            if maxplots < 0 or verify_cr:
-                maxplots = number_cr
-            _logger.info(f"generating {maxplots} plots for multiple cosmic rays")
-            for idum in range(min(number_cr, maxplots)):
-                i = isort_cr[idum]
-                ijloc = np.argwhere(labels_cr == i + 1)
-                ic = int(np.mean(ijloc[:, 0]) + 0.5)
-                jc = int(np.mean(ijloc[:, 1]) + 0.5)
-                i1 = ic - semiwindow
-                if i1 < 0:
-                    i1 = 0
-                i2 = ic + semiwindow
-                if i2 >= naxis2:
-                    i2 = naxis2 - 1
-                j1 = jc - semiwindow
-                if j1 < 0:
-                    j1 = 0
-                j2 = jc + semiwindow
-                if j2 >= naxis1:
-                    j2 = naxis1 - 1
-                fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
-                axarr = axarr.flatten()
-                # Important: use interpolation=None instead of interpolation='None' to avoid
-                # having blurred images when opening the PDF file with macos Preview
+                vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+            for k in range(num_plot_max):
+                ax = axarr[k]
+                title = title = f'image#{k+1}/{num_images}'
+                tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
+                           extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
+                           title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
+            for k in range(3):
+                ax = axarr[k + num_plot_max]
                 cmap = 'viridis'
-                cblabel = 'Number of counts'
-                if color_scale == 'zscale':
-                    vmin, vmax = tea.zscale(median2d_corrected[i1:(i2+1), j1:(j2+1)])
+                if k == 0:
+                    image2d = median2d
+                    title = 'median'
+                    vmin_, vmax_ = vmin, vmax
+                elif k == 1:
+                    image2d = flag_integer_dilated
+                    title = 'flag_integer_dilated'
+                    vmin_, vmax_ = 0, 2
+                    cmap = 'plasma'
+                    cblabel = 'flag'
+                elif k == 2:
+                    image2d = median2d_corrected
+                    title = 'median corrected'
+                    vmin_, vmax_ = vmin, vmax
                 else:
-                    vmin = np.min(median2d_corrected[i1:(i2+1), j1:(j2+1)])
-                    vmax = np.max(median2d_corrected[i1:(i2+1), j1:(j2+1)])
-                for k in range(num_plot_max):
-                    ax = axarr[k]
-                    title = title = f'image#{k+1}/{num_images}'
-                    tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
-                               extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
-                               title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
-                for k in range(3):
-                    ax = axarr[k + num_plot_max]
-                    cmap = 'viridis'
-                    if k == 0:
-                        image2d = median2d
-                        title = 'median'
-                        vmin_, vmax_ = vmin, vmax
-                    elif k == 1:
-                        image2d = flag_integer_dilated
-                        title = 'flag_integer_dilated'
-                        vmin_, vmax_ = 0, 2
-                        cmap = 'plasma'
-                        cblabel = 'flag'
-                    elif k == 2:
-                        image2d = median2d_corrected
-                        title = 'median corrected'
-                        vmin_, vmax_ = vmin, vmax
-                    else:
-                        raise ValueError(f'Unexpected {k=}')
-                    tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin_, vmax=vmax_,
-                               extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
-                               title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
-                nplot_missing = nrows * ncols - num_plot_max - 3
-                if nplot_missing > 0:
-                    for k in range(nplot_missing):
-                        ax = axarr[-k-1]
-                        ax.axis('off')
-                fig.suptitle(f'CR#{idum+1}/{number_cr}')
-                plt.tight_layout()
-                plt.show(block=False)
-                if verify_cr:
-                    accept_cr = input(f"Accept this cosmic ray detection #{idum+1} ([y]/n)? ")
-                    if accept_cr.lower() == 'n':
-                        _logger.info("removing cosmic ray detection #%d from the mask.\n", idum + 1)
-                        mask_mediancr[labels_cr == i + 1] = False
-                    else:
-                        _logger.info("keeping cosmic ray detection #%d in the mask.", idum + 1)
-                pdf.savefig(fig, bbox_inches='tight')
-                plt.close(fig)
+                    raise ValueError(f'Unexpected {k=}')
+                tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin_, vmax=vmax_,
+                           extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
+                           title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
+            nplot_missing = nrows * ncols - num_plot_max - 3
+            if nplot_missing > 0:
+                for k in range(nplot_missing):
+                    ax = axarr[-k-1]
+                    ax.axis('off')
+            fig.suptitle(f'CR#{idum+1}/{number_cr}')
+            plt.tight_layout()
+            plt.show(block=False)
+            if verify_cr:
+                accept_cr = input(f"Accept this cosmic ray detection #{idum+1} ([y]/n)? ")
+                if accept_cr.lower() == 'n':
+                    _logger.info("removing cosmic ray detection #%d from the mask.\n", idum + 1)
+                    mask_mediancr[labels_cr == i + 1] = False
+                else:
+                    _logger.info("keeping cosmic ray detection #%d in the mask.", idum + 1)
+            pdf.savefig(fig, bbox_inches='tight')
+            plt.close(fig)
 
-            pdf.close()
-            _logger.info("plot generation complete.")
+        pdf.close()
+        _logger.info("plot generation complete.")
 
     # Generate list of HDUs with masks
     hdu_mediancr = fits.ImageHDU(mask_mediancr.astype(np.uint8), name='MEDIANCR')
@@ -1278,11 +1285,7 @@ def compute_crmasks(
             sb_threshold = None
         elif crmethod == 'simboundary':
             xplot = min2d.flatten()
-            if i == 0:
-                yplot = array.flatten() - min2d.flatten()
-            else:
-                # For the individual arrays, apply the flux factor
-                yplot = array.flatten()/sb_flux_factor[i-1] - min2d.flatten()
+            yplot = array.flatten() - min2d.flatten()
             flag1 = yplot > splfit(xplot)
             flag2 = yplot > sb_threshold
             flag = np.logical_and(flag1, flag2)
@@ -1335,7 +1338,7 @@ def compute_crmasks(
     filtered_args = {k: v for k, v in locals().items() if k in args and k not in ['list_arrays']}
     hdu_primary = fits.PrimaryHDU()
     hdu_primary.header['UUID'] = str(uuid.uuid4())
-    for i, fluxf in enumerate(sb_flux_factor):
+    for i, fluxf in enumerate(flux_factor):
         hdu_primary.header[f'FLUXF{i+1}'] = fluxf
     hdu_primary.header.add_history(f"CRMasks generated by {__name__}")
     hdu_primary.header.add_history(f"at {datetime.now().isoformat()}")
@@ -1355,14 +1358,14 @@ def compute_crmasks(
     return hdul_masks
 
 
-def apply_crmasks(list_arrays, hdul_masks, combination=None,
-                  dtype=np.float32, apply_sb_flux_factor=False):
+def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
+                  dtype=np.float32, apply_flux_factor=True, bias=None):
     """
     Correct cosmic rays applying previously computed masks.
 
-    The pixels composing each cosmic ray can be surrounded by a dilation factor,
-    which expands the mask around the detected cosmic ray pixels. Each masked pixel
-    is replaced by the minimum value of the corresponding pixel in the input arrays.
+    The input arrays are bias subtracted, and optionally re-scaled by
+    a flux factor read from the header of `hdul_masks`. Then, they are
+    combined using the specified combination method.
 
     Parameters
     ----------
@@ -1386,11 +1389,15 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
         in the input arrays.
-    apply_sb_flux_factor : bool, optional
-        If True, the flux factor is applied to the suspected pixels when
-        correcting cosmic rays. Note that this rescaling is not applied
-        to the input arrays as a whole, but only to the pixels
-        suspected to be cosmic rays. Default is False.
+    apply_flux_factor : bool, optional
+        If True, the flux factor is applied to the input arrays before
+        combining them. The flux factor is read from the header of the
+        `hdul_masks` (keywords 'FLUXF1', 'FLUXF2', etc.). Default is True.
+    bias : float or 2D array, optional
+        The bias level to be subtracted from the input arrays. If a float is
+        provided, it is assumed to be constant for all pixels. If a 2D array
+        is provided, it must have the same shape as the input arrays. If None,
+        the bias is assumed to be zero for all pixels. Default is None.
     dtype : data-type, optional
         The desired data type for the output arrays (default is np.float32).
 
@@ -1435,28 +1442,40 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
     for i, array in enumerate(list_arrays):
         _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
 
-    # Read the flux factor from the masks
-    _logger.info("apply_sb_flux_factor: %s", apply_sb_flux_factor)
-    if apply_sb_flux_factor:
-        sb_flux_factor = []
-        for i in range(num_images):
-            sb_flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
-        sb_flux_factor = np.array(sb_flux_factor, dtype=float)
-        _logger.info("applying flux factor to suspected pixels: %s", str(sb_flux_factor))
+    # Define the bias
+    if bias is None:
+        bias = np.zeros((naxis2, naxis1), dtype=float)
+        _logger.info("bias not defined, assuming bias=0.0 for all pixels.")
+    elif isinstance(bias, (float, int)):
+        bias = np.full((naxis2, naxis1), bias, dtype=float)
+        _logger.info("bias defined as a constant value: %f", bias[0, 0])
+    elif isinstance(bias, np.ndarray):
+        if bias.shape != (naxis2, naxis1):
+            raise ValueError(f"bias must have the same shape as the input arrays ({naxis2=}, {naxis1=}).")
+        _logger.info("bias defined as a 2D array with shape: %s", bias.shape)
     else:
-        sb_flux_factor = np.ones(num_images, dtype=float)
+        raise TypeError(f"Invalid type for bias: {type(bias)}. Must be float, int, or numpy array.")
+
+    # Read the flux factor from the masks
+    _logger.info("apply_flux_factor: %s", apply_flux_factor)
+    if apply_flux_factor:
+        flux_factor = []
+        for i in range(num_images):
+            flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
+        flux_factor = np.array(flux_factor, dtype=float)
+        _logger.info("flux factor values: %s", str(flux_factor))
+    else:
+        flux_factor = np.ones(num_images, dtype=float)
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)
     image3d = np.zeros(shape3d, dtype=dtype)
+    _logger.info("applying bias and flux factors to input arrays...")
     for i, array in enumerate(list_arrays):
-        image3d[i] = array.astype(dtype)
-    image3d_rescaled = image3d.copy()
-    for i in range(num_images):
-        image3d_rescaled[i, :, :] *= sb_flux_factor[i]
+        image3d[i] = (array.astype(dtype) - bias) / flux_factor[i]
 
     # Compute minimum and median along the first axis of image3d
-    min2d_rescaled = np.min(image3d_rescaled, axis=0)
+    min2d_rescaled = np.min(image3d, axis=0)
     median2d = np.median(image3d, axis=0)
 
     # Apply the requested combination method
@@ -1500,7 +1519,7 @@ def apply_crmasks(list_arrays, hdul_masks, combination=None,
         # Loop through each image and apply the corresponding mask
         total_mask = np.zeros((naxis2, naxis1), dtype=int)
         for i in range(num_images):
-            image3d_masked[i, :, :] = list_arrays[i].astype(dtype) * sb_flux_factor[i]
+            image3d_masked[i, :, :] = list_arrays[i].astype(dtype) * flux_factor[i]
             mask = hdul_masks[f'CRMASK{i+1}'].data
             _logger.info("applying mask %s: %d masked pixels", f'CRMASK{i+1}', np.sum(mask))
             total_mask += mask.astype(int)
@@ -1592,9 +1611,6 @@ def main(args=None):
     parser_compute.add_argument("--dilation",
                                 help="Dilation factor for cosmic ray mask",
                                 type=int, default=1)
-    parser_compute.add_argument("--plots",
-                                help="Generate plots with detected double cosmic rays",
-                                action="store_true")
     parser_compute.add_argument("--verify_cr",
                                 help="Verify each detected double cosmic ray interactively",
                                 action="store_true")
@@ -1611,7 +1627,7 @@ def main(args=None):
                                 help="Output FITS file for the cosmic ray masks",
                                 type=str, default='masks.fits')
 
-    parser_compute.add_argument("--sb_flux_factor",
+    parser_compute.add_argument("--flux_factor",
                                 help="Flux factor to be applied to each image",
                                 type=str, default='none')
     parser_compute.add_argument("--sb_knots_splfit",
@@ -1690,15 +1706,14 @@ def main(args=None):
             rnoise=args.rnoise,
             bias=args.bias,
             crmethod=args.crmethod,
+            flux_factor=args.flux_factor,
             interactive=args.interactive,
             dilation=args.dilation,
             dtype=np.float32,
-            plots=args.plots,
             verify_cr=args.verify_cr,
             semiwindow=args.semiwindow,
             color_scale=args.color_scale,
             maxplots=args.maxplots,
-            sb_flux_factor=args.sb_flux_factor,
             sb_knots_splfit=args.sb_knots_splfit,
             sb_nsimulations=args.sb_nsimulations,
             sb_niter_boundary_extension=args.sb_niter_boundary_extension,
@@ -1719,12 +1734,13 @@ def main(args=None):
             # Compute the combined array, variance, and map
             combined, variance, maparray = apply_crmasks(
                 list_arrays=list_arrays,
+                bias=args.bias,
                 hdul_masks=hdul_masks,
                 combination=args.combination,
                 dtype=np.float32
             )
             # Save the combined array, variance, and map to a FITS file
-            logger.info("Saving combined array, variance, and map to %s", args.output_combined)
+            logger.info("Saving combined (bias subtracted) array, variance, and map to %s", args.output_combined)
             hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
             add_script_info_to_fits_history(hdu_combined.header, args)
             hdu_combined.header.add_history('Contents of --inputlist:')
@@ -1735,7 +1751,7 @@ def main(args=None):
             hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
             hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
             hdul.writeto(args.output_combined, overwrite=True)
-            logger.info("Combined array, variance, and map saved")
+            logger.info("Combined (bias subtracted) array, variance, and map saved")
     else:
         raise ValueError(f"Unknown command: {args.command}.")
 
