@@ -437,6 +437,61 @@ def gausskernel2d_elliptical(fwhm_x, fwhm_y, kernsize):
     return kernel.astype(np.float32)
 
 
+def update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger):
+    """Update the flag array with user-defined masks.
+
+    Parameters
+    ----------
+    flag : 2D numpy array
+        The input flag array to be updated.
+    pixels_to_be_masked : list of (x, y) tuples, or None
+        List of pixel coordinates to be included in the masks
+        (FITS criterium; first pixel is (1, 1)).
+    pixels_to_be_excluded : list of (x, y) tuples, or None
+        List of pixel coordinates to be excluded from the masks
+        (FITS criterium; first pixel is (1, 1)).
+    _logger : logging.Logger
+        The logger to use for logging.
+
+    Returns
+    -------
+    None
+    """
+    # Include pixels to be forced to be masked
+    if pixels_to_be_masked is not None:
+        ix_pixels_to_be_masked = np.array([p[0] for p in pixels_to_be_masked], dtype=int) - 1
+        iy_pixels_to_be_masked = np.array([p[1] for p in pixels_to_be_masked], dtype=int) - 1
+        if np.any(ix_pixels_to_be_masked < 0) or np.any(ix_pixels_to_be_masked >= flag.shape[1]):
+            raise ValueError("Some x coordinates in pixels_to_be_masked are out of bounds.")
+        if np.any(iy_pixels_to_be_masked < 0) or np.any(iy_pixels_to_be_masked >= flag.shape[0]):
+            raise ValueError("Some y coordinates in pixels_to_be_masked are out of bounds.")
+        neff = 0
+        for iy, ix in zip(iy_pixels_to_be_masked, ix_pixels_to_be_masked):
+            if not flag[iy, ix]:
+                flag[iy, ix] = True
+                neff += 1
+            else:
+                _logger.warning("Pixel (%d, %d) to be masked was already masked.", ix + 1, iy + 1)
+        _logger.info("Added %d/%d user-defined pixels to be masked.", neff, len(pixels_to_be_masked))
+
+    # Exclude pixels to be excluded from the mask
+    if pixels_to_be_excluded is not None:
+        ix_pixels_to_be_excluded = np.array([p[0] for p in pixels_to_be_excluded], dtype=int) - 1
+        iy_pixels_to_be_excluded = np.array([p[1] for p in pixels_to_be_excluded], dtype=int) - 1
+        if np.any(ix_pixels_to_be_excluded < 0) or np.any(ix_pixels_to_be_excluded >= flag.shape[1]):
+            raise ValueError("Some x coordinates in pixels_to_be_excluded are out of bounds.")
+        if np.any(iy_pixels_to_be_excluded < 0) or np.any(iy_pixels_to_be_excluded >= flag.shape[0]):
+            raise ValueError("Some y coordinates in pixels_to_be_excluded are out of bounds.")
+        neff = 0
+        for iy, ix in zip(iy_pixels_to_be_excluded, ix_pixels_to_be_excluded):
+            if flag[iy, ix]:
+                flag[iy, ix] = False
+                neff += 1
+            else:
+                _logger.warning("Pixel (%d, %d) to be unmasked was not masked.", ix + 1, iy + 1)
+        _logger.info("Removed %d/%d user-defined pixels from the mask.", neff, len(pixels_to_be_excluded))
+
+
 def compute_crmasks(
         list_arrays,
         gain=None,
@@ -446,6 +501,8 @@ def compute_crmasks(
         flux_factor=None,
         interactive=True,
         dilation=1,
+        pixels_to_be_masked=None,
+        pixels_to_be_excluded=None,
         dtype=np.float32,
         verify_cr=False,
         semiwindow=15,
@@ -511,6 +568,12 @@ def compute_crmasks(
         If True, enable interactive mode for plots.
     dilation : int, optional
         The dilation factor for the coincident cosmic ray mask.
+    pixels_to_be_masked : str, list of (x, y) tuples, or None, optional
+        List of pixel coordinates to be included in the masks
+        (FITS criterium; first pixel is (1, 1)).
+    pixels_to_be_excluded : str, list of (x, y) tuples, or None, optional
+        List of pixel coordinates to be excluded from the masks
+        (FITS criterium; first pixel is (1, 1)).
     dtype : data-type, optional
         The desired data type to build the 3D stack (default is np.float32).
     verify_cr : bool, optional
@@ -736,6 +799,26 @@ def compute_crmasks(
     if color_scale not in ['minmax', 'zscale']:
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
+    # Define the pixels to be forced to be masked
+    if pixels_to_be_masked is None:
+        pass
+    elif pixels_to_be_masked == 'none':
+        pixels_to_be_masked = None
+    else:
+        pixels_to_be_masked = list(eval(str(pixels_to_be_masked)))
+    _logger.info("pixels to be initially forced to be masked: %s",
+                 "None" if pixels_to_be_masked is None else str(pixels_to_be_masked))
+
+    # Define the pixels to be excluded from the masks
+    if pixels_to_be_excluded is None:
+        pass
+    elif pixels_to_be_excluded == 'none':
+        pixels_to_be_excluded = None
+    else:
+        pixels_to_be_excluded = list(eval(str(pixels_to_be_excluded)))
+    _logger.info("pixels to be initially excluded from the masks: %s",
+                 "None" if pixels_to_be_excluded is None else str(pixels_to_be_excluded))
+
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
     if crmethod == 'simboundary':
@@ -824,6 +907,7 @@ def compute_crmasks(
         else:
             raise ValueError("la_fsmode must be 'median' or 'convolve'.")
         _logger.info("number of pixels flagged as cosmic rays by lacosmic: %d", np.sum(flag))
+        update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger)
         _logger.info("generating diagnostic plot for MEDIANCR...")
         ylabel = r'median2d $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary=None, yplot_boundary=None, flag=flag.flatten(),
@@ -1286,6 +1370,9 @@ def compute_crmasks(
                     )
             else:
                 raise ValueError("la_fsmode must be 'median' or 'convolve'.")
+            # For the mean2d array, update the flag with the user masks
+            if i == 0:
+                update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger)
             flag = flag.flatten()
             xplot_boundary = None
             yplot_boundary = None
@@ -1300,8 +1387,14 @@ def compute_crmasks(
             flag = np.logical_and(flag, flag3)
         else:
             raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
-        # for the individual arrays, force the flag to be True if the pixel
-        # was flagged as a coincident cosmic ray when using the mean2d array
+        # For the mean2d mask, force the flag to be True if the pixel
+        # was flagged as a coincident cosmic ray when using the median2d array
+        # (this is to ensure that all pixels flagged in MEDIANCR are also
+        # flagged in MEANCRT)
+        if i == 0:
+            flag = np.logical_or(flag, list_hdu_masks[0].data.astype(bool).flatten())
+        # For the individual array masks, force the flag to be True if the pixel
+        # is flagged both in the individual exposure and in the mean2d array
         if i > 0:
             flag = np.logical_and(flag, list_hdu_masks[1].data.astype(bool).flatten())
         _logger.info("number of pixels flagged as cosmic rays: %d", np.sum(flag))
@@ -1361,21 +1454,21 @@ def compute_crmasks(
         for idum in range(number_cr):
             i = isort_cr[idum]
             ijloc = np.argwhere(labels_cr == i + 1)
-            _logger.info("reg. #%d: no. of pixels = %d, (x, y) indices = (%.1f, %.1f)",
-                         idum + 1, len(ijloc), np.mean(ijloc[:, 1]), np.mean(ijloc[:, 0]))
+            _logger.info("reg. #%d: no. of pixels = %d, (x, y) FITS-pixel = (%.1f, %.1f)",
+                         idum + 1, len(ijloc), np.mean(ijloc[:, 1]) + 1, np.mean(ijloc[:, 0]) + 1)
 
     # Generate output HDUList with masks
     args = inspect.signature(compute_crmasks).parameters
     if crmethod == 'lacosmic':
-        excluded_arg_prefix = 'sb_'
+        prefix_of_excluded_args = 'sb_'
     elif crmethod == 'simboundary':
-        excluded_arg_prefix = 'la_'
+        prefix_of_excluded_args = 'la_'
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
-    filtered_args = {k: v for k, v in locals().items() if 
-                     k in args and 
-                     k not in ['list_arrays'] and 
-                     k[:3] != excluded_arg_prefix}
+    filtered_args = {k: v for k, v in locals().items() if
+                     k in args and
+                     k not in ['list_arrays'] and
+                     k[:3] != prefix_of_excluded_args}
     hdu_primary = fits.PrimaryHDU()
     hdu_primary.header['UUID'] = str(uuid.uuid4())
     for i, fluxf in enumerate(flux_factor):
@@ -1580,7 +1673,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         raise ValueError(f"Invalid combination method: {combination}. "
                          f"Valid options are {VALID_COMBINATIONS}.")
 
-    return combined2d, variance2d, map2d
+    return combined2d.astype(dtype), variance2d.astype(dtype), map2d
 
 
 def main(args=None):
