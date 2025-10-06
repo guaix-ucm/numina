@@ -10,6 +10,7 @@
 import ast
 import inspect
 import logging
+import os
 import sys
 import uuid
 
@@ -26,6 +27,7 @@ import numpy as np
 import numpy.ma as ma
 from scipy import ndimage
 from skimage.registration import phase_cross_correlation
+import yaml
 
 from numina.array.display.plot_hist_step import plot_hist_step
 from numina.array.distortion import shift_image2d
@@ -33,7 +35,7 @@ from numina.array.numsplines import spline_positive_derivative
 from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits_history
 import teareduce as tea
 
-VALID_CRMETHODS = ['lacosmic', 'simboundary']
+VALID_CRMETHODS = ['simboundary', 'lacosmic', 'sb_lacosmic']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
 
 
@@ -356,42 +358,214 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, npixels)
     return xdiag_min, xdiag_max, ydiag_min, ydiag_max
 
 
-def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                    sb_threshold, ylabel, interactive, _logger, png_filename):
+def segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram):
+    """Segregate the cosmic ray flags into three categories:
+    - detected only by the lacosmic method
+    - detected only by the simboundary method
+    - detected by both methods
+
+    Parameters
+    ----------
+    naxis1 : int
+        The size of the first dimension of the input arrays.
+    naxis2 : int
+        The size of the second dimension of the input arrays.
+    flag_la : 2D numpy array
+        The cosmic ray flag array from the lacosmic method.
+    flag_sb : 2D numpy array
+        The cosmic ray flag array from the simboundary method.
+
+    Returns
+    -------
+    (num_only_la, xcr_only_la, ycr_only_la) : tuple
+        Number of pixels detected only by the lacosmic method,
+        and their x and y coordinates (FITS convention; first pixel is (1, 1)).
+        If no pixels are detected, xcr_only_la and ycr_only_la are None.
+    (num_only_sb, xcr_only_sb, ycr_only_sb) : tuple
+        Number of pixels detected only by the simboundary method,
+        and their x and y coordinates (FITS convention; first pixel is (1, 1)).
+        If no pixels are detected, xcr_only_sb and ycr_only_sb are None.
+    (num_both, xcr_both, ycr_both) : tuple
+        Number of pixels detected by both methods,
+        and their x and y coordinates (FITS convention; first pixel is (1, 1)).
+        If no pixels are detected, xcr_both and ycr_both are None.
+    """
+    flag_only_la = flag_la & ~flag_sb & within_xy_diagram
+    flag_only_sb = flag_sb & ~flag_la & within_xy_diagram
+    flag_both = flag_la & flag_sb & within_xy_diagram
+
+    num_only_la = np.sum(flag_only_la)
+    if num_only_la > 0:
+        pixels_detected = np.argwhere(flag_only_la.reshape(naxis2, naxis1))
+        xcr_only_la = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_only_la = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+    else:
+        xcr_only_la, ycr_only_la = None, None
+
+    num_only_sb = np.sum(flag_only_sb)
+    if num_only_sb > 0:
+        pixels_detected = np.argwhere(flag_only_sb.reshape(naxis2, naxis1))
+        xcr_only_sb = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_only_sb = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+    else:
+        xcr_only_sb, ycr_only_sb = None, None
+
+    num_both = np.sum(flag_both)
+    if num_both > 0:
+        pixels_detected = np.argwhere(flag_both.reshape(naxis2, naxis1))
+        xcr_both = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_both = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+    else:
+        xcr_both, ycr_both = None, None
+
+    return \
+        (num_only_la, xcr_only_la, ycr_only_la), \
+        (num_only_sb, xcr_only_sb, ycr_only_sb), \
+        (num_both, xcr_both, ycr_both)
+
+
+def update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4):
+    if flag_la.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{flag_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_la.shape != flag_sb.shape:
+        raise ValueError(f"{flag_sb.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_la.shape != xplot.shape or flag_la.shape != yplot.shape:
+        raise ValueError(f"{xplot.shape=} and {yplot.shape=} must have {flag_la.shape=}.")
+
+    xlim = ax1.get_xlim()
+    ylim = ax1.get_ylim()
+    within_xy_diagram = (xlim[0] <= xplot) & (xplot <= xlim[1]) & (ylim[0] <= yplot) & (yplot <= ylim[1])
+
+    tuple_la, tuple_sb, tuple_both = segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram)
+    num_only_la, xcr_only_la, ycr_only_la = tuple_la
+    num_only_sb, xcr_only_sb, ycr_only_sb = tuple_sb
+    num_both, xcr_both, ycr_both = tuple_both
+
+    for ax in [ax2, ax3, ax4]:
+        for num, xcr, ycr, edgecolors, symbol, facecolors in zip(
+                [num_only_la, num_only_sb, num_both],
+                [xcr_only_la, xcr_only_sb, xcr_both],
+                [ycr_only_la, ycr_only_sb, ycr_both],
+                ['r', 'b', 'g'],
+                ['x', '+', 'o'],
+                ['r', 'b', 'none']):
+            if num > 0:
+                ax.scatter(xcr-1, ycr-1, edgecolors=edgecolors, marker=symbol, facecolors=facecolors)
+
+
+def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
+                    sb_threshold, ylabel, interactive, median2d, mean2d,
+                    _logger, png_filename):
     """Diagnostic plot for the mediancr function.
     """
     if png_filename is None:
         raise ValueError("png_filename must be provided for diagnostic plots.")
-    fig, ax = plt.subplots()
-    ax.plot(xplot, yplot, 'C0,')
+
+    # Segregate the cosmic ray flags
+    naxis2, naxis1 = median2d.shape
+
+    fig, axarr = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+    ax1, ax2, ax3, ax4 = axarr.flatten()
+    vmin, vmax = tea.zscale(median2d)
+    tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
+    tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
+
+    ax2.set_xlim(ax3.get_xlim())
+    ax2.set_ylim(ax3.get_ylim())
+    ax2.set_title('Detected cosmic rays')
+    ax2.set_xlabel('X axis (array index)')
+    ax2.set_ylabel('Y axis (array index)')
+    ax3.set_title('Median combined image')
+    ax4.set_title('Mean combined image')
+    update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4)
+
+    updating = {'plot_limits': False}
+
+    def sync_zoom(event_ax):
+        if updating['plot_limits']:
+            return
+        try:
+            updating['plot_limits'] = True
+            if event_ax is ax1:
+                xlim = ax2.get_xlim()
+                ylim = ax2.get_ylim()
+                ax2.cla()  # after cla the callbacks are removed
+                ax2.set_title('Detected cosmic rays')
+                ax2.set_xlabel('X axis (array index)')
+                ax2.set_ylabel('Y axis (array index)')
+                ax2.callbacks.connect('xlim_changed', sync_zoom)
+                ax2.callbacks.connect('ylim_changed', sync_zoom)
+                for line in ax3.lines:
+                    line.remove()
+                for line in ax4.lines:
+                    line.remove()
+                tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
+                tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
+                update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4)
+                ax2.set_xlim(xlim)
+                ax2.set_ylim(ylim)
+                ax2.figure.canvas.draw_idle()
+                ax3.figure.canvas.draw_idle()
+                ax4.figure.canvas.draw_idle()
+            elif event_ax is ax2:
+                xlim = event_ax.get_xlim()
+                ylim = event_ax.get_ylim()
+                ax3.set_xlim(xlim)
+                ax3.set_ylim(ylim)
+                ax4.set_xlim(xlim)
+                ax4.set_ylim(ylim)
+                ax3.figure.canvas.draw_idle()
+                ax4.figure.canvas.draw_idle()
+            elif event_ax is ax3:
+                pass
+            elif event_ax is ax4:
+                pass
+        finally:
+            updating['plot_limits'] = False
+
+    ax1.callbacks.connect('xlim_changed', sync_zoom)
+    ax1.callbacks.connect('ylim_changed', sync_zoom)
+    ax2.callbacks.connect('xlim_changed', sync_zoom)
+    ax2.callbacks.connect('ylim_changed', sync_zoom)
+
+    ax1.plot(xplot, yplot, 'C0,')
+    flag_only_la = flag_la & ~flag_sb
+    flag_only_sb = flag_sb & ~flag_la
+    flag_both = flag_la & flag_sb
+    num_only_la = np.sum(flag_only_la)
+    num_only_sb = np.sum(flag_only_sb)
+    num_both = np.sum(flag_both)
+    ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
+                edgecolor='r', marker='x', facecolors='r', label=f'Suspected pixels: {num_only_la} (lacosmic)')
+    ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
+                edgecolor='b', marker='+', facecolors='b', label=f'Suspected pixels: {num_only_sb} (simboundary)')
+    ax1.scatter(xplot[flag_both], yplot[flag_both],
+                edgecolor='g', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
     if xplot_boundary is not None and yplot_boundary is not None:
-        ax.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
-        ymin = 0
-        ymax = np.max(yplot_boundary)
-        if sb_threshold is not None:
-            if sb_threshold > ymax:
-                ymax = sb_threshold
-        dy = ymax - ymin
-        ymin -= dy * 0.05
-        ymax += dy * 0.05
-        ax.set_ylim(ymin, ymax)
-        bbox_to_anchor = (0.5, 1.18)
-    else:
-        bbox_to_anchor = None
+        ax1.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
     if sb_threshold is not None:
-        ax.axhline(sb_threshold, color='gray', linestyle=':', label=f'sb_threshold ({sb_threshold:.2f})')
-    ax.plot(xplot[flag], yplot[flag], 'rx', label=f'Suspected pixels ({np.sum(flag)})')
-    ax.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
-    ax.set_ylabel(ylabel)
-    if bbox_to_anchor is None:
-        ax.legend(loc='upper right')
-    else:
-        ax.legend(loc='upper center', bbox_to_anchor=bbox_to_anchor, ncol=2)
+        ax1.axhline(sb_threshold, color='gray', linestyle=':', label=f'sb_threshold ({sb_threshold:.2f})')
+    ax1.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
+    ax1.set_ylabel(ylabel)
+    ax1.set_title('Median-Mean Diagnostic Diagram')
+    ax1.legend(loc='upper right', fontsize=8)
     plt.tight_layout()
     _logger.info(f"saving {png_filename}")
     plt.savefig(png_filename, dpi=150)
     if interactive:
+        init_limits = {ax: (ax.get_xlim(), ax.get_ylim()) for ax in [ax1, ax2, ax3, ax4]}
+
+        def on_key(event):
+            if event.key in ("h", "H"):
+                for ax in [ax1, ax2, ax3, ax4]:
+                    init_xlim, init_ylim = init_limits[ax]
+                    ax.set_xlim(init_xlim)
+                    ax.set_ylim(init_ylim)
+
+        fig.canvas.mpl_connect("key_press_event", on_key)
+
         _logger.info("Entering interactive mode (press 'q' to close plot)")
+        plt.tight_layout()
         plt.show()
     plt.close(fig)
 
@@ -497,7 +671,7 @@ def compute_crmasks(
         gain=None,
         rnoise=None,
         bias=None,
-        crmethod='lacosmic',
+        crmethod='sb_lacosmic',
         flux_factor=None,
         interactive=True,
         dilation=1,
@@ -821,7 +995,7 @@ def compute_crmasks(
 
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
-    if crmethod == 'simboundary':
+    if crmethod in ['simboundary', 'sb_lacosmic']:
         _logger.info("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
         _logger.info("knots for spline fit to the boundary: %d", sb_knots_splfit)
         _logger.info("fixed points in the boundary: %s",
@@ -833,7 +1007,7 @@ def compute_crmasks(
         _logger.info("niter for boundary extension: %d", sb_niter_boundary_extension)
         _logger.info("random seed for reproducibility: %s", str(sb_seed))
         _logger.info("weight for boundary extension: %f", sb_weight_boundary_extension)
-    elif crmethod == 'lacosmic':
+    elif crmethod in ['lacosmic', 'sb_lacosmic']:
         if la_sigclip is None:
             _logger.info("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
             la_sigclip = 5.0
@@ -867,7 +1041,7 @@ def compute_crmasks(
     _logger.info("maximum number of coincident cosmic rays to plot: %d", maxplots)
     _logger.info("color scale for plots: %s", color_scale)
 
-    if crmethod == 'lacosmic':
+    if crmethod in ['lacosmic', 'sb_lacosmic']:
         # ---------------------------------------------------------------------
         # Detect residual cosmic rays in the median2d image using the
         # Laplacian edge detection method from ccdproc. This only works if gain and
@@ -877,7 +1051,7 @@ def compute_crmasks(
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
         if la_fsmode == 'median':
-            median2d_lacosmic, flag = cosmicray_lacosmic(
+            median2d_lacosmic, flag_la = cosmicray_lacosmic(
                 median2d,
                 gain=gain_scalar,
                 readnoise=rnoise_scalar,
@@ -886,7 +1060,7 @@ def compute_crmasks(
             )
         elif la_fsmode == 'convolve':
             if la_psfmodel != 'gaussxy':
-                median2d_lacosmic, flag = cosmicray_lacosmic(
+                median2d_lacosmic, flag_la = cosmicray_lacosmic(
                     median2d,
                     gain=gain_scalar,
                     readnoise=rnoise_scalar,
@@ -896,7 +1070,7 @@ def compute_crmasks(
                     psfmodel=la_psfmodel,
                 )
             else:
-                median2d_lacosmic, flag = cosmicray_lacosmic(
+                median2d_lacosmic, flag_la = cosmicray_lacosmic(
                     median2d,
                     gain=gain_scalar,
                     readnoise=rnoise_scalar,
@@ -906,14 +1080,16 @@ def compute_crmasks(
                 )
         else:
             raise ValueError("la_fsmode must be 'median' or 'convolve'.")
-        _logger.info("number of pixels flagged as cosmic rays by lacosmic: %d", np.sum(flag))
-        update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger)
-        _logger.info("generating diagnostic plot for MEDIANCR...")
-        ylabel = r'median2d $-$ min2d'
-        diagnostic_plot(xplot, yplot, xplot_boundary=None, yplot_boundary=None, flag=flag.flatten(),
-                        sb_threshold=None, ylabel=ylabel, interactive=interactive, _logger=_logger,
-                        png_filename='diagnostic_mediancr.png')
-    elif crmethod == 'simboundary':
+        _logger.info("number of pixels flagged as cosmic rays by lacosmic: %d", np.sum(flag_la))
+        update_flag_with_user_masks(flag_la, pixels_to_be_masked, pixels_to_be_excluded, _logger)
+        flag_la = flag_la.flatten()
+        if crmethod == 'lacosmic':
+            xplot_boundary = None
+            yplot_boundary = None
+            sb_threshold = None
+            flag_sb = np.zeros_like(flag_la, dtype=bool)
+
+    if crmethod in ['simboundary', 'sb_lacosmic']:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
@@ -1163,21 +1339,31 @@ def compute_crmasks(
         # Apply the criterium to detect coincident cosmic rays
         flag1 = yplot > splfit(xplot)
         flag2 = yplot > sb_threshold
-        flag = np.logical_and(flag1, flag2)
+        flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
-        flag = np.logical_and(flag, flag3)
-        _logger.info("number of pixels flagged as coincident cosmic rays: %d", np.sum(flag))
-        _logger.info("generating diagnostic plot for MEDIANCR...")
-        ylabel = r'median2d $-$ min2d'
-        diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                        sb_threshold, ylabel, interactive, _logger,
-                        png_filename='diagnostic_mediancr.png')
-        flag = flag.reshape((naxis2, naxis1))
+        flag_sb = np.logical_and(flag_sb, flag3)
+        _logger.info("number of pixels flagged as coincident cosmic rays: %d", np.sum(flag_sb))
+        if crmethod == 'simboundary':
+            flag_la = np.zeros_like(flag_sb, dtype=bool)
+
+    # Show diagnostic plot for the cosmic ray detection
+    _logger.info("generating diagnostic plot for MEDIANCR...")
+    ylabel = r'median2d $-$ min2d'
+    diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
+                    sb_threshold, ylabel, interactive,
+                    median2d=median2d, mean2d=mean2d,
+                    _logger=_logger, png_filename='diagnostic_mediancr.png')
+
+    # Combine the flags from the two methods (if both were used)
+    if flag_la is None and flag_sb is None:
+        raise RuntimeError("Both flag_la and flag_sb are None. This should never happen.")
+    elif flag_la is None:
+        flag = flag_sb
+    elif flag_sb is None:
+        flag = flag_la
     else:
-        # ---------------------------------------------------------------------
-        # INVALID METHOD
-        # ---------------------------------------------------------------------
-        raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
+        flag = np.logical_and(flag_la, flag_sb)
+    flag = flag.reshape((naxis2, naxis1))
 
     # Check if any cosmic ray was detected
     if not np.any(flag):
@@ -1339,9 +1525,9 @@ def compute_crmasks(
             _logger.info("detecting cosmic rays in the mean2d image...")
         else:
             _logger.info(f"detecting cosmic rays in array {i}...")
-        if crmethod == 'lacosmic':
+        if crmethod in ['lacosmic', 'sb_lacosmic']:
             if la_fsmode == 'median':
-                array_lacosmic, flag = cosmicray_lacosmic(
+                array_lacosmic, flag_la = cosmicray_lacosmic(
                     array,
                     gain=gain_scalar,
                     readnoise=rnoise_scalar,
@@ -1350,7 +1536,7 @@ def compute_crmasks(
                 )
             elif la_fsmode == 'convolve':
                 if la_psfmodel != 'gaussxy':
-                    array_lacosmic, flag = cosmicray_lacosmic(
+                    array_lacosmic, flag_la = cosmicray_lacosmic(
                         array,
                         gain=gain_scalar,
                         readnoise=rnoise_scalar,
@@ -1360,7 +1546,7 @@ def compute_crmasks(
                         psfmodel=la_psfmodel,
                     )
                 else:
-                    array_lacosmic, flag = cosmicray_lacosmic(
+                    array_lacosmic, flag_la = cosmicray_lacosmic(
                         array,
                         gain=gain_scalar,
                         readnoise=rnoise_scalar,
@@ -1373,18 +1559,22 @@ def compute_crmasks(
             # For the mean2d array, update the flag with the user masks
             if i == 0:
                 update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger)
-            flag = flag.flatten()
-            xplot_boundary = None
-            yplot_boundary = None
-            sb_threshold = None
-        elif crmethod == 'simboundary':
+            flag_la = flag_la.flatten()
+            if crmethod == 'lacosmic':
+                xplot_boundary = None
+                yplot_boundary = None
+                sb_threshold = None
+                flag_sb = np.zeros_like(flag_la, dtype=bool)
+        elif crmethod in ['simboundary', 'sb_lacosmic']:
             xplot = min2d.flatten()
             yplot = array.flatten() - min2d.flatten()
             flag1 = yplot > splfit(xplot)
             flag2 = yplot > sb_threshold
-            flag = np.logical_and(flag1, flag2)
+            flag_sb = np.logical_and(flag1, flag2)
             flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
-            flag = np.logical_and(flag, flag3)
+            flag_sb = np.logical_and(flag_sb, flag3)
+            if crmethod == 'simboundary':
+                flag_la = np.zeros_like(flag_sb, dtype=bool)
         else:
             raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
         # For the mean2d mask, force the flag to be True if the pixel
@@ -1392,12 +1582,15 @@ def compute_crmasks(
         # (this is to ensure that all pixels flagged in MEDIANCR are also
         # flagged in MEANCRT)
         if i == 0:
-            flag = np.logical_or(flag, list_hdu_masks[0].data.astype(bool).flatten())
+            flag_la = np.logical_or(flag_la, list_hdu_masks[0].data.astype(bool).flatten())
+            flag_sb = np.logical_or(flag_sb, list_hdu_masks[0].data.astype(bool).flatten())
         # For the individual array masks, force the flag to be True if the pixel
         # is flagged both in the individual exposure and in the mean2d array
         if i > 0:
-            flag = np.logical_and(flag, list_hdu_masks[1].data.astype(bool).flatten())
-        _logger.info("number of pixels flagged as cosmic rays: %d", np.sum(flag))
+            flag_la = np.logical_and(flag_la, list_hdu_masks[1].data.astype(bool).flatten())
+            flag_sb = np.logical_and(flag_sb, list_hdu_masks[1].data.astype(bool).flatten())
+        _logger.info("number of pixels flagged as cosmic rays (lacosmic)...: %d", np.sum(flag_la))
+        _logger.info("number of pixels flagged as cosmic rays (simboundary): %d", np.sum(flag_sb))
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
@@ -1406,9 +1599,11 @@ def compute_crmasks(
             _logger.info(f"generating diagnostic plot for CRMASK{i}...")
             png_filename = f'diagnostic_crmask{i}.png'
             ylabel = f'array{i}' + r' $-$ min2d'
-        diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag,
-                        sb_threshold, ylabel, interactive, _logger,
-                        png_filename=png_filename)
+        diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
+                        sb_threshold, ylabel, interactive,
+                        median2d=median2d, mean2d=mean2d,
+                        _logger=_logger, png_filename=png_filename)
+        flag = np.logical_or(flag_la, flag_sb)
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
         if dilation > 0:
@@ -1464,7 +1659,7 @@ def compute_crmasks(
     elif crmethod == 'simboundary':
         prefix_of_excluded_args = 'la_'
     else:
-        raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
+        prefix_of_excluded_args = 'xxx'
     filtered_args = {k: v for k, v in locals().items() if
                      k in args and
                      k not in ['list_arrays'] and
@@ -1679,15 +1874,6 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
 def main(args=None):
     """
     Main function to compute and apply CR masks.
-
-    Since this main function is intended to be run for two different
-    purposes, we are using argparse with subparsers to split the
-    arguments for the two functionalities:
-    - `compute`: to compute the cosmic ray masks.
-    - `apply`: to apply the cosmic ray masks to a list of 2D arrays.
-
-    The main function will parse the command line arguments and call
-    the appropriate function based on the subcommand used.
     """
     logging.basicConfig(
         level=logging.INFO,  # or DEBUG, WARNING, ERROR, CRITICAL
@@ -1698,112 +1884,15 @@ def main(args=None):
     logger.info("Starting mediancr combination...")
 
     parser = argparse.ArgumentParser(
-        description="Combine 2D arrays using mediancr or meancr methods."
+        description="Combine 2D arrays using mediancr, meancrt or meancr methods."
     )
 
-    # Global arguments
+    parser.add_argument("inputyaml",
+                        help="Input YAML file.",
+                        type=str)
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
-
-    # Subparsers for different functionalities
-    subparsers = parser.add_subparsers(
-        dest='command',
-        help="Choose a command to execute.",
-        required=False
-    )
-
-    # Subparser for computing cosmic ray masks
-    parser_compute = subparsers.add_parser(
-        'compute',
-        help="Compute cosmic ray masks from a list of 2D arrays."
-    )
-    parser_compute.add_argument("--inputlist",
-                                help="Input text file with list of 2D arrays.",
-                                type=str,
-                                required=True)
-    parser_compute.add_argument("--extname",
-                                help="Extension name in the input arrays (default: 'PRIMARY')",
-                                type=str, default='PRIMARY')
-    parser_compute.add_argument("--gain",
-                                help="Detector gain (ADU)",
-                                type=float)
-    parser_compute.add_argument("--rnoise",
-                                help="Readout noise (ADU)",
-                                type=float)
-    parser_compute.add_argument("--bias",
-                                help="Detector bias (ADU, default: 0.0)",
-                                type=float, default=0.0)
-    parser_compute.add_argument("--crmethod",
-                                help=f"Cosmic ray detection method: {', '.join(VALID_CRMETHODS)}",
-                                type=str, choices=VALID_CRMETHODS,
-                                default='lacosmic')
-    parser_compute.add_argument("--interactive",
-                                help="Interactive mode for diagnostic plot (program will stop after the plot)",
-                                action="store_true")
-    parser_compute.add_argument("--dilation",
-                                help="Dilation factor for cosmic ray mask",
-                                type=int, default=1)
-    parser_compute.add_argument("--verify_cr",
-                                help="Verify each detected coincident cosmic ray interactively",
-                                action="store_true")
-    parser_compute.add_argument("--semiwindow",
-                                help="Semiwindow size for plotting coincident cosmic rays",
-                                type=int, default=15)
-    parser_compute.add_argument("--color_scale",
-                                help="Color scale for the plots (default: 'minmax')",
-                                type=str, choices=['minmax', 'zscale'], default='minmax')
-    parser_compute.add_argument("--maxplots",
-                                help="Maximum number of coincident cosmic rays to plot (-1 for all)",
-                                type=int, default=10)
-    parser_compute.add_argument("--output_masks",
-                                help="Output FITS file for the cosmic ray masks",
-                                type=str, default='masks.fits')
-
-    parser_compute.add_argument("--flux_factor",
-                                help="Flux factor to be applied to each image",
-                                type=str, default='none')
-    parser_compute.add_argument("--sb_knots_splfit",
-                                help="Total number of knots for the spline fit to the detection boundary (default: 3)",
-                                type=int, default=3)
-    parser_compute.add_argument("--sb_nsimulations",
-                                help="Number of simulations to compute the detection boundary (default: 10)",
-                                type=int, default=10)
-    parser_compute.add_argument("--sb_niter_boundary_extension",
-                                help="Number of iterations for the extension of the detection boundary (default: 3)",
-                                type=int, default=3)
-    parser_compute.add_argument("--sb_weight_boundary_extension",
-                                help="Weight for the detection boundary extension (default: 10)",
-                                type=float, default=10.0)
-    parser_compute.add_argument("--sb_threshold",
-                                help="Minimum sb_threshold for median2d - min2d to flag a pixel (default: None)",
-                                type=float, default=None)
-    parser_compute.add_argument("--sb_minimum_max2d_rnoise",
-                                help="Minimum value for max2d in rnoise units to flag a pixel (default: 5.0)",
-                                type=float, default=5.0)
-
-    # Subparser for applying cosmic ray masks
-    parser_apply = subparsers.add_parser(
-        'apply',
-        help="Apply cosmic ray masks to a list of 2D arrays."
-    )
-    parser_apply.add_argument("--inputlist",
-                              help="Input text file with list of 2D arrays.",
-                              type=str,
-                              required=True)
-    parser_apply.add_argument("--input_masks",
-                              help="Input FITS file with the cosmic ray masks",
-                              type=str, required=True)
-    parser_apply.add_argument("--output_combined",
-                              help="Output FITS file for the combined array and mask",
-                              type=str, required=True)
-    parser_apply.add_argument("--combination",
-                              help=f"Combination method: {', '.join(VALID_COMBINATIONS)}",
-                              type=str, choices=VALID_COMBINATIONS,
-                              default='mediancr')
-    parser_apply.add_argument("--extname",
-                              help="Extension name in the input arrays (default: 'PRIMARY')",
-                              type=str, default='PRIMARY')
 
     args = parser.parse_args(args)
 
@@ -1814,79 +1903,81 @@ def main(args=None):
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
 
+    # Read parameters from YAML file
+    with open(args.inputyaml, 'rt') as fstream:
+        input_params = yaml.safe_load(fstream)
+    print(f'{input_params=}')
+
+    # Check that mandatory parameters are present
+    if 'images' not in input_params:
+        raise ValueError("'images' must be provided in input YAML file.")
+    else:
+        list_of_fits_files = input_params['images']
+        if not isinstance(list_of_fits_files, list) or len(list_of_fits_files) < 3:
+            raise ValueError("'images' must be a list of at least 3 FITS files.")
+        for file in list_of_fits_files:
+            if not os.path.isfile(file):
+                raise FileNotFoundError(f"File {file} not found.")
+    for item in ['gain', 'rnoise', 'bias', 'crmethod']:
+        if item not in input_params:
+            raise ValueError(f"'{item}' must be provided in input YAML file.")
+
+    # Default values for missing parameters in input YAML file
+    if 'extnum' in input_params:
+        extnum = int(input_params['extnum'])
+    else:
+        extnum = 0
+
     # Read the input list of files, which should contain paths to 2D FITS files,
-    # and load the arrays from the specified extension name.
-    with open(args.inputlist, 'rt', encoding='utf-8') as f:
-        list_of_fits_files = [line.strip() for line in f if line.strip()]
-    list_arrays = [fits.getdata(file, extname=args.extname) for file in list_of_fits_files]
+    # and load the arrays from the specified extension number.
+    list_arrays = [fits.getdata(file, extnum=extnum) for file in input_params['images']]
 
     # Check if the list is empty
     if not list_arrays:
         raise ValueError("The input list is empty. Please provide a valid list of 2D arrays.")
 
-    # First task: compute cosmic ray masks
-    if args.command == 'compute':
-        # Check if gain and rnoise are provided
-        if args.gain is None:
-            raise ValueError("Gain must be provided for mediancr combination.")
-        if args.rnoise is None:
-            raise ValueError("Readout noise must be provided for mediancr combination.")
+    # Define parameters for compute_crmasks
+    crmasks_params = input_params.copy()
+    # Delete parameters not used by compute_crmasks
+    for item in ['images', 'extnum']:
+        del crmasks_params[item]
 
-        # Compute the different cosmic ray masks
-        hdul_masks = compute_crmasks(
+    # Compute the different cosmic ray masks
+    hdul_masks = compute_crmasks(
+        list_arrays=list_arrays,
+        **crmasks_params
+    )
+
+    # Save the cosmic ray masks to a FITS file
+    output_masks = 'crmasks.fits'
+    logger.info("Saving cosmic ray masks to %s", output_masks)
+    hdul_masks.writeto(output_masks, overwrite=True)
+    logger.info("Cosmic ray masks saved")
+
+    # Apply cosmic ray masks
+    for combination in VALID_COMBINATIONS:
+        logger.info("Applying cosmic ray masks using combination method: %s", combination)
+        output_combined = f'combined_{combination}.fits'
+        combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
-            gain=args.gain,
-            rnoise=args.rnoise,
-            bias=args.bias,
-            crmethod=args.crmethod,
-            flux_factor=args.flux_factor,
-            interactive=args.interactive,
-            dilation=args.dilation,
-            dtype=np.float32,
-            verify_cr=args.verify_cr,
-            semiwindow=args.semiwindow,
-            color_scale=args.color_scale,
-            maxplots=args.maxplots,
-            sb_knots_splfit=args.sb_knots_splfit,
-            sb_nsimulations=args.sb_nsimulations,
-            sb_niter_boundary_extension=args.sb_niter_boundary_extension,
-            sb_weight_boundary_extension=args.sb_weight_boundary_extension,
-            sb_threshold=args.sb_threshold,
-            sb_minimum_max2d_rnoise=args.sb_minimum_max2d_rnoise
+            bias=input_params['bias'],
+            hdul_masks=hdul_masks,
+            combination=combination,
+            dtype=np.float32
         )
-
-        # Save the masks to a FITS file if requested
-        if args.output_masks:
-            logger.info("Saving cosmic ray masks to %s", args.output_masks)
-            hdul_masks.writeto(args.output_masks, overwrite=True)
-            logger.info("Cosmic ray masks saved")
-
-    # Second task: apply cosmic ray masks
-    elif args.command == 'apply':
-        with fits.open(args.input_masks) as hdul_masks:
-            # Compute the combined array, variance, and map
-            combined, variance, maparray = apply_crmasks(
-                list_arrays=list_arrays,
-                bias=args.bias,
-                hdul_masks=hdul_masks,
-                combination=args.combination,
-                dtype=np.float32
-            )
-            # Save the combined array, variance, and map to a FITS file
-            logger.info("Saving combined (bias subtracted) array, variance, and map to %s", args.output_combined)
-            hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
-            add_script_info_to_fits_history(hdu_combined.header, args)
-            hdu_combined.header.add_history('Contents of --inputlist:')
-            for item in list_of_fits_files:
-                hdu_combined.header.add_history(f'- {item}')
-            hdu_combined.header.add_history(f"Masks UUID: {hdul_masks[0].header['UUID']}")
-            hdu_variance = fits.ImageHDU(variance.astype(np.float32), name='VARIANCE')
-            hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
-            hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
-            hdul.writeto(args.output_combined, overwrite=True)
-            logger.info("Combined (bias subtracted) array, variance, and map saved")
-    else:
-        raise ValueError(f"Unknown command: {args.command}.")
+        # Save the combined array, variance, and map to a FITS file
+        logger.info("Saving combined (bias subtracted) array, variance, and map to %s", output_combined)
+        hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
+        add_script_info_to_fits_history(hdu_combined.header, args)
+        hdu_combined.header.add_history('Contents of --inputlist:')
+        for item in list_of_fits_files:
+            hdu_combined.header.add_history(f'- {item}')
+        hdu_combined.header.add_history(f"Masks UUID: {hdul_masks[0].header['UUID']}")
+        hdu_variance = fits.ImageHDU(variance.astype(np.float32), name='VARIANCE')
+        hdu_map = fits.ImageHDU(maparray.astype(np.int16), name='MAP')
+        hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
+        hdul.writeto(output_combined, overwrite=True)
+        logger.info("Combined (bias subtracted) array, variance, and map saved")
 
 
 if __name__ == "__main__":
