@@ -382,7 +382,9 @@ def define_piecewise_linear_function(xarray, yarray):
     return function
 
 
-def segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram):
+def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
+                       enum_la_global, enum_sb_global, enum_both_global,
+                       within_xy_diagram):
     """Segregate the cosmic ray flags into three categories:
     - detected only by the lacosmic method
     - detected only by the simboundary method
@@ -394,13 +396,38 @@ def segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram):
         The size of the first dimension of the input arrays.
     naxis2 : int
         The size of the second dimension of the input arrays.
-    flag_la : 2D numpy array
-        The cosmic ray flag array from the lacosmic method.
-    flag_sb : 2D numpy array
-        The cosmic ray flag array from the simboundary method.
+    flag_only_la : 1D numpy array
+        A boolean array indicating which pixels are detected
+        only by the lacosmic method.
+    flag_only_sb : 1D numpy array
+        A boolean array indicating which pixels are detected
+        only by the simboundary method.
+    flag_both : 1D numpy array
+        A boolean array indicating which pixels are detected
+        by both methods.
+    enum_la_global : 1D numpy array
+        An integer array with the enumeration of the pixels
+        detected only by the lacosmic method.
+    enum_sb_global : 1D numpy array
+        An integer array with the enumeration of the pixels
+        detected only by the simboundary method.
+    enum_both_global : 1D numpy array
+        An integer array with the enumeration of the pixels
+        detected by both methods.
+    within_xy_diagram : 1D numpy array
+        A boolean array indicating which pixels are within the XY diagram.
 
     Returns
     -------
+    flag_only_la_within_xy : 1D numpy array
+        A boolean array indicating which pixels are detected
+        only by the lacosmic method within the XY diagram.
+    flag_only_sb_within_xy : 1D numpy array
+        A boolean array indicating which pixels are detected
+        only by the simboundary method within the XY diagram.
+    flag_both_within_xy : 1D numpy array
+        A boolean array indicating which pixels are detected
+        by both methods within the XY diagram.
     (num_only_la, xcr_only_la, ycr_only_la) : tuple
         Number of pixels detected only by the lacosmic method,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
@@ -414,73 +441,99 @@ def segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram):
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
         If no pixels are detected, xcr_both and ycr_both are None.
     """
-    flag_only_la = flag_la & ~flag_sb & within_xy_diagram
-    flag_only_sb = flag_sb & ~flag_la & within_xy_diagram
-    flag_both = flag_la & flag_sb & within_xy_diagram
 
-    num_only_la = np.sum(flag_only_la)
-    if num_only_la > 0:
-        pixels_detected = np.argwhere(flag_only_la.reshape(naxis2, naxis1))
-        xcr_only_la = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
-        ycr_only_la = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
-    else:
-        xcr_only_la, ycr_only_la = None, None
+    # Segregate the cosmic rays within the XY diagnostic diagram
+    flag_only_la_within_xy = flag_only_la & within_xy_diagram
+    flag_only_sb_within_xy = flag_only_sb & within_xy_diagram
+    flag_both_within_xy = flag_both & within_xy_diagram
 
-    num_only_sb = np.sum(flag_only_sb)
-    if num_only_sb > 0:
-        pixels_detected = np.argwhere(flag_only_sb.reshape(naxis2, naxis1))
-        xcr_only_sb = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
-        ycr_only_sb = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+    num_only_la_within_xy = np.sum(flag_only_la_within_xy)
+    if num_only_la_within_xy > 0:
+        pixels_detected = np.argwhere(flag_only_la_within_xy.reshape(naxis2, naxis1))
+        xcr_only_la_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_only_la_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+        ncr_only_la_within_xy = enum_la_global[flag_only_la_within_xy]
     else:
-        xcr_only_sb, ycr_only_sb = None, None
+        xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = None, None, None
 
-    num_both = np.sum(flag_both)
-    if num_both > 0:
-        pixels_detected = np.argwhere(flag_both.reshape(naxis2, naxis1))
-        xcr_both = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
-        ycr_both = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+    num_only_sb_within_xy = np.sum(flag_only_sb_within_xy)
+    if num_only_sb_within_xy > 0:
+        pixels_detected = np.argwhere(flag_only_sb_within_xy.reshape(naxis2, naxis1))
+        xcr_only_sb_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_only_sb_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+        ncr_only_sb_within_xy = enum_sb_global[flag_only_sb_within_xy]
     else:
-        xcr_both, ycr_both = None, None
+        xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy = None, None, None
+
+    num_both_within_xy = np.sum(flag_both_within_xy)
+    if num_both_within_xy > 0:
+        pixels_detected = np.argwhere(flag_both_within_xy.reshape(naxis2, naxis1))
+        xcr_both_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_both_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+        ncr_both_within_xy = enum_both_global[flag_both_within_xy]
+    else:
+        xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = None, None, None
 
     return \
-        (num_only_la, xcr_only_la, ycr_only_la), \
-        (num_only_sb, xcr_only_sb, ycr_only_sb), \
-        (num_both, xcr_both, ycr_both)
+        flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy, \
+        (num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy), \
+        (num_only_sb_within_xy, xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy), \
+        (num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy)
 
 
-def update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4):
-    if flag_la.shape != (naxis2 * naxis1,):
-        raise ValueError(f"{flag_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_la.shape != flag_sb.shape:
-        raise ValueError(f"{flag_sb.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_la.shape != xplot.shape or flag_la.shape != yplot.shape:
-        raise ValueError(f"{xplot.shape=} and {yplot.shape=} must have {flag_la.shape=}.")
+def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
+                 enum_la_global, enum_sb_global, enum_both_global,
+                 xplot, yplot,
+                 ax1, ax2, ax3, ax4, display_ncr=True):
+    if flag_only_la.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{flag_only_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_only_la.shape != flag_only_sb.shape:
+        raise ValueError(f"{flag_only_sb.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_only_la.shape != flag_both.shape:
+        raise ValueError(f"{flag_both.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_only_la.shape != xplot.shape or flag_only_la.shape != yplot.shape:
+        raise ValueError(f"{xplot.shape=} and {yplot.shape=} must have {flag_only_la.shape=}.")
 
     xlim = ax1.get_xlim()
     ylim = ax1.get_ylim()
     within_xy_diagram = (xlim[0] <= xplot) & (xplot <= xlim[1]) & (ylim[0] <= yplot) & (yplot <= ylim[1])
 
-    tuple_la, tuple_sb, tuple_both = segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram)
-    num_only_la, xcr_only_la, ycr_only_la = tuple_la
-    num_only_sb, xcr_only_sb, ycr_only_sb = tuple_sb
-    num_both, xcr_both, ycr_both = tuple_both
+    flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy, tuple_la, tuple_sb, tuple_both = \
+        segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
+                           enum_la_global, enum_sb_global, enum_both_global,
+                           within_xy_diagram)
+    num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = tuple_la
+    num_only_sb_within_xy, xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy = tuple_sb
+    num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = tuple_both
 
     for ax in [ax2, ax3, ax4]:
-        for num, xcr, ycr, color, marker in zip(
-                [num_only_la, num_only_sb, num_both],
-                [xcr_only_la, xcr_only_sb, xcr_both],
-                [ycr_only_la, ycr_only_sb, ycr_both],
+        for num, xcr, ycr, ncr, flag_only, color, marker in zip(
+                [num_only_la_within_xy, num_only_sb_within_xy, num_both_within_xy],
+                [xcr_only_la_within_xy, xcr_only_sb_within_xy, xcr_both_within_xy],
+                [ycr_only_la_within_xy, ycr_only_sb_within_xy, ycr_both_within_xy],
+                [ncr_only_la_within_xy, ncr_only_sb_within_xy, ncr_both_within_xy],
+                [flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy],
                 ['r', 'b', 'y'],
                 ['x', '+', 'o']):
             if num > 0:
-                if marker == 'o':
-                    ax.scatter(xcr-1, ycr-1, edgecolors=color, marker=marker, facecolors='none')
+                if ax == ax2:
+                    for ix, iy, ncr in zip(xplot[flag_only], yplot[flag_only], ncr):
+                        ax.text(ix, iy, str(ncr), color=color, fontsize=8, clip_on=True,
+                                ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5))
                 else:
-                    ax.scatter(xcr-1, ycr-1, c=color, marker=marker)
+                    if display_ncr:
+                        for ix, iy, ncr in zip(xcr, ycr, ncr):
+                            ax.text(ix-1, iy-1, str(ncr), color=color, fontsize=8, clip_on=True,
+                                    ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5))
+                    else:
+                        if marker == 'o':
+                            ax.scatter(xcr-1, ycr-1, edgecolors=color, marker=marker, facecolors='none')
+                        else:
+                            ax.scatter(xcr-1, ycr-1, c=color, marker=marker)
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive, median2d, min2d, mean2d, image3d,
+                    sb_threshold, ylabel, interactive, median2d, min2d, max2d, mean2d, image3d,
                     ax3_title='median2d', ax4_title='mean2d',
                     _logger=None, png_filename=None):
     """Diagnostic plot for the mediancr function.
@@ -488,8 +541,9 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     if png_filename is None:
         raise ValueError("png_filename must be provided for diagnostic plots.")
 
-    # Segregate the cosmic ray flags
     naxis2, naxis1 = median2d.shape
+    display_ncr = False   # display the number of cosmic rays in the plot instead of symbols
+    aspect_imshow = 'auto'  # 'equal' or 'auto'
 
     if interactive:
         fig = plt.figure(figsize=(12, 8))
@@ -498,94 +552,36 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         width_plot = 0.4
         height_plot = 0.4
         vspace_plot = 0.09
-        ax1 = fig.add_axes([x0_plot, y0_plot + height_plot + vspace_plot, width_plot, height_plot])  # top left
-        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot])  # top right
-        ax3 = fig.add_axes([x0_plot, y0_plot, width_plot, height_plot])  # bottom left
-        ax4 = fig.add_axes([0.55, y0_plot, width_plot, height_plot])  # bottom right
+        # top left, top right, bottom left, bottom right
+        ax1 = fig.add_axes([x0_plot, y0_plot + height_plot + vspace_plot, width_plot, height_plot])
+        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot])
+        ax3 = fig.add_axes([x0_plot, y0_plot, width_plot, height_plot])
+        ax4 = fig.add_axes([0.55, y0_plot, width_plot, height_plot], sharex=ax3, sharey=ax3)
         dx_text = 0.07
-        ax_vmin = plt.axes([x0_plot, y0_plot + height_plot + 0.005, dx_text, 0.03])
-        ax_vmax = plt.axes([x0_plot + width_plot - dx_text, y0_plot + height_plot + 0.005, dx_text, 0.03])
+        ax_vmin = fig.add_axes([x0_plot, y0_plot + height_plot + 0.005, dx_text, 0.03])
+        ax_vmax = fig.add_axes([x0_plot + width_plot - dx_text, y0_plot + height_plot + 0.005, dx_text, 0.03])
     else:
         fig, axarr = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
         ax1, ax2, ax3, ax4 = axarr.flatten()
         ax_vmin, ax_vmax = None, None
 
-    vmin, vmax = tea.zscale(median2d)
-    img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax,
-                               title=ax3_title, cmap='viridis', colorbar=False)
-    img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax,
-                               title=ax4_title, cmap='viridis', colorbar=False)
-
-    ax2.set_xlim(ax3.get_xlim())
-    ax2.set_ylim(ax3.get_ylim())
-    ax2.set_title('Detected cosmic rays')
-    ax2.set_xlabel('X axis (array index)')
-    ax2.set_ylabel('Y axis (array index)')
-    ax3.set_title('Median combined image')
-    ax4.set_title('Mean combined image')
-    update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4)
-
-    updating = {'plot_limits': False}
-
-    def sync_zoom(event_ax):
-        nonlocal img_ax3, img_ax4
-        if updating['plot_limits']:
-            return
-        try:
-            updating['plot_limits'] = True
-            if event_ax is ax1:
-                xlim = ax2.get_xlim()
-                ylim = ax2.get_ylim()
-                ax2.cla()  # after cla the callbacks are removed
-                ax2.callbacks.connect('xlim_changed', sync_zoom)
-                ax2.callbacks.connect('ylim_changed', sync_zoom)
-                ax2.set_title('Detected cosmic rays')
-                ax2.set_xlabel('X axis (array index)')
-                ax2.set_ylabel('Y axis (array index)')
-                for line in ax3.lines:
-                    line.remove()
-                for line in ax4.lines:
-                    line.remove()
-                ax3.cla()
-                img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax,
-                                           title=ax3_title, cmap='viridis', colorbar=False)
-                ax4.cla()
-                img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax,
-                                           title=ax4_title, cmap='viridis', colorbar=False)
-                update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4)
-                ax2.set_xlim(xlim)
-                ax2.set_ylim(ylim)
-                ax2.figure.canvas.draw_idle()
-                ax3.figure.canvas.draw_idle()
-                ax4.figure.canvas.draw_idle()
-            elif event_ax is ax2:
-                xlim = event_ax.get_xlim()
-                ylim = event_ax.get_ylim()
-                ax3.set_xlim(xlim)
-                ax3.set_ylim(ylim)
-                ax4.set_xlim(xlim)
-                ax4.set_ylim(ylim)
-                ax3.figure.canvas.draw_idle()
-                ax4.figure.canvas.draw_idle()
-            elif event_ax is ax3:
-                pass
-            elif event_ax is ax4:
-                pass
-        finally:
-            updating['plot_limits'] = False
-
-    ax1.callbacks.connect('xlim_changed', sync_zoom)
-    ax1.callbacks.connect('ylim_changed', sync_zoom)
-    ax2.callbacks.connect('xlim_changed', sync_zoom)
-    ax2.callbacks.connect('ylim_changed', sync_zoom)
-
-    ax1.plot(xplot, yplot, 'C0,')
+    # Segregate the cosmic rays detected by the different methods
     flag_only_la = flag_la & ~flag_sb
     flag_only_sb = flag_sb & ~flag_la
     flag_both = flag_la & flag_sb
     num_only_la = np.sum(flag_only_la)
     num_only_sb = np.sum(flag_only_sb)
     num_both = np.sum(flag_both)
+
+    # Enumerate the cosmic rays detected by the different methods
+    enum_la_global = np.zeros_like(flag_la, dtype=int)
+    enum_la_global[flag_only_la] = np.arange(1, np.sum(flag_only_la) + 1, dtype=int)
+    enum_sb_global = np.zeros_like(flag_sb, dtype=int)
+    enum_sb_global[flag_only_sb] = np.arange(1, np.sum(flag_only_sb) + 1, dtype=int)
+    enum_both_global = np.zeros_like(flag_la, dtype=int)
+    enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
+
+    ax1.plot(xplot, yplot, 'C0,')
     ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
                 c='r', marker='x', label=f'Suspected pixels: {num_only_la} (lacosmic)')
     ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
@@ -600,6 +596,87 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax1.set_ylabel(ylabel)
     ax1.set_title('Median-Mean Diagnostic Diagram')
     ax1.legend(loc='upper right', fontsize=8)
+
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_ylim(ax1.get_ylim())
+    ax2.set_xlabel(ax1.get_xlabel())
+    ax2.set_ylabel(ax1.get_ylabel())
+    ax2.set_title(ax1.get_title())
+
+    vmin, vmax = tea.zscale(median2d)
+    img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                               title=ax3_title, cmap='viridis', colorbar=False)
+    img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                               title=ax4_title, cmap='viridis', colorbar=False)
+    ax3.set_title(ax3_title)
+    ax4.set_title(ax4_title)
+    update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
+                 enum_la_global, enum_sb_global, enum_both_global,
+                 xplot, yplot,
+                 ax1, ax2, ax3, ax4, display_ncr)
+
+    updating = {'plot_limits': False}
+
+    def sync_zoom_x(event_ax):
+        if updating['plot_limits']:
+            return
+        try:
+            updating['plot_limits'] = True
+            if event_ax is ax1:
+                xlim = ax1.get_xlim()
+                ax2.set_xlim(xlim)
+            elif event_ax is ax2:
+                pass
+            elif event_ax is ax3:
+                pass
+            elif event_ax is ax4:
+                pass
+        finally:
+            updating['plot_limits'] = False
+
+    def sync_zoom_y(event_ax):
+        nonlocal img_ax3, img_ax4
+        nonlocal display_ncr
+        if updating['plot_limits']:
+            return
+        try:
+            updating['plot_limits'] = True
+            if event_ax is ax1:
+                ylim = ax1.get_ylim()
+                ax2.set_ylim(ylim)
+                xlim = ax3.get_xlim()
+                ylim = ax3.get_ylim()
+                ax3.cla()
+                img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                                           title=ax3_title, cmap='viridis', colorbar=False)
+                ax3.set_xlim(xlim)
+                ax3.set_ylim(ylim)
+                xlim = ax4.get_xlim()
+                ylim = ax4.get_ylim()
+                ax4.cla()
+                img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                                           title=ax4_title, cmap='viridis', colorbar=False)
+                ax4.set_xlim(xlim)
+                ax4.set_ylim(ylim)
+                update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
+                             enum_la_global, enum_sb_global, enum_both_global,
+                             xplot, yplot,
+                             ax1, ax2, ax3, ax4, display_ncr)
+                ax2.figure.canvas.draw_idle()
+                ax3.figure.canvas.draw_idle()
+                ax4.figure.canvas.draw_idle()
+            elif event_ax is ax2:
+                pass
+            elif event_ax is ax3:
+                pass
+            elif event_ax is ax4:
+                pass
+        finally:
+            updating['plot_limits'] = False
+
+    ax1.callbacks.connect('xlim_changed', sync_zoom_x)
+    ax1.callbacks.connect('ylim_changed', sync_zoom_y)
+
     if not interactive:
         plt.tight_layout()
     if png_filename is not None:
@@ -621,6 +698,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         def on_key(event):
             nonlocal vmin, vmax
             nonlocal img_ax3, img_ax4
+            nonlocal display_ncr
+            nonlocal aspect_imshow
             ax_mouse = mouse_info['ax']
             x_mouse = mouse_info['x']
             y_mouse = mouse_info['y']
@@ -633,11 +712,12 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             elif event.key == '?':
                 print("Keyboard shortcuts:")
                 print("  'h' reset zoom to initial limits")
-                print("  'i' print pixel info at mouse position")
+                print("  'i' print pixel info at mouse position (ax3 and ax4 only)")
+                print("  'n' toggle display of number of cosmic rays (ax3 and ax4 only)")
+                print("  'a' toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
                 print("  ',' set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
                 print("  '/' set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
-                print("  ';' set vmin and vmax interactively (ax3 and ax4 only)")
-                print("  'q' close the plot and exit interactive mode")
+                print("  'q' close the plot and continue the program execution")
             elif event.key in ("i", "I"):
                 if ax_mouse == ax1:
                     print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
@@ -652,6 +732,21 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         print('.' * 79)
                         for inum in range(image3d.shape[0]):
                             print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy, ix]:.3f}')
+                        print('.' * 79)
+                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'simboundary']):
+                            if flag.reshape((naxis2, naxis1))[iy, ix]:
+                                print(f'Pixel found by {crmethod}')
+                            else:
+                                print(f'Pixel not found by {crmethod}')
+            elif event.key == 'n':
+                display_ncr = not display_ncr
+                sync_zoom_y(ax1)
+            elif event.key == 'a':
+                if aspect_imshow == 'equal':
+                    aspect_imshow = 'auto'
+                else:
+                    aspect_imshow = 'equal'
+                sync_zoom_y(ax1)
             elif event.key in [',', '/']:
                 if ax_mouse in [ax3, ax4]:
                     xmin, xmax = ax_mouse.get_xlim()
@@ -1134,7 +1229,7 @@ def compute_crmasks(
     mean2d = np.mean(image3d, axis=0)
 
     # Compute points for diagnostic diagram of simboundary method
-    xplot = min2d.flatten()
+    xplot = min2d.flatten()  # bias was already subtracted above
     yplot = median2d.flatten() - min2d.flatten()
 
     # Check that color_scale is valid
@@ -1345,7 +1440,7 @@ def compute_crmasks(
                            aspect='auto', title=f'Median - Image {i+1}')
                 tea.imshow(fig, axarr[3], dumdiff2, vmin=vmin, vmax=vmax,
                            aspect='auto', title=f'Median - Shifted Image {i+1}')
-                #plt.tight_layout()
+                # plt.tight_layout()
                 png_filename = f'xyoffset_crosscorr_{i+1}.png'
                 _logger.info(f"saving {png_filename}")
                 plt.savefig(png_filename, dpi=150)
@@ -1558,17 +1653,9 @@ def compute_crmasks(
         flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
-        _logger.info("number of pixels flagged as coincident cosmic rays: %d", np.sum(flag_sb))
+        _logger.info("number of pixels flagged as cosmic rays by simboundary: %d", np.sum(flag_sb))
         if crmethod == 'simboundary':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
-
-    # Show diagnostic plot for the cosmic ray detection
-    _logger.info("generating diagnostic plot for MEDIANCR...")
-    ylabel = r'median2d $-$ min2d'
-    diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive,
-                    median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
-                    _logger=_logger, png_filename='diagnostic_mediancr.png')
 
     # Combine the flags from the two methods (if both were used)
     if flag_la is None and flag_sb is None:
@@ -1579,7 +1666,16 @@ def compute_crmasks(
         flag = flag_la
     else:
         flag = np.logical_and(flag_la, flag_sb)
+        _logger.info("number of pixels flagged as cosmic rays by lacosmic+simboundary: %d", np.sum(flag))
     flag = flag.reshape((naxis2, naxis1))
+
+    # Show diagnostic plot for the cosmic ray detection
+    _logger.info("generating diagnostic plot for MEDIANCR...")
+    ylabel = r'median2d $-$ min2d'
+    diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
+                    sb_threshold, ylabel, interactive,
+                    median2d=median2d, min2d=min2d, max2d=max2d, mean2d=mean2d, image3d=image3d,
+                    _logger=_logger, png_filename='diagnostic_mediancr.png')
 
     # Check if any cosmic ray was detected
     if not np.any(flag):
@@ -1817,7 +1913,7 @@ def compute_crmasks(
             ylabel = f'array{i}' + r' $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                         sb_threshold, ylabel, interactive,
-                        median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
+                        median2d=median2d, min2d=min2d, max2d=max2d, mean2d=mean2d, image3d=image3d,
                         _logger=_logger, png_filename=png_filename)
         flag = np.logical_or(flag_la, flag_sb)
         flag = flag.reshape((naxis2, naxis1))
