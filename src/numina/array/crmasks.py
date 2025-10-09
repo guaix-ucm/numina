@@ -23,6 +23,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import LogNorm
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
+from matplotlib.widgets import TextBox
 import numpy as np
 import numpy.ma as ma
 from scipy import ndimage
@@ -36,6 +37,7 @@ from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits
 import teareduce as tea
 
 VALID_CRMETHODS = ['simboundary', 'lacosmic', 'sb_lacosmic']
+VALID_BOUNDARY_FITS = ['spline', 'piecewise']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
 
 
@@ -358,6 +360,28 @@ def estimate_diagnostic_limits(rng, gain, rnoise, maxvalue, num_images, npixels)
     return xdiag_min, xdiag_max, ydiag_min, ydiag_max
 
 
+def define_piecewise_linear_function(xarray, yarray):
+    """Define a piecewise linear function.
+
+    Parameters
+    ----------
+    xarray : 1D numpy array
+        The x coordinates of the points.
+    yarray : 1D numpy array
+        The y coordinates of the points.
+
+    """
+    isort = np.argsort(xarray)
+    xfit = xarray[isort]
+    yfit = yarray[isort]
+
+    def function(x):
+        y = np.interp(x, xfit, yfit)
+        return y
+
+    return function
+
+
 def segregate_cr_flags(naxis1, naxis2, flag_la, flag_sb, within_xy_diagram):
     """Segregate the cosmic ray flags into three categories:
     - detected only by the lacosmic method
@@ -442,20 +466,23 @@ def update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, 
     num_both, xcr_both, ycr_both = tuple_both
 
     for ax in [ax2, ax3, ax4]:
-        for num, xcr, ycr, edgecolors, symbol, facecolors in zip(
+        for num, xcr, ycr, color, marker in zip(
                 [num_only_la, num_only_sb, num_both],
                 [xcr_only_la, xcr_only_sb, xcr_both],
                 [ycr_only_la, ycr_only_sb, ycr_both],
-                ['r', 'b', 'g'],
-                ['x', '+', 'o'],
-                ['r', 'b', 'none']):
+                ['r', 'b', 'y'],
+                ['x', '+', 'o']):
             if num > 0:
-                ax.scatter(xcr-1, ycr-1, edgecolors=edgecolors, marker=symbol, facecolors=facecolors)
+                if marker == 'o':
+                    ax.scatter(xcr-1, ycr-1, edgecolors=color, marker=marker, facecolors='none')
+                else:
+                    ax.scatter(xcr-1, ycr-1, c=color, marker=marker)
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive, median2d, mean2d,
-                    _logger, png_filename):
+                    sb_threshold, ylabel, interactive, median2d, min2d, mean2d, image3d,
+                    ax3_title='median2d', ax4_title='mean2d',
+                    _logger=None, png_filename=None):
     """Diagnostic plot for the mediancr function.
     """
     if png_filename is None:
@@ -464,11 +491,30 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     # Segregate the cosmic ray flags
     naxis2, naxis1 = median2d.shape
 
-    fig, axarr = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
-    ax1, ax2, ax3, ax4 = axarr.flatten()
+    if interactive:
+        fig = plt.figure(figsize=(12, 8))
+        x0_plot = 0.07
+        y0_plot = 0.07
+        width_plot = 0.4
+        height_plot = 0.4
+        vspace_plot = 0.09
+        ax1 = fig.add_axes([x0_plot, y0_plot + height_plot + vspace_plot, width_plot, height_plot])  # top left
+        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot])  # top right
+        ax3 = fig.add_axes([x0_plot, y0_plot, width_plot, height_plot])  # bottom left
+        ax4 = fig.add_axes([0.55, y0_plot, width_plot, height_plot])  # bottom right
+        dx_text = 0.07
+        ax_vmin = plt.axes([x0_plot, y0_plot + height_plot + 0.005, dx_text, 0.03])
+        ax_vmax = plt.axes([x0_plot + width_plot - dx_text, y0_plot + height_plot + 0.005, dx_text, 0.03])
+    else:
+        fig, axarr = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+        ax1, ax2, ax3, ax4 = axarr.flatten()
+        ax_vmin, ax_vmax = None, None
+
     vmin, vmax = tea.zscale(median2d)
-    tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
-    tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
+    img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax,
+                               title=ax3_title, cmap='viridis', colorbar=False)
+    img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax,
+                               title=ax4_title, cmap='viridis', colorbar=False)
 
     ax2.set_xlim(ax3.get_xlim())
     ax2.set_ylim(ax3.get_ylim())
@@ -482,6 +528,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     updating = {'plot_limits': False}
 
     def sync_zoom(event_ax):
+        nonlocal img_ax3, img_ax4
         if updating['plot_limits']:
             return
         try:
@@ -490,17 +537,21 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 xlim = ax2.get_xlim()
                 ylim = ax2.get_ylim()
                 ax2.cla()  # after cla the callbacks are removed
+                ax2.callbacks.connect('xlim_changed', sync_zoom)
+                ax2.callbacks.connect('ylim_changed', sync_zoom)
                 ax2.set_title('Detected cosmic rays')
                 ax2.set_xlabel('X axis (array index)')
                 ax2.set_ylabel('Y axis (array index)')
-                ax2.callbacks.connect('xlim_changed', sync_zoom)
-                ax2.callbacks.connect('ylim_changed', sync_zoom)
                 for line in ax3.lines:
                     line.remove()
                 for line in ax4.lines:
                     line.remove()
-                tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
-                tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax, cmap='gray')
+                ax3.cla()
+                img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect='auto', vmin=vmin, vmax=vmax,
+                                           title=ax3_title, cmap='viridis', colorbar=False)
+                ax4.cla()
+                img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect='auto', vmin=vmin, vmax=vmax,
+                                           title=ax4_title, cmap='viridis', colorbar=False)
                 update_marks(naxis1, naxis2, flag_la, flag_sb, xplot, yplot, ax1, ax2, ax3, ax4)
                 ax2.set_xlim(xlim)
                 ax2.set_ylim(ylim)
@@ -536,11 +587,11 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     num_only_sb = np.sum(flag_only_sb)
     num_both = np.sum(flag_both)
     ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
-                edgecolor='r', marker='x', facecolors='r', label=f'Suspected pixels: {num_only_la} (lacosmic)')
+                c='r', marker='x', label=f'Suspected pixels: {num_only_la} (lacosmic)')
     ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
-                edgecolor='b', marker='+', facecolors='b', label=f'Suspected pixels: {num_only_sb} (simboundary)')
+                c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (simboundary)')
     ax1.scatter(xplot[flag_both], yplot[flag_both],
-                edgecolor='g', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
+                edgecolor='y', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
     if xplot_boundary is not None and yplot_boundary is not None:
         ax1.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
     if sb_threshold is not None:
@@ -549,23 +600,135 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax1.set_ylabel(ylabel)
     ax1.set_title('Median-Mean Diagnostic Diagram')
     ax1.legend(loc='upper right', fontsize=8)
-    plt.tight_layout()
-    _logger.info(f"saving {png_filename}")
-    plt.savefig(png_filename, dpi=150)
+    if not interactive:
+        plt.tight_layout()
+    if png_filename is not None:
+        _logger.info(f"saving {png_filename}")
+        plt.savefig(png_filename, dpi=150)
     if interactive:
         init_limits = {ax: (ax.get_xlim(), ax.get_ylim()) for ax in [ax1, ax2, ax3, ax4]}
 
+        mouse_info = {'ax': None, 'x': None, 'y': None}
+
+        def on_mouse_move(event):
+            if event.inaxes:
+                mouse_info['ax'] = event.inaxes
+                mouse_info['x'] = event.xdata
+                mouse_info['y'] = event.ydata
+
+        fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
+
         def on_key(event):
+            nonlocal vmin, vmax
+            nonlocal img_ax3, img_ax4
+            ax_mouse = mouse_info['ax']
+            x_mouse = mouse_info['x']
+            y_mouse = mouse_info['y']
+
             if event.key in ("h", "H"):
                 for ax in [ax1, ax2, ax3, ax4]:
                     init_xlim, init_ylim = init_limits[ax]
                     ax.set_xlim(init_xlim)
                     ax.set_ylim(init_ylim)
+            elif event.key == '?':
+                print("Keyboard shortcuts:")
+                print("  'h' reset zoom to initial limits")
+                print("  'i' print pixel info at mouse position")
+                print("  ',' set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
+                print("  '/' set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
+                print("  ';' set vmin and vmax interactively (ax3 and ax4 only)")
+                print("  'q' close the plot and exit interactive mode")
+            elif event.key in ("i", "I"):
+                if ax_mouse == ax1:
+                    print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
+                elif ax_mouse in [ax2, ax3, ax4]:
+                    ix = int(round(x_mouse))
+                    iy = int(round(y_mouse))
+                    if 0 <= ix < naxis1 and 0 <= iy < naxis2:
+                        print('-' * 79)
+                        print(f'Pixel coordinates (array indices): ix = {ix}, iy = {iy}')
+                        print(f'median2d - min2d = {median2d[iy, ix] - min2d[iy, ix]:.3f}')
+                        print(f'min2d - bias     = {min2d[iy, ix]:.3f}')
+                        print('.' * 79)
+                        for inum in range(image3d.shape[0]):
+                            print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy, ix]:.3f}')
+            elif event.key in [',', '/']:
+                if ax_mouse in [ax3, ax4]:
+                    xmin, xmax = ax_mouse.get_xlim()
+                    ymin, ymax = ax_mouse.get_ylim()
+                    ixmin = int(round(xmin))
+                    ixmax = int(round(xmax))
+                    iymin = int(round(ymin))
+                    iymax = int(round(ymax))
+                    if ixmin > ixmax:
+                        ixmin, ixmax = ixmax, ixmin
+                    if iymin > iymax:
+                        iymin, iymax = iymax, iymin
+                    if ixmin < 0:
+                        ixmin = 0
+                    if ixmax > naxis1 - 1:
+                        ixmax = naxis1 - 1
+                    if iymin < 0:
+                        iymin = 0
+                    if iymax > naxis2 - 1:
+                        iymax = naxis2 - 1
+                    region2d = tea.SliceRegion2D(f'[{ixmin+1}:{ixmax+1},{iymin+1}:{iymax+1}]', mode='fits').python
+                    if event.key == ',':
+                        if ax_mouse == ax3:
+                            vmin, vmax = np.min(median2d[region2d]), np.max(median2d[region2d])
+                        elif ax_mouse == ax4:
+                            vmin, vmax = np.min(mean2d[region2d]), np.max(mean2d[region2d])
+                    elif event.key == '/':
+                        if ax_mouse == ax3:
+                            vmin, vmax = tea.zscale(median2d[region2d])
+                        elif ax_mouse == ax4:
+                            vmin, vmax = tea.zscale(mean2d[region2d])
+                    text_box_vmin.set_val(f'{int(np.round(vmin, 0))}')
+                    text_box_vmax.set_val(f'{int(np.round(vmax, 0))}')
+
+                    img_ax3.set_clim(vmin=vmin, vmax=vmax)
+                    img_ax4.set_clim(vmin=vmin, vmax=vmax)
+
+                    ax3.figure.canvas.draw_idle()
+                    ax4.figure.canvas.draw_idle()
 
         fig.canvas.mpl_connect("key_press_event", on_key)
 
+        def submit_vmin(text):
+            nonlocal vmin, vmax
+            text = text.strip()
+            if text:
+                try:
+                    vmin_ = float(text)
+                    vmin = vmin_
+                    img_ax3.set_clim(vmin=vmin, vmax=vmax)
+                    img_ax4.set_clim(vmin=vmin, vmax=vmax)
+                    ax3.figure.canvas.draw_idle()
+                    ax4.figure.canvas.draw_idle()
+                except ValueError:
+                    print(f'Invalid input: {text}')
+
+        def submit_vmax(text):
+            nonlocal vmin, vmax
+            text = text.strip()
+            if text:
+                try:
+                    vmax_ = float(text)
+                    vmax = vmax_
+                    img_ax3.set_clim(vmin=vmin, vmax=vmax)
+                    img_ax4.set_clim(vmin=vmin, vmax=vmax)
+                    ax3.figure.canvas.draw_idle()
+                    ax4.figure.canvas.draw_idle()
+                except ValueError:
+                    print(f'Invalid input: {text}')
+
+        text_box_vmin = TextBox(ax_vmin, 'vmin:', initial=f'{int(np.round(vmin, 0))}', textalignment='right')
+        text_box_vmin.on_submit(submit_vmin)
+        text_box_vmax = TextBox(ax_vmax, 'vmax:', initial=f'{int(np.round(vmax, 0))}', textalignment='right')
+        text_box_vmax.on_submit(submit_vmax)
+
         _logger.info("Entering interactive mode (press 'q' to close plot)")
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.show()
     plt.close(fig)
 
@@ -689,6 +852,7 @@ def compute_crmasks(
         la_psfmodel=None,
         la_psfsize=None,
         sb_crosscorr_region=None,
+        sb_boundary_fit=None,
         sb_knots_splfit=3,
         sb_fixed_points_in_boundary=None,
         sb_nsimulations=10,
@@ -790,6 +954,10 @@ def compute_crmasks(
         the images are already aligned. The format of the region
         must follow the FITS convention '[xmin:xmax,ymin:ymax]',
         where the indices start from 1 to NAXIS[12].
+    sb_boundary_fit : str, or None
+        The method to use for the boundary fitting. Valid options are:
+        - 'spline': use a spline fit to the boundary.
+        - 'piecewise': use a piecewise linear fit to the boundary.
     sb_knots_splfit : int, optional
         The number of knots for the spline fit to the boundary.
     sb_fixed_points_in_boundary : str, or list or None
@@ -997,6 +1165,7 @@ def compute_crmasks(
     _logger.info("crmethod: %s", crmethod)
     if crmethod in ['simboundary', 'sb_lacosmic']:
         _logger.info("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
+        _logger.info("sb_boundary_fit: %s", sb_boundary_fit if sb_boundary_fit is not None else "None")
         _logger.info("knots for spline fit to the boundary: %d", sb_knots_splfit)
         _logger.info("fixed points in the boundary: %s",
                      str(sb_fixed_points_in_boundary) if sb_fixed_points_in_boundary is not None else "None")
@@ -1101,9 +1270,39 @@ def compute_crmasks(
             sb_fixed_points_in_boundary = None
         else:
             sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
-            x_sb_fixed_points_in_boundary = np.array([item[0] for item in sb_fixed_points_in_boundary], dtype=float)
-            y_sb_fixed_points_in_boundary = np.array([item[1] for item in sb_fixed_points_in_boundary], dtype=float)
-            w_sb_fixed_points_in_boundary = np.array([item[2] for item in sb_fixed_points_in_boundary], dtype=float)
+            x_sb_fixed_points_in_boundary = []
+            y_sb_fixed_points_in_boundary = []
+            w_sb_fixed_points_in_boundary = []
+            for item in sb_fixed_points_in_boundary:
+                if not (isinstance(item, (list, tuple)) and len(item) in [2, 3]):
+                    raise ValueError("Each item in sb_fixed_points_in_boundary must be a list or tuple of "
+                                     "2 or 3 elements: (x, y) or (x, y, weight).")
+                if not all_valid_numbers(item):
+                    raise ValueError(f"All elements in sb_fixed_points_in_boundary={sb_fixed_points_in_boundary} "
+                                     "must be valid numbers.")
+                if len(item) == 2:
+                    x_sb_fixed_points_in_boundary.append(float(item[0]))
+                    y_sb_fixed_points_in_boundary.append(float(item[1]))
+                    w_sb_fixed_points_in_boundary.append(10000)
+                else:
+                    x_sb_fixed_points_in_boundary.append(float(item[0]))
+                    y_sb_fixed_points_in_boundary.append(float(item[1]))
+                    w_sb_fixed_points_in_boundary.append(float(item[2]))
+            x_sb_fixed_points_in_boundary = np.array(x_sb_fixed_points_in_boundary, dtype=float)
+            y_sb_fixed_points_in_boundary = np.array(y_sb_fixed_points_in_boundary, dtype=float)
+            w_sb_fixed_points_in_boundary = np.array(w_sb_fixed_points_in_boundary, dtype=float)
+
+        if sb_boundary_fit is None:
+            raise ValueError(f"sb_boundary_fit is None and must be one of {VALID_BOUNDARY_FITS}.")
+        elif sb_boundary_fit not in VALID_BOUNDARY_FITS:
+            raise ValueError(f"Invalid sb_boundary_fit: {sb_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
+        if sb_boundary_fit == 'piecewise':
+            if sb_fixed_points_in_boundary is None:
+                raise ValueError("For sb_boundary_fit='piecewise', "
+                                 "sb_fixed_points_in_boundary must be provided.")
+            elif len(x_sb_fixed_points_in_boundary) < 2:
+                raise ValueError("For sb_boundary_fit='piecewise', "
+                                 "at least two fixed points must be provided in sb_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
         if sb_crosscorr_region is None:
@@ -1146,7 +1345,7 @@ def compute_crmasks(
                            aspect='auto', title=f'Median - Image {i+1}')
                 tea.imshow(fig, axarr[3], dumdiff2, vmin=vmin, vmax=vmax,
                            aspect='auto', title=f'Median - Shifted Image {i+1}')
-                plt.tight_layout()
+                #plt.tight_layout()
                 png_filename = f'xyoffset_crosscorr_{i+1}.png'
                 _logger.info(f"saving {png_filename}")
                 plt.savefig(png_filename, dpi=150)
@@ -1277,45 +1476,62 @@ def compute_crmasks(
         xboundary = np.array(xboundary)
         yboundary = np.array(yboundary)
         ax1.plot(xboundary, yboundary, 'r+')
-        splfit = None  # avoid flake8 warning
-        for iterboundary in range(sb_niter_boundary_extension + 1):
-            wboundary = np.ones_like(xboundary, dtype=float)
-            if iterboundary == 0:
-                label = 'initial fit'
-            else:
-                wboundary[yboundary > splfit(xboundary)] = sb_weight_boundary_extension**iterboundary
-                label = f'Iteration {iterboundary}'
-            if sb_fixed_points_in_boundary is None:
-                xboundary_fit = xboundary
-                yboundary_fit = yboundary
-                wboundary_fit = wboundary
-            else:
-                wboundary_max = np.max(wboundary)
-                xboundary_fit = np.concatenate((xboundary, x_sb_fixed_points_in_boundary))
-                yboundary_fit = np.concatenate((yboundary, y_sb_fixed_points_in_boundary))
-                wboundary_fit = np.concatenate((wboundary, w_sb_fixed_points_in_boundary * wboundary_max))
-            isort = np.argsort(xboundary_fit)
-            splfit, knots = spline_positive_derivative(
-                x=xboundary_fit[isort],
-                y=yboundary_fit[isort],
-                w=wboundary_fit[isort],
-                n_total_knots=sb_knots_splfit,
+        boundaryfit = None  # avoid flake8 warning
+        if sb_boundary_fit == 'spline':
+            for iterboundary in range(sb_niter_boundary_extension + 1):
+                wboundary = np.ones_like(xboundary, dtype=float)
+                if iterboundary == 0:
+                    label = 'initial spline fit'
+                else:
+                    wboundary[yboundary > boundaryfit(xboundary)] = sb_weight_boundary_extension**iterboundary
+                    label = f'Iteration {iterboundary}'
+                if sb_fixed_points_in_boundary is None:
+                    xboundary_fit = xboundary
+                    yboundary_fit = yboundary
+                    wboundary_fit = wboundary
+                else:
+                    wboundary_max = np.max(wboundary)
+                    xboundary_fit = np.concatenate((xboundary, x_sb_fixed_points_in_boundary))
+                    yboundary_fit = np.concatenate((yboundary, y_sb_fixed_points_in_boundary))
+                    wboundary_fit = np.concatenate((wboundary, w_sb_fixed_points_in_boundary * wboundary_max))
+                isort = np.argsort(xboundary_fit)
+                boundaryfit, knots = spline_positive_derivative(
+                    x=xboundary_fit[isort],
+                    y=yboundary_fit[isort],
+                    w=wboundary_fit[isort],
+                    n_total_knots=sb_knots_splfit,
+                )
+                ydum = boundaryfit(xcbins)
+                ydum[xcbins < knots[0]] = boundaryfit(knots[0])
+                ydum[xcbins > knots[-1]] = boundaryfit(knots[-1])
+                ax1.plot(xcbins, ydum, '-', color=f'C{iterboundary}', label=label)
+                ax1.plot(knots, boundaryfit(knots), 'o', color=f'C{iterboundary}', markersize=4)
+        elif sb_boundary_fit == 'piecewise':
+            boundaryfit = define_piecewise_linear_function(
+                xarray=x_sb_fixed_points_in_boundary,
+                yarray=y_sb_fixed_points_in_boundary
             )
-            ydum = splfit(xcbins)
-            ydum[xcbins < knots[0]] = splfit(knots[0])
-            ydum[xcbins > knots[-1]] = splfit(knots[-1])
-            ax1.plot(xcbins, ydum, '-', color=f'C{iterboundary}', label=label)
-            ax1.plot(knots, splfit(knots), 'o', color=f'C{iterboundary}', markersize=4)
+            ax1.plot(xcbins, boundaryfit(xcbins), 'r-', label='Piecewise linear fit')
+        else:
+            raise ValueError(f"Invalid sb_boundary_fit: {sb_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
+        if sb_fixed_points_in_boundary is not None:
+            ax1.plot(x_sb_fixed_points_in_boundary, y_sb_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
+                     label='Fixed points')
         ax1.set_xlabel(r'min2d $-$ bias')
         ax1.set_ylabel(r'median2d $-$ min2d')
         ax1.set_title(f'Simulated data (sb_nsimulations = {sb_nsimulations})')
         if sb_niter_boundary_extension > 1:
             ax1.legend(loc=4)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
-        yplot_boundary = splfit(xplot_boundary)
-        yplot_boundary[xplot_boundary < knots[0]] = splfit(knots[0])
-        yplot_boundary[xplot_boundary > knots[-1]] = splfit(knots[-1])
+        yplot_boundary = boundaryfit(xplot_boundary)
+        if sb_boundary_fit == 'spline':
+            # For spline fit, force the boundary to be constant outside the knots
+            yplot_boundary[xplot_boundary < knots[0]] = boundaryfit(knots[0])
+            yplot_boundary[xplot_boundary > knots[-1]] = boundaryfit(knots[-1])
         ax2.plot(xplot_boundary, yplot_boundary, 'r-', label='Detection boundary')
+        if sb_fixed_points_in_boundary is not None:
+            ax2.plot(x_sb_fixed_points_in_boundary, y_sb_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
+                     label='Fixed points')
         ax2.set_xlim(xdiag_min, xdiag_max)
         ax2.set_ylim(ax1.get_ylim())
         ax2.set_xlabel(ax1.get_xlabel())
@@ -1337,7 +1553,7 @@ def compute_crmasks(
             _logger.info("updated sb_threshold for cosmic ray detection: %f", sb_threshold)
 
         # Apply the criterium to detect coincident cosmic rays
-        flag1 = yplot > splfit(xplot)
+        flag1 = yplot > boundaryfit(xplot)
         flag2 = yplot > sb_threshold
         flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
@@ -1351,7 +1567,7 @@ def compute_crmasks(
     ylabel = r'median2d $-$ min2d'
     diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                     sb_threshold, ylabel, interactive,
-                    median2d=median2d, mean2d=mean2d,
+                    median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
                     _logger=_logger, png_filename='diagnostic_mediancr.png')
 
     # Combine the flags from the two methods (if both were used)
@@ -1568,7 +1784,7 @@ def compute_crmasks(
         elif crmethod in ['simboundary', 'sb_lacosmic']:
             xplot = min2d.flatten()
             yplot = array.flatten() - min2d.flatten()
-            flag1 = yplot > splfit(xplot)
+            flag1 = yplot > boundaryfit(xplot)
             flag2 = yplot > sb_threshold
             flag_sb = np.logical_and(flag1, flag2)
             flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
@@ -1601,7 +1817,7 @@ def compute_crmasks(
             ylabel = f'array{i}' + r' $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                         sb_threshold, ylabel, interactive,
-                        median2d=median2d, mean2d=mean2d,
+                        median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
                         _logger=_logger, png_filename=png_filename)
         flag = np.logical_or(flag_la, flag_sb)
         flag = flag.reshape((naxis2, naxis1))
