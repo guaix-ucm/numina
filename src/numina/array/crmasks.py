@@ -533,17 +533,18 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive, median2d, min2d, max2d, mean2d, image3d,
-                    ax3_title='median2d', ax4_title='mean2d',
-                    _logger=None, png_filename=None):
+                    sb_threshold, ylabel, interactive, median2d, min2d, mean2d, image3d,
+                    ax3_title='median2d', _logger=None, png_filename=None):
     """Diagnostic plot for the mediancr function.
     """
     if png_filename is None:
         raise ValueError("png_filename must be provided for diagnostic plots.")
 
+    # Set up relevant parameters
     naxis2, naxis1 = median2d.shape
     display_ncr = False   # display the number of cosmic rays in the plot instead of symbols
     aspect_imshow = 'auto'  # 'equal' or 'auto'
+    i_comparison_image = 0  # 0 for mean2d, 1, 2,... for image3d[comparison_image-1]
 
     if interactive:
         fig = plt.figure(figsize=(12, 8))
@@ -607,7 +608,13 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     vmin, vmax = tea.zscale(median2d)
     img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
                                title=ax3_title, cmap='viridis', colorbar=False)
-    img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+    if i_comparison_image == 0:
+        comparison_image = mean2d
+        ax4_title = 'mean2d'
+    else:
+        comparison_image = image3d[i_comparison_image - 1]
+        ax4_title = f'single exposure #{i_comparison_image}]'
+    img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
                                title=ax4_title, cmap='viridis', colorbar=False)
     ax3.set_title(ax3_title)
     ax4.set_title(ax4_title)
@@ -655,7 +662,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 xlim = ax4.get_xlim()
                 ylim = ax4.get_ylim()
                 ax4.cla()
-                img_ax4, _, _ = tea.imshow(fig, ax4, mean2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
                                            title=ax4_title, cmap='viridis', colorbar=False)
                 ax4.set_xlim(xlim)
                 ax4.set_ylim(ylim)
@@ -701,6 +708,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             nonlocal img_ax3, img_ax4
             nonlocal display_ncr
             nonlocal aspect_imshow
+            nonlocal i_comparison_image
             ax_mouse = mouse_info['ax']
             x_mouse = mouse_info['x']
             y_mouse = mouse_info['y']
@@ -716,13 +724,14 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 print("  'i' print pixel info at mouse position (ax3 and ax4 only)")
                 print("  'n' toggle display of number of cosmic rays (ax3 and ax4 only)")
                 print("  'a' toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
+                print("  't' toggle mean2d -> individual exposures in ax4")
                 print("  ',' set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
                 print("  '/' set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
                 print("  'q' close the plot and continue the program execution")
             elif event.key in ("i", "I"):
-                if ax_mouse == ax1:
+                if ax_mouse in [ax1, ax2]:
                     print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
-                elif ax_mouse in [ax2, ax3, ax4]:
+                elif ax_mouse in [ax3, ax4]:
                     ix = int(round(x_mouse))
                     iy = int(round(y_mouse))
                     if 0 <= ix < naxis1 and 0 <= iy < naxis2:
@@ -748,6 +757,22 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 else:
                     aspect_imshow = 'equal'
                 sync_zoom_y(ax1)
+            elif event.key == 't':
+                if ax_mouse == ax4:
+                    i_comparison_image += 1
+                    if i_comparison_image > image3d.shape[0]:
+                        i_comparison_image = 0
+                    if i_comparison_image == 0:
+                        comparison_image = mean2d
+                        ax4_title = 'mean2d'
+                    else:
+                        comparison_image = image3d[i_comparison_image - 1]
+                        ax4_title = f'single exposure #{i_comparison_image}'
+                    vmin, vmax = img_ax4.get_clim()
+                    img_ax4.set_data(comparison_image)
+                    img_ax4.set_clim(vmin=vmin, vmax=vmax)
+                    ax4.set_title(ax4_title)
+                    ax4.figure.canvas.draw_idle()
             elif event.key in [',', '/']:
                 if ax_mouse in [ax3, ax4]:
                     xmin, xmax = ax_mouse.get_xlim()
@@ -1675,7 +1700,7 @@ def compute_crmasks(
     ylabel = r'median2d $-$ min2d'
     diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                     sb_threshold, ylabel, interactive,
-                    median2d=median2d, min2d=min2d, max2d=max2d, mean2d=mean2d, image3d=image3d,
+                    median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
                     _logger=_logger, png_filename='diagnostic_mediancr.png')
 
     # Check if any cosmic ray was detected
@@ -1914,7 +1939,7 @@ def compute_crmasks(
             ylabel = f'array{i}' + r' $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                         sb_threshold, ylabel, interactive,
-                        median2d=median2d, min2d=min2d, max2d=max2d, mean2d=mean2d, image3d=image3d,
+                        median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
                         _logger=_logger, png_filename=png_filename)
         flag = np.logical_or(flag_la, flag_sb)
         flag = flag.reshape((naxis2, naxis1))
