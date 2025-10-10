@@ -554,7 +554,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         vspace_plot = 0.09
         # top left, top right, bottom left, bottom right
         ax1 = fig.add_axes([x0_plot, y0_plot + height_plot + vspace_plot, width_plot, height_plot])
-        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot])
+        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot],
+                           sharex=ax1, sharey=ax1)
         ax3 = fig.add_axes([x0_plot, y0_plot, width_plot, height_plot])
         ax4 = fig.add_axes([0.55, y0_plot, width_plot, height_plot], sharex=ax3, sharey=ax3)
         dx_text = 0.07
@@ -2202,6 +2203,9 @@ def main(args=None):
     parser.add_argument("inputyaml",
                         help="Input YAML file.",
                         type=str)
+    parser.add_argument("--verbose",
+                        help="Increase output verbosity",
+                        action="store_true")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -2218,7 +2222,8 @@ def main(args=None):
     # Read parameters from YAML file
     with open(args.inputyaml, 'rt') as fstream:
         input_params = yaml.safe_load(fstream)
-    print(f'{input_params=}')
+    if args.verbose:
+        logger.info(f'{input_params=}')
 
     # Check that mandatory parameters are present
     if 'images' not in input_params:
@@ -2230,7 +2235,9 @@ def main(args=None):
         for file in list_of_fits_files:
             if not os.path.isfile(file):
                 raise FileNotFoundError(f"File {file} not found.")
-    for item in ['gain', 'rnoise', 'bias', 'crmethod']:
+            else:
+                logger.info("found input file: %s", file)
+    for item in ['gain', 'rnoise', 'bias']:
         if item not in input_params:
             raise ValueError(f"'{item}' must be provided in input YAML file.")
 
@@ -2239,6 +2246,7 @@ def main(args=None):
         extnum = int(input_params['extnum'])
     else:
         extnum = 0
+        logger.info("extnum not provided, assuming extnum=0")
 
     # Read the input list of files, which should contain paths to 2D FITS files,
     # and load the arrays from the specified extension number.
@@ -2248,11 +2256,21 @@ def main(args=None):
     if not list_arrays:
         raise ValueError("The input list is empty. Please provide a valid list of 2D arrays.")
 
+    # Check that the requirements are provided
+    if 'requirements' not in input_params:
+        raise ValueError("'requirements' must be provided in input YAML file.")
+    requirements = input_params['requirements']
+    if not isinstance(requirements, dict):
+        raise ValueError("'requirements' must be a dictionary.")
+    if not requirements:
+        raise ValueError("'requirements' dictionary is empty.")
+
     # Define parameters for compute_crmasks
-    crmasks_params = input_params.copy()
-    # Delete parameters not used by compute_crmasks
-    for item in ['images', 'extnum']:
-        del crmasks_params[item]
+    crmasks_params = dict()
+    for key in ['gain', 'rnoise', 'bias']:
+        crmasks_params[key] = input_params[key]
+    for item in input_params['requirements']:
+        crmasks_params[item] = input_params['requirements'][item]
 
     # Compute the different cosmic ray masks
     hdul_masks = compute_crmasks(
