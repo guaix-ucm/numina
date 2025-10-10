@@ -191,8 +191,8 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         argsort = np.argsort(image3d, axis=0)
         fig, (ax1, ax2) = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(12, 5.5))
         vmin, vmax = tea.zscale(median2d)
-        tea.imshow(fig, ax1, median2d, vmin=vmin, vmax=vmax, aspect='auto')
-        tea.imshow(fig, ax2, argsort[naxis3//2] + 1, vmin=1, vmax=naxis3, cmap='brg',
+        tea.imshow(fig, ax1, median2d, ds9mode=True, vmin=vmin, vmax=vmax, aspect='auto')
+        tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True, vmin=1, vmax=naxis3, cmap='brg',
                    cblabel='Image number', aspect='auto')
         plt.tight_layout()
         png_filename = 'image_number_to_median.png'
@@ -523,13 +523,13 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                 else:
                     if display_ncr:
                         for ix, iy, ncr in zip(xcr, ycr, ncr):
-                            ax.text(ix-1, iy-1, str(ncr), color=color, fontsize=8, clip_on=True,
+                            ax.text(ix, iy, str(ncr), color=color, fontsize=8, clip_on=True,
                                     ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5))
                     else:
                         if marker == 'o':
-                            ax.scatter(xcr-1, ycr-1, edgecolors=color, marker=marker, facecolors='none')
+                            ax.scatter(xcr, ycr, edgecolors=color, marker=marker, facecolors='none')
                         else:
-                            ax.scatter(xcr-1, ycr-1, c=color, marker=marker)
+                            ax.scatter(xcr, ycr, c=color, marker=marker)
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
@@ -541,7 +541,22 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         raise ValueError("png_filename must be provided for diagnostic plots.")
 
     # Set up relevant parameters
-    naxis2, naxis1 = median2d.shape
+    naxis3, naxis2, naxis1 = image3d.shape
+    if median2d.shape != (naxis2, naxis1):
+        raise ValueError("median2d must have shape (naxis2, naxis1).")
+    if min2d.shape != (naxis2, naxis1):
+        raise ValueError("min2d must have shape (naxis2, naxis1).")
+    if mean2d.shape != (naxis2, naxis1):
+        raise ValueError("mean2d must have shape (naxis2, naxis1).")
+    if flag_la.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{flag_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_la.shape != flag_sb.shape:
+        raise ValueError(f"{flag_sb.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if xplot.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{xplot.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if yplot.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{yplot.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+
     display_ncr = False   # display the number of cosmic rays in the plot instead of symbols
     aspect_imshow = 'auto'  # 'equal' or 'auto'
     i_comparison_image = 0  # 0 for mean2d, 1, 2,... for image3d[comparison_image-1]
@@ -606,7 +621,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax2.set_title(ax1.get_title())
 
     vmin, vmax = tea.zscale(median2d)
-    img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+    img_ax3, _, _ = tea.imshow(fig, ax3, median2d, ds9mode=True, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
                                title=ax3_title, cmap='viridis', colorbar=False)
     if i_comparison_image == 0:
         comparison_image = mean2d
@@ -614,7 +629,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     else:
         comparison_image = image3d[i_comparison_image - 1]
         ax4_title = f'single exposure #{i_comparison_image}]'
-    img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+    img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, ds9mode=True, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
                                title=ax4_title, cmap='viridis', colorbar=False)
     ax3.set_title(ax3_title)
     ax4.set_title(ax4_title)
@@ -655,14 +670,16 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 xlim = ax3.get_xlim()
                 ylim = ax3.get_ylim()
                 ax3.cla()
-                img_ax3, _, _ = tea.imshow(fig, ax3, median2d, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                img_ax3, _, _ = tea.imshow(fig, ax3, median2d, ds9mode=True, aspect=aspect_imshow,
+                                           vmin=vmin, vmax=vmax,
                                            title=ax3_title, cmap='viridis', colorbar=False)
                 ax3.set_xlim(xlim)
                 ax3.set_ylim(ylim)
                 xlim = ax4.get_xlim()
                 ylim = ax4.get_ylim()
                 ax4.cla()
-                img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+                img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, ds9mode=True, aspect=aspect_imshow,
+                                           vmin=vmin, vmax=vmax,
                                            title=ax4_title, cmap='viridis', colorbar=False)
                 ax4.set_xlim(xlim)
                 ax4.set_ylim(ylim)
@@ -708,43 +725,62 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             nonlocal img_ax3, img_ax4
             nonlocal display_ncr
             nonlocal aspect_imshow
-            nonlocal i_comparison_image
+            nonlocal i_comparison_image, comparison_image
             ax_mouse = mouse_info['ax']
             x_mouse = mouse_info['x']
             y_mouse = mouse_info['y']
 
-            if event.key in ("h", "H"):
+            if event.key in ("h", "H", "r", "R"):
                 for ax in [ax1, ax2, ax3, ax4]:
                     init_xlim, init_ylim = init_limits[ax]
                     ax.set_xlim(init_xlim)
                     ax.set_ylim(init_ylim)
+                if i_comparison_image == 0:
+                    comparison_image = mean2d
+                    ax4_title = 'mean2d'
+                else:
+                    comparison_image = image3d[i_comparison_image - 1]
+                    ax4_title = f'single exposure #{i_comparison_image}'
+                ax4.set_title(ax4_title)
             elif event.key == '?':
+                print("-" * 79)
                 print("Keyboard shortcuts:")
-                print("  'h' reset zoom to initial limits")
-                print("  'i' print pixel info at mouse position (ax3 and ax4 only)")
-                print("  'n' toggle display of number of cosmic rays (ax3 and ax4 only)")
-                print("  'a' toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
-                print("  't' toggle mean2d -> individual exposures in ax4")
-                print("  ',' set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
-                print("  '/' set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
-                print("  'q' close the plot and continue the program execution")
+                print("'h' or 'r': reset zoom to initial limits")
+                print("'p': pan mode")
+                print("'o': zoom to rectangle")
+                print("'f': toggle full screen mode")
+                print("'s': save the figure to a PNG file")
+                print("." * 79)
+                print("'?': show this help message")
+                print("'i': print pixel info at mouse position (ax3 and ax4 only)")
+                print("'n': toggle display of number of cosmic rays (ax3 and ax4 only)")
+                print("'a': toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
+                print("'t': toggle mean2d -> individual exposures in ax4")
+                print("'0': switch to mean2d in ax4")
+                print("'1', '2', ...: switch to individual exposure #1, #2, ... in ax4")
+                print("',': set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
+                print("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
+                print("'q': close the plot and continue the program execution")
+                print("-" * 79)
             elif event.key in ("i", "I"):
                 if ax_mouse in [ax1, ax2]:
                     print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
                 elif ax_mouse in [ax3, ax4]:
                     ix = int(round(x_mouse))
                     iy = int(round(y_mouse))
-                    if 0 <= ix < naxis1 and 0 <= iy < naxis2:
+                    if 1 <= ix <= naxis1 and 1 <= iy <= naxis2:
                         print('-' * 79)
-                        print(f'Pixel coordinates (array indices): ix = {ix}, iy = {iy}')
-                        print(f'median2d - min2d = {median2d[iy, ix] - min2d[iy, ix]:.3f}')
-                        print(f'min2d - bias     = {min2d[iy, ix]:.3f}')
+                        print(f'Pixel coordinates (FITS criterium): ix = {ix}, iy = {iy}')
+                        print(f'median2d - min2d = {median2d[iy-1, ix-1] - min2d[iy-1, ix-1]:.3f}')
+                        print(f'min2d - bias     = {min2d[iy-1, ix-1]:.3f}')
                         print('.' * 79)
                         for inum in range(image3d.shape[0]):
-                            print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy, ix]:.3f}')
+                            print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy-1, ix-1]:.3f}')
                         print('.' * 79)
                         for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'simboundary']):
-                            if flag.reshape((naxis2, naxis1))[iy, ix]:
+                            # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
+                            # where the first pixel is (1, 1)
+                            if flag.reshape((naxis2, naxis1))[iy-1, ix-1]:
                                 print(f'Pixel found by {crmethod}')
                             else:
                                 print(f'Pixel not found by {crmethod}')
@@ -757,22 +793,32 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 else:
                     aspect_imshow = 'equal'
                 sync_zoom_y(ax1)
-            elif event.key == 't':
+            elif event.key in ['t', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
                 if ax_mouse == ax4:
-                    i_comparison_image += 1
-                    if i_comparison_image > image3d.shape[0]:
+                    i_comparison_image_previous = i_comparison_image
+                    if event.key == 't':
+                        i_comparison_image += 1
+                        if i_comparison_image > naxis3:
+                            i_comparison_image = 0
+                    elif event.key == '0':
                         i_comparison_image = 0
-                    if i_comparison_image == 0:
-                        comparison_image = mean2d
-                        ax4_title = 'mean2d'
                     else:
-                        comparison_image = image3d[i_comparison_image - 1]
-                        ax4_title = f'single exposure #{i_comparison_image}'
-                    vmin, vmax = img_ax4.get_clim()
-                    img_ax4.set_data(comparison_image)
-                    img_ax4.set_clim(vmin=vmin, vmax=vmax)
-                    ax4.set_title(ax4_title)
-                    ax4.figure.canvas.draw_idle()
+                        i_comparison_image = int(event.key)
+                        if i_comparison_image > naxis3:
+                            i_comparison_image = i_comparison_image_previous
+                    if i_comparison_image != i_comparison_image_previous:
+                        if i_comparison_image == 0:
+                            comparison_image = mean2d
+                            ax4_title = 'mean2d'
+                        else:
+                            comparison_image = image3d[i_comparison_image - 1]
+                            ax4_title = f'single exposure #{i_comparison_image}'
+                        print(f'Switching to {ax4_title} in ax4')
+                        vmin, vmax = img_ax4.get_clim()
+                        img_ax4.set_data(comparison_image)
+                        img_ax4.set_clim(vmin=vmin, vmax=vmax)
+                        ax4.set_title(ax4_title)
+                        ax4.figure.canvas.draw_idle()
             elif event.key in [',', '/']:
                 if ax_mouse in [ax3, ax4]:
                     xmin, xmax = ax_mouse.get_xlim()
@@ -785,25 +831,25 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         ixmin, ixmax = ixmax, ixmin
                     if iymin > iymax:
                         iymin, iymax = iymax, iymin
-                    if ixmin < 0:
-                        ixmin = 0
-                    if ixmax > naxis1 - 1:
-                        ixmax = naxis1 - 1
-                    if iymin < 0:
-                        iymin = 0
-                    if iymax > naxis2 - 1:
-                        iymax = naxis2 - 1
-                    region2d = tea.SliceRegion2D(f'[{ixmin+1}:{ixmax+1},{iymin+1}:{iymax+1}]', mode='fits').python
+                    if ixmin < 1:
+                        ixmin = 1
+                    if ixmax > naxis1:
+                        ixmax = naxis1
+                    if iymin < 1:
+                        iymin = 1
+                    if iymax > naxis2:
+                        iymax = naxis2
+                    region2d = tea.SliceRegion2D(f'[{ixmin}:{ixmax},{iymin}:{iymax}]', mode='fits').python
                     if event.key == ',':
                         if ax_mouse == ax3:
                             vmin, vmax = np.min(median2d[region2d]), np.max(median2d[region2d])
                         elif ax_mouse == ax4:
-                            vmin, vmax = np.min(mean2d[region2d]), np.max(mean2d[region2d])
+                            vmin, vmax = np.min(comparison_image[region2d]), np.max(comparison_image[region2d])
                     elif event.key == '/':
                         if ax_mouse == ax3:
                             vmin, vmax = tea.zscale(median2d[region2d])
                         elif ax_mouse == ax4:
-                            vmin, vmax = tea.zscale(mean2d[region2d])
+                            vmin, vmax = tea.zscale(comparison_image[region2d])
                     text_box_vmin.set_val(f'{int(np.round(vmin, 0))}')
                     text_box_vmax.set_val(f'{int(np.round(vmax, 0))}')
 
@@ -1448,9 +1494,9 @@ def compute_crmasks(
                 axarr = axarr.flatten()
                 vmin = np.min(reference_image)
                 vmax = np.max(reference_image)
-                tea.imshow(fig, axarr[0], reference_image, vmin=vmin, vmax=vmax,
+                tea.imshow(fig, axarr[0], reference_image, ds9mode=True, vmin=vmin, vmax=vmax,
                            aspect='auto', title='Median')
-                tea.imshow(fig, axarr[1], moving_image, vmin=vmin, vmax=vmax,
+                tea.imshow(fig, axarr[1], moving_image, ds9mode=True, vmin=vmin, vmax=vmax,
                            aspect='auto', title=f'Image {i+1}')
                 shifted_image2d = shift_image2d(
                     moving_image,
@@ -1462,9 +1508,9 @@ def compute_crmasks(
                 dumdiff2 = reference_image - shifted_image2d
                 vmin = np.percentile(dumdiff1, 5)
                 vmax = np.percentile(dumdiff2, 95)
-                tea.imshow(fig, axarr[2], dumdiff1, vmin=vmin, vmax=vmax,
+                tea.imshow(fig, axarr[2], dumdiff1, ds9mode=True, vmin=vmin, vmax=vmax,
                            aspect='auto', title=f'Median - Image {i+1}')
-                tea.imshow(fig, axarr[3], dumdiff2, vmin=vmin, vmax=vmax,
+                tea.imshow(fig, axarr[3], dumdiff2, ds9mode=True, vmin=vmin, vmax=vmax,
                            aspect='auto', title=f'Median - Shifted Image {i+1}')
                 # plt.tight_layout()
                 png_filename = f'xyoffset_crosscorr_{i+1}.png'
@@ -1683,7 +1729,7 @@ def compute_crmasks(
         if crmethod == 'simboundary':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
 
-    # Combine the flags from the two methods (if both were used)
+    # Define the final cosmic ray flag
     if flag_la is None and flag_sb is None:
         raise RuntimeError("Both flag_la and flag_sb are None. This should never happen.")
     elif flag_la is None:
@@ -1691,7 +1737,8 @@ def compute_crmasks(
     elif flag_sb is None:
         flag = flag_la
     else:
-        flag = np.logical_and(flag_la, flag_sb)
+        # Combine the flags from lacosmic and simboundary
+        flag = np.logical_or(flag_la, flag_sb)
         _logger.info("number of pixels flagged as cosmic rays by lacosmic+simboundary: %d", np.sum(flag))
     flag = flag.reshape((naxis2, naxis1))
 
