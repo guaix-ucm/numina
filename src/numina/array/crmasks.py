@@ -484,7 +484,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
 def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                  enum_la_global, enum_sb_global, enum_both_global,
                  xplot, yplot,
-                 ax1, ax2, ax3, ax4, display_ncr=True):
+                 ax1, ax2, ax3, display_ncr=True):
     if flag_only_la.shape != (naxis2 * naxis1,):
         raise ValueError(f"{flag_only_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
     if flag_only_la.shape != flag_only_sb.shape:
@@ -506,7 +506,7 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     num_only_sb_within_xy, xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy = tuple_sb
     num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = tuple_both
 
-    for ax in [ax2, ax3, ax4]:
+    for ax in [ax2, ax3]:
         for num, xcr, ycr, ncr, flag_only, color, marker in zip(
                 [num_only_la_within_xy, num_only_sb_within_xy, num_both_within_xy],
                 [xcr_only_la_within_xy, xcr_only_sb_within_xy, xcr_both_within_xy],
@@ -533,8 +533,9 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive, median2d, min2d, mean2d, image3d,
-                    ax3_title='median2d', _logger=None, png_filename=None):
+                    sb_threshold, ylabel, interactive, target2d, target2d_name,
+                    min2d, mean2d, image3d,
+                    _logger=None, png_filename=None):
     """Diagnostic plot for the mediancr function.
     """
     if png_filename is None:
@@ -542,8 +543,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
 
     # Set up relevant parameters
     naxis3, naxis2, naxis1 = image3d.shape
-    if median2d.shape != (naxis2, naxis1):
-        raise ValueError("median2d must have shape (naxis2, naxis1).")
+    if target2d.shape != (naxis2, naxis1):
+        raise ValueError("target2d must have shape (naxis2, naxis1).")
     if min2d.shape != (naxis2, naxis1):
         raise ValueError("min2d must have shape (naxis2, naxis1).")
     if mean2d.shape != (naxis2, naxis1):
@@ -620,8 +621,9 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax2.set_ylabel(ax1.get_ylabel())
     ax2.set_title(ax1.get_title())
 
-    vmin, vmax = tea.zscale(median2d)
-    img_ax3, _, _ = tea.imshow(fig, ax3, median2d, ds9mode=True, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
+    vmin, vmax = tea.zscale(target2d)
+    ax3_title = target2d_name
+    img_ax3, _, _ = tea.imshow(fig, ax3, target2d, ds9mode=True, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
                                title=ax3_title, cmap='viridis', colorbar=False)
     if i_comparison_image == 0:
         comparison_image = mean2d
@@ -636,7 +638,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                  enum_la_global, enum_sb_global, enum_both_global,
                  xplot, yplot,
-                 ax1, ax2, ax3, ax4, display_ncr)
+                 ax1, ax2, ax3, display_ncr)
 
     updating = {'plot_limits': False}
 
@@ -670,7 +672,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 xlim = ax3.get_xlim()
                 ylim = ax3.get_ylim()
                 ax3.cla()
-                img_ax3, _, _ = tea.imshow(fig, ax3, median2d, ds9mode=True, aspect=aspect_imshow,
+                img_ax3, _, _ = tea.imshow(fig, ax3, target2d, ds9mode=True, aspect=aspect_imshow,
                                            vmin=vmin, vmax=vmax,
                                            title=ax3_title, cmap='viridis', colorbar=False)
                 ax3.set_xlim(xlim)
@@ -686,7 +688,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                              enum_la_global, enum_sb_global, enum_both_global,
                              xplot, yplot,
-                             ax1, ax2, ax3, ax4, display_ncr)
+                             ax1, ax2, ax3, display_ncr)
                 ax2.figure.canvas.draw_idle()
                 ax3.figure.canvas.draw_idle()
                 ax4.figure.canvas.draw_idle()
@@ -771,7 +773,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     if 1 <= ix <= naxis1 and 1 <= iy <= naxis2:
                         print('-' * 79)
                         print(f'Pixel coordinates (FITS criterium): ix = {ix}, iy = {iy}')
-                        print(f'median2d - min2d = {median2d[iy-1, ix-1] - min2d[iy-1, ix-1]:.3f}')
+                        print(f'target2d - min2d = {target2d[iy-1, ix-1] - min2d[iy-1, ix-1]:.3f}')
                         print(f'min2d - bias     = {min2d[iy-1, ix-1]:.3f}')
                         print('.' * 79)
                         for inum in range(image3d.shape[0]):
@@ -842,12 +844,12 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     region2d = tea.SliceRegion2D(f'[{ixmin}:{ixmax},{iymin}:{iymax}]', mode='fits').python
                     if event.key == ',':
                         if ax_mouse == ax3:
-                            vmin, vmax = np.min(median2d[region2d]), np.max(median2d[region2d])
+                            vmin, vmax = np.min(target2d[region2d]), np.max(target2d[region2d])
                         elif ax_mouse == ax4:
                             vmin, vmax = np.min(comparison_image[region2d]), np.max(comparison_image[region2d])
                     elif event.key == '/':
                         if ax_mouse == ax3:
-                            vmin, vmax = tea.zscale(median2d[region2d])
+                            vmin, vmax = tea.zscale(target2d[region2d])
                         elif ax_mouse == ax4:
                             vmin, vmax = tea.zscale(comparison_image[region2d])
                     text_box_vmin.set_val(f'{int(np.round(vmin, 0))}')
@@ -1343,7 +1345,8 @@ def compute_crmasks(
         _logger.info("niter for boundary extension: %d", sb_niter_boundary_extension)
         _logger.info("random seed for reproducibility: %s", str(sb_seed))
         _logger.info("weight for boundary extension: %f", sb_weight_boundary_extension)
-    elif crmethod in ['lacosmic', 'sb_lacosmic']:
+
+    if crmethod in ['lacosmic', 'sb_lacosmic']:
         if la_sigclip is None:
             _logger.info("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
             la_sigclip = 5.0
@@ -1367,8 +1370,6 @@ def compute_crmasks(
                 _logger.info("la_psfsize for lacosmic: %d", la_psfsize)
             if la_psfsize % 2 == 0 or la_psfsize < 3:
                 raise ValueError("la_psfsize must be an odd integer >= 3.")
-    else:
-        raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
 
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
@@ -1388,7 +1389,7 @@ def compute_crmasks(
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
         if la_fsmode == 'median':
             median2d_lacosmic, flag_la = cosmicray_lacosmic(
-                median2d,
+                ccd=median2d,
                 gain=gain_scalar,
                 readnoise=rnoise_scalar,
                 sigclip=la_sigclip,
@@ -1397,7 +1398,7 @@ def compute_crmasks(
         elif la_fsmode == 'convolve':
             if la_psfmodel != 'gaussxy':
                 median2d_lacosmic, flag_la = cosmicray_lacosmic(
-                    median2d,
+                    ccd=median2d,
                     gain=gain_scalar,
                     readnoise=rnoise_scalar,
                     sigclip=la_sigclip,
@@ -1407,7 +1408,7 @@ def compute_crmasks(
                 )
             else:
                 median2d_lacosmic, flag_la = cosmicray_lacosmic(
-                    median2d,
+                    ccd=median2d,
                     gain=gain_scalar,
                     readnoise=rnoise_scalar,
                     sigclip=la_sigclip,
@@ -1747,7 +1748,8 @@ def compute_crmasks(
     ylabel = r'median2d $-$ min2d'
     diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                     sb_threshold, ylabel, interactive,
-                    median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
+                    target2d=median2d, target2d_name='median2d',
+                    min2d=min2d, mean2d=mean2d, image3d=image3d,
                     _logger=_logger, png_filename='diagnostic_mediancr.png')
 
     # Check if any cosmic ray was detected
@@ -1905,15 +1907,17 @@ def compute_crmasks(
     list_hdu_masks = [hdu_mediancr]
 
     # Apply the same algorithm but now with mean2d and with each individual array
-    for i, array in enumerate([mean2d] + list_arrays):
+    for i, target2d in enumerate([mean2d] + list_arrays):
         if i == 0:
             _logger.info("detecting cosmic rays in the mean2d image...")
+            target2d_name = 'mean2d'
         else:
             _logger.info(f"detecting cosmic rays in array {i}...")
+            target2d_name = f'single exposure #{i}'
         if crmethod in ['lacosmic', 'sb_lacosmic']:
             if la_fsmode == 'median':
                 array_lacosmic, flag_la = cosmicray_lacosmic(
-                    array,
+                    ccd=target2d,
                     gain=gain_scalar,
                     readnoise=rnoise_scalar,
                     sigclip=la_sigclip,
@@ -1922,7 +1926,7 @@ def compute_crmasks(
             elif la_fsmode == 'convolve':
                 if la_psfmodel != 'gaussxy':
                     array_lacosmic, flag_la = cosmicray_lacosmic(
-                        array,
+                        ccd=target2d,
                         gain=gain_scalar,
                         readnoise=rnoise_scalar,
                         sigclip=la_sigclip,
@@ -1932,7 +1936,7 @@ def compute_crmasks(
                     )
                 else:
                     array_lacosmic, flag_la = cosmicray_lacosmic(
-                        array,
+                        ccd=target2d,
                         gain=gain_scalar,
                         readnoise=rnoise_scalar,
                         sigclip=la_sigclip,
@@ -1950,9 +1954,9 @@ def compute_crmasks(
                 yplot_boundary = None
                 sb_threshold = None
                 flag_sb = np.zeros_like(flag_la, dtype=bool)
-        elif crmethod in ['simboundary', 'sb_lacosmic']:
+        if crmethod in ['simboundary', 'sb_lacosmic']:
             xplot = min2d.flatten()
-            yplot = array.flatten() - min2d.flatten()
+            yplot = target2d.flatten() - min2d.flatten()
             flag1 = yplot > boundaryfit(xplot)
             flag2 = yplot > sb_threshold
             flag_sb = np.logical_and(flag1, flag2)
@@ -1960,8 +1964,6 @@ def compute_crmasks(
             flag_sb = np.logical_and(flag_sb, flag3)
             if crmethod == 'simboundary':
                 flag_la = np.zeros_like(flag_sb, dtype=bool)
-        else:
-            raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
         # For the mean2d mask, force the flag to be True if the pixel
         # was flagged as a coincident cosmic ray when using the median2d array
         # (this is to ensure that all pixels flagged in MEDIANCR are also
@@ -1969,6 +1971,7 @@ def compute_crmasks(
         if i == 0:
             flag_la = np.logical_or(flag_la, list_hdu_masks[0].data.astype(bool).flatten())
             flag_sb = np.logical_or(flag_sb, list_hdu_masks[0].data.astype(bool).flatten())
+
         # For the individual array masks, force the flag to be True if the pixel
         # is flagged both in the individual exposure and in the mean2d array
         if i > 0:
@@ -1986,7 +1989,8 @@ def compute_crmasks(
             ylabel = f'array{i}' + r' $-$ min2d'
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
                         sb_threshold, ylabel, interactive,
-                        median2d=median2d, min2d=min2d, mean2d=mean2d, image3d=image3d,
+                        target2d=target2d, target2d_name=target2d_name,
+                        min2d=min2d, mean2d=mean2d, image3d=image3d,
                         _logger=_logger, png_filename=png_filename)
         flag = np.logical_or(flag_la, flag_sb)
         flag = flag.reshape((naxis2, naxis1))
