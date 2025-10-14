@@ -485,6 +485,11 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                  enum_la_global, enum_sb_global, enum_both_global,
                  xplot, yplot,
                  ax1, ax2, ax3, display_ncr=True):
+    """Update the marks in the diagnostic plot.
+    If ax2 and ax3 are None, only the segregation of the cosmic rays
+    within the XY diagram is performed and the information of the
+    suspected pixels is printed in the terminal.
+    """
     if flag_only_la.shape != (naxis2 * naxis1,):
         raise ValueError(f"{flag_only_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
     if flag_only_la.shape != flag_only_sb.shape:
@@ -506,9 +511,14 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     num_only_sb_within_xy, xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy = tuple_sb
     num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = tuple_both
 
-    for ax in [ax2, ax3]:
-        for num, xcr, ycr, ncr, flag_only, color, marker in zip(
+    if ax2 is None and ax3 is None:
+        ax_list = [None]
+    else:
+        ax_list = [ax2, ax3]
+    for ax in ax_list:
+        for num, method, xcr, ycr, ncr, flag_only, color, marker in zip(
                 [num_only_la_within_xy, num_only_sb_within_xy, num_both_within_xy],
+                ['lacosmic', 'simboundary', 'both'],
                 [xcr_only_la_within_xy, xcr_only_sb_within_xy, xcr_both_within_xy],
                 [ycr_only_la_within_xy, ycr_only_sb_within_xy, ycr_both_within_xy],
                 [ncr_only_la_within_xy, ncr_only_sb_within_xy, ncr_both_within_xy],
@@ -516,11 +526,16 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                 ['r', 'b', 'y'],
                 ['x', '+', 'o']):
             if num > 0:
-                if ax == ax2:
+                if ax is None:
+                    print("-" * 78)
+                    print(f"{num} cosmic rays detected with method {method}.")
+                    for ix, iy, ncr in zip(xcr, ycr, ncr):
+                        print(f"  Pixel (x, y) = ({ix}, {iy}), number {ncr}")
+                elif ax == ax2:
                     for ix, iy, ncr in zip(xplot[flag_only], yplot[flag_only], ncr):
                         ax.text(ix, iy, str(ncr), color=color, fontsize=8, clip_on=True,
                                 ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5))
-                else:
+                elif ax == ax3:
                     if display_ncr:
                         for ix, iy, ncr in zip(xcr, ycr, ncr):
                             ax.text(ix, iy, str(ncr), color=color, fontsize=8, clip_on=True,
@@ -590,6 +605,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     num_only_la = np.sum(flag_only_la)
     num_only_sb = np.sum(flag_only_sb)
     num_both = np.sum(flag_both)
+    num_total = num_only_la + num_only_sb + num_both
 
     # Enumerate the cosmic rays detected by the different methods
     enum_la_global = np.zeros_like(flag_la, dtype=int)
@@ -613,7 +629,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax1.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
     ax1.set_title('Median-Mean Diagnostic Diagram')
-    ax1.legend(loc='upper right', fontsize=8)
+    ax1.legend(loc='upper right', fontsize=8, title=f'Total: {num_total} pixels')
 
     ax2.set_xlim(ax1.get_xlim())
     ax2.set_ylim(ax1.get_ylim())
@@ -754,8 +770,9 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 print("'s': save the figure to a PNG file")
                 print("." * 79)
                 print("'?': show this help message")
-                print("'i': print pixel info at mouse position (ax3 and ax4 only)")
-                print("'n': toggle display of number of cosmic rays (ax3 and ax4 only)")
+                print("'i': print pixel info at mouse position (ax3 only)")
+                print("'&': print CR pixels within the zoomed region (ax3 only)")
+                print("'n': toggle display of number of cosmic rays (ax3 only)")
                 print("'a': toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
                 print("'t': toggle mean2d -> individual exposures in ax4")
                 print("'0': switch to mean2d in ax4")
@@ -764,10 +781,10 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 print("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
                 print("'q': close the plot and continue the program execution")
                 print("-" * 79)
-            elif event.key in ("i", "I"):
+            elif event.key == "i":
                 if ax_mouse in [ax1, ax2]:
                     print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
-                elif ax_mouse in [ax3, ax4]:
+                elif ax_mouse in [ax3]:
                     ix = int(round(x_mouse))
                     iy = int(round(y_mouse))
                     if 1 <= ix <= naxis1 and 1 <= iy <= naxis2:
@@ -786,9 +803,16 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                                 print(f'Pixel found by {crmethod}')
                             else:
                                 print(f'Pixel not found by {crmethod}')
+            elif event.key == "&":
+                if ax_mouse in [ax3]:
+                    update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
+                                 enum_la_global, enum_sb_global, enum_both_global,
+                                 xplot, yplot,
+                                 ax1, None, None, None)
             elif event.key == 'n':
-                display_ncr = not display_ncr
-                sync_zoom_y(ax1)
+                if ax_mouse in [ax3]:
+                    display_ncr = not display_ncr
+                    sync_zoom_y(ax1)
             elif event.key == 'a':
                 if aspect_imshow == 'equal':
                     aspect_imshow = 'auto'
@@ -1314,10 +1338,11 @@ def compute_crmasks(
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Define the pixels to be forced to be masked
+    if isinstance(pixels_to_be_masked, str):
+        if pixels_to_be_masked.lower() == 'none':
+            pixels_to_be_masked = None
     if pixels_to_be_masked is None:
         pass
-    elif pixels_to_be_masked.lower() == 'none':
-        pixels_to_be_masked = None
     else:
         pixels_to_be_masked = list(eval(str(pixels_to_be_masked)))
     _logger.info("pixels to be initially forced to be masked: %s",
@@ -1435,10 +1460,11 @@ def compute_crmasks(
         # derived boundary.
         # ---------------------------------------------------------------------
         # Define sb_fixed_points_in_boundary
+        if isinstance(sb_fixed_points_in_boundary, str):
+            if sb_fixed_points_in_boundary.lower() == 'none':
+                sb_fixed_points_in_boundary = None
         if sb_fixed_points_in_boundary is None:
             pass
-        elif sb_fixed_points_in_boundary.lower() == 'none':
-            sb_fixed_points_in_boundary = None
         else:
             sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
             x_sb_fixed_points_in_boundary = []
@@ -1476,9 +1502,10 @@ def compute_crmasks(
                                  "at least two fixed points must be provided in sb_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
+        if isinstance(sb_crosscorr_region, str):
+            if sb_crosscorr_region.lower() == 'none':
+                sb_crosscorr_region = None
         if sb_crosscorr_region is None:
-            crossregion = None
-        elif sb_crosscorr_region.lower() == 'none':
             crossregion = None
         else:
             crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits')
@@ -1790,13 +1817,6 @@ def compute_crmasks(
         # Label the connected pixels as individual cosmic rays
         labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
         _logger.info("number of coincident cosmic rays (connected pixels) detected: %d", number_cr)
-        # Sort the cosmic rays x coordinate
-        _logger.info("sorting cosmic rays by x coordinate...")
-        xsort_cr = np.zeros(number_cr, dtype=float)
-        for i in range(1, number_cr + 1):
-            ijloc = np.argwhere(labels_cr == i)
-            xsort_cr[i - 1] = np.mean(ijloc[:, 1])
-        isort_cr = np.argsort(xsort_cr)
         num_plot_max = num_images
         # Determine the number of rows and columns for the plot,
         # considering that we want to plot also 3 additional images:
@@ -1824,8 +1844,7 @@ def compute_crmasks(
         if maxplots_eff < 0 or verify_cr:
             maxplots_eff = number_cr
         _logger.info(f"generating {maxplots_eff} plots of coincident cosmic rays...")
-        for idum in range(min(number_cr, maxplots_eff)):
-            i = isort_cr[idum]
+        for i in range(min(number_cr, maxplots_eff)):
             ijloc = np.argwhere(labels_cr == i + 1)
             ic = int(np.mean(ijloc[:, 0]) + 0.5)
             jc = int(np.mean(ijloc[:, 1]) + 0.5)
@@ -1855,8 +1874,11 @@ def compute_crmasks(
             for k in range(num_plot_max):
                 ax = axarr[k]
                 title = title = f'image#{k+1}/{num_images}'
+                xlabel = 'X pixel (from 1 to NAXIS1)'
+                ylabel = 'Y pixel (from 1 to NAXIS2)'
                 tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
-                           extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
+                           extent=[j1+0.5, j2+1.5, i1+0.5, i2+1.5],
+                           xlabel=xlabel, ylabel=ylabel,
                            title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
             for k in range(3):
                 ax = axarr[k + num_plot_max]
@@ -1890,16 +1912,16 @@ def compute_crmasks(
                 for k in range(nplot_missing):
                     ax = axarr[-k-1]
                     ax.axis('off')
-            fig.suptitle(f'CR#{idum+1}/{number_cr}')
+            fig.suptitle(f'CR#{i+1}/{number_cr}')
             plt.tight_layout()
             plt.show(block=False)
             if verify_cr:
-                accept_cr = input(f"Accept this cosmic ray detection #{idum+1} ([y]/n)? ")
+                accept_cr = input(f"Accept this cosmic ray detection #{i+1} ([y]/n)? ")
                 if accept_cr.lower() == 'n':
-                    _logger.info("removing cosmic ray detection #%d from the mask\n", idum + 1)
+                    _logger.info("removing cosmic ray detection #%d from the mask\n", i + 1)
                     mask_mediancr[labels_cr == i + 1] = False
                 else:
-                    _logger.info("keeping cosmic ray detection #%d in the mask", idum + 1)
+                    _logger.info("keeping cosmic ray detection #%d in the mask", i + 1)
             pdf.savefig(fig, bbox_inches='tight')
             plt.close(fig)
 
@@ -2032,19 +2054,11 @@ def compute_crmasks(
         # Label the connected problematic pixels as individual problematic cosmic rays
         labels_cr, number_cr = ndimage.label(mask_all)
         _logger.info("number of connected problematic pixel regions: %d", number_cr)
-        # Sort the problematic regions by x coordinate
-        _logger.info("sorting problematic regions by x coordinate...")
-        xsort_cr = np.zeros(number_cr, dtype=float)
-        for i in range(1, number_cr + 1):
-            ijloc = np.argwhere(labels_cr == i)
-            xsort_cr[i - 1] = np.mean(ijloc[:, 1])
-        isort_cr = np.argsort(xsort_cr)
         # print the coordinates of the problematic pixels
-        for idum in range(number_cr):
-            i = isort_cr[idum]
+        for i in range(number_cr):
             ijloc = np.argwhere(labels_cr == i + 1)
             _logger.info("reg. #%d: no. of pixels = %d, (x, y) FITS-pixel = (%.1f, %.1f)",
-                         idum + 1, len(ijloc), np.mean(ijloc[:, 1]) + 1, np.mean(ijloc[:, 0]) + 1)
+                         i + 1, len(ijloc), np.mean(ijloc[:, 1]) + 1, np.mean(ijloc[:, 0]) + 1)
 
     # Generate output HDUList with masks
     args = inspect.signature(compute_crmasks).parameters
