@@ -1313,7 +1313,7 @@ def compute_crmasks(
     # Define the pixels to be forced to be masked
     if pixels_to_be_masked is None:
         pass
-    elif pixels_to_be_masked == 'none':
+    elif pixels_to_be_masked.lower() == 'none':
         pixels_to_be_masked = None
     else:
         pixels_to_be_masked = list(eval(str(pixels_to_be_masked)))
@@ -1323,7 +1323,7 @@ def compute_crmasks(
     # Define the pixels to be excluded from the masks
     if pixels_to_be_excluded is None:
         pass
-    elif pixels_to_be_excluded == 'none':
+    elif pixels_to_be_excluded.lower() == 'none':
         pixels_to_be_excluded = None
     else:
         pixels_to_be_excluded = list(eval(str(pixels_to_be_excluded)))
@@ -1434,7 +1434,7 @@ def compute_crmasks(
         # Define sb_fixed_points_in_boundary
         if sb_fixed_points_in_boundary is None:
             pass
-        elif sb_fixed_points_in_boundary == 'none':
+        elif sb_fixed_points_in_boundary.lower() == 'none':
             sb_fixed_points_in_boundary = None
         else:
             sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
