@@ -1593,6 +1593,7 @@ def compute_crmasks(
         lam[lam < 0] = 0  # Avoid negative values
         lam3d = np.zeros((num_images, naxis2, naxis1))
         if sb_crosscorr_region is None:
+            _logger.info(f"{sb_crosscorr_region=}, assuming no offsets between images")
             for i in range(num_images):
                 lam3d[i] = lam
         else:
