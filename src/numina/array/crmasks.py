@@ -1014,6 +1014,7 @@ def compute_crmasks(
         semiwindow=15,
         color_scale='minmax',
         maxplots=-1,
+        debug=False,
         la_sigclip=None,
         la_psffwhm_x=None,
         la_psffwhm_y=None,
@@ -1094,6 +1095,8 @@ def compute_crmasks(
     maxplots : int, optional
         The maximum number of coincident cosmic rays to plot (default is -1).
         If negative, all detected cosmic rays will be plotted.
+    debug : bool, optional
+        If True, enable debug mode (default is False).
     la_sigclip : float
         The sigma clipping threshold. Employed when crmethod='lacosmic'.
     la_psffwhm_x : float
@@ -1474,6 +1477,8 @@ def compute_crmasks(
 
         # Compute offsets between each single exposure and the median image
         if sb_crosscorr_region is None:
+            crossregion = None
+        elif sb_crosscorr_region.lower() == 'none':
             crossregion = None
         else:
             crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits')
@@ -1971,7 +1976,6 @@ def compute_crmasks(
         if i == 0:
             flag_la = np.logical_or(flag_la, list_hdu_masks[0].data.astype(bool).flatten())
             flag_sb = np.logical_or(flag_sb, list_hdu_masks[0].data.astype(bool).flatten())
-
         # For the individual array masks, force the flag to be True if the pixel
         # is flagged both in the individual exposure and in the mean2d array
         if i > 0:
@@ -1987,8 +1991,9 @@ def compute_crmasks(
             _logger.info(f"generating diagnostic plot for CRMASK{i}...")
             png_filename = f'diagnostic_crmask{i}.png'
             ylabel = f'array{i}' + r' $-$ min2d'
+        interactive_eff = interactive and debug
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                        sb_threshold, ylabel, interactive,
+                        sb_threshold, ylabel, interactive_eff,
                         target2d=target2d, target2d_name=target2d_name,
                         min2d=min2d, mean2d=mean2d, image3d=image3d,
                         _logger=_logger, png_filename=png_filename)
