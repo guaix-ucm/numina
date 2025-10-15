@@ -1034,6 +1034,7 @@ def compute_crmasks(
         dilation=1,
         pixels_to_be_flagged_as_cr=None,
         pixels_to_be_ignored_as_cr=None,
+        pixels_to_be_replaced_by_local_median=None,
         dtype=np.float32,
         verify_cr=False,
         semiwindow=15,
@@ -1103,10 +1104,15 @@ def compute_crmasks(
         The dilation factor for the coincident cosmic ray mask.
     pixels_to_be_flagged_as_cr : str, list of (x, y) tuples, or None, optional
         List of pixel coordinates to be included in the masks
-        (FITS criterium; first pixel is (1, 1)).
+        (Assuming FITS criterium; first pixel is (1, 1)).
     pixels_to_be_ignored_as_cr : str, list of (x, y) tuples, or None, optional
         List of pixel coordinates to be excluded from the masks
-        (FITS criterium; first pixel is (1, 1)).
+        (Assuming FITS criterium; first pixel is (1, 1)).
+    pixels_to_be_replaced_by_local_median : str, list of (x, y) tuples, or None, optional
+        List of pixel coordinates to be replaced by the median value
+        when removing the cosmic rays. This information is stored as a binary
+        table in one of the extensions of the output HDUList with the masks.
+        (Assuming FITS criterium; first pixel is (1, 1)).
     dtype : data-type, optional
         The desired data type to build the 3D stack (default is np.float32).
     verify_cr : bool, optional
@@ -1338,7 +1344,7 @@ def compute_crmasks(
     if color_scale not in ['minmax', 'zscale']:
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
-    # Define the pixels to be forced to be masked
+    # Define the pixels to be flagged as CR
     if isinstance(pixels_to_be_flagged_as_cr, str):
         if pixels_to_be_flagged_as_cr.lower() == 'none':
             pixels_to_be_flagged_as_cr = None
@@ -1346,10 +1352,19 @@ def compute_crmasks(
         pass
     else:
         pixels_to_be_flagged_as_cr = list(eval(str(pixels_to_be_flagged_as_cr)))
-    _logger.info("pixels to be initially forced to be masked: %s",
+    # check that the provided pixels are valid
+    if pixels_to_be_flagged_as_cr is not None:
+        for p in pixels_to_be_flagged_as_cr:
+            if (not isinstance(p, (list, tuple)) or len(p) != 2 or
+                    not all(isinstance(item, int) for item in p)):
+                raise ValueError(f"Invalid numbers in pixels_to_be_flagged_as_cr: {p}. "
+                                 "Each pixel must be a tuple or list of two integers (X, Y).")
+            if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
+                raise ValueError(f"Pixel coordinates {p} in pixels_to_be_flagged_as_cr are out of bounds.")
+    _logger.info("pixels to be initially flagged as CR: %s",
                  "None" if pixels_to_be_flagged_as_cr is None else str(pixels_to_be_flagged_as_cr))
 
-    # Define the pixels to be excluded from the masks
+    # Define the pixels to be ignored as CR
     if isinstance(pixels_to_be_ignored_as_cr, str):
         if pixels_to_be_ignored_as_cr.lower() == 'none':
             pixels_to_be_ignored_as_cr = None
@@ -1357,8 +1372,61 @@ def compute_crmasks(
         pass
     else:
         pixels_to_be_ignored_as_cr = list(eval(str(pixels_to_be_ignored_as_cr)))
-    _logger.info("pixels to be initially excluded from the masks: %s",
+    # check that the provided pixels are valid
+    if pixels_to_be_ignored_as_cr is not None:
+        for p in pixels_to_be_ignored_as_cr:
+            if (not isinstance(p, (list, tuple)) or len(p) != 2 or
+                    not all(isinstance(item, int) for item in p)):
+                raise ValueError(f"Invalid numbers in pixels_to_be_ignored_as_cr: {p}. "
+                                 "Each pixel must be a tuple or list of two integers (X, Y).")
+            if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
+                raise ValueError(f"Pixel coordinates {p} in pixels_to_be_ignored_as_cr are out of bounds.")
+    _logger.info("pixels to be initially ignored as CR: %s",
                  "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
+
+    # Define the pixels to be replaced by the median value when removing the CRs
+    if isinstance(pixels_to_be_replaced_by_local_median, str):
+        if pixels_to_be_replaced_by_local_median.lower() == 'none':
+            pixels_to_be_replaced_by_local_median = None
+    if pixels_to_be_replaced_by_local_median is None:
+        pass
+    else:
+        pixels_to_be_replaced_by_local_median = list(eval(str(pixels_to_be_replaced_by_local_median)))
+    # check that the provided pixels are valid
+    if pixels_to_be_replaced_by_local_median is not None:
+        for p in pixels_to_be_replaced_by_local_median:
+            if (not isinstance(p, (list, tuple)) or len(p) != 4 or
+                    not all(isinstance(item, int) for item in p)):
+                raise ValueError(f"Invalid numbers in pixels_to_be_replaced_by_local_median: {p}. "
+                                 "Each pixel must be a tuple or list of four integers (X, Y, X_width, Y_width).")
+            if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
+                raise ValueError(f"Pixel coordinates {p} in pixels_to_be_replaced_by_local_median are out of bounds.")
+            if p[2] % 2 == 0 or p[3] % 2 == 0 or p[2] < 1 or p[3] < 1:
+                raise ValueError(f"Pixel {p}: X_width and Y_width in pixels_to_be_replaced_by_local_median "
+                                 "must be odd integers >= 1.")
+            if p[2] * p[3] < 3:
+                raise ValueError(f"Pixel {p}: The area defined by X_width and Y_width in "
+                                 "pixels_to_be_replaced_by_local_median must be >= 3.")
+    _logger.info("pixels to be replaced by the median value when removing the CRs: %s",
+                 "None" if pixels_to_be_replaced_by_local_median is None
+                 else str(pixels_to_be_replaced_by_local_median))
+
+    # The pixels to be replaced by the local median are included in
+    # the list of pixels to be ignored as CR (there is no need to flag them
+    # as CR if they will be replaced by the local median anyway
+    # (in this way we avoid to replace unnecessary neighboring pixels
+    # that would be included if we dilate the CR mask)
+    if pixels_to_be_replaced_by_local_median is not None:
+        if pixels_to_be_ignored_as_cr is None:
+            pixels_to_be_ignored_as_cr = [[p[0], p[1]] for p in pixels_to_be_replaced_by_local_median]
+        else:
+            # include pixels that are not already in the list
+            pixels_to_be_ignored_as_cr.extend([
+                [p[0], p[1]] for p in pixels_to_be_replaced_by_local_median
+                if [p[0], p[1]] not in pixels_to_be_ignored_as_cr
+            ])
+        _logger.info("updated pixels to be ignored as CR: %s",
+                     "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
 
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
@@ -2110,6 +2178,19 @@ def compute_crmasks(
         elif isinstance(value, list):
             value = str(value)
         hdu_primary.header.add_history(f"- {key} = {value}")
+    # Include extension with pixels to be replaced by the median value around them
+    # (stored as a binary table with four columns: 'X_pixel', 'Y_pixel', 'X_width', 'Y_width')
+    if pixels_to_be_replaced_by_local_median is not None:
+        col1 = fits.Column(name='X_pixel', format='K',
+                           array=[p[0] for p in pixels_to_be_replaced_by_local_median])
+        col2 = fits.Column(name='Y_pixel', format='K',
+                           array=[p[1] for p in pixels_to_be_replaced_by_local_median])
+        col3 = fits.Column(name='X_width', format='K',
+                           array=[p[2] for p in pixels_to_be_replaced_by_local_median])
+        col4 = fits.Column(name='Y_width', format='K',
+                           array=[p[3] for p in pixels_to_be_replaced_by_local_median])
+        hdu_table = fits.BinTableHDU.from_columns([col1, col2, col3, col4], name='RPMEDIAN')
+        list_hdu_masks.append(hdu_table)
 
     hdul_masks = fits.HDUList([hdu_primary] + list_hdu_masks)
     return hdul_masks
@@ -2297,6 +2378,37 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         raise ValueError(f"Invalid combination method: {combination}. "
                          f"Valid options are {VALID_COMBINATIONS}.")
 
+    # Replaced pixels defined in the RPMEDIAN extension of hdul_masks by
+    # the local median around them (excluding the considered pixel)
+    if 'RPMEDIAN' in hdul_masks:
+        _logger.info("replacing pixels defined in RPMEDIAN by the local median around them")
+        table_rpmedian = Table(hdul_masks['RPMEDIAN'].data)
+        for row in table_rpmedian:
+            xpixel = row['X_pixel'] - 1  # Convert to zero-based index
+            ypixel = row['Y_pixel'] - 1  # Convert to zero-based index
+            xwidth = row['X_width']
+            ywidth = row['Y_width']
+            # Define the box around the pixel, ensuring it is within image bounds
+            x1 = max(xpixel - xwidth // 2, 0)
+            x2 = min(xpixel + xwidth // 2 + 1, naxis1)
+            y1 = max(ypixel - ywidth // 2, 0)
+            y2 = min(ypixel + ywidth // 2 + 1, naxis2)
+            # Extract the local box from the combined2d array
+            local_box = combined2d[y1:y2, x1:x2]
+            # Create a mask for the local box that excludes the central pixel
+            local_mask = np.ones(local_box.shape, dtype=bool)
+            if y1 <= ypixel < y2 and x1 <= xpixel < x2:
+                local_mask[ypixel - y1, xpixel - x1] = False
+            # Compute the median of the unmasked pixels in the local box
+            if np.any(local_mask):
+                local_median = np.median(local_box[local_mask])
+                _logger.info(f"- pixel (x={xpixel+1}, y={ypixel+1}): "
+                             f"old value={combined2d[ypixel, xpixel]:.2f}, new value={local_median:.2f}")
+                combined2d[ypixel, xpixel] = local_median
+            else:
+                _logger.warning(f"cannot compute local median for pixel (x={xpixel+1}, y={ypixel+1}) "
+                                "as no surrounding pixels are available")
+
     return combined2d.astype(dtype), variance2d.astype(dtype), map2d
 
 
@@ -2318,6 +2430,9 @@ def main(args=None):
 
     parser.add_argument("inputyaml",
                         help="Input YAML file.",
+                        type=str)
+    parser.add_argument("--crmasks",
+                        help="FITS file with cosmic ray masks",
                         type=str)
     parser.add_argument("--verbose",
                         help="Increase output verbosity",
@@ -2388,17 +2503,25 @@ def main(args=None):
     for item in input_params['requirements']:
         crmasks_params[item] = input_params['requirements'][item]
 
-    # Compute the different cosmic ray masks
-    hdul_masks = compute_crmasks(
-        list_arrays=list_arrays,
-        **crmasks_params
-    )
-
-    # Save the cosmic ray masks to a FITS file
-    output_masks = 'crmasks.fits'
-    logger.info("Saving cosmic ray masks to %s", output_masks)
-    hdul_masks.writeto(output_masks, overwrite=True)
-    logger.info("Cosmic ray masks saved")
+    # If a FITS file with cosmic ray masks is provided, read it and skip
+    # the computation of the masks. Otherwise, compute the masks.
+    if args.crmasks is None:
+        # Compute the different cosmic ray masks
+        hdul_masks = compute_crmasks(
+            list_arrays=list_arrays,
+            **crmasks_params
+        )
+        # Save the cosmic ray masks to a FITS file
+        output_masks = 'crmasks.fits'
+        logger.info("Saving cosmic ray masks to %s", output_masks)
+        hdul_masks.writeto(output_masks, overwrite=True)
+        logger.info("Cosmic ray masks saved")
+    else:
+        if not os.path.isfile(args.crmasks):
+            raise FileNotFoundError(f"File {args.crmasks} not found.")
+        else:
+            logger.info("reading cosmic ray masks from %s", args.crmasks)
+            hdul_masks = fits.open(args.crmasks)
 
     # Apply cosmic ray masks
     for combination in VALID_COMBINATIONS:
