@@ -16,6 +16,7 @@ import uuid
 
 import argparse
 from astropy.io import fits
+from astropy.table import Table
 from ccdproc import cosmicray_lacosmic
 from datetime import datetime
 import math
@@ -967,17 +968,17 @@ def gausskernel2d_elliptical(fwhm_x, fwhm_y, kernsize):
     return kernel.astype(np.float32)
 
 
-def update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger):
+def update_flag_with_user_masks(flag, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger):
     """Update the flag array with user-defined masks.
 
     Parameters
     ----------
     flag : 2D numpy array
         The input flag array to be updated.
-    pixels_to_be_masked : list of (x, y) tuples, or None
+    pixels_to_be_flagged_as_cr : list of (x, y) tuples, or None
         List of pixel coordinates to be included in the masks
         (FITS criterium; first pixel is (1, 1)).
-    pixels_to_be_excluded : list of (x, y) tuples, or None
+    pixels_to_be_ignored_as_cr : list of (x, y) tuples, or None
         List of pixel coordinates to be excluded from the masks
         (FITS criterium; first pixel is (1, 1)).
     _logger : logging.Logger
@@ -988,38 +989,38 @@ def update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded
     None
     """
     # Include pixels to be forced to be masked
-    if pixels_to_be_masked is not None:
-        ix_pixels_to_be_masked = np.array([p[0] for p in pixels_to_be_masked], dtype=int) - 1
-        iy_pixels_to_be_masked = np.array([p[1] for p in pixels_to_be_masked], dtype=int) - 1
-        if np.any(ix_pixels_to_be_masked < 0) or np.any(ix_pixels_to_be_masked >= flag.shape[1]):
-            raise ValueError("Some x coordinates in pixels_to_be_masked are out of bounds.")
-        if np.any(iy_pixels_to_be_masked < 0) or np.any(iy_pixels_to_be_masked >= flag.shape[0]):
-            raise ValueError("Some y coordinates in pixels_to_be_masked are out of bounds.")
+    if pixels_to_be_flagged_as_cr is not None:
+        ix_pixels_to_be_flagged_as_cr = np.array([p[0] for p in pixels_to_be_flagged_as_cr], dtype=int) - 1
+        iy_pixels_to_be_flagged_as_cr = np.array([p[1] for p in pixels_to_be_flagged_as_cr], dtype=int) - 1
+        if np.any(ix_pixels_to_be_flagged_as_cr < 0) or np.any(ix_pixels_to_be_flagged_as_cr >= flag.shape[1]):
+            raise ValueError("Some x coordinates in pixels_to_be_flagged_as_cr are out of bounds.")
+        if np.any(iy_pixels_to_be_flagged_as_cr < 0) or np.any(iy_pixels_to_be_flagged_as_cr >= flag.shape[0]):
+            raise ValueError("Some y coordinates in pixels_to_be_flagged_as_cr are out of bounds.")
         neff = 0
-        for iy, ix in zip(iy_pixels_to_be_masked, ix_pixels_to_be_masked):
+        for iy, ix in zip(iy_pixels_to_be_flagged_as_cr, ix_pixels_to_be_flagged_as_cr):
             if not flag[iy, ix]:
                 flag[iy, ix] = True
                 neff += 1
             else:
                 _logger.warning("Pixel (%d, %d) to be masked was already masked.", ix + 1, iy + 1)
-        _logger.info("Added %d/%d user-defined pixels to be masked.", neff, len(pixels_to_be_masked))
+        _logger.info("Added %d/%d user-defined pixels to be masked.", neff, len(pixels_to_be_flagged_as_cr))
 
     # Exclude pixels to be excluded from the mask
-    if pixels_to_be_excluded is not None:
-        ix_pixels_to_be_excluded = np.array([p[0] for p in pixels_to_be_excluded], dtype=int) - 1
-        iy_pixels_to_be_excluded = np.array([p[1] for p in pixels_to_be_excluded], dtype=int) - 1
-        if np.any(ix_pixels_to_be_excluded < 0) or np.any(ix_pixels_to_be_excluded >= flag.shape[1]):
-            raise ValueError("Some x coordinates in pixels_to_be_excluded are out of bounds.")
-        if np.any(iy_pixels_to_be_excluded < 0) or np.any(iy_pixels_to_be_excluded >= flag.shape[0]):
-            raise ValueError("Some y coordinates in pixels_to_be_excluded are out of bounds.")
+    if pixels_to_be_ignored_as_cr is not None:
+        ix_pixels_to_be_ignored_as_cr = np.array([p[0] for p in pixels_to_be_ignored_as_cr], dtype=int) - 1
+        iy_pixels_to_be_ignored_as_cr = np.array([p[1] for p in pixels_to_be_ignored_as_cr], dtype=int) - 1
+        if np.any(ix_pixels_to_be_ignored_as_cr < 0) or np.any(ix_pixels_to_be_ignored_as_cr >= flag.shape[1]):
+            raise ValueError("Some x coordinates in pixels_to_be_ignored_as_cr are out of bounds.")
+        if np.any(iy_pixels_to_be_ignored_as_cr < 0) or np.any(iy_pixels_to_be_ignored_as_cr >= flag.shape[0]):
+            raise ValueError("Some y coordinates in pixels_to_be_ignored_as_cr are out of bounds.")
         neff = 0
-        for iy, ix in zip(iy_pixels_to_be_excluded, ix_pixels_to_be_excluded):
+        for iy, ix in zip(iy_pixels_to_be_ignored_as_cr, ix_pixels_to_be_ignored_as_cr):
             if flag[iy, ix]:
                 flag[iy, ix] = False
                 neff += 1
             else:
                 _logger.warning("Pixel (%d, %d) to be unmasked was not masked.", ix + 1, iy + 1)
-        _logger.info("Removed %d/%d user-defined pixels from the mask.", neff, len(pixels_to_be_excluded))
+        _logger.info("Removed %d/%d user-defined pixels from the mask.", neff, len(pixels_to_be_ignored_as_cr))
 
 
 def compute_crmasks(
@@ -1031,8 +1032,8 @@ def compute_crmasks(
         flux_factor=None,
         interactive=True,
         dilation=1,
-        pixels_to_be_masked=None,
-        pixels_to_be_excluded=None,
+        pixels_to_be_flagged_as_cr=None,
+        pixels_to_be_ignored_as_cr=None,
         dtype=np.float32,
         verify_cr=False,
         semiwindow=15,
@@ -1100,10 +1101,10 @@ def compute_crmasks(
         If True, enable interactive mode for plots.
     dilation : int, optional
         The dilation factor for the coincident cosmic ray mask.
-    pixels_to_be_masked : str, list of (x, y) tuples, or None, optional
+    pixels_to_be_flagged_as_cr : str, list of (x, y) tuples, or None, optional
         List of pixel coordinates to be included in the masks
         (FITS criterium; first pixel is (1, 1)).
-    pixels_to_be_excluded : str, list of (x, y) tuples, or None, optional
+    pixels_to_be_ignored_as_cr : str, list of (x, y) tuples, or None, optional
         List of pixel coordinates to be excluded from the masks
         (FITS criterium; first pixel is (1, 1)).
     dtype : data-type, optional
@@ -1338,25 +1339,26 @@ def compute_crmasks(
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Define the pixels to be forced to be masked
-    if isinstance(pixels_to_be_masked, str):
-        if pixels_to_be_masked.lower() == 'none':
-            pixels_to_be_masked = None
-    if pixels_to_be_masked is None:
+    if isinstance(pixels_to_be_flagged_as_cr, str):
+        if pixels_to_be_flagged_as_cr.lower() == 'none':
+            pixels_to_be_flagged_as_cr = None
+    if pixels_to_be_flagged_as_cr is None:
         pass
     else:
-        pixels_to_be_masked = list(eval(str(pixels_to_be_masked)))
+        pixels_to_be_flagged_as_cr = list(eval(str(pixels_to_be_flagged_as_cr)))
     _logger.info("pixels to be initially forced to be masked: %s",
-                 "None" if pixels_to_be_masked is None else str(pixels_to_be_masked))
+                 "None" if pixels_to_be_flagged_as_cr is None else str(pixels_to_be_flagged_as_cr))
 
     # Define the pixels to be excluded from the masks
-    if pixels_to_be_excluded is None:
+    if isinstance(pixels_to_be_ignored_as_cr, str):
+        if pixels_to_be_ignored_as_cr.lower() == 'none':
+            pixels_to_be_ignored_as_cr = None
+    if pixels_to_be_ignored_as_cr is None:
         pass
-    elif pixels_to_be_excluded.lower() == 'none':
-        pixels_to_be_excluded = None
     else:
-        pixels_to_be_excluded = list(eval(str(pixels_to_be_excluded)))
+        pixels_to_be_ignored_as_cr = list(eval(str(pixels_to_be_ignored_as_cr)))
     _logger.info("pixels to be initially excluded from the masks: %s",
-                 "None" if pixels_to_be_excluded is None else str(pixels_to_be_excluded))
+                 "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
 
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
@@ -1446,7 +1448,7 @@ def compute_crmasks(
         else:
             raise ValueError("la_fsmode must be 'median' or 'convolve'.")
         _logger.info("number of pixels flagged as cosmic rays by lacosmic: %d", np.sum(flag_la))
-        update_flag_with_user_masks(flag_la, pixels_to_be_masked, pixels_to_be_excluded, _logger)
+        update_flag_with_user_masks(flag_la, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
         flag_la = flag_la.flatten()
         if crmethod == 'lacosmic':
             xplot_boundary = None
@@ -1840,11 +1842,14 @@ def compute_crmasks(
             figsize = (13, 9)
             num_plot_max = 9
         pdf = PdfPages('mediancr_identified_cr.pdf')
-
+        cr_table = Table(names=('CR_number', 'X_pixel', 'Y_pixel', 'Mask_value'), dtype=(int, int, int, int))
+        cr_table_filename = 'mediancr_identified_cr.csv'
         maxplots_eff = maxplots
         if maxplots_eff < 0 or verify_cr:
             maxplots_eff = number_cr
         _logger.info(f"generating {maxplots_eff} plots of coincident cosmic rays...")
+        xlabel = 'X pixel (from 1 to NAXIS1)'
+        ylabel = 'Y pixel (from 1 to NAXIS2)'
         for i in range(min(number_cr, maxplots_eff)):
             ijloc = np.argwhere(labels_cr == i + 1)
             ic = int(np.mean(ijloc[:, 0]) + 0.5)
@@ -1875,8 +1880,6 @@ def compute_crmasks(
             for k in range(num_plot_max):
                 ax = axarr[k]
                 title = title = f'image#{k+1}/{num_images}'
-                xlabel = 'X pixel (from 1 to NAXIS1)'
-                ylabel = 'Y pixel (from 1 to NAXIS2)'
                 tea.imshow(fig, ax, image3d[k][i1:(i2+1), j1:(j2+1)], vmin=vmin, vmax=vmax,
                            extent=[j1+0.5, j2+1.5, i1+0.5, i2+1.5],
                            xlabel=xlabel, ylabel=ylabel,
@@ -1906,8 +1909,15 @@ def compute_crmasks(
                 else:
                     vmin_, vmax_ = 0, 2
                 tea.imshow(fig, ax, image2d[i1:(i2+1), j1:(j2+1)], vmin=vmin_, vmax=vmax_,
-                           extent=[j1-0.5, j2+0.5, i1-0.5, i2+0.5],
+                           extent=[j1+0.5, j2+1.5, i1+0.5, i2+1.5],
+                           xlabel=xlabel, ylabel=ylabel,
                            title=title, cmap=cmap, cblabel=cblabel, interpolation=None)
+                if k == 1:
+                    # Overlay the grid of pixels
+                    for idum in range(i1, i2 + 1):
+                        ax.hlines(y=idum + 0.5, xmin=j1 + 0.5, xmax=j2 + 1.5, colors='w', lw=0.5, alpha=0.3)
+                    for jdum in range(j1, j2 + 1):
+                        ax.vlines(x=jdum + 0.5, ymin=i1 + 0.5, ymax=i2 + 1.5, colors='w', lw=0.5, alpha=0.3)
             nplot_missing = nrows * ncols - num_plot_max - 3
             if nplot_missing > 0:
                 for k in range(nplot_missing):
@@ -1916,6 +1926,14 @@ def compute_crmasks(
             fig.suptitle(f'CR#{i+1}/{number_cr}')
             plt.tight_layout()
             plt.show(block=False)
+            if verify_cr:
+                print('-' * 50)
+            for idum in range(i1, i2 + 1):
+                for jdum in range(j1, j2 + 1):
+                    if labels_cr[idum, jdum] == i + 1:
+                        cr_table.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
+                        if verify_cr:
+                            print(f'pixel (x,y) = ({jdum+1}, {idum+1}):  mask = {flag_integer_dilated[idum, jdum]}')
             if verify_cr:
                 accept_cr = input(f"Accept this cosmic ray detection #{i+1} ([y]/n)? ")
                 if accept_cr.lower() == 'n':
@@ -1929,6 +1947,8 @@ def compute_crmasks(
         pdf.close()
         _logger.info("plot generation complete")
         _logger.info("saving mediancr_identified_cr.pdf")
+        cr_table.write(cr_table_filename, format='csv', overwrite=True)
+        _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)
 
     # Generate list of HDUs with masks
     hdu_mediancr = fits.ImageHDU(mask_mediancr.astype(np.uint8), name='MEDIANCR')
@@ -1975,7 +1995,7 @@ def compute_crmasks(
                 raise ValueError("la_fsmode must be 'median' or 'convolve'.")
             # For the mean2d array, update the flag with the user masks
             if i == 0:
-                update_flag_with_user_masks(flag, pixels_to_be_masked, pixels_to_be_excluded, _logger)
+                update_flag_with_user_masks(flag, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
             flag_la = flag_la.flatten()
             if crmethod == 'lacosmic':
                 xplot_boundary = None
