@@ -525,7 +525,7 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                 [ycr_only_la_within_xy, ycr_only_sb_within_xy, ycr_both_within_xy],
                 [ncr_only_la_within_xy, ncr_only_sb_within_xy, ncr_both_within_xy],
                 [flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy],
-                ['r', 'b', 'y'],
+                ['r', 'b', 'm'],
                 ['x', '+', 'o']):
             if num > 0:
                 if ax is None:
@@ -617,13 +617,13 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     enum_both_global = np.zeros_like(flag_la, dtype=int)
     enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
 
-    ax1.plot(xplot, yplot, 'C0,')
+    ax1.plot(xplot, yplot, 'C0,', label='Non-suspected pixels')
     ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
                 c='r', marker='x', label=f'Suspected pixels: {num_only_la} (lacosmic)')
     ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
                 c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (simboundary)')
     ax1.scatter(xplot[flag_both], yplot[flag_both],
-                edgecolor='y', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
+                edgecolor='m', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
     if xplot_boundary is not None and yplot_boundary is not None:
         ax1.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
     if sb_threshold is not None:
@@ -631,7 +631,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax1.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
     ax1.set_title('Median-Mean Diagnostic Diagram')
-    ax1.legend(loc='upper right', fontsize=8, title=f'Total: {num_total} pixels')
+    ax1.legend(loc='upper right', fontsize=8, title=f'Total: {num_total} suspected pixels')
 
     ax2.set_xlim(ax1.get_xlim())
     ax2.set_ylim(ax1.get_ylim())
@@ -657,6 +657,12 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                  enum_la_global, enum_sb_global, enum_both_global,
                  xplot, yplot,
                  ax1, ax2, ax3, display_ncr)
+
+    for ax, label, color in zip([ax1, ax2, ax3, ax4],
+                                ['(a)', '(b)', '(c)', '(d)'],
+                                ['k', 'k', 'w', 'w']):
+        ax.text(0.97, 0.03, label, transform=ax.transAxes, color=color,
+                fontsize=15, fontweight='bold', va='bottom', ha='right')
 
     updating = {'plot_limits': False}
 
@@ -707,6 +713,12 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                              enum_la_global, enum_sb_global, enum_both_global,
                              xplot, yplot,
                              ax1, ax2, ax3, display_ncr)
+                for ax, label, color in zip([ax3, ax4],
+                                            ['(c)', '(d)'],
+                                            ['w', 'w']):
+                    ax.text(0.97, 0.03, label, transform=ax.transAxes, color=color,
+                            fontsize=15, fontweight='bold', va='bottom', ha='right')
+
                 ax2.figure.canvas.draw_idle()
                 ax3.figure.canvas.draw_idle()
                 ax4.figure.canvas.draw_idle()
@@ -1698,7 +1710,7 @@ def compute_crmasks(
             if la_psfsize % 2 == 0 or la_psfsize < 3:
                 raise ValueError("la_psfsize must be an odd integer >= 3.")
         # Define dictionary with the parameters for cosmicray_lacosmic() function
-        # Note: the "pssl" parameter is not used here because it was deprecated 
+        # Note: the "pssl" parameter is not used here because it was deprecated
         # in version 2.3.0 and will be removed in a future version.
         # The "pssl" keyword will be removed in ccdproc 3.0.
         # Use "inbkg" instead to have astroscrappy temporarily remove the background during processing.
@@ -1706,20 +1718,37 @@ def compute_crmasks(
             'gain': gain_scalar,
             'readnoise': rnoise_scalar,
             'sigclip': la_sigclip,
+            'sigfrac': la_sigfrac,
             'objlim': la_objlim,
             'satlevel': la_satlevel * gain_scalar if la_satlevel is not None else None,  # in electrons!
             'niter': la_niter,
             'sepmed': la_sepmed,
             'fsmode': la_fsmode,
             'psfmodel': la_psfmodel,
-            'psffwhm': (la_psffwhm_x + la_psffwhm_y) / 2.0,
+            'psffwhm': None,
             'psfsize': la_psfsize,
             'psfbeta': la_psfbeta,
             'verbose': la_verbose,
+            'psfk': None,
             'inbkg': None,
             'invar': None
         }
-        if la_psfmodel == 'gaussxy':
+        if la_psfmodel in ['gauss', 'moffat']:
+            if la_psffwhm_x is None or la_psfsize is None:
+                raise ValueError("For la_psfmodel='gauss' or 'moffat', "
+                                 "la_psffwhm_x and la_psfsize must be provided.")
+            dict_la_params['psffwhm'] = (la_psffwhm_x + la_psffwhm_y) / 2.0  # average FWHM
+        elif la_psfmodel == 'gaussx':
+            if la_psffwhm_x is None or la_psfsize is None:
+                raise ValueError("For la_psfmodel='gaussx', "
+                                 "la_psffwhm_x and la_psfsize must be provided.")
+            dict_la_params['psffwhm'] = la_psffwhm_x
+        elif la_psfmodel == 'gaussy':
+            if la_psffwhm_y is None or la_psfsize is None:
+                raise ValueError("For la_psfmodel='gaussy', "
+                                 "la_psffwhm_y and la_psfsize must be provided.")
+            dict_la_params['psffwhm'] = la_psffwhm_y
+        elif la_psfmodel == 'gaussxy':
             dict_la_params['psffwhm'] = None  # not used in this case
             dict_la_params['psfk'] = gausskernel2d_elliptical(
                 fwhm_x=la_psffwhm_x,
@@ -1727,7 +1756,7 @@ def compute_crmasks(
                 kernsize=la_psfsize
             )
         else:
-            dict_la_params['psfk'] = None  # use default kernel from ccdproc
+            raise ValueError("la_psfmodel must be 'gauss', 'moffat', 'gaussx', 'gaussy', or 'gaussxy'.")
 
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
@@ -1738,7 +1767,13 @@ def compute_crmasks(
 
     if la_verbose:
         for key in dict_la_params.keys():
-            _logger.info("%s for lacosmic: %s", key, str(dict_la_params[key]))
+            if key == 'psfk':
+                if dict_la_params[key] is None:
+                    _logger.info("%s for lacosmic: None", key)
+                else:
+                    _logger.info("%s for lacosmic: array with shape %s", key, str(dict_la_params[key].shape))
+            else:
+                _logger.info("%s for lacosmic: %s", key, str(dict_la_params[key]))
 
     if crmethod in ['lacosmic', 'sb_lacosmic']:
         # ---------------------------------------------------------------------
@@ -1772,7 +1807,9 @@ def compute_crmasks(
             if sb_fixed_points_in_boundary.lower() == 'none':
                 sb_fixed_points_in_boundary = None
         if sb_fixed_points_in_boundary is None:
-            pass
+            if sb_boundary_fit == 'piecewise':
+                raise ValueError("For sb_boundary_fit='piecewise', "
+                                 "sb_fixed_points_in_boundary must be provided.")
         else:
             sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
             x_sb_fixed_points_in_boundary = []
@@ -1816,7 +1853,9 @@ def compute_crmasks(
         if sb_crosscorr_region is None:
             crossregion = None
         else:
-            crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits')
+            crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits', naxis1=naxis1, naxis2=naxis2)
+            if crossregion.area < 100:
+                raise ValueError("The area of sb_crosscorr_region must be at least 100 pixels.")
         list_yx_offsets = []
         for i in range(num_images):
             if crossregion is None:
