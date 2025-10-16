@@ -1240,11 +1240,18 @@ def compute_crmasks(
         maxplots=-1,
         debug=False,
         la_sigclip=None,
-        la_psffwhm_x=None,
-        la_psffwhm_y=None,
+        la_sigfrac=None,
+        la_objlim=None,
+        la_satlevel=None,
+        la_niter=None,
+        la_sepmed=None,
         la_fsmode=None,
         la_psfmodel=None,
+        la_psffwhm_x=None,
+        la_psffwhm_y=None,
         la_psfsize=None,
+        la_psfbeta=None,
+        la_verbose=False,
         sb_crosscorr_region=None,
         sb_boundary_fit=None,
         sb_knots_splfit=3,
@@ -1329,12 +1336,19 @@ def compute_crmasks(
         If True, enable debug mode (default is False).
     la_sigclip : float
         The sigma clipping threshold. Employed when crmethod='lacosmic'.
-    la_psffwhm_x : float
-        The full width at half maximum (FWHM, in pixels) of the PSF in
-        the x direction. Employed when crmethod='lacosmic'.
-    la_psffwhm_y : float
-        The full width at half maximum (FWHM, in pixels) of the PSF
-        in the y direction. Employed when crmethod='lacosmic'.
+    la_sigfrac : float
+        The fractional detection limit for neighboring pixels.
+        Employed when crmethod='lacosmic'.
+    la_objlim : float
+        Minimum contrast between Laplacian image and fine structure image.
+        Employed when crmethod='lacosmic'.
+    la_satlevel : float
+        The saturation level (in ADU) of the detector. Employed when crmethod='lacosmic'.
+    la_niter : int
+        The number of iterations to perform. Employed when crmethod='lacosmic'.
+    la_sepmed : bool
+        If True, use separable median filter instead of the full median filter.
+        Employed when crmethod='lacosmic'.
     la_fsmode : str
         The mode to use for the fine structure image. Valid options are:
         'median' or 'convolve'. Employed when crmethod='lacosmic'.
@@ -1346,9 +1360,21 @@ def compute_crmasks(
         - elliptical Gaussian: 'gaussxy' (this kernel is not available
           in ccdproc.cosmicray_lacosmic, so it is implemented here)
         Employed when crmethod='lacosmic'.
+    la_psffwhm_x : float
+        The full width at half maximum (FWHM, in pixels) of the PSF in
+        the x direction. Employed when crmethod='lacosmic'.
+    la_psffwhm_y : float
+        The full width at half maximum (FWHM, in pixels) of the PSF
+        in the y direction. Employed when crmethod='lacosmic'.
     la_psfsize : int
         The kernel size to use for the PSF. It must be an odd integer >= 3.
         Employed when crmethod='lacosmic'.
+    la_psfbeta : float
+        The beta parameter of the Moffat PSF. It is only used if
+        la_psfmodel='moffat'. Employed when crmethod='lacosmic'.
+    la_verbose : bool
+        If True, print additional information during the
+        execution. Employed when crmethod='lacosmic'.
     sb_crosscorr_region : str, or None
         The region to use for the 2D cross-correlation to determine
         the offsets between the individual images and the median image.
@@ -1671,6 +1697,37 @@ def compute_crmasks(
                 _logger.info("la_psfsize for lacosmic: %d", la_psfsize)
             if la_psfsize % 2 == 0 or la_psfsize < 3:
                 raise ValueError("la_psfsize must be an odd integer >= 3.")
+        # Define dictionary with the parameters for cosmicray_lacosmic() function
+        # Note: the "pssl" parameter is not used here because it was deprecated 
+        # in version 2.3.0 and will be removed in a future version.
+        # The "pssl" keyword will be removed in ccdproc 3.0.
+        # Use "inbkg" instead to have astroscrappy temporarily remove the background during processing.
+        dict_la_params = {
+            'gain': gain_scalar,
+            'readnoise': rnoise_scalar,
+            'sigclip': la_sigclip,
+            'objlim': la_objlim,
+            'satlevel': la_satlevel * gain_scalar if la_satlevel is not None else None,  # in electrons!
+            'niter': la_niter,
+            'sepmed': la_sepmed,
+            'fsmode': la_fsmode,
+            'psfmodel': la_psfmodel,
+            'psffwhm': (la_psffwhm_x + la_psffwhm_y) / 2.0,
+            'psfsize': la_psfsize,
+            'psfbeta': la_psfbeta,
+            'verbose': la_verbose,
+            'inbkg': None,
+            'invar': None
+        }
+        if la_psfmodel == 'gaussxy':
+            dict_la_params['psffwhm'] = None  # not used in this case
+            dict_la_params['psfk'] = gausskernel2d_elliptical(
+                fwhm_x=la_psffwhm_x,
+                fwhm_y=la_psffwhm_y,
+                kernsize=la_psfsize
+            )
+        else:
+            dict_la_params['psfk'] = None  # use default kernel from ccdproc
 
     _logger.info("dtype for output arrays: %s", dtype)
     _logger.info("dilation factor: %d", dilation)
@@ -1678,6 +1735,10 @@ def compute_crmasks(
     _logger.info("semiwindow size for plotting coincident cosmic-ray pixels: %d", semiwindow)
     _logger.info("maximum number of coincident cosmic-ray pixels to plot: %d", maxplots)
     _logger.info("color scale for plots: %s", color_scale)
+
+    if la_verbose:
+        for key in dict_la_params.keys():
+            _logger.info("%s for lacosmic: %s", key, str(dict_la_params[key]))
 
     if crmethod in ['lacosmic', 'sb_lacosmic']:
         # ---------------------------------------------------------------------
@@ -1688,36 +1749,10 @@ def compute_crmasks(
         _logger.info("detecting cosmic rays in the median2d image using lacosmic...")
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
-        if la_fsmode == 'median':
-            median2d_lacosmic, flag_la = cosmicray_lacosmic(
-                ccd=median2d,
-                gain=gain_scalar,
-                readnoise=rnoise_scalar,
-                sigclip=la_sigclip,
-                fsmode='median'
-            )
-        elif la_fsmode == 'convolve':
-            if la_psfmodel != 'gaussxy':
-                median2d_lacosmic, flag_la = cosmicray_lacosmic(
-                    ccd=median2d,
-                    gain=gain_scalar,
-                    readnoise=rnoise_scalar,
-                    sigclip=la_sigclip,
-                    fsmode='convolve',
-                    psfk=None,
-                    psfmodel=la_psfmodel,
-                )
-            else:
-                median2d_lacosmic, flag_la = cosmicray_lacosmic(
-                    ccd=median2d,
-                    gain=gain_scalar,
-                    readnoise=rnoise_scalar,
-                    sigclip=la_sigclip,
-                    fsmode='convolve',
-                    psfk=gausskernel2d_elliptical(fwhm_x=la_psffwhm_x, fwhm_y=la_psffwhm_y, kernsize=la_psfsize)
-                )
-        else:
-            raise ValueError("la_fsmode must be 'median' or 'convolve'.")
+        median2d_lacosmic, flag_la = cosmicray_lacosmic(
+            ccd=median2d,
+            **{key: value for key, value in dict_la_params.items() if value is not None}
+        )
         _logger.info("number of pixels flagged as cosmic rays by lacosmic: %d", np.sum(flag_la))
         update_flag_with_user_masks(flag_la, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
         flag_la = flag_la.flatten()
@@ -2129,36 +2164,10 @@ def compute_crmasks(
             _logger.info(f"detecting cosmic rays in array {i}...")
             target2d_name = f'single exposure #{i}'
         if crmethod in ['lacosmic', 'sb_lacosmic']:
-            if la_fsmode == 'median':
-                array_lacosmic, flag_la = cosmicray_lacosmic(
-                    ccd=target2d,
-                    gain=gain_scalar,
-                    readnoise=rnoise_scalar,
-                    sigclip=la_sigclip,
-                    fsmode='median'
-                )
-            elif la_fsmode == 'convolve':
-                if la_psfmodel != 'gaussxy':
-                    array_lacosmic, flag_la = cosmicray_lacosmic(
-                        ccd=target2d,
-                        gain=gain_scalar,
-                        readnoise=rnoise_scalar,
-                        sigclip=la_sigclip,
-                        fsmode='convolve',
-                        psfk=None,
-                        psfmodel=la_psfmodel,
-                    )
-                else:
-                    array_lacosmic, flag_la = cosmicray_lacosmic(
-                        ccd=target2d,
-                        gain=gain_scalar,
-                        readnoise=rnoise_scalar,
-                        sigclip=la_sigclip,
-                        fsmode='convolve',
-                        psfk=gausskernel2d_elliptical(fwhm_x=la_psffwhm_x, fwhm_y=la_psffwhm_y, kernsize=la_psfsize)
-                    )
-            else:
-                raise ValueError("la_fsmode must be 'median' or 'convolve'.")
+            array_lacosmic, flag_la = cosmicray_lacosmic(
+                ccd=target2d,
+                **{key: value for key, value in dict_la_params.items() if value is not None}
+            )
             # For the mean2d array, update the flag with the user masks
             if i == 0:
                 update_flag_with_user_masks(flag, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
@@ -2236,7 +2245,8 @@ def compute_crmasks(
     for hdu in list_hdu_masks[2:]:
         mask_all_singles = np.logical_and(mask_all_singles, hdu.data.astype(bool))
     problematic_pixels = np.argwhere(mask_all_singles)
-    _logger.info("number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d", len(problematic_pixels))
+    _logger.info("number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d",
+                 len(problematic_pixels))
     if len(problematic_pixels) > 0:
         # Label the connected problematic pixels as individual problematic cosmic rays
         labels_cr, number_cr = ndimage.label(mask_all_singles)
