@@ -216,7 +216,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     _logger.info(f"saving {png_filename}")
     plt.savefig(png_filename, dpi=150)
     if interactive:
-        _logger.info("Entering interactive mode (press 'q' to close plot)")
+        _logger.info("Entering interactive mode (press 'q' to close figure)")
         plt.show()
     plt.close(fig)
 
@@ -232,7 +232,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close plot)")
+            _logger.info("Entering interactive mode (press 'q' to close figure)")
             plt.show()
         plt.close(fig)
 
@@ -307,7 +307,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close plot)")
+            _logger.info("Entering interactive mode (press 'q' to close figure)")
             plt.show()
         plt.close(fig)
 
@@ -336,7 +336,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     _logger.info(f"saving {png_filename}")
     plt.savefig(png_filename, dpi=150)
     if interactive:
-        _logger.info("Entering interactive mode (press 'q' to close plot)")
+        _logger.info("Entering interactive mode (press 'q' to close figure)")
         plt.show()
     plt.close(fig)
 
@@ -965,7 +965,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         text_box_vmax = TextBox(ax_vmax, 'vmax:', initial=f'{int(np.round(vmax, 0))}', textalignment='right')
         text_box_vmax.on_submit(submit_vmax)
 
-        _logger.info("Entering interactive mode (press 'q' to close plot)")
+        _logger.info("Entering interactive mode (press 'q' to close figure)")
         # plt.tight_layout()
         plt.show()
     plt.close(fig)
@@ -1118,7 +1118,7 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
     maxplots_eff = maxplots
     if maxplots_eff < 0 or verify_cr:
         maxplots_eff = number_cr
-    _logger.info(f"generating {maxplots_eff} plots of coincident cosmic-ray pixels...")
+    _logger.info(f"generating {maxplots_eff} plots...")
     xlabel = 'X pixel (from 1 to NAXIS1)'
     ylabel = 'Y pixel (from 1 to NAXIS2)'
     naxis2, naxis1 = median2d.shape
@@ -1196,7 +1196,7 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
                 if k == 1:
                     cbar.set_ticks([0, 1, 2, 3, 4])
                     cbar.ax.yaxis.set_tick_params(length=0)
-                    cbar.set_ticklabels([' ', 'dilation', 'sb', 'la', 'sb+la'])
+                    cbar.set_ticklabels([' ', 'dilation', 'sb', 'la', 'sb & la'])
                     # Overlay the grid of pixels
                     for idum in range(i1, i2 + 1):
                         ax.hlines(y=idum + 0.5, xmin=j1 + 0.5, xmax=j2 + 1.5, colors='w', lw=0.5, alpha=0.3)
@@ -1213,8 +1213,6 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
             ijloc = np.argwhere(labels_cr == i + 1)
             xproblematic = ijloc[:, 1] + 1  # FITS criterium
             yproblematic = ijloc[:, 0] + 1  # FITS criter
-            _logger.info("reg. #%d: no. of pixels = %d, (x, y) FITS-pixel = (%.1f, %.1f)",
-                         i + 1, len(ijloc), np.mean(xproblematic), np.mean(yproblematic))
             # plots for problematic pixels
             for k in range(num_plot_max):
                 ax = axarr[k + num_plot_max]
@@ -1261,6 +1259,7 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
     _logger.info("plot generation complete")
     _logger.info("saving mediancr_identified_cr.pdf")
     cr_table.write(cr_table_filename, format='csv', overwrite=True)
+    _logger.info("\n%s", cr_table)
     _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)
 
 
@@ -1822,7 +1821,7 @@ def compute_crmasks(
             ccd=median2d,
             **{key: value for key, value in dict_la_params.items() if value is not None}
         )
-        _logger.info("number of pixels flagged as cosmic rays by lacosmic: %d", np.sum(flag_la))
+        _logger.info("number of pixels flagged as cosmic rays by [bold red]lacosmic[/bold red]: %d", np.sum(flag_la))
         update_flag_with_user_masks(flag_la, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
         flag_la = flag_la.flatten()
         if crmethod == 'lacosmic':
@@ -1932,7 +1931,7 @@ def compute_crmasks(
                 _logger.info(f"saving {png_filename}")
                 plt.savefig(png_filename, dpi=150)
                 if interactive:
-                    _logger.info("Entering interactive mode (press 'q' to close plot)")
+                    _logger.info("Entering interactive mode (press 'q' to close figure)")
                     plt.show()
                 plt.close(fig)
                 list_yx_offsets.append(yx_offsets)
@@ -2097,6 +2096,24 @@ def compute_crmasks(
             ax1.plot(xcbins, boundaryfit(xcbins), 'r-', label='Piecewise linear fit')
         else:
             raise ValueError(f"Invalid sb_boundary_fit: {sb_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
+
+        if sb_threshold is None:
+            # Use the minimum value of the boundary as the sb_threshold
+            sb_threshold = np.min(yplot_boundary)
+            _logger.info("updated sb_threshold for cosmic-ray detection: %f", sb_threshold)
+
+        # Apply the criterium to detect coincident cosmic-ray pixels
+        flag1 = yplot > boundaryfit(xplot)
+        flag2 = yplot > sb_threshold
+        flag_sb = np.logical_and(flag1, flag2)
+        flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
+        flag_sb = np.logical_and(flag_sb, flag3)
+        _logger.info("number of pixels flagged as cosmic rays by [bold blue]simboundary[/bold blue]: %d",
+                     np.sum(flag_sb))
+        if crmethod == 'simboundary':
+            flag_la = np.zeros_like(flag_sb, dtype=bool)
+
+        # Plot the results
         if sb_fixed_points_in_boundary is not None:
             ax1.plot(x_sb_fixed_points_in_boundary, y_sb_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
                      label='Fixed points')
@@ -2126,24 +2143,9 @@ def compute_crmasks(
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close plot)")
+            _logger.info("Entering interactive mode (press 'q' to close figure)")
             plt.show()
         plt.close(fig)
-
-        if sb_threshold is None:
-            # Use the minimum value of the boundary as the sb_threshold
-            sb_threshold = np.min(yplot_boundary)
-            _logger.info("updated sb_threshold for cosmic-ray detection: %f", sb_threshold)
-
-        # Apply the criterium to detect coincident cosmic-ray pixels
-        flag1 = yplot > boundaryfit(xplot)
-        flag2 = yplot > sb_threshold
-        flag_sb = np.logical_and(flag1, flag2)
-        flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
-        flag_sb = np.logical_and(flag_sb, flag3)
-        _logger.info("number of pixels flagged as cosmic rays by simboundary: %d", np.sum(flag_sb))
-        if crmethod == 'simboundary':
-            flag_la = np.zeros_like(flag_sb, dtype=bool)
 
     # Define the final cosmic ray flag
     if flag_la is None and flag_sb is None:
@@ -2158,7 +2160,19 @@ def compute_crmasks(
         # Combine the flags from lacosmic and simboundary
         flag = np.logical_or(flag_la, flag_sb)
         flag_integer = 2 * flag_sb.astype(np.uint8) + 3 * flag_la.astype(np.uint8)
-        _logger.info("number of pixels flagged as cosmic rays by lacosmic+simboundary: %d", np.sum(flag))
+        sdum = str(np.sum(flag))
+        cdum = f"{np.sum(flag):{len(sdum)}d}"
+        _logger.info("number of pixels flagged as cosmic rays by "
+                     "[red]lacosmic[/red] [bold]or[/bold]  [blue]simboundary[/blue]: %s", cdum)
+        cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
+        _logger.info("number of pixels flagged as cosmic rays by "
+                     "[red]lacosmic[/red] only...........: %s", cdum)
+        cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
+        _logger.info("number of pixels flagged as cosmic rays by "
+                     "[blue]simboundary[/blue] only........: %s", cdum)
+        cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
+        _logger.info("number of pixels flagged as cosmic rays by "
+                     "[red]lacosmic[/red] [bold]and[/bold] [blue]simboundary[/blue]: %s", cdum)
     flag = flag.reshape((naxis2, naxis1))
     flag_integer = flag_integer.reshape((naxis2, naxis1))
     flag_integer[flag_integer == 5] = 4  # pixels flagged by both methods are set to 4
@@ -2180,16 +2194,17 @@ def compute_crmasks(
         _logger.info("coincident cosmic-ray pixels detected...")
         # Use the integer version of the flag for dilation
         if dilation > 0:
-            _logger.info("before dilation: %d pixels flagged as coincident cosmic-ray pixels",
-                         np.sum(flag_integer > 0))
             structure = ndimage.generate_binary_structure(2, 2)
             flag_integer_dilated = ndimage.binary_dilation(
                 flag_integer,
                 structure=structure,
                 iterations=dilation
             ).astype(np.uint8)
-            _logger.info("after dilation: %d pixels flagged as coincident cosmic-ray pixels",
-                         np.sum(flag_integer_dilated > 0))
+            sdum = str(np.sum(flag_integer_dilated > 0))
+            cdum = f"{np.sum(flag_integer > 0):{len(sdum)}d}"
+            _logger.info("before dilation: %s pixels flagged as coincident cosmic-ray pixels", cdum)
+            cdum = f"{np.sum(flag_integer_dilated > 0):{len(sdum)}d}"
+            _logger.info("after dilation : %s pixels flagged as coincident cosmic-ray pixels", cdum)
         else:
             flag_integer_dilated = flag_integer
             _logger.info("no dilation applied: %d pixels flagged as coincident cosmic-ray pixels",
@@ -2206,7 +2221,7 @@ def compute_crmasks(
         median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
         # Label the connected pixels as individual cosmic rays
         labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
-        _logger.info("number of coincident cosmic-ray pixels (connected pixels) detected: %d", number_cr)
+        _logger.info("number of grouped cosmic-ray pixels detected: %d", number_cr)
         display_detected_cr(
             num_images=num_images,
             image3d=image3d,
@@ -2273,8 +2288,13 @@ def compute_crmasks(
         if i > 0:
             flag_la = np.logical_and(flag_la, list_hdu_masks[1].data.astype(bool).flatten())
             flag_sb = np.logical_and(flag_sb, list_hdu_masks[1].data.astype(bool).flatten())
-        _logger.info("number of pixels flagged as cosmic rays (lacosmic)...: %d", np.sum(flag_la))
-        _logger.info("number of pixels flagged as cosmic rays (simboundary): %d", np.sum(flag_sb))
+        sflag_la = str(np.sum(flag_la))
+        sflag_sb = str(np.sum(flag_sb))
+        smax = max(len(sflag_la), len(sflag_sb))
+        _logger.info("number of pixels flagged as cosmic rays by "
+                     "[red]lacosmic[/red]...: %s", f"{np.sum(flag_la):{smax}d}")
+        _logger.info("number of pixels flagged as cosmic rays by "
+                     "[blue]simboundary[/blue]: %s", f"{np.sum(flag_sb):{smax}d}")
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
@@ -2293,14 +2313,17 @@ def compute_crmasks(
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
         if dilation > 0:
-            _logger.info("before dilation: %d pixels flagged as cosmic rays", np.sum(flag_integer))
             structure = ndimage.generate_binary_structure(2, 2)
             flag_integer_dilated = ndimage.binary_dilation(
                 flag_integer,
                 structure=structure,
                 iterations=dilation
             ).astype(np.uint8)
-            _logger.info("after dilation: %d pixels flagged as cosmic rays", np.sum(flag_integer_dilated))
+            sdum = str(np.sum(flag_integer_dilated))
+            cdum = f"{np.sum(flag_integer):{len(sdum)}d}"
+            _logger.info("before dilation: %s pixels flagged as cosmic rays", cdum)
+            cdum = f"{np.sum(flag_integer_dilated):{len(sdum)}d}"
+            _logger.info("after dilation : %s pixels flagged as cosmic rays", cdum)
         else:
             flag_integer_dilated = flag_integer
             _logger.info("no dilation applied: %d pixels flagged as cosmic rays", np.sum(flag_integer))
@@ -2324,7 +2347,7 @@ def compute_crmasks(
     if len(problematic_pixels) > 0:
         # Label the connected problematic pixels as individual problematic cosmic rays
         labels_cr, number_cr = ndimage.label(mask_all_singles)
-        _logger.info("number of connected problematic pixel regions: %d", number_cr)
+        _logger.info("number of grouped problematic cosmic-ray pixels: %d", number_cr)
         display_detected_cr(
             num_images=num_images,
             image3d=image3d,
@@ -2516,7 +2539,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
     median2d = np.median(image3d, axis=0)
 
     # Apply the requested combination method
-    _logger.info("applying combination method: %s", combination)
+    _logger.info("applying combination method: [bold][magenta]%s[/magenta][/bold]", combination)
     _logger.info("using crmasks in %s", hdul_masks[0].header['UUID'])
     if combination in ['mediancr', 'meancrt']:
         # Define the mask_mediancr
@@ -2724,7 +2747,7 @@ def main(args=None):
     # the computation of the masks. Otherwise, compute the masks.
     if args.crmasks is None:
         # Compute the different cosmic ray masks
-        console.rule("[bold red] Computing cosmic ray masks [/bold red]")
+        console.rule("[bold magenta] Computing cosmic ray masks [/bold magenta]")
         hdul_masks = compute_crmasks(
             list_arrays=list_arrays,
             **crmasks_params
@@ -2743,7 +2766,7 @@ def main(args=None):
 
     # Apply cosmic ray masks
     for combination in VALID_COMBINATIONS:
-        console.rule(f"Applying cosmic ray masks using [bold red]{combination}[/bold red]")
+        console.rule(f"Applying cosmic ray masks using [bold magenta]{combination}[/bold magenta]")
         output_combined = f'combined_{combination}.fits'
         combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
