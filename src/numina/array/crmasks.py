@@ -47,8 +47,6 @@ VALID_CRMETHODS = ['simboundary', 'lacosmic', 'sb_lacosmic']
 VALID_BOUNDARY_FITS = ['spline', 'piecewise']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
 
-console = Console()
-
 
 def decorate_output(func):
     """Decorator to capture stdout and stderr of a function and log it."""
@@ -2633,6 +2631,9 @@ def main(args=None):
                         type=str,
                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                         default='INFO')
+    parser.add_argument("--record",
+                        help="Record terminal output",
+                        action="store_true")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -2643,16 +2644,19 @@ def main(args=None):
         parser.print_usage()
         raise SystemExit()
 
+    # Configure rich console
+    console = Console(force_terminal=True, record=args.record)
+
     if args.echo:
         console.print(f"[bright_red]Executing: {' '.join(sys.argv)}[/bright_red]\n", end='')
 
     # Configure logging
     if args.log_level in ['DEBUG', 'WARNING', 'ERROR', 'CRITICAL']:
         format_log = '%(name)s %(levelname)s %(message)s'
-        handlers = [RichHandler(show_time=False, markup=True)]
+        handlers = [RichHandler(console=console, show_time=False, markup=True)]
     else:
         format_log = '%(message)s'
-        handlers = [RichHandler(show_time=False, markup=True, show_path=False, show_level=False)]
+        handlers = [RichHandler(console=console, show_time=False, markup=True, show_path=False, show_level=False)]
     logging.basicConfig(
         level=args.log_level,
         format=format_log,
@@ -2761,6 +2765,12 @@ def main(args=None):
         hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
         hdul.writeto(output_combined, overwrite=True)
         logger.info("Combined (bias subtracted) array, variance, and map saved")
+
+    if args.record:
+        log_filename = 'terminal_output.txt'
+        with open(log_filename, 'wt') as f:
+            f.write(console.export_text(styles=True))
+        logger.info("terminal output recorded in %s", log_filename)
 
 
 if __name__ == "__main__":
