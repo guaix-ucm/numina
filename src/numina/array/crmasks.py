@@ -9,6 +9,7 @@
 """Combination of arrays avoiding coincident cosmic ray hits."""
 import ast
 import inspect
+import io
 import logging
 import os
 import sys
@@ -18,6 +19,7 @@ import argparse
 from astropy.io import fits
 from astropy.table import Table
 from ccdproc import cosmicray_lacosmic
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 import math
 from matplotlib.backends.backend_pdf import PdfPages
@@ -28,6 +30,8 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox
 import numpy as np
 import numpy.ma as ma
+from rich.console import Console
+from rich.logging import RichHandler
 from scipy import ndimage
 from skimage.registration import phase_cross_correlation
 import yaml
@@ -36,11 +40,40 @@ from numina.array.display.plot_hist_step import plot_hist_step
 from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits_history
+from numina._version import __version__
 import teareduce as tea
 
 VALID_CRMETHODS = ['simboundary', 'lacosmic', 'sb_lacosmic']
 VALID_BOUNDARY_FITS = ['spline', 'piecewise']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
+
+console = Console()
+
+
+def decorate_output(func):
+    """Decorator to capture stdout and stderr of a function and log it."""
+
+    def wrapper(*args, **kwargs):
+        _logger = logging.getLogger(__name__)
+        buf = io.StringIO()
+        with redirect_stdout(buf), redirect_stderr(buf):
+            result = func(*args, **kwargs)
+        # Split into lines
+        output_lines = buf.getvalue().splitlines()
+        # Remove trailing empty line
+        if output_lines and output_lines[-1] == '':
+            output_lines = output_lines[:-1]
+        if output_lines:
+            _logger.info("\n".join(output_lines))
+        return result
+
+    return wrapper
+
+
+@decorate_output
+def decorated_cosmicray_lacosmic(*args, **kwargs):
+    """Wrapper for cosmicray_lacosmic with decorated output."""
+    return cosmicray_lacosmic(*args, **kwargs)
 
 
 def is_valid_number(x):
@@ -1464,7 +1497,7 @@ def compute_crmasks(
     # Log the number of input arrays and their shapes
     _logger.info("number of input arrays: %d", len(list_arrays))
     for i, array in enumerate(list_arrays):
-        _logger.info("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
+        _logger.debug("array %d shape: %s, dtype: %s", i, array.shape, array.dtype)
 
     # Check that interactive is True if verify_cr is True
     if verify_cr and not interactive:
@@ -1474,7 +1507,7 @@ def compute_crmasks(
     gain_scalar = None  # store gain as a scalar value (if applicable)
     if gain is None:
         gain = np.ones((naxis2, naxis1), dtype=float)
-        _logger.info("gain not defined, assuming gain=1.0 for all pixels.")
+        _logger.warning("gain not defined, assuming gain=1.0 for all pixels.")
         gain_scalar = 1.0
     elif isinstance(gain, (float, int)):
         gain = np.full((naxis2, naxis1), gain, dtype=float)
@@ -1493,7 +1526,7 @@ def compute_crmasks(
     rnoise_scalar = None  # store rnoise as a scalar value (if applicable)
     if rnoise is None:
         rnoise = np.zeros((naxis2, naxis1), dtype=float)
-        _logger.info("readout noise not defined, assuming readout noise=0.0 for all pixels.")
+        _logger.warning("readout noise not defined, assuming readout noise=0.0 for all pixels.")
         rnoise_scalar = 0.0
     elif isinstance(rnoise, (float, int)):
         rnoise = np.full((naxis2, naxis1), rnoise, dtype=float)
@@ -1511,7 +1544,7 @@ def compute_crmasks(
     # Define the bias
     if bias is None:
         bias = np.zeros((naxis2, naxis1), dtype=float)
-        _logger.info("bias not defined, assuming bias=0.0 for all pixels.")
+        _logger.warning("bias not defined, assuming bias=0.0 for all pixels.")
     elif isinstance(bias, (float, int)):
         bias = np.full((naxis2, naxis1), bias, dtype=float)
         _logger.info("bias defined as a constant value: %f", bias[0, 0])
@@ -1672,43 +1705,46 @@ def compute_crmasks(
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
     if crmethod in ['simboundary', 'sb_lacosmic']:
-        _logger.info("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
-        _logger.info("sb_boundary_fit: %s", sb_boundary_fit if sb_boundary_fit is not None else "None")
-        _logger.info("knots for spline fit to the boundary: %d", sb_knots_splfit)
-        _logger.info("fixed points in the boundary: %s",
-                     str(sb_fixed_points_in_boundary) if sb_fixed_points_in_boundary is not None else "None")
-        _logger.info("number of simulations to compute the detection boundary: %d", sb_nsimulations)
-        _logger.info("sb_threshold for coincident cosmic-ray detection: %s",
-                     sb_threshold if sb_threshold is not None else "None")
-        _logger.info("minimum max2d in rnoise units for coincident cosmic-ray detection: %f", sb_minimum_max2d_rnoise)
-        _logger.info("niter for boundary extension: %d", sb_niter_boundary_extension)
-        _logger.info("random seed for reproducibility: %s", str(sb_seed))
-        _logger.info("weight for boundary extension: %f", sb_weight_boundary_extension)
+        _logger.debug("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
+        _logger.debug("sb_boundary_fit: %s", sb_boundary_fit if sb_boundary_fit is not None else "None")
+        _logger.debug("knots for spline fit to the boundary: %d", sb_knots_splfit)
+        _logger.debug("fixed points in the boundary: %s",
+                      str(sb_fixed_points_in_boundary) if sb_fixed_points_in_boundary is not None else "None")
+        _logger.debug("number of simulations to compute the detection boundary: %d", sb_nsimulations)
+        _logger.debug("sb_threshold for coincident cosmic-ray detection: %s",
+                      sb_threshold if sb_threshold is not None else "None")
+        _logger.debug("minimum max2d in rnoise units for coincident cosmic-ray detection: %f", sb_minimum_max2d_rnoise)
+        _logger.debug("niter for boundary extension: %d", sb_niter_boundary_extension)
+        _logger.debug("random seed for reproducibility: %s", str(sb_seed))
+        _logger.debug("weight for boundary extension: %f", sb_weight_boundary_extension)
 
     if crmethod in ['lacosmic', 'sb_lacosmic']:
         if la_sigclip is None:
-            _logger.info("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
+            _logger.warning("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
             la_sigclip = 5.0
         else:
-            _logger.info("la_sigclip for lacosmic: %f", la_sigclip)
+            _logger.debug("la_sigclip for lacosmic: %f", la_sigclip)
         if la_fsmode not in ['median', 'convolve']:
             raise ValueError("la_fsmode must be 'median' or 'convolve'.")
         else:
-            _logger.info("la_fsmode for lacosmic: %s", la_fsmode)
+            _logger.debug("la_fsmode for lacosmic: %s", la_fsmode)
         if la_psfmodel not in ['gauss', 'moffat', 'gaussx', 'gaussy', 'gaussxy']:
             raise ValueError("la_psfmodel must be 'gauss', 'moffat', 'gaussx', 'gaussy', or 'gaussxy'.")
         else:
-            _logger.info("la_psfmodel for lacosmic: %s", la_psfmodel)
+            _logger.debug("la_psfmodel for lacosmic: %s", la_psfmodel)
         if la_fsmode == 'convolve':
             if la_psffwhm_x is None or la_psffwhm_y is None or la_psfsize is None:
                 raise ValueError("For la_fsmode='convolve', "
                                  "la_psffwhm_x, la_psffwhm_y, and la_psfsize must be provided.")
             else:
-                _logger.info("la_psffwhm_x for lacosmic: %f", la_psffwhm_x)
-                _logger.info("la_psffwhm_y for lacosmic: %f", la_psffwhm_y)
-                _logger.info("la_psfsize for lacosmic: %d", la_psfsize)
+                _logger.debug("la_psffwhm_x for lacosmic: %f", la_psffwhm_x)
+                _logger.debug("la_psffwhm_y for lacosmic: %f", la_psffwhm_y)
+                _logger.debug("la_psfsize for lacosmic: %d", la_psfsize)
             if la_psfsize % 2 == 0 or la_psfsize < 3:
                 raise ValueError("la_psfsize must be an odd integer >= 3.")
+        current_logging_level = logging.getLogger().getEffectiveLevel()
+        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+            la_verbose = False
         # Define dictionary with the parameters for cosmicray_lacosmic() function
         # Note: the "pssl" parameter is not used here because it was deprecated
         # in version 2.3.0 and will be removed in a future version.
@@ -1781,10 +1817,10 @@ def compute_crmasks(
         # Laplacian edge detection method from ccdproc. This only works if gain and
         # rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
-        _logger.info("detecting cosmic rays in the median2d image using lacosmic...")
+        _logger.info("[bold]detecting cosmic rays in the median2d image using [red]lacosmic[/red]...[/bold]")
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
-        median2d_lacosmic, flag_la = cosmicray_lacosmic(
+        median2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
             ccd=median2d,
             **{key: value for key, value in dict_la_params.items() if value is not None}
         )
@@ -1803,6 +1839,7 @@ def compute_crmasks(
         # derived boundary.
         # ---------------------------------------------------------------------
         # Define sb_fixed_points_in_boundary
+        _logger.info("[bold]detecting cosmic rays in the median2d image using [blue]simboundary[/blue]...[/bold]")
         if isinstance(sb_fixed_points_in_boundary, str):
             if sb_fixed_points_in_boundary.lower() == 'none':
                 sb_fixed_points_in_boundary = None
@@ -1920,10 +1957,10 @@ def compute_crmasks(
             if np.max(y_sb_fixed_points_in_boundary) > ydiag_max:
                 ydiag_max = np.max(y_sb_fixed_points_in_boundary)
         ydiag_max *= 1.20  # Add 20% margin to the maximum y limit
-        _logger.info("xdiag_min=%f", xdiag_min)
-        _logger.info("ydiag_min=%f", ydiag_min)
-        _logger.info("xdiag_max=%f", xdiag_max)
-        _logger.info("ydiag_max=%f", ydiag_max)
+        _logger.debug("xdiag_min=%f", xdiag_min)
+        _logger.debug("ydiag_min=%f", ydiag_min)
+        _logger.debug("xdiag_max=%f", xdiag_max)
+        _logger.debug("ydiag_max=%f", ydiag_max)
 
         # Define binning for the diagnostic plot
         nbins_xdiag = 100
@@ -2197,13 +2234,12 @@ def compute_crmasks(
     # Apply the same algorithm but now with mean2d and with each individual array
     for i, target2d in enumerate([mean2d] + list_arrays):
         if i == 0:
-            _logger.info("detecting cosmic rays in the mean2d image...")
             target2d_name = 'mean2d'
         else:
-            _logger.info(f"detecting cosmic rays in array {i}...")
             target2d_name = f'single exposure #{i}'
         if crmethod in ['lacosmic', 'sb_lacosmic']:
-            array_lacosmic, flag_la = cosmicray_lacosmic(
+            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [red]lacosmic[/red]...[/bold]")
+            array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
                 ccd=target2d,
                 **{key: value for key, value in dict_la_params.items() if value is not None}
             )
@@ -2217,6 +2253,7 @@ def compute_crmasks(
                 sb_threshold = None
                 flag_sb = np.zeros_like(flag_la, dtype=bool)
         if crmethod in ['simboundary', 'sb_lacosmic']:
+            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [blue]simboundary[/blue]...[/bold]")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
             flag1 = yplot > boundaryfit(xplot)
@@ -2580,13 +2617,6 @@ def main(args=None):
     """
     Main function to compute and apply CR masks.
     """
-    logging.basicConfig(
-        level=logging.INFO,  # or DEBUG, WARNING, ERROR, CRITICAL
-        format='%(name)s %(levelname)s %(message)s'
-    )
-    logger = logging.getLogger(__name__)
-
-    logger.info("Starting mediancr combination...")
 
     parser = argparse.ArgumentParser(
         description="Combine 2D arrays using mediancr, meancrt or meancr methods."
@@ -2598,9 +2628,11 @@ def main(args=None):
     parser.add_argument("--crmasks",
                         help="FITS file with cosmic ray masks",
                         type=str)
-    parser.add_argument("--verbose",
-                        help="Increase output verbosity",
-                        action="store_true")
+    parser.add_argument("--log-level",
+                        help="Set the logging level",
+                        type=str,
+                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                        default='INFO')
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -2612,13 +2644,30 @@ def main(args=None):
         raise SystemExit()
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        console.print(f"[bright_red]Executing: {' '.join(sys.argv)}[/bright_red]\n", end='')
+
+    # Configure logging
+    if args.log_level in ['DEBUG', 'WARNING', 'ERROR', 'CRITICAL']:
+        format_log = '%(name)s %(levelname)s %(message)s'
+        handlers = [RichHandler(show_time=False, markup=True)]
+    else:
+        format_log = '%(message)s'
+        handlers = [RichHandler(show_time=False, markup=True, show_path=False, show_level=False)]
+    logging.basicConfig(
+        level=args.log_level,
+        format=format_log,
+        handlers=handlers
+    )
+    logging.getLogger('matplotlib').setLevel(logging.ERROR)  # Suppress matplotlib debug logs
+
+    # Log version info
+    logger = logging.getLogger(__name__)
+    logger.info(f"Using {__name__} version {__version__}")
 
     # Read parameters from YAML file
     with open(args.inputyaml, 'rt') as fstream:
         input_params = yaml.safe_load(fstream)
-    if args.verbose:
-        logger.info(f'{input_params=}')
+    logger.debug(f'{input_params=}')
 
     # Check that mandatory parameters are present
     if 'images' not in input_params:
@@ -2671,6 +2720,7 @@ def main(args=None):
     # the computation of the masks. Otherwise, compute the masks.
     if args.crmasks is None:
         # Compute the different cosmic ray masks
+        console.rule("[bold red] Computing cosmic ray masks [/bold red]")
         hdul_masks = compute_crmasks(
             list_arrays=list_arrays,
             **crmasks_params
@@ -2689,7 +2739,7 @@ def main(args=None):
 
     # Apply cosmic ray masks
     for combination in VALID_COMBINATIONS:
-        logger.info("Applying cosmic ray masks using combination method: %s", combination)
+        console.rule(f"Applying cosmic ray masks using [bold red]{combination}[/bold red]")
         output_combined = f'combined_{combination}.fits'
         combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
