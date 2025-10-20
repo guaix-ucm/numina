@@ -43,6 +43,7 @@ from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits
 from numina._version import __version__
 import teareduce as tea
 
+VALID_LACOSMIC_CLEANTYPE = ['median', 'medmask', 'meanmask', 'idw']
 VALID_CRMETHODS = ['simboundary', 'lacosmic', 'sb_lacosmic']
 VALID_BOUNDARY_FITS = ['spline', 'piecewise']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
@@ -1269,6 +1270,7 @@ def compute_crmasks(
         rnoise=None,
         bias=None,
         crmethod='sb_lacosmic',
+        use_lamedian=False,
         flux_factor=None,
         interactive=True,
         dilation=1,
@@ -1287,6 +1289,7 @@ def compute_crmasks(
         la_satlevel=None,
         la_niter=None,
         la_sepmed=None,
+        la_cleantype=None,
         la_fsmode=None,
         la_psfmodel=None,
         la_psffwhm_x=None,
@@ -1338,6 +1341,11 @@ def compute_crmasks(
         detection (van Dokkum 2001), as implemented in ccdproc.
         - 'simboundary': use the numerically derived boundary to
         detect cosmic rays in the median combined image.
+    use_lamedian: bool, optional
+        If True, use the corrected value from the lacosmic algorithm
+        when replacing the cosmic-ray affected pixels in the median
+        combined image. This parameter is only used when
+        crmethod is 'lacosmic', or 'sb_lacosmic'.
     flux_factor : str, list, float or None, optional
         The flux scaling factor for each exposure (default is None).
         If 'auto', the flux factor is determined automatically.
@@ -1564,6 +1572,11 @@ def compute_crmasks(
     # Check crmethod
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
+    _logger.info("crmethod: %s", crmethod)
+    # Check use_lamedian
+    if use_lamedian and crmethod not in ['lacosmic', 'sb_lacosmic']:
+        raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'sb_lacosmic'.")
+    _logger.info("use_lamedian: %s", str(use_lamedian))
 
     # Check flux_factor
     if flux_factor is None:
@@ -1704,31 +1717,71 @@ def compute_crmasks(
     if crmethod in ['simboundary', 'sb_lacosmic']:
         _logger.debug("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
         _logger.debug("sb_boundary_fit: %s", sb_boundary_fit if sb_boundary_fit is not None else "None")
-        _logger.debug("knots for spline fit to the boundary: %d", sb_knots_splfit)
-        _logger.debug("fixed points in the boundary: %s",
+        _logger.debug("sb_knots_splfit: %d", sb_knots_splfit)
+        _logger.debug("sb_fixed points_in_boundary: %s",
                       str(sb_fixed_points_in_boundary) if sb_fixed_points_in_boundary is not None else "None")
-        _logger.debug("number of simulations to compute the detection boundary: %d", sb_nsimulations)
-        _logger.debug("sb_threshold for coincident cosmic-ray detection: %s",
-                      sb_threshold if sb_threshold is not None else "None")
-        _logger.debug("minimum max2d in rnoise units for coincident cosmic-ray detection: %f", sb_minimum_max2d_rnoise)
-        _logger.debug("niter for boundary extension: %d", sb_niter_boundary_extension)
-        _logger.debug("random seed for reproducibility: %s", str(sb_seed))
-        _logger.debug("weight for boundary extension: %f", sb_weight_boundary_extension)
+        _logger.debug("sb_nsimulations: %d", sb_nsimulations)
+        _logger.debug("sb_niter_boundary_extension: %d", sb_niter_boundary_extension)
+        _logger.debug("sb_weight_boundary_extension: %f", sb_weight_boundary_extension)
+        _logger.debug("sb_threshold: %s", sb_threshold if sb_threshold is not None else "None")
+        _logger.debug("sb_minimum_max2d_rnoise: %f", sb_minimum_max2d_rnoise)
+        _logger.debug("sb_seed: %s", str(sb_seed))
 
     if crmethod in ['lacosmic', 'sb_lacosmic']:
+        # Check la_sigclip
         if la_sigclip is None:
             _logger.warning("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
             la_sigclip = 5.0
         else:
             _logger.debug("la_sigclip for lacosmic: %f", la_sigclip)
+        # Check la_sigfrac
+        if la_sigfrac is None:
+            _logger.warning("la_sigfrac for lacosmic not defined, assuming la_sigfrac=0.3")
+            la_sigfrac = 0.3
+        else:
+            _logger.debug("la_sigfrac for lacosmic: %f", la_sigfrac)
+        # Check la_objlim
+        if la_objlim is None:
+            _logger.warning("la_objlim for lacosmic not defined, assuming la_objlim=5.0")
+            la_objlim = 5.0
+        else:
+            _logger.debug("la_objlim for lacosmic: %f", la_objlim)
+        # Check la_satlevel
+        if la_satlevel is None:
+            _logger.warning("la_satlevel for lacosmic not defined, assuming la_satlevel=None")
+        else:
+            _logger.debug("la_satlevel for lacosmic: %f", la_satlevel)
+        # Check niter
+        if la_niter is None:
+            _logger.warning("la_niter for lacosmic not defined, assuming la_niter=4")
+            la_niter = 4
+        else:
+            _logger.debug("la_niter for lacosmic: %d", la_niter)
+        # Check la_sepmed
+        if la_sepmed is None:
+            _logger.warning("la_sepmed for lacosmic not defined, assuming la_sepmed=True")
+            la_sepmed = True
+        else:
+            _logger.debug("la_sepmed for lacosmic: %s", str(la_sepmed))
+        # Check la_cleantype
+        if la_cleantype is None:
+            raise ValueError("la_cleantype for lacosmic must be provided.")
+        elif isinstance(la_cleantype, str):
+            if la_cleantype not in VALID_LACOSMIC_CLEANTYPE:
+                raise ValueError(f"la_cleantype must be one of {VALID_LACOSMIC_CLEANTYPE} or 'none'.")
+        else:
+            raise TypeError("la_cleantype must be a string.")
+        # Check la_fsmode
         if la_fsmode not in ['median', 'convolve']:
             raise ValueError("la_fsmode must be 'median' or 'convolve'.")
         else:
             _logger.debug("la_fsmode for lacosmic: %s", la_fsmode)
+        # Check la_psfmodel
         if la_psfmodel not in ['gauss', 'moffat', 'gaussx', 'gaussy', 'gaussxy']:
             raise ValueError("la_psfmodel must be 'gauss', 'moffat', 'gaussx', 'gaussy', or 'gaussxy'.")
         else:
             _logger.debug("la_psfmodel for lacosmic: %s", la_psfmodel)
+        # Check la_psffwhm_x, la_psffwhm_y, la_psfsize
         if la_fsmode == 'convolve':
             if la_psffwhm_x is None or la_psffwhm_y is None or la_psfsize is None:
                 raise ValueError("For la_fsmode='convolve', "
@@ -1739,9 +1792,17 @@ def compute_crmasks(
                 _logger.debug("la_psfsize for lacosmic: %d", la_psfsize)
             if la_psfsize % 2 == 0 or la_psfsize < 3:
                 raise ValueError("la_psfsize must be an odd integer >= 3.")
+        # Check la_psfbeta
+        if la_psfmodel == 'moffat':
+            if la_psfbeta is None:
+                raise ValueError("For la_psfmodel='moffat', la_psfbeta must be provided.")
+            else:
+                _logger.debug("la_psfbeta for lacosmic: %f", la_psfbeta)
+        # Set la_verbose
         current_logging_level = logging.getLogger().getEffectiveLevel()
         if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
             la_verbose = False
+        _logger.debug("la_verbose for lacosmic: %s", str(la_verbose))
         # Define dictionary with the parameters for cosmicray_lacosmic() function
         # Note: the "pssl" parameter is not used here because it was deprecated
         # in version 2.3.0 and will be removed in a future version.
@@ -1756,6 +1817,7 @@ def compute_crmasks(
             'satlevel': la_satlevel * gain_scalar if la_satlevel is not None else None,  # in electrons!
             'niter': la_niter,
             'sepmed': la_sepmed,
+            'cleantype': la_cleantype,
             'fsmode': la_fsmode,
             'psfmodel': la_psfmodel,
             'psffwhm': None,
@@ -1829,6 +1891,8 @@ def compute_crmasks(
             yplot_boundary = None
             sb_threshold = None
             flag_sb = np.zeros_like(flag_la, dtype=bool)
+    else:
+        median2d_lacosmic = None
 
     if crmethod in ['simboundary', 'sb_lacosmic']:
         # ---------------------------------------------------------------------
@@ -1888,7 +1952,7 @@ def compute_crmasks(
             crossregion = None
         else:
             crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits', naxis1=naxis1, naxis2=naxis2)
-            if crossregion.area < 100:
+            if crossregion.area() < 100:
                 raise ValueError("The area of sb_crosscorr_region must be at least 100 pixels.")
         list_yx_offsets = []
         for i in range(num_images):
@@ -2218,7 +2282,10 @@ def compute_crmasks(
         # Fix the median2d array by replacing the flagged pixels with the minimum value
         # of the corresponding pixel in the input arrays
         median2d_corrected = median2d.copy()
-        median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
+        if use_lamedian:
+            median2d_corrected[mask_mediancr] = median2d_lacosmic[mask_mediancr]
+        else:
+            median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
         # Label the connected pixels as individual cosmic rays
         labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
         _logger.info("number of grouped cosmic-ray pixels detected: %d", number_cr)
@@ -2337,6 +2404,10 @@ def compute_crmasks(
         hdu_mask = fits.ImageHDU(mask.astype(np.uint8), name=name)
         list_hdu_masks.append(hdu_mask)
 
+    if median2d_lacosmic is not None:
+        hdu_median2d_lacosmic = fits.ImageHDU(median2d_lacosmic.astype(np.float32), name='LAMEDIAN')
+        list_hdu_masks.append(hdu_median2d_lacosmic)
+
     # Find problematic cosmic-ray pixels (those masked in all individual CRMASKi)
     mask_all_singles = np.ones((naxis2, naxis1), dtype=bool)
     for hdu in list_hdu_masks[2:]:
@@ -2357,7 +2428,7 @@ def compute_crmasks(
             labels_cr=labels_cr,
             number_cr=number_cr,
             mask_mediancr=mask_mediancr,
-            list_mask_single_exposures=[hdu.data for hdu in list_hdu_masks[2:]],
+            list_mask_single_exposures=[hdu.data for hdu in list_hdu_masks[2:2+num_images]],
             mask_all_singles=mask_all_singles,
             semiwindow=semiwindow,
             maxplots=maxplots,
@@ -2413,7 +2484,7 @@ def compute_crmasks(
     return hdul_masks
 
 
-def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
+def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=False,
                   dtype=np.float32, apply_flux_factor=True, bias=None):
     """
     Correct cosmic rays applying previously computed masks.
@@ -2428,13 +2499,16 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         The input arrays to be combined.
     hdul_masks : HDUList
         The HDUList containing the mask arrays for cosmic ray removal.
-        The masks should be in the following extensions:
-        - 'MEDIANCR' for the median combination
-        - 'MEANCRT' for the mean combination
-        - 'CRMASK1', 'CRMASK2', etc. for the mean combination with individual masks
-        - 'RPMEDIAN' (optional) with pixels to be replaced by the median value
-        around them (stored as a binary table with four columns:
-            'X_pixel', 'Y_pixel', 'X_width', 'Y_width')
+        The masks and auxiliary data should be in the following extensions:
+        - 'MEDIANCR' mask for the median combination
+        - 'MEANCRT' mask for the mean combination
+        - 'CRMASK1', 'CRMASK2', etc. masks for the mean combination with
+          individual masks
+        - 'LAMEDIAN' (optional) image with the lacosmic-corrected median array
+        - 'RPMEDIAN' (optional) pixels to be replaced by the local median value
+          around them. Stored as a binary table with four columns:
+          'X_pixel', 'Y_pixel', 'X_width', 'Y_width'. The (X, Y) coordinates
+          are given following the FITS convention (starting at 1).
     combination : str
         The type of combination to apply. There are three options:
         - 'mediancr', the median combination is applied, and masked pixels
@@ -2449,6 +2523,11 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
         in the input arrays.
+    use_lamedian : bool, optional
+        If True, and if the extension 'LAMEDIAN' is present in `hdul_masks`,
+        the lacosmic-corrected median array is used to replace the masked
+        pixels in the 'mediancr' and 'meancrt' combination methods.
+        Default is False.
     apply_flux_factor : bool, optional
         If True, the flux factor is applied to the input arrays before
         combining them. The flux factor is read from the header of the
@@ -2481,6 +2560,11 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
     # Check that the combination method is valid
     if combination not in VALID_COMBINATIONS:
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
+
+    # If use_lamedian is True, check that the extension 'LAMEDIAN' is present
+    if use_lamedian:
+        if 'LAMEDIAN' not in hdul_masks:
+            raise ValueError("use_lamedian is True, but extension 'LAMEDIAN' is not present in hdul_masks.")
 
     # Check that the list contains numpy 2D arrays
     if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays):
@@ -2548,7 +2632,10 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         # Replace the masked pixels with the minimum value
         # of the corresponding pixel in the input arrays
         median2d_corrected = median2d.copy()
-        median2d_corrected[mask_mediancr] = min2d_rescaled[mask_mediancr]
+        if use_lamedian:
+            median2d_corrected[mask_mediancr] = hdul_masks['LAMEDIAN'].data[mask_mediancr]
+        else:
+            median2d_corrected[mask_mediancr] = min2d_rescaled[mask_mediancr]
 
     if combination == 'mediancr':
         combined2d = median2d_corrected
@@ -2589,8 +2676,12 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         # Replace pixels without data with the minimum value
         mask_nodata = total_mask == num_images
         if np.any(mask_nodata):
-            _logger.info("replacing %d pixels without data by the minimum value", np.sum(mask_nodata))
-            combined2d[mask_nodata] = min2d_rescaled[mask_nodata]
+            if use_lamedian:
+                _logger.info("replacing %d pixels without data by the LAMEDIAN value", np.sum(mask_nodata))
+                combined2d[mask_nodata] = hdul_masks['LAMEDIAN'].data[mask_nodata]
+            else:
+                _logger.info("replacing %d pixels without data by the minimum value", np.sum(mask_nodata))
+                combined2d[mask_nodata] = min2d_rescaled[mask_nodata]
         else:
             _logger.info("no pixels without data found, no replacement needed")
         # Define the variance and map arrays
@@ -2606,8 +2697,8 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None,
         _logger.info("replacing pixels defined in RPMEDIAN by the local median around them")
         table_rpmedian = Table(hdul_masks['RPMEDIAN'].data)
         for row in table_rpmedian:
-            xpixel = row['X_pixel'] - 1  # Convert to zero-based index
-            ypixel = row['Y_pixel'] - 1  # Convert to zero-based index
+            xpixel = row['X_pixel'] - 1  # Convert from FITS to zero-based index
+            ypixel = row['Y_pixel'] - 1  # Convert from FITS to zero-based index
             xwidth = row['X_width']
             ywidth = row['Y_width']
             # Define the box around the pixel, ensuring it is within image bounds
@@ -2773,6 +2864,7 @@ def main(args=None):
             bias=input_params['bias'],
             hdul_masks=hdul_masks,
             combination=combination,
+            use_lamedian=crmasks_params.get('use_lamedian', False),
             dtype=np.float32
         )
         # Save the combined array, variance, and map to a FITS file
