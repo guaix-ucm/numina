@@ -44,7 +44,7 @@ from numina._version import __version__
 import teareduce as tea
 
 VALID_LACOSMIC_CLEANTYPE = ['median', 'medmask', 'meanmask', 'idw']
-VALID_CRMETHODS = ['simboundary', 'lacosmic', 'sb_lacosmic']
+VALID_CRMETHODS = ['medianmin', 'lacosmic', 'mm_lacosmic']
 VALID_BOUNDARY_FITS = ['spline', 'piecewise']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
 
@@ -417,11 +417,11 @@ def define_piecewise_linear_function(xarray, yarray):
 
 
 def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                       enum_la_global, enum_sb_global, enum_both_global,
+                       enum_la_global, enum_mm_global, enum_both_global,
                        within_xy_diagram):
     """Segregate the cosmic ray flags into three categories:
     - detected only by the lacosmic method
-    - detected only by the simboundary method
+    - detected only by the medianmin method
     - detected by both methods
 
     Parameters
@@ -435,16 +435,16 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         only by the lacosmic method.
     flag_only_sb : 1D numpy array
         A boolean array indicating which pixels are detected
-        only by the simboundary method.
+        only by the medianmin method.
     flag_both : 1D numpy array
         A boolean array indicating which pixels are detected
         by both methods.
     enum_la_global : 1D numpy array
         An integer array with the enumeration of the pixels
         detected only by the lacosmic method.
-    enum_sb_global : 1D numpy array
+    enum_mm_global : 1D numpy array
         An integer array with the enumeration of the pixels
-        detected only by the simboundary method.
+        detected only by the medianmin method.
     enum_both_global : 1D numpy array
         An integer array with the enumeration of the pixels
         detected by both methods.
@@ -456,9 +456,9 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     flag_only_la_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
         only by the lacosmic method within the XY diagram.
-    flag_only_sb_within_xy : 1D numpy array
+    flag_only_mm_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
-        only by the simboundary method within the XY diagram.
+        only by the medianmin method within the XY diagram.
     flag_both_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
         by both methods within the XY diagram.
@@ -467,7 +467,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
         If no pixels are detected, xcr_only_la and ycr_only_la are None.
     (num_only_sb, xcr_only_sb, ycr_only_sb) : tuple
-        Number of pixels detected only by the simboundary method,
+        Number of pixels detected only by the medianmin method,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
         If no pixels are detected, xcr_only_sb and ycr_only_sb are None.
     (num_both, xcr_both, ycr_both) : tuple
@@ -478,7 +478,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
 
     # Segregate the cosmic rays within the XY diagnostic diagram
     flag_only_la_within_xy = flag_only_la & within_xy_diagram
-    flag_only_sb_within_xy = flag_only_sb & within_xy_diagram
+    flag_only_mm_within_xy = flag_only_sb & within_xy_diagram
     flag_both_within_xy = flag_both & within_xy_diagram
 
     num_only_la_within_xy = np.sum(flag_only_la_within_xy)
@@ -490,14 +490,14 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     else:
         xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = None, None, None
 
-    num_only_sb_within_xy = np.sum(flag_only_sb_within_xy)
-    if num_only_sb_within_xy > 0:
-        pixels_detected = np.argwhere(flag_only_sb_within_xy.reshape(naxis2, naxis1))
-        xcr_only_sb_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
-        ycr_only_sb_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
-        ncr_only_sb_within_xy = enum_sb_global[flag_only_sb_within_xy]
+    num_only_mm_within_xy = np.sum(flag_only_mm_within_xy)
+    if num_only_mm_within_xy > 0:
+        pixels_detected = np.argwhere(flag_only_mm_within_xy.reshape(naxis2, naxis1))
+        xcr_only_mm_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_only_mm_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+        ncr_only_mm_within_xy = enum_mm_global[flag_only_mm_within_xy]
     else:
-        xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy = None, None, None
+        xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy = None, None, None
 
     num_both_within_xy = np.sum(flag_both_within_xy)
     if num_both_within_xy > 0:
@@ -509,14 +509,14 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = None, None, None
 
     return \
-        flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy, \
+        flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy, \
         (num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy), \
-        (num_only_sb_within_xy, xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy), \
+        (num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy), \
         (num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy)
 
 
 def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                 enum_la_global, enum_sb_global, enum_both_global,
+                 enum_la_global, enum_mm_global, enum_both_global,
                  xplot, yplot,
                  ax1, ax2, ax3, display_ncr=True):
     """Update the marks in the diagnostic plot.
@@ -537,12 +537,12 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     ylim = ax1.get_ylim()
     within_xy_diagram = (xlim[0] <= xplot) & (xplot <= xlim[1]) & (ylim[0] <= yplot) & (yplot <= ylim[1])
 
-    flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy, tuple_la, tuple_sb, tuple_both = \
+    flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy, tuple_la, tuple_sb, tuple_both = \
         segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                           enum_la_global, enum_sb_global, enum_both_global,
+                           enum_la_global, enum_mm_global, enum_both_global,
                            within_xy_diagram)
     num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = tuple_la
-    num_only_sb_within_xy, xcr_only_sb_within_xy, ycr_only_sb_within_xy, ncr_only_sb_within_xy = tuple_sb
+    num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy = tuple_sb
     num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = tuple_both
 
     if ax2 is None and ax3 is None:
@@ -551,12 +551,12 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         ax_list = [ax2, ax3]
     for ax in ax_list:
         for num, method, xcr, ycr, ncr, flag_only, color, marker in zip(
-                [num_only_la_within_xy, num_only_sb_within_xy, num_both_within_xy],
-                ['lacosmic', 'simboundary', 'both'],
-                [xcr_only_la_within_xy, xcr_only_sb_within_xy, xcr_both_within_xy],
-                [ycr_only_la_within_xy, ycr_only_sb_within_xy, ycr_both_within_xy],
-                [ncr_only_la_within_xy, ncr_only_sb_within_xy, ncr_both_within_xy],
-                [flag_only_la_within_xy, flag_only_sb_within_xy, flag_both_within_xy],
+                [num_only_la_within_xy, num_only_mm_within_xy, num_both_within_xy],
+                ['lacosmic', 'medianmin', 'both'],
+                [xcr_only_la_within_xy, xcr_only_mm_within_xy, xcr_both_within_xy],
+                [ycr_only_la_within_xy, ycr_only_mm_within_xy, ycr_both_within_xy],
+                [ncr_only_la_within_xy, ncr_only_mm_within_xy, ncr_both_within_xy],
+                [flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy],
                 ['r', 'b', 'm'],
                 ['x', '+', 'o']):
             if num > 0:
@@ -582,7 +582,7 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
 
 
 def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive, target2d, target2d_name,
+                    mm_threshold, ylabel, interactive, target2d, target2d_name,
                     min2d, mean2d, image3d,
                     _logger=None, png_filename=None):
     """Diagnostic plot for the mediancr function.
@@ -644,8 +644,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     # Enumerate the cosmic rays detected by the different methods
     enum_la_global = np.zeros_like(flag_la, dtype=int)
     enum_la_global[flag_only_la] = np.arange(1, np.sum(flag_only_la) + 1, dtype=int)
-    enum_sb_global = np.zeros_like(flag_sb, dtype=int)
-    enum_sb_global[flag_only_sb] = np.arange(1, np.sum(flag_only_sb) + 1, dtype=int)
+    enum_mm_global = np.zeros_like(flag_sb, dtype=int)
+    enum_mm_global[flag_only_sb] = np.arange(1, np.sum(flag_only_sb) + 1, dtype=int)
     enum_both_global = np.zeros_like(flag_la, dtype=int)
     enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
 
@@ -653,13 +653,13 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
                 c='r', marker='x', label=f'Suspected pixels: {num_only_la} (lacosmic)')
     ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
-                c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (simboundary)')
+                c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (medianmin)')
     ax1.scatter(xplot[flag_both], yplot[flag_both],
                 edgecolor='m', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
     if xplot_boundary is not None and yplot_boundary is not None:
         ax1.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
-    if sb_threshold is not None:
-        ax1.axhline(sb_threshold, color='gray', linestyle=':', label=f'sb_threshold ({sb_threshold:.2f})')
+    if mm_threshold is not None:
+        ax1.axhline(mm_threshold, color='gray', linestyle=':', label=f'mm_threshold ({mm_threshold:.2f})')
     ax1.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
     ax1.set_title('Median-Mean Diagnostic Diagram')
@@ -686,7 +686,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax3.set_title(ax3_title)
     ax4.set_title(ax4_title)
     update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                 enum_la_global, enum_sb_global, enum_both_global,
+                 enum_la_global, enum_mm_global, enum_both_global,
                  xplot, yplot,
                  ax1, ax2, ax3, display_ncr)
 
@@ -742,7 +742,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 ax4.set_xlim(xlim)
                 ax4.set_ylim(ylim)
                 update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                             enum_la_global, enum_sb_global, enum_both_global,
+                             enum_la_global, enum_mm_global, enum_both_global,
                              xplot, yplot,
                              ax1, ax2, ax3, display_ncr)
                 for ax, label, color in zip([ax3, ax4],
@@ -842,7 +842,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         for inum in range(image3d.shape[0]):
                             print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy-1, ix-1]:.3f}')
                         print('.' * 79)
-                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'simboundary']):
+                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'medianmin']):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
                             # where the first pixel is (1, 1)
                             if flag.reshape((naxis2, naxis1))[iy-1, ix-1]:
@@ -852,7 +852,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             elif event.key == "&":
                 if ax_mouse in [ax3]:
                     update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                                 enum_la_global, enum_sb_global, enum_both_global,
+                                 enum_la_global, enum_mm_global, enum_both_global,
                                  xplot, yplot,
                                  ax1, None, None, None)
             elif event.key == 'n':
@@ -1269,7 +1269,7 @@ def compute_crmasks(
         gain=None,
         rnoise=None,
         bias=None,
-        crmethod='sb_lacosmic',
+        crmethod='mm_lacosmic',
         use_lamedian=False,
         flux_factor=None,
         interactive=True,
@@ -1283,6 +1283,7 @@ def compute_crmasks(
         color_scale='minmax',
         maxplots=-1,
         debug=False,
+        la_gain_apply=True,
         la_sigclip=None,
         la_sigfrac=None,
         la_objlim=None,
@@ -1297,16 +1298,16 @@ def compute_crmasks(
         la_psfsize=None,
         la_psfbeta=None,
         la_verbose=False,
-        sb_crosscorr_region=None,
-        sb_boundary_fit=None,
-        sb_knots_splfit=3,
-        sb_fixed_points_in_boundary=None,
-        sb_nsimulations=10,
-        sb_niter_boundary_extension=3,
-        sb_weight_boundary_extension=10.0,
-        sb_threshold=0.0,
-        sb_minimum_max2d_rnoise=5.0,
-        sb_seed=None
+        mm_crosscorr_region=None,
+        mm_boundary_fit=None,
+        mm_knots_splfit=3,
+        mm_fixed_points_in_boundary=None,
+        mm_nsimulations=10,
+        mm_niter_boundary_extension=3,
+        mm_weight_boundary_extension=10.0,
+        mm_threshold=0.0,
+        mm_minimum_max2d_rnoise=5.0,
+        mm_seed=None
         ):
     """
     Computation of cosmic rays masks using several equivalent exposures.
@@ -1339,13 +1340,15 @@ def compute_crmasks(
         The method to use for cosmic ray detection. Valid options are:
         - 'lacosmic': use the cosmic-ray rejection by Laplacian edge
         detection (van Dokkum 2001), as implemented in ccdproc.
-        - 'simboundary': use the numerically derived boundary to
+        - 'medianmin': use the numerically derived boundary to
         detect cosmic rays in the median combined image.
+        - 'mm_lacosmic': use both methods: 'lacosmic' and 'medianmin'.
+        Pixels detected by either method are included in the final mask.
     use_lamedian: bool, optional
         If True, use the corrected value from the lacosmic algorithm
         when replacing the cosmic-ray affected pixels in the median
         combined image. This parameter is only used when
-        crmethod is 'lacosmic', or 'sb_lacosmic'.
+        crmethod is 'lacosmic', or 'mm_lacosmic'.
     flux_factor : str, list, float or None, optional
         The flux scaling factor for each exposure (default is None).
         If 'auto', the flux factor is determined automatically.
@@ -1384,6 +1387,9 @@ def compute_crmasks(
         If negative, all detected cosmic-ray pixels will be plotted.
     debug : bool, optional
         If True, enable debug mode (default is False).
+    la_gain_apply: bool, optional
+        If True, apply the gain when computing the cosmic ray mask
+        with the lacosmic algorithm. Default is True.
     la_sigclip : float
         The sigma clipping threshold. Employed when crmethod='lacosmic'.
     la_sigfrac : float
@@ -1425,41 +1431,41 @@ def compute_crmasks(
     la_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='lacosmic'.
-    sb_crosscorr_region : str, or None
+    mm_crosscorr_region : str, or None
         The region to use for the 2D cross-correlation to determine
         the offsets between the individual images and the median image.
         If None, no offsets are computed and it is assumed that
         the images are already aligned. The format of the region
         must follow the FITS convention '[xmin:xmax,ymin:ymax]',
         where the indices start from 1 to NAXIS[12].
-    sb_boundary_fit : str, or None
+    mm_boundary_fit : str, or None
         The method to use for the boundary fitting. Valid options are:
         - 'spline': use a spline fit to the boundary.
         - 'piecewise': use a piecewise linear fit to the boundary.
-    sb_knots_splfit : int, optional
+    mm_knots_splfit : int, optional
         The number of knots for the spline fit to the boundary.
-    sb_fixed_points_in_boundary : str, or list or None
+    mm_fixed_points_in_boundary : str, or list or None
         The fixed points to use for the boundary fitting.
-    sb_nsimulations : int, optional
+    mm_nsimulations : int, optional
         The number of simulations of each set of input images to compute
         the detection boundary.
-    sb_niter_boundary_extension : int, optional
+    mm_niter_boundary_extension : int, optional
         The number of iterations for the boundary extension.
-    sb_weight_boundary_extension : float, optional
+    mm_weight_boundary_extension : float, optional
         The weight for the boundary extension.
         In each iteration, the boundary is extended by applying an
         extra weight to the points above the previous boundary. This
-        extra weight is computed as `sb_weight_boundary_extension**iter`,
+        extra weight is computed as `mm_weight_boundary_extension**iter`,
         where `iter` is the current iteration number (starting from 1).
-    sb_threshold: float, optional
+    mm_threshold: float, optional
         Minimum threshold for median2d - min2d to consider a pixel as a
         cosmic ray (default is None). If None, the threshold is computed
         automatically from the minimum boundary value in the numerical
         simulations.
-    sb_minimum_max2d_rnoise : float, optional
+    mm_minimum_max2d_rnoise : float, optional
         Minimum value for max2d in readout noise units to flag a pixel
         as a coincident cosmic-ray pixel.
-    sb_seed : int or None, optional
+    mm_seed : int or None, optional
         The random seed for reproducibility.
 
     Returns
@@ -1572,10 +1578,10 @@ def compute_crmasks(
     # Check crmethod
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
-    _logger.info("crmethod: %s", crmethod)
+    _logger.info("crmethod: [bold green]%s[/bold green]", crmethod)
     # Check use_lamedian
-    if use_lamedian and crmethod not in ['lacosmic', 'sb_lacosmic']:
-        raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'sb_lacosmic'.")
+    if use_lamedian and crmethod not in ['lacosmic', 'mm_LACosmic']:
+        raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'mm_LACosmic'.")
     _logger.info("use_lamedian: %s", str(use_lamedian))
 
     # Check flux_factor
@@ -1620,7 +1626,7 @@ def compute_crmasks(
     median2d = np.median(image3d, axis=0)
     mean2d = np.mean(image3d, axis=0)
 
-    # Compute points for diagnostic diagram of simboundary method
+    # Compute points for diagnostic diagram of medianmin method
     xplot = min2d.flatten()  # bias was already subtracted above
     yplot = median2d.flatten() - min2d.flatten()
 
@@ -1714,20 +1720,26 @@ def compute_crmasks(
 
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
-    if crmethod in ['simboundary', 'sb_lacosmic']:
-        _logger.debug("sb_crosscorr_region: %s", sb_crosscorr_region if sb_crosscorr_region is not None else "None")
-        _logger.debug("sb_boundary_fit: %s", sb_boundary_fit if sb_boundary_fit is not None else "None")
-        _logger.debug("sb_knots_splfit: %d", sb_knots_splfit)
-        _logger.debug("sb_fixed points_in_boundary: %s",
-                      str(sb_fixed_points_in_boundary) if sb_fixed_points_in_boundary is not None else "None")
-        _logger.debug("sb_nsimulations: %d", sb_nsimulations)
-        _logger.debug("sb_niter_boundary_extension: %d", sb_niter_boundary_extension)
-        _logger.debug("sb_weight_boundary_extension: %f", sb_weight_boundary_extension)
-        _logger.debug("sb_threshold: %s", sb_threshold if sb_threshold is not None else "None")
-        _logger.debug("sb_minimum_max2d_rnoise: %f", sb_minimum_max2d_rnoise)
-        _logger.debug("sb_seed: %s", str(sb_seed))
+    if crmethod in ['medianmin', 'mm_LACosmic']:
+        _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
+        _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
+        _logger.debug("mm_knots_splfit: %d", mm_knots_splfit)
+        _logger.debug("mm_fixed points_in_boundary: %s",
+                      str(mm_fixed_points_in_boundary) if mm_fixed_points_in_boundary is not None else "None")
+        _logger.debug("mm_nsimulations: %d", mm_nsimulations)
+        _logger.debug("mm_niter_boundary_extension: %d", mm_niter_boundary_extension)
+        _logger.debug("mm_weight_boundary_extension: %f", mm_weight_boundary_extension)
+        _logger.debug("mm_threshold: %s", mm_threshold if mm_threshold is not None else "None")
+        _logger.debug("mm_minimum_max2d_rnoise: %f", mm_minimum_max2d_rnoise)
+        _logger.debug("mm_seed: %s", str(mm_seed))
 
-    if crmethod in ['lacosmic', 'sb_lacosmic']:
+    if crmethod in ['lacosmic', 'mm_lacosmic']:
+        # Check la_gain_apply
+        if la_gain_apply is None:
+            la_gain_apply = True
+            _logger.warning("la_gain_apply for lacosmic not defined, assuming la_gain_apply=True")
+        else:
+            _logger.debug("la_gain_apply for lacosmic: %s", str(la_gain_apply))
         # Check la_sigclip
         if la_sigclip is None:
             _logger.warning("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
@@ -1870,7 +1882,7 @@ def compute_crmasks(
             else:
                 _logger.info("%s for lacosmic: %s", key, str(dict_la_params[key]))
 
-    if crmethod in ['lacosmic', 'sb_lacosmic']:
+    if crmethod in ['lacosmic', 'mm_lacosmic']:
         # ---------------------------------------------------------------------
         # Detect residual cosmic rays in the median2d image using the
         # Laplacian edge detection method from ccdproc. This only works if gain and
@@ -1889,71 +1901,71 @@ def compute_crmasks(
         if crmethod == 'lacosmic':
             xplot_boundary = None
             yplot_boundary = None
-            sb_threshold = None
+            mm_threshold = None
             flag_sb = np.zeros_like(flag_la, dtype=bool)
     else:
         median2d_lacosmic = None
 
-    if crmethod in ['simboundary', 'sb_lacosmic']:
+    if crmethod in ['medianmin', 'mm_lacosmic']:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
         # ---------------------------------------------------------------------
-        # Define sb_fixed_points_in_boundary
-        _logger.info("[bold]detecting cosmic rays in the median2d image using [blue]simboundary[/blue]...[/bold]")
-        if isinstance(sb_fixed_points_in_boundary, str):
-            if sb_fixed_points_in_boundary.lower() == 'none':
-                sb_fixed_points_in_boundary = None
-        if sb_fixed_points_in_boundary is None:
-            if sb_boundary_fit == 'piecewise':
-                raise ValueError("For sb_boundary_fit='piecewise', "
-                                 "sb_fixed_points_in_boundary must be provided.")
+        # Define mm_fixed_points_in_boundary
+        _logger.info("[bold]detecting cosmic rays in the median2d image using [blue]medianmin[/blue]...[/bold]")
+        if isinstance(mm_fixed_points_in_boundary, str):
+            if mm_fixed_points_in_boundary.lower() == 'none':
+                mm_fixed_points_in_boundary = None
+        if mm_fixed_points_in_boundary is None:
+            if mm_boundary_fit == 'piecewise':
+                raise ValueError("For mm_boundary_fit='piecewise', "
+                                 "mm_fixed_points_in_boundary must be provided.")
         else:
-            sb_fixed_points_in_boundary = list(eval(str(sb_fixed_points_in_boundary)))
-            x_sb_fixed_points_in_boundary = []
-            y_sb_fixed_points_in_boundary = []
-            w_sb_fixed_points_in_boundary = []
-            for item in sb_fixed_points_in_boundary:
+            mm_fixed_points_in_boundary = list(eval(str(mm_fixed_points_in_boundary)))
+            x_mm_fixed_points_in_boundary = []
+            y_mm_fixed_points_in_boundary = []
+            w_mm_fixed_points_in_boundary = []
+            for item in mm_fixed_points_in_boundary:
                 if not (isinstance(item, (list, tuple)) and len(item) in [2, 3]):
-                    raise ValueError("Each item in sb_fixed_points_in_boundary must be a list or tuple of "
+                    raise ValueError("Each item in mm_fixed_points_in_boundary must be a list or tuple of "
                                      "2 or 3 elements: (x, y) or (x, y, weight).")
                 if not all_valid_numbers(item):
-                    raise ValueError(f"All elements in sb_fixed_points_in_boundary={sb_fixed_points_in_boundary} "
+                    raise ValueError(f"All elements in mm_fixed_points_in_boundary={mm_fixed_points_in_boundary} "
                                      "must be valid numbers.")
                 if len(item) == 2:
-                    x_sb_fixed_points_in_boundary.append(float(item[0]))
-                    y_sb_fixed_points_in_boundary.append(float(item[1]))
-                    w_sb_fixed_points_in_boundary.append(10000)
+                    x_mm_fixed_points_in_boundary.append(float(item[0]))
+                    y_mm_fixed_points_in_boundary.append(float(item[1]))
+                    w_mm_fixed_points_in_boundary.append(10000)
                 else:
-                    x_sb_fixed_points_in_boundary.append(float(item[0]))
-                    y_sb_fixed_points_in_boundary.append(float(item[1]))
-                    w_sb_fixed_points_in_boundary.append(float(item[2]))
-            x_sb_fixed_points_in_boundary = np.array(x_sb_fixed_points_in_boundary, dtype=float)
-            y_sb_fixed_points_in_boundary = np.array(y_sb_fixed_points_in_boundary, dtype=float)
-            w_sb_fixed_points_in_boundary = np.array(w_sb_fixed_points_in_boundary, dtype=float)
+                    x_mm_fixed_points_in_boundary.append(float(item[0]))
+                    y_mm_fixed_points_in_boundary.append(float(item[1]))
+                    w_mm_fixed_points_in_boundary.append(float(item[2]))
+            x_mm_fixed_points_in_boundary = np.array(x_mm_fixed_points_in_boundary, dtype=float)
+            y_mm_fixed_points_in_boundary = np.array(y_mm_fixed_points_in_boundary, dtype=float)
+            w_mm_fixed_points_in_boundary = np.array(w_mm_fixed_points_in_boundary, dtype=float)
 
-        if sb_boundary_fit is None:
-            raise ValueError(f"sb_boundary_fit is None and must be one of {VALID_BOUNDARY_FITS}.")
-        elif sb_boundary_fit not in VALID_BOUNDARY_FITS:
-            raise ValueError(f"Invalid sb_boundary_fit: {sb_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
-        if sb_boundary_fit == 'piecewise':
-            if sb_fixed_points_in_boundary is None:
-                raise ValueError("For sb_boundary_fit='piecewise', "
-                                 "sb_fixed_points_in_boundary must be provided.")
-            elif len(x_sb_fixed_points_in_boundary) < 2:
-                raise ValueError("For sb_boundary_fit='piecewise', "
-                                 "at least two fixed points must be provided in sb_fixed_points_in_boundary.")
+        if mm_boundary_fit is None:
+            raise ValueError(f"mm_boundary_fit is None and must be one of {VALID_BOUNDARY_FITS}.")
+        elif mm_boundary_fit not in VALID_BOUNDARY_FITS:
+            raise ValueError(f"Invalid mm_boundary_fit: {mm_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
+        if mm_boundary_fit == 'piecewise':
+            if mm_fixed_points_in_boundary is None:
+                raise ValueError("For mm_boundary_fit='piecewise', "
+                                 "mm_fixed_points_in_boundary must be provided.")
+            elif len(x_mm_fixed_points_in_boundary) < 2:
+                raise ValueError("For mm_boundary_fit='piecewise', "
+                                 "at least two fixed points must be provided in mm_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
-        if isinstance(sb_crosscorr_region, str):
-            if sb_crosscorr_region.lower() == 'none':
-                sb_crosscorr_region = None
-        if sb_crosscorr_region is None:
+        if isinstance(mm_crosscorr_region, str):
+            if mm_crosscorr_region.lower() == 'none':
+                mm_crosscorr_region = None
+        if mm_crosscorr_region is None:
             crossregion = None
         else:
-            crossregion = tea.SliceRegion2D(sb_crosscorr_region, mode='fits', naxis1=naxis1, naxis2=naxis2)
+            crossregion = tea.SliceRegion2D(mm_crosscorr_region, mode='fits', naxis1=naxis1, naxis2=naxis2)
             if crossregion.area() < 100:
-                raise ValueError("The area of sb_crosscorr_region must be at least 100 pixels.")
+                raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
         list_yx_offsets = []
         for i in range(num_images):
             if crossregion is None:
@@ -2001,7 +2013,7 @@ def compute_crmasks(
                 list_yx_offsets.append(yx_offsets)
 
         # Estimate limits for the diagnostic plot
-        rng = np.random.default_rng(sb_seed)  # Random number generator for reproducibility
+        rng = np.random.default_rng(mm_seed)  # Random number generator for reproducibility
         xdiag_min, xdiag_max, ydiag_min, ydiag_max = estimate_diagnostic_limits(
             rng=rng,
             gain=np.median(gain),  # Use median value to simplify the computation
@@ -2014,9 +2026,9 @@ def compute_crmasks(
             xdiag_min = np.min(xplot)
         if np.max(xplot) > xdiag_max:
             xdiag_max = np.max(xplot)
-        if sb_fixed_points_in_boundary is not None:
-            if np.max(y_sb_fixed_points_in_boundary) > ydiag_max:
-                ydiag_max = np.max(y_sb_fixed_points_in_boundary)
+        if mm_fixed_points_in_boundary is not None:
+            if np.max(y_mm_fixed_points_in_boundary) > ydiag_max:
+                ydiag_max = np.max(y_mm_fixed_points_in_boundary)
         ydiag_max *= 1.20  # Add 20% margin to the maximum y limit
         _logger.debug("xdiag_min=%f", xdiag_min)
         _logger.debug("ydiag_min=%f", ydiag_min)
@@ -2037,8 +2049,8 @@ def compute_crmasks(
         lam = median2d.copy()
         lam[lam < 0] = 0  # Avoid negative values
         lam3d = np.zeros((num_images, naxis2, naxis1))
-        if sb_crosscorr_region is None:
-            _logger.info(f"{sb_crosscorr_region=}, assuming no offsets between images")
+        if mm_crosscorr_region is None:
+            _logger.info(f"{mm_crosscorr_region=}, assuming no offsets between images")
             for i in range(num_images):
                 lam3d[i] = lam
         else:
@@ -2053,7 +2065,7 @@ def compute_crmasks(
                                          yoffset=-list_yx_offsets[i][0],
                                          resampling=2)
         _logger.info("computing simulated 2D histogram...")
-        for k in range(sb_nsimulations):
+        for k in range(mm_nsimulations):
             time_ini = datetime.now()
             image3d_simul = np.zeros((num_images, naxis2, naxis1))
             for i in range(num_images):
@@ -2071,9 +2083,9 @@ def compute_crmasks(
             )
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
-            _logger.info("simulation %d/%d, time elapsed: %s", k + 1, sb_nsimulations, time_end - time_ini)
+            _logger.info("simulation %d/%d, time elapsed: %s", k + 1, mm_nsimulations, time_end - time_ini)
         # Average the histogram over the number of simulations
-        hist2d_accummulated = hist2d_accummulated.astype(float) / sb_nsimulations
+        hist2d_accummulated = hist2d_accummulated.astype(float) / mm_nsimulations
         vmin = np.min(hist2d_accummulated[hist2d_accummulated > 0])
         if vmin == 0:
             vmin = 1
@@ -2115,7 +2127,7 @@ def compute_crmasks(
             fsum = np.sum(hist2d_accummulated[:, i])
             if fsum > 0:
                 pdensity = hist2d_accummulated[:, i] / fsum
-                perc = (1 - (1 / sb_nsimulations) / fsum)
+                perc = (1 - (1 / mm_nsimulations) / fsum)
                 p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
                 xboundary.append(xcbins[i])
                 yboundary.append(ycbins[int(p + 0.5)])
@@ -2123,78 +2135,78 @@ def compute_crmasks(
         yboundary = np.array(yboundary)
         ax1.plot(xboundary, yboundary, 'r+')
         boundaryfit = None  # avoid flake8 warning
-        if sb_boundary_fit == 'spline':
-            for iterboundary in range(sb_niter_boundary_extension + 1):
+        if mm_boundary_fit == 'spline':
+            for iterboundary in range(mm_niter_boundary_extension + 1):
                 wboundary = np.ones_like(xboundary, dtype=float)
                 if iterboundary == 0:
                     label = 'initial spline fit'
                 else:
-                    wboundary[yboundary > boundaryfit(xboundary)] = sb_weight_boundary_extension**iterboundary
+                    wboundary[yboundary > boundaryfit(xboundary)] = mm_weight_boundary_extension**iterboundary
                     label = f'Iteration {iterboundary}'
-                if sb_fixed_points_in_boundary is None:
+                if mm_fixed_points_in_boundary is None:
                     xboundary_fit = xboundary
                     yboundary_fit = yboundary
                     wboundary_fit = wboundary
                 else:
                     wboundary_max = np.max(wboundary)
-                    xboundary_fit = np.concatenate((xboundary, x_sb_fixed_points_in_boundary))
-                    yboundary_fit = np.concatenate((yboundary, y_sb_fixed_points_in_boundary))
-                    wboundary_fit = np.concatenate((wboundary, w_sb_fixed_points_in_boundary * wboundary_max))
+                    xboundary_fit = np.concatenate((xboundary, x_mm_fixed_points_in_boundary))
+                    yboundary_fit = np.concatenate((yboundary, y_mm_fixed_points_in_boundary))
+                    wboundary_fit = np.concatenate((wboundary, w_mm_fixed_points_in_boundary * wboundary_max))
                 isort = np.argsort(xboundary_fit)
                 boundaryfit, knots = spline_positive_derivative(
                     x=xboundary_fit[isort],
                     y=yboundary_fit[isort],
                     w=wboundary_fit[isort],
-                    n_total_knots=sb_knots_splfit,
+                    n_total_knots=mm_knots_splfit,
                 )
                 ydum = boundaryfit(xcbins)
                 ydum[xcbins < knots[0]] = boundaryfit(knots[0])
                 ydum[xcbins > knots[-1]] = boundaryfit(knots[-1])
                 ax1.plot(xcbins, ydum, '-', color=f'C{iterboundary}', label=label)
                 ax1.plot(knots, boundaryfit(knots), 'o', color=f'C{iterboundary}', markersize=4)
-        elif sb_boundary_fit == 'piecewise':
+        elif mm_boundary_fit == 'piecewise':
             boundaryfit = define_piecewise_linear_function(
-                xarray=x_sb_fixed_points_in_boundary,
-                yarray=y_sb_fixed_points_in_boundary
+                xarray=x_mm_fixed_points_in_boundary,
+                yarray=y_mm_fixed_points_in_boundary
             )
             ax1.plot(xcbins, boundaryfit(xcbins), 'r-', label='Piecewise linear fit')
         else:
-            raise ValueError(f"Invalid sb_boundary_fit: {sb_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
+            raise ValueError(f"Invalid mm_boundary_fit: {mm_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
 
-        if sb_threshold is None:
-            # Use the minimum value of the boundary as the sb_threshold
-            sb_threshold = np.min(yplot_boundary)
-            _logger.info("updated sb_threshold for cosmic-ray detection: %f", sb_threshold)
+        if mm_threshold is None:
+            # Use the minimum value of the boundary as the mm_threshold
+            mm_threshold = np.min(yplot_boundary)
+            _logger.info("updated mm_threshold for cosmic-ray detection: %f", mm_threshold)
 
         # Apply the criterium to detect coincident cosmic-ray pixels
         flag1 = yplot > boundaryfit(xplot)
-        flag2 = yplot > sb_threshold
+        flag2 = yplot > mm_threshold
         flag_sb = np.logical_and(flag1, flag2)
-        flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
+        flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
-        _logger.info("number of pixels flagged as cosmic rays by [bold blue]simboundary[/bold blue]: %d",
+        _logger.info("number of pixels flagged as cosmic rays by [bold blue]medianmin[/bold blue]: %d",
                      np.sum(flag_sb))
-        if crmethod == 'simboundary':
+        if crmethod == 'medianmin':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
 
         # Plot the results
-        if sb_fixed_points_in_boundary is not None:
-            ax1.plot(x_sb_fixed_points_in_boundary, y_sb_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
+        if mm_fixed_points_in_boundary is not None:
+            ax1.plot(x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
                      label='Fixed points')
         ax1.set_xlabel(r'min2d $-$ bias')
         ax1.set_ylabel(r'median2d $-$ min2d')
-        ax1.set_title(f'Simulated data (sb_nsimulations = {sb_nsimulations})')
-        if sb_niter_boundary_extension > 1:
+        ax1.set_title(f'Simulated data (mm_nsimulations = {mm_nsimulations})')
+        if mm_niter_boundary_extension > 1:
             ax1.legend(loc=4)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
         yplot_boundary = boundaryfit(xplot_boundary)
-        if sb_boundary_fit == 'spline':
+        if mm_boundary_fit == 'spline':
             # For spline fit, force the boundary to be constant outside the knots
             yplot_boundary[xplot_boundary < knots[0]] = boundaryfit(knots[0])
             yplot_boundary[xplot_boundary > knots[-1]] = boundaryfit(knots[-1])
         ax2.plot(xplot_boundary, yplot_boundary, 'r-', label='Detection boundary')
-        if sb_fixed_points_in_boundary is not None:
-            ax2.plot(x_sb_fixed_points_in_boundary, y_sb_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
+        if mm_fixed_points_in_boundary is not None:
+            ax2.plot(x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
                      label='Fixed points')
         ax2.set_xlim(xdiag_min, xdiag_max)
         ax2.set_ylim(ax1.get_ylim())
@@ -2221,22 +2233,22 @@ def compute_crmasks(
         flag = flag_la
         flag_integer = 3 * flag_la.astype(np.uint8)
     else:
-        # Combine the flags from lacosmic and simboundary
+        # Combine the flags from lacosmic and medianmin
         flag = np.logical_or(flag_la, flag_sb)
         flag_integer = 2 * flag_sb.astype(np.uint8) + 3 * flag_la.astype(np.uint8)
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] [bold]or[/bold]  [blue]simboundary[/blue]: %s", cdum)
+                     "[red]lacosmic[/red] [bold]or[/bold]  [blue]medianmin[/blue]: %s", cdum)
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] only...........: %s", cdum)
+                     "[red]lacosmic[/red] only.........: %s", cdum)
         cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[blue]simboundary[/blue] only........: %s", cdum)
+                     "[blue]medianmin[/blue] only........: %s", cdum)
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] [bold]and[/bold] [blue]simboundary[/blue]: %s", cdum)
+                     "[red]lacosmic[/red] [bold]and[/bold] [blue]medianmin[/blue]: %s", cdum)
     flag = flag.reshape((naxis2, naxis1))
     flag_integer = flag_integer.reshape((naxis2, naxis1))
     flag_integer[flag_integer == 5] = 4  # pixels flagged by both methods are set to 4
@@ -2245,7 +2257,7 @@ def compute_crmasks(
     _logger.info("generating diagnostic plot for MEDIANCR...")
     ylabel = r'median2d $-$ min2d'
     diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    sb_threshold, ylabel, interactive,
+                    mm_threshold, ylabel, interactive,
                     target2d=median2d, target2d_name='median2d',
                     min2d=min2d, mean2d=mean2d, image3d=image3d,
                     _logger=_logger, png_filename='diagnostic_mediancr.png')
@@ -2317,7 +2329,7 @@ def compute_crmasks(
             target2d_name = 'mean2d'
         else:
             target2d_name = f'single exposure #{i}'
-        if crmethod in ['lacosmic', 'sb_lacosmic']:
+        if crmethod in ['lacosmic', 'mm_lacosmic']:
             _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [red]lacosmic[/red]...[/bold]")
             array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
                 ccd=target2d,
@@ -2330,18 +2342,18 @@ def compute_crmasks(
             if crmethod == 'lacosmic':
                 xplot_boundary = None
                 yplot_boundary = None
-                sb_threshold = None
+                mm_threshold = None
                 flag_sb = np.zeros_like(flag_la, dtype=bool)
-        if crmethod in ['simboundary', 'sb_lacosmic']:
-            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [blue]simboundary[/blue]...[/bold]")
+        if crmethod in ['medianmin', 'mm_lacosmic']:
+            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [blue]medianmin[/blue]...[/bold]")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
             flag1 = yplot > boundaryfit(xplot)
-            flag2 = yplot > sb_threshold
+            flag2 = yplot > mm_threshold
             flag_sb = np.logical_and(flag1, flag2)
-            flag3 = max2d.flatten() > sb_minimum_max2d_rnoise * rnoise.flatten()
+            flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_sb = np.logical_and(flag_sb, flag3)
-            if crmethod == 'simboundary':
+            if crmethod == 'medianmin':
                 flag_la = np.zeros_like(flag_sb, dtype=bool)
         # For the mean2d mask, force the flag to be True if the pixel
         # was flagged as a coincident cosmic-ray pixel when using the median2d array
@@ -2359,9 +2371,9 @@ def compute_crmasks(
         sflag_sb = str(np.sum(flag_sb))
         smax = max(len(sflag_la), len(sflag_sb))
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red]...: %s", f"{np.sum(flag_la):{smax}d}")
+                     "[red]lacosmic[/red] : %s", f"{np.sum(flag_la):{smax}d}")
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[blue]simboundary[/blue]: %s", f"{np.sum(flag_sb):{smax}d}")
+                     "[blue]medianmin[/blue]: %s", f"{np.sum(flag_sb):{smax}d}")
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
@@ -2372,7 +2384,7 @@ def compute_crmasks(
             ylabel = f'array{i}' + r' $-$ min2d'
         interactive_eff = interactive and debug
         diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                        sb_threshold, ylabel, interactive_eff,
+                        mm_threshold, ylabel, interactive_eff,
                         target2d=target2d, target2d_name=target2d_name,
                         min2d=min2d, mean2d=mean2d, image3d=image3d,
                         _logger=_logger, png_filename=png_filename)
@@ -2440,8 +2452,8 @@ def compute_crmasks(
     # Generate output HDUList with masks
     args = inspect.signature(compute_crmasks).parameters
     if crmethod == 'lacosmic':
-        prefix_of_excluded_args = 'sb_'
-    elif crmethod == 'simboundary':
+        prefix_of_excluded_args = 'mm_'
+    elif crmethod == 'medianmin':
         prefix_of_excluded_args = 'la_'
     else:
         prefix_of_excluded_args = 'xxx'
@@ -2525,8 +2537,17 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
         in the input arrays.
     use_lamedian : bool, optional
         If True, and if the extension 'LAMEDIAN' is present in `hdul_masks`,
-        the lacosmic-corrected median array is used to replace the masked
-        pixels in the 'mediancr' and 'meancrt' combination methods.
+        the lacosmic-corrected median array is used instead of the minimum
+        value at each pixel. This affects differently depending on the
+        combination method:
+        - 'mediancr': all the masked pixels in the mask MEDIANCR are replaced.
+        - 'meancrt': only the pixels coincident in masks MEANCRT and MEDIANCR;
+          the rest of the pixels flagged in the mask MEANCRT are replaced by
+          the value obtained when the combination method is 'mediancr'.
+        - 'meancr': only the pixels flagged in all the individual exposures
+          (i.e., those flagged simulatenously in all the CRMASKi masks);
+          the rest of the pixels flagged in any of the `CRMASK1`, `CRMASK2`, etc.
+          masks are replaced by the corresponding masked mean.
         Default is False.
     apply_flux_factor : bool, optional
         If True, the flux factor is applied to the input arrays before
