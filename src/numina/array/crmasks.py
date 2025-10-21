@@ -30,7 +30,6 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox
 import numpy as np
 import numpy.ma as ma
-from rich.console import Console
 from rich.logging import RichHandler
 from scipy import ndimage
 from skimage.registration import phase_cross_correlation
@@ -40,6 +39,7 @@ from numina.array.display.plot_hist_step import plot_hist_step
 from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits_history
+from numina.user.console import NuminaConsole
 from numina._version import __version__
 import teareduce as tea
 
@@ -826,6 +826,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 print("',': set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
                 print("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
                 print("'q': close the plot and continue the program execution")
+                print("'x': quit the program immediately")
                 print("-" * 79)
             elif event.key == "i":
                 if ax_mouse in [ax1, ax2]:
@@ -930,6 +931,10 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
 
                     ax3.figure.canvas.draw_idle()
                     ax4.figure.canvas.draw_idle()
+            elif event.key == 'x':
+                _logger.info("Exiting program as per user request ('x' key pressed).")
+                plt.close(fig)
+                sys.exit(1)
 
         fig.canvas.mpl_connect("key_press_event", on_key)
 
@@ -966,7 +971,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         text_box_vmax = TextBox(ax_vmax, 'vmax:', initial=f'{int(np.round(vmax, 0))}', textalignment='right')
         text_box_vmax.on_submit(submit_vmax)
 
-        _logger.info("Entering interactive mode (press 'q' to close figure)")
+        _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
         # plt.tight_layout()
         plt.show()
     plt.close(fig)
@@ -1345,7 +1350,7 @@ def compute_crmasks(
         - 'mm_lacosmic': use both methods: 'lacosmic' and 'mmcosmic'.
         Pixels detected by either method are included in the final mask.
     use_lamedian: bool, optional
-        If True, use the corrected value from the lacosmic algorithm
+        If True, use the corrected values from the lacosmic algorithm
         when replacing the cosmic-ray affected pixels in the median
         combined image. This parameter is only used when
         crmethod is 'lacosmic', or 'mm_lacosmic'.
@@ -1485,6 +1490,15 @@ def compute_crmasks(
     """
 
     _logger = logging.getLogger(__name__)
+    rich_configured = any(isinstance(handler, RichHandler) for handler in _logger.handlers)
+    if rich_configured:
+        rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
+        rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
+        rlabel_mmcosmic = "[bold blue]mmcosmic[/bold blue]"
+    else:
+        rlabel_crmethod = f"{crmethod}"
+        rlabel_lacosmic = "lacosmic"
+        rlabel_mmcosmic = "mmcosmic"
 
     # Check that the input is a list
     if not isinstance(list_arrays, list):
@@ -1578,7 +1592,7 @@ def compute_crmasks(
     # Check crmethod
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
-    _logger.info("crmethod: [bold green]%s[/bold green]", crmethod)
+    _logger.info(f"computing crmasks using crmethod: {rlabel_crmethod}")
     # Check use_lamedian
     if use_lamedian and crmethod not in ['lacosmic', 'mm_lacosmic']:
         raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'mm_lacosmic'.")
@@ -1888,14 +1902,14 @@ def compute_crmasks(
         # Laplacian edge detection method from ccdproc. This only works if gain and
         # rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
-        _logger.info("[bold]detecting cosmic rays in the median2d image using [red]lacosmic[/red]...[/bold]")
+        _logger.info(f"detecting cosmic rays in the median2d image using {rlabel_lacosmic}...")
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
         median2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
             ccd=median2d,
             **{key: value for key, value in dict_la_params.items() if value is not None}
         )
-        _logger.info("number of pixels flagged as cosmic rays by [bold red]lacosmic[/bold red]: %d", np.sum(flag_la))
+        _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_lacosmic, np.sum(flag_la))
         update_flag_with_user_masks(flag_la, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
         flag_la = flag_la.flatten()
         if crmethod == 'lacosmic':
@@ -1912,7 +1926,7 @@ def compute_crmasks(
         # derived boundary.
         # ---------------------------------------------------------------------
         # Define mm_fixed_points_in_boundary
-        _logger.info("[bold]detecting cosmic rays in the median2d image using [blue]mmcosmic[/blue]...[/bold]")
+        _logger.info("detecting cosmic rays in the median2d image using %s...", rlabel_mmcosmic)
         if isinstance(mm_fixed_points_in_boundary, str):
             if mm_fixed_points_in_boundary.lower() == 'none':
                 mm_fixed_points_in_boundary = None
@@ -2106,7 +2120,15 @@ def compute_crmasks(
         combined_colors = np.vstack((colors1, colors2))
         combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', combined_colors)
         norm = LogNorm(vmin=vmin, vmax=vmax)
+
+        def on_key(event):
+            if event.key == 'x':
+                _logger.info("Exiting program as per user request ('x' key pressed).")
+                plt.close(fig)
+                sys.exit(1)
+
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
+        fig.canvas.mpl_connect('key_press_event', lambda event: on_key(event))
         # Display 2D histogram of the simulated data
         extent = [bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]]
         tea.imshow(fig, ax1, hist2d_accummulated, norm=norm, extent=extent,
@@ -2184,8 +2206,7 @@ def compute_crmasks(
         flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
-        _logger.info("number of pixels flagged as cosmic rays by [bold blue]mmcosmic[/bold blue]: %d",
-                     np.sum(flag_sb))
+        _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_mmcosmic, np.sum(flag_sb))
         if crmethod == 'mmcosmic':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
 
@@ -2219,7 +2240,7 @@ def compute_crmasks(
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
             plt.show()
         plt.close(fig)
 
@@ -2239,16 +2260,16 @@ def compute_crmasks(
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] [bold]or[/bold]  [blue]mmcosmic[/blue]: %s", cdum)
+                     "%s or  %s: %s", rlabel_lacosmic, rlabel_mmcosmic, cdum)
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] only........: %s", cdum)
+                     "%s only........: %s", rlabel_lacosmic, cdum)
         cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[blue]mmcosmic[/blue] only........: %s", cdum)
+                     "%s only........: %s", rlabel_mmcosmic, cdum)
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] [bold]and[/bold] [blue]mmcosmic[/blue]: %s", cdum)
+                     "%s and %s: %s", rlabel_lacosmic, rlabel_mmcosmic, cdum)
     flag = flag.reshape((naxis2, naxis1))
     flag_integer = flag_integer.reshape((naxis2, naxis1))
     flag_integer[flag_integer == 5] = 4  # pixels flagged by both methods are set to 4
@@ -2330,7 +2351,7 @@ def compute_crmasks(
         else:
             target2d_name = f'single exposure #{i}'
         if crmethod in ['lacosmic', 'mm_lacosmic']:
-            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [red]lacosmic[/red]...[/bold]")
+            _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
             array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
                 ccd=target2d,
                 **{key: value for key, value in dict_la_params.items() if value is not None}
@@ -2345,7 +2366,7 @@ def compute_crmasks(
                 mm_threshold = None
                 flag_sb = np.zeros_like(flag_la, dtype=bool)
         if crmethod in ['mmcosmic', 'mm_lacosmic']:
-            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [blue]mmcosmic[/blue]...[/bold]")
+            _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
             flag1 = yplot > boundaryfit(xplot)
@@ -2371,9 +2392,9 @@ def compute_crmasks(
         sflag_sb = str(np.sum(flag_sb))
         smax = max(len(sflag_la), len(sflag_sb))
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red]: %s", f"{np.sum(flag_la):{smax}d}")
+                     "%s: %s", rlabel_lacosmic, f"{np.sum(flag_la):{smax}d}")
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[blue]mmcosmic[/blue]: %s", f"{np.sum(flag_sb):{smax}d}")
+                     "%s: %s", rlabel_mmcosmic, f"{np.sum(flag_sb):{smax}d}")
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
@@ -2573,6 +2594,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
     """
 
     _logger = logging.getLogger(__name__)
+    rich_configured = any(isinstance(handler, RichHandler) for handler in _logger.handlers)
 
     # Check that the input is a list
     if not isinstance(list_arrays, list):
@@ -2644,7 +2666,11 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
     median2d = np.median(image3d, axis=0)
 
     # Apply the requested combination method
-    _logger.info("applying combination method: [bold][magenta]%s[/magenta][/bold]", combination)
+    if rich_configured:
+        rlabel_combination = f"[bold][magenta]{combination}[/magenta][/bold]"
+    else:
+        rlabel_combination = f"{combination}"
+    _logger.info("applying combination method: %s", rlabel_combination)
     _logger.info("using crmasks in %s", hdul_masks[0].header['UUID'])
     if combination in ['mediancr', 'meancrt']:
         # Define the mask_mediancr
@@ -2780,7 +2806,7 @@ def main(args=None):
         raise SystemExit()
 
     # Configure rich console
-    console = Console(force_terminal=True, record=args.record)
+    console = NuminaConsole(record=args.record)
 
     if args.echo:
         console.print(f"[bright_red]Executing: {' '.join(sys.argv)}[/bright_red]\n", end='')
@@ -2799,7 +2825,7 @@ def main(args=None):
     )
     logging.getLogger('matplotlib').setLevel(logging.ERROR)  # Suppress matplotlib debug logs
 
-    # Log version info
+    # Display version info
     logger = logging.getLogger(__name__)
     logger.info(f"Using {__name__} version {__version__}")
 
