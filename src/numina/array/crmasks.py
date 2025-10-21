@@ -44,7 +44,7 @@ from numina._version import __version__
 import teareduce as tea
 
 VALID_LACOSMIC_CLEANTYPE = ['median', 'medmask', 'meanmask', 'idw']
-VALID_CRMETHODS = ['medianmin', 'lacosmic', 'mm_lacosmic']
+VALID_CRMETHODS = ['mmcosmic', 'lacosmic', 'mm_lacosmic']
 VALID_BOUNDARY_FITS = ['spline', 'piecewise']
 VALID_COMBINATIONS = ['mediancr', 'meancrt', 'meancr']
 
@@ -421,7 +421,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                        within_xy_diagram):
     """Segregate the cosmic ray flags into three categories:
     - detected only by the lacosmic method
-    - detected only by the medianmin method
+    - detected only by the mmcosmic method
     - detected by both methods
 
     Parameters
@@ -435,7 +435,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         only by the lacosmic method.
     flag_only_sb : 1D numpy array
         A boolean array indicating which pixels are detected
-        only by the medianmin method.
+        only by the mmcosmic method.
     flag_both : 1D numpy array
         A boolean array indicating which pixels are detected
         by both methods.
@@ -444,7 +444,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         detected only by the lacosmic method.
     enum_mm_global : 1D numpy array
         An integer array with the enumeration of the pixels
-        detected only by the medianmin method.
+        detected only by the mmcosmic method.
     enum_both_global : 1D numpy array
         An integer array with the enumeration of the pixels
         detected by both methods.
@@ -458,7 +458,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         only by the lacosmic method within the XY diagram.
     flag_only_mm_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
-        only by the medianmin method within the XY diagram.
+        only by the mmcosmic method within the XY diagram.
     flag_both_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
         by both methods within the XY diagram.
@@ -467,7 +467,7 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
         If no pixels are detected, xcr_only_la and ycr_only_la are None.
     (num_only_sb, xcr_only_sb, ycr_only_sb) : tuple
-        Number of pixels detected only by the medianmin method,
+        Number of pixels detected only by the mmcosmic method,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
         If no pixels are detected, xcr_only_sb and ycr_only_sb are None.
     (num_both, xcr_both, ycr_both) : tuple
@@ -552,7 +552,7 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     for ax in ax_list:
         for num, method, xcr, ycr, ncr, flag_only, color, marker in zip(
                 [num_only_la_within_xy, num_only_mm_within_xy, num_both_within_xy],
-                ['lacosmic', 'medianmin', 'both'],
+                ['lacosmic', 'mmcosmic', 'both'],
                 [xcr_only_la_within_xy, xcr_only_mm_within_xy, xcr_both_within_xy],
                 [ycr_only_la_within_xy, ycr_only_mm_within_xy, ycr_both_within_xy],
                 [ncr_only_la_within_xy, ncr_only_mm_within_xy, ncr_both_within_xy],
@@ -653,7 +653,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
                 c='r', marker='x', label=f'Suspected pixels: {num_only_la} (lacosmic)')
     ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
-                c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (medianmin)')
+                c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (mmcosmic)')
     ax1.scatter(xplot[flag_both], yplot[flag_both],
                 edgecolor='m', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
     if xplot_boundary is not None and yplot_boundary is not None:
@@ -842,7 +842,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         for inum in range(image3d.shape[0]):
                             print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy-1, ix-1]:.3f}')
                         print('.' * 79)
-                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'medianmin']):
+                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'mmcosmic']):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
                             # where the first pixel is (1, 1)
                             if flag.reshape((naxis2, naxis1))[iy-1, ix-1]:
@@ -1340,9 +1340,9 @@ def compute_crmasks(
         The method to use for cosmic ray detection. Valid options are:
         - 'lacosmic': use the cosmic-ray rejection by Laplacian edge
         detection (van Dokkum 2001), as implemented in ccdproc.
-        - 'medianmin': use the numerically derived boundary to
+        - 'mmcosmic': use the numerically derived boundary to
         detect cosmic rays in the median combined image.
-        - 'mm_lacosmic': use both methods: 'lacosmic' and 'medianmin'.
+        - 'mm_lacosmic': use both methods: 'lacosmic' and 'mmcosmic'.
         Pixels detected by either method are included in the final mask.
     use_lamedian: bool, optional
         If True, use the corrected value from the lacosmic algorithm
@@ -1580,8 +1580,8 @@ def compute_crmasks(
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
     _logger.info("crmethod: [bold green]%s[/bold green]", crmethod)
     # Check use_lamedian
-    if use_lamedian and crmethod not in ['lacosmic', 'mm_LACosmic']:
-        raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'mm_LACosmic'.")
+    if use_lamedian and crmethod not in ['lacosmic', 'mm_lacosmic']:
+        raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'mm_lacosmic'.")
     _logger.info("use_lamedian: %s", str(use_lamedian))
 
     # Check flux_factor
@@ -1626,7 +1626,7 @@ def compute_crmasks(
     median2d = np.median(image3d, axis=0)
     mean2d = np.mean(image3d, axis=0)
 
-    # Compute points for diagnostic diagram of medianmin method
+    # Compute points for diagnostic diagram of mmcosmic method
     xplot = min2d.flatten()  # bias was already subtracted above
     yplot = median2d.flatten() - min2d.flatten()
 
@@ -1720,7 +1720,7 @@ def compute_crmasks(
 
     # Log the input parameters
     _logger.info("crmethod: %s", crmethod)
-    if crmethod in ['medianmin', 'mm_LACosmic']:
+    if crmethod in ['mmcosmic', 'mm_lacosmic']:
         _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
         _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
         _logger.debug("mm_knots_splfit: %d", mm_knots_splfit)
@@ -1906,13 +1906,13 @@ def compute_crmasks(
     else:
         median2d_lacosmic = None
 
-    if crmethod in ['medianmin', 'mm_lacosmic']:
+    if crmethod in ['mmcosmic', 'mm_lacosmic']:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
         # ---------------------------------------------------------------------
         # Define mm_fixed_points_in_boundary
-        _logger.info("[bold]detecting cosmic rays in the median2d image using [blue]medianmin[/blue]...[/bold]")
+        _logger.info("[bold]detecting cosmic rays in the median2d image using [blue]mmcosmic[/blue]...[/bold]")
         if isinstance(mm_fixed_points_in_boundary, str):
             if mm_fixed_points_in_boundary.lower() == 'none':
                 mm_fixed_points_in_boundary = None
@@ -2184,9 +2184,9 @@ def compute_crmasks(
         flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
-        _logger.info("number of pixels flagged as cosmic rays by [bold blue]medianmin[/bold blue]: %d",
+        _logger.info("number of pixels flagged as cosmic rays by [bold blue]mmcosmic[/bold blue]: %d",
                      np.sum(flag_sb))
-        if crmethod == 'medianmin':
+        if crmethod == 'mmcosmic':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
 
         # Plot the results
@@ -2233,22 +2233,22 @@ def compute_crmasks(
         flag = flag_la
         flag_integer = 3 * flag_la.astype(np.uint8)
     else:
-        # Combine the flags from lacosmic and medianmin
+        # Combine the flags from lacosmic and mmcosmic
         flag = np.logical_or(flag_la, flag_sb)
         flag_integer = 2 * flag_sb.astype(np.uint8) + 3 * flag_la.astype(np.uint8)
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] [bold]or[/bold]  [blue]medianmin[/blue]: %s", cdum)
+                     "[red]lacosmic[/red] [bold]or[/bold]  [blue]mmcosmic[/blue]: %s", cdum)
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] only.........: %s", cdum)
+                     "[red]lacosmic[/red] only........: %s", cdum)
         cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[blue]medianmin[/blue] only........: %s", cdum)
+                     "[blue]mmcosmic[/blue] only........: %s", cdum)
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] [bold]and[/bold] [blue]medianmin[/blue]: %s", cdum)
+                     "[red]lacosmic[/red] [bold]and[/bold] [blue]mmcosmic[/blue]: %s", cdum)
     flag = flag.reshape((naxis2, naxis1))
     flag_integer = flag_integer.reshape((naxis2, naxis1))
     flag_integer[flag_integer == 5] = 4  # pixels flagged by both methods are set to 4
@@ -2344,8 +2344,8 @@ def compute_crmasks(
                 yplot_boundary = None
                 mm_threshold = None
                 flag_sb = np.zeros_like(flag_la, dtype=bool)
-        if crmethod in ['medianmin', 'mm_lacosmic']:
-            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [blue]medianmin[/blue]...[/bold]")
+        if crmethod in ['mmcosmic', 'mm_lacosmic']:
+            _logger.info(f"[bold]detecting cosmic rays in {target2d_name} using [blue]mmcosmic[/blue]...[/bold]")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
             flag1 = yplot > boundaryfit(xplot)
@@ -2353,7 +2353,7 @@ def compute_crmasks(
             flag_sb = np.logical_and(flag1, flag2)
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_sb = np.logical_and(flag_sb, flag3)
-            if crmethod == 'medianmin':
+            if crmethod == 'mmcosmic':
                 flag_la = np.zeros_like(flag_sb, dtype=bool)
         # For the mean2d mask, force the flag to be True if the pixel
         # was flagged as a coincident cosmic-ray pixel when using the median2d array
@@ -2371,9 +2371,9 @@ def compute_crmasks(
         sflag_sb = str(np.sum(flag_sb))
         smax = max(len(sflag_la), len(sflag_sb))
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[red]lacosmic[/red] : %s", f"{np.sum(flag_la):{smax}d}")
+                     "[red]lacosmic[/red]: %s", f"{np.sum(flag_la):{smax}d}")
         _logger.info("number of pixels flagged as cosmic rays by "
-                     "[blue]medianmin[/blue]: %s", f"{np.sum(flag_sb):{smax}d}")
+                     "[blue]mmcosmic[/blue]: %s", f"{np.sum(flag_sb):{smax}d}")
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
@@ -2453,7 +2453,7 @@ def compute_crmasks(
     args = inspect.signature(compute_crmasks).parameters
     if crmethod == 'lacosmic':
         prefix_of_excluded_args = 'mm_'
-    elif crmethod == 'medianmin':
+    elif crmethod == 'mmcosmic':
         prefix_of_excluded_args = 'la_'
     else:
         prefix_of_excluded_args = 'xxx'
