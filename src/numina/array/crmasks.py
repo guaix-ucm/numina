@@ -123,6 +123,7 @@ def remove_isolated_pixels(h):
                     flag[i, j] = fsum / k
     hclean = h.copy()
     hclean[flag > 0] = flag[flag > 0]
+
     # Remove pixels with less than 4 neighbors
     flag = np.zeros_like(h, dtype=np.uint8)
     for i in range(naxis2):
@@ -138,6 +139,8 @@ def remove_isolated_pixels(h):
                 if k < 5:
                     flag[i, j] = 1
     hclean[flag == 1] = 0
+
+    """
     # Remove pixels with no neighbor on the left hand side
     # when moving from left to right in each row
     for i in range(naxis2):
@@ -150,7 +153,9 @@ def remove_isolated_pixels(h):
             else:
                 loop = False
         if j < naxis1:
+            pass
             hclean[i, j:] = 0
+    """
 
     return hclean
 
@@ -355,7 +360,7 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         ax1.set_xlim(ff_region.fits[0].start - 0.5, ff_region.fits[0].stop + 0.5)
         ax1.set_ylim(ff_region.fits[1].start - 0.5, ff_region.fits[1].stop + 0.5)
         plt.tight_layout()
-        png_filename = 'image_number_to_median.png'
+        png_filename = 'image_number_at_median_position.png'
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
@@ -985,7 +990,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         print(f'min2d - bias     = {min2d[iy-1, ix-1]:.3f}')
                         print('.' * 79)
                         for inum in range(image3d.shape[0]):
-                            print(f'(image {inum+1} - bias) * flux_factor = {image3d[inum, iy-1, ix-1]:.3f}')
+                            print(f'(image {inum+1} - bias) = {image3d[inum, iy-1, ix-1]:.3f}')
                         print('.' * 79)
                         for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'mmcosmic']):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
@@ -1432,6 +1437,7 @@ def compute_crmasks(
         use_lamedian=False,
         flux_factor=None,
         flux_factor_region=None,
+        apply_flux_factor_to=None,
         interactive=True,
         dilation=1,
         pixels_to_be_flagged_as_cr=None,
@@ -1522,6 +1528,12 @@ def compute_crmasks(
         when flux_factor='auto'. If None, the entire image is used.
         The format of the region must follow the FITS convention
         '[xmin:xmax,ymin:ymax]', where the indices start from 1 to NAXIS[12].
+    apply_flux_factor_to : str
+        Specifies to which images the flux factor should be applied.
+        Valid options are:
+        - 'original': apply the flux factor to the original images.
+        - 'simulated': apply the flux factor to the simulated images
+          used to derive the boundary.
     interactive : bool, optional
         If True, enable interactive mode for plots.
     dilation : int, optional
@@ -1654,6 +1666,7 @@ def compute_crmasks(
 
     if _logger is None:
         _logger = logging.getLogger(__name__)
+        rich_configured = False
     else:
         # use the provided logger
         root_logger = logging.getLogger()
@@ -1773,6 +1786,9 @@ def compute_crmasks(
     elif isinstance(flux_factor, str):
         if flux_factor.lower() == 'auto':
             _logger.info("flux_factor set to 'auto', computing values...")
+            if isinstance(flux_factor_region, str):
+                if flux_factor_region.lower() == 'none':
+                    flux_factor_region = None
             if flux_factor_region is None:
                 ff_region = tea.SliceRegion2D(f'[1:{naxis1}, 1:{naxis2}]', mode='fits')
             elif isinstance(flux_factor_region, str):
@@ -1782,7 +1798,7 @@ def compute_crmasks(
                                 "Must be str or None.")
             median2d = np.median(image3d, axis=0)
             flux_factor = compute_flux_factor(image3d, median2d, ff_region, _logger, interactive, debug)
-            _logger.info("flux_factor set to %s", str(flux_factor))
+            _logger.info("computed flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == 'none':
             flux_factor = np.ones(num_images, dtype=float)
         elif isinstance(ast.literal_eval(flux_factor), list):
@@ -1805,10 +1821,15 @@ def compute_crmasks(
     else:
         raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
     _logger.info("flux_factor: %s", str(flux_factor))
+    if apply_flux_factor_to not in ['original', 'simulated']:
+        raise ValueError(f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. "
+                         "Valid options are 'original' and 'simulated'.")
+    _logger.info("apply_flux_factor_to: %s", apply_flux_factor_to)
 
-    # Apply the flux factor to the input arrays
-    for i in range(num_images):
-        image3d[i] /= flux_factor[i]
+    # Apply the flux factor to the input arrays if requested
+    if apply_flux_factor_to == 'original':
+        for i in range(num_images):
+            image3d[i] /= flux_factor[i]
 
     # Compute minimum, maximum, median and mean along the first axis
     min2d = np.min(image3d, axis=0)
@@ -2238,10 +2259,18 @@ def compute_crmasks(
         lam = median2d.copy()
         lam[lam < 0] = 0  # Avoid negative values
         lam3d = np.zeros((num_images, naxis2, naxis1))
+        if apply_flux_factor_to == 'original':
+            flux_factor_for_simulated = np.ones(num_images, dtype=float)
+        elif apply_flux_factor_to == 'simulated':
+            flux_factor_for_simulated = flux_factor
+        else:
+            raise ValueError(f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. "
+                             "Valid options are 'original' and 'simulated'.")
+        _logger.info("flux factor for simulated images: %s", str(flux_factor_for_simulated))
         if mm_crosscorr_region is None:
             _logger.info(f"{mm_crosscorr_region=}, assuming no offsets between images")
             for i in range(num_images):
-                lam3d[i] = lam
+                lam3d[i] = lam / flux_factor_for_simulated[i]
         else:
             _logger.info("xy-shifting median2d to speed up simulations...")
             for i in range(num_images):
@@ -2252,7 +2281,7 @@ def compute_crmasks(
                 lam3d[i] = shift_image2d(lam,
                                          xoffset=-list_yx_offsets[i][1],
                                          yoffset=-list_yx_offsets[i][0],
-                                         resampling=2)
+                                         resampling=2) / flux_factor_for_simulated[i]
         _logger.info("computing simulated 2D histogram...")
         for k in range(mm_nsimulations):
             time_ini = datetime.now()
@@ -2760,8 +2789,8 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
     Returns
     -------
     combined2d: 2D array
-        The combined array with masked pixels replaced accordingly
-        depending on the combination method.
+        The combined bias-subtracted array with masked pixels replaced
+        accordingly depending on the combination method.
     variance2d : 2D array
         The variance of the input arrays along the first axis.
     map2d : 2D array
@@ -2825,9 +2854,9 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
         for i in range(num_images):
             flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
         flux_factor = np.array(flux_factor, dtype=float)
-        _logger.info("flux factor values: %s", str(flux_factor))
     else:
         flux_factor = np.ones(num_images, dtype=float)
+    _logger.info("flux factor values: %s", str(flux_factor))
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)
@@ -2888,7 +2917,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
         # Loop through each image and apply the corresponding mask
         total_mask = np.zeros((naxis2, naxis1), dtype=int)
         for i in range(num_images):
-            image3d_masked[i, :, :] = list_arrays[i].astype(dtype) * flux_factor[i]
+            image3d_masked[i, :, :] = image3d[i, :, :]
             mask = hdul_masks[f'CRMASK{i+1}'].data
             _logger.info("applying mask %s: %d masked pixels", f'CRMASK{i+1}', np.sum(mask))
             total_mask += mask.astype(int)
