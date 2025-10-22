@@ -191,6 +191,10 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         The flux factor for each image.
     """
     naxis3, naxis2, naxis1 = image3d.shape
+    if naxis3 > 7:
+        _logger.warning("compute_flux_factor: naxis3 > 7, skipping flux factor computation.")
+        return np.ones(naxis3, dtype=float)
+
     naxis2_, naxis1_ = median2d.shape
     if naxis2 != naxis2_ or naxis1 != naxis1_:
         raise ValueError("image3d and median2d must have the same shape in the last two dimensions.")
@@ -317,8 +321,23 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         vmin, vmax = tea.zscale(median2d)
         img_ax1, _, _ = tea.imshow(fig, ax1, median2d, ds9mode=True, vmin=vmin, vmax=vmax,
                                    aspect='auto', title='median2d')
-        tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True, vmin=1, vmax=naxis3, cmap='brg',
-                   cblabel='Image number', aspect='auto')
+        if naxis3 == 3:
+            color_list = ['tab:red', 'tab:green', 'tab:blue']
+        elif naxis3 == 5:
+            color_list = ['tab:red', 'tab:orange', 'tab:green', 'tab:blue', 'tab:purple']
+        elif naxis3 == 7:
+            color_list = ['tab:red', 'tab:orange', 'tab:olive', 'tab:green', 'tab:cyan', 'tab:blue', 'tab:purple']
+        else:
+            raise ValueError("Cannot define color map for naxis3 odd and > 7.")
+        cmap = ListedColormap(color_list)
+        bounds = np.arange(0.5, len(color_list) + 1, 1)   # integer limits: -0.5, 0.5, 1.5, ...
+        norm = BoundaryNorm(bounds, cmap.N)
+        ax2_img, cax2, cbar2 = tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True,
+                                          cmap=cmap, norm=norm,
+                                          title='Image number at median position',
+                                          cblabel='Image number', aspect='auto')
+        cbar2.set_ticks(np.arange(1, naxis3 + 1))
+        cbar2.ax.yaxis.set_tick_params(length=0)
         ax1.set_xlim(ff_region.fits[0].start - 0.5, ff_region.fits[0].stop + 0.5)
         ax1.set_ylim(ff_region.fits[1].start - 0.5, ff_region.fits[1].stop + 0.5)
         plt.tight_layout()
@@ -342,8 +361,8 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
     cblabel = 'Number of pixels'
     flux_factor = []
     for idata, data in enumerate(image3d):
-        ratio = np.divide(data, median2d, 
-                          out=np.zeros_like(median2d, dtype=float), 
+        ratio = np.divide(data, median2d,
+                          out=np.zeros_like(median2d, dtype=float),
                           where=median2d != 0)
         h, edges = np.histogramdd(
             sample=(ratio[ff_region.python].flatten(), median2d[ff_region.python].flatten()),
@@ -1295,8 +1314,9 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
                     image2d = flag_integer_dilated
                     title = 'flag_integer_dilated'
                     # cmap = 'plasma'
-                    cmap = ListedColormap(['black', 'grey', 'blue', 'red', 'yellow'])
-                    bounds = np.arange(-0.5, 5, 1)   # integer limits: -0.5, 0.5, 1.5, ...
+                    color_list = ['black', 'grey', 'blue', 'red', 'yellow']
+                    cmap = ListedColormap(color_list)
+                    bounds = np.arange(-0.5, len(color_list), 1)   # integer limits: -0.5, 0.5, 1.5, ...
                     norm = BoundaryNorm(bounds, cmap.N)
                     cblabel = None
                 elif k == 2:
