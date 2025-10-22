@@ -155,7 +155,7 @@ def remove_isolated_pixels(h):
     return hclean
 
 
-def compute_flux_factor(image3d, median2d, _logger, interactive=False,
+def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=False,
                         nxbins_half=50, nybins_half=50,
                         ymin=0.495, ymax=1.505):
     """Compute the flux factor for each image based on the median.
@@ -172,6 +172,8 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
         The logger to use for logging.
     interactive : bool, optional
         If True, enable interactive mode for plots (default is False).
+    debug : bool, optional
+        If True, enable debug mode (default is False).
     nxbins_half : int, optional
         Half the number of bins in the x direction (default is 50).
     nybins_half : int, optional
@@ -191,41 +193,128 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     if naxis2 != naxis2_ or naxis1 != naxis1_:
         raise ValueError("image3d and median2d must have the same shape in the last two dimensions.")
 
-    xmin = np.min(median2d)
-    xmax = np.max(median2d)
-    dx = xmax - xmin
-    xminh = xmin - dx / 20
-    xmaxh = xmax + dx / 20
-    bins0 = np.linspace(xmin, xmax, 100)
-    h0, edges0 = np.histogram(median2d.flatten(), bins=bins0)
-    hstep = (edges0[1] - edges0[0])
-    fig, ax = plt.subplots()
-    for i in range(naxis3):
-        xmax_ = np.max(image3d[i])
-        bins = np.arange(xmin, xmax_ + hstep, hstep)
-        h, edges = np.histogram(image3d[i].flatten(), bins=bins)
-        plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
-    plot_hist_step(ax, edges0, h0, color='black', label='Median')
-    ax.set_xlim(xminh, xmaxh)
-    ax.set_xlabel('pixel value')
-    ax.set_ylabel('Number of pixels')
-    ax.set_title('Before applying flux factor')
-    ax.set_yscale('log')
-    ax.legend(loc='upper right')
-    plt.tight_layout()
-    png_filename = 'histogram_before_flux_factor.png'
-    _logger.info(f"saving {png_filename}")
-    plt.savefig(png_filename, dpi=150)
-    if interactive:
-        _logger.info("Entering interactive mode (press 'q' to close figure)")
-        plt.show()
-    plt.close(fig)
+    if debug:
+        # Histograms before applying flux factor
+        xmin = np.min(median2d)
+        xmax = np.max(median2d)
+        dx = xmax - xmin
+        xminh = xmin - dx / 20
+        xmaxh = xmax + dx / 20
+        bins0 = np.linspace(xmin, xmax, 100)
+        h0, edges0 = np.histogram(median2d.flatten(), bins=bins0)
+        hstep = (edges0[1] - edges0[0])
+        fig, ax = plt.subplots()
+        for i in range(naxis3):
+            xmax_ = np.max(image3d[i])
+            bins = np.arange(xmin, xmax_ + hstep, hstep)
+            h, edges = np.histogram(image3d[i].flatten(), bins=bins)
+            plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
+        plot_hist_step(ax, edges0, h0, color='black', label='Median')
+        ax.set_xlim(xminh, xmaxh)
+        ax.set_xlabel('pixel value')
+        ax.set_ylabel('Number of pixels')
+        ax.set_title('Before applying flux factor')
+        ax.set_yscale('log')
+        ax.legend(loc='upper right')
+        plt.tight_layout()
+        png_filename = 'histogram_before_flux_factor.png'
+        _logger.info(f"saving {png_filename}")
+        plt.savefig(png_filename, dpi=150)
+        if interactive:
+            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            plt.show()
+        plt.close(fig)
 
     if naxis3 % 2 == 1:
         argsort = np.argsort(image3d, axis=0)
         fig, (ax1, ax2) = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(12, 5.5))
+
+        i_comparison_image = 0   # 0 for median2d, 1, 2,... for image3d[comparison_image-1]
+
+        def on_key(event):
+            nonlocal img_ax1
+            nonlocal i_comparison_image
+            update_vmin_vmax = False
+            # Determine the current region in the plot
+            xmin, xmax = ax1.get_xlim()
+            ymin, ymax = ax1.get_ylim()
+            ixmin = int(round(xmin))
+            ixmax = int(round(xmax))
+            iymin = int(round(ymin))
+            iymax = int(round(ymax))
+            if ixmin > ixmax:
+                ixmin, ixmax = ixmax, ixmin
+            if iymin > iymax:
+                iymin, iymax = iymax, iymin
+            if ixmin < 1:
+                ixmin = 1
+            if ixmax > naxis1:
+                ixmax = naxis1
+            if iymin < 1:
+                iymin = 1
+            if iymax > naxis2:
+                iymax = naxis2
+            region2d = tea.SliceRegion2D(f'[{ixmin}:{ixmax},{iymin}:{iymax}]', mode='fits').python
+            if event.key == ',':
+                vmin, vmax = np.min(median2d[region2d]), np.max(median2d[region2d])
+                update_vmin_vmax = True
+            elif event.key == '/':
+                vmin, vmax = tea.zscale(median2d[region2d])
+                update_vmin_vmax = True
+            elif event.key in ['t', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+                i_comparison_image_previous = i_comparison_image
+                if event.key == 't':
+                    i_comparison_image += 1
+                    if i_comparison_image > naxis3:
+                        i_comparison_image = 0
+                elif event.key == '0':
+                    i_comparison_image = 0
+                else:
+                    i_comparison_image = int(event.key)
+                    if i_comparison_image > naxis3:
+                        i_comparison_image = i_comparison_image_previous
+                if i_comparison_image != i_comparison_image_previous:
+                    if i_comparison_image == 0:
+                        comparison_image = median2d
+                        ax1_title = 'median2d'
+                    else:
+                        comparison_image = image3d[i_comparison_image - 1]
+                        ax1_title = f'single exposure #{i_comparison_image}'
+                    _logger.info(f"Displaying {ax1_title} in left panel.")
+                    img_ax1.set_data(comparison_image)
+                    ax1.set_title(ax1_title)
+                    ax1.figure.canvas.draw_idle()
+            elif event.key == '?':
+                _logger.info("-" * 79)
+                _logger.info("Keyboard shortcuts:")
+                _logger.info("'h' or 'r' : reset zoom to full image")
+                _logger.info("'p' : pan mode")
+                _logger.info("'o' : zoom to rectangle")
+                _logger.info("'f' : toggle full screen mode")
+                _logger.info("'s' : save figure to PNG file")
+                _logger.info("." * 79)
+                _logger.info("',' : set vmin and vmax to min and max of the current region")
+                _logger.info("'/' : set vmin and vmax using zscale of the current region")
+                _logger.info("'t' : cycle through images (left panel)")
+                _logger.info("'0-9' : display specific image number in left panel (0 for median)")
+                _logger.info("'?' : display this help message")
+                _logger.info("'q' : quit interactive mode")
+                _logger.info("'x' : exit program")
+                _logger.info("-" * 79)
+            elif event.key == 'x':
+                _logger.info("Exiting program as per user request ('x' key pressed).")
+                plt.close(fig)
+                sys.exit(0)
+
+            if update_vmin_vmax:
+                img_ax1.set_clim(vmin=vmin, vmax=vmax)
+                ax1.figure.canvas.draw_idle()
+
+        fig.canvas.mpl_connect('key_press_event', on_key)
+
         vmin, vmax = tea.zscale(median2d)
-        tea.imshow(fig, ax1, median2d, ds9mode=True, vmin=vmin, vmax=vmax, aspect='auto')
+        img_ax1, _, _ = tea.imshow(fig, ax1, median2d, ds9mode=True, vmin=vmin, vmax=vmax,
+                                   aspect='auto', title='median2d')
         tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True, vmin=1, vmax=naxis3, cmap='brg',
                    cblabel='Image number', aspect='auto')
         plt.tight_layout()
@@ -319,27 +408,29 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False,
     # unnecessary precision when writting to the FITS header
     flux_factor = np.round(flux_factor, decimals=6)
 
-    fig, ax = plt.subplots()
-    for i in range(naxis3):
-        xmax_ = np.max(image3d[i])
-        bins = np.arange(xmin, xmax_ + hstep, hstep)
-        h, edges = np.histogram(image3d[i].flatten() / flux_factor[i], bins=bins)
-        plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
-    plot_hist_step(ax, edges0, h0, color='black', label='Median')
-    ax.set_xlim(xminh, xmaxh)
-    ax.set_xlabel('pixel value')
-    ax.set_ylabel('Number of pixels')
-    ax.set_title('After applying flux factor')
-    ax.set_yscale('log')
-    ax.legend(loc='upper right')
-    plt.tight_layout()
-    png_filename = 'histogram_after_flux_factor.png'
-    _logger.info(f"saving {png_filename}")
-    plt.savefig(png_filename, dpi=150)
-    if interactive:
-        _logger.info("Entering interactive mode (press 'q' to close figure)")
-        plt.show()
-    plt.close(fig)
+    if debug:
+        # Histograms after applying flux factor
+        fig, ax = plt.subplots()
+        for i in range(naxis3):
+            xmax_ = np.max(image3d[i])
+            bins = np.arange(xmin, xmax_ + hstep, hstep)
+            h, edges = np.histogram(image3d[i].flatten() / flux_factor[i], bins=bins)
+            plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
+        plot_hist_step(ax, edges0, h0, color='black', label='Median')
+        ax.set_xlim(xminh, xmaxh)
+        ax.set_xlabel('pixel value')
+        ax.set_ylabel('Number of pixels')
+        ax.set_title('After applying flux factor')
+        ax.set_yscale('log')
+        ax.legend(loc='upper right')
+        plt.tight_layout()
+        png_filename = 'histogram_after_flux_factor.png'
+        _logger.info(f"saving {png_filename}")
+        plt.savefig(png_filename, dpi=150)
+        if interactive:
+            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            plt.show()
+        plt.close(fig)
 
     return flux_factor
 
@@ -807,27 +898,27 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     ax4_title = f'single exposure #{i_comparison_image}'
                 ax4.set_title(ax4_title)
             elif event.key == '?':
-                print("-" * 79)
-                print("Keyboard shortcuts:")
-                print("'h' or 'r': reset zoom to initial limits")
-                print("'p': pan mode")
-                print("'o': zoom to rectangle")
-                print("'f': toggle full screen mode")
-                print("'s': save the figure to a PNG file")
-                print("." * 79)
-                print("'?': show this help message")
-                print("'i': print pixel info at mouse position (ax3 only)")
-                print("'&': print CR pixels within the zoomed region (ax3 only)")
-                print("'n': toggle display of number of cosmic rays (ax3 only)")
-                print("'a': toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
-                print("'t': toggle mean2d -> individual exposures in ax4")
-                print("'0': switch to mean2d in ax4")
-                print("'1', '2', ...: switch to individual exposure #1, #2, ... in ax4")
-                print("',': set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
-                print("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
-                print("'q': close the plot and continue the program execution")
-                print("'x': halt the program execution")
-                print("-" * 79)
+                _logger.info("-" * 79)
+                _logger.info("Keyboard shortcuts:")
+                _logger.info("'h' or 'r': reset zoom to initial limits")
+                _logger.info("'p': pan mode")
+                _logger.info("'o': zoom to rectangle")
+                _logger.info("'f': toggle full screen mode")
+                _logger.info("'s': save the figure to a PNG file")
+                _logger.info("." * 79)
+                _logger.info("'?': show this help message")
+                _logger.info("'i': print pixel info at mouse position (ax3 only)")
+                _logger.info("'&': print CR pixels within the zoomed region (ax3 only)")
+                _logger.info("'n': toggle display of number of cosmic rays (ax3 only)")
+                _logger.info("'a': toggle imshow aspect='equal' / aspect='auto' (ax3 and ax4 only)")
+                _logger.info("'t': toggle mean2d -> individual exposures in ax4")
+                _logger.info("'0': switch to mean2d in ax4")
+                _logger.info("'1', '2', ...: switch to individual exposure #1, #2, ... in ax4")
+                _logger.info("',': set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
+                _logger.info("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
+                _logger.info("'q': close the plot and continue the program execution")
+                _logger.info("'x': halt the program execution")
+                _logger.info("-" * 79)
             elif event.key == "i":
                 if ax_mouse in [ax1, ax2]:
                     print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
@@ -894,6 +985,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         ax4.figure.canvas.draw_idle()
             elif event.key in [',', '/']:
                 if ax_mouse in [ax3, ax4]:
+                    # Determine the region in the image corresponding to the zoomed area
                     xmin, xmax = ax_mouse.get_xlim()
                     ymin, ymax = ax_mouse.get_ylim()
                     ixmin = int(round(xmin))
@@ -934,7 +1026,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             elif event.key == 'x':
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
-                sys.exit(1)
+                sys.exit(0)
 
         fig.canvas.mpl_connect("key_press_event", on_key)
 
@@ -1622,7 +1714,7 @@ def compute_crmasks(
         if flux_factor.lower() == 'auto':
             _logger.info("flux_factor set to 'auto', computing values...")
             median2d = np.median(image3d, axis=0)
-            flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive)
+            flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive, debug)
             _logger.info("flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == 'none':
             flux_factor = np.ones(num_images, dtype=float)
@@ -2141,7 +2233,7 @@ def compute_crmasks(
             if event.key == 'x':
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
-                sys.exit(1)
+                sys.exit(0)
 
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
         fig.canvas.mpl_connect('key_press_event', lambda event: on_key(event))
@@ -2905,6 +2997,7 @@ def main(args=None):
         hdul_masks = compute_crmasks(
             list_arrays=list_arrays,
             _logger=logger,
+            debug=(args.log_level == 'DEBUG'),
             **crmasks_params
         )
         # Save the cosmic ray masks to a FITS file
