@@ -232,14 +232,18 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         plt.close(fig)
 
     if naxis3 % 2 == 1:
+        # Interactive plot showing the image number at the median position
         argsort = np.argsort(image3d, axis=0)
+
         fig, (ax1, ax2) = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(12, 5.5))
+        aspect_imshow = 'auto'  # 'equal' or 'auto'
 
         i_comparison_image = 0   # 0 for median2d, 1, 2,... for image3d[comparison_image-1]
 
         def on_key(event):
-            nonlocal img_ax1
+            nonlocal img_ax1, img_ax2
             nonlocal i_comparison_image
+            nonlocal aspect_imshow
             update_vmin_vmax = False
             # Determine the current region in the plot
             xmin, xmax = ax1.get_xlim()
@@ -261,7 +265,16 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
             if iymax > naxis2:
                 iymax = naxis2
             region2d = tea.SliceRegion2D(f'[{ixmin}:{ixmax},{iymin}:{iymax}]', mode='fits').python
-            if event.key == ',':
+            if event.key == 'a':
+                if aspect_imshow == 'equal':
+                    aspect_imshow = 'auto'
+                else:
+                    aspect_imshow = 'equal'
+                ax1.set_aspect(aspect_imshow)
+                ax2.set_aspect(aspect_imshow)
+                ax1.figure.canvas.draw_idle()
+                ax2.figure.canvas.draw_idle()
+            elif event.key == ',':
                 vmin, vmax = np.min(median2d[region2d]), np.max(median2d[region2d])
                 update_vmin_vmax = True
             elif event.key == '/':
@@ -299,6 +312,7 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
                 _logger.info("'f' : toggle full screen mode")
                 _logger.info("'s' : save figure to PNG file")
                 _logger.info("." * 79)
+                _logger.info("'a' : toggle aspect='equal' / 'aspect='auto' for imshow")
                 _logger.info("',' : set vmin and vmax to min and max of the current region")
                 _logger.info("'/' : set vmin and vmax using zscale of the current region")
                 _logger.info("'t' : cycle through images (left panel)")
@@ -320,7 +334,7 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
 
         vmin, vmax = tea.zscale(median2d)
         img_ax1, _, _ = tea.imshow(fig, ax1, median2d, ds9mode=True, vmin=vmin, vmax=vmax,
-                                   aspect='auto', title='median2d')
+                                   aspect=aspect_imshow, title='median2d')
         if naxis3 == 3:
             color_list = ['tab:red', 'tab:green', 'tab:blue']
         elif naxis3 == 5:
@@ -332,10 +346,10 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         cmap = ListedColormap(color_list)
         bounds = np.arange(0.5, len(color_list) + 1, 1)   # integer limits: -0.5, 0.5, 1.5, ...
         norm = BoundaryNorm(bounds, cmap.N)
-        ax2_img, cax2, cbar2 = tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True,
-                                          cmap=cmap, norm=norm,
-                                          title='Image number at median position',
-                                          cblabel='Image number', aspect='auto')
+        img_ax2, _, cbar2 = tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True,
+                                       cmap=cmap, norm=norm,
+                                       title='Image number at median position',
+                                       cblabel='Image number', aspect=aspect_imshow)
         cbar2.set_ticks(np.arange(1, naxis3 + 1))
         cbar2.ax.yaxis.set_tick_params(length=0)
         ax1.set_xlim(ff_region.fits[0].start - 0.5, ff_region.fits[0].stop + 0.5)
