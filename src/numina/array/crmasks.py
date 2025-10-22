@@ -155,7 +155,7 @@ def remove_isolated_pixels(h):
     return hclean
 
 
-def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=False,
+def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False, debug=False,
                         nxbins_half=50, nybins_half=50,
                         ymin=0.495, ymax=1.505):
     """Compute the flux factor for each image based on the median.
@@ -168,6 +168,8 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
         subtracting the bias, if any.
     median2d : 2D numpy array
         The median of the input arrays.
+    ff_region : tea.SliceRegion2D instance
+        The region of interest for the flux factor computation.
     _logger : logging.Logger
         The logger to use for logging.
     interactive : bool, optional
@@ -195,19 +197,19 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
 
     if debug:
         # Histograms before applying flux factor
-        xmin = np.min(median2d)
-        xmax = np.max(median2d)
+        xmin = np.min(median2d[ff_region.python])
+        xmax = np.max(median2d[ff_region.python])
         dx = xmax - xmin
         xminh = xmin - dx / 20
         xmaxh = xmax + dx / 20
         bins0 = np.linspace(xmin, xmax, 100)
-        h0, edges0 = np.histogram(median2d.flatten(), bins=bins0)
+        h0, edges0 = np.histogram(median2d[ff_region.python].flatten(), bins=bins0)
         hstep = (edges0[1] - edges0[0])
         fig, ax = plt.subplots()
         for i in range(naxis3):
-            xmax_ = np.max(image3d[i])
+            xmax_ = np.max(image3d[i][ff_region.python])
             bins = np.arange(xmin, xmax_ + hstep, hstep)
-            h, edges = np.histogram(image3d[i].flatten(), bins=bins)
+            h, edges = np.histogram(image3d[i][ff_region.python].flatten(), bins=bins)
             plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
         plot_hist_step(ax, edges0, h0, color='black', label='Median')
         ax.set_xlim(xminh, xmaxh)
@@ -317,17 +319,19 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
                                    aspect='auto', title='median2d')
         tea.imshow(fig, ax2, argsort[naxis3//2] + 1, ds9mode=True, vmin=1, vmax=naxis3, cmap='brg',
                    cblabel='Image number', aspect='auto')
+        ax1.set_xlim(ff_region.fits[0].start - 0.5, ff_region.fits[0].stop + 0.5)
+        ax1.set_ylim(ff_region.fits[1].start - 0.5, ff_region.fits[1].stop + 0.5)
         plt.tight_layout()
         png_filename = 'image_number_to_median.png'
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
             plt.show()
         plt.close(fig)
 
-    xmin = np.min(median2d)
-    xmax = np.max(median2d)
+    xmin = np.min(median2d[ff_region.python])
+    xmax = np.max(median2d[ff_region.python])
     nxbins = 2 * nxbins_half + 1
     nybins = 2 * nybins_half + 1
     xbin_edges = np.linspace(xmin, xmax, nxbins + 1)
@@ -335,13 +339,14 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
     xbin = (xbin_edges[:-1] + xbin_edges[1:])/2
     ybin = (ybin_edges[:-1] + ybin_edges[1:])/2
     extent = [xbin_edges[0], xbin_edges[-1], ybin_edges[0], ybin_edges[-1]]
-
     cblabel = 'Number of pixels'
     flux_factor = []
     for idata, data in enumerate(image3d):
-        ratio = np.divide(data, median2d, out=np.zeros_like(median2d, dtype=float), where=median2d != 0)
+        ratio = np.divide(data, median2d, 
+                          out=np.zeros_like(median2d, dtype=float), 
+                          where=median2d != 0)
         h, edges = np.histogramdd(
-            sample=(ratio.flatten(), median2d.flatten()),
+            sample=(ratio[ff_region.python].flatten(), median2d[ff_region.python].flatten()),
             bins=(ybin_edges, xbin_edges)
         )
         vmin = np.min(h)
@@ -360,6 +365,7 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
         ax2.set_title(f'Image #{idata+1}')
         xmode = np.zeros(2)
         ymode = np.zeros(2)
+        good_splfits = True
         for side, imin, imax in zip((0, 1), (0, nybins_half+1), (nybins_half, nybins)):
             xfit = []
             yfit = []
@@ -374,23 +380,37 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
                     yfit.append(ybin[i])
             xfit = np.array(xfit)
             yfit = np.array(yfit)
-            splfit = tea.AdaptiveLSQUnivariateSpline(yfit, xfit, t=2, adaptive=False)
-            ax2.plot(splfit(yfit), yfit, f'C{side}-')
-            knots = splfit.get_knots()
-            ax2.plot(splfit(knots), knots, f'C{side}o', markersize=4)
-            imax = np.argmax(splfit(yfit))
-            ymode[side] = yfit[imax]
-            xmode[side] = splfit(ymode[side])
-            ax2.plot(xmode[side], ymode[side], f'C{side}o', markersize=8)
-            ax2.set_xlim(ax1.get_xlim())
-            ax2.set_ylim(ax1.get_ylim())
-        if xmode[0] > xmode[1]:
-            imode = 0
+            try:
+                splfit = tea.AdaptiveLSQUnivariateSpline(yfit, xfit, t=2, adaptive=False)
+                good_splfit = True
+            except Exception as e:
+                _logger.warning(f"Could not fit spline to flux factor data for image #{idata+1}, side {side}: {e}")
+                good_splfit = False
+            if good_splfit:
+                ax2.plot(splfit(yfit), yfit, f'C{side}-')
+                knots = splfit.get_knots()
+                ax2.plot(splfit(knots), knots, f'C{side}o', markersize=4)
+                imax = np.argmax(splfit(yfit))
+                ymode[side] = yfit[imax]
+                xmode[side] = splfit(ymode[side])
+                ax2.plot(xmode[side], ymode[side], f'C{side}o', markersize=8)
+            if not good_splfit:
+                good_splfits = False
+                _logger.warning(f"Skipping flux factor computation for image #{idata+1} due to bad spline fit.")
+        ax2.set_xlim(ax1.get_xlim())
+        ax2.set_ylim(ax1.get_ylim())
+        if good_splfits:
+            if xmode[0] > xmode[1]:
+                imode = 0
+            else:
+                imode = 1
+            ax2.axhline(ymode[imode], color=f'C{imode}', linestyle=':')
+            ax2.text(xbin[-5], ymode[imode]+(ybin[-1]-ybin[0])/40, f'{ymode[imode]:.3f}', color=f'C{imode}', ha='right')
+            flux_factor.append(ymode[imode])
         else:
-            imode = 1
-        ax2.axhline(ymode[imode], color=f'C{imode}', linestyle=':')
-        ax2.text(xbin[-5], ymode[imode]+(ybin[-1]-ybin[0])/40, f'{ymode[imode]:.3f}', color=f'C{imode}', ha='right')
-        flux_factor.append(ymode[imode])
+            ax2.axhline(1.0, color='k', linestyle=':')
+            ax2.text(xbin[-5], 1.01, f'{1.0:.3f}', color='k', ha='right')
+            flux_factor.append(1.0)
         plt.tight_layout()
 
         png_filename = f'flux_factor{idata+1}.png'
@@ -412,9 +432,9 @@ def compute_flux_factor(image3d, median2d, _logger, interactive=False, debug=Fal
         # Histograms after applying flux factor
         fig, ax = plt.subplots()
         for i in range(naxis3):
-            xmax_ = np.max(image3d[i])
+            xmax_ = np.max(image3d[i][ff_region.python])
             bins = np.arange(xmin, xmax_ + hstep, hstep)
-            h, edges = np.histogram(image3d[i].flatten() / flux_factor[i], bins=bins)
+            h, edges = np.histogram(image3d[i][ff_region.python].flatten() / flux_factor[i], bins=bins)
             plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
         plot_hist_step(ax, edges0, h0, color='black', label='Median')
         ax.set_xlim(xminh, xmaxh)
@@ -1377,6 +1397,7 @@ def compute_crmasks(
         crmethod='mm_lacosmic',
         use_lamedian=False,
         flux_factor=None,
+        flux_factor_region=None,
         interactive=True,
         dilation=1,
         pixels_to_be_flagged_as_cr=None,
@@ -1462,6 +1483,11 @@ def compute_crmasks(
         If a float is provided, it is used as the flux factor for all images.
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
+    flux_factor_region : str or None, optional
+        The region to use for computing the flux scaling factors
+        when flux_factor='auto'. If None, the entire image is used.
+        The format of the region must follow the FITS convention
+        '[xmin:xmax,ymin:ymax]', where the indices start from 1 to NAXIS[12].
     interactive : bool, optional
         If True, enable interactive mode for plots.
     dilation : int, optional
@@ -1713,8 +1739,15 @@ def compute_crmasks(
     elif isinstance(flux_factor, str):
         if flux_factor.lower() == 'auto':
             _logger.info("flux_factor set to 'auto', computing values...")
+            if flux_factor_region is None:
+                ff_region = tea.SliceRegion2D(f'[1:{naxis1}, 1:{naxis2}]', mode='fits')
+            elif isinstance(flux_factor_region, str):
+                ff_region = tea.SliceRegion2D(flux_factor_region, mode='fits')
+            else:
+                raise TypeError(f"Invalid type for flux_factor_region: {type(flux_factor_region)}. "
+                                "Must be str or None.")
             median2d = np.median(image3d, axis=0)
-            flux_factor = compute_flux_factor(image3d, median2d, _logger, interactive, debug)
+            flux_factor = compute_flux_factor(image3d, median2d, ff_region, _logger, interactive, debug)
             _logger.info("flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == 'none':
             flux_factor = np.ones(num_images, dtype=float)
