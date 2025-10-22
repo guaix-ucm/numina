@@ -826,7 +826,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 print("',': set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
                 print("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
                 print("'q': close the plot and continue the program execution")
-                print("'x': quit the program immediately")
+                print("'x': halt the program execution")
                 print("-" * 79)
             elif event.key == "i":
                 if ax_mouse in [ax1, ax2]:
@@ -1122,8 +1122,16 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
     cr_table = Table(names=('CR_number', 'X_pixel', 'Y_pixel', 'Mask_value'), dtype=(int, int, int, int))
     cr_table_filename = f'{output_basename}.csv'
     maxplots_eff = maxplots
-    if maxplots_eff < 0 or verify_cr:
+    if verify_cr:
+        # In verify_cr mode, we plot all the cosmic rays
         maxplots_eff = number_cr
+    elif maxplots_eff < 0:
+        if number_cr > 200:
+            maxplots_eff = 200
+            _logger.info(f"limiting to {maxplots_eff} plots (out of {number_cr} CRs detected)")
+            input("Press Enter to continue...")
+        else:
+            maxplots_eff = number_cr
     _logger.info(f"generating {maxplots_eff} plots...")
     xlabel = 'X pixel (from 1 to NAXIS1)'
     ylabel = 'Y pixel (from 1 to NAXIS2)'
@@ -1288,6 +1296,7 @@ def compute_crmasks(
         color_scale='minmax',
         maxplots=-1,
         debug=False,
+        _logger=None,
         la_gain_apply=True,
         la_sigclip=None,
         la_sigfrac=None,
@@ -1392,6 +1401,8 @@ def compute_crmasks(
         If negative, all detected cosmic-ray pixels will be plotted.
     debug : bool, optional
         If True, enable debug mode (default is False).
+    _logger : logging.Logger or None, optional
+        The logger to use for logging. If None, a new logger is created.
     la_gain_apply: bool, optional
         If True, apply the gain when computing the cosmic ray mask
         with the lacosmic algorithm. Default is True.
@@ -1489,8 +1500,14 @@ def compute_crmasks(
         in each individual array.
     """
 
-    _logger = logging.getLogger(__name__)
-    rich_configured = any(isinstance(handler, RichHandler) for handler in _logger.handlers)
+    if _logger is None:
+        _logger = logging.getLogger(__name__)
+    else:
+        # use the provided logger
+        root_logger = logging.getLogger()
+        # check if RichHandler is configured in the parent logger's handler
+        rich_configured = any(isinstance(handler, RichHandler) for handler in root_logger.handlers)
+    # Set up rich labels for logging
     if rich_configured:
         rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
         rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
@@ -1592,7 +1609,7 @@ def compute_crmasks(
     # Check crmethod
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
-    _logger.info(f"computing crmasks using crmethod: {rlabel_crmethod}")
+    _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
     # Check use_lamedian
     if use_lamedian and crmethod not in ['lacosmic', 'mm_lacosmic']:
         raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'mm_lacosmic'.")
@@ -1733,7 +1750,6 @@ def compute_crmasks(
                      "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
 
     # Log the input parameters
-    _logger.info("crmethod: %s", crmethod)
     if crmethod in ['mmcosmic', 'mm_lacosmic']:
         _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
         _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
@@ -2888,6 +2904,7 @@ def main(args=None):
         console.rule("[bold magenta] Computing cosmic ray masks [/bold magenta]")
         hdul_masks = compute_crmasks(
             list_arrays=list_arrays,
+            _logger=logger,
             **crmasks_params
         )
         # Save the cosmic ray masks to a FITS file
