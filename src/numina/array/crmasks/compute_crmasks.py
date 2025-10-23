@@ -80,7 +80,7 @@ def compute_crmasks(
         crmethod='mm_lacosmic',
         use_lamedian=False,
         flux_factor=None,
-        flux_factor_region=None,
+        flux_factor_regions=None,
         apply_flux_factor_to=None,
         interactive=True,
         dilation=1,
@@ -167,11 +167,12 @@ def compute_crmasks(
         If a float is provided, it is used as the flux factor for all images.
         If a list is provided, it should contain a value
         for each single image in `list_arrays`.
-    flux_factor_region : str or None, optional
-        The region to use for computing the flux scaling factors
+    flux_factor_regions : list of lists of 4 integers or None, optional
+        The regions to use for computing the flux scaling factors
         when flux_factor='auto'. If None, the entire image is used.
-        The format of the region must follow the FITS convention
-        '[xmin:xmax,ymin:ymax]', where the indices start from 1 to NAXIS[12].
+        The format of the each region must be a list of 4 integers, following
+        the FITS convention [xmin, xmax, ymin, ymax], where the indices
+        start from 1 to NAXIS[12].
     apply_flux_factor_to : str
         Specifies to which images the flux factor should be applied.
         Valid options are:
@@ -255,12 +256,12 @@ def compute_crmasks(
     la_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='lacosmic'.
-    mm_crosscorr_region : str, or None
+    mm_crosscorr_region : list of 4 integers or None
         The region to use for the 2D cross-correlation to determine
         the offsets between the individual images and the median image.
         If None, no offsets are computed and it is assumed that
         the images are already aligned. The format of the region
-        must follow the FITS convention '[xmin:xmax,ymin:ymax]',
+        must follow the FITS convention [xmin, xmax, ymin, ymax],
         where the indices start from 1 to NAXIS[12].
     mm_boundary_fit : str, or None
         The method to use for the boundary fitting. Valid options are:
@@ -430,18 +431,33 @@ def compute_crmasks(
     elif isinstance(flux_factor, str):
         if flux_factor.lower() == 'auto':
             _logger.info("flux_factor set to 'auto', computing values...")
-            if isinstance(flux_factor_region, str):
-                if flux_factor_region.lower() == 'none':
-                    flux_factor_region = None
-            if flux_factor_region is None:
+            list_flux_factor_regions = []
+            if isinstance(flux_factor_regions, list):
+                for flux_factor_region in flux_factor_regions:
+                    if isinstance(flux_factor_region, list):
+                        all_integers = all(isinstance(val, int) for val in flux_factor_region)
+                        if not all_integers:
+                            raise TypeError(f"Invalid flux_factor_region: {flux_factor_region}. "
+                                            "All elements must be integers.")
+                        if len(flux_factor_region) != 4:
+                            raise ValueError(f"Invalid length for flux_factor_region: {flux_factor_region}. "
+                                             "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
+                        dumreg = f"[{flux_factor_region[0]}:{flux_factor_region[1]}, " + \
+                                 f"{flux_factor_region[2]}:{flux_factor_region[3]}]"
+                        _logger.debug("defined flux factor region: %s", dumreg)
+                        ff_region = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
+                    else:
+                        raise TypeError(f"Invalid type for flux_factor_region in the list: {type(flux_factor_region)}. "
+                                        "Must be str or None.")
+                    list_flux_factor_regions.append(ff_region)
+            elif flux_factor_regions is None:
                 ff_region = tea.SliceRegion2D(f'[1:{naxis1}, 1:{naxis2}]', mode='fits')
-            elif isinstance(flux_factor_region, str):
-                ff_region = tea.SliceRegion2D(flux_factor_region, mode='fits')
+                list_flux_factor_regions = [ff_region]
             else:
-                raise TypeError(f"Invalid type for flux_factor_region: {type(flux_factor_region)}. "
-                                "Must be str or None.")
+                raise TypeError(f"Invalid type for flux_factor_regions: {type(flux_factor_regions)}. "
+                                "Must be list of 4 integers or None.")
             median2d = np.median(image3d, axis=0)
-            flux_factor = compute_flux_factor(image3d, median2d, ff_region, _logger, interactive, debug)
+            flux_factor = compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, interactive, debug)
             _logger.info("computed flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == 'none':
             flux_factor = np.ones(num_images, dtype=float)
@@ -811,15 +827,25 @@ def compute_crmasks(
                                  "at least two fixed points must be provided in mm_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
-        if isinstance(mm_crosscorr_region, str):
-            if mm_crosscorr_region.lower() == 'none':
-                mm_crosscorr_region = None
-        if mm_crosscorr_region is None:
-            crossregion = None
-        else:
-            crossregion = tea.SliceRegion2D(mm_crosscorr_region, mode='fits', naxis1=naxis1, naxis2=naxis2)
+        if isinstance(mm_crosscorr_region, list):
+            all_integers = all(isinstance(val, int) for val in mm_crosscorr_region)
+            if not all_integers:
+                raise TypeError(f"Invalid mm_crosscorr_region: {mm_crosscorr_region}. "
+                                "All elements must be integers.")
+            if len(mm_crosscorr_region) != 4:
+                raise ValueError(f"Invalid length for mm_crosscorr_region: {mm_crosscorr_region}. "
+                                 "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
+            dumreg = f"[{mm_crosscorr_region[0]}:{mm_crosscorr_region[1]}, " + \
+                     f"{mm_crosscorr_region[2]}:{mm_crosscorr_region[3]}]"
+            _logger.debug("defined mm_crosscorr_region: %s", dumreg)
+            crossregion = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
             if crossregion.area() < 100:
                 raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
+        elif mm_crosscorr_region is None:
+            crossregion = None
+        else:
+            raise TypeError(f"Invalid type for mm_crosscorr_region: {type(mm_crosscorr_region)}. "
+                            "Must be list of 4 integers or None.")
         list_yx_offsets = []
         for i in range(num_images):
             if crossregion is None:

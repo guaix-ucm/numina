@@ -11,6 +11,7 @@ import sys
 
 from matplotlib.colors import LogNorm
 from matplotlib.colors import ListedColormap, BoundaryNorm
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -20,7 +21,7 @@ import teareduce as tea
 from .remove_isolated_pixels import remove_isolated_pixels
 
 
-def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False, debug=False,
+def compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, interactive=False, debug=False,
                         nxbins_half=50, nybins_half=50,
                         ymin=0.495, ymax=1.505):
     """Compute the flux factor for each image based on the median.
@@ -33,8 +34,8 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         subtracting the bias, if any.
     median2d : 2D numpy array
         The median of the input arrays.
-    ff_region : tea.SliceRegion2D instance
-        The region of interest for the flux factor computation.
+    list_flux_factor_regions : list of tea.SliceRegion2D instances
+        The regions of interest for the flux factor computation.
     _logger : logging.Logger
         The logger to use for logging.
     interactive : bool, optional
@@ -64,21 +65,26 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
     if naxis2 != naxis2_ or naxis1 != naxis1_:
         raise ValueError("image3d and median2d must have the same shape in the last two dimensions.")
 
+    # Create a boolean mask for the flux factor regions
+    bool_ff_region = np.zeros((naxis2, naxis1), dtype=bool)
+    for ff_region in list_flux_factor_regions:
+        bool_ff_region[ff_region.python] = True
+
     if debug:
         # Histograms before applying flux factor
-        xmin = np.min(median2d[ff_region.python])
-        xmax = np.max(median2d[ff_region.python])
+        xmin = np.min(median2d[bool_ff_region])
+        xmax = np.max(median2d[bool_ff_region])
         dx = xmax - xmin
         xminh = xmin - dx / 20
         xmaxh = xmax + dx / 20
         bins0 = np.linspace(xmin, xmax, 100)
-        h0, edges0 = np.histogram(median2d[ff_region.python].flatten(), bins=bins0)
+        h0, edges0 = np.histogram(median2d[bool_ff_region].flatten(), bins=bins0)
         hstep = (edges0[1] - edges0[0])
         fig, ax = plt.subplots()
         for i in range(naxis3):
-            xmax_ = np.max(image3d[i][ff_region.python])
+            xmax_ = np.max(image3d[i][bool_ff_region])
             bins = np.arange(xmin, xmax_ + hstep, hstep)
-            h, edges = np.histogram(image3d[i][ff_region.python].flatten(), bins=bins)
+            h, edges = np.histogram(image3d[i][bool_ff_region].flatten(), bins=bins)
             plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
         plot_hist_step(ax, edges0, h0, color='black', label='Median')
         ax.set_xlim(xminh, xmaxh)
@@ -217,8 +223,15 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
                                        cblabel='Image number', aspect=aspect_imshow)
         cbar2.set_ticks(np.arange(1, naxis3 + 1))
         cbar2.ax.yaxis.set_tick_params(length=0)
-        ax1.set_xlim(ff_region.fits[0].start - 0.5, ff_region.fits[0].stop + 0.5)
-        ax1.set_ylim(ff_region.fits[1].start - 0.5, ff_region.fits[1].stop + 0.5)
+        ax1.set_xlim(0.5, naxis1 + 0.5)
+        ax1.set_ylim(0.5, naxis2 + 0.5)
+        for ff_region in list_flux_factor_regions:
+            rect = Rectangle((ff_region.fits[0].start - 0.5, ff_region.fits[1].start - 0.5),
+                             ff_region.fits[0].stop - ff_region.fits[0].start + 1,
+                             ff_region.fits[1].stop - ff_region.fits[1].start + 1,
+                             edgecolor='yellow', facecolor='none', linestyle='--', linewidth=1.5)
+            ax1.add_patch(rect)
+            # ax2.add_patch(rect)
         plt.tight_layout()
         png_filename = 'image_number_at_median_position.png'
         _logger.info(f"saving {png_filename}")
@@ -228,8 +241,8 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
             plt.show()
         plt.close(fig)
 
-    xmin = np.min(median2d[ff_region.python])
-    xmax = np.max(median2d[ff_region.python])
+    xmin = np.min(median2d[bool_ff_region])
+    xmax = np.max(median2d[bool_ff_region])
     nxbins = 2 * nxbins_half + 1
     nybins = 2 * nybins_half + 1
     xbin_edges = np.linspace(xmin, xmax, nxbins + 1)
@@ -244,7 +257,7 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
                           out=np.zeros_like(median2d, dtype=float),
                           where=median2d != 0)
         h, edges = np.histogramdd(
-            sample=(ratio[ff_region.python].flatten(), median2d[ff_region.python].flatten()),
+            sample=(ratio[bool_ff_region].flatten(), median2d[bool_ff_region].flatten()),
             bins=(ybin_edges, xbin_edges)
         )
         vmin = np.min(h)
@@ -330,9 +343,9 @@ def compute_flux_factor(image3d, median2d, ff_region, _logger, interactive=False
         # Histograms after applying flux factor
         fig, ax = plt.subplots()
         for i in range(naxis3):
-            xmax_ = np.max(image3d[i][ff_region.python])
+            xmax_ = np.max(image3d[i][bool_ff_region])
             bins = np.arange(xmin, xmax_ + hstep, hstep)
-            h, edges = np.histogram(image3d[i][ff_region.python].flatten() / flux_factor[i], bins=bins)
+            h, edges = np.histogram(image3d[i][bool_ff_region].flatten() / flux_factor[i], bins=bins)
             plot_hist_step(ax, edges, h, color=f'C{i}', label=f'Image {i+1}')
         plot_hist_step(ax, edges0, h0, color='black', label='Median')
         ax.set_xlim(xminh, xmaxh)
