@@ -21,9 +21,9 @@ from numina.tools.add_script_info_to_fits_history import add_script_info_to_fits
 from numina.user.console import NuminaConsole
 from numina._version import __version__
 
-from .__main__ import VALID_COMBINATIONS
 from .apply_crmasks import apply_crmasks
 from .compute_crmasks import compute_crmasks
+from .valid_parameters import VALID_COMBINATIONS
 
 
 def main(args=None):

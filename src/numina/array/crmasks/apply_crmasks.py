@@ -14,7 +14,7 @@ import numpy as np
 import numpy.ma as ma
 from rich.logging import RichHandler
 
-from .__main__ import VALID_COMBINATIONS
+from .valid_parameters import VALID_COMBINATIONS
 
 
 def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=False,

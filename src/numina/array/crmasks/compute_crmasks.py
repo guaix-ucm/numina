@@ -32,10 +32,10 @@ from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
 
-from .__main__ import VALID_CRMETHODS
-from .__main__ import VALID_LACOSMIC_CLEANTYPE
-from .__main__ import VALID_BOUNDARY_FITS
-from .__main__ import VALID_COMBINATIONS
+from .valid_parameters import VALID_CRMETHODS
+from .valid_parameters import VALID_LACOSMIC_CLEANTYPE
+from .valid_parameters import VALID_BOUNDARY_FITS
+from .valid_parameters import VALID_COMBINATIONS
 from .all_valid_numbers import all_valid_numbers
 from .compute_flux_factor import compute_flux_factor
 from .define_piecewise_linear_function import define_piecewise_linear_function
