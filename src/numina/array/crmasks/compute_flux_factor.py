@@ -264,7 +264,16 @@ def compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, in
         if vmin == 0:
             vmin = 1
         vmax = np.max(h)
+
+        def on_key(event):
+            if event.key == 'x':
+                _logger.info("Exiting program as per user request ('x' key pressed).")
+                plt.close(fig)
+                sys.exit(0)
+
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 5.5))
+        fig.canvas.mpl_connect('key_press_event', lambda event: on_key(event))
+
         tea.imshow(fig, ax1, h, norm=LogNorm(vmin=vmin, vmax=vmax), extent=extent, aspect='auto', cblabel=cblabel)
         ax1.set_xlabel('pixel value')
         ax1.set_ylabel('ratio image/median')
@@ -328,7 +337,7 @@ def compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, in
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
             plt.show()
         plt.close(fig)
 
