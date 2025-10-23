@@ -40,7 +40,6 @@ from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
 from .estimate_diagnostic_limits import estimate_diagnostic_limits
 from .gausskernel2d_elliptical import gausskernel2d_elliptical
-from .update_flag_with_user_masks import update_flag_with_user_masks
 
 
 def decorate_output(func):
@@ -81,6 +80,7 @@ def compute_crmasks(
         apply_flux_factor_to=None,
         interactive=True,
         dilation=1,
+        regions_to_be_skipped=None,
         pixels_to_be_flagged_as_cr=None,
         pixels_to_be_ignored_as_cr=None,
         pixels_to_be_replaced_by_local_median=None,
@@ -180,13 +180,18 @@ def compute_crmasks(
         If True, enable interactive mode for plots.
     dilation : int, optional
         The dilation factor for the coincident cosmic-ray pixel mask.
-    pixels_to_be_flagged_as_cr : str, list of (x, y) tuples, or None, optional
+    regions_to_be_skipped : list of lists of 4 integers or None, optional
+        The regions to be skipped during cosmic ray detection.
+        If None, no regions are skipped. The format of each region must
+        be a list of 4 integers, following the FITS convention
+        [xmin, xmax, ymin, ymax], where the indices start from 1 to NAXIS[12].
+    pixels_to_be_flagged_as_cr : list of (x, y) tuples, or None, optional
         List of pixel coordinates to be included in the masks
         (Assuming FITS criterium; first pixel is (1, 1)).
-    pixels_to_be_ignored_as_cr : str, list of (x, y) tuples, or None, optional
+    pixels_to_be_ignored_as_cr : list of (x, y) tuples, or None, optional
         List of pixel coordinates to be excluded from the masks
         (Assuming FITS criterium; first pixel is (1, 1)).
-    pixels_to_be_replaced_by_local_median : str, list of (x, y) tuples, or None, optional
+    pixels_to_be_replaced_by_local_median : list of (x, y, x_with, y_width) tuples, or None, optional
         List of pixel coordinates to be replaced by the median value
         when removing the cosmic rays. This information is stored as a binary
         table in one of the extensions of the output HDUList with the masks.
@@ -445,7 +450,7 @@ def compute_crmasks(
                         ff_region = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
                     else:
                         raise TypeError(f"Invalid type for flux_factor_region in the list: {type(flux_factor_region)}. "
-                                        "Must be str or None.")
+                                        "Must be a list of 4 integers")
                     list_flux_factor_regions.append(ff_region)
             elif flux_factor_regions is None:
                 ff_region = tea.SliceRegion2D(f'[1:{naxis1}, 1:{naxis2}]', mode='fits')
@@ -488,6 +493,27 @@ def compute_crmasks(
         for i in range(num_images):
             image3d[i] /= flux_factor[i]
 
+    # Define regions to be cleaned by computing a boolean mask
+    # that is True for pixels not included in the regions to be skipped
+    bool_to_be_cleaned = np.ones((naxis2, naxis1), dtype=bool)  # default is to clean all pixels
+    if isinstance(regions_to_be_skipped, list):
+        for region in regions_to_be_skipped:
+            if isinstance(region, list):
+                all_integers = all(isinstance(val, int) for val in region)
+                if not all_integers:
+                    raise TypeError(f"Invalid region_to_be_skipped: {region}. All elements must be integers.")
+                if len(region) != 4:
+                    raise ValueError(f"Invalid length for region_to_be_skipped: {region}. "
+                                     "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
+                dumreg = f"[{region[0]}:{region[1]}, {region[2]}:{region[3]}]"
+                _logger.debug("defined region to be skipped: %s", dumreg)
+                skip_region = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
+                bool_to_be_cleaned[skip_region.python[0].start:skip_region.python[0].stop,
+                                   skip_region.python[1].start:skip_region.python[1].stop] = False
+            else:
+                raise TypeError(f"Invalid type for region_to_be_skipped in the list: {type(region)}. "
+                                "Must be a list of 4 integers.")
+
     # Compute minimum, maximum, median and mean along the first axis
     min2d = np.min(image3d, axis=0)
     max2d = np.max(image3d, axis=0)
@@ -503,15 +529,7 @@ def compute_crmasks(
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Define the pixels to be flagged as CR
-    if isinstance(pixels_to_be_flagged_as_cr, str):
-        if pixels_to_be_flagged_as_cr.lower() == 'none':
-            pixels_to_be_flagged_as_cr = None
-    if pixels_to_be_flagged_as_cr is None:
-        pass
-    else:
-        pixels_to_be_flagged_as_cr = list(eval(str(pixels_to_be_flagged_as_cr)))
-    # check that the provided pixels are valid
-    if pixels_to_be_flagged_as_cr is not None:
+    if isinstance(pixels_to_be_flagged_as_cr, (list, tuple)):
         for p in pixels_to_be_flagged_as_cr:
             if (not isinstance(p, (list, tuple)) or len(p) != 2 or
                     not all(isinstance(item, int) for item in p)):
@@ -519,19 +537,18 @@ def compute_crmasks(
                                  "Each pixel must be a tuple or list of two integers (X, Y).")
             if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
                 raise ValueError(f"Pixel coordinates {p} in pixels_to_be_flagged_as_cr are out of bounds.")
-    _logger.info("pixels to be initially flagged as CR: %s",
+            # ensure these pixels are cleaned, independently of being included
+            # in regions_to_be_skipped
+            bool_to_be_cleaned[p[1]-1, p[0]-1] = True
+    elif pixels_to_be_flagged_as_cr is not None:
+        raise TypeError(f"Invalid type for pixels_to_be_flagged_as_cr: {type(pixels_to_be_flagged_as_cr)}. "
+                        "Must be a list of (x, y) tuples or None.")
+    _logger.info("individual pixels to be initially flagged as CR: %s",
                  "None" if pixels_to_be_flagged_as_cr is None else str(pixels_to_be_flagged_as_cr))
 
     # Define the pixels to be ignored as CR
-    if isinstance(pixels_to_be_ignored_as_cr, str):
-        if pixels_to_be_ignored_as_cr.lower() == 'none':
-            pixels_to_be_ignored_as_cr = None
-    if pixels_to_be_ignored_as_cr is None:
-        pass
-    else:
-        pixels_to_be_ignored_as_cr = list(eval(str(pixels_to_be_ignored_as_cr)))
     # check that the provided pixels are valid
-    if pixels_to_be_ignored_as_cr is not None:
+    if isinstance(pixels_to_be_ignored_as_cr, (list, tuple)):
         for p in pixels_to_be_ignored_as_cr:
             if (not isinstance(p, (list, tuple)) or len(p) != 2 or
                     not all(isinstance(item, int) for item in p)):
@@ -539,19 +556,17 @@ def compute_crmasks(
                                  "Each pixel must be a tuple or list of two integers (X, Y).")
             if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
                 raise ValueError(f"Pixel coordinates {p} in pixels_to_be_ignored_as_cr are out of bounds.")
-    _logger.info("pixels to be initially ignored as CR: %s",
+            # ensure these pixels are not cleaned
+            bool_to_be_cleaned[p[1]-1, p[0]-1] = False
+    elif pixels_to_be_ignored_as_cr is not None:
+        raise TypeError(f"Invalid type for pixels_to_be_ignored_as_cr: {type(pixels_to_be_ignored_as_cr)}. "
+                        "Must be a list of (x, y) tuples or None.")
+    _logger.info("individual pixels to be initially ignored as CR: %s",
                  "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
 
     # Define the pixels to be replaced by the median value when removing the CRs
-    if isinstance(pixels_to_be_replaced_by_local_median, str):
-        if pixels_to_be_replaced_by_local_median.lower() == 'none':
-            pixels_to_be_replaced_by_local_median = None
-    if pixels_to_be_replaced_by_local_median is None:
-        pass
-    else:
-        pixels_to_be_replaced_by_local_median = list(eval(str(pixels_to_be_replaced_by_local_median)))
     # check that the provided pixels are valid
-    if pixels_to_be_replaced_by_local_median is not None:
+    if isinstance(pixels_to_be_replaced_by_local_median, (list, tuple)):
         for p in pixels_to_be_replaced_by_local_median:
             if (not isinstance(p, (list, tuple)) or len(p) != 4 or
                     not all(isinstance(item, int) for item in p)):
@@ -565,24 +580,23 @@ def compute_crmasks(
             if p[2] * p[3] < 3:
                 raise ValueError(f"Pixel {p}: The area defined by X_width and Y_width in "
                                  "pixels_to_be_replaced_by_local_median must be >= 3.")
+    elif pixels_to_be_replaced_by_local_median is not None:
+        raise TypeError(f"Invalid type for pixels_to_be_replaced_by_local_median: "
+                        f"{type(pixels_to_be_replaced_by_local_median)}. "
+                        "Must be a list of (x, y, x_width, y_width) tuples or None.")
     _logger.info("pixels to be replaced by the median value when removing the CRs: %s",
                  "None" if pixels_to_be_replaced_by_local_median is None
                  else str(pixels_to_be_replaced_by_local_median))
 
-    # The pixels to be replaced by the local median are included in
-    # the list of pixels to be ignored as CR (there is no need to flag them
-    # as CR if they will be replaced by the local median anyway
-    # (in this way we avoid to replace unnecessary neighboring pixels
-    # that would be included if we dilate the CR mask)
+    # These pixels to be replaced by the local median should not be
+    # flagged as CR if they will be replaced by the local median anyway
     if pixels_to_be_replaced_by_local_median is not None:
-        if pixels_to_be_ignored_as_cr is None:
-            pixels_to_be_ignored_as_cr = [[p[0], p[1]] for p in pixels_to_be_replaced_by_local_median]
-        else:
-            # include pixels that are not already in the list
-            pixels_to_be_ignored_as_cr.extend([
-                [p[0], p[1]] for p in pixels_to_be_replaced_by_local_median
-                if [p[0], p[1]] not in pixels_to_be_ignored_as_cr
-            ])
+        for p in pixels_to_be_replaced_by_local_median:
+            if bool_to_be_cleaned[p[1]-1, p[0]-1]:
+                _logger.warning("Pixel %s is set to be replaced by the local median "
+                                "but it is also set to be cleaned as CR. "
+                                "It will not be cleaned as CR but will be replaced by the local median.", str(p))
+                bool_to_be_cleaned[p[1]-1, p[0]-1] = False
         _logger.info("updated pixels to be ignored as CR: %s",
                      "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
 
@@ -763,7 +777,7 @@ def compute_crmasks(
             **{key: value for key, value in dict_la_params.items() if value is not None}
         )
         _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_lacosmic, np.sum(flag_la))
-        update_flag_with_user_masks(flag_la, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
+        flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
         flag_la = flag_la.flatten()
         if crmethod == 'lacosmic':
             xplot_boundary = None
@@ -1077,6 +1091,7 @@ def compute_crmasks(
         flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
+        flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned)
         _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_mmcosmic, np.sum(flag_sb))
         if crmethod == 'mmcosmic':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
@@ -1227,9 +1242,7 @@ def compute_crmasks(
                 ccd=target2d,
                 **{key: value for key, value in dict_la_params.items() if value is not None}
             )
-            # For the mean2d array, update the flag with the user masks
-            if i == 0:
-                update_flag_with_user_masks(flag, pixels_to_be_flagged_as_cr, pixels_to_be_ignored_as_cr, _logger)
+            flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
             flag_la = flag_la.flatten()
             if crmethod == 'lacosmic':
                 xplot_boundary = None
@@ -1245,6 +1258,7 @@ def compute_crmasks(
             flag_sb = np.logical_and(flag1, flag2)
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_sb = np.logical_and(flag_sb, flag3)
+            flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned)
             if crmethod == 'mmcosmic':
                 flag_la = np.zeros_like(flag_sb, dtype=bool)
         # For the mean2d mask, force the flag to be True if the pixel
