@@ -434,6 +434,11 @@ def compute_crmasks(
         if flux_factor.lower() == 'auto':
             _logger.info("flux_factor set to 'auto', computing values...")
             list_flux_factor_regions = []
+            if isinstance(flux_factor_regions, str):
+                if flux_factor_regions.lower() == 'none':
+                    flux_factor_regions = None
+                else:
+                    flux_factor_regions = ast.literal_eval(flux_factor_regions)
             if isinstance(flux_factor_regions, list):
                 for flux_factor_region in flux_factor_regions:
                     if isinstance(flux_factor_region, list):
@@ -496,6 +501,11 @@ def compute_crmasks(
     # Define regions to be cleaned by computing a boolean mask
     # that is True for pixels not included in the regions to be skipped
     bool_to_be_cleaned = np.ones((naxis2, naxis1), dtype=bool)  # default is to clean all pixels
+    if isinstance(regions_to_be_skipped, str):
+        if regions_to_be_skipped.lower() == 'none':
+            regions_to_be_skipped = None
+        else:
+            regions_to_be_skipped = ast.literal_eval(regions_to_be_skipped)
     if isinstance(regions_to_be_skipped, list):
         for region in regions_to_be_skipped:
             if isinstance(region, list):
@@ -529,6 +539,11 @@ def compute_crmasks(
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Define the pixels to be flagged as CR
+    if isinstance(pixels_to_be_flagged_as_cr, str):
+        if pixels_to_be_flagged_as_cr.lower() == 'none':
+            pixels_to_be_flagged_as_cr = None
+        else:
+            pixels_to_be_flagged_as_cr = ast.literal_eval(pixels_to_be_flagged_as_cr)
     if isinstance(pixels_to_be_flagged_as_cr, (list, tuple)):
         for p in pixels_to_be_flagged_as_cr:
             if (not isinstance(p, (list, tuple)) or len(p) != 2 or
@@ -548,6 +563,11 @@ def compute_crmasks(
 
     # Define the pixels to be ignored as CR
     # check that the provided pixels are valid
+    if isinstance(pixels_to_be_ignored_as_cr, str):
+        if pixels_to_be_ignored_as_cr.lower() == 'none':
+            pixels_to_be_ignored_as_cr = None
+        else:
+            pixels_to_be_ignored_as_cr = ast.literal_eval(pixels_to_be_ignored_as_cr)
     if isinstance(pixels_to_be_ignored_as_cr, (list, tuple)):
         for p in pixels_to_be_ignored_as_cr:
             if (not isinstance(p, (list, tuple)) or len(p) != 2 or
@@ -566,6 +586,9 @@ def compute_crmasks(
 
     # Define the pixels to be replaced by the median value when removing the CRs
     # check that the provided pixels are valid
+    if isinstance(pixels_to_be_replaced_by_local_median, str):
+        if pixels_to_be_replaced_by_local_median.lower() == 'none':
+            pixels_to_be_replaced_by_local_median = None
     if isinstance(pixels_to_be_replaced_by_local_median, (list, tuple)):
         for p in pixels_to_be_replaced_by_local_median:
             if (not isinstance(p, (list, tuple)) or len(p) != 4 or
@@ -838,6 +861,11 @@ def compute_crmasks(
                                  "at least two fixed points must be provided in mm_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
+        if isinstance(mm_crosscorr_region, str):
+            if mm_crosscorr_region.lower() == 'none':
+                mm_crosscorr_region = None
+            else:
+                mm_crosscorr_region = ast.literal_eval(mm_crosscorr_region)
         if isinstance(mm_crosscorr_region, list):
             all_integers = all(isinstance(val, int) for val in mm_crosscorr_region)
             if not all_integers:
