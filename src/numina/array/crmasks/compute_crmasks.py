@@ -786,6 +786,13 @@ def compute_crmasks(
             else:
                 _logger.info("%s for lacosmic: %s", key, str(dict_la_params[key]))
 
+    if rich_configured:
+        _logger.info("[green]" + "-" * 79 + "[/green]")
+        _logger.info("starting cosmic ray detection in the [magenta]median2d[/magenta] image...")
+    else:
+        _logger.info("-" * 79)
+        _logger.info("starting cosmic ray detection in the median2d image...")
+
     if crmethod in ['lacosmic', 'mm_lacosmic']:
         # ---------------------------------------------------------------------
         # Detect residual cosmic rays in the median2d image using the
@@ -1264,6 +1271,12 @@ def compute_crmasks(
             target2d_name = 'mean2d'
         else:
             target2d_name = f'single exposure #{i}'
+        if rich_configured:
+            _logger.info("[green]" + "-" * 79 + "[/green]")
+            _logger.info(f"starting cosmic ray detection in the [magenta]{target2d_name}[/magenta] image...")
+        else:
+            _logger.info("-" * 79)
+            _logger.info(f"starting cosmic ray detection in the {target2d_name} image...")
         if crmethod in ['lacosmic', 'mm_lacosmic']:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
             array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
@@ -1359,6 +1372,10 @@ def compute_crmasks(
     for hdu in list_hdu_masks[2:]:
         mask_all_singles = np.logical_and(mask_all_singles, hdu.data.astype(bool))
     problematic_pixels = np.argwhere(mask_all_singles)
+    if rich_configured:
+        _logger.info("[green]" + "-" * 79 + "[/green]")
+    else:
+        _logger.info("-" * 79)
     _logger.info("number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d",
                  len(problematic_pixels))
     if len(problematic_pixels) > 0:

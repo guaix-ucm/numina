@@ -79,6 +79,9 @@ def main(args=None):
     )
     logging.getLogger('matplotlib').setLevel(logging.ERROR)  # Suppress matplotlib debug logs
 
+    # Welcome message
+    console.rule("[bold magenta] Numina: Cosmic Ray Masks [/bold magenta]")
+
     # Display version info
     logger = logging.getLogger(__name__)
     logger.info(f"Using {__name__} version {__version__}")
@@ -148,15 +151,17 @@ def main(args=None):
         )
         # Save the cosmic ray masks to a FITS file
         output_masks = 'crmasks.fits'
-        logger.info("Saving cosmic ray masks to %s", output_masks)
+        console.rule(f"Saving cosmic ray masks to [bold magenta]{output_masks}[/bold magenta]")
         hdul_masks.writeto(output_masks, overwrite=True)
         logger.info("Cosmic ray masks saved")
+        fits.info(output_masks, logger=logger)
     else:
         if not os.path.isfile(args.crmasks):
             raise FileNotFoundError(f"File {args.crmasks} not found.")
         else:
-            logger.info("reading cosmic ray masks from %s", args.crmasks)
+            console.rule(f"reading cosmic ray masks from [bold magenta]{args.crmasks}[/bold magenta]")
             hdul_masks = fits.open(args.crmasks)
+            fits.info(args.crmasks, logger=logger)
 
     # Apply cosmic ray masks
     for combination in VALID_COMBINATIONS:
@@ -171,7 +176,8 @@ def main(args=None):
             dtype=np.float32
         )
         # Save the combined array, variance, and map to a FITS file
-        logger.info("Saving combined (bias subtracted) array, variance, and map to %s", output_combined)
+        logger.info("Saving combined (bias subtracted) array, variance, and map to [bold magenta]%s[/bold magenta]",
+                    output_combined)
         hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
         add_script_info_to_fits_history(hdu_combined.header, args)
         hdu_combined.header.add_history('Contents of --inputlist:')
@@ -183,6 +189,9 @@ def main(args=None):
         hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
         hdul.writeto(output_combined, overwrite=True)
         logger.info("Combined (bias subtracted) array, variance, and map saved")
+
+    # Goodbye message
+    console.rule("[bold magenta] Goodbye! [/bold magenta]")
 
     if args.record:
         log_filename = 'terminal_output.txt'
