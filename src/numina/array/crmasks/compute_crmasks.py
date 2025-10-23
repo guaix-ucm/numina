@@ -788,10 +788,10 @@ def compute_crmasks(
 
     if rich_configured:
         _logger.info("[green]" + "-" * 79 + "[/green]")
-        _logger.info("starting cosmic ray detection in the [magenta]median2d[/magenta] image...")
+        _logger.info("starting cosmic ray detection in [magenta]median2d[/magenta] image...")
     else:
         _logger.info("-" * 79)
-        _logger.info("starting cosmic ray detection in the median2d image...")
+        _logger.info("starting cosmic ray detection in median2d image...")
 
     if crmethod in ['lacosmic', 'mm_lacosmic']:
         # ---------------------------------------------------------------------
@@ -799,7 +799,7 @@ def compute_crmasks(
         # Laplacian edge detection method from ccdproc. This only works if gain and
         # rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
-        _logger.info(f"detecting cosmic rays in the median2d image using {rlabel_lacosmic}...")
+        _logger.info(f"detecting cosmic rays in median2d image using {rlabel_lacosmic}...")
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
         median2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
@@ -823,7 +823,7 @@ def compute_crmasks(
         # derived boundary.
         # ---------------------------------------------------------------------
         # Define mm_fixed_points_in_boundary
-        _logger.info("detecting cosmic rays in the median2d image using %s...", rlabel_mmcosmic)
+        _logger.info("detecting cosmic rays in median2d image using %s...", rlabel_mmcosmic)
         if isinstance(mm_fixed_points_in_boundary, str):
             if mm_fixed_points_in_boundary.lower() == 'none':
                 mm_fixed_points_in_boundary = None
@@ -1273,10 +1273,10 @@ def compute_crmasks(
             target2d_name = f'single exposure #{i}'
         if rich_configured:
             _logger.info("[green]" + "-" * 79 + "[/green]")
-            _logger.info(f"starting cosmic ray detection in the [magenta]{target2d_name}[/magenta] image...")
+            _logger.info(f"starting cosmic ray detection in [magenta]{target2d_name}[/magenta] image...")
         else:
             _logger.info("-" * 79)
-            _logger.info(f"starting cosmic ray detection in the {target2d_name} image...")
+            _logger.info(f"starting cosmic ray detection in {target2d_name} image...")
         if crmethod in ['lacosmic', 'mm_lacosmic']:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
             array_lacosmic, flag_la = decorated_cosmicray_lacosmic(

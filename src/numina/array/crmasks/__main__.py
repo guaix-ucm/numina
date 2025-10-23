@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Combination of arrays avoiding coincident cosmic ray hits."""
+import io
 import logging
 import os
 import sys
@@ -154,14 +155,18 @@ def main(args=None):
         console.rule(f"Saving cosmic ray masks to [bold magenta]{output_masks}[/bold magenta]")
         hdul_masks.writeto(output_masks, overwrite=True)
         logger.info("Cosmic ray masks saved")
-        fits.info(output_masks, logger=logger)
+        buffer = io.StringIO()
+        fits.info(output_masks, output=buffer)
+        logger.info("%s", buffer.getvalue())
     else:
         if not os.path.isfile(args.crmasks):
             raise FileNotFoundError(f"File {args.crmasks} not found.")
         else:
             console.rule(f"reading cosmic ray masks from [bold magenta]{args.crmasks}[/bold magenta]")
             hdul_masks = fits.open(args.crmasks)
-            fits.info(args.crmasks, logger=logger)
+            buffer = io.StringIO()
+            fits.info(args.crmasks, output=buffer)
+            logger.info("%s", buffer.getvalue())
 
     # Apply cosmic ray masks
     for combination in VALID_COMBINATIONS:

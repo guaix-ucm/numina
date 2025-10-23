@@ -215,7 +215,7 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
 
     pdf.close()
     _logger.info("plot generation complete")
-    _logger.info("saving mediancr_identified_cr.pdf")
+    _logger.info(f"saving {output_basename}.pdf file")
     cr_table.write(cr_table_filename, format='csv', overwrite=True)
     _logger.info("\n%s", cr_table)
     _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)
