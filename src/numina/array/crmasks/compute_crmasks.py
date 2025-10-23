@@ -1091,7 +1091,7 @@ def compute_crmasks(
         flag_sb = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
-        flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned)
+        flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
         _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_mmcosmic, np.sum(flag_sb))
         if crmethod == 'mmcosmic':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
@@ -1258,7 +1258,7 @@ def compute_crmasks(
             flag_sb = np.logical_and(flag1, flag2)
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_sb = np.logical_and(flag_sb, flag3)
-            flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned)
+            flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
             if crmethod == 'mmcosmic':
                 flag_la = np.zeros_like(flag_sb, dtype=bool)
         # For the mean2d mask, force the flag to be True if the pixel
