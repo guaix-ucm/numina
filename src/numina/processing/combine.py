@@ -79,7 +79,8 @@ def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True,
     return result
 
 
-def combine_imgs(hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None, crmasks=None):
+def combine_imgs(hduls, method=combine.mean, method_kwargs=None,
+                 errors=True, prolog=None, crmasks=None, use_lamedian=False):
     """
 
     Parameters
