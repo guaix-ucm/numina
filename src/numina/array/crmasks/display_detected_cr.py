@@ -71,8 +71,7 @@ def display_detected_cr(num_images, image3d, median2d, median2d_corrected,
     elif maxplots_eff < 0:
         if number_cr > 200:
             maxplots_eff = 200
-            _logger.info(f"limiting to {maxplots_eff} plots (out of {number_cr} CRs detected)")
-            input("Press Enter to continue...")
+            _logger.warning(f"limiting to {maxplots_eff} plots (out of {number_cr} CRs detected)")
         else:
             maxplots_eff = number_cr
     _logger.info(f"generating {maxplots_eff} plots...")
