@@ -17,8 +17,8 @@ from rich.logging import RichHandler
 from .valid_parameters import VALID_COMBINATIONS
 
 
-def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=False,
-                  dtype=np.float32, apply_flux_factor=True, bias=None):
+def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=None,
+                  dtype=np.float32, apply_flux_factor=None, bias=None):
     """
     Correct cosmic rays applying previously computed masks.
 
@@ -144,15 +144,24 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=F
         raise TypeError(f"Invalid type for bias: {type(bias)}. Must be float, int, or numpy array.")
 
     # Read the flux factor from the masks
+    if apply_flux_factor is None:
+        raise ValueError("apply_flux_factor must be specified as True or False.")
     _logger.info("apply_flux_factor: %s", apply_flux_factor)
+    flux_factor = []
+    for i in range(num_images):
+        flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
+    flux_factor = np.array(flux_factor, dtype=float)
     if apply_flux_factor:
-        flux_factor = []
-        for i in range(num_images):
-            flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
-        flux_factor = np.array(flux_factor, dtype=float)
+        _logger.info("flux factor values: %s will be employed", str(flux_factor))
     else:
+        _logger.info("flux factor values: %s will NOT be employed", str(flux_factor))
         flux_factor = np.ones(num_images, dtype=float)
-    _logger.info("flux factor values: %s", str(flux_factor))
+        _logger.info("flux factor values set to %s", str(flux_factor))
+
+    # Check use_lamedian
+    if use_lamedian is None:
+        raise ValueError("use_lamedian must be specified as True or False.")
+    _logger.info("use_lamedian: %s", use_lamedian)
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)

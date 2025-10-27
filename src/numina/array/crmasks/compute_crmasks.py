@@ -790,7 +790,7 @@ def compute_crmasks(
         _logger.info("[green]" + "-" * 79 + "[/green]")
         _logger.info("starting cosmic ray detection in [magenta]median2d[/magenta] image...")
     else:
-        _logger.info("-" * 79)
+        _logger.info("-" * 73)
         _logger.info("starting cosmic ray detection in median2d image...")
 
     if crmethod in ['lacosmic', 'mm_lacosmic']:
@@ -806,7 +806,8 @@ def compute_crmasks(
             ccd=median2d,
             **{key: value for key, value in dict_la_params.items() if value is not None}
         )
-        _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_lacosmic, np.sum(flag_la))
+        _logger.info("pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
+                     rlabel_lacosmic, np.sum(flag_la), np.sum(flag_la) / flag_la.size * 100)
         flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
         flag_la = flag_la.flatten()
         if crmethod == 'lacosmic':
@@ -1127,7 +1128,8 @@ def compute_crmasks(
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
         flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
-        _logger.info("number of pixels flagged as cosmic rays by %s: %d", rlabel_mmcosmic, np.sum(flag_sb))
+        _logger.info("pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
+                     rlabel_mmcosmic, np.sum(flag_sb), np.sum(flag_sb) / flag_sb.size * 100)
         if crmethod == 'mmcosmic':
             flag_la = np.zeros_like(flag_sb, dtype=bool)
 
@@ -1180,17 +1182,21 @@ def compute_crmasks(
         flag_integer = 2 * flag_sb.astype(np.uint8) + 3 * flag_la.astype(np.uint8)
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
-        _logger.info("number of pixels flagged as cosmic rays by "
-                     "%s or  %s: %s", rlabel_lacosmic, rlabel_mmcosmic, cdum)
+        _logger.info("pixels flagged as cosmic rays by "
+                     "%s or  %s: %s (%08.4f%%)", rlabel_lacosmic, rlabel_mmcosmic, cdum,
+                     np.sum(flag) / flag.size * 100)
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
-        _logger.info("number of pixels flagged as cosmic rays by "
-                     "%s only........: %s", rlabel_lacosmic, cdum)
+        _logger.info("pixels flagged as cosmic rays by "
+                     "%s only........: %s (%08.4f%%)", rlabel_lacosmic, cdum,
+                     np.sum(flag_integer == 3) / flag.size * 100)
         cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
-        _logger.info("number of pixels flagged as cosmic rays by "
-                     "%s only........: %s", rlabel_mmcosmic, cdum)
+        _logger.info("pixels flagged as cosmic rays by "
+                     "%s only........: %s (%08.4f%%)", rlabel_mmcosmic, cdum,
+                     np.sum(flag_integer == 2) / flag.size * 100)
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
-        _logger.info("number of pixels flagged as cosmic rays by "
-                     "%s and %s: %s", rlabel_lacosmic, rlabel_mmcosmic, cdum)
+        _logger.info("pixels flagged as cosmic rays by "
+                     "%s and %s: %s (%08.4f%%)", rlabel_lacosmic, rlabel_mmcosmic, cdum,
+                     np.sum((flag_integer == 5)) / flag.size * 100)
     flag = flag.reshape((naxis2, naxis1))
     flag_integer = flag_integer.reshape((naxis2, naxis1))
     flag_integer[flag_integer == 5] = 4  # pixels flagged by both methods are set to 4
@@ -1275,7 +1281,7 @@ def compute_crmasks(
             _logger.info("[green]" + "-" * 79 + "[/green]")
             _logger.info(f"starting cosmic ray detection in [magenta]{target2d_name}[/magenta] image...")
         else:
-            _logger.info("-" * 79)
+            _logger.info("-" * 73)
             _logger.info(f"starting cosmic ray detection in {target2d_name} image...")
         if crmethod in ['lacosmic', 'mm_lacosmic']:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
@@ -1317,10 +1323,12 @@ def compute_crmasks(
         sflag_la = str(np.sum(flag_la))
         sflag_sb = str(np.sum(flag_sb))
         smax = max(len(sflag_la), len(sflag_sb))
-        _logger.info("number of pixels flagged as cosmic rays by "
-                     "%s: %s", rlabel_lacosmic, f"{np.sum(flag_la):{smax}d}")
-        _logger.info("number of pixels flagged as cosmic rays by "
-                     "%s: %s", rlabel_mmcosmic, f"{np.sum(flag_sb):{smax}d}")
+        _logger.info("pixels flagged as cosmic rays by "
+                     "%s: %s (%08.4f%%)", rlabel_lacosmic, f"{np.sum(flag_la):{smax}d}",
+                     np.sum(flag_la) / flag_la.size * 100)
+        _logger.info("pixels flagged as cosmic rays by "
+                     "%s: %s (%08.4f%%)", rlabel_mmcosmic, f"{np.sum(flag_sb):{smax}d}",
+                     np.sum(flag_sb) / flag_sb.size * 100)
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
             png_filename = 'diagnostic_meancr.png'
@@ -1375,7 +1383,7 @@ def compute_crmasks(
     if rich_configured:
         _logger.info("[green]" + "-" * 79 + "[/green]")
     else:
-        _logger.info("-" * 79)
+        _logger.info("-" * 73)
     _logger.info("number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d",
                  len(problematic_pixels))
     if len(problematic_pixels) > 0:
