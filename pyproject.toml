@@ -9,7 +9,7 @@ name = "numina"
 dynamic = ["version"]
 description = "Astronomy data reduction library"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "GPL-3.0-or-later"}
 authors = [
   {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
@@ -18,11 +18,11 @@ classifiers = [
     "Programming Language :: C",
     "Programming Language :: C++",
     "Programming Language :: Cython",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -34,22 +34,22 @@ classifiers = [
 ]
 
 dependencies = [
-    'attrs',
-    'numpy>=1.22',
     'astropy',
+    'attrs',
+    'backports.entry_points_selectable',  # required only with python < 3.10a7
     'ccdproc',
-    'scipy',
-    'PyYaml',
-    'matplotlib',
-    'python-dateutil>=2.7.0',
+    'importlib_resources',  # required with python < 3.9
     'lmfit',
+    'matplotlib',
+    'numpy',
+    'python-dateutil>=2.7.0',
+    'PyYaml',
     'reproject',
     'rich',
     'scikit-image',
+    'scipy',
     'spherical-geometry',
     'teareduce',
-    'importlib_resources',  # required with python < 3.9
-    'backports.entry_points_selectable',  # required only with python < 3.10a7
     'typing-extensions',
 ]
 
