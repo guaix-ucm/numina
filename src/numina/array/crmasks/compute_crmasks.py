@@ -106,6 +106,7 @@ def compute_crmasks(
         la_psfsize=None,
         la_psfbeta=None,
         la_verbose=False,
+        mm_xy_offsets=None,
         mm_crosscorr_region=None,
         mm_boundary_fit=None,
         mm_knots_splfit=3,
@@ -258,6 +259,11 @@ def compute_crmasks(
     la_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='lacosmic'.
+    mm_xy_offsets: list of [x_offset, y_offset] or None
+        The offsets to apply to each simulated individual exposure
+        when computing the diagnostic diagram for the mmcosmic method.
+        If None, no offsets are applied.
+        This option is not compatible with 'mm_crosscorr_region'.
     mm_crosscorr_region : list of 4 integers or None
         The region to use for the 2D cross-correlation to determine
         the offsets between the individual images and the median image.
@@ -265,6 +271,7 @@ def compute_crmasks(
         the images are already aligned. The format of the region
         must follow the FITS convention [xmin, xmax, ymin, ymax],
         where the indices start from 1 to NAXIS[12].
+        This option is not compatible with 'mm_xy_offsets'.
     mm_boundary_fit : str, or None
         The method to use for the boundary fitting. Valid options are:
         - 'spline': use a spline fit to the boundary.
@@ -468,6 +475,9 @@ def compute_crmasks(
             _logger.info("computed flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == 'none':
             flux_factor = np.ones(num_images, dtype=float)
+            if flux_factor_regions is not None:
+                raise ValueError("Using flux_factor='none', but flux_factor_regions is provided. "
+                                 "You must use flux_factor='auto' to use flux_factor_regions.")
         elif isinstance(ast.literal_eval(flux_factor), list):
             flux_factor = ast.literal_eval(flux_factor)
             if len(flux_factor) != num_images:
@@ -625,6 +635,7 @@ def compute_crmasks(
 
     # Log the input parameters
     if crmethod in ['mmcosmic', 'mm_lacosmic']:
+        _logger.debug("mm_xy_offsets: %s", str(mm_xy_offsets) if mm_xy_offsets is not None else "None")
         _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
         _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
         _logger.debug("mm_knots_splfit: %d", mm_knots_splfit)
@@ -869,75 +880,111 @@ def compute_crmasks(
                                  "at least two fixed points must be provided in mm_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
-        if isinstance(mm_crosscorr_region, str):
-            if mm_crosscorr_region.lower() == 'none':
-                mm_crosscorr_region = None
+        if mm_xy_offsets is not None and mm_crosscorr_region is not None:
+            raise ValueError("You can only provide one of mm_xy_offsets or mm_crosscorr_region, not both.")
+        shift_images = False
+        if mm_xy_offsets is not None:
+            if isinstance(mm_xy_offsets, str):
+                mm_xy_offsets = ast.literal_eval(mm_xy_offsets)
+            if isinstance(mm_xy_offsets, list):
+                if len(mm_xy_offsets) != num_images:
+                    raise ValueError(f"mm_xy_offsets must have the same length as the number of images ({num_images}).")
+                for offset in mm_xy_offsets:
+                    if (not isinstance(offset, (list, tuple)) or len(offset) != 2 or
+                            not all_valid_numbers(offset)):
+                        raise ValueError(f"Invalid offset in mm_xy_offsets: {offset}. "
+                                         "Each offset must be a tuple or list of two numbers (x_offset, y_offset).")
+                list_yx_offsets = [(float(offset[1]), float(offset[0])) for offset in mm_xy_offsets]
+                for i, yx_offsets in enumerate(list_yx_offsets):
+                    _logger.info("provided offsets for image %d: y=%+f, x=%+f", i+1, yx_offsets[0], yx_offsets[1])
             else:
-                mm_crosscorr_region = ast.literal_eval(mm_crosscorr_region)
-        if isinstance(mm_crosscorr_region, list):
-            all_integers = all(isinstance(val, int) for val in mm_crosscorr_region)
-            if not all_integers:
-                raise TypeError(f"Invalid mm_crosscorr_region: {mm_crosscorr_region}. "
-                                "All elements must be integers.")
-            if len(mm_crosscorr_region) != 4:
-                raise ValueError(f"Invalid length for mm_crosscorr_region: {mm_crosscorr_region}. "
-                                 "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
-            dumreg = f"[{mm_crosscorr_region[0]}:{mm_crosscorr_region[1]}, " + \
-                     f"{mm_crosscorr_region[2]}:{mm_crosscorr_region[3]}]"
-            _logger.debug("defined mm_crosscorr_region: %s", dumreg)
-            crossregion = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
-            if crossregion.area() < 100:
-                raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
-        elif mm_crosscorr_region is None:
-            crossregion = None
+                raise TypeError(f"Invalid type for mm_xy_offsets: {type(mm_xy_offsets)}. "
+                                "Must be list of [x_offset, y_offset)].")
+            shift_images = True
         else:
-            raise TypeError(f"Invalid type for mm_crosscorr_region: {type(mm_crosscorr_region)}. "
-                            "Must be list of 4 integers or None.")
-        list_yx_offsets = []
-        for i in range(num_images):
-            if crossregion is None:
-                list_yx_offsets.append((0.0, 0.0))
+            if isinstance(mm_crosscorr_region, str):
+                if mm_crosscorr_region.lower() == 'none':
+                    mm_crosscorr_region = None
+                else:
+                    mm_crosscorr_region = ast.literal_eval(mm_crosscorr_region)
+            if isinstance(mm_crosscorr_region, list):
+                all_integers = all(isinstance(val, int) for val in mm_crosscorr_region)
+                if not all_integers:
+                    raise TypeError(f"Invalid mm_crosscorr_region: {mm_crosscorr_region}. "
+                                    "All elements must be integers.")
+                if len(mm_crosscorr_region) != 4:
+                    raise ValueError(f"Invalid length for mm_crosscorr_region: {mm_crosscorr_region}. "
+                                     "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
+                dumreg = f"[{mm_crosscorr_region[0]}:{mm_crosscorr_region[1]}, " + \
+                         f"{mm_crosscorr_region[2]}:{mm_crosscorr_region[3]}]"
+                _logger.debug("defined mm_crosscorr_region: %s", dumreg)
+                crossregion = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
+                if crossregion.area() < 100:
+                    raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
+                shift_images = True
+            elif mm_crosscorr_region is None:
+                crossregion = None
             else:
-                reference_image = median2d[crossregion.python]
-                moving_image = image3d[i][crossregion.python]
-                yx_offsets, _, _ = phase_cross_correlation(
-                    reference_image=reference_image,
-                    moving_image=moving_image,
-                    upsample_factor=100,
-                    normalization=None  # use None to avoid artifacts with images with many cosmic rays
-                )
-                _logger.info("offsets for image %d: y=%+f, x=%+f", i+1, yx_offsets[0], yx_offsets[1])
-                fig, axarr = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4*1.5, 4.8*1.5))
-                axarr = axarr.flatten()
-                vmin = np.min(reference_image)
-                vmax = np.max(reference_image)
-                tea.imshow(fig, axarr[0], reference_image, ds9mode=True, vmin=vmin, vmax=vmax,
-                           aspect='auto', title='Median')
-                tea.imshow(fig, axarr[1], moving_image, ds9mode=True, vmin=vmin, vmax=vmax,
-                           aspect='auto', title=f'Image {i+1}')
-                shifted_image2d = shift_image2d(
-                    moving_image,
-                    xoffset=yx_offsets[1],
-                    yoffset=yx_offsets[0],
-                    resampling=2
-                )
-                dumdiff1 = reference_image - moving_image
-                dumdiff2 = reference_image - shifted_image2d
-                vmin = np.percentile(dumdiff1, 5)
-                vmax = np.percentile(dumdiff2, 95)
-                tea.imshow(fig, axarr[2], dumdiff1, ds9mode=True, vmin=vmin, vmax=vmax,
-                           aspect='auto', title=f'Median - Image {i+1}')
-                tea.imshow(fig, axarr[3], dumdiff2, ds9mode=True, vmin=vmin, vmax=vmax,
-                           aspect='auto', title=f'Median - Shifted Image {i+1}')
-                # plt.tight_layout()
-                png_filename = f'xyoffset_crosscorr_{i+1}.png'
-                _logger.info(f"saving {png_filename}")
-                plt.savefig(png_filename, dpi=150)
-                if interactive:
-                    _logger.info("Entering interactive mode (press 'q' to close figure)")
-                    plt.show()
-                plt.close(fig)
-                list_yx_offsets.append(yx_offsets)
+                raise TypeError(f"Invalid type for mm_crosscorr_region: {type(mm_crosscorr_region)}. "
+                                "Must be list of 4 integers or None.")
+            list_yx_offsets = []
+            for i in range(num_images):
+                if crossregion is None:
+                    list_yx_offsets.append((0.0, 0.0))
+                else:
+                    reference_image = median2d[crossregion.python]
+                    moving_image = image3d[i][crossregion.python]
+                    _logger.info("computing offsets for image %d using cross-correlation...", i+1)
+                    yx_offsets, _, _ = phase_cross_correlation(
+                        reference_image=reference_image,
+                        moving_image=moving_image,
+                        upsample_factor=100,
+                        normalization=None  # use None to avoid artifacts with images with many cosmic rays
+                    )
+                    yx_offsets[0] *= -1  # invert sign
+                    yx_offsets[1] *= -1  # invert sign
+                    _logger.info("offsets for image %d: y=%+f, x=%+f", i+1, yx_offsets[0], yx_offsets[1])
+
+                    def on_key_cross(event):
+                        if event.key == 'x':
+                            _logger.info("Exiting program as per user request ('x' key pressed).")
+                            plt.close(fig)
+                            sys.exit(0)
+
+                    fig, axarr = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4*1.5, 4.8*1.5))
+                    fig.canvas.mpl_connect('key_press_event', lambda event: on_key_cross(event))
+                    axarr = axarr.flatten()
+                    vmin = np.min(reference_image)
+                    vmax = np.max(reference_image)
+                    extent = [crossregion.fits[0].start - 0.5, crossregion.fits[0].stop + 0.5,
+                              crossregion.fits[1].start - 0.5, crossregion.fits[1].stop + 0.5]
+                    tea.imshow(fig, axarr[0], reference_image, vmin=vmin, vmax=vmax,
+                               extent=extent, aspect='auto', title='Median')
+                    tea.imshow(fig, axarr[1], moving_image, vmin=vmin, vmax=vmax,
+                               extent=extent, aspect='auto', title=f'Image {i+1}')
+                    shifted_image2d = shift_image2d(
+                        moving_image,
+                        xoffset=-yx_offsets[1],
+                        yoffset=-yx_offsets[0],
+                        resampling=2
+                    )
+                    dumdiff1 = reference_image - moving_image
+                    dumdiff2 = reference_image - shifted_image2d
+                    vmin = np.percentile(dumdiff1, 5)
+                    vmax = np.percentile(dumdiff2, 95)
+                    tea.imshow(fig, axarr[2], dumdiff1, vmin=vmin, vmax=vmax,
+                               extent=extent, aspect='auto', title=f'Median - Image {i+1}')
+                    tea.imshow(fig, axarr[3], dumdiff2, vmin=vmin, vmax=vmax,
+                               extent=extent, aspect='auto', title=f'Median - Shifted Image {i+1}')
+                    plt.tight_layout()
+                    png_filename = f'xyoffset_crosscorr_{i+1}.png'
+                    _logger.info(f"saving {png_filename}")
+                    plt.savefig(png_filename, dpi=150)
+                    if interactive:
+                        _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
+                        plt.show()
+                    plt.close(fig)
+                    list_yx_offsets.append(yx_offsets)
 
         # Estimate limits for the diagnostic plot
         rng = np.random.default_rng(mm_seed)  # Random number generator for reproducibility
@@ -984,20 +1031,19 @@ def compute_crmasks(
             raise ValueError(f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. "
                              "Valid options are 'original' and 'simulated'.")
         _logger.info("flux factor for simulated images: %s", str(flux_factor_for_simulated))
-        if mm_crosscorr_region is None:
-            _logger.info(f"{mm_crosscorr_region=}, assuming no offsets between images")
+        if not shift_images:
+            _logger.info("assuming no offsets between images")
             for i in range(num_images):
                 lam3d[i] = lam / flux_factor_for_simulated[i]
         else:
             _logger.info("xy-shifting median2d to speed up simulations...")
             for i in range(num_images):
                 _logger.info("shifted image %d/%d -> delta_y=%+f, delta_x=%+f",
-                             i + 1, num_images, -list_yx_offsets[i][0], -list_yx_offsets[i][1])
-                # apply negative offsets to the median image to simulate the
-                # expected individual exposures
+                             i + 1, num_images, list_yx_offsets[i][0], list_yx_offsets[i][1])
+                # apply offsets to the median image to simulate the expected individual exposures
                 lam3d[i] = shift_image2d(lam,
-                                         xoffset=-list_yx_offsets[i][1],
-                                         yoffset=-list_yx_offsets[i][0],
+                                         xoffset=list_yx_offsets[i][1],
+                                         yoffset=list_yx_offsets[i][0],
                                          resampling=2) / flux_factor_for_simulated[i]
         _logger.info("computing simulated 2D histogram...")
         for k in range(mm_nsimulations):
@@ -1042,14 +1088,14 @@ def compute_crmasks(
         combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', combined_colors)
         norm = LogNorm(vmin=vmin, vmax=vmax)
 
-        def on_key(event):
+        def on_key_2dhist(event):
             if event.key == 'x':
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
 
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
-        fig.canvas.mpl_connect('key_press_event', lambda event: on_key(event))
+        fig.canvas.mpl_connect('key_press_event', lambda event: on_key_2dhist(event))
         # Display 2D histogram of the simulated data
         extent = [bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]]
         tea.imshow(fig, ax1, hist2d_accummulated, norm=norm, extent=extent,

@@ -174,11 +174,12 @@ def main(args=None):
         output_combined = f'combined_{combination}.fits'
         combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
-            bias=input_params['bias'],
             hdul_masks=hdul_masks,
             combination=combination,
             use_lamedian=crmasks_params.get('use_lamedian', False),
-            dtype=np.float32
+            dtype=np.float32,
+            apply_flux_factor=True,
+            bias=input_params['bias'],
         )
         # Save the combined array, variance, and map to a FITS file
         logger.info("Saving combined (bias subtracted) array, variance, and map to [bold magenta]%s[/bold magenta]",

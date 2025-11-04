@@ -253,9 +253,12 @@ def compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, in
     cblabel = 'Number of pixels'
     flux_factor = []
     for idata, data in enumerate(image3d):
+        # Ratio image / median
         ratio = np.divide(data, median2d,
                           out=np.zeros_like(median2d, dtype=float),
                           where=median2d != 0)
+
+        # Create 2D histogram
         h, edges = np.histogramdd(
             sample=(ratio[bool_ff_region].flatten(), median2d[bool_ff_region].flatten()),
             bins=(ybin_edges, xbin_edges)
