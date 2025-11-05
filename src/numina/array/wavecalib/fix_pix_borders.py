@@ -41,7 +41,7 @@ def find_pix_borders(sp, sought_value):
     jborder_max = naxis1
 
     # only spectra with values different from 'sought_value'
-    if not np.alltrue(sp == sought_value):
+    if not np.all(sp == sought_value):
         # left border
         while True:
             jborder_min += 1
