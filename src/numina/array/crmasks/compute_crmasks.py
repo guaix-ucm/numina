@@ -435,6 +435,9 @@ def compute_crmasks(
     _logger.info("use_lamedian: %s", str(use_lamedian))
 
     # Check flux_factor
+    if isinstance(flux_factor_regions, str):
+        if flux_factor_regions.lower() == 'none':
+            flux_factor_regions = None
     if flux_factor is None:
         flux_factor = np.ones(num_images, dtype=float)
     elif isinstance(flux_factor, str):
@@ -442,10 +445,7 @@ def compute_crmasks(
             _logger.info("flux_factor set to 'auto', computing values...")
             list_flux_factor_regions = []
             if isinstance(flux_factor_regions, str):
-                if flux_factor_regions.lower() == 'none':
-                    flux_factor_regions = None
-                else:
-                    flux_factor_regions = ast.literal_eval(flux_factor_regions)
+                flux_factor_regions = ast.literal_eval(flux_factor_regions)
             if isinstance(flux_factor_regions, list):
                 for flux_factor_region in flux_factor_regions:
                     if isinstance(flux_factor_region, list):
@@ -880,6 +880,9 @@ def compute_crmasks(
                                  "at least two fixed points must be provided in mm_fixed_points_in_boundary.")
 
         # Compute offsets between each single exposure and the median image
+        if isinstance(mm_xy_offsets, str):
+            if mm_xy_offsets.lower() == 'none':
+                mm_xy_offsets = None
         if mm_xy_offsets is not None and mm_crosscorr_region is not None:
             raise ValueError("You can only provide one of mm_xy_offsets or mm_crosscorr_region, not both.")
         shift_images = False
