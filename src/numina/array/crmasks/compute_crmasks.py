@@ -1006,7 +1006,10 @@ def compute_crmasks(
         if mm_fixed_points_in_boundary is not None:
             if np.max(y_mm_fixed_points_in_boundary) > ydiag_max:
                 ydiag_max = np.max(y_mm_fixed_points_in_boundary)
-        ydiag_max *= 2.0  # Add 100% margin to the maximum y limit
+        if shift_images:
+            ydiag_max *= 4.0  # Add 300% margin to the maximum y limit
+        else:
+            ydiag_max *= 2.0  # Add 100% margin to the maximum y limit
         _logger.debug("xdiag_min=%f", xdiag_min)
         _logger.debug("ydiag_min=%f", ydiag_min)
         _logger.debug("xdiag_max=%f", xdiag_max)
