@@ -1,7 +1,7 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = ["setuptools >= 61.0.0", "setuptools_scm[toml]>=6.2",
-    "wheel", "cython >= 3", "numpy>=1.22"]
+    "wheel", "cython >= 3", "numpy>=2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -34,14 +34,14 @@ classifiers = [
 ]
 
 dependencies = [
-    'astropy',
+    'astropy >= 6.1.7',
     'attrs',
     'backports.entry_points_selectable',  # required only with python < 3.10a7
     'ccdproc',
     'importlib_resources',  # required with python < 3.9
     'lmfit',
     'matplotlib',
-    'numpy',
+    'numpy >= 2',
     'python-dateutil>=2.7.0',
     'PyYaml',
     'reproject',
