@@ -1051,6 +1051,10 @@ def compute_crmasks(
                                          xoffset=list_yx_offsets[i][1],
                                          yoffset=list_yx_offsets[i][0],
                                          resampling=2) / flux_factor_for_simulated[i]
+                # replace any NaN values introduced by the shift with zeros
+                lam3d[i] = np.nan_to_num(lam3d[i], nan=0.0)
+                # replace any negative values with zeros
+                lam3d[i][lam3d[i] < 0] = 0.0
         _logger.info("computing simulated 2D histogram...")
         for k in range(mm_nsimulations):
             time_ini = datetime.now()
