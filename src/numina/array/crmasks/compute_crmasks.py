@@ -599,6 +599,8 @@ def compute_crmasks(
     if isinstance(pixels_to_be_replaced_by_local_median, str):
         if pixels_to_be_replaced_by_local_median.lower() == 'none':
             pixels_to_be_replaced_by_local_median = None
+        else:
+            pixels_to_be_replaced_by_local_median = ast.literal_eval(pixels_to_be_replaced_by_local_median)
     if isinstance(pixels_to_be_replaced_by_local_median, (list, tuple)):
         for p in pixels_to_be_replaced_by_local_median:
             if (not isinstance(p, (list, tuple)) or len(p) != 4 or
