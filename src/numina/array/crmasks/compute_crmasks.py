@@ -1197,7 +1197,7 @@ def compute_crmasks(
         ax1.set_ylabel(r'median2d $-$ min2d')
         ax1.set_title(f'Simulated data (mm_nsimulations = {mm_nsimulations})')
         if mm_niter_boundary_extension > 1:
-            ax1.legend(loc=4)
+            ax1.legend(loc=1)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
         yplot_boundary = boundaryfit(xplot_boundary)
         if mm_boundary_fit == 'spline':
@@ -1213,7 +1213,7 @@ def compute_crmasks(
         ax2.set_xlabel(ax1.get_xlabel())
         ax2.set_ylabel(ax1.get_ylabel())
         ax2.set_title('Original data')
-        ax2.legend(loc=4)
+        ax2.legend(loc=1)
         plt.tight_layout()
         png_filename = 'diagnostic_histogram2d.png'
         _logger.info(f"saving {png_filename}")
