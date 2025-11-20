@@ -12,8 +12,11 @@ import argparse
 import matplotlib
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
+import math
 import numpy as np
 import re
+from rich import print
+from rich_argparse import RichHelpFormatter
 
 from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
@@ -27,6 +30,11 @@ GLOBAL_ASPECT = 'auto'
 GLOBAL_GEOMETRY = '1024,768,0,0'  # xwidth,ywidth,xorigin,yorigin
 dum_str = ''  # global variable in function keypress
 dum_par = ''  # global variable in function keypress
+
+
+def is_valid_number(x):
+    """Check if x is a valid number (not NaN or Inf)."""
+    return isinstance(x, (int, float)) and not math.isnan(x) and not math.isinf(x)
 
 
 def check_wavelength_scale(crval1, cdelt1, ctype1, cunit1):
@@ -263,13 +271,6 @@ def ximshow(image2d, title=None, show=True,
     def keypress(event):
         """Deal with keyboard events, allowing the update of vmin and vmax.
 
-        Note that a call to raw_input() is not allowed within this
-        function since, in that case, the following runtime error
-        is raised: can't re-enter readline
-
-        For that reason, the new vmin and vmax values should be
-        entered blindly.
-
         To avoid collisions with navigation keyboard shortcuts,
         check the table available at:
         http://matplotlib.org/users/navigation_toolbar.html
@@ -307,8 +308,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         elif event.key == "/":
             subimage2d = get_current_zoom(ax, debug=True)
             new_vmin, new_vmax = ZScaleInterval().get_limits(subimage2d)
-            print(">>> setting cuts to vmin=" + str(new_vmin) +
-                  " and vmax=" + str(new_vmax))
+            print(f">>> setting cuts to vmin={new_vmin} and vmax={new_vmax}")
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
             dum_str = ''
@@ -319,8 +319,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             subimage2d = get_current_zoom(ax, debug=True)
             new_vmin = np.nanmin(subimage2d)
             new_vmax = np.nanmax(subimage2d)
-            print(">>> setting cuts to vmin=" + str(new_vmin) +
-                  " and vmax=" + str(new_vmax))
+            print(f">>> setting cuts to vmin={new_vmin} and vmax={new_vmax}")
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
             dum_str = ''
@@ -331,50 +330,30 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             subimage2d = get_current_zoom(ax, debug=True)
             summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
-            print("Type (blindly!) vmin <return>")
-            dum_str = ''
-            dum_par = "vmin"
+            print(f'\nCurrent vmin={im_show.get_clim()[0]}')
+            new_vmin = input('Enter new vmin? ')
+            if is_valid_number(float(new_vmin)):
+                im_show.set_clim(vmin=new_vmin)
+            else:
+                print(f'WARNING: invalid vmin={new_vmin} ignored')
+            ax.figure.canvas.draw_idle()
         elif event.key == "m":
-            print("Type (blindly!) vmax <return>")
-            dum_str = ''
-            dum_par = "vmax"
+            print(f'\nCurrent vmax={im_show.get_clim()[1]}')
+            new_vmax = input('Enter new vmax? ')
+            if is_valid_number(float(new_vmax)):
+                im_show.set_clim(vmax=new_vmax)
+            else:
+                print(f'WARNING: invalid vmax={new_vmax} ignored')
+            ax.figure.canvas.draw_idle()
         elif event.key == "=":
-            if ax.get_aspect() == 'equal':
+            current_aspect = ax.get_aspect()
+            if current_aspect == 'equal' or current_aspect == 1.0:
                 ax.set_aspect('auto')
             else:
                 ax.set_aspect('equal')
             plt.tight_layout()
             plt.show(block=False)
             plt.pause(0.001)
-        elif event.key == "enter":
-            if dum_par == "vmin":
-                try:
-                    new_vmin = float(dum_str)
-                except ValueError:
-                    print("Invalid vmin=" + dum_str)
-                    dum_str = ''
-                    print("Type again (blindly!) vmin <return>")
-                else:
-                    print("Setting vmin=" + dum_str)
-                    im_show.set_clim(vmin=new_vmin)
-                    dum_str = ''
-                    dum_par = ''
-                    plt.show(block=False)
-                    plt.pause(0.001)
-            elif dum_par == "vmax":
-                try:
-                    new_vmax = float(dum_str)
-                except ValueError:
-                    print("Invalid vmax=" + dum_str)
-                    dum_str = ''
-                    print("Type again (blindly!) vmax <return>")
-                else:
-                    print("Setting vmax=" + dum_str)
-                    im_show.set_clim(vmax=new_vmax)
-                    dum_str = ''
-                    dum_par = ''
-                    plt.show(block=False)
-                    plt.pause(0.001)
         else:
             if dum_str == '':
                 dum_str = event.key
@@ -935,7 +914,8 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description='description: display FITS images'
+        description='description: display FITS images',
+        formatter_class=RichHelpFormatter
     )
 
     # positional arguments

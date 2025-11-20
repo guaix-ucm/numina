@@ -46,6 +46,7 @@ dependencies = [
     'PyYaml',
     'reproject',
     'rich',
+    'rich-argparse',
     'scikit-image',
     'scipy',
     'spherical-geometry',
