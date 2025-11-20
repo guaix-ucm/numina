@@ -14,6 +14,8 @@ from astropy.table import QTable
 import astropy.units as u
 import matplotlib.pyplot as plt
 import numpy as np
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from numina.tools.ctext import ctext
@@ -185,7 +187,8 @@ def compute_adr_wavelength(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(description="Compute Atmospheric Differential Refraction")
+    parser = argparse.ArgumentParser(description="Compute Atmospheric Differential Refraction",
+                                     formatter_class=RichHelpFormatter)
     parser.add_argument("--airmass", help="Airmass", type=float)
     parser.add_argument("--reference_wave_vacuum", help="Reference wavelength (vacuum)", type=float)
     parser.add_argument("--wave_ini", help="Initial wavelength", type=float)

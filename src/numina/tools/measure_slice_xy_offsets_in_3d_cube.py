@@ -15,11 +15,13 @@ import astropy.units as u
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
+from rich import print
+from rich_argparse import RichHelpFormatter
 from skimage.registration import phase_cross_correlation
 import sys
 
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
-from numina.array.display import shift_image2d
+from numina.array.distortion import shift_image2d
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
@@ -262,7 +264,8 @@ def measure_slice_xy_offsets_in_3d_cube(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(description="Determine (X,Y) offsets between slices along NAXIS3")
+    parser = argparse.ArgumentParser(description="Determine (X,Y) offsets between slices along NAXIS3",
+                                     formatter_class=RichHelpFormatter)
     parser.add_argument("filename", help="Input 3D FITS file")
     parser.add_argument("npoints", help="Number of points along NAXIS3", type=int)
     parser.add_argument("--extname", help="Output extension name to store result (default None)",

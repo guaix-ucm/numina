@@ -15,6 +15,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 import numpy as np
 from tqdm import tqdm
+from rich import print
 from scipy.ndimage import median_filter
 from spherical_geometry.polygon import SphericalPolygon
 import sys

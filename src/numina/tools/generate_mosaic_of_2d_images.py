@@ -29,6 +29,8 @@ import numpy as np
 import numpy.ma as ma
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
@@ -36,7 +38,7 @@ from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_c
 from .ctext import ctext
 
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
-COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std','sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
+COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std', 'sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
 
 def generate_mosaic_of_2d_images(
@@ -179,7 +181,7 @@ def generate_mosaic_of_2d_images(
         else:
             # merge footprints
             stack3d[i, :, :].mask = np.logical_or(
-                np.logical_or(mask2d_resampled, mask2d_resampled==np.nan),
+                np.logical_or(mask2d_resampled, mask2d_resampled == np.nan),
                 (footprint_image2d_resampled == 0)
             )
 
@@ -219,7 +221,7 @@ def generate_mosaic_of_2d_images(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Generate mosaic of 2D images", formatter_class=RichHelpFormatter)
     parser.add_argument("input_list",
                         help="TXT file with list of 2D images to be combined", type=str)
     parser.add_argument('output_filename',
@@ -309,7 +311,7 @@ def main(args=None):
                         hdu2d_mask = fits.ImageHDU(data=np.isnan(hdu2d_image.data).astype(np.uint8))
                         hdu2d_mask.header.extend(wcs_to_header_using_cd_keywords(WCS(hdu2d_image.header)), update=True)
                         if verbose:
-                            print(f'generating mask from np.nan values')
+                            print('generating mask from np.nan values')
                     if verbose:
                         print(f'Number of masked pixels / total: {np.sum(hdu2d_mask.data)} / {hdu2d_mask.size}')
                     # store image and associated footprint

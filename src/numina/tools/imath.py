@@ -13,6 +13,8 @@ The computation is performed casting to np.float32.
 """
 
 import argparse
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from astropy.io import fits
@@ -202,7 +204,8 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: binary image arithmetic"
+        description="description: binary image arithmetic",
+        formatter_class=RichHelpFormatter
     )
     # positional parameters
     parser.add_argument("file1",
@@ -228,9 +231,9 @@ def main(args=None):
     parser.add_argument("--overwrite",
                         help="Overwrite output file if already exists",
                         action="store_true")
-    parser.add_argument("--dtype", 
+    parser.add_argument("--dtype",
                         help="Data type of the output image (default: float32)",
-                        type=str, 
+                        type=str,
                         choices=['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64',
                                  'float32', 'float64'],
                         default='float32')
@@ -254,7 +257,6 @@ def main(args=None):
                         action="store_true")
 
     args = parser.parse_args(args=args)
-
 
     if args.echo:
         print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')

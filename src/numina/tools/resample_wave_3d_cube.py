@@ -15,6 +15,8 @@ from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
 import numpy as np
+from rich import print
+from rich_argparse import RichHelpFormatter
 
 from numina.instrument.simulation.ifu.define_3d_wcs \
     import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
@@ -129,7 +131,8 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
 def main(args=None):
     """Main function."""
     parser = argparse.ArgumentParser(
-        description="Resample a 3D cube in the wavelength axis (NAXIS3)."
+        description="Resample a 3D cube in the wavelength axis (NAXIS3).",
+        formatter_class=RichHelpFormatter
     )
     parser.add_argument("input_file", type=str,
                         help="Input FITS file with the 3D cube.")

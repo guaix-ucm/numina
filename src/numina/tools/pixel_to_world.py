@@ -13,6 +13,8 @@ import argparse
 
 from astropy.io import fits
 from astropy.wcs import WCS
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from .ctext import ctext
@@ -70,7 +72,8 @@ def main(args=None):
     quote symbol is not necessary if the numbers are given without
     blank spaces.
     """
-    parser = argparse.ArgumentParser(description="Convert pixel to world coordinates.")
+    parser = argparse.ArgumentParser(description="Convert pixel to world coordinates.",
+                                     formatter_class=RichHelpFormatter)
     parser.add_argument("inputfile", help="Input FITS file", type=str)
     parser.add_argument("--pixel", help="WCS pixel coordinate (comma separated values)", type=str,
                         default=None)

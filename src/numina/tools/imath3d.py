@@ -12,6 +12,8 @@
 The computation is performed casting to np.float32."""
 
 import argparse
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from astropy.io import fits
@@ -19,6 +21,7 @@ import numpy as np
 import pathlib
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
+
 
 def compute_operation(file1, file2, operation, extname1, extname2, dtype):
     """Compute output = file1 operation file2.
@@ -109,7 +112,8 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: binary image arithmetic"
+        description="description: binary image arithmetic",
+        formatter_class=RichHelpFormatter
     )
     # positional parameters
     parser.add_argument("file1",
@@ -135,9 +139,9 @@ def main(args=None):
     parser.add_argument("--overwrite",
                         help="Overwrite output file if already exists",
                         action="store_true")
-    parser.add_argument("--dtype", 
+    parser.add_argument("--dtype",
                         help="Data type of the output image (default: float32)",
-                        type=str, 
+                        type=str,
                         choices=['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64',
                                  'float32', 'float64'],
                         default='float32')
@@ -156,9 +160,9 @@ def main(args=None):
 
     # compute operation
     solution = compute_operation(
-        file1=args.file1, 
+        file1=args.file1,
         file2=args.file2,
-        operation=args.operation, 
+        operation=args.operation,
         extname1=args.extname1,
         extname2=args.extname2,
         dtype=args.dtype

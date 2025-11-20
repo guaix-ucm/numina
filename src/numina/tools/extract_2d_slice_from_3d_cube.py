@@ -15,6 +15,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 
@@ -179,7 +181,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Extract 2D slice from 3D cube", formatter_class=RichHelpFormatter)
     parser.add_argument("input", help="Input FITS file")
     parser.add_argument("--axis", help="Axis to be collapsed in output", type=int, default=3)
     parser.add_argument("--i1", help="First pixel of the projected axis", type=int, default=1)

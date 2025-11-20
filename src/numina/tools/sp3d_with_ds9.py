@@ -19,6 +19,8 @@ from astropy.io import fits
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
+from rich import print
+from rich_argparse import RichHelpFormatter
 
 from .ctext import ctext
 from .extract_2d_slice_from_3d_cube import extract_slice
@@ -443,7 +445,8 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
 def main(args=None):
     """Main function"""
     parser = argparse.ArgumentParser(
-        description="Interactive examination of 3D data cubes with ds9."
+        description="Interactive examination of 3D data cubes with ds9.",
+        formatter_class=RichHelpFormatter
     )
 
     parser.add_argument("datacube",

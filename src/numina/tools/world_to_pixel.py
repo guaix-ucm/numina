@@ -16,6 +16,7 @@ from astropy.units import Unit
 from astropy.io import fits
 from astropy.wcs import WCS
 import numpy as np
+from rich import print
 import sys
 
 from .ctext import ctext

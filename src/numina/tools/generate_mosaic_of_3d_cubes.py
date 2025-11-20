@@ -20,6 +20,8 @@ import numpy as np
 from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
@@ -278,7 +280,8 @@ def main(args=None):
     time_ini = datetime.now()
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="Generate a 3D mosaic from individual 3D cubes."
+        description="Generate a 3D mosaic from individual 3D cubes",
+        formatter_class=RichHelpFormatter
     )
     parser.add_argument("input_list",
                         help="TXT file with list of 3D images to be combined or single FITS file", type=str)

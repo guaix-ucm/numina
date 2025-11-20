@@ -13,9 +13,12 @@ from astropy.io import fits
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
+from rich import print
+from rich_argparse import RichHelpFormatter
 import sys
 
 from .ctext import ctext
+
 
 def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
     """Auxiliary function to plot reference wavelengths
@@ -138,7 +141,7 @@ def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitl
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube")
+    parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube", formatter_class=RichHelpFormatter)
     parser.add_argument("filename", help="Input 3D FITS file")
     parser.add_argument("extname1", help="First extension name", type=str)
     parser.add_argument("extname2", help="Second extension name (optional)", type=str)
@@ -171,4 +174,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-

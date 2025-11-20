@@ -964,14 +964,13 @@ def main(args=None):
                         help="ouput PDF file name",
                         type=argparse.FileType('w'))
     parser.add_argument("--figuredict",
-                        help="string with dictionary of parameters for"
-                             "plt.figure()",
+                        help="string with dictionary of parameters for plt.figure()",
                         type=str)
     parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                             " (default=12)",
+                        help="Integer indicating plotting/debugging (default=12)",
                         default=12, type=int,
                         choices=[0, 1, 2, 10, 11, 12, 21, 22])
+
     args = parser.parse_args(args)
 
     if abs(args.debugplot) in [21, 22]:
