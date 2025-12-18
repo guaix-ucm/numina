@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: numina
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+- affiliation: Universidad Complutense de Madrid
+  family-names: Pascual
+  given-names: Sergio
+  orcid: 'https://orcid.org/0000-0002-9351-6051' 
+- affiliation: Universidad Complutense de Madrid
+  family-names: Cardiel
+  given-names: Nicolás
+  orcid: 'https://orcid.org/0000-0002-9334-2979'
+date-released: '2025-11-07'
+doi: 10.5281/zenodo.593638
+identifiers:
+- type: doi
+  value: 10.5281/zenodo.593638
+repository-code: 'https://github.com/guaix-ucm/numina'
+abstract: >-
+  This is Numina, the data reduction package used by the following 
+  Gran Telescopio Canarias instruments: EMIR, FRIDA, MEGARA.
+keywords:
+- MEGARA
+- EMIR
+- GTC
+license: GPL-3.0-or-later
+version: 0.36.0
