@@ -5,7 +5,7 @@ Numina
 |zenodo| |docs| |pypi| 
 
 This is Numina, the data reduction package used by the following
-Gran Telescopio Canarias instruments: EMIR, FRIDA, MEGARA and MIRADAS.
+Gran Telescopio Canarias instruments: EMIR, MEGARA and FRIDA.
 
 You can install numina using
 the `released code in PyPI <https://pypi.org/project/numina/>`_ or
@@ -14,6 +14,8 @@ the `development version in Github <https://github.com/guaix-ucm/numina>`_.
 The installation instructions are available in the
 `online documentation <https://numina.readthedocs.io/en/latest/user/install.html>`_
 or `doc/user/install.rst <doc/user/install.rst>`_ in the source distribution.
+
+Command line tools inside this package are described in `numina-tools page <https://guaix-ucm.github.io/numina-tools/>`_.
 
 Licensing
 ---------
