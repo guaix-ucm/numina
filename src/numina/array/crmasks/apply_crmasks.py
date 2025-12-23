@@ -17,8 +17,15 @@ from rich.logging import RichHandler
 from .valid_parameters import VALID_COMBINATIONS
 
 
-def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=None,
-                  dtype=np.float32, apply_flux_factor=None, bias=None):
+def apply_crmasks(
+    list_arrays,
+    hdul_masks=None,
+    combination=None,
+    use_lamedian=None,
+    dtype=np.float32,
+    apply_flux_factor=None,
+    bias=None,
+):
     """
     Correct cosmic rays applying previously computed masks.
 
@@ -106,7 +113,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
 
     # If use_lamedian is True, check that the extension 'LAMEDIAN' is present
     if use_lamedian:
-        if 'LAMEDIAN' not in hdul_masks:
+        if "LAMEDIAN" not in hdul_masks:
             raise ValueError("use_lamedian is True, but extension 'LAMEDIAN' is not present in hdul_masks.")
 
     # Check that the list contains numpy 2D arrays
@@ -149,7 +156,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
     _logger.info("apply_flux_factor: %s", apply_flux_factor)
     flux_factor = []
     for i in range(num_images):
-        flux_factor.append(hdul_masks[0].header[f'FLUXF{i+1}'])
+        flux_factor.append(hdul_masks[0].header[f"FLUXF{i+1}"])
     flux_factor = np.array(flux_factor, dtype=float)
     if apply_flux_factor:
         _logger.info("flux factor values: %s will be employed", str(flux_factor))
@@ -180,29 +187,29 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
     else:
         rlabel_combination = f"{combination}"
     _logger.info("applying combination method: %s", rlabel_combination)
-    _logger.info("using crmasks in %s", hdul_masks[0].header['UUID'])
-    if combination in ['mediancr', 'meancrt']:
+    _logger.info("using crmasks in %s", hdul_masks[0].header["UUID"])
+    if combination in ["mediancr", "meancrt"]:
         # Define the mask_mediancr
-        mask_mediancr = hdul_masks['MEDIANCR'].data.astype(bool)
+        mask_mediancr = hdul_masks["MEDIANCR"].data.astype(bool)
         _logger.info("applying mask MEDIANCR: %d masked pixels", np.sum(mask_mediancr))
         # Replace the masked pixels with the minimum value
         # of the corresponding pixel in the input arrays
         median2d_corrected = median2d.copy()
         if use_lamedian:
-            median2d_corrected[mask_mediancr] = hdul_masks['LAMEDIAN'].data[mask_mediancr]
+            median2d_corrected[mask_mediancr] = hdul_masks["LAMEDIAN"].data[mask_mediancr]
         else:
             median2d_corrected[mask_mediancr] = min2d_rescaled[mask_mediancr]
 
-    if combination == 'mediancr':
+    if combination == "mediancr":
         combined2d = median2d_corrected
         # Define the variance and map arrays
         variance2d = np.var(image3d, axis=0, ddof=1)
         variance2d[mask_mediancr] = 0.0  # Set variance to 0 for the masked pixels
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
         map2d[mask_mediancr] = 1  # Set the map to 1 for the masked pixels
-    elif combination == 'meancrt':
+    elif combination == "meancrt":
         # Define the mask_meancr
-        mask_meancrt = hdul_masks['MEANCRT'].data.astype(bool)
+        mask_meancrt = hdul_masks["MEANCRT"].data.astype(bool)
         _logger.info("applying mask MEANCRT: %d masked pixels", np.sum(mask_meancrt))
         mean2d = np.mean(image3d, axis=0)
         # Replace the masked pixels in mean2d with the median2d_corrected value
@@ -214,17 +221,14 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
         variance2d[mask_meancrt] = 0.0  # Set variance to 0 for the masked pixels
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
         map2d[mask_meancrt] = 1  # Set the map to 1 for the masked pixels
-    elif combination == 'meancr':
-        image3d_masked = ma.array(
-            np.zeros(shape3d, dtype=dtype),
-            mask=np.full(shape3d, fill_value=True, dtype=bool)
-        )
+    elif combination == "meancr":
+        image3d_masked = ma.array(np.zeros(shape3d, dtype=dtype), mask=np.full(shape3d, fill_value=True, dtype=bool))
         # Loop through each image and apply the corresponding mask
         total_mask = np.zeros((naxis2, naxis1), dtype=int)
         for i in range(num_images):
             image3d_masked[i, :, :] = image3d[i, :, :]
-            mask = hdul_masks[f'CRMASK{i+1}'].data
-            _logger.info("applying mask %s: %d masked pixels", f'CRMASK{i+1}', np.sum(mask))
+            mask = hdul_masks[f"CRMASK{i+1}"].data
+            _logger.info("applying mask %s: %d masked pixels", f"CRMASK{i+1}", np.sum(mask))
             total_mask += mask.astype(int)
             image3d_masked[i, :, :].mask = mask.astype(bool)
         # Compute the mean of the masked 3D array
@@ -234,7 +238,7 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
         if np.any(mask_nodata):
             if use_lamedian:
                 _logger.info("replacing %d pixels without data by the LAMEDIAN value", np.sum(mask_nodata))
-                combined2d[mask_nodata] = hdul_masks['LAMEDIAN'].data[mask_nodata]
+                combined2d[mask_nodata] = hdul_masks["LAMEDIAN"].data[mask_nodata]
             else:
                 _logger.info("replacing %d pixels without data by the minimum value", np.sum(mask_nodata))
                 combined2d[mask_nodata] = min2d_rescaled[mask_nodata]
@@ -244,19 +248,18 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
         variance2d = ma.var(image3d_masked, axis=0, ddof=1).data
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images - total_mask
     else:
-        raise ValueError(f"Invalid combination method: {combination}. "
-                         f"Valid options are {VALID_COMBINATIONS}.")
+        raise ValueError(f"Invalid combination method: {combination}. " f"Valid options are {VALID_COMBINATIONS}.")
 
     # Replaced pixels defined in the RPMEDIAN extension of hdul_masks by
     # the local median around them (excluding the considered pixel)
-    if 'RPMEDIAN' in hdul_masks:
+    if "RPMEDIAN" in hdul_masks:
         _logger.info("replacing pixels defined in RPMEDIAN by the local median around them")
-        table_rpmedian = Table(hdul_masks['RPMEDIAN'].data)
+        table_rpmedian = Table(hdul_masks["RPMEDIAN"].data)
         for row in table_rpmedian:
-            xpixel = row['X_pixel'] - 1  # Convert from FITS to zero-based index
-            ypixel = row['Y_pixel'] - 1  # Convert from FITS to zero-based index
-            xwidth = row['X_width']
-            ywidth = row['Y_width']
+            xpixel = row["X_pixel"] - 1  # Convert from FITS to zero-based index
+            ypixel = row["Y_pixel"] - 1  # Convert from FITS to zero-based index
+            xwidth = row["X_width"]
+            ywidth = row["Y_width"]
             # Define the box around the pixel, ensuring it is within image bounds
             x1 = max(xpixel - xwidth // 2, 0)
             x2 = min(xpixel + xwidth // 2 + 1, naxis1)
@@ -271,11 +274,15 @@ def apply_crmasks(list_arrays, hdul_masks=None, combination=None, use_lamedian=N
             # Compute the median of the unmasked pixels in the local box
             if np.any(local_mask):
                 local_median = np.median(local_box[local_mask])
-                _logger.info(f"- pixel (x={xpixel+1}, y={ypixel+1}): "
-                             f"old value={combined2d[ypixel, xpixel]:.2f}, new value={local_median:.2f}")
+                _logger.info(
+                    f"- pixel (x={xpixel+1}, y={ypixel+1}): "
+                    f"old value={combined2d[ypixel, xpixel]:.2f}, new value={local_median:.2f}"
+                )
                 combined2d[ypixel, xpixel] = local_median
             else:
-                _logger.warning(f"cannot compute local median for pixel (x={xpixel+1}, y={ypixel+1}) "
-                                "as no surrounding pixels are available")
+                _logger.warning(
+                    f"cannot compute local median for pixel (x={xpixel+1}, y={ypixel+1}) "
+                    "as no surrounding pixels are available"
+                )
 
     return combined2d.astype(dtype), variance2d.astype(dtype), map2d

@@ -15,9 +15,17 @@ import numpy as np
 import teareduce as tea
 
 
-def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                       enum_la_global, enum_mm_global, enum_both_global,
-                       within_xy_diagram):
+def segregate_cr_flags(
+    naxis1,
+    naxis2,
+    flag_only_la,
+    flag_only_sb,
+    flag_both,
+    enum_la_global,
+    enum_mm_global,
+    enum_both_global,
+    within_xy_diagram,
+):
     """Segregate the cosmic ray flags into three categories:
     - detected only by the lacosmic method
     - detected only by the mmcosmic method
@@ -107,17 +115,32 @@ def segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     else:
         xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = None, None, None
 
-    return \
-        flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy, \
-        (num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy), \
-        (num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy), \
-        (num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy)
+    return (
+        flag_only_la_within_xy,
+        flag_only_mm_within_xy,
+        flag_both_within_xy,
+        (num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy),
+        (num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy),
+        (num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy),
+    )
 
 
-def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                 enum_la_global, enum_mm_global, enum_both_global,
-                 xplot, yplot,
-                 ax1, ax2, ax3, display_ncr=True):
+def update_marks(
+    naxis1,
+    naxis2,
+    flag_only_la,
+    flag_only_sb,
+    flag_both,
+    enum_la_global,
+    enum_mm_global,
+    enum_both_global,
+    xplot,
+    yplot,
+    ax1,
+    ax2,
+    ax3,
+    display_ncr=True,
+):
     """Update the marks in the diagnostic plot.
     If ax2 and ax3 are None, only the segregation of the cosmic rays
     within the XY diagram is performed and the information of the
@@ -136,10 +159,19 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
     ylim = ax1.get_ylim()
     within_xy_diagram = (xlim[0] <= xplot) & (xplot <= xlim[1]) & (ylim[0] <= yplot) & (yplot <= ylim[1])
 
-    flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy, tuple_la, tuple_sb, tuple_both = \
-        segregate_cr_flags(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                           enum_la_global, enum_mm_global, enum_both_global,
-                           within_xy_diagram)
+    flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy, tuple_la, tuple_sb, tuple_both = (
+        segregate_cr_flags(
+            naxis1,
+            naxis2,
+            flag_only_la,
+            flag_only_sb,
+            flag_both,
+            enum_la_global,
+            enum_mm_global,
+            enum_both_global,
+            within_xy_diagram,
+        )
+    )
     num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = tuple_la
     num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy = tuple_sb
     num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = tuple_both
@@ -150,14 +182,15 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
         ax_list = [ax2, ax3]
     for ax in ax_list:
         for num, method, xcr, ycr, ncr, flag_only, color, marker in zip(
-                [num_only_la_within_xy, num_only_mm_within_xy, num_both_within_xy],
-                ['lacosmic', 'mmcosmic', 'both'],
-                [xcr_only_la_within_xy, xcr_only_mm_within_xy, xcr_both_within_xy],
-                [ycr_only_la_within_xy, ycr_only_mm_within_xy, ycr_both_within_xy],
-                [ncr_only_la_within_xy, ncr_only_mm_within_xy, ncr_both_within_xy],
-                [flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy],
-                ['r', 'b', 'm'],
-                ['x', '+', 'o']):
+            [num_only_la_within_xy, num_only_mm_within_xy, num_both_within_xy],
+            ["lacosmic", "mmcosmic", "both"],
+            [xcr_only_la_within_xy, xcr_only_mm_within_xy, xcr_both_within_xy],
+            [ycr_only_la_within_xy, ycr_only_mm_within_xy, ycr_both_within_xy],
+            [ncr_only_la_within_xy, ncr_only_mm_within_xy, ncr_both_within_xy],
+            [flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy],
+            ["r", "b", "m"],
+            ["x", "+", "o"],
+        ):
             if num > 0:
                 if ax is None:
                     print("-" * 78)
@@ -166,26 +199,57 @@ def update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
                         print(f"  Pixel (x, y) = ({ix}, {iy}), number {ncr}")
                 elif ax == ax2:
                     for ix, iy, ncr in zip(xplot[flag_only], yplot[flag_only], ncr):
-                        ax.text(ix, iy, str(ncr), color=color, fontsize=8, clip_on=True,
-                                ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5))
+                        ax.text(
+                            ix,
+                            iy,
+                            str(ncr),
+                            color=color,
+                            fontsize=8,
+                            clip_on=True,
+                            ha="center",
+                            va="center",
+                            bbox=dict(facecolor="white", alpha=0.5),
+                        )
                 elif ax == ax3:
                     if display_ncr:
                         for ix, iy, ncr in zip(xcr, ycr, ncr):
-                            ax.text(ix, iy, str(ncr), color=color, fontsize=8, clip_on=True,
-                                    ha='center', va='center', bbox=dict(facecolor='white', alpha=0.5))
+                            ax.text(
+                                ix,
+                                iy,
+                                str(ncr),
+                                color=color,
+                                fontsize=8,
+                                clip_on=True,
+                                ha="center",
+                                va="center",
+                                bbox=dict(facecolor="white", alpha=0.5),
+                            )
                     else:
-                        if marker == 'o':
-                            ax.scatter(xcr, ycr, edgecolors=color, marker=marker, facecolors='none')
+                        if marker == "o":
+                            ax.scatter(xcr, ycr, edgecolors=color, marker=marker, facecolors="none")
                         else:
                             ax.scatter(xcr, ycr, c=color, marker=marker)
 
 
-def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    mm_threshold, ylabel, interactive, target2d, target2d_name,
-                    min2d, mean2d, image3d,
-                    _logger=None, png_filename=None):
-    """Diagnostic plot for the mediancr function.
-    """
+def diagnostic_plot(
+    xplot,
+    yplot,
+    xplot_boundary,
+    yplot_boundary,
+    flag_la,
+    flag_sb,
+    mm_threshold,
+    ylabel,
+    interactive,
+    target2d,
+    target2d_name,
+    min2d,
+    mean2d,
+    image3d,
+    _logger=None,
+    png_filename=None,
+):
+    """Diagnostic plot for the mediancr function."""
     if png_filename is None:
         raise ValueError("png_filename must be provided for diagnostic plots.")
 
@@ -206,8 +270,8 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     if yplot.shape != (naxis2 * naxis1,):
         raise ValueError(f"{yplot.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
 
-    display_ncr = False   # display the number of cosmic rays in the plot instead of symbols
-    aspect_imshow = 'auto'  # 'equal' or 'auto'
+    display_ncr = False  # display the number of cosmic rays in the plot instead of symbols
+    aspect_imshow = "auto"  # 'equal' or 'auto'
     i_comparison_image = 0  # 0 for mean2d, 1, 2,... for image3d[comparison_image-1]
 
     if interactive:
@@ -219,8 +283,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
         vspace_plot = 0.09
         # top left, top right, bottom left, bottom right
         ax1 = fig.add_axes([x0_plot, y0_plot + height_plot + vspace_plot, width_plot, height_plot])
-        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot],
-                           sharex=ax1, sharey=ax1)
+        ax2 = fig.add_axes([0.55, y0_plot + height_plot + vspace_plot, width_plot, height_plot], sharex=ax1, sharey=ax1)
         ax3 = fig.add_axes([x0_plot, y0_plot, width_plot, height_plot])
         ax4 = fig.add_axes([0.55, y0_plot, width_plot, height_plot], sharex=ax3, sharey=ax3)
         dx_text = 0.07
@@ -248,21 +311,29 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     enum_both_global = np.zeros_like(flag_la, dtype=int)
     enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
 
-    ax1.plot(xplot, yplot, 'C0,', label='Non-suspected pixels')
-    ax1.scatter(xplot[flag_only_la], yplot[flag_only_la],
-                c='r', marker='x', label=f'Suspected pixels: {num_only_la} (lacosmic)')
-    ax1.scatter(xplot[flag_only_sb], yplot[flag_only_sb],
-                c='b', marker='+', label=f'Suspected pixels: {num_only_sb} (mmcosmic)')
-    ax1.scatter(xplot[flag_both], yplot[flag_both],
-                edgecolor='m', marker='o', facecolors='none', label=f'Suspected pixels: {num_both} (both methods)')
+    ax1.plot(xplot, yplot, "C0,", label="Non-suspected pixels")
+    ax1.scatter(
+        xplot[flag_only_la], yplot[flag_only_la], c="r", marker="x", label=f"Suspected pixels: {num_only_la} (lacosmic)"
+    )
+    ax1.scatter(
+        xplot[flag_only_sb], yplot[flag_only_sb], c="b", marker="+", label=f"Suspected pixels: {num_only_sb} (mmcosmic)"
+    )
+    ax1.scatter(
+        xplot[flag_both],
+        yplot[flag_both],
+        edgecolor="m",
+        marker="o",
+        facecolors="none",
+        label=f"Suspected pixels: {num_both} (both methods)",
+    )
     if xplot_boundary is not None and yplot_boundary is not None:
-        ax1.plot(xplot_boundary, yplot_boundary, 'C1-', label='Detection boundary')
+        ax1.plot(xplot_boundary, yplot_boundary, "C1-", label="Detection boundary")
     if mm_threshold is not None:
-        ax1.axhline(mm_threshold, color='gray', linestyle=':', label=f'mm_threshold ({mm_threshold:.2f})')
-    ax1.set_xlabel(r'min2d $-$ bias')  # the bias was subtracted from the input arrays
+        ax1.axhline(mm_threshold, color="gray", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})")
+    ax1.set_xlabel(r"min2d $-$ bias")  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
-    ax1.set_title('Median-Mean Diagnostic Diagram')
-    ax1.legend(loc='upper right', fontsize=8, title=f'Total: {num_total} suspected pixels')
+    ax1.set_title("Median-Mean Diagnostic Diagram")
+    ax1.legend(loc="upper right", fontsize=8, title=f"Total: {num_total} suspected pixels")
 
     ax2.set_xlim(ax1.get_xlim())
     ax2.set_ylim(ax1.get_ylim())
@@ -272,36 +343,75 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
 
     vmin, vmax = tea.zscale(target2d)
     ax3_title = target2d_name
-    img_ax3, _, _ = tea.imshow(fig, ax3, target2d, ds9mode=True, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
-                               title=ax3_title, cmap='viridis', colorbar=False)
+    img_ax3, _, _ = tea.imshow(
+        fig,
+        ax3,
+        target2d,
+        ds9mode=True,
+        aspect=aspect_imshow,
+        vmin=vmin,
+        vmax=vmax,
+        title=ax3_title,
+        cmap="viridis",
+        colorbar=False,
+    )
     if i_comparison_image == 0:
         comparison_image = mean2d
-        ax4_title = 'mean2d'
+        ax4_title = "mean2d"
     else:
         comparison_image = image3d[i_comparison_image - 1]
-        ax4_title = f'single exposure #{i_comparison_image}]'
-    img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, ds9mode=True, aspect=aspect_imshow, vmin=vmin, vmax=vmax,
-                               title=ax4_title, cmap='viridis', colorbar=False)
+        ax4_title = f"single exposure #{i_comparison_image}]"
+    img_ax4, _, _ = tea.imshow(
+        fig,
+        ax4,
+        comparison_image,
+        ds9mode=True,
+        aspect=aspect_imshow,
+        vmin=vmin,
+        vmax=vmax,
+        title=ax4_title,
+        cmap="viridis",
+        colorbar=False,
+    )
     ax3.set_title(ax3_title)
     ax4.set_title(ax4_title)
-    update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                 enum_la_global, enum_mm_global, enum_both_global,
-                 xplot, yplot,
-                 ax1, ax2, ax3, display_ncr)
+    update_marks(
+        naxis1,
+        naxis2,
+        flag_only_la,
+        flag_only_sb,
+        flag_both,
+        enum_la_global,
+        enum_mm_global,
+        enum_both_global,
+        xplot,
+        yplot,
+        ax1,
+        ax2,
+        ax3,
+        display_ncr,
+    )
 
-    for ax, label, color in zip([ax1, ax2, ax3, ax4],
-                                ['(a)', '(b)', '(c)', '(d)'],
-                                ['k', 'k', 'w', 'w']):
-        ax.text(0.97, 0.03, label, transform=ax.transAxes, color=color,
-                fontsize=15, fontweight='bold', va='bottom', ha='right')
+    for ax, label, color in zip([ax1, ax2, ax3, ax4], ["(a)", "(b)", "(c)", "(d)"], ["k", "k", "w", "w"]):
+        ax.text(
+            0.97,
+            0.03,
+            label,
+            transform=ax.transAxes,
+            color=color,
+            fontsize=15,
+            fontweight="bold",
+            va="bottom",
+            ha="right",
+        )
 
-    updating = {'plot_limits': False}
+    updating = {"plot_limits": False}
 
     def sync_zoom_x(event_ax):
-        if updating['plot_limits']:
+        if updating["plot_limits"]:
             return
         try:
-            updating['plot_limits'] = True
+            updating["plot_limits"] = True
             if event_ax is ax1:
                 xlim = ax1.get_xlim()
                 ax2.set_xlim(xlim)
@@ -312,43 +422,80 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             elif event_ax is ax4:
                 pass
         finally:
-            updating['plot_limits'] = False
+            updating["plot_limits"] = False
 
     def sync_zoom_y(event_ax):
         nonlocal img_ax3, img_ax4
         nonlocal display_ncr
-        if updating['plot_limits']:
+        if updating["plot_limits"]:
             return
         try:
-            updating['plot_limits'] = True
+            updating["plot_limits"] = True
             if event_ax is ax1:
                 ylim = ax1.get_ylim()
                 ax2.set_ylim(ylim)
                 xlim = ax3.get_xlim()
                 ylim = ax3.get_ylim()
                 ax3.cla()
-                img_ax3, _, _ = tea.imshow(fig, ax3, target2d, ds9mode=True, aspect=aspect_imshow,
-                                           vmin=vmin, vmax=vmax,
-                                           title=ax3_title, cmap='viridis', colorbar=False)
+                img_ax3, _, _ = tea.imshow(
+                    fig,
+                    ax3,
+                    target2d,
+                    ds9mode=True,
+                    aspect=aspect_imshow,
+                    vmin=vmin,
+                    vmax=vmax,
+                    title=ax3_title,
+                    cmap="viridis",
+                    colorbar=False,
+                )
                 ax3.set_xlim(xlim)
                 ax3.set_ylim(ylim)
                 xlim = ax4.get_xlim()
                 ylim = ax4.get_ylim()
                 ax4.cla()
-                img_ax4, _, _ = tea.imshow(fig, ax4, comparison_image, ds9mode=True, aspect=aspect_imshow,
-                                           vmin=vmin, vmax=vmax,
-                                           title=ax4_title, cmap='viridis', colorbar=False)
+                img_ax4, _, _ = tea.imshow(
+                    fig,
+                    ax4,
+                    comparison_image,
+                    ds9mode=True,
+                    aspect=aspect_imshow,
+                    vmin=vmin,
+                    vmax=vmax,
+                    title=ax4_title,
+                    cmap="viridis",
+                    colorbar=False,
+                )
                 ax4.set_xlim(xlim)
                 ax4.set_ylim(ylim)
-                update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                             enum_la_global, enum_mm_global, enum_both_global,
-                             xplot, yplot,
-                             ax1, ax2, ax3, display_ncr)
-                for ax, label, color in zip([ax3, ax4],
-                                            ['(c)', '(d)'],
-                                            ['w', 'w']):
-                    ax.text(0.97, 0.03, label, transform=ax.transAxes, color=color,
-                            fontsize=15, fontweight='bold', va='bottom', ha='right')
+                update_marks(
+                    naxis1,
+                    naxis2,
+                    flag_only_la,
+                    flag_only_sb,
+                    flag_both,
+                    enum_la_global,
+                    enum_mm_global,
+                    enum_both_global,
+                    xplot,
+                    yplot,
+                    ax1,
+                    ax2,
+                    ax3,
+                    display_ncr,
+                )
+                for ax, label, color in zip([ax3, ax4], ["(c)", "(d)"], ["w", "w"]):
+                    ax.text(
+                        0.97,
+                        0.03,
+                        label,
+                        transform=ax.transAxes,
+                        color=color,
+                        fontsize=15,
+                        fontweight="bold",
+                        va="bottom",
+                        ha="right",
+                    )
 
                 ax2.figure.canvas.draw_idle()
                 ax3.figure.canvas.draw_idle()
@@ -360,10 +507,10 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             elif event_ax is ax4:
                 pass
         finally:
-            updating['plot_limits'] = False
+            updating["plot_limits"] = False
 
-    ax1.callbacks.connect('xlim_changed', sync_zoom_x)
-    ax1.callbacks.connect('ylim_changed', sync_zoom_y)
+    ax1.callbacks.connect("xlim_changed", sync_zoom_x)
+    ax1.callbacks.connect("ylim_changed", sync_zoom_y)
 
     if not interactive:
         plt.tight_layout()
@@ -373,15 +520,15 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
     if interactive:
         init_limits = {ax: (ax.get_xlim(), ax.get_ylim()) for ax in [ax1, ax2, ax3, ax4]}
 
-        mouse_info = {'ax': None, 'x': None, 'y': None}
+        mouse_info = {"ax": None, "x": None, "y": None}
 
         def on_mouse_move(event):
             if event.inaxes:
-                mouse_info['ax'] = event.inaxes
-                mouse_info['x'] = event.xdata
-                mouse_info['y'] = event.ydata
+                mouse_info["ax"] = event.inaxes
+                mouse_info["x"] = event.xdata
+                mouse_info["y"] = event.ydata
 
-        fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
+        fig.canvas.mpl_connect("motion_notify_event", on_mouse_move)
 
         def on_key(event):
             nonlocal vmin, vmax
@@ -389,9 +536,9 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
             nonlocal display_ncr
             nonlocal aspect_imshow
             nonlocal i_comparison_image, comparison_image
-            ax_mouse = mouse_info['ax']
-            x_mouse = mouse_info['x']
-            y_mouse = mouse_info['y']
+            ax_mouse = mouse_info["ax"]
+            x_mouse = mouse_info["x"]
+            y_mouse = mouse_info["y"]
 
             if event.key in ("h", "H", "r", "R"):
                 for ax in [ax1, ax2, ax3, ax4]:
@@ -400,12 +547,12 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     ax.set_ylim(init_ylim)
                 if i_comparison_image == 0:
                     comparison_image = mean2d
-                    ax4_title = 'mean2d'
+                    ax4_title = "mean2d"
                 else:
                     comparison_image = image3d[i_comparison_image - 1]
-                    ax4_title = f'single exposure #{i_comparison_image}'
+                    ax4_title = f"single exposure #{i_comparison_image}"
                 ax4.set_title(ax4_title)
-            elif event.key == '?':
+            elif event.key == "?":
                 _logger.info("-" * 79)
                 _logger.info("Keyboard shortcuts:")
                 _logger.info("'h' or 'r': reset zoom to initial limits")
@@ -429,50 +576,62 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                 _logger.info("-" * 79)
             elif event.key == "i":
                 if ax_mouse in [ax1, ax2]:
-                    print(f'x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}')
+                    print(f"x_mouse = {x_mouse:.3f}, y_mouse = {y_mouse:.3f}")
                 elif ax_mouse in [ax3]:
                     ix = int(round(x_mouse))
                     iy = int(round(y_mouse))
                     if 1 <= ix <= naxis1 and 1 <= iy <= naxis2:
-                        print('-' * 79)
-                        print(f'Pixel coordinates (FITS criterium): ix = {ix}, iy = {iy}')
-                        print(f'target2d - min2d = {target2d[iy-1, ix-1] - min2d[iy-1, ix-1]:.3f}')
-                        print(f'min2d - bias     = {min2d[iy-1, ix-1]:.3f}')
-                        print('.' * 79)
+                        print("-" * 79)
+                        print(f"Pixel coordinates (FITS criterium): ix = {ix}, iy = {iy}")
+                        print(f"target2d - min2d = {target2d[iy-1, ix-1] - min2d[iy-1, ix-1]:.3f}")
+                        print(f"min2d - bias     = {min2d[iy-1, ix-1]:.3f}")
+                        print("." * 79)
                         for inum in range(image3d.shape[0]):
-                            print(f'(image {inum+1} - bias) = {image3d[inum, iy-1, ix-1]:.3f}')
-                        print('.' * 79)
-                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ['lacosmic', 'mmcosmic']):
+                            print(f"(image {inum+1} - bias) = {image3d[inum, iy-1, ix-1]:.3f}")
+                        print("." * 79)
+                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ["lacosmic", "mmcosmic"]):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
                             # where the first pixel is (1, 1)
-                            if flag.reshape((naxis2, naxis1))[iy-1, ix-1]:
-                                print(f'Pixel found by {crmethod}')
+                            if flag.reshape((naxis2, naxis1))[iy - 1, ix - 1]:
+                                print(f"Pixel found by {crmethod}")
                             else:
-                                print(f'Pixel not found by {crmethod}')
+                                print(f"Pixel not found by {crmethod}")
             elif event.key == "&":
                 if ax_mouse in [ax3]:
-                    update_marks(naxis1, naxis2, flag_only_la, flag_only_sb, flag_both,
-                                 enum_la_global, enum_mm_global, enum_both_global,
-                                 xplot, yplot,
-                                 ax1, None, None, None)
-            elif event.key == 'n':
+                    update_marks(
+                        naxis1,
+                        naxis2,
+                        flag_only_la,
+                        flag_only_sb,
+                        flag_both,
+                        enum_la_global,
+                        enum_mm_global,
+                        enum_both_global,
+                        xplot,
+                        yplot,
+                        ax1,
+                        None,
+                        None,
+                        None,
+                    )
+            elif event.key == "n":
                 if ax_mouse in [ax3]:
                     display_ncr = not display_ncr
                     sync_zoom_y(ax1)
-            elif event.key == 'a':
-                if aspect_imshow == 'equal':
-                    aspect_imshow = 'auto'
+            elif event.key == "a":
+                if aspect_imshow == "equal":
+                    aspect_imshow = "auto"
                 else:
-                    aspect_imshow = 'equal'
+                    aspect_imshow = "equal"
                 sync_zoom_y(ax1)
-            elif event.key in ['t', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']:
+            elif event.key in ["t", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
                 if ax_mouse == ax4:
                     i_comparison_image_previous = i_comparison_image
-                    if event.key == 't':
+                    if event.key == "t":
                         i_comparison_image += 1
                         if i_comparison_image > naxis3:
                             i_comparison_image = 0
-                    elif event.key == '0':
+                    elif event.key == "0":
                         i_comparison_image = 0
                     else:
                         i_comparison_image = int(event.key)
@@ -481,17 +640,17 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     if i_comparison_image != i_comparison_image_previous:
                         if i_comparison_image == 0:
                             comparison_image = mean2d
-                            ax4_title = 'mean2d'
+                            ax4_title = "mean2d"
                         else:
                             comparison_image = image3d[i_comparison_image - 1]
-                            ax4_title = f'single exposure #{i_comparison_image}'
-                        print(f'Switching to {ax4_title} in ax4')
+                            ax4_title = f"single exposure #{i_comparison_image}"
+                        print(f"Switching to {ax4_title} in ax4")
                         vmin, vmax = img_ax4.get_clim()
                         img_ax4.set_data(comparison_image)
                         img_ax4.set_clim(vmin=vmin, vmax=vmax)
                         ax4.set_title(ax4_title)
                         ax4.figure.canvas.draw_idle()
-            elif event.key in [',', '/']:
+            elif event.key in [",", "/"]:
                 if ax_mouse in [ax3, ax4]:
                     # Determine the region in the image corresponding to the zoomed area
                     xmin, xmax = ax_mouse.get_xlim()
@@ -512,26 +671,26 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                         iymin = 1
                     if iymax > naxis2:
                         iymax = naxis2
-                    region2d = tea.SliceRegion2D(f'[{ixmin}:{ixmax},{iymin}:{iymax}]', mode='fits').python
-                    if event.key == ',':
+                    region2d = tea.SliceRegion2D(f"[{ixmin}:{ixmax},{iymin}:{iymax}]", mode="fits").python
+                    if event.key == ",":
                         if ax_mouse == ax3:
                             vmin, vmax = np.min(target2d[region2d]), np.max(target2d[region2d])
                         elif ax_mouse == ax4:
                             vmin, vmax = np.min(comparison_image[region2d]), np.max(comparison_image[region2d])
-                    elif event.key == '/':
+                    elif event.key == "/":
                         if ax_mouse == ax3:
                             vmin, vmax = tea.zscale(target2d[region2d])
                         elif ax_mouse == ax4:
                             vmin, vmax = tea.zscale(comparison_image[region2d])
-                    text_box_vmin.set_val(f'{int(np.round(vmin, 0))}')
-                    text_box_vmax.set_val(f'{int(np.round(vmax, 0))}')
+                    text_box_vmin.set_val(f"{int(np.round(vmin, 0))}")
+                    text_box_vmax.set_val(f"{int(np.round(vmax, 0))}")
 
                     img_ax3.set_clim(vmin=vmin, vmax=vmax)
                     img_ax4.set_clim(vmin=vmin, vmax=vmax)
 
                     ax3.figure.canvas.draw_idle()
                     ax4.figure.canvas.draw_idle()
-            elif event.key == 'x':
+            elif event.key == "x":
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
@@ -550,7 +709,7 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     ax3.figure.canvas.draw_idle()
                     ax4.figure.canvas.draw_idle()
                 except ValueError:
-                    print(f'Invalid input: {text}')
+                    print(f"Invalid input: {text}")
 
         def submit_vmax(text):
             nonlocal vmin, vmax
@@ -564,11 +723,11 @@ def diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_
                     ax3.figure.canvas.draw_idle()
                     ax4.figure.canvas.draw_idle()
                 except ValueError:
-                    print(f'Invalid input: {text}')
+                    print(f"Invalid input: {text}")
 
-        text_box_vmin = TextBox(ax_vmin, 'vmin:', initial=f'{int(np.round(vmin, 0))}', textalignment='right')
+        text_box_vmin = TextBox(ax_vmin, "vmin:", initial=f"{int(np.round(vmin, 0))}", textalignment="right")
         text_box_vmin.on_submit(submit_vmin)
-        text_box_vmax = TextBox(ax_vmax, 'vmax:', initial=f'{int(np.round(vmax, 0))}', textalignment='right')
+        text_box_vmax = TextBox(ax_vmax, "vmax:", initial=f"{int(np.round(vmax, 0))}", textalignment="right")
         text_box_vmax.on_submit(submit_vmax)
 
         _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")

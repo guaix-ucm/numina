@@ -34,9 +34,9 @@ def remove_isolated_pixels(h):
             if h[i, j] == 0:
                 k, ktot = 0, 0
                 fsum = 0.0
-                for ii in [i-1, i, i+1]:
+                for ii in [i - 1, i, i + 1]:
                     if 0 <= ii < naxis2:
-                        for jj in [j-1, j, j+1]:
+                        for jj in [j - 1, j, j + 1]:
                             if 0 <= jj < naxis1:
                                 ktot += 1
                                 if h[ii, jj] != 0:
@@ -53,9 +53,9 @@ def remove_isolated_pixels(h):
         for j in range(naxis1):
             if h[i, j] != 0:
                 k = 0
-                for ii in [i-1, i, i+1]:
+                for ii in [i - 1, i, i + 1]:
                     if 0 <= ii < naxis2:
-                        for jj in [j-1, j, j+1]:
+                        for jj in [j - 1, j, j + 1]:
                             if 0 <= jj < naxis1:
                                 if h[ii, jj] != 0:
                                     k += 1

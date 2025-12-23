@@ -43,7 +43,7 @@ def gausskernel2d_elliptical(fwhm_x, fwhm_y, kernsize):
     sigma_x = fwhm_x / (2 * math.sqrt(2 * math.log(2)))
     sigma_y = fwhm_y / (2 * math.sqrt(2 * math.log(2)))
     halfsize = kernsize // 2
-    y, x = np.mgrid[-halfsize:halfsize+1, -halfsize:halfsize+1]
+    y, x = np.mgrid[-halfsize : halfsize + 1, -halfsize : halfsize + 1]
     kernel = np.exp(-0.5 * ((x / sigma_x) ** 2 + (y / sigma_y) ** 2))
     kernel /= np.sum(kernel)
 

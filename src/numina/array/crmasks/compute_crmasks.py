@@ -29,6 +29,7 @@ from skimage.registration import phase_cross_correlation
 from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
+from teareduce import cleanest
 
 from .valid_parameters import VALID_CRMETHODS
 from .valid_parameters import VALID_LACOSMIC_CLEANTYPE
@@ -53,7 +54,7 @@ def decorate_output(func):
         # Split into lines
         output_lines = buf.getvalue().splitlines()
         # Remove trailing empty line
-        if output_lines and output_lines[-1] == '':
+        if output_lines and output_lines[-1] == "":
             output_lines = output_lines[:-1]
         if output_lines:
             _logger.info("\n".join(output_lines))
@@ -69,55 +70,56 @@ def decorated_cosmicray_lacosmic(*args, **kwargs):
 
 
 def compute_crmasks(
-        list_arrays,
-        gain=None,
-        rnoise=None,
-        bias=None,
-        crmethod='mm_lacosmic',
-        use_lamedian=False,
-        flux_factor=None,
-        flux_factor_regions=None,
-        apply_flux_factor_to=None,
-        interactive=True,
-        dilation=1,
-        regions_to_be_skipped=None,
-        pixels_to_be_flagged_as_cr=None,
-        pixels_to_be_ignored_as_cr=None,
-        pixels_to_be_replaced_by_local_median=None,
-        dtype=np.float32,
-        verify_cr=False,
-        semiwindow=15,
-        color_scale='minmax',
-        maxplots=-1,
-        debug=False,
-        _logger=None,
-        la_gain_apply=True,
-        la_sigclip=None,
-        la_sigfrac=None,
-        la_objlim=None,
-        la_satlevel=None,
-        la_niter=None,
-        la_sepmed=None,
-        la_cleantype=None,
-        la_fsmode=None,
-        la_psfmodel=None,
-        la_psffwhm_x=None,
-        la_psffwhm_y=None,
-        la_psfsize=None,
-        la_psfbeta=None,
-        la_verbose=False,
-        mm_xy_offsets=None,
-        mm_crosscorr_region=None,
-        mm_boundary_fit=None,
-        mm_knots_splfit=3,
-        mm_fixed_points_in_boundary=None,
-        mm_nsimulations=10,
-        mm_niter_boundary_extension=3,
-        mm_weight_boundary_extension=10.0,
-        mm_threshold=0.0,
-        mm_minimum_max2d_rnoise=5.0,
-        mm_seed=None
-        ):
+    list_arrays,
+    gain=None,
+    rnoise=None,
+    bias=None,
+    crmethod="mm_lacosmic",
+    use_lamedian=False,
+    flux_factor=None,
+    flux_factor_regions=None,
+    apply_flux_factor_to=None,
+    interactive=True,
+    dilation=1,
+    regions_to_be_skipped=None,
+    pixels_to_be_flagged_as_cr=None,
+    pixels_to_be_ignored_as_cr=None,
+    pixels_to_be_replaced_by_local_median=None,
+    dtype=np.float32,
+    verify_cr=False,
+    semiwindow=15,
+    color_scale="minmax",
+    maxplots=-1,
+    debug=False,
+    _logger=None,
+    la_gain_apply=True,
+    la_sigclip=None,
+    la_sigfrac=None,
+    la_objlim=None,
+    la_satlevel=None,
+    la_niter=None,
+    la_sepmed=None,
+    la_cleantype=None,
+    la_fsmode=None,
+    la_psfmodel=None,
+    la_psffwhm_x=None,
+    la_psffwhm_y=None,
+    la_psfsize=None,
+    la_psfbeta=None,
+    la_verbose=False,
+    la_padwidth=None,
+    mm_xy_offsets=None,
+    mm_crosscorr_region=None,
+    mm_boundary_fit=None,
+    mm_knots_splfit=3,
+    mm_fixed_points_in_boundary=None,
+    mm_nsimulations=10,
+    mm_niter_boundary_extension=3,
+    mm_weight_boundary_extension=10.0,
+    mm_threshold=0.0,
+    mm_minimum_max2d_rnoise=5.0,
+    mm_seed=None,
+):
     """
     Computation of cosmic rays masks using several equivalent exposures.
 
@@ -259,6 +261,11 @@ def compute_crmasks(
     la_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='lacosmic'.
+    la_padwidth : int or None
+        The width of the padding to apply to the input image
+        when using the lacosmic algorithm. If None, no padding is applied.
+        The padding helps to mitigate edge effects during the
+        cosmic ray detection.
     mm_xy_offsets: list of [x_offset, y_offset] or None
         The offsets to apply to each simulated individual exposure
         when computing the diagnostic diagram for the mmcosmic method.
@@ -430,18 +437,18 @@ def compute_crmasks(
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
     _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
     # Check use_lamedian
-    if use_lamedian and crmethod not in ['lacosmic', 'mm_lacosmic']:
+    if use_lamedian and crmethod not in ["lacosmic", "mm_lacosmic"]:
         raise ValueError("use_lamedian can only be True when crmethod is 'lacosmic' or 'mm_lacosmic'.")
     _logger.info("use_lamedian: %s", str(use_lamedian))
 
     # Check flux_factor
     if isinstance(flux_factor_regions, str):
-        if flux_factor_regions.lower() == 'none':
+        if flux_factor_regions.lower() == "none":
             flux_factor_regions = None
     if flux_factor is None:
         flux_factor = np.ones(num_images, dtype=float)
     elif isinstance(flux_factor, str):
-        if flux_factor.lower() == 'auto':
+        if flux_factor.lower() == "auto":
             _logger.info("flux_factor set to 'auto', computing values...")
             list_flux_factor_regions = []
             if isinstance(flux_factor_regions, str):
@@ -451,33 +458,44 @@ def compute_crmasks(
                     if isinstance(flux_factor_region, list):
                         all_integers = all(isinstance(val, int) for val in flux_factor_region)
                         if not all_integers:
-                            raise TypeError(f"Invalid flux_factor_region: {flux_factor_region}. "
-                                            "All elements must be integers.")
+                            raise TypeError(
+                                f"Invalid flux_factor_region: {flux_factor_region}. " "All elements must be integers."
+                            )
                         if len(flux_factor_region) != 4:
-                            raise ValueError(f"Invalid length for flux_factor_region: {flux_factor_region}. "
-                                             "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
-                        dumreg = f"[{flux_factor_region[0]}:{flux_factor_region[1]}, " + \
-                                 f"{flux_factor_region[2]}:{flux_factor_region[3]}]"
+                            raise ValueError(
+                                f"Invalid length for flux_factor_region: {flux_factor_region}. "
+                                "Must be a list of 4 integers [xmin, xmax, ymin, ymax]."
+                            )
+                        dumreg = (
+                            f"[{flux_factor_region[0]}:{flux_factor_region[1]}, "
+                            + f"{flux_factor_region[2]}:{flux_factor_region[3]}]"
+                        )
                         _logger.debug("defined flux factor region: %s", dumreg)
-                        ff_region = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
+                        ff_region = tea.SliceRegion2D(dumreg, mode="fits", naxis1=naxis1, naxis2=naxis2)
                     else:
-                        raise TypeError(f"Invalid type for flux_factor_region in the list: {type(flux_factor_region)}. "
-                                        "Must be a list of 4 integers")
+                        raise TypeError(
+                            f"Invalid type for flux_factor_region in the list: {type(flux_factor_region)}. "
+                            "Must be a list of 4 integers"
+                        )
                     list_flux_factor_regions.append(ff_region)
             elif flux_factor_regions is None:
-                ff_region = tea.SliceRegion2D(f'[1:{naxis1}, 1:{naxis2}]', mode='fits')
+                ff_region = tea.SliceRegion2D(f"[1:{naxis1}, 1:{naxis2}]", mode="fits")
                 list_flux_factor_regions = [ff_region]
             else:
-                raise TypeError(f"Invalid type for flux_factor_regions: {type(flux_factor_regions)}. "
-                                "Must be list of 4 integers or None.")
+                raise TypeError(
+                    f"Invalid type for flux_factor_regions: {type(flux_factor_regions)}. "
+                    "Must be list of 4 integers or None."
+                )
             median2d = np.median(image3d, axis=0)
             flux_factor = compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, interactive, debug)
             _logger.info("computed flux_factor set to %s", str(flux_factor))
-        elif flux_factor.lower() == 'none':
+        elif flux_factor.lower() == "none":
             flux_factor = np.ones(num_images, dtype=float)
             if flux_factor_regions is not None:
-                raise ValueError("Using flux_factor='none', but flux_factor_regions is provided. "
-                                 "You must use flux_factor='auto' to use flux_factor_regions.")
+                raise ValueError(
+                    "Using flux_factor='none', but flux_factor_regions is provided. "
+                    "You must use flux_factor='auto' to use flux_factor_regions."
+                )
         elif isinstance(ast.literal_eval(flux_factor), list):
             flux_factor = ast.literal_eval(flux_factor)
             if len(flux_factor) != num_images:
@@ -498,13 +516,14 @@ def compute_crmasks(
     else:
         raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
     _logger.info("flux_factor: %s", str(flux_factor))
-    if apply_flux_factor_to not in ['original', 'simulated']:
-        raise ValueError(f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. "
-                         "Valid options are 'original' and 'simulated'.")
+    if apply_flux_factor_to not in ["original", "simulated"]:
+        raise ValueError(
+            f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. " "Valid options are 'original' and 'simulated'."
+        )
     _logger.info("apply_flux_factor_to: %s", apply_flux_factor_to)
 
     # Apply the flux factor to the input arrays if requested
-    if apply_flux_factor_to == 'original':
+    if apply_flux_factor_to == "original":
         for i in range(num_images):
             image3d[i] /= flux_factor[i]
 
@@ -512,7 +531,7 @@ def compute_crmasks(
     # that is True for pixels not included in the regions to be skipped
     bool_to_be_cleaned = np.ones((naxis2, naxis1), dtype=bool)  # default is to clean all pixels
     if isinstance(regions_to_be_skipped, str):
-        if regions_to_be_skipped.lower() == 'none':
+        if regions_to_be_skipped.lower() == "none":
             regions_to_be_skipped = None
         else:
             regions_to_be_skipped = ast.literal_eval(regions_to_be_skipped)
@@ -523,16 +542,22 @@ def compute_crmasks(
                 if not all_integers:
                     raise TypeError(f"Invalid region_to_be_skipped: {region}. All elements must be integers.")
                 if len(region) != 4:
-                    raise ValueError(f"Invalid length for region_to_be_skipped: {region}. "
-                                     "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
+                    raise ValueError(
+                        f"Invalid length for region_to_be_skipped: {region}. "
+                        "Must be a list of 4 integers [xmin, xmax, ymin, ymax]."
+                    )
                 dumreg = f"[{region[0]}:{region[1]}, {region[2]}:{region[3]}]"
                 _logger.debug("defined region to be skipped: %s", dumreg)
-                skip_region = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
-                bool_to_be_cleaned[skip_region.python[0].start:skip_region.python[0].stop,
-                                   skip_region.python[1].start:skip_region.python[1].stop] = False
+                skip_region = tea.SliceRegion2D(dumreg, mode="fits", naxis1=naxis1, naxis2=naxis2)
+                bool_to_be_cleaned[
+                    skip_region.python[0].start : skip_region.python[0].stop,
+                    skip_region.python[1].start : skip_region.python[1].stop,
+                ] = False
             else:
-                raise TypeError(f"Invalid type for region_to_be_skipped in the list: {type(region)}. "
-                                "Must be a list of 4 integers.")
+                raise TypeError(
+                    f"Invalid type for region_to_be_skipped in the list: {type(region)}. "
+                    "Must be a list of 4 integers."
+                )
 
     # Compute minimum, maximum, median and mean along the first axis
     min2d = np.min(image3d, axis=0)
@@ -545,104 +570,129 @@ def compute_crmasks(
     yplot = median2d.flatten() - min2d.flatten()
 
     # Check that color_scale is valid
-    if color_scale not in ['minmax', 'zscale']:
+    if color_scale not in ["minmax", "zscale"]:
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
     # Define the pixels to be flagged as CR
     if isinstance(pixels_to_be_flagged_as_cr, str):
-        if pixels_to_be_flagged_as_cr.lower() == 'none':
+        if pixels_to_be_flagged_as_cr.lower() == "none":
             pixels_to_be_flagged_as_cr = None
         else:
             pixels_to_be_flagged_as_cr = ast.literal_eval(pixels_to_be_flagged_as_cr)
     if isinstance(pixels_to_be_flagged_as_cr, (list, tuple)):
         for p in pixels_to_be_flagged_as_cr:
-            if (not isinstance(p, (list, tuple)) or len(p) != 2 or
-                    not all(isinstance(item, int) for item in p)):
-                raise ValueError(f"Invalid numbers in pixels_to_be_flagged_as_cr: {p}. "
-                                 "Each pixel must be a tuple or list of two integers (X, Y).")
+            if not isinstance(p, (list, tuple)) or len(p) != 2 or not all(isinstance(item, int) for item in p):
+                raise ValueError(
+                    f"Invalid numbers in pixels_to_be_flagged_as_cr: {p}. "
+                    "Each pixel must be a tuple or list of two integers (X, Y)."
+                )
             if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
                 raise ValueError(f"Pixel coordinates {p} in pixels_to_be_flagged_as_cr are out of bounds.")
             # ensure these pixels are cleaned, independently of being included
             # in regions_to_be_skipped
-            bool_to_be_cleaned[p[1]-1, p[0]-1] = True
+            bool_to_be_cleaned[p[1] - 1, p[0] - 1] = True
     elif pixels_to_be_flagged_as_cr is not None:
-        raise TypeError(f"Invalid type for pixels_to_be_flagged_as_cr: {type(pixels_to_be_flagged_as_cr)}. "
-                        "Must be a list of (x, y) tuples or None.")
-    _logger.info("individual pixels to be initially flagged as CR: %s",
-                 "None" if pixels_to_be_flagged_as_cr is None else str(pixels_to_be_flagged_as_cr))
+        raise TypeError(
+            f"Invalid type for pixels_to_be_flagged_as_cr: {type(pixels_to_be_flagged_as_cr)}. "
+            "Must be a list of (x, y) tuples or None."
+        )
+    _logger.info(
+        "individual pixels to be initially flagged as CR: %s",
+        "None" if pixels_to_be_flagged_as_cr is None else str(pixels_to_be_flagged_as_cr),
+    )
 
     # Define the pixels to be ignored as CR
     # check that the provided pixels are valid
     if isinstance(pixels_to_be_ignored_as_cr, str):
-        if pixels_to_be_ignored_as_cr.lower() == 'none':
+        if pixels_to_be_ignored_as_cr.lower() == "none":
             pixels_to_be_ignored_as_cr = None
         else:
             pixels_to_be_ignored_as_cr = ast.literal_eval(pixels_to_be_ignored_as_cr)
     if isinstance(pixels_to_be_ignored_as_cr, (list, tuple)):
         for p in pixels_to_be_ignored_as_cr:
-            if (not isinstance(p, (list, tuple)) or len(p) != 2 or
-                    not all(isinstance(item, int) for item in p)):
-                raise ValueError(f"Invalid numbers in pixels_to_be_ignored_as_cr: {p}. "
-                                 "Each pixel must be a tuple or list of two integers (X, Y).")
+            if not isinstance(p, (list, tuple)) or len(p) != 2 or not all(isinstance(item, int) for item in p):
+                raise ValueError(
+                    f"Invalid numbers in pixels_to_be_ignored_as_cr: {p}. "
+                    "Each pixel must be a tuple or list of two integers (X, Y)."
+                )
             if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
                 raise ValueError(f"Pixel coordinates {p} in pixels_to_be_ignored_as_cr are out of bounds.")
             # ensure these pixels are not cleaned
-            bool_to_be_cleaned[p[1]-1, p[0]-1] = False
+            bool_to_be_cleaned[p[1] - 1, p[0] - 1] = False
     elif pixels_to_be_ignored_as_cr is not None:
-        raise TypeError(f"Invalid type for pixels_to_be_ignored_as_cr: {type(pixels_to_be_ignored_as_cr)}. "
-                        "Must be a list of (x, y) tuples or None.")
-    _logger.info("individual pixels to be initially ignored as CR: %s",
-                 "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
+        raise TypeError(
+            f"Invalid type for pixels_to_be_ignored_as_cr: {type(pixels_to_be_ignored_as_cr)}. "
+            "Must be a list of (x, y) tuples or None."
+        )
+    _logger.info(
+        "individual pixels to be initially ignored as CR: %s",
+        "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr),
+    )
 
     # Define the pixels to be replaced by the median value when removing the CRs
     # check that the provided pixels are valid
     if isinstance(pixels_to_be_replaced_by_local_median, str):
-        if pixels_to_be_replaced_by_local_median.lower() == 'none':
+        if pixels_to_be_replaced_by_local_median.lower() == "none":
             pixels_to_be_replaced_by_local_median = None
         else:
             pixels_to_be_replaced_by_local_median = ast.literal_eval(pixels_to_be_replaced_by_local_median)
     if isinstance(pixels_to_be_replaced_by_local_median, (list, tuple)):
         for p in pixels_to_be_replaced_by_local_median:
-            if (not isinstance(p, (list, tuple)) or len(p) != 4 or
-                    not all(isinstance(item, int) for item in p)):
-                raise ValueError(f"Invalid numbers in pixels_to_be_replaced_by_local_median: {p}. "
-                                 "Each pixel must be a tuple or list of four integers (X, Y, X_width, Y_width).")
+            if not isinstance(p, (list, tuple)) or len(p) != 4 or not all(isinstance(item, int) for item in p):
+                raise ValueError(
+                    f"Invalid numbers in pixels_to_be_replaced_by_local_median: {p}. "
+                    "Each pixel must be a tuple or list of four integers (X, Y, X_width, Y_width)."
+                )
             if p[0] < 1 or p[0] > naxis1 or p[1] < 1 or p[1] > naxis2:
                 raise ValueError(f"Pixel coordinates {p} in pixels_to_be_replaced_by_local_median are out of bounds.")
             if p[2] % 2 == 0 or p[3] % 2 == 0 or p[2] < 1 or p[3] < 1:
-                raise ValueError(f"Pixel {p}: X_width and Y_width in pixels_to_be_replaced_by_local_median "
-                                 "must be odd integers >= 1.")
+                raise ValueError(
+                    f"Pixel {p}: X_width and Y_width in pixels_to_be_replaced_by_local_median "
+                    "must be odd integers >= 1."
+                )
             if p[2] * p[3] < 3:
-                raise ValueError(f"Pixel {p}: The area defined by X_width and Y_width in "
-                                 "pixels_to_be_replaced_by_local_median must be >= 3.")
+                raise ValueError(
+                    f"Pixel {p}: The area defined by X_width and Y_width in "
+                    "pixels_to_be_replaced_by_local_median must be >= 3."
+                )
     elif pixels_to_be_replaced_by_local_median is not None:
-        raise TypeError(f"Invalid type for pixels_to_be_replaced_by_local_median: "
-                        f"{type(pixels_to_be_replaced_by_local_median)}. "
-                        "Must be a list of (x, y, x_width, y_width) tuples or None.")
-    _logger.info("pixels to be replaced by the median value when removing the CRs: %s",
-                 "None" if pixels_to_be_replaced_by_local_median is None
-                 else str(pixels_to_be_replaced_by_local_median))
+        raise TypeError(
+            f"Invalid type for pixels_to_be_replaced_by_local_median: "
+            f"{type(pixels_to_be_replaced_by_local_median)}. "
+            "Must be a list of (x, y, x_width, y_width) tuples or None."
+        )
+    _logger.info(
+        "pixels to be replaced by the median value when removing the CRs: %s",
+        "None" if pixels_to_be_replaced_by_local_median is None else str(pixels_to_be_replaced_by_local_median),
+    )
 
     # These pixels to be replaced by the local median should not be
     # flagged as CR if they will be replaced by the local median anyway
     if pixels_to_be_replaced_by_local_median is not None:
         for p in pixels_to_be_replaced_by_local_median:
-            if bool_to_be_cleaned[p[1]-1, p[0]-1]:
-                _logger.warning("Pixel %s is set to be replaced by the local median "
-                                "but it is also set to be cleaned as CR. "
-                                "It will not be cleaned as CR but will be replaced by the local median.", str(p))
-                bool_to_be_cleaned[p[1]-1, p[0]-1] = False
-        _logger.info("updated pixels to be ignored as CR: %s",
-                     "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr))
+            if bool_to_be_cleaned[p[1] - 1, p[0] - 1]:
+                _logger.warning(
+                    "Pixel %s is set to be replaced by the local median "
+                    "but it is also set to be cleaned as CR. "
+                    "It will not be cleaned as CR but will be replaced by the local median.",
+                    str(p),
+                )
+                bool_to_be_cleaned[p[1] - 1, p[0] - 1] = False
+        _logger.info(
+            "updated pixels to be ignored as CR: %s",
+            "None" if pixels_to_be_ignored_as_cr is None else str(pixels_to_be_ignored_as_cr),
+        )
 
     # Log the input parameters
-    if crmethod in ['mmcosmic', 'mm_lacosmic']:
+    if crmethod in ["mmcosmic", "mm_lacosmic"]:
         _logger.debug("mm_xy_offsets: %s", str(mm_xy_offsets) if mm_xy_offsets is not None else "None")
         _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
         _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
         _logger.debug("mm_knots_splfit: %d", mm_knots_splfit)
-        _logger.debug("mm_fixed points_in_boundary: %s",
-                      str(mm_fixed_points_in_boundary) if mm_fixed_points_in_boundary is not None else "None")
+        _logger.debug(
+            "mm_fixed points_in_boundary: %s",
+            str(mm_fixed_points_in_boundary) if mm_fixed_points_in_boundary is not None else "None",
+        )
         _logger.debug("mm_nsimulations: %d", mm_nsimulations)
         _logger.debug("mm_niter_boundary_extension: %d", mm_niter_boundary_extension)
         _logger.debug("mm_weight_boundary_extension: %f", mm_weight_boundary_extension)
@@ -650,7 +700,7 @@ def compute_crmasks(
         _logger.debug("mm_minimum_max2d_rnoise: %f", mm_minimum_max2d_rnoise)
         _logger.debug("mm_seed: %s", str(mm_seed))
 
-    if crmethod in ['lacosmic', 'mm_lacosmic']:
+    if crmethod in ["lacosmic", "mm_lacosmic"]:
         # Check la_gain_apply
         if la_gain_apply is None:
             la_gain_apply = True
@@ -662,19 +712,19 @@ def compute_crmasks(
             _logger.warning("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
             la_sigclip = 5.0
         else:
-            _logger.debug("la_sigclip for lacosmic: %f", la_sigclip)
+            _logger.debug("la_sigclip for lacosmic: %s", str(la_sigclip))
         # Check la_sigfrac
         if la_sigfrac is None:
             _logger.warning("la_sigfrac for lacosmic not defined, assuming la_sigfrac=0.3")
             la_sigfrac = 0.3
         else:
-            _logger.debug("la_sigfrac for lacosmic: %f", la_sigfrac)
+            _logger.debug("la_sigfrac for lacosmic: %s", str(la_sigfrac))
         # Check la_objlim
         if la_objlim is None:
             _logger.warning("la_objlim for lacosmic not defined, assuming la_objlim=5.0")
             la_objlim = 5.0
         else:
-            _logger.debug("la_objlim for lacosmic: %f", la_objlim)
+            _logger.debug("la_objlim for lacosmic: %s", str(la_objlim))
         # Check la_satlevel
         if la_satlevel is None:
             _logger.warning("la_satlevel for lacosmic not defined, assuming la_satlevel=None")
@@ -701,20 +751,21 @@ def compute_crmasks(
         else:
             raise TypeError("la_cleantype must be a string.")
         # Check la_fsmode
-        if la_fsmode not in ['median', 'convolve']:
+        if la_fsmode not in ["median", "convolve"]:
             raise ValueError("la_fsmode must be 'median' or 'convolve'.")
         else:
             _logger.debug("la_fsmode for lacosmic: %s", la_fsmode)
         # Check la_psfmodel
-        if la_psfmodel not in ['gauss', 'moffat', 'gaussx', 'gaussy', 'gaussxy']:
+        if la_psfmodel not in ["gauss", "moffat", "gaussx", "gaussy", "gaussxy"]:
             raise ValueError("la_psfmodel must be 'gauss', 'moffat', 'gaussx', 'gaussy', or 'gaussxy'.")
         else:
             _logger.debug("la_psfmodel for lacosmic: %s", la_psfmodel)
         # Check la_psffwhm_x, la_psffwhm_y, la_psfsize
-        if la_fsmode == 'convolve':
+        if la_fsmode == "convolve":
             if la_psffwhm_x is None or la_psffwhm_y is None or la_psfsize is None:
-                raise ValueError("For la_fsmode='convolve', "
-                                 "la_psffwhm_x, la_psffwhm_y, and la_psfsize must be provided.")
+                raise ValueError(
+                    "For la_fsmode='convolve', " "la_psffwhm_x, la_psffwhm_y, and la_psfsize must be provided."
+                )
             else:
                 _logger.debug("la_psffwhm_x for lacosmic: %f", la_psffwhm_x)
                 _logger.debug("la_psffwhm_y for lacosmic: %f", la_psffwhm_y)
@@ -722,7 +773,7 @@ def compute_crmasks(
             if la_psfsize % 2 == 0 or la_psfsize < 3:
                 raise ValueError("la_psfsize must be an odd integer >= 3.")
         # Check la_psfbeta
-        if la_psfmodel == 'moffat':
+        if la_psfmodel == "moffat":
             if la_psfbeta is None:
                 raise ValueError("For la_psfmodel='moffat', la_psfbeta must be provided.")
             else:
@@ -732,52 +783,104 @@ def compute_crmasks(
         if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
             la_verbose = False
         _logger.debug("la_verbose for lacosmic: %s", str(la_verbose))
+        # Check la_padwidth
+        if la_padwidth is None:
+            la_padwidth = 0
+            _logger.debug("la_padwidth for lacosmic not defined, assuming la_padwidth=0")
+        else:
+            if not isinstance(la_padwidth, int) or la_padwidth < 0:
+                raise ValueError("la_padwidth must be a non-negative integer.")
+            _logger.debug("la_padwidth for lacosmic: %d", la_padwidth)
         # Define dictionary with the parameters for cosmicray_lacosmic() function
         # Note: the "pssl" parameter is not used here because it was deprecated
         # in version 2.3.0 and will be removed in a future version.
         # The "pssl" keyword will be removed in ccdproc 3.0.
         # Use "inbkg" instead to have astroscrappy temporarily remove the background during processing.
-        dict_la_params = {
-            'gain': gain_scalar,
-            'readnoise': rnoise_scalar,
-            'sigclip': la_sigclip,
-            'sigfrac': la_sigfrac,
-            'objlim': la_objlim,
-            'satlevel': la_satlevel * gain_scalar if la_satlevel is not None else None,  # in electrons!
-            'niter': la_niter,
-            'sepmed': la_sepmed,
-            'cleantype': la_cleantype,
-            'fsmode': la_fsmode,
-            'psfmodel': la_psfmodel,
-            'psffwhm': None,
-            'psfsize': la_psfsize,
-            'psfbeta': la_psfbeta,
-            'verbose': la_verbose,
-            'psfk': None,
-            'inbkg': None,
-            'invar': None
+        dict_la_params_run1 = {
+            "gain": gain_scalar,
+            "readnoise": rnoise_scalar,
+            "sigclip": None,  # to be set below
+            "sigfrac": None,  # to be set below
+            "objlim": None,  # to be set below
+            "satlevel": la_satlevel * gain_scalar if la_satlevel is not None else None,  # in electrons!
+            "niter": la_niter,
+            "sepmed": la_sepmed,
+            "cleantype": la_cleantype,
+            "fsmode": la_fsmode,
+            "psfmodel": la_psfmodel,
+            "psffwhm": None,
+            "psfsize": la_psfsize,
+            "psfbeta": la_psfbeta,
+            "verbose": la_verbose,
+            "psfk": None,
+            "inbkg": None,
+            "invar": None,
         }
-        if la_psfmodel in ['gauss', 'moffat']:
+        dict_la_params_run2 = dict_la_params_run1.copy()
+        # update sigclip
+        la_sigclip_needs_2runs = False
+        if isinstance(la_sigclip, (float, int)):
+            dict_la_params_run1["sigclip"] = la_sigclip
+            dict_la_params_run2["sigclip"] = la_sigclip
+        elif all_valid_numbers(la_sigclip, fixed_length=2):
+            dict_la_params_run1["sigclip"] = la_sigclip[0]
+            dict_la_params_run2["sigclip"] = la_sigclip[1]
+            if la_sigclip[1] != la_sigclip[0]:
+                la_sigclip_needs_2runs = True
+        else:
+            raise TypeError("la_sigclip must be a number or a list of numbers.")
+        # update sigfrac
+        la_sigfrac_needs_2runs = False
+        if isinstance(la_sigfrac, (float, int)):
+            dict_la_params_run1["sigfrac"] = la_sigfrac
+            dict_la_params_run2["sigfrac"] = la_sigfrac
+        elif all_valid_numbers(la_sigfrac, fixed_length=2):
+            dict_la_params_run1["sigfrac"] = la_sigfrac[0]
+            dict_la_params_run2["sigfrac"] = la_sigfrac[1]
+            if la_sigfrac[1] != la_sigfrac[0]:
+                la_sigfrac_needs_2runs = True
+        else:
+            raise TypeError("la_sigfrac must be a number or a list of numbers.")
+        # update objlim
+        la_objlim_needs_2runs = False
+        if isinstance(la_objlim, (float, int)):
+            dict_la_params_run1["objlim"] = la_objlim
+            dict_la_params_run2["objlim"] = la_objlim
+        elif all_valid_numbers(la_objlim, fixed_length=2):
+            dict_la_params_run1["objlim"] = la_objlim[0]
+            dict_la_params_run2["objlim"] = la_objlim[1]
+            if la_objlim[1] != la_objlim[0]:
+                la_objlim_needs_2runs = True
+        else:
+            raise TypeError("la_objlim must be a number or a list of numbers.")
+        # Determine if two runs are needed
+        lacosmic_needs_2runs = la_sigclip_needs_2runs or la_sigfrac_needs_2runs or la_objlim_needs_2runs
+        # Update psffwhm or psfk based on la_psfmodel
+        if la_psfmodel in ["gauss", "moffat"]:
             if la_psffwhm_x is None or la_psfsize is None:
-                raise ValueError("For la_psfmodel='gauss' or 'moffat', "
-                                 "la_psffwhm_x and la_psfsize must be provided.")
-            dict_la_params['psffwhm'] = (la_psffwhm_x + la_psffwhm_y) / 2.0  # average FWHM
-        elif la_psfmodel == 'gaussx':
+                raise ValueError(
+                    "For la_psfmodel='gauss' or 'moffat', " "la_psffwhm_x and la_psfsize must be provided."
+                )
+            dict_la_params_run1["psffwhm"] = (la_psffwhm_x + la_psffwhm_y) / 2.0  # average FWHM
+            dict_la_params_run2["psffwhm"] = (la_psffwhm_x + la_psffwhm_y) / 2.0  # average FWHM
+        elif la_psfmodel == "gaussx":
             if la_psffwhm_x is None or la_psfsize is None:
-                raise ValueError("For la_psfmodel='gaussx', "
-                                 "la_psffwhm_x and la_psfsize must be provided.")
-            dict_la_params['psffwhm'] = la_psffwhm_x
-        elif la_psfmodel == 'gaussy':
+                raise ValueError("For la_psfmodel='gaussx', " "la_psffwhm_x and la_psfsize must be provided.")
+            dict_la_params_run1["psffwhm"] = la_psffwhm_x
+            dict_la_params_run2["psffwhm"] = la_psffwhm_x
+        elif la_psfmodel == "gaussy":
             if la_psffwhm_y is None or la_psfsize is None:
-                raise ValueError("For la_psfmodel='gaussy', "
-                                 "la_psffwhm_y and la_psfsize must be provided.")
-            dict_la_params['psffwhm'] = la_psffwhm_y
-        elif la_psfmodel == 'gaussxy':
-            dict_la_params['psffwhm'] = None  # not used in this case
-            dict_la_params['psfk'] = gausskernel2d_elliptical(
-                fwhm_x=la_psffwhm_x,
-                fwhm_y=la_psffwhm_y,
-                kernsize=la_psfsize
+                raise ValueError("For la_psfmodel='gaussy', " "la_psffwhm_y and la_psfsize must be provided.")
+            dict_la_params_run1["psffwhm"] = la_psffwhm_y
+            dict_la_params_run2["psffwhm"] = la_psffwhm_y
+        elif la_psfmodel == "gaussxy":
+            dict_la_params_run1["psffwhm"] = None  # not used in this case
+            dict_la_params_run2["psffwhm"] = None  # not used in this case
+            dict_la_params_run1["psfk"] = gausskernel2d_elliptical(
+                fwhm_x=la_psffwhm_x, fwhm_y=la_psffwhm_y, kernsize=la_psfsize
+            )
+            dict_la_params_run2["psfk"] = gausskernel2d_elliptical(
+                fwhm_x=la_psffwhm_x, fwhm_y=la_psffwhm_y, kernsize=la_psfsize
             )
         else:
             raise ValueError("la_psfmodel must be 'gauss', 'moffat', 'gaussx', 'gaussy', or 'gaussxy'.")
@@ -790,15 +893,26 @@ def compute_crmasks(
     _logger.info("color scale for plots: %s", color_scale)
 
     if la_verbose:
-        for key in dict_la_params.keys():
-            if key == 'psfk':
-                if dict_la_params[key] is None:
+        _logger.info("[green][LACOSMIC parameters for run 1][/green]")
+        for key in dict_la_params_run1.keys():
+            if key == "psfk":
+                if dict_la_params_run1[key] is None:
                     _logger.info("%s for lacosmic: None", key)
                 else:
-                    _logger.info("%s for lacosmic: array with shape %s", key, str(dict_la_params[key].shape))
+                    _logger.info("%s for lacosmic: array with shape %s", key, str(dict_la_params_run1[key].shape))
             else:
-                _logger.info("%s for lacosmic: %s", key, str(dict_la_params[key]))
-
+                _logger.info("%s for lacosmic: %s", key, str(dict_la_params_run1[key]))
+        if lacosmic_needs_2runs:
+            _logger.info("[green][LACOSMIC parameters modified for run 2][/green]")
+            if la_sigclip_needs_2runs:
+                _logger.info("  la_sigclip for run 1: %f", dict_la_params_run1["sigclip"])
+                _logger.info("  la_sigclip for run 2: %f", dict_la_params_run2["sigclip"])
+            if la_sigfrac_needs_2runs:
+                _logger.info("  la_sigfrac for run 1: %f", dict_la_params_run1["sigfrac"])
+                _logger.info("  la_sigfrac for run 2: %f", dict_la_params_run2["sigfrac"])
+            if la_objlim_needs_2runs:
+                _logger.info("  la_objlim for run 1: %f", dict_la_params_run1["objlim"])
+                _logger.info("  la_objlim for run 2: %f", dict_la_params_run2["objlim"])
     if rich_configured:
         _logger.info("[green]" + "-" * 79 + "[/green]")
         _logger.info("starting cosmic ray detection in [magenta]median2d[/magenta] image...")
@@ -806,24 +920,48 @@ def compute_crmasks(
         _logger.info("-" * 73)
         _logger.info("starting cosmic ray detection in median2d image...")
 
-    if crmethod in ['lacosmic', 'mm_lacosmic']:
+    if crmethod in ["lacosmic", "mm_lacosmic"]:
         # ---------------------------------------------------------------------
         # Detect residual cosmic rays in the median2d image using the
         # Laplacian edge detection method from ccdproc. This only works if gain and
         # rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
+        if lacosmic_needs_2runs:
+            _logger.info("LACOSMIC will be run in 2 passes with modified parameters.")
+        else:
+            _logger.info("LACOSMIC will be run in a single pass.")
         _logger.info(f"detecting cosmic rays in median2d image using {rlabel_lacosmic}...")
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
+        # run 1
+        median2d_padded = np.pad(median2d, pad_width=la_padwidth, mode="reflect")
         median2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
-            ccd=median2d,
-            **{key: value for key, value in dict_la_params.items() if value is not None}
+            ccd=median2d_padded, **{key: value for key, value in dict_la_params_run1.items() if value is not None}
         )
-        _logger.info("pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
-                     rlabel_lacosmic, np.sum(flag_la), np.sum(flag_la) / flag_la.size * 100)
+        if la_padwidth > 0:
+            median2d_lacosmic = median2d_lacosmic[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+            flag_la = flag_la[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+        # run 2 if needed
+        if lacosmic_needs_2runs:
+            median2d_lacosmic2, flag_la2 = decorated_cosmicray_lacosmic(
+                ccd=median2d_padded,
+                **{key: value for key, value in dict_la_params_run2.items() if value is not None},
+            )
+            if la_padwidth > 0:
+                median2d_lacosmic2 = median2d_lacosmic2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+                flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+            # combine results from both runs
+            flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
+            median2d_lacosmic = median2d_lacosmic2
+        _logger.info(
+            "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
+            rlabel_lacosmic,
+            np.sum(flag_la),
+            np.sum(flag_la) / flag_la.size * 100,
+        )
         flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
         flag_la = flag_la.flatten()
-        if crmethod == 'lacosmic':
+        if crmethod == "lacosmic":
             xplot_boundary = None
             yplot_boundary = None
             mm_threshold = None
@@ -831,7 +969,7 @@ def compute_crmasks(
     else:
         median2d_lacosmic = None
 
-    if crmethod in ['mmcosmic', 'mm_lacosmic']:
+    if crmethod in ["mmcosmic", "mm_lacosmic"]:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
@@ -839,12 +977,11 @@ def compute_crmasks(
         # Define mm_fixed_points_in_boundary
         _logger.info("detecting cosmic rays in median2d image using %s...", rlabel_mmcosmic)
         if isinstance(mm_fixed_points_in_boundary, str):
-            if mm_fixed_points_in_boundary.lower() == 'none':
+            if mm_fixed_points_in_boundary.lower() == "none":
                 mm_fixed_points_in_boundary = None
         if mm_fixed_points_in_boundary is None:
-            if mm_boundary_fit == 'piecewise':
-                raise ValueError("For mm_boundary_fit='piecewise', "
-                                 "mm_fixed_points_in_boundary must be provided.")
+            if mm_boundary_fit == "piecewise":
+                raise ValueError("For mm_boundary_fit='piecewise', " "mm_fixed_points_in_boundary must be provided.")
         else:
             mm_fixed_points_in_boundary = list(eval(str(mm_fixed_points_in_boundary)))
             x_mm_fixed_points_in_boundary = []
@@ -852,11 +989,15 @@ def compute_crmasks(
             w_mm_fixed_points_in_boundary = []
             for item in mm_fixed_points_in_boundary:
                 if not (isinstance(item, (list, tuple)) and len(item) in [2, 3]):
-                    raise ValueError("Each item in mm_fixed_points_in_boundary must be a list or tuple of "
-                                     "2 or 3 elements: (x, y) or (x, y, weight).")
+                    raise ValueError(
+                        "Each item in mm_fixed_points_in_boundary must be a list or tuple of "
+                        "2 or 3 elements: (x, y) or (x, y, weight)."
+                    )
                 if not all_valid_numbers(item):
-                    raise ValueError(f"All elements in mm_fixed_points_in_boundary={mm_fixed_points_in_boundary} "
-                                     "must be valid numbers.")
+                    raise ValueError(
+                        f"All elements in mm_fixed_points_in_boundary={mm_fixed_points_in_boundary} "
+                        "must be valid numbers."
+                    )
                 if len(item) == 2:
                     x_mm_fixed_points_in_boundary.append(float(item[0]))
                     y_mm_fixed_points_in_boundary.append(float(item[1]))
@@ -873,17 +1014,18 @@ def compute_crmasks(
             raise ValueError(f"mm_boundary_fit is None and must be one of {VALID_BOUNDARY_FITS}.")
         elif mm_boundary_fit not in VALID_BOUNDARY_FITS:
             raise ValueError(f"Invalid mm_boundary_fit: {mm_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
-        if mm_boundary_fit == 'piecewise':
+        if mm_boundary_fit == "piecewise":
             if mm_fixed_points_in_boundary is None:
-                raise ValueError("For mm_boundary_fit='piecewise', "
-                                 "mm_fixed_points_in_boundary must be provided.")
+                raise ValueError("For mm_boundary_fit='piecewise', " "mm_fixed_points_in_boundary must be provided.")
             elif len(x_mm_fixed_points_in_boundary) < 2:
-                raise ValueError("For mm_boundary_fit='piecewise', "
-                                 "at least two fixed points must be provided in mm_fixed_points_in_boundary.")
+                raise ValueError(
+                    "For mm_boundary_fit='piecewise', "
+                    "at least two fixed points must be provided in mm_fixed_points_in_boundary."
+                )
 
         # Compute offsets between each single exposure and the median image
         if isinstance(mm_xy_offsets, str):
-            if mm_xy_offsets.lower() == 'none':
+            if mm_xy_offsets.lower() == "none":
                 mm_xy_offsets = None
         if mm_xy_offsets is not None and mm_crosscorr_region is not None:
             raise ValueError("You can only provide one of mm_xy_offsets or mm_crosscorr_region, not both.")
@@ -895,43 +1037,52 @@ def compute_crmasks(
                 if len(mm_xy_offsets) != num_images:
                     raise ValueError(f"mm_xy_offsets must have the same length as the number of images ({num_images}).")
                 for offset in mm_xy_offsets:
-                    if (not isinstance(offset, (list, tuple)) or len(offset) != 2 or
-                            not all_valid_numbers(offset)):
-                        raise ValueError(f"Invalid offset in mm_xy_offsets: {offset}. "
-                                         "Each offset must be a tuple or list of two numbers (x_offset, y_offset).")
+                    if not isinstance(offset, (list, tuple)) or len(offset) != 2 or not all_valid_numbers(offset):
+                        raise ValueError(
+                            f"Invalid offset in mm_xy_offsets: {offset}. "
+                            "Each offset must be a tuple or list of two numbers (x_offset, y_offset)."
+                        )
                 list_yx_offsets = [(float(offset[1]), float(offset[0])) for offset in mm_xy_offsets]
                 for i, yx_offsets in enumerate(list_yx_offsets):
-                    _logger.info("provided offsets for image %d: y=%+f, x=%+f", i+1, yx_offsets[0], yx_offsets[1])
+                    _logger.info("provided offsets for image %d: y=%+f, x=%+f", i + 1, yx_offsets[0], yx_offsets[1])
             else:
-                raise TypeError(f"Invalid type for mm_xy_offsets: {type(mm_xy_offsets)}. "
-                                "Must be list of [x_offset, y_offset)].")
+                raise TypeError(
+                    f"Invalid type for mm_xy_offsets: {type(mm_xy_offsets)}. " "Must be list of [x_offset, y_offset)]."
+                )
             shift_images = True
         else:
             if isinstance(mm_crosscorr_region, str):
-                if mm_crosscorr_region.lower() == 'none':
+                if mm_crosscorr_region.lower() == "none":
                     mm_crosscorr_region = None
                 else:
                     mm_crosscorr_region = ast.literal_eval(mm_crosscorr_region)
             if isinstance(mm_crosscorr_region, list):
                 all_integers = all(isinstance(val, int) for val in mm_crosscorr_region)
                 if not all_integers:
-                    raise TypeError(f"Invalid mm_crosscorr_region: {mm_crosscorr_region}. "
-                                    "All elements must be integers.")
+                    raise TypeError(
+                        f"Invalid mm_crosscorr_region: {mm_crosscorr_region}. " "All elements must be integers."
+                    )
                 if len(mm_crosscorr_region) != 4:
-                    raise ValueError(f"Invalid length for mm_crosscorr_region: {mm_crosscorr_region}. "
-                                     "Must be a list of 4 integers [xmin, xmax, ymin, ymax].")
-                dumreg = f"[{mm_crosscorr_region[0]}:{mm_crosscorr_region[1]}, " + \
-                         f"{mm_crosscorr_region[2]}:{mm_crosscorr_region[3]}]"
+                    raise ValueError(
+                        f"Invalid length for mm_crosscorr_region: {mm_crosscorr_region}. "
+                        "Must be a list of 4 integers [xmin, xmax, ymin, ymax]."
+                    )
+                dumreg = (
+                    f"[{mm_crosscorr_region[0]}:{mm_crosscorr_region[1]}, "
+                    + f"{mm_crosscorr_region[2]}:{mm_crosscorr_region[3]}]"
+                )
                 _logger.debug("defined mm_crosscorr_region: %s", dumreg)
-                crossregion = tea.SliceRegion2D(dumreg, mode='fits', naxis1=naxis1, naxis2=naxis2)
+                crossregion = tea.SliceRegion2D(dumreg, mode="fits", naxis1=naxis1, naxis2=naxis2)
                 if crossregion.area() < 100:
                     raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
                 shift_images = True
             elif mm_crosscorr_region is None:
                 crossregion = None
             else:
-                raise TypeError(f"Invalid type for mm_crosscorr_region: {type(mm_crosscorr_region)}. "
-                                "Must be list of 4 integers or None.")
+                raise TypeError(
+                    f"Invalid type for mm_crosscorr_region: {type(mm_crosscorr_region)}. "
+                    "Must be list of 4 integers or None."
+                )
             list_yx_offsets = []
             for i in range(num_images):
                 if crossregion is None:
@@ -939,50 +1090,85 @@ def compute_crmasks(
                 else:
                     reference_image = median2d[crossregion.python]
                     moving_image = image3d[i][crossregion.python]
-                    _logger.info("computing offsets for image %d using cross-correlation...", i+1)
+                    _logger.info("computing offsets for image %d using cross-correlation...", i + 1)
                     yx_offsets, _, _ = phase_cross_correlation(
                         reference_image=reference_image,
                         moving_image=moving_image,
                         upsample_factor=100,
-                        normalization=None  # use None to avoid artifacts with images with many cosmic rays
+                        normalization=None,  # use None to avoid artifacts with images with many cosmic rays
                     )
                     yx_offsets[0] *= -1  # invert sign
                     yx_offsets[1] *= -1  # invert sign
-                    _logger.info("offsets for image %d: y=%+f, x=%+f", i+1, yx_offsets[0], yx_offsets[1])
+                    _logger.info("offsets for image %d: y=%+f, x=%+f", i + 1, yx_offsets[0], yx_offsets[1])
 
                     def on_key_cross(event):
-                        if event.key == 'x':
+                        if event.key == "x":
                             _logger.info("Exiting program as per user request ('x' key pressed).")
                             plt.close(fig)
                             sys.exit(0)
 
-                    fig, axarr = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4*1.5, 4.8*1.5))
-                    fig.canvas.mpl_connect('key_press_event', lambda event: on_key_cross(event))
+                    fig, axarr = plt.subplots(
+                        nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4 * 1.5, 4.8 * 1.5)
+                    )
+                    fig.canvas.mpl_connect("key_press_event", lambda event: on_key_cross(event))
                     axarr = axarr.flatten()
                     vmin = np.min(reference_image)
                     vmax = np.max(reference_image)
-                    extent = [crossregion.fits[0].start - 0.5, crossregion.fits[0].stop + 0.5,
-                              crossregion.fits[1].start - 0.5, crossregion.fits[1].stop + 0.5]
-                    tea.imshow(fig, axarr[0], reference_image, vmin=vmin, vmax=vmax,
-                               extent=extent, aspect='auto', title='Median')
-                    tea.imshow(fig, axarr[1], moving_image, vmin=vmin, vmax=vmax,
-                               extent=extent, aspect='auto', title=f'Image {i+1}')
-                    shifted_image2d = shift_image2d(
+                    extent = [
+                        crossregion.fits[0].start - 0.5,
+                        crossregion.fits[0].stop + 0.5,
+                        crossregion.fits[1].start - 0.5,
+                        crossregion.fits[1].stop + 0.5,
+                    ]
+                    tea.imshow(
+                        fig,
+                        axarr[0],
+                        reference_image,
+                        vmin=vmin,
+                        vmax=vmax,
+                        extent=extent,
+                        aspect="auto",
+                        title="Median",
+                    )
+                    tea.imshow(
+                        fig,
+                        axarr[1],
                         moving_image,
-                        xoffset=-yx_offsets[1],
-                        yoffset=-yx_offsets[0],
-                        resampling=2
+                        vmin=vmin,
+                        vmax=vmax,
+                        extent=extent,
+                        aspect="auto",
+                        title=f"Image {i+1}",
+                    )
+                    shifted_image2d = shift_image2d(
+                        moving_image, xoffset=-yx_offsets[1], yoffset=-yx_offsets[0], resampling=2
                     )
                     dumdiff1 = reference_image - moving_image
                     dumdiff2 = reference_image - shifted_image2d
                     vmin = np.percentile(dumdiff1, 5)
                     vmax = np.percentile(dumdiff2, 95)
-                    tea.imshow(fig, axarr[2], dumdiff1, vmin=vmin, vmax=vmax,
-                               extent=extent, aspect='auto', title=f'Median - Image {i+1}')
-                    tea.imshow(fig, axarr[3], dumdiff2, vmin=vmin, vmax=vmax,
-                               extent=extent, aspect='auto', title=f'Median - Shifted Image {i+1}')
+                    tea.imshow(
+                        fig,
+                        axarr[2],
+                        dumdiff1,
+                        vmin=vmin,
+                        vmax=vmax,
+                        extent=extent,
+                        aspect="auto",
+                        title=f"Median - Image {i+1}",
+                    )
+                    tea.imshow(
+                        fig,
+                        axarr[3],
+                        dumdiff2,
+                        vmin=vmin,
+                        vmax=vmax,
+                        extent=extent,
+                        aspect="auto",
+                        title=f"Median - Shifted Image {i+1}",
+                    )
                     plt.tight_layout()
-                    png_filename = f'xyoffset_crosscorr_{i+1}.png'
+                    png_filename = f"xyoffset_crosscorr_{i+1}.png"
                     _logger.info(f"saving {png_filename}")
                     plt.savefig(png_filename, dpi=150)
                     if interactive:
@@ -999,7 +1185,7 @@ def compute_crmasks(
             rnoise=np.median(rnoise),  # Use median value to simplify the computation
             maxvalue=np.max(min2d),
             num_images=num_images,
-            npixels=10000
+            npixels=10000,
         )
         if np.min(xplot) < xdiag_min:
             xdiag_min = np.min(xplot)
@@ -1031,13 +1217,15 @@ def compute_crmasks(
         lam = median2d.copy()
         lam[lam < 0] = 0  # Avoid negative values
         lam3d = np.zeros((num_images, naxis2, naxis1))
-        if apply_flux_factor_to == 'original':
+        if apply_flux_factor_to == "original":
             flux_factor_for_simulated = np.ones(num_images, dtype=float)
-        elif apply_flux_factor_to == 'simulated':
+        elif apply_flux_factor_to == "simulated":
             flux_factor_for_simulated = flux_factor
         else:
-            raise ValueError(f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. "
-                             "Valid options are 'original' and 'simulated'.")
+            raise ValueError(
+                f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. "
+                "Valid options are 'original' and 'simulated'."
+            )
         _logger.info("flux factor for simulated images: %s", str(flux_factor_for_simulated))
         if not shift_images:
             _logger.info("assuming no offsets between images")
@@ -1046,13 +1234,18 @@ def compute_crmasks(
         else:
             _logger.info("xy-shifting median2d to speed up simulations...")
             for i in range(num_images):
-                _logger.info("shifted image %d/%d -> delta_y=%+f, delta_x=%+f",
-                             i + 1, num_images, list_yx_offsets[i][0], list_yx_offsets[i][1])
+                _logger.info(
+                    "shifted image %d/%d -> delta_y=%+f, delta_x=%+f",
+                    i + 1,
+                    num_images,
+                    list_yx_offsets[i][0],
+                    list_yx_offsets[i][1],
+                )
                 # apply offsets to the median image to simulate the expected individual exposures
-                lam3d[i] = shift_image2d(lam,
-                                         xoffset=list_yx_offsets[i][1],
-                                         yoffset=list_yx_offsets[i][0],
-                                         resampling=2) / flux_factor_for_simulated[i]
+                lam3d[i] = (
+                    shift_image2d(lam, xoffset=list_yx_offsets[i][1], yoffset=list_yx_offsets[i][0], resampling=2)
+                    / flux_factor_for_simulated[i]
+                )
                 # replace any NaN values introduced by the shift with zeros
                 lam3d[i] = np.nan_to_num(lam3d[i], nan=0.0)
                 # replace any negative values with zeros
@@ -1070,10 +1263,7 @@ def compute_crmasks(
             median2d_simul = np.median(image3d_simul, axis=0)
             xplot_simul = min2d_simul.flatten()
             yplot_simul = median2d_simul.flatten() - min2d_simul.flatten()
-            hist2d, edges = np.histogramdd(
-                sample=(yplot_simul, xplot_simul),
-                bins=(bins_ydiag, bins_xdiag)
-            )
+            hist2d, edges = np.histogramdd(sample=(yplot_simul, xplot_simul), bins=(bins_ydiag, bins_xdiag))
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
             _logger.info("simulation %d/%d, time elapsed: %s", k + 1, mm_nsimulations, time_end - time_ini)
@@ -1083,8 +1273,8 @@ def compute_crmasks(
         if vmin == 0:
             vmin = 1
         vmax = np.max(hist2d_accummulated)
-        cmap1 = plt.get_cmap('cividis_r')
-        cmap2 = plt.get_cmap('viridis')
+        cmap1 = plt.get_cmap("cividis_r")
+        cmap2 = plt.get_cmap("viridis")
         n_colors = 256
         n_colors2 = int((np.log10(vmax) - np.log10(1.0)) / (np.log10(vmax) - np.log10(vmin)) * n_colors)
         n_colors2 += 1
@@ -1097,28 +1287,41 @@ def compute_crmasks(
         colors1 = cmap1(np.linspace(0, 1, n_colors1))
         colors2 = cmap2(np.linspace(0, 1, n_colors2))
         combined_colors = np.vstack((colors1, colors2))
-        combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', combined_colors)
+        combined_cmap = LinearSegmentedColormap.from_list("combined_cmap", combined_colors)
         norm = LogNorm(vmin=vmin, vmax=vmax)
 
         def on_key_2dhist(event):
-            if event.key == 'x':
+            if event.key == "x":
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
 
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
-        fig.canvas.mpl_connect('key_press_event', lambda event: on_key_2dhist(event))
+        fig.canvas.mpl_connect("key_press_event", lambda event: on_key_2dhist(event))
         # Display 2D histogram of the simulated data
         extent = [bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]]
-        tea.imshow(fig, ax1, hist2d_accummulated, norm=norm, extent=extent,
-                   aspect='auto', cblabel='Number of pixels', cmap=combined_cmap)
-        # Display 2D histogram of the original data
-        hist2d_original, edges = np.histogramdd(
-            sample=(yplot, xplot),
-            bins=(bins_ydiag, bins_xdiag)
+        tea.imshow(
+            fig,
+            ax1,
+            hist2d_accummulated,
+            norm=norm,
+            extent=extent,
+            aspect="auto",
+            cblabel="Number of pixels",
+            cmap=combined_cmap,
         )
-        tea.imshow(fig, ax2, hist2d_original, norm=norm, extent=extent,
-                   aspect='auto', cblabel='Number of pixels', cmap=combined_cmap)
+        # Display 2D histogram of the original data
+        hist2d_original, edges = np.histogramdd(sample=(yplot, xplot), bins=(bins_ydiag, bins_xdiag))
+        tea.imshow(
+            fig,
+            ax2,
+            hist2d_original,
+            norm=norm,
+            extent=extent,
+            aspect="auto",
+            cblabel="Number of pixels",
+            cmap=combined_cmap,
+        )
 
         # Determine the detection boundary for coincident cosmic-ray detection
         _logger.info("computing numerical boundary for coincident cosmic-ray detection...")
@@ -1128,22 +1331,22 @@ def compute_crmasks(
             fsum = np.sum(hist2d_accummulated[:, i])
             if fsum > 0:
                 pdensity = hist2d_accummulated[:, i] / fsum
-                perc = (1 - (1 / mm_nsimulations) / fsum)
+                perc = 1 - (1 / mm_nsimulations) / fsum
                 p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
                 xboundary.append(xcbins[i])
                 yboundary.append(ycbins[int(p + 0.5)])
         xboundary = np.array(xboundary)
         yboundary = np.array(yboundary)
-        ax1.plot(xboundary, yboundary, 'r+')
+        ax1.plot(xboundary, yboundary, "r+")
         boundaryfit = None  # avoid flake8 warning
-        if mm_boundary_fit == 'spline':
+        if mm_boundary_fit == "spline":
             for iterboundary in range(mm_niter_boundary_extension + 1):
                 wboundary = np.ones_like(xboundary, dtype=float)
                 if iterboundary == 0:
-                    label = 'initial spline fit'
+                    label = "initial spline fit"
                 else:
                     wboundary[yboundary > boundaryfit(xboundary)] = mm_weight_boundary_extension**iterboundary
-                    label = f'Iteration {iterboundary}'
+                    label = f"Iteration {iterboundary}"
                 if mm_fixed_points_in_boundary is None:
                     xboundary_fit = xboundary
                     yboundary_fit = yboundary
@@ -1163,14 +1366,13 @@ def compute_crmasks(
                 ydum = boundaryfit(xcbins)
                 ydum[xcbins < knots[0]] = boundaryfit(knots[0])
                 ydum[xcbins > knots[-1]] = boundaryfit(knots[-1])
-                ax1.plot(xcbins, ydum, '-', color=f'C{iterboundary}', label=label)
-                ax1.plot(knots, boundaryfit(knots), 'o', color=f'C{iterboundary}', markersize=4)
-        elif mm_boundary_fit == 'piecewise':
+                ax1.plot(xcbins, ydum, "-", color=f"C{iterboundary}", label=label)
+                ax1.plot(knots, boundaryfit(knots), "o", color=f"C{iterboundary}", markersize=4)
+        elif mm_boundary_fit == "piecewise":
             boundaryfit = define_piecewise_linear_function(
-                xarray=x_mm_fixed_points_in_boundary,
-                yarray=y_mm_fixed_points_in_boundary
+                xarray=x_mm_fixed_points_in_boundary, yarray=y_mm_fixed_points_in_boundary
             )
-            ax1.plot(xcbins, boundaryfit(xcbins), 'r-', label='Piecewise linear fit')
+            ax1.plot(xcbins, boundaryfit(xcbins), "r-", label="Piecewise linear fit")
         else:
             raise ValueError(f"Invalid mm_boundary_fit: {mm_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
 
@@ -1186,38 +1388,54 @@ def compute_crmasks(
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_sb = np.logical_and(flag_sb, flag3)
         flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
-        _logger.info("pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
-                     rlabel_mmcosmic, np.sum(flag_sb), np.sum(flag_sb) / flag_sb.size * 100)
-        if crmethod == 'mmcosmic':
+        _logger.info(
+            "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
+            rlabel_mmcosmic,
+            np.sum(flag_sb),
+            np.sum(flag_sb) / flag_sb.size * 100,
+        )
+        if crmethod == "mmcosmic":
             flag_la = np.zeros_like(flag_sb, dtype=bool)
 
         # Plot the results
         if mm_fixed_points_in_boundary is not None:
-            ax1.plot(x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
-                     label='Fixed points')
-        ax1.set_xlabel(r'min2d $-$ bias')
-        ax1.set_ylabel(r'median2d $-$ min2d')
-        ax1.set_title(f'Simulated data (mm_nsimulations = {mm_nsimulations})')
+            ax1.plot(
+                x_mm_fixed_points_in_boundary,
+                y_mm_fixed_points_in_boundary,
+                "ms",
+                markersize=6,
+                alpha=0.5,
+                label="Fixed points",
+            )
+        ax1.set_xlabel(r"min2d $-$ bias")
+        ax1.set_ylabel(r"median2d $-$ min2d")
+        ax1.set_title(f"Simulated data (mm_nsimulations = {mm_nsimulations})")
         if mm_niter_boundary_extension > 1:
             ax1.legend(loc=1)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
         yplot_boundary = boundaryfit(xplot_boundary)
-        if mm_boundary_fit == 'spline':
+        if mm_boundary_fit == "spline":
             # For spline fit, force the boundary to be constant outside the knots
             yplot_boundary[xplot_boundary < knots[0]] = boundaryfit(knots[0])
             yplot_boundary[xplot_boundary > knots[-1]] = boundaryfit(knots[-1])
-        ax2.plot(xplot_boundary, yplot_boundary, 'r-', label='Detection boundary')
+        ax2.plot(xplot_boundary, yplot_boundary, "r-", label="Detection boundary")
         if mm_fixed_points_in_boundary is not None:
-            ax2.plot(x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, 'ms', markersize=6, alpha=0.5,
-                     label='Fixed points')
+            ax2.plot(
+                x_mm_fixed_points_in_boundary,
+                y_mm_fixed_points_in_boundary,
+                "ms",
+                markersize=6,
+                alpha=0.5,
+                label="Fixed points",
+            )
         ax2.set_xlim(xdiag_min, xdiag_max)
         ax2.set_ylim(ax1.get_ylim())
         ax2.set_xlabel(ax1.get_xlabel())
         ax2.set_ylabel(ax1.get_ylabel())
-        ax2.set_title('Original data')
+        ax2.set_title("Original data")
         ax2.legend(loc=1)
         plt.tight_layout()
-        png_filename = 'diagnostic_histogram2d.png'
+        png_filename = "diagnostic_histogram2d.png"
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
@@ -1240,33 +1458,60 @@ def compute_crmasks(
         flag_integer = 2 * flag_sb.astype(np.uint8) + 3 * flag_la.astype(np.uint8)
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
-        _logger.info("pixels flagged as cosmic rays by "
-                     "%s or  %s: %s (%08.4f%%)", rlabel_lacosmic, rlabel_mmcosmic, cdum,
-                     np.sum(flag) / flag.size * 100)
+        _logger.info(
+            "pixels flagged as cosmic rays by " "%s or  %s: %s (%08.4f%%)",
+            rlabel_lacosmic,
+            rlabel_mmcosmic,
+            cdum,
+            np.sum(flag) / flag.size * 100,
+        )
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
-        _logger.info("pixels flagged as cosmic rays by "
-                     "%s only........: %s (%08.4f%%)", rlabel_lacosmic, cdum,
-                     np.sum(flag_integer == 3) / flag.size * 100)
+        _logger.info(
+            "pixels flagged as cosmic rays by " "%s only........: %s (%08.4f%%)",
+            rlabel_lacosmic,
+            cdum,
+            np.sum(flag_integer == 3) / flag.size * 100,
+        )
         cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
-        _logger.info("pixels flagged as cosmic rays by "
-                     "%s only........: %s (%08.4f%%)", rlabel_mmcosmic, cdum,
-                     np.sum(flag_integer == 2) / flag.size * 100)
+        _logger.info(
+            "pixels flagged as cosmic rays by " "%s only........: %s (%08.4f%%)",
+            rlabel_mmcosmic,
+            cdum,
+            np.sum(flag_integer == 2) / flag.size * 100,
+        )
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
-        _logger.info("pixels flagged as cosmic rays by "
-                     "%s and %s: %s (%08.4f%%)", rlabel_lacosmic, rlabel_mmcosmic, cdum,
-                     np.sum((flag_integer == 5)) / flag.size * 100)
+        _logger.info(
+            "pixels flagged as cosmic rays by " "%s and %s: %s (%08.4f%%)",
+            rlabel_lacosmic,
+            rlabel_mmcosmic,
+            cdum,
+            np.sum((flag_integer == 5)) / flag.size * 100,
+        )
     flag = flag.reshape((naxis2, naxis1))
     flag_integer = flag_integer.reshape((naxis2, naxis1))
     flag_integer[flag_integer == 5] = 4  # pixels flagged by both methods are set to 4
 
     # Show diagnostic plot for the cosmic ray detection
     _logger.info("generating diagnostic plot for MEDIANCR...")
-    ylabel = r'median2d $-$ min2d'
-    diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                    mm_threshold, ylabel, interactive,
-                    target2d=median2d, target2d_name='median2d',
-                    min2d=min2d, mean2d=mean2d, image3d=image3d,
-                    _logger=_logger, png_filename='diagnostic_mediancr.png')
+    ylabel = r"median2d $-$ min2d"
+    diagnostic_plot(
+        xplot,
+        yplot,
+        xplot_boundary,
+        yplot_boundary,
+        flag_la,
+        flag_sb,
+        mm_threshold,
+        ylabel,
+        interactive,
+        target2d=median2d,
+        target2d_name="median2d",
+        min2d=min2d,
+        mean2d=mean2d,
+        image3d=image3d,
+        _logger=_logger,
+        png_filename="diagnostic_mediancr.png",
+    )
 
     # Check if any cosmic ray was detected
     if not np.any(flag):
@@ -1278,9 +1523,7 @@ def compute_crmasks(
         if dilation > 0:
             structure = ndimage.generate_binary_structure(2, 2)
             flag_integer_dilated = ndimage.binary_dilation(
-                flag_integer,
-                structure=structure,
-                iterations=dilation
+                flag_integer, structure=structure, iterations=dilation
             ).astype(np.uint8)
             sdum = str(np.sum(flag_integer_dilated > 0))
             cdum = f"{np.sum(flag_integer > 0):{len(sdum)}d}"
@@ -1289,8 +1532,9 @@ def compute_crmasks(
             _logger.info("after dilation : %s pixels flagged as coincident cosmic-ray pixels", cdum)
         else:
             flag_integer_dilated = flag_integer
-            _logger.info("no dilation applied: %d pixels flagged as coincident cosmic-ray pixels",
-                         np.sum(flag_integer > 0))
+            _logger.info(
+                "no dilation applied: %d pixels flagged as coincident cosmic-ray pixels", np.sum(flag_integer > 0)
+            )
         # Set the pixels that were originally flagged as cosmic rays
         # to the integer value before dilation (this is to distinguish them
         # from the pixels that were dilated,which will be set to 1)
@@ -1322,39 +1566,38 @@ def compute_crmasks(
             maxplots=maxplots,
             verify_cr=verify_cr,
             color_scale=color_scale,
-            _logger=_logger
+            _logger=_logger,
         )
 
     # Generate list of HDUs with masks
-    hdu_mediancr = fits.ImageHDU(mask_mediancr.astype(np.uint8), name='MEDIANCR')
+    hdu_mediancr = fits.ImageHDU(mask_mediancr.astype(np.uint8), name="MEDIANCR")
     list_hdu_masks = [hdu_mediancr]
 
     # Apply the same algorithm but now with mean2d and with each individual array
     for i, target2d in enumerate([mean2d] + list_arrays):
         if i == 0:
-            target2d_name = 'mean2d'
+            target2d_name = "mean2d"
         else:
-            target2d_name = f'single exposure #{i}'
+            target2d_name = f"single exposure #{i}"
         if rich_configured:
             _logger.info("[green]" + "-" * 79 + "[/green]")
             _logger.info(f"starting cosmic ray detection in [magenta]{target2d_name}[/magenta] image...")
         else:
             _logger.info("-" * 73)
             _logger.info(f"starting cosmic ray detection in {target2d_name} image...")
-        if crmethod in ['lacosmic', 'mm_lacosmic']:
+        if crmethod in ["lacosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
             array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
-                ccd=target2d,
-                **{key: value for key, value in dict_la_params.items() if value is not None}
+                ccd=target2d, **{key: value for key, value in dict_la_params.items() if value is not None}
             )
             flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
             flag_la = flag_la.flatten()
-            if crmethod == 'lacosmic':
+            if crmethod == "lacosmic":
                 xplot_boundary = None
                 yplot_boundary = None
                 mm_threshold = None
                 flag_sb = np.zeros_like(flag_la, dtype=bool)
-        if crmethod in ['mmcosmic', 'mm_lacosmic']:
+        if crmethod in ["mmcosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
@@ -1364,7 +1607,7 @@ def compute_crmasks(
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_sb = np.logical_and(flag_sb, flag3)
             flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
-            if crmethod == 'mmcosmic':
+            if crmethod == "mmcosmic":
                 flag_la = np.zeros_like(flag_sb, dtype=bool)
         # For the mean2d mask, force the flag to be True if the pixel
         # was flagged as a coincident cosmic-ray pixel when using the median2d array
@@ -1381,35 +1624,52 @@ def compute_crmasks(
         sflag_la = str(np.sum(flag_la))
         sflag_sb = str(np.sum(flag_sb))
         smax = max(len(sflag_la), len(sflag_sb))
-        _logger.info("pixels flagged as cosmic rays by "
-                     "%s: %s (%08.4f%%)", rlabel_lacosmic, f"{np.sum(flag_la):{smax}d}",
-                     np.sum(flag_la) / flag_la.size * 100)
-        _logger.info("pixels flagged as cosmic rays by "
-                     "%s: %s (%08.4f%%)", rlabel_mmcosmic, f"{np.sum(flag_sb):{smax}d}",
-                     np.sum(flag_sb) / flag_sb.size * 100)
+        _logger.info(
+            "pixels flagged as cosmic rays by " "%s: %s (%08.4f%%)",
+            rlabel_lacosmic,
+            f"{np.sum(flag_la):{smax}d}",
+            np.sum(flag_la) / flag_la.size * 100,
+        )
+        _logger.info(
+            "pixels flagged as cosmic rays by " "%s: %s (%08.4f%%)",
+            rlabel_mmcosmic,
+            f"{np.sum(flag_sb):{smax}d}",
+            np.sum(flag_sb) / flag_sb.size * 100,
+        )
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
-            png_filename = 'diagnostic_meancr.png'
-            ylabel = r'mean2d $-$ min2d'
+            png_filename = "diagnostic_meancr.png"
+            ylabel = r"mean2d $-$ min2d"
         else:
             _logger.info(f"generating diagnostic plot for CRMASK{i}...")
-            png_filename = f'diagnostic_crmask{i}.png'
-            ylabel = f'array{i}' + r' $-$ min2d'
+            png_filename = f"diagnostic_crmask{i}.png"
+            ylabel = f"array{i}" + r" $-$ min2d"
         interactive_eff = interactive and debug
-        diagnostic_plot(xplot, yplot, xplot_boundary, yplot_boundary, flag_la, flag_sb,
-                        mm_threshold, ylabel, interactive_eff,
-                        target2d=target2d, target2d_name=target2d_name,
-                        min2d=min2d, mean2d=mean2d, image3d=image3d,
-                        _logger=_logger, png_filename=png_filename)
+        diagnostic_plot(
+            xplot,
+            yplot,
+            xplot_boundary,
+            yplot_boundary,
+            flag_la,
+            flag_sb,
+            mm_threshold,
+            ylabel,
+            interactive_eff,
+            target2d=target2d,
+            target2d_name=target2d_name,
+            min2d=min2d,
+            mean2d=mean2d,
+            image3d=image3d,
+            _logger=_logger,
+            png_filename=png_filename,
+        )
         flag = np.logical_or(flag_la, flag_sb)
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
         if dilation > 0:
             structure = ndimage.generate_binary_structure(2, 2)
             flag_integer_dilated = ndimage.binary_dilation(
-                flag_integer,
-                structure=structure,
-                iterations=dilation
+                flag_integer, structure=structure, iterations=dilation
             ).astype(np.uint8)
             sdum = str(np.sum(flag_integer_dilated))
             cdum = f"{np.sum(flag_integer):{len(sdum)}d}"
@@ -1423,14 +1683,14 @@ def compute_crmasks(
         # Compute mask
         mask = flag_integer_dilated > 0
         if i == 0:
-            name = 'MEANCRT'
+            name = "MEANCRT"
         else:
-            name = f'CRMASK{i}'
+            name = f"CRMASK{i}"
         hdu_mask = fits.ImageHDU(mask.astype(np.uint8), name=name)
         list_hdu_masks.append(hdu_mask)
 
     if median2d_lacosmic is not None:
-        hdu_median2d_lacosmic = fits.ImageHDU(median2d_lacosmic.astype(np.float32), name='LAMEDIAN')
+        hdu_median2d_lacosmic = fits.ImageHDU(median2d_lacosmic.astype(np.float32), name="LAMEDIAN")
         list_hdu_masks.append(hdu_median2d_lacosmic)
 
     # Find problematic cosmic-ray pixels (those masked in all individual CRMASKi)
@@ -1442,8 +1702,9 @@ def compute_crmasks(
         _logger.info("[green]" + "-" * 79 + "[/green]")
     else:
         _logger.info("-" * 73)
-    _logger.info("number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d",
-                 len(problematic_pixels))
+    _logger.info(
+        "number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d", len(problematic_pixels)
+    )
     if len(problematic_pixels) > 0:
         # Label the connected problematic pixels as individual problematic cosmic rays
         labels_cr, number_cr = ndimage.label(mask_all_singles)
@@ -1457,31 +1718,30 @@ def compute_crmasks(
             labels_cr=labels_cr,
             number_cr=number_cr,
             mask_mediancr=mask_mediancr,
-            list_mask_single_exposures=[hdu.data for hdu in list_hdu_masks[2:2+num_images]],
+            list_mask_single_exposures=[hdu.data for hdu in list_hdu_masks[2 : 2 + num_images]],
             mask_all_singles=mask_all_singles,
             semiwindow=semiwindow,
             maxplots=maxplots,
             verify_cr=False,
             color_scale=color_scale,
-            _logger=_logger
+            _logger=_logger,
         )
 
     # Generate output HDUList with masks
     args = inspect.signature(compute_crmasks).parameters
-    if crmethod == 'lacosmic':
-        prefix_of_excluded_args = 'mm_'
-    elif crmethod == 'mmcosmic':
-        prefix_of_excluded_args = 'la_'
+    if crmethod == "lacosmic":
+        prefix_of_excluded_args = "mm_"
+    elif crmethod == "mmcosmic":
+        prefix_of_excluded_args = "la_"
     else:
-        prefix_of_excluded_args = 'xxx'
-    filtered_args = {k: v for k, v in locals().items() if
-                     k in args and
-                     k not in ['list_arrays'] and
-                     k[:3] != prefix_of_excluded_args}
+        prefix_of_excluded_args = "xxx"
+    filtered_args = {
+        k: v for k, v in locals().items() if k in args and k not in ["list_arrays"] and k[:3] != prefix_of_excluded_args
+    }
     hdu_primary = fits.PrimaryHDU()
-    hdu_primary.header['UUID'] = str(uuid.uuid4())
+    hdu_primary.header["UUID"] = str(uuid.uuid4())
     for i, fluxf in enumerate(flux_factor):
-        hdu_primary.header[f'FLUXF{i+1}'] = fluxf
+        hdu_primary.header[f"FLUXF{i+1}"] = fluxf
     hdu_primary.header.add_history(f"CRMasks generated by {__name__}")
     hdu_primary.header.add_history(f"at {datetime.now().isoformat()}")
     for key, value in filtered_args.items():
@@ -1491,22 +1751,18 @@ def compute_crmasks(
             elif value.ndim == 1 and len(value) == num_images:
                 value = str(value.tolist())
             else:
-                value = f'array_shape: {value.shape}'
+                value = f"array_shape: {value.shape}"
         elif isinstance(value, list):
             value = str(value)
         hdu_primary.header.add_history(f"- {key} = {value}")
     # Include extension with pixels to be replaced by the median value around them
     # (stored as a binary table with four columns: 'X_pixel', 'Y_pixel', 'X_width', 'Y_width')
     if pixels_to_be_replaced_by_local_median is not None:
-        col1 = fits.Column(name='X_pixel', format='K',
-                           array=[p[0] for p in pixels_to_be_replaced_by_local_median])
-        col2 = fits.Column(name='Y_pixel', format='K',
-                           array=[p[1] for p in pixels_to_be_replaced_by_local_median])
-        col3 = fits.Column(name='X_width', format='K',
-                           array=[p[2] for p in pixels_to_be_replaced_by_local_median])
-        col4 = fits.Column(name='Y_width', format='K',
-                           array=[p[3] for p in pixels_to_be_replaced_by_local_median])
-        hdu_table = fits.BinTableHDU.from_columns([col1, col2, col3, col4], name='RPMEDIAN')
+        col1 = fits.Column(name="X_pixel", format="K", array=[p[0] for p in pixels_to_be_replaced_by_local_median])
+        col2 = fits.Column(name="Y_pixel", format="K", array=[p[1] for p in pixels_to_be_replaced_by_local_median])
+        col3 = fits.Column(name="X_width", format="K", array=[p[2] for p in pixels_to_be_replaced_by_local_median])
+        col4 = fits.Column(name="Y_width", format="K", array=[p[3] for p in pixels_to_be_replaced_by_local_median])
+        hdu_table = fits.BinTableHDU.from_columns([col1, col2, col3, col4], name="RPMEDIAN")
         list_hdu_masks.append(hdu_table)
 
     hdul_masks = fits.HDUList([hdu_primary] + list_hdu_masks)
