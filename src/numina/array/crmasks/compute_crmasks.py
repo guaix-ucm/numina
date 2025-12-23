@@ -952,7 +952,7 @@ def compute_crmasks(
                 flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
             # combine results from both runs
             flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
-            median2d_lacosmic = median2d_lacosmic2
+            median2d_lacosmic = median2d_lacosmic2  # use the result from the 2nd run
         _logger.info(
             "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
             rlabel_lacosmic,
@@ -1587,9 +1587,26 @@ def compute_crmasks(
             _logger.info(f"starting cosmic ray detection in {target2d_name} image...")
         if crmethod in ["lacosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
+            # run 1
+            target2d_padded = np.pad(target2d, pad_width=la_padwidth, mode="reflect")
             array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
-                ccd=target2d, **{key: value for key, value in dict_la_params.items() if value is not None}
+                ccd=target2d_padded, **{key: value for key, value in dict_la_params_run1.items() if value is not None}
             )
+            if la_padwidth > 0:
+                array_lacosmic = array_lacosmic[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+                flag_la = flag_la[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+            # run 2 if needed
+            if lacosmic_needs_2runs:
+                array_lacosmic2, flag_la2 = decorated_cosmicray_lacosmic(
+                    ccd=target2d_padded,
+                    **{key: value for key, value in dict_la_params_run2.items() if value is not None},
+                )
+                if la_padwidth > 0:
+                    array_lacosmic2 = array_lacosmic2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+                    flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
+                # combine results from both runs
+                flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
+                array_lacosmic = array_lacosmic2  # use the result from the 2nd run
             flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
             flag_la = flag_la.flatten()
             if crmethod == "lacosmic":
