@@ -25,7 +25,6 @@ from skimage.registration import phase_cross_correlation
 
 try:
     import PyCosmic
-
     PYCOSMIC_AVAILABLE = True
 except ModuleNotFoundError as e:
     PYCOSMIC_AVAILABLE = False
@@ -42,6 +41,7 @@ from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
 from .estimate_diagnostic_limits import estimate_diagnostic_limits
 from .execute_lacosmic import execute_lacosmic
+from .excecute_pycosmic import execute_pycosmic
 from .gausskernel2d_elliptical import gausskernel2d_elliptical
 from .valid_parameters import VALID_CRMETHODS
 from .valid_parameters import VALID_LACOSMIC_CLEANTYPE
@@ -1063,54 +1063,18 @@ def compute_crmasks(
     if crmethod in ["pycosmic", "mm_pycosmic"]:
         # ---------------------------------------------------------------------
         # Detect residual cosmic rays in the median2d image using PyCosmic.
+        # This only works if gain and rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
-        if pc_verbose:
-            _logger.info("[green][PYCOSMIC parameters for run 1][/green]")
-            for key in dict_pc_params_run1.keys():
-                _logger.info("%s for pycosmic: %s", key, str(dict_pc_params_run1[key]))
-            if pycosmic_needs_2runs:
-                _logger.info("[green][PYCOSMIC parameters modified for run 2][/green]")
-                if pc_sigma_det_needs_2runs:
-                    _logger.info(
-                        "pc_sigma_det for run 2 (run1): %f (%f)",
-                        dict_pc_params_run2["sigma_det"],
-                        dict_pc_params_run1["sigma_det"],
-                    )
-                if pc_rlim_needs_2runs:
-                    _logger.info(
-                        "pc_rlim for run 2 (run1): %f (%f)", dict_pc_params_run2["rlim"], dict_pc_params_run1["rlim"]
-                    )
-        if pycosmic_needs_2runs:
-            _logger.info("PYCOSMIC will be run in 2 passes with modified parameters.")
-        else:
-            _logger.info("PYCOSMIC will be run in a single pass.")
-        _logger.info(f"detecting cosmic rays in median2d image using {rlabel_pycosmic}...")
         if gain_scalar is None or rnoise_scalar is None:
-            raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='pycosmic'.")
-        # run 1
-        out = PyCosmic.det_cosmics(
-            data=median2d, **{key: value for key, value in dict_pc_params_run1.items() if value is not None}
+            raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
+        execute_pycosmic(
+            image2d=median2d,
+            bool_to_be_cleaned=bool_to_be_cleaned,
+            rlabel_pycosmic=rlabel_pycosmic,
+            dict_pc_params_run1=dict_pc_params_run1,
+            dict_pc_params_run2=dict_pc_params_run2,
+            _logger=_logger,
         )
-        meddian2d_pycosmic = out.data
-        flag_pc = out.mask.astype(bool)
-        # run 2 if needed
-        if pycosmic_needs_2runs:
-            out2 = PyCosmic.det_cosmics(
-                data=median2d, **{key: value for key, value in dict_pc_params_run2.items() if value is not None}
-            )
-            median2d_pycosmic2 = out2.data
-            flag_pc2 = out2.mask.astype(bool)
-            # combine results from both runs
-            flag_pc = cleanest.merge_peak_tail_masks(flag_pc, flag_pc2, pc_verbose)
-            median2d_pycosmic = median2d_pycosmic2  # use the result from the 2nd run
-        _logger.info(
-            "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
-            rlabel_pycosmic,
-            np.sum(flag_pc),
-            np.sum(flag_pc) / flag_pc.size * 100,
-        )
-        flag_pc = np.logical_and(flag_pc, bool_to_be_cleaned)
-        flag_pc = flag_pc.flatten()
         if crmethod == "pycosmic":
             xplot_boundary = None
             yplot_boundary = None

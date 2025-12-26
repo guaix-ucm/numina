@@ -41,6 +41,7 @@ def execute_lacosmic(
     if dict_la_params_run1["objlim"] != dict_la_params_run2["objlim"]:
         la_objlim_needs_2runs = True
     lacosmic_needs_2runs = la_sigclip_needs_2runs or la_sigfrac_needs_2runs or la_objlim_needs_2runs
+    # Display parameters
     if la_verbose:
         _logger.info("[green][LACOSMIC parameters for run 1][/green]")
         for key in dict_la_params_run1.keys():
