@@ -9,34 +9,14 @@
 
 """Execute L.A.Cosmic cosmic ray detection algorithm."""
 
-import io
-import logging
+from importlib.metadata import version
 
 from ccdproc import cosmicray_lacosmic
-from contextlib import redirect_stderr, redirect_stdout
 import numpy as np
 
 from teareduce import cleanest
 
-
-def decorate_output(func):
-    """Decorator to capture stdout and stderr of a function and log it."""
-
-    def wrapper(*args, **kwargs):
-        _logger = logging.getLogger(__name__)
-        buf = io.StringIO()
-        with redirect_stdout(buf), redirect_stderr(buf):
-            result = func(*args, **kwargs)
-        # Split into lines
-        output_lines = buf.getvalue().splitlines()
-        # Remove trailing empty line
-        if output_lines and output_lines[-1] == "":
-            output_lines = output_lines[:-1]
-        if output_lines:
-            _logger.info("\n" + "\n".join(output_lines))
-        return result
-
-    return wrapper
+from .decorated_output import decorate_output
 
 
 @decorate_output
@@ -96,6 +76,12 @@ def execute_lacosmic(
     else:
         _logger.info("LACOSMIC will be run in a single pass.")
     _logger.info(f"detecting cosmic rays in image2d image using {rlabel_lacosmic}...")
+    # Detect ccdproc version
+    try:
+        version_ccdproc = version("ccdproc")
+    except Exception:
+        version_ccdproc = "unknown"
+    _logger.info(f"using ccdproc version: {version_ccdproc}")
     # run 1
     image2d_padded = np.pad(image2d, pad_width=la_padwidth, mode="reflect")
     image2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
