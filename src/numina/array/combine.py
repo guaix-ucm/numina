@@ -240,7 +240,7 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
                                 out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
 
 
-def mediancr(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None, bias=None):
+def mediancr(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None, bias=None):
     """Combine arrays using the median with cosmic ray mask.
 
     The function returns the median of the input arrays, applying
@@ -251,7 +251,7 @@ def mediancr(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None,
     return apply_crmasks(
         list_arrays=arrays,
         hdul_masks=crmasks,
-        use_lamedian=use_lamedian,
+        use_auxmedian=use_auxmedian,
         combination='mediancr',
         dtype=dtype,
         apply_flux_factor=apply_flux_factor,
@@ -259,7 +259,7 @@ def mediancr(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None,
     )
 
 
-def meancr(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None, bias=None):
+def meancr(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None, bias=None):
     """Combine arrays using the mean with individual cosmic ray masks.
 
     The function returns the mean of the input arrays, applying
@@ -272,7 +272,7 @@ def meancr(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None, b
     return apply_crmasks(
         list_arrays=arrays,
         hdul_masks=crmasks,
-        use_lamedian=use_lamedian,
+        use_auxmedian=use_auxmedian,
         combination='meancr',
         dtype=dtype,
         apply_flux_factor=apply_flux_factor,
@@ -280,7 +280,7 @@ def meancr(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None, b
     )
 
 
-def meancrt(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None, bias=None):
+def meancrt(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None, bias=None):
     """Combine arrays using the mean with a single cosmic ray mask.
 
     The function returns the mean of the input arrays, applying
@@ -292,7 +292,7 @@ def meancrt(arrays, crmasks, dtype, use_lamedian=False, apply_flux_factor=None, 
     return apply_crmasks(
         list_arrays=arrays,
         hdul_masks=crmasks,
-        use_lamedian=use_lamedian,
+        use_auxmedian=use_auxmedian,
         combination='meancrt',
         dtype=dtype,
         apply_flux_factor=apply_flux_factor,

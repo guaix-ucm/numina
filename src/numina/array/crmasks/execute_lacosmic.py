@@ -76,7 +76,7 @@ def execute_lacosmic(
         _logger.info("LACOSMIC will be run in 2 passes with modified parameters.")
     else:
         _logger.info("LACOSMIC will be run in a single pass.")
-    _logger.info(f"detecting cosmic rays in image2d image using {rlabel_lacosmic}...")
+    _logger.info(f"detecting cosmic rays using {rlabel_lacosmic}...")
     # Detect ccdproc version
     try:
         version_ccdproc = version("ccdproc")
@@ -104,13 +104,13 @@ def execute_lacosmic(
         # combine results from both runs
         flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
         image2d_lacosmic = image2d_lacosmic2  # use the result from the 2nd run
+    flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
+    flag_la = flag_la.flatten()
     _logger.info(
         "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
         rlabel_lacosmic,
         np.sum(flag_la),
         np.sum(flag_la) / flag_la.size * 100,
     )
-    flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
-    flag_la = flag_la.flatten()
 
     return image2d_lacosmic, flag_la

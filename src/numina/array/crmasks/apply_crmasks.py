@@ -21,7 +21,7 @@ def apply_crmasks(
     list_arrays,
     hdul_masks=None,
     combination=None,
-    use_lamedian=None,
+    use_auxmedian=None,
     dtype=np.float32,
     apply_flux_factor=None,
     bias=None,
@@ -63,9 +63,9 @@ def apply_crmasks(
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
         in the input arrays.
-    use_lamedian : bool, optional
-        If True, and if the extension 'LAMEDIAN' is present in `hdul_masks`,
-        the lacosmic-corrected median array is used instead of the minimum
+    use_auxmedian : bool, optional
+        If True, and if the extension 'AXMEDIAN' is present in `hdul_masks`,
+        the auxiliary-corrected median array is used instead of the minimum
         value at each pixel. This affects differently depending on the
         combination method:
         - 'mediancr': all the masked pixels in the mask MEDIANCR are replaced.
@@ -111,10 +111,10 @@ def apply_crmasks(
     if combination not in VALID_COMBINATIONS:
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
 
-    # If use_lamedian is True, check that the extension 'LAMEDIAN' is present
-    if use_lamedian:
-        if "LAMEDIAN" not in hdul_masks:
-            raise ValueError("use_lamedian is True, but extension 'LAMEDIAN' is not present in hdul_masks.")
+    # If use_auxmedian is True, check that the extension 'AXMEDIAN' is present
+    if use_auxmedian:
+        if "AXMEDIAN" not in hdul_masks:
+            raise ValueError("use_auxmedian is True, but extension 'AXMEDIAN' is not present in hdul_masks.")
 
     # Check that the list contains numpy 2D arrays
     if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays):
@@ -165,10 +165,10 @@ def apply_crmasks(
         flux_factor = np.ones(num_images, dtype=float)
         _logger.info("flux factor values set to %s", str(flux_factor))
 
-    # Check use_lamedian
-    if use_lamedian is None:
-        raise ValueError("use_lamedian must be specified as True or False.")
-    _logger.info("use_lamedian: %s", use_lamedian)
+    # Check use_auxmedian
+    if use_auxmedian is None:
+        raise ValueError("use_auxmedian must be specified as True or False.")
+    _logger.info("use_auxmedian: %s", use_auxmedian)
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)
@@ -195,8 +195,8 @@ def apply_crmasks(
         # Replace the masked pixels with the minimum value
         # of the corresponding pixel in the input arrays
         median2d_corrected = median2d.copy()
-        if use_lamedian:
-            median2d_corrected[mask_mediancr] = hdul_masks["LAMEDIAN"].data[mask_mediancr]
+        if use_auxmedian:
+            median2d_corrected[mask_mediancr] = hdul_masks["AXMEDIAN"].data[mask_mediancr]
         else:
             median2d_corrected[mask_mediancr] = min2d_rescaled[mask_mediancr]
 
@@ -236,9 +236,9 @@ def apply_crmasks(
         # Replace pixels without data with the minimum value
         mask_nodata = total_mask == num_images
         if np.any(mask_nodata):
-            if use_lamedian:
-                _logger.info("replacing %d pixels without data by the LAMEDIAN value", np.sum(mask_nodata))
-                combined2d[mask_nodata] = hdul_masks["LAMEDIAN"].data[mask_nodata]
+            if use_auxmedian:
+                _logger.info("replacing %d pixels without data by the AXMEDIAN value", np.sum(mask_nodata))
+                combined2d[mask_nodata] = hdul_masks["AXMEDIAN"].data[mask_nodata]
             else:
                 _logger.info("replacing %d pixels without data by the minimum value", np.sum(mask_nodata))
                 combined2d[mask_nodata] = min2d_rescaled[mask_nodata]

@@ -57,7 +57,7 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         _logger.info("PYCOSMIC will be run in 2 passes with modified parameters.")
     else:
         _logger.info("PYCOSMIC will be run in a single pass.")
-    _logger.info(f"detecting cosmic rays in median2d image using {rlabel_pycosmic}...")
+    _logger.info(f"detecting cosmic rays using {rlabel_pycosmic}...")
     # Detect PyCosmic version
     try:
         version_pycosmic = version("PyCosmic")
@@ -80,13 +80,13 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         # combine results from both runs
         flag_pc = cleanest.merge_peak_tail_masks(flag_pc, flag_pc2, pc_verbose)
         median2d_pycosmic = median2d_pycosmic2  # use the result from the 2nd run
+    flag_pc = np.logical_and(flag_pc, bool_to_be_cleaned)
+    flag_pc = flag_pc.flatten()
     _logger.info(
         "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
         rlabel_pycosmic,
         np.sum(flag_pc),
         np.sum(flag_pc) / flag_pc.size * 100,
     )
-    flag_pc = np.logical_and(flag_pc, bool_to_be_cleaned)
-    flag_pc = flag_pc.flatten()
 
     return median2d_pycosmic, flag_pc

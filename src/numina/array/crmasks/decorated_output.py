@@ -32,4 +32,3 @@ def decorate_output(func):
         return result
 
     return wrapper
-
