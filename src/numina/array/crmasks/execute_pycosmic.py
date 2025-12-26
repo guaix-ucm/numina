@@ -24,6 +24,10 @@ def decorated_pycosmic_det_cosmics(*args, **kwargs):
     """Wrapper for PyCosmic.det_cosmics with decorated output."""
     return PyCosmic.det_cosmics(*args, **kwargs)
 
+@decorate_output
+def decorated_merge_peak_tail_masks(*args, **kwargs):
+    """Wrapper for merge_peak_tail_masks with decorated output."""
+    return cleanest.merge_peak_tail_masks(*args, **kwargs)
 
 def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, _logger):
     """Execute PyCosmic cosmic ray detection algorithm."""
@@ -78,7 +82,7 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         median2d_pycosmic2 = out2.data
         flag_pc2 = out2.mask.astype(bool)
         # combine results from both runs
-        flag_pc = cleanest.merge_peak_tail_masks(flag_pc, flag_pc2, pc_verbose)
+        flag_pc = decorated_merge_peak_tail_masks(flag_pc, flag_pc2, pc_verbose)
         median2d_pycosmic = median2d_pycosmic2  # use the result from the 2nd run
     flag_pc = np.logical_and(flag_pc, bool_to_be_cleaned)
     flag_pc = flag_pc.flatten()

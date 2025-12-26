@@ -24,6 +24,10 @@ def decorated_cosmicray_lacosmic(*args, **kwargs):
     """Wrapper for cosmicray_lacosmic with decorated output."""
     return cosmicray_lacosmic(*args, **kwargs)
 
+@decorate_output
+def decorated_merge_peak_tail_masks(*args, **kwargs):
+    """Wrapper for merge_peak_tail_masks with decorated output."""
+    return cleanest.merge_peak_tail_masks(*args, **kwargs)
 
 def execute_lacosmic(
     image2d, bool_to_be_cleaned, rlabel_lacosmic, dict_la_params_run1, dict_la_params_run2, la_padwidth, _logger
@@ -102,7 +106,7 @@ def execute_lacosmic(
             flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
             print(f"{image2d_lacosmic2.shape=}, {flag_la2.shape=}")
         # combine results from both runs
-        flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
+        flag_la = decorated_merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
         image2d_lacosmic = image2d_lacosmic2  # use the result from the 2nd run
     flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
     flag_la = flag_la.flatten()
