@@ -18,16 +18,16 @@ import teareduce as tea
 def segregate_cr_flags(
     naxis1,
     naxis2,
-    flag_only_la,
-    flag_only_sb,
+    flag_only_aux,
+    flag_only_mm,
     flag_both,
-    enum_la_global,
+    enum_aux_global,
     enum_mm_global,
     enum_both_global,
     within_xy_diagram,
 ):
     """Segregate the cosmic ray flags into three categories:
-    - detected only by the lacosmic method
+    - detected only by the auxiliar method
     - detected only by the mmcosmic method
     - detected by both methods
 
@@ -37,18 +37,18 @@ def segregate_cr_flags(
         The size of the first dimension of the input arrays.
     naxis2 : int
         The size of the second dimension of the input arrays.
-    flag_only_la : 1D numpy array
+    flag_only_aux : 1D numpy array
         A boolean array indicating which pixels are detected
-        only by the lacosmic method.
-    flag_only_sb : 1D numpy array
+        only by the auxiliar method.
+    flag_only_mm : 1D numpy array
         A boolean array indicating which pixels are detected
         only by the mmcosmic method.
     flag_both : 1D numpy array
         A boolean array indicating which pixels are detected
         by both methods.
-    enum_la_global : 1D numpy array
+    enum_aux_global : 1D numpy array
         An integer array with the enumeration of the pixels
-        detected only by the lacosmic method.
+        detected only by the auxiliar method.
     enum_mm_global : 1D numpy array
         An integer array with the enumeration of the pixels
         detected only by the mmcosmic method.
@@ -60,23 +60,23 @@ def segregate_cr_flags(
 
     Returns
     -------
-    flag_only_la_within_xy : 1D numpy array
+    flag_only_aux_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
-        only by the lacosmic method within the XY diagram.
+        only by the auxiliar method within the XY diagram.
     flag_only_mm_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
         only by the mmcosmic method within the XY diagram.
     flag_both_within_xy : 1D numpy array
         A boolean array indicating which pixels are detected
         by both methods within the XY diagram.
-    (num_only_la, xcr_only_la, ycr_only_la) : tuple
-        Number of pixels detected only by the lacosmic method,
+    (num_only_aux, xcr_only_aux, ycr_only_aux) : tuple
+        Number of pixels detected only by the auxiliar method,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
-        If no pixels are detected, xcr_only_la and ycr_only_la are None.
-    (num_only_sb, xcr_only_sb, ycr_only_sb) : tuple
+        If no pixels are detected, xcr_only_aux and ycr_only_aux are None.
+    (num_only_mm, xcr_only_mm, ycr_only_mm) : tuple
         Number of pixels detected only by the mmcosmic method,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
-        If no pixels are detected, xcr_only_sb and ycr_only_sb are None.
+        If no pixels are detected, xcr_only_mm and ycr_only_mm are None.
     (num_both, xcr_both, ycr_both) : tuple
         Number of pixels detected by both methods,
         and their x and y coordinates (FITS convention; first pixel is (1, 1)).
@@ -84,18 +84,18 @@ def segregate_cr_flags(
     """
 
     # Segregate the cosmic rays within the XY diagnostic diagram
-    flag_only_la_within_xy = flag_only_la & within_xy_diagram
-    flag_only_mm_within_xy = flag_only_sb & within_xy_diagram
+    flag_only_aux_within_xy = flag_only_aux & within_xy_diagram
+    flag_only_mm_within_xy = flag_only_mm & within_xy_diagram
     flag_both_within_xy = flag_both & within_xy_diagram
 
-    num_only_la_within_xy = np.sum(flag_only_la_within_xy)
-    if num_only_la_within_xy > 0:
-        pixels_detected = np.argwhere(flag_only_la_within_xy.reshape(naxis2, naxis1))
-        xcr_only_la_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
-        ycr_only_la_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
-        ncr_only_la_within_xy = enum_la_global[flag_only_la_within_xy]
+    num_only_aux_within_xy = np.sum(flag_only_aux_within_xy)
+    if num_only_aux_within_xy > 0:
+        pixels_detected = np.argwhere(flag_only_aux_within_xy.reshape(naxis2, naxis1))
+        xcr_only_aux_within_xy = pixels_detected[:, 1] + 1  # FITS convention: first pixel is (1, 1)
+        ycr_only_aux_within_xy = pixels_detected[:, 0] + 1  # FITS convention: first pixel is (1, 1)
+        ncr_only_aux_within_xy = enum_aux_global[flag_only_aux_within_xy]
     else:
-        xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = None, None, None
+        xcr_only_aux_within_xy, ycr_only_aux_within_xy, ncr_only_aux_within_xy = None, None, None
 
     num_only_mm_within_xy = np.sum(flag_only_mm_within_xy)
     if num_only_mm_within_xy > 0:
@@ -116,10 +116,10 @@ def segregate_cr_flags(
         xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = None, None, None
 
     return (
-        flag_only_la_within_xy,
+        flag_only_aux_within_xy,
         flag_only_mm_within_xy,
         flag_both_within_xy,
-        (num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy),
+        (num_only_aux_within_xy, xcr_only_aux_within_xy, ycr_only_aux_within_xy, ncr_only_aux_within_xy),
         (num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy),
         (num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy),
     )
@@ -128,10 +128,10 @@ def segregate_cr_flags(
 def update_marks(
     naxis1,
     naxis2,
-    flag_only_la,
-    flag_only_sb,
+    flag_only_aux,
+    flag_only_mm,
     flag_both,
-    enum_la_global,
+    enum_aux_global,
     enum_mm_global,
     enum_both_global,
     xplot,
@@ -146,34 +146,34 @@ def update_marks(
     within the XY diagram is performed and the information of the
     suspected pixels is printed in the terminal.
     """
-    if flag_only_la.shape != (naxis2 * naxis1,):
-        raise ValueError(f"{flag_only_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_only_la.shape != flag_only_sb.shape:
-        raise ValueError(f"{flag_only_sb.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_only_la.shape != flag_both.shape:
+    if flag_only_aux.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{flag_only_aux.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_only_aux.shape != flag_only_mm.shape:
+        raise ValueError(f"{flag_only_mm.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_only_aux.shape != flag_both.shape:
         raise ValueError(f"{flag_both.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_only_la.shape != xplot.shape or flag_only_la.shape != yplot.shape:
-        raise ValueError(f"{xplot.shape=} and {yplot.shape=} must have {flag_only_la.shape=}.")
+    if flag_only_aux.shape != xplot.shape or flag_only_aux.shape != yplot.shape:
+        raise ValueError(f"{xplot.shape=} and {yplot.shape=} must have {flag_only_aux.shape=}.")
 
     xlim = ax1.get_xlim()
     ylim = ax1.get_ylim()
     within_xy_diagram = (xlim[0] <= xplot) & (xplot <= xlim[1]) & (ylim[0] <= yplot) & (yplot <= ylim[1])
 
-    flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy, tuple_la, tuple_sb, tuple_both = (
+    flag_only_aux_within_xy, flag_only_mm_within_xy, flag_both_within_xy, tuple_aux, tuple_mm, tuple_both = (
         segregate_cr_flags(
             naxis1,
             naxis2,
-            flag_only_la,
-            flag_only_sb,
+            flag_only_aux,
+            flag_only_mm,
             flag_both,
-            enum_la_global,
+            enum_aux_global,
             enum_mm_global,
             enum_both_global,
             within_xy_diagram,
         )
     )
-    num_only_la_within_xy, xcr_only_la_within_xy, ycr_only_la_within_xy, ncr_only_la_within_xy = tuple_la
-    num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy = tuple_sb
+    num_only_aux_within_xy, xcr_only_aux_within_xy, ycr_only_aux_within_xy, ncr_only_aux_within_xy = tuple_aux
+    num_only_mm_within_xy, xcr_only_mm_within_xy, ycr_only_mm_within_xy, ncr_only_mm_within_xy = tuple_mm
     num_both_within_xy, xcr_both_within_xy, ycr_both_within_xy, ncr_both_within_xy = tuple_both
 
     if ax2 is None and ax3 is None:
@@ -182,12 +182,12 @@ def update_marks(
         ax_list = [ax2, ax3]
     for ax in ax_list:
         for num, method, xcr, ycr, ncr, flag_only, color, marker in zip(
-            [num_only_la_within_xy, num_only_mm_within_xy, num_both_within_xy],
-            ["lacosmic", "mmcosmic", "both"],
-            [xcr_only_la_within_xy, xcr_only_mm_within_xy, xcr_both_within_xy],
-            [ycr_only_la_within_xy, ycr_only_mm_within_xy, ycr_both_within_xy],
-            [ncr_only_la_within_xy, ncr_only_mm_within_xy, ncr_both_within_xy],
-            [flag_only_la_within_xy, flag_only_mm_within_xy, flag_both_within_xy],
+            [num_only_aux_within_xy, num_only_mm_within_xy, num_both_within_xy],
+            ["axiliar", "mmcosmic", "both"],
+            [xcr_only_aux_within_xy, xcr_only_mm_within_xy, xcr_both_within_xy],
+            [ycr_only_aux_within_xy, ycr_only_mm_within_xy, ycr_both_within_xy],
+            [ncr_only_aux_within_xy, ncr_only_mm_within_xy, ncr_both_within_xy],
+            [flag_only_aux_within_xy, flag_only_mm_within_xy, flag_both_within_xy],
             ["r", "b", "m"],
             ["x", "+", "o"],
         ):
@@ -236,8 +236,8 @@ def diagnostic_plot(
     yplot,
     xplot_boundary,
     yplot_boundary,
-    flag_la,
-    flag_sb,
+    flag_aux,
+    flag_mm,
     mm_threshold,
     ylabel,
     interactive,
@@ -261,10 +261,10 @@ def diagnostic_plot(
         raise ValueError("min2d must have shape (naxis2, naxis1).")
     if mean2d.shape != (naxis2, naxis1):
         raise ValueError("mean2d must have shape (naxis2, naxis1).")
-    if flag_la.shape != (naxis2 * naxis1,):
-        raise ValueError(f"{flag_la.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_la.shape != flag_sb.shape:
-        raise ValueError(f"{flag_sb.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_aux.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{flag_aux.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_aux.shape != flag_mm.shape:
+        raise ValueError(f"{flag_mm.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
     if xplot.shape != (naxis2 * naxis1,):
         raise ValueError(f"{xplot.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
     if yplot.shape != (naxis2 * naxis1,):
@@ -295,28 +295,32 @@ def diagnostic_plot(
         ax_vmin, ax_vmax = None, None
 
     # Segregate the cosmic rays detected by the different methods
-    flag_only_la = flag_la & ~flag_sb
-    flag_only_sb = flag_sb & ~flag_la
-    flag_both = flag_la & flag_sb
-    num_only_la = np.sum(flag_only_la)
-    num_only_sb = np.sum(flag_only_sb)
+    flag_only_aux = flag_aux & ~flag_mm
+    flag_only_mm = flag_mm & ~flag_aux
+    flag_both = flag_aux & flag_mm
+    num_only_aux = np.sum(flag_only_aux)
+    num_only_mm = np.sum(flag_only_mm)
     num_both = np.sum(flag_both)
-    num_total = num_only_la + num_only_sb + num_both
+    num_total = num_only_aux + num_only_mm + num_both
 
     # Enumerate the cosmic rays detected by the different methods
-    enum_la_global = np.zeros_like(flag_la, dtype=int)
-    enum_la_global[flag_only_la] = np.arange(1, np.sum(flag_only_la) + 1, dtype=int)
-    enum_mm_global = np.zeros_like(flag_sb, dtype=int)
-    enum_mm_global[flag_only_sb] = np.arange(1, np.sum(flag_only_sb) + 1, dtype=int)
-    enum_both_global = np.zeros_like(flag_la, dtype=int)
+    enum_aux_global = np.zeros_like(flag_aux, dtype=int)
+    enum_aux_global[flag_only_aux] = np.arange(1, np.sum(flag_only_aux) + 1, dtype=int)
+    enum_mm_global = np.zeros_like(flag_mm, dtype=int)
+    enum_mm_global[flag_only_mm] = np.arange(1, np.sum(flag_only_mm) + 1, dtype=int)
+    enum_both_global = np.zeros_like(flag_aux, dtype=int)
     enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
 
     ax1.plot(xplot, yplot, "C0,", label="Non-suspected pixels")
     ax1.scatter(
-        xplot[flag_only_la], yplot[flag_only_la], c="r", marker="x", label=f"Suspected pixels: {num_only_la} (lacosmic)"
+        xplot[flag_only_aux],
+        yplot[flag_only_aux],
+        c="r",
+        marker="x",
+        label=f"Suspected pixels: {num_only_aux} (auxiliar)",
     )
     ax1.scatter(
-        xplot[flag_only_sb], yplot[flag_only_sb], c="b", marker="+", label=f"Suspected pixels: {num_only_sb} (mmcosmic)"
+        xplot[flag_only_mm], yplot[flag_only_mm], c="b", marker="+", label=f"Suspected pixels: {num_only_mm} (mmcosmic)"
     )
     ax1.scatter(
         xplot[flag_both],
@@ -378,10 +382,10 @@ def diagnostic_plot(
     update_marks(
         naxis1,
         naxis2,
-        flag_only_la,
-        flag_only_sb,
+        flag_only_aux,
+        flag_only_mm,
         flag_both,
-        enum_la_global,
+        enum_aux_global,
         enum_mm_global,
         enum_both_global,
         xplot,
@@ -471,10 +475,10 @@ def diagnostic_plot(
                 update_marks(
                     naxis1,
                     naxis2,
-                    flag_only_la,
-                    flag_only_sb,
+                    flag_only_aux,
+                    flag_only_mm,
                     flag_both,
-                    enum_la_global,
+                    enum_aux_global,
                     enum_mm_global,
                     enum_both_global,
                     xplot,
@@ -589,7 +593,7 @@ def diagnostic_plot(
                         for inum in range(image3d.shape[0]):
                             print(f"(image {inum+1} - bias) = {image3d[inum, iy-1, ix-1]:.3f}")
                         print("." * 79)
-                        for flag, crmethod in zip([flag_la, flag_sb, flag_both], ["lacosmic", "mmcosmic"]):
+                        for flag, crmethod in zip([flag_aux, flag_mm, flag_both], ["auxiliar", "mmcosmic"]):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
                             # where the first pixel is (1, 1)
                             if flag.reshape((naxis2, naxis1))[iy - 1, ix - 1]:
@@ -601,10 +605,10 @@ def diagnostic_plot(
                     update_marks(
                         naxis1,
                         naxis2,
-                        flag_only_la,
-                        flag_only_sb,
+                        flag_only_aux,
+                        flag_only_mm,
                         flag_both,
-                        enum_la_global,
+                        enum_aux_global,
                         enum_mm_global,
                         enum_both_global,
                         xplot,

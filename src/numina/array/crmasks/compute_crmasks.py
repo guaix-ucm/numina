@@ -9,14 +9,11 @@
 """Computation of cosmic ray masks using several equivalent exposures."""
 import ast
 import inspect
-import io
 import logging
 import sys
 import uuid
 
 from astropy.io import fits
-from ccdproc import cosmicray_lacosmic
-from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
 from matplotlib.colors import LogNorm
 from matplotlib.colors import LinearSegmentedColormap
@@ -26,47 +23,29 @@ from rich.logging import RichHandler
 from scipy import ndimage
 from skimage.registration import phase_cross_correlation
 
+try:
+    import PyCosmic
+
+    PYCOSMIC_AVAILABLE = True
+except ModuleNotFoundError as e:
+    PYCOSMIC_AVAILABLE = False
+
 from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
 from teareduce import cleanest
 
-from .valid_parameters import VALID_CRMETHODS
-from .valid_parameters import VALID_LACOSMIC_CLEANTYPE
-from .valid_parameters import VALID_BOUNDARY_FITS
 from .all_valid_numbers import all_valid_numbers
 from .compute_flux_factor import compute_flux_factor
 from .define_piecewise_linear_function import define_piecewise_linear_function
 from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
 from .estimate_diagnostic_limits import estimate_diagnostic_limits
+from .execute_lacosmic import execute_lacosmic
 from .gausskernel2d_elliptical import gausskernel2d_elliptical
-
-
-def decorate_output(func):
-    """Decorator to capture stdout and stderr of a function and log it."""
-
-    def wrapper(*args, **kwargs):
-        _logger = logging.getLogger(__name__)
-        buf = io.StringIO()
-        with redirect_stdout(buf), redirect_stderr(buf):
-            result = func(*args, **kwargs)
-        # Split into lines
-        output_lines = buf.getvalue().splitlines()
-        # Remove trailing empty line
-        if output_lines and output_lines[-1] == "":
-            output_lines = output_lines[:-1]
-        if output_lines:
-            _logger.info("\n".join(output_lines))
-        return result
-
-    return wrapper
-
-
-@decorate_output
-def decorated_cosmicray_lacosmic(*args, **kwargs):
-    """Wrapper for cosmicray_lacosmic with decorated output."""
-    return cosmicray_lacosmic(*args, **kwargs)
+from .valid_parameters import VALID_CRMETHODS
+from .valid_parameters import VALID_LACOSMIC_CLEANTYPE
+from .valid_parameters import VALID_BOUNDARY_FITS
 
 
 def compute_crmasks(
@@ -108,6 +87,16 @@ def compute_crmasks(
     la_psfbeta=None,
     la_verbose=False,
     la_padwidth=None,
+    pc_sigma_det=None,
+    pc_rlim=None,
+    pc_iterations=None,
+    pc_fwhm_gauss_x=None,
+    pc_fwhm_gauss_y=None,
+    pc_replace_box_x=None,
+    pc_replace_box_y=None,
+    pc_replace_error=None,
+    pc_increase_radius=0,
+    pc_verbose=False,
     mm_xy_offsets=None,
     mm_crosscorr_region=None,
     mm_boundary_fit=None,
@@ -155,6 +144,8 @@ def compute_crmasks(
         detect cosmic rays in the median combined image.
         - 'mm_lacosmic': use both methods: 'lacosmic' and 'mmcosmic'.
         Pixels detected by either method are included in the final mask.
+        - 'pycosmic': use the PyCosmic algorithm (Husemann et al. 2012)
+        - 'mm_pycosmic': use both methods: 'pycosmic' and 'mmcosmic'.
     use_lamedian: bool, optional
         If True, use the corrected values from the lacosmic algorithm
         when replacing the cosmic-ray affected pixels in the median
@@ -266,6 +257,39 @@ def compute_crmasks(
         when using the lacosmic algorithm. If None, no padding is applied.
         The padding helps to mitigate edge effects during the
         cosmic ray detection.
+    pc_sigma_det : float or None
+        The detection limit above the noise.
+        Employed when crmethod='pycosmic'.
+    pc_rlim : float or None
+        The detection threshold.
+        Employed when crmethod='pycosmic'.
+    pc_iterations : int or None
+        The number of iterations to perform.
+        Employed when crmethod='pycosmic'.
+    pc_fwhm_gauss_x : float or None
+        FWHM of the Gaussian smoothing kernel (X direction).
+        Employed when crmethod='pycosmic'.
+    pc_fwhm_gauss_y : float or None
+        FWHM of the Gaussian smoothing kernel (Y direction).
+        Employed when crmethod='pycosmic'.
+    pc_replace_box_x : int or None
+        Median box size (X axis) to estimate replacement
+        values for cosmic ray affected pixels.
+        Employed when crmethod='pycosmic'.
+    pc_replace_box_y : int or None
+        Median box size (Y axis) to estimate replacement
+        values for cosmic ray affected pixels.
+        Employed when crmethod='pycosmic'.
+    pc_replace_error : float or None
+        Error value for bad pixels.
+        Employed when crmethod='pycosmic'.
+    pc_increase_radius : int, optional
+        The radius increase for the neighboring pixels
+        to be considered as affected by cosmic rays.
+        Employed when crmethod='pycosmic'.
+    pc_verbose : bool
+        If True, print additional information during the
+        execution. Employed when crmethod='pycosmic'.
     mm_xy_offsets: list of [x_offset, y_offset] or None
         The offsets to apply to each simulated individual exposure
         when computing the diagnostic diagram for the mmcosmic method.
@@ -337,10 +361,12 @@ def compute_crmasks(
     if rich_configured:
         rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
         rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
+        rlabel_pycosmic = "[bold red]pycosmic[/bold red]"
         rlabel_mmcosmic = "[bold blue]mmcosmic[/bold blue]"
     else:
         rlabel_crmethod = f"{crmethod}"
         rlabel_lacosmic = "lacosmic"
+        rlabel_pycosmic = "pycosmic"
         rlabel_mmcosmic = "mmcosmic"
 
     # Check that the input is a list
@@ -435,6 +461,13 @@ def compute_crmasks(
     # Check crmethod
     if crmethod not in VALID_CRMETHODS:
         raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
+    if crmethod in ["pycosmic", "mm_pycosmic"] and not PYCOSMIC_AVAILABLE:
+        raise ImportError(
+            "PyCosmic is not installed. Please install PyCosmic to use\n"
+            "the 'pycosmic' or 'mm_pycosmic' crmethod options.\n"
+            "You can try installing it via pip:\n"
+            "pip install git+https://github.com/nicocardiel/PyCosmic.git@test\n"
+        )
     _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
     # Check use_lamedian
     if use_lamedian and crmethod not in ["lacosmic", "mm_lacosmic"]:
@@ -573,6 +606,13 @@ def compute_crmasks(
     if color_scale not in ["minmax", "zscale"]:
         raise ValueError(f"Invalid color_scale: {color_scale}. Valid options are 'minmax' and 'zscale'.")
 
+    _logger.info("dtype for output arrays: %s", dtype)
+    _logger.info("dilation factor: %d", dilation)
+    _logger.info("verify cosmic-ray detection: %s", verify_cr)
+    _logger.info("semiwindow size for plotting coincident cosmic-ray pixels: %d", semiwindow)
+    _logger.info("maximum number of coincident cosmic-ray pixels to plot: %d", maxplots)
+    _logger.info("color scale for plots: %s", color_scale)
+
     # Define the pixels to be flagged as CR
     if isinstance(pixels_to_be_flagged_as_cr, str):
         if pixels_to_be_flagged_as_cr.lower() == "none":
@@ -700,6 +740,7 @@ def compute_crmasks(
         _logger.debug("mm_minimum_max2d_rnoise: %f", mm_minimum_max2d_rnoise)
         _logger.debug("mm_seed: %s", str(mm_seed))
 
+    # Check and update L.A.Cosmic parameters
     if crmethod in ["lacosmic", "mm_lacosmic"]:
         # Check la_gain_apply
         if la_gain_apply is None:
@@ -709,20 +750,20 @@ def compute_crmasks(
             _logger.debug("la_gain_apply for lacosmic: %s", str(la_gain_apply))
         # Check la_sigclip
         if la_sigclip is None:
-            _logger.warning("la_sigclip for lacosmic not defined, assuming la_sigclip=5.0")
             la_sigclip = 5.0
+            _logger.warning(f"la_sigclip for lacosmic not defined, assuming la_sigclip={la_sigclip}")
         else:
             _logger.debug("la_sigclip for lacosmic: %s", str(la_sigclip))
         # Check la_sigfrac
         if la_sigfrac is None:
-            _logger.warning("la_sigfrac for lacosmic not defined, assuming la_sigfrac=0.3")
             la_sigfrac = 0.3
+            _logger.warning(f"la_sigfrac for lacosmic not defined, assuming la_sigfrac={la_sigfrac}")
         else:
             _logger.debug("la_sigfrac for lacosmic: %s", str(la_sigfrac))
         # Check la_objlim
         if la_objlim is None:
-            _logger.warning("la_objlim for lacosmic not defined, assuming la_objlim=5.0")
             la_objlim = 5.0
+            _logger.warning(f"la_objlim for lacosmic not defined, assuming la_objlim={la_objlim}")
         else:
             _logger.debug("la_objlim for lacosmic: %s", str(la_objlim))
         # Check la_satlevel
@@ -818,43 +859,32 @@ def compute_crmasks(
         }
         dict_la_params_run2 = dict_la_params_run1.copy()
         # update sigclip
-        la_sigclip_needs_2runs = False
         if isinstance(la_sigclip, (float, int)):
             dict_la_params_run1["sigclip"] = la_sigclip
             dict_la_params_run2["sigclip"] = la_sigclip
         elif all_valid_numbers(la_sigclip, fixed_length=2):
             dict_la_params_run1["sigclip"] = la_sigclip[0]
             dict_la_params_run2["sigclip"] = la_sigclip[1]
-            if la_sigclip[1] != la_sigclip[0]:
-                la_sigclip_needs_2runs = True
         else:
-            raise TypeError("la_sigclip must be a number or a list of numbers.")
+            raise TypeError("la_sigclip must be a number or a list of 2 numbers.")
         # update sigfrac
-        la_sigfrac_needs_2runs = False
         if isinstance(la_sigfrac, (float, int)):
             dict_la_params_run1["sigfrac"] = la_sigfrac
             dict_la_params_run2["sigfrac"] = la_sigfrac
         elif all_valid_numbers(la_sigfrac, fixed_length=2):
             dict_la_params_run1["sigfrac"] = la_sigfrac[0]
             dict_la_params_run2["sigfrac"] = la_sigfrac[1]
-            if la_sigfrac[1] != la_sigfrac[0]:
-                la_sigfrac_needs_2runs = True
         else:
-            raise TypeError("la_sigfrac must be a number or a list of numbers.")
+            raise TypeError("la_sigfrac must be a number or a list of 2 numbers.")
         # update objlim
-        la_objlim_needs_2runs = False
         if isinstance(la_objlim, (float, int)):
             dict_la_params_run1["objlim"] = la_objlim
             dict_la_params_run2["objlim"] = la_objlim
         elif all_valid_numbers(la_objlim, fixed_length=2):
             dict_la_params_run1["objlim"] = la_objlim[0]
             dict_la_params_run2["objlim"] = la_objlim[1]
-            if la_objlim[1] != la_objlim[0]:
-                la_objlim_needs_2runs = True
         else:
-            raise TypeError("la_objlim must be a number or a list of numbers.")
-        # Determine if two runs are needed
-        lacosmic_needs_2runs = la_sigclip_needs_2runs or la_sigfrac_needs_2runs or la_objlim_needs_2runs
+            raise TypeError("la_objlim must be a number or a list of 2 numbers.")
         # Update psffwhm or psfk based on la_psfmodel
         if la_psfmodel in ["gauss", "moffat"]:
             if la_psffwhm_x is None or la_psfsize is None:
@@ -885,34 +915,118 @@ def compute_crmasks(
         else:
             raise ValueError("la_psfmodel must be 'gauss', 'moffat', 'gaussx', 'gaussy', or 'gaussxy'.")
 
-    _logger.info("dtype for output arrays: %s", dtype)
-    _logger.info("dilation factor: %d", dilation)
-    _logger.info("verify cosmic-ray detection: %s", verify_cr)
-    _logger.info("semiwindow size for plotting coincident cosmic-ray pixels: %d", semiwindow)
-    _logger.info("maximum number of coincident cosmic-ray pixels to plot: %d", maxplots)
-    _logger.info("color scale for plots: %s", color_scale)
+    # Check and update PyCosmic parameters
+    if crmethod in ["pycosmic", "mm_pycosmic"]:
+        # Check pc_sigma_det
+        if pc_sigma_det is None:
+            pc_sigma_det = 5.0
+            _logger.warning(f"pc_sigma_det for pycosmic not defined, assuming pc_sigma_det={pc_sigma_det}")
+        else:
+            _logger.debug("pc_sigma_det for pycosmic: %s", str(pc_sigma_det))
+        # Check pc_rlim
+        if pc_rlim is None:
+            pc_rlim = 1.2
+            _logger.warning(f"pc_rlim for pycosmic not defined, assuming pc_rlim={pc_rlim}")
+        else:
+            _logger.debug("pc_rlim for pycosmic: %s", str(pc_rlim))
+        # Check pc_iterations
+        if pc_iterations is None:
+            pc_iterations = 5
+            _logger.warning(f"pc_iterations for pycosmic not defined, assuming pc_iterations={pc_iterations}")
+        else:
+            _logger.debug("pc_iterations for pycosmic: %d", pc_iterations)
+        # Check pc_fwhm_gauss_x
+        if pc_fwhm_gauss_x is None:
+            pc_fwhm_gauss_x = 2.5
+            _logger.warning(f"pc_fwhm_gauss_x for pycosmic not defined, assuming pc_fwhm_gauss_x={pc_fwhm_gauss_x}")
+        else:
+            _logger.debug("pc_fwhm_gauss_x for pycosmic: %f", pc_fwhm_gauss_x)
+        # Check pc_fwhm_gauss_y
+        if pc_fwhm_gauss_y is None:
+            pc_fwhm_gauss_y = 2.5
+            _logger.warning(f"pc_fwhm_gauss_y for pycosmic not defined, assuming pc_fwhm_gauss_y={pc_fwhm_gauss_y}")
+        else:
+            _logger.debug("pc_fwhm_gauss_y for pycosmic: %f", pc_fwhm_gauss_y)
+        # Check pc_replace_box_x
+        if pc_replace_box_x is None:
+            pc_replace_box_x = 5
+            _logger.warning(f"pc_replace_box_x for pycosmic not defined, assuming pc_replace_box_x={pc_replace_box_x}")
+        else:
+            _logger.debug("pc_replace_box_x for pycosmic: %d", pc_replace_box_x)
+        # Check pc_replace_box_y
+        if pc_replace_box_y is None:
+            pc_replace_box_y = 5
+            _logger.warning(f"pc_replace_box_y for pycosmic not defined, assuming pc_replace_box_y={pc_replace_box_y}")
+        else:
+            _logger.debug("pc_replace_box_y for pycosmic: %d", pc_replace_box_y)
+        # Check pc_replace_error
+        if pc_replace_error is None:
+            pc_replace_error = 1.0e6
+            _logger.warning(f"pc_replace_error for pycosmic not defined, assuming pc_replace_error={pc_replace_error}")
+        else:
+            try:
+                pc_replace_error = float(pc_replace_error)
+            except ValueError:
+                raise TypeError("pc_replace_error must be a valid number.")
+            _logger.debug("pc_replace_error for pycosmic: %s", pc_replace_error)
+        # Check pc_increase_radius
+        if pc_increase_radius is None:
+            pc_increase_radius = 0
+            _logger.warning(
+                f"pc_increase_radius for pycosmic not defined, assuming pc_increase_radius={pc_increase_radius}"
+            )
+        else:
+            _logger.debug("pc_increase_radius for pycosmic: %d", pc_increase_radius)
+        # Set pc_verbose
+        current_logging_level = logging.getLogger().getEffectiveLevel()
+        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+            pc_verbose = False
+        _logger.debug("pc_verbose for pycosmic: %s", str(pc_verbose))
+        # Define dictionary with the parameters for cosmicray_pycosmic() function
+        dict_pc_params_run1 = {
+            "sigma_det": None,  # to be set below
+            "rlim": None,  # to be set below
+            "iterations": pc_iterations,
+            "fwhm_gauss": [pc_fwhm_gauss_x, pc_fwhm_gauss_y],
+            "replace_box": [pc_replace_box_x, pc_replace_box_y],
+            "replace_error": pc_replace_error,
+            "increase_radius": pc_increase_radius,
+            "gain": gain_scalar,
+            "rdnoise": rnoise_scalar,
+            "bias": 0.0,
+            "verbose": pc_verbose,
+        }
+        dict_pc_params_run2 = dict_pc_params_run1.copy()
+        # update sigma_det
+        pc_sigma_det_needs_2runs = False
+        if isinstance(pc_sigma_det, (float, int)):
+            dict_pc_params_run1["sigma_det"] = pc_sigma_det
+            dict_pc_params_run2["sigma_det"] = pc_sigma_det
+        elif all_valid_numbers(pc_sigma_det, fixed_length=2):
+            dict_pc_params_run1["sigma_det"] = pc_sigma_det[0]
+            dict_pc_params_run2["sigma_det"] = pc_sigma_det[1]
+            if pc_sigma_det[1] != pc_sigma_det[0]:
+                pc_sigma_det_needs_2runs = True
+        else:
+            raise TypeError("pc_sigma_det must be a number or a list of 2 numbers.")
+        # update rlim
+        pc_rlim_needs_2runs = False
+        if isinstance(pc_rlim, (float, int)):
+            dict_pc_params_run1["rlim"] = pc_rlim
+            dict_pc_params_run2["rlim"] = pc_rlim
+        elif all_valid_numbers(pc_rlim, fixed_length=2):
+            dict_pc_params_run1["rlim"] = pc_rlim[0]
+            dict_pc_params_run2["rlim"] = pc_rlim[1]
+            if pc_rlim[1] != pc_rlim[0]:
+                pc_rlim_needs_2runs = True
+        else:
+            raise TypeError("pc_rlim must be a number or a list of 2 numbers.")
+        # Determine if two runs are needed
+        pycosmic_needs_2runs = pc_sigma_det_needs_2runs or pc_rlim_needs_2runs
 
-    if la_verbose:
-        _logger.info("[green][LACOSMIC parameters for run 1][/green]")
-        for key in dict_la_params_run1.keys():
-            if key == "psfk":
-                if dict_la_params_run1[key] is None:
-                    _logger.info("%s for lacosmic: None", key)
-                else:
-                    _logger.info("%s for lacosmic: array with shape %s", key, str(dict_la_params_run1[key].shape))
-            else:
-                _logger.info("%s for lacosmic: %s", key, str(dict_la_params_run1[key]))
-        if lacosmic_needs_2runs:
-            _logger.info("[green][LACOSMIC parameters modified for run 2][/green]")
-            if la_sigclip_needs_2runs:
-                _logger.info("  la_sigclip for run 1: %f", dict_la_params_run1["sigclip"])
-                _logger.info("  la_sigclip for run 2: %f", dict_la_params_run2["sigclip"])
-            if la_sigfrac_needs_2runs:
-                _logger.info("  la_sigfrac for run 1: %f", dict_la_params_run1["sigfrac"])
-                _logger.info("  la_sigfrac for run 2: %f", dict_la_params_run2["sigfrac"])
-            if la_objlim_needs_2runs:
-                _logger.info("  la_objlim for run 1: %f", dict_la_params_run1["objlim"])
-                _logger.info("  la_objlim for run 2: %f", dict_la_params_run2["objlim"])
+    # #########################################################################
+    # Start cosmic ray detection in median2d image
+    # #########################################################################
     if rich_configured:
         _logger.info("[green]" + "-" * 79 + "[/green]")
         _logger.info("starting cosmic ray detection in [magenta]median2d[/magenta] image...")
@@ -922,54 +1036,91 @@ def compute_crmasks(
 
     if crmethod in ["lacosmic", "mm_lacosmic"]:
         # ---------------------------------------------------------------------
-        # Detect residual cosmic rays in the median2d image using the
-        # Laplacian edge detection method from ccdproc. This only works if gain and
-        # rnoise are constant values (scalars).
+        # Detect residual cosmic rays in the median2d image using L.A.Cosmic,
+        # the Laplacian edge detection method from ccdproc. This only works
+        # if gain and rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
-        if lacosmic_needs_2runs:
-            _logger.info("LACOSMIC will be run in 2 passes with modified parameters.")
-        else:
-            _logger.info("LACOSMIC will be run in a single pass.")
-        _logger.info(f"detecting cosmic rays in median2d image using {rlabel_lacosmic}...")
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
-        # run 1
-        median2d_padded = np.pad(median2d, pad_width=la_padwidth, mode="reflect")
-        median2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
-            ccd=median2d_padded, **{key: value for key, value in dict_la_params_run1.items() if value is not None}
+        median2d_lacosmic, flag_la = execute_lacosmic(
+            image2d=median2d,
+            bool_to_be_cleaned=bool_to_be_cleaned,
+            rlabel_lacosmic=rlabel_lacosmic,
+            dict_la_params_run1=dict_la_params_run1,
+            dict_la_params_run2=dict_la_params_run2,
+            la_padwidth=la_padwidth,
+            _logger=_logger,
         )
-        if la_padwidth > 0:
-            median2d_lacosmic = median2d_lacosmic[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-            flag_la = flag_la[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-        # run 2 if needed
-        if lacosmic_needs_2runs:
-            median2d_lacosmic2, flag_la2 = decorated_cosmicray_lacosmic(
-                ccd=median2d_padded,
-                **{key: value for key, value in dict_la_params_run2.items() if value is not None},
-            )
-            if la_padwidth > 0:
-                median2d_lacosmic2 = median2d_lacosmic2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-                flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-            # combine results from both runs
-            flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
-            median2d_lacosmic = median2d_lacosmic2  # use the result from the 2nd run
-        _logger.info(
-            "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
-            rlabel_lacosmic,
-            np.sum(flag_la),
-            np.sum(flag_la) / flag_la.size * 100,
-        )
-        flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
-        flag_la = flag_la.flatten()
         if crmethod == "lacosmic":
             xplot_boundary = None
             yplot_boundary = None
             mm_threshold = None
-            flag_sb = np.zeros_like(flag_la, dtype=bool)
+            flag_mm = np.zeros_like(flag_la, dtype=bool)
     else:
         median2d_lacosmic = None
+        flag_la = None
 
-    if crmethod in ["mmcosmic", "mm_lacosmic"]:
+    if crmethod in ["pycosmic", "mm_pycosmic"]:
+        # ---------------------------------------------------------------------
+        # Detect residual cosmic rays in the median2d image using PyCosmic.
+        # ---------------------------------------------------------------------
+        if pc_verbose:
+            _logger.info("[green][PYCOSMIC parameters for run 1][/green]")
+            for key in dict_pc_params_run1.keys():
+                _logger.info("%s for pycosmic: %s", key, str(dict_pc_params_run1[key]))
+            if pycosmic_needs_2runs:
+                _logger.info("[green][PYCOSMIC parameters modified for run 2][/green]")
+                if pc_sigma_det_needs_2runs:
+                    _logger.info(
+                        "pc_sigma_det for run 2 (run1): %f (%f)",
+                        dict_pc_params_run2["sigma_det"],
+                        dict_pc_params_run1["sigma_det"],
+                    )
+                if pc_rlim_needs_2runs:
+                    _logger.info(
+                        "pc_rlim for run 2 (run1): %f (%f)", dict_pc_params_run2["rlim"], dict_pc_params_run1["rlim"]
+                    )
+        if pycosmic_needs_2runs:
+            _logger.info("PYCOSMIC will be run in 2 passes with modified parameters.")
+        else:
+            _logger.info("PYCOSMIC will be run in a single pass.")
+        _logger.info(f"detecting cosmic rays in median2d image using {rlabel_pycosmic}...")
+        if gain_scalar is None or rnoise_scalar is None:
+            raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='pycosmic'.")
+        # run 1
+        out = PyCosmic.det_cosmics(
+            data=median2d, **{key: value for key, value in dict_pc_params_run1.items() if value is not None}
+        )
+        meddian2d_pycosmic = out.data
+        flag_pc = out.mask.astype(bool)
+        # run 2 if needed
+        if pycosmic_needs_2runs:
+            out2 = PyCosmic.det_cosmics(
+                data=median2d, **{key: value for key, value in dict_pc_params_run2.items() if value is not None}
+            )
+            median2d_pycosmic2 = out2.data
+            flag_pc2 = out2.mask.astype(bool)
+            # combine results from both runs
+            flag_pc = cleanest.merge_peak_tail_masks(flag_pc, flag_pc2, pc_verbose)
+            median2d_pycosmic = median2d_pycosmic2  # use the result from the 2nd run
+        _logger.info(
+            "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
+            rlabel_pycosmic,
+            np.sum(flag_pc),
+            np.sum(flag_pc) / flag_pc.size * 100,
+        )
+        flag_pc = np.logical_and(flag_pc, bool_to_be_cleaned)
+        flag_pc = flag_pc.flatten()
+        if crmethod == "pycosmic":
+            xplot_boundary = None
+            yplot_boundary = None
+            mm_threshold = None
+            flag_mm = np.zeros_like(flag_pc, dtype=bool)
+    else:
+        median2d_pycosmic = None
+        flag_pc = None
+
+    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic"]:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
@@ -1384,18 +1535,18 @@ def compute_crmasks(
         # Apply the criterium to detect coincident cosmic-ray pixels
         flag1 = yplot > boundaryfit(xplot)
         flag2 = yplot > mm_threshold
-        flag_sb = np.logical_and(flag1, flag2)
+        flag_mm = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
-        flag_sb = np.logical_and(flag_sb, flag3)
-        flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
+        flag_mm = np.logical_and(flag_mm, flag3)
+        flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
         _logger.info(
             "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
             rlabel_mmcosmic,
-            np.sum(flag_sb),
-            np.sum(flag_sb) / flag_sb.size * 100,
+            np.sum(flag_mm),
+            np.sum(flag_mm) / flag_mm.size * 100,
         )
         if crmethod == "mmcosmic":
-            flag_la = np.zeros_like(flag_sb, dtype=bool)
+            flag_la = np.zeros_like(flag_mm, dtype=bool)
 
         # Plot the results
         if mm_fixed_points_in_boundary is not None:
@@ -1444,23 +1595,39 @@ def compute_crmasks(
         plt.close(fig)
 
     # Define the final cosmic ray flag
-    if flag_la is None and flag_sb is None:
-        raise RuntimeError("Both flag_la and flag_sb are None. This should never happen.")
-    elif flag_la is None:
-        flag = flag_sb
-        flag_integer = 2 * flag_sb.astype(np.uint8)
-    elif flag_sb is None:
-        flag = flag_la
-        flag_integer = 3 * flag_la.astype(np.uint8)
+    if flag_la is None and flag_pc is None and flag_mm is None:
+        raise RuntimeError("All flag_la, flag_pc and flag_mm are None. This should never happen.")
+    if flag_la is not None and flag_pc is not None:
+        raise RuntimeError("Both lacosmic and pycosmic were run. This should never happen.")
+
+    if flag_la is None and flag_pc is None:
+        flag_aux = None
+        rlabel_aux = None
+        median2d_aux = None
+    elif flag_la is not None:
+        flag_aux = flag_la
+        rlabel_aux = rlabel_lacosmic
+        median2d_aux = median2d_lacosmic
     else:
-        # Combine the flags from lacosmic and mmcosmic
-        flag = np.logical_or(flag_la, flag_sb)
-        flag_integer = 2 * flag_sb.astype(np.uint8) + 3 * flag_la.astype(np.uint8)
+        flag_aux = flag_pc
+        rlabel_aux = rlabel_pycosmic
+        median2d_aux = median2d_pycosmic
+
+    if flag_aux is None:
+        flag = flag_mm
+        flag_integer = 2 * flag_mm.astype(np.uint8)
+    elif flag_mm is None:
+        flag = flag_aux
+        flag_integer = 3 * flag_aux.astype(np.uint8)
+    else:
+        # Combine the flags from [lacosmic|pycosmic] and mmcosmic
+        flag = np.logical_or(flag_aux, flag_mm)
+        flag_integer = 2 * flag_mm.astype(np.uint8) + 3 * flag_aux.astype(np.uint8)
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
         _logger.info(
             "pixels flagged as cosmic rays by " "%s or  %s: %s (%08.4f%%)",
-            rlabel_lacosmic,
+            rlabel_aux,
             rlabel_mmcosmic,
             cdum,
             np.sum(flag) / flag.size * 100,
@@ -1468,7 +1635,7 @@ def compute_crmasks(
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
         _logger.info(
             "pixels flagged as cosmic rays by " "%s only........: %s (%08.4f%%)",
-            rlabel_lacosmic,
+            rlabel_aux,
             cdum,
             np.sum(flag_integer == 3) / flag.size * 100,
         )
@@ -1482,7 +1649,7 @@ def compute_crmasks(
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
         _logger.info(
             "pixels flagged as cosmic rays by " "%s and %s: %s (%08.4f%%)",
-            rlabel_lacosmic,
+            rlabel_aux,
             rlabel_mmcosmic,
             cdum,
             np.sum((flag_integer == 5)) / flag.size * 100,
@@ -1499,8 +1666,8 @@ def compute_crmasks(
         yplot,
         xplot_boundary,
         yplot_boundary,
-        flag_la,
-        flag_sb,
+        flag_aux,
+        flag_mm,
         mm_threshold,
         ylabel,
         interactive,
@@ -1513,6 +1680,7 @@ def compute_crmasks(
         png_filename="diagnostic_mediancr.png",
     )
 
+    input("Press Enter to continue NOW...")
     # Check if any cosmic ray was detected
     if not np.any(flag):
         _logger.info("no coincident cosmic-ray pixels detected.")
@@ -1588,59 +1756,48 @@ def compute_crmasks(
         if crmethod in ["lacosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
             # run 1
-            target2d_padded = np.pad(target2d, pad_width=la_padwidth, mode="reflect")
-            array_lacosmic, flag_la = decorated_cosmicray_lacosmic(
-                ccd=target2d_padded, **{key: value for key, value in dict_la_params_run1.items() if value is not None}
+            array_lacosmic, flag_la = execute_lacosmic(
+                image2d=target2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_lacosmic=rlabel_lacosmic,
+                dict_la_params_run1=dict_la_params_run1,
+                dict_la_params_run2=dict_la_params_run2,
+                la_padwidth=la_padwidth,
+                _logger=_logger,
             )
-            if la_padwidth > 0:
-                array_lacosmic = array_lacosmic[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-                flag_la = flag_la[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-            # run 2 if needed
-            if lacosmic_needs_2runs:
-                array_lacosmic2, flag_la2 = decorated_cosmicray_lacosmic(
-                    ccd=target2d_padded,
-                    **{key: value for key, value in dict_la_params_run2.items() if value is not None},
-                )
-                if la_padwidth > 0:
-                    array_lacosmic2 = array_lacosmic2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-                    flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-                # combine results from both runs
-                flag_la = cleanest.merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
-                array_lacosmic = array_lacosmic2  # use the result from the 2nd run
-            flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
             flag_la = flag_la.flatten()
             if crmethod == "lacosmic":
                 xplot_boundary = None
                 yplot_boundary = None
                 mm_threshold = None
-                flag_sb = np.zeros_like(flag_la, dtype=bool)
+                flag_mm = np.zeros_like(flag_la, dtype=bool)
         if crmethod in ["mmcosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
             flag1 = yplot > boundaryfit(xplot)
             flag2 = yplot > mm_threshold
-            flag_sb = np.logical_and(flag1, flag2)
+            flag_mm = np.logical_and(flag1, flag2)
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
-            flag_sb = np.logical_and(flag_sb, flag3)
-            flag_sb = np.logical_and(flag_sb, bool_to_be_cleaned.flatten())
+            flag_mm = np.logical_and(flag_mm, flag3)
+            flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
             if crmethod == "mmcosmic":
-                flag_la = np.zeros_like(flag_sb, dtype=bool)
+                flag_la = np.zeros_like(flag_mm, dtype=bool)
         # For the mean2d mask, force the flag to be True if the pixel
         # was flagged as a coincident cosmic-ray pixel when using the median2d array
         # (this is to ensure that all pixels flagged in MEDIANCR are also
         # flagged in MEANCRT)
         if i == 0:
             flag_la = np.logical_or(flag_la, list_hdu_masks[0].data.astype(bool).flatten())
-            flag_sb = np.logical_or(flag_sb, list_hdu_masks[0].data.astype(bool).flatten())
+            flag_mm = np.logical_or(flag_mm, list_hdu_masks[0].data.astype(bool).flatten())
         # For the individual array masks, force the flag to be True if the pixel
         # is flagged both in the individual exposure and in the mean2d array
         if i > 0:
             flag_la = np.logical_and(flag_la, list_hdu_masks[1].data.astype(bool).flatten())
-            flag_sb = np.logical_and(flag_sb, list_hdu_masks[1].data.astype(bool).flatten())
+            flag_mm = np.logical_and(flag_mm, list_hdu_masks[1].data.astype(bool).flatten())
         sflag_la = str(np.sum(flag_la))
-        sflag_sb = str(np.sum(flag_sb))
-        smax = max(len(sflag_la), len(sflag_sb))
+        sflag_mm = str(np.sum(flag_mm))
+        smax = max(len(sflag_la), len(sflag_mm))
         _logger.info(
             "pixels flagged as cosmic rays by " "%s: %s (%08.4f%%)",
             rlabel_lacosmic,
@@ -1650,8 +1807,8 @@ def compute_crmasks(
         _logger.info(
             "pixels flagged as cosmic rays by " "%s: %s (%08.4f%%)",
             rlabel_mmcosmic,
-            f"{np.sum(flag_sb):{smax}d}",
-            np.sum(flag_sb) / flag_sb.size * 100,
+            f"{np.sum(flag_mm):{smax}d}",
+            np.sum(flag_mm) / flag_mm.size * 100,
         )
         if i == 0:
             _logger.info("generating diagnostic plot for MEANCRT...")
@@ -1668,7 +1825,7 @@ def compute_crmasks(
             xplot_boundary,
             yplot_boundary,
             flag_la,
-            flag_sb,
+            flag_mm,
             mm_threshold,
             ylabel,
             interactive_eff,
@@ -1680,7 +1837,7 @@ def compute_crmasks(
             _logger=_logger,
             png_filename=png_filename,
         )
-        flag = np.logical_or(flag_la, flag_sb)
+        flag = np.logical_or(flag_la, flag_mm)
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
         if dilation > 0:
