@@ -13,8 +13,10 @@ from importlib.metadata import version
 
 from datetime import datetime
 import numpy as np
+
 try:
     import PyCosmic
+
     PYCOSMIC_AVAILABLE = True
 except ModuleNotFoundError as e:
     PYCOSMIC_AVAILABLE = False
@@ -29,10 +31,12 @@ def decorated_pycosmic_det_cosmics(*args, **kwargs):
     """Wrapper for PyCosmic.det_cosmics with decorated output."""
     return PyCosmic.det_cosmics(*args, **kwargs)
 
+
 @decorate_output
 def decorated_merge_peak_tail_masks(*args, **kwargs):
     """Wrapper for merge_peak_tail_masks with decorated output."""
     return cleanest.merge_peak_tail_masks(*args, **kwargs)
+
 
 def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, _logger):
     """Execute PyCosmic cosmic ray detection algorithm."""

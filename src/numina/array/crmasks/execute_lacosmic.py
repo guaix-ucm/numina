@@ -25,10 +25,12 @@ def decorated_cosmicray_lacosmic(*args, **kwargs):
     """Wrapper for cosmicray_lacosmic with decorated output."""
     return cosmicray_lacosmic(*args, **kwargs)
 
+
 @decorate_output
 def decorated_merge_peak_tail_masks(*args, **kwargs):
     """Wrapper for merge_peak_tail_masks with decorated output."""
     return cleanest.merge_peak_tail_masks(*args, **kwargs)
+
 
 def execute_lacosmic(
     image2d, bool_to_be_cleaned, rlabel_lacosmic, dict_la_params_run1, dict_la_params_run2, la_padwidth, _logger

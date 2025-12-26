@@ -24,7 +24,15 @@ from scipy import ndimage
 from skimage.registration import phase_cross_correlation
 
 try:
+    import deepCR
+
+    DEEPCR_AVAILABLE = True
+except ModuleNotFoundError as e:
+    DEEPCR_AVAILABLE = False
+
+try:
     import PyCosmic
+
     PYCOSMIC_AVAILABLE = True
 except ModuleNotFoundError as e:
     PYCOSMIC_AVAILABLE = False
@@ -40,6 +48,7 @@ from .define_piecewise_linear_function import define_piecewise_linear_function
 from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
 from .estimate_diagnostic_limits import estimate_diagnostic_limits
+from .execute_deepcr import execute_deepcr
 from .execute_lacosmic import execute_lacosmic
 from .execute_pycosmic import execute_pycosmic
 from .gausskernel2d_elliptical import gausskernel2d_elliptical
@@ -97,6 +106,9 @@ def compute_crmasks(
     pc_replace_error=None,
     pc_increase_radius=0,
     pc_verbose=False,
+    dc_mask=None,
+    dc_threshold=None,
+    dc_verbose=False,
     mm_xy_offsets=None,
     mm_crosscorr_region=None,
     mm_boundary_fit=None,
@@ -290,6 +302,16 @@ def compute_crmasks(
     pc_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='pycosmic'.
+    dc_mask : str or None
+        The instrument/detector mask to use for DeepCR.
+        Valid options are 'ACS-WFC' and 'WFC3-UVIS'.
+        Employed when crmethod='deepcr' or 'mm_deepcr'.
+    dc_threshold : float or None
+        The detection threshold for DeepCR.
+        Employed when crmethod='deepcr' or 'mm_deepcr'.
+    dc_verbose : bool
+        If True, print additional information during the
+        execution. Employed when crmethod='deepcr' or 'mm_deepcr'.
     mm_xy_offsets: list of [x_offset, y_offset] or None
         The offsets to apply to each simulated individual exposure
         when computing the diagnostic diagram for the mmcosmic method.
@@ -361,16 +383,19 @@ def compute_crmasks(
     rlabel_crmethod_plain = f"{crmethod}"
     rlabel_lacosmic_plain = "lacosmic"
     rlabel_pycosmic_plain = "pycosmic"
+    rlabel_deepcr_plain = "deepcr"
     rlabel_mmcosmic_plain = "mmcosmic"
     if rich_configured:
         rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
         rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
         rlabel_pycosmic = "[bold red]pycosmic[/bold red]"
+        rlabel_deepcr = "[bold red]deepcr[/bold red]"
         rlabel_mmcosmic = "[bold blue]mmcosmic[/bold blue]"
     else:
         rlabel_crmethod = rlabel_crmethod_plain
         rlabel_lacosmic = rlabel_lacosmic_plain
         rlabel_pycosmic = rlabel_pycosmic_plain
+        rlabel_deepcr = rlabel_deepcr_plain
         rlabel_mmcosmic = rlabel_mmcosmic_plain
 
     # Check crmethod
@@ -383,23 +408,34 @@ def compute_crmasks(
             "You can try installing it via pip:\n"
             "pip install git+https://github.com/nicocardiel/PyCosmic.git@test\n"
         )
+    if crmethod in ["deepcr", "mm_deepcr"] and not DEEPCR_AVAILABLE:
+        raise ImportError(
+            "DeepCR is not installed. Please install DeepCR to use\n"
+            "the 'deepcr' or 'mm_deepcr' crmethod options.\n"
+            "You can try installing it via pip:\n"
+            "pip install deepCR\n"
+        )
     _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
-    # Define prefixes of excluded arguments for each crmethod
-    # Used later to filter the local variables
-    # when generating the output HDUList with masks
+    # Define prefixes of excluded arguments for each crmethod. They are used
+    # later to filter the local variables when generating the output HDUList with masks
     # (to avoid including irrelevant parameters)
     # mm = Median-Mean diagnostic method
     # la = L.A.Cosmic method
     # pc = PyCosmic method
+    # dc = DeepCR method
     if crmethod == "lacosmic":
-        prefix_of_excluded_args = ["mm_", "pc_"]
+        prefix_of_excluded_args = ["mm_", "pc_", "dc_"]
     elif crmethod == "mm_lacosmic":
-        prefix_of_excluded_args = ["pc_"]
+        prefix_of_excluded_args = ["pc_", "dc_"]
     elif crmethod == "pycosmic":
-        prefix_of_excluded_args = ["mm_", "la_"]
+        prefix_of_excluded_args = ["mm_", "la_", "dc_"]
     elif crmethod == "mm_pycosmic":
-        prefix_of_excluded_args = ["la_"]
+        prefix_of_excluded_args = ["la_", "dc_"]
     elif crmethod == "mmcosmic":
+        prefix_of_excluded_args = ["la_", "pc_", "dc_"]
+    elif crmethod == "deepcr":
+        prefix_of_excluded_args = ["mm_", "la_", "pc_"]
+    elif crmethod == "mm_deepcr":
         prefix_of_excluded_args = ["la_", "pc_"]
     else:
         prefix_of_excluded_args = ["xxx"]  # should never happen
@@ -408,6 +444,8 @@ def compute_crmasks(
         acronym_aux = "la"
     elif crmethod in ["pycosmic", "mm_pycosmic"]:
         acronym_aux = "pc"
+    elif crmethod in ["deepcr", "mm_deepcr"]:
+        acronym_aux = "dc"
     else:  # crmethod == 'mmcosmic'
         acronym_aux = None
 
@@ -1049,6 +1087,34 @@ def compute_crmasks(
         else:
             raise TypeError("pc_rlim must be a number or a list of 2 numbers.")
 
+    # Check and update DeepCR parameters
+    if crmethod in ["deepcr", "mm_deepcr"]:
+        # Check dc_mask
+        if dc_mask is None:
+            dc_mask = "ACS-WFC"
+            _logger.warning(f"dc_mask for deepcr not defined, assuming dc_mask='{dc_mask}'")
+        else:
+            _logger.debug("dc_mask for deepcr: %s", str(dc_mask))
+            if dc_mask not in ["ACS-WFC", "WFC3-UVIS"]:
+                raise ValueError("dc_mask must be 'ACS-WFC' or 'WFC3-UVIS'.")
+        # Check dc_threshold
+        if dc_threshold is None:
+            dc_threshold = 0.5
+            _logger.warning(f"dc_threshold for deepcr not defined, assuming dc_threshold={dc_threshold}")
+        else:
+            _logger.debug("dc_threshold for deepcr: %s", str(dc_threshold))
+        # Set dc_verbose
+        current_logging_level = logging.getLogger().getEffectiveLevel()
+        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+            dc_verbose = False
+        _logger.debug("dc_verbose for deepcr: %s", str(dc_verbose))
+        # Define dictionary with the parameters for deepCR
+        dict_dc_params = {
+            "mask": dc_mask,
+            "threshold": dc_threshold,
+            "verbose": dc_verbose,
+        }
+
     # #########################################################################
     # Start cosmic ray detection in median2d image
     # #########################################################################
@@ -1100,8 +1166,23 @@ def compute_crmasks(
             dict_pc_params_run2=dict_pc_params_run2,
             _logger=_logger,
         )
+    elif crmethod in ["deepcr", "mm_deepcr"]:
+        # ---------------------------------------------------------------------
+        # Detect residual cosmic rays in the median2d image using DeepCR.
+        # ---------------------------------------------------------------------
+        rlabel_aux = rlabel_deepcr
+        rlabel_aux_plain = rlabel_deepcr_plain
+        median2d_aux, flag_aux = execute_deepcr(
+            image2d=median2d,
+            bool_to_be_cleaned=bool_to_be_cleaned,
+            rlabel_deepcr=rlabel_deepcr,
+            dict_dc_params=dict_dc_params,
+            _logger=_logger,
+        )
+    elif crmethod != "mmcosmic":
+        raise ValueError(f"Invalid crmethod: {crmethod}. " f"Valid options are: {VALID_CRMETHODS}.")
 
-    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic"]:
+    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr"]:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
@@ -1574,16 +1655,17 @@ def compute_crmasks(
             _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
             plt.show()
         plt.close(fig)
-    else:
-        # crmethod is 'lacosmic' or 'pycosmic' only
+    elif crmethod in ["lacosmic", "pycosmic", "deepcr"]:
         xplot_boundary = None
         yplot_boundary = None
         mm_threshold = None
         flag_mm = np.zeros_like(median2d, dtype=bool)
+    else:
+        raise ValueError(f"Invalid crmethod: {crmethod}.\nValid options are: {VALID_CRMETHODS}.")
 
-    # ###############################################################################
-    # Combine the flags from the auxiliary method (lacosmic or pycosmic) and mmcosmic
-    # ###############################################################################
+    # #######################################################################################
+    # Combine the flags from the auxiliary method (lacosmic | pycosmic | deepcr) and mmcosmic
+    # #######################################################################################
     if flag_aux is None and flag_mm is None:
         raise RuntimeError("Both flag_aux and flag_mm are None. This should never happen.")
     elif flag_aux is None:
@@ -1749,8 +1831,19 @@ def compute_crmasks(
                 dict_pc_params_run2=dict_pc_params_run2,
                 _logger=_logger,
             )
+        elif crmethod in ["deepcr", "mm_deepcr"]:
+            _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_deepcr}...")
+            array_deepcr, flag_aux = execute_deepcr(
+                image2d=target2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_deepcr=rlabel_deepcr,
+                dict_dc_params=dict_dc_params,
+                _logger=_logger,
+            )
+        elif crmethod != "mmcosmic":
+            raise ValueError(f"Invalid crmethod: {crmethod}.\n" f"Valid options are: {VALID_CRMETHODS}.")
 
-        if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic"]:
+        if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
