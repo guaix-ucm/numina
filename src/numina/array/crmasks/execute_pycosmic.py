@@ -11,8 +11,13 @@
 
 from importlib.metadata import version
 
+from datetime import datetime
 import numpy as np
-import PyCosmic
+try:
+    import PyCosmic
+    PYCOSMIC_AVAILABLE = True
+except ModuleNotFoundError as e:
+    PYCOSMIC_AVAILABLE = False
 
 from teareduce import cleanest
 
@@ -31,6 +36,13 @@ def decorated_merge_peak_tail_masks(*args, **kwargs):
 
 def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, _logger):
     """Execute PyCosmic cosmic ray detection algorithm."""
+    if not PYCOSMIC_AVAILABLE:
+        raise ImportError(
+            "PyCosmic is not installed. Please install PyCosmic to use\n"
+            "the 'pycosmic' or 'mm_pycosmic' crmethod options.\n"
+            "You can try installing it via pip:\n"
+            "pip install git+https://github.com/nicocardiel/PyCosmic.git@test\n"
+        )
     pc_verbose = dict_pc_params_run1["verbose"] or dict_pc_params_run2["verbose"]
     # Determine if 2 runs are needed
     pc_sigma_det_needs_2runs = False
@@ -42,11 +54,11 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
     pycosmic_needs_2runs = pc_sigma_det_needs_2runs or pc_rlim_needs_2runs
     # Display parameters
     if pc_verbose:
-        _logger.info("[green][PYCOSMIC parameters for run 1][/green]")
+        _logger.info("[green][PyCosmic parameters for run 1][/green]")
         for key in dict_pc_params_run1.keys():
             _logger.info("%s for pycosmic: %s", key, str(dict_pc_params_run1[key]))
         if pycosmic_needs_2runs:
-            _logger.info("[green][PYCOSMIC parameters modified for run 2][/green]")
+            _logger.info("[green][PyCosmic parameters modified for run 2][/green]")
             if pc_sigma_det_needs_2runs:
                 _logger.info(
                     "pc_sigma_det for run 2 (run1): %f (%f)",
@@ -58,9 +70,9 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
                     "pc_rlim for run 2 (run1): %f (%f)", dict_pc_params_run2["rlim"], dict_pc_params_run1["rlim"]
                 )
     if pycosmic_needs_2runs:
-        _logger.info("PYCOSMIC will be run in 2 passes with modified parameters.")
+        _logger.info("PyCosmic will be run in 2 passes with modified parameters.")
     else:
-        _logger.info("PYCOSMIC will be run in a single pass.")
+        _logger.info("PyCosmic will be run in a single pass.")
     _logger.info(f"detecting cosmic rays using {rlabel_pycosmic}...")
     # Detect PyCosmic version
     try:
@@ -69,10 +81,11 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         version_pycosmic = "unknown"
     _logger.info(f"using PyCosmic version: {version_pycosmic}")
     # run 1
+    datetime_ini = datetime.now()
     out = decorated_pycosmic_det_cosmics(
         data=image2d, **{key: value for key, value in dict_pc_params_run1.items() if value is not None}
     )
-    meddian2d_pycosmic = out.data
+    median2d_pycosmic = out.data
     flag_pc = out.mask.astype(bool)
     # run 2 if needed
     if pycosmic_needs_2runs:
@@ -86,6 +99,9 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         median2d_pycosmic = median2d_pycosmic2  # use the result from the 2nd run
     flag_pc = np.logical_and(flag_pc, bool_to_be_cleaned)
     flag_pc = flag_pc.flatten()
+    datetime_end = datetime.now()
+    delta_datetime = datetime_end - datetime_ini
+    _logger.info("PyCosmic execution time: %s", str(delta_datetime))
     _logger.info(
         "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
         rlabel_pycosmic,

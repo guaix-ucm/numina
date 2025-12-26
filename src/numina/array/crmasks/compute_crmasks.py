@@ -25,7 +25,6 @@ from skimage.registration import phase_cross_correlation
 
 try:
     import PyCosmic
-
     PYCOSMIC_AVAILABLE = True
 except ModuleNotFoundError as e:
     PYCOSMIC_AVAILABLE = False

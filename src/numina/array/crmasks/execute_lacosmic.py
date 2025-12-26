@@ -11,6 +11,7 @@
 
 from importlib.metadata import version
 
+from datetime import datetime
 from ccdproc import cosmicray_lacosmic
 import numpy as np
 
@@ -47,7 +48,7 @@ def execute_lacosmic(
     lacosmic_needs_2runs = la_sigclip_needs_2runs or la_sigfrac_needs_2runs or la_objlim_needs_2runs
     # Display parameters
     if la_verbose:
-        _logger.info("[green][LACOSMIC parameters for run 1][/green]")
+        _logger.info("[green][L.A.Cosmic parameters for run 1][/green]")
         for key in dict_la_params_run1.keys():
             if key == "psfk":
                 if dict_la_params_run1[key] is None:
@@ -57,7 +58,7 @@ def execute_lacosmic(
             else:
                 _logger.info("%s for lacosmic: %s", key, str(dict_la_params_run1[key]))
         if lacosmic_needs_2runs:
-            _logger.info("[green][LACOSMIC parameters modified for run 2][/green]")
+            _logger.info("[green][L.A.Cosmic parameters modified for run 2][/green]")
             if la_sigclip_needs_2runs:
                 _logger.info(
                     "la_sigclip for run 2 (run1): %f (%f)",
@@ -77,9 +78,9 @@ def execute_lacosmic(
                     dict_la_params_run1["objlim"],
                 )
     if lacosmic_needs_2runs:
-        _logger.info("LACOSMIC will be run in 2 passes with modified parameters.")
+        _logger.info("L.A.Cosmic will be run in 2 passes with modified parameters.")
     else:
-        _logger.info("LACOSMIC will be run in a single pass.")
+        _logger.info("L.A.Cosmic will be run in a single pass.")
     _logger.info(f"detecting cosmic rays using {rlabel_lacosmic}...")
     # Detect ccdproc version
     try:
@@ -88,6 +89,7 @@ def execute_lacosmic(
         version_ccdproc = "unknown"
     _logger.info(f"using ccdproc version: {version_ccdproc}")
     # run 1
+    datetime_ini = datetime.now()
     image2d_padded = np.pad(image2d, pad_width=la_padwidth, mode="reflect")
     image2d_lacosmic, flag_la = decorated_cosmicray_lacosmic(
         ccd=image2d_padded, **{key: value for key, value in dict_la_params_run1.items() if value is not None}
@@ -104,12 +106,14 @@ def execute_lacosmic(
         if la_padwidth > 0:
             image2d_lacosmic2 = image2d_lacosmic2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
             flag_la2 = flag_la2[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
-            print(f"{image2d_lacosmic2.shape=}, {flag_la2.shape=}")
         # combine results from both runs
         flag_la = decorated_merge_peak_tail_masks(flag_la, flag_la2, la_verbose)
         image2d_lacosmic = image2d_lacosmic2  # use the result from the 2nd run
     flag_la = np.logical_and(flag_la, bool_to_be_cleaned)
     flag_la = flag_la.flatten()
+    datetime_end = datetime.now()
+    delta_datetime = datetime_end - datetime_ini
+    _logger.info("L.A.Cosmic execution time: %s", str(delta_datetime))
     _logger.info(
         "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
         rlabel_lacosmic,
