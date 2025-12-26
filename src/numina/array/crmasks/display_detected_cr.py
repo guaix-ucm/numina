@@ -22,6 +22,7 @@ def display_detected_cr(
     median2d,
     median2d_corrected,
     flag_integer_dilated,
+    acronym_aux,
     labels_cr,
     number_cr,
     mask_mediancr,
@@ -184,7 +185,7 @@ def display_detected_cr(
                 if k == 1:
                     cbar.set_ticks([0, 1, 2, 3, 4])
                     cbar.ax.yaxis.set_tick_params(length=0)
-                    cbar.set_ticklabels(["0: no CR", "1: dilation", "2: mm", "3: la", "4: mm & la"])
+                    cbar.set_ticklabels(["0: no CR", "1: dilation", "2: mm", f"3: {acronym_aux}", f"4: mm & {acronym_aux}"])
                     # Overlay the grid of pixels
                     for idum in range(i1, i2 + 1):
                         ax.hlines(y=idum + 0.5, xmin=j1 + 0.5, xmax=j2 + 1.5, colors="w", lw=0.5, alpha=0.3)

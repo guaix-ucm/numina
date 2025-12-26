@@ -236,6 +236,7 @@ def diagnostic_plot(
     yplot,
     xplot_boundary,
     yplot_boundary,
+    rlabel_aux_plain,
     flag_aux,
     flag_mm,
     mm_threshold,
@@ -317,7 +318,7 @@ def diagnostic_plot(
         yplot[flag_only_aux],
         c="r",
         marker="x",
-        label=f"Suspected pixels: {num_only_aux} (auxiliar)",
+        label=f"Suspected pixels: {num_only_aux} ({rlabel_aux_plain})",
     )
     ax1.scatter(
         xplot[flag_only_mm], yplot[flag_only_mm], c="b", marker="+", label=f"Suspected pixels: {num_only_mm} (mmcosmic)"

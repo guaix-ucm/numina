@@ -359,16 +359,58 @@ def compute_crmasks(
         # check if RichHandler is configured in the parent logger's handler
         rich_configured = any(isinstance(handler, RichHandler) for handler in root_logger.handlers)
     # Set up rich labels for logging
+    rlabel_crmethod_plain = f"{crmethod}"
+    rlabel_lacosmic_plain = "lacosmic"
+    rlabel_pycosmic_plain = "pycosmic"
+    rlabel_mmcosmic_plain = "mmcosmic"
     if rich_configured:
         rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
         rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
         rlabel_pycosmic = "[bold red]pycosmic[/bold red]"
         rlabel_mmcosmic = "[bold blue]mmcosmic[/bold blue]"
     else:
-        rlabel_crmethod = f"{crmethod}"
-        rlabel_lacosmic = "lacosmic"
-        rlabel_pycosmic = "pycosmic"
-        rlabel_mmcosmic = "mmcosmic"
+        rlabel_crmethod = rlabel_crmethod_plain
+        rlabel_lacosmic = rlabel_lacosmic_plain
+        rlabel_pycosmic = rlabel_pycosmic_plain
+        rlabel_mmcosmic = rlabel_mmcosmic_plain
+
+    # Check crmethod
+    if crmethod not in VALID_CRMETHODS:
+        raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
+    if crmethod in ["pycosmic", "mm_pycosmic"] and not PYCOSMIC_AVAILABLE:
+        raise ImportError(
+            "PyCosmic is not installed. Please install PyCosmic to use\n"
+            "the 'pycosmic' or 'mm_pycosmic' crmethod options.\n"
+            "You can try installing it via pip:\n"
+            "pip install git+https://github.com/nicocardiel/PyCosmic.git@test\n"
+        )
+    _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
+    # Define prefixes of excluded arguments for each crmethod
+    # Used later to filter the local variables
+    # when generating the output HDUList with masks
+    # (to avoid including irrelevant parameters)
+    # mm = Median-Mean diagnostic method
+    # la = L.A.Cosmic method
+    # pc = PyCosmic method
+    if crmethod == "lacosmic":
+        prefix_of_excluded_args = ["mm_", "pc_"]
+    elif crmethod == "mm_lacosmic":
+        prefix_of_excluded_args = ["pc_"]
+    elif crmethod == "pycosmic":
+        prefix_of_excluded_args = ["mm_", "la_"]
+    elif crmethod == "mm_pycosmic":
+        prefix_of_excluded_args = ["la_"]
+    elif crmethod == "mmcosmic":
+        prefix_of_excluded_args = ["la_", "pc_"]
+    else:
+        prefix_of_excluded_args = ["xxx"]  # should never happen
+    # Define acronyms for problematic pixels
+    if crmethod in ["lacosmic", "mm_lacosmic"]:
+        acronym_aux = "la"
+    elif crmethod in ["pycosmic", "mm_pycosmic"]:
+        acronym_aux = "pc"
+    else:  # crmethod == 'mmcosmic'
+        acronym_aux = None
 
     # Check that the input is a list
     if not isinstance(list_arrays, list):
@@ -459,17 +501,6 @@ def compute_crmasks(
     _logger.info("subtracting bias from the input arrays")
     image3d -= bias
 
-    # Check crmethod
-    if crmethod not in VALID_CRMETHODS:
-        raise ValueError(f"Invalid crmethod: {crmethod}. Valid options are {VALID_CRMETHODS}.")
-    if crmethod in ["pycosmic", "mm_pycosmic"] and not PYCOSMIC_AVAILABLE:
-        raise ImportError(
-            "PyCosmic is not installed. Please install PyCosmic to use\n"
-            "the 'pycosmic' or 'mm_pycosmic' crmethod options.\n"
-            "You can try installing it via pip:\n"
-            "pip install git+https://github.com/nicocardiel/PyCosmic.git@test\n"
-        )
-    _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
     # Check use_auxmedian
     if use_auxmedian and crmethod not in ["lacosmic", "mm_lacosmic", "pycosmic", "mm_pycosmic"]:
         raise ValueError(
@@ -1025,6 +1056,7 @@ def compute_crmasks(
     median2d_aux = None
     flag_aux = None
     rlabel_aux = None
+    rlabel_aux_plain = None
 
     if rich_configured:
         _logger.info("[green]" + "-" * 79 + "[/green]")
@@ -1040,6 +1072,7 @@ def compute_crmasks(
         # if gain and rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
         rlabel_aux = rlabel_lacosmic
+        rlabel_aux_plain = rlabel_lacosmic_plain
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
         median2d_aux, flag_aux = execute_lacosmic(
@@ -1057,6 +1090,7 @@ def compute_crmasks(
         # This only works if gain and rnoise are constant values (scalars).
         # ---------------------------------------------------------------------
         rlabel_aux = rlabel_pycosmic
+        rlabel_aux_plain = rlabel_pycosmic_plain
         if gain_scalar is None or rnoise_scalar is None:
             raise ValueError("gain and rnoise must be constant values (scalars) when using crmethod='lacosmic'.")
         median2d_aux, flag_aux = execute_pycosmic(
@@ -1602,15 +1636,16 @@ def compute_crmasks(
     _logger.info("generating diagnostic plot for MEDIANCR...")
     ylabel = r"median2d $-$ min2d"
     diagnostic_plot(
-        xplot,
-        yplot,
-        xplot_boundary,
-        yplot_boundary,
-        flag_aux,
-        flag_mm,
-        mm_threshold,
-        ylabel,
-        interactive,
+        xplot=xplot,
+        yplot=yplot,
+        xplot_boundary=xplot_boundary,
+        yplot_boundary=yplot_boundary,
+        rlabel_aux_plain=rlabel_aux_plain,
+        flag_aux=flag_aux,
+        flag_mm=flag_mm,
+        mm_threshold=mm_threshold,
+        ylabel=ylabel,
+        interactive=interactive,
         target2d=median2d,
         target2d_name="median2d",
         min2d=min2d,
@@ -1664,6 +1699,7 @@ def compute_crmasks(
             median2d=median2d,
             median2d_corrected=median2d_corrected,
             flag_integer_dilated=flag_integer_dilated,
+            acronym_aux=acronym_aux,
             labels_cr=labels_cr,
             number_cr=number_cr,
             mask_mediancr=mask_mediancr,
@@ -1772,15 +1808,16 @@ def compute_crmasks(
             ylabel = f"array{i}" + r" $-$ min2d"
         interactive_eff = interactive and debug
         diagnostic_plot(
-            xplot,
-            yplot,
-            xplot_boundary,
-            yplot_boundary,
-            flag_aux,
-            flag_mm,
-            mm_threshold,
-            ylabel,
-            interactive_eff,
+            xplot=xplot,
+            yplot=yplot,
+            xplot_boundary=xplot_boundary,
+            yplot_boundary=yplot_boundary,
+            rlabel_aux_plain=rlabel_aux_plain,
+            flag_aux=flag_aux,
+            flag_mm=flag_mm,
+            mm_threshold=mm_threshold,
+            ylabel=ylabel,
+            interactive=interactive_eff,
             target2d=target2d,
             target2d_name=target2d_name,
             min2d=min2d,
@@ -1842,6 +1879,7 @@ def compute_crmasks(
             median2d=median2d,
             median2d_corrected=median2d_corrected,
             flag_integer_dilated=flag_integer_dilated,
+            acronym_aux=acronym_aux,
             labels_cr=labels_cr,
             number_cr=number_cr,
             mask_mediancr=mask_mediancr,
@@ -1856,14 +1894,6 @@ def compute_crmasks(
 
     # Generate output HDUList with masks
     args = inspect.signature(compute_crmasks).parameters
-    if crmethod == "lacosmic":
-        prefix_of_excluded_args = ["mm_", "py_"]
-    elif crmethod == "pycosmic":
-        prefix_of_excluded_args = ["mm_", "la_"]
-    elif crmethod == "mmcosmic":
-        prefix_of_excluded_args = ["la_", "py_"]
-    else:
-        prefix_of_excluded_args = ["xxx"]
     filtered_args = {
         k: v
         for k, v in locals().items()
