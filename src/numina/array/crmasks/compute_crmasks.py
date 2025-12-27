@@ -403,15 +403,15 @@ def compute_crmasks(
     rlabel_crmethod_plain = f"{crmethod}"
     rlabel_lacosmic_plain = "lacosmic"
     rlabel_pycosmic_plain = "pycosmic"
-    rlabel_deepcr_plain = "deepcr"
-    rlabel_conn_plain = "conn"
+    rlabel_deepcr_plain = "deepcr  "
+    rlabel_conn_plain = "conn    "
     rlabel_mmcosmic_plain = "mmcosmic"
     if rich_configured:
         rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
         rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
         rlabel_pycosmic = "[bold red]pycosmic[/bold red]"
-        rlabel_deepcr = "[bold red]deepcr[/bold red]"
-        rlabel_conn = "[bold red]conn[/bold red]"
+        rlabel_deepcr = "[bold red]deepcr  [/bold red]"
+        rlabel_conn = "[bold red]conn    [/bold red]"
         rlabel_mmcosmic = "[bold blue]mmcosmic[/bold blue]"
     else:
         rlabel_crmethod = rlabel_crmethod_plain
@@ -1742,11 +1742,11 @@ def compute_crmasks(
             _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
             plt.show()
         plt.close(fig)
-    elif crmethod in ["lacosmic", "pycosmic", "deepcr"]:
+    elif crmethod in ["lacosmic", "pycosmic", "deepcr", "conn"]:
         xplot_boundary = None
         yplot_boundary = None
         mm_threshold = None
-        flag_mm = np.zeros_like(median2d, dtype=bool)
+        flag_mm = np.zeros_like(median2d, dtype=bool).flatten()
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}.\nValid options are: {VALID_CRMETHODS}.")
 
@@ -1769,7 +1769,7 @@ def compute_crmasks(
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
         _logger.info(
-            "pixels flagged as cosmic rays by " "%s or  %s: %s (%08.4f%%)",
+            "pixels flagged as cosmic rays by %s or %s: %s (%08.4f%%)",
             rlabel_aux,
             rlabel_mmcosmic,
             cdum,
@@ -1777,21 +1777,21 @@ def compute_crmasks(
         )
         cdum = f"{np.sum(flag_integer == 3):{len(sdum)}d}"
         _logger.info(
-            "pixels flagged as cosmic rays by " "%s only........: %s (%08.4f%%)",
+            "pixels flagged as cosmic rays by %s only........: %s (%08.4f%%)",
             rlabel_aux,
             cdum,
             np.sum(flag_integer == 3) / flag.size * 100,
         )
         cdum = f"{np.sum((flag_integer == 2)):{len(sdum)}d}"
         _logger.info(
-            "pixels flagged as cosmic rays by " "%s only........: %s (%08.4f%%)",
+            "pixels flagged as cosmic rays by %s only........: %s (%08.4f%%)",
             rlabel_mmcosmic,
             cdum,
             np.sum(flag_integer == 2) / flag.size * 100,
         )
         cdum = f"{np.sum((flag_integer == 5)):{len(sdum)}d}"
         _logger.info(
-            "pixels flagged as cosmic rays by " "%s and %s: %s (%08.4f%%)",
+            "pixels flagged as cosmic rays by %s and %s: %s (%08.4f%%)",
             rlabel_aux,
             rlabel_mmcosmic,
             cdum,
@@ -1930,13 +1930,14 @@ def compute_crmasks(
             )
         elif crmethod in ["conn", "mm_conn"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_conn}...")
-            array_conn, flag_aux = execute_conn(
+            flag_aux = execute_conn(
                 image2d=target2d,
                 bool_to_be_cleaned=bool_to_be_cleaned,
                 rlabel_conn=rlabel_conn,
                 dict_nn_params=dict_nn_params,
                 _logger=_logger,
             )
+            array_conn = None
         elif crmethod != "mmcosmic":
             raise ValueError(f"Invalid crmethod: {crmethod}.\n" f"Valid options are: {VALID_CRMETHODS}.")
 
@@ -1964,8 +1965,10 @@ def compute_crmasks(
         # flagged in MEANCRT)
         if i == 0:
             _logger.info("including pixels flagged in MEDIANCR into MEANCRT (logical_or)...")
-            flag_aux = np.logical_or(flag_aux, list_hdu_masks[0].data.astype(bool).flatten())
-            flag_mm = np.logical_or(flag_mm, list_hdu_masks[0].data.astype(bool).flatten())
+            if np.any(flag_aux):
+                flag_aux = np.logical_or(flag_aux, list_hdu_masks[0].data.astype(bool).flatten())
+            if np.any(flag_mm):
+                flag_mm = np.logical_or(flag_mm, list_hdu_masks[0].data.astype(bool).flatten())
         # For the individual array masks, force the flag to be True if the pixel
         # is flagged both in the individual exposure and in the mean2d array
         if i > 0:
@@ -1976,13 +1979,13 @@ def compute_crmasks(
         sflag_mm = str(np.sum(flag_mm))
         smax = max(len(sflag_aux), len(sflag_mm))
         _logger.info(
-            "pixels flagged as cosmic rays by " "%s: %s (%08.4f%%)",
-            rlabel_lacosmic,
+            "pixels flagged as cosmic rays by %s: %s (%08.4f%%)",
+            rlabel_aux,
             f"{np.sum(flag_aux):{smax}d}",
             np.sum(flag_aux) / flag_aux.size * 100,
         )
         _logger.info(
-            "pixels flagged as cosmic rays by " "%s: %s (%08.4f%%)",
+            "pixels flagged as cosmic rays by %s: %s (%08.4f%%)",
             rlabel_mmcosmic,
             f"{np.sum(flag_mm):{smax}d}",
             np.sum(flag_mm) / flag_mm.size * 100,
