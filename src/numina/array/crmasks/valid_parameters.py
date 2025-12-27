@@ -10,6 +10,16 @@
 """Valid parameters for cosmic ray masks computation and application."""
 
 VALID_LACOSMIC_CLEANTYPE = ["median", "medmask", "meanmask", "idw"]
-VALID_CRMETHODS = ["mmcosmic", "lacosmic", "mm_lacosmic", "pycosmic", "mm_pycosmic", "deepcr", "mm_deepcr"]
+VALID_CRMETHODS = [
+    "mmcosmic",
+    "lacosmic",
+    "mm_lacosmic",
+    "pycosmic",
+    "mm_pycosmic",
+    "deepcr",
+    "mm_deepcr",
+    "conn",
+    "mm_conn",
+]
 VALID_BOUNDARY_FITS = ["spline", "piecewise"]
 VALID_COMBINATIONS = ["mediancr", "meancrt", "meancr"]

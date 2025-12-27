@@ -37,6 +37,13 @@ try:
 except ModuleNotFoundError as e:
     PYCOSMIC_AVAILABLE = False
 
+try:
+    import cosmic_conn
+
+    CONN_AVAILABLE = True
+except ModuleNotFoundError as e:
+    CONN_AVAILABLE = False
+
 from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
@@ -48,6 +55,7 @@ from .define_piecewise_linear_function import define_piecewise_linear_function
 from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
 from .estimate_diagnostic_limits import estimate_diagnostic_limits
+from .execute_conn import execute_conn
 from .execute_deepcr import execute_deepcr
 from .execute_lacosmic import execute_lacosmic
 from .execute_pycosmic import execute_pycosmic
@@ -109,6 +117,9 @@ def compute_crmasks(
     dc_mask=None,
     dc_threshold=None,
     dc_verbose=False,
+    nn_model=None,
+    nn_threshold=None,
+    nn_verbose=False,
     mm_xy_offsets=None,
     mm_crosscorr_region=None,
     mm_boundary_fit=None,
@@ -312,6 +323,15 @@ def compute_crmasks(
     dc_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='deepcr' or 'mm_deepcr'.
+    nn_model : str or None
+        The neural network model to use for cosmic ray detection.
+        Employed when crmethod='conn' or 'mm_conn'.
+    nn_threshold : float or None
+        The threshold value for the neural network model.
+        Employed when crmethod='conn' or 'mm_conn'.
+    nn_verbose : bool
+        If True, print additional information during the
+        execution. Employed when crmethod='conn' or 'mm_conn'.
     mm_xy_offsets: list of [x_offset, y_offset] or None
         The offsets to apply to each simulated individual exposure
         when computing the diagnostic diagram for the mmcosmic method.
@@ -384,18 +404,21 @@ def compute_crmasks(
     rlabel_lacosmic_plain = "lacosmic"
     rlabel_pycosmic_plain = "pycosmic"
     rlabel_deepcr_plain = "deepcr"
+    rlabel_conn_plain = "conn"
     rlabel_mmcosmic_plain = "mmcosmic"
     if rich_configured:
         rlabel_crmethod = f"[bold green]{crmethod}[/bold green]"
         rlabel_lacosmic = "[bold red]lacosmic[/bold red]"
         rlabel_pycosmic = "[bold red]pycosmic[/bold red]"
         rlabel_deepcr = "[bold red]deepcr[/bold red]"
+        rlabel_conn = "[bold red]conn[/bold red]"
         rlabel_mmcosmic = "[bold blue]mmcosmic[/bold blue]"
     else:
         rlabel_crmethod = rlabel_crmethod_plain
         rlabel_lacosmic = rlabel_lacosmic_plain
         rlabel_pycosmic = rlabel_pycosmic_plain
         rlabel_deepcr = rlabel_deepcr_plain
+        rlabel_conn = rlabel_conn_plain
         rlabel_mmcosmic = rlabel_mmcosmic_plain
 
     # Check crmethod
@@ -415,6 +438,14 @@ def compute_crmasks(
             "You can try installing it via pip:\n"
             "pip install deepCR\n"
         )
+    if crmethod in ["conn", "mm_conn"] and not CONN_AVAILABLE:
+        raise ImportError(
+            "cosmic-conn is not installed. Please install cosmic-conn to use\n"
+            "the 'conn' or 'mm_conn' crmethod options.\n"
+            "You can try installing it via pip:\n"
+            "pip install cosmic-conn\n"
+        )
+    # Display crmethod
     _logger.info("computing crmasks using crmethod: %s", rlabel_crmethod)
     # Define prefixes of excluded arguments for each crmethod. They are used
     # later to filter the local variables when generating the output HDUList with masks
@@ -424,19 +455,23 @@ def compute_crmasks(
     # pc = PyCosmic method
     # dc = DeepCR method
     if crmethod == "lacosmic":
-        prefix_of_excluded_args = ["mm_", "pc_", "dc_"]
+        prefix_of_excluded_args = ["mm_", "pc_", "dc_", "nn_"]
     elif crmethod == "mm_lacosmic":
-        prefix_of_excluded_args = ["pc_", "dc_"]
+        prefix_of_excluded_args = ["pc_", "dc_", "nn_"]
     elif crmethod == "pycosmic":
-        prefix_of_excluded_args = ["mm_", "la_", "dc_"]
+        prefix_of_excluded_args = ["mm_", "la_", "dc_", "nn_"]
     elif crmethod == "mm_pycosmic":
-        prefix_of_excluded_args = ["la_", "dc_"]
-    elif crmethod == "mmcosmic":
-        prefix_of_excluded_args = ["la_", "pc_", "dc_"]
+        prefix_of_excluded_args = ["la_", "dc_", "nn_"]
     elif crmethod == "deepcr":
-        prefix_of_excluded_args = ["mm_", "la_", "pc_"]
+        prefix_of_excluded_args = ["mm_", "la_", "pc_", "nn_"]
     elif crmethod == "mm_deepcr":
-        prefix_of_excluded_args = ["la_", "pc_"]
+        prefix_of_excluded_args = ["la_", "pc_", "nn_"]
+    elif crmethod == "conn":
+        prefix_of_excluded_args = ["mm_", "la_", "pc_", "dc_"]
+    elif crmethod == "mm_conn":
+        prefix_of_excluded_args = ["la_", "pc_", "dc_"]
+    elif crmethod == "mmcosmic":
+        prefix_of_excluded_args = ["la_", "pc_", "dc_", "nn_"]
     else:
         prefix_of_excluded_args = ["xxx"]  # should never happen
     # Define acronyms for problematic pixels
@@ -446,8 +481,12 @@ def compute_crmasks(
         acronym_aux = "pc"
     elif crmethod in ["deepcr", "mm_deepcr"]:
         acronym_aux = "dc"
-    else:  # crmethod == 'mmcosmic'
+    elif crmethod in ["conn", "mm_conn"]:
+        acronym_aux = "nn"
+    elif crmethod in ["mmcosmic"]:
         acronym_aux = None
+    else:
+        raise ValueError(f"Invalid crmethod: {crmethod}. This should never happen.")
 
     # Check that the input is a list
     if not isinstance(list_arrays, list):
@@ -1103,6 +1142,8 @@ def compute_crmasks(
             _logger.warning(f"dc_threshold for deepcr not defined, assuming dc_threshold={dc_threshold}")
         else:
             _logger.debug("dc_threshold for deepcr: %s", str(dc_threshold))
+            if (dc_threshold <= 0.0) or (dc_threshold >= 1.0):
+                raise ValueError("dc_threshold must be a number between 0 and 1.")
         # Set dc_verbose
         current_logging_level = logging.getLogger().getEffectiveLevel()
         if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
@@ -1113,6 +1154,36 @@ def compute_crmasks(
             "mask": dc_mask,
             "threshold": dc_threshold,
             "verbose": dc_verbose,
+        }
+
+    # Check and update Cosmic-CoNN parameters
+    if crmethod in ["conn", "mm_conn"]:
+        # Check nn_model
+        if nn_model is None:
+            nn_model = "ground_imaging"
+            _logger.warning(f"nn_model for Cosmic-CoNN not defined, assuming nn_model='{nn_model}'")
+        else:
+            _logger.debug("nn_model for Cosmic-CoNN: %s", str(nn_model))
+            if nn_model not in ["ground_imaging", "NRES", "HST_ACS_WFC"]:
+                raise ValueError("nn_model must be 'ground_imaging', 'NRES', or 'HST_ACS_WFC'.")
+        # Check nn_threshold
+        if nn_threshold is None:
+            nn_threshold = 0.5
+            _logger.warning(f"nn_threshold for Cosmic-CoNN not defined, assuming nn_threshold={nn_threshold}")
+        else:
+            _logger.debug("nn_threshold for Cosmic-CoNN: %s", str(nn_threshold))
+            if (nn_threshold <= 0.0) or (nn_threshold >= 1.0):
+                raise ValueError("nn_threshold must be a number between 0 and 1.")
+        # Set nn_verbose
+        current_logging_level = logging.getLogger().getEffectiveLevel()
+        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+            nn_verbose = False
+        _logger.debug("nn_verbose for Cosmic-CoNN: %s", str(nn_verbose))
+        # Define dictionary with the parameters for Cosmic-CoNN
+        dict_nn_params = {
+            "model": nn_model,
+            "threshold": nn_threshold,
+            "verbose": nn_verbose,
         }
 
     # #########################################################################
@@ -1179,10 +1250,26 @@ def compute_crmasks(
             dict_dc_params=dict_dc_params,
             _logger=_logger,
         )
+    elif crmethod in ["conn", "mm_conn"]:
+        # ---------------------------------------------------------------------
+        # Detect residual cosmic rays in the median2d image using Cosmic-CoNN.
+        # ---------------------------------------------------------------------
+        rlabel_aux = rlabel_conn
+        rlabel_aux_plain = rlabel_conn_plain
+        flag_aux = execute_conn(
+            image2d=median2d,
+            bool_to_be_cleaned=bool_to_be_cleaned,
+            rlabel_conn=rlabel_conn,
+            dict_nn_params=dict_nn_params,
+            _logger=_logger,
+        )
+        median2d_aux = None
+        if use_auxmedian:
+            raise NotImplementedError("use_auxmedian=True is not implemented for crmethod='conn' or 'mm_conn'.")
     elif crmethod != "mmcosmic":
         raise ValueError(f"Invalid crmethod: {crmethod}. " f"Valid options are: {VALID_CRMETHODS}.")
 
-    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr"]:
+    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
         # ---------------------------------------------------------------------
         # Detect cosmic rays in the median2d image using the numerically
         # derived boundary.
@@ -1664,7 +1751,8 @@ def compute_crmasks(
         raise ValueError(f"Invalid crmethod: {crmethod}.\nValid options are: {VALID_CRMETHODS}.")
 
     # #######################################################################################
-    # Combine the flags from the auxiliary method (lacosmic | pycosmic | deepcr) and mmcosmic
+    # Combine the flags from the auxiliary method (lacosmic | pycosmic | deepcr | conn)
+    # and mmcosmic
     # #######################################################################################
     if flag_aux is None and flag_mm is None:
         raise RuntimeError("Both flag_aux and flag_mm are None. This should never happen.")
@@ -1840,10 +1928,19 @@ def compute_crmasks(
                 dict_dc_params=dict_dc_params,
                 _logger=_logger,
             )
+        elif crmethod in ["conn", "mm_conn"]:
+            _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_conn}...")
+            array_conn, flag_aux = execute_conn(
+                image2d=target2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_conn=rlabel_conn,
+                dict_nn_params=dict_nn_params,
+                _logger=_logger,
+            )
         elif crmethod != "mmcosmic":
             raise ValueError(f"Invalid crmethod: {crmethod}.\n" f"Valid options are: {VALID_CRMETHODS}.")
 
-        if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr"]:
+        if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
