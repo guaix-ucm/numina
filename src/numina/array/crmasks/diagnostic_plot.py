@@ -262,10 +262,18 @@ def diagnostic_plot(
         raise ValueError("min2d must have shape (naxis2, naxis1).")
     if mean2d.shape != (naxis2, naxis1):
         raise ValueError("mean2d must have shape (naxis2, naxis1).")
-    if flag_aux.shape != (naxis2 * naxis1,):
-        raise ValueError(f"{flag_aux.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
-    if flag_aux.shape != flag_mm.shape:
-        raise ValueError(f"{flag_mm.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_aux is None:
+        flag_aux_eff = np.zeros((naxis2 * naxis1,), dtype=bool)
+    else:
+        flag_aux_eff = flag_aux
+    if flag_mm is None:
+        flag_mm_eff = np.zeros((naxis2 * naxis1,), dtype=bool)
+    else:
+        flag_mm_eff = flag_mm
+    if flag_aux_eff.shape != (naxis2 * naxis1,):
+        raise ValueError(f"{flag_aux_eff.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
+    if flag_aux_eff.shape != flag_mm_eff.shape:
+        raise ValueError(f"{flag_mm_eff.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
     if xplot.shape != (naxis2 * naxis1,):
         raise ValueError(f"{xplot.shape=} must have shape (naxis2*naxis1,)={naxis1*naxis2}.")
     if yplot.shape != (naxis2 * naxis1,):
@@ -296,20 +304,20 @@ def diagnostic_plot(
         ax_vmin, ax_vmax = None, None
 
     # Segregate the cosmic rays detected by the different methods
-    flag_only_aux = flag_aux & ~flag_mm
-    flag_only_mm = flag_mm & ~flag_aux
-    flag_both = flag_aux & flag_mm
+    flag_only_aux = flag_aux_eff & ~flag_mm_eff
+    flag_only_mm = flag_mm_eff & ~flag_aux_eff
+    flag_both = flag_aux_eff & flag_mm_eff
     num_only_aux = np.sum(flag_only_aux)
     num_only_mm = np.sum(flag_only_mm)
     num_both = np.sum(flag_both)
     num_total = num_only_aux + num_only_mm + num_both
 
     # Enumerate the cosmic rays detected by the different methods
-    enum_aux_global = np.zeros_like(flag_aux, dtype=int)
+    enum_aux_global = np.zeros_like(flag_aux_eff, dtype=int)
     enum_aux_global[flag_only_aux] = np.arange(1, np.sum(flag_only_aux) + 1, dtype=int)
-    enum_mm_global = np.zeros_like(flag_mm, dtype=int)
+    enum_mm_global = np.zeros_like(flag_mm_eff, dtype=int)
     enum_mm_global[flag_only_mm] = np.arange(1, np.sum(flag_only_mm) + 1, dtype=int)
-    enum_both_global = np.zeros_like(flag_aux, dtype=int)
+    enum_both_global = np.zeros_like(flag_aux_eff, dtype=int)
     enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
 
     ax1.plot(xplot, yplot, "C0,", label="Non-suspected pixels")
@@ -594,7 +602,7 @@ def diagnostic_plot(
                         for inum in range(image3d.shape[0]):
                             print(f"(image {inum+1} - bias) = {image3d[inum, iy-1, ix-1]:.3f}")
                         print("." * 79)
-                        for flag, crmethod in zip([flag_aux, flag_mm, flag_both], ["auxiliar", "mmcosmic"]):
+                        for flag, crmethod in zip([flag_aux_eff, flag_mm_eff, flag_both], ["auxiliar", "mmcosmic"]):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
                             # where the first pixel is (1, 1)
                             if flag.reshape((naxis2, naxis1))[iy - 1, ix - 1]:
