@@ -1860,7 +1860,8 @@ def compute_crmasks(
         else:
             median2d_corrected[mask_mediancr] = min2d[mask_mediancr]
         # Label the connected pixels as individual cosmic rays
-        labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0)
+        structure = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+        labels_cr, number_cr = ndimage.label(flag_integer_dilated > 0, structure=structure)
         _logger.info("number of grouped cosmic-ray pixels detected: %d", number_cr)
         display_detected_cr(
             num_images=num_images,
@@ -2063,7 +2064,8 @@ def compute_crmasks(
     )
     if len(problematic_pixels) > 0:
         # Label the connected problematic pixels as individual problematic cosmic rays
-        labels_cr, number_cr = ndimage.label(mask_all_singles)
+        structure = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
+        labels_cr, number_cr = ndimage.label(mask_all_singles, structure=structure)
         _logger.info("number of grouped problematic cosmic-ray pixels: %d", number_cr)
         display_detected_cr(
             num_images=num_images,
