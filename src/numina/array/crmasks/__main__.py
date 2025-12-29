@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Combination of arrays avoiding coincident cosmic ray hits."""
+from datetime import datetime
 import io
 import logging
 import os
@@ -31,6 +32,8 @@ def main(args=None):
     """
     Main function to compute and apply CR masks.
     """
+
+    datetime_ini = datetime.now()
 
     parser = argparse.ArgumentParser(description="Combine 2D arrays using mediancr, meancrt or meancr methods.")
 
@@ -183,6 +186,9 @@ def main(args=None):
         hdul.writeto(output_combined, overwrite=True)
         logger.info("Combined (bias subtracted) array, variance, and map saved")
 
+    datetime_end = datetime.now()
+    time_elapsed = datetime_end - datetime_ini
+    logger.info("Total time elapsed: %s", str(time_elapsed))
     # Goodbye message
     console.rule("[bold magenta] Goodbye! [/bold magenta]")
 
