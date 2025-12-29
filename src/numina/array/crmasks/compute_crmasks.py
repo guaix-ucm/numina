@@ -47,7 +47,6 @@ except ModuleNotFoundError as e:
 from numina.array.distortion import shift_image2d
 from numina.array.numsplines import spline_positive_derivative
 import teareduce as tea
-from teareduce import cleanest
 
 from .all_valid_numbers import all_valid_numbers
 from .compute_flux_factor import compute_flux_factor
@@ -1196,10 +1195,10 @@ def compute_crmasks(
 
     if rich_configured:
         _logger.info("[green]" + "-" * 79 + "[/green]")
-        _logger.info("starting cosmic ray detection in [magenta]median2d[/magenta] image...")
+        _logger.info("starting cosmic ray detection in [magenta]median2d[/magenta]...")
     else:
         _logger.info("-" * 73)
-        _logger.info("starting cosmic ray detection in median2d image...")
+        _logger.info("starting cosmic ray detection in median2d...")
 
     if crmethod in ["lacosmic", "mm_lacosmic"]:
         # ---------------------------------------------------------------------
@@ -1275,7 +1274,7 @@ def compute_crmasks(
         # derived boundary.
         # ---------------------------------------------------------------------
         # Define mm_fixed_points_in_boundary
-        _logger.info("detecting cosmic rays in median2d image using %s...", rlabel_mmcosmic)
+        _logger.info("detecting cosmic rays in median2d using %s...", rlabel_mmcosmic)
         if isinstance(mm_fixed_points_in_boundary, str):
             if mm_fixed_points_in_boundary.lower() == "none":
                 mm_fixed_points_in_boundary = None
@@ -1894,10 +1893,10 @@ def compute_crmasks(
             target2d_name = f"single exposure #{i}"
         if rich_configured:
             _logger.info("[green]" + "-" * 79 + "[/green]")
-            _logger.info(f"starting cosmic ray detection in [magenta]{target2d_name}[/magenta] image...")
+            _logger.info(f"starting cosmic ray detection in [magenta]{target2d_name}[/magenta]...")
         else:
             _logger.info("-" * 73)
-            _logger.info(f"starting cosmic ray detection in {target2d_name} image...")
+            _logger.info(f"starting cosmic ray detection in {target2d_name}...")
 
         if crmethod in ["lacosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")

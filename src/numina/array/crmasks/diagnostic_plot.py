@@ -602,7 +602,9 @@ def diagnostic_plot(
                         for inum in range(image3d.shape[0]):
                             print(f"(image {inum+1} - bias) = {image3d[inum, iy-1, ix-1]:.3f}")
                         print("." * 79)
-                        for flag, crmethod in zip([flag_aux_eff, flag_mm_eff, flag_both], [rlabel_aux_plain, "mmcosmic"]):
+                        for flag, crmethod in zip(
+                            [flag_aux_eff, flag_mm_eff, flag_both], [rlabel_aux_plain, "mmcosmic"]
+                        ):
                             # Python convention: first pixel is (0, 0) but iy and ix are in FITS convention
                             # where the first pixel is (1, 1)
                             if flag.reshape((naxis2, naxis1))[iy - 1, ix - 1]:
