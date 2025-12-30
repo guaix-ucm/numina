@@ -326,7 +326,7 @@ def diagnostic_plot(
         yplot[flag_only_aux],
         c="r",
         marker="x",
-        label=f"Suspected pixels: {num_only_aux} ({rlabel_aux_plain})",
+        label=f"Suspected pixels: {num_only_aux} ({str(rlabel_aux_plain).rstrip()})",
     )
     ax1.scatter(
         xplot[flag_only_mm], yplot[flag_only_mm], c="b", marker="+", label=f"Suspected pixels: {num_only_mm} (mmcosmic)"
@@ -345,7 +345,7 @@ def diagnostic_plot(
         ax1.axhline(mm_threshold, color="gray", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})")
     ax1.set_xlabel(r"min2d $-$ bias")  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
-    ax1.set_title("Median-Mean Diagnostic Diagram")
+    ax1.set_title("Diagnostic Diagram")
     ax1.legend(loc="upper right", fontsize=8, title=f"Total: {num_total} suspected pixels")
 
     ax2.set_xlim(ax1.get_xlim())

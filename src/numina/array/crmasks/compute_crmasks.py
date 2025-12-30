@@ -1768,7 +1768,7 @@ def compute_crmasks(
         sdum = str(np.sum(flag))
         cdum = f"{np.sum(flag):{len(sdum)}d}"
         _logger.info(
-            "pixels flagged as cosmic rays by %s or %s: %s (%08.4f%%)",
+            "pixels flagged as cosmic rays by %s or %s : %s (%08.4f%%)",
             rlabel_aux,
             rlabel_mmcosmic,
             cdum,

@@ -74,7 +74,19 @@ def display_detected_cr(
         nrows, ncols = 3, 4
         figsize = (13, 9)
         num_plot_max = 9
-    pdf = PdfPages(f"{output_basename}.pdf")
+    if list_mask_single_exposures is None:
+        # plots for mediancr
+        pdf_any4 = PdfPages(f"{output_basename}_any4.pdf")
+        pdf_only3 = PdfPages(f"{output_basename}_only3.pdf")
+        pdf_only2 = PdfPages(f"{output_basename}_only2.pdf")
+        pdf_other = PdfPages(f"{output_basename}_other.pdf")
+        num_any4 = 0
+        num_only3 = 0
+        num_only2 = 0
+        num_other = 0
+    else:
+        # plots for problematic pixels
+        pdf = PdfPages(f"{output_basename}.pdf")
     cr_table = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
     cr_table_filename = f"{output_basename}.csv"
     maxplots_eff = maxplots
@@ -253,12 +265,44 @@ def display_detected_cr(
                 raise SystemExit(0)
             else:
                 _logger.info("keeping cosmic ray detection #%d in the mask", i + 1)
-        pdf.savefig(fig, bbox_inches="tight")
+        if list_mask_single_exposures is None:
+            # plot for mediancr
+            different_flag_values = set(flag_integer_dilated[i1 : (i2 + 1), j1 : (j2 + 1)].flatten())
+            if 4 in different_flag_values:
+                pdf_any4.savefig(fig, bbox_inches="tight")
+                num_any4 += 1
+            elif 3 in different_flag_values and 2 not in different_flag_values:
+                pdf_only3.savefig(fig, bbox_inches="tight")
+                num_only3 += 1
+            elif 2 in different_flag_values and 3 not in different_flag_values:
+                pdf_only2.savefig(fig, bbox_inches="tight")
+                num_only2 += 1
+            else:
+                pdf_other.savefig(fig, bbox_inches="tight")
+                num_other += 1
+        else:
+            # plot for problematic pixels
+            pdf.savefig(fig, bbox_inches="tight")
         plt.close(fig)
 
-    pdf.close()
     _logger.info("plot generation complete")
-    _logger.info(f"saving {output_basename}.pdf file")
+    if list_mask_single_exposures is None:
+        # plots for mediancr
+        num_max = np.max([num_any4, num_only3, num_only2, num_other])
+        snum_max = str(num_max)
+        lmax = len(snum_max)
+        pdf_any4.close()
+        _logger.info(f"saving {num_any4:>{lmax}} CRs in {output_basename}_any4.pdf file")
+        pdf_only3.close()
+        _logger.info(f"saving {num_only3:>{lmax}} CRs in {output_basename}_only3.pdf file")
+        pdf_only2.close()
+        _logger.info(f"saving {num_only2:>{lmax}} CRs in {output_basename}_only2.pdf file")
+        pdf_other.close()
+        _logger.info(f"saving {num_other:>{lmax}} CRs in {output_basename}_other.pdf file")
+    else:
+        # plots for problematic pixels
+        pdf.close()
+        _logger.info(f"saving {output_basename}.pdf file")
     cr_table.write(cr_table_filename, format="csv", overwrite=True)
     _logger.info("\n%s", cr_table)
     _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)
