@@ -75,7 +75,7 @@ def compute_crmasks(
     flux_factor_regions=None,
     apply_flux_factor_to=None,
     interactive=True,
-    dilation=1,
+    dilation=0,
     regions_to_be_skipped=None,
     pixels_to_be_flagged_as_cr=None,
     pixels_to_be_ignored_as_cr=None,
@@ -119,6 +119,7 @@ def compute_crmasks(
     nn_model=None,
     nn_threshold=None,
     nn_verbose=False,
+    mm_dilation=0,
     mm_xy_offsets=None,
     mm_crosscorr_region=None,
     mm_boundary_fit=None,
@@ -331,6 +332,8 @@ def compute_crmasks(
     nn_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='conn' or 'mm_conn'.
+    mm_dilation : int, optional
+        The dilation factor for the cosmic-ray pixel mask.
     mm_xy_offsets: list of [x_offset, y_offset] or None
         The offsets to apply to each simulated individual exposure
         when computing the diagnostic diagram for the mmcosmic method.
@@ -1686,6 +1689,17 @@ def compute_crmasks(
         flag_mm = np.logical_and(flag1, flag2)
         flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
         flag_mm = np.logical_and(flag_mm, flag3)
+        if mm_dilation > 0:
+            _logger.info("applying binary dilation with size=%d to cosmic-ray mask", mm_dilation)
+            num_pixels_before_dilation = np.sum(flag_mm)
+            structure = ndimage.generate_binary_structure(2, 2)
+            flag_mm = ndimage.binary_dilation(
+                flag_mm.reshape((naxis2, naxis1)), structure=structure, iterations=mm_dilation
+            ).flatten()
+            num_pixels_after_dilation = np.sum(flag_mm)
+            ldum = len(str(num_pixels_after_dilation))
+            _logger.info(f"number of pixels flagged before dilation: {num_pixels_before_dilation:{ldum}d}")
+            _logger.info(f"number of pixels flagged after dilation : {num_pixels_after_dilation:{ldum}d}")
         flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
         _logger.info(
             "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
