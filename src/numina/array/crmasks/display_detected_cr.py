@@ -84,11 +84,19 @@ def display_detected_cr(
         num_only3 = 0
         num_only2 = 0
         num_other = 0
+        cr_table_any4 = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
+        cr_table_only3 = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
+        cr_table_only2 = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
+        cr_table_other = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
+        cr_table_filename_any4 = f"{output_basename}_any4.csv"
+        cr_table_filename_only3 = f"{output_basename}_only3.csv"
+        cr_table_filename_only2 = f"{output_basename}_only2.csv"
+        cr_table_filename_other = f"{output_basename}_other.csv"
     else:
         # plots for problematic pixels
         pdf = PdfPages(f"{output_basename}.pdf")
-    cr_table = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
-    cr_table_filename = f"{output_basename}.csv"
+        cr_table = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
+        cr_table_filename = f"{output_basename}.csv"
     maxplots_eff = maxplots
     if verify_cr:
         # In verify_cr mode, we plot all the cosmic rays
@@ -245,10 +253,21 @@ def display_detected_cr(
 
         if verify_cr:
             print("-" * 50)
+        different_flag_values = set(flag_integer_dilated[i1 : (i2 + 1), j1 : (j2 + 1)].flatten())
         for idum in range(i1, i2 + 1):
             for jdum in range(j1, j2 + 1):
                 if labels_cr[idum, jdum] == i + 1:
-                    cr_table.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
+                    if list_mask_single_exposures is None:
+                        if 4 in different_flag_values:
+                            cr_table_any4.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
+                        elif 3 in different_flag_values and 2 not in different_flag_values:
+                            cr_table_only3.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
+                        elif 2 in different_flag_values and 3 not in different_flag_values:
+                            cr_table_only2.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
+                        else:
+                            cr_table_other.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
+                    else:
+                        cr_table.add_row((i + 1, jdum + 1, idum + 1, flag_integer_dilated[idum, jdum]))
                     if verify_cr:
                         print(f"pixel (x,y) = ({jdum+1}, {idum+1}):  mask = {flag_integer_dilated[idum, jdum]}")
         if verify_cr:
@@ -299,10 +318,22 @@ def display_detected_cr(
         _logger.info(f"saving {num_only2:>{lmax}} CRs in {output_basename}_only2.pdf file")
         pdf_other.close()
         _logger.info(f"saving {num_other:>{lmax}} CRs in {output_basename}_other.pdf file")
+        cr_table_any4.write(cr_table_filename_any4, format="csv", overwrite=True)
+        _logger.info("\n%s", cr_table_any4)
+        _logger.info("table of identified cosmic rays saved to %s", cr_table_filename_any4)
+        cr_table_only3.write(cr_table_filename_only3, format="csv", overwrite=True)
+        _logger.info("\n%s", cr_table_only3)
+        _logger.info("table of identified cosmic rays saved to %s", cr_table_filename_only3)
+        cr_table_only2.write(cr_table_filename_only2, format="csv", overwrite=True)
+        _logger.info("\n%s", cr_table_only2)
+        _logger.info("table of identified cosmic rays saved to %s", cr_table_filename_only2)
+        cr_table_other.write(cr_table_filename_other, format="csv", overwrite=True)
+        _logger.info("\n%s", cr_table_other)
+        _logger.info("table of identified cosmic rays saved to %s", cr_table_filename_other)
     else:
         # plots for problematic pixels
         pdf.close()
         _logger.info(f"saving {output_basename}.pdf file")
-    cr_table.write(cr_table_filename, format="csv", overwrite=True)
-    _logger.info("\n%s", cr_table)
-    _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)
+        cr_table.write(cr_table_filename, format="csv", overwrite=True)
+        _logger.info("\n%s", cr_table)
+        _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)
