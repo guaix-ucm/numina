@@ -120,6 +120,7 @@ def compute_crmasks(
     nn_threshold=None,
     nn_verbose=False,
     mm_preclean_single=False,
+    mm_hist2d_min_neighbors=0,
     mm_dilation=0,
     mm_xy_offsets=None,
     mm_crosscorr_region=None,
@@ -1280,31 +1281,30 @@ def compute_crmasks(
         raise ValueError(f"Invalid crmethod: {crmethod}. " f"Valid options are: {VALID_CRMETHODS}.")
 
     if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
-        image3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
+        # Define a pre-cleaned median2d image for creating the fake individual images
         median2d_precleaned = median2d.copy()
-        # Pre-clean the median2d image by replacing the detected CR pixels with the minimum value
-        flag_aux = flag_aux.reshape((naxis2, naxis1))
-        median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
-        flag_aux = flag_aux.flatten()
+        # Ensure no negative values in median2d_precleaned
+        median2d_precleaned[median2d_precleaned < 0.0] = 0.0
+        if crmethod == "mmcosmic":
+            # Note that flag_aux is None in this case
+            _logger.warning("mm_preclean_single parameter is ignored for crmethod='mmcosmic'.")
+        else:
+            # Pre-clean the median2d image by replacing the detected CR pixels with the minimum value
+            flag_aux = flag_aux.reshape((naxis2, naxis1))
+            median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
+            flag_aux = flag_aux.flatten()
+        image3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
         for i in range(num_images):
             image3d_fake_single[i] = median2d_precleaned
-            # Ensure no negative values
-            image3d_fake_single[i][image3d_fake_single[i] < 0.0] = 0.0
         flag3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
         if mm_preclean_single:
-            if crmethod == "mmcosmic":
-                # It is necessary to define the auxiliary method for pre-cleaning
-                raise ValueError(
-                    "mm_preclean_single=True is only valid for "
-                    "crmethod='mm_lacosmic', 'mm_pycosmic', 'mm_deepcr', or 'mm_conn'."
-                )
             # ---------------------------------------------------------------------
-            # Pre-clean each individual image by subtracting the median2d image,
-            # cleaning the CRs, and adding back the median. The resulting images
-            # are employed to compute the detection boundary.
+            # Pre-clean each individual image by subtracting the pre-cleaned
+            # median2d image, cleaning the CRs, and adding back the median. 
+            # The resulting images are employed to compute the detection boundary.
             # ---------------------------------------------------------------------
             _logger.info("pre-cleaning single images before determining the detection boundary...")
-            if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+            if crmethod != "mmcosmic":
                 for i in range(num_images):
                     # Subtract the pre-cleaned median2d from each individual image
                     dumimage2d = image3d[i, :, :] - median2d_precleaned[:, :]
@@ -1672,8 +1672,16 @@ def compute_crmasks(
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
             _logger.info("simulation %d/%d, time elapsed: %s", k + 1, mm_nsimulations, time_end - time_ini)
+        # Remove isolated pixels in the 2D histogram
+        kernel_neighbors = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]], dtype=int)
+        neighbor_counts = ndimage.convolve(
+            (hist2d_accummulated > 0).astype(int), kernel_neighbors, mode="constant", cval=0
+        )
+        surrounded_by_threshold = (hist2d_accummulated > 0) & (neighbor_counts < mm_hist2d_min_neighbors)
+        hist2d_accummulated[surrounded_by_threshold] = 0
         # Average the histogram over the number of simulations
         hist2d_accummulated = hist2d_accummulated.astype(float) / mm_nsimulations
+        # Determine vmin and vmax for the color scale
         vmin = np.min(hist2d_accummulated[hist2d_accummulated > 0])
         if vmin == 0:
             vmin = 1
