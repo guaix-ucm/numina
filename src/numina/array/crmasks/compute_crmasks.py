@@ -121,6 +121,7 @@ def compute_crmasks(
     nn_verbose=False,
     mm_preclean_single=False,
     mm_hist2d_min_neighbors=0,
+    mm_ydiag_max=0,
     mm_dilation=0,
     mm_xy_offsets=None,
     mm_crosscorr_region=None,
@@ -337,6 +338,13 @@ def compute_crmasks(
     mm_preclean_single : bool
         If True, pre-clean each individual exposure using the specified
         crmethod before computing the detection boundary.
+    mm_hist2d_min_neighbors : int, optional
+        The minimum number of neighboring pixels required to consider
+        a pixel as part of a cosmic ray in the 2D histogram used to
+        derive the detection boundary.
+    mm_ydiag_max : float or None, optional
+        The maximum y value to use in the diagnostic diagram.
+        If zero or None, it is computed automatically.
     mm_dilation : int, optional
         The dilation factor for the cosmic-ray pixel mask.
     mm_xy_offsets: list of [x_offset, y_offset] or None
@@ -845,7 +853,14 @@ def compute_crmasks(
         )
 
     # Log the input parameters
-    if crmethod in ["mmcosmic", "mm_lacosmic"]:
+    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+        _logger.debug("mm_preclean_single: %s", str(mm_preclean_single))
+        _logger.debug("mm_hist2d_min_neighbors: %d", mm_hist2d_min_neighbors)
+        if mm_hist2d_min_neighbors < 0:
+            raise ValueError(f"{mm_hist2d_min_neighbors=} must be >= 0.")
+        if mm_hist2d_min_neighbors > 8:
+            raise ValueError(f"{mm_hist2d_min_neighbors=} must be <= 8.")
+        _logger.debug("mm_dilation: %d", mm_dilation)
         _logger.debug("mm_xy_offsets: %s", str(mm_xy_offsets) if mm_xy_offsets is not None else "None")
         _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
         _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
@@ -1597,6 +1612,10 @@ def compute_crmasks(
             ydiag_max *= 4.0  # Add 300% margin to the maximum y limit
         else:
             ydiag_max *= 2.0  # Add 100% margin to the maximum y limit
+        if mm_ydiag_max is not None:
+            if mm_ydiag_max > 0:
+                ydiag_max = mm_ydiag_max
+                _logger.info("using user-defined mm_ydiag_max=%f", mm_ydiag_max)
         _logger.debug("xdiag_min=%f", xdiag_min)
         _logger.debug("ydiag_min=%f", ydiag_min)
         _logger.debug("xdiag_max=%f", xdiag_max)
@@ -1650,8 +1669,9 @@ def compute_crmasks(
                 )
                 # replace any NaN values introduced by the shift with zeros
                 lam3d[i] = np.nan_to_num(lam3d[i], nan=0.0)
-                # replace any negative values with zeros
-                lam3d[i][lam3d[i] < 0] = 0.0
+        # replace any negative values with zeros
+        for i in range(num_images):
+            lam3d[i][lam3d[i] < 0] = 0.0
         _logger.info("computing simulated 2D histogram...")
         for k in range(mm_nsimulations):
             time_ini = datetime.now()
@@ -1672,13 +1692,21 @@ def compute_crmasks(
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
             _logger.info("simulation %d/%d, time elapsed: %s", k + 1, mm_nsimulations, time_end - time_ini)
-        # Remove isolated pixels in the 2D histogram
-        kernel_neighbors = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]], dtype=int)
-        neighbor_counts = ndimage.convolve(
-            (hist2d_accummulated > 0).astype(int), kernel_neighbors, mode="constant", cval=0
-        )
-        surrounded_by_threshold = (hist2d_accummulated > 0) & (neighbor_counts < mm_hist2d_min_neighbors)
-        hist2d_accummulated[surrounded_by_threshold] = 0
+        # Remove bins that are surrounded by less than mm_hist2d_min_neighbors neighbors
+        if mm_hist2d_min_neighbors > 0:
+            kernel_neighbors = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]], dtype=int)
+            neighbor_counts = ndimage.convolve(
+                (hist2d_accummulated > 0).astype(int), kernel_neighbors, mode="constant", cval=0
+            )
+            surrounded_by_threshold = (hist2d_accummulated > 0) & (neighbor_counts < mm_hist2d_min_neighbors)
+            num_zero_bins_before = np.sum(hist2d_accummulated == 0)
+            hist2d_accummulated[surrounded_by_threshold] = 0
+            num_zero_bins_after = np.sum(hist2d_accummulated == 0)
+            _logger.info(
+                "removed %d bins that were surrounded by less than %d neighbors",
+                num_zero_bins_after - num_zero_bins_before,
+                mm_hist2d_min_neighbors,
+            )
         # Average the histogram over the number of simulations
         hist2d_accummulated = hist2d_accummulated.astype(float) / mm_nsimulations
         # Determine vmin and vmax for the color scale
