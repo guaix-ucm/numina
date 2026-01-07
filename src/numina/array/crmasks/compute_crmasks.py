@@ -1309,9 +1309,11 @@ def compute_crmasks(
             median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
             flag_aux = flag_aux.flatten()
         image3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
+        flag3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
         for i in range(num_images):
             image3d_fake_single[i] = median2d_precleaned
-        flag3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
+            if crmethod != "mmcosmic":
+                flag3d_fake_single[i] = flag_aux.reshape((naxis2, naxis1))
         if mm_preclean_single:
             # ---------------------------------------------------------------------
             # Pre-clean each individual image by subtracting the pre-cleaned
@@ -1616,10 +1618,10 @@ def compute_crmasks(
             if mm_ydiag_max > 0:
                 ydiag_max = mm_ydiag_max
                 _logger.info("using user-defined mm_ydiag_max=%f", mm_ydiag_max)
-        _logger.debug("xdiag_min=%f", xdiag_min)
-        _logger.debug("ydiag_min=%f", ydiag_min)
-        _logger.debug("xdiag_max=%f", xdiag_max)
-        _logger.debug("ydiag_max=%f", ydiag_max)
+        _logger.info("xdiag_min=%f", xdiag_min)
+        _logger.info("ydiag_min=%f", ydiag_min)
+        _logger.info("xdiag_max=%f", xdiag_max)
+        _logger.info("ydiag_max=%f", ydiag_max)
 
         # Define binning for the diagnostic plot
         nbins_xdiag = 100
