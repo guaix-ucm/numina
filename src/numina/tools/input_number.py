@@ -186,7 +186,7 @@ def input_number(
     else:
         base = prompt
 
-    full_prompt = f"{base} (default={default}): " if (default is not None and allow_blank_to_default) else f"{base}: "
+    full_prompt = f"{base} [{default}]: " if (default is not None and allow_blank_to_default) else f"{base}: "
 
     # --- Parsing helper ---
     def _parse(s: str) -> Number:
