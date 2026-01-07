@@ -9,6 +9,7 @@
 
 """Display 2D histogram of min2d-bias vs mean2d-bias values."""
 
+from astropy.table import Table
 from matplotlib.colors import LogNorm
 from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.pyplot as plt
@@ -20,9 +21,33 @@ from numina.array.numsplines import spline_positive_derivative
 from numina.tools.input_number import input_number
 import teareduce as tea
 
-from .ask_integer import ask_integer
 from .define_piecewise_linear_function import define_piecewise_linear_function
 from .valid_parameters import VALID_BOUNDARY_FITS
+
+
+def show_fixed_points_in_boundary(
+    _logger,
+    num_fixed_points,
+    x_mm_fixed_points_in_boundary,
+    y_mm_fixed_points_in_boundary,
+    w_mm_fixed_points_in_boundary,
+):
+    """Show fixed points in boundary."""
+    if num_fixed_points > 0:
+        _logger.info("Current fixed points in boundary:")
+        fixed_table = Table(names=("number", "X", "Y", "Weight"), dtype=(int, float, float, float))
+        for idum in range(num_fixed_points):
+            fixed_table.add_row(
+                (
+                    idum + 1,
+                    x_mm_fixed_points_in_boundary[idum],
+                    y_mm_fixed_points_in_boundary[idum],
+                    w_mm_fixed_points_in_boundary[idum],
+                )
+            )
+        _logger.info("%s", fixed_table)
+    else:
+        _logger.info("No fixed points in boundary.")
 
 
 def display_hist2d(
@@ -273,25 +298,136 @@ def display_hist2d(
             loop = False
         if loop:
             if mm_boundary_fit == "spline":
+                # Modify number of knots
                 mm_knots_splfit = input_number(
                     expected_type="int",
-                    prompt="Number of knots for spline boundary fit",
+                    prompt="Number of knots for spline boundary fit (min. 2)",
                     min_val=2,
                     default=mm_knots_splfit,
                 )
+                # Modify number of iterations for boundary extension
+                mm_niter_boundary_extension = input_number(
+                    expected_type="int",
+                    prompt="Number of iterations for boundary extension (min. 0)",
+                    min_val=0,
+                    default=mm_niter_boundary_extension,
+                )
+            # Modify hist2d_min_neighbors
             mm_hist2d_min_neighbors = input_number(
                 expected_type="int",
-                prompt="Minimum number of neighbors to keep a bin in the 2D histogram",
+                prompt="Minimum number of neighbors to keep bins in the 2D histogram (0-8)",
                 min_val=0,
                 max_val=8,
                 default=mm_hist2d_min_neighbors,
             )
-            mm_niter_boundary_extension = input_number(
-                expected_type="int",
-                prompt="Number of iterations for boundary extension",
-                min_val=0,
-                default=mm_niter_boundary_extension,
-            )
+            # Modify fixed points in the boundary
+            if mm_fixed_points_in_boundary is None:
+                num_fixed_points = 0
+            else:
+                num_fixed_points = len(x_mm_fixed_points_in_boundary)
+            modify_fixed = "x"
+            while modify_fixed != "n":
+                show_fixed_points_in_boundary(
+                    _logger,
+                    num_fixed_points,
+                    x_mm_fixed_points_in_boundary,
+                    y_mm_fixed_points_in_boundary,
+                    w_mm_fixed_points_in_boundary,
+                )
+                while modify_fixed not in ["y", "n", ""]:
+                    modify_fixed = (
+                        input("Do you want to modify the fixed points in the boundary? (y/[n]): ").strip().lower()
+                    )
+                    if modify_fixed not in ["y", "n", ""]:
+                        _logger.info("Invalid value. Please type 'y' or 'n' or press 'Enter'.")
+                if modify_fixed != "y":
+                    modify_fixed = "n"
+                # Allow to delete individual fixed points or add new ones
+                if modify_fixed == "y":
+                    action = ""
+                    while action != "n":
+                        _logger.info(
+                            "Type:\n"
+                            "- 'a' to add a fixed point\n"
+                            "- 'd' to delete an existing one\n"
+                            "- 'c' to clear all fixed points\n"
+                            "- 'n' none (continue without changes)"
+                        )
+                        action = input("Your choice (c/a/d/[n]): ").strip().lower()
+                        if action == "d" and num_fixed_points > 0:
+                            index_to_delete = input_number(
+                                expected_type="int",
+                                prompt=f"Index of fixed point to delete (1 to {num_fixed_points})",
+                                min_val=1,
+                                max_val=num_fixed_points,
+                            )
+                            x_mm_fixed_points_in_boundary = np.delete(
+                                x_mm_fixed_points_in_boundary, index_to_delete - 1
+                            )
+                            y_mm_fixed_points_in_boundary = np.delete(
+                                y_mm_fixed_points_in_boundary, index_to_delete - 1
+                            )
+                            w_mm_fixed_points_in_boundary = np.delete(
+                                w_mm_fixed_points_in_boundary, index_to_delete - 1
+                            )
+                            num_fixed_points -= 1
+                            if num_fixed_points == 0:
+                                x_mm_fixed_points_in_boundary = None
+                                y_mm_fixed_points_in_boundary = None
+                                w_mm_fixed_points_in_boundary = None
+                        elif action == "a":
+                            x_new = input_number(
+                                expected_type="float", prompt="x value of new fixed point", default=None
+                            )
+                            y_new = input_number(
+                                expected_type="float", prompt="y value of new fixed point", default=None
+                            )
+                            w_new = input_number(
+                                expected_type="float",
+                                prompt="weight of new fixed point",
+                                min_val=0.0,
+                                default=1000.0,
+                            )
+                            if num_fixed_points == 0:
+                                x_mm_fixed_points_in_boundary = np.array([x_new], dtype=float)
+                                y_mm_fixed_points_in_boundary = np.array([y_new], dtype=float)
+                                w_mm_fixed_points_in_boundary = np.array([w_new], dtype=float)
+                            else:
+                                x_mm_fixed_points_in_boundary = np.append(x_mm_fixed_points_in_boundary, x_new)
+                                y_mm_fixed_points_in_boundary = np.append(y_mm_fixed_points_in_boundary, y_new)
+                                w_mm_fixed_points_in_boundary = np.append(w_mm_fixed_points_in_boundary, w_new)
+                            num_fixed_points += 1
+                        elif action == "c":
+                            num_fixed_points = 0
+                            x_mm_fixed_points_in_boundary = None
+                            y_mm_fixed_points_in_boundary = None
+                            w_mm_fixed_points_in_boundary = None
+                        elif action in ["n", ""]:
+                            if action == "":
+                                action = "n"
+                            if mm_boundary_fit == "piecewise":
+                                if num_fixed_points < 2:
+                                    _logger.info(
+                                        "At least two fixed points are needed for piecewise linear boundary fit."
+                                    )
+                                    input("Press Enter to continue...")
+                                    action = "x"
+                            if action == "n":
+                                _logger.info("No changes made to fixed points in boundary.")
+                                modify_fixed = "n"
+                        else:
+                            input("Invalid option. Press Enter to try again...")
+                        if num_fixed_points > 0:
+                            mm_fixed_points_in_boundary = True
+                        else:
+                            mm_fixed_points_in_boundary = None
+                        show_fixed_points_in_boundary(
+                            _logger,
+                            num_fixed_points,
+                            x_mm_fixed_points_in_boundary,
+                            y_mm_fixed_points_in_boundary,
+                            w_mm_fixed_points_in_boundary,
+                        )
         else:
             plt.close(fig)
 
