@@ -17,6 +17,7 @@ from scipy import ndimage
 import sys
 
 from numina.array.numsplines import spline_positive_derivative
+from numina.tools.input_number import input_number
 import teareduce as tea
 
 from .ask_integer import ask_integer
@@ -272,17 +273,24 @@ def display_hist2d(
             loop = False
         if loop:
             if mm_boundary_fit == "spline":
-                mm_knots_splfit = ask_integer(
-                    prompt="Number of knots for spline boundary fit", min_val=2, default=mm_knots_splfit
+                mm_knots_splfit = input_number(
+                    expected_type="int",
+                    prompt="Number of knots for spline boundary fit",
+                    min_val=2,
+                    default=mm_knots_splfit,
                 )
-            mm_hist2d_min_neighbors = ask_integer(
+            mm_hist2d_min_neighbors = input_number(
+                expected_type="int",
                 prompt="Minimum number of neighbors to keep a bin in the 2D histogram",
                 min_val=0,
                 max_val=8,
                 default=mm_hist2d_min_neighbors,
             )
-            mm_niter_boundary_extension = ask_integer(
-                prompt="Number of iterations for boundary extension", min_val=0, default=mm_niter_boundary_extension
+            mm_niter_boundary_extension = input_number(
+                expected_type="int",
+                prompt="Number of iterations for boundary extension",
+                min_val=0,
+                default=mm_niter_boundary_extension,
             )
         else:
             plt.close(fig)
