@@ -384,21 +384,28 @@ def display_hist2d(
                 if modify_fixed == "y":
                     action = ""
                     while action != "n":
-                        _logger.info(
-                            "Type:\n"
-                            "- 'a' to add a fixed point\n"
-                            "- 'd' to delete an existing one\n"
-                            "- 'c' to clear all fixed points\n"
-                            "- 'n' none (continue without changes)"
-                        )
-                        action = input("Your choice (c/a/d/[n]): ").strip().lower()
+                        submenu = "Type:\n"
+                        submenu += "- 'a' to add a fixed point\n"
+                        valid_answers = "a/[n]"
+                        if num_fixed_points > 0:
+                            submenu += "- 'c' to clear all fixed points\n"
+                            submenu += "- 'd' to delete an existing fixed point\n"
+                            submenu += "- 'e' to edit an existing fixed point\n"
+                            valid_answers = "a/c/d/e/[n]"
+                        submenu += "- 'n' none (continue without additional changes)"
+                        _logger.info(submenu)
+                        action = input(f"Your choice ({valid_answers}): ").strip().lower()
                         if action == "d" and num_fixed_points > 0:
-                            index_to_delete = input_number(
-                                expected_type="int",
-                                prompt=f"Index of fixed point to delete (1 to {num_fixed_points})",
-                                min_val=1,
-                                max_val=num_fixed_points,
-                            )
+                            if num_fixed_points == 1:
+                                _logger.info("Only one fixed point available, deleting it.")
+                                index_to_delete = 1
+                            else:
+                                index_to_delete = input_number(
+                                    expected_type="int",
+                                    prompt=f"Index of fixed point to delete (1 to {num_fixed_points})",
+                                    min_val=1,
+                                    max_val=num_fixed_points,
+                                )
                             x_mm_fixed_points_in_boundary = np.delete(
                                 x_mm_fixed_points_in_boundary, index_to_delete - 1
                             )
@@ -413,6 +420,36 @@ def display_hist2d(
                                 x_mm_fixed_points_in_boundary = None
                                 y_mm_fixed_points_in_boundary = None
                                 w_mm_fixed_points_in_boundary = None
+                        elif action == "e" and num_fixed_points > 0:
+                            if num_fixed_points == 1:
+                                _logger.info("Only one fixed point available, editing it.")
+                                index_to_edit = 1
+                            else:
+                                index_to_edit = input_number(
+                                    expected_type="int",
+                                    prompt=f"Index of fixed point to edit (1 to {num_fixed_points})",
+                                    min_val=1,
+                                    max_val=num_fixed_points,
+                                )
+                            x_new = input_number(
+                                expected_type="float",
+                                prompt="New x value of fixed point",
+                                default=x_mm_fixed_points_in_boundary[index_to_edit - 1],
+                            )
+                            y_new = input_number(
+                                expected_type="float",
+                                prompt="New y value of fixed point",
+                                default=y_mm_fixed_points_in_boundary[index_to_edit - 1],
+                            )
+                            w_new = input_number(
+                                expected_type="float",
+                                prompt="New weight of fixed point",
+                                min_val=0.0,
+                                default=w_mm_fixed_points_in_boundary[index_to_edit - 1],
+                            )
+                            x_mm_fixed_points_in_boundary[index_to_edit - 1] = x_new
+                            y_mm_fixed_points_in_boundary[index_to_edit - 1] = y_new
+                            w_mm_fixed_points_in_boundary[index_to_edit - 1] = w_new
                         elif action == "a":
                             x_new = input_number(
                                 expected_type="float", prompt="x value of new fixed point", default=None
@@ -435,7 +472,7 @@ def display_hist2d(
                                 y_mm_fixed_points_in_boundary = np.append(y_mm_fixed_points_in_boundary, y_new)
                                 w_mm_fixed_points_in_boundary = np.append(w_mm_fixed_points_in_boundary, w_new)
                             num_fixed_points += 1
-                        elif action == "c":
+                        elif action == "c" and num_fixed_points > 0:
                             num_fixed_points = 0
                             x_mm_fixed_points_in_boundary = None
                             y_mm_fixed_points_in_boundary = None
