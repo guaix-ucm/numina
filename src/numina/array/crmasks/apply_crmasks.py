@@ -50,7 +50,7 @@ def apply_crmasks(
           'X_pixel', 'Y_pixel', 'X_width', 'Y_width'. The (X, Y) coordinates
           are given following the FITS convention (starting at 1).
     combination : str
-        The type of combination to apply. There are three options:
+        The type of combination to apply. There are the following options:
         - 'mediancr', the median combination is applied, and masked pixels
         (those equal to 1 in extension 'MEDIANCR' of `hdul_masks`) are
         replaced by the minimum value of the corresponding pixel in the
@@ -63,6 +63,8 @@ def apply_crmasks(
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
         in the input arrays.
+        - 'median', the simple median without any substitution of masked pixels.
+        - 'min', the simple minimum, without any substitution of masked pixels.
     use_auxmedian : bool, optional
         If True, and if the extension 'AXMEDIAN' is present in `hdul_masks`,
         the auxiliary-corrected median array is used instead of the minimum
@@ -108,7 +110,7 @@ def apply_crmasks(
         raise TypeError("Input must be a list of arrays.")
 
     # Check that the combination method is valid
-    if combination not in VALID_COMBINATIONS:
+    if combination not in VALID_COMBINATIONS + ['median', 'min']:
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
 
     # If use_auxmedian is True, check that the extension 'AXMEDIAN' is present
@@ -180,6 +182,19 @@ def apply_crmasks(
     # Compute minimum and median along the first axis of image3d
     min2d_rescaled = np.min(image3d, axis=0)
     median2d = np.median(image3d, axis=0)
+
+    # Simple cases: mean, median and mininum without cosmic ray correction
+    if combination in ["mean", "median", "min"]:
+        variance2d = np.var(image3d, axis=0, ddof=1)
+        map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
+        if combination == "mean":
+            return np.mean(image3d, axis=0).astype(dtype), variance2d.astype(dtype), map2d
+        if combination == "median":
+            return median2d.astype(dtype), variance2d.astype(dtype), map2d
+        elif combination == "min":
+            return min2d_rescaled.astype(dtype), variance2d.astype(dtype), map2d
+        else:
+            raise ValueError(f"Invalid combination method: {combination}.")
 
     # Apply the requested combination method
     if rich_configured:

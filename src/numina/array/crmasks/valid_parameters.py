@@ -21,4 +21,4 @@ VALID_CRMETHODS = [
     "mm_conn",
 ]
 VALID_BOUNDARY_FITS = ["spline", "piecewise"]
-VALID_COMBINATIONS = ["mediancr", "meancrt", "meancr"]
+VALID_COMBINATIONS = ["mean", "median", "min", "mediancr", "meancrt", "meancr"]
