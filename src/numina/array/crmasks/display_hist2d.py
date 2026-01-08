@@ -25,15 +25,23 @@ from .define_piecewise_linear_function import define_piecewise_linear_function
 from .valid_parameters import VALID_BOUNDARY_FITS
 
 
-def show_fixed_points_in_boundary(
+def xsort_and_show_fixed_points_in_boundary(
     _logger,
     num_fixed_points,
     x_mm_fixed_points_in_boundary,
     y_mm_fixed_points_in_boundary,
     w_mm_fixed_points_in_boundary,
 ):
-    """Show fixed points in boundary."""
+    """Show fixed points in boundary.
+    
+    If there are fixed points, sort them by increasing x value."""
     if num_fixed_points > 0:
+        isort = np.argsort(x_mm_fixed_points_in_boundary)
+        if not np.all(isort == np.arange(num_fixed_points)):
+            _logger.info("Sorting fixed points in boundary by increasing x value.")
+        x_mm_fixed_points_in_boundary[:] = x_mm_fixed_points_in_boundary[isort]
+        y_mm_fixed_points_in_boundary[:] = y_mm_fixed_points_in_boundary[isort]
+        w_mm_fixed_points_in_boundary[:] = w_mm_fixed_points_in_boundary[isort]
         _logger.info("Current fixed points in boundary:")
         fixed_table = Table(names=("number", "X", "Y", "Weight"), dtype=(int, float, float, float))
         for idum in range(num_fixed_points):
@@ -378,7 +386,7 @@ def display_hist2d(
             else:
                 modify_fixed = "?"
             while modify_fixed != "n":
-                show_fixed_points_in_boundary(
+                xsort_and_show_fixed_points_in_boundary(
                     _logger,
                     num_fixed_points,
                     x_mm_fixed_points_in_boundary,
@@ -509,7 +517,7 @@ def display_hist2d(
                             mm_fixed_points_in_boundary = True
                         else:
                             mm_fixed_points_in_boundary = None
-                        show_fixed_points_in_boundary(
+                        xsort_and_show_fixed_points_in_boundary(
                             _logger,
                             num_fixed_points,
                             x_mm_fixed_points_in_boundary,
