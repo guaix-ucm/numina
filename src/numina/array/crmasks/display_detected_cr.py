@@ -32,6 +32,10 @@ def display_detected_cr(
     maxplots=-1,
     verify_cr=False,
     color_scale="zscale",
+    xplot=None,
+    yplot=None,
+    xplot_boundary=None,
+    yplot_boundary=None,
     _logger=None,
 ):
     """Display the detected cosmic rays
@@ -309,6 +313,41 @@ def display_detected_cr(
             # plot for problematic pixels
             pdf.savefig(fig, bbox_inches="tight")
         plt.close(fig)
+
+        if list_mask_single_exposures is None:
+            # plot pixels in the M.M. diagnostic diagram
+            fig, ax = plt.subplots(figsize=figsize)
+            ax.plot(xplot_boundary, yplot_boundary, "r--", label="detection boundary")
+            for idum in range(i1, i2 + 1):
+                for jdum in range(j1, j2 + 1):
+                    if labels_cr[idum, jdum] == i + 1:
+                        if flag_integer_dilated[idum, jdum] == 4:
+                            symbol = "co"
+                        elif flag_integer_dilated[idum, jdum] == 3:
+                            symbol = "ro"
+                        elif flag_integer_dilated[idum, jdum] == 2:
+                            symbol = "b+"
+                        else:
+                            symbol = "ko"
+                        xval = xplot.reshape((naxis2, naxis1))[idum, jdum]
+                        yval = yplot.reshape((naxis2, naxis1))[idum, jdum]
+                        ax.plot(xval, yval, symbol)
+            _, ymax = ax.get_ylim()
+            ax.set_ylim(0.0, ymax)
+            ax.set_xlabel(r"min2d $-$ bias")
+            ax.set_ylabel(r"median2d $-$ min2d")
+            ax.legend()
+            fig.suptitle(f"CR#{i+1}/{number_cr}")
+            plt.tight_layout()
+            if 4 in different_flag_values:
+                pdf_any4.savefig(fig, bbox_inches="tight")
+            elif 3 in different_flag_values and 2 not in different_flag_values:
+                pdf_only3.savefig(fig, bbox_inches="tight")
+            elif 2 in different_flag_values and 3 not in different_flag_values:
+                pdf_only2.savefig(fig, bbox_inches="tight")
+            else:
+                pdf_other.savefig(fig, bbox_inches="tight")
+            plt.close(fig)
 
     _logger.info("plot generation complete")
     if list_mask_single_exposures is None:

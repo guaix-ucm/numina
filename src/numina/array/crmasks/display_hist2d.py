@@ -209,7 +209,7 @@ def display_hist2d(
                     yboundary.append(bins_ydiag[0])
         xboundary = np.array(xboundary)
         yboundary = np.array(yboundary)
-        ax1.plot(xboundary, yboundary, "r+", label="boundary points")
+        ax1.plot(xboundary, yboundary, "r+", label="Boundary points")
         boundaryfit = None  # avoid flake8 warning
         if mm_boundary_fit == "spline":
             nmax_iterations_with_color = 6
@@ -218,11 +218,11 @@ def display_hist2d(
                 color = f"C{iterboundary}"
                 alpha = 1.0
                 if iterboundary == 0:
-                    label = "initial spline fit"
+                    label = "Initial spline fit"
                 else:
                     wboundary[yboundary > boundaryfit(xboundary)] = mm_weight_boundary_extension**iterboundary
                     if iterboundary == mm_niter_boundary_extension:
-                        label = f"final iteration {iterboundary}"
+                        label = f"Final iteration {iterboundary}"
                         if mm_niter_boundary_extension > nmax_iterations_with_color:
                             color = f"C{nmax_iterations_with_color}"
                     else:

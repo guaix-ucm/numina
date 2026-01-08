@@ -1880,6 +1880,10 @@ def compute_crmasks(
             maxplots=maxplots,
             verify_cr=verify_cr,
             color_scale=color_scale,
+            xplot=xplot,
+            yplot=yplot,
+            xplot_boundary=xplot_boundary,
+            yplot_boundary=yplot_boundary,
             _logger=_logger,
         )
 
@@ -2097,6 +2101,10 @@ def compute_crmasks(
             maxplots=maxplots,
             verify_cr=False,
             color_scale=color_scale,
+            xplot=None,
+            yplot=None,
+            xplot_boundary=None,
+            yplot_boundary=None,
             _logger=_logger,
         )
 
