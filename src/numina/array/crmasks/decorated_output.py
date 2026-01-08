@@ -20,7 +20,6 @@ def decorate_output(prompt=">>>"):
 
     def decorator(func):
         @wraps(func)
-
         def wrapper(*args, **kwargs):
             _logger = logging.getLogger(__name__)
             buf = io.StringIO()
@@ -37,5 +36,5 @@ def decorate_output(prompt=">>>"):
             return result
 
         return wrapper
-    
+
     return decorator

@@ -22,3 +22,5 @@ VALID_CRMETHODS = [
 ]
 VALID_BOUNDARY_FITS = ["spline", "piecewise"]
 VALID_COMBINATIONS = ["mean", "median", "min", "mediancr", "meancrt", "meancr"]
+
+DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY = 10000.0

@@ -59,6 +59,7 @@ from .gausskernel2d_elliptical import gausskernel2d_elliptical
 from .valid_parameters import VALID_CRMETHODS
 from .valid_parameters import VALID_LACOSMIC_CLEANTYPE
 from .valid_parameters import VALID_BOUNDARY_FITS
+from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
 
 
 def compute_crmasks(
@@ -1414,7 +1415,7 @@ def compute_crmasks(
                 if len(item) == 2:
                     x_mm_fixed_points_in_boundary.append(float(item[0]))
                     y_mm_fixed_points_in_boundary.append(float(item[1]))
-                    w_mm_fixed_points_in_boundary.append(10000)
+                    w_mm_fixed_points_in_boundary.append(DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY)
                 else:
                     x_mm_fixed_points_in_boundary.append(float(item[0]))
                     y_mm_fixed_points_in_boundary.append(float(item[1]))
@@ -1700,7 +1701,7 @@ def compute_crmasks(
             nchars = len(str(mm_nsimulations))
             _logger.info(f"simulation {k + 1:0{nchars}d}/{mm_nsimulations}, time elapsed: {time_end - time_ini}")
         # Display hist2d
-        xplot_boundary, yplot_boundary, boundaryfit, flag_mm = display_hist2d(
+        result_hist2d = display_hist2d(
             _logger=_logger,
             rlabel_mmcosmic=rlabel_mmcosmic,
             mm_hist2d_min_neighbors=mm_hist2d_min_neighbors,
@@ -1729,6 +1730,18 @@ def compute_crmasks(
             w_mm_fixed_points_in_boundary=w_mm_fixed_points_in_boundary,
             interactive=interactive,
         )
+        # retrieve main results
+        xplot_boundary = result_hist2d["xplot_boundary"]
+        yplot_boundary = result_hist2d["yplot_boundary"]
+        boundaryfit = result_hist2d["boundaryfit"]
+        flag_mm = result_hist2d["flag_mm"]
+        # update additional parameters that might have been modified
+        mm_fixed_points_in_boundary = result_hist2d["mm_fixed_points_in_boundary"]
+        mm_hist2d_min_neighbors = result_hist2d["mm_hist2d_min_neighbors"]
+        mm_boundary_fit = result_hist2d["mm_boundary_fit"]
+        mm_knots_splfit = result_hist2d["mm_knots_splfit"]
+        mm_niter_boundary_extension = result_hist2d["mm_niter_boundary_extension"]
+        mm_weight_boundary_extension = result_hist2d["mm_weight_boundary_extension"]
     elif crmethod in ["lacosmic", "pycosmic", "deepcr", "conn"]:
         xplot_boundary = None
         yplot_boundary = None

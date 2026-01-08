@@ -23,6 +23,7 @@ import teareduce as tea
 
 from .define_piecewise_linear_function import define_piecewise_linear_function
 from .valid_parameters import VALID_BOUNDARY_FITS
+from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
 
 
 def xsort_and_show_fixed_points_in_boundary(
@@ -33,8 +34,10 @@ def xsort_and_show_fixed_points_in_boundary(
     w_mm_fixed_points_in_boundary,
 ):
     """Show fixed points in boundary.
-    
-    If there are fixed points, sort them by increasing x value."""
+
+    If there are fixed points, sort them by increasing x value.
+    Return list of fixed points or None if there are no fixed points.
+    """
     if num_fixed_points > 0:
         isort = np.argsort(x_mm_fixed_points_in_boundary)
         if not np.all(isort == np.arange(num_fixed_points)):
@@ -44,6 +47,7 @@ def xsort_and_show_fixed_points_in_boundary(
         w_mm_fixed_points_in_boundary[:] = w_mm_fixed_points_in_boundary[isort]
         _logger.info("Current fixed points in boundary:")
         fixed_table = Table(names=("number", "X", "Y", "Weight"), dtype=(int, float, float, float))
+        mm_fixed_points_in_boundary = []
         for idum in range(num_fixed_points):
             fixed_table.add_row(
                 (
@@ -53,9 +57,19 @@ def xsort_and_show_fixed_points_in_boundary(
                     w_mm_fixed_points_in_boundary[idum],
                 )
             )
+            mm_fixed_points_in_boundary.append(
+                [
+                    x_mm_fixed_points_in_boundary[idum],
+                    y_mm_fixed_points_in_boundary[idum],
+                    w_mm_fixed_points_in_boundary[idum],
+                ]
+            )
         _logger.info("%s", fixed_table)
     else:
         _logger.info("No fixed points in boundary.")
+        mm_fixed_points_in_boundary = None
+
+    return mm_fixed_points_in_boundary
 
 
 def display_hist2d(
@@ -219,7 +233,9 @@ def display_hist2d(
                                 if nmax_iterations_with_color == mm_niter_boundary_extension - 1:
                                     label = f"Iteration {iterboundary}"
                                 else:
-                                    label = f"Iterations {nmax_iterations_with_color} to {mm_niter_boundary_extension - 1}"
+                                    label = (
+                                        f"Iterations {nmax_iterations_with_color} to {mm_niter_boundary_extension - 1}"
+                                    )
                                 color = "gray"
                                 alpha = 0.3
                             else:
@@ -348,7 +364,9 @@ def display_hist2d(
             # Modify mm_boundary_fit
             new_mm_boundary_fit = ""
             while new_mm_boundary_fit not in ["piecewise", "spline"]:
-                new_mm_boundary_fit = input(f"Type of boundary fit: piecewise or spline [{mm_boundary_fit}]: ").strip().lower()
+                new_mm_boundary_fit = (
+                    input(f"Type of boundary fit: piecewise or spline [{mm_boundary_fit}]: ").strip().lower()
+                )
                 if new_mm_boundary_fit == "":
                     new_mm_boundary_fit = mm_boundary_fit
                 if new_mm_boundary_fit not in ["piecewise", "spline"]:
@@ -386,7 +404,7 @@ def display_hist2d(
             else:
                 modify_fixed = "?"
             while modify_fixed != "n":
-                xsort_and_show_fixed_points_in_boundary(
+                mm_fixed_points_in_boundary = xsort_and_show_fixed_points_in_boundary(
                     _logger,
                     num_fixed_points,
                     x_mm_fixed_points_in_boundary,
@@ -482,7 +500,7 @@ def display_hist2d(
                                 expected_type="float",
                                 prompt="weight of new fixed point",
                                 min_val=0.0,
-                                default=1000.0,
+                                default=DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY,
                             )
                             if num_fixed_points == 0:
                                 x_mm_fixed_points_in_boundary = np.array([x_new], dtype=float)
@@ -513,11 +531,7 @@ def display_hist2d(
                                 modify_fixed = "n"
                         else:
                             input("Invalid option. Press Enter to try again...")
-                        if num_fixed_points > 0:
-                            mm_fixed_points_in_boundary = True
-                        else:
-                            mm_fixed_points_in_boundary = None
-                        xsort_and_show_fixed_points_in_boundary(
+                        mm_fixed_points_in_boundary = xsort_and_show_fixed_points_in_boundary(
                             _logger,
                             num_fixed_points,
                             x_mm_fixed_points_in_boundary,
@@ -527,4 +541,17 @@ def display_hist2d(
         else:
             plt.close(fig)
 
-    return xplot_boundary, yplot_boundary, boundaryfit, flag_mm
+    result = {
+        "xplot_boundary": xplot_boundary,
+        "yplot_boundary": yplot_boundary,
+        "boundaryfit": boundaryfit,
+        "flag_mm": flag_mm,
+        "mm_fixed_points_in_boundary": mm_fixed_points_in_boundary,
+        "mm_hist2d_min_neighbors": mm_hist2d_min_neighbors,
+        "mm_boundary_fit": mm_boundary_fit,
+        "mm_knots_splfit": mm_knots_splfit,
+        "mm_niter_boundary_extension": mm_niter_boundary_extension,
+        "mm_weight_boundary_extension": mm_weight_boundary_extension,
+    }
+
+    return result
