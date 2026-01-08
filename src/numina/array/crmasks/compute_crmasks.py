@@ -116,7 +116,7 @@ def compute_crmasks(
     nn_model=None,
     nn_threshold=None,
     nn_verbose=False,
-    mm_preclean_single=False,
+    mm_synthetic=None,
     mm_hist2d_min_neighbors=0,
     mm_ydiag_max=0,
     mm_dilation=0,
@@ -162,18 +162,24 @@ def compute_crmasks(
     crmethod : str
         The method to use for cosmic ray detection. Valid options are:
         - 'lacosmic': use the cosmic-ray rejection by Laplacian edge
-        detection (van Dokkum 2001), as implemented in ccdproc.
-        - 'mmcosmic': use the numerically derived boundary to
-        detect cosmic rays in the median combined image.
-        - 'mm_lacosmic': use both methods: 'lacosmic' and 'mmcosmic'.
-        Pixels detected by either method are included in the final mask.
-        - 'pycosmic': use the PyCosmic algorithm (Husemann et al. 2012)
-        - 'mm_pycosmic': use both methods: 'pycosmic' and 'mmcosmic'.
+           detection (van Dokkum 2001), as implemented in ccdproc.
+        - 'pycosmic': use the PyCosmic algorithm (Husemann et al. 2012).
+        - 'deepcr': use the DeepCR algorithm (Zhang & Bloom 2021).
+        - 'conn': use a convolutional neural network for cosmic ray detection
+        - 'mm_lacosmic': use both methods: 'lacosmic' and the detection
+           boundary derived from numerical simulations.
+        - 'mm_pycosmic': use both methods: 'pycosmic' and the detection
+           boundary derived from numerical simulations.
+        - 'mm_deepcr': use both methods: 'deepcr' and the detection
+           boundary derived from numerical simulations.
+        - 'mm_conn': use both methods: 'conn' and the detection
+           boundary derived from numerical simulations.
     use_auxmedian: bool, optional
         If True, use the corrected values from the auxiliary algorithm
         when replacing the cosmic-ray affected pixels in the median
         combined image. This parameter is only used when
-        crmethod is 'lacosmic', 'mm_lacosmic', 'pycosmic', or 'mm_pycosmic'.
+        crmethod is 'lacosmic', 'mm_lacosmic', 'pycosmic', 'mm_pycosmic',
+        'deepcr', or 'mm_deepcr'.
     flux_factor : str, list, float or None, optional
         The flux scaling factor for each exposure (default is None).
         If 'auto', the flux factor is determined automatically.
@@ -235,23 +241,27 @@ def compute_crmasks(
         If True, apply the gain when computing the cosmic ray mask
         with the lacosmic algorithm. Default is True.
     la_sigclip : float
-        The sigma clipping threshold. Employed when crmethod='lacosmic'.
+        The sigma clipping threshold. Employed when crmethod='lacosmic'
+        or 'mm_lacosmic'.
     la_sigfrac : float
         The fractional detection limit for neighboring pixels.
-        Employed when crmethod='lacosmic'.
+        Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_objlim : float
         Minimum contrast between Laplacian image and fine structure image.
-        Employed when crmethod='lacosmic'.
+        Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_satlevel : float
-        The saturation level (in ADU) of the detector. Employed when crmethod='lacosmic'.
+        The saturation level (in ADU) of the detector. Employed when 
+        crmethod='lacosmic' or 'mm_lacosmic'.
     la_niter : int
-        The number of iterations to perform. Employed when crmethod='lacosmic'.
+        The number of iterations to perform. Employed when 
+        crmethod='lacosmic' or 'mm_lacosmic'.
     la_sepmed : bool
         If True, use separable median filter instead of the full median filter.
-        Employed when crmethod='lacosmic'.
+        Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_fsmode : str
         The mode to use for the fine structure image. Valid options are:
-        'median' or 'convolve'. Employed when crmethod='lacosmic'.
+        'median' or 'convolve'. Employed when crmethod='lacosmic' 
+        or 'mm_lacosmic'.
     la_psfmodel : str
         The model to use for the PSF if la_fsmode='convolve'.
         Valid options are:
@@ -259,60 +269,60 @@ def compute_crmasks(
         - Gaussian in the x and y directions: 'gaussx' and 'gaussy'
         - elliptical Gaussian: 'gaussxy' (this kernel is not available
           in ccdproc.cosmicray_lacosmic, so it is implemented here)
-        Employed when crmethod='lacosmic'.
+        Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_psffwhm_x : float
         The full width at half maximum (FWHM, in pixels) of the PSF in
-        the x direction. Employed when crmethod='lacosmic'.
+        the x direction. Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_psffwhm_y : float
         The full width at half maximum (FWHM, in pixels) of the PSF
-        in the y direction. Employed when crmethod='lacosmic'.
+        in the y direction. Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_psfsize : int
         The kernel size to use for the PSF. It must be an odd integer >= 3.
-        Employed when crmethod='lacosmic'.
+        Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_psfbeta : float
         The beta parameter of the Moffat PSF. It is only used if
-        la_psfmodel='moffat'. Employed when crmethod='lacosmic'.
+        la_psfmodel='moffat'. Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_verbose : bool
         If True, print additional information during the
-        execution. Employed when crmethod='lacosmic'.
+        execution. Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_padwidth : int or None
         The width of the padding to apply to the input image
         when using the lacosmic algorithm. If None, no padding is applied.
         The padding helps to mitigate edge effects during the
-        cosmic ray detection.
+        cosmic ray detection. Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     pc_sigma_det : float or None
         The detection limit above the noise.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_rlim : float or None
         The detection threshold.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_iterations : int or None
         The number of iterations to perform.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_fwhm_gauss_x : float or None
         FWHM of the Gaussian smoothing kernel (X direction).
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_fwhm_gauss_y : float or None
         FWHM of the Gaussian smoothing kernel (Y direction).
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_replace_box_x : int or None
         Median box size (X axis) to estimate replacement
         values for cosmic ray affected pixels.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_replace_box_y : int or None
         Median box size (Y axis) to estimate replacement
         values for cosmic ray affected pixels.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_replace_error : float or None
         Error value for bad pixels.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_increase_radius : int, optional
         The radius increase for the neighboring pixels
         to be considered as affected by cosmic rays.
-        Employed when crmethod='pycosmic'.
+        Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     pc_verbose : bool
         If True, print additional information during the
-        execution. Employed when crmethod='pycosmic'.
+        execution. Employed when crmethod='pycosmic' or 'mm_pycosmic'.
     dc_mask : str or None
         The instrument/detector mask to use for DeepCR.
         Valid options are 'ACS-WFC' and 'WFC3-UVIS'.
@@ -332,9 +342,11 @@ def compute_crmasks(
     nn_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='conn' or 'mm_conn'.
-    mm_preclean_single : bool
-        If True, pre-clean each individual exposure using the specified
-        crmethod before computing the detection boundary.
+    mm_synthetic : str or None
+        The type of synthetic images to use for the numerical simulations.
+        Valid options are:
+        - 'median': use the pre-cleaned median combined image.
+        - 'single': use the pre-cleaned single images.
     mm_hist2d_min_neighbors : int, optional
         The minimum number of neighboring pixels required to consider
         a pixel as part of a cosmic ray in the 2D histogram used to
@@ -482,8 +494,6 @@ def compute_crmasks(
         prefix_of_excluded_args = ["mm_", "la_", "pc_", "dc_"]
     elif crmethod == "mm_conn":
         prefix_of_excluded_args = ["la_", "pc_", "dc_"]
-    elif crmethod == "mmcosmic":
-        prefix_of_excluded_args = ["la_", "pc_", "dc_", "nn_"]
     else:
         prefix_of_excluded_args = ["xxx"]  # should never happen
     # Define acronyms for problematic pixels
@@ -590,9 +600,9 @@ def compute_crmasks(
     image3d -= bias
 
     # Check use_auxmedian
-    if use_auxmedian and crmethod not in ["lacosmic", "mm_lacosmic", "pycosmic", "mm_pycosmic"]:
+    if use_auxmedian and crmethod not in ["lacosmic", "mm_lacosmic", "pycosmic", "mm_pycosmic", "deepcr", "mm_deepcr"]:
         raise ValueError(
-            "use_auxmedian can only be True when crmethod is 'lacosmic', 'mm_lacosmic', 'pycosmic', or 'mm_pycosmic'."
+            "use_auxmedian can only be True when crmethod is 'lacosmic', 'mm_lacosmic', 'pycosmic', 'mm_pycosmic', 'deepcr', or 'mm_deepcr'."
         )
     _logger.info("use_auxmedian: %s", str(use_auxmedian))
 
@@ -671,9 +681,9 @@ def compute_crmasks(
     else:
         raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
     _logger.info("flux_factor: %s", str(flux_factor))
-    if mm_preclean_single and not np.array_equal(flux_factor, np.ones(num_images)):
+    if mm_synthetic == "single" and not np.array_equal(flux_factor, np.ones(num_images)):
         raise NotImplementedError(
-            "mm_preclean_single=True is not compatible with flux_factor values different from 1.0."
+            "mm_synthetic='single' is not compatible with flux_factor values different from 1.0."
         )
     if apply_flux_factor_to not in ["original", "simulated"]:
         raise ValueError(
@@ -850,8 +860,8 @@ def compute_crmasks(
         )
 
     # Log the input parameters
-    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
-        _logger.debug("mm_preclean_single: %s", str(mm_preclean_single))
+    if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+        _logger.debug("mm_synthetic: %s", str(mm_synthetic))
         _logger.debug("mm_hist2d_min_neighbors: %d", mm_hist2d_min_neighbors)
         if mm_hist2d_min_neighbors < 0:
             raise ValueError(f"{mm_hist2d_min_neighbors=} must be >= 0.")
@@ -1289,102 +1299,99 @@ def compute_crmasks(
         median2d_aux = None
         if use_auxmedian:
             raise NotImplementedError("use_auxmedian=True is not implemented for crmethod='conn' or 'mm_conn'.")
-    elif crmethod != "mmcosmic":
+    else:
         raise ValueError(f"Invalid crmethod: {crmethod}. " f"Valid options are: {VALID_CRMETHODS}.")
 
-    if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+    if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
         # Define a pre-cleaned median2d image for creating the fake individual images
         median2d_precleaned = median2d.copy()
         # Ensure no negative values in median2d_precleaned
         median2d_precleaned[median2d_precleaned < 0.0] = 0.0
-        if crmethod == "mmcosmic":
-            # Note that flag_aux is None in this case
-            _logger.warning("mm_preclean_single parameter is ignored for crmethod='mmcosmic'.")
-        else:
-            # Pre-clean the median2d image by replacing the detected CR pixels with the minimum value
-            flag_aux = flag_aux.reshape((naxis2, naxis1))
-            median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
-            flag_aux = flag_aux.flatten()
-        image3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
-        flag3d_fake_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
+        # Pre-clean the median2d image by replacing the detected CR pixels with the minimum value
+        flag_aux = flag_aux.reshape((naxis2, naxis1))
+        median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
+        flag_aux = flag_aux.flatten()
+        image3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
+        flag3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
+        # ---------------------------------------------------------------------
+        # Clean each individual image.
+        # The resulting images are employed to compute the detection boundary.
+        # ---------------------------------------------------------------------
+        _logger.info("Cleaning single images...")
         for i in range(num_images):
-            image3d_fake_single[i] = median2d_precleaned
-            if crmethod != "mmcosmic":
-                flag3d_fake_single[i] = flag_aux.reshape((naxis2, naxis1))
-        if mm_preclean_single:
-            # ---------------------------------------------------------------------
-            # Pre-clean each individual image by subtracting the pre-cleaned
-            # median2d image, cleaning the CRs, and adding back the median.
-            # The resulting images are employed to compute the detection boundary.
-            # ---------------------------------------------------------------------
-            _logger.info("pre-cleaning single images before determining the detection boundary...")
-            if crmethod != "mmcosmic":
-                for i in range(num_images):
-                    # Subtract the pre-cleaned median2d from each individual image
-                    dumimage2d = image3d[i, :, :] - median2d_precleaned[:, :]
-                    # Clean the dumimage2d image
-                    if rich_configured:
-                        _logger.info("[green]" + "-" * 79 + "[/green]")
-                        _logger.info(
-                            f"starting cosmic ray detection in [magenta]image#{i+1} - pre-cleaned median2d[/magenta]..."
-                        )
-                    else:
-                        _logger.info("-" * 73)
-                        _logger.info(f"starting cosmic ray detection in image#{i+1} - pre-cleaned median2d...")
-                    if crmethod == "mm_lacosmic":
-                        dumimage2d_cleaned, flagdum = execute_lacosmic(
-                            image2d=dumimage2d,
-                            bool_to_be_cleaned=bool_to_be_cleaned,
-                            rlabel_lacosmic=rlabel_lacosmic,
-                            dict_la_params_run1=dict_la_params_run1,
-                            dict_la_params_run2=dict_la_params_run2,
-                            la_padwidth=la_padwidth,
-                            _logger=_logger,
-                        )
-                    elif crmethod == "mm_pycosmic":
-                        dumimage2d_cleaned, flagdum = execute_pycosmic(
-                            image2d=dumimage2d,
-                            bool_to_be_cleaned=bool_to_be_cleaned,
-                            rlabel_pycosmic=rlabel_pycosmic,
-                            dict_pc_params_run1=dict_pc_params_run1,
-                            dict_pc_params_run2=dict_pc_params_run2,
-                            _logger=_logger,
-                        )
-                    elif crmethod == "mm_deepcr":
-                        dumimage2d_cleaned, flagdum = execute_deepcr(
-                            image2d=dumimage2d,
-                            bool_to_be_cleaned=bool_to_be_cleaned,
-                            rlabel_deepcr=rlabel_deepcr,
-                            dict_dc_params=dict_dc_params,
-                            _logger=_logger,
-                        )
-                    elif crmethod == "mm_conn":
-                        flagdum = execute_conn(
-                            image2d=dumimage2d,
-                            bool_to_be_cleaned=bool_to_be_cleaned,
-                            rlabel_conn=rlabel_conn,
-                            dict_nn_params=dict_nn_params,
-                            _logger=_logger,
-                        )
-                        dumimage2d_cleaned = dumimage2d  # not used
-                    else:
-                        raise ValueError(f"Invalid crmethod: {crmethod}.")
-                    # Add back the pre-cleaned median2d to the cleaned dumimage2d
-                    image3d_fake_single[i] = dumimage2d_cleaned + median2d_precleaned
-                    # Ensure no negative values
-                    image3d_fake_single[i][image3d_fake_single[i] < 0.0] = 0.0
-                    # Create 3D flag array
-                    flag3d_fake_single[i] = flagdum.reshape((naxis2, naxis1))
+            dumimage2d = image3d[i, :, :]
+            # Clean the dumimage2d image
+            if rich_configured:
+                _logger.info("[green]" + "-" * 79 + "[/green]")
+                _logger.info(
+                    f"starting cosmic ray detection in [magenta]image#{i+1}[/magenta]..."
+                )
+            else:
+                _logger.info("-" * 73)
+                _logger.info(f"starting cosmic ray detection in image#{i+1}...")
+            if crmethod == "mm_lacosmic":
+                dumimage2d_cleaned, flagdum = execute_lacosmic(
+                    image2d=dumimage2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_lacosmic=rlabel_lacosmic,
+                    dict_la_params_run1=dict_la_params_run1,
+                    dict_la_params_run2=dict_la_params_run2,
+                    la_padwidth=la_padwidth,
+                    _logger=_logger,
+                )
+            elif crmethod == "mm_pycosmic":
+                dumimage2d_cleaned, flagdum = execute_pycosmic(
+                    image2d=dumimage2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_pycosmic=rlabel_pycosmic,
+                    dict_pc_params_run1=dict_pc_params_run1,
+                    dict_pc_params_run2=dict_pc_params_run2,
+                    _logger=_logger,
+                )
+            elif crmethod == "mm_deepcr":
+                dumimage2d_cleaned, flagdum = execute_deepcr(
+                    image2d=dumimage2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_deepcr=rlabel_deepcr,
+                    dict_dc_params=dict_dc_params,
+                    _logger=_logger,
+                )
+            elif crmethod == "mm_conn":
+                flagdum = execute_conn(
+                    image2d=dumimage2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_conn=rlabel_conn,
+                    dict_nn_params=dict_nn_params,
+                    _logger=_logger,
+                )
+                dumimage2d_cleaned = dumimage2d  # not used
+            else:
+                raise ValueError(f"Invalid crmethod: {crmethod}.")
+            # Store the cleaned image
+            image3d_cleaned_single[i] = dumimage2d_cleaned
+            # Ensure no negative values
+            image3d_cleaned_single[i][image3d_cleaned_single[i] < 0.0] = 0.0
+            # Create 3D flag array 
+            flag3d_cleaned_single[i] = flagdum.reshape((naxis2, naxis1)).astype(int)
         # Create 2D flag array by summing over the 3D flag array
-        flag2d_fake_single = np.sum(flag3d_fake_single, axis=0)
+        flag2d_cleaned_single = np.sum(flag3d_cleaned_single, axis=0)
         # Flatten the 2D flag array to 1D
-        flag2d_fake_single = flag2d_fake_single.flatten()
+        flag2d_cleaned_single = flag2d_cleaned_single.flatten()
+        # Add pixels flagged in median2d
+        flag2d_cleaned_single += flag_aux
         # ---------------------------------------------------------------------
         # Compute detection boundary in M.M. diagram to detect cosmic rays
         # in median2d image
         # ---------------------------------------------------------------------
         # Define mm_fixed_points_in_boundary
-        _logger.info("detecting cosmic rays in median2d using %s...", rlabel_mmcosmic)
+        if rich_configured:
+            _logger.info("[green]" + "-" * 79 + "[/green]")
+            _logger.info(
+                f"detecting cosmic rays in [magenta]median2d[/magenta] using {rlabel_mmcosmic}..."
+            )
+        else:
+            _logger.info("-" * 73)
+            _logger.info(f"detecting cosmic rays in median2d using {rlabel_mmcosmic}...")
         if isinstance(mm_fixed_points_in_boundary, str):
             if mm_fixed_points_in_boundary.lower() == "none":
                 mm_fixed_points_in_boundary = None
@@ -1462,8 +1469,8 @@ def compute_crmasks(
                     f"Invalid type for mm_xy_offsets: {type(mm_xy_offsets)}. " "Must be list of [x_offset, y_offset)]."
                 )
             shift_images = True
-            if mm_preclean_single:
-                raise NotImplementedError("xy-shifting with mm_preclean_single=True is not implemented.")
+            if mm_synthetic == "single":
+                raise NotImplementedError("xy-shifting with mm_synthetic='single' is not implemented.")
         else:
             if isinstance(mm_crosscorr_region, str):
                 if mm_crosscorr_region.lower() == "none":
@@ -1490,8 +1497,8 @@ def compute_crmasks(
                 if crossregion.area() < 100:
                     raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
                 shift_images = True
-                if mm_preclean_single:
-                    raise NotImplementedError("xy-shifting with mm_preclean_single=True is not implemented.")
+                if mm_synthetic == 'single':
+                    raise NotImplementedError("xy-shifting with mm_synthetic='single' is not implemented.")
             elif mm_crosscorr_region is None:
                 crossregion = None
             else:
@@ -1646,7 +1653,12 @@ def compute_crmasks(
         if not shift_images:
             _logger.info("assuming no offsets between images")
             for i in range(num_images):
-                lam3d[i] = image3d_fake_single[i] / flux_factor_for_simulated[i]
+                if mm_synthetic == "single":
+                    lam3d[i] = image3d_cleaned_single[i] / flux_factor_for_simulated[i]
+                elif mm_synthetic == "median":
+                    lam3d[i] = median2d_precleaned / flux_factor_for_simulated[i]
+                else:
+                    raise ValueError(f"Invalid mm_synthetic: {mm_synthetic}.")
         else:
             _logger.info("xy-shifting median2d to speed up simulations...")
             for i in range(num_images):
@@ -1660,7 +1672,7 @@ def compute_crmasks(
                 # apply offsets to the median image to simulate the expected individual exposures
                 lam3d[i] = (
                     shift_image2d(
-                        image3d_fake_single[i],
+                        median2d_precleaned,
                         xoffset=list_yx_offsets[i][1],
                         yoffset=list_yx_offsets[i][0],
                         resampling=2,
@@ -1685,9 +1697,9 @@ def compute_crmasks(
             median2d_simul = np.median(image3d_simul, axis=0)
             xplot_simul = min2d_simul.flatten()
             yplot_simul = median2d_simul.flatten() - min2d_simul.flatten()
-            # Avoid pixels that were flagged as cosmic rays in the pre-cleaning step
-            xplot_simul = xplot_simul[flag2d_fake_single == 0]
-            yplot_simul = yplot_simul[flag2d_fake_single == 0]
+            # Avoid pixels that were flagged as cosmic rays in the median and single images
+            xplot_simul = xplot_simul[flag2d_cleaned_single == 0]
+            yplot_simul = yplot_simul[flag2d_cleaned_single == 0]
             hist2d, edges = np.histogramdd(sample=(yplot_simul, xplot_simul), bins=(bins_ydiag, bins_xdiag))
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
@@ -1817,13 +1829,13 @@ def compute_crmasks(
             ).astype(np.uint8)
             sdum = str(np.sum(flag_integer_dilated > 0))
             cdum = f"{np.sum(flag_integer > 0):{len(sdum)}d}"
-            _logger.info("before dilation: %s pixels flagged as coincident cosmic-ray pixels", cdum)
+            _logger.info("before global dilation: %s pixels flagged as coincident cosmic-ray pixels", cdum)
             cdum = f"{np.sum(flag_integer_dilated > 0):{len(sdum)}d}"
-            _logger.info("after dilation : %s pixels flagged as coincident cosmic-ray pixels", cdum)
+            _logger.info("after global dilation : %s pixels flagged as coincident cosmic-ray pixels", cdum)
         else:
             flag_integer_dilated = flag_integer
             _logger.info(
-                "no dilation applied: %d pixels flagged as coincident cosmic-ray pixels", np.sum(flag_integer > 0)
+                "no global dilation applied: %d pixels flagged as coincident cosmic-ray pixels", np.sum(flag_integer > 0)
             )
         # Set the pixels that were originally flagged as cosmic rays
         # to the integer value before dilation (this is to distinguish them
@@ -1880,48 +1892,63 @@ def compute_crmasks(
 
         if crmethod in ["lacosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
-            array_lacosmic, flag_aux = execute_lacosmic(
-                image2d=target2d,
-                bool_to_be_cleaned=bool_to_be_cleaned,
-                rlabel_lacosmic=rlabel_lacosmic,
-                dict_la_params_run1=dict_la_params_run1,
-                dict_la_params_run2=dict_la_params_run2,
-                la_padwidth=la_padwidth,
-                _logger=_logger,
-            )
+            if i == 0:
+                _, flag_aux = execute_lacosmic(
+                    image2d=target2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_lacosmic=rlabel_lacosmic,
+                    dict_la_params_run1=dict_la_params_run1,
+                    dict_la_params_run2=dict_la_params_run2,
+                    la_padwidth=la_padwidth,
+                    _logger=_logger,
+                )
+            else:
+                _logger.info(f"image #{i} already cleaned, retrieving flags from previous step...")
+                flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)        
         elif crmethod in ["pycosmic", "mm_pycosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_pycosmic}...")
-            array_pycosmic, flag_aux = execute_pycosmic(
-                image2d=target2d,
-                bool_to_be_cleaned=bool_to_be_cleaned,
-                rlabel_pycosmic=rlabel_pycosmic,
-                dict_pc_params_run1=dict_pc_params_run1,
-                dict_pc_params_run2=dict_pc_params_run2,
-                _logger=_logger,
-            )
+            if i == 0:
+                _, flag_aux = execute_pycosmic(
+                    image2d=target2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_pycosmic=rlabel_pycosmic,
+                    dict_pc_params_run1=dict_pc_params_run1,
+                    dict_pc_params_run2=dict_pc_params_run2,
+                    _logger=_logger,
+                )
+            else:
+                _logger.info(f"image #{i} already cleaned, retrieving flags from previous step...")
+                flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
         elif crmethod in ["deepcr", "mm_deepcr"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_deepcr}...")
-            array_deepcr, flag_aux = execute_deepcr(
-                image2d=target2d,
-                bool_to_be_cleaned=bool_to_be_cleaned,
-                rlabel_deepcr=rlabel_deepcr,
-                dict_dc_params=dict_dc_params,
-                _logger=_logger,
-            )
+            if i == 0:
+                _, flag_aux = execute_deepcr(
+                    image2d=target2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_deepcr=rlabel_deepcr,
+                    dict_dc_params=dict_dc_params,
+                    _logger=_logger,
+                )
+            else:
+                _logger.info(f"image #{i} already cleaned, retrieving flags from previous step...")
+                flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
         elif crmethod in ["conn", "mm_conn"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_conn}...")
-            flag_aux = execute_conn(
-                image2d=target2d,
-                bool_to_be_cleaned=bool_to_be_cleaned,
-                rlabel_conn=rlabel_conn,
-                dict_nn_params=dict_nn_params,
-                _logger=_logger,
-            )
-            array_conn = None
-        elif crmethod != "mmcosmic":
+            if i == 0:
+                flag_aux = execute_conn(
+                    image2d=target2d,
+                    bool_to_be_cleaned=bool_to_be_cleaned,
+                    rlabel_conn=rlabel_conn,
+                    dict_nn_params=dict_nn_params,
+                    _logger=_logger,
+                )
+            else:
+                _logger.info(f"image #{i} already cleaned, retrieving flags from previous step...")
+                flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
+        else:
             raise ValueError(f"Invalid crmethod: {crmethod}.\n" f"Valid options are: {VALID_CRMETHODS}.")
 
-        if crmethod in ["mmcosmic", "mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+        if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
             xplot = min2d.flatten()
             yplot = target2d.flatten() - min2d.flatten()
@@ -1931,8 +1958,6 @@ def compute_crmasks(
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_mm = np.logical_and(flag_mm, flag3)
             flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
-            if crmethod == "mmcosmic":
-                flag_aux = np.zeros_like(flag_mm, dtype=bool)
         else:
             xplot_boundary = None
             yplot_boundary = None
@@ -2008,12 +2033,12 @@ def compute_crmasks(
             ).astype(np.uint8)
             sdum = str(np.sum(flag_integer_dilated))
             cdum = f"{np.sum(flag_integer):{len(sdum)}d}"
-            _logger.info("before dilation: %s pixels flagged as cosmic rays", cdum)
+            _logger.info("before global dilation: %s pixels flagged as cosmic rays", cdum)
             cdum = f"{np.sum(flag_integer_dilated):{len(sdum)}d}"
-            _logger.info("after dilation : %s pixels flagged as cosmic rays", cdum)
+            _logger.info("after global dilation : %s pixels flagged as cosmic rays", cdum)
         else:
             flag_integer_dilated = flag_integer
-            _logger.info("no dilation applied: %d pixels flagged as cosmic rays", np.sum(flag_integer))
+            _logger.info("no global dilation applied: %d pixels flagged as cosmic rays", np.sum(flag_integer))
         flag_integer_dilated[flag] = 2
         # Compute mask
         mask = flag_integer_dilated > 0

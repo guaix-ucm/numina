@@ -11,7 +11,6 @@
 
 VALID_LACOSMIC_CLEANTYPE = ["median", "medmask", "meanmask", "idw"]
 VALID_CRMETHODS = [
-    "mmcosmic",
     "lacosmic",
     "mm_lacosmic",
     "pycosmic",

@@ -171,8 +171,12 @@ def display_hist2d(
         for i in range(nbins_xdiag):
             fsum = np.sum(hist2d_accummulated[:, i])
             if fsum > 0:
+                # Compute the probability density function for this x bin
                 pdensity = hist2d_accummulated[:, i] / fsum
+                # Find the y value where the cumulative distribution reaches the desired percentile
+                # (note that 1 / mm_nsimulations is the minimum expected value different from zero in any bin)
                 perc = 1 - (1 / mm_nsimulations) / fsum
+                # Interpolate to find the corresponding y value
                 p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
                 xboundary.append(xcbins[i])
                 yboundary.append(ycbins[int(p + 0.5)])
@@ -238,8 +242,8 @@ def display_hist2d(
             ).flatten()
             num_pixels_after_dilation = np.sum(flag_mm)
             ldum = len(str(num_pixels_after_dilation))
-            _logger.info(f"number of pixels flagged before dilation: {num_pixels_before_dilation:{ldum}d}")
-            _logger.info(f"number of pixels flagged after dilation : {num_pixels_after_dilation:{ldum}d}")
+            _logger.info(f"number of pixels flagged before dilation : {num_pixels_before_dilation:{ldum}d}")
+            _logger.info(f"number of pixels flagged after dilation  : {num_pixels_after_dilation:{ldum}d}")
         flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
         _logger.info(
             "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",
