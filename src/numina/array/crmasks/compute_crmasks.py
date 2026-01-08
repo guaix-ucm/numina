@@ -1302,83 +1302,83 @@ def compute_crmasks(
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}. " f"Valid options are: {VALID_CRMETHODS}.")
 
+    # Define a pre-cleaned median2d image for creating the fake individual images
+    median2d_precleaned = median2d.copy()
+    # Ensure no negative values in median2d_precleaned
+    median2d_precleaned[median2d_precleaned < 0.0] = 0.0
+    # Pre-clean the median2d image by replacing the detected CR pixels with the minimum value
+    flag_aux = flag_aux.reshape((naxis2, naxis1))
+    median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
+    flag_aux = flag_aux.flatten()
+    image3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
+    flag3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
+    # ---------------------------------------------------------------------
+    # Clean each individual image. The resulting images can be employed 
+    # to compute the detection boundary.
+    # ---------------------------------------------------------------------
+    for i in range(num_images):
+        dumimage2d = image3d[i, :, :]
+        # Clean the dumimage2d image
+        if rich_configured:
+            _logger.info("[green]" + "-" * 79 + "[/green]")
+            _logger.info(
+                f"starting cosmic ray detection in [magenta]image#{i+1}[/magenta]..."
+            )
+        else:
+            _logger.info("-" * 73)
+            _logger.info(f"starting cosmic ray detection in image#{i+1}...")
+        if crmethod in ["lacosmic", "mm_lacosmic"]:
+            dumimage2d_cleaned, flagdum = execute_lacosmic(
+                image2d=dumimage2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_lacosmic=rlabel_lacosmic,
+                dict_la_params_run1=dict_la_params_run1,
+                dict_la_params_run2=dict_la_params_run2,
+                la_padwidth=la_padwidth,
+                _logger=_logger,
+            )
+        elif crmethod in ["pycosmic", "mm_pycosmic"]:
+            dumimage2d_cleaned, flagdum = execute_pycosmic(
+                image2d=dumimage2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_pycosmic=rlabel_pycosmic,
+                dict_pc_params_run1=dict_pc_params_run1,
+                dict_pc_params_run2=dict_pc_params_run2,
+                _logger=_logger,
+            )
+        elif crmethod in ["deepcr", "mm_deepcr"]:
+            dumimage2d_cleaned, flagdum = execute_deepcr(
+                image2d=dumimage2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_deepcr=rlabel_deepcr,
+                dict_dc_params=dict_dc_params,
+                _logger=_logger,
+            )
+        elif crmethod in ["conn", "mm_conn"]:
+            flagdum = execute_conn(
+                image2d=dumimage2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rlabel_conn=rlabel_conn,
+                dict_nn_params=dict_nn_params,
+                _logger=_logger,
+            )
+            dumimage2d_cleaned = dumimage2d  # not used
+        else:
+            raise ValueError(f"Invalid crmethod: {crmethod}.")
+        # Store the cleaned image
+        image3d_cleaned_single[i] = dumimage2d_cleaned
+        # Ensure no negative values
+        image3d_cleaned_single[i][image3d_cleaned_single[i] < 0.0] = 0.0
+        # Create 3D flag array 
+        flag3d_cleaned_single[i] = flagdum.reshape((naxis2, naxis1)).astype(int)
+    # Create 2D flag array by summing over the 3D flag array
+    flag2d_cleaned_single = np.sum(flag3d_cleaned_single, axis=0)
+    # Flatten the 2D flag array to 1D
+    flag2d_cleaned_single = flag2d_cleaned_single.flatten()
+    # Add pixels flagged in median2d
+    flag2d_cleaned_single += flag_aux
+
     if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
-        # Define a pre-cleaned median2d image for creating the fake individual images
-        median2d_precleaned = median2d.copy()
-        # Ensure no negative values in median2d_precleaned
-        median2d_precleaned[median2d_precleaned < 0.0] = 0.0
-        # Pre-clean the median2d image by replacing the detected CR pixels with the minimum value
-        flag_aux = flag_aux.reshape((naxis2, naxis1))
-        median2d_precleaned[flag_aux > 0] = min2d[flag_aux > 0]
-        flag_aux = flag_aux.flatten()
-        image3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
-        flag3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
-        # ---------------------------------------------------------------------
-        # Clean each individual image.
-        # The resulting images are employed to compute the detection boundary.
-        # ---------------------------------------------------------------------
-        _logger.info("Cleaning single images...")
-        for i in range(num_images):
-            dumimage2d = image3d[i, :, :]
-            # Clean the dumimage2d image
-            if rich_configured:
-                _logger.info("[green]" + "-" * 79 + "[/green]")
-                _logger.info(
-                    f"starting cosmic ray detection in [magenta]image#{i+1}[/magenta]..."
-                )
-            else:
-                _logger.info("-" * 73)
-                _logger.info(f"starting cosmic ray detection in image#{i+1}...")
-            if crmethod == "mm_lacosmic":
-                dumimage2d_cleaned, flagdum = execute_lacosmic(
-                    image2d=dumimage2d,
-                    bool_to_be_cleaned=bool_to_be_cleaned,
-                    rlabel_lacosmic=rlabel_lacosmic,
-                    dict_la_params_run1=dict_la_params_run1,
-                    dict_la_params_run2=dict_la_params_run2,
-                    la_padwidth=la_padwidth,
-                    _logger=_logger,
-                )
-            elif crmethod == "mm_pycosmic":
-                dumimage2d_cleaned, flagdum = execute_pycosmic(
-                    image2d=dumimage2d,
-                    bool_to_be_cleaned=bool_to_be_cleaned,
-                    rlabel_pycosmic=rlabel_pycosmic,
-                    dict_pc_params_run1=dict_pc_params_run1,
-                    dict_pc_params_run2=dict_pc_params_run2,
-                    _logger=_logger,
-                )
-            elif crmethod == "mm_deepcr":
-                dumimage2d_cleaned, flagdum = execute_deepcr(
-                    image2d=dumimage2d,
-                    bool_to_be_cleaned=bool_to_be_cleaned,
-                    rlabel_deepcr=rlabel_deepcr,
-                    dict_dc_params=dict_dc_params,
-                    _logger=_logger,
-                )
-            elif crmethod == "mm_conn":
-                flagdum = execute_conn(
-                    image2d=dumimage2d,
-                    bool_to_be_cleaned=bool_to_be_cleaned,
-                    rlabel_conn=rlabel_conn,
-                    dict_nn_params=dict_nn_params,
-                    _logger=_logger,
-                )
-                dumimage2d_cleaned = dumimage2d  # not used
-            else:
-                raise ValueError(f"Invalid crmethod: {crmethod}.")
-            # Store the cleaned image
-            image3d_cleaned_single[i] = dumimage2d_cleaned
-            # Ensure no negative values
-            image3d_cleaned_single[i][image3d_cleaned_single[i] < 0.0] = 0.0
-            # Create 3D flag array 
-            flag3d_cleaned_single[i] = flagdum.reshape((naxis2, naxis1)).astype(int)
-        # Create 2D flag array by summing over the 3D flag array
-        flag2d_cleaned_single = np.sum(flag3d_cleaned_single, axis=0)
-        # Flatten the 2D flag array to 1D
-        flag2d_cleaned_single = flag2d_cleaned_single.flatten()
-        # Add pixels flagged in median2d
-        flag2d_cleaned_single += flag_aux
         # ---------------------------------------------------------------------
         # Compute detection boundary in M.M. diagram to detect cosmic rays
         # in median2d image
