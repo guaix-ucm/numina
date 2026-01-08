@@ -26,13 +26,13 @@ from teareduce import cleanest
 from .decorated_output import decorate_output
 
 
-@decorate_output
+@decorate_output(prompt="PyCosmic > ")
 def decorated_pycosmic_det_cosmics(*args, **kwargs):
     """Wrapper for PyCosmic.det_cosmics with decorated output."""
     return PyCosmic.det_cosmics(*args, **kwargs)
 
 
-@decorate_output
+@decorate_output(prompt="")
 def decorated_merge_peak_tail_masks(*args, **kwargs):
     """Wrapper for merge_peak_tail_masks with decorated output."""
     return cleanest.merge_peak_tail_masks(*args, **kwargs)
@@ -56,28 +56,10 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
     if dict_pc_params_run1["rlim"] != dict_pc_params_run2["rlim"]:
         pc_rlim_needs_2runs = True
     pycosmic_needs_2runs = pc_sigma_det_needs_2runs or pc_rlim_needs_2runs
-    # Display parameters
-    if pc_verbose:
-        _logger.info("[green][PyCosmic parameters for run 1][/green]")
-        for key in dict_pc_params_run1.keys():
-            _logger.info("%s for pycosmic: %s", key, str(dict_pc_params_run1[key]))
-        if pycosmic_needs_2runs:
-            _logger.info("[green][PyCosmic parameters modified for run 2][/green]")
-            if pc_sigma_det_needs_2runs:
-                _logger.info(
-                    "pc_sigma_det for run 2 (run1): %f (%f)",
-                    dict_pc_params_run2["sigma_det"],
-                    dict_pc_params_run1["sigma_det"],
-                )
-            if pc_rlim_needs_2runs:
-                _logger.info(
-                    "pc_rlim for run 2 (run1): %f (%f)", dict_pc_params_run2["rlim"], dict_pc_params_run1["rlim"]
-                )
     if pycosmic_needs_2runs:
         _logger.info("PyCosmic will be run in 2 passes with modified parameters.")
     else:
         _logger.info("PyCosmic will be run in a single pass.")
-    _logger.info(f"detecting cosmic rays using {rlabel_pycosmic}...")
     # Detect PyCosmic version
     try:
         version_pycosmic = version("PyCosmic")
@@ -85,6 +67,10 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         version_pycosmic = "unknown"
     _logger.info(f"using PyCosmic version: {version_pycosmic}")
     # run 1
+    if pc_verbose:
+        _logger.info("[green][PyCosmic parameters for run 1][/green]")
+        for key in dict_pc_params_run1.keys():
+            _logger.info("%s for pycosmic: %s", key, str(dict_pc_params_run1[key]))
     datetime_ini = datetime.now()
     out = decorated_pycosmic_det_cosmics(
         data=image2d, **{key: value for key, value in dict_pc_params_run1.items() if value is not None}
@@ -93,6 +79,18 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
     flag_pc = out.mask.astype(bool)
     # run 2 if needed
     if pycosmic_needs_2runs:
+        if pc_verbose:
+            _logger.info("[green][PyCosmic parameters modified for run 2][/green]")
+            if pc_sigma_det_needs_2runs:
+                _logger.info(
+                    "pc_sigma_det for run 2 (run 1): %f (%f)",
+                    dict_pc_params_run2["sigma_det"],
+                    dict_pc_params_run1["sigma_det"],
+                )
+            if pc_rlim_needs_2runs:
+                _logger.info(
+                    "pc_rlim for run 2 (run 1): %f (%f)", dict_pc_params_run2["rlim"], dict_pc_params_run1["rlim"]
+                )
         out2 = decorated_pycosmic_det_cosmics(
             data=image2d, **{key: value for key, value in dict_pc_params_run2.items() if value is not None}
         )
