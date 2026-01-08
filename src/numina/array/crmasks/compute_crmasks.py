@@ -1706,6 +1706,7 @@ def compute_crmasks(
             mm_hist2d_min_neighbors=mm_hist2d_min_neighbors,
             hist2d_accummulated=hist2d_accummulated,
             mm_nsimulations=mm_nsimulations,
+            mm_synthetic=mm_synthetic,
             bins_xdiag=bins_xdiag,
             bins_ydiag=bins_ydiag,
             xplot=xplot,

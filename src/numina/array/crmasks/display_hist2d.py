@@ -56,6 +56,7 @@ def display_hist2d(
     mm_hist2d_min_neighbors,
     hist2d_accummulated,
     mm_nsimulations,
+    mm_synthetic,
     bins_xdiag,
     bins_ydiag,
     xplot,
@@ -168,30 +169,57 @@ def display_hist2d(
         ycbins = (bins_ydiag[:-1] + bins_ydiag[1:]) / 2
         nbins_xdiag = len(xcbins)
         nbins_ydiag = len(ycbins)
+        minimum_bin_value = 1.0 / mm_nsimulations
         for i in range(nbins_xdiag):
             fsum = np.sum(hist2d_accummulated[:, i])
             if fsum > 0:
+                xboundary.append(xcbins[i])
                 # Compute the probability density function for this x bin
                 pdensity = hist2d_accummulated[:, i] / fsum
                 # Find the y value where the cumulative distribution reaches the desired percentile
                 # (note that 1 / mm_nsimulations is the minimum expected value different from zero in any bin)
-                perc = 1 - (1 / mm_nsimulations) / fsum
-                # Interpolate to find the corresponding y value
-                p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
-                xboundary.append(xcbins[i])
-                yboundary.append(ycbins[int(p + 0.5)])
+                if fsum > minimum_bin_value:
+                    perc = (fsum - minimum_bin_value) / fsum
+                    # Interpolate to find the corresponding y value
+                    p = np.interp(perc, np.cumsum(pdensity), np.arange(nbins_ydiag))
+                    yboundary.append(ycbins[int(p + 0.5)])
+                else:
+                    yboundary.append(bins_ydiag[0])
         xboundary = np.array(xboundary)
         yboundary = np.array(yboundary)
-        ax1.plot(xboundary, yboundary, "r+")
+        ax1.plot(xboundary, yboundary, "r+", label="boundary points")
         boundaryfit = None  # avoid flake8 warning
         if mm_boundary_fit == "spline":
+            nmax_iterations_with_color = 6
             for iterboundary in range(mm_niter_boundary_extension + 1):
                 wboundary = np.ones_like(xboundary, dtype=float)
+                color = f"C{iterboundary}"
+                alpha = 1.0
                 if iterboundary == 0:
                     label = "initial spline fit"
                 else:
                     wboundary[yboundary > boundaryfit(xboundary)] = mm_weight_boundary_extension**iterboundary
-                    label = f"Iteration {iterboundary}"
+                    if iterboundary == mm_niter_boundary_extension:
+                        label = f"final iteration {iterboundary}"
+                        if mm_niter_boundary_extension > nmax_iterations_with_color:
+                            color = f"C{nmax_iterations_with_color}"
+                    else:
+                        if mm_niter_boundary_extension > nmax_iterations_with_color:
+                            if iterboundary < nmax_iterations_with_color:
+                                label = f"Iteration {iterboundary}"
+                            elif iterboundary == nmax_iterations_with_color:
+                                if nmax_iterations_with_color == mm_niter_boundary_extension - 1:
+                                    label = f"Iteration {iterboundary}"
+                                else:
+                                    label = f"Iterations {nmax_iterations_with_color} to {mm_niter_boundary_extension - 1}"
+                                color = "gray"
+                                alpha = 0.3
+                            else:
+                                label = None
+                                color = "gray"
+                                alpha = 0.3
+                        else:
+                            label = f"Iteration {iterboundary}"
                 if mm_fixed_points_in_boundary is None:
                     xboundary_fit = xboundary
                     yboundary_fit = yboundary
@@ -211,8 +239,8 @@ def display_hist2d(
                 ydum = boundaryfit(xcbins)
                 ydum[xcbins < knots[0]] = boundaryfit(knots[0])
                 ydum[xcbins > knots[-1]] = boundaryfit(knots[-1])
-                ax1.plot(xcbins, ydum, "-", color=f"C{iterboundary}", label=label)
-                ax1.plot(knots, boundaryfit(knots), "o", color=f"C{iterboundary}", markersize=4)
+                ax1.plot(xcbins, ydum, "-", color=color, label=label)
+                ax1.plot(knots, boundaryfit(knots), "o", color=color, alpha=alpha, markersize=4)
         elif mm_boundary_fit == "piecewise":
             boundaryfit = define_piecewise_linear_function(
                 xarray=x_mm_fixed_points_in_boundary, yarray=y_mm_fixed_points_in_boundary
@@ -264,7 +292,7 @@ def display_hist2d(
             )
         ax1.set_xlabel(r"min2d $-$ bias")
         ax1.set_ylabel(r"median2d $-$ min2d")
-        ax1.set_title(f"Simulated data (mm_nsimulations = {mm_nsimulations})")
+        ax1.set_title(f"Simulated data\n(mm_nsimulations = {mm_nsimulations}, mm_synthetic={mm_synthetic})")
         if mm_niter_boundary_extension > 1:
             ax1.legend(loc=1)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
@@ -315,6 +343,12 @@ def display_hist2d(
                     prompt="Number of iterations for boundary extension (min. 0)",
                     min_val=0,
                     default=mm_niter_boundary_extension,
+                )
+                mm_weight_boundary_extension = input_number(
+                    expected_type="float",
+                    prompt="Weight for boundary extension (greater than 1.0)",
+                    min_val=1.0,
+                    default=mm_weight_boundary_extension,
                 )
             # Modify hist2d_min_neighbors
             mm_hist2d_min_neighbors = input_number(
