@@ -171,7 +171,7 @@ def main(args=None):
         )
         # Save the combined array, variance, and map to a FITS file
         logger.info(
-            "Saving combined (bias subtracted) array, variance, and map to [bold magenta]%s[/bold magenta]",
+            "saving to [bold magenta]%s[/bold magenta]",
             output_combined,
         )
         hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
@@ -184,7 +184,7 @@ def main(args=None):
         hdu_map = fits.ImageHDU(maparray.astype(np.int16), name="MAP")
         hdul = fits.HDUList([hdu_combined, hdu_variance, hdu_map])
         hdul.writeto(output_combined, overwrite=True)
-        logger.info("Combined (bias subtracted) array, variance, and map saved")
+        logger.info("combined (bias subtracted) array, variance, and map saved")
 
     datetime_end = datetime.now()
     time_elapsed = datetime_end - datetime_ini

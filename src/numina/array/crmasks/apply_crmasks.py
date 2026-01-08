@@ -110,7 +110,7 @@ def apply_crmasks(
         raise TypeError("Input must be a list of arrays.")
 
     # Check that the combination method is valid
-    if combination not in VALID_COMBINATIONS + ['median', 'min']:
+    if combination not in VALID_COMBINATIONS:
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
 
     # If use_auxmedian is True, check that the extension 'AXMEDIAN' is present

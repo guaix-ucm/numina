@@ -250,17 +250,17 @@ def compute_crmasks(
         Minimum contrast between Laplacian image and fine structure image.
         Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_satlevel : float
-        The saturation level (in ADU) of the detector. Employed when 
+        The saturation level (in ADU) of the detector. Employed when
         crmethod='lacosmic' or 'mm_lacosmic'.
     la_niter : int
-        The number of iterations to perform. Employed when 
+        The number of iterations to perform. Employed when
         crmethod='lacosmic' or 'mm_lacosmic'.
     la_sepmed : bool
         If True, use separable median filter instead of the full median filter.
         Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_fsmode : str
         The mode to use for the fine structure image. Valid options are:
-        'median' or 'convolve'. Employed when crmethod='lacosmic' 
+        'median' or 'convolve'. Employed when crmethod='lacosmic'
         or 'mm_lacosmic'.
     la_psfmodel : str
         The model to use for the PSF if la_fsmode='convolve'.
@@ -682,9 +682,7 @@ def compute_crmasks(
         raise ValueError(f"Invalid flux_factor value: {flux_factor}.")
     _logger.info("flux_factor: %s", str(flux_factor))
     if mm_synthetic == "single" and not np.array_equal(flux_factor, np.ones(num_images)):
-        raise NotImplementedError(
-            "mm_synthetic='single' is not compatible with flux_factor values different from 1.0."
-        )
+        raise NotImplementedError("mm_synthetic='single' is not compatible with flux_factor values different from 1.0.")
     if apply_flux_factor_to not in ["original", "simulated"]:
         raise ValueError(
             f"Invalid apply_flux_factor_to: {apply_flux_factor_to}. " "Valid options are 'original' and 'simulated'."
@@ -1313,7 +1311,7 @@ def compute_crmasks(
     image3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=float)
     flag3d_cleaned_single = np.zeros((num_images, naxis2, naxis1), dtype=int)
     # ---------------------------------------------------------------------
-    # Clean each individual image. The resulting images can be employed 
+    # Clean each individual image. The resulting images can be employed
     # to compute the detection boundary.
     # ---------------------------------------------------------------------
     for i in range(num_images):
@@ -1321,9 +1319,7 @@ def compute_crmasks(
         # Clean the dumimage2d image
         if rich_configured:
             _logger.info("[green]" + "-" * 79 + "[/green]")
-            _logger.info(
-                f"starting cosmic ray detection in [magenta]image#{i+1}[/magenta]..."
-            )
+            _logger.info(f"starting cosmic ray detection in [magenta]image#{i+1}[/magenta]...")
         else:
             _logger.info("-" * 73)
             _logger.info(f"starting cosmic ray detection in image#{i+1}...")
@@ -1369,7 +1365,7 @@ def compute_crmasks(
         image3d_cleaned_single[i] = dumimage2d_cleaned
         # Ensure no negative values
         image3d_cleaned_single[i][image3d_cleaned_single[i] < 0.0] = 0.0
-        # Create 3D flag array 
+        # Create 3D flag array
         flag3d_cleaned_single[i] = flagdum.reshape((naxis2, naxis1)).astype(int)
     # Create 2D flag array by summing over the 3D flag array
     flag2d_cleaned_single = np.sum(flag3d_cleaned_single, axis=0)
@@ -1386,9 +1382,7 @@ def compute_crmasks(
         # Define mm_fixed_points_in_boundary
         if rich_configured:
             _logger.info("[green]" + "-" * 79 + "[/green]")
-            _logger.info(
-                f"detecting cosmic rays in [magenta]median2d[/magenta] using {rlabel_mmcosmic}..."
-            )
+            _logger.info(f"detecting cosmic rays in [magenta]median2d[/magenta] using {rlabel_mmcosmic}...")
         else:
             _logger.info("-" * 73)
             _logger.info(f"detecting cosmic rays in median2d using {rlabel_mmcosmic}...")
@@ -1497,7 +1491,7 @@ def compute_crmasks(
                 if crossregion.area() < 100:
                     raise ValueError("The area of mm_crosscorr_region must be at least 100 pixels.")
                 shift_images = True
-                if mm_synthetic == 'single':
+                if mm_synthetic == "single":
                     raise NotImplementedError("xy-shifting with mm_synthetic='single' is not implemented.")
             elif mm_crosscorr_region is None:
                 crossregion = None
@@ -1703,7 +1697,8 @@ def compute_crmasks(
             hist2d, edges = np.histogramdd(sample=(yplot_simul, xplot_simul), bins=(bins_ydiag, bins_xdiag))
             hist2d_accummulated += hist2d.astype(int)
             time_end = datetime.now()
-            _logger.info("simulation %d/%d, time elapsed: %s", k + 1, mm_nsimulations, time_end - time_ini)
+            nchars = len(str(mm_nsimulations))
+            _logger.info(f"simulation {k + 1:0{nchars}d}/{mm_nsimulations}, time elapsed: {time_end - time_ini}")
         # Display hist2d
         xplot_boundary, yplot_boundary, boundaryfit, flag_mm = display_hist2d(
             _logger=_logger,
@@ -1835,7 +1830,8 @@ def compute_crmasks(
         else:
             flag_integer_dilated = flag_integer
             _logger.info(
-                "no global dilation applied: %d pixels flagged as coincident cosmic-ray pixels", np.sum(flag_integer > 0)
+                "no global dilation applied: %d pixels flagged as coincident cosmic-ray pixels",
+                np.sum(flag_integer > 0),
             )
         # Set the pixels that were originally flagged as cosmic rays
         # to the integer value before dilation (this is to distinguish them
@@ -1904,7 +1900,7 @@ def compute_crmasks(
                 )
             else:
                 _logger.info(f"image #{i} already cleaned, retrieving flags from previous step...")
-                flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)        
+                flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
         elif crmethod in ["pycosmic", "mm_pycosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_pycosmic}...")
             if i == 0:
