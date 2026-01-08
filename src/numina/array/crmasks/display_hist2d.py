@@ -329,6 +329,23 @@ def display_hist2d(
         else:
             loop = False
         if loop:
+            # Modify hist2d_min_neighbors
+            mm_hist2d_min_neighbors = input_number(
+                expected_type="int",
+                prompt="Minimum number of neighbors to keep bins in the 2D histogram (0-8)",
+                min_val=0,
+                max_val=8,
+                default=mm_hist2d_min_neighbors,
+            )
+            # Modify mm_boundary_fit
+            new_mm_boundary_fit = ""
+            while new_mm_boundary_fit not in ["piecewise", "spline"]:
+                new_mm_boundary_fit = input(f"Type of boundary fit: piecewise or spline [{mm_boundary_fit}]: ").strip().lower()
+                if new_mm_boundary_fit == "":
+                    new_mm_boundary_fit = mm_boundary_fit
+                if new_mm_boundary_fit not in ["piecewise", "spline"]:
+                    _logger.info("Invalid value. Please type 'piecewise' or 'spline'.")
+            mm_boundary_fit = new_mm_boundary_fit
             if mm_boundary_fit == "spline":
                 # Modify number of knots
                 mm_knots_splfit = input_number(
@@ -350,20 +367,16 @@ def display_hist2d(
                     min_val=1.0,
                     default=mm_weight_boundary_extension,
                 )
-            # Modify hist2d_min_neighbors
-            mm_hist2d_min_neighbors = input_number(
-                expected_type="int",
-                prompt="Minimum number of neighbors to keep bins in the 2D histogram (0-8)",
-                min_val=0,
-                max_val=8,
-                default=mm_hist2d_min_neighbors,
-            )
             # Modify fixed points in the boundary
             if mm_fixed_points_in_boundary is None:
                 num_fixed_points = 0
             else:
                 num_fixed_points = len(x_mm_fixed_points_in_boundary)
-            modify_fixed = "x"
+            if mm_boundary_fit == "piecewise" and num_fixed_points < 2:
+                _logger.info("At least two fixed points are needed for piecewise linear boundary fit.")
+                modify_fixed = "y"
+            else:
+                modify_fixed = "?"
             while modify_fixed != "n":
                 show_fixed_points_in_boundary(
                     _logger,
@@ -486,7 +499,7 @@ def display_hist2d(
                                         "At least two fixed points are needed for piecewise linear boundary fit."
                                     )
                                     input("Press Enter to continue...")
-                                    action = "x"
+                                    action = "?"
                             if action == "n":
                                 _logger.info("No changes made to fixed points in boundary.")
                                 modify_fixed = "n"
