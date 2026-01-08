@@ -39,6 +39,8 @@ def display_detected_cr(
     If list_mask_single_exposures is None, the plots correspond to the MEDIANCR
     computation. Otherwise, the plots correspond to problematic pixels (i.e.,
     cosmic-ray pixels flagged in all the single exposures).
+
+    Note that this function can change 'mask_mediancr' if 'verify_cr' is True.
     """
     if list_mask_single_exposures is None:
         output_basename = "mediancr_identified"
@@ -102,8 +104,8 @@ def display_detected_cr(
         # In verify_cr mode, we plot all the cosmic rays
         maxplots_eff = number_cr
     elif maxplots_eff < 0:
-        if number_cr > 200:
-            maxplots_eff = 200
+        if number_cr > 1000:
+            maxplots_eff = 1000
             _logger.warning(f"limiting to {maxplots_eff} plots (out of {number_cr} CRs detected)")
         else:
             maxplots_eff = number_cr
@@ -127,6 +129,7 @@ def display_detected_cr(
         j2 = jc + semiwindow
         if j2 >= naxis1:
             j2 = naxis1 - 1
+        # Generate the plots
         fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
         axarr = axarr.flatten()
         # Important: use interpolation=None instead of interpolation='None' to avoid
@@ -156,7 +159,7 @@ def display_detected_cr(
                 interpolation=None,
             )
         if list_mask_single_exposures is None:
-            # plots for mediancr
+            # Plots for mediancr
             for k in range(3):
                 ax = axarr[k + num_plot_max]
                 cmap = "viridis"
@@ -220,11 +223,10 @@ def display_detected_cr(
                     ax.axis("off")
             fig.suptitle(f"CR#{i+1}/{number_cr}")
         else:
-            # print the coordinates of the problematic pixels
+            # Plot the problematic pixels
             ijloc = np.argwhere(labels_cr == i + 1)
             xproblematic = ijloc[:, 1] + 1  # FITS criterium
             yproblematic = ijloc[:, 0] + 1  # FITS criter
-            # plots for problematic pixels
             for k in range(num_plot_max):
                 ax = axarr[k + num_plot_max]
                 title = title = f"mask#{k+1}/{num_images}"
@@ -253,7 +255,12 @@ def display_detected_cr(
 
         if verify_cr:
             print("-" * 50)
-        different_flag_values = set(flag_integer_dilated[i1 : (i2 + 1), j1 : (j2 + 1)].flatten())
+        different_flag_values = []
+        for idum in range(i1, i2 + 1):
+            for jdum in range(j1, j2 + 1):
+                if labels_cr[idum, jdum] == i + 1:
+                    different_flag_values.append(flag_integer_dilated[idum, jdum])
+        different_flag_values = set(different_flag_values)
         for idum in range(i1, i2 + 1):
             for jdum in range(j1, j2 + 1):
                 if labels_cr[idum, jdum] == i + 1:
@@ -286,7 +293,6 @@ def display_detected_cr(
                 _logger.info("keeping cosmic ray detection #%d in the mask", i + 1)
         if list_mask_single_exposures is None:
             # plot for mediancr
-            different_flag_values = set(flag_integer_dilated[i1 : (i2 + 1), j1 : (j2 + 1)].flatten())
             if 4 in different_flag_values:
                 pdf_any4.savefig(fig, bbox_inches="tight")
                 num_any4 += 1
