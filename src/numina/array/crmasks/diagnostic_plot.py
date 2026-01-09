@@ -320,16 +320,17 @@ def diagnostic_plot(
     enum_both_global = np.zeros_like(flag_aux_eff, dtype=int)
     enum_both_global[flag_both] = np.arange(1, np.sum(flag_both) + 1, dtype=int)
 
-    ax1.plot(xplot, yplot, "C0,", label="Non-suspected pixels")
+    ax1.plot(xplot, yplot, "C0,", label="Non-suspected pixels", zorder=1)
     ax1.scatter(
         xplot[flag_only_aux],
         yplot[flag_only_aux],
         c="r",
         marker="x",
         label=f"Suspected pixels: {num_only_aux} ({str(rlabel_aux_plain).rstrip()})",
+        zorder=2
     )
     ax1.scatter(
-        xplot[flag_only_mm], yplot[flag_only_mm], c="b", marker="+", label=f"Suspected pixels: {num_only_mm} (mmcosmic)"
+        xplot[flag_only_mm], yplot[flag_only_mm], c="b", marker="+", label=f"Suspected pixels: {num_only_mm} (mmcosmic)", zorder=2
     )
     ax1.scatter(
         xplot[flag_both],
@@ -338,11 +339,12 @@ def diagnostic_plot(
         marker="o",
         facecolors="none",
         label=f"Suspected pixels: {num_both} (both methods)",
+        zorder=2,
     )
     if xplot_boundary is not None and yplot_boundary is not None:
-        ax1.plot(xplot_boundary, yplot_boundary, "C1-", label="Detection boundary")
+        ax1.plot(xplot_boundary, yplot_boundary, "C1-", label="Detection boundary", zorder=3)
     if mm_threshold is not None:
-        ax1.axhline(mm_threshold, color="C0", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})")
+        ax1.axhline(mm_threshold, color="C0", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})", zorder=3)
     ax1.set_xlabel(r"min2d $-$ bias")  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
     ax1.set_title("Diagnostic Diagram")
