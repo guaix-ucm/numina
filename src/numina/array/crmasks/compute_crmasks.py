@@ -46,6 +46,7 @@ from numina.array.distortion import shift_image2d
 import teareduce as tea
 
 from .all_valid_numbers import all_valid_numbers
+from .apply_threshold_cr import apply_threshold_cr
 from .compute_flux_factor import compute_flux_factor
 from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
@@ -129,7 +130,7 @@ def compute_crmasks(
     mm_nsimulations=10,
     mm_niter_boundary_extension=3,
     mm_weight_boundary_extension=10.0,
-    mm_threshold=0.0,
+    mm_threshold_rnoise=0.0,
     mm_minimum_max2d_rnoise=5.0,
     mm_seed=None,
 ):
@@ -389,11 +390,9 @@ def compute_crmasks(
         extra weight to the points above the previous boundary. This
         extra weight is computed as `mm_weight_boundary_extension**iter`,
         where `iter` is the current iteration number (starting from 1).
-    mm_threshold: float, optional
-        Minimum threshold for median2d - min2d to consider a pixel as a
-        cosmic ray (default is None). If None, the threshold is computed
-        automatically from the minimum boundary value in the numerical
-        simulations.
+    mm_threshold_rnoise: float, optional
+        Minimum threshold for median2d - min2d in readout noise units
+        to consider a pixel as a cosmic ray (default is None).
     mm_minimum_max2d_rnoise : float, optional
         Minimum value for max2d in readout noise units to flag a pixel
         as a coincident cosmic-ray pixel.
@@ -576,6 +575,12 @@ def compute_crmasks(
             rnoise_scalar = float(rnoise[0, 0])
     else:
         raise TypeError(f"Invalid type for rnoise: {type(rnoise)}. Must be float, int, or numpy array.")
+
+    # Define mm_threshold
+    if rnoise_scalar is not None:
+        mm_threshold = rnoise_scalar * mm_threshold_rnoise
+    else:
+        mm_threshold = 0.0
 
     # Define the bias
     if bias is None:
@@ -860,27 +865,28 @@ def compute_crmasks(
 
     # Log the input parameters
     if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
-        _logger.debug("mm_synthetic: %s", str(mm_synthetic))
-        _logger.debug("mm_hist2d_min_neighbors: %d", mm_hist2d_min_neighbors)
+        _logger.info("mm_synthetic: %s", str(mm_synthetic))
+        _logger.info("mm_hist2d_min_neighbors: %d", mm_hist2d_min_neighbors)
         if mm_hist2d_min_neighbors < 0:
             raise ValueError(f"{mm_hist2d_min_neighbors=} must be >= 0.")
         if mm_hist2d_min_neighbors > 8:
             raise ValueError(f"{mm_hist2d_min_neighbors=} must be <= 8.")
-        _logger.debug("mm_dilation: %d", mm_dilation)
-        _logger.debug("mm_xy_offsets: %s", str(mm_xy_offsets) if mm_xy_offsets is not None else "None")
-        _logger.debug("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
-        _logger.debug("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
-        _logger.debug("mm_knots_splfit: %d", mm_knots_splfit)
-        _logger.debug(
+        _logger.info("mm_dilation: %d", mm_dilation)
+        _logger.info("mm_xy_offsets: %s", str(mm_xy_offsets) if mm_xy_offsets is not None else "None")
+        _logger.info("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
+        _logger.info("mm_boundary_fit: %s", mm_boundary_fit if mm_boundary_fit is not None else "None")
+        _logger.info("mm_knots_splfit: %d", mm_knots_splfit)
+        _logger.info(
             "mm_fixed points_in_boundary: %s",
             str(mm_fixed_points_in_boundary) if mm_fixed_points_in_boundary is not None else "None",
         )
-        _logger.debug("mm_nsimulations: %d", mm_nsimulations)
-        _logger.debug("mm_niter_boundary_extension: %d", mm_niter_boundary_extension)
-        _logger.debug("mm_weight_boundary_extension: %f", mm_weight_boundary_extension)
-        _logger.debug("mm_threshold: %s", mm_threshold if mm_threshold is not None else "None")
-        _logger.debug("mm_minimum_max2d_rnoise: %f", mm_minimum_max2d_rnoise)
-        _logger.debug("mm_seed: %s", str(mm_seed))
+        _logger.info("mm_nsimulations: %d", mm_nsimulations)
+        _logger.info("mm_niter_boundary_extension: %d", mm_niter_boundary_extension)
+        _logger.info("mm_weight_boundary_extension: %f", mm_weight_boundary_extension)
+        _logger.info("mm_threshold_rnoise: %s", mm_threshold_rnoise)
+        _logger.info("mm_threshold: %f (derived parameter)", mm_threshold)
+        _logger.info("mm_minimum_max2d_rnoise: %f", mm_minimum_max2d_rnoise)
+        _logger.info("mm_seed: %s", str(mm_seed))
 
     # Check and update L.A.Cosmic parameters
     if crmethod in ["lacosmic", "mm_lacosmic"]:
@@ -1300,6 +1306,19 @@ def compute_crmasks(
             raise NotImplementedError("use_auxmedian=True is not implemented for crmethod='conn' or 'mm_conn'.")
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}. " f"Valid options are: {VALID_CRMETHODS}.")
+
+    if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+        # Apply thresholding in M.M. diagram to help removing false positives in auxiliary method
+        _logger.info(f"applying mm_threshold={mm_threshold} to auxiliary method {rlabel_aux}...")
+        npixels_found_before = np.sum(flag_aux)
+        flag_aux = apply_threshold_cr(
+            bool_crmask2d=flag_aux.reshape((naxis2, naxis1)),
+            bool_threshold2d=(yplot > mm_threshold).reshape((naxis2, naxis1)),
+        ).flatten()
+        npixels_found_after = np.sum(flag_aux)
+        ldum = len(str(npixels_found_before))
+        _logger.info(f"number of CR pixels before applying mm_threshold: {npixels_found_before:>{ldum}d}")
+        _logger.info(f"number of CR pixels after  applying mm_threshold: {npixels_found_after:>{ldum}d}")
 
     # Define a pre-cleaned median2d image for creating the fake individual images
     median2d_precleaned = median2d.copy()
@@ -1745,7 +1764,6 @@ def compute_crmasks(
     elif crmethod in ["lacosmic", "pycosmic", "deepcr", "conn"]:
         xplot_boundary = None
         yplot_boundary = None
-        mm_threshold = None
         flag_mm = np.zeros_like(median2d, dtype=bool).flatten()
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}.\nValid options are: {VALID_CRMETHODS}.")
@@ -1884,6 +1902,7 @@ def compute_crmasks(
             yplot=yplot,
             xplot_boundary=xplot_boundary,
             yplot_boundary=yplot_boundary,
+            mm_threshold=mm_threshold,
             _logger=_logger,
         )
 
@@ -1972,10 +1991,34 @@ def compute_crmasks(
             flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
             flag_mm = np.logical_and(flag_mm, flag3)
             flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
+            if mm_dilation > 0:
+                _logger.info("applying binary dilation with size=%d to cosmic-ray mask", mm_dilation)
+                num_pixels_before_dilation = np.sum(flag_mm)
+                structure = ndimage.generate_binary_structure(2, 2)
+                flag_mm = ndimage.binary_dilation(
+                    flag_mm.reshape((naxis2, naxis1)), structure=structure, iterations=mm_dilation
+                ).flatten()
+                num_pixels_after_dilation = np.sum(flag_mm)
+                ldum = len(str(num_pixels_after_dilation))
+                _logger.info(f"number of pixels flagged before dilation : {num_pixels_before_dilation:{ldum}d}")
+                _logger.info(f"number of pixels flagged after dilation  : {num_pixels_after_dilation:{ldum}d}")
+                # note: there is no need to apply now thresholding again because all the
+                # dilated pixels are included in CRs that contain at least one pixel
+                # above the threshold
+            # Apply thresholding in M.M. diagram to help removing false positives in auxiliary method
+            _logger.info(f"applying mm_threshold={mm_threshold} to auxiliary method {rlabel_aux}...")
+            npixels_found_before = np.sum(flag_aux)
+            flag_aux = apply_threshold_cr(
+                bool_crmask2d=flag_aux.reshape((naxis2, naxis1)),
+                bool_threshold2d=(yplot > mm_threshold).reshape((naxis2, naxis1)),
+            ).flatten()
+            npixels_found_after = np.sum(flag_aux)
+            ldum = len(str(npixels_found_before))
+            _logger.info(f"number of CR pixels before applying mm_threshold: {npixels_found_before:>{ldum}d}")
+            _logger.info(f"number of CR pixels after  applying mm_threshold: {npixels_found_after:>{ldum}d}")
         else:
             xplot_boundary = None
             yplot_boundary = None
-            mm_threshold = None
             flag_mm = np.zeros_like(target2d.flatten(), dtype=bool)
 
         # For the mean2d mask, force the flag to be True if the pixel

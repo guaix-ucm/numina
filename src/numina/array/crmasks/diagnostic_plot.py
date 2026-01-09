@@ -342,7 +342,7 @@ def diagnostic_plot(
     if xplot_boundary is not None and yplot_boundary is not None:
         ax1.plot(xplot_boundary, yplot_boundary, "C1-", label="Detection boundary")
     if mm_threshold is not None:
-        ax1.axhline(mm_threshold, color="gray", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})")
+        ax1.axhline(mm_threshold, color="C0", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})")
     ax1.set_xlabel(r"min2d $-$ bias")  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
     ax1.set_title("Diagnostic Diagram")

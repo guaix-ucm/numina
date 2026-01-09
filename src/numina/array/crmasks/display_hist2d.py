@@ -21,6 +21,7 @@ from numina.array.numsplines import spline_positive_derivative
 from numina.tools.input_number import input_number
 import teareduce as tea
 
+from .apply_threshold_cr import apply_threshold_cr
 from .define_piecewise_linear_function import define_piecewise_linear_function
 from .valid_parameters import VALID_BOUNDARY_FITS
 from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
@@ -296,6 +297,15 @@ def display_hist2d(
             ldum = len(str(num_pixels_after_dilation))
             _logger.info(f"number of pixels flagged before dilation : {num_pixels_before_dilation:{ldum}d}")
             _logger.info(f"number of pixels flagged after dilation  : {num_pixels_after_dilation:{ldum}d}")
+            # Apply the thresholding again after dilation
+            _logger.info("applying thresholding again after dilation")
+            flag_mm = apply_threshold_cr(
+                bool_crmask2d=flag_mm.reshape((naxis2, naxis1)), bool_threshold2d=flag2.reshape((naxis2, naxis1))
+            ).flatten()
+            num_pixels_after_thresholding = np.sum(flag_mm)
+            _logger.info(f"number of pixels after thresholding again: {num_pixels_after_thresholding:{ldum}d}")
+        # Apply the cleaning mask
+        _logger.info("applying cleaning mask region")
         flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
         _logger.info(
             "pixels flagged as cosmic rays by %s: %d (%08.4f%%)",

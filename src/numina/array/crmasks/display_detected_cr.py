@@ -36,6 +36,7 @@ def display_detected_cr(
     yplot=None,
     xplot_boundary=None,
     yplot_boundary=None,
+    mm_threshold=None,
     _logger=None,
 ):
     """Display the detected cosmic rays
@@ -317,7 +318,9 @@ def display_detected_cr(
         if list_mask_single_exposures is None:
             # plot pixels in the M.M. diagnostic diagram
             fig, ax = plt.subplots(figsize=figsize)
-            ax.plot(xplot_boundary, yplot_boundary, "r--", label="detection boundary")
+            ax.plot(xplot_boundary, yplot_boundary, color="C1", linestyle="-", label="detection boundary")
+            if mm_threshold is not None:
+                ax.axhline(y=mm_threshold, color="C0", linestyle=":", label="mm_threshold")
             legend4 = True
             legend3 = True
             legend2 = True
@@ -333,7 +336,7 @@ def display_detected_cr(
                             else:
                                 label = None
                         elif flag_integer_dilated[idum, jdum] == 3:
-                            symbol = "ro"
+                            symbol = "rx"
                             if legend3:
                                 label = f"{acronym_aux}"
                                 legend3 = False
