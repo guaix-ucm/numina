@@ -327,10 +327,15 @@ def diagnostic_plot(
         c="r",
         marker="x",
         label=f"Suspected pixels: {num_only_aux} ({str(rlabel_aux_plain).rstrip()})",
-        zorder=2
+        zorder=2,
     )
     ax1.scatter(
-        xplot[flag_only_mm], yplot[flag_only_mm], c="b", marker="+", label=f"Suspected pixels: {num_only_mm} (mmcosmic)", zorder=2
+        xplot[flag_only_mm],
+        yplot[flag_only_mm],
+        c="b",
+        marker="+",
+        label=f"Suspected pixels: {num_only_mm} (mmcosmic)",
+        zorder=2,
     )
     ax1.scatter(
         xplot[flag_both],

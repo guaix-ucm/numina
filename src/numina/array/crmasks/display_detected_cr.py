@@ -12,6 +12,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import ListedColormap, BoundaryNorm
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
 import teareduce as tea
 
@@ -118,7 +119,9 @@ def display_detected_cr(
     xlabel = "X pixel (from 1 to NAXIS1)"
     ylabel = "Y pixel (from 1 to NAXIS2)"
     naxis2, naxis1 = median2d.shape
-    for i in range(min(number_cr, maxplots_eff)):
+    total = min(number_cr, maxplots_eff)
+    for i in range(total):
+        # Locate the cosmic ray pixels
         ijloc = np.argwhere(labels_cr == i + 1)
         ic = int(np.mean(ijloc[:, 0]) + 0.5)
         jc = int(np.mean(ijloc[:, 1]) + 0.5)
@@ -377,7 +380,7 @@ def display_detected_cr(
                 pdf_other.savefig(fig, bbox_inches="tight")
             plt.close(fig)
 
-    _logger.info("plot generation complete")
+    _logger.info("\nplot generation complete")
     if list_mask_single_exposures is None:
         # plots for mediancr
         num_max = np.max([num_any4, num_only3, num_only2, num_other])

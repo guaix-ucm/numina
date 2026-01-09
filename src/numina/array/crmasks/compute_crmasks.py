@@ -46,6 +46,7 @@ from numina.array.distortion import shift_image2d
 import teareduce as tea
 
 from .all_valid_numbers import all_valid_numbers
+from .apply_crmasks import apply_crmasks
 from .apply_threshold_cr import apply_threshold_cr
 from .compute_flux_factor import compute_flux_factor
 from .diagnostic_plot import diagnostic_plot
@@ -1911,11 +1912,34 @@ def compute_crmasks(
     list_hdu_masks = [hdu_mediancr]
 
     # Apply the same algorithm but now with mean2d and with each individual array
-    for i, target2d in enumerate([mean2d] + list_arrays):
+    for i, target2d in enumerate([mean2d] + list_arrays + [None]):
         if i == 0:
             target2d_name = "mean2d"
-        else:
+        elif i <= num_images:
             target2d_name = f"single exposure #{i}"
+        elif i == num_images + 1:
+            if rich_configured:
+                _logger.info("[green]" + "-" * 79 + "[/green]")
+            else:
+                _logger.info("-" * 73)
+            _logger.info("applying CRMASKi masks to generate MEANCR combination...")
+            target2d_name = "MEANCR"
+            hdu_primary = fits.PrimaryHDU()
+            hdu_primary.header["UUID"] = str(uuid.uuid4())
+            for ifluxf, fluxf in enumerate(flux_factor):
+                hdu_primary.header[f"FLUXF{ifluxf+1}"] = fluxf
+            hdul_masks = fits.HDUList([hdu_primary] + list_hdu_masks)
+            target2d, _, _ = apply_crmasks(
+                list_arrays=list_arrays,
+                hdul_masks=hdul_masks,
+                combination="meancr",
+                use_auxmedian=False,
+                dtype=dtype,
+                apply_flux_factor=(apply_flux_factor_to == "original"),
+                bias=bias,
+            )
+        else:
+            raise RuntimeError("This should never happen.")
         if rich_configured:
             _logger.info("[green]" + "-" * 79 + "[/green]")
             _logger.info(f"starting cosmic ray detection in [magenta]{target2d_name}[/magenta]...")
@@ -1925,7 +1949,7 @@ def compute_crmasks(
 
         if crmethod in ["lacosmic", "mm_lacosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_lacosmic}...")
-            if i == 0:
+            if i in [0, num_images + 1]:
                 _, flag_aux = execute_lacosmic(
                     image2d=target2d,
                     bool_to_be_cleaned=bool_to_be_cleaned,
@@ -1940,7 +1964,7 @@ def compute_crmasks(
                 flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
         elif crmethod in ["pycosmic", "mm_pycosmic"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_pycosmic}...")
-            if i == 0:
+            if i in [0, num_images + 1]:
                 _, flag_aux = execute_pycosmic(
                     image2d=target2d,
                     bool_to_be_cleaned=bool_to_be_cleaned,
@@ -1954,7 +1978,7 @@ def compute_crmasks(
                 flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
         elif crmethod in ["deepcr", "mm_deepcr"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_deepcr}...")
-            if i == 0:
+            if i in [0, num_images + 1]:
                 _, flag_aux = execute_deepcr(
                     image2d=target2d,
                     bool_to_be_cleaned=bool_to_be_cleaned,
@@ -1967,7 +1991,7 @@ def compute_crmasks(
                 flag_aux = flag3d_cleaned_single[i - 1].flatten().astype(bool)
         elif crmethod in ["conn", "mm_conn"]:
             _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_conn}...")
-            if i == 0:
+            if i in [0, num_images + 1]:
                 flag_aux = execute_conn(
                     image2d=target2d,
                     bool_to_be_cleaned=bool_to_be_cleaned,
@@ -1981,41 +2005,46 @@ def compute_crmasks(
         else:
             raise ValueError(f"Invalid crmethod: {crmethod}.\n" f"Valid options are: {VALID_CRMETHODS}.")
 
-        if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
-            _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
-            xplot = min2d.flatten()
-            yplot = target2d.flatten() - min2d.flatten()
-            flag1 = yplot > boundaryfit(xplot)
-            flag2 = yplot > mm_threshold
-            flag_mm = np.logical_and(flag1, flag2)
-            flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
-            flag_mm = np.logical_and(flag_mm, flag3)
-            flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
-            if mm_dilation > 0:
-                _logger.info("applying binary dilation with size=%d to cosmic-ray mask", mm_dilation)
-                num_pixels_before_dilation = np.sum(flag_mm)
-                structure = ndimage.generate_binary_structure(2, 2)
-                flag_mm = ndimage.binary_dilation(
-                    flag_mm.reshape((naxis2, naxis1)), structure=structure, iterations=mm_dilation
+        if i <= num_images:
+            if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+                _logger.info(f"detecting cosmic rays in {target2d_name} using {rlabel_mmcosmic}...")
+                xplot = min2d.flatten()
+                yplot = target2d.flatten() - min2d.flatten()
+                flag1 = yplot > boundaryfit(xplot)
+                flag2 = yplot > mm_threshold
+                flag_mm = np.logical_and(flag1, flag2)
+                flag3 = max2d.flatten() > mm_minimum_max2d_rnoise * rnoise.flatten()
+                flag_mm = np.logical_and(flag_mm, flag3)
+                flag_mm = np.logical_and(flag_mm, bool_to_be_cleaned.flatten())
+                if mm_dilation > 0:
+                    _logger.info("applying binary dilation with size=%d to cosmic-ray mask", mm_dilation)
+                    num_pixels_before_dilation = np.sum(flag_mm)
+                    structure = ndimage.generate_binary_structure(2, 2)
+                    flag_mm = ndimage.binary_dilation(
+                        flag_mm.reshape((naxis2, naxis1)), structure=structure, iterations=mm_dilation
+                    ).flatten()
+                    num_pixels_after_dilation = np.sum(flag_mm)
+                    ldum = len(str(num_pixels_after_dilation))
+                    _logger.info(f"number of pixels flagged before dilation : {num_pixels_before_dilation:{ldum}d}")
+                    _logger.info(f"number of pixels flagged after dilation  : {num_pixels_after_dilation:{ldum}d}")
+                    # note: there is no need to apply now thresholding again because all the
+                    # dilated pixels are included in CRs that contain at least one pixel
+                    # above the threshold
+                # Apply thresholding in M.M. diagram to help removing false positives in auxiliary method
+                _logger.info(f"applying mm_threshold={mm_threshold} to auxiliary method {rlabel_aux}...")
+                npixels_found_before = np.sum(flag_aux)
+                flag_aux = apply_threshold_cr(
+                    bool_crmask2d=flag_aux.reshape((naxis2, naxis1)),
+                    bool_threshold2d=(yplot > mm_threshold).reshape((naxis2, naxis1)),
                 ).flatten()
-                num_pixels_after_dilation = np.sum(flag_mm)
-                ldum = len(str(num_pixels_after_dilation))
-                _logger.info(f"number of pixels flagged before dilation : {num_pixels_before_dilation:{ldum}d}")
-                _logger.info(f"number of pixels flagged after dilation  : {num_pixels_after_dilation:{ldum}d}")
-                # note: there is no need to apply now thresholding again because all the
-                # dilated pixels are included in CRs that contain at least one pixel
-                # above the threshold
-            # Apply thresholding in M.M. diagram to help removing false positives in auxiliary method
-            _logger.info(f"applying mm_threshold={mm_threshold} to auxiliary method {rlabel_aux}...")
-            npixels_found_before = np.sum(flag_aux)
-            flag_aux = apply_threshold_cr(
-                bool_crmask2d=flag_aux.reshape((naxis2, naxis1)),
-                bool_threshold2d=(yplot > mm_threshold).reshape((naxis2, naxis1)),
-            ).flatten()
-            npixels_found_after = np.sum(flag_aux)
-            ldum = len(str(npixels_found_before))
-            _logger.info(f"number of CR pixels before applying mm_threshold: {npixels_found_before:>{ldum}d}")
-            _logger.info(f"number of CR pixels after  applying mm_threshold: {npixels_found_after:>{ldum}d}")
+                npixels_found_after = np.sum(flag_aux)
+                ldum = len(str(npixels_found_before))
+                _logger.info(f"number of CR pixels before applying mm_threshold: {npixels_found_before:>{ldum}d}")
+                _logger.info(f"number of CR pixels after  applying mm_threshold: {npixels_found_after:>{ldum}d}")
+            else:
+                xplot_boundary = None
+                yplot_boundary = None
+                flag_mm = np.zeros_like(target2d.flatten(), dtype=bool)
         else:
             xplot_boundary = None
             yplot_boundary = None
@@ -2033,7 +2062,7 @@ def compute_crmasks(
                 flag_mm = np.logical_or(flag_mm, list_hdu_masks[0].data.astype(bool).flatten())
         # For the individual array masks, force the flag to be True if the pixel
         # is flagged both in the individual exposure and in the mean2d array
-        if i > 0:
+        if 1 <= i <= num_images:
             _logger.info("including pixels flagged in MEANCRT into CRMASK%d (logical_and)...", i)
             flag_aux = np.logical_and(flag_aux, list_hdu_masks[1].data.astype(bool).flatten())
             flag_mm = np.logical_and(flag_mm, list_hdu_masks[1].data.astype(bool).flatten())
@@ -2055,12 +2084,18 @@ def compute_crmasks(
         if debug:
             if i == 0:
                 _logger.info("generating diagnostic plot for MEANCRT...")
-                png_filename = "diagnostic_meancr.png"
+                png_filename = "diagnostic_meancrt.png"
                 ylabel = r"mean2d $-$ min2d"
-            else:
+            elif 1 <= i <= num_images:
                 _logger.info(f"generating diagnostic plot for CRMASK{i}...")
                 png_filename = f"diagnostic_crmask{i}.png"
                 ylabel = f"array{i}" + r" $-$ min2d"
+            elif i == num_images + 1:
+                _logger.info(f"generating diagnostic plot for MEANCR...")
+                png_filename = f"diagnostic_meancr.png"
+                ylabel = r"MEANCR $-$ min2d"
+            else:
+                raise RuntimeError("This should never happen.")
             diagnostic_plot(
                 xplot=xplot,
                 yplot=yplot,
@@ -2084,15 +2119,18 @@ def compute_crmasks(
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
         if dilation > 0:
-            structure = ndimage.generate_binary_structure(2, 2)
-            flag_integer_dilated = ndimage.binary_dilation(
-                flag_integer, structure=structure, iterations=dilation
-            ).astype(np.uint8)
-            sdum = str(np.sum(flag_integer_dilated))
-            cdum = f"{np.sum(flag_integer):{len(sdum)}d}"
-            _logger.info("before global dilation: %s pixels flagged as cosmic rays", cdum)
-            cdum = f"{np.sum(flag_integer_dilated):{len(sdum)}d}"
-            _logger.info("after global dilation : %s pixels flagged as cosmic rays", cdum)
+            if i == num_images + 1:
+                _logger.warning("ignoring dilation for MEANCR mask!")
+            else:
+                structure = ndimage.generate_binary_structure(2, 2)
+                flag_integer_dilated = ndimage.binary_dilation(
+                    flag_integer, structure=structure, iterations=dilation
+                ).astype(np.uint8)
+                sdum = str(np.sum(flag_integer_dilated))
+                cdum = f"{np.sum(flag_integer):{len(sdum)}d}"
+                _logger.info("before global dilation: %s pixels flagged as cosmic rays", cdum)
+                cdum = f"{np.sum(flag_integer_dilated):{len(sdum)}d}"
+                _logger.info("after global dilation : %s pixels flagged as cosmic rays", cdum)
         else:
             flag_integer_dilated = flag_integer
             _logger.info("no global dilation applied: %d pixels flagged as cosmic rays", np.sum(flag_integer))
@@ -2101,8 +2139,12 @@ def compute_crmasks(
         mask = flag_integer_dilated > 0
         if i == 0:
             name = "MEANCRT"
-        else:
+        elif i <= num_images:
             name = f"CRMASK{i}"
+        elif i == num_images + 1:
+            name = "MEANCR"
+        else:
+            raise RuntimeError("This should never happen.")
         hdu_mask = fits.ImageHDU(mask.astype(np.uint8), name=name)
         list_hdu_masks.append(hdu_mask)
 
@@ -2120,9 +2162,7 @@ def compute_crmasks(
         _logger.info("[green]" + "-" * 79 + "[/green]")
     else:
         _logger.info("-" * 73)
-    _logger.info(
-        "number of problematic cosmic-ray pixels masked in all individual CRMASKi: %d", len(problematic_pixels)
-    )
+    _logger.info("number of problematic cosmic-ray pixels masked in all CRMASKi: %d", len(problematic_pixels))
     if len(problematic_pixels) > 0:
         # Label the connected problematic pixels as individual problematic cosmic rays
         structure = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
@@ -2160,8 +2200,8 @@ def compute_crmasks(
     }
     hdu_primary = fits.PrimaryHDU()
     hdu_primary.header["UUID"] = str(uuid.uuid4())
-    for i, fluxf in enumerate(flux_factor):
-        hdu_primary.header[f"FLUXF{i+1}"] = fluxf
+    for ifluxf, fluxf in enumerate(flux_factor):
+        hdu_primary.header[f"FLUXF{ifluxf+1}"] = fluxf
     hdu_primary.header.add_history(f"CRMasks generated by {__name__}")
     hdu_primary.header.add_history(f"at {datetime.now().isoformat()}")
     for key, value in filtered_args.items():

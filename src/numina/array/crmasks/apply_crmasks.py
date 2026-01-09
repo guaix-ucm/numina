@@ -44,6 +44,7 @@ def apply_crmasks(
         - 'MEANCRT' mask for the mean combination
         - 'CRMASK1', 'CRMASK2', etc. masks for the mean combination with
           individual masks
+        - 'MEANCR' mask for a refined mean combination
         - 'LAMEDIAN' (optional) image with the lacosmic-corrected median array
         - 'RPMEDIAN' (optional) pixels to be replaced by the local median value
           around them. Stored as a binary table with four columns:
@@ -63,6 +64,10 @@ def apply_crmasks(
         etc. in `hdul_masks`). Those pixels that are masked in all the individual
         images are replaced by the minimum value of the corresponding pixel
         in the input arrays.
+        - 'meancr2', similar to 'meancr', but replacing the pixels flagged
+        in the 'MEANCR' mask by the minimum value of the corresponding pixel
+        in the input arrays.
+        - 'mean', the simple mean without any substitution of masked pixels.
         - 'median', the simple median without any substitution of masked pixels.
         - 'min', the simple minimum, without any substitution of masked pixels.
     use_auxmedian : bool, optional
@@ -203,7 +208,7 @@ def apply_crmasks(
         rlabel_combination = f"{combination}"
     _logger.info("applying combination method: %s", rlabel_combination)
     _logger.info("using crmasks in %s", hdul_masks[0].header["UUID"])
-    if combination in ["mediancr", "meancrt"]:
+    if combination in ["mediancr", "meancrt", "meancr2"]:
         # Define the mask_mediancr
         mask_mediancr = hdul_masks["MEDIANCR"].data.astype(bool)
         _logger.info("applying mask MEDIANCR: %d masked pixels", np.sum(mask_mediancr))
@@ -236,7 +241,7 @@ def apply_crmasks(
         variance2d[mask_meancrt] = 0.0  # Set variance to 0 for the masked pixels
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images
         map2d[mask_meancrt] = 1  # Set the map to 1 for the masked pixels
-    elif combination == "meancr":
+    elif combination in ["meancr", "meancr2"]:
         image3d_masked = ma.array(np.zeros(shape3d, dtype=dtype), mask=np.full(shape3d, fill_value=True, dtype=bool))
         # Loop through each image and apply the corresponding mask
         total_mask = np.zeros((naxis2, naxis1), dtype=int)
@@ -248,7 +253,7 @@ def apply_crmasks(
             image3d_masked[i, :, :].mask = mask.astype(bool)
         # Compute the mean of the masked 3D array
         combined2d = ma.mean(image3d_masked, axis=0).data
-        # Replace pixels without data with the minimum value
+        # Replace pixels without data with the minimum value or the AXMEDIAN value
         mask_nodata = total_mask == num_images
         if np.any(mask_nodata):
             if use_auxmedian:
@@ -262,6 +267,19 @@ def apply_crmasks(
         # Define the variance and map arrays
         variance2d = ma.var(image3d_masked, axis=0, ddof=1).data
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images - total_mask
+        if combination == "meancr2":
+            # Replace pixels flagged in MEANCR by the minimum value or the AXMEDIAN value
+            mask_meancr = hdul_masks["MEANCR"].data.astype(bool)
+            if np.any(mask_meancr):
+                if use_auxmedian:
+                    _logger.info("replacing %d pixels flagged in MEANCR by the AXMEDIAN value", np.sum(mask_meancr))
+                    combined2d[mask_meancr] = hdul_masks["AXMEDIAN"].data[mask_meancr]
+                else:
+                    _logger.info("replacing %d pixels flagged in MEANCR by the minimum value", np.sum(mask_meancr))
+                    combined2d[mask_meancr] = min2d_rescaled[mask_meancr]
+                map2d[mask_meancr] = 1  # Set the map to 1 for the replaced pixels
+            else:
+                _logger.info("no pixels flagged in MEANCR found, no replacement needed")
     else:
         raise ValueError(f"Invalid combination method: {combination}. " f"Valid options are {VALID_COMBINATIONS}.")
 

@@ -15,7 +15,7 @@ from scipy import ndimage
 def apply_threshold_cr(bool_crmask2d, bool_threshold2d):
     """Apply thresholding to CR mask.
 
-    Apply threshold only when none of the pixels within a 
+    Apply threshold only when none of the pixels within a
     grouped CR feature exceeds the threshold condition.
     """
 
