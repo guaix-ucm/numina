@@ -2052,34 +2052,34 @@ def compute_crmasks(
             f"{np.sum(flag_mm):{smax}d}",
             np.sum(flag_mm) / flag_mm.size * 100,
         )
-        if i == 0:
-            _logger.info("generating diagnostic plot for MEANCRT...")
-            png_filename = "diagnostic_meancr.png"
-            ylabel = r"mean2d $-$ min2d"
-        else:
-            _logger.info(f"generating diagnostic plot for CRMASK{i}...")
-            png_filename = f"diagnostic_crmask{i}.png"
-            ylabel = f"array{i}" + r" $-$ min2d"
-        interactive_eff = interactive and debug
-        diagnostic_plot(
-            xplot=xplot,
-            yplot=yplot,
-            xplot_boundary=xplot_boundary,
-            yplot_boundary=yplot_boundary,
-            rlabel_aux_plain=rlabel_aux_plain,
-            flag_aux=flag_aux,
-            flag_mm=flag_mm,
-            mm_threshold=mm_threshold,
-            ylabel=ylabel,
-            interactive=interactive_eff,
-            target2d=target2d,
-            target2d_name=target2d_name,
-            min2d=min2d,
-            mean2d=mean2d,
-            image3d=image3d,
-            _logger=_logger,
-            png_filename=png_filename,
-        )
+        if debug:
+            if i == 0:
+                _logger.info("generating diagnostic plot for MEANCRT...")
+                png_filename = "diagnostic_meancr.png"
+                ylabel = r"mean2d $-$ min2d"
+            else:
+                _logger.info(f"generating diagnostic plot for CRMASK{i}...")
+                png_filename = f"diagnostic_crmask{i}.png"
+                ylabel = f"array{i}" + r" $-$ min2d"
+            diagnostic_plot(
+                xplot=xplot,
+                yplot=yplot,
+                xplot_boundary=xplot_boundary,
+                yplot_boundary=yplot_boundary,
+                rlabel_aux_plain=rlabel_aux_plain,
+                flag_aux=flag_aux,
+                flag_mm=flag_mm,
+                mm_threshold=mm_threshold,
+                ylabel=ylabel,
+                interactive=interactive,
+                target2d=target2d,
+                target2d_name=target2d_name,
+                min2d=min2d,
+                mean2d=mean2d,
+                image3d=image3d,
+                _logger=_logger,
+                png_filename=png_filename,
+            )
         flag = np.logical_or(flag_aux, flag_mm)
         flag = flag.reshape((naxis2, naxis1))
         flag_integer = flag.astype(np.uint8)
