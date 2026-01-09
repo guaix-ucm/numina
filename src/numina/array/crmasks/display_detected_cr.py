@@ -318,20 +318,45 @@ def display_detected_cr(
             # plot pixels in the M.M. diagnostic diagram
             fig, ax = plt.subplots(figsize=figsize)
             ax.plot(xplot_boundary, yplot_boundary, "r--", label="detection boundary")
+            legend4 = True
+            legend3 = True
+            legend2 = True
+            legend0 = True
             for idum in range(i1, i2 + 1):
                 for jdum in range(j1, j2 + 1):
                     if labels_cr[idum, jdum] == i + 1:
                         if flag_integer_dilated[idum, jdum] == 4:
-                            symbol = "co"
+                            symbol = "mo"
+                            if legend4:
+                                label = f"mm & {acronym_aux}"
+                                legend4 = False
+                            else:
+                                label = None
                         elif flag_integer_dilated[idum, jdum] == 3:
                             symbol = "ro"
+                            if legend3:
+                                label = f"{acronym_aux}"
+                                legend3 = False
+                            else:
+                                label = None
                         elif flag_integer_dilated[idum, jdum] == 2:
                             symbol = "b+"
+                            if legend2:
+                                label = "mm"
+                                legend2 = False
+                            else:
+                                label = None
                         else:
                             symbol = "ko"
+                            if legend0:
+                                label = "dilation"
+                                legend0 = False
+                            else:
+                                label = None
                         xval = xplot.reshape((naxis2, naxis1))[idum, jdum]
                         yval = yplot.reshape((naxis2, naxis1))[idum, jdum]
-                        ax.plot(xval, yval, symbol)
+                        ax.plot(xval, yval, symbol, label=label)
+                        ax.text(xval, yval, f"({jdum+1},{idum+1})", fontsize=6, color="gray")
             _, ymax = ax.get_ylim()
             ax.set_ylim(0.0, ymax)
             ax.set_xlabel(r"min2d $-$ bias")
