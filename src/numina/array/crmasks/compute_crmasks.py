@@ -1857,13 +1857,13 @@ def compute_crmasks(
             ).astype(np.uint8)
             sdum = str(np.sum(flag_integer_dilated > 0))
             cdum = f"{np.sum(flag_integer > 0):{len(sdum)}d}"
-            _logger.info("before global dilation: %s pixels flagged as coincident cosmic-ray pixels", cdum)
+            _logger.info("before global dilation: %s pixels flagged as coincident CR pixels", cdum)
             cdum = f"{np.sum(flag_integer_dilated > 0):{len(sdum)}d}"
-            _logger.info("after global dilation : %s pixels flagged as coincident cosmic-ray pixels", cdum)
+            _logger.info("after global dilation : %s pixels flagged as coincident CR pixels", cdum)
         else:
             flag_integer_dilated = flag_integer
             _logger.info(
-                "no global dilation applied: %d pixels flagged as coincident cosmic-ray pixels",
+                "no global dilation applied: %d pixels flagged as coincident CR pixels",
                 np.sum(flag_integer > 0),
             )
         # Set the pixels that were originally flagged as cosmic rays

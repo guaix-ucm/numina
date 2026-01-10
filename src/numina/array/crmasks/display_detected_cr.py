@@ -12,8 +12,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import ListedColormap, BoundaryNorm
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 
+from numina.tools.progressbarlines import ProgressBarLines
 import teareduce as tea
 
 
@@ -120,6 +120,7 @@ def display_detected_cr(
     ylabel = "Y pixel (from 1 to NAXIS2)"
     naxis2, naxis1 = median2d.shape
     total = min(number_cr, maxplots_eff)
+    pbar = ProgressBarLines(total, _logger)
     for i in range(total):
         # Locate the cosmic ray pixels
         ijloc = np.argwhere(labels_cr == i + 1)
@@ -379,8 +380,9 @@ def display_detected_cr(
             else:
                 pdf_other.savefig(fig, bbox_inches="tight")
             plt.close(fig)
+        pbar.update()
 
-    _logger.info("\nplot generation complete")
+    _logger.info("plot generation complete")
     if list_mask_single_exposures is None:
         # plots for mediancr
         num_max = np.max([num_any4, num_only3, num_only2, num_other])

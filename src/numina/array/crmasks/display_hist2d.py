@@ -65,7 +65,7 @@ def xsort_and_show_fixed_points_in_boundary(
                     w_mm_fixed_points_in_boundary[idum],
                 ]
             )
-        _logger.info("%s", fixed_table)
+        _logger.info("\n%s", fixed_table)
     else:
         _logger.info("No fixed points in boundary.")
         mm_fixed_points_in_boundary = None
