@@ -46,7 +46,6 @@ def xsort_and_show_fixed_points_in_boundary(
         x_mm_fixed_points_in_boundary[:] = x_mm_fixed_points_in_boundary[isort]
         y_mm_fixed_points_in_boundary[:] = y_mm_fixed_points_in_boundary[isort]
         w_mm_fixed_points_in_boundary[:] = w_mm_fixed_points_in_boundary[isort]
-        _logger.info("Current fixed points in boundary:")
         fixed_table = Table(names=("number", "X", "Y", "Weight"), dtype=(int, float, float, float))
         mm_fixed_points_in_boundary = []
         for idum in range(num_fixed_points):
@@ -65,7 +64,7 @@ def xsort_and_show_fixed_points_in_boundary(
                     w_mm_fixed_points_in_boundary[idum],
                 ]
             )
-        _logger.info("\n%s", fixed_table)
+        _logger.info("Current fixed points in boundary:\n%s", fixed_table)
     else:
         _logger.info("No fixed points in boundary.")
         mm_fixed_points_in_boundary = None
