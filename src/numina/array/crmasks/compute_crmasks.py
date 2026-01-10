@@ -14,6 +14,7 @@ import sys
 import uuid
 
 from astropy.io import fits
+from astropy.table import Table
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
@@ -1640,10 +1641,11 @@ def compute_crmasks(
             if mm_ydiag_max > 0:
                 ydiag_max = mm_ydiag_max
                 _logger.info("using user-defined mm_ydiag_max=%f", mm_ydiag_max)
-        _logger.info("xdiag_min=%f", xdiag_min)
-        _logger.info("ydiag_min=%f", ydiag_min)
-        _logger.info("xdiag_max=%f", xdiag_max)
-        _logger.info("ydiag_max=%f", ydiag_max)
+        xylim_table = Table(names=["xdiag_min", "xdiag_max", "ydiag_min", "ydiag_max"], dtype=[float, float, float, float])
+        for colname in xylim_table.colnames:
+            xylim_table[colname].format = ".3f"
+        xylim_table.add_row([xdiag_min, xdiag_max, ydiag_min, ydiag_max])
+        _logger.info("diagnostic diagram limits:\n%s", str(xylim_table))
 
         # Define binning for the diagnostic plot
         nbins_xdiag = 100
