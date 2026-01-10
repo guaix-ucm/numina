@@ -71,7 +71,7 @@ def apply_crmasks(
         - 'median', the simple median without any substitution of masked pixels.
         - 'min', the simple minimum, without any substitution of masked pixels.
     use_auxmedian : bool, optional
-        If True, and if the extension 'AXMEDIAN' is present in `hdul_masks`,
+        If True, and if the extension 'AUXCLEAN' is present in `hdul_masks`,
         the auxiliary-corrected median array is used instead of the minimum
         value at each pixel. This affects differently depending on the
         combination method:
@@ -118,10 +118,10 @@ def apply_crmasks(
     if combination not in VALID_COMBINATIONS:
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
 
-    # If use_auxmedian is True, check that the extension 'AXMEDIAN' is present
+    # If use_auxmedian is True, check that the extension 'AUXCLEAN' is present
     if use_auxmedian:
-        if "AXMEDIAN" not in hdul_masks:
-            raise ValueError("use_auxmedian is True, but extension 'AXMEDIAN' is not present in hdul_masks.")
+        if "AUXCLEAN" not in hdul_masks:
+            raise ValueError("use_auxmedian is True, but extension 'AUXCLEAN' is not present in hdul_masks.")
 
     # Check that the list contains numpy 2D arrays
     if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays):
@@ -216,7 +216,7 @@ def apply_crmasks(
         # of the corresponding pixel in the input arrays
         median2d_corrected = median2d.copy()
         if use_auxmedian:
-            median2d_corrected[mask_mediancr] = hdul_masks["AXMEDIAN"].data[mask_mediancr]
+            median2d_corrected[mask_mediancr] = hdul_masks["AUXCLEAN"].data[mask_mediancr]
         else:
             median2d_corrected[mask_mediancr] = min2d_rescaled[mask_mediancr]
 
@@ -253,12 +253,12 @@ def apply_crmasks(
             image3d_masked[i, :, :].mask = mask.astype(bool)
         # Compute the mean of the masked 3D array
         combined2d = ma.mean(image3d_masked, axis=0).data
-        # Replace pixels without data with the minimum value or the AXMEDIAN value
+        # Replace pixels without data with the minimum value or the AUXCLEAN value
         mask_nodata = total_mask == num_images
         if np.any(mask_nodata):
             if use_auxmedian:
-                _logger.info("replacing %d pixels without data by the AXMEDIAN value", np.sum(mask_nodata))
-                combined2d[mask_nodata] = hdul_masks["AXMEDIAN"].data[mask_nodata]
+                _logger.info("replacing %d pixels without data by the AUXCLEAN value", np.sum(mask_nodata))
+                combined2d[mask_nodata] = hdul_masks["AUXCLEAN"].data[mask_nodata]
             else:
                 _logger.info("replacing %d pixels without data by the minimum value", np.sum(mask_nodata))
                 combined2d[mask_nodata] = min2d_rescaled[mask_nodata]
@@ -268,12 +268,12 @@ def apply_crmasks(
         variance2d = ma.var(image3d_masked, axis=0, ddof=1).data
         map2d = np.ones((naxis2, naxis1), dtype=int) * num_images - total_mask
         if combination == "meancr2":
-            # Replace pixels flagged in MEANCR by the minimum value or the AXMEDIAN value
+            # Replace pixels flagged in MEANCR by the minimum value or the AUXCLEAN value
             mask_meancr = hdul_masks["MEANCR"].data.astype(bool)
             if np.any(mask_meancr):
                 if use_auxmedian:
-                    _logger.info("replacing %d pixels flagged in MEANCR by the AXMEDIAN value", np.sum(mask_meancr))
-                    combined2d[mask_meancr] = hdul_masks["AXMEDIAN"].data[mask_meancr]
+                    _logger.info("replacing %d pixels flagged in MEANCR by the AUXCLEAN value", np.sum(mask_meancr))
+                    combined2d[mask_meancr] = hdul_masks["AUXCLEAN"].data[mask_meancr]
                 else:
                     _logger.info("replacing %d pixels flagged in MEANCR by the minimum value", np.sum(mask_meancr))
                     combined2d[mask_meancr] = min2d_rescaled[mask_meancr]

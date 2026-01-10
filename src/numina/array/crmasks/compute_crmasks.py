@@ -2150,7 +2150,7 @@ def compute_crmasks(
 
     # Include auxiliary-corrected median2d image if applicable
     if median2d_aux is not None:
-        hdu_median2d_aux = fits.ImageHDU(median2d_aux.astype(np.float32), name="AXMEDIAN")
+        hdu_median2d_aux = fits.ImageHDU(median2d_aux.astype(np.float32), name="AUXCLEAN")
         list_hdu_masks.append(hdu_median2d_aux)
 
     # Find problematic cosmic-ray pixels (those masked in all individual CRMASKi)
