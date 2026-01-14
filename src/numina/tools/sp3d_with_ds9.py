@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -22,7 +22,6 @@ import numpy as np
 from rich import print
 from rich_argparse import RichHelpFormatter
 
-from .ctext import ctext
 from .extract_2d_slice_from_3d_cube import extract_slice
 
 
@@ -486,10 +485,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing: ' + ' '.join(sys.argv) + '[/bold red]\n')
 
     file_datacube = args.datacube
     ds9exec = args.ds9exec
