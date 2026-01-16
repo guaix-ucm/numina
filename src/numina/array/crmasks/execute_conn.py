@@ -20,7 +20,7 @@ except ModuleNotFoundError as e:
     CONN_AVAILABLE = False
 
 
-def execute_conn(image2d, bool_to_be_cleaned, rlabel_conn, dict_nn_params, _logger):
+def execute_conn(image2d, bool_to_be_cleaned, rlabel_conn, dict_nn_params, displaypar, _logger):
     """Execute Cosmic-CoNN cosmic ray detection algorithm."""
     if not CONN_AVAILABLE:
         raise ImportError(
@@ -29,8 +29,7 @@ def execute_conn(image2d, bool_to_be_cleaned, rlabel_conn, dict_nn_params, _logg
             "You can try installing it via pip:\n"
             "pip install cosmic-conn\n"
         )
-    nn_verbose = dict_nn_params["verbose"]
-    if nn_verbose:
+    if displaypar:
         _logger.info("[green][Cosmic-CoNN parameters][/green]")
         for key in dict_nn_params.keys():
             _logger.info("%s for Cosmic-CoNN: %s", key, str(dict_nn_params[key]))

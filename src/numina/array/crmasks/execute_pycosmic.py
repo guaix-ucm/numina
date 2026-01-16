@@ -38,7 +38,7 @@ def decorated_merge_peak_tail_masks(*args, **kwargs):
     return cleanest.merge_peak_tail_masks(*args, **kwargs)
 
 
-def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, _logger):
+def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, displaypar, _logger):
     """Execute PyCosmic cosmic ray detection algorithm."""
     if not PYCOSMIC_AVAILABLE:
         raise ImportError(
@@ -67,7 +67,7 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
         version_pycosmic = "unknown"
     _logger.info(f"using PyCosmic version: {version_pycosmic}")
     # run 1
-    if pc_verbose:
+    if displaypar:
         _logger.info("[green][PyCosmic parameters for run 1][/green]")
         for key in dict_pc_params_run1.keys():
             _logger.info("%s for pycosmic: %s", key, str(dict_pc_params_run1[key]))
@@ -79,7 +79,7 @@ def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_param
     flag_pc = out.mask.astype(bool)
     # run 2 if needed
     if pycosmic_needs_2runs:
-        if pc_verbose:
+        if displaypar:
             _logger.info("[green][PyCosmic parameters modified for run 2][/green]")
             if pc_sigma_det_needs_2runs:
                 _logger.info(

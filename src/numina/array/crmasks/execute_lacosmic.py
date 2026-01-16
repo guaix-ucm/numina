@@ -33,7 +33,7 @@ def decorated_merge_peak_tail_masks(*args, **kwargs):
 
 
 def execute_lacosmic(
-    image2d, bool_to_be_cleaned, rlabel_lacosmic, dict_la_params_run1, dict_la_params_run2, la_padwidth, _logger
+    image2d, bool_to_be_cleaned, rlabel_lacosmic, dict_la_params_run1, dict_la_params_run2, la_padwidth, displaypar, _logger
 ):
     """Execute L.A.Cosmic cosmic ray detection algorithm."""
     la_verbose = dict_la_params_run1["verbose"] or dict_la_params_run2["verbose"]
@@ -59,7 +59,7 @@ def execute_lacosmic(
         version_ccdproc = "unknown"
     _logger.info(f"using ccdproc version: {version_ccdproc}")
     # run 1
-    if la_verbose:
+    if displaypar:
         _logger.info("[green][L.A.Cosmic parameters for run 1][/green]")
         for key in dict_la_params_run1.keys():
             if key == "psfk":
@@ -79,7 +79,7 @@ def execute_lacosmic(
         flag_la = flag_la[la_padwidth:-la_padwidth, la_padwidth:-la_padwidth]
     # run 2 if needed
     if lacosmic_needs_2runs:
-        if la_verbose:
+        if displaypar:
             _logger.info("[green][L.A.Cosmic parameters modified for run 2][/green]")
             if la_sigclip_needs_2runs:
                 _logger.info(

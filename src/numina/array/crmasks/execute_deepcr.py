@@ -20,7 +20,7 @@ except ModuleNotFoundError as e:
     DEEPCR_AVAILABLE = False
 
 
-def execute_deepcr(image2d, bool_to_be_cleaned, rlabel_deepcr, dict_dc_params, _logger):
+def execute_deepcr(image2d, bool_to_be_cleaned, rlabel_deepcr, dict_dc_params, displaypar, _logger):
     """Execute DeepCR cosmic ray detection algorithm."""
     if not DEEPCR_AVAILABLE:
         raise ImportError(
@@ -29,8 +29,7 @@ def execute_deepcr(image2d, bool_to_be_cleaned, rlabel_deepcr, dict_dc_params, _
             "You can try installing it via pip:\n"
             "pip install deepCR\n"
         )
-    dc_verbose = dict_dc_params["verbose"]
-    if dc_verbose:
+    if displaypar:
         _logger.info("[green][DeepCR parameters][/green]")
         for key in dict_dc_params.keys():
             _logger.info("%s for deepCR: %s", key, str(dict_dc_params[key]))

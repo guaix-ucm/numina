@@ -1258,6 +1258,7 @@ def compute_crmasks(
             dict_la_params_run1=dict_la_params_run1,
             dict_la_params_run2=dict_la_params_run2,
             la_padwidth=la_padwidth,
+            displaypar=dict_la_params_run1["verbose"] or dict_la_params_run2["verbose"],
             _logger=_logger,
         )
     elif crmethod in ["pycosmic", "mm_pycosmic"]:
@@ -1275,6 +1276,7 @@ def compute_crmasks(
             rlabel_pycosmic=rlabel_pycosmic,
             dict_pc_params_run1=dict_pc_params_run1,
             dict_pc_params_run2=dict_pc_params_run2,
+            displaypar=dict_pc_params_run1["verbose"] or dict_pc_params_run2["verbose"],
             _logger=_logger,
         )
     elif crmethod in ["deepcr", "mm_deepcr"]:
@@ -1288,6 +1290,7 @@ def compute_crmasks(
             bool_to_be_cleaned=bool_to_be_cleaned,
             rlabel_deepcr=rlabel_deepcr,
             dict_dc_params=dict_dc_params,
+            displaypar=dict_dc_params["verbose"],
             _logger=_logger,
         )
     elif crmethod in ["conn", "mm_conn"]:
@@ -1301,6 +1304,7 @@ def compute_crmasks(
             bool_to_be_cleaned=bool_to_be_cleaned,
             rlabel_conn=rlabel_conn,
             dict_nn_params=dict_nn_params,
+            displaypar=dict_nn_params["verbose"],
             _logger=_logger,
         )
         median2d_aux = None
@@ -1353,6 +1357,7 @@ def compute_crmasks(
                 dict_la_params_run1=dict_la_params_run1,
                 dict_la_params_run2=dict_la_params_run2,
                 la_padwidth=la_padwidth,
+                displaypar=False,
                 _logger=_logger,
             )
         elif crmethod in ["pycosmic", "mm_pycosmic"]:
@@ -1362,6 +1367,7 @@ def compute_crmasks(
                 rlabel_pycosmic=rlabel_pycosmic,
                 dict_pc_params_run1=dict_pc_params_run1,
                 dict_pc_params_run2=dict_pc_params_run2,
+                displaypar=False,
                 _logger=_logger,
             )
         elif crmethod in ["deepcr", "mm_deepcr"]:
@@ -1370,6 +1376,7 @@ def compute_crmasks(
                 bool_to_be_cleaned=bool_to_be_cleaned,
                 rlabel_deepcr=rlabel_deepcr,
                 dict_dc_params=dict_dc_params,
+                displaypar=False,
                 _logger=_logger,
             )
         elif crmethod in ["conn", "mm_conn"]:
@@ -1378,6 +1385,7 @@ def compute_crmasks(
                 bool_to_be_cleaned=bool_to_be_cleaned,
                 rlabel_conn=rlabel_conn,
                 dict_nn_params=dict_nn_params,
+                displaypar=False,
                 _logger=_logger,
             )
             dumimage2d_cleaned = dumimage2d  # not used
@@ -1964,6 +1972,7 @@ def compute_crmasks(
                     dict_la_params_run1=dict_la_params_run1,
                     dict_la_params_run2=dict_la_params_run2,
                     la_padwidth=la_padwidth,
+                    displaypar=False,
                     _logger=_logger,
                 )
             else:
@@ -1978,6 +1987,7 @@ def compute_crmasks(
                     rlabel_pycosmic=rlabel_pycosmic,
                     dict_pc_params_run1=dict_pc_params_run1,
                     dict_pc_params_run2=dict_pc_params_run2,
+                    displaypar=False,
                     _logger=_logger,
                 )
             else:
@@ -1991,6 +2001,7 @@ def compute_crmasks(
                     bool_to_be_cleaned=bool_to_be_cleaned,
                     rlabel_deepcr=rlabel_deepcr,
                     dict_dc_params=dict_dc_params,
+                    displaypar=False,
                     _logger=_logger,
                 )
             else:
@@ -2004,6 +2015,7 @@ def compute_crmasks(
                     bool_to_be_cleaned=bool_to_be_cleaned,
                     rlabel_conn=rlabel_conn,
                     dict_nn_params=dict_nn_params,
+                    displaypar=False,
                     _logger=_logger,
                 )
             else:
