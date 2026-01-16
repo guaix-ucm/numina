@@ -12,6 +12,7 @@
 from astropy.table import Table
 from matplotlib.colors import LogNorm
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
@@ -25,6 +26,8 @@ from .apply_threshold_cr import apply_threshold_cr
 from .define_piecewise_linear_function import define_piecewise_linear_function
 from .valid_parameters import VALID_BOUNDARY_FITS
 from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
+
+mpl.rcParams["keymap.quit"] = []  # disable 'q' key for quitting plots
 
 
 def xsort_and_show_fixed_points_in_boundary(
@@ -151,7 +154,9 @@ def display_hist2d(
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
-            elif event.key == "q":
+            elif event.key == "c":
+                print("Continuing to next step as per user request ('c' key pressed).")
+                plt.close(fig)
                 loop = False
             elif event.key == "r":
                 plt.close(fig)
@@ -355,9 +360,7 @@ def display_hist2d(
         _logger.info(f"saving {png_filename}")
         plt.savefig(png_filename, dpi=150)
         if interactive:
-            _logger.info(
-                "Entering interactive mode\n" "(press 'r' to repeat plot, 'q' to close figure, 'x' to quit program)"
-            )
+            _logger.info("Entering interactive mode\n(press 'r' to repeat plot, 'c' to continue, 'x' to quit program)")
             plt.show()
         else:
             loop = False

@@ -9,10 +9,13 @@
 """Diagnostic plot for cosmic ray mask computation."""
 import sys
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox
 import numpy as np
 import teareduce as tea
+
+mpl.rcParams["keymap.quit"] = []  # disable 'q' key for quitting plots
 
 
 def segregate_cr_flags(
@@ -591,7 +594,7 @@ def diagnostic_plot(
                 _logger.info("'1', '2', ...: switch to individual exposure #1, #2, ... in ax4")
                 _logger.info("',': set vmin and vmax to min and max of the zoomed region (ax3 and ax4 only)")
                 _logger.info("'/': set vmin and vmax using zscale of the zoomed region (ax3 and ax4 only)")
-                _logger.info("'q': close the plot and continue the program execution")
+                _logger.info("'c': close the plot and continue the program execution")
                 _logger.info("'x': halt the program execution")
                 _logger.info("-" * 79)
             elif event.key == "i":
@@ -716,6 +719,9 @@ def diagnostic_plot(
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
+            elif event.key == "c":
+                _logger.info("Continuing program execution as per user request ('c' key pressed).")
+                plt.close(fig)
 
         fig.canvas.mpl_connect("key_press_event", on_key)
 
@@ -752,7 +758,7 @@ def diagnostic_plot(
         text_box_vmax = TextBox(ax_vmax, "vmax:", initial=f"{int(np.round(vmax, 0))}", textalignment="right")
         text_box_vmax.on_submit(submit_vmax)
 
-        _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
+        _logger.info("Entering interactive mode\n(press '?' for help, 'c' to continue, 'x' to quit program)")
         # plt.tight_layout()
         plt.show()
     plt.close(fig)

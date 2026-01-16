@@ -1545,6 +1545,9 @@ def compute_crmasks(
                             _logger.info("Exiting program as per user request ('x' key pressed).")
                             plt.close(fig)
                             sys.exit(0)
+                        elif event.key == "c":
+                            _logger.info("Closing figure as per user request ('c' key pressed).")
+                            plt.close(fig)
 
                     fig, axarr = plt.subplots(
                         nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4 * 1.5, 4.8 * 1.5)
@@ -1611,7 +1614,7 @@ def compute_crmasks(
                     _logger.info(f"saving {png_filename}")
                     plt.savefig(png_filename, dpi=150)
                     if interactive:
-                        _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
+                        _logger.info("Entering interactive mode (press 'c' to continue, 'x' to quit program)")
                         plt.show()
                     plt.close(fig)
                     list_yx_offsets.append(yx_offsets)
@@ -1641,7 +1644,9 @@ def compute_crmasks(
             if mm_ydiag_max > 0:
                 ydiag_max = mm_ydiag_max
                 _logger.info("using user-defined mm_ydiag_max=%f", mm_ydiag_max)
-        xylim_table = Table(names=["xdiag_min", "xdiag_max", "ydiag_min", "ydiag_max"], dtype=[float, float, float, float])
+        xylim_table = Table(
+            names=["xdiag_min", "xdiag_max", "ydiag_min", "ydiag_max"], dtype=[float, float, float, float]
+        )
         for colname in xylim_table.colnames:
             xylim_table[colname].format = ".3f"
         xylim_table.add_row([xdiag_min, xdiag_max, ydiag_min, ydiag_max])
