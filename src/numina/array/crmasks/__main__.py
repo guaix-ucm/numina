@@ -72,13 +72,14 @@ def main(args=None):
     logging.getLogger("matplotlib").setLevel(logging.ERROR)  # Suppress matplotlib debug logs
 
     # Welcome message
-    console.rule("[bold magenta] Numina: Cosmic Ray Masks [/bold magenta]")
+    console.rule("[bold magenta]Numina: Cosmic Ray Masks[/bold magenta]")
 
     # Display version info
     logger = logging.getLogger(__name__)
     logger.info(f"Using {__name__} version {__version__}")
 
     # Read parameters from YAML file
+    logger.info(f"Reading input parameters from: [bold blue]{args.inputyaml}[/bold blue]")
     with open(args.inputyaml, "rt") as fstream:
         input_params = yaml.safe_load(fstream)
     logger.debug(f"{input_params=}")
