@@ -354,7 +354,7 @@ def diagnostic_plot(
         ax1.plot(xplot_boundary, yplot_boundary, "C1-", label="Detection boundary", zorder=3)
     if mm_threshold is not None:
         ax1.axhline(mm_threshold, color="C0", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})", zorder=3)
-    ax1.set_xlabel(r"min2d $-$ bias")  # the bias was subtracted from the input arrays
+    ax1.set_xlabel(r"min2d $-$ bias  [${\rm e}^{-}$]")  # the bias was subtracted from the input arrays
     ax1.set_ylabel(ylabel)
     ax1.set_title("Diagnostic Diagram")
     ax1.legend(loc="upper right", fontsize=8, title=f"Total: {num_total} suspected pixels")
