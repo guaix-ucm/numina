@@ -271,6 +271,7 @@ def apply_crmasks(
             # Replace pixels flagged in MEANCR by the minimum value or the AUXCLEAN value
             mask_meancr = hdul_masks["MEANCR"].data.astype(bool)
             if np.any(mask_meancr):
+                _logger.info("applying mask %s: %d masked pixels", "MEANCR", np.sum(mask_meancr))
                 if use_auxmedian:
                     _logger.info("replacing %d pixels flagged in MEANCR by the AUXCLEAN value", np.sum(mask_meancr))
                     combined2d[mask_meancr] = hdul_masks["AUXCLEAN"].data[mask_meancr]

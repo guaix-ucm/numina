@@ -165,6 +165,7 @@ def main(args=None):
             )
         else:
             msg = f"Computing [bold magenta]{combination}[/bold magenta] combination applying cosmic ray masks."
+        console.rule(msg)
         output_combined = f"combined_{combination}.fits"
         combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
