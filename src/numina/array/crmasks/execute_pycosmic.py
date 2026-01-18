@@ -38,7 +38,9 @@ def decorated_merge_peak_tail_masks(*args, **kwargs):
     return cleanest.merge_peak_tail_masks(*args, **kwargs)
 
 
-def execute_pycosmic(image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, displaypar, _logger):
+def execute_pycosmic(
+    image2d, bool_to_be_cleaned, rlabel_pycosmic, dict_pc_params_run1, dict_pc_params_run2, displaypar, _logger
+):
     """Execute PyCosmic cosmic ray detection algorithm."""
     if not PYCOSMIC_AVAILABLE:
         raise ImportError(

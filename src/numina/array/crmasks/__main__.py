@@ -159,7 +159,12 @@ def main(args=None):
 
     # Apply cosmic ray masks
     for combination in VALID_COMBINATIONS:
-        console.rule(f"Applying cosmic ray masks using [bold magenta]{combination}[/bold magenta]")
+        if combination in ["mean", "median", "min"]:
+            msg = (
+                f"Computing simple [bold magenta]{combination}[/bold magenta] combination, no cosmic ray masks applied."
+            )
+        else:
+            msg = f"Computing [bold magenta]{combination}[/bold magenta] combination applying cosmic ray masks."
         output_combined = f"combined_{combination}.fits"
         combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,

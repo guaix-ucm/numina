@@ -1921,7 +1921,8 @@ def compute_crmasks(
     hdu_mediancr = fits.ImageHDU(mask_mediancr.astype(np.uint8), name="MEDIANCR")
     list_hdu_masks = [hdu_mediancr]
 
-    # Apply the same algorithm but now with mean2d and with each individual array
+    # Apply the same algorithm but now with mean2d, with each individual array,
+    # and with a cleaned mean2d generated using CRMASKi masks
     for i, target2d in enumerate([mean2d] + list_arrays + [None]):
         if i == 0:
             target2d_name = "mean2d"

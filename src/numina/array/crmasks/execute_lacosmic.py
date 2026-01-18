@@ -33,7 +33,14 @@ def decorated_merge_peak_tail_masks(*args, **kwargs):
 
 
 def execute_lacosmic(
-    image2d, bool_to_be_cleaned, rlabel_lacosmic, dict_la_params_run1, dict_la_params_run2, la_padwidth, displaypar, _logger
+    image2d,
+    bool_to_be_cleaned,
+    rlabel_lacosmic,
+    dict_la_params_run1,
+    dict_la_params_run2,
+    la_padwidth,
+    displaypar,
+    _logger,
 ):
     """Execute L.A.Cosmic cosmic ray detection algorithm."""
     la_verbose = dict_la_params_run1["verbose"] or dict_la_params_run2["verbose"]
