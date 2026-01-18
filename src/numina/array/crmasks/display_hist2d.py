@@ -554,8 +554,6 @@ def display_hist2d(
             plt.close(fig)
 
     result = {
-        "xplot_boundary": xplot_boundary,
-        "yplot_boundary": yplot_boundary,
         "boundaryfit": boundaryfit,
         "flag_mm": flag_mm,
         "mm_fixed_points_in_boundary": mm_fixed_points_in_boundary,

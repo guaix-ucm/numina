@@ -35,8 +35,7 @@ def display_detected_cr(
     color_scale="zscale",
     xplot=None,
     yplot=None,
-    xplot_boundary=None,
-    yplot_boundary=None,
+    boundaryfit=None,
     mm_threshold=None,
     _logger=None,
 ):
@@ -322,6 +321,11 @@ def display_detected_cr(
         if list_mask_single_exposures is None:
             # plot pixels in the M.M. diagnostic diagram
             fig, ax = plt.subplots(figsize=figsize)
+            if boundaryfit is not None:
+                xplot_boundary = np.linspace(np.min(xplot), np.max(xplot), 1000)
+                yplot_boundary = boundaryfit(xplot_boundary)
+            else:
+                raise ValueError("boundaryfit must be provided for mediancr plots")
             ax.plot(xplot_boundary, yplot_boundary, color="C1", linestyle="-", label="detection boundary")
             if mm_threshold is not None:
                 ax.axhline(y=mm_threshold, color="C0", linestyle=":", label="mm_threshold")

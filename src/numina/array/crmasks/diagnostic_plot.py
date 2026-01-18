@@ -237,8 +237,7 @@ def update_marks(
 def diagnostic_plot(
     xplot,
     yplot,
-    xplot_boundary,
-    yplot_boundary,
+    boundaryfit,
     rlabel_aux_plain,
     flag_aux,
     flag_mm,
@@ -349,7 +348,9 @@ def diagnostic_plot(
         label=f"Suspected pixels: {num_both} (both methods)",
         zorder=2,
     )
-    if xplot_boundary is not None and yplot_boundary is not None:
+    if boundaryfit is not None:
+        xplot_boundary = np.linspace(np.min(xplot), np.max(xplot), 1000)
+        yplot_boundary = boundaryfit(xplot_boundary)
         ax1.plot(xplot_boundary, yplot_boundary, "C1-", label="Detection boundary", zorder=3)
     if mm_threshold is not None:
         ax1.axhline(mm_threshold, color="C0", linestyle=":", label=f"mm_threshold ({mm_threshold:.2f})", zorder=3)

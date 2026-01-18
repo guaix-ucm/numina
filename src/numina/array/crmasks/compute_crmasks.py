@@ -1766,8 +1766,6 @@ def compute_crmasks(
             interactive=interactive,
         )
         # retrieve main results
-        xplot_boundary = result_hist2d["xplot_boundary"]
-        yplot_boundary = result_hist2d["yplot_boundary"]
         boundaryfit = result_hist2d["boundaryfit"]
         flag_mm = result_hist2d["flag_mm"]
         # update additional parameters that might have been modified
@@ -1778,8 +1776,7 @@ def compute_crmasks(
         mm_niter_boundary_extension = result_hist2d["mm_niter_boundary_extension"]
         mm_weight_boundary_extension = result_hist2d["mm_weight_boundary_extension"]
     elif crmethod in ["lacosmic", "pycosmic", "deepcr", "conn"]:
-        xplot_boundary = None
-        yplot_boundary = None
+        boundaryfit = None
         flag_mm = np.zeros_like(median2d, dtype=bool).flatten()
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}.\nValid options are: {VALID_CRMETHODS}.")
@@ -1841,8 +1838,7 @@ def compute_crmasks(
     diagnostic_plot(
         xplot=xplot,
         yplot=yplot,
-        xplot_boundary=xplot_boundary,
-        yplot_boundary=yplot_boundary,
+        boundaryfit=boundaryfit,
         rlabel_aux_plain=rlabel_aux_plain,
         flag_aux=flag_aux,
         flag_mm=flag_mm,
@@ -1916,8 +1912,7 @@ def compute_crmasks(
             color_scale=color_scale,
             xplot=xplot,
             yplot=yplot,
-            xplot_boundary=xplot_boundary,
-            yplot_boundary=yplot_boundary,
+            boundaryfit=boundaryfit,
             mm_threshold=mm_threshold,
             _logger=_logger,
         )
@@ -2061,12 +2056,10 @@ def compute_crmasks(
                 _logger.info(f"number of CR pixels before applying mm_threshold: {npixels_found_before:>{ldum}d}")
                 _logger.info(f"number of CR pixels after  applying mm_threshold: {npixels_found_after:>{ldum}d}")
             else:
-                xplot_boundary = None
-                yplot_boundary = None
+                boundaryfit = None
                 flag_mm = np.zeros_like(target2d.flatten(), dtype=bool)
         else:
-            xplot_boundary = None
-            yplot_boundary = None
+            boundaryfit = None
             flag_mm = np.zeros_like(target2d.flatten(), dtype=bool)
 
         # For the mean2d mask, force the flag to be True if the pixel
@@ -2118,8 +2111,7 @@ def compute_crmasks(
             diagnostic_plot(
                 xplot=xplot,
                 yplot=yplot,
-                xplot_boundary=xplot_boundary,
-                yplot_boundary=yplot_boundary,
+                boundaryfit=boundaryfit,
                 rlabel_aux_plain=rlabel_aux_plain,
                 flag_aux=flag_aux,
                 flag_mm=flag_mm,
@@ -2205,8 +2197,7 @@ def compute_crmasks(
             color_scale=color_scale,
             xplot=None,
             yplot=None,
-            xplot_boundary=None,
-            yplot_boundary=None,
+            boundaryfit=None,
             _logger=_logger,
         )
 
