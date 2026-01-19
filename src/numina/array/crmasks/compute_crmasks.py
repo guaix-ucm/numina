@@ -663,7 +663,7 @@ def compute_crmasks(
                     "Must be list of 4 integers or None."
                 )
             median2d = np.median(image3d, axis=0)
-            flux_factor = compute_flux_factor(image3d, median2d, list_flux_factor_regions, _logger, interactive, debug)
+            flux_factor = compute_flux_factor(image3d, median2d, list_flux_factor_regions, output_dir, _logger, interactive, debug)
             _logger.info("computed flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == "none":
             flux_factor = np.ones(num_images, dtype=float)

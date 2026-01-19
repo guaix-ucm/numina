@@ -10,22 +10,26 @@
 
 import sys
 
+import matplotlib as mpl
 from matplotlib.colors import LogNorm
 from matplotlib.colors import ListedColormap, BoundaryNorm
 from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 from numina.array.display.plot_hist_step import plot_hist_step
 import teareduce as tea
 
 from .remove_isolated_pixels import remove_isolated_pixels
 
+mpl.rcParams["keymap.quit"] = []  # Change default quit key to 'c' to avoid conflicts
 
 def compute_flux_factor(
     image3d,
     median2d,
     list_flux_factor_regions,
+    output_dir,
     _logger,
     interactive=False,
     debug=False,
@@ -106,9 +110,9 @@ def compute_flux_factor(
         plt.tight_layout()
         png_filename = "histogram_before_flux_factor.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(png_filename, dpi=150)
+        plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            _logger.info("Entering interactive mode\n(press 'c' to close figure and continue)")
             plt.show()
         plt.close(fig)
 
@@ -199,13 +203,16 @@ def compute_flux_factor(
                 _logger.info("'t' : cycle through images (left panel)")
                 _logger.info("'0-9' : display specific image number in left panel (0 for median)")
                 _logger.info("'?' : display this help message")
-                _logger.info("'q' : quit interactive mode")
+                _logger.info("'c' : close figure and continue execution")
                 _logger.info("'x' : exit program")
                 _logger.info("-" * 79)
             elif event.key == "x":
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
+            elif event.key == "c":
+                _logger.info("Closing figure and continuing execution as per user request ('c' key pressed).")
+                plt.close(fig)
 
             if update_vmin_vmax:
                 img_ax1.set_clim(vmin=vmin, vmax=vmax)
@@ -258,9 +265,9 @@ def compute_flux_factor(
         plt.tight_layout()
         png_filename = "image_number_at_median_position.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(png_filename, dpi=150)
+        plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
+            _logger.info("Entering interactive mode\n(press '?' for help, 'c' to close figure and continue, 'x' to quit program)")
             plt.show()
         plt.close(fig)
 
@@ -293,6 +300,9 @@ def compute_flux_factor(
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
+            elif event.key == "c":
+                _logger.info("Closing figure and continuing execution as per user request ('c' key pressed).")
+                plt.close(fig)
 
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 5.5))
         fig.canvas.mpl_connect("key_press_event", lambda event: on_key(event))
@@ -360,9 +370,9 @@ def compute_flux_factor(
 
         png_filename = f"flux_factor{idata+1}.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(png_filename, dpi=150)
+        plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure, 'x' to quit program)")
+            _logger.info("Entering interactive mode\n(press 'c' to close figure and continue, 'x' to quit program)")
             plt.show()
         plt.close(fig)
 
@@ -391,9 +401,9 @@ def compute_flux_factor(
         plt.tight_layout()
         png_filename = "histogram_after_flux_factor.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(png_filename, dpi=150)
+        plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press 'q' to close figure)")
+            _logger.info("Entering interactive mode\n(press 'c' to close figure and continue)")
             plt.show()
         plt.close(fig)
 
