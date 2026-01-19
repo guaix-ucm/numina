@@ -12,6 +12,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import ListedColormap, BoundaryNorm
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 
 from numina.tools.progressbarlines import ProgressBarLines
 import teareduce as tea
@@ -38,6 +39,7 @@ def display_detected_cr(
     boundaryfit=None,
     mm_threshold=None,
     _logger=None,
+    output_dir=".",
 ):
     """Display the detected cosmic rays
 
@@ -83,10 +85,10 @@ def display_detected_cr(
         num_plot_max = 9
     if list_mask_single_exposures is None:
         # plots for mediancr
-        pdf_any4 = PdfPages(f"{output_basename}_any4.pdf")
-        pdf_only3 = PdfPages(f"{output_basename}_only3.pdf")
-        pdf_only2 = PdfPages(f"{output_basename}_only2.pdf")
-        pdf_other = PdfPages(f"{output_basename}_other.pdf")
+        pdf_any4 = PdfPages(Path(output_dir) / f"{output_basename}_any4.pdf")
+        pdf_only3 = PdfPages(Path(output_dir) / f"{output_basename}_only3.pdf")
+        pdf_only2 = PdfPages(Path(output_dir) / f"{output_basename}_only2.pdf")
+        pdf_other = PdfPages(Path(output_dir) / f"{output_basename}_other.pdf")
         num_any4 = 0
         num_only3 = 0
         num_only2 = 0
@@ -101,7 +103,7 @@ def display_detected_cr(
         cr_table_filename_other = f"{output_basename}_other.csv"
     else:
         # plots for problematic pixels
-        pdf = PdfPages(f"{output_basename}.pdf")
+        pdf = PdfPages(Path(output_dir) / f"{output_basename}.pdf")
         cr_table = Table(names=("CR_number", "X_pixel", "Y_pixel", "Mask_value"), dtype=(int, int, int, int))
         cr_table_filename = f"{output_basename}.csv"
     maxplots_eff = maxplots
@@ -400,22 +402,22 @@ def display_detected_cr(
         _logger.info(f"saving {num_only2:>{lmax}} CRs in {output_basename}_only2.pdf file")
         pdf_other.close()
         _logger.info(f"saving {num_other:>{lmax}} CRs in {output_basename}_other.pdf file")
-        cr_table_any4.write(cr_table_filename_any4, format="csv", overwrite=True)
+        cr_table_any4.write(Path(output_dir) / cr_table_filename_any4, format="csv", overwrite=True)
         _logger.info(f"table of {num_any4} CRs in {output_basename}_any4.csv:\n{cr_table_any4}")
         _logger.info("table saved")
-        cr_table_only3.write(cr_table_filename_only3, format="csv", overwrite=True)
+        cr_table_only3.write(Path(output_dir) / cr_table_filename_only3, format="csv", overwrite=True)
         _logger.info(f"table of {num_only3} CRs in {output_basename}_only3.csv:\n{cr_table_only3}")
         _logger.info("table saved")
-        cr_table_only2.write(cr_table_filename_only2, format="csv", overwrite=True)
+        cr_table_only2.write(Path(output_dir) / cr_table_filename_only2, format="csv", overwrite=True)
         _logger.info(f"table of {num_only2} CRs in {output_basename}_only2.csv:\n{cr_table_only2}")
         _logger.info("table saved")
-        cr_table_other.write(cr_table_filename_other, format="csv", overwrite=True)
+        cr_table_other.write(Path(output_dir) / cr_table_filename_other, format="csv", overwrite=True)
         _logger.info(f"table of {num_other} CRs in {output_basename}_other.csv:\n{cr_table_other}")
         _logger.info("table saved")
     else:
         # plots for problematic pixels
         pdf.close()
         _logger.info(f"saving {output_basename}.pdf file")
-        cr_table.write(cr_table_filename, format="csv", overwrite=True)
+        cr_table.write(Path(output_dir) / cr_table_filename, format="csv", overwrite=True)
         _logger.info("\n%s", cr_table)
         _logger.info("table of identified cosmic rays saved to %s", cr_table_filename)

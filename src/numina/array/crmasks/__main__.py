@@ -16,6 +16,7 @@ import sys
 import argparse
 from astropy.io import fits
 import numpy as np
+from pathlib import Path
 from rich.logging import RichHandler
 import yaml
 
@@ -46,6 +47,7 @@ def main(args=None):
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         default="INFO",
     )
+    parser.add_argument("--output_dir", help="Output directory", type=str, default=".")
     parser.add_argument("--record", help="Record terminal output", action="store_true")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
 
@@ -131,16 +133,22 @@ def main(args=None):
     for item in input_params["requirements"]:
         crmasks_params[item] = input_params["requirements"][item]
 
+    # if output directory does not exist, create it
+    if args.output_dir != ".":
+        if not os.path.isdir(args.output_dir):
+            os.makedirs(args.output_dir)
+    logger.info("Output directory: %s", args.output_dir)
+
     # If a FITS file with cosmic ray masks is provided, read it and skip
     # the computation of the masks. Otherwise, compute the masks.
     if args.crmasks is None:
         # Compute the different cosmic ray masks
         console.rule("[bold magenta] Computing cosmic ray masks [/bold magenta]")
         hdul_masks = compute_crmasks(
-            list_arrays=list_arrays, _logger=logger, debug=(args.log_level == "DEBUG"), **crmasks_params
+            list_arrays=list_arrays, _logger=logger, debug=(args.log_level == "DEBUG"), output_dir=args.output_dir, **crmasks_params
         )
         # Save the cosmic ray masks to a FITS file
-        output_masks = "crmasks.fits"
+        output_masks = Path(args.output_dir) / "crmasks.fits"
         console.rule(f"Saving cosmic ray masks to [bold magenta]{output_masks}[/bold magenta]")
         hdul_masks.writeto(output_masks, overwrite=True)
         logger.info("Cosmic ray masks saved")
@@ -166,7 +174,7 @@ def main(args=None):
         else:
             msg = f"Computing [bold magenta]{combination}[/bold magenta] combination applying cosmic ray masks."
         console.rule(msg)
-        output_combined = f"combined_{combination}.fits"
+        output_combined = Path(args.output_dir) / f"combined_{combination}.fits"
         combined, variance, maparray = apply_crmasks(
             list_arrays=list_arrays,
             hdul_masks=hdul_masks,
@@ -201,7 +209,7 @@ def main(args=None):
 
     if args.record:
         log_filename = "terminal_output.txt"
-        with open(log_filename, "wt") as f:
+        with open(Path(args.output_dir) / log_filename, "wt") as f:
             f.write(console.export_text(styles=True))
         logger.info("terminal output recorded in %s", log_filename)
 

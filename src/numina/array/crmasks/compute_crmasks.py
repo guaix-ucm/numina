@@ -18,6 +18,7 @@ from astropy.table import Table
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 from rich.logging import RichHandler
 from scipy import ndimage
 from skimage.registration import phase_cross_correlation
@@ -67,6 +68,7 @@ from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
 
 def compute_crmasks(
     list_arrays,
+    output_dir=".",
     gain=None,
     rnoise=None,
     bias=None,
@@ -1620,7 +1622,7 @@ def compute_crmasks(
                     plt.tight_layout()
                     png_filename = f"xyoffset_crosscorr_{i+1}.png"
                     _logger.info(f"saving {png_filename}")
-                    plt.savefig(png_filename, dpi=150)
+                    plt.savefig(Path(output_dir) / png_filename, dpi=150)
                     if interactive:
                         _logger.info("Entering interactive mode (press 'c' to continue, 'x' to quit program)")
                         plt.show()
@@ -1764,6 +1766,7 @@ def compute_crmasks(
             y_mm_fixed_points_in_boundary=y_mm_fixed_points_in_boundary,
             w_mm_fixed_points_in_boundary=w_mm_fixed_points_in_boundary,
             interactive=interactive,
+            output_dir=output_dir,
         )
         # retrieve main results
         boundaryfit = result_hist2d["boundaryfit"]
@@ -1852,6 +1855,7 @@ def compute_crmasks(
         image3d=image3d,
         _logger=_logger,
         png_filename="diagnostic_mediancr.png",
+        output_dir=output_dir,
     )
 
     # Check if any cosmic ray was detected
@@ -1915,6 +1919,7 @@ def compute_crmasks(
             boundaryfit=boundaryfit,
             mm_threshold=mm_threshold,
             _logger=_logger,
+            output_dir=output_dir,
         )
 
     # Generate list of HDUs with masks
@@ -2126,6 +2131,7 @@ def compute_crmasks(
                 image3d=image3d,
                 _logger=_logger,
                 png_filename=png_filename,
+                output_dir=output_dir,
             )
         flag = np.logical_or(flag_aux, flag_mm)
         flag = flag.reshape((naxis2, naxis1))
@@ -2200,6 +2206,7 @@ def compute_crmasks(
             yplot=None,
             boundaryfit=None,
             _logger=_logger,
+            output_dir=output_dir,
         )
 
     # Generate output HDUList with masks

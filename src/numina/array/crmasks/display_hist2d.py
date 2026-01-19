@@ -15,6 +15,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 from scipy import ndimage
 import sys
 
@@ -103,6 +104,7 @@ def display_hist2d(
     y_mm_fixed_points_in_boundary,
     w_mm_fixed_points_in_boundary,
     interactive,
+    output_dir=".",
 ):
     """Display 2D histogram of min2d-bias vs mean2d-bias values."""
     # Remove bins that are surrounded by less than mm_hist2d_min_neighbors neighbors
@@ -358,7 +360,7 @@ def display_hist2d(
         plt.tight_layout()
         png_filename = "diagnostic_histogram2d.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(png_filename, dpi=150)
+        plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
             _logger.info("Entering interactive mode\n(press 'r' to repeat plot, 'c' to continue, 'x' to quit program)")
             plt.show()

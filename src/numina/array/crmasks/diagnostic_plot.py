@@ -13,6 +13,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.widgets import TextBox
 import numpy as np
+from pathlib import Path
 import teareduce as tea
 
 mpl.rcParams["keymap.quit"] = []  # disable 'q' key for quitting plots
@@ -251,6 +252,7 @@ def diagnostic_plot(
     image3d,
     _logger=None,
     png_filename=None,
+    output_dir="."
 ):
     """Diagnostic plot for the mediancr function."""
     if png_filename is None:
@@ -540,7 +542,7 @@ def diagnostic_plot(
         plt.tight_layout()
     if png_filename is not None:
         _logger.info(f"saving {png_filename}")
-        plt.savefig(png_filename, dpi=150)
+        plt.savefig(Path(output_dir) / png_filename, dpi=150)
     if interactive:
         init_limits = {ax: (ax.get_xlim(), ax.get_ylim()) for ax in [ax1, ax2, ax3, ax4]}
 
