@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Combination of arrays avoiding coincident cosmic ray hits."""
+
 from datetime import datetime
 import io
 import logging

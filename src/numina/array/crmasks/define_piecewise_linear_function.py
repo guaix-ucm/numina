@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Define a piecewise linear function."""
+
 import numpy as np
 
 

@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Remove isolated pixels in a 2D array."""
+
 import numpy as np
 
 

@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Check if all elements in a sequence are valid numbers (not NaN or Inf)."""
+
 import math
 
 

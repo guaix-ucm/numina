@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Compute the flux factor for each image based on the median."""
+
 import sys
 
 from matplotlib.colors import LogNorm

@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Correct cosmic rays applying previously computed masks."""
+
 import logging
 
 from astropy.table import Table

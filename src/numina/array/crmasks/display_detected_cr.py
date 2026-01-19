@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Display the detected cosmic rays in the images."""
+
 from astropy.table import Table
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.colors import ListedColormap, BoundaryNorm

@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Computation of cosmic ray masks using several equivalent exposures."""
+
 import ast
 import inspect
 import logging

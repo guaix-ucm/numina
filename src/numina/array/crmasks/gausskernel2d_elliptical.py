@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Calculate elliptical 2D Gaussian kernel."""
+
 import math
 import numpy as np
 

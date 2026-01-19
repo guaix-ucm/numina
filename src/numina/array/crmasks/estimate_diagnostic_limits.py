@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Estimate the limits for the diagnostic plot."""
+
 import numpy as np
 
 

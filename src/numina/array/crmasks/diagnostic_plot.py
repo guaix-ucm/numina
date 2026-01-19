@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Diagnostic plot for cosmic ray mask computation."""
+
 import sys
 
 import matplotlib as mpl
