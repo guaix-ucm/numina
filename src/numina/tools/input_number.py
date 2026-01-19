@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -186,7 +186,8 @@ def input_number(
     else:
         base = prompt
 
-    full_prompt = f"{base} [{default}]: " if (default is not None and allow_blank_to_default) else f"{base}: "
+    default_str = f" [{default}]" if default is not None else None
+    full_prompt = f"{base}{default_str}: " if (default is not None and allow_blank_to_default) else f"{base}: "
 
     # --- Parsing helper ---
     def _parse(s: str) -> Number:

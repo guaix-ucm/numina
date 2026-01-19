@@ -145,7 +145,11 @@ def main(args=None):
         # Compute the different cosmic ray masks
         console.rule("[bold magenta] Computing cosmic ray masks [/bold magenta]")
         hdul_masks = compute_crmasks(
-            list_arrays=list_arrays, _logger=logger, debug=(args.log_level == "DEBUG"), output_dir=args.output_dir, **crmasks_params
+            list_arrays=list_arrays,
+            _logger=logger,
+            debug=(args.log_level == "DEBUG"),
+            output_dir=args.output_dir,
+            **crmasks_params,
         )
         # Save the cosmic ray masks to a FITS file
         output_masks = Path(args.output_dir) / "crmasks.fits"

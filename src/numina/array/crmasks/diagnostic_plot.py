@@ -252,7 +252,7 @@ def diagnostic_plot(
     image3d,
     _logger=None,
     png_filename=None,
-    output_dir="."
+    output_dir=".",
 ):
     """Diagnostic plot for the mediancr function."""
     if png_filename is None:
