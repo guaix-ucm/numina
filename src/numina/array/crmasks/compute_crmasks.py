@@ -1924,6 +1924,7 @@ def compute_crmasks(
 
     # Generate list of HDUs with masks
     hdu_mediancr = fits.ImageHDU(mask_mediancr.astype(np.uint8), name="MEDIANCR")
+    hdu_mediancr.header["NPMASKED"] = np.sum(mask_mediancr).astype(int)
     list_hdu_masks = [hdu_mediancr]
 
     # Apply the same algorithm but now with mean2d, with each individual array,
@@ -2164,6 +2165,7 @@ def compute_crmasks(
         else:
             raise RuntimeError("This should never happen.")
         hdu_mask = fits.ImageHDU(mask.astype(np.uint8), name=name)
+        hdu_mask.header["NPMASKED"] = np.sum(mask).astype(int)
         list_hdu_masks.append(hdu_mask)
 
     # Include auxiliary-corrected median2d image if applicable
