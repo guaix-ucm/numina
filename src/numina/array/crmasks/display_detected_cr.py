@@ -261,9 +261,9 @@ def display_detected_cr(
             fig.suptitle(f"Problematic pixels, region #{i+1}/{number_cr}")
 
         plt.tight_layout()
-        plt.show(block=False)
 
         if verify_cr:
+            plt.show(block=False)
             print("-" * 50)
         different_flag_values = []
         for idum in range(i1, i2 + 1):
