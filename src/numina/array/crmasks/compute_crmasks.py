@@ -1643,13 +1643,13 @@ def compute_crmasks(
             xdiag_min = np.min(xplot)
         if np.max(xplot) > xdiag_max:
             xdiag_max = np.max(xplot)
-        if mm_fixed_points_in_boundary is not None:
-            if np.max(y_mm_fixed_points_in_boundary) > ydiag_max:
-                ydiag_max = np.max(y_mm_fixed_points_in_boundary)
         if shift_images:
             ydiag_max *= 4.0  # Add 300% margin to the maximum y limit
         else:
             ydiag_max *= 2.0  # Add 100% margin to the maximum y limit
+        if mm_fixed_points_in_boundary is not None:
+            if np.max(y_mm_fixed_points_in_boundary) > ydiag_max:
+                ydiag_max = 1.05 * np.max(y_mm_fixed_points_in_boundary)
         if mm_ydiag_max is not None:
             if mm_ydiag_max > 0:
                 ydiag_max = mm_ydiag_max
