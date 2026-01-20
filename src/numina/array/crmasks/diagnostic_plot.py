@@ -244,6 +244,7 @@ def diagnostic_plot(
     flag_aux,
     flag_mm,
     mm_threshold,
+    mm_dilation,
     ylabel,
     interactive,
     target2d,
@@ -339,7 +340,7 @@ def diagnostic_plot(
         yplot[flag_only_mm],
         c="b",
         marker="+",
-        label=f"Suspected pixels: {num_only_mm} (mmcosmic)",
+        label=f"Suspected pixels: {num_only_mm} (mmcosmic, mm_dilation: {mm_dilation})",
         zorder=2,
     )
     ax1.scatter(
