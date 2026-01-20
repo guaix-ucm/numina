@@ -1488,7 +1488,7 @@ def compute_crmasks(
                         )
                 list_yx_offsets = [(float(offset[1]), float(offset[0])) for offset in mm_xy_offsets]
                 for i, yx_offsets in enumerate(list_yx_offsets):
-                    _logger.info("provided offsets for image %d: y=%+f, x=%+f", i + 1, yx_offsets[0], yx_offsets[1])
+                    _logger.info("provided (x, y) offsets for image %d: (%+.2f, %+.2f)", i + 1, yx_offsets[1], yx_offsets[0])
             else:
                 raise TypeError(
                     f"Invalid type for mm_xy_offsets: {type(mm_xy_offsets)}. " "Must be list of [x_offset, y_offset)]."
@@ -1547,7 +1547,7 @@ def compute_crmasks(
                     )
                     yx_offsets[0] *= -1  # invert sign
                     yx_offsets[1] *= -1  # invert sign
-                    _logger.info("offsets for image %d: y=%+f, x=%+f", i + 1, yx_offsets[0], yx_offsets[1])
+                    _logger.info("(x, y) offsets for image %d: (%+.2f, %+.2f)", i + 1, yx_offsets[1], yx_offsets[0])
 
                     def on_key_cross(event):
                         if event.key == "x":
@@ -1619,8 +1619,8 @@ def compute_crmasks(
                         title=r"Median $-$ Shifted Image " + f"{i+1} (cleaned)",
                     )
                     fig.suptitle(f"Cross-correlation offsets for image {i+1}\n" 
-                                 rf"$\delta y= {yx_offsets[0]:+.2f}$, " 
-                                 rf"$\delta x= {yx_offsets[1]:+.2f}$")
+                                 rf"$\delta x= {yx_offsets[1]:+.2f}$, " 
+                                 rf"$\delta y= {yx_offsets[0]:+.2f}$")
                     plt.tight_layout()
                     png_filename = f"xyoffset_crosscorr_{i+1}.png"
                     _logger.info(f"saving {png_filename}")
@@ -1697,11 +1697,11 @@ def compute_crmasks(
             _logger.info("xy-shifting median2d to speed up simulations...")
             for i in range(num_images):
                 _logger.info(
-                    "shifted image %d/%d -> delta_y=%+f, delta_x=%+f",
+                    "shifted image %d/%d -> delta_x=%+f, delta_y=%+f",
                     i + 1,
                     num_images,
-                    list_yx_offsets[i][0],
                     list_yx_offsets[i][1],
+                    list_yx_offsets[i][0],
                 )
                 # apply offsets to the median image to simulate the expected individual exposures
                 lam3d[i] = (
