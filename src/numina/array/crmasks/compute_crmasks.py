@@ -1391,13 +1391,11 @@ def compute_crmasks(
                 displaypar=False,
                 _logger=_logger,
             )
-            dumimage2d_cleaned = dumimage2d  # not used
+            dumimage2d_cleaned = dumimage2d
         else:
             raise ValueError(f"Invalid crmethod: {crmethod}.")
         # Store the cleaned image
         image3d_cleaned_single[i] = dumimage2d_cleaned
-        # Ensure no negative values
-        image3d_cleaned_single[i][image3d_cleaned_single[i] < 0.0] = 0.0
         # Create 3D flag array
         flag3d_cleaned_single[i] = flagdum.reshape((naxis2, naxis1)).astype(int)
     # Create 2D flag array by summing over the 3D flag array
@@ -1539,7 +1537,7 @@ def compute_crmasks(
                     list_yx_offsets.append((0.0, 0.0))
                 else:
                     reference_image = median2d[crossregion.python]
-                    moving_image = image3d[i][crossregion.python]
+                    moving_image = image3d_cleaned_single[i][crossregion.python]  # use cleaned image
                     _logger.info("computing offsets for image %d using cross-correlation...", i + 1)
                     yx_offsets, _, _ = phase_cross_correlation(
                         reference_image=reference_image,
@@ -1591,7 +1589,7 @@ def compute_crmasks(
                         vmax=vmax,
                         extent=extent,
                         aspect="auto",
-                        title=f"Image {i+1}",
+                        title=f"Image {i+1} (cleaned)",
                     )
                     shifted_image2d = shift_image2d(
                         moving_image, xoffset=-yx_offsets[1], yoffset=-yx_offsets[0], resampling=2
@@ -1608,7 +1606,7 @@ def compute_crmasks(
                         vmax=vmax,
                         extent=extent,
                         aspect="auto",
-                        title=f"Median - Image {i+1}",
+                        title=r"Median $-$ Image " + f"{i+1} (cleaned)",
                     )
                     tea.imshow(
                         fig,
@@ -1618,8 +1616,11 @@ def compute_crmasks(
                         vmax=vmax,
                         extent=extent,
                         aspect="auto",
-                        title=f"Median - Shifted Image {i+1}",
+                        title=r"Median $-$ Shifted Image " + f"{i+1} (cleaned)",
                     )
+                    fig.suptitle(f"Cross-correlation offsets for image {i+1}\n" 
+                                 rf"$\delta y= {yx_offsets[0]:+.2f}$, " 
+                                 rf"$\delta x= {yx_offsets[1]:+.2f}$")
                     plt.tight_layout()
                     png_filename = f"xyoffset_crosscorr_{i+1}.png"
                     _logger.info(f"saving {png_filename}")
