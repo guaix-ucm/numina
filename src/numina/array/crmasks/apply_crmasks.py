@@ -120,9 +120,9 @@ def apply_crmasks(
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
 
     # If use_auxclean is True, check that the extension 'AUXCLEAN' is present
-    if use_auxmedian:
+    if use_auxclean:
         if "AUXCLEAN" not in hdul_masks:
-            raise ValueError("use_auxmedian is True, but extension 'AUXCLEAN' is not present in hdul_masks.")
+            raise ValueError("use_auxclean is True, but extension 'AUXCLEAN' is not present in hdul_masks.")
 
     # Check that the list contains numpy 2D arrays
     if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays):
@@ -173,10 +173,10 @@ def apply_crmasks(
         flux_factor = np.ones(num_images, dtype=float)
         _logger.info("flux factor values set to %s", str(flux_factor))
 
-    # Check use_auxmedian
-    if use_auxmedian is None:
-        raise ValueError("use_auxmedian must be specified as True or False.")
-    _logger.info("use_auxmedian: %s", use_auxmedian)
+    # Check use_auxclean
+    if use_auxclean is None:
+        raise ValueError("use_auxclean must be specified as True or False.")
+    _logger.info("use_auxclean: %s", use_auxclean)
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)
