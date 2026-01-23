@@ -22,7 +22,7 @@ def apply_crmasks(
     list_arrays,
     hdul_masks=None,
     combination=None,
-    use_auxclean=None,
+    use_auxmedian=None,
     dtype=np.float32,
     apply_flux_factor=None,
     bias=None,
@@ -71,7 +71,7 @@ def apply_crmasks(
         - 'mean', the simple mean without any substitution of masked pixels.
         - 'median', the simple median without any substitution of masked pixels.
         - 'min', the simple minimum, without any substitution of masked pixels.
-    use_auxclean : bool, optional
+    use_auxmedian : bool, optional
         If True, and if the extension 'AUXCLEAN' is present in `hdul_masks`,
         the auxiliary-corrected median array is used instead of the minimum
         value at each pixel. This affects differently depending on the
@@ -119,10 +119,10 @@ def apply_crmasks(
     if combination not in VALID_COMBINATIONS:
         raise ValueError(f"Combination: {combination} must be one of {VALID_COMBINATIONS}.")
 
-    # If use_auxclean is True, check that the extension 'AUXCLEAN' is present
-    if use_auxclean:
+    # If use_auxmedian is True, check that the extension 'AUXCLEAN' is present
+    if use_auxmedian:
         if "AUXCLEAN" not in hdul_masks:
-            raise ValueError("use_auxclean is True, but extension 'AUXCLEAN' is not present in hdul_masks.")
+            raise ValueError("use_auxmedian is True, but extension 'AUXCLEAN' is not present in hdul_masks.")
 
     # Check that the list contains numpy 2D arrays
     if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays):
@@ -173,10 +173,10 @@ def apply_crmasks(
         flux_factor = np.ones(num_images, dtype=float)
         _logger.info("flux factor values set to %s", str(flux_factor))
 
-    # Check use_auxclean
-    if use_auxclean is None:
-        raise ValueError("use_auxclean must be specified as True or False.")
-    _logger.info("use_auxclean: %s", use_auxclean)
+    # Check use_auxmedian
+    if use_auxmedian is None:
+        raise ValueError("use_auxmedian must be specified as True or False.")
+    _logger.info("use_auxmedian: %s", use_auxmedian)
 
     # Convert the list of arrays to a 3D numpy array
     shape3d = (num_images, naxis2, naxis1)
@@ -216,7 +216,7 @@ def apply_crmasks(
         # Replace the masked pixels with the minimum value
         # of the corresponding pixel in the input arrays
         median2d_corrected = median2d.copy()
-        if use_auxclean:
+        if use_auxmedian:
             median2d_corrected[mask_mediancr] = hdul_masks["AUXCLEAN"].data[mask_mediancr]
         else:
             median2d_corrected[mask_mediancr] = min2d_rescaled[mask_mediancr]
@@ -257,7 +257,7 @@ def apply_crmasks(
         # Replace pixels without data with the minimum value or the AUXCLEAN value
         mask_nodata = total_mask == num_images
         if np.any(mask_nodata):
-            if use_auxclean:
+            if use_auxmedian:
                 _logger.info("replacing %d pixels without data by the AUXCLEAN value", np.sum(mask_nodata))
                 combined2d[mask_nodata] = hdul_masks["AUXCLEAN"].data[mask_nodata]
             else:
@@ -273,7 +273,7 @@ def apply_crmasks(
             mask_meancr = hdul_masks["MEANCR"].data.astype(bool)
             if np.any(mask_meancr):
                 _logger.info("applying mask %s: %d masked pixels", "MEANCR", np.sum(mask_meancr))
-                if use_auxclean:
+                if use_auxmedian:
                     _logger.info("replacing %d pixels flagged in MEANCR by the AUXCLEAN value", np.sum(mask_meancr))
                     combined2d[mask_meancr] = hdul_masks["AUXCLEAN"].data[mask_meancr]
                 else:
