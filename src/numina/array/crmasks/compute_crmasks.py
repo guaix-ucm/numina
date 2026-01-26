@@ -885,12 +885,14 @@ def compute_crmasks(
 
     # Log the input parameters
     if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+        _logger.info("mm_cr_coincidences: %d", mm_cr_coincidences)
         _logger.info("mm_synthetic: %s", str(mm_synthetic))
         _logger.info("mm_hist2d_min_neighbors: %d", mm_hist2d_min_neighbors)
         if mm_hist2d_min_neighbors < 0:
             raise ValueError(f"{mm_hist2d_min_neighbors=} must be >= 0.")
         if mm_hist2d_min_neighbors > 8:
             raise ValueError(f"{mm_hist2d_min_neighbors=} must be <= 8.")
+        _logger.info("mm_ydiag_max: %f", mm_ydiag_max)
         _logger.info("mm_dilation: %d", mm_dilation)
         _logger.info("mm_xy_offsets: %s", str(mm_xy_offsets) if mm_xy_offsets is not None else "None")
         _logger.info("mm_crosscorr_region: %s", mm_crosscorr_region if mm_crosscorr_region is not None else "None")
