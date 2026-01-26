@@ -25,6 +25,7 @@ from .remove_isolated_pixels import remove_isolated_pixels
 
 mpl.rcParams["keymap.quit"] = []  # Change default quit key to 'c' to avoid conflicts
 
+
 def compute_flux_factor(
     image3d,
     median2d,
@@ -269,7 +270,9 @@ def compute_flux_factor(
         _logger.info(f"saving {png_filename}")
         plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode\n(press '?' for help, 'c' to close figure and continue, 'x' to quit program)")
+            _logger.info(
+                "Entering interactive mode\n(press '?' for help, 'c' to close figure and continue, 'x' to quit program)"
+            )
             plt.show()
         plt.close(fig)
 

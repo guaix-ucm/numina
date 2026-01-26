@@ -352,11 +352,11 @@ def compute_crmasks(
         If True, print additional information during the
         execution. Employed when crmethod='conn' or 'mm_conn'.
     mm_cr_coincidences : int, optional
-        Number of exposures to be discarded when coincident cosmic-ray 
+        Number of exposures to be discarded when coincident cosmic-ray
         pixels are found. The remaining exposures are used to compute
         the replacement value for those pixels. The minimum value is 2,
         and it should be lower than the total number of indidividual
-        exposures. 
+        exposures.
     mm_synthetic : str or None
         The type of synthetic images to use for the numerical simulations.
         Valid options are:
@@ -534,7 +534,7 @@ def compute_crmasks(
     # Check that mm_cr_coincidences is valid
     if not isinstance(mm_cr_coincidences, int) or mm_cr_coincidences < 2:
         raise ValueError("mm_cr_coincidences must be an integer >= 2.")
-    
+
     # Check that the list contains the minimum number of arrays
     num_images = len(list_arrays)
     if num_images < mm_cr_coincidences + 1:
@@ -675,7 +675,9 @@ def compute_crmasks(
                     "Must be list of 4 integers or None."
                 )
             median2d = np.median(image3d, axis=0)
-            flux_factor = compute_flux_factor(image3d, median2d, list_flux_factor_regions, output_dir, _logger, interactive, debug)
+            flux_factor = compute_flux_factor(
+                image3d, median2d, list_flux_factor_regions, output_dir, _logger, interactive, debug
+            )
             _logger.info("computed flux_factor set to %s", str(flux_factor))
         elif flux_factor.lower() == "none":
             flux_factor = np.ones(num_images, dtype=float)
@@ -1501,7 +1503,9 @@ def compute_crmasks(
                         )
                 list_yx_offsets = [(float(offset[1]), float(offset[0])) for offset in mm_xy_offsets]
                 for i, yx_offsets in enumerate(list_yx_offsets):
-                    _logger.info("provided (x, y) offsets for image %d: (%+.2f, %+.2f)", i + 1, yx_offsets[1], yx_offsets[0])
+                    _logger.info(
+                        "provided (x, y) offsets for image %d: (%+.2f, %+.2f)", i + 1, yx_offsets[1], yx_offsets[0]
+                    )
             else:
                 raise TypeError(
                     f"Invalid type for mm_xy_offsets: {type(mm_xy_offsets)}. " "Must be list of [x_offset, y_offset)]."
@@ -1631,9 +1635,11 @@ def compute_crmasks(
                         aspect="auto",
                         title=r"Median $-$ Shifted Image " + f"{i+1} (cleaned)",
                     )
-                    fig.suptitle(f"Cross-correlation offsets for image {i+1}\n" 
-                                 rf"$\delta x= {yx_offsets[1]:+.2f}$, " 
-                                 rf"$\delta y= {yx_offsets[0]:+.2f}$")
+                    fig.suptitle(
+                        f"Cross-correlation offsets for image {i+1}\n"
+                        rf"$\delta x= {yx_offsets[1]:+.2f}$, "
+                        rf"$\delta y= {yx_offsets[0]:+.2f}$"
+                    )
                     plt.tight_layout()
                     png_filename = f"xyoffset_crosscorr_{i+1}.png"
                     _logger.info(f"saving {png_filename}")
