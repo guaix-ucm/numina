@@ -116,7 +116,9 @@ def compute_flux_factor(
             plt.show()
         plt.close(fig)
 
-    if naxis3 % 2 == 1:
+    if naxis3 % 2 == 0:
+        _logger.warning("compute_flux_factor: naxis3 is even, skipping image number at median position plot.")
+    else:
         # Interactive plot showing the image number at the median position
         argsort = np.argsort(image3d, axis=0)
 

@@ -51,6 +51,7 @@ import teareduce as tea
 from .all_valid_numbers import all_valid_numbers
 from .apply_crmasks import apply_crmasks
 from .apply_threshold_cr import apply_threshold_cr
+from .average_excluding_top_n import average_excluding_top_n
 from .compute_flux_factor import compute_flux_factor
 from .diagnostic_plot import diagnostic_plot
 from .display_detected_cr import display_detected_cr
@@ -123,6 +124,7 @@ def compute_crmasks(
     nn_model=None,
     nn_threshold=None,
     nn_verbose=False,
+    mm_cr_coincidences=2,
     mm_synthetic=None,
     mm_hist2d_min_neighbors=0,
     mm_ydiag_max=0,
@@ -349,6 +351,12 @@ def compute_crmasks(
     nn_verbose : bool
         If True, print additional information during the
         execution. Employed when crmethod='conn' or 'mm_conn'.
+    mm_cr_coincidences : int, optional
+        Number of exposures to be discarded when coincident cosmic-ray 
+        pixels are found. The remaining exposures are used to compute
+        the replacement value for those pixels. The minimum value is 2,
+        and it should be lower than the total number of indidividual
+        exposures. 
     mm_synthetic : str or None
         The type of synthetic images to use for the numerical simulations.
         Valid options are:
@@ -523,10 +531,14 @@ def compute_crmasks(
     if not all(isinstance(array, np.ndarray) and array.ndim == 2 for array in list_arrays):
         raise ValueError("All elements in the list must be 2D numpy arrays.")
 
-    # Check that the list contains at least 3 arrays
+    # Check that mm_cr_coincidences is valid
+    if not isinstance(mm_cr_coincidences, int) or mm_cr_coincidences < 2:
+        raise ValueError("mm_cr_coincidences must be an integer >= 2.")
+    
+    # Check that the list contains the minimum number of arrays
     num_images = len(list_arrays)
-    if num_images < 3:
-        raise ValueError("At least 3 images are required for useful mediancr combination.")
+    if num_images < mm_cr_coincidences + 1:
+        raise ValueError(f"At least {mm_cr_coincidences + 1} images are required for useful mediancr combination.")
 
     # Check that all arrays have the same shape
     for i, array in enumerate(list_arrays):
@@ -738,7 +750,8 @@ def compute_crmasks(
                 )
 
     # Compute minimum, maximum, median and mean along the first axis
-    min2d = np.min(image3d, axis=0)
+    # Note: min2d is computed excluding the highest 'mm_cr_coincidences' values
+    min2d = average_excluding_top_n(arr=image3d, n=mm_cr_coincidences, axis=0)
     max2d = np.max(image3d, axis=0)
     median2d = np.median(image3d, axis=0)
     mean2d = np.mean(image3d, axis=0)
@@ -1727,7 +1740,7 @@ def compute_crmasks(
                 image3d_simul[i] = rng.poisson(lam=lam3d[i] * gain).astype(float) / gain
                 # add readout noise in ADU
                 image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
-            min2d_simul = np.min(image3d_simul, axis=0)
+            min2d_simul = average_excluding_top_n(arr=image3d_simul, n=mm_cr_coincidences, axis=0)
             median2d_simul = np.median(image3d_simul, axis=0)
             xplot_simul = min2d_simul.flatten()
             yplot_simul = median2d_simul.flatten() - min2d_simul.flatten()
