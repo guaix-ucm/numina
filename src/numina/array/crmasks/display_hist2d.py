@@ -330,8 +330,8 @@ def display_hist2d(
                 alpha=0.5,
                 label="Fixed points",
             )
-        ax1.set_xlabel(r"min2d $-$ bias  [${\rm e}^{-}$]")
-        ax1.set_ylabel(r"median2d $-$ min2d  [${\rm e}^{-}$]")
+        ax1.set_xlabel(r"min2d $-$ bias  [ADU]")
+        ax1.set_ylabel(r"median2d $-$ min2d  [ADU]")
         ax1.set_title(f"Simulated data\n(mm_nsimulations = {mm_nsimulations}, mm_synthetic={mm_synthetic})")
         if mm_niter_boundary_extension > 1:
             ax1.legend(loc=1)

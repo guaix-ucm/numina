@@ -1860,7 +1860,7 @@ def compute_crmasks(
 
     # Show diagnostic plot for the cosmic ray detection
     _logger.info("generating diagnostic plot for MEDIANCR...")
-    ylabel = r"median2d $-$ min2d  [${\rm e}^{-}$]"
+    ylabel = r"median2d $-$ min2d  [ADU]"
     diagnostic_plot(
         xplot=xplot,
         yplot=yplot,
@@ -2128,15 +2128,15 @@ def compute_crmasks(
             if i == 0:
                 _logger.info("generating diagnostic plot for MEANCRT...")
                 png_filename = "diagnostic_meancrt.png"
-                ylabel = r"mean2d $-$ min2d  [${\rm e}^{-}$]"
+                ylabel = r"mean2d $-$ min2d  [ADU]"
             elif 1 <= i <= num_images:
                 _logger.info(f"generating diagnostic plot for CRMASK{i}...")
                 png_filename = f"diagnostic_crmask{i}.png"
-                ylabel = f"array{i}" + r" $-$ min2d  [${\rm e}^{-}$]"
+                ylabel = f"array{i}" + r" $-$ min2d  [ADU]"
             elif i == num_images + 1:
                 _logger.info(f"generating diagnostic plot for MEANCR...")
                 png_filename = f"diagnostic_meancr.png"
-                ylabel = r"MEANCR $-$ min2d  [${\rm e}^{-}$]"
+                ylabel = r"MEANCR $-$ min2d  [ADU]"
             else:
                 raise RuntimeError("This should never happen.")
             diagnostic_plot(
