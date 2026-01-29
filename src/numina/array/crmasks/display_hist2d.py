@@ -362,7 +362,7 @@ def display_hist2d(
         _logger.info(f"saving {png_filename}")
         plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode\n(press 'r' to repeat plot, 'c' to continue, 'x' to quit program)")
+            _logger.info("Entering interactive mode\n(press 'r' to repeat fit, 'c' to continue, 'x' to quit program)")
             plt.show()
         else:
             loop = False
@@ -379,7 +379,7 @@ def display_hist2d(
             new_mm_boundary_fit = ""
             while new_mm_boundary_fit not in ["piecewise", "spline"]:
                 new_mm_boundary_fit = (
-                    input(f"Type of boundary fit: piecewise or spline [{mm_boundary_fit}]: ").strip().lower()
+                    input(f"Type of boundary fit (piecewise | spline) [{mm_boundary_fit}]: ").strip().lower()
                 )
                 if new_mm_boundary_fit == "":
                     new_mm_boundary_fit = mm_boundary_fit

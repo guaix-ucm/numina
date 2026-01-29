@@ -46,6 +46,7 @@ except ModuleNotFoundError as e:
     CONN_AVAILABLE = False
 
 from numina.array.distortion import shift_image2d
+from numina.tools.input_number import input_number
 import teareduce as tea
 
 from .all_valid_numbers import all_valid_numbers
@@ -125,6 +126,8 @@ def compute_crmasks(
     nn_threshold=None,
     nn_verbose=False,
     mm_cr_coincidences=2,
+    mm_photon_distribution=None,
+    mm_nbinom_shape=None,
     mm_synthetic=None,
     mm_hist2d_min_neighbors=0,
     mm_ydiag_max=0,
@@ -357,6 +360,16 @@ def compute_crmasks(
         the replacement value for those pixels. The minimum value is 2,
         and it should be lower than the total number of indidividual
         exposures.
+    mm_photon_distribution : str or None, optional
+        The type of photon distribution to use for the numerical simulations.
+        Valid options are:
+        - 'poisson': use a Poisson distribution for the photon noise.
+        - 'nbinom': use a negative binomial distribution for the photon noise.
+          In this case, the shape parameter must be provided via the
+          'mm_nbinom_shape' parameter.
+    mm_nbinom_shape : float or None, optional
+        The shape parameter for the negative binomial distribution. Only
+        used if 'mm_photon_distribution' is set to 'nbinom'.
     mm_synthetic : str or None
         The type of synthetic images to use for the numerical simulations.
         Valid options are:
@@ -522,6 +535,21 @@ def compute_crmasks(
         acronym_aux = None
     else:
         raise ValueError(f"Invalid crmethod: {crmethod}. This should never happen.")
+
+    # Check that mm_photon_distribution is valid if the MM method is used
+    if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
+        if mm_photon_distribution is not None:
+            if mm_photon_distribution not in ["poisson", "nbinom"]:
+                raise ValueError(
+                    "Invalid mm_photon_distribution: "
+                    f"{mm_photon_distribution}. Valid options are 'poisson' or 'nbinom'"
+                )
+        else:
+            raise ValueError("mm_photon_distribution must be provided when using the M.M.Cosmic method.")
+        if not isinstance(mm_nbinom_shape, (float, int)) or mm_nbinom_shape <= 0:
+            raise ValueError(
+                "mm_nbinom_shape must be a positive float in case mm_photon_distribution is set to 'nbinom'."
+            )
 
     # Check that the input is a list
     if not isinstance(list_arrays, list):
@@ -886,6 +914,8 @@ def compute_crmasks(
     # Log the input parameters
     if crmethod in ["mm_lacosmic", "mm_pycosmic", "mm_deepcr", "mm_conn"]:
         _logger.info("mm_cr_coincidences: %d", mm_cr_coincidences)
+        _logger.info("mm_photon_distribution: %s", mm_photon_distribution)
+        _logger.info("mm_nbinom_shape: %f", mm_nbinom_shape)
         _logger.info("mm_synthetic: %s", str(mm_synthetic))
         _logger.info("mm_hist2d_min_neighbors: %d", mm_hist2d_min_neighbors)
         if mm_hist2d_min_neighbors < 0:
@@ -1656,6 +1686,8 @@ def compute_crmasks(
         rng = np.random.default_rng(mm_seed)  # Random number generator for reproducibility
         xdiag_min, xdiag_max, ydiag_min, ydiag_max = estimate_diagnostic_limits(
             rng=rng,
+            mm_photon_distribution=mm_photon_distribution,
+            mm_nbinom_shape=mm_nbinom_shape,
             gain=np.median(gain),  # Use median value to simplify the computation
             rnoise=np.median(rnoise),  # Use median value to simplify the computation
             maxvalue=np.max(min2d),
@@ -1680,6 +1712,7 @@ def compute_crmasks(
         xylim_table = Table(
             names=["xdiag_min", "xdiag_max", "ydiag_min", "ydiag_max"], dtype=[float, float, float, float]
         )
+        ydiag_min = 0.0  # always 0
         for colname in xylim_table.colnames:
             xylim_table[colname].format = ".3f"
         xylim_table.add_row([xdiag_min, xdiag_max, ydiag_min, ydiag_max])
@@ -1693,7 +1726,6 @@ def compute_crmasks(
 
         # Create a 2D histogram for the diagnostic plot, using
         # integers to avoid rounding errors
-        hist2d_accummulated = np.zeros((nbins_ydiag, nbins_xdiag), dtype=int)
         if apply_flux_factor_to == "original":
             flux_factor_for_simulated = np.ones(num_images, dtype=float)
         elif apply_flux_factor_to == "simulated":
@@ -1739,58 +1771,127 @@ def compute_crmasks(
         # replace any negative values with zeros
         for i in range(num_images):
             lam3d[i][lam3d[i] < 0] = 0.0
-        _logger.info("computing simulated 2D histogram...")
-        for k in range(mm_nsimulations):
-            time_ini = datetime.now()
-            image3d_simul = np.zeros((num_images, naxis2, naxis1))
-            for i in range(num_images):
-                # convert from ADU to electrons to apply Poisson noise, and then back to ADU
-                image3d_simul[i] = rng.poisson(lam=lam3d[i] * gain).astype(float) / gain
-                # add readout noise in ADU
-                image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
-            min2d_simul = average_excluding_top_n(arr=image3d_simul, n=mm_cr_coincidences, axis=0)
-            median2d_simul = np.median(image3d_simul, axis=0)
-            xplot_simul = min2d_simul.flatten()
-            yplot_simul = median2d_simul.flatten() - min2d_simul.flatten()
-            # Avoid pixels that were flagged as cosmic rays in the median and single images
-            xplot_simul = xplot_simul[flag2d_cleaned_single == 0]
-            yplot_simul = yplot_simul[flag2d_cleaned_single == 0]
-            hist2d, edges = np.histogramdd(sample=(yplot_simul, xplot_simul), bins=(bins_ydiag, bins_xdiag))
-            hist2d_accummulated += hist2d.astype(int)
-            time_end = datetime.now()
-            nchars = len(str(mm_nsimulations))
-            _logger.info(f"simulation {k + 1:0{nchars}d}/{mm_nsimulations}, time elapsed: {time_end - time_ini}")
-        # Display hist2d
-        result_hist2d = display_hist2d(
-            _logger=_logger,
-            rlabel_mmcosmic=rlabel_mmcosmic,
-            mm_hist2d_min_neighbors=mm_hist2d_min_neighbors,
-            hist2d_accummulated=hist2d_accummulated,
-            mm_nsimulations=mm_nsimulations,
-            mm_synthetic=mm_synthetic,
-            bins_xdiag=bins_xdiag,
-            bins_ydiag=bins_ydiag,
-            xplot=xplot,
-            yplot=yplot,
-            xdiag_min=xdiag_min,
-            xdiag_max=xdiag_max,
-            max2d=max2d,
-            bool_to_be_cleaned=bool_to_be_cleaned,
-            rnoise=rnoise,
-            mm_threshold=mm_threshold,
-            mm_boundary_fit=mm_boundary_fit,
-            mm_knots_splfit=mm_knots_splfit,
-            mm_minimum_max2d_rnoise=mm_minimum_max2d_rnoise,
-            mm_dilation=mm_dilation,
-            mm_niter_boundary_extension=mm_niter_boundary_extension,
-            mm_weight_boundary_extension=mm_weight_boundary_extension,
-            mm_fixed_points_in_boundary=mm_fixed_points_in_boundary,
-            x_mm_fixed_points_in_boundary=x_mm_fixed_points_in_boundary,
-            y_mm_fixed_points_in_boundary=y_mm_fixed_points_in_boundary,
-            w_mm_fixed_points_in_boundary=w_mm_fixed_points_in_boundary,
-            interactive=interactive,
-            output_dir=output_dir,
-        )
+        loop_simulations = True
+        while loop_simulations:
+            _logger.info("computing simulated 2D histogram...")
+            hist2d_accummulated = np.zeros((nbins_ydiag, nbins_xdiag), dtype=int)
+            for k in range(mm_nsimulations):
+                time_ini = datetime.now()
+                image3d_simul = np.zeros((num_images, naxis2, naxis1))
+                for i in range(num_images):
+                    # convert from ADU to electrons to apply Poisson / Negative Binomial noise,
+                    # and then back to ADU
+                    if mm_photon_distribution == "poisson":
+                        image3d_simul[i] = rng.poisson(lam=lam3d[i] * gain).astype(float) / gain
+                    else:
+                        image3d_simul[i] = (
+                            rng.negative_binomial(
+                                n=mm_nbinom_shape,
+                                p=mm_nbinom_shape / (mm_nbinom_shape + lam3d[i] * gain),
+                            ).astype(float)
+                            / gain
+                        )
+                    # add readout noise in ADU
+                    image3d_simul[i] += rng.normal(loc=0, scale=rnoise)
+                min2d_simul = average_excluding_top_n(arr=image3d_simul, n=mm_cr_coincidences, axis=0)
+                median2d_simul = np.median(image3d_simul, axis=0)
+                xplot_simul = min2d_simul.flatten()
+                yplot_simul = median2d_simul.flatten() - min2d_simul.flatten()
+                # Avoid pixels that were flagged as cosmic rays in the median and single images
+                xplot_simul = xplot_simul[flag2d_cleaned_single == 0]
+                yplot_simul = yplot_simul[flag2d_cleaned_single == 0]
+                hist2d, edges = np.histogramdd(sample=(yplot_simul, xplot_simul), bins=(bins_ydiag, bins_xdiag))
+                hist2d_accummulated += hist2d.astype(int)
+                time_end = datetime.now()
+                nchars = len(str(mm_nsimulations))
+                _logger.info(f"simulation {k + 1:0{nchars}d}/{mm_nsimulations}, time elapsed: {time_end - time_ini}")
+            # Display hist2d
+            result_hist2d = display_hist2d(
+                _logger=_logger,
+                rlabel_mmcosmic=rlabel_mmcosmic,
+                mm_hist2d_min_neighbors=mm_hist2d_min_neighbors,
+                hist2d_accummulated=hist2d_accummulated,
+                mm_nsimulations=mm_nsimulations,
+                mm_synthetic=mm_synthetic,
+                bins_xdiag=bins_xdiag,
+                bins_ydiag=bins_ydiag,
+                xplot=xplot,
+                yplot=yplot,
+                xdiag_min=xdiag_min,
+                xdiag_max=xdiag_max,
+                max2d=max2d,
+                bool_to_be_cleaned=bool_to_be_cleaned,
+                rnoise=rnoise,
+                mm_threshold=mm_threshold,
+                mm_boundary_fit=mm_boundary_fit,
+                mm_knots_splfit=mm_knots_splfit,
+                mm_minimum_max2d_rnoise=mm_minimum_max2d_rnoise,
+                mm_dilation=mm_dilation,
+                mm_niter_boundary_extension=mm_niter_boundary_extension,
+                mm_weight_boundary_extension=mm_weight_boundary_extension,
+                mm_fixed_points_in_boundary=mm_fixed_points_in_boundary,
+                x_mm_fixed_points_in_boundary=x_mm_fixed_points_in_boundary,
+                y_mm_fixed_points_in_boundary=y_mm_fixed_points_in_boundary,
+                w_mm_fixed_points_in_boundary=w_mm_fixed_points_in_boundary,
+                interactive=interactive,
+                output_dir=output_dir,
+            )
+            if interactive:
+                user_input = input("Do you want to rerun the simulations? (y/n) [n]: ")
+                if user_input.lower() in ["y", "yes"]:
+                    new_mm_photon_distribution = ""
+                    while new_mm_photon_distribution not in ["poisson", "nbinom"]:
+                        new_mm_photon_distribution = (
+                            input(
+                                f"Enter new value for mm_photon_distribution (poisson | nbinom) [{mm_photon_distribution}]: "
+                            )
+                            .strip()
+                            .lower()
+                        )
+                        if new_mm_photon_distribution == "":
+                            new_mm_photon_distribution = mm_photon_distribution
+                        if new_mm_photon_distribution not in ["poisson", "nbinom"]:
+                            print("Invalid input. Please enter 'poisson', 'nbinom', or press Enter to keep current.")
+                    mm_photon_distribution = new_mm_photon_distribution
+                    if mm_photon_distribution == "nbinom":
+                        is_positive = lambda x: (isinstance(x, (int, float)) and x > 0)
+                        mm_nbinom_shape = input_number(
+                            expected_type="float",
+                            prompt="Enter new value for mm_nbinom_shape (float > 0)",
+                            validator=is_positive,
+                            default=mm_nbinom_shape,
+                        )
+                    print(f"{xdiag_min=}, {xdiag_max=}, {ydiag_max=}, {mm_nsimulations=}")
+                    xdiag_min = input_number(
+                        expected_type="float",
+                        prompt="Enter new value for xdiag_min (float)",
+                        default=xdiag_min,
+                    )
+                    xdiag_max = input_number(
+                        expected_type="float",
+                        prompt="Enter new value for xdiag_max (float > xdiag_min)",
+                        validator=lambda x: (isinstance(x, float) and x > xdiag_min),
+                        default=xdiag_max,
+                    )
+                    bins_xdiag = np.linspace(xdiag_min, xdiag_max, nbins_xdiag + 1)
+                    ydiag_max = input_number(
+                        expected_type="float",
+                        prompt="Enter new value for ydiag_max (float > 0)",
+                        validator=is_positive,
+                        default=ydiag_max,
+                    )
+                    bins_ydiag = np.linspace(0, ydiag_max, nbins_ydiag + 1)
+                    mm_nsimulations = input_number(
+                        expected_type="int",
+                        prompt="Enter new value for mm_nsimulations (int > 0)",
+                        validator=lambda x: (isinstance(x, int) and x > 0),
+                        default=mm_nsimulations,
+                    )
+                    _logger.info("rerunning the simulations as per user request...")
+                else:
+                    loop_simulations = False
+            else:
+                loop_simulations = False
         # retrieve main results
         boundaryfit = result_hist2d["boundaryfit"]
         flag_mm = result_hist2d["flag_mm"]

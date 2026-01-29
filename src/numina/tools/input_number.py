@@ -10,6 +10,8 @@
 
 from typing import Optional, Callable, Literal, Union
 
+import numpy as np
+
 Number = Union[int, float]
 
 
@@ -143,18 +145,18 @@ def input_number(
 
     # --- Validate bounds consistency ---
     def _is_number(x) -> bool:
-        return isinstance(x, (int, float))
+        return isinstance(x, (int, float, np.integer, np.floating))
 
     if min_val is not None and not _is_number(min_val):
-        raise TypeError("min_val must be a number or None.")
+        raise TypeError(f"min_val of type {type(min_val)} must be a number or None.")
     if max_val is not None and not _is_number(max_val):
-        raise TypeError("max_val must be a number or None.")
+        raise TypeError(f"max_val of type {type(max_val)} must be a number or None.")
     if min_val is not None and max_val is not None and min_val > max_val:
         raise ValueError("min_val must be <= max_val when both are provided.")
 
     # --- Validate default ---
     if default is not None and not _is_number(default):
-        raise TypeError("default must be a number or None.")
+        raise TypeError(f"default of type {type(default)} must be a number or None.")
     if default is not None:
         if min_val is not None and default < min_val:
             raise ValueError("Default is below the minimum bound.")
