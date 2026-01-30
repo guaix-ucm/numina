@@ -25,6 +25,7 @@ def input_number(
     attempts: Optional[int] = None,
     validator: Optional[Callable[[Number], bool]] = None,
     input_func: Callable[[str], str] = input,
+    number_format: Optional[str] = None,
 ) -> Number:
     """
     Prompt the user for a number (integer or float), with optional bounds and validation.
@@ -50,6 +51,10 @@ def input_number(
         Additional constraint; the parsed value must satisfy validator(x) == True.
     input_func : callable(prompt: str) -> str, default built-in input
         The function used to obtain input (useful for testing).
+    number_format : str | None, default None
+        Optional format string for displaying the number in prompts
+        (e.g., ".2f" for two decimal places). If None, default string 
+        conversion is used.
 
     Returns
     -------
@@ -93,6 +98,14 @@ def input_number(
     >>> inp = fake_input_gen(["1.5", "0.75"])
     >>> input_number("float", 0.0, 1.0, prompt="Probability [0-1]", input_func=inp)
     0.75
+
+    Float with custom format:
+
+    >>> inp = fake_input_gen([""])
+    >>> input_number(expected_type="float", default=0.123456,
+    ...              number_format=".4f", input_func=inp)
+    Enter a float [0.123]:
+    0.123456
 
     Integer parsing allows strings like "3.0" that are exactly integral:
 
@@ -167,15 +180,25 @@ def input_number(
         # Enforce type: if expected int, default must be an integer value
         if expected_type == "int" and not float(default).is_integer():
             raise ValueError("Default must be an integer for expected_type='int'.")
+        
+    # --- Helper to format numbers ---
+    def _format_number(n: Number) -> str:
+        if number_format is None:
+            return str(n)
+        try:
+            return f"{n:{number_format}}"
+        except (ValueError, TypeError):
+            # Fallback to default string conversion on format error
+            return str(n)
 
     # --- Build a context-aware prompt ---
     def _range_text() -> str:
         if min_val is not None and max_val is not None:
-            return f"[{min_val}–{max_val}]"
+            return f"[{_format_number(min_val)}–{_format_number(max_val)}]"
         elif min_val is not None:
-            return f"≥ {min_val}"
+            return f"≥ {_format_number(min_val)}"
         elif max_val is not None:
-            return f"≤ {max_val}"
+            return f"≤ {_format_number(max_val)}"
         else:
             return ""
 
@@ -188,7 +211,7 @@ def input_number(
     else:
         base = prompt
 
-    default_str = f" [{default}]" if default is not None else None
+    default_str = f" [{_format_number(default)}]" if default is not None else None
     full_prompt = f"{base}{default_str}: " if (default is not None and allow_blank_to_default) else f"{base}: "
 
     # --- Parsing helper ---
@@ -246,11 +269,11 @@ def input_number(
         # Check constraints
         if not _valid(n):
             if min_val is not None and max_val is not None:
-                print(f"Out of range or invalid. Enter a value between {min_val} and {max_val}.")
+                print(f"Out of range or invalid. Enter a value between {_format_number(min_val)} and {_format_number(max_val)}.")
             elif min_val is not None:
-                print(f"Out of range or invalid. Enter a value ≥ {min_val}.")
+                print(f"Out of range or invalid. Enter a value ≥ {_format_number(min_val)}.")
             elif max_val is not None:
-                print(f"Out of range or invalid. Enter a value ≤ {max_val}.")
+                print(f"Out of range or invalid. Enter a value ≤ {_format_number(max_val)}.")
             else:
                 print("Invalid value for the provided constraints.")
             if remaining is not None:
