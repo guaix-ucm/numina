@@ -1813,6 +1813,8 @@ def compute_crmasks(
                 hist2d_accummulated=hist2d_accummulated,
                 mm_nsimulations=mm_nsimulations,
                 mm_synthetic=mm_synthetic,
+                mm_photon_distribution=mm_photon_distribution,
+                mm_nbinom_shape=mm_nbinom_shape,
                 bins_xdiag=bins_xdiag,
                 bins_ydiag=bins_ydiag,
                 xplot=xplot,
@@ -1861,7 +1863,6 @@ def compute_crmasks(
                             validator=is_positive,
                             default=mm_nbinom_shape,
                         )
-                    print(f"{xdiag_min=}, {xdiag_max=}, {ydiag_max=}, {mm_nsimulations=}")
                     xdiag_min = input_number(
                         expected_type="float",
                         prompt="Enter new value for xdiag_min (float)",

@@ -83,6 +83,8 @@ def display_hist2d(
     hist2d_accummulated,
     mm_nsimulations,
     mm_synthetic,
+    mm_photon_distribution,
+    mm_nbinom_shape,
     bins_xdiag,
     bins_ydiag,
     xplot,
@@ -332,7 +334,13 @@ def display_hist2d(
             )
         ax1.set_xlabel(r"min2d $-$ bias  [ADU]")
         ax1.set_ylabel(r"median2d $-$ min2d  [ADU]")
-        ax1.set_title(f"Simulated data\n(mm_nsimulations = {mm_nsimulations}, mm_synthetic={mm_synthetic})")
+        tmp_title = "Simulated data, "
+        if mm_photon_distribution == "poisson":
+            tmp_title += "Poisson"
+        elif mm_photon_distribution == "nbinom":
+            tmp_title += f"Negative binomial (shape={mm_nbinom_shape})"
+        tmp_title += f"\n(mm_nsimulations = {mm_nsimulations}, mm_synthetic={mm_synthetic})"
+        ax1.set_title(tmp_title)
         if mm_niter_boundary_extension > 1:
             ax1.legend(loc=1)
         xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
