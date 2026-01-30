@@ -150,6 +150,7 @@ def main(args=None):
             _logger=logger,
             debug=(args.log_level == "DEBUG"),
             output_dir=args.output_dir,
+            record_terminal_output=args.record,
             **crmasks_params,
         )
         # Save the cosmic ray masks to a FITS file

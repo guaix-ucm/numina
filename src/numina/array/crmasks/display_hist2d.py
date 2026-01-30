@@ -29,6 +29,7 @@ from .valid_parameters import VALID_BOUNDARY_FITS
 from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
 
 mpl.rcParams["keymap.quit"] = []  # disable 'q' key for quitting plots
+mpl.rcParams["keymap.fullscreen"] = []  # disable 'f' key for fullscreen (used here for other purpose)
 
 
 def xsort_and_show_fixed_points_in_boundary(
@@ -107,6 +108,7 @@ def display_hist2d(
     w_mm_fixed_points_in_boundary,
     interactive,
     output_dir=".",
+    record_terminal_output=False,
 ):
     """Display 2D histogram of min2d-bias vs mean2d-bias values."""
     # Remove bins that are surrounded by less than mm_hist2d_min_neighbors neighbors
@@ -153,17 +155,25 @@ def display_hist2d(
         norm = LogNorm(vmin=vmin, vmax=vmax)
 
         def on_key_2dhist(event):
-            nonlocal loop
+            nonlocal loop, rerun_simulations
             if event.key == "x":
                 _logger.info("Exiting program as per user request ('x' key pressed).")
                 plt.close(fig)
                 sys.exit(0)
             elif event.key == "c":
-                print("Continuing to next step as per user request ('c' key pressed).")
+                _logger.info("Continuing to next step as per user request ('c' key pressed).")
                 plt.close(fig)
                 loop = False
-            elif event.key == "r":
+                rerun_simulations = False
+            elif event.key == "f":
+                _logger.info("Repeating fit as per user request ('f' key pressed).")
                 plt.close(fig)
+                rerun_simulations = False
+            elif event.key == "r":
+                _logger.info("Rerunning simulations and fit as per user request ('r' key pressed).")
+                plt.close(fig)
+                loop = False
+                rerun_simulations = True
 
         fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
         fig.canvas.mpl_connect("key_press_event", lambda event: on_key_2dhist(event))
@@ -370,51 +380,74 @@ def display_hist2d(
         _logger.info(f"saving {png_filename}")
         plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode\n(press 'r' to repeat fit, 'c' to continue, 'x' to quit program)")
+            _logger.info("Entering interactive mode (press any of the following keys)\n"
+                         "'f' to repeat fit, 'r' to rerun simulations, 'c' to continue, 'x' to quit")
             plt.show()
         else:
             loop = False
+            rerun_simulations = False
         if loop:
             # Modify hist2d_min_neighbors
+            mm_hist2d_min_neighbors_ = mm_hist2d_min_neighbors
+            prompt = "Minimum number of neighbors to keep bins in the 2D histogram (0-8)"
             mm_hist2d_min_neighbors = input_number(
                 expected_type="int",
-                prompt="Minimum number of neighbors to keep bins in the 2D histogram (0-8)",
+                prompt=prompt,
                 min_val=0,
                 max_val=8,
                 default=mm_hist2d_min_neighbors,
             )
+            if record_terminal_output:
+                _logger.info(f"{prompt} [{mm_hist2d_min_neighbors_}]: {mm_hist2d_min_neighbors}")
             # Modify mm_boundary_fit
             new_mm_boundary_fit = ""
+            mm_boundary_fit_ = mm_boundary_fit
             while new_mm_boundary_fit not in ["piecewise", "spline"]:
-                new_mm_boundary_fit = (
-                    input(f"Type of boundary fit (piecewise | spline) [{mm_boundary_fit}]: ").strip().lower()
-                )
+                prompt = "Type of boundary fit (piecewise | spline)"
+                new_mm_boundary_fit = input(f"{prompt} [{mm_boundary_fit}]: ").strip().lower()
                 if new_mm_boundary_fit == "":
                     new_mm_boundary_fit = mm_boundary_fit
                 if new_mm_boundary_fit not in ["piecewise", "spline"]:
                     _logger.info("Invalid value. Please type 'piecewise' or 'spline'.")
             mm_boundary_fit = new_mm_boundary_fit
+            if record_terminal_output:
+                # escape first bracket for rich logging
+                _logger.info(f"{prompt} \\[{mm_boundary_fit_}]: {mm_boundary_fit}")
+            # Modify spline parameters if needed
             if mm_boundary_fit == "spline":
                 # Modify number of knots
+                mm_knots_splfit_ = mm_knots_splfit
+                prompt = "Number of knots for spline boundary fit (min. 2)"
                 mm_knots_splfit = input_number(
                     expected_type="int",
-                    prompt="Number of knots for spline boundary fit (min. 2)",
+                    prompt=prompt,
                     min_val=2,
                     default=mm_knots_splfit,
                 )
+                if record_terminal_output:
+                    _logger.info(f"{prompt} [{mm_knots_splfit_}]: {mm_knots_splfit}")
                 # Modify number of iterations for boundary extension
+                mm_niter_boundary_extension_ = mm_niter_boundary_extension
+                prompt = "Number of iterations for boundary extension (min. 0)"
                 mm_niter_boundary_extension = input_number(
                     expected_type="int",
-                    prompt="Number of iterations for boundary extension (min. 0)",
+                    prompt=prompt,
                     min_val=0,
                     default=mm_niter_boundary_extension,
                 )
+                if record_terminal_output:
+                    _logger.info(f"{prompt} [{mm_niter_boundary_extension_}]: {mm_niter_boundary_extension}")
+                # Modify weight for boundary extension
+                mm_weight_boundary_extension_ = mm_weight_boundary_extension
+                prompt = "Weight for boundary extension (greater than 1.0)"
                 mm_weight_boundary_extension = input_number(
                     expected_type="float",
-                    prompt="Weight for boundary extension (greater than 1.0)",
+                    prompt=prompt,
                     min_val=1.0,
                     default=mm_weight_boundary_extension,
                 )
+                if record_terminal_output:
+                    _logger.info(f"{prompt} [{mm_weight_boundary_extension_}]: {mm_weight_boundary_extension}")
             # Modify fixed points in the boundary
             if mm_fixed_points_in_boundary is None:
                 num_fixed_points = 0
@@ -434,11 +467,12 @@ def display_hist2d(
                     w_mm_fixed_points_in_boundary,
                 )
                 while modify_fixed not in ["y", "n", ""]:
-                    modify_fixed = (
-                        input("Do you want to modify the fixed points in the boundary? (y/[n]): ").strip().lower()
-                    )
+                    prompt = "Do you want to modify the fixed points in the boundary"
+                    modify_fixed = input(f"{prompt} (y/[n])? ").strip().lower()
                     if modify_fixed not in ["y", "n", ""]:
                         _logger.info("Invalid value. Please type 'y' or 'n' or press 'Enter'.")
+                if record_terminal_output:
+                    _logger.info(f"{prompt} (y/\\[n])? {modify_fixed}")
                 if modify_fixed != "y":
                     modify_fixed = "n"
                 # Allow to delete individual fixed points or add new ones
@@ -448,25 +482,33 @@ def display_hist2d(
                         submenu = "Type:\n"
                         submenu += "- 'a' to add a fixed point\n"
                         valid_answers = "a/[n]"
+                        valid_answers_ = "a/\\[n]"
                         if num_fixed_points > 0:
                             submenu += "- 'c' to clear all fixed points\n"
                             submenu += "- 'd' to delete an existing fixed point\n"
                             submenu += "- 'e' to edit an existing fixed point\n"
                             valid_answers = "a/c/d/e/[n]"
+                            valid_answers_ = "a/c/d/e/\\[n]"
                         submenu += "- 'n' none (continue without additional changes)"
                         _logger.info(submenu)
-                        action = input(f"Your choice ({valid_answers}): ").strip().lower()
+                        prompt = f"Your choice"
+                        action = input(f"{prompt} ({valid_answers}): ").strip().lower()
+                        if record_terminal_output:
+                            _logger.info(f"{prompt} ({valid_answers_}): {action}")
                         if action == "d" and num_fixed_points > 0:
                             if num_fixed_points == 1:
                                 _logger.info("Only one fixed point available, deleting it.")
                                 index_to_delete = 1
                             else:
+                                prompt = f"Index of fixed point to delete (1 to {num_fixed_points})"
                                 index_to_delete = input_number(
                                     expected_type="int",
-                                    prompt=f"Index of fixed point to delete (1 to {num_fixed_points})",
+                                    prompt=prompt,
                                     min_val=1,
                                     max_val=num_fixed_points,
                                 )
+                                if record_terminal_output:
+                                    _logger.info(f"{prompt}: {index_to_delete}")
                             x_mm_fixed_points_in_boundary = np.delete(
                                 x_mm_fixed_points_in_boundary, index_to_delete - 1
                             )
@@ -486,44 +528,65 @@ def display_hist2d(
                                 _logger.info("Only one fixed point available, editing it.")
                                 index_to_edit = 1
                             else:
+                                prompt = f"Index of fixed point to edit (1 to {num_fixed_points})"
                                 index_to_edit = input_number(
                                     expected_type="int",
-                                    prompt=f"Index of fixed point to edit (1 to {num_fixed_points})",
+                                    prompt=prompt,
                                     min_val=1,
                                     max_val=num_fixed_points,
                                 )
+                                if record_terminal_output:
+                                    _logger.info(f"{prompt}: {index_to_edit}")
+                            prompt = "New x value of fixed point"
                             x_new = input_number(
                                 expected_type="float",
-                                prompt="New x value of fixed point",
+                                prompt=prompt,
                                 default=x_mm_fixed_points_in_boundary[index_to_edit - 1],
                             )
+                            if record_terminal_output:
+                                _logger.info(f"{prompt} [{x_mm_fixed_points_in_boundary[index_to_edit - 1]}]: {x_new}")
+                            prompt = "New y value of fixed point"
                             y_new = input_number(
                                 expected_type="float",
-                                prompt="New y value of fixed point",
+                                prompt=prompt,
                                 default=y_mm_fixed_points_in_boundary[index_to_edit - 1],
                             )
+                            if record_terminal_output:
+                                _logger.info(f"{prompt} [{y_mm_fixed_points_in_boundary[index_to_edit - 1]}]: {y_new}")
+                            prompt = "New weight of fixed point"
                             w_new = input_number(
                                 expected_type="float",
-                                prompt="New weight of fixed point",
+                                prompt=prompt,
                                 min_val=0.0,
                                 default=w_mm_fixed_points_in_boundary[index_to_edit - 1],
                             )
+                            if record_terminal_output:
+                                _logger.info(f"{prompt} [{w_mm_fixed_points_in_boundary[index_to_edit - 1]}]: {w_new}")
                             x_mm_fixed_points_in_boundary[index_to_edit - 1] = x_new
                             y_mm_fixed_points_in_boundary[index_to_edit - 1] = y_new
                             w_mm_fixed_points_in_boundary[index_to_edit - 1] = w_new
                         elif action == "a":
+                            prompt = "x value of new fixed point"
                             x_new = input_number(
-                                expected_type="float", prompt="x value of new fixed point", default=None
+                                expected_type="float", prompt=prompt, default=None
                             )
+                            if record_terminal_output:
+                                _logger.info(f"{prompt}: {x_new}")
+                            prompt = "y value of new fixed point"
                             y_new = input_number(
-                                expected_type="float", prompt="y value of new fixed point", default=None
+                                expected_type="float", prompt=prompt, default=None
                             )
+                            if record_terminal_output:
+                                _logger.info(f"{prompt}: {y_new}")
+                            prompt = "weight of new fixed point"
                             w_new = input_number(
                                 expected_type="float",
-                                prompt="weight of new fixed point",
+                                prompt=prompt,
                                 min_val=0.0,
                                 default=DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY,
                             )
+                            if record_terminal_output:
+                                _logger.info(f"{prompt} [{DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY}]: {w_new}")
                             if num_fixed_points == 0:
                                 x_mm_fixed_points_in_boundary = np.array([x_new], dtype=float)
                                 y_mm_fixed_points_in_boundary = np.array([y_new], dtype=float)
@@ -546,7 +609,10 @@ def display_hist2d(
                                     _logger.info(
                                         "At least two fixed points are needed for piecewise linear boundary fit."
                                     )
-                                    input("Press Enter to continue...")
+                                    prompt = "Press Enter to continue..."
+                                    input(prompt)
+                                    if record_terminal_output:
+                                        _logger.info(prompt)
                                     action = "?"
                             if action == "n":
                                 _logger.info("No changes made to fixed points in boundary.")
@@ -574,4 +640,4 @@ def display_hist2d(
         "mm_weight_boundary_extension": mm_weight_boundary_extension,
     }
 
-    return result
+    return rerun_simulations, result

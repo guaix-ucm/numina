@@ -72,6 +72,7 @@ from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
 def compute_crmasks(
     list_arrays,
     output_dir=".",
+    record_terminal_output=False,
     gain=None,
     rnoise=None,
     bias=None,
@@ -162,6 +163,12 @@ def compute_crmasks(
     list_arrays : list of 2D arrays
         The input arrays to be combined. The arrays are assumed to be
         provided in ADU.
+    output_dir : str, optional
+        The output directory where the results will be saved
+        (default is the current directory).
+    record_terminal_output : bool, optional
+        If True, the terminal output is being recorded. It is then
+        necessary to repeat the terminal input when interactive mode is enabled.
     gain : 2D array, float or None
         The gain value (in e/ADU) of the detector.
         If None, it is assumed to be 1.0.
@@ -1677,7 +1684,8 @@ def compute_crmasks(
                     _logger.info(f"saving {png_filename}")
                     plt.savefig(Path(output_dir) / png_filename, dpi=150)
                     if interactive:
-                        _logger.info("Entering interactive mode (press 'c' to continue, 'x' to quit program)")
+                        _logger.info("Entering interactive mode (press any of the following keys)\n"
+                                     "'c' to continue, 'x' to quit program")
                         plt.show()
                     plt.close(fig)
                     list_yx_offsets.append(yx_offsets)
@@ -1806,7 +1814,7 @@ def compute_crmasks(
                 nchars = len(str(mm_nsimulations))
                 _logger.info(f"simulation {k + 1:0{nchars}d}/{mm_nsimulations}, time elapsed: {time_end - time_ini}")
             # Display hist2d
-            result_hist2d = display_hist2d(
+            rerun_simulations,result_hist2d = display_hist2d(
                 _logger=_logger,
                 rlabel_mmcosmic=rlabel_mmcosmic,
                 mm_hist2d_min_neighbors=mm_hist2d_min_neighbors,
@@ -1837,57 +1845,87 @@ def compute_crmasks(
                 w_mm_fixed_points_in_boundary=w_mm_fixed_points_in_boundary,
                 interactive=interactive,
                 output_dir=output_dir,
+                record_terminal_output=record_terminal_output,
             )
             if interactive:
-                user_input = input("Do you want to rerun the simulations? (y/n) [n]: ")
-                if user_input.lower() in ["y", "yes"]:
+                if rerun_simulations:
+                    _logger.info("modifying simulation parameters...")
+                    # Prompt user for new mm_photon_distribution
                     new_mm_photon_distribution = ""
+                    mm_photon_distribution_ = mm_photon_distribution
                     while new_mm_photon_distribution not in ["poisson", "nbinom"]:
-                        new_mm_photon_distribution = (
-                            input(
-                                f"Enter new value for mm_photon_distribution (poisson | nbinom) [{mm_photon_distribution}]: "
-                            )
-                            .strip()
-                            .lower()
-                        )
+                        prompt = f"Enter new value for mm_photon_distribution (poisson | nbinom)"
+                        new_mm_photon_distribution = input(f"{prompt} [{mm_photon_distribution}]:").strip().lower()
                         if new_mm_photon_distribution == "":
                             new_mm_photon_distribution = mm_photon_distribution
                         if new_mm_photon_distribution not in ["poisson", "nbinom"]:
                             print("Invalid input. Please enter 'poisson', 'nbinom', or press Enter to keep current.")
                     mm_photon_distribution = new_mm_photon_distribution
+                    if record_terminal_output:
+                        # escape first bracket for rich logging
+                        _logger.info(f"{prompt} \\[{mm_photon_distribution_}]: {mm_photon_distribution}")
+                    # Prompt user for new mm_nbinom_shape if needed
+                    is_positive = lambda x: (isinstance(x, (int, float)) and x > 0)
                     if mm_photon_distribution == "nbinom":
-                        is_positive = lambda x: (isinstance(x, (int, float)) and x > 0)
+                        prompt = "Enter new value for mm_nbinom_shape (float > 0)"
+                        mm_nbinom_shape_ = mm_nbinom_shape
                         mm_nbinom_shape = input_number(
                             expected_type="float",
-                            prompt="Enter new value for mm_nbinom_shape (float > 0)",
+                            prompt=prompt,
                             validator=is_positive,
                             default=mm_nbinom_shape,
                         )
+                        if record_terminal_output:
+                            _logger.info(f"{prompt} [{mm_nbinom_shape_}]: {mm_nbinom_shape}")
+                    # Prompt user for new xdiag_min
+                    number_format = ".3f"
+                    xdiag_min_ = xdiag_min
+                    prompt = "Enter new value for xdiag_min (float)"
                     xdiag_min = input_number(
                         expected_type="float",
-                        prompt="Enter new value for xdiag_min (float)",
+                        prompt=prompt,
                         default=xdiag_min,
+                        number_format=number_format,
                     )
+                    if record_terminal_output:
+                        _logger.info(f"{prompt} [{xdiag_min_:{number_format}}]: {xdiag_min:{number_format}}")
+                    # Prompt user for new xdiag_max
+                    xdiag_max_ = xdiag_max
+                    prompt = "Enter new value for xdiag_max (float > xdiag_min)"
                     xdiag_max = input_number(
                         expected_type="float",
-                        prompt="Enter new value for xdiag_max (float > xdiag_min)",
+                        prompt=prompt,
                         validator=lambda x: (isinstance(x, float) and x > xdiag_min),
                         default=xdiag_max,
+                        number_format=number_format,
                     )
+                    if record_terminal_output:
+                        _logger.info(f"{prompt} [{xdiag_max_:{number_format}}]: {xdiag_max:{number_format}}")
                     bins_xdiag = np.linspace(xdiag_min, xdiag_max, nbins_xdiag + 1)
+                    # Prompt user for new ydiag_max
+                    ydiag_max_ = ydiag_max
+                    prompt = "Enter new value for ydiag_max (float > 0)"
                     ydiag_max = input_number(
                         expected_type="float",
-                        prompt="Enter new value for ydiag_max (float > 0)",
+                        prompt=prompt,
                         validator=is_positive,
                         default=ydiag_max,
+                        number_format=number_format,
                     )
+                    if record_terminal_output:
+                        _logger.info(f"{prompt} [{ydiag_max_:{number_format}}]: {ydiag_max:{number_format}}")
                     bins_ydiag = np.linspace(0, ydiag_max, nbins_ydiag + 1)
+                    # Prompt user for new mm_nsimulations
+                    mm_nsimulations_ = mm_nsimulations
+                    prompt = "Enter new value for mm_nsimulations (int > 0)"
                     mm_nsimulations = input_number(
                         expected_type="int",
-                        prompt="Enter new value for mm_nsimulations (int > 0)",
+                        prompt=prompt,
                         validator=lambda x: (isinstance(x, int) and x > 0),
                         default=mm_nsimulations,
                     )
+                    if record_terminal_output:
+                        _logger.info(f"{prompt} [{mm_nsimulations_}]: {mm_nsimulations}")
                     _logger.info("rerunning the simulations as per user request...")
                 else:
                     loop_simulations = False
