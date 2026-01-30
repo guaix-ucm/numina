@@ -1684,8 +1684,10 @@ def compute_crmasks(
                     _logger.info(f"saving {png_filename}")
                     plt.savefig(Path(output_dir) / png_filename, dpi=150)
                     if interactive:
-                        _logger.info("Entering interactive mode (press any of the following keys)\n"
-                                     "'c' to continue, 'x' to quit program")
+                        _logger.info(
+                            "Entering interactive mode (press any of the following keys)\n"
+                            "'c' to continue, 'x' to quit program"
+                        )
                         plt.show()
                     plt.close(fig)
                     list_yx_offsets.append(yx_offsets)
@@ -1814,7 +1816,7 @@ def compute_crmasks(
                 nchars = len(str(mm_nsimulations))
                 _logger.info(f"simulation {k + 1:0{nchars}d}/{mm_nsimulations}, time elapsed: {time_end - time_ini}")
             # Display hist2d
-            rerun_simulations,result_hist2d = display_hist2d(
+            rerun_simulations, result_hist2d = display_hist2d(
                 _logger=_logger,
                 rlabel_mmcosmic=rlabel_mmcosmic,
                 mm_hist2d_min_neighbors=mm_hist2d_min_neighbors,

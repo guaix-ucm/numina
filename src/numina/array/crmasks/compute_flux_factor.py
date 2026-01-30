@@ -378,8 +378,10 @@ def compute_flux_factor(
         _logger.info(f"saving {png_filename}")
         plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press any of the following keys)\n"
-                         "'c' to close figure and continue, 'x' to quit program")
+            _logger.info(
+                "Entering interactive mode (press any of the following keys)\n"
+                "'c' to close figure and continue, 'x' to quit program"
+            )
             plt.show()
         plt.close(fig)
 

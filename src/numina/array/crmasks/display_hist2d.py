@@ -380,8 +380,10 @@ def display_hist2d(
         _logger.info(f"saving {png_filename}")
         plt.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
-            _logger.info("Entering interactive mode (press any of the following keys)\n"
-                         "'f' to repeat fit, 'r' to rerun simulations, 'c' to continue, 'x' to quit")
+            _logger.info(
+                "Entering interactive mode (press any of the following keys)\n"
+                "'f' to repeat fit, 'r' to rerun simulations, 'c' to continue, 'x' to quit"
+            )
             plt.show()
         else:
             loop = False
@@ -567,15 +569,11 @@ def display_hist2d(
                             w_mm_fixed_points_in_boundary[index_to_edit - 1] = w_new
                         elif action == "a":
                             prompt = "x value of new fixed point"
-                            x_new = input_number(
-                                expected_type="float", prompt=prompt, default=None
-                            )
+                            x_new = input_number(expected_type="float", prompt=prompt, default=None)
                             if record_terminal_output:
                                 _logger.info(f"{prompt}: {x_new}")
                             prompt = "y value of new fixed point"
-                            y_new = input_number(
-                                expected_type="float", prompt=prompt, default=None
-                            )
+                            y_new = input_number(expected_type="float", prompt=prompt, default=None)
                             if record_terminal_output:
                                 _logger.info(f"{prompt}: {y_new}")
                             prompt = "weight of new fixed point"

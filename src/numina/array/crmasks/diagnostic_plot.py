@@ -763,8 +763,10 @@ def diagnostic_plot(
         text_box_vmax = TextBox(ax_vmax, "vmax:", initial=f"{int(np.round(vmax, 0))}", textalignment="right")
         text_box_vmax.on_submit(submit_vmax)
 
-        _logger.info("Entering interactive mode (press any of the following keys)\n"
-                     "'?' for help, 'c' to continue, 'x' to quit program")
+        _logger.info(
+            "Entering interactive mode (press any of the following keys)\n"
+            "'?' for help, 'c' to continue, 'x' to quit program"
+        )
         # plt.tight_layout()
         plt.show()
     plt.close(fig)
