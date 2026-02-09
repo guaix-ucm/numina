@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2025 Universidad Complutense de Madrid
+# Copyright 2008-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,8 +16,18 @@ import numina.array._combine as intl  # noqa
 from numina.array.crmasks.apply_crmasks import apply_crmasks
 
 
-def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
-         out_var=None, out_pix=None, zeros=None, scales=None, weights=None):
+def mean(
+    arrays,
+    masks=None,
+    dtype=None,
+    out=None,
+    out_res=None,
+    out_var=None,
+    out_pix=None,
+    zeros=None,
+    scales=None,
+    weights=None,
+):
     """Combine arrays using the mean, with masks and offsets.
 
     Arrays and masks are a list of array objects. All input arrays
@@ -49,12 +59,33 @@ def mean(arrays, masks=None, dtype=None, out=None, out_res=None,
                 [ 2. ,  2. ]]])
 
     """
-    return generic_combine(intl.mean_method(), arrays, masks=masks, dtype=dtype, out=out, out_res=out_res,
-                           out_var=out_var, out_pix=out_pix, zeros=zeros, scales=scales, weights=weights)
+    return generic_combine(
+        intl.mean_method(),
+        arrays,
+        masks=masks,
+        dtype=dtype,
+        out=out,
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+        zeros=zeros,
+        scales=scales,
+        weights=weights,
+    )
 
 
-def median(arrays, masks=None, dtype=None, out=None, out_res=None,
-           out_var=None, out_pix=None, zeros=None, scales=None, weights=None):
+def median(
+    arrays,
+    masks=None,
+    dtype=None,
+    out=None,
+    out_res=None,
+    out_var=None,
+    out_pix=None,
+    zeros=None,
+    scales=None,
+    weights=None,
+):
     """Combine arrays using the median, with masks.
 
     Arrays and masks are a list of array objects. All input arrays
@@ -73,13 +104,35 @@ def median(arrays, masks=None, dtype=None, out=None, out_res=None,
     :return: median, variance of the median and number of points stored
     """
 
-    return generic_combine(intl.median_method(), arrays, masks=masks, dtype=dtype, out=out,
-                           out_res=out_res, out_var=out_var, out_pix=out_pix,
-                           zeros=zeros, scales=scales, weights=weights)
+    return generic_combine(
+        intl.median_method(),
+        arrays,
+        masks=masks,
+        dtype=dtype,
+        out=out,
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+        zeros=zeros,
+        scales=scales,
+        weights=weights,
+    )
 
 
-def sigmaclip(arrays, masks=None, dtype=None, out=None, out_res=None, out_var=None,
-              out_pix=None, zeros=None, scales=None, weights=None, low=3.0, high=3.0):
+def sigmaclip(
+    arrays,
+    masks=None,
+    dtype=None,
+    out=None,
+    out_res=None,
+    out_var=None,
+    out_pix=None,
+    zeros=None,
+    scales=None,
+    weights=None,
+    low=3.0,
+    high=3.0,
+):
     """Combine arrays using the sigma-clipping, with masks.
 
     Inputs and masks are a list of array objects. All input arrays
@@ -99,8 +152,19 @@ def sigmaclip(arrays, masks=None, dtype=None, out=None, out_res=None, out_var=No
     :return: mean, variance of the mean and number of points stored
     """
 
-    return generic_combine(intl.sigmaclip_method(low, high), arrays, out=out, dtype=dtype, out_res=out_res,
-                           out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales, weights=weights)
+    return generic_combine(
+        intl.sigmaclip_method(low, high),
+        arrays,
+        out=out,
+        dtype=dtype,
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+        masks=masks,
+        zeros=zeros,
+        scales=scales,
+        weights=weights,
+    )
 
 
 def minmax(arrays, masks=None, dtype=None, zeros=None, scales=None, weights=None, nmin=1, nmax=1):
@@ -123,12 +187,24 @@ def minmax(arrays, masks=None, dtype=None, zeros=None, scales=None, weights=None
     :return: mean, variance of the mean and number of points stored
     """
 
-    return generic_combine(intl.minmax_method(nmin, nmax), arrays, dtype=dtype,
-                           zeros=zeros, scales=scales, weights=weights)
+    return generic_combine(
+        intl.minmax_method(nmin, nmax), arrays, dtype=dtype, zeros=zeros, scales=scales, weights=weights
+    )
 
 
-def quantileclip(arrays, masks=None, out_res=None, out_var=None, out_pix=None, out=None,
-                 dtype=None, zeros=None, scales=None, weights=None, fclip=0.10):
+def quantileclip(
+    arrays,
+    masks=None,
+    out_res=None,
+    out_var=None,
+    out_pix=None,
+    out=None,
+    dtype=None,
+    zeros=None,
+    scales=None,
+    weights=None,
+    fclip=0.10,
+):
     """Combine arrays using the sigma-clipping, with masks.
 
     Inputs and masks are a list of array objects. All input arrays
@@ -145,9 +221,19 @@ def quantileclip(arrays, masks=None, out_res=None, out_var=None, out_pix=None, o
     :param fclip: fraction of points removed on both ends. Maximum is 0.4 (80% of points rejected)
     :return: mean, variance of the mean and number of points stored
     """
-    return generic_combine(intl.quantileclip_method(fclip), arrays, masks=masks, out=out, dtype=dtype,
-                           out_res=out_res, out_var=out_var, out_pix=out_pix,
-                           zeros=zeros, scales=scales, weights=weights)
+    return generic_combine(
+        intl.quantileclip_method(fclip),
+        arrays,
+        masks=masks,
+        out=out,
+        dtype=dtype,
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+        zeros=zeros,
+        scales=scales,
+        weights=weights,
+    )
 
 
 def flatcombine(arrays, masks=None, scales=None, dtype=None, low=3.0, high=3.0, blank=1.0):
@@ -218,12 +304,33 @@ def sum(arrays, masks=None, out_res=None, out_var=None, out_pix=None, out=None, 
                 [ 2. ,  2. ]]])
 
     """
-    return generic_combine(intl.sum_method(), arrays, out=out, dtype=dtype, out_res=out_res,
-                           out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
+    return generic_combine(
+        intl.sum_method(),
+        arrays,
+        out=out,
+        dtype=dtype,
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+        masks=masks,
+        zeros=zeros,
+        scales=scales,
+    )
 
 
-def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, out=None,
-                    dtype=None, masks=None, zeros=None, scales=None, weights=None):
+def generic_combine(
+    method,
+    arrays,
+    out_res=None,
+    out_var=None,
+    out_pix=None,
+    out=None,
+    dtype=None,
+    masks=None,
+    zeros=None,
+    scales=None,
+    weights=None,
+):
 
     # Trying to use all the arguments
     if out is not None:
@@ -236,8 +343,9 @@ def generic_combine(method, arrays, out_res=None, out_var=None, out_pix=None, ou
             out_var = numpy.empty_like(arrays[0], dtype=dtype)
             out_pix = numpy.empty_like(arrays[0], dtype=dtype)
 
-    return intl.generic_combine(method, arrays, out_res=out_res, out_var=out_var,
-                                out_pix=out_pix, masks=masks, zeros=zeros, scales=scales)
+    return intl.generic_combine(
+        method, arrays, out_res=out_res, out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales
+    )
 
 
 def mediancr(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None, bias=None):
@@ -252,10 +360,10 @@ def mediancr(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None
         list_arrays=arrays,
         hdul_masks=crmasks,
         use_auxmedian=use_auxmedian,
-        combination='mediancr',
+        combination="mediancr",
         dtype=dtype,
         apply_flux_factor=apply_flux_factor,
-        bias=bias
+        bias=bias,
     )
 
 
@@ -273,10 +381,27 @@ def meancr(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None, 
         list_arrays=arrays,
         hdul_masks=crmasks,
         use_auxmedian=use_auxmedian,
-        combination='meancr',
+        combination="meancr",
         dtype=dtype,
         apply_flux_factor=apply_flux_factor,
-        bias=bias
+        bias=bias,
+    )
+
+
+def meancr2(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None, bias=None):
+    """Combine arrays using the mean with individual cosmic ray masks.
+
+    This function is similar to meancr, but some additional masked pixels
+    are replaced in the output.
+    """
+    return apply_crmasks(
+        list_arrays=arrays,
+        hdul_masks=crmasks,
+        use_auxmedian=use_auxmedian,
+        combination="meancr2",
+        dtype=dtype,
+        apply_flux_factor=apply_flux_factor,
+        bias=bias,
     )
 
 
@@ -293,8 +418,8 @@ def meancrt(arrays, crmasks, dtype, use_auxmedian=False, apply_flux_factor=None,
         list_arrays=arrays,
         hdul_masks=crmasks,
         use_auxmedian=use_auxmedian,
-        combination='meancrt',
+        combination="meancrt",
         dtype=dtype,
         apply_flux_factor=apply_flux_factor,
-        bias=bias
+        bias=bias,
     )
