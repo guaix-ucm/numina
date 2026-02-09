@@ -112,7 +112,7 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None,
         method_kwargs['dtype'] = 'float32'
 
     _logger.info(f"stacking {cnum:d} images using '{method.__name__}'")
-    if method.__name__ in ['mediancr', 'meancrt', 'meancr']:
+    if method.__name__ in ['mediancr', 'meancrt', 'meancr', 'meancr2']:
         combined_data = method([d[0].data for d in hduls], crmasks=crmasks, **method_kwargs)
     else:
         combined_data = method([d[0].data for d in hduls], **method_kwargs)

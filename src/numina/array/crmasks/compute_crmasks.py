@@ -1856,8 +1856,8 @@ def compute_crmasks(
                     new_mm_photon_distribution = ""
                     mm_photon_distribution_ = mm_photon_distribution
                     while new_mm_photon_distribution not in ["poisson", "nbinom"]:
-                        prompt = f"Enter new value for mm_photon_distribution (poisson | nbinom)"
-                        new_mm_photon_distribution = input(f"{prompt} [{mm_photon_distribution}]:").strip().lower()
+                        prompt = f"New value for mm_photon_distribution (poisson | nbinom)"
+                        new_mm_photon_distribution = input(f"{prompt} [{mm_photon_distribution}]: ").strip().lower()
                         if new_mm_photon_distribution == "":
                             new_mm_photon_distribution = mm_photon_distribution
                         if new_mm_photon_distribution not in ["poisson", "nbinom"]:
