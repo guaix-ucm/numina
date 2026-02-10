@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+import logging
 
 from astropy.units import Unit
 import pprint
