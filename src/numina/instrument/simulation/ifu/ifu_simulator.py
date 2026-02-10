@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,10 +15,9 @@ import json
 import numpy as np
 import os
 import pprint
+from rich import print
 import time
 import yaml
-
-from numina.tools.ctext import ctext
 
 from .define_3d_wcs import get_wvparam_from_wcs3d
 from .define_3d_wcs import wcs_to_header_using_cd_keywords
@@ -143,7 +142,7 @@ def ifu_simulator(wcs3d, header_keys,
     if verbose:
         print(' ')
         for item in faux_dict:
-            print(ctext(f'- Required file for item {item}:\n  {faux_dict[item]}', faint=True))
+            print(f'- Required file for item {item}:\n  {faux_dict[item]}')
 
     if plots:
         # display SKYCALC predictions for sky radiance and transmission
@@ -196,35 +195,35 @@ def ifu_simulator(wcs3d, header_keys,
             if 'scene_block_name' not in scene_block.keys():
                 if verbose:
                     print(' ')
-                print(ctext(f'ERROR while processing {scene_fname}', fg='red'))
+                print(f'[red]ERROR while processing {scene_fname}[/red]')
                 raise_ValueError('key scene_block_name not found!')
             scene_block_name = scene_block['scene_block_name']
-            print(ctext(f'\n* Processing: {scene_block_name}', fg='green'))
+            print(f'[green]\n* Processing: {scene_block_name}[/green]')
             # insert default values for keys not provided
             if 'wavelength_sampling' not in scene_block.keys():
                 scene_block['wavelength_sampling'] = 'random'
-                print(ctext(f"WARNING: asumming {scene_block['wavelength_sampling']=}", fg='cyan'))
+                print(f"[cyan]WARNING: asumming {scene_block['wavelength_sampling']=}[/cyan]")
             if 'render' not in scene_block.keys():
                 scene_block['render'] = True
-                print(ctext(f"WARNING: asumming {scene_block['render']=}", fg='cyan'))
+                print(f"[cyan]WARNING: asumming {scene_block['render']=}[/cyan]")
             if 'apply_atmosphere_transmission' not in scene_block.keys():
                 scene_block['apply_atmosphere_transmission'] = True
-                print(ctext(f"WARNING: asumming {scene_block['apply_atmosphere_transmission']=}", fg='cyan'))
+                print(f"[cyan]WARNING: asumming {scene_block['apply_atmosphere_transmission']=}[/cyan]")
             if 'apply_seeing' not in scene_block.keys():
                 scene_block['apply_seeing'] = True
-                print(ctext(f"WARNING: asumming {scene_block['apply_seeing']=}", fg='cyan'))
+                print(f"[cyan]WARNING: asumming {scene_block['apply_seeing']=}[/cyan]")
             scene_block_keys = set(scene_block.keys())
             # insert default values
             if scene_block_keys != required_keys_in_scene_block:
-                print(ctext(f'ERROR while processing: {scene_fname}', fg='red'))
-                print(ctext('expected keys..: ', fg='blue') + f'{required_keys_in_scene_block}')
-                print(ctext('keys found.....: ', fg='blue') + f'{scene_block_keys}')
+                print(f'[red]ERROR while processing: {scene_fname}[/red]')
+                print(f'[blue]expected keys..: [/blue]{required_keys_in_scene_block}')
+                print(f'[blue]keys found.....: [/blue]{scene_block_keys}')
                 list_unexpected_keys = list(scene_block_keys.difference(required_keys_in_scene_block))
                 if len(list_unexpected_keys) > 0:
-                    print(ctext('unexpected keys: ', fg='red') + f'{list_unexpected_keys}')
+                    print(f'[red]unexpected keys: [/red]{list_unexpected_keys}')
                 list_missing_keys = list(required_keys_in_scene_block.difference(scene_block_keys))
                 if len(list_missing_keys) > 0:
-                    print(ctext('missing keys...: ', fg='red') + f'{list_missing_keys}')
+                    print(f'[red]missing keys...: [/red]{list_missing_keys}')
                 pp.pprint(scene_block)
                 raise_ValueError(f'Invalid format in file: {scene_fname}')
             if verbose:
@@ -236,7 +235,7 @@ def ifu_simulator(wcs3d, header_keys,
                 raise_ValueError(f'Unexpected {wavelength_sampling=}')
             apply_atmosphere_transmission = scene_block['apply_atmosphere_transmission']
             if atmosphere_transmission == "none" and apply_atmosphere_transmission:
-                print(ctext(f'WARNING: {apply_atmosphere_transmission=} when {atmosphere_transmission=}', fg='cyan'))
+                print(f'[cyan]WARNING: {apply_atmosphere_transmission=} when {atmosphere_transmission=}[/cyan]')
                 print(f'{atmosphere_transmission=} overrides {apply_atmosphere_transmission=}')
                 print('The atmosphere transmission will not be applied!')
                 apply_atmosphere_transmission = False
@@ -245,7 +244,7 @@ def ifu_simulator(wcs3d, header_keys,
                 if seeing_fwhm_arcsec.value < 0:
                     raise_ValueError(f'Unexpected {seeing_fwhm_arcsec=}')
                 elif seeing_fwhm_arcsec == 0:
-                    print(ctext(f'WARNING: {apply_seeing=} when {seeing_fwhm_arcsec=}', fg='cyan'))
+                    print(f'[cyan]WARNING: {apply_seeing=} when {seeing_fwhm_arcsec=}[/cyan]')
                     print('Seeing effect will not be applied!')
                     apply_seeing = False
             render = scene_block['render']
@@ -312,7 +311,7 @@ def ifu_simulator(wcs3d, header_keys,
                 # ---
                 # update nphotons
                 if verbose:
-                    print(ctext(f'--> {nphotons} photons simulated', fg='blue'))
+                    print(f'[blue]--> {nphotons} photons simulated[/blue]')
                 if nphotons_all == 0:
                     nphotons_all = nphotons
                 else:
@@ -322,7 +321,7 @@ def ifu_simulator(wcs3d, header_keys,
                         len(simulated_x_ifu_all),
                         len(simulated_y_ifu_all)
                         }) != 1:
-                    print(ctext('ERROR: check the following numbers:', fg='red'))
+                    print(f'[red]ERROR: check the following numbers:[/red]')
                     print(f'{nphotons_all=}')
                     print(f'{len(simulated_wave_all)=}')
                     print(f'{len(simulated_x_ifu_all)=}')
@@ -331,9 +330,9 @@ def ifu_simulator(wcs3d, header_keys,
             else:
                 if verbose:
                     if nphotons == 0:
-                        print(ctext('WARNING -> nphotons: 0', fg='cyan'))
+                        print(f'[cyan]WARNING -> nphotons: 0[/cyan]')
                     else:
-                        print(ctext('WARNING -> render: False', fg='cyan'))
+                        print(f'[cyan]WARNING -> render: False[/cyan]')
 
     # filter simulated photons to keep only those that fall within
     # the IFU field of view and within the expected spectral range
@@ -353,7 +352,7 @@ def ifu_simulator(wcs3d, header_keys,
     iok = np.where(cond1 & cond2 & cond3 & cond4 & cond5 & cond6)[0]
 
     if len(iok) == 0:
-        print(ctext(f'Final number of simulated photons..: {len(iok):>{textwidth_nphotons_number}}', fg='red'))
+        print(f'[red]Final number of simulated photons..: {len(iok):>{textwidth_nphotons_number}}[/red]')
         raise SystemExit
 
     if len(iok) < nphotons_all:
@@ -362,13 +361,13 @@ def ifu_simulator(wcs3d, header_keys,
         simulated_wave_all = simulated_wave_all[iok]
         nphotons_all = len(iok)
     if verbose:
-        print(ctext(f'Final number of simulated photons..: {nphotons_all:>{textwidth_nphotons_number}}', fg='blue'))
+        print(f'[blue]Final number of simulated photons..: {nphotons_all:>{textwidth_nphotons_number}}[/blue]')
 
     # ---------------------------------------------------------------
     # compute image2d IFU, white image, with and without oversampling
     # ---------------------------------------------------------------
     if verbose:
-        print(ctext('\n* Computing image2d IFU (method 0) with and without oversampling', fg='green'))
+        print(f'[green]\n* Computing image2d IFU (method 0) with and without oversampling[/green]')
     for noversampling in {noversampling_whitelight, 1}:
         generate_image2d_method0_ifu(
             wcs3d=wcs3d,
@@ -387,7 +386,7 @@ def ifu_simulator(wcs3d, header_keys,
     # compute image3d IFU, method0
     # ----------------------------
     if verbose:
-        print(ctext('\n* Computing image3d IFU (method 0)', fg='green'))
+        print(f'[green]\n* Computing image3d IFU (method 0)[/green]')
     bins_x_ifu = (0.5 + np.arange(naxis1_ifu.value + 1)) * u.pix
     bins_y_ifu = (0.5 + np.arange(naxis2_ifu.value + 1)) * u.pix
     bins_wave = wv_crval1 + \
@@ -412,7 +411,7 @@ def ifu_simulator(wcs3d, header_keys,
     # compute image2d RSS and in detector, method0
     # --------------------------------------------
     if verbose:
-        print(ctext('\n* Computing image2d RSS and detector (method 0)', fg='green'))
+        print(f'[green]\n* Computing image2d RSS and detector (method 0)[/green]')
     bins_x_detector = np.linspace(start=0.5, stop=naxis1_detector.value + 0.5, num=naxis1_detector.value + 1)
     bins_y_detector = np.linspace(start=0.5, stop=naxis2_detector.value + 0.5, num=naxis2_detector.value + 1)
 

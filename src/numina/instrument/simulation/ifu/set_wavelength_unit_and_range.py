@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,8 +9,7 @@
 
 from astropy.units import Unit
 import pprint
-
-from numina.tools.ctext import ctext
+from rich import print
 
 from .raise_valueerror import raise_ValueError
 
@@ -48,15 +47,15 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
 
     spectrum_keys = set(scene_block['spectrum'].keys())
     if not expected_keys_in_spectrum.issubset(spectrum_keys):
-        print(ctext(f'ERROR while processing: {scene_fname}', fg='red'))
-        print(ctext('expected keys..: ', fg='blue') + f'{expected_keys_in_spectrum}')
-        print(ctext('keys found.....: ', fg='blue') + f'{spectrum_keys}')
+        print(f'[red]ERROR while processing: {scene_fname}[/red]')
+        print(f'[blue]expected keys..: {expected_keys_in_spectrum}[/blue]')
+        print(f'[blue]keys found.....: {spectrum_keys}[/blue]')
         list_unexpected_keys = list(spectrum_keys.difference(expected_keys_in_spectrum))
         if len(list_unexpected_keys) > 0:
-            print(ctext('unexpected keys: ', fg='red') + f'{list_unexpected_keys}')
+            print(f'[red]unexpected keys: {list_unexpected_keys}[/red]')
         list_missing_keys = list(expected_keys_in_spectrum.difference(spectrum_keys))
         if len(list_missing_keys) > 0:
-            print(ctext('missing keys:..: ', fg='red') + f'{list_missing_keys}')
+            print(f'[red]missing keys: {list_missing_keys}[/red]')
         pp.pprint(scene_block)
         raise_ValueError(f'Invalid format in file: {scene_fname}')
     if 'wave_unit' in scene_block['spectrum']:
@@ -64,12 +63,12 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
     else:
         wave_unit = wmin.unit
         if verbose:
-            print(ctext(f'Assuming wave_unit: {wave_unit}', faint=True))
+            print(f'[faint]Assuming wave_unit: {wave_unit}[/faint]')
     if 'wave_min' in scene_block['spectrum']:
         wave_min = float(scene_block['spectrum']['wave_min'])
     else:
         if verbose:
-            print(ctext('Assuming wave_min: null', faint=True))
+            print(f'[faint]Assuming wave_min: null[/faint]')
         wave_min = None
     if wave_min is None:
         wave_min = wmin.to(wave_unit)
@@ -79,7 +78,7 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
         wave_max = float(scene_block['spectrum']['wave_max'])
     else:
         if verbose:
-            print(ctext('Assuming wave_max: null', faint=True))
+            print(f'[faint]Assuming wave_max: null[/faint]')
         wave_max = None
     if wave_max is None:
         wave_max = wmax.to(wave_unit)
@@ -87,8 +86,8 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
         wave_max = wave_max * Unit(wave_unit)
 
     if verbose:
-        print(ctext(f'{wave_min=}', faint=True))
-        print(ctext(f'{wave_max=}', faint=True))
-        print(ctext(f'{wave_unit=}', faint=True))
+        print(f'[faint]{wave_min=}[/faint]')
+        print(f'[faint]{wave_max=}[/faint]')
+        print(f'[faint]{wave_unit=}[/faint]')
 
     return wave_unit, wave_min, wave_max

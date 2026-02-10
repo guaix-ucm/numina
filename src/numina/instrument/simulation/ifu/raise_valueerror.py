@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of FRIDA DRP
 #
@@ -7,9 +7,11 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.tools.ctext import ctext
+from rich.console import Console
 
 
 def raise_ValueError(msg):
     """Raise exception showing a coloured message."""
-    raise ValueError(ctext(msg, fg='red'))
+    console = Console()
+    console.print(msg, style="bold red")
+    raise ValueError(msg)

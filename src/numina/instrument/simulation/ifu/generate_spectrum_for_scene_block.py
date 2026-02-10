@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,8 +12,6 @@ from astropy.units import Unit
 import astropy.units as u
 import numpy as np
 import os
-
-from numina.tools.ctext import ctext
 
 from .fapply_atmosphere_transmission import fapply_atmosphere_transmission
 from .simulate_constant_photlam import simulate_constant_photlam
@@ -113,7 +111,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
         with fits.open(faux_skycalc) as hdul:
             skycalc_table = hdul[1].data
         if wave_unit != Unit('nm'):
-            print(ctext(f'Ignoring wave_unit: {wave_unit} (assuming {u.nm})', faint=True))
+            print(f'Ignoring wave_unit: {wave_unit} (assuming {u.nm})')
         wave = skycalc_table['lam'] * u.nm
         if not np.all(np.diff(wave.value) > 0):
             raise_ValueError(f'Wavelength array {wave=} is not sorted!')
@@ -147,13 +145,13 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             redshift = float(scene_block['spectrum']['redshift'])
         else:
             if verbose:
-                print(ctext('Assuming redshift: 0', faint=True))
+                print('Assuming redshift: 0')
             redshift = 0.0
         if 'convolve_sigma_km_s' in scene_block['spectrum']:
             convolve_sigma_km_s = float(scene_block['spectrum']['convolve_sigma_km_s'])
         else:
             if verbose:
-                print(ctext('Assuming convolve_sigma_km_s: 0', faint=True))
+                print('Assuming convolve_sigma_km_s: 0')
             convolve_sigma_km_s = 0.0
         convolve_sigma_km_s *= u.km / u.s
         # read data

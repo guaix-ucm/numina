@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,8 +9,7 @@
 """Compute image3d IFU from RSS image"""
 import numpy as np
 from scipy.signal import convolve2d
-
-from numina.tools.ctext import ctext
+from rich import print
 
 
 def compute_image3d_ifu_from_rss_method1(
@@ -47,7 +46,7 @@ def compute_image3d_ifu_from_rss_method1(
     """
 
     if verbose:
-        print(ctext('\n* Computing image3d IFU from image2d RSS method 1', fg='green'))
+        print('[green]\n* Computing image3d IFU from image2d RSS method 1[/green]')
 
     # kernel in the spectral direction
     # (bidimensional to be applied to a bidimensional image)

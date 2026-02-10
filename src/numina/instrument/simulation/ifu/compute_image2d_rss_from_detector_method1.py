@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,7 +12,7 @@ import numpy as np
 import time
 
 from numina.instrument.simulation.ifu.define_3d_wcs import get_wvparam_from_wcs3d
-from numina.tools.ctext import ctext
+from rich import print
 
 from .update_image2d_rss_method1 import update_image2d_rss_method1
 
@@ -57,7 +57,7 @@ def compute_image2d_rss_from_detector_method1(
     """
 
     if verbose:
-        print(ctext('\n* Computing image2d RSS (method 1)', fg='green'))
+        print('[green]\n* Computing image2d RSS (method 1)[/green]')
 
     # get WCS parameters
     wv_cunit1, wv_crpix1, wv_crval1, wv_cdelt1 = get_wvparam_from_wcs3d(wcs3d)

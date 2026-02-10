@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,8 +12,8 @@ import astropy.units as u
 from astropy.wcs.utils import proj_plane_pixel_scales
 import matplotlib.pyplot as plt
 import numpy as np
+from rich import print
 
-from numina.tools.ctext import ctext
 from numina.tools.compute_adr_wavelength import compute_adr_wavelength
 
 from .raise_valueerror import raise_ValueError
@@ -117,28 +117,28 @@ def generate_geometry_for_scene_block(
             ra_deg = scene_block['geometry']['ra_deg']
         else:
             if verbose:
-                print(ctext('Assuming ra_deg: 0', faint=True))
+                print('[faint]Assuming ra_deg: 0[/faint]')
             ra_deg = 0.0
         ra_deg *= u.deg
         if 'dec_deg' in scene_block['geometry']:
             dec_deg = scene_block['geometry']['dec_deg']
         else:
             if verbose:
-                print(ctext('Assuming dec_deg: 0', faint=True))
+                print('[faint]Assuming dec_deg: 0[/faint]')
             dec_deg = 0.0
         dec_deg *= u.deg
         if 'delta_ra_arcsec' in scene_block['geometry']:
             delta_ra_arcsec = scene_block['geometry']['delta_ra_arcsec']
         else:
             if verbose:
-                print(ctext('Assuming delta_ra_deg: 0', faint=True))
+                print('[faint]Assuming delta_ra_deg: 0[/faint]')
             delta_ra_arcsec = 0.0
         delta_ra_arcsec *= u.arcsec
         if 'delta_dec_arcsec' in scene_block['geometry']:
             delta_dec_arcsec = scene_block['geometry']['delta_dec_arcsec']
         else:
             if verbose:
-                print(ctext('Assuming delta_dec_deg: 0', faint=True))
+                print('[faint]Assuming delta_dec_deg: 0[/faint]')
             delta_dec_arcsec = 0.0
         delta_dec_arcsec *= u.arcsec
         x_center, y_center = wcs3d.celestial.world_to_pixel(
@@ -162,13 +162,13 @@ def generate_geometry_for_scene_block(
             else:
                 fwhm_dec_arcsec = fwhm_ra_arcsec
                 if verbose:
-                    print(ctext(f'Assuming {fwhm_dec_arcsec=}', faint=True))
+                    print(f'[faint]Assuming {fwhm_dec_arcsec=}[/faint]')
             if 'position_angle_deg' in scene_block['geometry']:
                 position_angle_deg = scene_block['geometry']['position_angle_deg'] * u.deg
             else:
                 position_angle_deg = 0.0 * u.deg
                 if verbose:
-                    print(ctext(f'Assuming {position_angle_deg=}', faint=True))
+                    print(f'[faint]Assuming {position_angle_deg=}[/faint]')
             # covariance matrix for the multivariate normal
             std_x = fwhm_ra_arcsec * factor_fwhm_to_sigma / plate_scale_x.to(u.arcsec / u.pix)
             std_y = fwhm_dec_arcsec * factor_fwhm_to_sigma / plate_scale_y.to(u.arcsec / u.pix)
