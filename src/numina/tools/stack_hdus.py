@@ -12,8 +12,6 @@ import argparse
 from astropy.io import fits
 import sys
 
-from .ctext import ctext
-
 
 def stack_hdus(input_list, output_filename, verbose=False):
     """Store HDU from different files into a single FITS file with extensions.
@@ -86,10 +84,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     input_list = args.input_list
     output_filename = args.output_filename

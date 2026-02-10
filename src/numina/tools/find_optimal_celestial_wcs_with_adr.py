@@ -16,8 +16,6 @@ import numpy as np
 from reproject.mosaicking import find_optimal_celestial_wcs
 import sys
 
-from .ctext import ctext
-
 
 def find_optimal_celestial_wcs_with_adr(
         input_list,
@@ -107,10 +105,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     input_list = args.input_list
     extname_adr = args.extname_adr
@@ -122,7 +120,7 @@ def main(args=None):
     wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs_with_adr(
         input_list=input_list,
         extname_adr=extname_adr,
-        verbose=extname_adr
+        verbose=verbose
     )
 
     if verbose:
@@ -140,4 +138,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    find_optimal_celestial_wcs_with_adr()
+    
+    main()

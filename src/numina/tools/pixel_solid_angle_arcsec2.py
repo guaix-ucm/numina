@@ -21,7 +21,6 @@ from spherical_geometry.polygon import SphericalPolygon
 import sys
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
-from .ctext import ctext
 
 
 def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, verbose=False):
@@ -184,10 +183,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     input_file = args.input_file
     output_file = args.output_file

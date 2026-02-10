@@ -12,8 +12,6 @@ import argparse
 from astropy.io import fits
 import sys
 
-from .ctext import ctext
-
 
 def remove_extension(filename, extension, verbose=True):
     """Remove extension from FITS file
@@ -88,10 +86,10 @@ def main(args=None):
 
     if not args.noverbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     if args.extnum is None:
         if args.extname is None:

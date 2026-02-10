@@ -17,8 +17,6 @@ from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
-from .ctext import ctext
-
 
 def pixel_to_world(inputfile, pixel, extnum, verbose=False):
     """Compute world_to_pixel.
@@ -91,10 +89,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     extnum = args.extnum
     if extnum < 0:

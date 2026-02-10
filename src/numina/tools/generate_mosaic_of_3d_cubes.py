@@ -29,7 +29,6 @@ from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_mergin
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
-from .ctext import ctext
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
@@ -175,7 +174,7 @@ def generate_mosaic_of_3d_cubes(
     else:
         # make use of an external celestial WCS projection
         if verbose:
-            print(ctext(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}', fg='green'))
+            print(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}')
         with fits.open(desired_celestial_2d_wcs) as hdul_mosaic2d:
             wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
             shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
@@ -199,7 +198,7 @@ def generate_mosaic_of_3d_cubes(
         size_output = array_size_32bits(mosaic3d_cube_by_cube)
         if footprint:
             size_output += array_size_8bits(footprint3d)
-        print(ctext(f'Combined image will require {size_output:.2f}', fg='red'))
+        print(f'Combined image will require {size_output:.2f}')
 
     # generate 3D mosaic
     for fname in list_of_fits_files:
@@ -326,10 +325,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     input_list = args.input_list
     output_filename = args.output_filename

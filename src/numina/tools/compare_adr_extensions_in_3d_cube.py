@@ -17,8 +17,6 @@ from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
-from .ctext import ctext
-
 
 def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
     """Auxiliary function to plot reference wavelengths
@@ -156,10 +154,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:

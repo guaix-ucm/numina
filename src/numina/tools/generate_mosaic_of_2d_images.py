@@ -35,8 +35,6 @@ import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
-from .ctext import ctext
-
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 COMBINATION_FUNCTIONS = ['mean', 'median', 'sum', 'std', 'sigmaclip_mean', 'sigmaclip_median', 'sigmaclip_stddev']
 
@@ -255,10 +253,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     input_list = args.input_list
     output_filename = args.output_filename

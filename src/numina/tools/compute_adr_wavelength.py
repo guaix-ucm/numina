@@ -18,8 +18,6 @@ from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
-from numina.tools.ctext import ctext
-
 
 def air_refractive_index_15_760(wave_vacuum):
     """Air refractive index (dry air at sea level)
@@ -137,7 +135,7 @@ def compute_adr_wavelength(
     # zenith distance
     zenith_distance = np.rad2deg(np.arccos(1/airmass)) * u.deg
     if debug:
-        print(ctext(f'{airmass=} --> {zenith_distance=}', faint=True))
+        print(f'{airmass=} --> {zenith_distance=}')
 
     # air refractive index for reference wavelength, at the conditions
     # employed by Filippenko (1982)
@@ -148,9 +146,9 @@ def compute_adr_wavelength(
         pressure_water_vapor_mm=pressure_water_vapor_mm
     )
     if debug:
-        print(ctext(f'Assuming {temperature=}, {pressure_mm=}, {pressure_water_vapor_mm=}', faint=True))
-        print(ctext(f'{reference_wave_vacuum=}', faint=True))
-        print(ctext(f'{n_air_reference=}', faint=True))
+        print(f'Assuming {temperature=}, {pressure_mm=}, {pressure_water_vapor_mm=}')
+        print(f'{reference_wave_vacuum=}')
+        print(f'{n_air_reference=}')
 
     # air refractive index for all the simulated wavelengths
     n_air = air_refractive_index(
@@ -164,8 +162,8 @@ def compute_adr_wavelength(
     factor_arcsec_per_radian = 206264.80624709636
     refraction_reference = (n_air_reference - 1) * np.tan(zenith_distance)
     if debug:
-        print(ctext('Refraction at reference wavelength (arcsec): ' +
-                    f'{refraction_reference * factor_arcsec_per_radian:+.4f}', faint=True))
+        print(f'Refraction at reference wavelength (arcsec): ' +
+              f'{refraction_reference * factor_arcsec_per_radian:+.4f}')
     refraction = (n_air - 1) * np.tan(zenith_distance)
     differential_refraction = (refraction - refraction_reference) * factor_arcsec_per_radian * u.arcsec
     if debug:
@@ -176,10 +174,10 @@ def compute_adr_wavelength(
         simulated_wave_ok = wave_vacuum[iok]
         imin = np.argmin(differential_refraction_ok)
         imax = np.argmax(differential_refraction_ok)
-        print(ctext(f'Minimum differential refraction: {differential_refraction_ok[imin][0]:+.4f} ' +
-                    f'at wavelength: {simulated_wave_ok[imin][0]}', faint=True))
-        print(ctext(f'Maximum differential refraction: {differential_refraction_ok[imax][0]:+.4f} ' +
-                    f'at wavelength: {simulated_wave_ok[imax][0]}', faint=True))
+        print(f'Minimum differential refraction: {differential_refraction_ok[imin][0]:+.4f} ' +
+              f'at wavelength: {simulated_wave_ok[imin][0]}')
+        print(f'Maximum differential refraction: {differential_refraction_ok[imax][0]:+.4f} ' +
+              f'at wavelength: {simulated_wave_ok[imax][0]}')
 
     return differential_refraction
 
@@ -215,7 +213,7 @@ def main(args=None):
             print(f'--{arg} {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     if args.wave_ini is None:
         raise ValueError('You must specify --wave_ini')

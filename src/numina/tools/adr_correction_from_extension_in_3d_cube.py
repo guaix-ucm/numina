@@ -19,8 +19,6 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 import sys
 
-from .ctext import ctext
-
 REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
 
 
@@ -307,7 +305,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
+
+    if args.echo:
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     if args.extname_adr is None:
         raise ValueError("You must specify an extension name with --extname_adr")

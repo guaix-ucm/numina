@@ -22,7 +22,6 @@ from numina.instrument.simulation.ifu.define_3d_wcs \
     import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
-from .ctext import ctext
 
 
 def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=False):
@@ -162,10 +161,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(ctext(f'{arg}: {value}', faint=True))
+            print(f'{arg}: {value}')
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
 
     input_file = args.input_file
     output_file = args.output_file
@@ -215,7 +214,7 @@ def main(args=None):
 
     add_script_info_to_fits_history(resampled_hdu.header, args)
     if verbose:
-        print(f'Saving: {output_file}')
+        print(f'[bold green]Saving: {output_file}[/bold green]')
     resampled_hdu.writeto(output_file, overwrite=True)
 
 
