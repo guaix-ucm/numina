@@ -7,6 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 """Compute image3d IFU from RSS image"""
+import logging
+
 import numpy as np
 from scipy.signal import convolve2d
 from rich import print
@@ -18,7 +20,7 @@ def compute_image3d_ifu_from_rss_method1(
     naxis2_ifu,
     naxis1_ifu,
     nslices,
-    verbose=False   
+    logger=None,   
 ):
     """
     Compute the image3d IFU from the image2d RSS using method 1.
@@ -36,17 +38,18 @@ def compute_image3d_ifu_from_rss_method1(
         Number of pixels in the first axis of the IFU image.
     nslices : int
         Number of slices in the IFU image.
-    verbose : bool, optional
-        If True, print verbose output. Default is False.
+    logger : logging.Logger or None, optional
+        Logger for logging messages. If None, a default logger will be used.
     
     Returns
     -------
     image3d_ifu_method1 : numpy.ndarray
         The output IFU image.
     """
+    if logger is None:
+        logger = logging.getLogger()
 
-    if verbose:
-        print('[green]\n* Computing image3d IFU from image2d RSS method 1[/green]')
+    logger.debug('[green]\n* Computing image3d IFU from image2d RSS method 1[/green]')
 
     # kernel in the spectral direction
     # (bidimensional to be applied to a bidimensional image)
@@ -59,8 +62,7 @@ def compute_image3d_ifu_from_rss_method1(
     # TODO: the second dimension in the following array should be 2*nslices
     # (check what to do for another IFU, like TARSIS)
     image3d_ifu_method1 = np.zeros((naxis1_detector.value, naxis2_ifu.value, naxis1_ifu.value))
-    if verbose:
-        print(f'(debug): {image3d_ifu_method1.shape=}')
+    logger.debug(f'(debug): {image3d_ifu_method1.shape=}')
 
     for islice in range(nslices):
         i1 = islice * 2
@@ -70,9 +72,8 @@ def compute_image3d_ifu_from_rss_method1(
         image3d_ifu_method1[:, i1+1, :] = convolved_data[j1:j2, :].T
 
     image3d_ifu_method1 /= 2
-    if verbose:
-        print(f'(debug): {np.sum(image2d_rss_method1)=}')
-        print(f'(debug):      {np.sum(convolved_data)=}')
-        print(f'(debug): {np.sum(image3d_ifu_method1)=}')
+    logger.debug(f'(debug): {np.sum(image2d_rss_method1)=}')
+    logger.debug(f'(debug):      {np.sum(convolved_data)=}')
+    logger.debug(f'(debug): {np.sum(image3d_ifu_method1)=}')
 
     return image3d_ifu_method1

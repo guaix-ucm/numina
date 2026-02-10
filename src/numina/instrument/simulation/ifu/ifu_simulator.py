@@ -12,10 +12,10 @@ from astropy.units import Quantity
 import astropy.units as u
 from joblib import Parallel, delayed
 import json
+import logging
 import numpy as np
 import os
 import pprint
-from rich import print
 import time
 import yaml
 
@@ -58,7 +58,7 @@ def ifu_simulator(wcs3d, header_keys,
                   noparallel_computation,
                   prefix_intermediate_fits,
                   stop_after_ifu_3D_method0=False,
-                  verbose=False, instname=None, subtitle=None, plots=False):
+                  logger=None, instname=None, subtitle=None, plots=False):
     """IFU simulator.
 
     Parameters
@@ -126,8 +126,8 @@ def ifu_simulator(wcs3d, header_keys,
         this string is 0, no output is generated.
     stop_after_ifu_3D_method0 : bool
         If True, stop execution after generating ifu_3D_method0 image.
-    verbose : bool
-        If True, display additional information.
+    logger : logging.Logger or None, optional
+        Logger for logging messages. If None, a default logger will be used.
     instname : str or None
         Instrument name.
     subtitle : str or None
@@ -139,10 +139,16 @@ def ifu_simulator(wcs3d, header_keys,
     -------
     """
 
-    if verbose:
-        print(' ')
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    if logger.isEnabledFor(logging.DEBUG):
+        verbose = True
+        logger.debug(' ')
         for item in faux_dict:
-            print(f'- Required file for item {item}:\n  {faux_dict[item]}')
+            logger.info(f'- Required file for item {item}:\n  {faux_dict[item]}')
+    else:
+        verbose = False
 
     if plots:
         # display SKYCALC predictions for sky radiance and transmission
@@ -169,7 +175,7 @@ def ifu_simulator(wcs3d, header_keys,
         wmax=wmax,
         wv_cunit1=wv_cunit1,
         faux_dict=faux_dict,
-        verbose=verbose
+        logger=logger,
     )
 
     required_keys_in_scene_block = {
@@ -193,37 +199,36 @@ def ifu_simulator(wcs3d, header_keys,
         scene_dict = yaml.safe_load_all(fstream)
         for scene_block in scene_dict:
             if 'scene_block_name' not in scene_block.keys():
-                if verbose:
-                    print(' ')
-                print(f'[red]ERROR while processing {scene_fname}[/red]')
+                logger.info(' ')
+                logger.info(f'[red]ERROR while processing {scene_fname}[/red]')
                 raise_ValueError('key scene_block_name not found!')
             scene_block_name = scene_block['scene_block_name']
-            print(f'[green]\n* Processing: {scene_block_name}[/green]')
+            logger.info(f'[green]\n* Processing: {scene_block_name}[/green]')
             # insert default values for keys not provided
             if 'wavelength_sampling' not in scene_block.keys():
                 scene_block['wavelength_sampling'] = 'random'
-                print(f"[cyan]WARNING: asumming {scene_block['wavelength_sampling']=}[/cyan]")
+                logger.info(f"[cyan]WARNING: asumming {scene_block['wavelength_sampling']=}[/cyan]")
             if 'render' not in scene_block.keys():
                 scene_block['render'] = True
-                print(f"[cyan]WARNING: asumming {scene_block['render']=}[/cyan]")
+                logger.info(f"[cyan]WARNING: asumming {scene_block['render']=}[/cyan]")
             if 'apply_atmosphere_transmission' not in scene_block.keys():
                 scene_block['apply_atmosphere_transmission'] = True
-                print(f"[cyan]WARNING: asumming {scene_block['apply_atmosphere_transmission']=}[/cyan]")
+                logger.info(f"[cyan]WARNING: asumming {scene_block['apply_atmosphere_transmission']=}[/cyan]")
             if 'apply_seeing' not in scene_block.keys():
                 scene_block['apply_seeing'] = True
-                print(f"[cyan]WARNING: asumming {scene_block['apply_seeing']=}[/cyan]")
+                logger.info(f"[cyan]WARNING: asumming {scene_block['apply_seeing']=}[/cyan]")
             scene_block_keys = set(scene_block.keys())
             # insert default values
             if scene_block_keys != required_keys_in_scene_block:
-                print(f'[red]ERROR while processing: {scene_fname}[/red]')
-                print(f'[blue]expected keys..: [/blue]{required_keys_in_scene_block}')
-                print(f'[blue]keys found.....: [/blue]{scene_block_keys}')
+                logger.info(f'[red]ERROR while processing: {scene_fname}[/red]')
+                logger.info(f'[blue]expected keys..: [/blue]{required_keys_in_scene_block}')
+                logger.info(f'[blue]keys found.....: [/blue]{scene_block_keys}')
                 list_unexpected_keys = list(scene_block_keys.difference(required_keys_in_scene_block))
                 if len(list_unexpected_keys) > 0:
-                    print(f'[red]unexpected keys: [/red]{list_unexpected_keys}')
+                    logger.info(f'[red]unexpected keys: [/red]{list_unexpected_keys}')
                 list_missing_keys = list(required_keys_in_scene_block.difference(scene_block_keys))
                 if len(list_missing_keys) > 0:
-                    print(f'[red]missing keys...: [/red]{list_missing_keys}')
+                    logger.info(f'[red]missing keys...: [/red]{list_missing_keys}')
                 pp.pprint(scene_block)
                 raise_ValueError(f'Invalid format in file: {scene_fname}')
             if verbose:
@@ -235,17 +240,17 @@ def ifu_simulator(wcs3d, header_keys,
                 raise_ValueError(f'Unexpected {wavelength_sampling=}')
             apply_atmosphere_transmission = scene_block['apply_atmosphere_transmission']
             if atmosphere_transmission == "none" and apply_atmosphere_transmission:
-                print(f'[cyan]WARNING: {apply_atmosphere_transmission=} when {atmosphere_transmission=}[/cyan]')
-                print(f'{atmosphere_transmission=} overrides {apply_atmosphere_transmission=}')
-                print('The atmosphere transmission will not be applied!')
+                logger.info(f'[cyan]WARNING: {apply_atmosphere_transmission=} when {atmosphere_transmission=}[/cyan]')
+                logger.info(f'{atmosphere_transmission=} overrides {apply_atmosphere_transmission=}')
+                logger.info('The atmosphere transmission will not be applied!')
                 apply_atmosphere_transmission = False
             apply_seeing = scene_block['apply_seeing']
             if apply_seeing:
                 if seeing_fwhm_arcsec.value < 0:
                     raise_ValueError(f'Unexpected {seeing_fwhm_arcsec=}')
                 elif seeing_fwhm_arcsec == 0:
-                    print(f'[cyan]WARNING: {apply_seeing=} when {seeing_fwhm_arcsec=}[/cyan]')
-                    print('Seeing effect will not be applied!')
+                    logger.info(f'[cyan]WARNING: {apply_seeing=} when {seeing_fwhm_arcsec=}[/cyan]')
+                    logger.info('Seeing effect will not be applied!')
                     apply_seeing = False
             render = scene_block['render']
             if nphotons > 0 and render:
@@ -255,7 +260,7 @@ def ifu_simulator(wcs3d, header_keys,
                     scene_block=scene_block,
                     wmin=wmin,
                     wmax=wmax,
-                    verbose=verbose
+                    logger=logger,
                 )
                 # generate spectrum
                 simulated_wave = generate_spectrum_for_scene_block(
@@ -272,7 +277,7 @@ def ifu_simulator(wcs3d, header_keys,
                     curve_transmission=curve_transmission,
                     rng=rng,
                     naxis1_detector=naxis1_detector,
-                    verbose=verbose,
+                    logger=logger,
                     plots=plots
                 )
                 # convert to default wavelength_unit
@@ -296,7 +301,7 @@ def ifu_simulator(wcs3d, header_keys,
                     min_y_ifu=min_y_ifu,
                     max_y_ifu=max_y_ifu,
                     rng=rng,
-                    verbose=verbose,
+                    logger=logger,
                     plots=plots
                 )
                 # store all simulated photons
@@ -310,8 +315,7 @@ def ifu_simulator(wcs3d, header_keys,
                     simulated_y_ifu_all = np.concatenate((simulated_y_ifu_all, simulated_y_ifu))
                 # ---
                 # update nphotons
-                if verbose:
-                    print(f'[blue]--> {nphotons} photons simulated[/blue]')
+                logger.debug(f'[blue]--> {nphotons} photons simulated[/blue]')
                 if nphotons_all == 0:
                     nphotons_all = nphotons
                 else:
@@ -321,18 +325,17 @@ def ifu_simulator(wcs3d, header_keys,
                         len(simulated_x_ifu_all),
                         len(simulated_y_ifu_all)
                         }) != 1:
-                    print(f'[red]ERROR: check the following numbers:[/red]')
-                    print(f'{nphotons_all=}')
-                    print(f'{len(simulated_wave_all)=}')
-                    print(f'{len(simulated_x_ifu_all)=}')
-                    print(f'{len(simulated_y_ifu_all)=}')
+                    logger.info(f'[red]ERROR: check the following numbers:[/red]')
+                    logger.info(f'{nphotons_all=}')
+                    logger.info(f'{len(simulated_wave_all)=}')
+                    logger.info(f'{len(simulated_x_ifu_all)=}')
+                    logger.info(f'{len(simulated_y_ifu_all)=}')
                     raise_ValueError('Unexpected differences found in the previous numbers')
             else:
-                if verbose:
-                    if nphotons == 0:
-                        print(f'[cyan]WARNING -> nphotons: 0[/cyan]')
-                    else:
-                        print(f'[cyan]WARNING -> render: False[/cyan]')
+                if nphotons == 0:
+                    logger.warning(f'[cyan]WARNING -> nphotons: 0[/cyan]')
+                else:
+                    logger.warning(f'[cyan]WARNING -> render: False[/cyan]')
 
     # filter simulated photons to keep only those that fall within
     # the IFU field of view and within the expected spectral range
@@ -340,9 +343,8 @@ def ifu_simulator(wcs3d, header_keys,
     # negative wavelength value corresponding to those absorbed by
     # the atmosphere when applying the transmission curve)
     textwidth_nphotons_number = len(str(nphotons_all))
-    if verbose:
-        print('\nFiltering photons within IFU field of view and spectral range...')
-        print(f'Initial number of simulated photons: {nphotons_all:>{textwidth_nphotons_number}}')
+    logger.debug('\nFiltering photons within IFU field of view and spectral range...')
+    logger.debug(f'Initial number of simulated photons: {nphotons_all:>{textwidth_nphotons_number}}')
     cond1 = simulated_x_ifu_all >= min_x_ifu
     cond2 = simulated_x_ifu_all <= max_x_ifu
     cond3 = simulated_y_ifu_all >= min_y_ifu
@@ -352,7 +354,7 @@ def ifu_simulator(wcs3d, header_keys,
     iok = np.where(cond1 & cond2 & cond3 & cond4 & cond5 & cond6)[0]
 
     if len(iok) == 0:
-        print(f'[red]Final number of simulated photons..: {len(iok):>{textwidth_nphotons_number}}[/red]')
+        logger.info(f'[red]Final number of simulated photons..: {len(iok):>{textwidth_nphotons_number}}[/red]')
         raise SystemExit
 
     if len(iok) < nphotons_all:
@@ -360,14 +362,12 @@ def ifu_simulator(wcs3d, header_keys,
         simulated_y_ifu_all = simulated_y_ifu_all[iok]
         simulated_wave_all = simulated_wave_all[iok]
         nphotons_all = len(iok)
-    if verbose:
-        print(f'[blue]Final number of simulated photons..: {nphotons_all:>{textwidth_nphotons_number}}[/blue]')
+    logger.debug(f'[blue]Final number of simulated photons..: {nphotons_all:>{textwidth_nphotons_number}}[/blue]')
 
     # ---------------------------------------------------------------
     # compute image2d IFU, white image, with and without oversampling
     # ---------------------------------------------------------------
-    if verbose:
-        print(f'[green]\n* Computing image2d IFU (method 0) with and without oversampling[/green]')
+    logger.debug(f'[green]\n* Computing image2d IFU (method 0) with and without oversampling[/green]')
     for noversampling in {noversampling_whitelight, 1}:
         generate_image2d_method0_ifu(
             wcs3d=wcs3d,
@@ -379,14 +379,14 @@ def ifu_simulator(wcs3d, header_keys,
             instname=instname,
             subtitle=subtitle,
             scene=scene_fname,
-            plots=plots
+            plots=plots,
+            logger=logger
         )
 
     # ----------------------------
     # compute image3d IFU, method0
     # ----------------------------
-    if verbose:
-        print(f'[green]\n* Computing image3d IFU (method 0)[/green]')
+    logger.debug(f'[green]\n* Computing image3d IFU (method 0)[/green]')
     bins_x_ifu = (0.5 + np.arange(naxis1_ifu.value + 1)) * u.pix
     bins_y_ifu = (0.5 + np.arange(naxis2_ifu.value + 1)) * u.pix
     bins_wave = wv_crval1 + \
@@ -401,7 +401,8 @@ def ifu_simulator(wcs3d, header_keys,
         bins_x_ifu=bins_x_ifu,
         bins_y_ifu=bins_y_ifu,
         bins_wave=bins_wave,
-        prefix_intermediate_fits=prefix_intermediate_fits
+        prefix_intermediate_fits=prefix_intermediate_fits,
+        logger=logger,
     )
 
     if stop_after_ifu_3D_method0:
@@ -410,8 +411,7 @@ def ifu_simulator(wcs3d, header_keys,
     # --------------------------------------------
     # compute image2d RSS and in detector, method0
     # --------------------------------------------
-    if verbose:
-        print(f'[green]\n* Computing image2d RSS and detector (method 0)[/green]')
+    logger.debug(f'[green]\n* Computing image2d RSS and detector (method 0)[/green]')
     bins_x_detector = np.linspace(start=0.5, stop=naxis1_detector.value + 0.5, num=naxis1_detector.value + 1)
     bins_y_detector = np.linspace(start=0.5, stop=naxis2_detector.value + 0.5, num=naxis2_detector.value + 1)
 
@@ -438,8 +438,7 @@ def ifu_simulator(wcs3d, header_keys,
     if noparallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
-            if verbose:
-                print(f'{islice=}')
+            logger.debug(f'{islice=}')
             update_image2d_rss_detector_method0(
                 islice=islice,
                 simulated_x_ifu_all=simulated_x_ifu_all,
@@ -475,8 +474,7 @@ def ifu_simulator(wcs3d, header_keys,
                 image2d_detector_method0=image2d_detector_method0
             ) for islice in range(nslices))
     t1 = time.time()
-    if verbose:
-        print(f'Delta time: {t1 - t0}')
+    logger.debug(f'Delta time: {t1 - t0}')
 
     # save RSS image (note that the flatfield effect is not included!)
     save_image2d_rss(
@@ -496,47 +494,42 @@ def ifu_simulator(wcs3d, header_keys,
         with fits.open(infile) as hdul:
             image2d_flatpix2pix = hdul[0].data
         if np.min(image2d_flatpix2pix) <= 0:
-            print(f'- minimum flatpix2pix value: {np.min(image2d_flatpix2pix)}')
+            logger.info(f'- minimum flatpix2pix value: {np.min(image2d_flatpix2pix)}')
             raise_ValueError('Unexpected signal in flatpix2pix <= 0')
         naxis2_flatpix2pix, naxis1_flatpix2pix = image2d_flatpix2pix.shape
         naxis1_flatpix2pix *= u.pix
         naxis2_flatpix2pix *= u.pix
         if (naxis1_flatpix2pix != naxis1_detector) or (naxis2_flatpix2pix != naxis2_detector):
             raise_ValueError(f'Unexpected flatpix2pix shape: naxis1={naxis1_flatpix2pix}, naxis2={naxis2_flatpix2pix}')
-        if verbose:
-            print(f'Applying flatpix2pix: {os.path.basename(infile)} to detector image')
-            print(f'- minimum flatpix2pix value: {np.min(image2d_flatpix2pix):.6f}')
-            print(f'- maximum flatpix2pix value: {np.max(image2d_flatpix2pix):.6f}')
+        logger.debug(f'Applying flatpix2pix: {os.path.basename(infile)} to detector image')
+        logger.debug(f'- minimum flatpix2pix value: {np.min(image2d_flatpix2pix):.6f}')
+        logger.debug(f'- maximum flatpix2pix value: {np.max(image2d_flatpix2pix):.6f}')
         image2d_detector_method0 /= image2d_flatpix2pix
     else:
-        if verbose:
-            print('Skipping applying flatpix2pix')
+        logger.debug('Skipping applying flatpix2pix')
 
     # apply bias to detector image
     if bias.value > 0:
         image2d_detector_method0 += bias.value
-        if verbose:
-            print(f'Applying {bias=} to detector image')
+        logger.debug(f'Applying {bias=} to detector image')
     else:
-        if verbose:
-            print('Skipping adding bias')
+        logger.debug('Skipping adding bias')
 
     # apply Gaussian readout noise to detector image
     if rnoise.value > 0:
-        if verbose:
-            print(f'Applying Gaussian {rnoise=} to detector image')
+        logger.debug(f'Applying Gaussian {rnoise=} to detector image')
         ntot_pixels = naxis1_detector.value * naxis2_detector.value
         image2d_rnoise_flatten = rng.normal(loc=0.0, scale=rnoise.value, size=ntot_pixels)
         image2d_detector_method0 += image2d_rnoise_flatten.reshape((naxis2_detector.value, naxis1_detector.value))
     else:
-        if verbose:
-            print('Skipping adding Gaussian readout noise')
+        logger.debug('Skipping adding Gaussian readout noise')
 
     save_image2d_detector_method0(
         header_keys,
         image2d_detector_method0=image2d_detector_method0,
         prefix_intermediate_fits=prefix_intermediate_fits,
         bitpix=16,
+        logger=logger
     )
 
     # ---------------------------------------------------
@@ -550,7 +543,7 @@ def ifu_simulator(wcs3d, header_keys,
         dict_ifu2detector=dict_ifu2detector,
         wcs3d=wcs3d,
         noparallel_computation=noparallel_computation,
-        verbose=verbose
+        logger=logger
     )
 
     # save FITS file
@@ -561,6 +554,7 @@ def ifu_simulator(wcs3d, header_keys,
         method=1,
         prefix_intermediate_fits=prefix_intermediate_fits,
         bitpix=-32,
+        logger=logger
     )
 
     # ------------------------------------
@@ -572,7 +566,7 @@ def ifu_simulator(wcs3d, header_keys,
         naxis2_ifu=naxis2_ifu,
         naxis1_ifu=naxis1_ifu,
         nslices=nslices,
-        verbose=verbose
+        logger=logger
     )
 
     # save FITS file
@@ -587,5 +581,5 @@ def ifu_simulator(wcs3d, header_keys,
             pos0 + 1, ('COMMENT', "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"))
         hdul = fits.HDUList([hdu])
         outfile = f'{prefix_intermediate_fits}_ifu_3D_method1.fits'
-        print(f'Saving file: {outfile}')
+        logger.info(f'Saving file: {outfile}')
         hdul.writeto(f'{outfile}', overwrite='yes')

@@ -1,11 +1,12 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+import logging
 
 from astropy import wcs
 from astropy.io import fits
@@ -22,7 +23,8 @@ def save_image2d_rss(
         image2d_rss,
         method,
         prefix_intermediate_fits,
-        bitpix
+        bitpix,
+        logger=None
 ):
     """Save the RSS image.
 
@@ -42,7 +44,11 @@ def save_image2d_rss(
         this string is 0, no output is generated.
     bitpix : int
         BITPIX value for the FITS file.
+    logger : `~logging.Logger`, optional
+        Logger for logging messages. If None, the root logger is used.
     """
+    if logger is None:
+        logger = logging.getLogger()
 
     if len(prefix_intermediate_fits) > 0:
         # ------------------------------------------------
@@ -78,5 +84,5 @@ def save_image2d_rss(
             pos0 + 1, ('COMMENT', "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"))
         hdul = fits.HDUList([hdu])
         outfile = f'{prefix_intermediate_fits}_rss_2D_method{method}.fits'
-        print(f'Saving file: {outfile}')
+        logger.info(f'Saving file: {outfile}')
         hdul.writeto(outfile, overwrite='yes')

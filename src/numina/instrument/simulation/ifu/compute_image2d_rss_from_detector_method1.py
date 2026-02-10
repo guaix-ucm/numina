@@ -8,11 +8,11 @@
 #
 """Compute RSS image from detector image"""
 from joblib import Parallel, delayed
+import logging
 import numpy as np
 import time
 
 from numina.instrument.simulation.ifu.define_3d_wcs import get_wvparam_from_wcs3d
-from rich import print
 
 from .update_image2d_rss_method1 import update_image2d_rss_method1
 
@@ -25,7 +25,7 @@ def compute_image2d_rss_from_detector_method1(
         dict_ifu2detector,
         wcs3d,
         noparallel_computation=False,
-        verbose=False
+        logger=None
 ):
     """
     Compute the RSS image from the detector image using method 1.
@@ -49,6 +49,8 @@ def compute_image2d_rss_from_detector_method1(
         If True, do not use parallel computation. Default is False.
     verbose : bool, optional
         If True, print verbose output. Default is False.
+    logger : `~logging.Logger`, optional
+        Logger for logging messages. If None, the root logger is used.
 
     Returns
     -------
@@ -56,8 +58,10 @@ def compute_image2d_rss_from_detector_method1(
         The computed RSS image.
     """
 
-    if verbose:
-        print('[green]\n* Computing image2d RSS (method 1)[/green]')
+    if logger is None:
+        logger = logging.getLogger()
+
+    logger.debug('[green]\n* Computing image2d RSS (method 1)[/green]')
 
     # get WCS parameters
     wv_cunit1, wv_crpix1, wv_crval1, wv_cdelt1 = get_wvparam_from_wcs3d(wcs3d)
@@ -65,14 +69,12 @@ def compute_image2d_rss_from_detector_method1(
     # initialize image
     image2d_rss_method1 = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value))
 
-    if verbose:
-        print('Rectifying...')
+    logger.debug('Rectifying...')
     t0 = time.time()
     if noparallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
-            if verbose:
-                print(f'{islice=}')
+            logger.debug(f'{islice=}')
             update_image2d_rss_method1(
                 islice=islice,
                 image2d_detector_method0=image2d_detector_method0,
@@ -101,7 +103,6 @@ def compute_image2d_rss_from_detector_method1(
             ) for islice in range(nslices))
 
     t1 = time.time()
-    if verbose:
-        print(f'Delta time: {t1 - t0}')
+    logger.debug(f'Delta time: {t1 - t0}')
 
     return image2d_rss_method1

@@ -1,11 +1,12 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+import logging
 
 from astropy.io import fits
 import numpy as np
@@ -21,7 +22,8 @@ def generate_image3d_method0_ifu(
         bins_x_ifu,
         bins_y_ifu,
         bins_wave,
-        prefix_intermediate_fits
+        prefix_intermediate_fits,
+        logger=None
 ):
     """Compute 3D image3 IFU, method 0
 
@@ -55,8 +57,11 @@ def generate_image3d_method0_ifu(
     prefix_intermediate_fits : str
         Prefix for output intermediate FITS files. If the length of
         this string is 0, no output is generated.
-
+    logger : `~logging.Logger`, optional
+        Logger for logging messages. If `None`, the root logger is used.
     """
+    if logger is None:
+        logger = logging.getLogger()
 
     # generate image
     image3d_method0_ifu, edges = np.histogramdd(
@@ -76,5 +81,5 @@ def generate_image3d_method0_ifu(
             pos0 + 1, ('COMMENT', "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"))
         hdul = fits.HDUList([hdu])
         outfile = f'{prefix_intermediate_fits}_ifu_3D_method0.fits'
-        print(f'Saving file: {outfile}')
+        logger.info(f'Saving file: {outfile}')
         hdul.writeto(f'{outfile}', overwrite='yes')

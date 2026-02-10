@@ -10,6 +10,7 @@
 from astropy.io import fits
 from astropy.units import Unit
 import astropy.units as u
+import logging
 import numpy as np
 import os
 
@@ -24,7 +25,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
                                       wave_min, wave_max, nphotons, wavelength_sampling,
                                       apply_atmosphere_transmission, wave_transmission, curve_transmission,
                                       rng, naxis1_detector,
-                                      verbose, plots):
+                                      logger, plots):
     """Generate photons for the scene block.
 
     Parameters
@@ -64,8 +65,8 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
         'wave_transmission'.
     naxis1_detector : `~astropy.units.Quantity`
         Detector NAXIS1, dispersion direction.
-    verbose : bool
-        If True, display additional information.
+    logger : logging.Logger
+        Logger for logging messages.
     plots : bool
         If True, plot intermediate results.
 
@@ -77,6 +78,9 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
 
     """
 
+    if logger is None:
+        logger = logging.getLogger(__name__)
+        
     spectrum_type = scene_block['spectrum']['type']
     if spectrum_type == 'delta-lines':
         mandatory_keys = ['filename', 'wave_column', 'flux_column']
@@ -111,7 +115,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
         with fits.open(faux_skycalc) as hdul:
             skycalc_table = hdul[1].data
         if wave_unit != Unit('nm'):
-            print(f'Ignoring wave_unit: {wave_unit} (assuming {u.nm})')
+            logger.info(f'Ignoring wave_unit: {wave_unit} (assuming {u.nm})')
         wave = skycalc_table['lam'] * u.nm
         if not np.all(np.diff(wave.value) > 0):
             raise_ValueError(f'Wavelength array {wave=} is not sorted!')
@@ -130,7 +134,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             nbins_histo=naxis1_detector.value,
             plots=plots,
             plot_title=os.path.basename(faux_skycalc),
-            verbose=verbose
+            verbose=False
         )
     elif spectrum_type == 'tabulated-spectrum':
         mandatory_keys = ['filename', 'wave_column', 'flux_column', 'flux_type']
@@ -144,14 +148,12 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
         if 'redshift' in scene_block['spectrum']:
             redshift = float(scene_block['spectrum']['redshift'])
         else:
-            if verbose:
-                print('Assuming redshift: 0')
+            logger.debug(f'[faint]Assuming redshift: 0[/faint]')
             redshift = 0.0
         if 'convolve_sigma_km_s' in scene_block['spectrum']:
             convolve_sigma_km_s = float(scene_block['spectrum']['convolve_sigma_km_s'])
         else:
-            if verbose:
-                print('Assuming convolve_sigma_km_s: 0')
+            logger.debug(f'[faint]Assuming convolve_sigma_km_s: 0[/faint]')
             convolve_sigma_km_s = 0.0
         convolve_sigma_km_s *= u.km / u.s
         # read data
@@ -173,7 +175,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             nbins_histo=naxis1_detector.value,
             plots=plots,
             plot_title=os.path.basename(filename),
-            verbose=verbose
+            logger=logger,
         )
     elif spectrum_type == 'constant-flux':
         simulated_wave = simulate_constant_photlam(
@@ -194,7 +196,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             wave_transmission=wave_transmission,
             curve_transmission=curve_transmission,
             rng=rng,
-            verbose=verbose,
+            verbose=False,
             plots=plots
         )
 

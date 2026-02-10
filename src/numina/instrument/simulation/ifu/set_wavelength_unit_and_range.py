@@ -9,14 +9,13 @@
 
 from astropy.units import Unit
 import pprint
-from rich import print
 
 from .raise_valueerror import raise_ValueError
 
 pp = pprint.PrettyPrinter(indent=1, sort_dicts=False)
 
 
-def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose):
+def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, logger=None):
     """Set the wavelength unit and range for a scene block.
 
     Parameters
@@ -29,8 +28,8 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
         Minimum wavelength covered by the detector.
     wmax : `~astropy.units.Quantity`
         Maximum wavelength covered by the detector.
-    verbose : bool
-       If True, display additional information.
+    logger : logging.Logger or None, optional
+        Logger for logging messages. If None, a default logger will be used.
 
     Returns
     -------
@@ -42,6 +41,9 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
         Maximum wavelength to be used in the scene block.
 
     """
+
+    if logger is None:
+        logger = logging.getLogger(__name__)
 
     expected_keys_in_spectrum = {'type'}
 
@@ -62,13 +64,11 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
         wave_unit = scene_block['spectrum']['wave_unit']
     else:
         wave_unit = wmin.unit
-        if verbose:
-            print(f'[faint]Assuming wave_unit: {wave_unit}[/faint]')
+        logger.debug(f'[faint]Assuming wave_unit: {wave_unit}[/faint]')
     if 'wave_min' in scene_block['spectrum']:
         wave_min = float(scene_block['spectrum']['wave_min'])
     else:
-        if verbose:
-            print(f'[faint]Assuming wave_min: null[/faint]')
+        logger.debug(f'[faint]Assuming wave_min: null[/faint]')
         wave_min = None
     if wave_min is None:
         wave_min = wmin.to(wave_unit)
@@ -77,17 +77,15 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, verbose)
     if 'wave_max' in scene_block['spectrum']:
         wave_max = float(scene_block['spectrum']['wave_max'])
     else:
-        if verbose:
-            print(f'[faint]Assuming wave_max: null[/faint]')
+        logger.debug(f'[faint]Assuming wave_max: null[/faint]')
         wave_max = None
     if wave_max is None:
         wave_max = wmax.to(wave_unit)
     else:
         wave_max = wave_max * Unit(wave_unit)
 
-    if verbose:
-        print(f'[faint]{wave_min=}[/faint]')
-        print(f'[faint]{wave_max=}[/faint]')
-        print(f'[faint]{wave_unit=}[/faint]')
+    logger.debug(f'[faint]{wave_min=}[/faint]')
+    logger.debug(f'[faint]{wave_max=}[/faint]')
+    logger.debug(f'[faint]{wave_unit=}[/faint]')
 
     return wave_unit, wave_min, wave_max

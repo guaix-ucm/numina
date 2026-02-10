@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,13 +9,14 @@
 
 from astropy.io import fits
 from astropy.units import Unit
+import logging
 import numpy as np
 import os
 
 from .raise_valueerror import raise_ValueError
 
 
-def load_atmosphere_transmission_curve(atmosphere_transmission, wmin, wmax, wv_cunit1, faux_dict, verbose):
+def load_atmosphere_transmission_curve(atmosphere_transmission, wmin, wmax, wv_cunit1, faux_dict, logger=None):
     """Load atmosphere transmission curve.
 
     Parameters
@@ -37,8 +38,8 @@ def load_atmosphere_transmission_curve(atmosphere_transmission, wmin, wmax, wv_c
         - flatpix2pix: pixel-to-pixel flat field
         - model_ifu2detector: 2D polynomial transformation
           x_ifu, y_ify, wavelength -> x_detector, y_detector
-    verbose : bool
-        If True, display additional information.
+    logger : logging.Logger or None, optional
+        Logger for logging messages. If None, a default logger will be used.
 
     Returns
     -------
@@ -50,10 +51,12 @@ def load_atmosphere_transmission_curve(atmosphere_transmission, wmin, wmax, wv_c
 
     """
 
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     if atmosphere_transmission == "default":
         infile = faux_dict['skycalc']
-        if verbose:
-            print(f'\nLoading atmosphere transmission curve {os.path.basename(infile)}')
+        logger.debug(f'Loading atmosphere transmission curve {os.path.basename(infile)}')
         with fits.open(infile) as hdul:
             skycalc_header = hdul[1].header
             skycalc_table = hdul[1].data
@@ -63,16 +66,15 @@ def load_atmosphere_transmission_curve(atmosphere_transmission, wmin, wmax, wv_c
         wave_transmission = skycalc_table['lam'] * Unit(cwave_unit)
         curve_transmission = skycalc_table['trans']
         if wmin < np.min(wave_transmission) or wmax > np.max(wave_transmission):
-            print(f'{wmin=} (simulated photons)')
-            print(f'{wmax=} (simulated photons)')
-            print(f'{np.min(wave_transmission.to(wv_cunit1))=} (transmission curve)')
-            print(f'{np.max(wave_transmission.to(wv_cunit1))=} (transmission curve)')
+            logger.info(f'{wmin=} (simulated photons)')
+            logger.info(f'{wmax=} (simulated photons)')
+            logger.info(f'{np.min(wave_transmission.to(wv_cunit1))=} (transmission curve)')
+            logger.info(f'{np.max(wave_transmission.to(wv_cunit1))=} (transmission curve)')
             raise_ValueError('Wavelength range covered by the tabulated transmission curve is insufficient')
     elif atmosphere_transmission == "none":
         wave_transmission = None
         curve_transmission = None
-        if verbose:
-            print('Skipping application of the atmosphere transmission')
+        logger.debug('Skipping application of the atmosphere transmission')
     else:
         wave_transmission = None   # avoid PyCharm warning (not aware of raise ValueError)
         curve_transmission = None  # avoid PyCharm warning (not aware of raise ValueError)

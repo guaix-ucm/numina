@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,6 +9,7 @@
 
 import astropy.constants as constants
 import astropy.units as u
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,7 +19,7 @@ from .raise_valueerror import raise_ValueError
 def simulate_spectrum(wave, flux, flux_type,
                       nphotons, wavelength_sampling,
                       rng, wmin, wmax, convolve_sigma_km_s,
-                      nbins_histo, plots, plot_title, verbose):
+                      nbins_histo, plots, plot_title, logger=None):
     """Simulate spectrum defined by tabulated wave and flux data.
 
     Parameters
@@ -54,14 +55,16 @@ def simulate_spectrum(wave, flux, flux_type,
         If True, plot input and output results.
     plot_title : str or None
         Plot title. Used only when 'plots' is True.
-    verbose : bool
-        If True, display additional information.
+    logger : logging.Logger or None, optional
+        Logger for logging messages. If None, a default logger will be used.
 
     Returns
     -------
     simulated_wave : `~astropy.units.Quantity`
         Wavelength of simulated photons.
     """
+    if logger is None:
+        logger = logging.getLogger(__name__)
 
     flux = np.asarray(flux)
     if len(wave) != len(flux):
@@ -134,8 +137,7 @@ def simulate_spectrum(wave, flux, flux_type,
 
     # convert FLAM to PHOTLAM
     if flux_type.lower() == 'flam':
-        if verbose:
-            print('Converting FLAM to PHOTLAM')
+        logger.debug('Converting FLAM to PHOTLAM')
         flux_conversion = wave.to(u.m) / (constants.h * constants.c)
         flux *= flux_conversion.value
 
@@ -177,8 +179,7 @@ def simulate_spectrum(wave, flux, flux_type,
 
     # apply Gaussian broadening
     if convolve_sigma_km_s.value > 0:
-        if verbose:
-            print(f'Applying {convolve_sigma_km_s=}')
+        logger.debug(f'Applying {convolve_sigma_km_s=}')
         sigma_wave = convolve_sigma_km_s / constants.c.to(u.km / u.s) * simulated_wave
         simulated_wave = rng.normal(loc=simulated_wave, scale=sigma_wave)
 

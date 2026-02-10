@@ -1,5 +1,5 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,10 +13,11 @@ from astropy.coordinates import SkyCoord
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
+import logging
 import numpy as np
 
 
-def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lincal, instrument_pa, verbose):
+def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lincal, instrument_pa, logger=None):
     """Define a 3D WCS.
 
     Parameters
@@ -33,8 +34,8 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
         Linear wavelength calibration object.
     instrument_pa : `~astropy.units.Quantity`
         Instrument Position Angle.
-    verbose : bool
-        If True, display additional information.
+    logger : logging.Logger or None, optional
+        Logger for logging messages. If None, a default logger will be used.
 
     Returns
     -------
@@ -42,6 +43,10 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
         WCS of the data cube.
 
     """
+
+    # define logger
+    if logger is None:
+        logger = logging.getLogger(__name__)
 
     # initial checks
     if not naxis1_ifu.unit.is_equivalent(u.pix):
@@ -105,8 +110,7 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
 
     # define wcs object
     wcs3d = WCS(header)
-    if verbose:
-        print(f'\n{wcs3d}')
+    logger.debug(f'\n{wcs3d}')
 
     return wcs3d
 

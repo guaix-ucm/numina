@@ -1,11 +1,13 @@
 #
-# Copyright 2024-2025 Universidad Complutense de Madrid
+# Copyright 2024-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+
+import logging
 
 from astropy.io import fits
 import astropy.units as u
@@ -26,7 +28,7 @@ def simulate_image2d_from_fitsfile(
         background_to_subtract=None,
         image_threshold=0.0,
         plots=False,
-        verbose=False
+        logger=None
 ):
     """Simulate photons mimicking a 2D image from FITS file.
 
@@ -52,8 +54,8 @@ def simulate_image2d_from_fitsfile(
         Data below this threshold is set to zero.
     plots : bool
         If True, plot intermediate results.
-    verbose : bool
-        If True, display additional information.
+    logger : logging.Logger or None
+        Logger for logging messages. If None, a default logger is used.
 
     Returns
     -------
@@ -64,9 +66,11 @@ def simulate_image2d_from_fitsfile(
 
     """
 
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     # read input FITS file
-    if verbose:
-        print(f'Reading {infile=}')
+    logger.debug(f'Reading {infile=}')
     with fits.open(infile) as hdul:
         image2d_ini = hdul[0].data
     image2d_reference = image2d_ini.astype(float)
@@ -79,29 +83,24 @@ def simulate_image2d_from_fitsfile(
         h, bin_edges = np.histogram(image2d_reference.flatten(), bins=nbins)
         imax = np.argmax(h)
         skylevel = (bin_edges[imax] + bin_edges[imax+1]) / 2
-        if verbose:
-            print(f'Subtracting {skylevel=} (image mode)')
+        logger.debug(f'Subtracting {skylevel=} (image mode)')
     elif background_to_subtract == 'median':
         skylevel = np.median(image2d_reference.flatten())
-        if verbose:
-            print(f'Subtracting {skylevel=} (image median)')
+        logger.debug(f'Subtracting {skylevel=} (image median)')
     elif background_to_subtract == 'none':
         skylevel = 0.0
-        if verbose:
-            print('Skipping background subtraction')
+        logger.debug('Skipping background subtraction')
     else:
         try:
             skylevel = float(background_to_subtract)
         except ValueError:
             skylevel = None   # avoid PyCharm warning (not aware of raise ValueError)
             raise_ValueError(f'Invalid {background_to_subtract=}')
-        if verbose:
-            print(f"Subtracting {skylevel=} (user's value)")
+        logger.debug(f"Subtracting {skylevel=} (user's value)")
     image2d_reference -= skylevel
 
     # impose image threshold
-    if verbose:
-        print(f'Applying {image_threshold=}')
+    logger.debug(f'Applying {image_threshold=}')
     image2d_reference[image2d_reference <= image_threshold] = 0
     if np.min(image2d_reference) < 0.0:
         raise_ValueError(f'{np.min(image2d_reference)=} must be >= 0.0')
