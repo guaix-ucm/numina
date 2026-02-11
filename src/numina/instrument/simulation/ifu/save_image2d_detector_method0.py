@@ -57,4 +57,4 @@ def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_detector_2D_method0.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)

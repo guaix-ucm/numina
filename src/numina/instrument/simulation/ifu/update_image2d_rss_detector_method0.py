@@ -82,12 +82,21 @@ def update_image2d_rss_detector_method0(
         updated by this function.
 
     """
+    if simulated_x_ifu_all is None or simulated_y_ifu_all is None or simulated_wave_all is None:
+        nphotons_all = 0
+    else:
+        nphotons_all = len(simulated_x_ifu_all)
+        if nphotons_all != len(simulated_y_ifu_all) or nphotons_all != len(simulated_wave_all):
+            raise ValueError("The input arrays simulated_x_ifu_all, simulated_y_ifu_all, and simulated_wave_all must have the same length.")
 
     # determine photons that pass through the considered slice
     y_ifu_expected = 1.5 + 2 * islice
-    condition = np.abs(simulated_y_ifu_all.value - y_ifu_expected) < 1
-    iok = np.where(condition)[0]
-    nphotons_slice = len(iok)
+    if nphotons_all > 0:
+        condition = np.abs(simulated_y_ifu_all.value - y_ifu_expected) < 1
+        iok = np.where(condition)[0]
+        nphotons_slice = len(iok)
+    else:
+        nphotons_slice = 0
 
     if nphotons_slice > 0:
         # -------------------------------------------------

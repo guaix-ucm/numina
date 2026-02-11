@@ -80,4 +80,4 @@ def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediat
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_rss_2D_method{method}.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)

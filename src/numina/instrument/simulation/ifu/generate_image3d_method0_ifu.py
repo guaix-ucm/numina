@@ -68,11 +68,21 @@ def generate_image3d_method0_ifu(
     if logger is None:
         logger = logging.getLogger()
 
+    if simulated_x_ifu_all is None or simulated_y_ifu_all is None or simulated_wave_all is None:
+        nphotons_all = 0
+    else:
+        nphotons_all = len(simulated_x_ifu_all)
+        if nphotons_all != len(simulated_y_ifu_all) or nphotons_all != len(simulated_wave_all):
+            raise ValueError("The length of simulated_x_ifu_all, simulated_y_ifu_all, and simulated_wave_all must be the same.")
+
     # generate image
-    image3d_method0_ifu, edges = np.histogramdd(
-        sample=(simulated_wave_all.value, simulated_y_ifu_all.value, simulated_x_ifu_all.value),
-        bins=(bins_wave.value, bins_y_ifu.value, bins_x_ifu.value),
-    )
+    if nphotons_all > 0:
+        image3d_method0_ifu, edges = np.histogramdd(
+            sample=(simulated_wave_all.value, simulated_y_ifu_all.value, simulated_x_ifu_all.value),
+            bins=(bins_wave.value, bins_y_ifu.value, bins_x_ifu.value),
+        )
+    else:
+        image3d_method0_ifu = np.zeros((len(bins_wave) - 1, len(bins_y_ifu) - 1, len(bins_x_ifu) - 1))
 
     # save FITS file
     if len(prefix_intermediate_fits) > 0:
@@ -87,4 +97,4 @@ def generate_image3d_method0_ifu(
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_3D_method0.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)

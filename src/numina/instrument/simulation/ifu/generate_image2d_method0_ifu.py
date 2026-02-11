@@ -89,12 +89,22 @@ def generate_image2d_method0_ifu(
 
     wcs2d.wcs.crpix = crpix1_oversampled, crpix2_oversampled
 
-    # (important: reverse X <-> Y)
-    image2d_method0_ifu, xedges, yedges = np.histogram2d(
-        x=(simulated_y_ifu_all.value - crpix2_orig) * noversampling_whitelight + crpix2_oversampled,
-        y=(simulated_x_ifu_all.value - crpix1_orig) * noversampling_whitelight + crpix1_oversampled,
-        bins=(bins_y_ifu_oversampled.value, bins_x_ifu_oversampled.value),
-    )
+    if simulated_x_ifu_all is not None and simulated_y_ifu_all is not None:
+        nphotons_all = len(simulated_x_ifu_all)
+        if nphotons_all != len(simulated_y_ifu_all):
+            raise ValueError("Length of simulated_x_ifu_all and simulated_y_ifu_all must be the same.")
+    else:
+        nphotons_all = 0
+
+    if nphotons_all > 0:
+        # (important: reverse X <-> Y)
+        image2d_method0_ifu, xedges, yedges = np.histogram2d(
+            x=(simulated_y_ifu_all.value - crpix2_orig) * noversampling_whitelight + crpix2_oversampled,
+            y=(simulated_x_ifu_all.value - crpix1_orig) * noversampling_whitelight + crpix1_oversampled,
+            bins=(bins_y_ifu_oversampled.value, bins_x_ifu_oversampled.value),
+        )
+    else:
+        image2d_method0_ifu = np.zeros((naxis2_ifu_oversampled.value, naxis1_ifu_oversampled.value), dtype=int)
 
     wcs2d.wcs.cd /= noversampling_whitelight
 
@@ -112,7 +122,7 @@ def generate_image2d_method0_ifu(
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_white2D_method0_os{noversampling_whitelight:d}.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)
 
     # display result
     if plots:

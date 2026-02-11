@@ -16,7 +16,7 @@ import logging
 import numpy as np
 import os
 from pathlib import Path
-import pprint
+from rich.pretty import pretty_repr
 import time
 import yaml
 
@@ -35,8 +35,6 @@ from .save_image2d_detector_method0 import save_image2d_detector_method0
 from .save_image2d_rss import save_image2d_rss
 from .set_wavelength_unit_and_range import set_wavelength_unit_and_range
 from .update_image2d_rss_detector_method0 import update_image2d_rss_detector_method0
-
-pp = pprint.PrettyPrinter(indent=1, sort_dicts=False)
 
 
 def ifu_simulator(
@@ -156,12 +154,9 @@ def ifu_simulator(
         logger = logging.getLogger(__name__)
 
     if logger.isEnabledFor(logging.DEBUG):
-        verbose = True
         logger.debug(" ")
         for item in faux_dict:
-            logger.info(f"- Required file for item {item}:\n  {faux_dict[item]}")
-    else:
-        verbose = False
+            logger.debug(f"- Required file for item {item}: {faux_dict[item]}")
 
     # check output_dir is a valid directory
     if not os.path.isdir(output_dir):
@@ -222,7 +217,7 @@ def ifu_simulator(
                 logger.info(f"[red]ERROR while processing {scene_fname}[/red]")
                 raise_ValueError("key scene_block_name not found!")
             scene_block_name = scene_block["scene_block_name"]
-            logger.info(f"[green]\n* Processing: {scene_block_name}[/green]")
+            logger.info(f"[green]* Processing: {scene_block_name}[/green]")
             # insert default values for keys not provided
             if "wavelength_sampling" not in scene_block.keys():
                 scene_block["wavelength_sampling"] = "random"
@@ -248,10 +243,9 @@ def ifu_simulator(
                 list_missing_keys = list(required_keys_in_scene_block.difference(scene_block_keys))
                 if len(list_missing_keys) > 0:
                     logger.info(f"[red]missing keys...: [/red]{list_missing_keys}")
-                pp.pprint(scene_block)
+                logger.info(f"scene_block={pretty_repr(scene_block)}")
                 raise_ValueError(f"Invalid format in file: {scene_fname}")
-            if verbose:
-                pp.pprint(scene_block)
+            logger.debug(f"scene_block={pretty_repr(scene_block)}")
 
             nphotons = int(float(scene_block["nphotons"]) * flux_factor)
             wavelength_sampling = scene_block["wavelength_sampling"]
@@ -361,19 +355,18 @@ def ifu_simulator(
     # negative wavelength value corresponding to those absorbed by
     # the atmosphere when applying the transmission curve)
     textwidth_nphotons_number = len(str(nphotons_all))
-    logger.debug("\nFiltering photons within IFU field of view and spectral range...")
-    logger.debug(f"Initial number of simulated photons: {nphotons_all:>{textwidth_nphotons_number}}")
-    cond1 = simulated_x_ifu_all >= min_x_ifu
-    cond2 = simulated_x_ifu_all <= max_x_ifu
-    cond3 = simulated_y_ifu_all >= min_y_ifu
-    cond4 = simulated_y_ifu_all <= max_y_ifu
-    cond5 = simulated_wave_all >= wmin
-    cond6 = simulated_wave_all <= wmax
-    iok = np.where(cond1 & cond2 & cond3 & cond4 & cond5 & cond6)[0]
-
-    if len(iok) == 0:
-        logger.info(f"[red]Final number of simulated photons..: {len(iok):>{textwidth_nphotons_number}}[/red]")
-        raise SystemExit
+    if nphotons_all > 0:
+        logger.debug("Filtering photons within IFU field of view and spectral range...")
+        logger.debug(f"Initial number of simulated photons: {nphotons_all:>{textwidth_nphotons_number}}")
+        cond1 = simulated_x_ifu_all >= min_x_ifu
+        cond2 = simulated_x_ifu_all <= max_x_ifu
+        cond3 = simulated_y_ifu_all >= min_y_ifu
+        cond4 = simulated_y_ifu_all <= max_y_ifu
+        cond5 = simulated_wave_all >= wmin
+        cond6 = simulated_wave_all <= wmax
+        iok = np.where(cond1 & cond2 & cond3 & cond4 & cond5 & cond6)[0]
+    else:
+        iok = np.array([], dtype=int)
 
     if len(iok) < nphotons_all:
         simulated_x_ifu_all = simulated_x_ifu_all[iok]
@@ -385,7 +378,7 @@ def ifu_simulator(
     # ---------------------------------------------------------------
     # compute image2d IFU, white image, with and without oversampling
     # ---------------------------------------------------------------
-    logger.debug(f"[green]\n* Computing image2d IFU (method 0) with and without oversampling[/green]")
+    logger.debug(f"[green]* Computing image2d IFU (method 0) with and without oversampling[/green]")
     for noversampling in {noversampling_whitelight, 1}:
         generate_image2d_method0_ifu(
             wcs3d=wcs3d,
@@ -405,7 +398,7 @@ def ifu_simulator(
     # ----------------------------
     # compute image3d IFU, method0
     # ----------------------------
-    logger.debug(f"[green]\n* Computing image3d IFU (method 0)[/green]")
+    logger.debug(f"[green]* Computing image3d IFU (method 0)[/green]")
     bins_x_ifu = (0.5 + np.arange(naxis1_ifu.value + 1)) * u.pix
     bins_y_ifu = (0.5 + np.arange(naxis2_ifu.value + 1)) * u.pix
     bins_wave = (
@@ -433,7 +426,7 @@ def ifu_simulator(
     # --------------------------------------------
     # compute image2d RSS and in detector, method0
     # --------------------------------------------
-    logger.debug(f"[green]\n* Computing image2d RSS and detector (method 0)[/green]")
+    logger.debug(f"[green]* Computing image2d RSS and detector (method 0)[/green]")
     bins_x_detector = np.linspace(start=0.5, stop=naxis1_detector.value + 0.5, num=naxis1_detector.value + 1)
     bins_y_detector = np.linspace(start=0.5, stop=naxis2_detector.value + 0.5, num=naxis2_detector.value + 1)
 
@@ -608,4 +601,4 @@ def ifu_simulator(
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_3D_method1.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)
