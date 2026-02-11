@@ -14,8 +14,9 @@ import numpy as np
 from .raise_valueerror import raise_ValueError
 
 
-def simulate_delta_lines(line_wave, line_flux, nphotons, wavelength_sampling,
-                         rng, wmin=None, wmax=None, plots=False, plot_title=None):
+def simulate_delta_lines(
+    line_wave, line_flux, nphotons, wavelength_sampling, rng, wmin=None, wmax=None, plots=False, plot_title=None
+):
     """Simulate spectrum defined from isolated wavelengths.
 
     Parameters
@@ -56,7 +57,7 @@ def simulate_delta_lines(line_wave, line_flux, nphotons, wavelength_sampling,
         raise_ValueError(f"Incompatible array length: 'line_wave' ({len(line_wave)}), 'line_flux' ({len(line_flux)})")
 
     if np.any(line_flux < 0):
-        raise_ValueError(f'Negative line fluxes cannot be handled')
+        raise_ValueError(f"Negative line fluxes cannot be handled")
 
     if not isinstance(line_wave, u.Quantity):
         raise_ValueError(f"Object 'line_wave': {line_wave} is not a Quantity instance")
@@ -71,7 +72,7 @@ def simulate_delta_lines(line_wave, line_flux, nphotons, wavelength_sampling,
         if not wmin.unit.is_equivalent(u.m):
             raise_ValueError(f"Unexpected unit for 'wmin': {wmin}")
         wmin = wmin.to(wave_unit)
-        lower_index = np.searchsorted(line_wave.value, wmin.value, side='left')
+        lower_index = np.searchsorted(line_wave.value, wmin.value, side="left")
     else:
         lower_index = 0
 
@@ -82,19 +83,19 @@ def simulate_delta_lines(line_wave, line_flux, nphotons, wavelength_sampling,
         if not wmax.unit.is_equivalent(u.m):
             raise_ValueError(f"Unexpected unit for 'wmax': {wmin}")
         wmax = wmax.to(wave_unit)
-        upper_index = np.searchsorted(line_wave.value, wmax.value, side='right')
+        upper_index = np.searchsorted(line_wave.value, wmax.value, side="right")
     else:
         upper_index = len(line_wave)
 
     if plots:
         fig, ax = plt.subplots()
-        ax.stem(line_wave.value, line_flux, markerfmt=' ', basefmt=' ')
+        ax.stem(line_wave.value, line_flux, markerfmt=" ", basefmt=" ")
         if wmin is not None:
-            ax.axvline(wmin.value, linestyle='--', color='gray')
+            ax.axvline(wmin.value, linestyle="--", color="gray")
         if wmax is not None:
-            ax.axvline(wmax.value, linestyle='--', color='gray')
-        ax.set_xlabel(f'Wavelength ({wave_unit})')
-        ax.set_ylabel('Intensity (arbitrary units)')
+            ax.axvline(wmax.value, linestyle="--", color="gray")
+        ax.set_xlabel(f"Wavelength ({wave_unit})")
+        ax.set_ylabel("Intensity (arbitrary units)")
         if plot_title is not None:
             ax.set_title(plot_title)
         plt.tight_layout()
@@ -109,31 +110,31 @@ def simulate_delta_lines(line_wave, line_flux, nphotons, wavelength_sampling,
 
     if plots:
         fig, ax = plt.subplots()
-        ax.plot(line_wave.value, cumsum, '-')
+        ax.plot(line_wave.value, cumsum, "-")
         if wmin is not None:
-            ax.axvline(wmin.value, linestyle='--', color='gray')
+            ax.axvline(wmin.value, linestyle="--", color="gray")
         if wmax is not None:
-            ax.axvline(wmax.value, linestyle='--', color='gray')
-        ax.set_xlabel(f'Wavelength ({wave_unit})')
-        ax.set_ylabel('Cumulative sum')
+            ax.axvline(wmax.value, linestyle="--", color="gray")
+        ax.set_xlabel(f"Wavelength ({wave_unit})")
+        ax.set_ylabel("Cumulative sum")
         if plot_title is not None:
             ax.set_title(plot_title)
         plt.tight_layout()
         plt.show()
 
-    if wavelength_sampling == 'random':
+    if wavelength_sampling == "random":
         # samples following a uniform distribution
         unisamples = rng.uniform(low=0, high=1, size=nphotons)
-    elif wavelength_sampling == 'fixed':
+    elif wavelength_sampling == "fixed":
         # constant sampling of distribution function
-        unisamples = np.linspace(0, 1, num=nphotons+1)  # generate extra photon
+        unisamples = np.linspace(0, 1, num=nphotons + 1)  # generate extra photon
         unisamples = unisamples[:-1]  # remove last photon
     else:
         unisamples = None  # avoid PyCharm warning
-        raise_ValueError(f'Unexpected {wavelength_sampling=}')
+        raise_ValueError(f"Unexpected {wavelength_sampling=}")
 
     # closest array indices in sorted array
-    closest_indices = np.searchsorted(cumsum, unisamples, side='right')
+    closest_indices = np.searchsorted(cumsum, unisamples, side="right")
 
     # simulated wavelengths
     simulated_wave = line_wave.value[closest_indices]
@@ -149,14 +150,14 @@ def simulate_delta_lines(line_wave, line_flux, nphotons, wavelength_sampling,
 
         # overplot expected and simulated spectrum
         fig, ax = plt.subplots()
-        ax.stem(line_wave.value, line_flux / factor, markerfmt=' ', basefmt=' ')
-        ax.plot(x_spectrum, y_spectrum, '.')
+        ax.stem(line_wave.value, line_flux / factor, markerfmt=" ", basefmt=" ")
+        ax.plot(x_spectrum, y_spectrum, ".")
         if wmin is not None:
-            ax.axvline(wmin.value, linestyle='--', color='gray')
+            ax.axvline(wmin.value, linestyle="--", color="gray")
         if wmax is not None:
-            ax.axvline(wmax.value, linestyle='--', color='gray')
-        ax.set_xlabel(f'Wavelength ({wave_unit})')
-        ax.set_ylabel('Intensity (number of photons)')
+            ax.axvline(wmax.value, linestyle="--", color="gray")
+        ax.set_xlabel(f"Wavelength ({wave_unit})")
+        ax.set_ylabel("Intensity (number of photons)")
         if plot_title is not None:
             ax.set_title(plot_title)
         plt.tight_layout()

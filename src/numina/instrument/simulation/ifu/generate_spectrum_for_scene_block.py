@@ -21,11 +21,23 @@ from .simulate_spectrum import simulate_spectrum
 from .raise_valueerror import raise_ValueError
 
 
-def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_unit,
-                                      wave_min, wave_max, nphotons, wavelength_sampling,
-                                      apply_atmosphere_transmission, wave_transmission, curve_transmission,
-                                      rng, naxis1_detector,
-                                      logger, plots):
+def generate_spectrum_for_scene_block(
+    scene_fname,
+    scene_block,
+    faux_dict,
+    wave_unit,
+    wave_min,
+    wave_max,
+    nphotons,
+    wavelength_sampling,
+    apply_atmosphere_transmission,
+    wave_transmission,
+    curve_transmission,
+    rng,
+    naxis1_detector,
+    logger,
+    plots,
+):
     """Generate photons for the scene block.
 
     Parameters
@@ -80,24 +92,24 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
 
     if logger is None:
         logger = logging.getLogger(__name__)
-        
-    spectrum_type = scene_block['spectrum']['type']
-    if spectrum_type == 'delta-lines':
-        mandatory_keys = ['filename', 'wave_column', 'flux_column']
+
+    spectrum_type = scene_block["spectrum"]["type"]
+    if spectrum_type == "delta-lines":
+        mandatory_keys = ["filename", "wave_column", "flux_column"]
         for key in mandatory_keys:
-            if key not in scene_block['spectrum']:
+            if key not in scene_block["spectrum"]:
                 raise_ValueError(f"Expected key '{key}' not found!")
-        filename = scene_block['spectrum']['filename']
-        wave_column = scene_block['spectrum']['wave_column'] - 1
-        flux_column = scene_block['spectrum']['flux_column'] - 1
-        if filename[0] == '@':
+        filename = scene_block["spectrum"]["filename"]
+        wave_column = scene_block["spectrum"]["wave_column"] - 1
+        flux_column = scene_block["spectrum"]["flux_column"] - 1
+        if filename[0] == "@":
             # retrieve file name from dictionary of auxiliary
             # file names for the considered instrument
             filename = faux_dict[filename[1:]]
         catlines = np.genfromtxt(filename)
         line_wave = catlines[:, wave_column] * Unit(wave_unit)
         if not np.all(np.diff(line_wave.value) > 0):
-            raise_ValueError(f'Wavelength array {line_wave=} is not sorted!')
+            raise_ValueError(f"Wavelength array {line_wave=} is not sorted!")
         line_flux = catlines[:, flux_column]
         simulated_wave = simulate_delta_lines(
             line_wave=line_wave,
@@ -108,19 +120,19 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             wmin=wave_min,
             wmax=wave_max,
             plots=plots,
-            plot_title=filename
+            plot_title=filename,
         )
-    elif spectrum_type == 'skycalc-radiance':
-        faux_skycalc = faux_dict['skycalc']
+    elif spectrum_type == "skycalc-radiance":
+        faux_skycalc = faux_dict["skycalc"]
         with fits.open(faux_skycalc) as hdul:
             skycalc_table = hdul[1].data
-        if wave_unit != Unit('nm'):
-            logger.info(f'Ignoring wave_unit: {wave_unit} (assuming {u.nm})')
-        wave = skycalc_table['lam'] * u.nm
+        if wave_unit != Unit("nm"):
+            logger.info(f"Ignoring wave_unit: {wave_unit} (assuming {u.nm})")
+        wave = skycalc_table["lam"] * u.nm
         if not np.all(np.diff(wave.value) > 0):
-            raise_ValueError(f'Wavelength array {wave=} is not sorted!')
-        flux = skycalc_table['flux']
-        flux_type = 'photlam'
+            raise_ValueError(f"Wavelength array {wave=} is not sorted!")
+        flux = skycalc_table["flux"]
+        flux_type = "photlam"
         simulated_wave = simulate_spectrum(
             wave=wave,
             flux=flux,
@@ -134,33 +146,33 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             nbins_histo=naxis1_detector.value,
             plots=plots,
             plot_title=os.path.basename(faux_skycalc),
-            verbose=False
+            verbose=False,
         )
-    elif spectrum_type == 'tabulated-spectrum':
-        mandatory_keys = ['filename', 'wave_column', 'flux_column', 'flux_type']
+    elif spectrum_type == "tabulated-spectrum":
+        mandatory_keys = ["filename", "wave_column", "flux_column", "flux_type"]
         for key in mandatory_keys:
-            if key not in scene_block['spectrum']:
+            if key not in scene_block["spectrum"]:
                 raise_ValueError(f"Expected key '{key}' not found!")
-        filename = scene_block['spectrum']['filename']
-        wave_column = scene_block['spectrum']['wave_column'] - 1
-        flux_column = scene_block['spectrum']['flux_column'] - 1
-        flux_type = scene_block['spectrum']['flux_type']
-        if 'redshift' in scene_block['spectrum']:
-            redshift = float(scene_block['spectrum']['redshift'])
+        filename = scene_block["spectrum"]["filename"]
+        wave_column = scene_block["spectrum"]["wave_column"] - 1
+        flux_column = scene_block["spectrum"]["flux_column"] - 1
+        flux_type = scene_block["spectrum"]["flux_type"]
+        if "redshift" in scene_block["spectrum"]:
+            redshift = float(scene_block["spectrum"]["redshift"])
         else:
-            logger.debug(f'[faint]Assuming redshift: 0[/faint]')
+            logger.debug(f"[faint]Assuming redshift: 0[/faint]")
             redshift = 0.0
-        if 'convolve_sigma_km_s' in scene_block['spectrum']:
-            convolve_sigma_km_s = float(scene_block['spectrum']['convolve_sigma_km_s'])
+        if "convolve_sigma_km_s" in scene_block["spectrum"]:
+            convolve_sigma_km_s = float(scene_block["spectrum"]["convolve_sigma_km_s"])
         else:
-            logger.debug(f'[faint]Assuming convolve_sigma_km_s: 0[/faint]')
+            logger.debug(f"[faint]Assuming convolve_sigma_km_s: 0[/faint]")
             convolve_sigma_km_s = 0.0
         convolve_sigma_km_s *= u.km / u.s
         # read data
         table_data = np.genfromtxt(filename)
         wave = table_data[:, wave_column] * (1 + redshift) * Unit(wave_unit)
         if not np.all(np.diff(wave.value) > 0):
-            raise_ValueError(f'Wavelength array {wave=} is not sorted!')
+            raise_ValueError(f"Wavelength array {wave=} is not sorted!")
         flux = table_data[:, flux_column]
         simulated_wave = simulate_spectrum(
             wave=wave,
@@ -177,17 +189,13 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             plot_title=os.path.basename(filename),
             logger=logger,
         )
-    elif spectrum_type == 'constant-flux':
+    elif spectrum_type == "constant-flux":
         simulated_wave = simulate_constant_photlam(
-            wmin=wave_min,
-            wmax=wave_max,
-            nphotons=nphotons,
-            wavelength_sampling=wavelength_sampling,
-            rng=rng
+            wmin=wave_min, wmax=wave_max, nphotons=nphotons, wavelength_sampling=wavelength_sampling, rng=rng
         )
     else:
         simulated_wave = None  # avoid PyCharm warning (not aware of raise ValueError)
-        raise_ValueError(f'Unexpected {spectrum_type=} in file {scene_fname}')
+        raise_ValueError(f"Unexpected {spectrum_type=} in file {scene_fname}")
 
     # apply atmosphere transmission
     if apply_atmosphere_transmission:
@@ -197,7 +205,7 @@ def generate_spectrum_for_scene_block(scene_fname, scene_block, faux_dict, wave_
             curve_transmission=curve_transmission,
             rng=rng,
             verbose=False,
-            plots=plots
+            plots=plots,
         )
 
     return simulated_wave

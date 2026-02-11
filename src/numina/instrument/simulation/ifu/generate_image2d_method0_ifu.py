@@ -19,17 +19,17 @@ from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
 
 def generate_image2d_method0_ifu(
-        wcs3d,
-        header_keys,
-        noversampling_whitelight,
-        simulated_x_ifu_all,
-        simulated_y_ifu_all,
-        prefix_intermediate_fits,
-        instname,
-        subtitle,
-        scene,
-        plots,
-        logger=None
+    wcs3d,
+    header_keys,
+    noversampling_whitelight,
+    simulated_x_ifu_all,
+    simulated_y_ifu_all,
+    prefix_intermediate_fits,
+    instname,
+    subtitle,
+    scene,
+    plots,
+    logger=None,
 ):
     """Compute image2d IFU (white image), method0
 
@@ -73,16 +73,8 @@ def generate_image2d_method0_ifu(
     # select the 2D spatial info of the 3D WCS
     wcs2d = wcs3d.sub(axes=[1, 2])
 
-    naxis1_ifu_oversampled = Quantity(
-        value=wcs2d.array_shape[1] * noversampling_whitelight,
-        unit=u.pix,
-        dtype=int
-    )
-    naxis2_ifu_oversampled = Quantity(
-        value=wcs2d.array_shape[0] * noversampling_whitelight,
-        unit=u.pix,
-        dtype=int
-    )
+    naxis1_ifu_oversampled = Quantity(value=wcs2d.array_shape[1] * noversampling_whitelight, unit=u.pix, dtype=int)
+    naxis2_ifu_oversampled = Quantity(value=wcs2d.array_shape[0] * noversampling_whitelight, unit=u.pix, dtype=int)
 
     bins_x_ifu_oversampled = (0.5 + np.arange(naxis1_ifu_oversampled.value + 1)) * u.pix
     bins_y_ifu_oversampled = (0.5 + np.arange(naxis2_ifu_oversampled.value + 1)) * u.pix
@@ -97,7 +89,7 @@ def generate_image2d_method0_ifu(
     image2d_method0_ifu, xedges, yedges = np.histogram2d(
         x=(simulated_y_ifu_all.value - crpix2_orig) * noversampling_whitelight + crpix2_oversampled,
         y=(simulated_x_ifu_all.value - crpix1_orig) * noversampling_whitelight + crpix1_oversampled,
-        bins=(bins_y_ifu_oversampled.value, bins_x_ifu_oversampled.value)
+        bins=(bins_y_ifu_oversampled.value, bins_x_ifu_oversampled.value),
     )
 
     wcs2d.wcs.cd /= noversampling_whitelight
@@ -109,32 +101,32 @@ def generate_image2d_method0_ifu(
         pos0 = len(hdu.header) - 1
         hdu.header.extend(wcs_to_header_using_cd_keywords(wcs2d), update=True)
         hdu.header.update(header_keys)
+        hdu.header.insert(pos0, ("COMMENT", "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
         hdu.header.insert(
-            pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
-        hdu.header.insert(
-            pos0 + 1, ('COMMENT', "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"))
+            pos0 + 1, ("COMMENT", "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H")
+        )
         hdul = fits.HDUList([hdu])
-        outfile = f'{prefix_intermediate_fits}_ifu_white2D_method0_os{noversampling_whitelight:d}.fits'
-        logger.info(f'Saving file: {outfile}')
-        hdul.writeto(f'{outfile}', overwrite='yes')
+        outfile = f"{prefix_intermediate_fits}_ifu_white2D_method0_os{noversampling_whitelight:d}.fits"
+        logger.info(f"Saving file: {outfile}")
+        hdul.writeto(f"{outfile}", overwrite="yes")
 
     # display result
     if plots:
         fig, ax = plt.subplots(figsize=(6.4, 6.4))
-        img = ax.imshow(image2d_method0_ifu, origin='lower', interpolation='None')
-        ax.set_xlabel('X axis (array index)  [parallel to the slices]')
-        ax.set_ylabel('Y axis (array index)  [perpendicular to the slices]')
+        img = ax.imshow(image2d_method0_ifu, origin="lower", interpolation="None")
+        ax.set_xlabel("X axis (array index)  [parallel to the slices]")
+        ax.set_ylabel("Y axis (array index)  [perpendicular to the slices]")
         if instname is not None:
-            title = f'{instname} '
+            title = f"{instname} "
         else:
-            title = ''
-        title += f'IFU image, method0 (oversampling={noversampling_whitelight})'
+            title = ""
+        title += f"IFU image, method0 (oversampling={noversampling_whitelight})"
         if subtitle is not None:
-            title += f'\n{subtitle}'
-        title += f'\nscene: {scene}'
+            title += f"\n{subtitle}"
+        title += f"\nscene: {scene}"
         ax.set_title(title)
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
-        fig.colorbar(img, cax=cax, label='Number of photons')
+        fig.colorbar(img, cax=cax, label="Number of photons")
         plt.tight_layout()
         plt.show()

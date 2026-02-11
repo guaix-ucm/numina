@@ -22,15 +22,25 @@ from .simulate_image2d_from_fitsfile import simulate_image2d_from_fitsfile
 
 
 def generate_geometry_for_scene_block(
-        scene_fname, scene_block, nphotons,
-        apply_seeing, seeing_fwhm_arcsec, seeing_psf,
-        airmass, parallactic_angle,
-        reference_wave_vacuum_differential_refraction, simulated_wave,
-        instrument_pa,
-        wcs3d,
-        min_x_ifu, max_x_ifu, min_y_ifu, max_y_ifu,
-        rng,
-        logger, plots
+    scene_fname,
+    scene_block,
+    nphotons,
+    apply_seeing,
+    seeing_fwhm_arcsec,
+    seeing_psf,
+    airmass,
+    parallactic_angle,
+    reference_wave_vacuum_differential_refraction,
+    simulated_wave,
+    instrument_pa,
+    wcs3d,
+    min_x_ifu,
+    max_x_ifu,
+    min_y_ifu,
+    max_y_ifu,
+    rng,
+    logger,
+    plots,
 ):
     """Distribute photons in the IFU focal plane for the scene block.
 
@@ -95,7 +105,7 @@ def generate_geometry_for_scene_block(
         logger = logging.getLogger(__name__)
 
     if len(simulated_wave) != nphotons:
-        raise ValueError(f'Unexpected {len(simulated_wave)=} != {nphotons=}')
+        raise ValueError(f"Unexpected {len(simulated_wave)=} != {nphotons=}")
 
     factor_fwhm_to_sigma = 1 / (2 * np.sqrt(2 * np.log(2)))
 
@@ -104,40 +114,40 @@ def generate_geometry_for_scene_block(
     plate_scale_x *= u.deg / u.pix
     plate_scale_y *= u.deg / u.pix
 
-    logger.debug(f'{wcs3d.wcs.cd=}')
-    logger.debug(f'{plate_scale_x=}')
-    logger.debug(f'{plate_scale_y=}')
+    logger.debug(f"{wcs3d.wcs.cd=}")
+    logger.debug(f"{plate_scale_x=}")
+    logger.debug(f"{plate_scale_y=}")
 
     # define geometry type for scene block
-    geometry_type = scene_block['geometry']['type']
+    geometry_type = scene_block["geometry"]["type"]
 
     # simulate photons following the selected geometry
-    if geometry_type == 'flatfield':
+    if geometry_type == "flatfield":
         simulated_x_ifu = rng.uniform(low=min_x_ifu.value, high=max_x_ifu.value, size=nphotons)
         simulated_y_ifu = rng.uniform(low=min_y_ifu.value, high=max_y_ifu.value, size=nphotons)
-    elif geometry_type in ['gaussian', 'point-like', 'from-FITS-image']:
-        if 'ra_deg' in scene_block['geometry']:
-            ra_deg = scene_block['geometry']['ra_deg']
+    elif geometry_type in ["gaussian", "point-like", "from-FITS-image"]:
+        if "ra_deg" in scene_block["geometry"]:
+            ra_deg = scene_block["geometry"]["ra_deg"]
         else:
-            logger.debug('[faint]Assuming ra_deg: 0[/faint]')
+            logger.debug("[faint]Assuming ra_deg: 0[/faint]")
             ra_deg = 0.0
         ra_deg *= u.deg
-        if 'dec_deg' in scene_block['geometry']:
-            dec_deg = scene_block['geometry']['dec_deg']
+        if "dec_deg" in scene_block["geometry"]:
+            dec_deg = scene_block["geometry"]["dec_deg"]
         else:
-            logger.debug('[faint]Assuming dec_deg: 0[/faint]')
+            logger.debug("[faint]Assuming dec_deg: 0[/faint]")
             dec_deg = 0.0
         dec_deg *= u.deg
-        if 'delta_ra_arcsec' in scene_block['geometry']:
-            delta_ra_arcsec = scene_block['geometry']['delta_ra_arcsec']
+        if "delta_ra_arcsec" in scene_block["geometry"]:
+            delta_ra_arcsec = scene_block["geometry"]["delta_ra_arcsec"]
         else:
-            logger.debug('[faint]Assuming delta_ra_deg: 0[/faint]')
+            logger.debug("[faint]Assuming delta_ra_deg: 0[/faint]")
             delta_ra_arcsec = 0.0
         delta_ra_arcsec *= u.arcsec
-        if 'delta_dec_arcsec' in scene_block['geometry']:
-            delta_dec_arcsec = scene_block['geometry']['delta_dec_arcsec']
+        if "delta_dec_arcsec" in scene_block["geometry"]:
+            delta_dec_arcsec = scene_block["geometry"]["delta_dec_arcsec"]
         else:
-            logger.debug('[faint]Assuming delta_dec_deg: 0[/faint]')
+            logger.debug("[faint]Assuming delta_dec_deg: 0[/faint]")
             delta_dec_arcsec = 0.0
         delta_dec_arcsec *= u.arcsec
         x_center, y_center = wcs3d.celestial.world_to_pixel(
@@ -147,58 +157,56 @@ def generate_geometry_for_scene_block(
         # of the first pixel in each dimension
         x_center += 1
         y_center += 1
-        if geometry_type == 'point-like':
+        if geometry_type == "point-like":
             simulated_x_ifu = np.repeat(x_center, nphotons)
             simulated_y_ifu = np.repeat(y_center, nphotons)
-        elif geometry_type == 'gaussian':
-            mandatory_keys = ['fwhm_ra_arcsec']
+        elif geometry_type == "gaussian":
+            mandatory_keys = ["fwhm_ra_arcsec"]
             for key in mandatory_keys:
-                if key not in scene_block['geometry']:
+                if key not in scene_block["geometry"]:
                     raise_ValueError(f"Expected key '{key}' not found!")
-            fwhm_ra_arcsec = scene_block['geometry']['fwhm_ra_arcsec'] * u.arcsec
-            if 'fwhm_dec_arcsec' in scene_block['geometry']:
-                fwhm_dec_arcsec = scene_block['geometry']['fwhm_dec_arcsec'] * u.arcsec
+            fwhm_ra_arcsec = scene_block["geometry"]["fwhm_ra_arcsec"] * u.arcsec
+            if "fwhm_dec_arcsec" in scene_block["geometry"]:
+                fwhm_dec_arcsec = scene_block["geometry"]["fwhm_dec_arcsec"] * u.arcsec
             else:
                 fwhm_dec_arcsec = fwhm_ra_arcsec
-                logger.debug(f'[faint]Assuming {fwhm_dec_arcsec=}[/faint]')
-            if 'position_angle_deg' in scene_block['geometry']:
-                position_angle_deg = scene_block['geometry']['position_angle_deg'] * u.deg
+                logger.debug(f"[faint]Assuming {fwhm_dec_arcsec=}[/faint]")
+            if "position_angle_deg" in scene_block["geometry"]:
+                position_angle_deg = scene_block["geometry"]["position_angle_deg"] * u.deg
             else:
                 position_angle_deg = 0.0 * u.deg
-                logger.debug(f'[faint]Assuming {position_angle_deg=}[/faint]')
+                logger.debug(f"[faint]Assuming {position_angle_deg=}[/faint]")
             # covariance matrix for the multivariate normal
             std_x = fwhm_ra_arcsec * factor_fwhm_to_sigma / plate_scale_x.to(u.arcsec / u.pix)
             std_y = fwhm_dec_arcsec * factor_fwhm_to_sigma / plate_scale_y.to(u.arcsec / u.pix)
             rotation_matrix = np.array(  # note the sign to rotate N -> E -> S -> W
                 [
                     [np.cos(position_angle_deg), np.sin(position_angle_deg)],
-                    [-np.sin(position_angle_deg), np.cos(position_angle_deg)]
+                    [-np.sin(position_angle_deg), np.cos(position_angle_deg)],
                 ]
             )
-            covariance = np.diag([std_x.value ** 2, std_y.value ** 2])
+            covariance = np.diag([std_x.value**2, std_y.value**2])
             rotated_covariance = np.dot(rotation_matrix.T, np.dot(covariance, rotation_matrix))
             # simulate X, Y values
-            simulated_xy_ifu = rng.multivariate_normal(
-                mean=[x_center, y_center],
-                cov=rotated_covariance,
-                size=nphotons
-            )
+            simulated_xy_ifu = rng.multivariate_normal(mean=[x_center, y_center], cov=rotated_covariance, size=nphotons)
             # compensate for instrument position angle
-            simulated_x_ifu = \
-                simulated_xy_ifu[:, 0] * np.cos(instrument_pa).value + \
-                simulated_xy_ifu[:, 1] * np.sin(instrument_pa).value
-            simulated_y_ifu = \
-                -simulated_xy_ifu[:, 0] * np.sin(instrument_pa).value + \
-                simulated_xy_ifu[:, 1] * np.cos(instrument_pa).value
-        elif geometry_type == 'from-FITS-image':
-            mandatory_keys = ['filename', 'diagonal_fov_arcsec', 'background_to_subtract']
+            simulated_x_ifu = (
+                simulated_xy_ifu[:, 0] * np.cos(instrument_pa).value
+                + simulated_xy_ifu[:, 1] * np.sin(instrument_pa).value
+            )
+            simulated_y_ifu = (
+                -simulated_xy_ifu[:, 0] * np.sin(instrument_pa).value
+                + simulated_xy_ifu[:, 1] * np.cos(instrument_pa).value
+            )
+        elif geometry_type == "from-FITS-image":
+            mandatory_keys = ["filename", "diagonal_fov_arcsec", "background_to_subtract"]
             for key in mandatory_keys:
-                if key not in scene_block['geometry']:
+                if key not in scene_block["geometry"]:
                     raise_ValueError(f"Expected key '{key}' not found!")
             # read reference FITS file
-            infile = scene_block['geometry']['filename']
-            diagonal_fov_arcsec = scene_block['geometry']['diagonal_fov_arcsec'] * u.arcsec
-            background_to_subtract = scene_block['geometry']['background_to_subtract']
+            infile = scene_block["geometry"]["filename"]
+            diagonal_fov_arcsec = scene_block["geometry"]["diagonal_fov_arcsec"] * u.arcsec
+            background_to_subtract = scene_block["geometry"]["background_to_subtract"]
             # generate simulated locations in the IFU
             simulated_x_ifu_0, simulated_y_ifu_0 = simulate_image2d_from_fitsfile(
                 infile=infile,
@@ -212,49 +220,46 @@ def generate_geometry_for_scene_block(
                 logger=logger,
             )
             # compensate for instrument rotation angle
-            simulated_x_ifu = \
-                simulated_x_ifu_0 * np.cos(instrument_pa).value + \
-                simulated_y_ifu_0 * np.sin(instrument_pa).value
-            simulated_y_ifu = \
-                -simulated_x_ifu_0 * np.sin(instrument_pa).value + \
-                simulated_y_ifu_0 * np.cos(instrument_pa).value
+            simulated_x_ifu = (
+                simulated_x_ifu_0 * np.cos(instrument_pa).value + simulated_y_ifu_0 * np.sin(instrument_pa).value
+            )
+            simulated_y_ifu = (
+                -simulated_x_ifu_0 * np.sin(instrument_pa).value + simulated_y_ifu_0 * np.cos(instrument_pa).value
+            )
             # shift image center
             simulated_x_ifu += x_center
             simulated_y_ifu += y_center
         else:
             simulated_x_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
             simulated_y_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
-            raise_ValueError(f'Unexpected {geometry_type=}')
+            raise_ValueError(f"Unexpected {geometry_type=}")
     else:
         simulated_x_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
         simulated_y_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
-        raise_ValueError(f'Unexpected {geometry_type=} in file {scene_fname}')
+        raise_ValueError(f"Unexpected {geometry_type=} in file {scene_fname}")
 
     # apply seeing
     if apply_seeing:
         if seeing_psf == "gaussian":
-            logger.debug(f'Applying Gaussian PSF with {seeing_fwhm_arcsec=}')
+            logger.debug(f"Applying Gaussian PSF with {seeing_fwhm_arcsec=}")
             std_x = seeing_fwhm_arcsec * factor_fwhm_to_sigma / plate_scale_x.to(u.arcsec / u.pix)
             simulated_x_ifu += rng.normal(loc=0, scale=abs(std_x.value), size=nphotons)
             std_y = seeing_fwhm_arcsec * factor_fwhm_to_sigma / plate_scale_y.to(u.arcsec / u.pix)
             simulated_y_ifu += rng.normal(loc=0, scale=abs(std_y.value), size=nphotons)
         else:
-            raise_ValueError(f'Unexpected {seeing_psf=}')
+            raise_ValueError(f"Unexpected {seeing_psf=}")
 
     # apply differential refraction (as a function of wavelength)
-    if (geometry_type != 'flatfield') and (airmass > 1.0):
-        logger.debug('Applying differential refraction correction as a function of wavelength')
+    if (geometry_type != "flatfield") and (airmass > 1.0):
+        logger.debug("Applying differential refraction correction as a function of wavelength")
         differential_refraction = compute_adr_wavelength(
             airmass=airmass,
             reference_wave_vacuum=reference_wave_vacuum_differential_refraction,
             wave_vacuum=simulated_wave,
-            debug=False
+            debug=False,
         )
         # compute RA and DEC of each simulated photon
-        simulated_coor = wcs3d.celestial.pixel_to_world(
-            simulated_x_ifu - 1.0,
-            simulated_y_ifu - 1.0
-        )
+        simulated_coor = wcs3d.celestial.pixel_to_world(simulated_x_ifu - 1.0, simulated_y_ifu - 1.0)
         simulated_ra = simulated_coor.ra
         simulated_dec = simulated_coor.dec
         # apply differential refraction correction (first declination
@@ -279,19 +284,18 @@ def generate_geometry_for_scene_block(
             differential_refraction_center_ifu = compute_adr_wavelength(
                 airmass=airmass,
                 reference_wave_vacuum=reference_wave_vacuum_differential_refraction,
-                wave_vacuum=sample_wavelengths
+                wave_vacuum=sample_wavelengths,
             )
             x_center_ifu, y_center_ifu = wcs3d.celestial.wcs.crpix
-            simulated_coor = wcs3d.celestial.pixel_to_world(
-                x_center_ifu - 1.0,
-                y_center_ifu - 1.0
-            )
+            simulated_coor = wcs3d.celestial.pixel_to_world(x_center_ifu - 1.0, y_center_ifu - 1.0)
             ra_center_ifu = simulated_coor.ra
             dec_center_ifu = simulated_coor.dec
             ra_center_ifu = np.repeat(ra_center_ifu, nsample_wavelengths)
             dec_center_ifu = np.repeat(dec_center_ifu, nsample_wavelengths)
             dec_center_ifu += differential_refraction_center_ifu.to(u.deg) * np.cos(parallactic_angle)
-            ra_center_ifu += differential_refraction_center_ifu.to(u.deg) * np.sin(parallactic_angle) / np.cos(dec_center_ifu)
+            ra_center_ifu += (
+                differential_refraction_center_ifu.to(u.deg) * np.sin(parallactic_angle) / np.cos(dec_center_ifu)
+            )
             x_center_ifu_corrected, y_center_ifu_corrected = wcs3d.celestial.world_to_pixel(
                 SkyCoord(ra=ra_center_ifu, dec=dec_center_ifu)
             )
@@ -307,17 +311,17 @@ def generate_geometry_for_scene_block(
             for iplot in range(2):
                 ax = axarr[iplot]
                 if iplot == 0:
-                    ax.plot(simulated_wave[iok], delta_simulated_x_ifu[iok], ',', label='simulated photons')
-                    ax.plot(sample_wavelengths, delta_x_center_ifu, 'r+', label='IFU center')
-                    ax.set_ylabel(r'$\Delta$simulated_x_ifu (pixel)')
+                    ax.plot(simulated_wave[iok], delta_simulated_x_ifu[iok], ",", label="simulated photons")
+                    ax.plot(sample_wavelengths, delta_x_center_ifu, "r+", label="IFU center")
+                    ax.set_ylabel(r"$\Delta$simulated_x_ifu (pixel)")
                 else:
-                    ax.plot(simulated_wave[iok], delta_simulated_y_ifu[iok], ',', label='simulated photons')
-                    ax.plot(sample_wavelengths, delta_y_center_ifu, 'r+', label='IFU center')
-                    ax.set_ylabel(r'$\Delta$simulated_y_ifu (pixel)')
-                ax.set_xlabel(f'Wavelength ({simulated_wave.unit})')
-                ax.axhline(0, linestyle='--', color='gray')
-                ax.axvline(reference_wave_vacuum_differential_refraction.value, linestyle=':', color='C1')
-                ax.set_title(f'airmass: {airmass}, parallactic angle: {parallactic_angle}')
+                    ax.plot(simulated_wave[iok], delta_simulated_y_ifu[iok], ",", label="simulated photons")
+                    ax.plot(sample_wavelengths, delta_y_center_ifu, "r+", label="IFU center")
+                    ax.set_ylabel(r"$\Delta$simulated_y_ifu (pixel)")
+                ax.set_xlabel(f"Wavelength ({simulated_wave.unit})")
+                ax.axhline(0, linestyle="--", color="gray")
+                ax.axvline(reference_wave_vacuum_differential_refraction.value, linestyle=":", color="C1")
+                ax.set_title(f"airmass: {airmass}, parallactic angle: {parallactic_angle}")
                 ax.legend()
             plt.tight_layout()
             plt.show()

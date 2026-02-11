@@ -59,15 +59,15 @@ class LinearWaveCal(object):
     def __init__(self, crpix1_wavecal, crval1_wavecal, cdelt1_wavecal, naxis1_wavecal, default_wavelength_unit):
         # check units
         if not crpix1_wavecal.unit.is_equivalent(u.pix):
-            raise ValueError(f'Unexpected crpix1_wavecal unit: {crpix1_wavecal.unit}')
+            raise ValueError(f"Unexpected crpix1_wavecal unit: {crpix1_wavecal.unit}")
         if not crval1_wavecal.unit.is_equivalent(u.m):
-            raise ValueError(f'Unexpected crval1_wavecal unit: {crval1_wavecal.unit}')
+            raise ValueError(f"Unexpected crval1_wavecal unit: {crval1_wavecal.unit}")
         if not cdelt1_wavecal.unit.is_equivalent(u.m / u.pix):
-            raise ValueError(f'Unexpected cdelt1_wavecal unit: {cdelt1_wavecal.unit}')
+            raise ValueError(f"Unexpected cdelt1_wavecal unit: {cdelt1_wavecal.unit}")
         if not naxis1_wavecal.unit.is_equivalent(u.pix):
-            raise ValueError(f'Unexpected naxis1_wavecal unit: {naxis1_wavecal.unit}')
+            raise ValueError(f"Unexpected naxis1_wavecal unit: {naxis1_wavecal.unit}")
         if not default_wavelength_unit.is_equivalent(u.m):
-            raise ValueError(f'Unexpected default_wavelength_unit: {default_wavelength_unit}')
+            raise ValueError(f"Unexpected default_wavelength_unit: {default_wavelength_unit}")
 
         # define attributes
         self.crpix1_wavecal = crpix1_wavecal
@@ -79,24 +79,24 @@ class LinearWaveCal(object):
         self.default_wavelength_unit = default_wavelength_unit
 
     def __str__(self):
-        output = '<LinearWaveCal instance>\n'
-        output += f'crpix1_wavecal: {self.crpix1_wavecal}\n'
-        output += f'crval1_wavecal: {self.crval1_wavecal}\n'
-        output += f'cdelt1_wavecal: {self.cdelt1_wavecal}\n'
-        output += f'naxis1_wavecal: {self.naxis1_wavecal}\n'
-        output += f'wmin..........: {self.wmin}\n'
-        output += f'wmax..........: {self.wmax}\n'
-        output += f'default_wavelength_unit: {self.default_wavelength_unit}'
+        output = "<LinearWaveCal instance>\n"
+        output += f"crpix1_wavecal: {self.crpix1_wavecal}\n"
+        output += f"crval1_wavecal: {self.crval1_wavecal}\n"
+        output += f"cdelt1_wavecal: {self.cdelt1_wavecal}\n"
+        output += f"naxis1_wavecal: {self.naxis1_wavecal}\n"
+        output += f"wmin..........: {self.wmin}\n"
+        output += f"wmax..........: {self.wmax}\n"
+        output += f"default_wavelength_unit: {self.default_wavelength_unit}"
         return output
 
     def __repr__(self):
-        output = f'LinearWaveCal(\n'
-        output += f'    crpix1_wavecal={self.crpix1_wavecal.value} * {self.crpix1_wavecal.unit.__repr__()},\n'
-        output += f'    crval1_wavecal={self.crval1_wavecal.value} * {self.crval1_wavecal.unit.__repr__()},\n'
-        output += f'    cdelt1_wavecal={self.cdelt1_wavecal.value} * {self.cdelt1_wavecal.unit.__repr__()},\n'
-        output += f'    naxis1_wavecal={self.naxis1_wavecal.value} * {self.naxis1_wavecal.unit.__repr__()},\n'
-        output += f'    default_wavelength_unit={self.default_wavelength_unit.__repr__()}\n'
-        output += ')'
+        output = f"LinearWaveCal(\n"
+        output += f"    crpix1_wavecal={self.crpix1_wavecal.value} * {self.crpix1_wavecal.unit.__repr__()},\n"
+        output += f"    crval1_wavecal={self.crval1_wavecal.value} * {self.crval1_wavecal.unit.__repr__()},\n"
+        output += f"    cdelt1_wavecal={self.cdelt1_wavecal.value} * {self.cdelt1_wavecal.unit.__repr__()},\n"
+        output += f"    naxis1_wavecal={self.naxis1_wavecal.value} * {self.naxis1_wavecal.unit.__repr__()},\n"
+        output += f"    default_wavelength_unit={self.default_wavelength_unit.__repr__()}\n"
+        output += ")"
         return output
 
     def __eq__(self, other):
@@ -163,7 +163,7 @@ class LinearWaveCal(object):
         if not isinstance(wave, u.Quantity):
             raise ValueError(f"Object 'wave': {wave} is not a Quantity instance")
         if return_units not in [u.pix, u.dimensionless_unscaled]:
-            raise ValueError(f'Unexpected return_units: {return_units}')
+            raise ValueError(f"Unexpected return_units: {return_units}")
 
         waveunit = self.default_wavelength_unit
         fitspixel = (wave.to(waveunit) - self.crval1_wavecal) / self.cdelt1_wavecal + self.crpix1_wavecal

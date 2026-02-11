@@ -12,13 +12,7 @@ from astropy.io import fits
 import numpy as np
 
 
-def save_image2d_detector_method0(
-        header_keys,
-        image2d_detector_method0,
-        prefix_intermediate_fits,
-        bitpix,
-        logger=None
-):
+def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_intermediate_fits, bitpix, logger=None):
     """Save the two 2D images: RSS and detector.
 
     Parameters
@@ -50,14 +44,14 @@ def save_image2d_detector_method0(
             # round to integer and save as BITPIX=16 (unsigned short)
             hdu = fits.PrimaryHDU(np.round(image2d_detector_method0).astype(np.uint16))
         else:
-            raise ValueError(f'Unsupported BITPIX value: {bitpix}')
+            raise ValueError(f"Unsupported BITPIX value: {bitpix}")
         pos0 = len(hdu.header) - 1
         hdu.header.update(header_keys)
+        hdu.header.insert(pos0, ("COMMENT", "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
         hdu.header.insert(
-            pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
-        hdu.header.insert(
-            pos0 + 1, ('COMMENT', "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"))
+            pos0 + 1, ("COMMENT", "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H")
+        )
         hdul = fits.HDUList([hdu])
-        outfile = f'{prefix_intermediate_fits}_detector_2D_method0.fits'
-        logger.info(f'Saving file: {outfile}')
-        hdul.writeto(outfile, overwrite='yes')
+        outfile = f"{prefix_intermediate_fits}_detector_2D_method0.fits"
+        logger.info(f"Saving file: {outfile}")
+        hdul.writeto(outfile, overwrite="yes")

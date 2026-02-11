@@ -55,29 +55,29 @@ def load_atmosphere_transmission_curve(atmosphere_transmission, wmin, wmax, wv_c
         logger = logging.getLogger(__name__)
 
     if atmosphere_transmission == "default":
-        infile = faux_dict['skycalc']
-        logger.debug(f'Loading atmosphere transmission curve {os.path.basename(infile)}')
+        infile = faux_dict["skycalc"]
+        logger.debug(f"Loading atmosphere transmission curve {os.path.basename(infile)}")
         with fits.open(infile) as hdul:
             skycalc_header = hdul[1].header
             skycalc_table = hdul[1].data
-        if skycalc_header['TTYPE1'] != 'lam':
+        if skycalc_header["TTYPE1"] != "lam":
             raise_ValueError(f"Unexpected TTYPE1: {skycalc_header['TTYPE1']}")
-        cwave_unit = skycalc_header['TUNIT1']
-        wave_transmission = skycalc_table['lam'] * Unit(cwave_unit)
-        curve_transmission = skycalc_table['trans']
+        cwave_unit = skycalc_header["TUNIT1"]
+        wave_transmission = skycalc_table["lam"] * Unit(cwave_unit)
+        curve_transmission = skycalc_table["trans"]
         if wmin < np.min(wave_transmission) or wmax > np.max(wave_transmission):
-            logger.info(f'{wmin=} (simulated photons)')
-            logger.info(f'{wmax=} (simulated photons)')
-            logger.info(f'{np.min(wave_transmission.to(wv_cunit1))=} (transmission curve)')
-            logger.info(f'{np.max(wave_transmission.to(wv_cunit1))=} (transmission curve)')
-            raise_ValueError('Wavelength range covered by the tabulated transmission curve is insufficient')
+            logger.info(f"{wmin=} (simulated photons)")
+            logger.info(f"{wmax=} (simulated photons)")
+            logger.info(f"{np.min(wave_transmission.to(wv_cunit1))=} (transmission curve)")
+            logger.info(f"{np.max(wave_transmission.to(wv_cunit1))=} (transmission curve)")
+            raise_ValueError("Wavelength range covered by the tabulated transmission curve is insufficient")
     elif atmosphere_transmission == "none":
         wave_transmission = None
         curve_transmission = None
-        logger.debug('Skipping application of the atmosphere transmission')
+        logger.debug("Skipping application of the atmosphere transmission")
     else:
-        wave_transmission = None   # avoid PyCharm warning (not aware of raise ValueError)
+        wave_transmission = None  # avoid PyCharm warning (not aware of raise ValueError)
         curve_transmission = None  # avoid PyCharm warning (not aware of raise ValueError)
-        raise_ValueError(f'Unexpected {atmosphere_transmission=}')
+        raise_ValueError(f"Unexpected {atmosphere_transmission=}")
 
     return wave_transmission, curve_transmission

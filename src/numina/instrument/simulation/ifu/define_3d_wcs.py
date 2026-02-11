@@ -50,13 +50,13 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
 
     # initial checks
     if not naxis1_ifu.unit.is_equivalent(u.pix):
-        raise ValueError(f'Unexpected naxis1 unit: {naxis1_ifu.unit}')
+        raise ValueError(f"Unexpected naxis1 unit: {naxis1_ifu.unit}")
     if not naxis2_ifu.unit.is_equivalent(u.pix):
-        raise ValueError(f'Unexpected naxis2 unit: {naxis2_ifu.unit}')
+        raise ValueError(f"Unexpected naxis2 unit: {naxis2_ifu.unit}")
     if not isinstance(skycoord_center, SkyCoord):
-        raise ValueError(f'Expected SkyCoord instance not found: {skycoord_center} of type {type(skycoord_center)}')
+        raise ValueError(f"Expected SkyCoord instance not found: {skycoord_center} of type {type(skycoord_center)}")
     if not spatial_scale.unit.is_equivalent(u.deg / u.pix):
-        raise ValueError(f'Unexpected spatial_scale unit: {spatial_scale.unit}')
+        raise ValueError(f"Unexpected spatial_scale unit: {spatial_scale.unit}")
 
     default_wv_unit = wv_lincal.default_wavelength_unit
 
@@ -64,13 +64,13 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
     # Note: when using CDi_j keywords, there is no need to define CDELTi
     #       keywords, since they are ignored by astropy.wcs.WCS.
     #
-    #       The FITS standard defined 
-    #       in https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf 
+    #       The FITS standard defined
+    #       in https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
     #       (page 30) states that there are three possible conventions:
-    #       1. The CDi_j keywords: represent a full linear transformation matrix, 
-    #          including rotation, scaling, and possible distortion. Used when you 
+    #       1. The CDi_j keywords: represent a full linear transformation matrix,
+    #          including rotation, scaling, and possible distortion. Used when you
     #          want to describe the complete transformation in a single matrix.
-    #       2. The PCi_j + CDELTi keywords: PCi_j should represent a rotation 
+    #       2. The PCi_j + CDELTi keywords: PCi_j should represent a rotation
     #          and distortion matrix without units, meaning it should be normalized.
     #          The CDELTi keywords should represent the pixel scale in the
     #          corresponding axis, with units.
@@ -85,32 +85,32 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
     #       function that returns the header with CDi_j keywords (see below).
     #       This function should be used instead of wcs3d.to_header().
     header = fits.Header()
-    header['NAXIS'] = 3
-    header['NAXIS1'] = int(naxis1_ifu.value)
-    header['NAXIS2'] = int(naxis2_ifu.value)
-    header['NAXIS3'] = int(wv_lincal.naxis1_wavecal.value)
-    header['CTYPE1'] = 'RA---TAN'
-    header['CTYPE2'] = 'DEC--TAN'
-    header['CTYPE3'] = 'WAVE'
-    header['CRVAL1'] = skycoord_center.ra.deg
-    header['CRVAL2'] = skycoord_center.dec.deg
-    header['CRVAL3'] = wv_lincal.crval1_wavecal.to(default_wv_unit).value
-    header['CRPIX1'] = (naxis1_ifu.value + 1) / 2
-    header['CRPIX2'] = (naxis2_ifu.value + 1) / 2
-    header['CRPIX3'] = wv_lincal.crpix1_wavecal.value
+    header["NAXIS"] = 3
+    header["NAXIS1"] = int(naxis1_ifu.value)
+    header["NAXIS2"] = int(naxis2_ifu.value)
+    header["NAXIS3"] = int(wv_lincal.naxis1_wavecal.value)
+    header["CTYPE1"] = "RA---TAN"
+    header["CTYPE2"] = "DEC--TAN"
+    header["CTYPE3"] = "WAVE"
+    header["CRVAL1"] = skycoord_center.ra.deg
+    header["CRVAL2"] = skycoord_center.dec.deg
+    header["CRVAL3"] = wv_lincal.crval1_wavecal.to(default_wv_unit).value
+    header["CRPIX1"] = (naxis1_ifu.value + 1) / 2
+    header["CRPIX2"] = (naxis2_ifu.value + 1) / 2
+    header["CRPIX3"] = wv_lincal.crpix1_wavecal.value
     spatial_scale_deg_pix = spatial_scale.to(u.deg / u.pix).value
-    header['CD1_1'] = (-spatial_scale_deg_pix) * np.cos(instrument_pa).value
-    header['CD1_2'] = spatial_scale_deg_pix * np.sin(instrument_pa).value
-    header['CD2_1'] = (-spatial_scale_deg_pix) * (-np.sin(instrument_pa).value)
-    header['CD2_2'] = spatial_scale_deg_pix * np.cos(instrument_pa).value
-    header['CD3_3'] = wv_lincal.cdelt1_wavecal.to(default_wv_unit / u.pix).value
-    header['CUNIT1'] = 'deg'
-    header['CUNIT2'] = 'deg'
-    header['CUNIT3'] = default_wv_unit.name
+    header["CD1_1"] = (-spatial_scale_deg_pix) * np.cos(instrument_pa).value
+    header["CD1_2"] = spatial_scale_deg_pix * np.sin(instrument_pa).value
+    header["CD2_1"] = (-spatial_scale_deg_pix) * (-np.sin(instrument_pa).value)
+    header["CD2_2"] = spatial_scale_deg_pix * np.cos(instrument_pa).value
+    header["CD3_3"] = wv_lincal.cdelt1_wavecal.to(default_wv_unit / u.pix).value
+    header["CUNIT1"] = "deg"
+    header["CUNIT2"] = "deg"
+    header["CUNIT3"] = default_wv_unit.name
 
     # define wcs object
     wcs3d = WCS(header)
-    logger.debug(f'\n{wcs3d}')
+    logger.debug(f"\n{wcs3d}")
 
     return wcs3d
 
@@ -135,22 +135,22 @@ def wcs_to_header_using_cd_keywords(wcs):
     header = wcs.to_header()
 
     # Replace PCi_j with CDi_j keywords and remove CDELTi keywords.
-    list_of_pc_keys = [key for key in header.keys() if key.startswith('PC')]
+    list_of_pc_keys = [key for key in header.keys() if key.startswith("PC")]
     list_of_pc_keys.sort()  # Sort list of keys to ensure consistent order
     if len(list_of_pc_keys) > 0:
         for key in list_of_pc_keys:
-            header.rename_keyword(key, f'CD{key[2]}_{key[4]}')
-        list_of_cdelt_keys = [key for key in header.keys() if key.startswith('CDELT')]
+            header.rename_keyword(key, f"CD{key[2]}_{key[4]}")
+        list_of_cdelt_keys = [key for key in header.keys() if key.startswith("CDELT")]
         if len(list_of_cdelt_keys) > 0:
             for key in list_of_cdelt_keys:
                 del header[key]
     else:
         # If no PCi_j keywords are present, rename CDELTi as CDi_i keywords
-        list_of_cdelt_keys = [key for key in header.keys() if key.startswith('CDELT')]
+        list_of_cdelt_keys = [key for key in header.keys() if key.startswith("CDELT")]
         if len(list_of_cdelt_keys) > 0:
             for key in list_of_cdelt_keys:
-                header.rename_keyword(key, f'CD{key[5]}_{key[5]}')
-                header.comments[f'CD{key[5]}_{key[5]}'] = 'Coordinate transformation matrix element'
+                header.rename_keyword(key, f"CD{key[5]}_{key[5]}")
+                header.comments[f"CD{key[5]}_{key[5]}"] = "Coordinate transformation matrix element"
     return header
 
 
@@ -192,14 +192,14 @@ def header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(wcs2d_celestial, w
     """Merge 2D celestial WCS and 1D spectral WCS into a single header.
 
     This function merges a 2D celestial WCS and a 1D spectral WCS into
-    a single 3D WCS header. The celestial WCS is assumed to be in the 
-    first two axes (NAXIS1 and NAXIS2), and the spectral WCS is assumed 
-    to be in the third axis (NAXIS3). The resulting header contains the 
-    necessary keywords to describe the 3D WCS, including the celestial 
+    a single 3D WCS header. The celestial WCS is assumed to be in the
+    first two axes (NAXIS1 and NAXIS2), and the spectral WCS is assumed
+    to be in the third axis (NAXIS3). The resulting header contains the
+    necessary keywords to describe the 3D WCS, including the celestial
     coordinates and the spectral wavelength information.
 
-    The returned value is the FITS header and not a WCS object, 
-    so to avoid astropy.wcs.WCS replacing the CDi_j keywords 
+    The returned value is the FITS header and not a WCS object,
+    so to avoid astropy.wcs.WCS replacing the CDi_j keywords
     with PCi_j and CDELTi keywords.
 
     Parameters
@@ -216,25 +216,21 @@ def header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(wcs2d_celestial, w
     """
 
     header3d = wcs_to_header_using_cd_keywords(wcs2d_celestial)
-    header3d['NAXIS'] = 3
+    header3d["NAXIS"] = 3
     header_spectral = wcs_to_header_using_cd_keywords(wcs1d_spectral)
-    header3d['WCSAXES'] = 3
-    for item in ['CRPIX', 'CD', 'CUNIT', 'CTYPE', 'CRVAL']:
+    header3d["WCSAXES"] = 3
+    for item in ["CRPIX", "CD", "CUNIT", "CTYPE", "CRVAL"]:
         # insert {item}3 after {item}2 to preserve the order in the header
-        if item == 'CD':
-            keybefore = f'{item}2_2'
-            keyafter = f'{item}3_3'
-            keyvalue = header_spectral[f'{item}1_1']
-            keycomment = header_spectral.comments[f'{item}1_1']
+        if item == "CD":
+            keybefore = f"{item}2_2"
+            keyafter = f"{item}3_3"
+            keyvalue = header_spectral[f"{item}1_1"]
+            keycomment = header_spectral.comments[f"{item}1_1"]
         else:
-            keybefore = f'{item}2'
-            keyafter = f'{item}3'
-            keyvalue = header_spectral[f'{item}1']
-            keycomment = header_spectral.comments[f'{item}1']
-        header3d.insert(
-            keybefore,
-            (keyafter, keyvalue, keycomment),
-            after=True
-        )
+            keybefore = f"{item}2"
+            keyafter = f"{item}3"
+            keyvalue = header_spectral[f"{item}1"]
+            keycomment = header_spectral.comments[f"{item}1"]
+        header3d.insert(keybefore, (keyafter, keyvalue, keycomment), after=True)
 
     return header3d

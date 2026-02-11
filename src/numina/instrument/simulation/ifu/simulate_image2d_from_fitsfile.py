@@ -19,16 +19,16 @@ from .raise_valueerror import raise_ValueError
 
 
 def simulate_image2d_from_fitsfile(
-        infile,
-        diagonal_fov_arcsec,
-        plate_scale_x,
-        plate_scale_y,
-        nphotons,
-        rng,
-        background_to_subtract=None,
-        image_threshold=0.0,
-        plots=False,
-        logger=None
+    infile,
+    diagonal_fov_arcsec,
+    plate_scale_x,
+    plate_scale_y,
+    nphotons,
+    rng,
+    background_to_subtract=None,
+    image_threshold=0.0,
+    plots=False,
+    logger=None,
 ):
     """Simulate photons mimicking a 2D image from FITS file.
 
@@ -70,7 +70,7 @@ def simulate_image2d_from_fitsfile(
         logger = logging.getLogger(__name__)
 
     # read input FITS file
-    logger.debug(f'Reading {infile=}')
+    logger.debug(f"Reading {infile=}")
     with fits.open(infile) as hdul:
         image2d_ini = hdul[0].data
     image2d_reference = image2d_ini.astype(float)
@@ -78,47 +78,44 @@ def simulate_image2d_from_fitsfile(
     npixels = naxis1 * naxis2
 
     # subtract background
-    if background_to_subtract == 'mode':
+    if background_to_subtract == "mode":
         nbins = int(np.sqrt(npixels) + 0.5)
         h, bin_edges = np.histogram(image2d_reference.flatten(), bins=nbins)
         imax = np.argmax(h)
-        skylevel = (bin_edges[imax] + bin_edges[imax+1]) / 2
-        logger.debug(f'Subtracting {skylevel=} (image mode)')
-    elif background_to_subtract == 'median':
+        skylevel = (bin_edges[imax] + bin_edges[imax + 1]) / 2
+        logger.debug(f"Subtracting {skylevel=} (image mode)")
+    elif background_to_subtract == "median":
         skylevel = np.median(image2d_reference.flatten())
-        logger.debug(f'Subtracting {skylevel=} (image median)')
-    elif background_to_subtract == 'none':
+        logger.debug(f"Subtracting {skylevel=} (image median)")
+    elif background_to_subtract == "none":
         skylevel = 0.0
-        logger.debug('Skipping background subtraction')
+        logger.debug("Skipping background subtraction")
     else:
         try:
             skylevel = float(background_to_subtract)
         except ValueError:
-            skylevel = None   # avoid PyCharm warning (not aware of raise ValueError)
-            raise_ValueError(f'Invalid {background_to_subtract=}')
+            skylevel = None  # avoid PyCharm warning (not aware of raise ValueError)
+            raise_ValueError(f"Invalid {background_to_subtract=}")
         logger.debug(f"Subtracting {skylevel=} (user's value)")
     image2d_reference -= skylevel
 
     # impose image threshold
-    logger.debug(f'Applying {image_threshold=}')
+    logger.debug(f"Applying {image_threshold=}")
     image2d_reference[image2d_reference <= image_threshold] = 0
     if np.min(image2d_reference) < 0.0:
-        raise_ValueError(f'{np.min(image2d_reference)=} must be >= 0.0')
+        raise_ValueError(f"{np.min(image2d_reference)=} must be >= 0.0")
 
     # flatten image to be simulated
     image1d = image2d_reference.flatten()
     # compute normalized cumulative area
     xpixel = 1 + np.arange(npixels)
-    cumulative_area = np.concatenate((
-        [0],
-        np.cumsum((image1d[:-1] + image1d[1:]) / 2 * (xpixel[1:] - xpixel[:-1]))
-    ))
+    cumulative_area = np.concatenate(([0], np.cumsum((image1d[:-1] + image1d[1:]) / 2 * (xpixel[1:] - xpixel[:-1]))))
     normalized_cumulative_area = cumulative_area / cumulative_area[-1]
     if plots:
         fig, ax = plt.subplots()
-        ax.plot(xpixel, normalized_cumulative_area, '.')
-        ax.set_xlabel(f'xpixel')
-        ax.set_ylabel('Normalized cumulative area')
+        ax.plot(xpixel, normalized_cumulative_area, ".")
+        ax.set_xlabel(f"xpixel")
+        ax.set_ylabel("Normalized cumulative area")
         ax.set_title(os.path.basename(infile))
         plt.tight_layout()
         plt.show()

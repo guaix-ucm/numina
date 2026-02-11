@@ -40,16 +40,18 @@ def simulate_constant_photlam(wmin, wmax, nphotons, wavelength_sampling, rng):
     if not isinstance(wmax, u.Quantity):
         raise_ValueError(f"Object 'wmax': {wmax} is not a Quantity instance")
     if wmin.unit != wmax.unit:
-        raise_ValueError(f"Different units used for 'wmin' and 'wmax': {wmin.unit}, {wmax.unit}.\n" +
-                         "Employ the same unit to unambiguously define the output result.")
+        raise_ValueError(
+            f"Different units used for 'wmin' and 'wmax': {wmin.unit}, {wmax.unit}.\n"
+            + "Employ the same unit to unambiguously define the output result."
+        )
 
-    if wavelength_sampling == 'random':
+    if wavelength_sampling == "random":
         simulated_wave = rng.uniform(low=wmin.value, high=wmax.value, size=nphotons)
-    elif wavelength_sampling == 'fixed':
+    elif wavelength_sampling == "fixed":
         simulated_wave = np.linspace(wmin.value, wmax.value, num=nphotons)
     else:
         simulated_wave = None  # avoid PyCharm warning
-        raise_ValueError(f'Unexpected {wavelength_sampling=}')
+        raise_ValueError(f"Unexpected {wavelength_sampling=}")
 
     simulated_wave *= wmin.unit
     return simulated_wave

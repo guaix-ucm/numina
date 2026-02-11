@@ -17,15 +17,7 @@ from .define_3d_wcs import get_wvparam_from_wcs3d
 from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
 
-def save_image2d_rss(
-        wcs3d,
-        header_keys,
-        image2d_rss,
-        method,
-        prefix_intermediate_fits,
-        bitpix,
-        logger=None
-):
+def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediate_fits, bitpix, logger=None):
     """Save the RSS image.
 
     Parameters
@@ -66,7 +58,7 @@ def save_image2d_rss(
         wcs2d.wcs.crpix = [wv_crpix1.value, 1]  # reference pixel coordinate
         wcs2d.wcs.crval = [wv_crval1.value, 0]  # world coordinate at reference pixel
         wcs2d.wcs.cdelt = [wv_cdelt1.value, 1]
-        wcs2d.wcs.ctype = ["WAVE", ""]   # ToDo: fix this
+        wcs2d.wcs.ctype = ["WAVE", ""]  # ToDo: fix this
         wcs2d.wcs.cunit = [wv_cunit1, u.pix]
         if bitpix == 16:
             # round to integer and save as BITPIX=16 (unsigned short)
@@ -74,15 +66,15 @@ def save_image2d_rss(
         elif bitpix == -32:
             hdu = fits.PrimaryHDU(image2d_rss.astype(np.float32))
         else:
-            raise ValueError(f'Unsupported BITPIX value: {bitpix}')
+            raise ValueError(f"Unsupported BITPIX value: {bitpix}")
         pos0 = len(hdu.header) - 1
         hdu.header.extend(wcs_to_header_using_cd_keywords(wcs2d), update=True)
         hdu.header.update(header_keys)
+        hdu.header.insert(pos0, ("COMMENT", "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
         hdu.header.insert(
-            pos0, ('COMMENT', "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
-        hdu.header.insert(
-            pos0 + 1, ('COMMENT', "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H"))
+            pos0 + 1, ("COMMENT", "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H")
+        )
         hdul = fits.HDUList([hdu])
-        outfile = f'{prefix_intermediate_fits}_rss_2D_method{method}.fits'
-        logger.info(f'Saving file: {outfile}')
-        hdul.writeto(outfile, overwrite='yes')
+        outfile = f"{prefix_intermediate_fits}_rss_2D_method{method}.fits"
+        logger.info(f"Saving file: {outfile}")
+        hdul.writeto(outfile, overwrite="yes")

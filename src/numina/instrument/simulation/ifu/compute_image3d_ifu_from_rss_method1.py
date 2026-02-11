@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 """Compute image3d IFU from RSS image"""
+
 import logging
 
 import numpy as np
@@ -20,11 +21,11 @@ def compute_image3d_ifu_from_rss_method1(
     naxis2_ifu,
     naxis1_ifu,
     nslices,
-    logger=None,   
+    logger=None,
 ):
     """
     Compute the image3d IFU from the image2d RSS using method 1.
-    
+
     Parameters
     ----------
     image2d_rss_method1 : numpy.ndarray
@@ -40,7 +41,7 @@ def compute_image3d_ifu_from_rss_method1(
         Number of slices in the IFU image.
     logger : logging.Logger or None, optional
         Logger for logging messages. If None, a default logger will be used.
-    
+
     Returns
     -------
     image3d_ifu_method1 : numpy.ndarray
@@ -49,7 +50,7 @@ def compute_image3d_ifu_from_rss_method1(
     if logger is None:
         logger = logging.getLogger()
 
-    logger.debug('[green]\n* Computing image3d IFU from image2d RSS method 1[/green]')
+    logger.debug("[green]\n* Computing image3d IFU from image2d RSS method 1[/green]")
 
     # kernel in the spectral direction
     # (bidimensional to be applied to a bidimensional image)
@@ -57,23 +58,23 @@ def compute_image3d_ifu_from_rss_method1(
     kernel = np.array([[0.25, 0.50, 0.25]])
 
     # convolve RSS image
-    convolved_data = convolve2d(image2d_rss_method1, kernel, boundary='fill', fillvalue=0, mode='same')
+    convolved_data = convolve2d(image2d_rss_method1, kernel, boundary="fill", fillvalue=0, mode="same")
 
     # TODO: the second dimension in the following array should be 2*nslices
     # (check what to do for another IFU, like TARSIS)
     image3d_ifu_method1 = np.zeros((naxis1_detector.value, naxis2_ifu.value, naxis1_ifu.value))
-    logger.debug(f'(debug): {image3d_ifu_method1.shape=}')
+    logger.debug(f"{image3d_ifu_method1.shape=}")
 
     for islice in range(nslices):
         i1 = islice * 2
         j1 = islice * naxis1_ifu.value
         j2 = j1 + naxis1_ifu.value
         image3d_ifu_method1[:, i1, :] = convolved_data[j1:j2, :].T
-        image3d_ifu_method1[:, i1+1, :] = convolved_data[j1:j2, :].T
+        image3d_ifu_method1[:, i1 + 1, :] = convolved_data[j1:j2, :].T
 
     image3d_ifu_method1 /= 2
-    logger.debug(f'(debug): {np.sum(image2d_rss_method1)=}')
-    logger.debug(f'(debug):      {np.sum(convolved_data)=}')
-    logger.debug(f'(debug): {np.sum(image3d_ifu_method1)=}')
+    logger.debug(f"{np.sum(image2d_rss_method1)=}")
+    logger.debug(f"{np.sum(convolved_data)=}")
+    logger.debug(f"{np.sum(image3d_ifu_method1)=}")
 
     return image3d_ifu_method1

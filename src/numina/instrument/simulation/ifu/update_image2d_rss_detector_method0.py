@@ -14,20 +14,20 @@ from numina.array.distortion import fmap
 
 
 def update_image2d_rss_detector_method0(
-        islice,
-        simulated_x_ifu_all,
-        simulated_y_ifu_all,
-        simulated_wave_all,
-        naxis1_ifu,
-        bins_x_ifu,
-        bins_wave,
-        bins_x_detector,
-        bins_y_detector,
-        wv_cdelt1,
-        extra_degradation_spectral_direction,
-        dict_ifu2detector,
-        image2d_rss_method0,
-        image2d_detector_method0
+    islice,
+    simulated_x_ifu_all,
+    simulated_y_ifu_all,
+    simulated_wave_all,
+    naxis1_ifu,
+    bins_x_ifu,
+    bins_wave,
+    bins_x_detector,
+    bins_y_detector,
+    wv_cdelt1,
+    extra_degradation_spectral_direction,
+    dict_ifu2detector,
+    image2d_rss_method0,
+    image2d_detector_method0,
 ):
     """Update the two 2D images: RSS and detector.
 
@@ -95,10 +95,10 @@ def update_image2d_rss_detector_method0(
         # -------------------------------------------------
         h, xedges, yedges = np.histogram2d(
             x=simulated_x_ifu_all.value[iok],
-            y=simulated_wave_all.value[iok] +
-              (simulated_y_ifu_all.value[iok] - y_ifu_expected) * wv_cdelt1.value +
-              extra_degradation_spectral_direction.value[iok] * wv_cdelt1.value,
-            bins=(bins_x_ifu.value, bins_wave.value)
+            y=simulated_wave_all.value[iok]
+            + (simulated_y_ifu_all.value[iok] - y_ifu_expected) * wv_cdelt1.value
+            + extra_degradation_spectral_direction.value[iok] * wv_cdelt1.value,
+            bins=(bins_x_ifu.value, bins_wave.value),
         )
         j1 = islice * naxis1_ifu.value
         j2 = j1 + naxis1_ifu.value
@@ -109,11 +109,11 @@ def update_image2d_rss_detector_method0(
         # -----------------------------------------
         # use models to predict location in Hawaii detector
         # important: reverse here X <-> Y
-        wavelength_unit = Unit(dict_ifu2detector['wavelength-unit'])
-        dumdict = dict_ifu2detector['contents'][islice]
-        order = dumdict['order']
-        aij = np.array(dumdict['aij'])
-        bij = np.array(dumdict['bij'])
+        wavelength_unit = Unit(dict_ifu2detector["wavelength-unit"])
+        dumdict = dict_ifu2detector["contents"][islice]
+        order = dumdict["order"]
+        aij = np.array(dumdict["aij"])
+        bij = np.array(dumdict["bij"])
         y_hawaii, x_hawaii = fmap(
             order=order,
             aij=aij,
@@ -121,7 +121,7 @@ def update_image2d_rss_detector_method0(
             x=simulated_x_ifu_all.value[iok],
             # important: use the wavelength unit employed to determine
             # the polynomial transformation
-            y=simulated_wave_all.to(wavelength_unit).value[iok]
+            y=simulated_wave_all.to(wavelength_unit).value[iok],
         )
         # disperse photons along the spectral direction according to their
         # location within the slice in the vertical direction
@@ -130,9 +130,5 @@ def update_image2d_rss_detector_method0(
         x_hawaii += extra_degradation_spectral_direction.value[iok]
         # compute 2D histogram
         # important: reverse X <-> Y
-        h, xedges, yedges = np.histogram2d(
-            x=y_hawaii,
-            y=x_hawaii,
-            bins=(bins_y_detector, bins_x_detector)
-        )
+        h, xedges, yedges = np.histogram2d(x=y_hawaii, y=x_hawaii, bins=(bins_y_detector, bins_x_detector))
         image2d_detector_method0 += h
