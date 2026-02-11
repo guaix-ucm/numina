@@ -14,6 +14,7 @@ import astropy.units as u
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
+from pathlib import Path
 
 from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
@@ -30,6 +31,7 @@ def generate_image2d_method0_ifu(
     scene,
     plots,
     logger=None,
+    output_dir=".",
 ):
     """Compute image2d IFU (white image), method0
 
@@ -66,6 +68,8 @@ def generate_image2d_method0_ifu(
         If True, plot intermediate results.
     logger : `~logging.Logger` or None
         Logger for logging messages. If None, the root logger is used.
+    output_dir : str or `~pathlib.Path`, optional
+        Output directory for intermediate FITS files.
     """
     if logger is None:
         logger = logging.getLogger()
@@ -108,7 +112,7 @@ def generate_image2d_method0_ifu(
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_white2D_method0_os{noversampling_whitelight:d}.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
 
     # display result
     if plots:

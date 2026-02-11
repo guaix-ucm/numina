@@ -148,7 +148,7 @@ def ifu_simulator(
         Plot subtitle.
     plots : bool
         If True, plot intermediate results.
-    output_dir : str
+    output_dir : str or `~pathlib.Path`, optional
         Output directory to store results.
     """
 
@@ -166,8 +166,8 @@ def ifu_simulator(
     # check output_dir is a valid directory
     if not os.path.isdir(output_dir):
         raise_ValueError(f"Invalid output directory: {output_dir}")
-    if not isinstance(output_dir, Path):
-        output_dir = Path(output_dir)
+    else:
+        logger.debug(f"Output directory: {output_dir}")
 
     if plots:
         # display SKYCALC predictions for sky radiance and transmission
@@ -399,6 +399,7 @@ def ifu_simulator(
             scene=scene_fname,
             plots=plots,
             logger=logger,
+            output_dir=output_dir,
         )
 
     # ----------------------------
@@ -423,6 +424,7 @@ def ifu_simulator(
         bins_wave=bins_wave,
         prefix_intermediate_fits=prefix_intermediate_fits,
         logger=logger,
+        output_dir=output_dir,
     )
 
     if stop_after_ifu_3D_method0:
@@ -504,6 +506,8 @@ def ifu_simulator(
         method=0,
         prefix_intermediate_fits=prefix_intermediate_fits,
         bitpix=16,
+        logger=logger,
+        output_dir=output_dir,
     )
 
     # apply flatpix2pix to detector image
@@ -550,6 +554,7 @@ def ifu_simulator(
         prefix_intermediate_fits=prefix_intermediate_fits,
         bitpix=16,
         logger=logger,
+        output_dir=output_dir,
     )
 
     # ---------------------------------------------------
@@ -575,6 +580,7 @@ def ifu_simulator(
         prefix_intermediate_fits=prefix_intermediate_fits,
         bitpix=-32,
         logger=logger,
+        output_dir=output_dir,
     )
 
     # ------------------------------------
@@ -602,4 +608,4 @@ def ifu_simulator(
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_3D_method1.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")

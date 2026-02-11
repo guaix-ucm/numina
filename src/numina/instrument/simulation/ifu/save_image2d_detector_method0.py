@@ -10,9 +10,10 @@ import logging
 
 from astropy.io import fits
 import numpy as np
+from pathlib import Path
 
 
-def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_intermediate_fits, bitpix, logger=None):
+def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_intermediate_fits, bitpix, logger=None, output_dir="."):
     """Save the two 2D images: RSS and detector.
 
     Parameters
@@ -29,6 +30,8 @@ def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_
         BITPIX value for the FITS file.
     logger : `~logging.Logger`, optional
         Logger for logging messages. If None, the root logger is used.
+    output_dir : str or `~pathlib.Path`, optional
+        Output directory to store results. Default is the current directory.
     """
 
     if logger is None:
@@ -54,4 +57,4 @@ def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_detector_2D_method0.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(outfile, overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")

@@ -12,12 +12,13 @@ from astropy import wcs
 from astropy.io import fits
 import astropy.units as u
 import numpy as np
+from pathlib import Path
 
 from .define_3d_wcs import get_wvparam_from_wcs3d
 from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
 
-def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediate_fits, bitpix, logger=None):
+def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediate_fits, bitpix, logger=None, output_dir="."):
     """Save the RSS image.
 
     Parameters
@@ -38,6 +39,8 @@ def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediat
         BITPIX value for the FITS file.
     logger : `~logging.Logger`, optional
         Logger for logging messages. If None, the root logger is used.
+    output_dir : str or `~pathlib.Path`, optional
+        Output directory to store results. Default is the current directory.
     """
     if logger is None:
         logger = logging.getLogger()
@@ -77,4 +80,4 @@ def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediat
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_rss_2D_method{method}.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(outfile, overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")

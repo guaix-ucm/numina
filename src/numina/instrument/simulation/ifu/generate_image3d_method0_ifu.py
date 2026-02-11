@@ -10,6 +10,7 @@ import logging
 
 from astropy.io import fits
 import numpy as np
+from pathlib import Path
 
 from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
@@ -25,6 +26,7 @@ def generate_image3d_method0_ifu(
     bins_wave,
     prefix_intermediate_fits,
     logger=None,
+    output_dir=".",
 ):
     """Compute 3D image3 IFU, method 0
 
@@ -60,6 +62,8 @@ def generate_image3d_method0_ifu(
         this string is 0, no output is generated.
     logger : `~logging.Logger`, optional
         Logger for logging messages. If `None`, the root logger is used.
+    output_dir : str or `~pathlib.Path`, optional
+        Output directory to store results. Default is the current directory.
     """
     if logger is None:
         logger = logging.getLogger()
@@ -83,4 +87,4 @@ def generate_image3d_method0_ifu(
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_3D_method0.fits"
         logger.info(f"Saving file: {outfile}")
-        hdul.writeto(f"{outfile}", overwrite="yes")
+        hdul.writeto(f"{Path(output_dir) / outfile}", overwrite="yes")
