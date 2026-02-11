@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2024 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -96,7 +96,9 @@ def ximshow(image2d, title=None, show=True,
             aspect=GLOBAL_ASPECT,
             crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
             ds9regfile=None,
-            geometry=GLOBAL_GEOMETRY, figuredict=None,
+            geometry=GLOBAL_GEOMETRY, 
+            factor_macosx=1.5,
+            figuredict=None,
             tight_layout=True,
             debugplot=0, using_jupyter=False):
     """Auxiliary function to display a numpy 2d array.
@@ -149,6 +151,12 @@ def ximshow(image2d, title=None, show=True,
     geometry : str or None
         xwidth, ywidth, xorigin, yorigin values employed to set the
         window geometry.
+    factor_macosx : float
+        Factor to control the size of the plot on macOS (default=1.5).
+         This factor is applied to the xwidth and ywidth values provided
+        in geometry when the backend is macOS. This is a workaround to
+        control the size of the plot on macOS, which does not allow to set
+        the window geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     figuredict: dictionary
@@ -412,13 +420,17 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         xini_geom = int(tmp_str[2])
         yini_geom = int(tmp_str[3])
         backend = matplotlib.get_backend()
-        if backend == 'TkAgg':
+        if backend.lower() == 'tkagg':
             plt.get_current_fig_manager().resize(xwidth_geom, ywidth_geom)
             plt.get_current_fig_manager().window.wm_geometry(
                 f"+{xini_geom}+{yini_geom}")
-        elif backend == 'Qt5Agg':
+        elif backend.lower() == 'qt5agg':
             geometry_tuple = xwidth_geom, ywidth_geom, xini_geom, yini_geom
             set_window_geometry(geometry_tuple)
+        elif backend.lower() == 'macosx':
+            fig = plt.gcf()
+            fig.set_size_inches(factor_macosx * xwidth_geom / fig.dpi, factor_macosx  * ywidth_geom / fig.dpi)
+            print(f"WARNING: Window position control not available for backend {backend}")
         else:
             print(
                 f'WARNING: geometry {geometry} ignored with backend {backend}')
@@ -460,7 +472,9 @@ def ximshow_file(singlefile,
                  args_z1z2=None, args_bbox=None, args_firstpix=None,
                  args_aspect=GLOBAL_ASPECT,
                  args_keystitle=None, args_ds9reg=None,
-                 args_geometry=GLOBAL_GEOMETRY, pdf=None,
+                 args_geometry=GLOBAL_GEOMETRY, 
+                 args_factor_macosx=1.5,
+                 pdf=None, png=None,
                  args_figuredict=None,
                  show=True,
                  debugplot=None,
@@ -498,8 +512,16 @@ def ximshow_file(singlefile,
     args_geometry : string or None
         xwidth, ywidth, xorigin, yorigin to define the window geometry.
         This information is ignored if args_pdffile is not None.
+    args_factor_macosx : float
+        Factor to control the size of the plot on macOS (default=1.5).
+         This factor is applied to the xwidth and ywidth values provided
+        in args_geometry when the backend is macOS. This is a workaround to
+        control the size of the plot on macOS, which does not allow to set
+        the window geometry.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
+    png : string or None
+        If not None, output is sent to PNG file.
     args_figuredict : string containing a dictionary
         Parameters for ptl.figure(). Useful for pdf output.
         For example: --figuredict "{'figsize': (8, 10), 'dpi': 100}"
@@ -650,6 +672,7 @@ def ximshow_file(singlefile,
                  cunit1=cunit1,
                  ds9regfile=args_ds9reg,
                  geometry=args_geometry,
+                 factor_macosx=args_factor_macosx,
                  figuredict=figuredict,
                  debugplot=debugplot,
                  using_jupyter=using_jupyter)
@@ -659,6 +682,13 @@ def ximshow_file(singlefile,
             from numina.array.display.matplotlib_qt import plt
             plt.tight_layout()
             pdf.savefig()
+        else:
+            return ax
+    elif png is not None:
+        if show:
+            from numina.array.display.matplotlib_qt import plt
+            plt.tight_layout()
+            plt.savefig(png)
         else:
             return ax
     else:
@@ -960,8 +990,13 @@ def main(args=None):
     parser.add_argument("--geometry",
                         help='string "xwidth,ywidth,xorigin,yorigin"',
                         default=GLOBAL_GEOMETRY)
+    parser.add_argument("--factor_macosx", help="Factor to control the size of the plot on macOS (default=1.5)",
+                        default=1.5, type=float)
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
+                        type=argparse.FileType('w'))
+    parser.add_argument("--pngfile",
+                        help="ouput PNG file name",
                         type=argparse.FileType('w'))
     parser.add_argument("--figuredict",
                         help="string with dictionary of parameters for plt.figure()",
@@ -997,13 +1032,21 @@ def main(args=None):
         print('>> Filenames.: ', list_fits_files)
         print('>> Extensions: ', list_extnum)
 
+    if args.pdffile is not None and args.pngfile is not None:
+        raise ValueError('Cannot specify both pdffile and pngfile')
+
     # read pdffile
+    pdf = None
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
         pdf = PdfPages(args.pdffile.name)
     else:
         from numina.array.display.matplotlib_qt import plt  # noqa: F401
-        pdf = None
+
+    png = None
+    if args.pngfile is not None:
+        from numina.array.display.matplotlib_qt import plt  # noqa: F401
+        png = args.pngfile.name
 
     for myfile, extnum in zip(list_fits_files, list_extnum):
         if extnum is None:
@@ -1020,7 +1063,9 @@ def main(args=None):
                      args_keystitle=args.keystitle,
                      args_ds9reg=args.ds9reg,
                      args_geometry=args.geometry,
+                     args_factor_macosx=args.factor_macosx,
                      pdf=pdf,
+                     png=png,
                      args_figuredict=args.figuredict,
                      debugplot=args.debugplot)
 
