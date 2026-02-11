@@ -62,7 +62,7 @@ def compute_image2d_rss_from_detector_method1(
     if logger is None:
         logger = logging.getLogger()
 
-    logger.debug("[green]\n* Computing image2d RSS (method 1)[/green]")
+    logger.debug("[green]* Computing image2d RSS (method 1)[/green]")
 
     # get WCS parameters
     wv_cunit1, wv_crpix1, wv_crval1, wv_cdelt1 = get_wvparam_from_wcs3d(wcs3d)

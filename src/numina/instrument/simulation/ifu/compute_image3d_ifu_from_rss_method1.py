@@ -12,7 +12,6 @@ import logging
 
 import numpy as np
 from scipy.signal import convolve2d
-from rich import print
 
 
 def compute_image3d_ifu_from_rss_method1(
@@ -50,7 +49,7 @@ def compute_image3d_ifu_from_rss_method1(
     if logger is None:
         logger = logging.getLogger()
 
-    logger.debug("[green]\n* Computing image3d IFU from image2d RSS method 1[/green]")
+    logger.debug("[green]* Computing image3d IFU from image2d RSS method 1[/green]")
 
     # kernel in the spectral direction
     # (bidimensional to be applied to a bidimensional image)

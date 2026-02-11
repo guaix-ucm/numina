@@ -688,7 +688,7 @@ def ximshow_file(singlefile,
         if show:
             from numina.array.display.matplotlib_qt import plt
             plt.tight_layout()
-            plt.savefig(png)
+            plt.savefig(png, metadata={'Software': 'ximshow'})
         else:
             return ax
     else:

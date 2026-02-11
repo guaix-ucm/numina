@@ -143,7 +143,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
         fig.colorbar(img, cax=cax, label=f'Number of counts ({method})')
         plt.tight_layout()
         if png is not None:
-            plt.savefig(png)
+            plt.savefig(png, metadata={'Software': 'extract_2d_slice_from_3d_cube'})
             plt.close()
         else:
             plt.show()
