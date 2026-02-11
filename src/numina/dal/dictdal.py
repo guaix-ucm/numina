@@ -36,9 +36,11 @@ _logger = logging.getLogger(__name__)
 class BaseDictDAL(AbsDrpDAL):
     """A dictionary based DAL"""
 
-    _RESERVED_MODE_NAMES = ['nulo', 'container', 'root', 'raiz']
+    _RESERVED_MODE_NAMES = ["nulo", "container", "root", "raiz"]
 
-    def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None, components=None):
+    def __init__(
+        self, drps, ob_table, prod_table, req_table, extra_data=None, components=None
+    ):
         super(BaseDictDAL, self).__init__(drps)
         # Check that the structure of the base is correct
         self.ob_table = ob_table
@@ -59,11 +61,11 @@ class BaseDictDAL(AbsDrpDAL):
         ins_prod = self.prod_table.get(ins, {})
         for profile, prof_prod in ins_prod.items():
             for prod in prof_prod:
-                if prod['ob'] == obsid:
+                if prod["ob"] == obsid:
                     # We have found the result, no more checks
                     return StoredProduct(**prod)
         else:
-            raise NoResultFound(f'result for ob {obsid} not found')
+            raise NoResultFound(f"result for ob {obsid} not found")
 
     def search_prod_req_tags(self, req, ins, profile, tags, pipeline):
         if req.dest in self.extra_data:
@@ -89,17 +91,17 @@ class BaseDictDAL(AbsDrpDAL):
         ins_table = self.prod_table.get(ins, {})
         ptable = ins_table.get(profile, [])
         for prod in ptable:
-            pk = prod['type']
-            pt = prod['tags']
+            pk = prod["type"]
+            pt = prod["tags"]
             if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, tags):
                 # this is a valid product
                 # We have found the result, no more checks
                 # Make a copy
                 rprod = dict(prod)
-                rprod['content'] = numina.store.load(tipo, prod['content'])
+                rprod["content"] = numina.store.load(tipo, prod["content"])
                 return StoredProduct(**rprod)
         else:
-            msg = f'type {tipo} compatible with tags {tags!r} not found'
+            msg = f"type {tipo} compatible with tags {tags!r} not found"
             raise NoResultFound(msg)
 
     def search_param_req(self, req, instrument, profile, mode, pipeline):
@@ -116,8 +118,7 @@ class BaseDictDAL(AbsDrpDAL):
             content = StoredParameter(value)
             return content
         else:
-            raise NoResultFound(
-                f"No parameters for {mode} mode, pipeline {pipeline}")
+            raise NoResultFound(f"No parameters for {mode} mode, pipeline {pipeline}")
 
     def search_param_req_tags(self, req, instrument, profile, mode, tags, pipeline):
         req_table_ins = self.req_table.get(instrument, {})
@@ -130,15 +131,15 @@ class BaseDictDAL(AbsDrpDAL):
             return content
         else:
             for prod in mode_list:
-                pn = prod['name']
-                pt = prod['tags']
+                pn = prod["name"]
+                pt = prod["tags"]
                 if pn == req.dest and tags_are_valid(pt, tags):
                     # We have found the result, no more checks
-                    value = numina.store.load(req.type, prod['content'])
+                    value = numina.store.load(req.type, prod["content"])
                     content = StoredParameter(value)
                     return content
             else:
-                msg = f'name {req.dest} compatible with tags {tags!r} not found'
+                msg = f"name {req.dest} compatible with tags {tags!r} not found"
                 raise NoResultFound(msg)
 
     def oblock_from_id(self, obsid):
@@ -149,7 +150,7 @@ class BaseDictDAL(AbsDrpDAL):
         return oblock
 
     def obsres_from_oblock_id(self, obsid, as_mode=None, configuration=None):
-        """"
+        """ "
         Override instrument configuration if configuration is not None
         """
 
@@ -167,12 +168,13 @@ class BaseDictDAL(AbsDrpDAL):
 
         obsres.mode = as_mode or obsres.mode
         _logger.debug(
-            "obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)
+            "obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode
+        )
 
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
         except KeyError:
-            raise ValueError(f'no DRP for instrument {obsres.instrument}')
+            raise ValueError(f"no DRP for instrument {obsres.instrument}")
 
         # Reserved names
         if obsres.mode in self._RESERVED_MODE_NAMES:
@@ -189,22 +191,22 @@ class BaseDictDAL(AbsDrpDAL):
             # the requirements
             obsres = selected_mode.tag_ob(obsres)
 
-        _logger.debug('assembly instrument model, auto detection')
+        _logger.debug("assembly instrument model, auto detection")
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
         obsres.profile = str(obsres.configuration.origin.uuid)
-        _logger.debug(f'instrument profile is {obsres.profile}')
+        _logger.debug(f"instrument profile is {obsres.profile}")
 
         auto_configure = True
         sample_frame = obsres.get_sample_frame()
         if auto_configure and sample_frame is not None:
-            _logger.debug('configuring instrument model with image from obsres')
+            _logger.debug("configuring instrument model with image from obsres")
             obsres.configuration.configure_with_image(sample_frame.open())
         else:
-            _logger.debug('no configuring instrument model')
+            _logger.debug("no configuring instrument model")
         return obsres
 
-    def assembly_instrument(self, keyval, date, by_key='name'):
+    def assembly_instrument(self, keyval, date, by_key="name"):
         return assembly_instrument(self.components, keyval, date, by_key=by_key)
 
     def search_result_id(self, node_id, tipo, field):
@@ -213,7 +215,7 @@ class BaseDictDAL(AbsDrpDAL):
         rdir = resultsdir_default(self.basedir, node_id)
         # FIXME: hardcoded
         # taskfile = os.path.join(rdir, 'task.yaml')
-        resfile = os.path.join(rdir, 'result.yaml')
+        resfile = os.path.join(rdir, "result.yaml")
         result_contents = yaml.safe_load(open(resfile))
         # task_contents = yaml.safe_load(open(taskfile))
 
@@ -221,9 +223,8 @@ class BaseDictDAL(AbsDrpDAL):
             field_file = result_contents[field]
             st = StoredProduct(
                 id=node_id,
-                content=numina.store.load(
-                    tipo, os.path.join(rdir, field_file)),
-                tags={}
+                content=numina.store.load(tipo, os.path.join(rdir, field_file)),
+                tags={},
             )
             return st
         except KeyError as err:
@@ -262,15 +263,15 @@ class BaseDictDAL(AbsDrpDAL):
             return content
         else:
             for prod in mode_list:
-                pn = prod['name']
-                pt = prod['tags']
+                pn = prod["name"]
+                pt = prod["tags"]
                 if pn == name and tags_are_valid(pt, tags):
                     # We have found the result, no more checks
-                    value = numina.store.load(tipo, prod['content'])
+                    value = numina.store.load(tipo, prod["content"])
                     content = StoredParameter(value)
                     return content
             else:
-                msg = f'name {name} compatible with tags {tags!r} not found'
+                msg = f"name {name} compatible with tags {tags!r} not found"
                 raise NoResultFound(msg)
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
@@ -283,31 +284,27 @@ class DictDAL(BaseDictDAL):
 
         # Check that the structure of 'base' is correct
         super(DictDAL, self).__init__(
-            drps,
-            base['oblocks'],
-            base['products'],
-            base['parameters']
+            drps, base["oblocks"], base["products"], base["parameters"]
         )
 
 
 class Dict2DAL(BaseDictDAL):
     def __init__(self, drps, obtable, base, extra_data=None, components=None):
 
-        prod_table = base.get('products', {})
+        prod_table = base.get("products", {})
 
-        if 'parameters' in base:
-            req_table = base['parameters']
+        if "parameters" in base:
+            req_table = base["parameters"]
         else:
-            req_table = base.get('requirements', {})
+            req_table = base.get("requirements", {})
 
         super(Dict2DAL, self).__init__(
-            drps, obtable, prod_table, req_table,
-            extra_data, components=components
+            drps, obtable, prod_table, req_table, extra_data, components=components
         )
 
     def new_task_id(self, request, request_params):
-        if request == 'reduce':
-            return request_params.get('oblock_id', 1)
+        if request == "reduce":
+            return request_params.get("oblock_id", 1)
         return 1
 
     def new_task(self, request, request_params):
@@ -316,13 +313,13 @@ class Dict2DAL(BaseDictDAL):
         from numina.user.helpers import ProcessingTask
 
         newidx = self.new_task_id(request, request_params)
-        _logger.debug('create task=%s', newidx)
+        _logger.debug("create task=%s", newidx)
         task = ProcessingTask()
         task.id = newidx
         task.request = request
         task.request_params = request_params
-        task.request_runinfo['runner'] = 'numina'
-        task.request_runinfo['runner_version'] = __version__
+        task.request_runinfo["runner"] = "numina"
+        task.request_runinfo["runner_version"] = __version__
         return task
 
     def update_task(self, task):
@@ -336,35 +333,37 @@ class Dict2DAL(BaseDictDAL):
         yaml.dump(state, fp)
         # yaml.dump(state, fp, default_flow_style=False)
 
-        with open('control_dump.json', 'w') as fp:
+        with open("control_dump.json", "w") as fp:
             json.dump(state, fp, indent=2)
 
     def dump_data(self):
         state = {}
-        state['version'] = 1
-        state['products'] = self.prod_table
-        state['requirements'] = self.req_table
-        state['oblocks'] = self.ob_table
+        state["version"] = 1
+        state["products"] = self.prod_table
+        state["requirements"] = self.req_table
+        state["oblocks"] = self.ob_table
         return state
 
 
 def workdir_default(basedir, obsid):
     # FIXME: hardcoded
-    workdir = os.path.join(basedir, f'obsid{obsid}_work')
+    workdir = os.path.join(basedir, f"obsid{obsid}_work")
     workdir = os.path.abspath(workdir)
     return workdir
 
 
 def resultsdir_default(basedir, obsid):
     # FIXME: hardcoded
-    resultsdir = os.path.join(basedir, f'obsid{obsid}_results')
+    resultsdir = os.path.join(basedir, f"obsid{obsid}_results")
     resultsdir = os.path.abspath(resultsdir)
     return resultsdir
 
 
 class BaseHybridDAL(Dict2DAL):
 
-    def __init__(self, drps, obtable, base, extra_data=None, basedir=None, components=None):
+    def __init__(
+        self, drps, obtable, base, extra_data=None, basedir=None, components=None
+    ):
 
         self.rootdir = base.get("rootdir", "")
         self.ob_ids = []
@@ -381,18 +380,18 @@ class BaseHybridDAL(Dict2DAL):
     def add_obs(self, obtable):
         obdict = {}
         for ob in obtable:
-            obid = ob['id']
+            obid = ob["id"]
             if obid not in self.ob_ids:
 
                 self.ob_ids.append(obid)
                 obdict[obid] = ob
             else:
-                _logger.warning('oblock_id=%s is already in table', obid)
+                _logger.warning("oblock_id=%s is already in table", obid)
         # Update parents
         for ob in obdict.values():
-            children = ob.get('children', [])
+            children = ob.get("children", [])
             for ch in children:
-                obdict[ch]['parent'] = ob['id']
+                obdict[ch]["parent"] = ob["id"]
 
         self.ob_table.update(obdict)
 
@@ -432,24 +431,25 @@ class BaseHybridDAL(Dict2DAL):
         ins_tab = self.prod_table.get(instrument, {})
         ptable = ins_tab.get(profile, [])
         for prod in ptable:
-            pid = prod['id']
+            pid = prod["id"]
             if pid == resultid:
                 # this is a valid product
                 # We have found the result, no more checks
                 # Make a copy
                 rprod = dict(prod)
 
-                if 'content' in prod:
-                    path = prod['content']
+                if "content" in prod:
+                    path = prod["content"]
                 else:
                     # Build path
                     path = build_product_path(
-                        drp, self.rootdir, profile, name, tipo, obsres)
+                        drp, self.rootdir, profile, name, tipo, obsres
+                    )
                 _logger.debug("searching product in path: %s", path)
-                rprod['content'] = self.product_loader(tipo, name, path)
+                rprod["content"] = self.product_loader(tipo, name, path)
                 return StoredProduct(**rprod)
         else:
-            msg = f'result with id {resultid} not found'
+            msg = f"result with id {resultid} not found"
             raise NoResultFound(msg)
 
     def product_loader(self, tipo, name, path):
@@ -461,15 +461,15 @@ class BaseHybridDAL(Dict2DAL):
             with open(path) as fd:
                 data = json.load(fd)
                 inter = gtcload.build_result(data)
-                elem = inter['elements']
+                elem = inter["elements"]
                 return elem[name]
 
     def search_previous_obsres(self, obsres, node=None):
 
         if node is None:
-            node = 'prev'
+            node = "prev"
 
-        if node == 'prev-rel':
+        if node == "prev-rel":
             # Compute nodes relative to parent
             # unless parent is None, then is equal to prev
             parent_id = obsres.parent
@@ -492,7 +492,7 @@ class BaseHybridDAL(Dict2DAL):
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
 
-        _logger.debug('search relative result for %s', name)
+        _logger.debug("search relative result for %s", name)
 
         # result_type = DataFrameType()
         result_mode = result_desc.mode
@@ -501,10 +501,10 @@ class BaseHybridDAL(Dict2DAL):
 
         ignore_fail = result_desc.ignore_fail
 
-        if result_node == 'children':
+        if result_node == "children":
             # Results are multiple
             # one per children
-            _logger.debug('search children nodes of %s', obsres.id)
+            _logger.debug("search children nodes of %s", obsres.id)
             results = []
             for c in obsres.children:
                 try:
@@ -515,23 +515,24 @@ class BaseHybridDAL(Dict2DAL):
                         raise
 
             return results
-        elif result_node == 'prev' or result_node == 'prev-rel':
-            _logger.debug('search previous nodes of %s', obsres.id)
+        elif result_node == "prev" or result_node == "prev-rel":
+            _logger.debug("search previous nodes of %s", obsres.id)
 
             # obtain previous nodes
             for previd in self.search_previous_obsres(obsres, node=result_node):
                 # print('searching in node', previd)
                 try:
                     st = self.search_result_id(
-                        previd, tipo, result_field, mode=result_mode)
+                        previd, tipo, result_field, mode=result_mode
+                    )
                     return st
                 except NoResultFound:
                     pass
 
             else:
-                raise NoResultFound('value not found in any node')
-        elif result_node == 'last':
-            _logger.debug('search last node of %s', result_mode)
+                raise NoResultFound("value not found in any node")
+        elif result_node == "last":
+            _logger.debug("search last node of %s", result_mode)
 
             try:
                 st = self.search_result_last(name, tipo, result_desc)
@@ -539,7 +540,7 @@ class BaseHybridDAL(Dict2DAL):
             except NoResultFound:
                 pass
         else:
-            msg = f'unknown node type {result_node}'
+            msg = f"unknown node type {result_node}"
             raise TypeError(msg)
 
     def search_result_last(self, name, tipo, result_desc):
@@ -553,8 +554,8 @@ class BaseHybridDAL(Dict2DAL):
     def search_session_ids(self):
         for obs_id in self.ob_ids:
             obdict = self.ob_table[obs_id]
-            enabled = obdict.get('enabled', True)
-            if (not enabled) or obdict['mode'] in self._RESERVED_MODE_NAMES:
+            enabled = obdict.get("enabled", True)
+            if (not enabled) or obdict["mode"] in self._RESERVED_MODE_NAMES:
                 # ignore these OBs
                 continue
 
@@ -562,35 +563,39 @@ class BaseHybridDAL(Dict2DAL):
 
     def dump_data(self):
         state = super(BaseHybridDAL, self).dump_data()
-        state['rootdir'] = self.rootdir
-        state['ob_ids'] = self.ob_ids
+        state["rootdir"] = self.rootdir
+        state["ob_ids"] = self.ob_ids
         return state
 
 
 class HybridDAL(BaseHybridDAL):
     """A DAL that can read files from directory structure"""
 
-    def __init__(self, drps, obtable, base, extra_data=None, components=None, basedir=None):
+    def __init__(
+        self, drps, obtable, base, extra_data=None, components=None, basedir=None
+    ):
 
         temp_ob_ids = []
         # Preprocessing
         obdict = {}
         for ob in obtable:
-            obid = ob['id']
+            obid = ob["id"]
             temp_ob_ids.append(obid)
             obdict[obid] = ob
 
         # Update parents
         for ob in obdict.values():
-            children = ob.get('children', [])
+            children = ob.get("children", [])
             for ch in children:
-                obdict[ch]['parent'] = ob['id']
+                obdict[ch]["parent"] = ob["id"]
 
         super(HybridDAL, self).__init__(
-            drps, obdict, base,
+            drps,
+            obdict,
+            base,
             extra_data=extra_data,
             basedir=basedir,
-            components=components
+            components=components,
         )
         # This field does not exist until super is called
         self.ob_ids = temp_ob_ids
@@ -614,22 +619,23 @@ class HybridDAL(BaseHybridDAL):
         ins_table = self.prod_table.get(instrument, {})
         ptable = ins_table.get(profile, [])
         for prod in ptable:
-            pk = prod['type']
-            pt = prod['tags']
+            pk = prod["type"]
+            pt = prod["tags"]
             if ((pk == label) or (pk == label_alt)) and tags_are_valid(pt, obsres.tags):
                 # this is a valid product
                 # We have found the result, no more checks
                 # Make a copy
                 rprod = dict(prod)
 
-                if 'content' in prod:
-                    path = prod['content']
+                if "content" in prod:
+                    path = prod["content"]
                 else:
                     # Build path
                     path = build_product_path(
-                        drp, self.rootdir, profile, name, tipo, obsres)
+                        drp, self.rootdir, profile, name, tipo, obsres
+                    )
                 _logger.debug("path is %s", path)
-                rprod['content'] = numina.store.load(tipo, path)
+                rprod["content"] = numina.store.load(tipo, path)
                 return StoredProduct(**rprod)
         else:
             # Not in table, try file directly
@@ -645,7 +651,9 @@ class HybridDAL(BaseHybridDAL):
         if mode is not None:
             # mode must match
             if cobsres.mode != mode:
-                msg = f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
+                msg = (
+                    f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
+                )
                 raise NoResultFound(msg)
 
         try:
@@ -655,8 +663,8 @@ class HybridDAL(BaseHybridDAL):
             with working_directory(os.path.join(self.basedir, directory)):
 
                 # Try to open both
-                filename_yaml = 'result.yaml'
-                filename_json = 'result.json'
+                filename_yaml = "result.yaml"
+                filename_json = "result.json"
                 if os.path.exists(filename_yaml):
                     with open(filename_yaml) as fd:
                         result_data = yaml.safe_load(fd)
@@ -665,20 +673,17 @@ class HybridDAL(BaseHybridDAL):
                         result_data = json.load(fd)
                 else:
                     raise ValueError(
-                        f'result.yaml or result.json not found in {directory}')
+                        f"result.yaml or result.json not found in {directory}"
+                    )
 
                 stored_result = StoredResult.load_data(result_data)
 
                 try:
                     content = getattr(stored_result, field)
                 except AttributeError:
-                    raise NoResultFound(f'no field {field} found in result')
+                    raise NoResultFound(f"no field {field} found in result")
 
-                st = StoredProduct(
-                    id=node_id,
-                    content=content,
-                    tags={}
-                )
+                st = StoredProduct(id=node_id, content=content, tags={})
                 return st
         except KeyError as err:
             msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"

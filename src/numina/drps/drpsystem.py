@@ -19,7 +19,7 @@ from .drpbase import DrpGeneric
 class DrpSystem(DrpGeneric):
     """Load DRPs from the system."""
 
-    def __init__(self, entry_point='numina.pipeline.1'):
+    def __init__(self, entry_point="numina.pipeline.1"):
         self.entry = entry_point
         super(DrpSystem, self).__init__()
 
@@ -31,17 +31,17 @@ class DrpSystem(DrpGeneric):
         return self
 
     @classmethod
-    def load_drp(cls, name, entry_point='numina.pipeline.1'):
+    def load_drp(cls, name, entry_point="numina.pipeline.1"):
         """Load all available DRPs in 'entry_point'."""
 
         for drpins in cls.iload(entry_point):
             if drpins.name == name:
                 return drpins
         else:
-            raise KeyError(f'{name}')
+            raise KeyError(f"{name}")
 
     @classmethod
-    def iload(cls, entry_point='numina.pipeline.1'):
+    def iload(cls, entry_point="numina.pipeline.1"):
         """Load all available DRPs in 'entry_point'."""
 
         for entry in beps.entry_points(group=entry_point):
@@ -51,5 +51,5 @@ class DrpSystem(DrpGeneric):
                 if cls.instrumentdrp_check(drpins, entry.name):
                     yield drpins
             except Exception as error:
-                print('Problem loading', entry, file=sys.stderr)
+                print("Problem loading", entry, file=sys.stderr)
                 print("Error is: ", error, file=sys.stderr)

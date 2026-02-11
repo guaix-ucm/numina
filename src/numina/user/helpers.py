@@ -39,10 +39,10 @@ class DataManager:
 
         self.workdir_tmpl = "obsid{obsid}_{taskid}_work"
         self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
-        self.serial_format = 'json'
+        self.serial_format = "json"
 
-        self.resultfile_tmpl = 'result.json'
-        self.taskfile_tmpl = 'task.json'
+        self.resultfile_tmpl = "result.json"
+        self.taskfile_tmpl = "task.json"
 
     def insert_obs(self, loaded_obs):
         self.backend.add_obs(loaded_obs)
@@ -53,31 +53,30 @@ class DataManager:
         with open(obfile) as fd:
             sess = []
             for doc in yaml.safe_load_all(fd):
-                enabled = doc.get('enabled', True)
-                docid = doc['id']
-                requirements = doc.get('requirements', {})
-                sess.append(
-                    dict(id=docid, enabled=enabled,
-                         requirements=requirements)
-                )
+                enabled = doc.get("enabled", True)
+                docid = doc["id"]
+                requirements = doc.get("requirements", {})
+                sess.append(dict(id=docid, enabled=enabled, requirements=requirements))
                 loaded_obs.append(doc)
         self.insert_obs(loaded_obs)
         return loaded_obs
 
     def serializer(self, data, fd):
-        if self.serial_format == 'yaml':
+        if self.serial_format == "yaml":
             self.serializer_yaml(data, fd)
-        elif self.serial_format == 'json':
+        elif self.serial_format == "json":
             self.serializer_json(data, fd)
         else:
-            raise ValueError('serializer not supported')
+            raise ValueError("serializer not supported")
 
     def serializer_json(self, data, fd):
         import json
+
         json.dump(data, fd, indent=2, cls=ExtEncoder)
 
     def serializer_yaml(self, data, fd):
         import yaml
+
         yaml.dump(data, fd)
 
     def store_result_to(self, result):
@@ -86,13 +85,10 @@ class DataManager:
 
     def store_task(self, task):
 
-        result_dir_rel = task.request_runinfo['results_dir']
+        result_dir_rel = task.request_runinfo["results_dir"]
         result_dir = os.path.join(self.basedir, result_dir_rel)
 
-        values = dict(
-            obsid=task.request_params['oblock_id'],
-            taskid=task.id
-        )
+        values = dict(obsid=task.request_params["oblock_id"], taskid=task.id)
 
         result_file = self.resultfile_tmpl.format(**values)
         task_file = self.taskfile_tmpl.format(**values)
@@ -105,24 +101,28 @@ class DataManager:
             if task.result is not None:
                 uuid = task.result.uuid
                 qc = task.result.qc
-                _logger.info('storing result uuid=%s, quality=%s', uuid, qc)
+                _logger.info("storing result uuid=%s, quality=%s", uuid, qc)
                 if qc != QC.GOOD:
                     for key, val in task.result.stored().items():
                         val = getattr(task.result, key)
-                        if hasattr(val, 'quality_control'):
-                            _logger.info('with field %s=%s, quality=%s',
-                                         key, val, val.quality_control)
+                        if hasattr(val, "quality_control"):
+                            _logger.info(
+                                "with field %s=%s, quality=%s",
+                                key,
+                                val,
+                                val.quality_control,
+                            )
 
                 result_repr = self.store_result_to(task.result)
                 # Change result structure by filename
-                task_repr['result'] = result_file
+                task_repr["result"] = result_file
 
-                with open(result_file, 'w+') as fd:
+                with open(result_file, "w+") as fd:
                     self.serializer(result_repr, fd)
 
             tid = task.id
-            _logger.info('storing task id=%s', tid)
-            with open(task_file, 'w+') as fd:
+            _logger.info("storing task id=%s", tid)
+            with open(task_file, "w+") as fd:
                 self.serializer(task_repr, fd)
 
         self.backend.update_task(task)
@@ -131,20 +131,12 @@ class DataManager:
 
     def create_workenv(self, task):
 
-        values = dict(
-            obsid=task.request_params['oblock_id'],
-            taskid=task.id
-        )
+        values = dict(obsid=task.request_params["oblock_id"], taskid=task.id)
 
         work_dir = self.workdir_tmpl.format(**values)
         result_dir = self.resultdir_tmpl.format(**values)
 
-        workenv = WorkEnvironment(
-            self.datadir,
-            self.basedir,
-            work_dir,
-            result_dir
-        )
+        workenv = WorkEnvironment(self.datadir, self.basedir, work_dir, result_dir)
 
         return workenv
 
@@ -165,13 +157,12 @@ class ProcessingTask:
 
     @classmethod
     def _init_runinfo(cls):
-        request_runinfo = dict(runner='unknown', runner_version='unknown')
+        request_runinfo = dict(runner="unknown", runner_version="unknown")
         return request_runinfo
 
 
 class WorkEnvironment:
-    def __init__(self, datadir, basedir, workdir,
-                 resultsdir):
+    def __init__(self, datadir, basedir, workdir, resultsdir):
 
         self.basedir = basedir
 
@@ -179,8 +170,7 @@ class WorkEnvironment:
         self.workdir = os.path.abspath(os.path.join(self.basedir, workdir))
 
         self.resultsdir_rel = resultsdir
-        self.resultsdir = os.path.abspath(
-            os.path.join(self.basedir, resultsdir))
+        self.resultsdir = os.path.abspath(os.path.join(self.basedir, resultsdir))
 
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
@@ -191,12 +181,12 @@ class WorkEnvironment:
         self.hashes = {}
 
     def sane_work(self):
-        _logger.debug('check workdir for working: %r', self.workdir_rel)
+        _logger.debug("check workdir for working: %r", self.workdir_rel)
         make_sure_path_exists(self.workdir)
         make_sure_file_exists(self.index_file)
         # Load dictionary of hashes
 
-        with open(self.index_file, 'rb') as fd:
+        with open(self.index_file, "rb") as fd:
             try:
                 self.hashes = pickle.load(fd)
             except EOFError:
@@ -205,32 +195,29 @@ class WorkEnvironment:
         make_sure_file_exists(self.index_file)
 
         # make_sure_path_doesnot_exist(self.resultsdir)
-        _logger.debug('check resultsdir to store results %r',
-                      self.resultsdir_rel)
+        _logger.debug("check resultsdir to store results %r", self.resultsdir_rel)
         make_sure_path_exists(self.resultsdir)
 
     def copyfiles(self, obsres, reqs):
 
-        _logger.info('copying files from %r to %r',
-                     self.datadir_rel, self.workdir_rel)
+        _logger.info("copying files from %r to %r", self.datadir_rel, self.workdir_rel)
 
         if obsres:
             self.copyfiles_stage1(obsres)
 
         self.copyfiles_stage2(reqs)
 
-    def installfiles_stage1(self, obsres, action='copy'):
+    def installfiles_stage1(self, obsres, action="copy"):
         import astropy.io.fits as fits
 
         install_if_needed = self._calc_install_if_needed(action)
 
-        _logger.debug('installing files from observation result')
+        _logger.debug("installing files from observation result")
         tails = []
         sources = []
         for f in obsres.images:
             if not os.path.isabs(f.filename):
-                complete = os.path.abspath(
-                    os.path.join(self.datadir, f.filename))
+                complete = os.path.abspath(os.path.join(self.datadir, f.filename))
             else:
                 complete = f.filename
             head, tail = os.path.split(complete)
@@ -246,7 +233,7 @@ class WorkEnvironment:
             if tail in dupes:
                 # extract UUID
                 hdr = fits.getheader(src)
-                img_uuid = hdr['UUID']
+                img_uuid = hdr["UUID"]
                 root, ext = os.path.splitext(tail)
                 key = f"{root}_{img_uuid}{ext}"
 
@@ -262,21 +249,21 @@ class WorkEnvironment:
         return obsres
 
     def _calc_install_if_needed(self, action):
-        if action not in ['copy', 'link']:  # , 'symlink', 'hardlink']:
+        if action not in ["copy", "link"]:  # , 'symlink', 'hardlink']:
             raise ValueError(f"{action} action is not allowed")
 
         _logger.debug(f'installing files with "{action}"')
 
-        if action == 'copy':
+        if action == "copy":
             install_if_needed = self.copy_if_needed
-        elif action == 'link':
+        elif action == "link":
             install_if_needed = self.link_if_needed
         else:
             raise ValueError(f"{action} action is not allowed")
         return install_if_needed
 
-    def installfiles_stage2(self, reqs, action='copy'):
-        _logger.debug('installing files from requirements')
+    def installfiles_stage2(self, reqs, action="copy"):
+        _logger.debug("installing files from requirements")
 
         install_if_needed = self._calc_install_if_needed(action)
 
@@ -286,9 +273,7 @@ class WorkEnvironment:
                 if value is None:
                     continue
 
-                complete = os.path.abspath(
-                    os.path.join(self.datadir, value.filename)
-                )
+                complete = os.path.abspath(os.path.join(self.datadir, value.filename))
 
                 head, tail = os.path.split(value.filename)
                 dest = os.path.join(self.workdir, tail)
@@ -296,10 +281,10 @@ class WorkEnvironment:
                 install_if_needed(value.filename, complete, dest)
 
     def copyfiles_stage1(self, obsres):
-        return self.installfiles_stage1(obsres, action='copy')
+        return self.installfiles_stage1(obsres, action="copy")
 
     def linkfiles_stage1(self, obsres):
-        return self.installfiles_stage1(obsres, action='link')
+        return self.installfiles_stage1(obsres, action="link")
 
     def check_duplicates(self, tails):
         seen = set()
@@ -312,15 +297,15 @@ class WorkEnvironment:
         return dupes
 
     def copyfiles_stage2(self, reqs):
-        return self.installfiles_stage2(reqs, action='copy')
+        return self.installfiles_stage2(reqs, action="copy")
 
     def linkfiles_stage2(self, reqs):
-        return self.installfiles_stage2(reqs, action='link')
+        return self.installfiles_stage2(reqs, action="link")
 
     def copy_if_needed(self, key, src, dest):
 
         md5hash = compute_md5sum_file(src)
-        _logger.debug('compute hash, %s %s %s', key, md5hash, src)
+        _logger.debug("compute hash, %s %s %s", key, md5hash, src)
 
         # Check hash
         hash_in_file = self.hashes.get(key)
@@ -340,18 +325,18 @@ class WorkEnvironment:
         self.hashes[key] = md5hash
 
         if make_copy:
-            _logger.debug('copying %r to %r', key, self.workdir)
+            _logger.debug("copying %r to %r", key, self.workdir)
             shutil.copy(src, dest)
         else:
-            _logger.debug('copying %r not needed', key)
+            _logger.debug("copying %r not needed", key)
 
         if trigger_save:
-            _logger.debug('save hashes')
-            with open(self.index_file, 'wb') as fd:
+            _logger.debug("save hashes")
+            with open(self.index_file, "wb") as fd:
                 pickle.dump(self.hashes, fd)
 
     def link_if_needed(self, key, src, dest):
-        _logger.debug('linking %r to %r', key, self.workdir)
+        _logger.debug("linking %r to %r", key, self.workdir)
         try:
             # Remove destination
             os.remove(dest)
@@ -362,7 +347,7 @@ class WorkEnvironment:
     def adapt_obsres(self, obsres):
         """Adapt obsres after file copy"""
 
-        _logger.debug('adapt observation result for work dir')
+        _logger.debug("adapt observation result for work dir")
         for f in obsres.images:
             # Remove path components
             f.filename = os.path.basename(f.filename)
@@ -371,9 +356,10 @@ class WorkEnvironment:
 
 def compute_md5sum_file(filename):
     import hashlib
+
     md5 = hashlib.md5()
-    with open(filename, 'rb') as f:
-        for chunk in iter(lambda: f.read(128 * md5.block_size), b''):
+    with open(filename, "rb") as f:
+        for chunk in iter(lambda: f.read(128 * md5.block_size), b""):
             md5.update(chunk)
     return md5.hexdigest()
 
@@ -396,89 +382,155 @@ def make_sure_path_exists(path):
 
 def make_sure_file_exists(path):
     try:
-        with open(path, 'a'):
+        with open(path, "a"):
             pass
     except (OSError, IOError) as exception:
         if exception.errno != errno.EEXIST:
             raise
 
 
-def process_format_version_1(basedir, loaded_data, loaded_data_extra=None, profile_path_extra=None) -> HybridDAL:
+def create_com_store(sys_drps, profile_path_extra=None):
     import numina.instrument.assembly as asbl
-    sys_drps = numina.drps.get_system_drps()
+
     com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
+    return com_store
+
+
+def deep_merge(initial_schema, loaded_data):
+    # copy all keys except requirements
+    for key in loaded_data:
+        if key == "requirements":
+            reqs = loaded_data[key]
+            init_reqs = initial_schema[key]
+            for ins_name in reqs:
+                for epoch in reqs[ins_name]:
+                    for pipe in reqs[ins_name][epoch]:
+                        for recipe in reqs[ins_name][epoch][pipe]:
+                            # We allow to redefine only pipeline and recipe
+                            init_recipe = (
+                                init_reqs[ins_name][epoch]
+                                .setdefault(pipe, {})
+                                .setdefault(recipe, [])
+                            )
+                            for entry in reqs[ins_name][epoch][pipe][recipe]:
+                                entry_name = entry["name"]
+                                entry_tags = entry["tags"]
+                                for init_entry in init_recipe:
+                                    if (
+                                        init_entry["name"] == entry_name
+                                        and init_entry["tags"] == entry_tags
+                                    ):
+                                        init_entry["content"] = entry["content"]
+                                        break
+                                else:
+                                    init_recipe.append(entry)
+        else:
+            initial_schema[key] = loaded_data[key]
+    return initial_schema
+
+
+def process_format_version_1(
+    sys_drps, components, basedir, loaded_data, loaded_data_extra=None
+) -> HybridDAL:
     backend = HybridDAL(
-        sys_drps, [], loaded_data,
+        sys_drps,
+        [],
+        loaded_data,
         extra_data=loaded_data_extra,
         basedir=basedir,
-        components=com_store
+        components=components,
     )
     return backend
 
 
-def process_format_version_2(basedir, loaded_data, loaded_data_extra=None,
-                             profile_path_extra=None, filename=None) -> Backend:
-    import numina.instrument.assembly as asbl
-    sys_drps = numina.drps.get_system_drps()
-    com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
-    loaded_db = loaded_data['database']
+def process_format_version_2(
+    sys_drps, components, basedir, loaded_data, loaded_data_extra=None, filename=None
+) -> Backend:
+    loaded_db = loaded_data["database"]
     backend = Backend(
-        sys_drps, loaded_db,
+        sys_drps,
+        loaded_db,
         extra_data=loaded_data_extra,
         basedir=basedir,
-        components=com_store,
-        filename=filename
+        components=components,
+        filename=filename,
     )
-    backend.rootdir = loaded_data.get('rootdir', '')
+    backend.rootdir = loaded_data.get("rootdir", "")
     return backend
 
 
-def create_datamanager(config, reqfile,
-                       extra_control=None, profile_path_extra=None,
-                       persist=True) -> DataManager:
+def create_datamanager(
+    config, reqfile, extra_control=None, profile_path_extra=None, persist=True
+) -> DataManager:
 
-    section = config['tool.run']
-    basedir = section['basedir']
-    datadir = section['datadir']
+    # This should go before we load CL file
+    # load additional reduction defaults
+    sys_drps = numina.drps.get_system_drps()
+    initial_schema = {"version": 1, "requirements": {}}
+    for ins, drp in sys_drps.query_all().items():
+        pkg = f"{drp.package}.recipes"
+        instrument_name = drp.name
+        resource = "configs.yaml"
+        try:
+            data = pkgutil.get_data(pkg, resource)
+            values = yaml.safe_load(data)
+            # insert requirements
+            reqs = values.get("requirements", {})
+            reqs_ins = reqs.get(instrument_name, {})
+            if reqs_ins:
+                initial_schema["requirements"][instrument_name] = reqs_ins
+        except FileNotFoundError:
+            # if the file doesn't exist, we ignore it
+            pass
+    section = config["tool.run"]
+    basedir = section["basedir"]
+    datadir = section["datadir"]
 
     if reqfile:
-        _logger.info('reading control from %s', reqfile)
-        with open(reqfile, 'r') as fd:
+        _logger.info("reading control from %s", reqfile)
+        with open(reqfile, "r") as fd:
             loaded_data = yaml.safe_load(fd)
     else:
-        _logger.info('no control file')
+        _logger.info("no control file")
         loaded_data = {}
 
     if extra_control:
-        _logger.info('extra control %s', extra_control)
+        _logger.info("extra control %s", extra_control)
         loaded_data_extra = parse_as_yaml(extra_control)
     else:
         loaded_data_extra = None
 
-    control_format = loaded_data.get('version', 1)
-    _logger.info('control format version %d', control_format)
+    control_format = loaded_data.get("version", 1)
+    _logger.info("control format version %d", control_format)
 
+    components = create_com_store(sys_drps, profile_path_extra)
     if control_format == 1:
+        merged_data = deep_merge(initial_schema, loaded_data)
         _backend = process_format_version_1(
-            basedir, loaded_data, loaded_data_extra, profile_path_extra)
+            sys_drps, components, basedir, merged_data, loaded_data_extra
+        )
         datamanager = DataManager(basedir, datadir, _backend)
-        datamanager.workdir_tmpl = section['workdir_tmpl']
-        datamanager.resultdir_tmpl = section['resultdir_tmpl']
-        datamanager.resultfile_tmpl = section['resultfile_tmpl']
-        datamanager.taskfile_tmpl = section['taskfile_tmpl']
+        datamanager.workdir_tmpl = section["workdir_tmpl"]
+        datamanager.resultdir_tmpl = section["resultdir_tmpl"]
+        datamanager.resultfile_tmpl = section["resultfile_tmpl"]
+        datamanager.taskfile_tmpl = section["taskfile_tmpl"]
     elif control_format == 2:
         if persist:
             pname = reqfile
         else:
             pname = None
-        _backend = process_format_version_2(basedir, loaded_data,
-                                            loaded_data_extra,
-                                            profile_path_extra,
-                                            filename=pname)
+        _backend = process_format_version_2(
+            sys_drps,
+            components,
+            basedir,
+            loaded_data,
+            loaded_data_extra,
+            filename=pname,
+        )
 
         datamanager = DataManager(basedir, datadir, _backend)
     else:
-        msg = f'Unsupported format {control_format} in {reqfile}'
+        msg = f"Unsupported format {control_format} in {reqfile}"
         raise ValueError(msg)
 
     # This should go before we load CL file
@@ -490,7 +542,7 @@ def create_datamanager(config, reqfile,
             data = pkgutil.get_data(pkg, resource)
             values = yaml.safe_load(data)
             # insert requirements
-            reqs = values.get('requirements', {})
+            reqs = values.get("requirements", {})
             reqs_ins = reqs.get(ins, {})
             for prof_name in reqs_ins:
                 node_pln = reqs_ins[prof_name]
@@ -526,22 +578,21 @@ def load_observations(obfiles, is_session=False):
             if is_session:
                 _logger.info("session file from %r", obfile)
                 sess = yaml.safe_load(fd)
-                sessions.append(sess['session'])
+                sessions.append(sess["session"])
             else:
                 _logger.info("observation results from %r", obfile)
                 sess = []
                 for doc in yaml.safe_load_all(fd):
-                    enabled = doc.get('enabled', True)
-                    docid = doc['id']
-                    requirements = doc.get('requirements', {})
-                    sess.append(dict(id=docid, enabled=enabled,
-                                     requirements=requirements))
+                    enabled = doc.get("enabled", True)
+                    docid = doc["id"]
+                    requirements = doc.get("requirements", {})
+                    sess.append(
+                        dict(id=docid, enabled=enabled, requirements=requirements)
+                    )
                     if enabled:
-                        _logger.debug(
-                            "load observation result with id %s", docid)
+                        _logger.debug("load observation result with id %s", docid)
                     else:
-                        _logger.debug(
-                            "skip observation result with id %s", docid)
+                        _logger.debug("skip observation result with id %s", docid)
 
                     loaded_obs.append(doc)
 
@@ -554,6 +605,6 @@ def parse_as_yaml(strdict):
     interm = ""
     for key, val in strdict.items():
         interm = f"{key}: {val}, {interm}"
-    fin = '{%s}' % interm
+    fin = "{%s}" % interm
 
     return yaml.safe_load(fin)
