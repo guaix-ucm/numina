@@ -20,7 +20,7 @@ from rich_argparse import RichHelpFormatter
 import sys
 
 
-def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, noplot, output):
+def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, noplot, output, png=None):
     """Extract 2D slice.
 
     Parameters
@@ -52,6 +52,8 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
         If True, skip plotting of the result.
     output : str
         Output FITS file name.
+    png : str or None
+        Output PNG file name (plot of the result).
 
     """
 
@@ -140,7 +142,11 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
         cax = divider.append_axes("right", size="5%", pad=0.05)
         fig.colorbar(img, cax=cax, label=f'Number of counts ({method})')
         plt.tight_layout()
-        plt.show()
+        if png is not None:
+            plt.savefig(png)
+            plt.close()
+        else:
+            plt.show()
 
     # save result
     if output is not None:
@@ -195,6 +201,7 @@ def main(args=None):
     parser.add_argument("--vmin", help="vmin value for imshow", type=float)
     parser.add_argument("--vmax", help="vmax value for imshow", type=float)
     parser.add_argument("--output", help="Output FITS file")
+    parser.add_argument("--png", help="Output PNG file (plot of the result)", type=str)
     parser.add_argument("--echo", help="Display full command line", action="store_true")
     parser.add_argument("--debug", help="Debug", action="store_true")
 
@@ -222,7 +229,8 @@ def main(args=None):
         vmin=args.vmin,
         vmax=args.vmax,
         noplot=args.noplot,
-        output=args.output
+        output=args.output,
+        png=args.png
     )
 
 
