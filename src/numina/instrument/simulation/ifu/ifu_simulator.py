@@ -58,7 +58,7 @@ def ifu_simulator(
     spectral_blurring_pixel,
     faux_dict,
     rng,
-    noparallel_computation,
+    parallel_computation,
     prefix_intermediate_fits,
     stop_after_ifu_3D_method0=False,
     logger=None,
@@ -131,8 +131,8 @@ def ifu_simulator(
           x_ifu, y_ify, wavelength -> x_detector, y_detector
     rng : `~numpy.random._generator.Generator`
         Random number generator.
-    noparallel_computation : bool
-        It True, skip use of parallel processing.
+    parallel_computation : bool
+        It True, use parallel processing.
     prefix_intermediate_fits : str
         Prefix for output intermediate FITS files. If the length of
         this string is 0, no output is generated.
@@ -449,7 +449,7 @@ def ifu_simulator(
     # update images
     # (accelerate computation using joblib.Parallel)
     t0 = time.time()
-    if noparallel_computation:
+    if not parallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
             logger.debug(f"{islice=}")
@@ -561,7 +561,7 @@ def ifu_simulator(
         nslices=nslices,
         dict_ifu2detector=dict_ifu2detector,
         wcs3d=wcs3d,
-        noparallel_computation=noparallel_computation,
+        parallel_computation=parallel_computation,
         logger=logger,
     )
 

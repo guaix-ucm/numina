@@ -25,7 +25,7 @@ def compute_image2d_rss_from_detector_method1(
     nslices,
     dict_ifu2detector,
     wcs3d,
-    noparallel_computation=False,
+    parallel_computation=False,
     logger=None,
 ):
     """
@@ -46,8 +46,8 @@ def compute_image2d_rss_from_detector_method1(
         Dictionary mapping IFU slices to detector pixels.
     wcs3d : `~astropy.wcs.WCS`
         WCS object for the 3D image.
-    noparallel_computation : bool, optional
-        If True, do not use parallel computation. Default is False.
+    parallel_computation : bool, optional
+        If True, use parallel computation. Default is False.
     verbose : bool, optional
         If True, print verbose output. Default is False.
     logger : `~logging.Logger`, optional
@@ -72,7 +72,7 @@ def compute_image2d_rss_from_detector_method1(
 
     logger.debug("Rectifying...")
     t0 = time.time()
-    if noparallel_computation:
+    if not parallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
             logger.debug(f"{islice=}")
