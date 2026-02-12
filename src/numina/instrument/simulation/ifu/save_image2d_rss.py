@@ -18,7 +18,9 @@ from .define_3d_wcs import get_wvparam_from_wcs3d
 from .define_3d_wcs import wcs_to_header_using_cd_keywords
 
 
-def save_image2d_rss(wcs3d, header_keys, image2d_rss, method, prefix_intermediate_fits, bitpix, logger=None, output_dir="."):
+def save_image2d_rss(
+    wcs3d, header_keys, image2d_rss, method, prefix_intermediate_fits, bitpix, logger=None, output_dir="."
+):
     """Save the RSS image.
 
     Parameters

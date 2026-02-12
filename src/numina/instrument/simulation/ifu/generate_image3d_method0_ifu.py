@@ -73,7 +73,9 @@ def generate_image3d_method0_ifu(
     else:
         nphotons_all = len(simulated_x_ifu_all)
         if nphotons_all != len(simulated_y_ifu_all) or nphotons_all != len(simulated_wave_all):
-            raise ValueError("The length of simulated_x_ifu_all, simulated_y_ifu_all, and simulated_wave_all must be the same.")
+            raise ValueError(
+                "The length of simulated_x_ifu_all, simulated_y_ifu_all, and simulated_wave_all must be the same."
+            )
 
     # generate image
     if nphotons_all > 0:

@@ -313,6 +313,7 @@ def ifu_simulator(
                     max_x_ifu=max_x_ifu,
                     min_y_ifu=min_y_ifu,
                     max_y_ifu=max_y_ifu,
+                    nslices=nslices,
                     rng=rng,
                     logger=logger,
                     plots=plots,

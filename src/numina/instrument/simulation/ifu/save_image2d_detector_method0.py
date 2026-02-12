@@ -13,7 +13,9 @@ import numpy as np
 from pathlib import Path
 
 
-def save_image2d_detector_method0(header_keys, image2d_detector_method0, prefix_intermediate_fits, bitpix, logger=None, output_dir="."):
+def save_image2d_detector_method0(
+    header_keys, image2d_detector_method0, prefix_intermediate_fits, bitpix, logger=None, output_dir="."
+):
     """Save the two 2D images: RSS and detector.
 
     Parameters

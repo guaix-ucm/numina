@@ -21,6 +21,61 @@ from .raise_valueerror import raise_ValueError
 from .simulate_image2d_from_fitsfile import simulate_image2d_from_fitsfile
 
 
+def parse_slice_numbers(string):
+    """
+    Convert interval string to list of integers. This function is
+    used to parse the list of slices in the IFU when the geometry type is
+    "slices 1,3-5" (for example, to select slices 1, 3, 4, and 5).
+
+    Parameters
+    ----------
+    string : str
+        String containing intervals separated by commas.
+        Intervals can be "number1-number2" or single numbers.
+        Blank spaces are allowed and ignored.
+
+    Returns
+    -------
+    list of int
+        All integers contained in the intervals.
+
+    Examples
+    --------
+    >>> parse_slice_numbers("slices 3-7, 12, 14-16")
+    [3, 4, 5, 6, 7, 12, 14, 15, 16]
+    """
+    result = []
+
+    # Remove blank spaces
+    string = string.replace(" ", "")
+
+    # Remove the leading "slices" if present
+    if string.lower().startswith("slices"):
+        string = string[6:]
+
+    # Split by commas and process each interval
+    intervals = string.split(",")
+
+    for interval in intervals:
+        if "-" in interval:
+            # It's a range
+            parts = interval.split("-")
+            try:
+                start = int(parts[0])
+                end = int(parts[1])
+                result.extend(range(start, end + 1))
+            except ValueError:
+                raise ValueError(f"Invalid interval: {interval}")
+        else:
+            # Single number
+            try:
+                result.append(int(interval))
+            except ValueError:
+                raise ValueError(f"Invalid number: {interval}")
+
+    return result
+
+
 def generate_geometry_for_scene_block(
     scene_fname,
     scene_block,
@@ -38,6 +93,7 @@ def generate_geometry_for_scene_block(
     max_x_ifu,
     min_y_ifu,
     max_y_ifu,
+    nslices,
     rng,
     logger,
     plots,
@@ -83,6 +139,8 @@ def generate_geometry_for_scene_block(
         Minimum pixel Y coordinate defining the IFU focal plane.
     max_y_ifu : `~astropy.units.Quantity`
         Maximum pixel Y coordinate defining the IFU focal plane.
+    nslices : int
+        Number of slices in the IFU.
     rng : `~numpy.random._generator.Generator`
         Random number generator.
     logger : logging.Logger
@@ -122,9 +180,45 @@ def generate_geometry_for_scene_block(
     geometry_type = scene_block["geometry"]["type"]
 
     # simulate photons following the selected geometry
+    simulated_x_ifu = None
+    simulated_y_ifu = None
     if geometry_type == "flatfield":
         simulated_x_ifu = rng.uniform(low=min_x_ifu.value, high=max_x_ifu.value, size=nphotons)
         simulated_y_ifu = rng.uniform(low=min_y_ifu.value, high=max_y_ifu.value, size=nphotons)
+    elif "slices" in geometry_type:
+        slice_list = parse_slice_numbers(geometry_type)
+        # simulate photons in the selected slices (assuming that the slices are parallel to the X axis and
+        # that they cover the whole X range of the IFU)
+        slice_width_y = (max_y_ifu - min_y_ifu) / nslices
+        nphotons_per_slice = nphotons // len(slice_list)
+        remainder_photons = nphotons % len(slice_list)
+        if remainder_photons != 0:
+            logger.warning(
+                f"Number of photons {nphotons} is not divisible by the number of slices {len(slice_list)}. "
+                f"Simulating {remainder_photons} extra photons in the first slice to reach the requested total number of photons."
+            )
+        for islice in slice_list:
+            lower_y_ifu = min_y_ifu + (islice - 1) * slice_width_y
+            upper_y_ifu = min_y_ifu + islice * slice_width_y
+            if simulated_x_ifu is None:
+                simulated_x_ifu = rng.uniform(
+                    low=min_x_ifu.value, high=max_x_ifu.value, size=nphotons_per_slice + remainder_photons
+                )
+                simulated_y_ifu = rng.uniform(
+                    low=lower_y_ifu.value, high=upper_y_ifu.value, size=nphotons_per_slice + remainder_photons
+                )
+            else:
+                simulated_x_ifu = np.concatenate(
+                    (simulated_x_ifu, rng.uniform(low=min_x_ifu.value, high=max_x_ifu.value, size=nphotons_per_slice))
+                )
+                simulated_y_ifu = np.concatenate(
+                    (
+                        simulated_y_ifu,
+                        rng.uniform(low=lower_y_ifu.value, high=upper_y_ifu.value, size=nphotons_per_slice),
+                    )
+                )
+        if len(simulated_x_ifu) != nphotons:
+            raise ValueError(f"Unexpected {len(simulated_x_ifu)=} != {nphotons=}")
     elif geometry_type in ["gaussian", "point-like", "from-FITS-image"]:
         if "ra_deg" in scene_block["geometry"]:
             ra_deg = scene_block["geometry"]["ra_deg"]
@@ -234,8 +328,6 @@ def generate_geometry_for_scene_block(
             simulated_y_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
             raise_ValueError(f"Unexpected {geometry_type=}")
     else:
-        simulated_x_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
-        simulated_y_ifu = None  # avoid PyCharm warning (not aware of raise ValueError)
         raise_ValueError(f"Unexpected {geometry_type=} in file {scene_fname}")
 
     # apply seeing
@@ -248,6 +340,8 @@ def generate_geometry_for_scene_block(
             simulated_y_ifu += rng.normal(loc=0, scale=abs(std_y.value), size=nphotons)
         else:
             raise_ValueError(f"Unexpected {seeing_psf=}")
+    else:
+        logger.debug("Not applying seeing")
 
     # apply differential refraction (as a function of wavelength)
     if (geometry_type != "flatfield") and (airmass > 1.0):
