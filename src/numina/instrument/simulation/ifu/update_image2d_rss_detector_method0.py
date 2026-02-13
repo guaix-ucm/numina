@@ -101,9 +101,9 @@ def update_image2d_rss_detector_method0(
         nphotons_slice = 0
 
     if nphotons_slice > 0:
-        # -------------------------------------------------
-        # 1) spectroscopic 2D image with continguous slices
-        # -------------------------------------------------
+        # ------------------------------------------------
+        # 1) spectroscopic 2D image with contiguous slices
+        # ------------------------------------------------
         h, xedges, yedges = np.histogram2d(
             x=simulated_x_ifu_all.value[iok],
             y=simulated_wave_all.value[iok]
@@ -111,9 +111,14 @@ def update_image2d_rss_detector_method0(
             + extra_degradation_spectral_direction.value[iok] * wv_cdelt1.value,
             bins=(bins_x_ifu.value, bins_wave.value),
         )
+        # update the corresponding slice in the RSS image
         j1 = islice * naxis1_ifu.value
         j2 = j1 + naxis1_ifu.value
-        image2d_rss_method0[j1:j2, :] += h
+        # note: np.histogram2d returns a float64 array because it is designed
+        # to handle the general case where weights could be floats. To mantain
+        # consistency and flexibility, it always returns float64, regardless
+        # of whether we are counting integer ocurrences
+        image2d_rss_method0[j1:j2, :] += h.astype(int)
 
         # -----------------------------------------
         # 2) spectroscopic 2D image in the detector
@@ -142,4 +147,4 @@ def update_image2d_rss_detector_method0(
         # compute 2D histogram
         # important: reverse X <-> Y
         h, xedges, yedges = np.histogram2d(x=y_hawaii, y=x_hawaii, bins=(bins_y_detector, bins_x_detector))
-        image2d_detector_method0 += h
+        image2d_detector_method0 += h.astype(int)

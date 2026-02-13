@@ -146,7 +146,7 @@ def generate_spectrum_for_scene_block(
             nbins_histo=naxis1_detector.value,
             plots=plots,
             plot_title=os.path.basename(faux_skycalc),
-            verbose=False,
+            logger=logger,
         )
     elif spectrum_type == "tabulated-spectrum":
         mandatory_keys = ["filename", "wave_column", "flux_column", "flux_type"]

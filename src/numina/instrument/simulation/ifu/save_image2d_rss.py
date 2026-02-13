@@ -65,11 +65,22 @@ def save_image2d_rss(
         wcs2d.wcs.cdelt = [wv_cdelt1.value, 1]
         wcs2d.wcs.ctype = ["WAVE", ""]  # ToDo: fix this
         wcs2d.wcs.cunit = [wv_cunit1, u.pix]
+        outfile = f"{prefix_intermediate_fits}_rss_2D_method{method}.fits"
         if bitpix == 16:
-            # round to integer and save as BITPIX=16 (unsigned short)
-            hdu = fits.PrimaryHDU(np.round(image2d_rss).astype(np.uint16))
+            if image2d_rss.max() <= 65535:
+                if image2d_rss.min() < 0:
+                    raise ValueError(f"Negative values found in {outfile} but BITPIX=16 does not support negative values.")
+                hdu = fits.PrimaryHDU(np.round(image2d_rss).astype(np.uint16))
+                bitpix_used = 16
+            else:
+                # use float to avoid saturation problem
+                logger.warning(f"The maximum value in {outfile} is greater than 65535.")
+                logger.warning("Saving the image using float32 to avoid saturation.")
+                hdu = fits.PrimaryHDU(image2d_rss.astype(np.float32))
+                bitpix_used = -32
         elif bitpix == -32:
             hdu = fits.PrimaryHDU(image2d_rss.astype(np.float32))
+            bitpix_used = -32
         else:
             raise ValueError(f"Unsupported BITPIX value: {bitpix}")
         pos0 = len(hdu.header) - 1
@@ -80,6 +91,5 @@ def save_image2d_rss(
             pos0 + 1, ("COMMENT", "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H")
         )
         hdul = fits.HDUList([hdu])
-        outfile = f"{prefix_intermediate_fits}_rss_2D_method{method}.fits"
-        logger.info(f"Saving file: {outfile}")
+        logger.info(f"Saving file: {outfile} (BITPIX={bitpix_used})")
         hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)

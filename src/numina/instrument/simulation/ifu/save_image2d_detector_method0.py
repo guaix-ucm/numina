@@ -7,9 +7,12 @@
 # License-Filename: LICENSE.txt
 #
 import logging
+from venv import logger
 
 from astropy.io import fits
 import numpy as np
+
+from numina import logger
 from pathlib import Path
 
 
@@ -44,12 +47,22 @@ def save_image2d_detector_method0(
         # spectroscopic 2D image in the detector
         # --------------------------------------
         if bitpix == 16:
+            # avoid negative values
+            if image2d_detector_method0.min() < 0:
+                logger.warning("Negative values found in the detector image but BITPIX=16 does not support negative values.")
+                logger.warning("Negative values will be set to 0.")
+                image2d_detector_method0[image2d_detector_method0 < 0] = 0
             # avoid overflow
+            if image2d_detector_method0.max() > 65535:
+                logger.warning("The maximum value in the detector image is greater than 65535.")
+                logger.warning("Values greater than 65535 will be set to 65535 to avoid overflow.")
             image2d_detector_method0[image2d_detector_method0 > 65535] = 65535
             # round to integer and save as BITPIX=16 (unsigned short)
             hdu = fits.PrimaryHDU(np.round(image2d_detector_method0).astype(np.uint16))
+        elif bitpix == -32:
+            hdu = fits.PrimaryHDU(image2d_detector_method0.astype(np.float32))
         else:
-            raise ValueError(f"Unsupported BITPIX value: {bitpix}")
+            raise ValueError(f"Unsupported BITPIX value: {bitpix}. Supported values are 16 and -32.")
         pos0 = len(hdu.header) - 1
         hdu.header.update(header_keys)
         hdu.header.insert(pos0, ("COMMENT", "FITS (Flexible Image Transport System) format is defined in 'Astronomy"))
@@ -58,5 +71,5 @@ def save_image2d_detector_method0(
         )
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_detector_2D_method0.fits"
-        logger.info(f"Saving file: {outfile}")
+        logger.info(f"Saving file: {outfile} (BITPIX={bitpix})")
         hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)

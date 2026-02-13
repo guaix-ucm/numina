@@ -11,6 +11,7 @@
 from joblib import Parallel, delayed
 import logging
 import numpy as np
+from rich.console import Console
 import time
 
 from numina.instrument.simulation.ifu.define_3d_wcs import get_wvparam_from_wcs3d
@@ -27,6 +28,7 @@ def compute_image2d_rss_from_detector_method1(
     wcs3d,
     parallel_computation=False,
     logger=None,
+    console=None,
 ):
     """
     Compute the RSS image from the detector image using method 1.
@@ -52,6 +54,8 @@ def compute_image2d_rss_from_detector_method1(
         If True, print verbose output. Default is False.
     logger : `~logging.Logger`, optional
         Logger for logging messages. If None, the root logger is used.
+    console : `~rich.console.Console` or None, optional
+        Rich console for rich printing. If None, the default console will be used.
 
     Returns
     -------
@@ -61,6 +65,7 @@ def compute_image2d_rss_from_detector_method1(
 
     if logger is None:
         logger = logging.getLogger()
+    logger_level_in_use = logger.getEffectiveLevel()
 
     logger.debug("[green]* Computing image2d RSS (method 1)[/green]")
 
@@ -75,6 +80,13 @@ def compute_image2d_rss_from_detector_method1(
     if not parallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
+            if logger_level_in_use <= logging.DEBUG:
+                logger.debug(f"slice: {islice + 1}/{nslices}")
+            else:
+                if (islice + 1) % 10 == 0:
+                    console.print(f"{islice + 1}", end="")
+                else:
+                    console.print(".", end="")
             logger.debug(f"{islice=}")
             update_image2d_rss_method1(
                 islice=islice,
@@ -88,6 +100,8 @@ def compute_image2d_rss_from_detector_method1(
                 image2d_rss_method1=image2d_rss_method1,
                 debug=False,
             )
+        if logger_level_in_use > logging.DEBUG:
+            console.print("")  # new line after the progress dots
     else:
         Parallel(n_jobs=-1, prefer="threads")(
             delayed(update_image2d_rss_method1)(

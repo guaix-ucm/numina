@@ -110,8 +110,16 @@ def generate_image2d_method0_ifu(
 
     # save FITS file
     if len(prefix_intermediate_fits) > 0:
-        # use float to avoid saturation problem
-        hdu = fits.PrimaryHDU(image2d_method0_ifu.astype(np.float32))
+        outfile = f"{prefix_intermediate_fits}_ifu_white2D_method0_os{noversampling_whitelight:d}.fits"
+        if image2d_method0_ifu.max() <= 65535:
+            bitpix = 16
+            hdu = fits.PrimaryHDU(image2d_method0_ifu.astype(np.uint16))
+        else:
+            # use float to avoid saturation problem
+            logger.warning(f"The maximum value in {outfile} is greater than 65535.")
+            logger.warning("Saving the image using float32 to avoid saturation.")
+            bitpix = -32
+            hdu = fits.PrimaryHDU(image2d_method0_ifu.astype(np.float32))
         pos0 = len(hdu.header) - 1
         hdu.header.extend(wcs_to_header_using_cd_keywords(wcs2d), update=True)
         hdu.header.update(header_keys)
@@ -120,8 +128,7 @@ def generate_image2d_method0_ifu(
             pos0 + 1, ("COMMENT", "and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H")
         )
         hdul = fits.HDUList([hdu])
-        outfile = f"{prefix_intermediate_fits}_ifu_white2D_method0_os{noversampling_whitelight:d}.fits"
-        logger.info(f"Saving file: {outfile}")
+        logger.info(f"Saving file: {outfile} (BITPIX={bitpix})")
         hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)
 
     # display result

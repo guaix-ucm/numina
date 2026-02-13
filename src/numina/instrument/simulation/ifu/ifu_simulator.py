@@ -16,6 +16,7 @@ import logging
 import numpy as np
 import os
 from pathlib import Path
+from rich.console import Console
 from rich.pretty import pretty_repr
 import time
 import yaml
@@ -56,12 +57,14 @@ def ifu_simulator(
     bias,
     rnoise,
     spectral_blurring_pixel,
+    bitpix_detector,
     faux_dict,
     rng,
     parallel_computation,
     prefix_intermediate_fits,
     stop_after_ifu_3D_method0=False,
     logger=None,
+    console=None,
     instname=None,
     subtitle=None,
     plots=False,
@@ -123,6 +126,10 @@ def ifu_simulator(
     spectral_blurring_pixel : `~astropy.units.Quantity`
         Spectral blurring (in pixels) to be introduced when generating
         the initial RSS image from the original 3D data cube.
+    bitpix_detector : int
+        BITPIX value for the detector image. Supported values are:
+        - 16: unsigned short integer (0 to 65535) 
+        - -32: 32-bit floating point
     faux_dict : Python dictionary
         File names of auxiliary files:
         - skycalc: table with SKYCALC Sky Model Calculator predictions
@@ -140,6 +147,8 @@ def ifu_simulator(
         If True, stop execution after generating ifu_3D_method0 image.
     logger : logging.Logger or None, optional
         Logger for logging messages. If None, a default logger will be used.
+    console : `~rich.console.Console` or None, optional
+        Rich console for rich printing. If None, the default console will be used.
     instname : str or None
         Instrument name.
     subtitle : str or None
@@ -152,11 +161,19 @@ def ifu_simulator(
 
     if logger is None:
         logger = logging.getLogger(__name__)
+    logger_level_in_use = logger.getEffectiveLevel()
 
-    if logger.isEnabledFor(logging.DEBUG):
+    if console is None:
+        console = Console()
+
+    if logger_level_in_use <= logging.DEBUG:
         logger.debug(" ")
         for item in faux_dict:
             logger.debug(f"- Required file for item {item}: {faux_dict[item]}")
+
+    # check bitpix_detector value
+    if bitpix_detector not in [16, -32]:
+        raise ValueError(f"Unsupported BITPIX value: {bitpix_detector}. Supported values are 16 and -32.")
 
     # check output_dir is a valid directory
     if not os.path.isdir(output_dir):
@@ -248,6 +265,7 @@ def ifu_simulator(
             logger.debug(f"scene_block={pretty_repr(scene_block)}")
 
             nphotons = int(float(scene_block["nphotons"]) * flux_factor)
+            logger.info(f"Number of photons to be simulated for this block: {nphotons}")
             wavelength_sampling = scene_block["wavelength_sampling"]
             if wavelength_sampling not in ["random", "fixed"]:
                 raise_ValueError(f"Unexpected {wavelength_sampling=}")
@@ -443,8 +461,8 @@ def ifu_simulator(
     )
 
     # initialize images
-    image2d_rss_method0 = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value))
-    image2d_detector_method0 = np.zeros((naxis2_detector.value, naxis1_detector.value))
+    image2d_rss_method0 = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value), dtype=int)
+    image2d_detector_method0 = np.zeros((naxis2_detector.value, naxis1_detector.value))  # float type to be able to include noise and flatfield effects
 
     # update images
     # (accelerate computation using joblib.Parallel)
@@ -452,7 +470,13 @@ def ifu_simulator(
     if not parallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
-            logger.debug(f"{islice=}")
+            if logger_level_in_use <= logging.DEBUG:
+                logger.debug(f"slice: {islice + 1}/{nslices}")
+            else:
+                if (islice + 1) % 10 == 0:
+                    console.print(f"{islice + 1}", end="")
+                else:
+                    console.print(".", end="")
             update_image2d_rss_detector_method0(
                 islice=islice,
                 simulated_x_ifu_all=simulated_x_ifu_all,
@@ -469,6 +493,8 @@ def ifu_simulator(
                 image2d_rss_method0=image2d_rss_method0,
                 image2d_detector_method0=image2d_detector_method0,
             )
+        if logger_level_in_use > logging.DEBUG:
+            console.print("")  # new line after the progress dots
     else:
         Parallel(n_jobs=-1, prefer="threads")(
             delayed(update_image2d_rss_detector_method0)(
@@ -546,7 +572,7 @@ def ifu_simulator(
         header_keys,
         image2d_detector_method0=image2d_detector_method0,
         prefix_intermediate_fits=prefix_intermediate_fits,
-        bitpix=16,
+        bitpix=bitpix_detector,
         logger=logger,
         output_dir=output_dir,
     )
@@ -563,6 +589,7 @@ def ifu_simulator(
         wcs3d=wcs3d,
         parallel_computation=parallel_computation,
         logger=logger,
+        console=console,
     )
 
     # save FITS file
@@ -601,5 +628,5 @@ def ifu_simulator(
         )
         hdul = fits.HDUList([hdu])
         outfile = f"{prefix_intermediate_fits}_ifu_3D_method1.fits"
-        logger.info(f"Saving file: {outfile}")
+        logger.info(f"Saving file: {outfile} (BITPIX=-32)")
         hdul.writeto(f"{Path(output_dir) / outfile}", overwrite=True)

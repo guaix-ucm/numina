@@ -194,8 +194,10 @@ def generate_geometry_for_scene_block(
         remainder_photons = nphotons % len(slice_list)
         if remainder_photons != 0:
             logger.warning(
-                f"Number of photons {nphotons} is not divisible by the number of slices {len(slice_list)}. "
-                f"Simulating {remainder_photons} extra photons in the first slice to reach the requested total number of photons."
+                f"Number of photons {nphotons} is not divisible by the number of slices {len(slice_list)}."
+            )
+            logger.warning(
+                f"Simulating {remainder_photons} extra photons in first slice to reach the number of photons."
             )
         for islice in slice_list:
             lower_y_ifu = min_y_ifu + (islice - 1) * slice_width_y
