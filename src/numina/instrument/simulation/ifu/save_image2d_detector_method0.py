@@ -49,7 +49,9 @@ def save_image2d_detector_method0(
         if bitpix == 16:
             # avoid negative values
             if image2d_detector_method0.min() < 0:
-                logger.warning("Negative values found in the detector image but BITPIX=16 does not support negative values.")
+                logger.warning(
+                    "Negative values found in the detector image but BITPIX=16 does not support negative values."
+                )
                 logger.warning("Negative values will be set to 0.")
                 image2d_detector_method0[image2d_detector_method0 < 0] = 0
             # avoid overflow

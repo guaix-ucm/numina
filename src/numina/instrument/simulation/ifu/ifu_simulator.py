@@ -128,7 +128,7 @@ def ifu_simulator(
         the initial RSS image from the original 3D data cube.
     bitpix_detector : int
         BITPIX value for the detector image. Supported values are:
-        - 16: unsigned short integer (0 to 65535) 
+        - 16: unsigned short integer (0 to 65535)
         - -32: 32-bit floating point
     faux_dict : Python dictionary
         File names of auxiliary files:
@@ -462,7 +462,9 @@ def ifu_simulator(
 
     # initialize images
     image2d_rss_method0 = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value), dtype=int)
-    image2d_detector_method0 = np.zeros((naxis2_detector.value, naxis1_detector.value))  # float type to be able to include noise and flatfield effects
+    image2d_detector_method0 = np.zeros(
+        (naxis2_detector.value, naxis1_detector.value)
+    )  # float type to be able to include noise and flatfield effects
 
     # update images
     # (accelerate computation using joblib.Parallel)

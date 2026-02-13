@@ -69,7 +69,9 @@ def save_image2d_rss(
         if bitpix == 16:
             if image2d_rss.max() <= 65535:
                 if image2d_rss.min() < 0:
-                    raise ValueError(f"Negative values found in {outfile} but BITPIX=16 does not support negative values.")
+                    raise ValueError(
+                        f"Negative values found in {outfile} but BITPIX=16 does not support negative values."
+                    )
                 hdu = fits.PrimaryHDU(np.round(image2d_rss).astype(np.uint16))
                 bitpix_used = 16
             else:
