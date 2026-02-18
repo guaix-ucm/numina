@@ -69,6 +69,68 @@ from .valid_parameters import VALID_BOUNDARY_FITS
 from .valid_parameters import DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY
 
 
+def extract_mm_fixed_points_in_boundary(mm_fixed_points_in_boundary, mm_boundary_fit):
+    """Auxiliary function to extract fixed points.
+
+    Parameters
+    ----------
+    mm_fixed_points_in_boundary : list, str, or None
+        The fixed points to use for the boundary fitting. If str, it is
+        evaluated. If list, it should contain the fixed points as tuples
+        of (x, y) or (x, y, weight). If None, no fixed points are used.
+    mm_boundary_fit : str or None
+        The method to use for the boundary fitting. Valid options are:
+        - 'spline': use a spline fit to the boundary.
+        - 'piecewise': use a piecewise linear fit to the boundary. If
+          this option is selected, mm_fixed_points_in_boundary must be
+          provided.
+
+    Returns
+    -------
+    x_mm_fixed_points_in_boundary : numpy array or None
+        The x coordinates of the fixed points to use for the boundary fitting.
+    y_mm_fixed_points_in_boundary : numpy array or None
+        The y coordinates of the fixed points to use for the boundary fitting.
+    w_mm_fixed_points_in_boundary : numpy array or None
+        The weights of the fixed points to use for the boundary fitting.
+    """
+    if mm_fixed_points_in_boundary is None:
+        if mm_boundary_fit == "piecewise":
+            raise ValueError("For mm_boundary_fit='piecewise', " "mm_fixed_points_in_boundary must be provided.")
+        x_mm_fixed_points_in_boundary = None
+        y_mm_fixed_points_in_boundary = None
+        w_mm_fixed_points_in_boundary = None
+    else:
+        mm_fixed_points_in_boundary = list(eval(str(mm_fixed_points_in_boundary)))
+        x_mm_fixed_points_in_boundary = []
+        y_mm_fixed_points_in_boundary = []
+        w_mm_fixed_points_in_boundary = []
+        for item in mm_fixed_points_in_boundary:
+            if not (isinstance(item, (list, tuple)) and len(item) in [2, 3]):
+                raise ValueError(
+                    "Each item in mm_fixed_points_in_boundary must be a list or tuple of "
+                    "2 or 3 elements: (x, y) or (x, y, weight)."
+                )
+            if not all_valid_numbers(item):
+                raise ValueError(
+                    f"All elements in mm_fixed_points_in_boundary={mm_fixed_points_in_boundary} "
+                    "must be valid numbers."
+                )
+            if len(item) == 2:
+                x_mm_fixed_points_in_boundary.append(float(item[0]))
+                y_mm_fixed_points_in_boundary.append(float(item[1]))
+                w_mm_fixed_points_in_boundary.append(DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY)
+            else:
+                x_mm_fixed_points_in_boundary.append(float(item[0]))
+                y_mm_fixed_points_in_boundary.append(float(item[1]))
+                w_mm_fixed_points_in_boundary.append(float(item[2]))
+        x_mm_fixed_points_in_boundary = np.array(x_mm_fixed_points_in_boundary, dtype=float)
+        y_mm_fixed_points_in_boundary = np.array(y_mm_fixed_points_in_boundary, dtype=float)
+        w_mm_fixed_points_in_boundary = np.array(w_mm_fixed_points_in_boundary, dtype=float)
+
+    return x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, w_mm_fixed_points_in_boundary
+
+
 def compute_crmasks(
     list_arrays,
     output_dir=".",
@@ -1474,39 +1536,9 @@ def compute_crmasks(
         if isinstance(mm_fixed_points_in_boundary, str):
             if mm_fixed_points_in_boundary.lower() == "none":
                 mm_fixed_points_in_boundary = None
-        if mm_fixed_points_in_boundary is None:
-            if mm_boundary_fit == "piecewise":
-                raise ValueError("For mm_boundary_fit='piecewise', " "mm_fixed_points_in_boundary must be provided.")
-            x_mm_fixed_points_in_boundary = None
-            y_mm_fixed_points_in_boundary = None
-            w_mm_fixed_points_in_boundary = None
-        else:
-            mm_fixed_points_in_boundary = list(eval(str(mm_fixed_points_in_boundary)))
-            x_mm_fixed_points_in_boundary = []
-            y_mm_fixed_points_in_boundary = []
-            w_mm_fixed_points_in_boundary = []
-            for item in mm_fixed_points_in_boundary:
-                if not (isinstance(item, (list, tuple)) and len(item) in [2, 3]):
-                    raise ValueError(
-                        "Each item in mm_fixed_points_in_boundary must be a list or tuple of "
-                        "2 or 3 elements: (x, y) or (x, y, weight)."
-                    )
-                if not all_valid_numbers(item):
-                    raise ValueError(
-                        f"All elements in mm_fixed_points_in_boundary={mm_fixed_points_in_boundary} "
-                        "must be valid numbers."
-                    )
-                if len(item) == 2:
-                    x_mm_fixed_points_in_boundary.append(float(item[0]))
-                    y_mm_fixed_points_in_boundary.append(float(item[1]))
-                    w_mm_fixed_points_in_boundary.append(DEFAULT_WEIGHT_FIXED_POINTS_IN_BOUNDARY)
-                else:
-                    x_mm_fixed_points_in_boundary.append(float(item[0]))
-                    y_mm_fixed_points_in_boundary.append(float(item[1]))
-                    w_mm_fixed_points_in_boundary.append(float(item[2]))
-            x_mm_fixed_points_in_boundary = np.array(x_mm_fixed_points_in_boundary, dtype=float)
-            y_mm_fixed_points_in_boundary = np.array(y_mm_fixed_points_in_boundary, dtype=float)
-            w_mm_fixed_points_in_boundary = np.array(w_mm_fixed_points_in_boundary, dtype=float)
+        x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, w_mm_fixed_points_in_boundary = (
+            extract_mm_fixed_points_in_boundary(mm_fixed_points_in_boundary, mm_boundary_fit)
+        )
 
         if mm_boundary_fit is None:
             raise ValueError(f"mm_boundary_fit is None and must be one of {VALID_BOUNDARY_FITS}.")
@@ -1849,6 +1881,18 @@ def compute_crmasks(
                 output_dir=output_dir,
                 record_terminal_output=record_terminal_output,
             )
+            # update additional parameters that might have been modified, so they
+            # can be used in the next iteration if the user decides to rerun the simulations
+            mm_boundary_fit = result_hist2d["mm_boundary_fit"]
+            mm_fixed_points_in_boundary = result_hist2d["mm_fixed_points_in_boundary"]
+            x_mm_fixed_points_in_boundary, y_mm_fixed_points_in_boundary, w_mm_fixed_points_in_boundary = (
+                extract_mm_fixed_points_in_boundary(mm_fixed_points_in_boundary, mm_boundary_fit)
+            )
+            mm_hist2d_min_neighbors = result_hist2d["mm_hist2d_min_neighbors"]
+            mm_knots_splfit = result_hist2d["mm_knots_splfit"]
+            mm_niter_boundary_extension = result_hist2d["mm_niter_boundary_extension"]
+            mm_weight_boundary_extension = result_hist2d["mm_weight_boundary_extension"]
+            # update the boolean to control whether to rerun the simulations based on user input
             if interactive:
                 if rerun_simulations:
                     _logger.info("modifying simulation parameters...")
@@ -1936,13 +1980,6 @@ def compute_crmasks(
         # retrieve main results
         boundaryfit = result_hist2d["boundaryfit"]
         flag_mm = result_hist2d["flag_mm"]
-        # update additional parameters that might have been modified
-        mm_fixed_points_in_boundary = result_hist2d["mm_fixed_points_in_boundary"]
-        mm_hist2d_min_neighbors = result_hist2d["mm_hist2d_min_neighbors"]
-        mm_boundary_fit = result_hist2d["mm_boundary_fit"]
-        mm_knots_splfit = result_hist2d["mm_knots_splfit"]
-        mm_niter_boundary_extension = result_hist2d["mm_niter_boundary_extension"]
-        mm_weight_boundary_extension = result_hist2d["mm_weight_boundary_extension"]
     elif crmethod in ["lacosmic", "pycosmic", "deepcr", "conn"]:
         boundaryfit = None
         flag_mm = np.zeros_like(median2d, dtype=bool).flatten()
