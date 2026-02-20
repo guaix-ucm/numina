@@ -58,15 +58,17 @@ def main(args=None):
         parser.print_usage()
         raise SystemExit()
 
-    # Configure rich console
+    # Initialize console and logger
     console = NuminaConsole(record=args.record)
+    logger = logging.getLogger(__name__)
+
 
     if args.echo:
         console.print(f"[bright_red]Executing: {' '.join(sys.argv)}[/bright_red]\n", end="")
 
     # Configure logging
     if args.log_level in ["DEBUG", "WARNING", "ERROR", "CRITICAL"]:
-        format_log = "%(name)s %(levelname)s %(message)s"
+        format_log = "%(name)s %(levelname)s: %(message)s"
         handlers = [RichHandler(console=console, show_time=False, markup=True)]
     else:
         format_log = "%(message)s"
@@ -78,7 +80,6 @@ def main(args=None):
     console.rule("[bold magenta]Numina: Cosmic Ray Masks[/bold magenta]")
 
     # Display version info
-    logger = logging.getLogger(__name__)
     logger.info(f"Using {__name__} version {__version__}")
 
     # Read parameters from YAML file
