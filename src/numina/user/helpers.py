@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -430,10 +430,11 @@ def deep_merge(initial_schema, loaded_data):
 
 
 def process_format_version_1(
-    sys_drps, components, basedir, loaded_data, loaded_data_extra=None
+    sys_drps, components, basedir, rootdir, loaded_data, loaded_data_extra=None
 ) -> HybridDAL:
     backend = HybridDAL(
         sys_drps,
+        rootdir,
         [],
         loaded_data,
         extra_data=loaded_data_extra,
@@ -444,18 +445,25 @@ def process_format_version_1(
 
 
 def process_format_version_2(
-    sys_drps, components, basedir, loaded_data, loaded_data_extra=None, filename=None
+    sys_drps,
+    components,
+    basedir,
+    rootdir,
+    loaded_data,
+    loaded_data_extra=None,
+    filename=None,
 ) -> Backend:
     loaded_db = loaded_data["database"]
     backend = Backend(
         sys_drps,
+        rootdir,
         loaded_db,
         extra_data=loaded_data_extra,
         basedir=basedir,
         components=components,
         filename=filename,
     )
-    backend.rootdir = loaded_data.get("rootdir", "")
+
     return backend
 
 
@@ -485,6 +493,7 @@ def create_datamanager(
     section = config["tool.run"]
     basedir = section["basedir"]
     datadir = section["datadir"]
+    calibsdir = section.get("calibsdir")
 
     if reqfile:
         _logger.info("reading control from %s", reqfile)
@@ -504,10 +513,15 @@ def create_datamanager(
     _logger.info("control format version %d", control_format)
 
     components = create_com_store(sys_drps, profile_path_extra)
+    # What rootdir are going to use
+    if calibsdir is None:
+        _logger.debug("loading rootdir from control file data")
+        calibsdir = loaded_data.get("rootdir", "")
+    _logger.debug(f"current calibsdir is '{calibsdir}'")
     if control_format == 1:
         merged_data = deep_merge(initial_schema, loaded_data)
         _backend = process_format_version_1(
-            sys_drps, components, basedir, merged_data, loaded_data_extra
+            sys_drps, components, basedir, calibsdir, merged_data, loaded_data_extra
         )
         datamanager = DataManager(basedir, datadir, _backend)
         datamanager.workdir_tmpl = section["workdir_tmpl"]
@@ -523,6 +537,7 @@ def create_datamanager(
             sys_drps,
             components,
             basedir,
+            calibsdir,
             loaded_data,
             loaded_data_extra,
             filename=pname,

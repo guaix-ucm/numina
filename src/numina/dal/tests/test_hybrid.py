@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2023 Universidad Complutense de Madrid
+# Copyright 2018-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -18,39 +18,54 @@ from ..dictdal import HybridDAL
 @pytest.fixture
 def hybriddal():
 
-    drps = create_drp_test(['drpclodia.yaml'])
-    name = 'CLODIA'
+    drps = create_drp_test(["drpclodia.yaml"])
+    name = "CLODIA"
     ob_table = [
-        dict(id=1, instrument=name, mode="sky", images=[], children=[],
-             enabled=False
-             ),
+        dict(id=1, instrument=name, mode="sky", images=[], children=[], enabled=False),
         dict(id=2, instrument=name, mode="sky", images=[], children=[]),
         dict(id=3, instrument=name, mode="image", images=[], children=[]),
         dict(id=4, instrument=name, mode="sky", images=[], children=[]),
         dict(id=5, instrument=name, mode="image", images=[], children=[]),
         dict(id=30, instrument=name, mode="mosaic", images=[], children=[2, 3]),
         dict(id=40, instrument=name, mode="mosaic", images=[], children=[4, 5]),
-        dict(id=400, instrument=name, mode="raiz",
-             images=[], children=[30, 40]),
+        dict(id=400, instrument=name, mode="raiz", images=[], children=[30, 40]),
     ]
 
     prod_table = {
-        'TEST1': {
-            '225fcaf2-7f6f-49cc-972a-70fd0aee8e96': [
-                {'id': 1, 'type': 'DemoType1', 'tags': {}, 'content': {'demo1': 1}, 'ob': 2},
-                {'id': 2, 'type': 'DemoType2', 'tags': {'field2': 'A'}, 'content': {'demo2': 2}, 'ob': 14},
-                {'id': 3, 'type': 'DemoType2', 'tags': {'field2': 'B'}, 'content': {'demo2': 3}, 'ob': 15}
+        "TEST1": {
+            "225fcaf2-7f6f-49cc-972a-70fd0aee8e96": [
+                {
+                    "id": 1,
+                    "type": "DemoType1",
+                    "tags": {},
+                    "content": {"demo1": 1},
+                    "ob": 2,
+                },
+                {
+                    "id": 2,
+                    "type": "DemoType2",
+                    "tags": {"field2": "A"},
+                    "content": {"demo2": 2},
+                    "ob": 14,
+                },
+                {
+                    "id": 3,
+                    "type": "DemoType2",
+                    "tags": {"field2": "B"},
+                    "content": {"demo2": 3},
+                    "ob": 15,
+                },
             ]
         }
     }
 
     gentable = {}
-    gentable['products'] = prod_table
-    gentable['requirements'] = {}
+    gentable["products"] = prod_table
+    gentable["requirements"] = {}
     # Load instrument profiles
-    pkg_paths = ['numina.drps.tests.configs']
+    pkg_paths = ["numina.drps.tests.configs"]
     store = asb.load_paths_store(pkg_paths)
-    base = HybridDAL(drps, ob_table, gentable, {}, components=store)
+    base = HybridDAL(drps, "", ob_table, gentable, {}, components=store)
 
     return base
 
@@ -65,7 +80,7 @@ def test_skip_reserved(hybriddal):
 def test_parent_inserted(hybriddal):
 
     obsres = hybriddal.search_oblock_from_id(2)
-    print('OBSR', obsres.__dict__)
+    print("OBSR", obsres.__dict__)
     assert obsres.parent == 30
 
     obsres = hybriddal.search_oblock_from_id(4)
@@ -81,13 +96,13 @@ def test_parent_inserted(hybriddal):
 def test_previous_obsid(hybriddal):
 
     obsres = hybriddal.search_oblock_from_id(5)
-    previd = hybriddal.search_previous_obsres(obsres, node='prev')
+    previd = hybriddal.search_previous_obsres(obsres, node="prev")
     assert list(previd) == [4, 3, 2, 1]
 
     obsres = hybriddal.search_oblock_from_id(5)
-    previd = hybriddal.search_previous_obsres(obsres, node='prev-rel')
+    previd = hybriddal.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == [4]
 
     obsres = hybriddal.search_oblock_from_id(4)
-    previd = hybriddal.search_previous_obsres(obsres, node='prev-rel')
+    previd = hybriddal.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == []

@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -283,9 +283,7 @@ class DictDAL(BaseDictDAL):
     def __init__(self, drps, base):
 
         # Check that the structure of 'base' is correct
-        super(DictDAL, self).__init__(
-            drps, base["oblocks"], base["products"], base["parameters"]
-        )
+        super().__init__(drps, base["oblocks"], base["products"], base["parameters"])
 
 
 class Dict2DAL(BaseDictDAL):
@@ -298,7 +296,7 @@ class Dict2DAL(BaseDictDAL):
         else:
             req_table = base.get("requirements", {})
 
-        super(Dict2DAL, self).__init__(
+        super().__init__(
             drps, obtable, prod_table, req_table, extra_data, components=components
         )
 
@@ -362,10 +360,17 @@ def resultsdir_default(basedir, obsid):
 class BaseHybridDAL(Dict2DAL):
 
     def __init__(
-        self, drps, obtable, base, extra_data=None, basedir=None, components=None
+        self,
+        drps,
+        rootdir,
+        obtable,
+        base,
+        extra_data=None,
+        basedir=None,
+        components=None,
     ):
 
-        self.rootdir = base.get("rootdir", "")
+        self.rootdir = rootdir
         self.ob_ids = []
 
         if basedir is None:
@@ -373,7 +378,7 @@ class BaseHybridDAL(Dict2DAL):
         else:
             self.basedir = basedir
 
-        super(BaseHybridDAL, self).__init__(
+        super().__init__(
             drps, obtable, base, extra_data=extra_data, components=components
         )
 
@@ -572,7 +577,14 @@ class HybridDAL(BaseHybridDAL):
     """A DAL that can read files from directory structure"""
 
     def __init__(
-        self, drps, obtable, base, extra_data=None, components=None, basedir=None
+        self,
+        drps,
+        rootdir,
+        obtable,
+        base,
+        extra_data=None,
+        components=None,
+        basedir=None,
     ):
 
         temp_ob_ids = []
@@ -589,8 +601,9 @@ class HybridDAL(BaseHybridDAL):
             for ch in children:
                 obdict[ch]["parent"] = ob["id"]
 
-        super(HybridDAL, self).__init__(
+        super().__init__(
             drps,
+            rootdir,
             obdict,
             base,
             extra_data=extra_data,
