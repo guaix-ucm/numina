@@ -430,7 +430,12 @@ def deep_merge(initial_schema, loaded_data):
 
 
 def process_format_version_1(
-    sys_drps, components, basedir, rootdir, loaded_data, loaded_data_extra=None
+    sys_drps,
+    components,
+    basedir: str,
+    rootdir: str,
+    loaded_data,
+    loaded_data_extra=None,
 ) -> HybridDAL:
     backend = HybridDAL(
         sys_drps,
@@ -447,8 +452,8 @@ def process_format_version_1(
 def process_format_version_2(
     sys_drps,
     components,
-    basedir,
-    rootdir,
+    basedir: str,
+    rootdir: str,
     loaded_data,
     loaded_data_extra=None,
     filename=None,
@@ -516,8 +521,16 @@ def create_datamanager(
     # What rootdir are going to use
     if calibsdir is None:
         _logger.debug("loading rootdir from control file data")
-        calibsdir = loaded_data.get("rootdir", "")
-    _logger.debug(f"current calibsdir is '{calibsdir}'")
+        calibsdir = loaded_data.get("rootdir", None)
+
+    if calibsdir is not None:
+        _logger.debug(f"current calibsdir is '{calibsdir}'")
+        if not os.path.isabs(calibsdir):
+            calibsdir = os.path.join(basedir, calibsdir)
+        calibsdir = os.path.normpath(calibsdir)
+    else:
+        calibsdir = ""
+
     if control_format == 1:
         merged_data = deep_merge(initial_schema, loaded_data)
         _backend = process_format_version_1(
