@@ -359,7 +359,10 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                 ax.set_aspect('auto')
             else:
                 ax.set_aspect('equal')
-            plt.tight_layout()
+            try:
+                plt.tight_layout()
+            except:
+                pass
             plt.show(block=False)
             plt.pause(0.001)
         else:
@@ -421,6 +424,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         yini_geom = int(tmp_str[3])
         backend = matplotlib.get_backend()
         if backend.lower() == 'tkagg':
+            print(xwidth_geom, ywidth_geom, xini_geom, yini_geom)
+            input("Press RETURN to set the window geometry...")
             plt.get_current_fig_manager().resize(xwidth_geom, ywidth_geom)
             plt.get_current_fig_manager().window.wm_geometry(
                 f"+{xini_geom}+{yini_geom}")
@@ -458,7 +463,10 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         if tight_layout:
-            plt.tight_layout()
+            try:
+                plt.tight_layout()
+            except:
+                pass
         # return axes
         if using_jupyter:
             plt.ion()
@@ -680,14 +688,20 @@ def ximshow_file(singlefile,
     if pdf is not None:
         if show:
             from numina.array.display.matplotlib_qt import plt
-            plt.tight_layout()
+            try:
+                plt.tight_layout()
+            except:
+                pass
             pdf.savefig()
         else:
             return ax
     elif png is not None:
         if show:
             from numina.array.display.matplotlib_qt import plt
-            plt.tight_layout()
+            try:
+                plt.tight_layout()
+            except:
+                pass
             plt.savefig(png, metadata={'Software': 'ximshow'})
         else:
             return ax
