@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,12 +11,10 @@ import sys
 
 from numina.array.display.matplotlib_qt import plt
 
-DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12,
-                   -21, 21, -22, 22)
+DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12, -21, 21, -22, 22)
 
 
-def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
-                    tight_layout=True):
+def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout=True):
     """Ask the user to press RETURN to continue after plotting.
 
     Parameters
@@ -45,7 +43,7 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
     """
 
     if debugplot not in DEBUGPLOT_CODES:
-        raise ValueError('Invalid debugplot value:', debugplot)
+        raise ValueError("Invalid debugplot value:", debugplot)
 
     if debugplot < 0:
         debugplot_ = -debugplot
@@ -65,16 +63,16 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False,
                 plt.show(block=False)
                 plt.pause(0.2)
             elif debugplot_ in [2, 12, 22]:
-                print('Press "q" to continue...', end='')
+                print('Press "q" to continue...', end="")
                 sys.stdout.flush()
                 plt.show()
-                print('')
+                print("")
     else:
         if debugplot_ in [2, 12, 22]:
             if optional_prompt is None:
-                print('Press <RETURN> to continue...', end='')
+                print("Press <RETURN> to continue...", end="")
             else:
-                print(optional_prompt, end='')
+                print(optional_prompt, end="")
             sys.stdout.flush()
             cdummy = sys.stdin.readline().strip()  # noqa: F841
 

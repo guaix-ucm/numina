@@ -25,11 +25,10 @@ from .fileinfo import check_extnum
 from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
 
-
-GLOBAL_ASPECT = 'auto'
-GLOBAL_GEOMETRY = '1024,768,0,0'  # xwidth,ywidth,xorigin,yorigin
-dum_str = ''  # global variable in function keypress
-dum_par = ''  # global variable in function keypress
+GLOBAL_ASPECT = "auto"
+GLOBAL_GEOMETRY = "1024,768,0,0"  # xwidth,ywidth,xorigin,yorigin
+dum_str = ""  # global variable in function keypress
+dum_par = ""  # global variable in function keypress
 
 
 def is_valid_number(x):
@@ -68,10 +67,10 @@ def check_wavelength_scale(crval1, cdelt1, ctype1, cunit1):
         return result
 
     if ctype1 is not None:
-        if 'wavelength' in ctype1.lower():
+        if "wavelength" in ctype1.lower():
             result = True
     if cunit1 is not None:
-        if 'angstrom' in cunit1.lower():
+        if "angstrom" in cunit1.lower():
             result = True
 
     if result:
@@ -84,23 +83,34 @@ def check_wavelength_scale(crval1, cdelt1, ctype1, cunit1):
 
 
 def ximshow_jupyter(image2d, **args):
-    """Auxiliary function to call ximshow from a jupyter notebook.
-    """
+    """Auxiliary function to call ximshow from a jupyter notebook."""
     return ximshow(image2d, using_jupyter=True, **args)
 
 
-def ximshow(image2d, title=None, show=True,
-            cbar_label=None, cbar_orientation='None',
-            z1z2=None, cmap='hot',
-            image_bbox=None, first_pixel=(1, 1),
-            aspect=GLOBAL_ASPECT,
-            crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
-            ds9regfile=None,
-            geometry=GLOBAL_GEOMETRY, 
-            factor_macosx=1.5,
-            figuredict=None,
-            tight_layout=True,
-            debugplot=0, using_jupyter=False):
+def ximshow(
+    image2d,
+    title=None,
+    show=True,
+    cbar_label=None,
+    cbar_orientation="None",
+    z1z2=None,
+    cmap="hot",
+    image_bbox=None,
+    first_pixel=(1, 1),
+    aspect=GLOBAL_ASPECT,
+    crpix1=None,
+    crval1=None,
+    cdelt1=None,
+    ctype1=None,
+    cunit1=None,
+    ds9regfile=None,
+    geometry=GLOBAL_GEOMETRY,
+    factor_macosx=1.5,
+    figuredict=None,
+    tight_layout=True,
+    debugplot=0,
+    using_jupyter=False,
+):
     """Auxiliary function to display a numpy 2d array.
 
     Parameters
@@ -184,18 +194,14 @@ def ximshow(image2d, title=None, show=True,
 
     # protections
     if not isinstance(image2d, np.ndarray):
-        raise ValueError("image2d=" + str(image2d) +
-                         " must be a numpy.ndarray")
+        raise ValueError("image2d=" + str(image2d) + " must be a numpy.ndarray")
     elif image2d.ndim != 2:
-        raise ValueError("image2d.ndim=" + str(image2d.dim) +
-                         " must be 2")
+        raise ValueError("image2d.ndim=" + str(image2d.dim) + " must be 2")
 
     naxis2_, naxis1_ = image2d.shape
 
     # check if wavelength calibration is provided
-    wavecalib = check_wavelength_scale(
-        crval1=crval1, cdelt1=1, ctype1=ctype1, cunit1=cunit1
-    )
+    wavecalib = check_wavelength_scale(crval1=crval1, cdelt1=1, ctype1=ctype1, cunit1=cunit1)
 
     # read bounding box limits
     if image_bbox is None:
@@ -272,9 +278,8 @@ def ximshow(image2d, title=None, show=True,
         if iymax > ns2:
             iymax = ns2
         if debug:
-            print("\n>>> xmin, xmax, ymin, ymax [pixels; origin (1,1)]:",
-                  ixmin, ixmax, iymin, iymax)
-        return image2d[(iymin-1):iymax, (ixmin-1):ixmax]
+            print("\n>>> xmin, xmax, ymin, ymax [pixels; origin (1,1)]:", ixmin, ixmax, iymin, iymax)
+        return image2d[(iymin - 1) : iymax, (ixmin - 1) : ixmax]
 
     def keypress(event):
         """Deal with keyboard events, allowing the update of vmin and vmax.
@@ -319,8 +324,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             print(f">>> setting cuts to vmin={new_vmin} and vmax={new_vmax}")
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
-            dum_str = ''
-            dum_par = ''
+            dum_str = ""
+            dum_par = ""
             plt.show(block=False)
             plt.pause(0.001)
         elif event.key == ",":
@@ -330,35 +335,35 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             print(f">>> setting cuts to vmin={new_vmin} and vmax={new_vmax}")
             im_show.set_clim(vmin=new_vmin)
             im_show.set_clim(vmax=new_vmax)
-            dum_str = ''
-            dum_par = ''
+            dum_str = ""
+            dum_par = ""
             plt.show(block=False)
             plt.pause(0.001)
         elif event.key == ";":
             subimage2d = get_current_zoom(ax, debug=True)
             summary(subimage2d.flatten(), debug=True)
         elif event.key == "n":
-            print(f'\nCurrent vmin={im_show.get_clim()[0]}')
-            new_vmin = input('Enter new vmin? ')
+            print(f"\nCurrent vmin={im_show.get_clim()[0]}")
+            new_vmin = input("Enter new vmin? ")
             if is_valid_number(float(new_vmin)):
                 im_show.set_clim(vmin=new_vmin)
             else:
-                print(f'WARNING: invalid vmin={new_vmin} ignored')
+                print(f"WARNING: invalid vmin={new_vmin} ignored")
             ax.figure.canvas.draw_idle()
         elif event.key == "m":
-            print(f'\nCurrent vmax={im_show.get_clim()[1]}')
-            new_vmax = input('Enter new vmax? ')
+            print(f"\nCurrent vmax={im_show.get_clim()[1]}")
+            new_vmax = input("Enter new vmax? ")
             if is_valid_number(float(new_vmax)):
                 im_show.set_clim(vmax=new_vmax)
             else:
-                print(f'WARNING: invalid vmax={new_vmax} ignored')
+                print(f"WARNING: invalid vmax={new_vmax} ignored")
             ax.figure.canvas.draw_idle()
         elif event.key == "=":
             current_aspect = ax.get_aspect()
-            if current_aspect == 'equal' or current_aspect == 1.0:
-                ax.set_aspect('auto')
+            if current_aspect == "equal" or current_aspect == 1.0:
+                ax.set_aspect("auto")
             else:
-                ax.set_aspect('equal')
+                ax.set_aspect("equal")
             try:
                 plt.tight_layout()
             except:
@@ -366,7 +371,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             plt.show(block=False)
             plt.pause(0.001)
         else:
-            if dum_str == '':
+            if dum_str == "":
                 dum_str = event.key
             else:
                 dum_str += event.key
@@ -385,30 +390,32 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     ax = fig.add_subplot(111)
     ax.autoscale(False)
-    ax.set_xlabel('image pixel in the X direction')
-    ax.set_ylabel('image pixel in the Y direction')
+    ax.set_xlabel("image pixel in the X direction")
+    ax.set_ylabel("image pixel in the Y direction")
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
     ax.grid(False)
     if z1z2 in ["zscale", None]:
-        z1, z2 = ZScaleInterval().get_limits(
-            image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
-        )
+        z1, z2 = ZScaleInterval().get_limits(image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2])
     elif z1z2 == "minmax":
-        z1 = np.nanmin(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2])
-        z2 = np.nanmax(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2])
+        z1 = np.nanmin(image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2])
+        z2 = np.nanmax(image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2])
     else:
         z1, z2 = z1z2
-    im_show = plt.imshow(image2d[(ns1 - 1):ns2, (nc1 - 1):nc2],
-                         cmap=cmap, aspect=aspect,
-                         vmin=z1, vmax=z2,
-                         interpolation='nearest', origin='lower',
-                         extent=[xmin, xmax, ymin, ymax])
+    im_show = plt.imshow(
+        image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2],
+        cmap=cmap,
+        aspect=aspect,
+        vmin=z1,
+        vmax=z2,
+        interpolation="nearest",
+        origin="lower",
+        extent=[xmin, xmax, ymin, ymax],
+    )
     if cbar_label is None:
         cbar_label = "Number of counts"
     if cbar_orientation in ["horizontal", "vertical"]:
-        plt.colorbar(im_show, shrink=1.0, label=cbar_label,
-                     orientation=cbar_orientation)
+        plt.colorbar(im_show, shrink=1.0, label=cbar_label, orientation=cbar_orientation)
     if title is not None:
         ax.set_title(title)
 
@@ -423,27 +430,25 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         xini_geom = int(tmp_str[2])
         yini_geom = int(tmp_str[3])
         backend = matplotlib.get_backend()
-        if backend.lower() == 'tkagg':
+        if backend.lower() == "tkagg":
             print(xwidth_geom, ywidth_geom, xini_geom, yini_geom)
             input("Press RETURN to set the window geometry...")
             plt.get_current_fig_manager().resize(xwidth_geom, ywidth_geom)
-            plt.get_current_fig_manager().window.wm_geometry(
-                f"+{xini_geom}+{yini_geom}")
-        elif backend.lower() == 'qt5agg':
+            plt.get_current_fig_manager().window.wm_geometry(f"+{xini_geom}+{yini_geom}")
+        elif backend.lower() == "qt5agg":
             geometry_tuple = xwidth_geom, ywidth_geom, xini_geom, yini_geom
             set_window_geometry(geometry_tuple)
-        elif backend.lower() == 'macosx':
+        elif backend.lower() == "macosx":
             fig = plt.gcf()
-            fig.set_size_inches(factor_macosx * xwidth_geom / fig.dpi, factor_macosx  * ywidth_geom / fig.dpi)
+            fig.set_size_inches(factor_macosx * xwidth_geom / fig.dpi, factor_macosx * ywidth_geom / fig.dpi)
             print(f"WARNING: Window position control not available for backend {backend}")
         else:
-            print(
-                f'WARNING: geometry {geometry} ignored with backend {backend}')
-            print('(you can try the TkAgg backend instead)')
+            print(f"WARNING: geometry {geometry} ignored with backend {backend}")
+            print("(you can try the TkAgg backend instead)")
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
-    fig.canvas.mpl_connect('key_press_event', keypress)
+    fig.canvas.mpl_connect("key_press_event", keypress)
 
     # wavelength scale
     if wavecalib:
@@ -454,7 +459,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         ax2 = ax.twiny()
         ax2.grid(False)
         ax2.set_xlim(xminwv, xmaxwv)
-        ax2.set_xlabel('Wavelength (Angstroms)')
+        ax2.set_xlabel("Wavelength (Angstroms)")
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
 
@@ -473,20 +478,27 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         return ax
 
 
-def ximshow_file(singlefile,
-                 extnum=1,
-                 args_cmap=None,
-                 args_cbar_label=None, args_cbar_orientation='None',
-                 args_z1z2=None, args_bbox=None, args_firstpix=None,
-                 args_aspect=GLOBAL_ASPECT,
-                 args_keystitle=None, args_ds9reg=None,
-                 args_geometry=GLOBAL_GEOMETRY, 
-                 args_factor_macosx=1.5,
-                 pdf=None, png=None,
-                 args_figuredict=None,
-                 show=True,
-                 debugplot=None,
-                 using_jupyter=False):
+def ximshow_file(
+    singlefile,
+    extnum=1,
+    args_cmap=None,
+    args_cbar_label=None,
+    args_cbar_orientation="None",
+    args_z1z2=None,
+    args_bbox=None,
+    args_firstpix=None,
+    args_aspect=GLOBAL_ASPECT,
+    args_keystitle=None,
+    args_ds9reg=None,
+    args_geometry=GLOBAL_GEOMETRY,
+    args_factor_macosx=1.5,
+    pdf=None,
+    png=None,
+    args_figuredict=None,
+    show=True,
+    debugplot=None,
+    using_jupyter=False,
+):
     """Function to execute ximshow() as called from command line.
 
     Parameters
@@ -558,47 +570,47 @@ def ximshow_file(singlefile,
     elif args_z1z2 == "minmax":
         z1z2 = "minmax"
     else:
-        if args_z1z2[0] == '[':
+        if args_z1z2[0] == "[":
             tmp_str = args_z1z2[1:]
         else:
             tmp_str = args_z1z2
-        tmp_str = re.sub(']', '', tmp_str)
+        tmp_str = re.sub("]", "", tmp_str)
         tmp_str = tmp_str.split(",")
         z1z2 = float(tmp_str[0]), float(tmp_str[1])
 
     # read input FITS file
     hdulist = fits.open(singlefile)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError(f'Unexpected extension number {extnum}')
+        raise ValueError(f"Unexpected extension number {extnum}")
     image_header = hdulist[extnum - 1].header
     image2d = hdulist[extnum - 1].data
     hdulist.close()
 
-    naxis1 = image_header['naxis1']
-    if 'naxis2' in image_header:
-        naxis2 = image_header['naxis2']
+    naxis1 = image_header["naxis1"]
+    if "naxis2" in image_header:
+        naxis2 = image_header["naxis2"]
     else:
         naxis2 = 1
 
     # read wavelength calibration
-    if 'crpix1' in image_header:
-        crpix1 = image_header['crpix1']
+    if "crpix1" in image_header:
+        crpix1 = image_header["crpix1"]
     else:
         crpix1 = None
-    if 'crval1' in image_header:
-        crval1 = image_header['crval1']
+    if "crval1" in image_header:
+        crval1 = image_header["crval1"]
     else:
         crval1 = None
-    if 'cdelt1' in image_header:
-        cdelt1 = image_header['cdelt1']
+    if "cdelt1" in image_header:
+        cdelt1 = image_header["cdelt1"]
     else:
         cdelt1 = None
-    if 'ctype1' in image_header:
-        ctype1 = image_header['ctype1']
+    if "ctype1" in image_header:
+        ctype1 = image_header["ctype1"]
     else:
         ctype1 = None
-    if 'cunit1' in image_header:
-        cunit1 = image_header['cunit1']
+    if "cunit1" in image_header:
+        cunit1 = image_header["cunit1"]
     else:
         cunit1 = None
 
@@ -624,9 +636,9 @@ def ximshow_file(singlefile,
     else:
         raise ValueError("Unexpected number of dimensions > 2")
 
-    print('>>> File..:', singlefile)
-    print('>>> NAXIS1:', naxis1)
-    print('>>> NAXIS2:', naxis2)
+    print(">>> File..:", singlefile)
+    print(">>> NAXIS1:", naxis1)
+    print(">>> NAXIS2:", naxis2)
 
     # read bounding box
     if args_bbox is None:
@@ -664,30 +676,34 @@ def ximshow_file(singlefile,
     else:
         figuredict = eval(args_figuredict)
 
-    ax = ximshow(image2d=image2d, show=False,
-                 cmap=args_cmap,
-                 cbar_label=args_cbar_label,
-                 cbar_orientation=args_cbar_orientation,
-                 title=title,
-                 z1z2=z1z2,
-                 image_bbox=(nc1, nc2, ns1, ns2),
-                 first_pixel=(nc0, ns0),
-                 aspect=args_aspect,
-                 crpix1=crpix1,
-                 crval1=crval1,
-                 cdelt1=cdelt1,
-                 ctype1=ctype1,
-                 cunit1=cunit1,
-                 ds9regfile=args_ds9reg,
-                 geometry=args_geometry,
-                 factor_macosx=args_factor_macosx,
-                 figuredict=figuredict,
-                 debugplot=debugplot,
-                 using_jupyter=using_jupyter)
+    ax = ximshow(
+        image2d=image2d,
+        show=False,
+        cmap=args_cmap,
+        cbar_label=args_cbar_label,
+        cbar_orientation=args_cbar_orientation,
+        title=title,
+        z1z2=z1z2,
+        image_bbox=(nc1, nc2, ns1, ns2),
+        first_pixel=(nc0, ns0),
+        aspect=args_aspect,
+        crpix1=crpix1,
+        crval1=crval1,
+        cdelt1=cdelt1,
+        ctype1=ctype1,
+        cunit1=cunit1,
+        ds9regfile=args_ds9reg,
+        geometry=args_geometry,
+        factor_macosx=args_factor_macosx,
+        figuredict=figuredict,
+        debugplot=debugplot,
+        using_jupyter=using_jupyter,
+    )
 
     if pdf is not None:
         if show:
             from numina.array.display.matplotlib_qt import plt
+
             try:
                 plt.tight_layout()
             except:
@@ -698,11 +714,12 @@ def ximshow_file(singlefile,
     elif png is not None:
         if show:
             from numina.array.display.matplotlib_qt import plt
+
             try:
                 plt.tight_layout()
             except:
                 pass
-            plt.savefig(png, metadata={'Software': 'ximshow'})
+            plt.savefig(png, metadata={"Software": "ximshow"})
         else:
             return ax
     else:
@@ -713,19 +730,26 @@ def ximshow_file(singlefile,
             return ax
 
 
-def jimshow(image2d,
-            ax=None,
-            title=None,
-            vmin=None, vmax=None,
-            image_bbox=None,
-            aspect=GLOBAL_ASPECT,
-            xlabel='image pixel in the X direction',
-            ylabel='image pixel in the Y direction',
-            crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
-            grid=False,
-            cmap='hot',
-            cbar_label='Number of counts',
-            cbar_orientation='horizontal'):
+def jimshow(
+    image2d,
+    ax=None,
+    title=None,
+    vmin=None,
+    vmax=None,
+    image_bbox=None,
+    aspect=GLOBAL_ASPECT,
+    xlabel="image pixel in the X direction",
+    ylabel="image pixel in the Y direction",
+    crpix1=None,
+    crval1=None,
+    cdelt1=None,
+    ctype1=None,
+    cunit1=None,
+    grid=False,
+    cmap="hot",
+    cbar_label="Number of counts",
+    cbar_orientation="horizontal",
+):
     """Auxiliary function to display a numpy 2d array via axes object.
 
     Parameters
@@ -786,7 +810,7 @@ def jimshow(image2d,
     """
 
     if ax is None:
-        raise ValueError('ax=None is not valid in this function')
+        raise ValueError("ax=None is not valid in this function")
 
     naxis2_, naxis1_ = image2d.shape
 
@@ -809,7 +833,7 @@ def jimshow(image2d,
     ymin = float(ns1) - 0.5
     ymax = float(ns2) + 0.5
 
-    image2d_region = image2d[(ns1 - 1):ns2, (nc1 - 1):nc2]
+    image2d_region = image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2]
 
     if vmin is None or vmax is None:
         z1, z2 = ZScaleInterval().get_limits(image2d_region)
@@ -818,33 +842,34 @@ def jimshow(image2d,
 
     if vmin is None:
         vmin = z1
-    elif vmin == 'min':
+    elif vmin == "min":
         vmin = np.nanmin(image2d_region)
     if vmax is None:
         vmax = z2
-    elif vmax == 'max':
+    elif vmax == "max":
         vmax = np.nanmax(image2d_region)
 
     im_show = ax.imshow(
         image2d_region,
-        cmap=cmap, aspect=aspect, vmin=vmin, vmax=vmax,
-        interpolation="nearest", origin="lower",
-        extent=[xmin, xmax, ymin, ymax]
+        cmap=cmap,
+        aspect=aspect,
+        vmin=vmin,
+        vmax=vmax,
+        interpolation="nearest",
+        origin="lower",
+        extent=[xmin, xmax, ymin, ymax],
     )
-    if cbar_orientation in ['horizontal', 'vertical']:
+    if cbar_orientation in ["horizontal", "vertical"]:
         import matplotlib.pyplot as plt
-        plt.colorbar(im_show, shrink=1.0,
-                     label=cbar_label, orientation=cbar_orientation,
-                     ax=ax)
+
+        plt.colorbar(im_show, shrink=1.0, label=cbar_label, orientation=cbar_orientation, ax=ax)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.grid(grid)
     if title is not None:
         ax.set_title(title)
 
-    wavecalib = check_wavelength_scale(
-        crval1=crval1, cdelt1=1, ctype1=ctype1, cunit1=cunit1
-    )
+    wavecalib = check_wavelength_scale(crval1=crval1, cdelt1=1, ctype1=ctype1, cunit1=cunit1)
     if wavecalib:
         if crpix1 is None:
             crpix1 = 1.0
@@ -853,23 +878,30 @@ def jimshow(image2d,
         ax2 = ax.twiny()
         ax2.grid(False)
         ax2.set_xlim(xminwv, xmaxwv)
-        ax2.set_xlabel('Wavelength (Angstroms)')
+        ax2.set_xlabel("Wavelength (Angstroms)")
 
 
-def jimshowfile(filename,
-                extnum=1,
-                ax=None,
-                title=None,
-                vmin=None, vmax=None,
-                image_bbox=None,
-                aspect=GLOBAL_ASPECT,
-                xlabel='image pixel in the X direction',
-                ylabel='image pixel in the Y direction',
-                crpix1=None, crval1=None, cdelt1=None, ctype1=None, cunit1=None,
-                grid=False,
-                cmap='hot',
-                cbar_label='Number of counts',
-                cbar_orientation='horizontal'):
+def jimshowfile(
+    filename,
+    extnum=1,
+    ax=None,
+    title=None,
+    vmin=None,
+    vmax=None,
+    image_bbox=None,
+    aspect=GLOBAL_ASPECT,
+    xlabel="image pixel in the X direction",
+    ylabel="image pixel in the Y direction",
+    crpix1=None,
+    crval1=None,
+    cdelt1=None,
+    ctype1=None,
+    cunit1=None,
+    grid=False,
+    cmap="hot",
+    cbar_label="Number of counts",
+    cbar_orientation="horizontal",
+):
     """Auxiliary function to display a FITS image via axes object.
 
     Parameters
@@ -934,96 +966,85 @@ def jimshowfile(filename,
     # read input FITS file
     hdulist = fits.open(filename)
     if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError(f'Unexpected extension number {extnum}')
+        raise ValueError(f"Unexpected extension number {extnum}")
     image2d = hdulist[extnum - 1].data
     hdulist.close()
 
-    return jimshow(image2d,
-                   ax=ax,
-                   title=title,
-                   vmin=vmin, vmax=vmax,
-                   image_bbox=image_bbox,
-                   aspect=aspect,
-                   xlabel=xlabel,
-                   ylabel=ylabel,
-                   crpix1=crpix1, crval1=crval1, cdelt1=cdelt1,
-                   ctype1=ctype1, cunit1=cunit1,
-                   grid=grid,
-                   cmap=cmap,
-                   cbar_label=cbar_label,
-                   cbar_orientation=cbar_orientation)
+    return jimshow(
+        image2d,
+        ax=ax,
+        title=title,
+        vmin=vmin,
+        vmax=vmax,
+        image_bbox=image_bbox,
+        aspect=aspect,
+        xlabel=xlabel,
+        ylabel=ylabel,
+        crpix1=crpix1,
+        crval1=crval1,
+        cdelt1=cdelt1,
+        ctype1=ctype1,
+        cunit1=cunit1,
+        grid=grid,
+        cmap=cmap,
+        cbar_label=cbar_label,
+        cbar_orientation=cbar_orientation,
+    )
 
 
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(
-        description='description: display FITS images',
-        formatter_class=RichHelpFormatter
-    )
+    parser = argparse.ArgumentParser(description="description: display FITS images", formatter_class=RichHelpFormatter)
 
     # positional arguments
-    parser.add_argument("filename",
-                        help="FITS file (wildcards allowed) "
-                             "or txt file with list of FITS files",
-                        nargs="+")
+    parser.add_argument(
+        "filename", help="FITS file (wildcards allowed) " "or txt file with list of FITS files", nargs="+"
+    )
 
     # optional arguments
-    parser.add_argument('--extnum',
-                        help='Extension number in input files (note that ' +
-                             'first extension is 1 = default value)',
-                        default=1, type=int)
-    parser.add_argument("--z1z2",
-                        help="tuple [z1,z2], minmax, zscale or None (=zscale)",
-                        type=str)
-    parser.add_argument("--bbox",
-                        help="bounding box tuple: nc1,nc2,ns1,ns2")
-    parser.add_argument("--firstpix",
-                        help="coordinates of lower left pixel: nc0, ns0")
-    parser.add_argument("--aspect",
-                        help="aspect ratio (equal or auto)",
-                        type=str,
-                        choices=['equal', 'auto'], default=GLOBAL_ASPECT)
-    parser.add_argument("--cmap",
-                        help="color map",
-                        type=str, default='hot')
-    parser.add_argument("--cbar_label",
-                        help="color bar label",
-                        type=str, default='Number of counts')
-    parser.add_argument("--cbar_orientation",
-                        help="color bar orientation",
-                        type=str,
-                        choices=['horizontal', 'vertical', 'None'],
-                        default='horizontal')
-    parser.add_argument("--keystitle",
-                        help="tuple of FITS keywords.format: " +
-                             "key1,key2,...keyn.'format'")
-    parser.add_argument("--ds9reg",
-                        help="ds9 region file to be overplotted",
-                        type=argparse.FileType('rt'))
-    parser.add_argument("--geometry",
-                        help='string "xwidth,ywidth,xorigin,yorigin"',
-                        default=GLOBAL_GEOMETRY)
-    parser.add_argument("--factor_macosx", help="Factor to control the size of the plot on macOS (default=1.5)",
-                        default=1.5, type=float)
-    parser.add_argument("--pdffile",
-                        help="ouput PDF file name",
-                        type=argparse.FileType('w'))
-    parser.add_argument("--pngfile",
-                        help="ouput PNG file name",
-                        type=argparse.FileType('w'))
-    parser.add_argument("--figuredict",
-                        help="string with dictionary of parameters for plt.figure()",
-                        type=str)
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging (default=12)",
-                        default=12, type=int,
-                        choices=[0, 1, 2, 10, 11, 12, 21, 22])
+    parser.add_argument(
+        "--extnum",
+        help="Extension number in input files (note that " + "first extension is 1 = default value)",
+        default=1,
+        type=int,
+    )
+    parser.add_argument("--z1z2", help="tuple [z1,z2], minmax, zscale or None (=zscale)", type=str)
+    parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
+    parser.add_argument("--firstpix", help="coordinates of lower left pixel: nc0, ns0")
+    parser.add_argument(
+        "--aspect", help="aspect ratio (equal or auto)", type=str, choices=["equal", "auto"], default=GLOBAL_ASPECT
+    )
+    parser.add_argument("--cmap", help="color map", type=str, default="hot")
+    parser.add_argument("--cbar_label", help="color bar label", type=str, default="Number of counts")
+    parser.add_argument(
+        "--cbar_orientation",
+        help="color bar orientation",
+        type=str,
+        choices=["horizontal", "vertical", "None"],
+        default="horizontal",
+    )
+    parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
+    parser.add_argument("--ds9reg", help="ds9 region file to be overplotted", type=argparse.FileType("rt"))
+    parser.add_argument("--geometry", help='string "xwidth,ywidth,xorigin,yorigin"', default=GLOBAL_GEOMETRY)
+    parser.add_argument(
+        "--factor_macosx", help="Factor to control the size of the plot on macOS (default=1.5)", default=1.5, type=float
+    )
+    parser.add_argument("--pdffile", help="ouput PDF file name", type=argparse.FileType("w"))
+    parser.add_argument("--pngfile", help="ouput PNG file name", type=argparse.FileType("w"))
+    parser.add_argument("--figuredict", help="string with dictionary of parameters for plt.figure()", type=str)
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting/debugging (default=12)",
+        default=12,
+        type=int,
+        choices=[0, 1, 2, 10, 11, 12, 21, 22],
+    )
 
     args = parser.parse_args(args)
 
     if abs(args.debugplot) in [21, 22]:
-        print('>> args.filename: ', args.filename)
+        print(">> args.filename: ", args.filename)
 
     if len(args.filename) == 1:
         list_fits_files = []
@@ -1043,16 +1064,17 @@ def main(args=None):
     list_extnum = [args.extnum if dum is None else dum for dum in list_extnum]
 
     if abs(args.debugplot) in [21, 22]:
-        print('>> Filenames.: ', list_fits_files)
-        print('>> Extensions: ', list_extnum)
+        print(">> Filenames.: ", list_fits_files)
+        print(">> Extensions: ", list_extnum)
 
     if args.pdffile is not None and args.pngfile is not None:
-        raise ValueError('Cannot specify both pdffile and pngfile')
+        raise ValueError("Cannot specify both pdffile and pngfile")
 
     # read pdffile
     pdf = None
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
+
         pdf = PdfPages(args.pdffile.name)
     else:
         from numina.array.display.matplotlib_qt import plt  # noqa: F401
@@ -1060,28 +1082,31 @@ def main(args=None):
     png = None
     if args.pngfile is not None:
         from numina.array.display.matplotlib_qt import plt  # noqa: F401
+
         png = args.pngfile.name
 
     for myfile, extnum in zip(list_fits_files, list_extnum):
         if extnum is None:
             extnum = args.extnum
-        ximshow_file(singlefile=myfile,
-                     extnum=extnum,
-                     args_z1z2=args.z1z2,
-                     args_bbox=args.bbox,
-                     args_firstpix=args.firstpix,
-                     args_aspect=args.aspect,
-                     args_cmap=args.cmap,
-                     args_cbar_label=args.cbar_label,
-                     args_cbar_orientation=args.cbar_orientation,
-                     args_keystitle=args.keystitle,
-                     args_ds9reg=args.ds9reg,
-                     args_geometry=args.geometry,
-                     args_factor_macosx=args.factor_macosx,
-                     pdf=pdf,
-                     png=png,
-                     args_figuredict=args.figuredict,
-                     debugplot=args.debugplot)
+        ximshow_file(
+            singlefile=myfile,
+            extnum=extnum,
+            args_z1z2=args.z1z2,
+            args_bbox=args.bbox,
+            args_firstpix=args.firstpix,
+            args_aspect=args.aspect,
+            args_cmap=args.cmap,
+            args_cbar_label=args.cbar_label,
+            args_cbar_orientation=args.cbar_orientation,
+            args_keystitle=args.keystitle,
+            args_ds9reg=args.ds9reg,
+            args_geometry=args.geometry,
+            args_factor_macosx=args.factor_macosx,
+            pdf=pdf,
+            png=png,
+            args_figuredict=args.figuredict,
+            debugplot=args.debugplot,
+        )
 
     if pdf is not None:
         pdf.close()
