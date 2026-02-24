@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2023 Universidad Complutense de Madrid
+# Copyright 2014-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -21,10 +21,15 @@ def norm_pdf_t(x):
 
 def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
     """Integrate a Gaussian profile."""
-    z = (x - mean) / stddev
-    z2 = z + hpix / stddev
-    z1 = z - hpix / stddev
-    return amplitude * (norm.cdf(z2) - norm.cdf(z1))
+    # deactivate runtime warning for division by zero, it is handled in the code
+    with np.errstate(divide='ignore', invalid='ignore'):
+        z = (x - mean) / stddev
+        z2 = z + hpix / stddev
+        z1 = z - hpix / stddev
+    result = amplitude * (norm.cdf(z2) - norm.cdf(z1))
+    # Replace NaN and inf values with 0.0
+    result = np.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
+    return result
 
 
 def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
