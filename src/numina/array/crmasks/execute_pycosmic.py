@@ -21,7 +21,7 @@ try:
 except ModuleNotFoundError as e:
     PYCOSMIC_AVAILABLE = False
 
-from teareduce import cleanest
+from teareduce.cleanest.mergemasks import merge_peak_tail_masks
 
 from .decorated_output import decorate_output
 
@@ -35,7 +35,7 @@ def decorated_pycosmic_det_cosmics(*args, **kwargs):
 @decorate_output(prompt="")
 def decorated_merge_peak_tail_masks(*args, **kwargs):
     """Wrapper for merge_peak_tail_masks with decorated output."""
-    return cleanest.merge_peak_tail_masks(*args, **kwargs)
+    return merge_peak_tail_masks(*args, **kwargs)
 
 
 def execute_pycosmic(

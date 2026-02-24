@@ -15,7 +15,7 @@ from datetime import datetime
 from ccdproc import cosmicray_lacosmic
 import numpy as np
 
-from teareduce import cleanest
+from teareduce.cleanest.mergemasks import merge_peak_tail_masks
 
 from .decorated_output import decorate_output
 
@@ -29,7 +29,7 @@ def decorated_cosmicray_lacosmic(*args, **kwargs):
 @decorate_output(prompt="")
 def decorated_merge_peak_tail_masks(*args, **kwargs):
     """Wrapper for merge_peak_tail_masks with decorated output."""
-    return cleanest.merge_peak_tail_masks(*args, **kwargs)
+    return merge_peak_tail_masks(*args, **kwargs)
 
 
 def execute_lacosmic(
