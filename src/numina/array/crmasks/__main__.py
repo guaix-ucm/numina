@@ -62,7 +62,6 @@ def main(args=None):
     console = NuminaConsole(record=args.record)
     logger = logging.getLogger(__name__)
 
-
     if args.echo:
         console.print(f"[bright_red]Executing: {' '.join(sys.argv)}[/bright_red]\n", end="")
 
