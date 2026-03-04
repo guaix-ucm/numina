@@ -6,13 +6,35 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+"""IFU simulator
+
+We have avoid using joblib.Parallel for the computation because
+when using "prefer=threads" in joblib, multiple threads write 
+simultaneously to the same shared NumPy arrays 
+(image2d_rss_method0, image2d_detector_method0). 
+Python's GIL does not protect NumPy array writes, so concurrent modifications 
+produce corrupted pixel values that change randomly between runs — the classic 
+signature of a race condition.
+
+The solution: private arrays + final reduction:
+The pattern applied in both worker functions is identical:
+1. Each worker allocates its own private output arrays (local_rss, local_det) 
+   initialised to zero, works on them independently, and returns them.
+2. Pool.map distributes the slice tasks across physical CPU cores using 
+   separate processes. Since each process has its own memory space, 
+   there is no shared state and no race condition, regardless of whether 
+   slices write to overlapping regions.
+3. The main process reduces the results by accumulating all returned 
+   local arrays into the final output arrays with +=. 
+   This step is single-threaded and therefore always safe.
+"""
 
 from astropy.io import fits
 from astropy.units import Quantity
 import astropy.units as u
-from joblib import Parallel, delayed
 import json
 import logging
+from multiprocessing import Pool
 import numpy as np
 import os
 from pathlib import Path
@@ -36,6 +58,46 @@ from .save_image2d_detector_method0 import save_image2d_detector_method0
 from .save_image2d_rss import save_image2d_rss
 from .set_wavelength_unit_and_range import set_wavelength_unit_and_range
 from .update_image2d_rss_detector_method0 import update_image2d_rss_detector_method0
+
+
+def _worker_method0(args):
+    """Worker function for parallel computation of a single slice."""
+    (islice,
+     simulated_x_ifu_all,
+     simulated_y_ifu_all,
+     simulated_wave_all,
+     naxis1_ifu,
+     naxis1_detector,
+     naxis2_detector,
+     nslices,
+     bins_x_ifu,
+     bins_wave,
+     bins_x_detector,
+     bins_y_detector,
+     wv_cdelt1,
+     extra_degradation_spectral_direction,
+     dict_ifu2detector) = args
+
+    local_rss = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value), dtype=int)
+    local_detector = np.zeros((naxis2_detector.value, naxis1_detector.value))  # float type to be able to include noise and flatfield effects
+
+    update_image2d_rss_detector_method0(
+        islice=islice,
+        simulated_x_ifu_all=simulated_x_ifu_all,
+        simulated_y_ifu_all=simulated_y_ifu_all,
+        simulated_wave_all=simulated_wave_all,
+        naxis1_ifu=naxis1_ifu,
+        bins_x_ifu=bins_x_ifu,
+        bins_wave=bins_wave,
+        bins_x_detector=bins_x_detector,
+        bins_y_detector=bins_y_detector,
+        wv_cdelt1=wv_cdelt1,
+        extra_degradation_spectral_direction=extra_degradation_spectral_direction,
+        dict_ifu2detector=dict_ifu2detector,
+        image2d_rss_method0=local_rss,
+        image2d_detector_method0=local_detector,
+    )
+    return local_rss, local_detector
 
 
 def ifu_simulator(
@@ -498,25 +560,35 @@ def ifu_simulator(
         if logger_level_in_use > logging.DEBUG:
             console.print("")  # new line after the progress dots
     else:
-        Parallel(n_jobs=-1, prefer="threads")(
-            delayed(update_image2d_rss_detector_method0)(
-                islice=islice,
-                simulated_x_ifu_all=simulated_x_ifu_all,
-                simulated_y_ifu_all=simulated_y_ifu_all,
-                simulated_wave_all=simulated_wave_all,
-                naxis1_ifu=naxis1_ifu,
-                bins_x_ifu=bins_x_ifu,
-                bins_wave=bins_wave,
-                bins_x_detector=bins_x_detector,
-                bins_y_detector=bins_y_detector,
-                wv_cdelt1=wv_cdelt1,
-                extra_degradation_spectral_direction=extra_degradation_spectral_direction,
-                dict_ifu2detector=dict_ifu2detector,
-                image2d_rss_method0=image2d_rss_method0,
-                image2d_detector_method0=image2d_detector_method0,
-            )
+        args_list = [
+            (islice,
+             simulated_x_ifu_all,
+             simulated_y_ifu_all,
+             simulated_wave_all,
+             naxis1_ifu,
+             naxis1_detector,
+             naxis2_detector,
+             nslices,
+             bins_x_ifu,
+             bins_wave,
+             bins_x_detector,
+             bins_y_detector,
+             wv_cdelt1,
+             extra_degradation_spectral_direction,
+             dict_ifu2detector)
             for islice in range(nslices)
-        )
+        ]
+
+        n_jobs = min(os.cpu_count() // 2, nslices)
+
+        with Pool(processes=n_jobs) as pool:
+            results = pool.map(_worker_method0, args_list)
+
+        # Final reduction (single-threaded, always safe)
+        for local_rss, local_detector in results:
+            image2d_rss_method0 += local_rss
+            image2d_detector_method0 += local_detector
+
     t1 = time.time()
     logger.debug(f"Delta time: {t1 - t0}")
 

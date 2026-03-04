@@ -8,15 +8,43 @@
 #
 """Compute RSS image from detector image"""
 
-from joblib import Parallel, delayed
 import logging
+from multiprocessing import Pool
 import numpy as np
-from rich.console import Console
+import os
 import time
 
 from numina.instrument.simulation.ifu.define_3d_wcs import get_wvparam_from_wcs3d
 
 from .update_image2d_rss_method1 import update_image2d_rss_method1
+
+
+def _worker_method1(args):
+    """Worker function for parallel computation of a single slice."""
+    (islice,
+     image2d_detector_method0,
+     dict_ifu2detector,
+     naxis1_detector,
+     naxis1_ifu,
+     nslices,
+     wv_crpix1,
+     wv_crval1,
+     wv_cdelt1) = args
+
+    local_rss = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value))
+    update_image2d_rss_method1(
+        islice=islice,
+        image2d_detector_method0=image2d_detector_method0,
+        dict_ifu2detector=dict_ifu2detector,
+        naxis1_detector=naxis1_detector,
+        naxis1_ifu=naxis1_ifu,
+        wv_crpix1=wv_crpix1,
+        wv_crval1=wv_crval1,
+        wv_cdelt1=wv_cdelt1,
+        image2d_rss_method1=local_rss,
+        debug=False,
+    )
+    return local_rss
 
 
 def compute_image2d_rss_from_detector_method1(
@@ -77,6 +105,7 @@ def compute_image2d_rss_from_detector_method1(
 
     logger.debug("Rectifying...")
     t0 = time.time()
+
     if not parallel_computation:
         # explicit loop in slices
         for islice in range(nslices):
@@ -103,21 +132,27 @@ def compute_image2d_rss_from_detector_method1(
         if logger_level_in_use > logging.DEBUG:
             console.print("")  # new line after the progress dots
     else:
-        Parallel(n_jobs=-1, prefer="threads")(
-            delayed(update_image2d_rss_method1)(
-                islice=islice,
-                image2d_detector_method0=image2d_detector_method0,
-                dict_ifu2detector=dict_ifu2detector,
-                naxis1_detector=naxis1_detector,
-                naxis1_ifu=naxis1_ifu,
-                wv_crpix1=wv_crpix1,
-                wv_crval1=wv_crval1,
-                wv_cdelt1=wv_cdelt1,
-                image2d_rss_method1=image2d_rss_method1,
-                debug=False,
-            )
-            for islice in range(nslices)
-        )
+        args_list = [
+            (islice,
+             image2d_detector_method0,
+             dict_ifu2detector,
+             naxis1_detector,
+             naxis1_ifu,
+             nslices,
+             wv_crpix1,
+             wv_crval1,
+             wv_cdelt1)
+            for islice in range(nslices)    
+        ]
+
+        n_jobs = min(os.cpu_count() // 2, nslices)
+
+        with Pool(processes=n_jobs) as pool:
+            results = pool.map(_worker_method1, args_list)
+
+        # Final reduction (single-threaded, always safe)
+        for local_rss in results:
+            image2d_rss_method1 += local_rss
 
     t1 = time.time()
     logger.debug(f"Delta time: {t1 - t0}")
