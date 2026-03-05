@@ -8,7 +8,7 @@
 #
 """IFU simulator
 
-We have avoid using joblib.Parallel for the computation because
+We have avoided using joblib.Parallel for the computation because
 when using "prefer=threads" in joblib, multiple threads write 
 simultaneously to the same shared NumPy arrays 
 (image2d_rss_method0, image2d_detector_method0). 
@@ -17,7 +17,8 @@ produce corrupted pixel values that change randomly between runs — the classic
 signature of a race condition.
 
 The solution: private arrays + final reduction:
-The pattern applied in both worker functions is identical:
+The pattern applied in both worker functions (here and in 
+compute_image2d_rss_from_detector_method1) is identical:
 1. Each worker allocates its own private output arrays (local_rss, local_det) 
    initialised to zero, works on them independently, and returns them.
 2. Pool.map distributes the slice tasks across physical CPU cores using 
@@ -27,6 +28,25 @@ The pattern applied in both worker functions is identical:
 3. The main process reduces the results by accumulating all returned 
    local arrays into the final output arrays with +=. 
    This step is single-threaded and therefore always safe.
+
+The remaining performance bottleneck is the serialisation overhead 
+of passing large NumPy arrays to each worker on every call. 
+The proposed optimisation is to use the initializer argument of Pool 
+to load the large read-only input arrays into each worker process once 
+at startup, so that only the slice index needs to be passed per task. 
+This reduces both serialisation time and memory pressure, and is 
+the most promising avenue for closing the gap between parallel and 
+sequential execution times.
+
+The timing results show that this workload is memory-bound rather 
+than compute-bound. Each slice computation is fast enough that 
+the bottleneck is not the CPU but the rate at which data can be 
+fetched from RAM. As a consequence, adding more parallel processes 
+beyond a small number does not help — it simply increases contention
+on the memory bus, and the overhead of managing additional processes
+begins to dominate. In fact, in some cases using more than one
+process can even degrade performance due to this increased contention
+and overhead.
 """
 
 from astropy.io import fits
@@ -60,40 +80,73 @@ from .set_wavelength_unit_and_range import set_wavelength_unit_and_range
 from .update_image2d_rss_detector_method0 import update_image2d_rss_detector_method0
 
 
-def _worker_method0(args):
-    """Worker function for parallel computation of a single slice."""
-    (islice,
-     simulated_x_ifu_all,
-     simulated_y_ifu_all,
-     simulated_wave_all,
-     naxis1_ifu,
-     naxis1_detector,
-     naxis2_detector,
-     nslices,
-     bins_x_ifu,
-     bins_wave,
-     bins_x_detector,
-     bins_y_detector,
-     wv_cdelt1,
-     extra_degradation_spectral_direction,
-     dict_ifu2detector) = args
+_worker_inputs_method0 = {}
 
-    local_rss = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value), dtype=int)
-    local_detector = np.zeros((naxis2_detector.value, naxis1_detector.value))  # float type to be able to include noise and flatfield effects
+def _worker_init_method0(simulated_x_ifu_all,
+                         simulated_y_ifu_all,
+                         simulated_wave_all,
+                         naxis1_ifu,
+                         naxis1_detector,
+                         naxis2_detector,
+                         nslices,
+                         bins_x_ifu,
+                         bins_wave,
+                         bins_x_detector,
+                         bins_y_detector,
+                         wv_cdelt1,
+                         extra_degradation_spectral_direction,
+                         dict_ifu2detector):
+    """Initialiser executed once per worker process at Pool startup.
+    
+    Stores all large input arrays in the module-level global so that
+    individual tasks only need to receive the slice index.
+    """
+    global _worker_inputs_method0
+    _worker_inputs_method0 = {
+        "simulated_x_ifu_all": simulated_x_ifu_all,
+        "simulated_y_ifu_all": simulated_y_ifu_all,
+        "simulated_wave_all": simulated_wave_all,
+        "naxis1_ifu": naxis1_ifu,
+        "naxis1_detector": naxis1_detector,
+        "naxis2_detector": naxis2_detector,
+        "nslices": nslices,
+        "bins_x_ifu": bins_x_ifu,
+        "bins_wave": bins_wave,
+        "bins_x_detector": bins_x_detector,
+        "bins_y_detector": bins_y_detector,
+        "wv_cdelt1": wv_cdelt1,
+        "extra_degradation_spectral_direction": extra_degradation_spectral_direction,
+        "dict_ifu2detector": dict_ifu2detector
+    }
+
+def _worker_method0(islice):
+    """Worker function for parallel computation of a single slice.
+    
+    Receives only the slice index, and accesses all large input arrays 
+    from the global _worker_inputs_method0. Allocates private output arrays, 
+    calls the update function, and returns results."""
+    local_rss = np.zeros(
+        (_worker_inputs_method0['naxis1_ifu'].value * _worker_inputs_method0['nslices'],
+        _worker_inputs_method0['naxis1_detector'].value), 
+        dtype=int
+    )
+    local_detector = np.zeros(
+        (_worker_inputs_method0['naxis2_detector'].value, 
+         _worker_inputs_method0['naxis1_detector'].value))  # float type to be able to include noise and flatfield effects
 
     update_image2d_rss_detector_method0(
         islice=islice,
-        simulated_x_ifu_all=simulated_x_ifu_all,
-        simulated_y_ifu_all=simulated_y_ifu_all,
-        simulated_wave_all=simulated_wave_all,
-        naxis1_ifu=naxis1_ifu,
-        bins_x_ifu=bins_x_ifu,
-        bins_wave=bins_wave,
-        bins_x_detector=bins_x_detector,
-        bins_y_detector=bins_y_detector,
-        wv_cdelt1=wv_cdelt1,
-        extra_degradation_spectral_direction=extra_degradation_spectral_direction,
-        dict_ifu2detector=dict_ifu2detector,
+        simulated_x_ifu_all=_worker_inputs_method0['simulated_x_ifu_all'],
+        simulated_y_ifu_all=_worker_inputs_method0['simulated_y_ifu_all'],
+        simulated_wave_all=_worker_inputs_method0['simulated_wave_all'],
+        naxis1_ifu=_worker_inputs_method0['naxis1_ifu'],
+        bins_x_ifu=_worker_inputs_method0['bins_x_ifu'],
+        bins_wave=_worker_inputs_method0['bins_wave'],
+        bins_x_detector=_worker_inputs_method0['bins_x_detector'],
+        bins_y_detector=_worker_inputs_method0['bins_y_detector'],
+        wv_cdelt1=_worker_inputs_method0['wv_cdelt1'],
+        extra_degradation_spectral_direction=_worker_inputs_method0['extra_degradation_spectral_direction'],
+        dict_ifu2detector=_worker_inputs_method0['dict_ifu2detector'],
         image2d_rss_method0=local_rss,
         image2d_detector_method0=local_detector,
     )
@@ -122,8 +175,8 @@ def ifu_simulator(
     bitpix_detector,
     faux_dict,
     rng,
-    parallel_computation,
-    prefix_intermediate_fits,
+    ncores=1,
+    prefix_intermediate_fits='test',
     stop_after_ifu_3D_method0=False,
     logger=None,
     console=None,
@@ -200,8 +253,10 @@ def ifu_simulator(
           x_ifu, y_ify, wavelength -> x_detector, y_detector
     rng : `~numpy.random._generator.Generator`
         Random number generator.
-    parallel_computation : bool
-        It True, use parallel processing.
+    ncores : int
+        Number of CPU cores to be used for parallel processing. If ncores=1,
+        no parallel processing is used. If ncores > 1, the computation is
+        parallelised using multiprocessing.Pool. Default is 1 (no parallelisation).
     prefix_intermediate_fits : str
         Prefix for output intermediate FITS files. If the length of
         this string is 0, no output is generated.
@@ -233,21 +288,39 @@ def ifu_simulator(
         for item in faux_dict:
             logger.debug(f"- Required file for item {item}: {faux_dict[item]}")
 
-    # check bitpix_detector value
+    # Check bitpix_detector value
     if bitpix_detector not in [16, -32]:
         raise ValueError(f"Unsupported BITPIX value: {bitpix_detector}. Supported values are 16 and -32.")
 
-    # check output_dir is a valid directory
+    # Check output_dir is a valid directory
     if not os.path.isdir(output_dir):
         raise_ValueError(f"Invalid output directory: {output_dir}")
     else:
         logger.debug(f"Output directory: {output_dir}")
 
+    # Check ncores is a positive integer
+    if not isinstance(ncores, int) or ncores < 1:
+        raise_ValueError(f"Invalid ncores value: {ncores}. ncores must be a positive integer.")
+    # If ncores > 1, we will use parallel processing. 
+    # We will check the number of available CPU cores and adjust ncores 
+    # if it exceeds the available cores or if os.cpu_count() returns None.
+    if ncores > 1:
+        cpu_count = os.cpu_count()
+        if cpu_count is None:
+            if ncores > 1:
+                logger.warning(f"[cyan]WARNING: os.cpu_count() returned None, using ncores=1 instead[/cyan]")
+                ncores = 1
+        else:
+            if ncores > cpu_count:
+                logger.warning(f"[cyan]WARNING: ncores={ncores} exceeds available CPU cores ({cpu_count})[/cyan]")
+                ncores = cpu_count - 1
+            logger.info(f"os.cpu_count() returned {cpu_count}, using ncores={ncores} for parallel computation")
+
     if plots:
-        # display SKYCALC predictions for sky radiance and transmission
+        # Display SKYCALC predictions for sky radiance and transmission
         display_skycalc(faux_skycalc=faux_dict["skycalc"])
 
-    # spatial IFU limits
+    # Spatial IFU limits
     naxis1_ifu = Quantity(value=wcs3d.array_shape[2], unit=u.pix, dtype=int)
     naxis2_ifu = Quantity(value=wcs3d.array_shape[1], unit=u.pix, dtype=int)
     min_x_ifu = 0.5 * u.pix
@@ -255,13 +328,13 @@ def ifu_simulator(
     min_y_ifu = 0.5 * u.pix
     max_y_ifu = naxis2_ifu + 0.5 * u.pix
 
-    # wavelength limits
+    # Wavelength limits
     wv_cunit1, wv_crpix1, wv_crval1, wv_cdelt1 = get_wvparam_from_wcs3d(wcs3d)
     wmin = wv_crval1 + (0.5 * u.pix - wv_crpix1) * wv_cdelt1
     wmax = wmin + naxis1_detector * wv_cdelt1
     reference_wave_vacuum_differential_refraction = (wmin + wmax) / 2
 
-    # load atmosphere transmission curve
+    # Load atmosphere transmission curve
     wave_transmission, curve_transmission = load_atmosphere_transmission_curve(
         atmosphere_transmission=atmosphere_transmission,
         wmin=wmin,
@@ -287,7 +360,7 @@ def ifu_simulator(
     simulated_x_ifu_all = None
     simulated_y_ifu_all = None
 
-    # main loop (rendering of scene blocks)
+    # Main loop (rendering of scene blocks)
     with open(scene_fname, "rt") as fstream:
         scene_dict = yaml.safe_load_all(fstream)
         for scene_block in scene_dict:
@@ -430,7 +503,7 @@ def ifu_simulator(
                 else:
                     logger.warning(f"[cyan]WARNING -> render: False[/cyan]")
 
-    # filter simulated photons to keep only those that fall within
+    # Filter simulated photons to keep only those that fall within
     # the IFU field of view and within the expected spectral range
     # (note that this step also removes simulated photons with
     # negative wavelength value corresponding to those absorbed by
@@ -457,7 +530,7 @@ def ifu_simulator(
     logger.debug(f"[blue]Final number of simulated photons..: {nphotons_all:>{textwidth_nphotons_number}}[/blue]")
 
     # ---------------------------------------------------------------
-    # compute image2d IFU, white image, with and without oversampling
+    # Compute image2d IFU, white image, with and without oversampling
     # ---------------------------------------------------------------
     logger.debug(f"[green]* Computing image2d IFU (method 0) with and without oversampling[/green]")
     for noversampling in {noversampling_whitelight, 1}:
@@ -477,7 +550,7 @@ def ifu_simulator(
         )
 
     # ----------------------------
-    # compute image3d IFU, method0
+    # Compute image3d IFU, method0
     # ----------------------------
     logger.debug(f"[green]* Computing image3d IFU (method 0)[/green]")
     bins_x_ifu = (0.5 + np.arange(naxis1_ifu.value + 1)) * u.pix
@@ -505,16 +578,16 @@ def ifu_simulator(
         raise SystemExit(f"Program stopped because {stop_after_ifu_3D_method0=}")
 
     # --------------------------------------------
-    # compute image2d RSS and in detector, method0
+    # Compute image2d RSS and in detector, method0
     # --------------------------------------------
     logger.debug(f"[green]* Computing image2d RSS and detector (method 0)[/green]")
     bins_x_detector = np.linspace(start=0.5, stop=naxis1_detector.value + 0.5, num=naxis1_detector.value + 1)
     bins_y_detector = np.linspace(start=0.5, stop=naxis2_detector.value + 0.5, num=naxis2_detector.value + 1)
 
-    # read ifu2detector transformations
+    # Read ifu2detector transformations
     dict_ifu2detector = json.loads(open(faux_dict["model_ifu2detector"], mode="rt").read())
 
-    # additional degradation in the spectral direction
+    # Additional degradation in the spectral direction
     # (in units of detector pixels)
     if spectral_blurring_pixel.unit != u.pix:
         raise_ValueError(f"Unexpected unit for {spectral_blurring_pixel.unit=}")
@@ -522,16 +595,15 @@ def ifu_simulator(
         rng.normal(loc=0.0, scale=spectral_blurring_pixel.value, size=nphotons_all) * u.pix
     )
 
-    # initialize images
+    # Initialize images
     image2d_rss_method0 = np.zeros((naxis1_ifu.value * nslices, naxis1_detector.value), dtype=int)
     image2d_detector_method0 = np.zeros(
         (naxis2_detector.value, naxis1_detector.value)
     )  # float type to be able to include noise and flatfield effects
 
-    # update images
-    # (accelerate computation using joblib.Parallel)
+    # Update images
     t0 = time.time()
-    if not parallel_computation:
+    if ncores == 1:
         # explicit loop in slices
         for islice in range(nslices):
             if logger_level_in_use <= logging.DEBUG:
@@ -560,39 +632,42 @@ def ifu_simulator(
         if logger_level_in_use > logging.DEBUG:
             console.print("")  # new line after the progress dots
     else:
-        args_list = [
-            (islice,
-             simulated_x_ifu_all,
-             simulated_y_ifu_all,
-             simulated_wave_all,
-             naxis1_ifu,
-             naxis1_detector,
-             naxis2_detector,
-             nslices,
-             bins_x_ifu,
-             bins_wave,
-             bins_x_detector,
-             bins_y_detector,
-             wv_cdelt1,
-             extra_degradation_spectral_direction,
-             dict_ifu2detector)
-            for islice in range(nslices)
-        ]
-
-        n_jobs = min(os.cpu_count() // 2, nslices)
-
-        with Pool(processes=n_jobs) as pool:
-            results = pool.map(_worker_method0, args_list)
-
+        # Parallel path using multiprocessing.Pool.
+        # Large input arrays are loaded into each worker once via the initializer,
+        # so only the slice index is passed per task, minimising serialisation overhead.
+        # Number of workers is capped at physical core count and at nslices to avoid
+        # spawning idle processes.
+        cpu_count = os.cpu_count()
+        with Pool(
+            processes=ncores,
+            initializer=_worker_init_method0,
+            initargs=(
+                simulated_x_ifu_all,
+                simulated_y_ifu_all,
+                simulated_wave_all,
+                naxis1_ifu,
+                naxis1_detector,
+                naxis2_detector,
+                nslices,
+                bins_x_ifu,
+                bins_wave,
+                bins_x_detector,
+                bins_y_detector,
+                wv_cdelt1,
+                extra_degradation_spectral_direction,
+                dict_ifu2detector,
+            )
+        ) as pool:
+            results = pool.map(_worker_method0, range(nslices))
         # Final reduction (single-threaded, always safe)
         for local_rss, local_detector in results:
             image2d_rss_method0 += local_rss
             image2d_detector_method0 += local_detector
 
     t1 = time.time()
-    logger.debug(f"Delta time: {t1 - t0}")
+    logger.info(f"Delta time: {t1 - t0}")
 
-    # save RSS image (note that the flatfield effect is not included!)
+    # Save RSS image (note that the flatfield effect is not included!)
     save_image2d_rss(
         wcs3d=wcs3d,
         header_keys=header_keys,
@@ -604,7 +679,7 @@ def ifu_simulator(
         output_dir=output_dir,
     )
 
-    # apply flatpix2pix to detector image
+    # Apply flatpix2pix to detector image
     if flatpix2pix not in ["default", "none"]:
         raise_ValueError(f"Invalid {flatpix2pix=}")
     if flatpix2pix == "default":
@@ -626,14 +701,14 @@ def ifu_simulator(
     else:
         logger.debug("Skipping applying flatpix2pix")
 
-    # apply bias to detector image
+    # Apply bias to detector image
     if bias.value > 0:
         image2d_detector_method0 += bias.value
         logger.debug(f"Applying {bias=} to detector image")
     else:
         logger.debug("Skipping adding bias")
 
-    # apply Gaussian readout noise to detector image
+    # Apply Gaussian readout noise to detector image
     if rnoise.value > 0:
         logger.debug(f"Applying Gaussian {rnoise=} to detector image")
         ntot_pixels = naxis1_detector.value * naxis2_detector.value
@@ -652,7 +727,7 @@ def ifu_simulator(
     )
 
     # ---------------------------------------------------
-    # compute image2d RSS from image in detector, method1
+    # Compute image2d RSS from image in detector, method1
     # ---------------------------------------------------
     image2d_rss_method1 = compute_image2d_rss_from_detector_method1(
         image2d_detector_method0=image2d_detector_method0,
@@ -661,12 +736,12 @@ def ifu_simulator(
         nslices=nslices,
         dict_ifu2detector=dict_ifu2detector,
         wcs3d=wcs3d,
-        parallel_computation=parallel_computation,
+        ncores=ncores,
         logger=logger,
         console=console,
     )
 
-    # save FITS file
+    # Save FITS file
     save_image2d_rss(
         wcs3d=wcs3d,
         header_keys=header_keys,
@@ -679,7 +754,7 @@ def ifu_simulator(
     )
 
     # ------------------------------------
-    # compute image3d IFU from RSS method1
+    # Compute image3d IFU from RSS method1
     # ------------------------------------
     image3d_ifu_method1 = compute_image3d_ifu_from_rss_method1(
         image2d_rss_method1=image2d_rss_method1,
@@ -690,7 +765,7 @@ def ifu_simulator(
         logger=logger,
     )
 
-    # save FITS file
+    # Save FITS file if prefix is provided
     if len(prefix_intermediate_fits) > 0:
         hdu = fits.PrimaryHDU(image3d_ifu_method1.astype(np.float32))
         pos0 = len(hdu.header) - 1
