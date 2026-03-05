@@ -56,11 +56,8 @@ def _worker_method1(islice):
     All large input arrays are accessed from the global _worker_inputs_method1. 
     Allocates private output arrays, calls the update function, 
     and returns results."""
-    local_rss = np.zeros(
-        (_worker_inputs_method1['naxis1_ifu'].value * _worker_inputs_method1['nslices'], 
-         _worker_inputs_method1['naxis1_detector'].value)
-    )
-    update_image2d_rss_method1(
+    # Call the update function to compute the RSS slice for the considered slice.
+    local_rss = update_image2d_rss_method1(
         islice=islice,
         image2d_detector_method0=_worker_inputs_method1['image2d_detector_method0'],
         dict_ifu2detector=_worker_inputs_method1['dict_ifu2detector'],
@@ -69,10 +66,10 @@ def _worker_method1(islice):
         wv_crpix1=_worker_inputs_method1['wv_crpix1'],
         wv_crval1=_worker_inputs_method1['wv_crval1'],
         wv_cdelt1=_worker_inputs_method1['wv_cdelt1'],
-        image2d_rss_method1=local_rss,
         debug=False,
+        logger=None,
     )
-    return local_rss
+    return islice, local_rss
 
 
 def compute_image2d_rss_from_detector_method1(
@@ -146,8 +143,7 @@ def compute_image2d_rss_from_detector_method1(
                     console.print(f"{islice + 1}", end="")
                 else:
                     console.print(".", end="")
-            logger.debug(f"{islice=}")
-            update_image2d_rss_method1(
+            single_slice2d = update_image2d_rss_method1(
                 islice=islice,
                 image2d_detector_method0=image2d_detector_method0,
                 dict_ifu2detector=dict_ifu2detector,
@@ -156,9 +152,13 @@ def compute_image2d_rss_from_detector_method1(
                 wv_crpix1=wv_crpix1,
                 wv_crval1=wv_crval1,
                 wv_cdelt1=wv_cdelt1,
-                image2d_rss_method1=image2d_rss_method1,
                 debug=False,
+                logger=logger,
             )
+            # insert slice in final image
+            i1_rss_index = islice * naxis1_ifu.value
+            i2_rss_index = i1_rss_index + naxis1_ifu.value
+            image2d_rss_method1[i1_rss_index:i2_rss_index, :] += single_slice2d[:, :]
         if logger_level_in_use > logging.DEBUG:
             console.print("")  # new line after the progress dots
     else:
@@ -178,10 +178,11 @@ def compute_image2d_rss_from_detector_method1(
                 wv_cdelt1,
             ),
         ) as pool:
-            results = pool.map(_worker_method1, range(nslices))
-        # Final reduction (single-threaded, always safe)
-        for local_rss in results:
-            image2d_rss_method1 += local_rss
+            # insert slices in final image as they are completed
+            for islice, local_rss in pool.imap_unordered(_worker_method1, range(nslices)):
+                i1_rss_index = islice * naxis1_ifu.value
+                i2_rss_index = i1_rss_index + naxis1_ifu.value
+                image2d_rss_method1[i1_rss_index:i2_rss_index, :] = local_rss[:, :]
 
     t1 = time.time()
     logger.info(f"Delta time: {t1 - t0}")

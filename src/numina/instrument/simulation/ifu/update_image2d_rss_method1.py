@@ -10,6 +10,7 @@
 from astropy.units import Unit
 import astropy.units as u
 from astropy.visualization import ZScaleInterval
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -27,16 +28,10 @@ def update_image2d_rss_method1(
     wv_crpix1,
     wv_crval1,
     wv_cdelt1,
-    image2d_rss_method1,
     debug=False,
+    logger=None,
 ):
-    """Update the RSS image from the detector image.
-
-    The function updates the following 2D array:
-    - image2d_rss_method1,
-    with the data of the slice 'islice' in the detector image.
-
-    This function can be executed in parallel.
+    """Generate 2D RSS slice from the detector image.
 
     Parameters
     ----------
@@ -63,8 +58,17 @@ def update_image2d_rss_method1(
         updated by this function.
     debug : bool
         If True, show debugging information/plots.
+    logger : `~logging.Logger`
+        Logger for debug/info/warning messages. If None, the root logger is used.
 
+    Returns
+    -------
+    image2d_slice_rss : `~numpy.ndarray`
+        2D array containing the RSS image for the considered slice.
     """
+
+    if logger is None:
+        logger = logging.getLogger()
 
     slice_id = islice + 1
 
@@ -149,7 +153,7 @@ def update_image2d_rss_method1(
         xmax = np.max(np.concatenate((x_detector_lower_index, x_detector_upper_index)))
         ymin = np.min(np.concatenate((y_detector_lower_index, y_detector_upper_index)))
         ymax = np.max(np.concatenate((y_detector_lower_index, y_detector_upper_index)))
-        print(f"{xmin=}, {xmax=}, {ymin=}, {ymax=}")
+        logger.debug(f"{xmin=}, {xmax=}, {ymin=}, {ymax=}")
         dy = ymax - ymin
         yminplot = ymin - dy / 5
         ymaxplot = ymax + dy / 5
@@ -173,7 +177,7 @@ def update_image2d_rss_method1(
     i1_rss_index = islice * naxis1_ifu.value
     i2_rss_index = i1_rss_index + naxis1_ifu.value
     if debug:
-        print(f"{i1_rss_index=}, {i2_rss_index=}, {i2_rss_index - i1_rss_index=}")
+        logger.debug(f"{i1_rss_index=}, {i2_rss_index=}, {i2_rss_index - i1_rss_index=}")
     # generate a grid to compute the 2D transformation
     nx_grid_rss = 20
     ny_grid_rss = 20
@@ -240,5 +244,6 @@ def update_image2d_rss_method1(
         plt.tight_layout()
         plt.show()
 
-    # insert result in final image
-    image2d_rss_method1[i1_rss_index:i2_rss_index, :] = image2d_slice_rss[:, :]
+    # Return the 2D RSS slice for the considered slice. 
+    # IMPORTANT: The caller is responsible for adding this slice to the full RSS image.
+    return image2d_slice_rss
