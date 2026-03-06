@@ -2,7 +2,7 @@
 Numina
 ======
 
-|zenodo| |docs| |pypi| 
+|zenodo| |docs| |pypi| |ascl|
 
 This is Numina, the data reduction package used by the following
 Gran Telescopio Canarias instruments: EMIR, MEGARA and FRIDA.
@@ -41,4 +41,8 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 .. |pypi| image:: https://badge.fury.io/py/numina.svg
     :target: https://badge.fury.io/py/numina
     :alt: Numina's PyPI version
+
+.. |ascl| image:: https://img.shields.io/badge/ascl-2512.005-blue.svg?colorB=262255
+    :target: https://ascl.net/2512.005
+    :alt: Numina's ASCL entry
 
