@@ -406,9 +406,9 @@ def deep_merge(initial_schema, loaded_data):
                 for epoch in reqs[ins_name]:
                     for pipe in reqs[ins_name][epoch]:
                         for recipe in reqs[ins_name][epoch][pipe]:
-                            # We allow to redefine only pipeline and recipe
                             init_recipe = (
-                                init_reqs[ins_name][epoch]
+                                init_reqs.setdefault(ins_name, {})
+                                .setdefault(epoch, {})
                                 .setdefault(pipe, {})
                                 .setdefault(recipe, [])
                             )
@@ -416,10 +416,7 @@ def deep_merge(initial_schema, loaded_data):
                                 entry_name = entry["name"]
                                 entry_tags = entry["tags"]
                                 for init_entry in init_recipe:
-                                    if (
-                                        init_entry["name"] == entry_name
-                                        and init_entry["tags"] == entry_tags
-                                    ):
+                                    if init_entry["name"] == entry_name and init_entry["tags"] == entry_tags:
                                         init_entry["content"] = entry["content"]
                                         break
                                 else:
@@ -472,9 +469,7 @@ def process_format_version_2(
     return backend
 
 
-def create_datamanager(
-    config, reqfile, extra_control=None, profile_path_extra=None, persist=True
-) -> DataManager:
+def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=None, persist=True) -> DataManager:
 
     # This should go before we load CL file
     # load additional reduction defaults
@@ -533,9 +528,7 @@ def create_datamanager(
 
     if control_format == 1:
         merged_data = deep_merge(initial_schema, loaded_data)
-        _backend = process_format_version_1(
-            sys_drps, components, basedir, calibsdir, merged_data, loaded_data_extra
-        )
+        _backend = process_format_version_1(sys_drps, components, basedir, calibsdir, merged_data, loaded_data_extra)
         datamanager = DataManager(basedir, datadir, _backend)
         datamanager.workdir_tmpl = section["workdir_tmpl"]
         datamanager.resultdir_tmpl = section["resultdir_tmpl"]
@@ -614,9 +607,7 @@ def load_observations(obfiles, is_session=False):
                     enabled = doc.get("enabled", True)
                     docid = doc["id"]
                     requirements = doc.get("requirements", {})
-                    sess.append(
-                        dict(id=docid, enabled=enabled, requirements=requirements)
-                    )
+                    sess.append(dict(id=docid, enabled=enabled, requirements=requirements))
                     if enabled:
                         _logger.debug("load observation result with id %s", docid)
                     else:
