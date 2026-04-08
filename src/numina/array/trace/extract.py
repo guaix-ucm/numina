@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,8 +28,8 @@ class Aperture(object):
 def extract_simple_rss(arr, borders, axis=0, out=None):
 
     # If arr is not in native byte order, the C-extension won't work
-    if arr.dtype.byteorder != '=':
-        arr2 = arr.byteswap().newbyteorder()
+    if arr.dtype.byteorder != "=":
+        arr2 = arr.byteswap().view(arr.dtype.newbyteorder())
     else:
         arr2 = arr
 
@@ -41,7 +41,7 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
         raise ValueError("'axis' must be 0 or 1")
 
     if out is None:
-        out = numpy.zeros((len(borders), arr3.shape[1]), dtype='float')
+        out = numpy.zeros((len(borders), arr3.shape[1]), dtype="float")
 
     xx = numpy.arange(arr3.shape[1])
 
@@ -58,8 +58,8 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
 def extract_simple_rss_apers(arr, apers, axis=0, out=None):
 
     # If arr is not in native byte order, the C-extension won't work
-    if arr.dtype.byteorder != '=':
-        arr2 = arr.byteswap().newbyteorder()
+    if arr.dtype.byteorder != "=":
+        arr2 = arr.byteswap().view(arr.dtype.newbyteorder())
     else:
         arr2 = arr
 
@@ -73,7 +73,7 @@ def extract_simple_rss_apers(arr, apers, axis=0, out=None):
         raise ValueError("'axis' must be 0 or 1")
 
     if out is None:
-        out = numpy.zeros((len(apers), arr3.shape[1]), dtype='float')
+        out = numpy.zeros((len(apers), arr3.shape[1]), dtype="float")
 
     for idx, aper in enumerate(apers):
         if aper.axis != axis:

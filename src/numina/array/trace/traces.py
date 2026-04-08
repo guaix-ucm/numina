@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -13,8 +13,7 @@ from ..utils import coor_to_pix
 from ._traces import tracing
 
 
-def trace(arr, x, y, axis=0, background=0.0,
-          step=4, hs=1, tol=2, maxdis=2.0, gauss=1):
+def trace(arr, x, y, axis=0, background=0.0, step=4, hs=1, tol=2, maxdis=2.0, gauss=1):
     """Trace peak in array starting in (x,y).
 
     Trace a peak feature in an array starting in position (x,y).
@@ -44,13 +43,13 @@ def trace(arr, x, y, axis=0, background=0.0,
         A nx3 array, with x,y,p of each point in the trace
     """
 
-    i, j = coor_to_pix([x, y], order='xy')
+    i, j = coor_to_pix([x, y], order="xy")
     value = arr[i, j]
 
     # If arr is not in native byte order, the C-extension won't work
 
-    if arr.dtype.byteorder != '=':
-        arr2 = arr.byteswap().newbyteorder()
+    if arr.dtype.byteorder != "=":
+        arr2 = arr.byteswap().view(arr.dtype.newbyteorder())
     else:
         arr2 = arr
 
@@ -61,8 +60,7 @@ def trace(arr, x, y, axis=0, background=0.0,
     else:
         raise ValueError("'axis' must be 0 or 1")
 
-    result = tracing(arr3, x, y, value, background=background,
-                     step=step, hs=hs, tol=tol, maxdis=maxdis, gauss=gauss)
+    result = tracing(arr3, x, y, value, background=background, step=step, hs=hs, tol=tol, maxdis=maxdis, gauss=gauss)
 
     if axis == 1:
         # Flip X,Y columns
@@ -73,10 +71,10 @@ def trace(arr, x, y, axis=0, background=0.0,
 
 def tracing_limits(size, col, step, hs):
     m = col % step
-    k0 = ((hs + step - m) / step)
+    k0 = (hs + step - m) / step
     r0 = int(math.floor(k0))
     xx_start = r0 * step + m
-    k1 = ((size - hs - step - m) / step)
+    k1 = (size - hs - step - m) / step
     r1 = int(math.ceil(k1))
     xx_end = r1 * step + m
     return xx_start, xx_end

@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,16 +11,21 @@
 
 import numpy as np
 from numpy.testing import assert_allclose
+import pytest
 
 from ..extract import extract_simple_rss_apers
 from ..extract import Aperture
 from ..traces import axis_to_dispaxis
 
+_test_data = [
+    np.ones((89, 100)),
+    np.ones((89, 100), dtype=">f4"),
+    np.ones((89, 100), dtype="<f4"),
+]
 
-def test_extract_simple_rss_apers_flat():
 
-    img = np.ones((89, 100))
-
+@pytest.mark.parametrize("img", _test_data)
+def test_extract_simple_rss_apers_flat(img):
     bbox = [5, 71, 6, 64]
     # Check with flat boundaries
     # axis = 0
@@ -28,11 +33,15 @@ def test_extract_simple_rss_apers_flat():
     aa2 = 5.5
     axis = 0
     dispaxis = axis_to_dispaxis(axis)
-    def b1(x): return aa1 * np.ones_like(x)  # noqa: E731
-    def b2(x): return aa2 * np.ones_like(x)  # noqa: E731
+
+    def b1(x):
+        return aa1 * np.ones_like(x)  # noqa: E731
+
+    def b2(x):
+        return aa2 * np.ones_like(x)  # noqa: E731
 
     result = np.zeros((1, img.shape[1]))
-    result[0, bbox[0]:bbox[1]+1] = aa2 - aa1
+    result[0, bbox[0] : bbox[1] + 1] = aa2 - aa1
 
     aper = Aperture(bbox, [b1, b2], axis=0)
     out = extract_simple_rss_apers(img, [aper], axis=axis)
@@ -46,11 +55,15 @@ def test_extract_simple_rss_apers_flat():
     aa4 = 5.5
     axis = 1
     dispaxis = axis_to_dispaxis(axis)
-    def b3(x): return aa3 * np.ones_like(x)  # noqa: E731
-    def b4(x): return aa4 * np.ones_like(x)  # noqa: E731
+
+    def b3(x):
+        return aa3 * np.ones_like(x)  # noqa: E731
+
+    def b4(x):
+        return aa4 * np.ones_like(x)  # noqa: E731
 
     result = np.zeros((1, img.shape[0]))
-    result[0, bbox[2]:bbox[3]+1] = aa4 - aa3
+    result[0, bbox[2] : bbox[3] + 1] = aa4 - aa3
 
     aper = Aperture(bbox, [b3, b4], axis=1)
     out = extract_simple_rss_apers(img, [aper], axis=axis)
@@ -59,9 +72,9 @@ def test_extract_simple_rss_apers_flat():
     assert_allclose(out, result)
 
 
-def test_extract_simple_rss_apers_line():
+@pytest.mark.parametrize("img", _test_data)
+def test_extract_simple_rss_apers_line(img):
 
-    img = np.ones((89, 100))
     bbox = [5, 71, 6, 64]
 
     # Check with flat boundaries
@@ -71,11 +84,15 @@ def test_extract_simple_rss_apers_line():
 
     axis = 0
     dispaxis = axis_to_dispaxis(axis)
-    def b1(x): return aa1 + 1.1 * (x - 50) / 100  # noqa: E731
-    def b2(x): return aa2 + 1.1 * (x - 50) / 100  # noqa: E731
+
+    def b1(x):
+        return aa1 + 1.1 * (x - 50) / 100  # noqa: E731
+
+    def b2(x):
+        return aa2 + 1.1 * (x - 50) / 100  # noqa: E731
 
     result = np.zeros((1, img.shape[1]))
-    result[0, bbox[0]:bbox[1]+1] = aa2 - aa1
+    result[0, bbox[0] : bbox[1] + 1] = aa2 - aa1
 
     aper = Aperture(bbox, [b1, b2], axis=0)
     out = extract_simple_rss_apers(img, [aper], axis=axis)
@@ -88,13 +105,17 @@ def test_extract_simple_rss_apers_line():
     aa3 = 1.9
     aa4 = 5.5
 
-    def b3(x): return aa3 + 1.2 * (x - 44) / 89  # noqa: E731
-    def b4(x): return aa4 + 1.2 * (x - 44) / 89  # noqa: E731
+    def b3(x):
+        return aa3 + 1.2 * (x - 44) / 89  # noqa: E731
+
+    def b4(x):
+        return aa4 + 1.2 * (x - 44) / 89  # noqa: E731
+
     axis = 1
     dispaxis = axis_to_dispaxis(axis)
 
     result = np.zeros((1, img.shape[0]))
-    result[0, bbox[2]:bbox[3]+1] = aa4 - aa3
+    result[0, bbox[2] : bbox[3] + 1] = aa4 - aa3
 
     aper = Aperture(bbox, [b3, b4], axis=1)
     out = extract_simple_rss_apers(img, [aper], axis=axis)

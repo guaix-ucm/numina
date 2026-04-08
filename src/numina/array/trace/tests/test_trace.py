@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,6 +16,12 @@ from ..traces import axis_to_dispaxis
 from ..traces import tracing_limits
 
 
+_test_data = [
+    np.ones((100, 100), dtype=">f4"),
+    np.ones((100, 100), dtype="<f4"),
+]
+
+
 def test_axis_to_dispaxis():
     assert axis_to_dispaxis(0) == 1
     assert axis_to_dispaxis(1) == 0
@@ -24,8 +30,9 @@ def test_axis_to_dispaxis():
         axis_to_dispaxis(2)
 
 
+@pytest.mark.parametrize("arr", _test_data)
 @pytest.mark.parametrize("gauss", [1, 0])
-def test_trace_simple(benchmark, gauss):
+def test_trace_simple(benchmark, arr, gauss):
     """Test a simple trace"""
     arr = np.zeros((100, 100))
 
@@ -35,15 +42,21 @@ def test_trace_simple(benchmark, gauss):
 
     if gauss:
         result = np.array(
-            [[44., 48.02061133, 33.36466379], [45., 48.02061133, 66.72932758],
-             [46., 48.02061133, 100.09399137], [
-                 47., 48.02061133, 100.09399137],
-             [48., 48., 100.], [49., 48.02061133, 100.09399137],
-             [50., 48.02061133, 100.09399137], [
-                 51., 48.02061133, 100.09399137],
-             [52., 48.02061133, 100.09399137], [
-                 53., 48.02061133, 100.09399137],
-             [54., 48.02061133, 66.72932758], [55., 48.02061133, 33.36466379]])
+            [
+                [44.0, 48.02061133, 33.36466379],
+                [45.0, 48.02061133, 66.72932758],
+                [46.0, 48.02061133, 100.09399137],
+                [47.0, 48.02061133, 100.09399137],
+                [48.0, 48.0, 100.0],
+                [49.0, 48.02061133, 100.09399137],
+                [50.0, 48.02061133, 100.09399137],
+                [51.0, 48.02061133, 100.09399137],
+                [52.0, 48.02061133, 100.09399137],
+                [53.0, 48.02061133, 100.09399137],
+                [54.0, 48.02061133, 66.72932758],
+                [55.0, 48.02061133, 33.36466379],
+            ]
+        )
     else:
         result = np.empty((12, 3))
         result[:, 0] = np.arange(44, 56)
@@ -60,9 +73,9 @@ def test_trace_simple(benchmark, gauss):
     assert_allclose(mm, result)
 
 
-def test_trace_bug_27():
+@pytest.mark.parametrize("arr", _test_data)
+def test_trace_bug_27(arr):
     """Trace doesn't work with a flat peak"""
-    arr = np.zeros((100, 100))
     arr[47:52, 12:90] = 100.0
     mm = trace(arr, 50, 50)
     assert mm.shape[0] >= 1
