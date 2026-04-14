@@ -40,18 +40,22 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
     else:
         raise ValueError("'axis' must be 0 or 1")
 
+    if len(borders) == 0:
+        raise ValueError("'borders' must be greater than 0")
+
     if out is None:
-        out = numpy.zeros((len(borders), arr3.shape[1]), dtype="float")
+        out = numpy.zeros((borders[-1][0], arr3.shape[1]), dtype="float")
 
     xx = numpy.arange(arr3.shape[1])
 
     # Borders contains a list of function objects
-    for idx, (b1, b2) in enumerate(borders):
+    # idx starts in 1
+    for idx, b1, b2 in enumerate(borders):
         bb1 = b1(xx)
         bb1[bb1 < -0.5] = -0.5
         bb2 = b2(xx)
         bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
-        extract_simple_intl(arr3, xx, bb1, bb2, out[idx])
+        extract_simple_intl(arr3, xx, bb1, bb2, out[idx - 1])
     return out
 
 
