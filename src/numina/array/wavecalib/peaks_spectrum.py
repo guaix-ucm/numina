@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,11 +14,129 @@ from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
 
+def find_highest_peaks_spectrum(sx, nmaxpeaks, nclean_around_peak, nwinwidth, threshold=0, debugplot=0, jupyter=False):
+    """Find a fixed number of highest peaks in 1D array.
+    
+    Peaks are found iteratively. Every time a new peak is found, the area
+    around it is cleaned (set to zero) in order to avoid finding the same
+    peak again or finding a peak that is too close to the previous one. 
+    The area to be cleaned is defined by the parameter nclean_around_peak. 
+    The width of the window where each peak must be found is defined by 
+    the parameter nwinwidth.
+
+    The borders of the input array are ignored, since the first and 
+    last nwinwidth pixels are not considered for peak detection.
+
+    Parameters
+    ----------
+    sx : 1d numpy array, floats
+        Input array.
+    nmaxpeaks : int
+        Maximum number of peaks to find.
+    nclean_around_peak : int
+        Number of pixels to clean around each peak.
+    nwinwidth : int
+        Width of the window where each peak must be found.
+    threshold : float
+        Minimum signal in the peaks.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed:
+        00 : no debug, no plots
+        01 : no debug, plots without pauses
+        02 : no debug, plots with pauses
+        10 : debug, no plots
+        11 : debug, plots without pauses
+        12 : debug, plots with pauses
+    jupyter : bool
+        If True, the plots will be displayed in a Jupyter notebook.
+
+    Returns
+    -------
+    ixpeaks : 1d numpy array, int
+        Peak locations, in array coordinates (integers).
+        The peaks are sorted in ascending order of their array coordinates.
+    """
+    # check input parameters
+    if len(sx) < nwinwidth:
+        raise ValueError("Input array length is smaller than nwinwidth")
+    if nmaxpeaks < 1:
+        raise ValueError("nmaxpeaks must be at least 1")
+    if nclean_around_peak < 0:
+        raise ValueError("nclean_around_peak must be non-negative")
+    if nwinwidth < 1:
+        raise ValueError("nwinwidth must be at least 1")
+    if threshold < 0:
+        raise ValueError("threshold must be non-negative")
+    if len(sx) < nmaxpeaks:
+        raise ValueError("Input array length is smaller than nmaxpeaks")
+    
+    # list to store the peak locations
+    list_ixpeaks = []
+    # make a copy of the input array to avoid modifying it
+    sx_copy = np.copy(sx)
+    # set to zero the first and last nwinwidth pixels to avoid detecting peaks at the borders
+    sx_copy[:nwinwidth] = 0
+    sx_copy[-nwinwidth:] = 0
+    # set the effective window width to the initial value
+    nwinwidth_effective = nwinwidth
+    for i in range(nmaxpeaks):
+        loop = True
+        while loop:
+            # detect peaks in 1d array
+            ixpeaks = find_peaks_spectrum(
+                sx=sx_copy, 
+                nwinwidth=nwinwidth_effective, 
+                threshold=threshold, 
+                debugplot=0
+            )
+            # if no peaks are found, reduce the window width and try again
+            if len(ixpeaks) < 1:
+                nwinwidth_effective -= 2
+                # if the window width is too small, take the maximum value as the peak
+                if nwinwidth_effective < 1:
+                    ixpeaks = [np.argmax(sx_copy)]
+                    loop = False
+            else:
+                loop = False
+        # peak values
+        peak_values = sx_copy[ixpeaks]
+        # find the index of the highest peak
+        highest_peak_index = np.argmax(peak_values)
+        # get the location of the highest peak
+        highest_peak_location = ixpeaks[highest_peak_index]
+        # add the highest peak location to the list of peaks
+        list_ixpeaks.append(highest_peak_location)
+        # clean the area around the highest peak
+        start_clean = max(0, highest_peak_location - nclean_around_peak)
+        end_clean = min(len(sx_copy), highest_peak_location + nclean_around_peak + 1)
+        sx_copy[start_clean:end_clean] = 0
+
+        if debugplot % 10 != 0:
+            from numina.array.display.matplotlib_qt import plt
+            fig, ax = plt.subplots()
+            xdum = np.arange(len(sx_copy))
+            ax.plot(xdum, sx, '-', color='gray')
+            ax.plot(xdum, sx_copy, 'C0.')
+            ax.plot(list_ixpeaks, sx[list_ixpeaks], 'go')
+            ax.plot([highest_peak_location], sx[highest_peak_location], 'ro')
+            ax.set_xlabel('array index along Y axis')
+            ax.set_ylabel('Signal')
+            ax.set_title(f'Peak #{i+1}/{nmaxpeaks}, nwinwidth_eff={nwinwidth_effective}, nclean={nclean_around_peak}')
+            if not jupyter:
+                plt.show(block=False)
+            plt.pause(0.001)
+            pause_debugplot(debugplot)
+ 
+    return np.array(np.sort(list_ixpeaks))
+
+
 def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
-    """Find peaks in array.
+    """Find peaks in 1D array.
 
     The algorithm imposes that the signal at both sides of the peak
-    decreases monotonically.
+    decreases monotonically. Peaks are found within a window of width 
+    nwinwidth.
 
     Parameters
     ----------
