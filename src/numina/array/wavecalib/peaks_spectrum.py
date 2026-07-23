@@ -20,8 +20,8 @@ def find_highest_peaks_spectrum(
     """Find a fixed number of highest peaks in 1D array.
 
     Peaks are found iteratively. Every time a new peak is found, the area
-    around it is cleaned (set to zero) in order to avoid finding the same
-    peak again or finding a peak that is too close to the previous one.
+    around this new peak is cleaned (set to zero) in order to avoid finding
+    the same peak again or finding a peak that is too close to it.
     The area to be cleaned is defined by the parameter nclean_around_peak.
     The width of the window where each peak must be found is defined by
     the parameter nwinwidth.
