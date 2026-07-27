@@ -16,7 +16,7 @@ import platform
 import sys
 
 
-def add_script_info_to_fits_history(header, args):
+def add_script_info_to_fits_history(header, args, title=None):
     """Add script information to the FITS header history.
 
     Parameters
@@ -25,6 +25,8 @@ def add_script_info_to_fits_history(header, args):
         The FITS header to which the script information will be added.
     args : `argparse.Namespace`
         The arguments parsed from the command line.
+    title : str, optional
+        The title for the history entry.
 
     Returns
     -------
@@ -33,9 +35,11 @@ def add_script_info_to_fits_history(header, args):
     if not isinstance(header, fits.Header):
         raise ValueError("The header must be an instance of astropy.io.fits.Header.")
 
-    header.add_history('-' * 25)
+    header.add_history("*" * 71)
+    if title is not None:
+        header.add_history(f"{title}")
+        header.add_history("-" * 71)
     header.add_history(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    header.add_history('-' * 25)
     header.add_history(f'Node: {platform.uname().node}')
     header.add_history(f'Python: {sys.executable}')
     header.add_history(f'$ {Path(sys.argv[0]).name}')
