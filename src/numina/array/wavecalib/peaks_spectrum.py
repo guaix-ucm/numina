@@ -15,7 +15,15 @@ from ..display.pause_debugplot import pause_debugplot
 
 
 def find_highest_peaks_spectrum(
-    sx, nmaxpeaks, nclean_around_peak, nwinwidth, threshold=0, nborder_to_ignore=0, debugplot=0, jupyter=False
+    sx,
+    nmaxpeaks,
+    nclean_around_peak,
+    nwinwidth,
+    threshold=0,
+    nborder_to_ignore=0,
+    title=None,
+    debugplot=0,
+    jupyter=False,
 ):
     """Find a fixed number of highest peaks in 1D array.
 
@@ -46,6 +54,9 @@ def find_highest_peaks_spectrum(
         Minimum signal in the peaks.
     nborder_to_ignore : int
         Number of pixels to ignore at the borders of the input array.
+    title: str or None
+        Title for the debug plots. The provided string will be prepended
+        to the default title. If None, the default title will be used.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -130,11 +141,16 @@ def find_highest_peaks_spectrum(
             ax.plot([highest_peak_location], sx[highest_peak_location], "ro")
             ax.set_xlabel("array index along Y axis")
             ax.set_ylabel("Signal")
-            ax.set_title(f"Peak #{i+1}/{nmaxpeaks}, nwinwidth_eff={nwinwidth_effective}, nclean={nclean_around_peak}")
+            default_title = f"Peak #{i+1}/{nmaxpeaks}, nwinwidth_eff={nwinwidth_effective}, nclean={nclean_around_peak}"
+            if title is not None:
+                title_ = title + "\n" + default_title
+            else:
+                title_ = default_title
+            ax.set_title(title_)
             if not jupyter:
                 plt.show(block=False)
             plt.pause(0.001)
-            pause_debugplot(debugplot)
+            pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     return np.array(np.sort(list_ixpeaks))
 
