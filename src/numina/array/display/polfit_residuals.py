@@ -267,14 +267,14 @@ def polfit_residuals(
         ax.set_ylim(ymin, ymax)
         ax.scatter(xfitted, yfitted,
                    color=cfitted, marker='o', edgecolor='k',
-                   s=sfitted, label="fitted data")
+                   s=sfitted, label=f"fitted data ({len(xfitted)})")
         xpol = np.linspace(start=xmin, stop=xmax, num=1000)
         ypol = poly(xpol)
-        ax.plot(xpol, ypol, 'c-', label="fit")
+        ax.plot(xpol, ypol, 'c-', label=f"fit (deg={deg})")
         if nrejected > 0:
             ax.scatter(xrejected, yrejected,
                        marker='x', s=srejected, color=crejected,
-                       label="rejected")
+                       label=f"rejected ({len(xrejected)})")
 
         # put a legend
         ax.legend(numpoints=1)
