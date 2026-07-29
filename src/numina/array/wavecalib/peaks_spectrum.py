@@ -245,7 +245,7 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     return ixpeaks
 
 
-def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, debugplot=0):
+def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, title=None, debugplot=0):
     """Refine line peaks in spectrum.
 
     Parameters
@@ -263,6 +263,9 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, de
         "gaussian" : fit to a Gaussian
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
+    title : str or None
+        Title for the debug plots. The provided string will be prepended
+        to the default title. If None, the default title will be used.
     debugplot : int
         Determines whether intermediate computations and/or plots
         are displayed:
@@ -371,7 +374,12 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, de
             ax.set_ylim(ymin, ymax)
             ax.set_xlabel("index around initial integer peak")
             ax.set_ylabel("Normalized number of counts")
-            ax.set_title("Fit to line at array index " + str(jmax) + "\n(method=" + final_method + ")")
+            default_title = "Fit to line at array index " + str(jmax) + " (method=" + final_method + ")"
+            if title is not None:
+                title_ = title + "\n" + default_title
+            else:
+                title_ = default_title
+            ax.set_title(title_)
             plt.plot(x_fit, y_fit, "bo")
             x_plot = np.linspace(start=-nmed, stop=nmed, num=1000, dtype=float)
             if final_method == "poly2":
@@ -387,6 +395,6 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, de
             print("Refined peak location:", refined_peak)
             plt.show(block=False)
             plt.pause(0.001)
-            pause_debugplot(debugplot)
+            pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     return xfpeaks, sfpeaks
