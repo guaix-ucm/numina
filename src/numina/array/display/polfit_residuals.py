@@ -20,7 +20,7 @@ from ..display.pause_debugplot import pause_debugplot
 def polfit_residuals(
         x, y, deg, reject=None,
         color='b', size=75,
-        xlim=None, ylim=None,
+        xlim=None, ylim=None, ylimres_with_rejected=False,
         xlabel=None, ylabel=None, title=None,
         use_r=False,
         show=True,
@@ -59,6 +59,10 @@ def polfit_residuals(
         Plot limits in the X axis.
     ylim : tuple (floats)
         Plot limits in the Y axis.
+    ylimres_with_rejected : bool
+        If True, the limits in the Y axis of the residuals plot are
+        computed with all the points. If False, the limits are computed
+        without taking into account the rejected points.
     xlabel : string
         Character string for label in X axis.
     ylabel : string
@@ -226,12 +230,20 @@ def polfit_residuals(
         else:
             xmin, xmax = xlim
         ax2.set_xlim(xmin, xmax)
-        ymin = min(yres_fitted)
-        ymax = max(yres_fitted)
+        if ylimres_with_rejected:
+            if nrejected > 0:
+                ymin = min(np.concatenate([yres_fitted, yres_rejected]))
+                ymax = max(np.concatenate([yres_fitted, yres_rejected]))
+            else:
+                ymin = min(yres_fitted)
+                ymax = max(yres_fitted)
+        else:
+            ymin = min(yres_fitted)
+            ymax = max(yres_fitted)
         dy = ymax - ymin
         if dy > 0:
-            ymin -= dy/20
-            ymax += dy/20
+            ymin -= dy / 20
+            ymax += dy / 20
         else:
             ymin -= 0.5
             ymax += 0.5
@@ -297,7 +309,7 @@ def polfit_residuals(
 def polfit_residuals_with_sigma_rejection(
         x, y, deg, times_sigma_reject,
         color='b', size=75,
-        xlim=None, ylim=None,
+        xlim=None, ylim=None, ylimres_with_rejected=False,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
         show=True,
@@ -337,6 +349,10 @@ def polfit_residuals_with_sigma_rejection(
         Plot limits in the X axis.
     ylim : tuple (floats)
         Plot limits in the Y axis.
+    ylimres_with_rejected : bool
+        If True, the limits in the Y axis of the residuals plot are
+        computed with all the points. If False, the limits are computed
+        without taking into account the rejected points.
     xlabel : string
         Character string for label in X axis.
     ylabel : string
@@ -403,7 +419,7 @@ def polfit_residuals_with_sigma_rejection(
     if deg == npoints - 1:
         poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=None,
                                       color=color, size=size,
-                                      xlim=xlim, ylim=ylim,
+                                      xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
@@ -421,7 +437,7 @@ def polfit_residuals_with_sigma_rejection(
         if abs(debugplot) in [21, 22]:
             poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
                                           color=color, size=size,
-                                          xlim=xlim, ylim=ylim,
+                                          xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
                                           xlabel=xlabel, ylabel=ylabel,
                                           title=title,
                                           use_r=use_r,
@@ -475,7 +491,7 @@ def polfit_residuals_with_sigma_rejection(
         if abs(debugplot) not in [21, 22]:
             poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
                                           color=color, size=size,
-                                          xlim=xlim, ylim=ylim,
+                                          xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
                                           xlabel=xlabel, ylabel=ylabel,
                                           title=title,
                                           use_r=use_r,
@@ -495,7 +511,7 @@ def polfit_residuals_with_sigma_rejection(
 def polfit_residuals_with_cook_rejection(
         x, y, deg, times_sigma_cook,
         color='b', size=75,
-        xlim=None, ylim=None,
+        xlim=None, ylim=None, ylimres_with_rejected=False,
         xlabel=None, ylabel=None, title=None,
         use_r=None,
         show=True,
@@ -535,6 +551,10 @@ def polfit_residuals_with_cook_rejection(
         Plot limits in the X axis.
     ylim : tuple (floats)
         Plot limits in the Y axis.
+    ylimres_with_rejected : bool
+        If True, the limits in the Y axis of the residuals plot are
+        computed with all the points. If False, the limits are computed
+        without taking into account the rejected points.
     xlabel : string
         Character string for label in X axis.
     ylabel : string
@@ -601,7 +621,7 @@ def polfit_residuals_with_cook_rejection(
     if deg == npoints - 1 or deg == npoints - 2:
         poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=None,
                                       color=color, size=size,
-                                      xlim=xlim, ylim=ylim,
+                                      xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
@@ -622,7 +642,7 @@ def polfit_residuals_with_cook_rejection(
         # rejected points)
         poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
                                       color=color, size=size,
-                                      xlim=xlim, ylim=ylim,
+                                      xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
                                       xlabel=xlabel, ylabel=ylabel,
                                       title=title,
                                       use_r=use_r,
@@ -644,7 +664,7 @@ def polfit_residuals_with_cook_rejection(
                     poly_cook, yres_cook = polfit_residuals(
                         x=x, y=y, deg=deg, reject=reject_cook,
                         color=color, size=size,
-                        xlim=xlim, ylim=ylim,
+                        xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
                         xlabel=xlabel, ylabel=ylabel,
                         title="Computing Cook's distance for point " +
                               str(i+1),
