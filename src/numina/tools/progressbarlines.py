@@ -24,7 +24,7 @@ class ProgressBarLines:
         self.logger = logger
         self.progress_line = "0%"
         # show initial line with elapsed time and estimated time remaining
-        self.logger.info(self.progress_line + "__________________________________________[ELAP<LEFT]")
+        self.logger.info(self.progress_line)
         self.start_time = time.time()
 
         # Fixed width: length of the longest possible line
@@ -44,7 +44,7 @@ class ProgressBarLines:
 
                 self.progress_line += f" {milestone}%"
                 padded = self.progress_line.ljust(self.label_width, "_")
-                line_to_show = f"{padded} [{self._fmt(elapsed)}<{self._fmt(eta)}]"
+                line_to_show = f"{padded} (elap={self._fmt(elapsed)}|left={self._fmt(eta)}|exp={self._fmt(elapsed + eta)})"
                 self.logger.info(line_to_show)
 
     @staticmethod
