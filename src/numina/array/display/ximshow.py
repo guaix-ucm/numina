@@ -162,7 +162,7 @@ def ximshow(
     cunit1 : str or None
         CUNIT1 parameter corresponding to wavelength calibration in
         the X direction.
-    ds9regfile : file handler
+    ds9regfile : str or None
         Ds9 region file to be overplotted.
     geometry : str or None
         xwidth, ywidth, xorigin, yorigin values employed to set the
@@ -432,7 +432,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         ax.set_title(title)
 
     if ds9regfile is not None:
-        overplot_ds9reg(ds9regfile.name, ax)
+        overplot_ds9reg(ds9regfile, ax)
 
     # set the geometry
     if geometry is not None:
@@ -545,7 +545,7 @@ def ximshow_file(
         X-axis label.
     args_ylabel : string
         Y-axis label.
-    args_ds9reg : file handler
+    args_ds9reg : string or None
         Ds9 region file to be overplotted.
     args_geometry : string or None
         xwidth, ywidth, xorigin, yorigin to define the window geometry.
@@ -634,6 +634,8 @@ def ximshow_file(
 
     # title for plot
     title = singlefile
+    if extnum > 1:
+        title += f" [{image_header['extname']}]"
     if args_keystitle is not None:
         keystitle = args_keystitle
         keysformat = ".".join(keystitle.split(".")[1:])
@@ -1047,13 +1049,13 @@ def main(args=None):
         default="horizontal",
     )
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
-    parser.add_argument("--ds9reg", help="ds9 region file to be overplotted", type=argparse.FileType("rt"))
+    parser.add_argument("--ds9reg", help="ds9 region file to be overplotted", type=str, default=None)
     parser.add_argument("--geometry", help='string "xwidth,ywidth,xorigin,yorigin"', default=GLOBAL_GEOMETRY)
     parser.add_argument(
         "--factor_macosx", help="Factor to control the size of the plot on macOS (default=1.5)", default=1.5, type=float
     )
-    parser.add_argument("--pdffile", help="ouput PDF file name", type=argparse.FileType("w"))
-    parser.add_argument("--pngfile", help="ouput PNG file name", type=argparse.FileType("w"))
+    parser.add_argument("--pdffile", help="ouput PDF file name", type=str, default=None)
+    parser.add_argument("--pngfile", help="ouput PNG file name", type=str, default=None)
     parser.add_argument("--figuredict", help="string with dictionary of parameters for plt.figure()", type=str)
     parser.add_argument(
         "--debugplot",
@@ -1097,7 +1099,7 @@ def main(args=None):
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
 
-        pdf = PdfPages(args.pdffile.name)
+        pdf = PdfPages(args.pdffile)
     else:
         from numina.array.display.matplotlib_qt import plt  # noqa: F401
 
@@ -1105,7 +1107,7 @@ def main(args=None):
     if args.pngfile is not None:
         from numina.array.display.matplotlib_qt import plt  # noqa: F401
 
-        png = args.pngfile.name
+        png = args.pngfile
 
     for myfile, extnum in zip(list_fits_files, list_extnum):
         if extnum is None:
