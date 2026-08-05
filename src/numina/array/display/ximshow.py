@@ -1031,7 +1031,7 @@ def main(args=None):
         default=1,
         type=int,
     )
-    parser.add_argument("--z1z2", help="tuple [z1,z2], minmax, zscale or None (=zscale)", type=str)
+    parser.add_argument("--z1z2", help="tuple '[+/-z1, +/-z2]', minmax, zscale or None (=zscale)", type=str)
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--firstpix", help="coordinates of lower left pixel: nc0, ns0")
     parser.add_argument(
