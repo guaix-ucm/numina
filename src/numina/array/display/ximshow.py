@@ -90,6 +90,8 @@ def ximshow_jupyter(image2d, **args):
 def ximshow(
     image2d,
     title=None,
+    xlabel=None,
+    ylabel=None,
     show=True,
     cbar_label=None,
     cbar_orientation="None",
@@ -119,6 +121,10 @@ def ximshow(
         2d image to be displayed.
     title : string
         Plot title.
+    xlabel : string
+        X-axis label.
+    ylabel : string
+        Y-axis label.
     cbar_label : string
         Color bar label.
     cbar_orientation : string
@@ -390,8 +396,14 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     ax = fig.add_subplot(111)
     ax.autoscale(False)
-    ax.set_xlabel("image pixel in the X direction")
-    ax.set_ylabel("image pixel in the Y direction")
+    if xlabel is None:
+        ax.set_xlabel("image pixel in the X direction")
+    else:
+        ax.set_xlabel(xlabel)
+    if ylabel is None:
+        ax.set_ylabel("image pixel in the Y direction")
+    else:
+        ax.set_ylabel(ylabel)
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
     ax.grid(False)
@@ -489,6 +501,8 @@ def ximshow_file(
     args_firstpix=None,
     args_aspect=GLOBAL_ASPECT,
     args_keystitle=None,
+    args_xlabel=None,
+    args_ylabel=None,
     args_ds9reg=None,
     args_geometry=GLOBAL_GEOMETRY,
     args_factor_macosx=1.5,
@@ -527,6 +541,10 @@ def ximshow_file(
         and 'auto'.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
+    args_xlabel : string
+        X-axis label.
+    args_ylabel : string
+        Y-axis label.
     args_ds9reg : file handler
         Ds9 region file to be overplotted.
     args_geometry : string or None
@@ -683,6 +701,8 @@ def ximshow_file(
         cbar_label=args_cbar_label,
         cbar_orientation=args_cbar_orientation,
         title=title,
+        xlabel=args_xlabel,
+        ylabel=args_ylabel,
         z1z2=z1z2,
         image_bbox=(nc1, nc2, ns1, ns2),
         first_pixel=(nc0, ns0),
@@ -1015,6 +1035,8 @@ def main(args=None):
     parser.add_argument(
         "--aspect", help="aspect ratio (equal or auto)", type=str, choices=["equal", "auto"], default=GLOBAL_ASPECT
     )
+    parser.add_argument("--xlabel", help="X-axis label", type=str, default=None)
+    parser.add_argument("--ylabel", help="Y-axis label", type=str, default=None)
     parser.add_argument("--cmap", help="color map", type=str, default="hot")
     parser.add_argument("--cbar_label", help="color bar label", type=str, default="Number of counts")
     parser.add_argument(
@@ -1099,6 +1121,8 @@ def main(args=None):
             args_cbar_label=args.cbar_label,
             args_cbar_orientation=args.cbar_orientation,
             args_keystitle=args.keystitle,
+            args_xlabel=args.xlabel,
+            args_ylabel=args.ylabel,
             args_ds9reg=args.ds9reg,
             args_geometry=args.geometry,
             args_factor_macosx=args.factor_macosx,
