@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2025 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -72,7 +72,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
         image2d = hdulist[0].data
     naxis2, naxis1 = image2d.shape
     if abs(debugplot) >= 10:
-        print('>>> Reading file:', fitsfile.name)
+        print('>>> Reading file:', fitsfile)
         print('>>> NAXIS1:', naxis1)
         print('>>> NAXIS2:', naxis2)
 
@@ -502,7 +502,7 @@ def main(args=None):
     # required parameters
     parser.add_argument("fitsfile",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('rb'))
+                        type=str)
     parser.add_argument("--scans", required=True,
                         help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
     parser.add_argument("--wv_master_file", required=True,
@@ -575,7 +575,7 @@ def main(args=None):
                              "format before performing the wavelength "
                              "calibration (default=None)",
                         default=None,
-                        type=argparse.FileType('wb'))
+                        type=str)
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy (default 0,0,640,480)",
                         default="0,0,640,480")
@@ -685,7 +685,7 @@ def main(args=None):
     # from 0 to (naxis - 1)
     plottitle0 = ' [{}, {}:{}],  line list: {}'.format(
         args.method, ns1, ns2, os.path.basename(args.wv_master_file))
-    plottitle = os.path.basename(args.fitsfile.name) + plottitle0
+    plottitle = os.path.basename(args.fitsfile) + plottitle0
     fxpeaks, sxpeaks = find_fxpeaks(
         sp=sp,
         times_sigma_threshold=args.times_sigma_threshold,

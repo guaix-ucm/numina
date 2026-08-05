@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -697,13 +697,13 @@ def main(args=None):
     # positional parameters
     parser.add_argument("filename",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('rb'))
+                        type=str)
     parser.add_argument("--scans", required=True,
                         help="Tuple ns1[,ns2] (from 1 to NAXIS2) to compute "
                              "median spectrum")
     parser.add_argument("--wv_master_file", required=True,
                         help="TXT file containing wavelengths",
-                        type=argparse.FileType('rt'))
+                        type=str)
 
     # optional arguments
     parser.add_argument("--interactive",
@@ -786,7 +786,7 @@ def main(args=None):
     crpix1 = image2d_header['crpix1']
     crval1 = image2d_header['crval1']
     cdelt1 = image2d_header['cdelt1']
-    print('* Input file:', args.filename.name)
+    print('* Input file:', args.filename)
     print('>>> NAXIS1:', naxis1)
     print('>>> NAXIS2:', naxis2)
     print('>>> CRPIX1:', crpix1)
@@ -809,9 +809,9 @@ def main(args=None):
         print('wv_master:', wv_master)
 
     # define plot title
-    title = 'fitsfile: ' + os.path.basename(args.filename.name) + \
+    title = 'fitsfile: ' + os.path.basename(args.filename) + \
             ' [' + str(ns1) + ',' + str(ns2) + ']\n' + \
-            'wv_master: ' + os.path.basename(args.wv_master_file.name)
+            'wv_master: ' + os.path.basename(args.wv_master_file)
 
     # check the wavelength calibration
     check_wlcalib_sp(sp=spmedian,

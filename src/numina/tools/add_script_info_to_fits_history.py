@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -44,7 +44,7 @@ def add_script_info_to_fits_history(header, args, title=None):
     header.add_history(f'Python: {sys.executable}')
     header.add_history(f'$ {Path(sys.argv[0]).name}')
     for arg, value in vars(args).items():
-        # filename read as argparse.FileType()
+        # Handle BufferedReader objects
         if isinstance(value, BufferedReader):
             value = value.name if hasattr(value, 'name') else str(value)
         header.add_history(f'--{arg} {value}')

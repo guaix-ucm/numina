@@ -85,8 +85,8 @@ def main(args=None):
     parser = argparse.ArgumentParser(description="description: apply bad-pixel-mask to image")
 
     # positional arguments
-    parser.add_argument("fitsfile", help="Input FITS file name", type=argparse.FileType("rb"))
-    parser.add_argument("--bpm", required=True, help="Bad pixel mask", type=argparse.FileType("rb"))
+    parser.add_argument("fitsfile", help="Input FITS file name", type=str)
+    parser.add_argument("--bpm", required=True, help="Bad pixel mask", type=str)
     parser.add_argument(
         "--outfile", required=True, help="Output FITS file name", type=lambda x: arg_file_is_new(parser, x, mode="wb")
     )

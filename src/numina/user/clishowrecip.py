@@ -33,6 +33,7 @@ def register(subparsers, config):
         '-m', '--mode',
         help='filter recipes by mode name'
     )
+# Note that argparse.FileType is deprecated
 #    parser_show_rec.add_argument('--output', type=argparse.FileType('wb', 0))
 
     parser_show_rec.add_argument(

@@ -1,3 +1,12 @@
+#
+# Copyright 2025-2026 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# License-Filename: LICENSE.txt
+#
+
 """Coadd several FITS images or subsets of FITS images listed in a TXT file"""
 
 import argparse
@@ -41,7 +50,7 @@ def main(args=None):
     parser.add_argument("--out_nsum",
                         help="filename for output nsum FITS image "
                              "(default=None)",
-                        type=argparse.FileType('w'),
+                        type=str,
                         default=None)
     parser.add_argument("--debugplot",
                         help="integer indicating plotting/debugging" +
@@ -172,7 +181,7 @@ def main(args=None):
         if args.out_nsum is not None:
             if abs(debugplot) >= 10:
                 print("==> Generating output file: " +
-                      args.out_nsum.name + "...")
+                      args.out_nsum + "...")
             hdu = fits.PrimaryHDU(image2d_nsum.astype(np.int16))
             hdu.writeto(args.out_nsum, overwrite=(not args.noclobber))
 

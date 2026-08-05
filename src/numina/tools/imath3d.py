@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,9 +28,9 @@ def compute_operation(file1, file2, operation, extname1, extname2, dtype):
 
     Parameters
     ----------
-    file1 : file object
+    file1 : str
         First FITS file.
-    file2 : file object or float
+    file2 : str or float
         Second FITS file or float number.
     operation : string
         Mathematical operation.
@@ -118,7 +118,7 @@ def main(args=None):
     # positional parameters
     parser.add_argument("file1",
                         help="First FITS image",
-                        type=argparse.FileType('rb'))
+                        type=str)
     parser.add_argument("operation",
                         help="Arithmetic operation",
                         type=str,

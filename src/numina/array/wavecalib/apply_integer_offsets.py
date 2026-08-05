@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -62,10 +62,12 @@ def main(args=None):
     # required parameters
     parser.add_argument("infile",
                         help="Input FITS image",
-                        type=argparse.FileType('rb'))
+                        type=str
+                        )
     parser.add_argument("outfile",
                         help="Output FITS image",
-                        type=argparse.FileType('wb'))
+                        type=str
+                        )
     # optional arguments
     parser.add_argument("--offx",
                         help="Offset in the X direction (integer)",
