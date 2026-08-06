@@ -493,6 +493,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 def ximshow_file(
     singlefile,
     extnum=1,
+    extname=None,
     args_cmap=None,
     args_cbar_label=None,
     args_cbar_orientation="None",
@@ -521,6 +522,8 @@ def ximshow_file(
         Name of the FITS file to be displayed.
     extnum : int
         Extension number: 1 for first extension (default).
+    extname : string or None
+        Extension name.
     args_cmap : string
         Matplotlib color map.
     args_cbar_label : string
@@ -598,8 +601,14 @@ def ximshow_file(
 
     # read input FITS file
     hdulist = fits.open(singlefile)
-    if extnum is None or extnum < 1 or extnum > len(hdulist):
-        raise ValueError(f"Unexpected extension number {extnum}")
+    if extnum is None and extname is None:
+        raise ValueError("Either extnum or extname must be specified")
+
+    if extnum is not None and (extnum < 1 or extnum > len(hdulist)):
+        raise ValueError(f"Invalid extension number {extnum}. Must be between 1 and {len(hdulist)}")
+    if extnum is None:
+        # get extnum from extname
+        extnum = hdulist.index_of(extname) + 1  # (1-based)
     image_header = hdulist[extnum - 1].header
     image2d = hdulist[extnum - 1].data
     hdulist.close()
@@ -1027,9 +1036,15 @@ def main(args=None):
     # optional arguments
     parser.add_argument(
         "--extnum",
-        help="Extension number in input files (note that " + "first extension is 1 = default value)",
-        default=1,
+        help="Extension number in input files (note that primary extension is 1 = default value)",
         type=int,
+        default=None,
+    )
+    parser.add_argument(
+        "--extname",
+        help="Extension name in input file. Only works for a single file, not for a list of files (use --extnum instead)",
+        type=str,
+        default=None,
     )
     parser.add_argument("--z1z2", help="tuple '[+/-z1, +/-z2]', minmax, zscale or None (=zscale)", type=str)
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
@@ -1069,6 +1084,9 @@ def main(args=None):
 
     if abs(args.debugplot) in [21, 22]:
         print(">> args.filename: ", args.filename)
+
+    if args.extnum is not None and args.extname is not None:
+        raise ValueError("Cannot specify both --extnum and --extname")
 
     if len(args.filename) == 1:
         list_fits_files = []
@@ -1115,6 +1133,7 @@ def main(args=None):
         ximshow_file(
             singlefile=myfile,
             extnum=extnum,
+            extname=args.extname,
             args_z1z2=args.z1z2,
             args_bbox=args.bbox,
             args_firstpix=args.firstpix,
