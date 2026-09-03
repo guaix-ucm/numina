@@ -175,6 +175,8 @@ def measure_xy_offset_2dimages(image1, image2, method, plots):
     # Compute the cross-correlation
     if method == 1:
         # Use the correlate2d function from scipy.signal to compute the cross-correlation
+        # This funcion makes use of correlate2d(..., mode='full', boundary='fill', fillvalue=0),
+        # which is equivalent to zero-padding the images before computing the cross-correlation.
         yx_offsets = yx_offsets_correlate2d(reference_image=image1_rescaled, moving_image=image2_rescaled)
     elif method == 2:
         if plots:
