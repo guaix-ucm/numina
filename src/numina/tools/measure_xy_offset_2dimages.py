@@ -238,6 +238,7 @@ def main(args=None):
         "--test-yoffset", type=float, default=3.0, help="Y offset of the synthetic images (default: 3.0)"
     )
     parser.add_argument("--test-seed", type=int, default=1234, help="Random seed for synthetic images (default: 1234)")
+    parser.add_argument("--save-test-images", action="store_true", help="Save synthetic images to FITS files")
 
     parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
     parser.add_argument("--record", help="Record terminal output", action="store_true")
@@ -271,6 +272,13 @@ def main(args=None):
             noise=args.test_noise,
             seed=args.test_seed,
         )
+        if args.save_test_images:
+            # Save the synthetic images to FITS files
+            image1_fits_path = Path(args.output_dir) / "test1.fits"
+            image2_fits_path = Path(args.output_dir) / "test2.fits"
+            fits.writeto(image1_fits_path, image1_data, overwrite=True)
+            fits.writeto(image2_fits_path, image2_data, overwrite=True)
+            logger.info(f"Synthetic images saved to {image1_fits_path} and {image2_fits_path}")
     else:
         # Check input images
         if args.image1 is None or args.image2 is None:
