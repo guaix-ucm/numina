@@ -121,8 +121,14 @@ def cross_correlation_map2d(img1, img2, normalization="phase"):
     return np.fft.fftshift(np.abs(corr))  # peak centered in the middle of the array, not at the corners
 
 
-def measure_xy_offset_2dimages(image1, image2, method, plots):
+def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale_to_01=True, method=1, plots=False):
     """Determine (X,Y) offsets between 2 2D images using cross-correlation.
+
+    The inputs are two 2D images (numpy arrays) and the output is a tuple
+    with the (x_offset, y_offset) between the two images.
+
+    The input images can be pre-processed by subtracting the median background
+    and/or rescaling to the range [0, 1].
 
     Parameters
     ----------
@@ -130,6 +136,13 @@ def measure_xy_offset_2dimages(image1, image2, method, plots):
         First 2D image.
     image2 : np.ndarray
         Second 2D image.
+    subtract_background : bool
+        Whether to subtract the median background from the images
+        before computing the cross-correlation. This background is estimated
+        as the median of the pixel values in each image.
+    rescale_to_01 : bool
+        Whether to rescale the images to the range [0, 1] before
+        computing the cross-correlation.
     method : int
         Two methods are implemented:
         - method 1: using scipy.signal.correlate2d
@@ -150,27 +163,41 @@ def measure_xy_offset_2dimages(image1, image2, method, plots):
         plt.tight_layout()
         plt.show()
 
-    # Subtract the median to remove background and normalize the images
-    image1_bkg_sub = image1 - np.median(image1)
-    logger.info(f"Image 1 background median: {np.median(image1):.3f}")
-    image2_bkg_sub = image2 - np.median(image2)
-    logger.info(f"Image 2 background median: {np.median(image2):.3f}")
-    if plots:
-        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-        tea.imshow(fig, ax1, image1_bkg_sub, title="Image 1 - Background", ds9mode=True)
-        tea.imshow(fig, ax2, image2_bkg_sub, title="Image 2 - Background", ds9mode=True)
-        plt.tight_layout()
-        plt.show()
+    # Subtract the median background from the images if requested
+    if subtract_background:
+        image1_bkg_sub = image1 - np.median(image1)
+        logger.info(f"Image 1 background median: {np.median(image1):.3f}")
+        image2_bkg_sub = image2 - np.median(image2)
+        logger.info(f"Image 2 background median: {np.median(image2):.3f}")
+        if plots:
+            fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+            tea.imshow(fig, ax1, image1_bkg_sub, title="Image 1 - Background", ds9mode=True)
+            tea.imshow(fig, ax2, image2_bkg_sub, title="Image 2 - Background", ds9mode=True)
+            plt.tight_layout()
+            plt.show()
+    else:
+        logger.warning("Background subtraction is disabled.\n"
+                       " -> This may affect the accuracy of the offset measurement.\n"
+                       " -> Consider using --subtract-background for better results.")
+        image1_bkg_sub = image1
+        image2_bkg_sub = image2
 
-    # Rescale the images
-    image1_rescaled, _ = rescale_array_to_z1z2(image1_bkg_sub, (0, 1))
-    image2_rescaled, _ = rescale_array_to_z1z2(image2_bkg_sub, (0, 1))
-    if plots:
-        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
-        tea.imshow(fig, ax1, image1_rescaled, title="Rescaled Image 1 - Background", ds9mode=True)
-        tea.imshow(fig, ax2, image2_rescaled, title="Rescaled Image 2 - Background", ds9mode=True)
-        plt.tight_layout()
-        plt.show()
+    # Rescale the images if requested
+    if rescale_to_01:
+        image1_rescaled, _ = rescale_array_to_z1z2(image1_bkg_sub, (0, 1))
+        image2_rescaled, _ = rescale_array_to_z1z2(image2_bkg_sub, (0, 1))
+        if plots:
+            fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+            tea.imshow(fig, ax1, image1_rescaled, title="Rescaled Image 1 - Background", ds9mode=True)
+            tea.imshow(fig, ax2, image2_rescaled, title="Rescaled Image 2 - Background", ds9mode=True)
+            plt.tight_layout()
+            plt.show()
+    else:
+        logger.warning("Rescaling to [0, 1] is disabled.\n"
+                       " -> This may affect the accuracy of the offset measurement.\n"
+                       " -> Consider using --rescale-to-01 for better results.")
+        image1_rescaled = image1_bkg_sub
+        image2_rescaled = image2_bkg_sub
 
     # Compute the cross-correlation
     if method == 1:
@@ -212,6 +239,12 @@ def main(args=None):
     parser.add_argument("--image2", type=str, help="Path to the second 2D image")
     parser.add_argument("--extnum1", type=int, default=0, help="Extension number for the first image (default: 0)")
     parser.add_argument("--extnum2", type=int, default=0, help="Extension number for the second image (default: 0)")
+    parser.add_argument("--subtract-background", action="store_true", help="Subtract median background from images")
+    parser.add_argument(
+        "--rescale-to-01",
+        action="store_true",
+        help="Rescale images to the range [0, 1] before computing cross-correlation",
+    )
     parser.add_argument("--method", help="Method (1: scipy (default), 2: skimage)", type=int, choices=[1, 2], default=1)
     parser.add_argument("--plots", action="store_true", help="Generate plots of the images and cross-correlation")
 
@@ -306,7 +339,12 @@ def main(args=None):
 
     # Compute the offsets
     x_offset, y_offset = measure_xy_offset_2dimages(
-        image1=image1_data, image2=image2_data, method=args.method, plots=args.plots
+        image1=image1_data,
+        image2=image2_data,
+        subtract_background=args.subtract_background,
+        rescale_to_01=args.rescale_to_01,
+        method=args.method,
+        plots=args.plots,
     )
     logger.info(f"Computed offsets: x_offset = {x_offset}, y_offset = {y_offset}")
 
