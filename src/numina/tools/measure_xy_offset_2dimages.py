@@ -29,7 +29,7 @@ from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina._version import __version__
 
 
-def simulate_images(fwhm, amplitude, background, noise, xoffset=0, yoffset=0, seed=None):
+def simulate_images(fwhm, amplitude, background, noise, xoffset=0, yoffset=0, num_nans=0, seed=None):
     """Simulate two 2D images with a known offset.
 
     Parameters
@@ -46,6 +46,8 @@ def simulate_images(fwhm, amplitude, background, noise, xoffset=0, yoffset=0, se
         X offset between the two images.
     yoffset : float
         Y offset between the two images.
+    num_nans : int
+        Number of NaN pixels to insert in each image.
     seed : int
         Random seed for reproducibility
 
@@ -85,6 +87,27 @@ def simulate_images(fwhm, amplitude, background, noise, xoffset=0, yoffset=0, se
     image2_data += background  # add background
     image2_data += rng.normal(loc=0.0, scale=noise, size=image2_data.shape).astype(np.float32)  # add noise
 
+    # Insert NaN values in random locations near the borders of both images
+    if num_nans > 0:
+        for _ in range(num_nans):
+            # Randomly choose a pixel near the border of image1
+            loop = True
+            while loop:
+                x_nan1 = rng.integers(0, nx)
+                y_nan1 = rng.integers(0, ny)
+                if x_nan1 < 5 or x_nan1 >= nx - 5 or y_nan1 < 5 or y_nan1 >= ny - 5:
+                    image1_data[y_nan1, x_nan1] = np.nan
+                    loop = False
+
+            # Randomly choose a pixel near the border of image2
+            loop = True
+            while loop:
+                x_nan2 = rng.integers(0, nx)
+                y_nan2 = rng.integers(0, ny)
+                if x_nan2 < 5 or x_nan2 >= nx - 5 or y_nan2 < 5 or y_nan2 >= ny - 5:
+                    image2_data[y_nan2, x_nan2] = np.nan
+                    loop = False
+
     return image1_data, image2_data
 
 
@@ -121,7 +144,9 @@ def cross_correlation_map2d(img1, img2, normalization="phase"):
     return np.fft.fftshift(np.abs(corr))  # peak centered in the middle of the array, not at the corners
 
 
-def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale_to_01=True, method=1, plots=False):
+def measure_xy_offset_2dimages(
+    image1, image2, subtract_background=True, rescale_to_01=True, method=1, plots=False, log_messages=True
+):
     """Determine (X,Y) offsets between 2 2D images using cross-correlation.
 
     The inputs are two 2D images (numpy arrays) and the output is a tuple
@@ -149,6 +174,8 @@ def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale
         - method 2: using skimage.registration.phase_cross_correlations
     plots : bool
         Whether to generate plots of the images and cross-correlation.
+    log_messages : bool
+        Whether to log messages about the processing steps.
 
     Returns
     -------
@@ -156,6 +183,15 @@ def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale
         (x_offset, y_offset) between the two images.
     """
     logger = logging.getLogger(__name__)
+
+    mask1_nan = np.isnan(image1)
+    mask2_nan = np.isnan(image2)
+    num_mask1_nan = np.sum(mask1_nan)
+    num_mask2_nan = np.sum(mask2_nan)
+    if log_messages:
+        logger.info(f"Image 1: {num_mask1_nan} NaN pixels")
+        logger.info(f"Image 2: {num_mask2_nan} NaN pixels")
+
     if plots:
         fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
         tea.imshow(fig, ax1, image1, title="Image 1", ds9mode=True)
@@ -165,10 +201,13 @@ def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale
 
     # Subtract the median background from the images if requested
     if subtract_background:
-        image1_bkg_sub = image1 - np.median(image1)
-        logger.info(f"Image 1 background median: {np.median(image1):.3f}")
-        image2_bkg_sub = image2 - np.median(image2)
-        logger.info(f"Image 2 background median: {np.median(image2):.3f}")
+        bkg1 = np.nanmedian(image1)
+        bkg2 = np.nanmedian(image2)
+        if log_messages:
+            logger.info(f"Image 1 background median: {bkg1:.3f}")
+            logger.info(f"Image 2 background median: {bkg2:.3f}")
+        image1_bkg_sub = image1 - bkg1
+        image2_bkg_sub = image2 - bkg2
         if plots:
             fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
             tea.imshow(fig, ax1, image1_bkg_sub, title="Image 1 - Background", ds9mode=True)
@@ -176,11 +215,30 @@ def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale
             plt.tight_layout()
             plt.show()
     else:
-        logger.warning("Background subtraction is disabled.\n"
-                       " -> This may affect the accuracy of the offset measurement.\n"
-                       " -> Consider using --subtract-background for better results.")
+        if log_messages:
+            logger.warning(
+                "Background subtraction is disabled.\n"
+                " -> This may affect the accuracy of the offset measurement.\n"
+                " -> Consider using --subtract-background for better results."
+            )
         image1_bkg_sub = image1
         image2_bkg_sub = image2
+
+    # Replace NaN values with zeros
+    if num_mask1_nan > 0:
+        image1_bkg_sub = np.nan_to_num(image1_bkg_sub, nan=0.0)
+        if log_messages:
+            logger.warning(f"Image 1: {num_mask1_nan} NaN pixels replaced with zeros.")
+    if num_mask2_nan > 0:
+        image2_bkg_sub = np.nan_to_num(image2_bkg_sub, nan=0.0)
+        if log_messages:
+            logger.warning(f"Image 2: {num_mask2_nan} NaN pixels replaced with zeros.")
+    if num_mask1_nan > 0 or num_mask2_nan > 0 and plots:
+        fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+        tea.imshow(fig, ax1, image1_bkg_sub, title="Image 1 - Background (NaN replaced)", ds9mode=True)
+        tea.imshow(fig, ax2, image2_bkg_sub, title="Image 2 - Background (NaN replaced)", ds9mode=True)
+        plt.tight_layout()
+        plt.show()
 
     # Rescale the images if requested
     if rescale_to_01:
@@ -193,9 +251,12 @@ def measure_xy_offset_2dimages(image1, image2, subtract_background=True, rescale
             plt.tight_layout()
             plt.show()
     else:
-        logger.warning("Rescaling to [0, 1] is disabled.\n"
-                       " -> This may affect the accuracy of the offset measurement.\n"
-                       " -> Consider using --rescale-to-01 for better results.")
+        if log_messages:
+            logger.warning(
+                "Rescaling to [0, 1] is disabled.\n"
+                " -> This may affect the accuracy of the offset measurement.\n"
+                " -> Consider using --rescale-to-01 for better results."
+            )
         image1_rescaled = image1_bkg_sub
         image2_rescaled = image2_bkg_sub
 
@@ -270,6 +331,12 @@ def main(args=None):
     parser.add_argument(
         "--test-yoffset", type=float, default=3.0, help="Y offset of the synthetic images (default: 3.0)"
     )
+    parser.add_argument(
+        "--test-num-nans",
+        type=int,
+        default=20,
+        help="Number of NaN pixels to insert in each synthetic image (default: 20)",
+    )
     parser.add_argument("--test-seed", type=int, default=1234, help="Random seed for synthetic images (default: 1234)")
     parser.add_argument("--save-test-images", action="store_true", help="Save synthetic images to FITS files")
 
@@ -303,6 +370,7 @@ def main(args=None):
             xoffset=args.test_xoffset,
             yoffset=args.test_yoffset,
             noise=args.test_noise,
+            num_nans=args.test_num_nans,
             seed=args.test_seed,
         )
         if args.save_test_images:
