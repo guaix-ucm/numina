@@ -7,7 +7,27 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Determine (X,Y) offsets between 2 2D images using cross-correlation."""
+"""Determine (X,Y) offsets between 2 2D images using cross-correlation.
+
+The inputs are two 2D images (numpy arrays) with the same dimensions.
+
+The computed (X,Y) offsets indicate how much the second image is shifted
+with respect to the first image. The offsets are returned in pixels.
+
+The input images can be pre-processed by subtracting the median background
+and/or rescaling to the range [0, 1].
+
+NaN values in the input images are replaced with zeros before computing
+the cross-correlation.
+
+It is possible to use --test mode to create synthetic images with a known offset,
+which can be used to validate the offset measurement. The synthetic images can also
+be saved to FITS files for further analysis.
+
+Usage examples:
+    numina-measure_xy_offset_2dimages --test --subtract-background --rescale-to-01 --plots
+    numina-measure_xy_offset_2dimages --image1 image1.fits --image2 image2.fits --subtract-background --rescale-to-01 --plots
+"""
 
 import argparse
 from astropy.io import fits
@@ -149,11 +169,17 @@ def measure_xy_offset_2dimages(
 ):
     """Determine (X,Y) offsets between 2 2D images using cross-correlation.
 
-    The inputs are two 2D images (numpy arrays) and the output is a tuple
-    with the (x_offset, y_offset) between the two images.
+    The inputs are two 2D images (numpy arrays) with the same dimensions,
+    and the output is a tuple with the (x_offset, y_offset) between the two images.
+
+    The computed offsets indicate how much the second image is shifted
+    with respect to the first image. The offsets are returned in pixels.
 
     The input images can be pre-processed by subtracting the median background
     and/or rescaling to the range [0, 1].
+
+    NaN values in the input images are replaced with zeros before computing
+    the cross-correlation.
 
     Parameters
     ----------
