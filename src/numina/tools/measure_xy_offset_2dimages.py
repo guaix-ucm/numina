@@ -233,7 +233,7 @@ def measure_xy_offset_2dimages(
         image2_bkg_sub = np.nan_to_num(image2_bkg_sub, nan=0.0)
         if log_messages:
             logger.warning(f"Image 2: {num_mask2_nan} NaN pixels replaced with zeros.")
-    if num_mask1_nan > 0 or num_mask2_nan > 0 and plots:
+    if (num_mask1_nan > 0 or num_mask2_nan > 0) and plots:
         fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
         tea.imshow(fig, ax1, image1_bkg_sub, title="Image 1 - Background (NaN replaced)", ds9mode=True)
         tea.imshow(fig, ax2, image2_bkg_sub, title="Image 2 - Background (NaN replaced)", ds9mode=True)
