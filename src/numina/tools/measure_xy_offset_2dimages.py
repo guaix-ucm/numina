@@ -440,7 +440,7 @@ def main(args=None):
         method=args.method,
         plots=args.plots,
     )
-    logger.info(f"Computed offsets: x_offset = {x_offset}, y_offset = {y_offset}")
+    logger.info(f"Computed offsets (pixels): x_offset = {x_offset}, y_offset = {y_offset}")
 
     # Execution time
     datetime_end = datetime.now()
