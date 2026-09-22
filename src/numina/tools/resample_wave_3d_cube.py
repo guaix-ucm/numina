@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,6 +14,7 @@ import argparse
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
+import logging
 import numpy as np
 from rich import print
 from rich_argparse import RichHelpFormatter
@@ -24,7 +25,7 @@ from numina.instrument.simulation.ifu.define_3d_wcs \
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 
 
-def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=False):
+def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     """Resample a 3D cube to a new wavelength sampling.
 
     The celestial WCS is preserved, and the spectral WCS is modified
@@ -40,14 +41,14 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
         Wavelength step for the output image.
     naxis3out : int
         Number of slices in the output image.
-    verbose : bool, optional
-        If True, display intermediate information.
 
     Returns
     -------
     resampled_hdu : `astropy.io.fits.ImageHDU`
         Resampled HDU instance with the 3D image.
     """
+    logger = logging.getLogger(__name__)
+
     # protections
     if not isinstance(hdu3d_image, fits.ImageHDU) and not isinstance(hdu3d_image, fits.PrimaryHDU):
         raise ValueError("Input HDU must be an ImageHDU or PrimaryHDU.")
@@ -81,13 +82,11 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
         if np.all(np.allclose(old_wl_borders, new_wl_borders)):
             resampled_data = hdu3d_image.data.astype(np.float32)
             resample_needed = False
-            if verbose:
-                print("Old and new wavelength borders are the same.\n"
-                      "-> Copying original data without spectral resampling.")
+            logger.debug("Old and new wavelength borders are the same.\n"
+                         "-> Copying original data without spectral resampling.")
 
     if resample_needed:
-        if verbose:
-            print("Spectral resampling of the original 3D cube...", end=' ')
+        logger.debug("Spectral resampling of the original 3D cube...", end=' ')
         # resample the 3D cube (see wavecal.py in teareduce for reference)
         resampled_data = np.zeros((naxis3out, naxis2, naxis1))
         for i in range(naxis1):
@@ -104,8 +103,7 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out, verbose=
                     right=np.nan
                 )
                 resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
-        if verbose:
-            print("resampling completed!")
+        logger.debug("resampling completed!")
 
     # create new HDU with resampled data
     resampled_hdu = fits.PrimaryHDU(data=resampled_data.astype(np.float32))
@@ -146,22 +144,17 @@ def main(args=None):
     parser.add_argument("--extname", type=str,
                         help="Extension name of the input HDU (default: 'PRIMARY').",
                         default='PRIMARY')
-    parser.add_argument("--verbose",
-                        help="Display intermediate information",
-                        action="store_true")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
 
     args = parser.parse_args(args)
 
+    logger = logging.getLogger(__name__)
+
     if len(sys.argv) == 1:
         parser.print_usage()
         raise SystemExit()
-
-    if args.verbose:
-        for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
 
     if args.echo:
         print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
@@ -176,45 +169,37 @@ def main(args=None):
         cdelt3out = cdelt3out * u.m / u.pix
     naxis3out = args.naxis3out
     extname = args.extname
-    verbose = args.verbose
 
     with fits.open(input_file) as hdul:
         if extname not in hdul:
             raise ValueError(f"Extension '{extname}' not found in {input_file}.")
         hdu3d_image = hdul[extname].copy()
-        if verbose:
-            print(f"{hdu3d_image.header['NAXIS1']=}")
-            print(f"{hdu3d_image.header['NAXIS2']=}")
-            print(f"{hdu3d_image.header['NAXIS3']=}")
+        logger.info(f"Loaded {hdu3d_image.header['NAXIS1']=}")
+        logger.info(f"Loaded {hdu3d_image.header['NAXIS2']=}")
+        logger.info(f"Loaded {hdu3d_image.header['NAXIS3']=}")
 
     if crval3out is None or cdelt3out is None:
         wcs1d_spectral = WCS(hdu3d_image.header).spectral
         wave = wcs1d_spectral.pixel_to_world(np.arange(hdu3d_image.data.shape[0]))
         if crval3out is None:
             crval3out = wave[0]
-            if verbose:
-                print(f"Assuming {crval3out=}.")
+            logger.info(f"Assuming {crval3out=}.")
         if cdelt3out is None:
             cdelt3out = (wave[1] - wave[0]) / u.pix
-            if verbose:
-                print(f"Assuming {cdelt3out=}.")
+            logger.info(f"Assuming {cdelt3out=}.")
 
     if naxis3out is None:
         naxis3out = hdu3d_image.data.shape[0]
-        if verbose:
-            print(f"Assuming {naxis3out=}.")
+        logger.info(f"Assuming {naxis3out=}.")
 
     resampled_hdu = resample_wave_3d_cube(
         hdu3d_image=hdu3d_image,
         crval3out=crval3out,
         cdelt3out=cdelt3out,
         naxis3out=naxis3out,
-        verbose=verbose
     )
 
     add_script_info_to_fits_history(resampled_hdu.header, args)
-    if verbose:
-        print(f'[bold green]Saving: {output_file}[/bold green]')
     resampled_hdu.writeto(output_file, overwrite=True)
 
 

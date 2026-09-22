@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -16,17 +16,20 @@ import astropy.units as u
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
 from datetime import datetime
+import logging
 import numpy as np
 from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
-from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
+from numina.tools.initialize_script_with_args import initialize_script_with_args
+
+from numina._version import __version__
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .resample_wave_3d_cube import resample_wave_3d_cube
@@ -45,7 +48,6 @@ def generate_mosaic_of_3d_cubes(
         parallel,
         output_celestial_2d_wcs,
         footprint=False,
-        verbose=False
 ):
     """Combine 3D cubes using their WCS information.
 
@@ -76,8 +78,6 @@ def generate_mosaic_of_3d_cubes(
         Path to output 2D celestial WCS.
     footprint : bool
         If True, generate a FOOTPRINT extension with the final footprint.
-    verbose : bool
-        If True, display additional information.
 
     Returns
     -------
@@ -86,6 +86,8 @@ def generate_mosaic_of_3d_cubes(
         - PRIMARY: mosaic image
         - FOOTPRINT: array with final footprint
     """
+    logger = logging.getLogger(__name__)
+
     # protections
     if not isinstance(list_of_fits_files, list):
         raise TypeError('list_of_fits_files must be a list')
@@ -97,8 +99,7 @@ def generate_mosaic_of_3d_cubes(
         raise TypeError('naxis3out must be an integer')
 
     nimages = len(list_of_fits_files)
-    if verbose:
-        print(f'Total number of images to be combined: {nimages}')
+    logger.info(f'Total number of images to be combined: {nimages}')
 
     if nimages < 1:
         raise ValueError('Number of images = 0')
@@ -112,8 +113,7 @@ def generate_mosaic_of_3d_cubes(
             if extname_image not in hdul:
                 raise ValueError(f'Expected {extname_image} extension not found')
             hdu = hdul[extname_image]
-            if verbose:
-                print(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
+            logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
             wcs1d_spectral = WCS(hdu.header).spectral
             wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
         if crval3out_ is None:
@@ -148,14 +148,12 @@ def generate_mosaic_of_3d_cubes(
     header_spectral_mosaic['CUNIT1'] = 'm'
     header_spectral_mosaic['CTYPE1'] = 'WAVE'
     wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
-    if verbose:
-        print(f'\n{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n')
-        print(f'{wcs1d_spectral_mosaic=}')
+    logger.info(f'{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n')
+    logger.info(f'{wcs1d_spectral_mosaic=}')
 
     # optimal 2D WCS (celestial part) for combined mosaic
     if desired_celestial_2d_wcs is None:
-        if verbose:
-            print('\nCelestial scales:')
+        logger.info('\nCelestial scales:')
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
         for i, fname in enumerate(list_of_fits_files):
@@ -164,28 +162,23 @@ def generate_mosaic_of_3d_cubes(
             header3d = hdu.header
             wcs2d = WCS(header3d).celestial
             scales = proj_plane_pixel_scales(wcs2d)
-            if verbose:
-                print(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
+            logger.info(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
             list_of_inputs.append(((header3d['NAXIS2'], header3d['NAXIS1']), wcs2d))
         wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
         scales = proj_plane_pixel_scales(wcs_mosaic2d)
-        if verbose:
-            print(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
+        logger.info(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
     else:
         # make use of an external celestial WCS projection
-        if verbose:
-            print(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}')
+        logger.info(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}')
         with fits.open(desired_celestial_2d_wcs) as hdul_mosaic2d:
             wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
             shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
-    if verbose:
-        print(f'\n{wcs_mosaic2d=}')
-        print(f'\n{shape_mosaic2d=}')
+    logger.info(f'\n{wcs_mosaic2d=}')
+    logger.info(f'\n{shape_mosaic2d=}')
     if output_celestial_2d_wcs is not None:
         header_2d_wcs = wcs_to_header_using_cd_keywords(wcs_mosaic2d)
         hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
-        if verbose:
-            print(f'Saving resulting celestial 2D WCS to: {output_celestial_2d_wcs}')
+        logger.info(f'Saving resulting celestial 2D WCS to: {output_celestial_2d_wcs}')
         hdu.writeto(output_celestial_2d_wcs, overwrite=True)
 
     # initialize arrays to store combination
@@ -193,32 +186,28 @@ def generate_mosaic_of_3d_cubes(
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
-    if verbose:
-        print(f'\nNAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}')
-        size_output = array_size_32bits(mosaic3d_cube_by_cube)
-        if footprint:
-            size_output += array_size_8bits(footprint3d)
-        print(f'Combined image will require {size_output:.2f}')
+    logger.info(f'\nNAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}')
+    size_output = array_size_32bits(mosaic3d_cube_by_cube)
+    if footprint:
+        size_output += array_size_8bits(footprint3d)
+    logger.info(f'Combined image will require {size_output:.2f}')
 
     # generate 3D mosaic
     for fname in list_of_fits_files:
         time_ini = datetime.now()
-        if verbose:
-            print(f'\n* Working with: {fname}')
+        logger.info(f'\n* Working with: {fname}')
         with fits.open(fname) as hdul:
             hdu = hdul[extname_image]
             single_hdu3d = resample_wave_3d_cube(
                 hdu3d_image=hdu,
                 crval3out=crval3out,
                 cdelt3out=cdelt3out,
-                naxis3out=naxis3out,
-                verbose=verbose
+                naxis3out=naxis3out
             )
         data_ini3d = single_hdu3d.data
         wcs_ini3d = WCS(single_hdu3d.header)
         wcs_ini2d = wcs_ini3d.celestial
-        if verbose:
-            print(f'Celestial WCS reprojection method: {reproject_method}')
+        logger.info(f'Celestial WCS reprojection method: {reproject_method}')
         if reproject_method == 'interp':
             temp3d, footprint_temp3d = reproject_interp(
                 (data_ini3d, wcs_ini2d),
@@ -248,8 +237,7 @@ def generate_mosaic_of_3d_cubes(
         mosaic3d_cube_by_cube[valid_region] += temp3d[valid_region]
         footprint3d += footprint_temp3d
         time_end = datetime.now()
-        if verbose:
-            print(f'Processing time for {fname}: {time_end - time_ini}')
+        logger.info(f'Processing time for {fname}: {time_end - time_ini}')
 
     valid_region = (footprint3d > 0)
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
@@ -276,7 +264,8 @@ def generate_mosaic_of_3d_cubes(
 
 def main(args=None):
 
-    time_ini = datetime.now()
+    datetime_ini = datetime.now()
+
     # parse command-line options
     parser = argparse.ArgumentParser(
         description="Generate a 3D mosaic from individual 3D cubes",
@@ -310,25 +299,22 @@ def main(args=None):
     parser.add_argument("--footprint",
                         help="Generate a FOOTPRINT extension with the final footprint",
                         action="store_true")
-    parser.add_argument("--verbose",
-                        help="Display intermediate information",
-                        action="store_true")
+    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default='.')
+    parser.add_argument("--record", help="Record terminal output", action="store_true")
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
-
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO"
+    )
     args = parser.parse_args(args)
 
-    if len(sys.argv) == 1:
-        parser.print_usage()
-        raise SystemExit()
-
-    if args.verbose:
-        for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
-
-    if args.echo:
-        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
+    # Initialize the script with the provided arguments
+    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_list = args.input_list
     output_filename = args.output_filename
@@ -346,7 +332,6 @@ def main(args=None):
         raise ValueError(f'Unexpected reproject_method: {reproject_method}. Expected one of {REPROJECT_METHODS}')
     output_celestial_2d_wcs = args.output_celestial_2d_wcs
     footprint = args.footprint
-    verbose = args.verbose
 
     # define extensions for image and mask
     extname_image = args.extname_image
@@ -381,7 +366,6 @@ def main(args=None):
         parallel=parallel,
         output_celestial_2d_wcs=output_celestial_2d_wcs,
         footprint=footprint,
-        verbose=verbose
     )
 
     # save result
@@ -389,14 +373,26 @@ def main(args=None):
     output_hdul[0].header.add_history('Contents of --input_list:')
     for item in list_of_fits_files:
         output_hdul[0].header.add_history(f'- {item}')
-    if verbose:
-        print(f'Saving: {output_filename}')
+    logger.info(f'Saving: {output_filename}')
     output_hdul.writeto(output_filename, overwrite='yes')
 
-    time_end = datetime.now()
-    if verbose:
-        print(f'\nTotal time: {time_end - time_ini}')
-        print('Done!')
+    # Execution time
+    datetime_end = datetime.now()
+    time_elapsed = datetime_end - datetime_ini
+    logger.info("Total time elapsed: %s", str(time_elapsed))
+
+    # Goodbye message
+    console.rule("[bold magenta] Goddbye! [/bold magenta]")
+
+    # Save console log if recording is enabled
+    if args.record:
+        output_dir_path = Path(args.output_dir)
+        if not output_dir_path.exists():
+            output_dir_path.mkdir(parents=True, exist_ok=True)
+        log_filename = Path(args.output_dir) / "terminal_output.txt"
+        with open(log_filename, "wt") as f:
+            f.write(console.export_text(styles=True))
+        logger.info(f"terminal output recorded in [green]{log_filename}[/green]")
 
 
 if __name__ == "__main__":
