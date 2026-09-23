@@ -114,8 +114,15 @@ def generate_mosaic_of_3d_cubes(
                 raise ValueError(f'Expected {extname_image} extension not found')
             hdu = hdul[extname_image]
             logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
-            wcs1d_spectral = WCS(hdu.header).spectral
+            hdr_copy = hdu.header.copy()
+            # remove keywords that may cause issues
+            for key in ['OBSGEO-X', 'OBSGEO-Y', 'OBSGEO-Z', 'OBSGEO-L', 'OBSGEO-B', 'OBSGEO-H']:
+                hdr_copy.remove(key, ignore_missing=True)
+            wcs1d_spectral = WCS(hdr_copy).spectral
             wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
+            logger.info(f"file: {fname}, {wcs1d_spectral=}")
+            logger.info(f"file: {fname}, {wave=}")
+            input("Press Enter to continue...")
         if crval3out_ is None:
             crval3out_ = wave[0]
         else:
@@ -159,11 +166,14 @@ def generate_mosaic_of_3d_cubes(
         for i, fname in enumerate(list_of_fits_files):
             with fits.open(fname) as hdul:
                 hdu = hdul[extname_image]
-            header3d = hdu.header
-            wcs2d = WCS(header3d).celestial
+            header3d_copy = hdu.header.copy()
+            # remove keywords that may cause issues
+            for key in ['OBSGEO-X', 'OBSGEO-Y', 'OBSGEO-Z', 'OBSGEO-L', 'OBSGEO-B', 'OBSGEO-H']:
+                header3d_copy.remove(key, ignore_missing=True)
+            wcs2d = WCS(header3d_copy).celestial
             scales = proj_plane_pixel_scales(wcs2d)
             logger.info(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
-            list_of_inputs.append(((header3d['NAXIS2'], header3d['NAXIS1']), wcs2d))
+            list_of_inputs.append(((header3d_copy['NAXIS2'], header3d_copy['NAXIS1']), wcs2d))
         wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
         scales = proj_plane_pixel_scales(wcs_mosaic2d)
         logger.info(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')

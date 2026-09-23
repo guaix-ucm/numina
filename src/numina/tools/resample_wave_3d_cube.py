@@ -64,8 +64,14 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     # get shape of the input 3D cube
     naxis3, naxis2, naxis1 = hdu3d_image.data.shape
 
+    # create a copy of the header to avoid modifying the original
+    header3d_copy = hdu3d_image.header.copy()
+    # remove keywords that may cause issues
+    for key in ['OBSGEO-X', 'OBSGEO-Y', 'OBSGEO-Z', 'OBSGEO-L', 'OBSGEO-B', 'OBSGEO-H']:
+        header3d_copy.remove(key, ignore_missing=True)
+
     # initial pixel borders in the spectral axis
-    old_wcs1d_spectral = WCS(hdu3d_image.header).spectral
+    old_wcs1d_spectral = WCS(header3d_copy).spectral
     old_wl_borders = old_wcs1d_spectral.pixel_to_world(np.arange(naxis3+1)-0.5)
     # modify slightly the first and last values to avoid numerical issues
     deltawave = old_wl_borders[1] - old_wl_borders[0]
@@ -117,7 +123,7 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     header_spectral_resampled['CTYPE1'] = 'WAVE'
     wcs1d_spectral_resampled = WCS(header_spectral_resampled)
     header_resampled = header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral(
-        wcs2d_celestial=WCS(hdu3d_image.header).celestial,
+        wcs2d_celestial=WCS(header3d_copy).celestial,
         wcs1d_spectral=wcs1d_spectral_resampled
     )
     resampled_hdu.header.update(header_resampled)
