@@ -13,7 +13,16 @@ import time
 
 
 class ProgressBarLines:
-    """Progress bar that logs complete lines."""
+    """Progress bar that logs complete lines.
+
+    Usage in a script:
+
+    num = 100  # for example
+    pbar = ProgressBarLines(total=num, logger=logger)
+    for i in range(num):
+        # do some work
+        pbar.update()
+    """
 
     def __init__(self, total=None, logger=None):
         if total is None or logger is None:
@@ -44,7 +53,9 @@ class ProgressBarLines:
 
                 self.progress_line += f" {milestone}%"
                 padded = self.progress_line.ljust(self.label_width, "_")
-                line_to_show = f"{padded} (elap={self._fmt(elapsed)}|left={self._fmt(eta)}|exp={self._fmt(elapsed + eta)})"
+                line_to_show = (
+                    f"{padded} (elap={self._fmt(elapsed)}|left={self._fmt(eta)}|exp={self._fmt(elapsed + eta)})"
+                )
                 self.logger.info(line_to_show)
 
     @staticmethod

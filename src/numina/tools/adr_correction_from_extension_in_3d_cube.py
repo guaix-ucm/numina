@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,27 +8,34 @@
 #
 
 """Apply ADR correction using offsets from FITS extension"""
+
 import argparse
 
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
 from datetime import datetime
+import logging
 import numpy.ma as ma
 from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 import sys
 
-REPROJECT_METHODS = ['interp', 'adaptive', 'exact']
+from numina.tools.initialize_script_with_args import initialize_script_with_args
+from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
+from numina.tools.progressbarlines import ProgressBarLines
+
+from numina._version import __version__
+
+REPROJECT_METHODS = ["interp", "adaptive", "exact"]
 
 
 def apply_adr_correction_from_extension_in_3d_cube(
-        hdul,
-        extname_adr,
-        extname_mask,
-        final_celestial_wcs,
-        reproject_method,
-        verbose=False,
+    hdul,
+    extname_adr,
+    extname_mask,
+    final_celestial_wcs,
+    reproject_method,
 ):
     """Apply ADR correction using offsets from FITS extension.
 
@@ -46,8 +53,6 @@ def apply_adr_correction_from_extension_in_3d_cube(
         compute output celestial WCS for current 3D cube.
     reproject_method : str
         Reprojection method. See 'REPROJECT_METHODS' above.
-    verbose : bool
-        If True, display additional information.
 
     Returns
     -------
@@ -56,6 +61,8 @@ def apply_adr_correction_from_extension_in_3d_cube(
         - PRIMARY: corrected image
         - MASK: array with masked pixels
     """
+    logger = logging.getLogger(__name__)
+
     primary_header = hdul[0].header
     if primary_header["NAXIS"] != 3:
         raise ValueError("Expected NAXIS=3 not found in PRIMARY HDU")
@@ -65,8 +72,7 @@ def apply_adr_correction_from_extension_in_3d_cube(
     if extname_adr not in hdul:
         raise ValueError(f"Extension '{extname_adr}' not found in FITS file.")
     else:
-        if verbose:
-            print(f'Reading ADR correction from {extname_adr} extension')
+        logger.info(f"Reading ADR correction from {extname_adr} extension")
         table_adrcross = hdul[extname_adr].data.copy()
     # read mask or generate one from np.nan
     if extname_mask is None:
@@ -75,39 +81,34 @@ def apply_adr_correction_from_extension_in_3d_cube(
         if extname_mask not in hdul:
             raise ValueError(f"Extension '{extname_mask}' not found in FITS file.")
         else:
-            if verbose:
-                print(f'Reading mask from {extname_mask} extension')
+            logger.info(f"Reading mask from {extname_mask} extension")
             hdu3d_mask = hdul[extname_mask]
-            bitpix_mask = hdu3d_mask.header['BITPIX']
+            bitpix_mask = hdu3d_mask.header["BITPIX"]
             if bitpix_mask != 8:
                 raise ValueError(f"BITPIX (mask): {bitpix_mask} is not 8")
             if data3d.shape != hdu3d_mask.data.shape:
                 raise ValueError(f"Shape of PRIMARY and {extname_mask} are different")
     # generate mask from np.nan when necessary
     if hdu3d_mask is None:
-        if verbose:
-            print("Generating mask from np.nan in PRIMARY HDU")
+        logger.info("Generating mask from np.nan in PRIMARY HDU")
         mask3d = np.isnan(data3d).astype(np.uint8)
     else:
         mask3d = hdu3d_mask.data.copy()
     num_masked_pixels_in_data3d = mask3d.sum()
-    if verbose:
-        print(f"Number of masked pixels in the input 3D array: {num_masked_pixels_in_data3d}")
+    logger.info(f"Number of masked pixels in the input 3D array: {num_masked_pixels_in_data3d}")
 
     # input 3D WCS
     wcs3d = WCS(primary_header)
     naxis1, naxis2, naxis3 = wcs3d.pixel_shape
 
     # ADR at the center of the field of view
-    delta_x_center_ifu = table_adrcross['Delta_x']
-    delta_y_center_ifu = table_adrcross['Delta_y']
+    delta_x_center_ifu = table_adrcross["Delta_x"]
+    delta_y_center_ifu = table_adrcross["Delta_y"]
     x_center_ifu, y_center_ifu = wcs3d.celestial.wcs.crpix  # FITS convention
     center_ifu_coord = wcs3d.celestial.pixel_to_world(
-        x_center_ifu - 1.0,  # Python convention
-        y_center_ifu - 1.0   # Python convention
+        x_center_ifu - 1.0, y_center_ifu - 1.0  # Python convention  # Python convention
     )
-    if verbose:
-        print(f'Center IFU coord: {center_ifu_coord}')
+    logger.info(f"Center IFU coord: {center_ifu_coord}")
     x_center_ifu_corrected = x_center_ifu + delta_x_center_ifu
     y_center_ifu_corrected = y_center_ifu + delta_y_center_ifu
 
@@ -116,42 +117,34 @@ def apply_adr_correction_from_extension_in_3d_cube(
         # compute final celestial WCS for this 3D cube
         wcs2d_blue = wcs3d.celestial.deepcopy()
         wcs2d_blue.wcs.crpix = np.array([x_center_ifu_corrected[0], y_center_ifu_corrected[0]])
-        if verbose:
-            print(f"\nwcs2d_blue:\n{wcs2d_blue}")
+        logger.info(f"\nwcs2d_blue:\n{wcs2d_blue}")
         wcs2d_red = wcs3d.celestial.deepcopy()
         wcs2d_red.wcs.crpix = np.array([x_center_ifu_corrected[-1], y_center_ifu_corrected[-1]])
-        if verbose:
-            print(f"\nwcs2d_red:\n{wcs2d_red}")
+        logger.info(f"\nwcs2d_red:\n{wcs2d_red}")
         wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(
-            input_data=[
-                ((naxis2, naxis1), wcs2d_blue),
-                ((naxis2, naxis1), wcs2d_red)
-            ],
-            auto_rotate=False
+            input_data=[((naxis2, naxis1), wcs2d_blue), ((naxis2, naxis1), wcs2d_red)], auto_rotate=False
         )
     else:
         # make use of an external celestial WCS projection
         with fits.open(final_celestial_wcs) as hdul_mosaic2d:
             wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
-            shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
-    if verbose:
-        print(f"\nwcs_mosaic2d:\n{wcs_mosaic2d}")
-        print(f"shape_mosaic2d: {shape_mosaic2d}")
+            shape_mosaic2d = hdul_mosaic2d[0].header["NAXIS2"], hdul_mosaic2d[0].header["NAXIS1"]
+    logger.info(f"\nwcs_mosaic2d:\n{wcs_mosaic2d}")
+    logger.info(f"shape_mosaic2d: {shape_mosaic2d}")
 
     # initialize corrected 3D cube (using a masked array!)
     naxis3_corrected3d = naxis3
     naxis2_corrected3d, naxis1_corrected3d = shape_mosaic2d
-    if verbose:
-        print("NAXIS1, NAXIS2, NAXIS3 of corrected 3D cube: "
-              f"{naxis1_corrected3d}, {naxis2_corrected3d}, {naxis3_corrected3d}")
+    logger.info(
+        "NAXIS1, NAXIS2, NAXIS3 of corrected 3D cube: "
+        f"{naxis1_corrected3d}, {naxis2_corrected3d}, {naxis3_corrected3d}"
+    )
     shape_corrected3d = (naxis3_corrected3d, naxis2_corrected3d, naxis1_corrected3d)
-    array3d_corrected = ma.array(np.zeros(shape_corrected3d),
-                                 mask=np.full(shape_corrected3d, fill_value=False))
+    array3d_corrected = ma.array(np.zeros(shape_corrected3d), mask=np.full(shape_corrected3d, fill_value=False))
 
     # compute corrected 3D cube slice by slice
     wcs2d = wcs3d.celestial.deepcopy()
-    if verbose:
-        print(f"Reprojection method: {reproject_method} (please wait...)")
+    logger.info(f"Reprojection method: {reproject_method} (please wait...)")
     time_ini = datetime.now()
     """
     # alternative code for debugging purposes
@@ -160,6 +153,10 @@ def apply_adr_correction_from_extension_in_3d_cube(
     combined_range = list(x for r in (range1, range2) for x in r)
     for k in combined_range:
     """
+    # avoid INFO messages from reproject package
+    logging.getLogger("reproject").setLevel(logging.WARNING)
+    # loop over slices of the 3D cube, applying ADR correction and reprojection
+    pbar = ProgressBarLines(total=naxis3, logger=logger)
     for k in range(naxis3):
         wcs2d.wcs.crpix = np.array([x_center_ifu_corrected[k], y_center_ifu_corrected[k]])
         data2d = data3d[k, :, :]
@@ -188,7 +185,7 @@ def apply_adr_correction_from_extension_in_3d_cube(
                 output_projection=wcs_mosaic2d,
                 shape_out=shape_mosaic2d,
                 conserve_flux=True,
-                kernel='Gaussian'
+                kernel="Gaussian",
             )
             if num_masked_pixels_in_data3d > 0:
                 mask2d_resampled, _ = reproject_adaptive(
@@ -196,7 +193,7 @@ def apply_adr_correction_from_extension_in_3d_cube(
                     output_projection=wcs_mosaic2d,
                     shape_out=shape_mosaic2d,
                     conserve_flux=True,
-                    kernel='Gaussian'
+                    kernel="Gaussian",
                 )
             else:
                 mask2d_resampled = None
@@ -219,13 +216,13 @@ def apply_adr_correction_from_extension_in_3d_cube(
         array3d_corrected[k, :, :] = data2d_resampled
         if mask2d_resampled is None:
             # use only the footprint
-            array3d_corrected[k, :, :].mask = (footprint_data2d_resampled == 0)
+            array3d_corrected[k, :, :].mask = footprint_data2d_resampled == 0
         else:
             # merge corrected mask with footprint
             array3d_corrected[k, :, :].mask = np.logical_or(
-                np.logical_or(mask2d_resampled, mask2d_resampled==np.nan),
-                (footprint_data2d_resampled == 0)
+                np.logical_or(mask2d_resampled, mask2d_resampled == np.nan), (footprint_data2d_resampled == 0)
             )
+        pbar.update()
 
     time_end = datetime.now()
 
@@ -233,39 +230,36 @@ def apply_adr_correction_from_extension_in_3d_cube(
     footprint3d_corrected = np.ones_like(array3d_corrected)
     footprint3d_corrected[np.isnan(array3d_corrected)] = 0
 
-    if verbose:
-        print(f"Reprojection finished! (elapsed time: {(time_end - time_ini).total_seconds()} seconds)")
-        print("\nFlux check:")
-        flux1 = np.sum(data3d)
-        flux2 = np.nansum(array3d_corrected)
-        print(f"- total counts in original  3D cube: {flux1}")
-        print(f"- total counts in corrected 3D cube: {flux2}")
-        print(f"- ratio original/corrected.........: {flux1/flux2}")
-        print(f"\nFootprint coverage (fraction): {np.sum(footprint3d_corrected) / footprint3d_corrected.size}")
+    logger.info(f"Reprojection finished! (elapsed time: {(time_end - time_ini).total_seconds()} seconds)")
+    logger.info("\nFlux check:")
+    flux1 = np.sum(data3d)
+    flux2 = np.nansum(array3d_corrected)
+    logger.info(f"- total counts in original  3D cube: {flux1}")
+    logger.info(f"- total counts in corrected 3D cube: {flux2}")
+    logger.info(f"- ratio original/corrected.........: {flux1/flux2}")
+    logger.info(f"\nFootprint coverage (fraction): {np.sum(footprint3d_corrected) / footprint3d_corrected.size}")
 
     # generate single 3D WCS combining the celestial and spectral axes
     header3d_corrected = wcs_mosaic2d.to_header()
     header_spectral = wcs3d.spectral.to_header()
-    header3d_corrected['WCSAXES'] = 3
-    for item in ['CRPIX', 'CDELT', 'CUNIT', 'CTYPE', 'CRVAL']:
+    header3d_corrected["WCSAXES"] = 3
+    for item in ["CRPIX", "CDELT", "CUNIT", "CTYPE", "CRVAL"]:
         # insert {item}3 after {item}2 to preserve the order in the header
         header3d_corrected.insert(
-            f'{item}2',
-            (f'{item}3', header_spectral[f'{item}1'], header_spectral.comments[f'{item}1']),
-            after=True)
+            f"{item}2", (f"{item}3", header_spectral[f"{item}1"], header_spectral.comments[f"{item}1"]), after=True
+        )
     # IMPORTANT: CDELT3 needs to be recomputed
     # (one option is to use PC3_3 if CDELT3=1; another one is to compute 1 pixel increment)
-    header3d_corrected['CDELT3'] =  wcs3d.spectral.pixel_to_world(2).value - wcs3d.spectral.pixel_to_world(1).value
-    if verbose:
-        print("\nheader3d_corrected:")
-        for line in header3d_corrected.cards:
-            print(line)
+    header3d_corrected["CDELT3"] = wcs3d.spectral.pixel_to_world(2).value - wcs3d.spectral.pixel_to_world(1).value
+    logger.info("\nheader3d_corrected:")
+    for line in header3d_corrected.cards:
+        logger.info(line)
 
     # generate result
     hdu = fits.PrimaryHDU(array3d_corrected.data.astype(np.float32))
     hdu.header.update(header3d_corrected)
     hdu_mask = fits.ImageHDU(data=array3d_corrected.mask.astype(np.uint8))
-    hdu_mask.header['EXTNAME'] = 'MASK'
+    hdu_mask.header["EXTNAME"] = "MASK"
     hdu_mask.header.update(header3d_corrected)
     output_hdul = fits.HDUList([hdu, hdu_mask])
 
@@ -273,42 +267,46 @@ def apply_adr_correction_from_extension_in_3d_cube(
 
 
 def main(args=None):
+    datetime_ini = datetime.now()
+
     # parse command-line options
     parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube")
     parser.add_argument("inputfile", help="Input 3D FITS file", type=str)
-    parser.add_argument("--extname_adr", help="Name of the extension with ADR correction",
-                        type=str, default=None)
-    parser.add_argument("--extname_mask",
-                        help="Name of the extension with mask in input 3D cube. "
-                        "Default 'None': use np.nan in image",
-                        default=None, type=str)
-    parser.add_argument("--final_celestial_wcs",
-                        help="Final celestial WCS projection. Default None (compute for current 3D cube)",
-                        type=str, default=None)
-    parser.add_argument("--output", help="Output filename",
-                        type=str, default=None)
-    parser.add_argument('--reproject_method',
-                        help='Reprojection method (interp, adaptive, exact)',
-                        type=str, choices=REPROJECT_METHODS, default='adaptive')
-    parser.add_argument("--verbose",
-                        help="Display intermediate information",
-                        action="store_true")
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
-
+    parser.add_argument("--extname-adr", help="Name of the extension with ADR correction", type=str, default=None)
+    parser.add_argument(
+        "--extname-mask",
+        help="Name of the extension with mask in input 3D cube. " "Default 'None': use np.nan in image",
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
+        "--final-celestial-wcs",
+        help="Final celestial WCS projection. Default None (compute for current 3D cube)",
+        type=str,
+        default=None,
+    )
+    parser.add_argument("--output", help="Output filename", type=str, default=None)
+    parser.add_argument(
+        "--reproject-method",
+        help="Reprojection method (interp, adaptive, exact)",
+        type=str,
+        choices=REPROJECT_METHODS,
+        default="adaptive",
+    )
+    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    parser.add_argument("--record", help="Record terminal output", action="store_true")
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    )
     args = parser.parse_args(args)
 
-    if len(sys.argv) == 1:
-        parser.print_usage()
-        raise SystemExit()
-
-    if args.verbose:
-        for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
-
-    if args.echo:
-        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
+    # Initialize the script with the provided arguments
+    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     if args.extname_adr is None:
         raise ValueError("You must specify an extension name with --extname_adr")
@@ -317,7 +315,7 @@ def main(args=None):
 
     extname_mask = args.extname_mask
     if extname_mask is not None:
-        if extname_mask.lower() in ['none', 'nan']:
+        if extname_mask.lower() in ["none", "nan"]:
             extname_mask = None
         else:
             extname_mask = extname_mask.upper()
@@ -326,22 +324,22 @@ def main(args=None):
         raise ValueError("You must specify an output filename with --output")
 
     with fits.open(args.inputfile) as input_hdul:
-        if args.verbose:
-            print(input_hdul.info())
+        logger.debug(input_hdul.info())
         output_hdul = apply_adr_correction_from_extension_in_3d_cube(
             hdul=input_hdul,
             extname_adr=extname_adr,
             extname_mask=extname_mask,
             final_celestial_wcs=args.final_celestial_wcs,
             reproject_method=args.reproject_method,
-            verbose=args.verbose
         )
 
     # save result
-    if args.verbose:
-        print(f"\nSaving file: {args.output}")
+    logger.info(f"\nSaving file: {args.output}")
     output_hdul.writeto(args.output, overwrite=True)
 
+    # Display goodbye message and save console log if recording is enabled
+    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

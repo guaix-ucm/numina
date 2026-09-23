@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,14 +8,20 @@
 #
 
 """Compare ADR corrections in a 3D FITS file"""
+
 import argparse
 from astropy.io import fits
 from astropy.wcs import WCS
+from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
-from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
+
+from numina.tools.initialize_script_with_args import initialize_script_with_args
+from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
+
+from numina._version import __version__
 
 
 def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
@@ -35,17 +41,29 @@ def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
         Name of the second extension.
     """
     if refewave1 is not None:
-        ax.axvline(refewave1, color='C0', linestyle=':',
-                   label=r"$\lambda_{\rm ref1}$" + f" {extname1}")
+        ax.axvline(refewave1, color="C0", linestyle=":", label=r"$\lambda_{\rm ref1}$" + f" {extname1}")
     if refewave2 is not None:
-        ax.axvline(refewave2, color='C1', linestyle=':',
-                   label=r"$\lambda_{\rm ref2}$" + f" {extname2}")
+        ax.axvline(refewave2, color="C1", linestyle=":", label=r"$\lambda_{\rm ref2}$" + f" {extname2}")
     if refewave1 is not None:
-        ax.text(0.0, 1.05, r"$\lambda_{\rm ref1}=$" + f"{refewave1}",
-                ha='left', va='bottom', color='C0', transform=ax.transAxes)
+        ax.text(
+            0.0,
+            1.05,
+            r"$\lambda_{\rm ref1}=$" + f"{refewave1}",
+            ha="left",
+            va="bottom",
+            color="C0",
+            transform=ax.transAxes,
+        )
     if refewave2 is not None:
-        ax.text(1.0, 1.05, r"$\lambda_{\rm ref2}=$" + f"{refewave2}",
-                ha='right', va='bottom', color='C1', transform=ax.transAxes)
+        ax.text(
+            1.0,
+            1.05,
+            r"$\lambda_{\rm ref2}=$" + f"{refewave2}",
+            ha="right",
+            va="bottom",
+            color="C1",
+            transform=ax.transAxes,
+        )
 
 
 def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitle=None):
@@ -70,13 +88,13 @@ def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitl
         header = hdul[0].header
         if extname1 in hdul:
             table1_adrcross = hdul[extname1].data
-            refewave1 = hdul[extname1].header['REFEWAVE']
+            refewave1 = hdul[extname1].header["REFEWAVE"]
         else:
             raise ValueError(f"Extension '{extname1}' not found in FITS file '{filename}'")
         if extname2 is not None:
             if extname2 in hdul:
                 table2_adrcross = hdul[extname2].data
-                refewave2 = hdul[extname1].header['REFEWAVE']
+                refewave2 = hdul[extname1].header["REFEWAVE"]
             else:
                 raise ValueError(f"Extension '{extname2}' not found in FITS file '{filename}'")
         else:
@@ -86,11 +104,11 @@ def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitl
     naxis1, naxis2, naxis3 = wcs3d.pixel_shape
     wave = wcs3d.spectral.pixel_to_world(np.arange(naxis3))
 
-    delta_x1 = table1_adrcross['Delta_x']
-    delta_y1 = table1_adrcross['Delta_y']
+    delta_x1 = table1_adrcross["Delta_x"]
+    delta_y1 = table1_adrcross["Delta_y"]
     if table2_adrcross is not None:
-        delta_x2 = table2_adrcross['Delta_x']
-        delta_y2 = table2_adrcross['Delta_y']
+        delta_x2 = table2_adrcross["Delta_x"]
+        delta_y2 = table2_adrcross["Delta_y"]
         num_figures = 4
         fig, axarr = plt.subplots(nrows=2, ncols=2, figsize=(10, 7))
     else:
@@ -103,34 +121,34 @@ def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitl
     for iplot in range(num_figures):
         ax = axarr[iplot]
         if iplot == 0:
-            ax.plot(wave, delta_x1, 'C0.', label=extname1)
+            ax.plot(wave, delta_x1, "C0.", label=extname1)
             if table2_adrcross is not None:
-                ax.plot(wave, delta_x2, 'C1-', linewidth=1, label=extname2)
+                ax.plot(wave, delta_x2, "C1-", linewidth=1, label=extname2)
             plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2)
-            ax.set_ylabel(r'$\Delta$x_ifu (pixel)')
+            ax.set_ylabel(r"$\Delta$x_ifu (pixel)")
         elif iplot == 1:
-            ax.plot(wave, delta_y1, '.', label=extname1)
+            ax.plot(wave, delta_y1, ".", label=extname1)
             if table2_adrcross is not None:
-                ax.plot(wave, delta_y2, '-', linewidth=1, label=extname2)
+                ax.plot(wave, delta_y2, "-", linewidth=1, label=extname2)
             plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2)
-            ax.set_ylabel(r'$\Delta$y_ifu (pixel)')
+            ax.set_ylabel(r"$\Delta$y_ifu (pixel)")
         elif iplot == 2:
-            ax.plot(wave, delta_x1 - delta_x2, '.')
+            ax.plot(wave, delta_x1 - delta_x2, ".")
             plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2)
-            ax.set_ylabel(r'difference in $\Delta$x_ifu (pixel)')
+            ax.set_ylabel(r"difference in $\Delta$x_ifu (pixel)")
         else:
-            ax.plot(wave, delta_y1 - delta_y2, '.')
+            ax.plot(wave, delta_y1 - delta_y2, ".")
             plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2)
-            ax.set_ylabel(r'difference in $\Delta$y_ifu (pixel)')
-        ax.set_xlabel(f'Wavelength ({wave.unit})')
-        ax.axhline(0, linestyle='--', color='gray')
+            ax.set_ylabel(r"difference in $\Delta$y_ifu (pixel)")
+        ax.set_xlabel(f"Wavelength ({wave.unit})")
+        ax.axhline(0, linestyle="--", color="gray")
         if iplot in [0, 1]:
             ax.legend()
     if suptitle is None:
         if extname2 is not None:
-            plt.suptitle(f'file: {filename} (extensions: {extname1}, {extname2})')
+            plt.suptitle(f"file: {filename} (extensions: {extname1}, {extname2})")
         else:
-            plt.suptitle(f'file: {filename} (extension: {extname1})')
+            plt.suptitle(f"file: {filename} (extension: {extname1})")
     else:
         plt.suptitle(suptitle)
     plt.tight_layout()
@@ -138,37 +156,39 @@ def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitl
 
 
 def main(args=None):
+    datetime_ini = datetime.now()
+
     # parse command-line options
     parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube", formatter_class=RichHelpFormatter)
     parser.add_argument("filename", help="Input 3D FITS file")
     parser.add_argument("extname1", help="First extension name", type=str)
     parser.add_argument("extname2", help="Second extension name (optional)", type=str)
-    parser.add_argument("--verbose", help="Display intermediate information", action="store_true")
+    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    parser.add_argument("--record", help="Record terminal output", action="store_true")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
-
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    )
     args = parser.parse_args(args=args)
 
-    if len(sys.argv) == 1:
-        parser.print_usage()
-        raise SystemExit()
-
-    if args.verbose:
-        for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
-
-    if args.echo:
-        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
+    # Initialize the script with the provided arguments
+    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:
             raise ValueError(f"Extension '{extname}' must be less than 9 characters")
 
     compare_adr_extensions_in_3d_cube(
-        filename=args.filename,
-        extname1=args.extname1.upper(),
-        extname2=args.extname2.upper()
+        filename=args.filename, extname1=args.extname1.upper(), extname2=args.extname2.upper()
     )
 
+    # Display goodbye message and save console log if recording is enabled
+    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
