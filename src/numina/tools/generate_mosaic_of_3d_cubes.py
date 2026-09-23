@@ -104,22 +104,64 @@ def generate_mosaic_of_3d_cubes(
     if nimages < 1:
         raise ValueError('Number of images = 0')
 
+    # optimal 2D WCS (celestial part) for combined mosaic
+    if desired_celestial_2d_wcs is None:
+        # compute final celestial WCS for the ensemble of 3D cubes
+        list_of_inputs = []
+        for i, fname in enumerate(list_of_fits_files):
+            logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
+            logger.info(f"Working with file (extension): {fname} ({extname_image})")
+            with fits.open(fname) as hdul:
+                hdu = hdul[extname_image]
+            logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
+            header3d_copy = hdu.header.copy()
+            # remove keywords that may cause issues
+            for key in ['OBSGEO-X', 'OBSGEO-Y', 'OBSGEO-Z', 'OBSGEO-L', 'OBSGEO-B', 'OBSGEO-H']:
+                header3d_copy.remove(key, ignore_missing=True)
+            wcs2d_celestial = WCS(header3d_copy).celestial
+            logger.info(f"{wcs2d_celestial=}")
+            scales = proj_plane_pixel_scales(wcs2d_celestial)
+            logger.info(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
+            list_of_inputs.append(((header3d_copy['NAXIS2'], header3d_copy['NAXIS1']), wcs2d_celestial))
+        logger.info(f"\n--- 2D CELESTIAL MOSAIC ---\n")
+        logger.info('Celestial scales:')
+        for i, (shape, wcs2d_celestial) in enumerate(list_of_inputs):
+            scales = proj_plane_pixel_scales(wcs2d_celestial)
+            logger.info(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
+        wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
+        scales = proj_plane_pixel_scales(wcs_mosaic2d)
+        logger.info(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
+    else:
+        # make use of an external celestial WCS projection
+        logger.info(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}')
+        with fits.open(desired_celestial_2d_wcs) as hdul_mosaic2d:
+            wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
+            shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
+    logger.info(f'\n{wcs_mosaic2d=}')
+    logger.info(f"NAXIS1, NAXIS2 of 2D mosaic: {shape_mosaic2d[1]}, {shape_mosaic2d[0]}")
+    if output_celestial_2d_wcs is not None:
+        header_2d_wcs = wcs_to_header_using_cd_keywords(wcs_mosaic2d)
+        hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
+        logger.info(f'Saving resulting celestial 2D WCS to: {output_celestial_2d_wcs}')
+        hdu.writeto(output_celestial_2d_wcs, overwrite=True)
+
     # compute crval3out, cdelt3out and naxis3out if not provided
     crval3out_ = None
     wavemax = None   # maximum wavelength (at the center of the last pixel)
     cdelt3out_ = None
-    for fname in list_of_fits_files:
+    for i, fname in enumerate(list_of_fits_files):
         with fits.open(fname) as hdul:
             if extname_image not in hdul:
                 raise ValueError(f'Expected {extname_image} extension not found')
             hdu = hdul[extname_image]
+            logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
             logger.info(f"Working with file (extension): {fname} ({extname_image})")
             logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
-            hdr_copy = hdu.header.copy()
+            header3d_copy = hdu.header.copy()
             # remove keywords that may cause issues
             for key in ['OBSGEO-X', 'OBSGEO-Y', 'OBSGEO-Z', 'OBSGEO-L', 'OBSGEO-B', 'OBSGEO-H']:
-                hdr_copy.remove(key, ignore_missing=True)
-            wcs1d_spectral = WCS(hdr_copy).spectral
+                header3d_copy.remove(key, ignore_missing=True)
+            wcs1d_spectral = WCS(header3d_copy).spectral
             wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
             logger.info(f"{wcs1d_spectral=}")
             logger.debug(f"{wave[0]=}")
@@ -157,55 +199,24 @@ def generate_mosaic_of_3d_cubes(
     header_spectral_mosaic['CUNIT1'] = 'm'
     header_spectral_mosaic['CTYPE1'] = 'WAVE'
     wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
+    logger.info(f"\n--- 1D SPECTRAL MOSAIC ---\n")
     logger.info(f'{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n')
     logger.info(f'{wcs1d_spectral_mosaic=}')
-
-    # optimal 2D WCS (celestial part) for combined mosaic
-    if desired_celestial_2d_wcs is None:
-        logger.info('\nCelestial scales:')
-        # compute final celestial WCS for the ensemble of 3D cubes
-        list_of_inputs = []
-        for i, fname in enumerate(list_of_fits_files):
-            with fits.open(fname) as hdul:
-                hdu = hdul[extname_image]
-            header3d_copy = hdu.header.copy()
-            # remove keywords that may cause issues
-            for key in ['OBSGEO-X', 'OBSGEO-Y', 'OBSGEO-Z', 'OBSGEO-L', 'OBSGEO-B', 'OBSGEO-H']:
-                header3d_copy.remove(key, ignore_missing=True)
-            wcs2d = WCS(header3d_copy).celestial
-            scales = proj_plane_pixel_scales(wcs2d)
-            logger.info(f'Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
-            list_of_inputs.append(((header3d_copy['NAXIS2'], header3d_copy['NAXIS1']), wcs2d))
-        wcs_mosaic2d, shape_mosaic2d = find_optimal_celestial_wcs(list_of_inputs)
-        scales = proj_plane_pixel_scales(wcs_mosaic2d)
-        logger.info(f'Mosaic : {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec')
-    else:
-        # make use of an external celestial WCS projection
-        logger.info(f'\nUsing external celestial WCS: {desired_celestial_2d_wcs}')
-        with fits.open(desired_celestial_2d_wcs) as hdul_mosaic2d:
-            wcs_mosaic2d = WCS(hdul_mosaic2d[0].header)
-            shape_mosaic2d = hdul_mosaic2d[0].header['NAXIS2'], hdul_mosaic2d[0].header['NAXIS1']
-    logger.info(f'\n{wcs_mosaic2d=}')
-    logger.info(f'\n{shape_mosaic2d=}')
-    if output_celestial_2d_wcs is not None:
-        header_2d_wcs = wcs_to_header_using_cd_keywords(wcs_mosaic2d)
-        hdu = fits.PrimaryHDU(np.zeros(shape_mosaic2d, dtype=np.uint8), header=header_2d_wcs)
-        logger.info(f'Saving resulting celestial 2D WCS to: {output_celestial_2d_wcs}')
-        hdu.writeto(output_celestial_2d_wcs, overwrite=True)
 
     # initialize arrays to store combination
     naxis3_mosaic3d = naxis3out
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
-    logger.info(f'\nNAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}')
+    logger.info(f"\n--- BUILDING THE 3D MOSAIC ---\n")
+    logger.info(f'NAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}')
     size_output = array_size_32bits(mosaic3d_cube_by_cube)
     if footprint:
         size_output += array_size_8bits(footprint3d)
     logger.info(f'Combined image will require {size_output:.2f}')
 
     # generate 3D mosaic
-    for fname in list_of_fits_files:
+    for i, fname in enumerate(list_of_fits_files):
         time_ini = datetime.now()
         logger.info(f'\n* Working with: {fname}')
         with fits.open(fname) as hdul:
