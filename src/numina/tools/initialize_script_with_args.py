@@ -8,6 +8,7 @@
 #
 """Initialize script with command line arguments and logging."""
 
+from datetime import datetime
 import logging
 from rich.logging import RichHandler
 from pathlib import Path
@@ -86,3 +87,37 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
         logger.debug(f"Command line arguments: {args}")
 
     return console, logger
+
+
+def goodbye_message_and_save_console(logger, console, datetime_ini, args_record, args_output_dir):
+    """Display goodbye message and save console log if recording is enabled.
+
+    Parameters
+    ----------
+    logger : logging.Logger
+        Logger object for logging messages.
+    console : NuminaConsole
+        Console object for rich output.
+    datetime_ini : datetime
+        Start time of the script execution.
+    args_record : bool
+        Flag indicating whether to record the console output.
+    args_output_dir : str
+        Output directory where the console log will be saved if recording is enabled.
+    """
+    datatime_end = datetime.now()
+    time_elapsed = datatime_end - datetime_ini
+    logger.info("Total time elapsed: %s", str(time_elapsed))
+
+    # Goodbye message
+    console.rule("[bold magenta] Goodbye! [/bold magenta]")
+
+    # Save console log if recording is enabled
+    if args_record:
+        output_dir_path = Path(args_output_dir)
+        if not output_dir_path.exists():
+            output_dir_path.mkdir(parents=True, exist_ok=True)
+        log_filename = Path(args_output_dir) / "terminal_output.txt"
+        with open(log_filename, "wt") as f:
+            f.write(console.export_text(styles=True))
+        logger.info(f"terminal output recorded in [green]{log_filename}[/green]")
