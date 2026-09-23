@@ -20,6 +20,7 @@ import logging
 import numpy as np
 import sys
 
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
@@ -183,16 +184,7 @@ def main(args=None):
     parser.add_argument("--pressure-water-vapor-mm", help="Pressure water vapor in Hg mm",
                         type=float, default=8)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
@@ -202,6 +194,8 @@ def main(args=None):
     extname = args.extname.upper()
     if len(extname) > 8:
         raise ValueError(f"Extension '{extname}' must be less than 9 characters")
+    if args.output_dir != ".":
+        raise ValueError("--output-dir cannot be used in this script: the input file is updated in place.")
 
     reference_vacuum_wavelength_angstrom = args.reference_vacuum_wavelength
     if reference_vacuum_wavelength_angstrom is not None:

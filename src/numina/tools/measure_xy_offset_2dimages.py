@@ -44,7 +44,9 @@ import teareduce as tea
 
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
+from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
 from numina._version import __version__
 
@@ -365,18 +367,7 @@ def main(args=None):
     )
     parser.add_argument("--test-seed", type=int, default=1234, help="Random seed for synthetic images (default: 1234)")
     parser.add_argument("--save-test-images", action="store_true", help="Save synthetic images to FITS files")
-
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument("--version", help="Display version", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
@@ -442,23 +433,8 @@ def main(args=None):
     )
     logger.info(f"Computed offsets (pixels): x_offset = {x_offset}, y_offset = {y_offset}")
 
-    # Execution time
-    datetime_end = datetime.now()
-    time_elapsed = datetime_end - datetime_ini
-    logger.info("Total time elapsed: %s", str(time_elapsed))
-
-    # Goodbye message
-    console.rule("[bold magenta] Goodbye! [/bold magenta]")
-
-    # Save console log if recording is enabled
-    if args.record:
-        output_dir_path = Path(args.output_dir)
-        if not output_dir_path.exists():
-            output_dir_path.mkdir(parents=True, exist_ok=True)
-        log_filename = Path(args.output_dir) / "terminal_output.txt"
-        with open(log_filename, "wt") as f:
-            f.write(console.export_text(styles=True))
-        logger.info(f"terminal output recorded in [green]{log_filename}[/green]")
+    # Display goodbye message and save console log if recording is enabled
+    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
 
 if __name__ == "__main__":

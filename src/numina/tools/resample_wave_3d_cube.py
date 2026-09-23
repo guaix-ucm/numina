@@ -17,9 +17,11 @@ from astropy.wcs import WCS
 from datetime import datetime
 import logging
 import numpy as np
+from pathlib import Path
 from rich_argparse import RichHelpFormatter
 
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
@@ -150,16 +152,7 @@ def main(args=None):
     parser.add_argument(
         "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
     )
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
@@ -208,7 +201,7 @@ def main(args=None):
     )
 
     add_script_info_to_fits_history(resampled_hdu.header, args)
-    resampled_hdu.writeto(output_file, overwrite=True)
+    resampled_hdu.writeto(Path(args.output_dir) / output_file, overwrite=True)
 
     # Display goodbye message and save console log if recording is enabled
     goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)

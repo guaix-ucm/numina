@@ -20,8 +20,10 @@ from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
+from numina.user.console import print_table
 
 from numina._version import __version__
 
@@ -211,30 +213,21 @@ def main(args=None):
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
     parser.add_argument("--ndecimal-wave", help="Number of decimal places in wavelength", type=int, default=3)
     parser.add_argument("--ndecimal-adr", help="Number of decimal places in ADR", type=int, default=3)
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
     console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     if args.wave_ini is None:
-        raise ValueError("You must specify --wave_ini")
+        raise ValueError("You must specify --wave-ini")
     if args.wave_end is None:
-        raise ValueError("You must specify --wave_end")
+        raise ValueError("You must specify --wave-end")
     if args.wave_step is None:
-        raise ValueError("You must specify --wave_step")
+        raise ValueError("You must specify --wave-step")
 
     if args.wave_unit is None:
-        raise ValueError("You must specify --wave_unit")
+        raise ValueError("You must specify --wave-unit")
     else:
         try:
             wave_unit = u.Unit(args.wave_unit)
@@ -250,7 +243,7 @@ def main(args=None):
 
     if args.reference_wave_vacuum is None:
         reference_wave_vacuum = (wave_vacuum[0] + wave_vacuum[-1]) / 2
-        print(f"Using reference_wave_vacuum={reference_wave_vacuum}")
+        print(f"Using reference-wave-vacuum={reference_wave_vacuum}")
     else:
         reference_wave_vacuum = args.reference_wave_vacuum * wave_unit
 
@@ -268,7 +261,8 @@ def main(args=None):
     result["Wavelength"].info.format = f".{args.ndecimal_wave}f"
     result["ADR"] = differential_refraction
     result["ADR"].info.format = f".{args.ndecimal_adr}f"
-    result.pprint_all()
+    # result.pprint_all()  # this is not recordable in the console
+    print_table(console, result, header_style="red")
 
     if args.plots:
         fig, ax = plt.subplots()

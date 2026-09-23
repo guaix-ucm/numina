@@ -17,10 +17,12 @@ from astropy.wcs import WCS
 from datetime import datetime
 import logging
 import numpy.ma as ma
+from pathlib import Path
 from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 import sys
 
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 from numina.tools.progressbarlines import ProgressBarLines
@@ -293,16 +295,7 @@ def main(args=None):
         choices=REPROJECT_METHODS,
         default="adaptive",
     )
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
@@ -334,8 +327,8 @@ def main(args=None):
         )
 
     # save result
-    logger.info(f"\nSaving file: {args.output}")
-    output_hdul.writeto(args.output, overwrite=True)
+    logger.info(f"\nSaving file: {Path(args.output_dir) / args.output}")
+    output_hdul.writeto(Path(args.output_dir) / args.output, overwrite=True)
 
     # Display goodbye message and save console log if recording is enabled
     goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)

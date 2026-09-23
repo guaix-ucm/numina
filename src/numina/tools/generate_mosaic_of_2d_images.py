@@ -29,12 +29,14 @@ from datetime import datetime
 import logging
 import numpy as np
 import numpy.ma as ma
+from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
 from rich_argparse import RichHelpFormatter
 import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
@@ -246,16 +248,7 @@ def main(args=None):
         choices=COMBINATION_FUNCTIONS,
     )
     parser.add_argument("--output-3D-stack", help="filename for stacked 3D array. Default None", default=None, type=str)
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
@@ -329,8 +322,8 @@ def main(args=None):
     hdu_mask.header["EXTNAME"] = "MASK"
     hdu_mask.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
     hdul = fits.HDUList([hdu, hdu_mask])
-    logger.info(f"\nSaving combined 2D image: {output_filename}")
-    hdul.writeto(output_filename, overwrite="yes")
+    logger.info(f"\nSaving combined 2D image: {Path(args.output_dir) /output_filename}")
+    hdul.writeto(Path(args.output_dir) / output_filename, overwrite="yes")
 
     # save 3D stack if requested
     if output_3d_stack is not None:
@@ -340,8 +333,8 @@ def main(args=None):
         hdu_mask.header["EXTNAME"] = "MASK"
         hdu_mask.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
         hdul = fits.HDUList([hdu, hdu_mask])
-        logger.info(f"Saving 3D stack.........: {output_3d_stack}")
-        hdul.writeto(output_3d_stack, overwrite="yes")
+        logger.info(f"Saving 3D stack.........: {Path(args.output_dir) / output_3d_stack}")
+        hdul.writeto(Path(args.output_dir) / output_3d_stack, overwrite="yes")
 
     # Display goodbye message and save console log if recording is enabled
     goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)

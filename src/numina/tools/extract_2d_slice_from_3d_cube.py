@@ -17,10 +17,10 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from pathlib import Path
-from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
+from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
 from numina.tools.initialize_script_with_args import initialize_script_with_args
 from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
@@ -63,6 +63,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
         Output PNG file name (plot of the result).
 
     """
+    logger = logging.getLogger(__name__)
 
     # protections
     if not (1 <= axis <= 3):
@@ -90,7 +91,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
 
     if axis == 1:
         if np.any(np.isnan(data[:, :, (i1 - 1) : i2])):
-            print(
+            logger.warning(
                 f"Warning: NaN values found in input data for axis {axis} "
                 f"between pixels {i1} and {i2}. They will be ignored."
             )
@@ -104,7 +105,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
             raise ValueError(f"Unexpected {method=}")
     elif axis == 2:
         if np.any(np.isnan(data[:, (i1 - 1) : i2, :])):
-            print(
+            logger.warning(
                 f"Warning: NaN values found in input data for axis {axis} "
                 f"between pixels {i1} and {i2}. They will be ignored."
             )
@@ -118,7 +119,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
             raise ValueError(f"Unexpected {method=}")
     else:
         if np.any(np.isnan(data[(i1 - 1) : i2, :, :])):
-            print(
+            logger.warning(
                 f"Warning: NaN values found in input data for axis {axis} "
                 f"between pixels {i1} and {i2}. They will be ignored."
             )
@@ -224,20 +225,16 @@ def main(args=None):
     parser.add_argument("--vmax", help="vmax value for imshow", type=float)
     parser.add_argument("--output", help="Output FITS file")
     parser.add_argument("--png", help="Output PNG file (plot of the result)", type=str)
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
     console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+
+    if args.output is not None:
+        output_path = Path(args.output_dir) / args.output
+    else:
+        output_path = None
 
     extract_slice(
         input=args.input,
@@ -250,7 +247,7 @@ def main(args=None):
         vmin=args.vmin,
         vmax=args.vmax,
         noplot=args.noplot,
-        output=args.output,
+        output=output_path,
         png=args.png,
     )
 

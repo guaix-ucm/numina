@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
-"""Initialize script with command line arguments and logging."""
+"""Auxiliary functions for initializing scripts with command line arguments and logging."""
 
 from datetime import datetime
 import logging
@@ -14,6 +14,27 @@ from rich.logging import RichHandler
 from pathlib import Path
 
 from numina.user.console import NuminaConsole
+
+
+def include_default_arguments_for_common_actions(parser):
+    """Include default arguments to record and other common actions.
+
+    Parameters
+    ----------
+    parser : argparse.ArgumentParser
+        Argument parser object to which the default arguments will be added.
+    """
+    parser.add_argument("--version", help="Display version information and exit", action="store_true")
+    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    parser.add_argument("--record", help="Record terminal output", action="store_true")
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    )
 
 
 def initialize_script_with_args(sys_argv, parser, args, local_name, version=None):
@@ -85,6 +106,13 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug(f"Command line arguments: {args}")
+
+    # Generate output directory if it does not exist
+    if args.output_dir != ".":
+        output_dir_path = Path(args.output_dir)
+        if not output_dir_path.exists():
+            output_dir_path.mkdir(parents=True, exist_ok=True)
+            logger.debug(f"Created output directory: {output_dir_path}")
 
     return console, logger
 
