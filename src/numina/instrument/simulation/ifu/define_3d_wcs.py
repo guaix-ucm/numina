@@ -15,6 +15,7 @@ import astropy.units as u
 from astropy.wcs import WCS
 import logging
 import numpy as np
+import re
 
 
 def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lincal, instrument_pa, logger=None):
@@ -118,9 +119,10 @@ def define_3d_wcs(naxis1_ifu, naxis2_ifu, skycoord_center, spatial_scale, wv_lin
 def wcs_to_header_using_cd_keywords(wcs):
     """Return WCS header using CDi_j keywords.
 
-    This function is a workaround to avoid the problem with the
-    astropy.wcs.WCS.to_header() method that replaces CDi_j keywords
-    with PCi_j and CDELTi keywords.
+    The full CD matrix (CDi_j = CDELTi * PCi_j) is computed from the
+    WCS object and all its elements are written explicitly, including
+    those equal to 0 or 1, since the FITS standard assumes missing
+    CDi_j elements to be 0 when the CD convention is used.
 
     Parameters
     ----------
@@ -133,24 +135,26 @@ def wcs_to_header_using_cd_keywords(wcs):
         FITS header with CDi_j keywords.
     """
     header = wcs.to_header()
+    cd = wcs.pixel_scale_matrix  # diag(CDELT) @ PC, or CD if present
+    naxis = wcs.wcs.naxis
 
-    # Replace PCi_j with CDi_j keywords and remove CDELTi keywords.
-    list_of_pc_keys = [key for key in header.keys() if key.startswith("PC")]
-    list_of_pc_keys.sort()  # Sort list of keys to ensure consistent order
-    if len(list_of_pc_keys) > 0:
-        for key in list_of_pc_keys:
-            header.rename_keyword(key, f"CD{key[2]}_{key[4]}")
-        list_of_cdelt_keys = [key for key in header.keys() if key.startswith("CDELT")]
-        if len(list_of_cdelt_keys) > 0:
-            for key in list_of_cdelt_keys:
-                del header[key]
-    else:
-        # If no PCi_j keywords are present, rename CDELTi as CDi_i keywords
-        list_of_cdelt_keys = [key for key in header.keys() if key.startswith("CDELT")]
-        if len(list_of_cdelt_keys) > 0:
-            for key in list_of_cdelt_keys:
-                header.rename_keyword(key, f"CD{key[5]}_{key[5]}")
-                header.comments[f"CD{key[5]}_{key[5]}"] = "Coordinate transformation matrix element"
+    # Remove any PCi_j, CDELTi and CDi_j keywords
+    pattern = re.compile(r"^(PC\d+_\d+|CDELT\d+|CD\d+_\d+)$")
+    for key in [k for k in header.keys() if pattern.match(k)]:
+        del header[key]
+
+    # Insert CDi_j after the last CRPIXi to preserve the usual order
+    anchor = f"CRPIX{naxis}"
+    for i in range(naxis):
+        for j in range(naxis):
+            key = f"CD{i + 1}_{j + 1}"
+            header.insert(
+                anchor,
+                (key, cd[i, j], "Coordinate transformation matrix element"),
+                after=True,
+            )
+            anchor = key
+
     return header
 
 
