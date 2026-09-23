@@ -88,19 +88,24 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
         if np.all(np.allclose(old_wl_borders, new_wl_borders)):
             resampled_data = hdu3d_image.data.astype(np.float32)
             resample_needed = False
-            logger.debug("Old and new wavelength borders are the same.\n"
+            logger.info("Old and new wavelength borders are the same.\n"
                          "-> Copying original data without spectral resampling.")
 
     if resample_needed:
-        logger.debug("Spectral resampling of the original 3D cube...", end=' ')
+        logger.info("Spectral resampling of the original 3D cube")
+        logger.debug(f"Original wavelength borders:\n{old_wl_borders}")
+        logger.debug(f"New wavelength borders:\n{new_wl_borders}")
         # resample the 3D cube (see wavecal.py in teareduce for reference)
-        resampled_data = np.zeros((naxis3out, naxis2, naxis1))
+        resampled_data = np.zeros((naxis3out, naxis2, naxis1), dtype=np.float32)
+        logger.info(f"{np.isnan(hdu3d_image.data).sum()} NaN values in the original data.")
         for i in range(naxis1):
             for j in range(naxis2):
                 # resample each spectrum independently
-                data_spectrum = hdu3d_image.data[:, j, i]
-                accum_flux = np.zeros(naxis3 + 1)
-                accum_flux[1:] = np.cumsum(data_spectrum)
+                data_spectrum = hdu3d_image.data[:, j, i].astype(np.float32)
+                accum_flux = np.zeros(naxis3 + 1, dtype=np.float32)
+                # the cumulative flux is computed as the cumulative sum of the original spectrum,
+                # with NaN values replaced by 0
+                accum_flux[1:] = np.nancumsum(data_spectrum)
                 flux_borders = np.interp(
                     x=new_wl_borders.value,
                     xp=old_wl_borders.value,
@@ -109,7 +114,7 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
                     right=np.nan
                 )
                 resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
-        logger.debug("resampling completed!")
+        logger.info(f"{np.isnan(resampled_data).sum()} NaN values in the resampled data.")
 
     # create new HDU with resampled data
     resampled_hdu = fits.PrimaryHDU(data=resampled_data.astype(np.float32))
