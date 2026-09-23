@@ -113,6 +113,7 @@ def generate_mosaic_of_3d_cubes(
             if extname_image not in hdul:
                 raise ValueError(f'Expected {extname_image} extension not found')
             hdu = hdul[extname_image]
+            logger.info(f"Working with file (extension): {fname} ({extname_image})")
             logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
             hdr_copy = hdu.header.copy()
             # remove keywords that may cause issues
@@ -120,9 +121,10 @@ def generate_mosaic_of_3d_cubes(
                 hdr_copy.remove(key, ignore_missing=True)
             wcs1d_spectral = WCS(hdr_copy).spectral
             wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
-            logger.info(f"file: {fname}, {wcs1d_spectral=}")
-            logger.info(f"file: {fname}, {wave=}")
-            input("Press Enter to continue...")
+            logger.info(f"{wcs1d_spectral=}")
+            logger.debug(f"{wave[0]=}")
+            logger.debug(f"{wave[-1]=}")
+            logger.debug(f"{np.diff(wave).min()=}")
         if crval3out_ is None:
             crval3out_ = wave[0]
         else:
