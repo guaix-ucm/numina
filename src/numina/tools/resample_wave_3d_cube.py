@@ -14,12 +14,16 @@ import argparse
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
+from datetime import datetime
 import logging
 import numpy as np
-from rich import print
 from rich_argparse import RichHelpFormatter
 
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
+from numina.tools.initialize_script_with_args import initialize_script_with_args
+from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
+
+from numina._version import __version__
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 
@@ -133,32 +137,38 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
 
 def main(args=None):
     """Main function."""
+    datetime_ini = datetime.now()
+
     parser = argparse.ArgumentParser(
         description="Resample a 3D cube in the wavelength axis (NAXIS3).", formatter_class=RichHelpFormatter
     )
-    parser.add_argument("input_file", type=str, help="Input FITS file with the 3D cube.")
-    parser.add_argument("output_file", type=str, help="Output FITS file with the resampled 3D cube.")
+    parser.add_argument("input", type=str, help="Input FITS file with the 3D cube.")
+    parser.add_argument("output", type=str, help="Output FITS file with the resampled 3D cube.")
     parser.add_argument("--crval3out", type=float, help="Minimum wavelength for the output image (in meters).")
     parser.add_argument("--cdelt3out", type=float, help="Wavelength step for the output image (in meters).")
     parser.add_argument("--naxis3out", type=int, help="Number of slices in the output image.")
     parser.add_argument(
         "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
     )
+    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    parser.add_argument("--record", help="Record terminal output", action="store_true")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
-
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    )
     args = parser.parse_args(args)
 
-    logger = logging.getLogger(__name__)
+    # Initialize the script with the provided arguments
+    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
-    if len(sys.argv) == 1:
-        parser.print_usage()
-        raise SystemExit()
-
-    if args.echo:
-        print("[bold red]Executing:\n" + " ".join(sys.argv) + "[/bold red]")
-
-    input_file = args.input_file
-    output_file = args.output_file
+    input_file = args.input
+    output_file = args.output
+    if args.crval3out is None and args.cdelt3out is None and args.naxis3out is None:
+        raise ValueError("At least one of --crval3out, --cdelt3out, or --naxis3out must be specified.")
     crval3out = args.crval3out
     if crval3out is not None:
         crval3out = crval3out * u.m
@@ -199,6 +209,9 @@ def main(args=None):
 
     add_script_info_to_fits_history(resampled_hdu.header, args)
     resampled_hdu.writeto(output_file, overwrite=True)
+
+    # Display goodbye message and save console log if recording is enabled
+    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
 
 if __name__ == "__main__":
