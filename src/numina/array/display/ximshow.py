@@ -602,7 +602,8 @@ def ximshow_file(
     # read input FITS file
     hdulist = fits.open(singlefile)
     if extnum is None and extname is None:
-        raise ValueError("Either extnum or extname must be specified")
+        # neither extnum nor extname is specified. Assuming extnum=1 (first extension)
+        extnum = 1
 
     if extnum is not None and (extnum < 1 or extnum > len(hdulist)):
         raise ValueError(f"Invalid extension number {extnum}. Must be between 1 and {len(hdulist)}")
