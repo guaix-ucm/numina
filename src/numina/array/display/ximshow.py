@@ -602,7 +602,7 @@ def ximshow_file(
     # read input FITS file
     hdulist = fits.open(singlefile)
     if extnum is None and extname is None:
-        # neither extnum nor extname is specified. Assuming extnum=1 (first extension)
+        # neither extnum nor extname is specified: assuming extnum=1 (first extension)
         extnum = 1
 
     if extnum is not None and (extnum < 1 or extnum > len(hdulist)):
@@ -1056,7 +1056,7 @@ def main(args=None):
     parser.add_argument("--xlabel", help="X-axis label", type=str, default=None)
     parser.add_argument("--ylabel", help="Y-axis label", type=str, default=None)
     parser.add_argument("--cmap", help="color map", type=str, default="hot")
-    parser.add_argument("--cbar_label", help="color bar label", type=str, default="Number of counts")
+    parser.add_argument("--cbar-label", help="color bar label", type=str, default="Number of counts")
     parser.add_argument(
         "--cbar_orientation",
         help="color bar orientation",
