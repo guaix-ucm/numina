@@ -27,6 +27,7 @@ from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 from numina.tools.initialize_script_with_args import initialize_script_with_args
+from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
 from numina._version import __version__
 
@@ -123,7 +124,7 @@ def generate_mosaic_of_3d_cubes(
             scales = proj_plane_pixel_scales(wcs2d_celestial)
             logger.info(f"Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec")
             list_of_inputs.append(((header3d_copy["NAXIS2"], header3d_copy["NAXIS1"]), wcs2d_celestial))
-        logger.info(f"\n*** WCS FOR 2D CELESTIAL MOSAIC ***\n")
+        logger.info(f"\n--- WCS FOR 2D CELESTIAL MOSAIC ---\n")
         logger.info("Celestial scales:")
         for i, (shape, wcs2d_celestial) in enumerate(list_of_inputs):
             scales = proj_plane_pixel_scales(wcs2d_celestial)
@@ -200,7 +201,7 @@ def generate_mosaic_of_3d_cubes(
     header_spectral_mosaic["CUNIT1"] = "m"
     header_spectral_mosaic["CTYPE1"] = "WAVE"
     wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
-    logger.info(f"\n*** WCS FOR 1D SPECTRAL MOSAIC ***\n")
+    logger.info(f"\n--- WCS FOR 1D SPECTRAL MOSAIC ---\n")
     logger.info(f"{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n")
     logger.info(f"{wcs1d_spectral_mosaic=}")
 
@@ -209,7 +210,7 @@ def generate_mosaic_of_3d_cubes(
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
-    logger.info(f"\n*** BUILDING THE 3D MOSAIC ***\n")
+    logger.info(f"\n--- BUILDING THE 3D MOSAIC ---\n")
     logger.info(f"NAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}")
     size_output = array_size_32bits(mosaic3d_cube_by_cube)
     if footprint:
@@ -300,7 +301,7 @@ def main(args=None):
         default=None,
     )
     parser.add_argument(
-        "--reproject_method",
+        "--reproject-method",
         help="Reprojection method (interp, adaptive, exact)",
         type=str,
         choices=REPROJECT_METHODS,
@@ -308,13 +309,13 @@ def main(args=None):
     )
     parser.add_argument("--parallel", help="Use parallel processing for reprojection", action="store_true")
     parser.add_argument(
-        "--extname_image",
+        "--extname-image",
         help="Extension name for image in input files. Default value: PRIMARY",
         default="PRIMARY",
         type=str,
     )
     parser.add_argument(
-        "--output_celestial_2d_wcs", help="filename for output 2D celestial WCS", type=str, default=None
+        "--output-celestial-2d-wcs", help="filename for output 2D celestial WCS", type=str, default=None
     )
     parser.add_argument(
         "--footprint", help="Generate a FOOTPRINT extension with the final footprint", action="store_true"
@@ -394,23 +395,8 @@ def main(args=None):
     logger.info(f"Saving: {output_filename}")
     output_hdul.writeto(output_filename, overwrite="yes")
 
-    # Execution time
-    datetime_end = datetime.now()
-    time_elapsed = datetime_end - datetime_ini
-    logger.info("Total time elapsed: %s", str(time_elapsed))
-
-    # Goodbye message
-    console.rule("[bold magenta] Goddbye! [/bold magenta]")
-
-    # Save console log if recording is enabled
-    if args.record:
-        output_dir_path = Path(args.output_dir)
-        if not output_dir_path.exists():
-            output_dir_path.mkdir(parents=True, exist_ok=True)
-        log_filename = Path(args.output_dir) / "terminal_output.txt"
-        with open(log_filename, "wt") as f:
-            f.write(console.export_text(styles=True))
-        logger.info(f"terminal output recorded in [green]{log_filename}[/green]")
+    # Display goodbye message and save console log if recording is enabled
+    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
 
 if __name__ == "__main__":
