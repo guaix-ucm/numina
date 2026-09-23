@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -15,8 +15,15 @@ import astropy.units as u
 from astropy.units import Unit
 from astropy.coordinates import SkyCoord, Angle
 from astropy.wcs import WCS
+from datetime import datetime
+import logging
 import numpy as np
 import sys
+
+from numina.tools.initialize_script_with_args import initialize_script_with_args
+from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
+
+from numina._version import __version__
 
 from .compute_adr_wavelength import compute_adr_wavelength
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
@@ -30,7 +37,6 @@ def include_adrtheor_in_3d_cube(
         pressure_mm,
         pressure_water_vapor_mm,
         plots,
-        verbose=False
 ):
     """Include ADR prediction as extension in a 3D FITS file
 
@@ -42,13 +48,19 @@ def include_adrtheor_in_3d_cube(
         Extension to store the ADR prediction in.
     reference_vacuum_wavelength_angstrom : float or None
         Reference wavelength (in Angstrom) to compute ADR prediction.
-    verbose : bool
-        If True, display additional information.
+    temperature : float
+        Temperature in degrees Celsius.
+    pressure_mm : float
+        Pressure in mm of Hg.
+    pressure_water_vapor_mm : float
+        Pressure water vapor in mm of Hg.
+    plots : bool
+        If True, generate plots.
     """
+    logger = logging.getLogger(__name__)
 
     with fits.open(filename) as hdul:
-        if verbose:
-            print(hdul.info())
+        logger.debug(hdul.info())
         header = hdul[0].header
 
     if header["NAXIS"] != 3:
@@ -57,8 +69,7 @@ def include_adrtheor_in_3d_cube(
     # generate 3D WCS object
     wcs3d = WCS(header)
     naxis1, naxis2, naxis3 = wcs3d.pixel_shape
-    if verbose:
-        print(wcs3d.spectral)
+    logger.info(wcs3d.spectral)
 
     # array of wavelengths along NAXIS3
     wave = wcs3d.spectral.pixel_to_world(np.arange(naxis3))
@@ -69,14 +80,12 @@ def include_adrtheor_in_3d_cube(
         reference_vacuum_wavelength = reference_vacuum_wavelength.to(Unit('m'))
     else:
         reference_vacuum_wavelength = (wave[0] + wave[-1]) / 2
-    if verbose:
-        print(f'Reference wavelength: {reference_vacuum_wavelength}')
+    logger.info(f'Reference wavelength: {reference_vacuum_wavelength}')
 
     # airmass
     if 'AIRMASS' in header:
         airmass = header['AIRMASS']
-        if verbose:
-            print(f'AIRMASS: {airmass}')
+        logger.info(f'AIRMASS: {airmass}')
     else:
         raise ValueError('Header does not contain AIRMASS')
 
@@ -89,14 +98,12 @@ def include_adrtheor_in_3d_cube(
         pressure_mm=pressure_mm,
         pressure_water_vapor_mm=pressure_water_vapor_mm,
     )
-    if verbose:
-        print(f'Differential refraction: {differential_refraction}')
+    logger.debug(f'Differential refraction: {differential_refraction}')
 
     # parallactic angle
     if 'PARANGLE' in header:
         parangle = Angle(header['PARANGLE'] * Unit('deg'))
-        if verbose:
-            print(f'PARANGLE: {parangle}')
+        logger.info(f'PARANGLE: {parangle}')
     else:
         raise ValueError('Header does not contain PARANGLE')
 
@@ -106,8 +113,7 @@ def include_adrtheor_in_3d_cube(
         x_center_ifu - 1.0,   # Python convention
         y_center_ifu - 1.0    # Python convention
     )
-    if verbose:
-        print(f'Center IFU coord: {center_ifu_coord}')
+    logger.info(f'Center IFU coord: {center_ifu_coord}')
 
     # duplicate initial central coordinates at each slice along NAXIS3
     ra_center_ifu = np.repeat(center_ifu_coord.ra, naxis3)
@@ -128,8 +134,7 @@ def include_adrtheor_in_3d_cube(
 
     # save result in extension
     if extname != 'NONE':
-        if verbose:
-            print(f'Updating file {filename}')
+        logger.info(f'Updating file {filename}')
         # binary table to store result
         col1 = fits.Column(name='Delta_x', format='D', array=delta_x_center_ifu, unit='pixel')
         col2 = fits.Column(name='Delta_y', format='D', array=delta_y_center_ifu, unit='pixel')
@@ -145,12 +150,10 @@ def include_adrtheor_in_3d_cube(
         # open and update existing FITS file
         hdul = fits.open(filename, mode='update')
         if extname in hdul:
-            if verbose:
-                print(f"Updating extension '{extname}'")
+            logger.info(f"Updating extension '{extname}'")
             hdul[extname] = hdu_result
         else:
-            if verbose:
-                print(f"Adding new extension '{extname}'")
+            logger.info(f"Adding new extension '{extname}'")
             hdul.append(hdu_result)
         hdul.flush()
         hdul.close()
@@ -162,37 +165,38 @@ def include_adrtheor_in_3d_cube(
 
 def main(args=None):
 
+    datetime_ini = datetime.now()
+
     # parse command-line options
     parser = argparse.ArgumentParser(description="Include ADR prediction as extension in a 3D FITS file")
     parser.add_argument("filename", help="Input 3D FITS file")
     parser.add_argument("--extname",
                         help="Output extension name to store result (default ADRTHEOR)",
                         type=str, default='ADRTHEOR')
-    parser.add_argument("--reference_vacuum_wavelength",
+    parser.add_argument("--reference-vacuum-wavelength",
                         help="Reference vacuum wavelength (in Angstrom) to compute ADR prediction",
                         type=float, default=None)
     parser.add_argument("--temperature", help="Temperature in degree Celsius",
                         type=float, default=7)
     parser.add_argument("--pressure_mm", help="Pressure in Hg mm",
                         type=float, default=600)
-    parser.add_argument("--pressure_water_vapor_mm", help="Pressure water vapor in Hg mm",
+    parser.add_argument("--pressure-water-vapor-mm", help="Pressure water vapor in Hg mm",
                         type=float, default=8)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
-    parser.add_argument("--verbose", help="Display intermediate information", action="store_true")
+    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    parser.add_argument("--record", help="Record terminal output", action="store_true")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
-
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level",
+        type=str,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        default="INFO",
+    )
     args = parser.parse_args(args=args)
 
-    if len(sys.argv) == 1:
-        parser.print_usage()
-        raise SystemExit()
-
-    if args.verbose:
-        for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
-
-    if args.echo:
-        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
+    # Initialize the script with the provided arguments
+    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     # protections
     extname = args.extname.upper()
@@ -212,8 +216,10 @@ def main(args=None):
         pressure_mm=args.pressure_mm,
         pressure_water_vapor_mm=args.pressure_water_vapor_mm,
         plots=args.plots,
-        verbose=args.verbose
     )
+
+    # Display goodbye message and save console log if recording is enabled
+    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
 
 if __name__ == '__main__':
