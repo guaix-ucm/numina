@@ -17,10 +17,9 @@ import argparse
 from astropy.io import fits
 from astropy.wcs import WCS
 from datetime import datetime
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
-from rich import print
-from rich.text import Text
 from rich_argparse import RichHelpFormatter
 
 from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
@@ -218,6 +217,8 @@ def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave, fig, ax
     plot_render : str
         Display to display spectra: matplotlib or ds9
     """
+    logger = logging.getLogger(__name__)
+
     # update file with regions
     lines = [
         "# Region file format: DS9 version 4.1",
@@ -242,7 +243,7 @@ def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave, fig, ax
         ds9cmd("xpaset -p ds9 region delete")
         ds9cmd("xpaset -p ds9 region load tmp_regions_ds9.reg")
     except ValueError as exc:
-        print(f"WARNING: {exc}")
+        logger.warning(f"WARNING: {exc}")
     # Update splot
     update_splot(
         data=data,
@@ -265,17 +266,18 @@ def display_help_menu(plot_render):
     plot_render: str
         Display to display spectra: matplotlib or ds9
     """
-    print("Click on the ds9 window to select pixels:")
-    print("  - Press 's' to select a single source pixel")
-    print("  - Press 'c' to select a single continuum pixel")
-    print("  - Press 'x' to remove a single pixel from any mask")
-    print("  - Press 'r' to reset both masks")
-    print("  - Press 'a' to start selecting a rectangular region")
-    print("    (then press 's' or 'c' in the opposite corner to define the mask type)")
+    logger = logging.getLogger(__name__)
+    logger.info("Click on the ds9 window to select pixels:")
+    logger.info("  - Press 's' to select a single source pixel")
+    logger.info("  - Press 'c' to select a single continuum pixel")
+    logger.info("  - Press 'x' to remove a single pixel from any mask")
+    logger.info("  - Press 'r' to reset both masks")
+    logger.info("  - Press 'a' to start selecting a rectangular region")
+    logger.info("    (then press 's' or 'c' in the opposite corner to define the mask type)")
     if plot_render in ["matplotlib", "both"]:
-        print("  - Press 'p' to pause pixel selection and allow matplotlib interaction")
-    print("  - Press 'q' to quit (stop pixel selection)")
-    print("  - Press 'h' to display this help")
+        logger.info("  - Press 'p' to pause pixel selection and allow matplotlib interaction")
+    logger.info("  - Press 'q' to quit (stop pixel selection)")
+    logger.info("  - Press 'h' to display this help")
 
 
 def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plot_render):
@@ -299,10 +301,11 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
         Display to display spectra: matplotlib or ds9
 
     """
+    logger = logging.getLogger(__name__)
 
     if source_mask.shape != continuum_mask.shape:
-        print(f"{source_mask.shape=}")
-        print(f"{continuum_mask.shape=}")
+        logger.error(f"{source_mask.shape=}")
+        logger.error(f"{continuum_mask.shape=}")
         raise ValueError("Incompatible mask shapes")
     naxis2, naxis1 = source_mask.shape
     tmp_mask = None
@@ -349,12 +352,12 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
             key, x, y = ds9cmd("xpaget ds9 iexam key coordinate image").split()
         except ValueError as exc:
             if verbose:
-                print(f"WARNING: {exc}")
+                logger.warning(f"WARNING: {exc}")
         if key in ["s", "c", "r", "a", "x"]:
             x = str(round(float(x)))
             y = str(round(float(y)))
             if verbose:
-                print(f"key: {key}: selecting pixel {x=}, {y=}")
+                logger.info(f"key: {key}: selecting pixel {x=}, {y=}")
             iy = int(y) - 1
             ix = int(x) - 1
             if key == "a":
@@ -427,12 +430,12 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
             if cquit.lower() in ["y", "yes"]:
                 loop = False
                 if verbose:
-                    print("Selection of pixels finished!")
+                    logger.info("Selection of pixels finished!")
 
     if plot_render in ["matplotlib", "both"]:
         # keep the splot open after updates
         plt.ioff()
-        print("Press 'q' to close matplotlib window and stop the program")
+        logger.info("Press 'q' to close matplotlib window and stop the program")
         plt.show(block=True)
 
 
@@ -476,19 +479,19 @@ def main(args=None):
             raise SystemExit(f"The program {required_executable} is not available")
         else:
             if verbose:
-                print(f"Required program {execfile} found!")
+                logger.info(f"Required program {execfile} found!")
 
     # Check if ds9 is already running
-    print("Checking if a previous ds9 instance is running...")
+    logger.info("Checking if a previous ds9 instance is running...")
     try:
         filename = ds9cmd("xpaget ds9 file")
     except Exception as exc:
         filename = ""
         if verbose:
-            print(f"{exc=}")
-            print("No previous ds9 instance found. OK!")
+            logger.info(f"{exc=}")
+            logger.info("No previous ds9 instance found. OK!")
     if len(filename) > 0:
-        print(
+        logger.warning(
             "A previous instance of ds9 is already running.\n"
             + f"Filename: {filename}\n"
             + "Please close it before using this program"
@@ -500,7 +503,7 @@ def main(args=None):
     header = fits.getheader(fpath)
     wcs = WCS(header)
     if verbose:
-        print(f"WCS: {wcs}")
+        logger.info(f"WCS: {wcs}")
 
     data = fits.getdata(fpath)
     if len(data.shape) != 3:
@@ -508,9 +511,9 @@ def main(args=None):
 
     naxis3, naxis2, naxis1 = data.shape
     if verbose:
-        print(f"{naxis1=}")
-        print(f"{naxis2=}")
-        print(f"{naxis3=}")
+        logger.info(f"{naxis1=}")
+        logger.info(f"{naxis2=}")
+        logger.info(f"{naxis3=}")
 
     i1 = args.i1
     if i1 < 1 or i1 > naxis3:
@@ -524,7 +527,7 @@ def main(args=None):
 
     # Collapse the data cube along NAXIS3
     if verbose:
-        print("Collapsing 3D cubes along NAXIS3... ", end="")
+        logger.info("Collapsing 3D cubes along NAXIS3... ")
     extract_slice(
         input=file_datacube,
         axis=3,
@@ -538,32 +541,31 @@ def main(args=None):
         noplot=True,
         output="tmp_collapsed_3D.fits",
     )
-    print("OK!")
 
     # Launch ds9
     cmd = f"{ds9exec.split()[0]} tmp_collapsed_3D.fits {' '.join(ds9exec.split()[1:])} &"
     if verbose:
-        print("Executing:")
-        print(Text(cmd))  # Do not apply highlighting to the command line, as it may contain special characters
+        logger.info("Executing:")
+        console.print(cmd, highlight=False)  # Do not apply highlighting to the command line, as it may contain special characters
     # Note: use shell=True below to make the ds9 alias in the system available
     result = subprocess.run(cmd, capture_output=True, text=True, check=False, shell=True)
     if verbose:
-        print(f"{result.stderr=}")
-        print(f"{result.stdout=}")
+        logger.info(f"{result.stderr=}")
+        logger.info(f"{result.stdout=}")
     input("Press RETURN after ds9 has properly started...")
     try:
         filename = ds9cmd("xpaget ds9 file")
     except Exception as exc:
         raise SystemExit("Fatal error: ds9 is not running") from exc
     if verbose:
-        print(f"ds9 working with file: {filename}")
+        logger.info(f"ds9 working with file: {filename}")
 
     # Generate array in the spectral direction
     wcs1d_spectral = wcs.spectral
     wave = wcs1d_spectral.pixel_to_world(np.arange(naxis3))
     if verbose:
-        print(f"Minimum value along NAXIS3: {wave.min()}")
-        print(f"Maximum value along NAXIS3: {wave.max()}")
+        logger.info(f"Minimum value along NAXIS3: {wave.min()}")
+        logger.info(f"Maximum value along NAXIS3: {wave.max()}")
 
     # Read source and continuum masks or create them
     if args.input_masks:
@@ -584,7 +586,7 @@ def main(args=None):
     if plot_render in ["ds9", "both"]:
         current_plot = init_ds9_plot(fpath=fpath, wave=wave)
         if verbose:
-            print(f"Opening ds9 plot: {current_plot}")
+            logger.info(f"Opening ds9 plot: {current_plot}")
 
     update_masks(
         filename=file_datacube,
@@ -607,9 +609,9 @@ def main(args=None):
     hdul = fits.HDUList([hdu0, hdu1, hdu2])
     hdul.writeto(output_masks, overwrite=True)
     if verbose:
-        print(f"Masks saved to {output_masks}")
+        logger.info(f"Masks saved to {output_masks}")
 
-    print("Remember to close the running session of ds9 before re-executing this program!")
+    logger.info("[red]Remember to close the running session of ds9 before re-executing this program![/red]")
 
     # Display goodbye message and save console log if recording is enabled
     goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
