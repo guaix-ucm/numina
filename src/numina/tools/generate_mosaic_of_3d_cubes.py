@@ -33,6 +33,7 @@ from numina.tools.initialize_script_with_args import goodbye_message_and_save_co
 from numina._version import __version__
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
+from .file_is_valid_fits import file_is_valid_fits
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
 REPROJECT_METHODS = ["interp", "adaptive", "exact"]
@@ -360,6 +361,8 @@ def main(args=None):
             if fname[0] not in ["#"]:
                 if not Path(fname).is_file():
                     raise ValueError(f"File {fname} does not exist or is not a valid file.")
+                if not file_is_valid_fits(fname):
+                    raise ValueError(f"File {fname} is not a valid FITS file.")
                 list_of_fits_files.append(fname)
 
     if len(list_of_fits_files) < 1:
