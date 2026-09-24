@@ -296,7 +296,7 @@ def main(args=None):
     )
     parser.add_argument("--naxis3out", help="Number of slices in the output image", type=int, default=None)
     parser.add_argument(
-        "--desired_celestial_2d_wcs",
+        "--desired-celestial-2d-wcs",
         help="Desired 2D celestial WCS projection. " "Default None (compute for current 3D cube combination)",
         type=str,
         default=None,
@@ -342,6 +342,8 @@ def main(args=None):
     if reproject_method not in REPROJECT_METHODS:
         raise ValueError(f"Unexpected reproject_method: {reproject_method}. Expected one of {REPROJECT_METHODS}")
     output_celestial_2d_wcs = args.output_celestial_2d_wcs
+    if output_celestial_2d_wcs is not None:
+        output_celestial_2d_wcs = Path(args.output_dir) / output_celestial_2d_wcs
     footprint = args.footprint
 
     # define extensions for image and mask
