@@ -8,6 +8,7 @@
 #
 """Interactive examination of 3D data cubes with ds9."""
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -280,7 +281,7 @@ def display_help_menu(plot_render):
     logger.info("  - Press 'h' to display this help")
 
 
-def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plot_render):
+def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render):
     """Update source and continuum masks interactively using ds9.
 
     Parameters
@@ -295,8 +296,6 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
         The continuum mask to update.
     wave : astropy.units.Quantity
         The wavelength array corresponding to the spectral axis.
-    verbose : bool
-        If True, print verbose output.
     plot_render : str
         Display to display spectra: matplotlib or ds9
 
@@ -351,13 +350,11 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
         try:
             key, x, y = ds9cmd("xpaget ds9 iexam key coordinate image").split()
         except ValueError as exc:
-            if verbose:
-                logger.warning(f"WARNING: {exc}")
+            logger.warning(f"WARNING: {exc}")
         if key in ["s", "c", "r", "a", "x"]:
             x = str(round(float(x)))
             y = str(round(float(y)))
-            if verbose:
-                logger.info(f"key: {key}: selecting pixel {x=}, {y=}")
+            logger.info(f"key: {key}: selecting pixel {x=}, {y=}")
             iy = int(y) - 1
             ix = int(x) - 1
             if key == "a":
@@ -429,8 +426,7 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, verbose, plo
             cquit = input("Do you want to quit? (y/[n]) ")
             if cquit.lower() in ["y", "yes"]:
                 loop = False
-                if verbose:
-                    logger.info("Selection of pixels finished!")
+                logger.info("Selection of pixels finished!")
 
     if plot_render in ["matplotlib", "both"]:
         # keep the splot open after updates
@@ -451,7 +447,7 @@ def main(args=None):
     parser.add_argument("datacube", help="Input 3D FITS data cube", type=str)
     parser.add_argument("--i1", help="First pixel along NAXIS3 (default 1)", type=int, default=1)
     parser.add_argument("--i2", help="Last pixel along NAXIS3 (default NAXIS3)", type=str)
-    parser.add_argument("--ds9exec", help="Command line to launch ds9 (default 'ds9')", type=str, default="ds9")
+    parser.add_argument("--ds9exec", help="Command line to launch ds9 (default 'ds9')", type=str)
     parser.add_argument(
         "--plot_render",
         help="Display to display spectra (default=matplotlib)",
@@ -468,7 +464,18 @@ def main(args=None):
 
     file_datacube = args.datacube
     ds9exec = args.ds9exec
-    verbose = True
+    if ds9exec is None:
+        # find environment variable DS9EXEC, if not found, use 'ds9'
+        logger.info("Searching for environment variable DS9EXEC...")
+        ds9exec = os.environ.get("DS9EXEC")
+        console.print(
+            f"DS9EXEC={ds9exec}", highlight=False
+        )  # Do not apply highlighting to the command line, as it may contain special characters
+        if ds9exec is None:
+            logger.info("Environment variable DS9EXEC not found. Using 'ds9' as default.")
+            ds9exec = "ds9"
+    else:
+        logger.info(f"Using provided ds9exec: {ds9exec}")
     plot_render = args.plot_render
 
     # Check XPA is installed
@@ -478,8 +485,7 @@ def main(args=None):
         if execfile is None:
             raise SystemExit(f"The program {required_executable} is not available")
         else:
-            if verbose:
-                logger.info(f"Required program {execfile} found!")
+            logger.info(f"Required program {execfile} found!")
 
     # Check if ds9 is already running
     logger.info("Checking if a previous ds9 instance is running...")
@@ -487,9 +493,8 @@ def main(args=None):
         filename = ds9cmd("xpaget ds9 file")
     except Exception as exc:
         filename = ""
-        if verbose:
-            logger.info(f"{exc=}")
-            logger.info("No previous ds9 instance found. OK!")
+        logger.info(f"{exc=}")
+        logger.info("No previous ds9 instance found. OK!")
     if len(filename) > 0:
         logger.warning(
             "A previous instance of ds9 is already running.\n"
@@ -502,18 +507,16 @@ def main(args=None):
     fpath = Path(file_datacube)
     header = fits.getheader(fpath)
     wcs = WCS(header)
-    if verbose:
-        logger.info(f"WCS: {wcs}")
+    logger.info(f"WCS: {wcs}")
 
     data = fits.getdata(fpath)
     if len(data.shape) != 3:
         raise ValueError(f"Expected a 3D cube, but got {data.shape}")
 
     naxis3, naxis2, naxis1 = data.shape
-    if verbose:
-        logger.info(f"{naxis1=}")
-        logger.info(f"{naxis2=}")
-        logger.info(f"{naxis3=}")
+    logger.info(f"{naxis1=}")
+    logger.info(f"{naxis2=}")
+    logger.info(f"{naxis3=}")
 
     i1 = args.i1
     if i1 < 1 or i1 > naxis3:
@@ -526,8 +529,7 @@ def main(args=None):
             raise ValueError(f"Invalid last pixel={i2} along NAXIS3={naxis3}")
 
     # Collapse the data cube along NAXIS3
-    if verbose:
-        logger.info("Collapsing 3D cubes along NAXIS3... ")
+    logger.info("Collapsing 3D cubes along NAXIS3... ")
     extract_slice(
         input=file_datacube,
         axis=3,
@@ -544,28 +546,29 @@ def main(args=None):
 
     # Launch ds9
     cmd = f"{ds9exec.split()[0]} tmp_collapsed_3D.fits {' '.join(ds9exec.split()[1:])} &"
-    if verbose:
-        logger.info("Executing:")
-        console.print(cmd, highlight=False)  # Do not apply highlighting to the command line, as it may contain special characters
+    logger.info("Executing:")
+    console.print(
+        cmd, highlight=False
+    )  # Do not apply highlighting to the command line, as it may contain special characters
     # Note: use shell=True below to make the ds9 alias in the system available
     result = subprocess.run(cmd, capture_output=True, text=True, check=False, shell=True)
-    if verbose:
-        logger.info(f"{result.stderr=}")
-        logger.info(f"{result.stdout=}")
+    if result.stderr != "":
+        logger.error(f"{result.stderr}")
+        raise SystemExit(
+            "ds9 could not be launched! Check environment variable DS9EXEC or the command line provided with --ds9exec"
+        )
     input("Press RETURN after ds9 has properly started...")
     try:
         filename = ds9cmd("xpaget ds9 file")
     except Exception as exc:
         raise SystemExit("Fatal error: ds9 is not running") from exc
-    if verbose:
-        logger.info(f"ds9 working with file: {filename}")
+    logger.info(f"ds9 working with file: {filename}")
 
     # Generate array in the spectral direction
     wcs1d_spectral = wcs.spectral
     wave = wcs1d_spectral.pixel_to_world(np.arange(naxis3))
-    if verbose:
-        logger.info(f"Minimum value along NAXIS3: {wave.min()}")
-        logger.info(f"Maximum value along NAXIS3: {wave.max()}")
+    logger.info(f"Minimum value along NAXIS3: {wave.min()}")
+    logger.info(f"Maximum value along NAXIS3: {wave.max()}")
 
     # Read source and continuum masks or create them
     if args.input_masks:
@@ -585,8 +588,7 @@ def main(args=None):
 
     if plot_render in ["ds9", "both"]:
         current_plot = init_ds9_plot(fpath=fpath, wave=wave)
-        if verbose:
-            logger.info(f"Opening ds9 plot: {current_plot}")
+        logger.info(f"Opening ds9 plot: {current_plot}")
 
     update_masks(
         filename=file_datacube,
@@ -594,7 +596,6 @@ def main(args=None):
         source_mask=source_mask,
         continuum_mask=continuum_mask,
         wave=wave,
-        verbose=verbose,
         plot_render=plot_render,
     )
 
@@ -608,8 +609,7 @@ def main(args=None):
     hdu2 = fits.ImageHDU(continuum_mask, name="CONTMASK")
     hdul = fits.HDUList([hdu0, hdu1, hdu2])
     hdul.writeto(output_masks, overwrite=True)
-    if verbose:
-        logger.info(f"Masks saved to {output_masks}")
+    logger.info(f"Masks saved to {output_masks}")
 
     logger.info("[red]Remember to close the running session of ds9 before re-executing this program![/red]")
 
