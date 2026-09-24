@@ -16,25 +16,47 @@ from pathlib import Path
 from numina.user.console import NuminaConsole
 
 
-def include_default_arguments_for_common_actions(parser):
+def include_default_arguments_for_common_actions(
+    parser,
+    include_version=True,
+    include_output_dir=True,
+    include_record=True,
+    include_echo=True,
+    include_log_level=True,
+):
     """Include default arguments to record and other common actions.
 
     Parameters
     ----------
     parser : argparse.ArgumentParser
         Argument parser object to which the default arguments will be added.
+    include_version : bool, optional
+        Whether to include the --version argument (default: True).
+    include_output_dir : bool, optional
+        Whether to include the --output-dir argument (default: True).
+    include_record : bool, optional
+        Whether to include the --record argument (default: True).
+    include_echo : bool, optional
+        Whether to include the --echo argument (default: True).
+    include_log_level : bool, optional
+        Whether to include the --log-level argument (default: True).
     """
-    parser.add_argument("--version", help="Display version information and exit", action="store_true")
-    parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
-    parser.add_argument("--record", help="Record terminal output", action="store_true")
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    parser.add_argument(
-        "--log-level",
-        help="Set the logging level",
-        type=str,
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-    )
+    if include_version:
+        parser.add_argument("--version", help="Display version information and exit", action="store_true")
+    if include_output_dir:
+        parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    if include_record:
+        parser.add_argument("--record", help="Record terminal output", action="store_true")
+    if include_echo:
+        parser.add_argument("--echo", help="Display full command line", action="store_true")
+    if include_log_level:
+        parser.add_argument(
+            "--log-level",
+            help="Set the logging level",
+            type=str,
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            default="INFO",
+        )
 
 
 def initialize_script_with_args(sys_argv, parser, args, local_name, version=None):
