@@ -200,7 +200,7 @@ def main(args=None):
         naxis3out=naxis3out,
     )
 
-    add_script_info_to_fits_history(resampled_hdu.header, args)
+    add_script_info_to_fits_history(resampled_hdu.header, args, parser)
     resampled_hdu.writeto(Path(args.output_dir) / output_file, overwrite=True)
 
     # Display goodbye message and save console log if recording is enabled

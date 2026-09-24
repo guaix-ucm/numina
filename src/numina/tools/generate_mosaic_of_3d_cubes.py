@@ -328,6 +328,7 @@ def main(args=None):
     console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_list = args.input_list
+    extname_image = args.extname_image
     output_filename = Path(args.output_dir) / args.output_filename
     crval3out = args.crval3out
     if crval3out is not None:
@@ -346,11 +347,8 @@ def main(args=None):
         output_celestial_2d_wcs = Path(args.output_dir) / output_celestial_2d_wcs
     footprint = args.footprint
 
-    # define extensions for image and mask
-    extname_image = args.extname_image
-
     # check if input file is a single FITS file or a list
-    if input_list.endswith(".fits"):
+    if input_list.lower().endswith(".fits"):
         file_content = [input_list]
     else:
         with open(input_list) as f:
@@ -382,7 +380,7 @@ def main(args=None):
     )
 
     # save result
-    add_script_info_to_fits_history(output_hdul[0].header, args)
+    add_script_info_to_fits_history(output_hdul[0].header, args, parser)
     output_hdul[0].header.add_history("Contents of --input_list:")
     for item in list_of_fits_files:
         output_hdul[0].header.add_history(f"- {item}")

@@ -1,5 +1,5 @@
 #
-# Copyright 2025 Universidad Complutense de Madrid
+# Copyright 2025-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -71,13 +71,7 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
     iy_array = meshgrid[1].flatten()
 
     # spherical coordinates of the four corners of all the image pixels
-    result_spherical = SkyCoord.from_pixel(
-        xp=ix_array,
-        yp=iy_array,
-        wcs=wcs,
-        origin=1,
-        mode='all'
-    )
+    result_spherical = SkyCoord.from_pixel(xp=ix_array, yp=iy_array, wcs=wcs, origin=1, mode="all")
 
     if method == 1:
         # Use spherical polygons to compute the solid angle
@@ -86,17 +80,21 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
         for i in tqdm(range(naxis2), desc="NAXIS2", disable=not verbose):
             for j in range(naxis1):
                 polygon = SphericalPolygon.from_radec(
-                    lon=[result_spherical[i, j].ra.rad,
-                         result_spherical[i, j + 1].ra.rad,
-                         result_spherical[i + 1, j + 1].ra.rad,
-                         result_spherical[i + 1, j].ra.rad],
-                    lat=[result_spherical[i, j].dec.rad,
-                         result_spherical[i, j + 1].dec.rad,
-                         result_spherical[i + 1, j + 1].dec.rad,
-                         result_spherical[i + 1, j].dec.rad],
+                    lon=[
+                        result_spherical[i, j].ra.rad,
+                        result_spherical[i, j + 1].ra.rad,
+                        result_spherical[i + 1, j + 1].ra.rad,
+                        result_spherical[i + 1, j].ra.rad,
+                    ],
+                    lat=[
+                        result_spherical[i, j].dec.rad,
+                        result_spherical[i, j + 1].dec.rad,
+                        result_spherical[i + 1, j + 1].dec.rad,
+                        result_spherical[i + 1, j].dec.rad,
+                    ],
                     degrees=False,
                 )
-                result[i, j] = polygon.area() * (180 / np.pi) ** 2 * 3600 ** 2
+                result[i, j] = polygon.area() * (180 / np.pi) ** 2 * 3600**2
     elif method == 2:
         # Use spherical polygons with a different approach to compute the solid angle
         result_spherical = result_spherical.reshape(naxis2 + 1, naxis1 + 1)
@@ -118,15 +116,13 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
         y = result_spherical.cartesian.y.value.reshape(naxis2 + 1, naxis1 + 1)
         z = result_spherical.cartesian.z.value.reshape(naxis2 + 1, naxis1 + 1)
         # dot product of consecutive points along NAXIS1
-        dot_product_naxis1 = x[:, :-1] * x[:, 1:] + \
-            y[:, :-1] * y[:, 1:] + z[:, :-1] * z[:, 1:]
+        dot_product_naxis1 = x[:, :-1] * x[:, 1:] + y[:, :-1] * y[:, 1:] + z[:, :-1] * z[:, 1:]
         # distance (arcsec) between consecutive points along NAXIS1
         result_naxis1 = np.arccos(dot_product_naxis1) * 180 / np.pi * 3600
         # average distances corresponding to the upper and lower sides of each pixel
         pixel_size_naxis1 = (result_naxis1[:-1, :] + result_naxis1[1:, :]) / 2
         # dot product of consecutive points along NAXIS2
-        dot_product_naxis2 = x[:-1, :] * x[1:, :] + \
-            y[:-1, :] * y[1:, :] + z[:-1, :] * z[1:, :]
+        dot_product_naxis2 = x[:-1, :] * x[1:, :] + y[:-1, :] * y[1:, :] + z[:-1, :] * z[1:, :]
         # distance (arcsec) between consecutive points along NAXIS2
         result_naxis2 = np.arccos(dot_product_naxis2) * 180 / np.pi * 3600
         # average distances corresponding to the left and right sides of each pixel
@@ -140,7 +136,7 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
     if kernel_size is not None:
         if verbose:
             print(f"Applying median filter with kernel size {kernel_size}.")
-        result = median_filter(result, size=kernel_size, mode='nearest')
+        result = median_filter(result, size=kernel_size, mode="nearest")
 
     return result
 
@@ -148,32 +144,34 @@ def pixel_solid_angle_arcsec2(wcs, naxis1, naxis2, method=3, kernel_size=None, v
 def main(args=None):
     parser = argparse.ArgumentParser(
         description="Compute the solid angle in arcsec^2 for each pixel in a 2D image.",
-        formatter_class=RawTextHelpFormatter
+        formatter_class=RawTextHelpFormatter,
     )
-    parser.add_argument('input_file', type=str,
-                        help='FITS file containing the image data.')
-    parser.add_argument('output_file', type=str,
-                        help='Output FITS file to save the solid angle data.')
-    parser.add_argument("--extname", type=str,
-                        help="Extension name of the input HDU (default: 'PRIMARY').",
-                        default='PRIMARY')
-    parser.add_argument("--method", type=int, default=3,
-                        help="Method to compute the solid angle:\n"
-                             "1: Use spherical polygons (slow)\n"
-                             "   (not recommended for very small pixel sizes)\n"
-                             "2: Use spherical polygons (different approach, slow)\n"
-                             "   (recommended for small pixel sizes)\n"
-                             "3: Use spherical coordinates and distances (fast)\n"
-                             "   (default, not recommended for very small pixel sizes)")
-    parser.add_argument("--kernel_size", type=int, default=None,
-                        help="Kernel size for smoothing the result using a median\n"
-                             "filter. If not specified, no smoothing is applied.")
-    parser.add_argument("--verbose",
-                        help="Display intermediate information",
-                        action="store_true")
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument("input_file", type=str, help="FITS file containing the image data.")
+    parser.add_argument("output_file", type=str, help="Output FITS file to save the solid angle data.")
+    parser.add_argument(
+        "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
+    )
+    parser.add_argument(
+        "--method",
+        type=int,
+        default=3,
+        help="Method to compute the solid angle:\n"
+        "1: Use spherical polygons (slow)\n"
+        "   (not recommended for very small pixel sizes)\n"
+        "2: Use spherical polygons (different approach, slow)\n"
+        "   (recommended for small pixel sizes)\n"
+        "3: Use spherical coordinates and distances (fast)\n"
+        "   (default, not recommended for very small pixel sizes)",
+    )
+    parser.add_argument(
+        "--kernel_size",
+        type=int,
+        default=None,
+        help="Kernel size for smoothing the result using a median\n"
+        "filter. If not specified, no smoothing is applied.",
+    )
+    parser.add_argument("--verbose", help="Display intermediate information", action="store_true")
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args)
 
@@ -183,10 +181,10 @@ def main(args=None):
 
     if args.verbose:
         for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
+            print(f"{arg}: {value}")
 
     if args.echo:
-        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
+        print("[bold red]Executing:\n" + " ".join(sys.argv) + "[/bold red]")
 
     input_file = args.input_file
     output_file = args.output_file
@@ -199,33 +197,28 @@ def main(args=None):
         if extname not in hdul:
             raise ValueError(f"Extension '{extname}' not found in {input_file}.")
         hdu_image = hdul[extname]
-        naxis = hdu_image.header['NAXIS']
+        naxis = hdu_image.header["NAXIS"]
         if naxis == 2:
             wcs = WCS(hdu_image.header)
         elif naxis == 3:
             wcs = WCS(hdu_image.header).celestial
         else:
             raise ValueError(f"Unsupported NAXIS value: {naxis}. Expected 2 or 3.")
-        naxis1 = hdu_image.header['NAXIS1']
-        naxis2 = hdu_image.header['NAXIS2']
+        naxis1 = hdu_image.header["NAXIS1"]
+        naxis2 = hdu_image.header["NAXIS2"]
         if args.verbose:
             print(f"{naxis1=}")
             print(f"{naxis2=}")
             print(f"Celestial coordinates WCS:\n{wcs}")
 
     result = pixel_solid_angle_arcsec2(
-        wcs=wcs,
-        naxis1=naxis1,
-        naxis2=naxis2,
-        method=method,
-        kernel_size=kernel_size,
-        verbose=verbose
+        wcs=wcs, naxis1=naxis1, naxis2=naxis2, method=method, kernel_size=kernel_size, verbose=verbose
     )
 
     # Create a new FITS HDU with the solid angle data
     solid_angle_hdu = fits.PrimaryHDU(data=result.astype(np.float32))
     header = solid_angle_hdu.header
-    add_script_info_to_fits_history(header, args)
+    add_script_info_to_fits_history(header, args, parser)
     if args.verbose:
         print(f"Saving solid angle data to {output_file}.")
     solid_angle_hdu.writeto(output_file, overwrite=True)

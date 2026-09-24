@@ -196,7 +196,7 @@ def main(args=None):
             output_combined,
         )
         hdu_combined = fits.PrimaryHDU(combined.astype(np.float32))
-        add_script_info_to_fits_history(hdu_combined.header, args)
+        add_script_info_to_fits_history(hdu_combined.header, args, parser)
         hdu_combined.header.add_history("Contents of --inputlist:")
         for item in list_of_fits_files:
             hdu_combined.header.add_history(f"- {item}")

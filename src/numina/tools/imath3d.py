@@ -51,27 +51,27 @@ def compute_operation(file1, file2, operation, extname1, extname2, dtype):
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[extname1].header
         image1 = hdulist[extname1].data.astype(dtype)
-    naxis = image_header1['naxis']
+    naxis = image_header1["naxis"]
     if naxis != 3:
         raise ValueError("Input file must be a 3D cube (NAXIS=3).")
-    naxis1 = image_header1['naxis1']
-    naxis2 = image_header1['naxis2']
-    naxis3 = image_header1['naxis3']
+    naxis1 = image_header1["naxis1"]
+    naxis2 = image_header1["naxis2"]
+    naxis3 = image_header1["naxis3"]
 
     # read second FITS file or number
     try:
         with fits.open(file2) as hdulist:
             image_header2 = hdulist[extname2].header
             image2 = hdulist[extname2].data.astype(dtype)
-            naxis_ = image_header2['naxis']
-            naxis1_ = image_header2['naxis1']
-            naxis2_ = image_header2['naxis2']
-            naxis3_ = image_header2['naxis3']
+            naxis_ = image_header2["naxis"]
+            naxis1_ = image_header2["naxis1"]
+            naxis2_ = image_header2["naxis2"]
+            naxis3_ = image_header2["naxis3"]
     except FileNotFoundError:
         image2 = np.zeros((naxis3, naxis2, naxis1), dtype=dtype)
-        if 'int' in dtype:
+        if "int" in dtype:
             file2 = int(file2)
-        elif 'float' in dtype:
+        elif "float" in dtype:
             file2 = float(file2)
         else:
             raise ValueError(f"Unsupported dtype: {dtype}. Use an integer or float type.")
@@ -112,47 +112,34 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: binary image arithmetic",
-        formatter_class=RichHelpFormatter
+        description="description: binary image arithmetic", formatter_class=RichHelpFormatter
     )
     # positional parameters
-    parser.add_argument("file1",
-                        help="First FITS image",
-                        type=str)
-    parser.add_argument("operation",
-                        help="Arithmetic operation",
-                        type=str,
-                        choices=['+', '-', 'x', '/', '='])
-    parser.add_argument("file2",
-                        help="Second FITS image or number",
-                        type=str)
-    parser.add_argument("output",
-                        help="Output FITS image",
-                        type=str)
+    parser.add_argument("file1", help="First FITS image", type=str)
+    parser.add_argument("operation", help="Arithmetic operation", type=str, choices=["+", "-", "x", "/", "="])
+    parser.add_argument("file2", help="Second FITS image or number", type=str)
+    parser.add_argument("output", help="Output FITS image", type=str)
     # optional arguments
-    parser.add_argument("--extname1", type=str,
-                        help="Extension name of the first FITS file (default: 'PRIMARY').",
-                        default='PRIMARY')
-    parser.add_argument("--extname2", type=str,
-                        help="Extension name of the second FITS file (default: 'PRIMARY').",
-                        default='PRIMARY')
-    parser.add_argument("--overwrite",
-                        help="Overwrite output file if already exists",
-                        action="store_true")
-    parser.add_argument("--dtype",
-                        help="Data type of the output image (default: float32)",
-                        type=str,
-                        choices=['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64',
-                                 'float32', 'float64'],
-                        default='float32')
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--extname1", type=str, help="Extension name of the first FITS file (default: 'PRIMARY').", default="PRIMARY"
+    )
+    parser.add_argument(
+        "--extname2", type=str, help="Extension name of the second FITS file (default: 'PRIMARY').", default="PRIMARY"
+    )
+    parser.add_argument("--overwrite", help="Overwrite output file if already exists", action="store_true")
+    parser.add_argument(
+        "--dtype",
+        help="Data type of the output image (default: float32)",
+        type=str,
+        choices=["uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "float32", "float64"],
+        default="float32",
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     if not args.overwrite and pathlib.Path(args.output).exists():
         print(f"Output file {args.output} already exists. Use --overwrite to overwrite it.")
@@ -165,17 +152,19 @@ def main(args=None):
         operation=args.operation,
         extname1=args.extname1,
         extname2=args.extname2,
-        dtype=args.dtype
+        dtype=args.dtype,
     )
 
     # save output file
     header = fits.getheader(args.file1, args.extname1)
-    if header['naxis1'] != solution.shape[2] or \
-       header['naxis2'] != solution.shape[1] or \
-       header['naxis3'] != solution.shape[0]:
+    if (
+        header["naxis1"] != solution.shape[2]
+        or header["naxis2"] != solution.shape[1]
+        or header["naxis3"] != solution.shape[0]
+    ):
         raise ValueError("Output image dimensions do not match the input image dimensions.")
     hdu = fits.PrimaryHDU(solution.astype(args.dtype), header=header)
-    add_script_info_to_fits_history(hdu.header, args)
+    add_script_info_to_fits_history(hdu.header, args, parser)
     hdu.writeto(args.output, overwrite=args.overwrite)
 
 
