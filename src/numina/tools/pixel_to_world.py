@@ -11,8 +11,8 @@
 
 import argparse
 from astropy.io import fits
-from astropy.wcs import WCS
 from astropy.coordinates import SkyCoord, SpectralCoord
+import io
 import logging
 import numpy as np
 from rich_argparse import RichHelpFormatter
@@ -46,6 +46,9 @@ def pixel_to_world(inputfile, pixel, extnum, extname, wcskey):
     logger.debug(f"Opened FITS file: {inputfile}")
 
     with fits.open(inputfile) as hdul:
+        buffer = io.StringIO()
+        hdul.info(output=buffer)
+        logger.info(buffer.getvalue().rstrip(), extra={"markup": False})
         hdu = get_hdu_from_hdul(hdul, extnum=extnum, extname=extname)
         wcs = get_wcs_from_hdu(hdu, wcskey=wcskey)
         header = hdu.header
