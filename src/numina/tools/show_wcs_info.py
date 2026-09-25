@@ -11,8 +11,6 @@
 
 import argparse
 from astropy.io import fits
-from astropy.wcs import find_all_wcs
-from astropy.wcs import WCS
 import io
 import logging
 from pathlib import Path
@@ -76,12 +74,12 @@ def main(args=None):
     parser.add_argument(
         "-e",
         "--extnum",
-        help="Extension number for image in input files. Default value: 0",
+        help="Extension number for image in input files.",
         type=int,
     )
     parser.add_argument(
         "--extname",
-        help="Extension name for image in input files. Default value: PRIMARY",
+        help="Extension name for image in input files.",
         type=str,
     )
     parser.add_argument(

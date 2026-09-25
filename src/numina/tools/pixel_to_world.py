@@ -18,14 +18,15 @@ import numpy as np
 from rich_argparse import RichHelpFormatter
 import sys
 
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
+from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 from numina._version import __version__
 
 
-def pixel_to_world(inputfile, pixel, extnum):
+def pixel_to_world(inputfile, pixel, extnum, extname, wcskey):
     """Compute world_to_pixel.
 
     Parameters
@@ -36,17 +37,19 @@ def pixel_to_world(inputfile, pixel, extnum):
         WCS pixel coordinate.
     extnum : int
         Extension number to read the WCS from.
+    extname : str
+        Extension name to read the WCS from.
+    wcskey : str
+        WCS key to use when multiple WCS are present in the FITS header.
     """
     logger = logging.getLogger(__name__)
     logger.debug(f"Opened FITS file: {inputfile}")
 
     with fits.open(inputfile) as hdul:
-        logger.debug(hdul.info())
-        if extnum > len(hdul) - 1:
-            raise ValueError(f"Extension number {extnum} exceeds {len(hdul) - 1}")
-        header = hdul[extnum].header
+        hdu = get_hdu_from_hdul(hdul, extnum=extnum, extname=extname)
+        wcs = get_wcs_from_hdu(hdu, wcskey=wcskey)
+        header = hdu.header
 
-    wcs = WCS(header)
     logger.debug(f"WCS info: {wcs}")
     naxis = wcs.naxis
 
@@ -94,21 +97,23 @@ def main(args=None):
     )
     parser.add_argument("inputfile", help="Input FITS file", type=str)
     parser.add_argument("--pixel", help="WCS pixel coordinate (comma separated values)", type=str, default=None)
-    parser.add_argument("-e", "--extnum", help="Extension number (default 0=PRIMARY)", type=int, default=0)
+    parser.add_argument("-e", "--extnum", help="Extension number", type=int)
+    parser.add_argument("--extname", help="Extension name", type=str)
+    parser.add_argument(
+        "--wcskey", help="WCS key to use when multiple WCS are present in the FITS header", type=str, default=None
+    )
     include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
     console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
-    extnum = args.extnum
-    if extnum < 0:
-        raise ValueError("extnum must be >= 0")
-
     pixel_to_world(
         inputfile=args.inputfile,
         pixel=args.pixel,
-        extnum=extnum,
+        extnum=args.extnum,
+        extname=args.extname,
+        wcskey=args.wcskey,
     )
 
     # Display goodbye message and save console log if recording is enabled
