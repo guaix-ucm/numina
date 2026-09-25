@@ -10,16 +10,30 @@
 
 from datetime import datetime
 import logging
+from rich.highlighter import ReprHighlighter
 from rich.logging import RichHandler
 from pathlib import Path
 
 from numina.user.console import NuminaConsole
 
 
+class SciNotationHighlighter(ReprHighlighter):
+    """ReprHighlighter that also recognises uppercase exponents (e.g. 1.5E-13).
+
+    The default ReprHighlighter only matches lowercase exponents, so numbers
+    such as those found in FITS header cards are highlighted incorrectly.
+    """
+
+    highlights = ReprHighlighter.highlights + [
+        r"(?P<number>(?<![\w.])[-+]?\d+\.?\d*[eE][-+]?\d+\b)",
+    ]
+
+
 def include_default_arguments_for_common_actions(
     parser,
     include_version=True,
     include_output_dir=True,
+    include_no_color=True,
     include_record=True,
     include_echo=True,
     include_log_level=True,
@@ -45,6 +59,8 @@ def include_default_arguments_for_common_actions(
         parser.add_argument("--version", help="Display version information and exit", action="store_true")
     if include_output_dir:
         parser.add_argument("--output-dir", help="Output directory (default: .)", type=str, default=".")
+    if include_no_color:
+        parser.add_argument("--no-color", help="Disable color output", action="store_true")
     if include_record:
         parser.add_argument("--record", help="Record terminal output", action="store_true")
     if include_echo:
@@ -98,7 +114,13 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
     datetime_ini = datetime.now()
 
     # Configure rich console
-    console = NuminaConsole(record=args.record)
+    highlighter = SciNotationHighlighter()
+    no_color = getattr(args, "no_color", False)
+    if no_color:
+        console = NuminaConsole(record=args.record, color_system=None)
+    else:
+        console = NuminaConsole(record=args.record)
+    console.highlighter = highlighter  # affect console.print()
 
     # Display version and exit if requested
     if hasattr(args, "version") and args.version:
@@ -115,12 +137,14 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
     # Configure logging
     if not hasattr(args, "log_level"):
         args.log_level = "INFO"
+
+    handler_kwargs = dict(console=console, show_time=False, markup=True, highlighter=highlighter)
     if args.log_level in ["DEBUG", "WARNING", "ERROR", "CRITICAL"]:
         format_log = "%(name)s %(levelname)s\n%(message)s"
-        handlers = [RichHandler(console=console, show_time=False, markup=True)]
     else:
         format_log = "%(message)s"
-        handlers = [RichHandler(console=console, show_time=False, markup=True, show_path=False, show_level=False)]
+        handler_kwargs.update(show_path=False, show_level=False)
+    handlers = [RichHandler(**handler_kwargs)]
     logging.basicConfig(level=args.log_level, format=format_log, handlers=handlers)
     logging.getLogger("matplotlib").setLevel(logging.ERROR)  # Suppress matplotlib debug logs
 
