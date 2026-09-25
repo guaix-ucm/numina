@@ -149,7 +149,8 @@ def initialize_script_with_args(sys_argv, parser, args, local_name):
 
     # Display version info
     logger = logging.getLogger(local_name)
-    logger.info(f"Using {local_name} version {__version__}")
+    logger.info(f"Using {local_name}")
+    logger.info(f"Version {__version__}")
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug(f"Command line arguments: {args}")
