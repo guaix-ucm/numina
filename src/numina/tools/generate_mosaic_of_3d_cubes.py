@@ -118,9 +118,6 @@ def generate_mosaic_of_3d_cubes(
                 hdu = hdul[extname_image]
             logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
             header3d_copy = hdu.header.copy()
-            # remove keywords that may cause issues
-            for key in ["OBSGEO-X", "OBSGEO-Y", "OBSGEO-Z", "OBSGEO-L", "OBSGEO-B", "OBSGEO-H"]:
-                header3d_copy.remove(key, ignore_missing=True)
             wcs2d_celestial = WCS(header3d_copy).celestial
             logger.info(f"{wcs2d_celestial=}")
             scales = proj_plane_pixel_scales(wcs2d_celestial)
@@ -161,9 +158,6 @@ def generate_mosaic_of_3d_cubes(
             logger.info(f"Working with file (extension): {fname} ({extname_image})")
             logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
             header3d_copy = hdu.header.copy()
-            # remove keywords that may cause issues
-            for key in ["OBSGEO-X", "OBSGEO-Y", "OBSGEO-Z", "OBSGEO-L", "OBSGEO-B", "OBSGEO-H"]:
-                header3d_copy.remove(key, ignore_missing=True)
             wcs1d_spectral = WCS(header3d_copy).spectral
             wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
             logger.info(f"{wcs1d_spectral=}")

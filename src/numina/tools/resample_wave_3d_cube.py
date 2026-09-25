@@ -70,9 +70,6 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
 
     # create a copy of the header to avoid modifying the original
     header3d_copy = hdu3d_image.header.copy()
-    # remove keywords that may cause issues
-    for key in ["OBSGEO-X", "OBSGEO-Y", "OBSGEO-Z", "OBSGEO-L", "OBSGEO-B", "OBSGEO-H"]:
-        header3d_copy.remove(key, ignore_missing=True)
 
     # initial pixel borders in the spectral axis
     old_wcs1d_spectral = WCS(header3d_copy).spectral
