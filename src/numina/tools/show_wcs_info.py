@@ -55,7 +55,8 @@ def show_wcs_info(list_of_fits_files, extname_image):
                 if key in hdu.header:
                     logger.info(f"{key} = {hdu.header[key]}")
             wcs = WCS(hdu.header)
-            logger.info(f"WCS info:\n{wcs.to_header_string()}")
+            header_text = wcs.to_header().tostring(sep="\n", endcard=False, padding=False).rstrip()
+            logger.info(f"WCS info:\n{header_text}")
 
 
 def main(args=None):
