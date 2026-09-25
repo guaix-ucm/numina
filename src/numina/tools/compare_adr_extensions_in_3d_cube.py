@@ -17,11 +17,9 @@ import numpy as np
 from rich_argparse import RichHelpFormatter
 import sys
 
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
-
-from numina._version import __version__
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 
 def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
@@ -167,7 +165,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:

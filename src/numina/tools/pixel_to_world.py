@@ -23,8 +23,6 @@ from .initialize_script_with_args import include_default_arguments_for_common_ac
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
-from numina._version import __version__
-
 
 def pixel_to_world(inputfile, pixel, extnum, extname, wcskey):
     """Compute world_to_pixel.
@@ -109,7 +107,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     pixel_to_world(
         inputfile=args.inputfile,

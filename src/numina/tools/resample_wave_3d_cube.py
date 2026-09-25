@@ -20,13 +20,11 @@ from pathlib import Path
 from rich_argparse import RichHelpFormatter
 
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
-
-from numina._version import __version__
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 
 def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
@@ -151,7 +149,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     input_file = args.input
     output_file = args.output

@@ -14,6 +14,7 @@ from rich.highlighter import ReprHighlighter
 from rich.logging import RichHandler
 from pathlib import Path
 
+from numina._version import __version__
 from numina.user.console import NuminaConsole
 
 
@@ -75,7 +76,7 @@ def include_default_arguments_for_common_actions(
         )
 
 
-def initialize_script_with_args(sys_argv, parser, args, local_name, version=None):
+def initialize_script_with_args(sys_argv, parser, args, local_name):
     """Initialize script with command line arguments and logging.
 
     This function initializes the script by parsing command line arguments,
@@ -94,8 +95,6 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
         Parsed command line arguments.
     local_name : str
         Name of the local script (usually __name__).
-    version : str or None, optional
-        Version to be displayed when requested.
 
     Returns
     -------
@@ -124,10 +123,7 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
 
     # Display version and exit if requested
     if hasattr(args, "version") and args.version:
-        if version is not None:
-            console.print(version)
-        else:
-            console.print("Version not available")
+        console.print(__version__)
         raise SystemExit()
 
     # Display full command line if requested
@@ -153,7 +149,7 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
 
     # Display version info
     logger = logging.getLogger(local_name)
-    logger.info(f"Using {local_name} version {version}")
+    logger.info(f"Using {local_name} version {__version__}")
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug(f"Command line arguments: {args}")

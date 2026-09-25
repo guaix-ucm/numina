@@ -24,13 +24,11 @@ from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_re
 from numina.array.distortion import shift_image2d
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
-
-from numina._version import __version__
 
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 
 def compute_i1i2(i, naxis3, binning_naxis3):
@@ -275,7 +273,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     # protections
     extname = args.extname.upper()

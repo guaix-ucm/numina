@@ -35,11 +35,10 @@ from rich_argparse import RichHelpFormatter
 import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
-from numina._version import __version__
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 REPROJECT_METHODS = ["interp", "adaptive", "exact"]
 COMBINATION_FUNCTIONS = ["mean", "median", "sum", "std", "sigmaclip_mean", "sigmaclip_median", "sigmaclip_stddev"]
@@ -250,7 +249,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     input_list = args.input_list
     output_filename = args.output_filename

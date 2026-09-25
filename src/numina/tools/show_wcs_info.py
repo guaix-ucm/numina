@@ -17,14 +17,11 @@ from pathlib import Path
 from rich_argparse import RichHelpFormatter
 import sys
 
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
-
-from numina._version import __version__
-
 from .file_is_valid_fits import file_is_valid_fits
 from .hdul_utils import get_wcs_from_hdul
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 
 def show_wcs_info(list_of_fits_files, extname=None, extnum=None, wcskey=None):
@@ -91,7 +88,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     input_list = args.input_list
     extnum = args.extnum

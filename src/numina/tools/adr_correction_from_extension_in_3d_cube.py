@@ -22,12 +22,10 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 import sys
 
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
-from numina.tools.progressbarlines import ProgressBarLines
-
-from numina._version import __version__
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
+from .progressbarlines import ProgressBarLines
 
 REPROJECT_METHODS = ["interp", "adaptive", "exact"]
 
@@ -299,7 +297,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     if args.extname_adr is None:
         raise ValueError("You must specify an extension name with --extname_adr")

@@ -43,11 +43,10 @@ import teareduce as tea
 
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 
-from numina._version import __version__
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 
 def simulate_images(fwhm, amplitude, background, noise, xoffset=0, yoffset=0, num_nans=0, seed=None):
@@ -369,7 +368,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     # If test mode is enabled, create synthetic images.
     # Otherwise, read the images from the provided paths.

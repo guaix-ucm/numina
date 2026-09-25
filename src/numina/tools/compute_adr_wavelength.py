@@ -19,12 +19,11 @@ from rich import print
 from rich_argparse import RichHelpFormatter
 import sys
 
-from numina.tools.initialize_script_with_args import include_default_arguments_for_common_actions
-from numina.tools.initialize_script_with_args import initialize_script_with_args
-from numina.tools.initialize_script_with_args import goodbye_message_and_save_console
 from numina.user.console import print_table
 
-from numina._version import __version__
+from .initialize_script_with_args import include_default_arguments_for_common_actions
+from .initialize_script_with_args import initialize_script_with_args
+from .initialize_script_with_args import goodbye_message_and_save_console
 
 
 def air_refractive_index_15_760(wave_vacuum):
@@ -215,7 +214,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
 
     if args.wave_ini is None:
         raise ValueError("You must specify --wave-ini")
