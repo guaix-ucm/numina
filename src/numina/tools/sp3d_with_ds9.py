@@ -17,7 +17,6 @@ import sys
 import argparse
 from astropy.io import fits
 from astropy.wcs import WCS
-from datetime import datetime
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
@@ -438,8 +437,6 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
 def main(args=None):
     """Main function"""
 
-    datetime_ini = datetime.now()
-
     parser = argparse.ArgumentParser(
         description="Interactive examination of 3D data cubes with ds9.", formatter_class=RichHelpFormatter
     )
@@ -460,7 +457,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     file_datacube = args.datacube
     ds9exec = args.ds9exec

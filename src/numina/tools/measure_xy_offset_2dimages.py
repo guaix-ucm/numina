@@ -32,7 +32,6 @@ Usage examples:
 import argparse
 from astropy.io import fits
 from astropy.modeling.models import Gaussian2D
-from datetime import datetime
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
@@ -317,8 +316,7 @@ def measure_xy_offset_2dimages(
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function"""
 
     parser = argparse.ArgumentParser(
         description="Determine (X,Y) offsets between 2 2D images using cross-correlation.",
@@ -371,7 +369,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     # If test mode is enabled, create synthetic images.
     # Otherwise, read the images from the provided paths.

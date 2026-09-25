@@ -280,8 +280,7 @@ def generate_mosaic_of_3d_cubes(
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function."""
 
     # parse command-line options
     parser = argparse.ArgumentParser(
@@ -326,7 +325,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_list = args.input_list
     extname_image = args.extname_image

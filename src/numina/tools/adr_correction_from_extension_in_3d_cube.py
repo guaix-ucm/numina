@@ -269,7 +269,7 @@ def apply_adr_correction_from_extension_in_3d_cube(
 
 
 def main(args=None):
-    datetime_ini = datetime.now()
+    """Main function"""
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube")
@@ -299,7 +299,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     if args.extname_adr is None:
         raise ValueError("You must specify an extension name with --extname_adr")

@@ -12,7 +12,6 @@
 import argparse
 from astropy.io import fits
 from astropy.wcs import WCS
-from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
@@ -157,7 +156,7 @@ def compare_adr_extensions_in_3d_cube(filename, extname1, extname2=None, suptitl
 
 
 def main(args=None):
-    datetime_ini = datetime.now()
+    """Main function"""
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Compare ADR extensions in 3D cube", formatter_class=RichHelpFormatter)
@@ -168,7 +167,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:

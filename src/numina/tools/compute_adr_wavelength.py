@@ -12,7 +12,6 @@
 import argparse
 from astropy.table import QTable
 import astropy.units as u
-from datetime import datetime
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
@@ -194,8 +193,7 @@ def compute_adr_wavelength(
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function"""
 
     # parse command-line options
     parser = argparse.ArgumentParser(
@@ -217,7 +215,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     if args.wave_ini is None:
         raise ValueError("You must specify --wave-ini")

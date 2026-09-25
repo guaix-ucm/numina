@@ -25,7 +25,6 @@ import argparse
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from astropy.wcs import WCS
-from datetime import datetime
 import logging
 import numpy as np
 import numpy.ma as ma
@@ -214,8 +213,7 @@ def generate_mosaic_of_2d_images(
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function."""
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Generate mosaic of 2D images", formatter_class=RichHelpFormatter)
@@ -252,7 +250,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_list = args.input_list
     output_filename = args.output_filename

@@ -87,10 +87,15 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
         Console object for rich output.
     logger : logging.Logger
         Logger object for logging messages.
+    datetime_ini : datetime
+        Start time of the script execution.
     """
     if len(sys_argv) == 1:
         parser.print_usage()
         raise SystemExit()
+
+    # Initialize datetime for script execution
+    datetime_ini = datetime.now()
 
     # Configure rich console
     console = NuminaConsole(record=args.record)
@@ -136,7 +141,7 @@ def initialize_script_with_args(sys_argv, parser, args, local_name, version=None
             output_dir_path.mkdir(parents=True, exist_ok=True)
             logger.debug(f"Created output directory: {output_dir_path}")
 
-    return console, logger
+    return console, logger, datetime_ini
 
 
 def goodbye_message_and_save_console(logger, console, datetime_ini, args_record, args_output_dir):

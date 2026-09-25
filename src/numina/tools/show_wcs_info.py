@@ -12,7 +12,6 @@
 import argparse
 from astropy.io import fits
 from astropy.wcs import WCS
-from datetime import datetime
 import logging
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
@@ -29,7 +28,7 @@ from .file_is_valid_fits import file_is_valid_fits
 
 def show_wcs_info(list_of_fits_files, extname_image):
     """Show WCS info of a particular FITS image extension.
-    
+
     Parameters
     ----------
     list_of_fits_files : list
@@ -60,8 +59,7 @@ def show_wcs_info(list_of_fits_files, extname_image):
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function to show WCS info of a particular FITS image extension."""
 
     # parse command-line options
     parser = argparse.ArgumentParser(
@@ -80,12 +78,12 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_list = args.input_list
     extname_image = args.extname_image
 
-    # If input is a single FITS file, use it directly; 
+    # If input is a single FITS file, use it directly;
     # otherwise, read the list of files from the provided file
     if len(input_list) == 1:
         if input_list[0].lower().endswith(".fits"):

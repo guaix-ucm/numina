@@ -14,7 +14,6 @@ import argparse
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
-from datetime import datetime
 import logging
 import numpy as np
 from pathlib import Path
@@ -139,7 +138,6 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
 
 def main(args=None):
     """Main function."""
-    datetime_ini = datetime.now()
 
     parser = argparse.ArgumentParser(
         description="Resample a 3D cube in the wavelength axis (NAXIS3).", formatter_class=RichHelpFormatter
@@ -156,7 +154,7 @@ def main(args=None):
     args = parser.parse_args(args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_file = args.input
     output_file = args.output

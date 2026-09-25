@@ -15,7 +15,6 @@ import astropy.units as u
 from astropy.units import Unit
 from astropy.coordinates import SkyCoord, Angle
 from astropy.wcs import WCS
-from datetime import datetime
 import logging
 import numpy as np
 import sys
@@ -31,13 +30,13 @@ from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
 
 
 def include_adrtheor_in_3d_cube(
-        filename,
-        extname,
-        reference_vacuum_wavelength_angstrom,
-        temperature,
-        pressure_mm,
-        pressure_water_vapor_mm,
-        plots,
+    filename,
+    extname,
+    reference_vacuum_wavelength_angstrom,
+    temperature,
+    pressure_mm,
+    pressure_water_vapor_mm,
+    plots,
 ):
     """Include ADR prediction as extension in a 3D FITS file
 
@@ -77,18 +76,18 @@ def include_adrtheor_in_3d_cube(
 
     # reference wavelength to compute ADR
     if reference_vacuum_wavelength_angstrom is not None:
-        reference_vacuum_wavelength = reference_vacuum_wavelength_angstrom * Unit('Angstrom')
-        reference_vacuum_wavelength = reference_vacuum_wavelength.to(Unit('m'))
+        reference_vacuum_wavelength = reference_vacuum_wavelength_angstrom * Unit("Angstrom")
+        reference_vacuum_wavelength = reference_vacuum_wavelength.to(Unit("m"))
     else:
         reference_vacuum_wavelength = (wave[0] + wave[-1]) / 2
-    logger.info(f'Reference wavelength: {reference_vacuum_wavelength}')
+    logger.info(f"Reference wavelength: {reference_vacuum_wavelength}")
 
     # airmass
-    if 'AIRMASS' in header:
-        airmass = header['AIRMASS']
-        logger.info(f'AIRMASS: {airmass}')
+    if "AIRMASS" in header:
+        airmass = header["AIRMASS"]
+        logger.info(f"AIRMASS: {airmass}")
     else:
-        raise ValueError('Header does not contain AIRMASS')
+        raise ValueError("Header does not contain AIRMASS")
 
     # differential refraction (arcsec)
     differential_refraction = compute_adr_wavelength(
@@ -99,22 +98,21 @@ def include_adrtheor_in_3d_cube(
         pressure_mm=pressure_mm,
         pressure_water_vapor_mm=pressure_water_vapor_mm,
     )
-    logger.debug(f'Differential refraction: {differential_refraction}')
+    logger.debug(f"Differential refraction: {differential_refraction}")
 
     # parallactic angle
-    if 'PARANGLE' in header:
-        parangle = Angle(header['PARANGLE'] * Unit('deg'))
-        logger.info(f'PARANGLE: {parangle}')
+    if "PARANGLE" in header:
+        parangle = Angle(header["PARANGLE"] * Unit("deg"))
+        logger.info(f"PARANGLE: {parangle}")
     else:
-        raise ValueError('Header does not contain PARANGLE')
+        raise ValueError("Header does not contain PARANGLE")
 
     # predict ADR at the center of the field of view
-    x_center_ifu, y_center_ifu = wcs3d.celestial.wcs.crpix    # FITS convention
+    x_center_ifu, y_center_ifu = wcs3d.celestial.wcs.crpix  # FITS convention
     center_ifu_coord = wcs3d.celestial.pixel_to_world(
-        x_center_ifu - 1.0,   # Python convention
-        y_center_ifu - 1.0    # Python convention
+        x_center_ifu - 1.0, y_center_ifu - 1.0  # Python convention  # Python convention
     )
-    logger.info(f'Center IFU coord: {center_ifu_coord}')
+    logger.info(f"Center IFU coord: {center_ifu_coord}")
 
     # duplicate initial central coordinates at each slice along NAXIS3
     ra_center_ifu = np.repeat(center_ifu_coord.ra, naxis3)
@@ -134,22 +132,21 @@ def include_adrtheor_in_3d_cube(
     delta_y_center_ifu = y_center_ifu_corrected - y_center_ifu
 
     # save result in extension
-    if extname != 'NONE':
-        logger.info(f'Updating file {filename}')
+    if extname != "NONE":
+        logger.info(f"Updating file {filename}")
         # binary table to store result
-        col1 = fits.Column(name='Delta_x', format='D', array=delta_x_center_ifu, unit='pixel')
-        col2 = fits.Column(name='Delta_y', format='D', array=delta_y_center_ifu, unit='pixel')
+        col1 = fits.Column(name="Delta_x", format="D", array=delta_x_center_ifu, unit="pixel")
+        col2 = fits.Column(name="Delta_y", format="D", array=delta_y_center_ifu, unit="pixel")
         hdu_result = fits.BinTableHDU.from_columns([col1, col2])
         hdu_result.name = extname.upper()
-        hdu_result.header['AIRMASS'] = (airmass, 'Airmass')
-        hdu_result.header['PARANGLE'] = (parangle.value, 'Parallactic angle (deg)')
-        hdu_result.header['REFEWAVE'] = (reference_vacuum_wavelength.to(u.m).value,
-                                         'Reference vacuum wavelength (m)')
-        hdu_result.header['TEMPERAT'] = (temperature.value, 'Assumed temperature (Celsius degrees)')
-        hdu_result.header['PRESSURE'] = (pressure_mm, 'Pressure (Hg mm)')
-        hdu_result.header['PRESSUWV'] = (pressure_water_vapor_mm, 'Water vapor pressure (Hg mm)')
+        hdu_result.header["AIRMASS"] = (airmass, "Airmass")
+        hdu_result.header["PARANGLE"] = (parangle.value, "Parallactic angle (deg)")
+        hdu_result.header["REFEWAVE"] = (reference_vacuum_wavelength.to(u.m).value, "Reference vacuum wavelength (m)")
+        hdu_result.header["TEMPERAT"] = (temperature.value, "Assumed temperature (Celsius degrees)")
+        hdu_result.header["PRESSURE"] = (pressure_mm, "Pressure (Hg mm)")
+        hdu_result.header["PRESSUWV"] = (pressure_water_vapor_mm, "Water vapor pressure (Hg mm)")
         # open and update existing FITS file
-        hdul = fits.open(filename, mode='update')
+        hdul = fits.open(filename, mode="update")
         if extname in hdul:
             logger.info(f"Updating extension '{extname}'")
             hdul[extname] = hdu_result
@@ -165,30 +162,29 @@ def include_adrtheor_in_3d_cube(
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function."""
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Include ADR prediction as extension in a 3D FITS file")
     parser.add_argument("filename", help="Input 3D FITS file")
-    parser.add_argument("--extname",
-                        help="Output extension name to store result (default ADRTHEOR)",
-                        type=str, default='ADRTHEOR')
-    parser.add_argument("--reference-vacuum-wavelength",
-                        help="Reference vacuum wavelength (in Angstrom) to compute ADR prediction",
-                        type=float, default=None)
-    parser.add_argument("--temperature", help="Temperature in degree Celsius",
-                        type=float, default=7)
-    parser.add_argument("--pressure_mm", help="Pressure in Hg mm",
-                        type=float, default=600)
-    parser.add_argument("--pressure-water-vapor-mm", help="Pressure water vapor in Hg mm",
-                        type=float, default=8)
+    parser.add_argument(
+        "--extname", help="Output extension name to store result (default ADRTHEOR)", type=str, default="ADRTHEOR"
+    )
+    parser.add_argument(
+        "--reference-vacuum-wavelength",
+        help="Reference vacuum wavelength (in Angstrom) to compute ADR prediction",
+        type=float,
+        default=None,
+    )
+    parser.add_argument("--temperature", help="Temperature in degree Celsius", type=float, default=7)
+    parser.add_argument("--pressure_mm", help="Pressure in Hg mm", type=float, default=600)
+    parser.add_argument("--pressure-water-vapor-mm", help="Pressure water vapor in Hg mm", type=float, default=8)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
     include_default_arguments_for_common_actions(parser)
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     # protections
     extname = args.extname.upper()
@@ -206,7 +202,7 @@ def main(args=None):
         filename=args.filename,
         extname=extname,
         reference_vacuum_wavelength_angstrom=reference_vacuum_wavelength_angstrom,
-        temperature=args.temperature*u.Celsius,
+        temperature=args.temperature * u.Celsius,
         pressure_mm=args.pressure_mm,
         pressure_water_vapor_mm=args.pressure_water_vapor_mm,
         plots=args.plots,
@@ -216,6 +212,6 @@ def main(args=None):
     goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()

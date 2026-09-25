@@ -200,8 +200,7 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function."""
 
     # parse command-line options
     parser = argparse.ArgumentParser(description="Extract 2D slice from 3D cube", formatter_class=RichHelpFormatter)
@@ -229,7 +228,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     if args.output is not None:
         output_path = Path(args.output_dir) / args.output

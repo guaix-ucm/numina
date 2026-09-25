@@ -13,7 +13,6 @@ import argparse
 from astropy.io import fits
 import astropy.units as u
 from astropy.wcs import WCS
-from datetime import datetime
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
@@ -251,8 +250,7 @@ def measure_slice_xy_offsets_in_3d_cube(
 
 
 def main(args=None):
-
-    datetime_ini = datetime.now()
+    """Main function"""
 
     # parse command-line options
     parser = argparse.ArgumentParser(
@@ -277,7 +275,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     # protections
     extname = args.extname.upper()
