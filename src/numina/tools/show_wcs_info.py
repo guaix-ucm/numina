@@ -11,7 +11,9 @@
 
 import argparse
 from astropy.io import fits
+from astropy.wcs import find_all_wcs
 from astropy.wcs import WCS
+import io
 import logging
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
@@ -24,17 +26,21 @@ from numina.tools.initialize_script_with_args import goodbye_message_and_save_co
 from numina._version import __version__
 
 from .file_is_valid_fits import file_is_valid_fits
+from .hdul_utils import get_wcs_from_hdul
 
 
-def show_wcs_info(list_of_fits_files, extname_image):
+def show_wcs_info(list_of_fits_files, extname=None, extnum=None, wcskey=None):
     """Show WCS info of a particular FITS image extension.
 
     Parameters
     ----------
     list_of_fits_files : list
         List of FITS files to process.
-    extname_image : str
-        Extension name for image in input files. Default value: PRIMARY.
+    extname : str
+        Extension name for image in input files.
+    extnum : int
+        Extension number for image in input files.
+    wcskey : str
     """
     logger = logging.getLogger(__name__)
 
@@ -44,19 +50,17 @@ def show_wcs_info(list_of_fits_files, extname_image):
 
     nimages = len(list_of_fits_files)
     for i, fname in enumerate(list_of_fits_files):
+        logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
         with fits.open(fname) as hdul:
-            if extname_image not in hdul:
-                raise ValueError(f"Expected {extname_image} extension not found")
-            hdu = hdul[extname_image]
-            logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
-            logger.info(f"Working with file (extension): {fname} ({extname_image})")
-            for i in range(1, 4):
-                key = f"NAXIS{i}"
-                if key in hdu.header:
-                    logger.info(f"{key} = {hdu.header[key]}")
-            wcs = WCS(hdu.header)
+            buffer = io.StringIO()
+            hdul.info(output=buffer)
+            logger.info(buffer.getvalue().rstrip(), extra={"markup": False})
+            wcs = get_wcs_from_hdul(hdul, extname=extname, extnum=extnum, wcskey=wcskey)
+            naxis = wcs.naxis
+            logger.info(f"NAXIS = {naxis} {wcs.pixel_shape}")
+            logger.info(f"CTYPE = {list(wcs.wcs.ctype)}")
             header_text = wcs.to_header().tostring(sep="\n", endcard=False, padding=False).rstrip()
-            logger.info(f"WCS info:\n{header_text}")
+            logger.info(f"WCS info:\n{header_text}", extra={"markup": False})
 
 
 def main(args=None):
@@ -70,9 +74,19 @@ def main(args=None):
         "input_list", help="TXT file with list of 3D images to be combined or single FITS file", type=str, nargs="+"
     )
     parser.add_argument(
-        "--extname-image",
+        "-e",
+        "--extnum",
+        help="Extension number for image in input files. Default value: 0",
+        type=int,
+    )
+    parser.add_argument(
+        "--extname",
         help="Extension name for image in input files. Default value: PRIMARY",
-        default="PRIMARY",
+        type=str,
+    )
+    parser.add_argument(
+        "--wcskey",
+        help="WCS key to use when multiple WCS are present in the FITS header.",
         type=str,
     )
     include_default_arguments_for_common_actions(parser)
@@ -82,8 +96,9 @@ def main(args=None):
     console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__, __version__)
 
     input_list = args.input_list
-    extname_image = args.extname_image
-
+    extnum = args.extnum
+    extname = args.extname
+    wcskey = args.wcskey
     # If input is a single FITS file, use it directly;
     # otherwise, read the list of files from the provided file
     if len(input_list) == 1:
@@ -109,7 +124,7 @@ def main(args=None):
         raise ValueError(f"No valid FITS files found in {input_list}. Please check the file content.")
 
     # Show WCS info
-    show_wcs_info(list_of_fits_files, extname_image)
+    show_wcs_info(list_of_fits_files, extname, extnum, wcskey)
 
     # Display goodbye message and save console log if recording is enabled
     goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
