@@ -18,7 +18,7 @@ from rich_argparse import RichHelpFormatter
 import sys
 
 from .file_is_valid_fits import file_is_valid_fits
-from .hdul_utils import get_wcs_from_hdul
+from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
 from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
@@ -50,7 +50,8 @@ def show_wcs_info(list_of_fits_files, extname=None, extnum=None, wcskey=None):
             buffer = io.StringIO()
             hdul.info(output=buffer)
             logger.info(buffer.getvalue().rstrip(), extra={"markup": False})
-            wcs = get_wcs_from_hdul(hdul, extname=extname, extnum=extnum, wcskey=wcskey)
+            hdu = get_hdu_from_hdul(hdul, extname=extname, extnum=extnum)
+            wcs = get_wcs_from_hdu(hdu, wcskey=wcskey)
             naxis = wcs.naxis
             logger.info(f"NAXIS = {naxis} {wcs.pixel_shape}")
             logger.info(f"CTYPE = {list(wcs.wcs.ctype)}")
