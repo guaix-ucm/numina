@@ -15,6 +15,7 @@ import astropy.units as u
 from astropy.units import Unit
 from astropy.coordinates import SkyCoord, Angle
 from astropy.wcs import WCS
+import io
 import logging
 import numpy as np
 import sys
@@ -57,7 +58,9 @@ def include_adrtheor_in_3d_cube(
     logger = logging.getLogger(__name__)
 
     with fits.open(filename) as hdul:
-        logger.debug(hdul.info())
+        buffer = io.StringIO()
+        hdul.info(output=buffer)
+        logger.debug(buffer.getvalue().rstrip(), extra={"markup": False})
         header = hdul[0].header
 
     if header["NAXIS"] != 3:

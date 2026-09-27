@@ -15,6 +15,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
 from datetime import datetime
+import io
 import logging
 import numpy.ma as ma
 from pathlib import Path
@@ -315,7 +316,9 @@ def main(args=None):
         raise ValueError("You must specify an output filename with --output")
 
     with fits.open(args.inputfile) as input_hdul:
-        logger.debug(input_hdul.info())
+        buffer = io.StringIO()
+        input_hdul.info(output=buffer)
+        logger.debug(buffer.getvalue().rstrip(), extra={"markup": False})
         output_hdul = apply_adr_correction_from_extension_in_3d_cube(
             hdul=input_hdul,
             extname_adr=extname_adr,

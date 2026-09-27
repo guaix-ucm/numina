@@ -11,10 +11,12 @@
 """
 import argparse
 from argparse import RawTextHelpFormatter
+from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.units import Unit
 from astropy.io import fits
 from astropy.wcs import WCS
+import io
 import numpy as np
 from rich import print
 import sys
@@ -39,8 +41,10 @@ def world_to_pixel(inputfile, sky, wave, extnum, verbose=False):
 
     with fits.open(inputfile) as hdul:
         if verbose:
-            print(hdul.info())
-        if extnum > len(hdul):
+            buffer = io.StringIO()
+            hdul.info(output=buffer)
+            print(buffer.getvalue().rstrip(), extra={"markup": False})
+        if extnum > len(hdul) - 1:
             raise ValueError(f"Extension number {extnum} exceeds {len(hdul)}")
         header = hdul[extnum].header
 
