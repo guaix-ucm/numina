@@ -8,6 +8,7 @@
 #
 """Auxiliary functions for initializing scripts with command line arguments and logging."""
 
+from asyncio.log import logger
 from datetime import datetime
 import logging
 from rich.highlighter import ReprHighlighter
@@ -144,13 +145,17 @@ def initialize_script_with_args(sys_argv, parser, args, local_name):
     logging.basicConfig(level=args.log_level, format=format_log, handlers=handlers)
     logging.getLogger("matplotlib").setLevel(logging.ERROR)  # Suppress matplotlib debug logs
 
+    # Get the current logging level
+    current_logging_level = logging.getLevelName(logging.getLogger().getEffectiveLevel())
+
     # Welcome message
-    console.rule(f"[bold magenta]Welcome to {Path(sys_argv[0]).name}[/bold magenta]")
+    if current_logging_level in ["NOTSET", "DEBUG", "INFO"]:
+        console.rule(f"[bold magenta]Welcome to {Path(sys_argv[0]).name}[/bold magenta]")
 
     # Display version info
-    logger = logging.getLogger(local_name)
-    logger.info(f"Using {local_name}")
-    logger.info(f"Version {__version__}")
+    if current_logging_level in ["DEBUG", "INFO"]:
+        logger.info(f"Using {local_name}")
+        logger.info(f"Version {__version__}")
 
     if logger.isEnabledFor(logging.DEBUG):
         logger.debug(f"Command line arguments: {args}")
@@ -181,12 +186,17 @@ def goodbye_message_and_save_console(logger, console, datetime_ini, args_record,
     args_output_dir : str
         Output directory where the console log will be saved if recording is enabled.
     """
+    # Get the current logging level
+    current_logging_level = logging.getLevelName(logging.getLogger().getEffectiveLevel())
+
     datatime_end = datetime.now()
     time_elapsed = datatime_end - datetime_ini
-    logger.info("Total time elapsed: %s", str(time_elapsed))
+    if current_logging_level in ["NOTSET", "DEBUG", "INFO"]:
+        logger.info("Total time elapsed: %s", str(time_elapsed))
 
     # Goodbye message
-    console.rule("[bold magenta] Goodbye! [/bold magenta]")
+    if current_logging_level in ["NOTSET", "DEBUG", "INFO"]:
+        console.rule("[bold magenta] Goodbye! [/bold magenta]")
 
     # Save console log if recording is enabled
     if args_record:
@@ -196,4 +206,5 @@ def goodbye_message_and_save_console(logger, console, datetime_ini, args_record,
         log_filename = Path(args_output_dir) / "terminal_output.txt"
         with open(log_filename, "wt") as f:
             f.write(console.export_text(styles=True))
-        logger.info(f"terminal output recorded in [green]{log_filename}[/green]")
+        if current_logging_level in ["NOTSET", "DEBUG", "INFO"]:
+            logger.info(f"Terminal output recorded in [green]{log_filename}[/green]")
