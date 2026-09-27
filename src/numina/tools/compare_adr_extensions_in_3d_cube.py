@@ -165,7 +165,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:

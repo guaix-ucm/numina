@@ -13,6 +13,7 @@ from datetime import datetime
 import logging
 from rich.highlighter import ReprHighlighter
 from rich.logging import RichHandler
+import sys
 from pathlib import Path
 
 from numina._version import __version__
@@ -77,7 +78,7 @@ def include_default_arguments_for_common_actions(
         )
 
 
-def initialize_script_with_args(sys_argv, parser, args, local_name):
+def initialize_script_with_args(sys_argv, parser, args):
     """Initialize script with command line arguments and logging.
 
     This function initializes the script by parsing command line arguments,
@@ -94,8 +95,6 @@ def initialize_script_with_args(sys_argv, parser, args, local_name):
         Argument parser object.
     args : argparse.Namespace
         Parsed command line arguments.
-    local_name : str
-        Name of the local script (usually __name__).
 
     Returns
     -------
@@ -154,7 +153,7 @@ def initialize_script_with_args(sys_argv, parser, args, local_name):
 
     # Display version info
     if current_logging_level in ["DEBUG", "INFO"]:
-        logger.info(f"Using {local_name}")
+        logger.info(f"Using {sys._getframe(1).f_globals.get("__name__")}")
         logger.info(f"Version {__version__}")
 
     if logger.isEnabledFor(logging.DEBUG):

@@ -214,7 +214,7 @@ def main(args=None):
     args = parser.parse_args(args=args)
 
     # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args, __name__)
+    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
 
     if args.wave_ini is None:
         raise ValueError("You must specify --wave-ini")
