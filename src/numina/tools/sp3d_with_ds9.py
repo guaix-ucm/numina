@@ -23,7 +23,6 @@ import numpy as np
 from rich_argparse import RichHelpFormatter
 
 from .extract_2d_slice_from_3d_cube import extract_slice
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -450,11 +449,8 @@ def main(args=None):
     )
     parser.add_argument("--input_masks", help="Path to a FITS file with source and continuum masks", type=str)
     parser.add_argument("--output_masks", help="Path to the output FITS file with source and continuum masks", type=str)
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     file_datacube = args.datacube
     ds9exec = args.ds9exec

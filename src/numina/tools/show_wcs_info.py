@@ -19,7 +19,6 @@ import sys
 
 from .file_is_valid_fits import file_is_valid_fits
 from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -85,11 +84,8 @@ def main(args=None):
         help="WCS key to use when multiple WCS are present in the FITS header.",
         type=str,
     )
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     input_list = args.input_list
     extnum = args.extnum

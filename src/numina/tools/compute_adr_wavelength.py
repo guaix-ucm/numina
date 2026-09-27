@@ -21,7 +21,6 @@ import sys
 
 from numina.user.console import print_table
 
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -210,11 +209,8 @@ def main(args=None):
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
     parser.add_argument("--ndecimal-wave", help="Number of decimal places in wavelength", type=int, default=3)
     parser.add_argument("--ndecimal-adr", help="Number of decimal places in ADR", type=int, default=3)
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args=args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     if args.wave_ini is None:
         raise ValueError("You must specify --wave-ini")

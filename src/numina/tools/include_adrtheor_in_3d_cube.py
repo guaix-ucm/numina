@@ -22,7 +22,6 @@ import sys
 
 from .compute_adr_wavelength import compute_adr_wavelength
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -180,11 +179,8 @@ def main(args=None):
     parser.add_argument("--pressure_mm", help="Pressure in Hg mm", type=float, default=600)
     parser.add_argument("--pressure-water-vapor-mm", help="Pressure water vapor in Hg mm", type=float, default=8)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args=args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     # protections
     extname = args.extname.upper()

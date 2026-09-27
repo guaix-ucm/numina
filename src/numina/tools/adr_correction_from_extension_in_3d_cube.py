@@ -23,7 +23,6 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 import sys
 
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 from .progressbarlines import ProgressBarLines
@@ -294,11 +293,8 @@ def main(args=None):
         choices=REPROJECT_METHODS,
         default="adaptive",
     )
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     if args.extname_adr is None:
         raise ValueError("You must specify an extension name with --extname_adr")

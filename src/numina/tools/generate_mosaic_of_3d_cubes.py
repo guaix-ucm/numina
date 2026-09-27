@@ -29,7 +29,6 @@ from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_c
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .file_is_valid_fits import file_is_valid_fits
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 from .resample_wave_3d_cube import resample_wave_3d_cube
@@ -313,11 +312,8 @@ def main(args=None):
     parser.add_argument(
         "--footprint", help="Generate a FOOTPRINT extension with the final footprint", action="store_true"
     )
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     input_list = args.input_list
     extname_image = args.extname_image

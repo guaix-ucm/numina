@@ -8,11 +8,11 @@
 #
 """Auxiliary functions for initializing scripts with command line arguments and logging."""
 
-from asyncio.log import logger
 from datetime import datetime
 import logging
 from rich.highlighter import ReprHighlighter
 from rich.logging import RichHandler
+from rich.markup import escape
 import sys
 from pathlib import Path
 
@@ -32,8 +32,9 @@ class SciNotationHighlighter(ReprHighlighter):
     ]
 
 
-def include_default_arguments_for_common_actions(
+def initialize_script_with_args(
     parser,
+    argv=None,
     include_version=True,
     include_output_dir=True,
     include_no_color=True,
@@ -41,22 +42,42 @@ def include_default_arguments_for_common_actions(
     include_echo=True,
     include_log_level=True,
 ):
-    """Include default arguments to record and other common actions.
+    """Parse command line arguments and initialize console and logging.
+
+    This function parses the command line arguments, configures the rich
+    console and logging, displays version information and a welcome
+    message, and handles the display of the full command line if requested.
 
     Parameters
     ----------
     parser : argparse.ArgumentParser
-        Argument parser object to which the default arguments will be added.
+        Argument parser object.
+    argv : list of str or None, optional
+        Command line arguments, excluding the program name.
+        If None, sys.argv[1:] is used.
     include_version : bool, optional
         Whether to include the --version argument (default: True).
     include_output_dir : bool, optional
         Whether to include the --output-dir argument (default: True).
+    include_no_color : bool, optional
+        Whether to include the --no-color argument (default: True).
     include_record : bool, optional
         Whether to include the --record argument (default: True).
     include_echo : bool, optional
         Whether to include the --echo argument (default: True).
     include_log_level : bool, optional
         Whether to include the --log-level argument (default: True).
+
+    Returns
+    -------
+    args : argparse.Namespace
+        Parsed command line arguments.
+    console : NuminaConsole
+        Console object for rich output.
+    logger : logging.Logger
+        Logger named after the calling module.
+    datetime_ini : datetime
+        Start time of the script execution.
     """
     if include_version:
         parser.add_argument("--version", help="Display version information and exit", action="store_true")
@@ -77,96 +98,71 @@ def include_default_arguments_for_common_actions(
             default="INFO",
         )
 
+    if argv is None:
+        argv = sys.argv[1:]
 
-def initialize_script_with_args(sys_argv, parser, args):
-    """Initialize script with command line arguments and logging.
-
-    This function initializes the script by parsing command line arguments,
-    configuring logging, and displaying version information.
-    It also provides a welcome message and handles the display of the
-    full command line if requested. This functionality is useful for
-    several scripts that require similar initialization steps.
-
-    Parameters
-    ----------
-    sys_argv : list
-        List of command line arguments (sys.argv).
-    parser : argparse.ArgumentParser
-        Argument parser object.
-    args : argparse.Namespace
-        Parsed command line arguments.
-
-    Returns
-    -------
-    console : NuminaConsole
-        Console object for rich output.
-    logger : logging.Logger
-        Logger object for logging messages.
-    datetime_ini : datetime
-        Start time of the script execution.
-    """
-    if len(sys_argv) == 1:
+    if len(argv) == 0:
         parser.print_usage()
         raise SystemExit()
+
+    args = parser.parse_args(argv)
+
+    # Name of the module that called this function
+    caller_name = sys._getframe(1).f_globals.get("__name__", "__main__")
 
     # Initialize datetime for script execution
     datetime_ini = datetime.now()
 
     # Configure rich console
     highlighter = SciNotationHighlighter()
-    no_color = getattr(args, "no_color", False)
-    if no_color:
-        console = NuminaConsole(record=args.record, color_system=None)
+    record = getattr(args, "record", False)
+    if getattr(args, "no_color", False):
+        console = NuminaConsole(record=record, color_system=None)
     else:
-        console = NuminaConsole(record=args.record)
-    console.highlighter = highlighter  # affect console.print()
+        console = NuminaConsole(record=record)
+    console.highlighter = highlighter  # affects console.print()
 
     # Display version and exit if requested
-    if hasattr(args, "version") and args.version:
+    if getattr(args, "version", False):
         console.print(__version__)
         raise SystemExit()
 
     # Display full command line if requested
-    if hasattr(args, "echo") and args.echo:
-        console.print(f"[bright_red]Executing:\n{' '.join(sys_argv)}[/bright_red]\n", end="")
+    if getattr(args, "echo", False):
+        full_command = " ".join([parser.prog] + argv)
+        console.print(f"[bright_red]Executing:\n{escape(full_command)}[/bright_red]\n", end="")
 
     # Configure logging
-    if not hasattr(args, "log_level"):
-        args.log_level = "INFO"
-
+    log_level = getattr(args, "log_level", "INFO")
     handler_kwargs = dict(console=console, show_time=False, markup=True, highlighter=highlighter)
-    if args.log_level in ["DEBUG", "WARNING", "ERROR", "CRITICAL"]:
-        format_log = "%(name)s %(levelname)s\n%(message)s"
-    else:
+    if log_level == "INFO":
         format_log = "%(message)s"
         handler_kwargs.update(show_path=False, show_level=False)
-    handlers = [RichHandler(**handler_kwargs)]
-    logging.basicConfig(level=args.log_level, format=format_log, handlers=handlers)
-    logging.getLogger("matplotlib").setLevel(logging.ERROR)  # Suppress matplotlib debug logs
+    else:
+        format_log = "%(name)s %(levelname)s\n%(message)s"
+    logging.basicConfig(level=log_level, format=format_log, handlers=[RichHandler(**handler_kwargs)])
+    logging.getLogger("matplotlib").setLevel(logging.ERROR)  # suppress matplotlib debug logs
 
-    # Get the current logging level
-    current_logging_level = logging.getLevelName(logging.getLogger().getEffectiveLevel())
+    # Get the logger for the calling module
+    logger = logging.getLogger(caller_name)
 
-    # Welcome message
-    if current_logging_level in ["NOTSET", "DEBUG", "INFO"]:
-        console.rule(f"[bold magenta]Welcome to {Path(sys_argv[0]).name}[/bold magenta]")
-
-    # Display version info
-    if current_logging_level in ["DEBUG", "INFO"]:
-        logger.info(f"Using {sys._getframe(1).f_globals.get("__name__")}")
+    # Welcome message and version info
+    if logger.isEnabledFor(logging.INFO):
+        console.rule(f"[bold magenta]Welcome to {escape(parser.prog)}[/bold magenta]")
+        logger.info(f"Using {caller_name}")
         logger.info(f"Version {__version__}")
 
-    if logger.isEnabledFor(logging.DEBUG):
-        logger.debug(f"Command line arguments: {args}")
+    logger.debug(f"Command line arguments: {args}", extra={"markup": False})
 
     # Generate output directory if it does not exist
-    if args.output_dir != ".":
-        output_dir_path = Path(args.output_dir)
+    output_dir = getattr(args, "output_dir", ".")
+    if output_dir != ".":
+        output_dir_path = Path(output_dir)
         if not output_dir_path.exists():
             output_dir_path.mkdir(parents=True, exist_ok=True)
             logger.debug(f"Created output directory: {output_dir_path}")
 
-    return console, logger, datetime_ini
+    return args, console, logger, datetime_ini
 
 
 def goodbye_message_and_save_console(logger, console, datetime_ini, args_record, args_output_dir):

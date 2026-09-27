@@ -36,7 +36,6 @@ import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -245,11 +244,8 @@ def main(args=None):
         choices=COMBINATION_FUNCTIONS,
     )
     parser.add_argument("--output-3D-stack", help="filename for stacked 3D array. Default None", default=None, type=str)
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     input_list = args.input_list
     output_filename = args.output_filename

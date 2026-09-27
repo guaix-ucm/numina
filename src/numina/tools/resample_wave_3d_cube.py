@@ -22,7 +22,6 @@ from rich_argparse import RichHelpFormatter
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -145,11 +144,8 @@ def main(args=None):
     parser.add_argument(
         "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
     )
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     input_file = args.input
     output_file = args.output

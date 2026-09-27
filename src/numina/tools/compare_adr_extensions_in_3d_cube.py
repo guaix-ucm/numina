@@ -17,7 +17,6 @@ import numpy as np
 from rich_argparse import RichHelpFormatter
 import sys
 
-from .initialize_script_with_args import include_default_arguments_for_common_actions
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console
 
@@ -161,11 +160,8 @@ def main(args=None):
     parser.add_argument("filename", help="Input 3D FITS file")
     parser.add_argument("extname1", help="First extension name", type=str)
     parser.add_argument("extname2", help="Second extension name (optional)", type=str)
-    include_default_arguments_for_common_actions(parser)
-    args = parser.parse_args(args=args)
-
-    # Initialize the script with the provided arguments
-    console, logger, datetime_ini = initialize_script_with_args(sys.argv, parser, args)
+    # Include default arguments for common actions, and initialize console and logging
+    args, console, logger, datetime_ini = initialize_script_with_args(parser)
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:
