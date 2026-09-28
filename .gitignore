@@ -65,3 +65,11 @@ target/
 
 # PyCharm
 .idea
+
+# Files created by Cython
+src/numina/array/bpm.cpp
+src/numina/array/clippix.c
+src/numina/array/peaks/kernels.c
+src/numina/array/src/nirproc.cpp
+src/numina/array/trace/extract.cpp
+src/numina/array/trace/traces.cpp
