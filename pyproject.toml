@@ -1,6 +1,6 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools >= 61.0.0", "setuptools_scm[toml]>=6.2",
+requires = ["setuptools >= 77.0.3", "setuptools_scm[toml]>=8.1",
     "wheel", "cython >= 3", "numpy>=2"]
 build-backend = "setuptools.build_meta"
 
@@ -10,7 +10,7 @@ dynamic = ["version"]
 description = "Astronomy data reduction library"
 readme = "README.rst"
 requires-python = ">=3.10"
-license = {text = "GPL-3.0-or-later"}
+license = "GPL-3.0-or-later"
 authors = [
   {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
 ]
@@ -27,7 +27,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License (GPL)",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Astronomy",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
@@ -106,7 +105,7 @@ numina-r6-insert_keyword = "numina.tools.r6_insert_keyword:main"
 numina-r6-replace_image = "numina.tools.r6_replace_image:main"
 
 [tool.setuptools_scm]
-write_to = "src/numina/_version.py"
+version_file = "src/numina/_version.py"
 
 # without this, still works, performs autodetection
 [tool.setuptools.packages.find]
