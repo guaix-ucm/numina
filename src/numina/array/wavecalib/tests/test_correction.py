@@ -1,4 +1,3 @@
-import sys
 
 import pytest
 import numpy
@@ -30,7 +29,6 @@ def create_header1():
     return hdr
 
 
-@pytest.mark.skipif(sys.version_info < (3, 5), reason="requires python3.5 or higher")
 def test_add_barycentric():
     import astropy.wcs
     import astropy.time
