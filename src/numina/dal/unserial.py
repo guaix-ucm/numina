@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2021 Universidad Complutense de Madrid
+# Copyright 2019-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -56,7 +56,7 @@ def read_yaml(filename):
     import yaml
 
     with open(filename) as fd:
-        base = yaml.load(fd)
+        base = yaml.safe_load(fd)
     return read_structured(base)
 
 
