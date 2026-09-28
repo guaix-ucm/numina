@@ -14,14 +14,14 @@ jobs:
         os: ["macos-latest", "ubuntu-latest"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup python for test ${{ matrix.python }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       - name: Cache tox
         id: cache-tox
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .tox
           key: tox-${{ matrix.python }}-${{ matrix.os }}-${{ hashFiles('pyproject.toml', 'setup.cfg') }}
