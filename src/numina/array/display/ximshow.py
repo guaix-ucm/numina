@@ -372,7 +372,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
                 ax.set_aspect("equal")
             try:
                 plt.tight_layout()
-            except:
+            except Exception:
                 pass
             plt.show(block=False)
             plt.pause(0.001)
@@ -482,7 +482,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         if tight_layout:
             try:
                 plt.tight_layout()
-            except:
+            except Exception:
                 pass
         # return axes
         if using_jupyter:
@@ -738,7 +738,7 @@ def ximshow_file(
 
             try:
                 plt.tight_layout()
-            except:
+            except Exception:
                 pass
             pdf.savefig()
         else:
@@ -749,7 +749,7 @@ def ximshow_file(
 
             try:
                 plt.tight_layout()
-            except:
+            except Exception:
                 pass
             plt.savefig(png, metadata={"Software": "ximshow"})
         else:

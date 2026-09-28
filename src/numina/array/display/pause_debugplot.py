@@ -57,7 +57,7 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout
             if tight_layout:
                 try:
                     plt.tight_layout()
-                except:
+                except Exception:
                     pass
             if debugplot_ in [1, 11, 21]:
                 plt.show(block=False)
