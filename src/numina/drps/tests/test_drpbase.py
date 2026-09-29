@@ -9,7 +9,7 @@ def test_drpbase():
     drpbase = DrpBase()
 
     with pytest.raises(KeyError):
-        drpbase.query_by_name('TEST1')
+        drpbase.query_by_name("TEST1")
 
     assert drpbase.query_all() == {}
 
@@ -20,35 +20,22 @@ def test_invalid_instrument1():
         pass
 
     drpbase = DrpBase()
-    assert drpbase.instrumentdrp_check(Something(), 'TEST1') is False
-
-
-def test_invalid_instrument1_warning():
-
-    with pytest.warns(RuntimeWarning):
-        test_invalid_instrument1()
+    with pytest.warns(RuntimeWarning, match="does not contain a valid DRP"):
+        assert drpbase.instrumentdrp_check(Something(), "TEST1") is False
 
 
 def test_invalid_instrument2():
-    insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', {}, {}, [], [])
+    insdrp = numina.core.pipeline.InstrumentDRP("MYNAME", {}, {}, [], [])
 
     drpbase = DrpBase()
-    res = drpbase.instrumentdrp_check(insdrp, 'TEST1')
+    with pytest.warns(RuntimeWarning, match="differ"):
+        res = drpbase.instrumentdrp_check(insdrp, "TEST1")
     assert res is False
 
 
-def test_invalid_instrument2_warning():
-
-    insdrp = numina.core.pipeline.InstrumentDRP('MYNAME', {}, {}, [], [])
-
-    drpbase = DrpBase()
-    with pytest.warns(RuntimeWarning):
-        drpbase.instrumentdrp_check(insdrp, 'TEST1')
-
-
 def test_valid_instrument():
-    insdrp = numina.core.pipeline.InstrumentDRP('TEST1', {}, {}, [], [])
+    insdrp = numina.core.pipeline.InstrumentDRP("TEST1", {}, {}, [], [])
 
     drpbase = DrpBase()
-    res = drpbase.instrumentdrp_check(insdrp, 'TEST1')
+    res = drpbase.instrumentdrp_check(insdrp, "TEST1")
     assert res
