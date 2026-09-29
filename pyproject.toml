@@ -35,7 +35,6 @@ classifiers = [
 dependencies = [
     'astropy >= 6.1.7',
     'attrs',
-    'backports.entry_points_selectable',  # required only with python < 3.10a7
     'ccdproc',
     'importlib_resources',  # required with python < 3.9
     'lmfit',

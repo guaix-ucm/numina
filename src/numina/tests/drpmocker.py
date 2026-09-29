@@ -10,63 +10,53 @@
 """A class to mock the DRP loading process."""
 
 import importlib.metadata
-import sys
 
-import backports.entry_points_selectable
 import numina.core.pipelineload as pload
+import numina.drps.drpsystem
 
 
-def create_mock_entry_point(monkeypatch, entry_name, drploader):
+def create_mock_entry_point(drploader, entry_name, group="numina.pipeline.1"):
 
     value = f"{entry_name}.loader"
-    group = "numina.pipeline.1"
 
-    # In python >= 3.11 EntryPoint is inmutable
-    # and we cannot use monkeypatch
-    # We remove __setattr__ that raises an exception
-    if not sys.version_info < (3, 11):
-        try:
-            delattr(importlib.metadata.EntryPoint, '__setattr__')
-        except AttributeError:
-            pass
+    class EntryPoint(importlib.metadata.EntryPoint):
+        def load(self):
+            return drploader
 
-    ep = importlib.metadata.EntryPoint(
-        name=entry_name, value=value, group=group)
-
-    monkeypatch.setattr(ep, 'load', lambda: drploader)
-
+    ep = EntryPoint(name=entry_name, value=value, group=group)
     return ep
 
 
-class DRPMocker(object):
+class DRPMocker:
     """Mocks the DRP loading process for testing."""
 
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
         self._eps = []
-        basevalue = backports.entry_points_selectable.entry_points
+        basevalue = importlib.metadata.entry_points
         # Use the mocker only for 'numina.pipeline.1'
 
         def mockreturn(group, name=None):
-            if group == 'numina.pipeline.1':
+            if group == "numina.pipeline.1":
                 return self._eps
+            elif name is None:
+                return basevalue(group=group)
             else:
                 return basevalue(group=group, name=name)
 
-        self.monkeypatch.setattr(
-            backports.entry_points_selectable, 'entry_points', mockreturn)
+        self.monkeypatch.setattr(numina.drps.drpsystem, "entry_points", mockreturn)
 
     def add_drp(self, name, loader):
 
         if callable(loader):
-            ep = create_mock_entry_point(self.monkeypatch, name, loader)
+            ep = create_mock_entry_point(loader, name)
         else:
             # Assume loader is data instead
             drpdata = loader
 
             def drploader():
-                return pload.drp_load_data('numina', drpdata)
+                return pload.drp_load_data("numina", drpdata)
 
-            ep = create_mock_entry_point(self.monkeypatch, name, drploader)
+            ep = create_mock_entry_point(drploader, name)
 
         self._eps.append(ep)

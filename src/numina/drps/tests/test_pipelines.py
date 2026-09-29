@@ -1,8 +1,4 @@
-
-import importlib.metadata
 import pkgutil
-
-import backports.entry_points_selectable
 
 from numina.drps.drpsystem import DrpSystem
 from numina.core.pipeline import InstrumentDRP, Pipeline
@@ -12,43 +8,35 @@ def assert_valid_instrument(instrument):
     assert isinstance(instrument, InstrumentDRP)
 
     pipes = instrument.pipelines
-    assert 'default' in pipes
+    assert "default" in pipes
     for k, v in pipes.items():
         assert k == v.name
         assert isinstance(v, Pipeline)
 
 
-def test_fake_pipeline(monkeypatch):
+def test_fake_pipeline(drpmocker):
 
-    def mockreturn(group=None):
+    def fake_loader():
+        confs = dict()
+        modes = dict()
+        pipelines = {"default": Pipeline("FAKE", "default", {})}
+        return InstrumentDRP("FAKE", confs, modes, pipelines)
 
-        def fake_loader():
-            confs = dict()
-            modes = dict()
-            pipelines = {'default': Pipeline('default', {}, 1)}
-            fake = InstrumentDRP('FAKE', confs, modes, pipelines)
-            return fake
-
-        ep = importlib.metadata.EntryPoint(
-            name='fake', value='fake.loader', group='numina.pipelines.1')
-        monkeypatch.setattr(ep, 'load', lambda: fake_loader)
-        return [ep]
-
-    monkeypatch.setattr(backports.entry_points_selectable,
-                        'entry_points', mockreturn)
+    drpmocker.add_drp("FAKE", fake_loader)
 
     alldrps = DrpSystem().load().query_all()
+    assert list(alldrps) == ["FAKE"]
     for k, v in alldrps.items():
         assert_valid_instrument(v)
 
 
 def test_fake_pipeline_alt(drpmocker):
 
-    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
+    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
 
-    drpmocker.add_drp('TEST1', drpdata1)
+    drpmocker.add_drp("TEST1", drpdata1)
 
-    mydrp = DrpSystem().load().query_by_name('TEST1')
+    mydrp = DrpSystem().load().query_by_name("TEST1")
     assert mydrp is not None
 
     assert_valid_instrument(mydrp)
@@ -56,7 +44,7 @@ def test_fake_pipeline_alt(drpmocker):
 
 def test_fake_pipeline_alt2(drpmocker):
 
-    drpdata1 = pkgutil.get_data('numina.drps.tests', 'drptest1.yaml')
+    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
 
     ob_to_test = """
     id: 4
@@ -66,7 +54,7 @@ def test_fake_pipeline_alt2(drpmocker):
      - ThAr_LR-U.fits
     """
 
-    drpmocker.add_drp('TEST1', drpdata1)
+    drpmocker.add_drp("TEST1", drpdata1)
 
     import yaml
     from numina.core.oresult import obsres_from_dict
@@ -81,7 +69,7 @@ def test_fake_pipeline_alt2(drpmocker):
     assert_valid_instrument(drp)
 
     this_pipeline = drp.pipelines[oblock.pipeline]
-    expected = 'numina.tests.recipes.BiasRecipe'
+    expected = "numina.tests.recipes.BiasRecipe"
     assert this_pipeline.get_recipe(oblock.mode) == expected
 
     recipe = this_pipeline.get_recipe_object(oblock.mode)

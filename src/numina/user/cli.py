@@ -13,12 +13,13 @@
 import argparse
 import configparser
 from importlib import import_module
+from importlib.metadata import entry_points
 import logging
 import logging.config
 import os
 import sys
 
-from backports.entry_points_selectable import entry_points
+
 import importlib_resources
 import yaml
 
@@ -36,24 +37,21 @@ def main(args=None):
     # Configuration args from a text file
     config = configparser.ConfigParser()
     # Load base config here
-    basecfg = importlib_resources.files().joinpath('numina.cfg')
+    basecfg = importlib_resources.files().joinpath("numina.cfg")
     config.read_file(basecfg.open())
 
     # Extend with custom values
-    read_files = config.read([
-        os.path.join(xdg_config_home, 'numina/numina.cfg'),
-        '.numina.cfg'
-    ])
-    _logger.debug(f'Reading config files {read_files}')
+    read_files = config.read([os.path.join(xdg_config_home, "numina/numina.cfg"), ".numina.cfg"])
+    _logger.debug(f"Reading config files {read_files}")
 
     parser0 = argparse.ArgumentParser(
-        description='Command line interface of Numina',
-        prog='numina',
+        description="Command line interface of Numina",
+        prog="numina",
         epilog="For detailed help pass --help to a target",
-        add_help=False
+        add_help=False,
     )
 
-    parser0.add_argument('--disable-plugins', action='store_true')
+    parser0.add_argument("--disable-plugins", action="store_true")
 
     args0, args = parser0.parse_known_args(args)
 
@@ -61,46 +59,33 @@ def main(args=None):
     subcmd_load = []
 
     if not args0.disable_plugins:
-        for entry in entry_points(
-                group='numina.plugins.1'
-        ):
+        for entry in entry_points(group="numina.plugins.1"):
             try:
                 register = entry.load()
                 subcmd_load.append(register)
             except Exception as error:
-                print(f'exception loading plugin {entry}', file=sys.stderr)
+                print(f"exception loading plugin {entry}", file=sys.stderr)
                 print(error, file=sys.stderr)
 
     parser = argparse.ArgumentParser(
-        description='Command line interface of Numina',
-        prog='numina',
-        epilog="For detailed help pass --help to a target"
+        description="Command line interface of Numina",
+        prog="numina",
+        epilog="For detailed help pass --help to a target",
     )
 
-    parser.add_argument('--disable-plugins', action='store_true',
-                        help='disable plugin loading')
-    parser.add_argument(
-        '-l', action="store", dest="logging", metavar="FILE",
-        help="FILE with logging configuration"
-    )
+    parser.add_argument("--disable-plugins", action="store_true", help="disable plugin loading")
+    parser.add_argument("-l", action="store", dest="logging", metavar="FILE", help="FILE with logging configuration")
+
+    parser.add_argument("-c", action="store", dest="config", metavar="FILE", help="FILE with configuration")
+
+    parser.add_argument("-d", "--debug", action="store_true", dest="debug", default=False, help="make lots of noise")
 
     parser.add_argument(
-        '-c', action="store", dest="config", metavar="FILE",
-        help="FILE with configuration"
-    )
-
-    parser.add_argument(
-        '-d', '--debug',
+        "--standalone",
         action="store_true",
-        dest="debug", default=False,
-        help="make lots of noise"
-    )
-
-    parser.add_argument(
-        '--standalone',
-        action="store_true",
-        dest="standalone", default=False,
-        help="do not activate GTC compatibility code"
+        dest="standalone",
+        default=False,
+        help="do not activate GTC compatibility code",
     )
 
     # Due to a problem with argparse
@@ -109,16 +94,14 @@ def main(args=None):
     # parser.set_defaults(command=None)
 
     subparsers = parser.add_subparsers(
-        title='Targets',
-        description='These are valid commands you can ask numina to do.'
+        title="Targets", description="These are valid commands you can ask numina to do."
     )
 
     # Init subcommands
-    cmds = ['clidentify', 'clishowins', 'clishowom', 'clishowrecip',
-            'clirun', 'clirunrec']
+    cmds = ["clidentify", "clishowins", "clishowom", "clishowrecip", "clirun", "clirunrec"]
     for cmd in cmds:
-        cmd_mod = import_module(f'.{cmd}', 'numina.user')
-        register = getattr(cmd_mod, 'register', None)
+        cmd_mod = import_module(f".{cmd}", "numina.user")
+        register = getattr(cmd_mod, "register", None)
         if register is not None:
             register(subparsers, config)
 
@@ -135,6 +118,7 @@ def main(args=None):
     # logger file
     if args.standalone:
         import numina.ext.gtc
+
         numina.ext.gtc.ignore_gtc_check()
 
     # Config file from command line
@@ -145,7 +129,7 @@ def main(args=None):
         if args.logging is not None:
             loggingf = args.logging
         else:
-            loggingf = config.get('numina', 'logging')
+            loggingf = config.get("numina", "logging")
 
         with open(loggingf) as logfile:
             logconf = yaml.safe_load(logfile)
@@ -158,8 +142,8 @@ def main(args=None):
         for h in _logger.handlers:
             h.setLevel(logging.DEBUG)
 
-    _logger.info(f'Numina simple recipe runner version {__version__}')
-    command = getattr(args, 'command', None)
+    _logger.info(f"Numina simple recipe runner version {__version__}")
+    command = getattr(args, "command", None)
 
     if command is not None:
         args.command(args, extra_args, config)
@@ -174,12 +158,12 @@ def process_unknown_arguments(unknowns):
     # machinery for this
     for unknown in unknowns:
         # Check prefixes
-        prefix = '--parameter-'
+        prefix = "--parameter-"
         if unknown.startswith(prefix):
             # process '='
-            values = unknown.split('=')
+            values = unknown.split("=")
             if len(values) == 2:
-                key = values[0][len(prefix):]
+                key = values[0][len(prefix) :]
                 val = values[1]
                 if key:
                     result.extra_control[key] = val
