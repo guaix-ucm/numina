@@ -110,7 +110,9 @@ version_file = "src/numina/_version.py"
 where = ["src"]
 
 [tool.pytest.ini_options]
-# xfail_strict = true
+filterwarnings = [
+    "error",
+]
 
 [tool.black]
 line-length = 120
@@ -126,4 +128,3 @@ exclude = '''
   | dist
 )/
 '''
-
