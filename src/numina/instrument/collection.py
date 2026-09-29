@@ -33,7 +33,7 @@ class ComponentCollection:
 
 
 def load_paths_store(
-    pkg_paths: "Iterable[FileLike] | None" = None,
+    pkg_paths: "Iterable[str] | None" = None,
     file_paths: "Iterable[FileLike] | None" = None,
 ) -> dict[str, typing.Any]:
     comp_store = {}

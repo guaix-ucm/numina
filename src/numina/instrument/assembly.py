@@ -8,22 +8,17 @@
 #
 
 from datetime import datetime
-import importlib.resources
-import itertools
-import json
-import pathlib
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-import attrs
 from dateutil.parser import isoparse
 import numina.util.objimport
 
+from .collection import load_paths_store
 from .elements import SetupBlock, PropertiesBlock, ElementEnum
 from .generic import CG
-from .configorigin import ElementOrigin
 from .property import (
     PropertyEntry,
     PropertyProxy,
@@ -32,38 +27,6 @@ from .property import (
     PropertyBase,
 )
 from ..keydef import KeyDefinition
-
-
-@attrs.define
-class ComponentCollection:
-    dirname = attrs.field()
-    paths = attrs.field()
-
-
-def load_resources_dir(dirname):
-    raise NotImplementedError
-    # return ComponentCollection(dirname, valid_paths)
-
-
-def load_comp_store(comp_collection: ComponentCollection) -> dict:
-    """
-
-    Parameters
-    ----------
-    comp_collection : ComponentCollection
-
-    Returns
-    -------
-    dict
-    """
-    comp_store = {}
-    for entry in comp_collection.dirname.iterfiles():
-        if entry.name in comp_collection.paths:
-            with open(entry) as fd:
-                cont = json.load(fd)
-                cont["origin"] = ElementOrigin.from_dict(cont)
-                comp_store[entry.name] = cont
-    return comp_store
 
 
 def load_panoply_store(sys_drps=None, defpath=None) -> dict:
@@ -79,40 +42,6 @@ def load_panoply_store(sys_drps=None, defpath=None) -> dict:
             pkg_paths.append(drp.profiles)
 
     return load_paths_store(pkg_paths, file_paths)
-
-
-def load_paths_store(pkg_paths=None, file_paths=None) -> dict:
-    """
-
-    Parameters
-    ----------
-    pkg_paths
-    file_paths
-
-    Returns
-    -------
-    dict
-    """
-
-    comp_store = {}
-    # Prepare file paths
-    if file_paths is None:
-        file_paths = []
-    if pkg_paths is None:
-        pkg_paths = []
-
-    paths1 = [pathlib.Path(fpath) for fpath in file_paths]
-    paths2 = [importlib.resources.files(ppath) for ppath in pkg_paths]
-
-    for path in itertools.chain(paths1, paths2):
-        for obj in path.iterdir():
-            if obj.suffix == ".json":
-                with obj.open() as fd:
-                    cont = json.load(fd)
-                    cont["origin"] = ElementOrigin.from_dict(cont)
-                    comp_store[obj.name] = cont
-
-    return comp_store
 
 
 def find_instrument(comp_store, keyval: str, date: str | datetime, by_key="name") -> dict[str, Any]:
