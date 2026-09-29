@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2022 Universidad Complutense de Madrid
+# Copyright 2008-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,9 +9,8 @@
 
 """Background estimation
 
-    Background estimation following Costa 1992, Bertin & Arnouts 1996
+Background estimation following Costa 1992, Bertin & Arnouts 1996
 """
-
 
 import numpy
 import scipy.ndimage as ndimage
@@ -19,15 +18,15 @@ import scipy.ndimage as ndimage
 
 def _interpolation(z, sx, sy, mx, my):
     # Spline to original size
-    x, y = numpy.ogrid[-1:1:complex(0, mx), -1:1:complex(0, my)]
-    newx, newy = numpy.mgrid[-1:1:complex(0, sx), -1:1:complex(0, sy)]
+    x, y = numpy.ogrid[-1 : 1 : complex(0, mx), -1 : 1 : complex(0, my)]
+    newx, newy = numpy.mgrid[-1 : 1 : complex(0, sx), -1 : 1 : complex(0, sy)]
 
     x0 = x[0, 0]
     y0 = y[0, 0]
     dx = x[1, 0] - x0
     dy = y[0, 1] - y0
-    ivals = (newx - x0)/dx
-    jvals = (newy - y0)/dy
+    ivals = (newx - x0) / dx
+    jvals = (newy - y0) / dy
     coords = numpy.array([ivals, jvals])
     newf = ndimage.map_coordinates(z, coords)
     return newf
@@ -78,8 +77,7 @@ def create_background_map(data, bsx, bsy):
             rms.append(r)
 
     # Reconstructed image
-    z = numpy.array(comp)
-    z.shape = (mx, my)
+    z = numpy.array(comp).reshape(mx, my)
     # median filter
     ndimage.median_filter(z, size=(3, 3), output=z)
 
@@ -87,8 +85,7 @@ def create_background_map(data, bsx, bsy):
     new = _interpolation(z, sx, sy, mx, my)
 
     # Interpolate the rms
-    z = numpy.array(rms)
-    z.shape = (mx, my)
+    z = numpy.array(rms).reshape(mx, my)
     nrms = _interpolation(z, sx, sy, mx, my)
 
     return new, nrms
