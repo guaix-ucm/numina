@@ -34,7 +34,7 @@ def fit_theil_sen(x, y):
 
     Returns
     -------
-    coef : ndarray, shape (2,) or (2, K)
+    coef : numpy.ndarray, shape (2,) or (2, K)
            Intercept and slope of the linear fit. If y was 2-D, the
            coefficients in column k of coef represent the linear fit
            to the data in y's k-th column.
@@ -50,26 +50,25 @@ def fit_theil_sen(x, y):
     y1 = numpy.asarray(y)
     n = len(xx)
     if n < 5:
-        raise ValueError('Number of points < 5')
+        raise ValueError("Number of points < 5")
 
     if xx.ndim != 1:
-        raise ValueError('Input arrays have unexpected dimensions')
+        raise ValueError("Input arrays have unexpected dimensions")
 
     diff = xx[1:] - x[:-1]
     if not numpy.all(diff > 0):
-        raise ValueError('The input arrays must be sorted')
+        raise ValueError("The input arrays must be sorted")
 
     if y1.ndim == 1:
         if len(y1) != n:
-            raise ValueError('X and Y arrays have different sizes')
+            raise ValueError("X and Y arrays have different sizes")
         yy = y1[numpy.newaxis, :]
     elif y1.ndim == 2:
         if n != y1.shape[0]:
-            raise ValueError(
-                'Y-array size in the fitting direction is different to the X-array size')
+            raise ValueError("Y-array size in the fitting direction is different to the X-array size")
         yy = y1.T
     else:
-        raise ValueError('Input arrays have unexpected dimensions')
+        raise ValueError("Input arrays have unexpected dimensions")
 
     nmed = n // 2
     iextra = nmed if (n % 2) == 0 else nmed + 1

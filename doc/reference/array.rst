@@ -30,13 +30,13 @@
 
 .. automodule:: numina.array.background
    :members:
-   
+
 :mod:`numina.array.blocks` --- Generation of blocks
 ====================================================
 
 .. automodule:: numina.array.blocks
-   :members:  
- 
+   :members:
+
 :mod:`numina.array.bpm` --- Bad Pixel Mask interpolation
 ========================================================
 
@@ -50,14 +50,14 @@
 .. automodule:: numina.array.combine
    :synopsis: Array combination
    :members:
-   
-   
+
+
 Combination methods in :mod:`numina.array.combine`
 ==================================================
-All these functions return a :class:`PyCapsule`, that 
+All these functions return a :class:`PyCapsule`, that
 can be passed to :func:`generic_combine`
-   
-   
+
+
 .. py:function:: mean_method()
 
    Mean method
@@ -69,18 +69,18 @@ can be passed to :func:`generic_combine`
 .. py:function:: sigmaclip_method([low=0.0[, high=0.0]])
 
    Sigmaclip method
-   
+
    :param low: Number of sigmas to reject under the mean
    :param high: Number of sigmas to reject over the mean
    :raises: :class:`ValueError` if **low** or **high** are negative
- 
+
 .. py:function:: quantileclip_method([fclip=0.0])
 
    Quantile clip method
-   
+
    :param fclip: Fraction of points to reject on both ends
    :raises: :class:`ValueError` if **fclip** is negative or greater than 0.4
- 
+
 .. py:function:: minmax_method([nmin=0[, nmax=0]])
 
    Min-max method
@@ -88,11 +88,11 @@ can be passed to :func:`generic_combine`
    :param nmin: Number of minimum points to reject
    :param nmax: Number of maximum points to reject
    :raises: :class:`ValueError` if **nmin** or **nmax** are negative
-   
-   
+
+
 Extending :func:`generic_combine`
 =================================
- 
+
 New combination methods can be implemented and used by :func:`generic_combine`
 The combine function expects a :class:`PyCapsule` object containing a pointer
 to a C function implementing the combination method.
@@ -100,28 +100,28 @@ to a C function implementing the combination method.
 .. c:function:: int combine(double *data, double *weights, size_t size, double *out[3], void *func_data)
 
    Operate on two arrays, containing **data** and **weights**. The result, its variance and the number of points
-   used in the calculation (useful when there is some kind of rejection) are stored in **out[0]**, 
+   used in the calculation (useful when there is some kind of rejection) are stored in **out[0]**,
    **out[1]**  and **out[2]**.
 
-   :param data: a pointer to an array containing the data 
+   :param data: a pointer to an array containing the data
    :param weights: a pointer to an array containing weights
    :param size: the size of data and weights
    :param out: an array of pointers to the pixels in the result arrays
    :param func_data: additional parameters of the function encoded as a void pointer
    :return: 1 if operation succeeded, 0 in case of error.
-   
- 
+
+
 If the function uses dynamically allocated data stored in *func_data*, we must also
-implement a function that deallocates the data once it is used. 
- 
+implement a function that deallocates the data once it is used.
+
 .. c:function:: void destructor_function(PyObject* cobject)
 
    :param cobject: the object owning dynamically allocated data
-   
- 
+
+
 Simple combine method
 ---------------------
- 
+
 As an example, I'm going to implement a combination method that returns the minimum
 of the input arrays. Let's call the method `min_method`
 
@@ -130,28 +130,28 @@ very simple).
 
 .. code-block:: c++
 
-   int min_combine(double *data, double *weights, size_t size, double *out[3], 
+   int min_combine(double *data, double *weights, size_t size, double *out[3],
             void *func_data) {
-                        
+
        double* res = std::min_element(data, data + size);
 
-       *out[0] = *res; 
+       *out[0] = *res;
        // I'm not going to compute the variance for the minimum
        // but it should go here
        *out[1] = 0.0;
        *out[2] = size;
 
-       return 1;   
+       return 1;
    }
 
-A destructor function is not needed in this case as we are not using *func_data*. 
+A destructor function is not needed in this case as we are not using *func_data*.
 
 The next step is to build a Python extension. First we need to create a function
 returning the :class:`PyCapsule` in C code like this:
 
 
 .. code-block:: c
-   
+
    static PyObject *
    py_method_min(PyObject *obj, PyObject *args) {
      if (not PyArg_ParseTuple(args, "")) {
@@ -174,14 +174,14 @@ The code to load it in a module is like this:
     { NULL, NULL, 0, NULL } /* sentinel */
    };
 
-   PyMODINIT_FUNC 
+   PyMODINIT_FUNC
    init_mymodule(void)
    {
      PyObject *m;
      m = Py_InitModule("_mymodule", mymod_methods);
    }
 
-When compiled, this code created a file `_mymodule.so` that can be loaded by the 
+When compiled, this code created a file `_mymodule.so` that can be loaded by the
 Python interpreter. This module will contain, among others, a `min_combine` function.
 
     >>> from _mymodule import min_combine
@@ -212,7 +212,7 @@ First, the Python function. I'm skipping error checking code hre.
       }
 
       cap = PyCapsule_New((void*) my_sigmaclip_function, "numina.cmethod", my_destructor);
-         
+
       /* Allocating space for the two parameters */
       /* We use Python memory allocator */
       double *funcdata = (double*)PyMem_Malloc(2 * sizeof(double));
@@ -234,21 +234,21 @@ The deallocator is simply:
       void* cdata = PyCapsule_GetContext(cap);
       PyMem_Free(cdata);
    }
-   
+
 and the combine function is:
 
 .. code-block:: c
 
-   int my_sigmaclip_function(double *data, double *weights, size_t size, double *out[3], 
+   int my_sigmaclip_function(double *data, double *weights, size_t size, double *out[3],
             void *func_data) {
-       
+
        double* fdata = (double*) func_data;
        double slow = *fdata;
-       double shigh = *(fdata + 1);                 
-    
+       double shigh = *(fdata + 1);
+
        /* Operations go here */
-    
-       return 1;    
+
+       return 1;
     }
 
 Once the module is created and loaded, a sample session would be:
@@ -257,9 +257,9 @@ Once the module is created and loaded, a sample session would be:
     >>> method = sigmaclip_combine(3.0, 3.0)
     ...
     >>> o = generic_combine(method, arrays)
-    
-    
-    
+
+
+
 :mod:`numina.array.cosmetics` --- Array cosmetics
 ===================================================
 
@@ -273,7 +273,7 @@ Once the module is created and loaded, a sample session would be:
 
 .. automodule:: numina.array.fwhm
    :members:
-    
+
 :mod:`numina.array.imsurfit` --- Image surface fitting
 ======================================================
 
@@ -324,7 +324,7 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.recenter
    :members:
 
-:mod:`numina.array.robusfit` --- Robust fits
+:mod:`numina.array.robustfit` --- Robust fits
 ======================================================
 
 .. automodule:: numina.array.robustfit

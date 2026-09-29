@@ -39,7 +39,7 @@ def trace(arr, x, y, axis=0, background=0.0, step=4, hs=1, tol=2, maxdis=2.0, ga
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         A nx3 array, with x,y,p of each point in the trace
     """
 

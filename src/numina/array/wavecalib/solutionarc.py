@@ -57,12 +57,23 @@ class CrLinear(object):
     def __str__(self):
         """Printable representation of a CrLinear instance."""
 
-        output = "<CrLinear instance>\n" + \
-                 "crpix linear: " + str(self.crpix) + "\n" + \
-                 "crval linear: " + str(self.crval) + "\n" + \
-                 "cdelt linear: " + str(self.cdelt) + "\n" + \
-                 "crmin linear: " + str(self.crmin) + "\n" + \
-                 "crmax linear: " + str(self.crmax)
+        output = (
+            "<CrLinear instance>\n"
+            + "crpix linear: "
+            + str(self.crpix)
+            + "\n"
+            + "crval linear: "
+            + str(self.crval)
+            + "\n"
+            + "cdelt linear: "
+            + str(self.cdelt)
+            + "\n"
+            + "crmin linear: "
+            + str(self.crmin)
+            + "\n"
+            + "crmax linear: "
+            + str(self.crmax)
+        )
 
         return output
 
@@ -102,8 +113,9 @@ class WavecalFeature(object):
 
     """
 
-    def __init__(self, line_ok, category, lineid, funcost, xpos, ypos=0.0,
-                 peak=0.0, fwhm=0.0, reference=0.0, wavelength=0.0):
+    def __init__(
+        self, line_ok, category, lineid, funcost, xpos, ypos=0.0, peak=0.0, fwhm=0.0, reference=0.0, wavelength=0.0
+    ):
         self.line_ok = line_ok
         self.category = category
         self.lineid = lineid
@@ -117,21 +129,17 @@ class WavecalFeature(object):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        float_keys = ['funcost', 'xpos', 'ypos', 'peak', 'fwhm',
-                      'reference', 'wavelength']
+        float_keys = ["funcost", "xpos", "ypos", "peak", "fwhm", "reference", "wavelength"]
         for k in state:
             if k in float_keys:
                 value = float(state[k])
                 # translate infinities
                 if math.isinf(value):
                     value = 1e50
-                    warnings.warn(
-                        f'Converting {k}=inf to {value}',
-                        RuntimeWarning
-                    )
+                    warnings.warn(f"Converting {k}=inf to {value}", RuntimeWarning)
 
                 state[k] = value
-            elif k in ['lineid']:
+            elif k in ["lineid"]:
                 state[k] = int(state[k])
             else:
                 pass
@@ -139,20 +147,41 @@ class WavecalFeature(object):
 
     def __str__(self):
         if self.line_ok:
-            sline_ok = 'True '
+            sline_ok = "True "
         else:
-            sline_ok = 'False'
-        output = "<WavecalFeature instance>\n" + \
-                 " line_ok: " + sline_ok + "  " + \
-                 "category: " + str(self.category) + "  " + \
-                 "id: " + str(self.lineid) + "  " + \
-                 "xpos: " + str(self.xpos) + "  " + \
-                 "ypos: " + str(self.ypos) + "\n" + \
-                 " peak: " + str(self.peak) + "  " + \
-                 "fwhm: " + str(self.fwhm) + "  " + \
-                 "reference: " + str(self.reference) + "  " + \
-                 "wavelength: " + str(self.wavelength) + "  " + \
-                 "funcost: " + str(self.funcost)
+            sline_ok = "False"
+        output = (
+            "<WavecalFeature instance>\n"
+            + " line_ok: "
+            + sline_ok
+            + "  "
+            + "category: "
+            + str(self.category)
+            + "  "
+            + "id: "
+            + str(self.lineid)
+            + "  "
+            + "xpos: "
+            + str(self.xpos)
+            + "  "
+            + "ypos: "
+            + str(self.ypos)
+            + "\n"
+            + " peak: "
+            + str(self.peak)
+            + "  "
+            + "fwhm: "
+            + str(self.fwhm)
+            + "  "
+            + "reference: "
+            + str(self.reference)
+            + "  "
+            + "wavelength: "
+            + str(self.wavelength)
+            + "  "
+            + "funcost: "
+            + str(self.funcost)
+        )
 
         return output
 
@@ -172,8 +201,8 @@ class SolutionArcCalibration(object):
         elements are instances of the class WavecalFeature, containing
         all the relevant information concerning the line
         identification.
-    coeff : 1d numpy array (float)
-        Coefficients of the wavelength calibration polynomial.
+    coeff : numpy.ndarray
+        1D array of floats with the coefficients of the wavelength calibration polynomial.
     residual_std : float
         Residual standard deviation of the fit.
     cr_linear : instance of CrLinear
@@ -206,8 +235,7 @@ class SolutionArcCalibration(object):
 
     @property
     def nlines_arc(self):
-        return len([wvfeature for wvfeature in self.features
-                    if wvfeature.line_ok])
+        return len([wvfeature for wvfeature in self.features if wvfeature.line_ok])
 
     def __eq__(self, other):
         if isinstance(other, SolutionArcCalibration):
@@ -221,11 +249,21 @@ class SolutionArcCalibration(object):
     def __str__(self):
         """Printable representation of a SolutionArcCalibration instance."""
 
-        output = "<SolutionArcCalibration instance>\n" + \
-                 "- Number arc lines: " + str(self.nlines_arc) + "\n" + \
-                 "- Coeff...........: " + str(self.coeff) + "\n" + \
-                 "- Residual std....: " + str(self.residual_std) + "\n" + \
-                 "- " + str(self.cr_linear) + "\n"
+        output = (
+            "<SolutionArcCalibration instance>\n"
+            + "- Number arc lines: "
+            + str(self.nlines_arc)
+            + "\n"
+            + "- Coeff...........: "
+            + str(self.coeff)
+            + "\n"
+            + "- Residual std....: "
+            + str(self.residual_std)
+            + "\n"
+            + "- "
+            + str(self.cr_linear)
+            + "\n"
+        )
 
         for feature in self.features:
             output += "- " + str(feature) + "\n"
@@ -235,19 +273,17 @@ class SolutionArcCalibration(object):
 
     def __getstate__(self):
         result = self.__dict__.copy()
-        result['features'] = [
-            feature.__getstate__() for feature in self.features
-        ]
-        result['cr_linear'] = result['cr_linear'].__getstate__()
+        result["features"] = [feature.__getstate__() for feature in self.features]
+        result["cr_linear"] = result["cr_linear"].__getstate__()
         return result
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
         features = []
-        for feature in state['features']:
+        for feature in state["features"]:
             newf = WavecalFeature.__new__(WavecalFeature)
             newf.__dict__ = feature
             features.append(newf)
 
         self.features = features
-        self.cr_linear = CrLinear(**state['cr_linear'])
+        self.cr_linear = CrLinear(**state["cr_linear"])

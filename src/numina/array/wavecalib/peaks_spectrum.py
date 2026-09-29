@@ -14,9 +14,6 @@ from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
 
-import numpy as np
-
-
 def zero_monotonic_flanks(signal, peak_idx, inplace=False):
     """Set to zero the peak and its monotonically decreasing flanks.
 
@@ -92,8 +89,8 @@ def find_highest_peaks_spectrum(
 
     Parameters
     ----------
-    sx : 1d numpy array, floats
-        Input array.
+    sx : numpy.ndarray
+        Input 1D array of floats.
     nmaxpeaks : int
         Maximum number of peaks to find.
     nclean_around_peak : int
@@ -127,8 +124,8 @@ def find_highest_peaks_spectrum(
 
     Returns
     -------
-    ixpeaks : 1d numpy array, int
-        Peak locations, in array coordinates (integers).
+    ixpeaks : numpy.ndarray
+        1D array with the peak locations, in array coordinates (integers).
         The peaks are sorted in ascending order of their array coordinates.
     """
     # check input parameters
@@ -169,13 +166,15 @@ def find_highest_peaks_spectrum(
                 nwinwidth_effective -= 2
                 if debugplot != 0:
                     print(
-                        f"find_highest_peaks_spectrum> No peaks found, reducing nwinwidth_effective to {nwinwidth_effective}"
+                        "find_highest_peaks_spectrum> No peaks found, "
+                        f"reducing nwinwidth_effective to {nwinwidth_effective}"
                     )
                 # if the window width is too small, take the maximum value as the peak
                 if nwinwidth_effective < 2:
                     if debugplot != 0:
                         print(
-                            "find_highest_peaks_spectrum> nwinwidth_effective is too small, taking the maximum value as the peak"
+                            "find_highest_peaks_spectrum> nwinwidth_effective is too small, "
+                            "taking the maximum value as the peak"
                         )
                     ixpeaks = [np.argmax(sx_copy)]
                     loop = False
@@ -235,8 +234,8 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 
     Parameters
     ----------
-    sx : 1d numpy array, floats
-        Input array.
+    sx : numpy.ndarray
+        Input 1D array of floats.
     nwinwidth : int
         Width of the window where each peak must be found.
     threshold : float
@@ -253,8 +252,8 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 
     Returns
     -------
-    ixpeaks : 1d numpy array, int
-        Peak locations, in array coordinates (integers).
+    ixpeaks : numpy.ndarray
+        1D array with the peak locations, in array coordinates (integers).
 
     """
 
@@ -324,10 +323,10 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
 
     Parameters
     ----------
-    sx : 1d numpy array, floats
-        Input array.
-    ixpeaks : 1d numpy array, int
-        Initial peak locations, in array coordinates (integers).
+    sx : numpy.ndarray
+        Input 1D array of floats.
+    ixpeaks : numpy.ndarray
+        1D array with the initial peak locations, in array coordinates (integers).
         These values can be the output from the function
         find_peaks_spectrum().
     nwinwidth : int
@@ -352,10 +351,10 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
 
     Returns
     -------
-    fxpeaks : 1d numpy array, float
-        Refined peak locations, in array coordinates.
-    sxpeaks : 1d numpy array, float
-        When fitting Gaussians, this array stores the fitted line
+    fxpeaks : numpy.ndarray
+        1D array of floats with the refined peak locations, in array coordinates.
+    sxpeaks : numpy.ndarray
+        1D array of floats. When fitting Gaussians, this array stores the fitted line
         widths (sigma). Otherwise, this array returns zeros.
 
     """

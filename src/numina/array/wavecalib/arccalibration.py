@@ -53,10 +53,10 @@ def select_data_for_fit(list_of_wvfeatures):
         coordinates are going to be employed in the posterior fits.
     xfit : 1d numpy aray
         X coordinate of points for posterior fits.
-    yfit : 1d numpy array
-        Y coordinate of points for posterior fits.
-    wfit : 1d numpy array
-        Cost function of points for posterior fits. The inverse of
+    yfit : numpy.ndarray
+        1D array with the Y coordinate of points for posterior fits.
+    wfit : numpy.ndarray
+        1D array with the cost function of points for posterior fits. The inverse of
         these values can be employed for weighted fits.
 
     """
@@ -79,14 +79,16 @@ def select_data_for_fit(list_of_wvfeatures):
     return nfit, ifit, xfit, yfit, wfit
 
 
-def fit_list_of_wvfeatures(list_of_wvfeatures,
-                           naxis1_arc,
-                           crpix1,
-                           poly_degree_wfit,
-                           weighted=False,
-                           plot_title=None,
-                           geometry=None,
-                           debugplot=0):
+def fit_list_of_wvfeatures(
+    list_of_wvfeatures,
+    naxis1_arc,
+    crpix1,
+    poly_degree_wfit,
+    weighted=False,
+    plot_title=None,
+    geometry=None,
+    debugplot=0,
+):
     """Fit polynomial to arc calibration list_of_wvfeatures.
 
     Parameters
@@ -144,15 +146,15 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     list_unidentified = []
     for i in range(nlines_arc):
         if not list_of_wvfeatures[i].line_ok:
-            if list_of_wvfeatures[i].category == 'X':
+            if list_of_wvfeatures[i].category == "X":
                 list_unidentified.append(i)
-            elif list_of_wvfeatures[i].category == 'R':
+            elif list_of_wvfeatures[i].category == "R":
                 list_r.append(i)
-            elif list_of_wvfeatures[i].category == 'T':
+            elif list_of_wvfeatures[i].category == "T":
                 list_t.append(i)
-            elif list_of_wvfeatures[i].category == 'P':
+            elif list_of_wvfeatures[i].category == "P":
                 list_p.append(i)
-            elif list_of_wvfeatures[i].category == 'K':
+            elif list_of_wvfeatures[i].category == "K":
                 list_k.append(i)
             else:
                 raise ValueError('Unexpected "category"')
@@ -165,19 +167,17 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
 
     if xfit.size <= poly_degree_wfit:
         raise ValueError("Insufficient number of points for fit.")
-    poly, stats_list = Polynomial.fit(
-        x=xfit, y=yfit, deg=poly_degree_wfit, full=True, w=weights
-    )
+    poly, stats_list = Polynomial.fit(x=xfit, y=yfit, deg=poly_degree_wfit, full=True, w=weights)
     poly = Polynomial.cast(poly)
     coeff = poly.coef
     if len(xfit) > poly_degree_wfit + 1:
-        residual_std = np.sqrt(stats_list[0]/(len(xfit)-poly_degree_wfit-1))[0]
+        residual_std = np.sqrt(stats_list[0] / (len(xfit) - poly_degree_wfit - 1))[0]
     else:
         residual_std = 0.0
 
     if abs(debugplot) >= 10:
-        print('>>> Fitted coefficients:\n', coeff)
-        print('>>> Residual std.......:', residual_std)
+        print(">>> Fitted coefficients:\n", coeff)
+        print(">>> Residual std.......:", residual_std)
 
     # obtain CRVAL1 and CDELT1 for a linear wavelength scale from the
     # last polynomial fit
@@ -186,25 +186,16 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
     crmax1_linear = poly(naxis1_arc)
     cdelt1_linear = (crmax1_linear - crval1_linear) / (naxis1_arc - crpix1)
     if abs(debugplot) >= 10:
-        print('>>> CRVAL1 linear scale:', crval1_linear)
-        print('>>> CDELT1 linear scale:', cdelt1_linear)
+        print(">>> CRVAL1 linear scale:", crval1_linear)
+        print(">>> CDELT1 linear scale:", cdelt1_linear)
 
     # generate solution (note that the class SolutionArcCalibration
     # only sotres the information in list_of_wvfeatures corresponding
     # to lines that have been properly identified
-    cr_linear = CrLinear(
-        crpix1,
-        crval1_linear,
-        crmin1_linear,
-        crmax1_linear,
-        cdelt1_linear
-    )
+    cr_linear = CrLinear(crpix1, crval1_linear, crmin1_linear, crmax1_linear, cdelt1_linear)
 
     solution_wv = SolutionArcCalibration(
-        features=list_of_wvfeatures,
-        coeff=coeff,
-        residual_std=residual_std,
-        cr_linear=cr_linear
+        features=list_of_wvfeatures, coeff=coeff, residual_std=residual_std, cr_linear=cr_linear
     )
 
     if abs(debugplot) % 10 != 0:
@@ -217,17 +208,16 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
         yres = yfit - poly(xp)  # residuals
         # include residuals plot with identified lines
         from numina.array.display.matplotlib_qt import plt
+
         fig = plt.figure()
         ax2 = fig.add_subplot(2, 1, 2)
         ax2.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
-        ax2.set_xlabel('pixel position in arc spectrum [from 1 to NAXIS1]')
-        ax2.set_ylabel('residuals (Angstrom)')
-        ax2.plot(xp, yres, 'go')
+        ax2.set_xlabel("pixel position in arc spectrum [from 1 to NAXIS1]")
+        ax2.set_ylabel("residuals (Angstrom)")
+        ax2.plot(xp, yres, "go")
         ax2.axhline(y=0.0, color="black", linestyle="dashed")
         # residuals with R, T, P and K lines
-        for val in zip(["R", "T", "P", "K"],
-                       [list_r, list_t, list_p, list_k],
-                       ['red', 'blue', 'magenta', 'orange']):
+        for val in zip(["R", "T", "P", "K"], [list_r, list_t, list_p, list_k], ["red", "blue", "magenta", "orange"]):
             list_x = val[1]
             if len(list_x) > 0:
                 xxp = np.array([])
@@ -236,36 +226,31 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                     xxp = np.append(xxp, [list_of_wvfeatures[i].xpos])
                     yyp = np.append(yyp, [list_of_wvfeatures[i].reference])
                 yyres = yyp - poly(xxp)
-                ax2.plot(xxp, yyres, marker='x', markersize=15, c=val[2],
-                         linewidth=0)
+                ax2.plot(xxp, yyres, marker="x", markersize=15, c=val[2], linewidth=0)
 
         # plot with differences between linear fit and fitted
         # polynomial
         ax = fig.add_subplot(2, 1, 1, sharex=ax2)
         ax.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
-        ax.set_ylabel('differences with\nlinear solution (Angstrom)')
-        ax.plot(xp, yp, 'go', label="identified")
+        ax.set_ylabel("differences with\nlinear solution (Angstrom)")
+        ax.plot(xp, yp, "go", label="identified")
         for i in range(nfit):
-            ax.text(xp[i], yp[i], list_of_wvfeatures[ifit[i]].category,
-                    fontsize=15)
+            ax.text(xp[i], yp[i], list_of_wvfeatures[ifit[i]].category, fontsize=15)
         # polynomial fit
-        ax.plot(xpol, ypol, 'c-', label="fit")
+        ax.plot(xpol, ypol, "c-", label="fit")
         # unidentified lines
         if len(list_unidentified) > 0:
             ymin = np.concatenate((yp, ypol)).min()
             ymax = np.concatenate((yp, ypol)).max()
             for i in list_unidentified:
-                xxp = np.array([list_of_wvfeatures[i].xpos,
-                                list_of_wvfeatures[i].xpos])
+                xxp = np.array([list_of_wvfeatures[i].xpos, list_of_wvfeatures[i].xpos])
                 yyp = np.array([ymin, ymax])
                 if i == list_unidentified[0]:
-                    ax.plot(xxp, yyp, 'r--', label='unidentified')
+                    ax.plot(xxp, yyp, "r--", label="unidentified")
                 else:
-                    ax.plot(xxp, yyp, 'r--')
+                    ax.plot(xxp, yyp, "r--")
         # R, T, P and K lines
-        for val in zip(["R", "T", "P", "K"],
-                       [list_r, list_t, list_p, list_k],
-                       ['red', 'blue', 'magenta', 'orange']):
+        for val in zip(["R", "T", "P", "K"], [list_r, list_t, list_p, list_k], ["red", "blue", "magenta", "orange"]):
             list_x = val[1]
             if len(list_x) > 0:
                 xxp = np.array([])
@@ -274,8 +259,7 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
                     xxp = np.append(xxp, [list_of_wvfeatures[i].xpos])
                     yyp = np.append(yyp, [list_of_wvfeatures[i].reference])
                 yyp -= crval1_linear + (xxp - crpix1) * cdelt1_linear
-                ax.plot(xxp, yyp, marker='x', markersize=15, c=val[2],
-                        linewidth=0, label='removed')
+                ax.plot(xxp, yyp, marker="x", markersize=15, c=val[2], linewidth=0, label="removed")
                 for k in range(len(xxp)):
                     ax.text(xxp[k], yyp[k], val[0], fontsize=15)
 
@@ -289,27 +273,42 @@ def fit_list_of_wvfeatures(list_of_wvfeatures,
             plt.title(plot_title)
 
         # include important parameters in plot
-        ax.text(0.50, 0.25, "poldeg: " + str(poly_degree_wfit) +
-                ", nfit: " + str(len(xfit)),
-                fontsize=12,
-                transform=ax.transAxes,
-                horizontalalignment="center",
-                verticalalignment="bottom")
-        ax.text(0.50, 0.15, "CRVAL1: " + str(round(crval1_linear, 4)),
-                fontsize=12,
-                transform=ax.transAxes,
-                horizontalalignment="center",
-                verticalalignment="bottom")
-        ax.text(0.50, 0.05, "CDELT1: " + str(round(cdelt1_linear, 4)),
-                fontsize=12,
-                transform=ax.transAxes,
-                horizontalalignment="center",
-                verticalalignment="bottom")
-        ax2.text(0.50, 0.05, "r.m.s.: " + str(round(residual_std, 4)),
-                 fontsize=12,
-                 transform=ax2.transAxes,
-                 horizontalalignment="center",
-                 verticalalignment="bottom")
+        ax.text(
+            0.50,
+            0.25,
+            "poldeg: " + str(poly_degree_wfit) + ", nfit: " + str(len(xfit)),
+            fontsize=12,
+            transform=ax.transAxes,
+            horizontalalignment="center",
+            verticalalignment="bottom",
+        )
+        ax.text(
+            0.50,
+            0.15,
+            "CRVAL1: " + str(round(crval1_linear, 4)),
+            fontsize=12,
+            transform=ax.transAxes,
+            horizontalalignment="center",
+            verticalalignment="bottom",
+        )
+        ax.text(
+            0.50,
+            0.05,
+            "CDELT1: " + str(round(cdelt1_linear, 4)),
+            fontsize=12,
+            transform=ax.transAxes,
+            horizontalalignment="center",
+            verticalalignment="bottom",
+        )
+        ax2.text(
+            0.50,
+            0.05,
+            "r.m.s.: " + str(round(residual_std, 4)),
+            fontsize=12,
+            transform=ax2.transAxes,
+            horizontalalignment="center",
+            verticalalignment="bottom",
+        )
 
         # set window geometry
         set_window_geometry(geometry)
@@ -327,8 +326,8 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
 
     Parameters
     ----------
-    wv_master : 1d numpy array, float
-        Array with wavelengths corresponding to the master table
+    wv_master : numpy.ndarray
+        1D array of floats with wavelengths corresponding to the master table
         (Angstroms).
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
@@ -341,8 +340,8 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     -------
     ntriplets_master : int
         Number of triplets built from master table.
-    ratios_master_sorted : 1d numpy array, float
-        Array with values of the relative position of the central line
+    ratios_master_sorted : numpy.ndarray
+        1D array of floats with values of the relative position of the central line
         of each triplet, sorted in ascending order.
     triplets_master_sorted_list : list of tuples
         List with tuples of three numbers, corresponding to the three
@@ -357,9 +356,13 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     wv_previous = wv_master[0]
     for i in range(1, nlines_master):
         if wv_previous >= wv_master[i]:
-            raise ValueError('Wavelengths:\n--> ' +
-                             str(wv_previous) + '\n--> ' + str(wv_master[i]) +
-                             '\nin master table are duplicated or not sorted')
+            raise ValueError(
+                "Wavelengths:\n--> "
+                + str(wv_previous)
+                + "\n--> "
+                + str(wv_master[i])
+                + "\nin master table are duplicated or not sorted"
+            )
         wv_previous = wv_master[i]
 
     # Generate all the possible triplets with the numbers of the lines
@@ -375,12 +378,10 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     ntriplets_master = len(triplets_master_list)
     if ntriplets_master == comb(nlines_master, 3, exact=True):
         if abs(debugplot) >= 10:
-            print('>>> Total number of lines in master table:',
-                  nlines_master)
-            print('>>> Number of triplets in master table...:',
-                  ntriplets_master)
+            print(">>> Total number of lines in master table:", nlines_master)
+            print(">>> Number of triplets in master table...:", ntriplets_master)
     else:
-        raise ValueError('Invalid number of combinations')
+        raise ValueError("Invalid number of combinations")
 
     # For each triplet, compute the relative position of the central
     # line.
@@ -397,8 +398,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
 
     # Simultaneous sort of position ratios and triplets.
     ratios_master_sorted = ratios_master[isort_ratios_master]
-    triplets_master_sorted_list = [triplets_master_list[i]
-                                   for i in isort_ratios_master]
+    triplets_master_sorted_list = [triplets_master_list[i] for i in isort_ratios_master]
 
     if abs(debugplot) in [21, 22]:
         # compute and plot histogram with position ratios
@@ -406,15 +406,15 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
         hist, bins_out = np.histogram(ratios_master, bins=bins_in)
         #
         from numina.array.display.matplotlib_qt import plt
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        width_hist = 0.8*(bins_out[1]-bins_out[0])
-        center = (bins_out[:-1]+bins_out[1:])/2
-        ax.bar(center, hist, align='center', width=width_hist)
-        ax.set_xlabel('distance ratio in each triplet')
-        ax.set_ylabel('Number of triplets')
-        ax.set_title("Number of lines/triplets: " +
-                     str(nlines_master) + "/" + str(ntriplets_master))
+        width_hist = 0.8 * (bins_out[1] - bins_out[0])
+        center = (bins_out[:-1] + bins_out[1:]) / 2
+        ax.bar(center, hist, align="center", width=width_hist)
+        ax.set_xlabel("distance ratio in each triplet")
+        ax.set_ylabel("Number of triplets")
+        ax.set_title("Number of lines/triplets: " + str(nlines_master) + "/" + str(ntriplets_master))
         # set window geometry
         set_window_geometry(geometry)
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
@@ -422,24 +422,26 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
 
 
-def arccalibration(wv_master,
-                   xpos_arc,
-                   naxis1_arc,
-                   crpix1,
-                   wv_ini_search,
-                   wv_end_search,
-                   wvmin_useful,
-                   wvmax_useful,
-                   error_xpos_arc,
-                   times_sigma_r,
-                   frac_triplets_for_sum,
-                   times_sigma_theil_sen,
-                   poly_degree_wfit,
-                   times_sigma_polfilt,
-                   times_sigma_cook,
-                   times_sigma_inclusion,
-                   geometry=None,
-                   debugplot=0):
+def arccalibration(
+    wv_master,
+    xpos_arc,
+    naxis1_arc,
+    crpix1,
+    wv_ini_search,
+    wv_end_search,
+    wvmin_useful,
+    wvmax_useful,
+    error_xpos_arc,
+    times_sigma_r,
+    frac_triplets_for_sum,
+    times_sigma_theil_sen,
+    poly_degree_wfit,
+    times_sigma_polfilt,
+    times_sigma_cook,
+    times_sigma_inclusion,
+    geometry=None,
+    debugplot=0,
+):
     """Performs arc line identification for arc calibration.
 
     This function is a wrapper of two functions, which are responsible
@@ -453,11 +455,11 @@ def arccalibration(wv_master,
 
     Parameters
     ----------
-    wv_master : 1d numpy array, float
-        Array with wavelengths corresponding to the master table
+    wv_master : numpy.ndarray
+        1D array of floats with wavelengths corresponding to the master table
         (Angstroms).
-    xpos_arc : 1d numpy array, float
-        Location of arc lines (pixels).
+    xpos_arc : numpy.ndarray
+        1D array of floats with the location of arc lines (pixels).
     naxis1_arc : int
         NAXIS1 for arc spectrum.
     crpix1 : float
@@ -510,9 +512,9 @@ def arccalibration(wv_master,
 
     """
 
-    ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-        gen_triplets_master(wv_master=wv_master, geometry=geometry,
-                            debugplot=debugplot)
+    ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = gen_triplets_master(
+        wv_master=wv_master, geometry=geometry, debugplot=debugplot
+    )
 
     list_of_wvfeatures = arccalibration_direct(
         wv_master=wv_master,
@@ -535,32 +537,35 @@ def arccalibration(wv_master,
         times_sigma_cook=times_sigma_cook,
         times_sigma_inclusion=times_sigma_inclusion,
         geometry=geometry,
-        debugplot=debugplot)
+        debugplot=debugplot,
+    )
 
     return list_of_wvfeatures
 
 
-def arccalibration_direct(wv_master,
-                          ntriplets_master,
-                          ratios_master_sorted,
-                          triplets_master_sorted_list,
-                          xpos_arc,
-                          naxis1_arc,
-                          crpix1,
-                          wv_ini_search,
-                          wv_end_search,
-                          wvmin_useful=None,
-                          wvmax_useful=None,
-                          error_xpos_arc=1.0,
-                          times_sigma_r=3.0,
-                          frac_triplets_for_sum=0.50,
-                          times_sigma_theil_sen=10.0,
-                          poly_degree_wfit=3,
-                          times_sigma_polfilt=10.0,
-                          times_sigma_cook=10.0,
-                          times_sigma_inclusion=5.0,
-                          geometry=None,
-                          debugplot=0):
+def arccalibration_direct(
+    wv_master,
+    ntriplets_master,
+    ratios_master_sorted,
+    triplets_master_sorted_list,
+    xpos_arc,
+    naxis1_arc,
+    crpix1,
+    wv_ini_search,
+    wv_end_search,
+    wvmin_useful=None,
+    wvmax_useful=None,
+    error_xpos_arc=1.0,
+    times_sigma_r=3.0,
+    frac_triplets_for_sum=0.50,
+    times_sigma_theil_sen=10.0,
+    poly_degree_wfit=3,
+    times_sigma_polfilt=10.0,
+    times_sigma_cook=10.0,
+    times_sigma_inclusion=5.0,
+    geometry=None,
+    debugplot=0,
+):
     """Performs line identification for arc calibration using line triplets.
 
     This function assumes that a previous call to the function
@@ -570,20 +575,20 @@ def arccalibration_direct(wv_master,
 
     Parameters
     ----------
-    wv_master : 1d numpy array, float
-        Array with wavelengths corresponding to the master table
+    wv_master : numpy.ndarray
+        1D array of floats with wavelengths corresponding to the master table
         (Angstroms).
     ntriplets_master : int
         Number of triplets built from master table.
-    ratios_master_sorted : 1d numpy array, float
-        Array with values of the relative position of the central line
+    ratios_master_sorted : numpy.ndarray
+        1D array of floats with values of the relative position of the central line
         of each triplet, sorted in ascending order.
     triplets_master_sorted_list : list of tuples
         List with tuples of three numbers, corresponding to the three
         line indices in the master table. The list is sorted to be in
         correspondence with `ratios_master_sorted`.
-    xpos_arc : 1d numpy array, float
-        Location of arc lines (pixels).
+    xpos_arc : numpy.ndarray
+        1D array of floats with the location of arc lines (pixels).
     naxis1_arc : int
         NAXIS1 for arc spectrum.
     crpix1 : float
@@ -646,7 +651,7 @@ def arccalibration_direct(wv_master,
 
     nlines_arc = xpos_arc.size
     if nlines_arc < 5:
-        raise ValueError('Insufficient arc lines=' + str(nlines_arc))
+        raise ValueError("Insufficient arc lines=" + str(nlines_arc))
 
     # ---
     # Generate triplets with consecutive arc lines. For each triplet,
@@ -665,30 +670,30 @@ def arccalibration_direct(wv_master,
 
     ntriplets_arc = nlines_arc - 2
     if abs(debugplot) >= 10:
-        print('>>> Total number of arc lines............:', nlines_arc)
-        print('>>> Total number of arc triplets.........:', ntriplets_arc)
+        print(">>> Total number of arc lines............:", nlines_arc)
+        print(">>> Total number of arc triplets.........:", ntriplets_arc)
 
     # maximum allowed value for CDELT1
-    cdelt1_max = (wv_end_search-wv_ini_search)/float(naxis1_arc-1)
+    cdelt1_max = (wv_end_search - wv_ini_search) / float(naxis1_arc - 1)
 
     # Loop in all the arc line triplets. Note that only triplets built
     # from consecutive arc lines are considered.
     for i in range(ntriplets_arc):
-        i1, i2, i3 = i, i+1, i+2
+        i1, i2, i3 = i, i + 1, i + 2
 
         dist12 = xpos_arc[i2] - xpos_arc[i1]
         dist13 = xpos_arc[i3] - xpos_arc[i1]
         ratio_arc = dist12 / dist13
 
         pol_r = ratio_arc * (ratio_arc - 1) + 1
-        error_ratio_arc = np.sqrt(2) * error_xpos_arc/dist13 * np.sqrt(pol_r)
+        error_ratio_arc = np.sqrt(2) * error_xpos_arc / dist13 * np.sqrt(pol_r)
 
-        ratio_arc_min = max(0.0, ratio_arc-times_sigma_r*error_ratio_arc)
-        ratio_arc_max = min(1.0, ratio_arc+times_sigma_r*error_ratio_arc)
+        ratio_arc_min = max(0.0, ratio_arc - times_sigma_r * error_ratio_arc)
+        ratio_arc_max = min(1.0, ratio_arc + times_sigma_r * error_ratio_arc)
 
         # determine compatible triplets from the master list
-        j_loc_min = np.searchsorted(ratios_master_sorted, ratio_arc_min)-1
-        j_loc_max = np.searchsorted(ratios_master_sorted, ratio_arc_max)+1
+        j_loc_min = np.searchsorted(ratios_master_sorted, ratio_arc_min) - 1
+        j_loc_max = np.searchsorted(ratios_master_sorted, ratio_arc_max) + 1
 
         if j_loc_min < 0:
             j_loc_min = 0
@@ -696,47 +701,42 @@ def arccalibration_direct(wv_master,
             j_loc_max = ntriplets_master
 
         if abs(debugplot) >= 10:
-            print(i, ratio_arc_min, ratio_arc, ratio_arc_max,
-                  j_loc_min, j_loc_max)
+            print(i, ratio_arc_min, ratio_arc, ratio_arc_max, j_loc_min, j_loc_max)
 
         # each triplet from the master list provides a potential
         # solution for CRVAL1 and CDELT1
         for j_loc in range(j_loc_min, j_loc_max):
             j1, j2, j3 = triplets_master_sorted_list[j_loc]
             # initial solutions for CDELT1, CRVAL1 and CRMAX1
-            cdelt1_temp = (wv_master[j3]-wv_master[j1])/dist13
-            crval1_temp = wv_master[j2]-(xpos_arc[i2]-crpix1)*cdelt1_temp
-            crmin1_temp = crval1_temp + float(1-crpix1)*cdelt1_temp
+            cdelt1_temp = (wv_master[j3] - wv_master[j1]) / dist13
+            crval1_temp = wv_master[j2] - (xpos_arc[i2] - crpix1) * cdelt1_temp
+            crmin1_temp = crval1_temp + float(1 - crpix1) * cdelt1_temp
             # crmax1_temp = crval1_temp + float(naxis1_arc-crpix1)*cdelt1_temp
             # check that CRMIN1 and CRMAX1 are within the valid limits
-            if wv_ini_search <= crmin1_temp <= wv_end_search \
-                    and cdelt1_temp <= cdelt1_max:
+            if wv_ini_search <= crmin1_temp <= wv_end_search and cdelt1_temp <= cdelt1_max:
                 # Compute errors
-                error_crval1_temp = \
-                    cdelt1_temp*error_xpos_arc * \
-                    np.sqrt(1+2*((xpos_arc[i2]-crpix1)**2)/(dist13**2))
-                error_cdelt1_temp = \
-                    np.sqrt(2)*cdelt1_temp * error_xpos_arc/dist13
+                error_crval1_temp = (
+                    cdelt1_temp * error_xpos_arc * np.sqrt(1 + 2 * ((xpos_arc[i2] - crpix1) ** 2) / (dist13**2))
+                )
+                error_cdelt1_temp = np.sqrt(2) * cdelt1_temp * error_xpos_arc / dist13
                 # Store values and errors
                 crval1_search = np.append(crval1_search, [crval1_temp])
                 cdelt1_search = np.append(cdelt1_search, [cdelt1_temp])
-                error_crval1_search = np.append(error_crval1_search,
-                                                [error_crval1_temp])
-                error_cdelt1_search = np.append(error_cdelt1_search,
-                                                [error_cdelt1_temp])
+                error_crval1_search = np.append(error_crval1_search, [error_crval1_temp])
+                error_cdelt1_search = np.append(error_cdelt1_search, [error_cdelt1_temp])
                 # Store additional information about the triplets
                 itriplet_search = np.append(itriplet_search, [i])
                 clabel_search.append((j1, j2, j3))
 
     # normalize the values of CDELT1 and CRVAL1 to the interval [0,1]
     # in each case
-    cdelt1_search_norm = cdelt1_search/cdelt1_max
-    error_cdelt1_search_norm = error_cdelt1_search/cdelt1_max
+    cdelt1_search_norm = cdelt1_search / cdelt1_max
+    error_cdelt1_search_norm = error_cdelt1_search / cdelt1_max
     #
-    crval1_search_norm = (crval1_search-wv_ini_search)
-    crval1_search_norm /= (wv_end_search-wv_ini_search)
+    crval1_search_norm = crval1_search - wv_ini_search
+    crval1_search_norm /= wv_end_search - wv_ini_search
     error_crval1_search_norm = error_crval1_search
-    error_crval1_search_norm /= (wv_end_search-wv_ini_search)
+    error_crval1_search_norm /= wv_end_search - wv_ini_search
 
     # intermediate plots
     if abs(debugplot) in [21, 22]:
@@ -745,51 +745,51 @@ def arccalibration_direct(wv_master,
         # CDELT1 vs CRVAL1 diagram (original coordinates)
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('cdelt1 (Angstroms/pixel)')
-        ax.set_ylabel('crval1 (Angstroms)')
+        ax.set_xlabel("cdelt1 (Angstroms/pixel)")
+        ax.set_ylabel("crval1 (Angstroms)")
         ax.scatter(cdelt1_search, crval1_search, s=200, alpha=0.1)
         xmin = 0.0
         xmax = cdelt1_max
-        dx = xmax-xmin
-        xmin -= dx/20
-        xmax += dx/20
+        dx = xmax - xmin
+        xmin -= dx / 20
+        xmax += dx / 20
         ax.set_xlim(xmin, xmax)
         ymin = wv_ini_search
         ymax = wv_end_search
-        dy = ymax-ymin
-        ymin -= dy/20
-        ymax += dy/20
+        dy = ymax - ymin
+        ymin -= dy / 20
+        ymax += dy / 20
         ax.set_ylim(ymin, ymax)
-        xp_limits = np.array([0., cdelt1_max])
-        yp_limits = wv_end_search-float(naxis1_arc-1)*xp_limits
+        xp_limits = np.array([0.0, cdelt1_max])
+        yp_limits = wv_end_search - float(naxis1_arc - 1) * xp_limits
         xp_limits = np.concatenate((xp_limits, [xp_limits[0], xp_limits[0]]))
         yp_limits = np.concatenate((yp_limits, [yp_limits[1], yp_limits[0]]))
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="magenta")
         ax.set_title("Potential solutions within the valid parameter space")
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search))
+        print("Number of points in last plot:", len(cdelt1_search))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
+        ax.set_xlabel("normalized cdelt1")
+        ax.set_ylabel("normalized crval1")
         ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1)
         xmin = -0.05
         xmax = 1.05
         ymin = -0.05
         ymax = 1.05
-        xp_limits = np.array([0., 1., 0., 0.])
-        yp_limits = np.array([1., 0., 0., 1.])
+        xp_limits = np.array([0.0, 1.0, 0.0, 0.0])
+        yp_limits = np.array([1.0, 0.0, 0.0, 1.0])
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="magenta")
         ax.set_title("Potential solutions within the valid parameter space")
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search_norm))
+        print("Number of points in last plot:", len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
@@ -797,40 +797,36 @@ def arccalibration_direct(wv_master,
         # the arc triplet number
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=itriplet_search)
+        ax.set_xlabel("normalized cdelt1")
+        ax.set_ylabel("normalized crval1")
+        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1, c=itriplet_search)
         for i in range(len(itriplet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i],
-                    str(int(itriplet_search[i])), fontsize=6)
+            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], str(int(itriplet_search[i])), fontsize=6)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="magenta")
         ax.set_title("Potential solutions: arc line triplet number")
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search_norm))
+        print("Number of points in last plot:", len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
         # including triplet numbers
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1,
-                   c=itriplet_search)
+        ax.set_xlabel("normalized cdelt1")
+        ax.set_ylabel("normalized crval1")
+        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=200, alpha=0.1, c=itriplet_search)
         for i in range(len(clabel_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i],
-                    clabel_search[i], fontsize=6)
+            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], clabel_search[i], fontsize=6)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="magenta")
         ax.set_title("Potential solutions: master line triplets")
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search_norm))
+        print("Number of points in last plot:", len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
@@ -838,19 +834,22 @@ def arccalibration_direct(wv_master,
         # correlated)
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.errorbar(cdelt1_search_norm, crval1_search_norm,
-                    xerr=error_cdelt1_search_norm,
-                    yerr=error_crval1_search_norm,
-                    fmt='none')
+        ax.set_xlabel("normalized cdelt1")
+        ax.set_ylabel("normalized crval1")
+        ax.errorbar(
+            cdelt1_search_norm,
+            crval1_search_norm,
+            xerr=error_cdelt1_search_norm,
+            yerr=error_crval1_search_norm,
+            fmt="none",
+        )
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='magenta')
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="magenta")
         ax.set_title("Potential solutions within the valid parameter space")
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search_norm))
+        print("Number of points in last plot:", len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
     # ---
@@ -866,7 +865,7 @@ def arccalibration_direct(wv_master,
     itriplet_layered_list = []
     clabel_layered_list = []
     for i in range(ntriplets_arc):
-        ldum = (itriplet_search == i)
+        ldum = itriplet_search == i
         ntriplets_layered_list.append(ldum.sum())
         #
         cdelt1_dum = cdelt1_search_norm[ldum]
@@ -886,11 +885,13 @@ def arccalibration_direct(wv_master,
         clabel_layered_list.append(clabel_dum)
 
     if abs(debugplot) >= 10:
-        print('>>> Total number of potential solutions: ' +
-              str(sum(ntriplets_layered_list)) + " (double check ==) " +
-              str(len(itriplet_search)))
-        print('>>> List with no. of solutions/triplet.:\n' +
-              str(ntriplets_layered_list))
+        print(
+            ">>> Total number of potential solutions: "
+            + str(sum(ntriplets_layered_list))
+            + " (double check ==) "
+            + str(len(itriplet_search))
+        )
+        print(">>> List with no. of solutions/triplet.:\n" + str(ntriplets_layered_list))
         pause_debugplot(debugplot)
 
     # ---
@@ -901,9 +902,7 @@ def arccalibration_direct(wv_master,
     # layers. Compute the distance (in normalized coordinates) to those
     # closest solutions, and obtain the sum of distances considering
     # only a fraction of them (after sorting them in ascending order).
-    ntriplets_for_sum = max(
-        1, int(round(frac_triplets_for_sum*float(ntriplets_arc)))
-    )
+    ntriplets_for_sum = max(1, int(round(frac_triplets_for_sum * float(ntriplets_arc))))
     funcost_search = np.zeros(len(itriplet_search))
     for k in range(len(itriplet_search)):
         itriplet_local = itriplet_search[k]
@@ -915,7 +914,7 @@ def arccalibration_direct(wv_master,
                 if ntriplets_layered_list[i] > 0:
                     x1 = cdelt1_layered_list[i]
                     y1 = crval1_layered_list[i]
-                    dist2 = (x0-x1)**2 + (y0-y1)**2
+                    dist2 = (x0 - x1) ** 2 + (y0 - y1) ** 2
                     dist_to_layers = np.append(dist_to_layers, [min(dist2)])
                 else:
                     dist_to_layers = np.append(dist_to_layers, [np.inf])
@@ -925,25 +924,29 @@ def arccalibration_direct(wv_master,
     # normalize the cost function
     funcost_min = min(funcost_search)
     if abs(debugplot) >= 10:
-        print('funcost_min:', funcost_min)
+        print("funcost_min:", funcost_min)
     funcost_search /= funcost_min
 
     # segregate the cost function by arc triplet.
     funcost_layered_list = []
     for i in range(ntriplets_arc):
-        ldum = (itriplet_search == i)
+        ldum = itriplet_search == i
         funcost_dum = funcost_search[ldum]
         funcost_layered_list.append(funcost_dum)
     if abs(debugplot) >= 10:
         for i in range(ntriplets_arc):
             if ntriplets_layered_list[i] > 0:
                 jdum = funcost_layered_list[i].argmin()
-                print('>>>', i, funcost_layered_list[i][jdum],
-                      clabel_layered_list[i][jdum],
-                      cdelt1_layered_list[i][jdum],
-                      crval1_layered_list[i][jdum])
+                print(
+                    ">>>",
+                    i,
+                    funcost_layered_list[i][jdum],
+                    clabel_layered_list[i][jdum],
+                    cdelt1_layered_list[i][jdum],
+                    crval1_layered_list[i][jdum],
+                )
             else:
-                print('>>>', i, None, "(None, None, None)", None, None)
+                print(">>>", i, None, "(None, None, None)", None, None)
         pause_debugplot(debugplot)
 
     # intermediate plots
@@ -954,24 +957,24 @@ def arccalibration_direct(wv_master,
         # size proportional to the inverse of the cost function
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm,
-                   s=2000/funcost_search, c=itriplet_search, alpha=0.2)
+        ax.set_xlabel("normalized cdelt1")
+        ax.set_ylabel("normalized crval1")
+        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=2000 / funcost_search, c=itriplet_search, alpha=0.2)
         xmin = -0.05
         xmax = 1.05
         ymin = -0.05
         ymax = 1.05
-        xp_limits = np.array([0., 1., 0., 0.])
-        yp_limits = np.array([1., 0., 0., 1.])
+        xp_limits = np.array([0.0, 1.0, 0.0, 0.0])
+        yp_limits = np.array([1.0, 0.0, 0.0, 1.0])
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        ax.set_title("Potential solutions within the valid parameter space\n" +
-                     "[symbol size proportional to 1/(cost function)]")
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="red")
+        ax.set_title(
+            "Potential solutions within the valid parameter space\n" + "[symbol size proportional to 1/(cost function)]"
+        )
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search_norm))
+        print("Number of points in last plot:", len(cdelt1_search_norm))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
@@ -979,21 +982,20 @@ def arccalibration_direct(wv_master,
         # function and over-plotting triplet number
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel('normalized cdelt1')
-        ax.set_ylabel('normalized crval1')
-        ax.scatter(cdelt1_search_norm, crval1_search_norm,
-                   s=2000/funcost_search, c=itriplet_search, alpha=0.2)
+        ax.set_xlabel("normalized cdelt1")
+        ax.set_ylabel("normalized crval1")
+        ax.scatter(cdelt1_search_norm, crval1_search_norm, s=2000 / funcost_search, c=itriplet_search, alpha=0.2)
         for i in range(len(itriplet_search)):
-            ax.text(cdelt1_search_norm[i], crval1_search_norm[i],
-                    str(int(itriplet_search[i])), fontsize=6)
+            ax.text(cdelt1_search_norm[i], crval1_search_norm[i], str(int(itriplet_search[i])), fontsize=6)
         ax.set_xlim(xmin, xmax)
         ax.set_ylim(ymin, ymax)
-        ax.plot(xp_limits, yp_limits, linestyle='-', color='red')
-        ax.set_title("Potential solutions: arc line triplet number\n" +
-                     "[symbol size proportional to 1/(cost function)]")
+        ax.plot(xp_limits, yp_limits, linestyle="-", color="red")
+        ax.set_title(
+            "Potential solutions: arc line triplet number\n" + "[symbol size proportional to 1/(cost function)]"
+        )
         # set window geometry
         set_window_geometry(geometry)
-        print('Number of points in last plot:', len(cdelt1_search))
+        print("Number of points in last plot:", len(cdelt1_search))
         pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates)
@@ -1059,10 +1061,10 @@ def arccalibration_direct(wv_master,
             diagonal_funcost = [[funcost_dum], [funcost_dum], [funcost_dum]]
         else:
             diagonal_ids[i].append(k1)
-            diagonal_ids[i+1].append(k2)
+            diagonal_ids[i + 1].append(k2)
             diagonal_ids.append([k3])
             diagonal_funcost[i].append(funcost_dum)
-            diagonal_funcost[i+1].append(funcost_dum)
+            diagonal_funcost[i + 1].append(funcost_dum)
             diagonal_funcost.append([funcost_dum])
 
     if abs(debugplot) >= 10:
@@ -1082,15 +1084,17 @@ def arccalibration_direct(wv_master,
     # initialize list_of_wvfeatures
     list_of_wvfeatures = []
     for i in range(nlines_arc):
-        tmp_feature = WavecalFeature(line_ok=False,
-                                     category='X',
-                                     lineid=-1,
-                                     funcost=np.inf,
-                                     xpos=xpos_arc[i],
-                                     ypos=0.0,
-                                     peak=0.0,
-                                     fwhm=0.0,
-                                     reference=0.0)
+        tmp_feature = WavecalFeature(
+            line_ok=False,
+            category="X",
+            lineid=-1,
+            funcost=np.inf,
+            xpos=xpos_arc[i],
+            ypos=0.0,
+            peak=0.0,
+            fwhm=0.0,
+            reference=0.0,
+        )
         list_of_wvfeatures.append(tmp_feature)
 
     # set clipping window (in Angstrom)
@@ -1101,7 +1105,7 @@ def arccalibration_direct(wv_master,
     else:
         wvmin_clip = wvmin_useful
     if wvmax_useful is None:
-        wvmax_clip = 1.0E10
+        wvmax_clip = 1.0e10
     else:
         wvmax_clip = wvmax_useful
 
@@ -1111,13 +1115,13 @@ def arccalibration_direct(wv_master,
         if j1 == j2 == j3 and j1 is not None:
             if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                 list_of_wvfeatures[i].line_ok = True
-                list_of_wvfeatures[i].category = 'A'
+                list_of_wvfeatures[i].category = "A"
                 list_of_wvfeatures[i].lineid = j1
                 list_of_wvfeatures[i].funcost = min(diagonal_funcost[i])
                 list_of_wvfeatures[i].reference = wv_master[j1]
 
     if abs(debugplot) >= 10:
-        print('\n* Including category A lines:')
+        print("\n* Including category A lines:")
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
@@ -1131,7 +1135,7 @@ def arccalibration_direct(wv_master,
                 if max(f1, f2) < f3:
                     if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                         list_of_wvfeatures[i].line_ok = True
-                        list_of_wvfeatures[i].category = 'B'
+                        list_of_wvfeatures[i].category = "B"
                         list_of_wvfeatures[i].lineid = j1
                         list_of_wvfeatures[i].funcost = min(f1, f2)
                         list_of_wvfeatures[i].reference = wv_master[j1]
@@ -1139,7 +1143,7 @@ def arccalibration_direct(wv_master,
                 if max(f1, f3) < f2:
                     if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                         list_of_wvfeatures[i].line_ok = True
-                        list_of_wvfeatures[i].category = 'B'
+                        list_of_wvfeatures[i].category = "B"
                         list_of_wvfeatures[i].lineid = j1
                         list_of_wvfeatures[i].funcost = min(f1, f3)
                         list_of_wvfeatures[i].reference = wv_master[j1]
@@ -1147,13 +1151,13 @@ def arccalibration_direct(wv_master,
                 if max(f2, f3) < f1:
                     if wvmin_clip <= wv_master[j2] <= wvmax_clip:
                         list_of_wvfeatures[i].line_ok = True
-                        list_of_wvfeatures[i].category = 'B'
+                        list_of_wvfeatures[i].category = "B"
                         list_of_wvfeatures[i].lineid = j2
                         list_of_wvfeatures[i].funcost = min(f2, f3)
                         list_of_wvfeatures[i].reference = wv_master[j2]
 
     if abs(debugplot) >= 10:
-        print('\n* Including category B lines:')
+        print("\n* Including category B lines:")
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
@@ -1163,25 +1167,25 @@ def arccalibration_direct(wv_master,
         if not list_of_wvfeatures[i].line_ok:
             j1, j2, j3 = diagonal_ids[i]
             f1, f2, f3 = diagonal_funcost[i]
-            if list_of_wvfeatures[i-1].category == 'B':
+            if list_of_wvfeatures[i - 1].category == "B":
                 if min(f2, f3) > f1:
                     if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                         list_of_wvfeatures[i].line_ok = True
-                        list_of_wvfeatures[i].category = 'C'
+                        list_of_wvfeatures[i].category = "C"
                         list_of_wvfeatures[i].lineid = j1
                         list_of_wvfeatures[i].funcost = f1
                         list_of_wvfeatures[i].reference = wv_master[j1]
-            elif list_of_wvfeatures[i+1].category == 'B':
+            elif list_of_wvfeatures[i + 1].category == "B":
                 if min(f1, f2) > f3:
                     if wvmin_clip <= wv_master[j3] <= wvmax_clip:
                         list_of_wvfeatures[i].line_ok = True
-                        list_of_wvfeatures[i].category = 'C'
+                        list_of_wvfeatures[i].category = "C"
                         list_of_wvfeatures[i].lineid = j3
                         list_of_wvfeatures[i].funcost = f3
                         list_of_wvfeatures[i].reference = wv_master[j3]
 
     if abs(debugplot) >= 10:
-        print('\n* Including category C lines:')
+        print("\n* Including category C lines:")
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
@@ -1193,47 +1197,53 @@ def arccalibration_direct(wv_master,
             if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                 f1, f2 = diagonal_funcost[i]
                 list_of_wvfeatures[i].line_ok = True
-                list_of_wvfeatures[i].category = 'D'
+                list_of_wvfeatures[i].category = "D"
                 list_of_wvfeatures[i].lineid = j1
                 list_of_wvfeatures[i].funcost = min(f1, f2)
                 list_of_wvfeatures[i].reference = wv_master[j1]
 
     if abs(debugplot) >= 10:
-        print('\n* Including category D lines:')
+        print("\n* Including category D lines:")
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
 
     # Category E lines
     i = 0
-    if list_of_wvfeatures[i+1].line_ok and list_of_wvfeatures[i+2].line_ok:
+    if list_of_wvfeatures[i + 1].line_ok and list_of_wvfeatures[i + 2].line_ok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
             if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                 list_of_wvfeatures[i].line_ok = True
-                list_of_wvfeatures[i].category = 'E'
+                list_of_wvfeatures[i].category = "E"
                 list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
                 list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
                 list_of_wvfeatures[i].reference = wv_master[j1]
-    i = nlines_arc-1
-    if list_of_wvfeatures[i-2].line_ok and list_of_wvfeatures[i-1].line_ok:
+    i = nlines_arc - 1
+    if list_of_wvfeatures[i - 2].line_ok and list_of_wvfeatures[i - 1].line_ok:
         j1 = diagonal_ids[i][0]
         if j1 is not None:
             if wvmin_clip <= wv_master[j1] <= wvmax_clip:
                 list_of_wvfeatures[i].line_ok = True
-                list_of_wvfeatures[i].category = 'E'
+                list_of_wvfeatures[i].category = "E"
                 list_of_wvfeatures[i].lineid = diagonal_ids[i][0]
                 list_of_wvfeatures[i].funcost = diagonal_funcost[i][0]
                 list_of_wvfeatures[i].reference = wv_master[j1]
 
     if abs(debugplot) >= 10:
-        print('\n* Including category E lines:')
+        print("\n* Including category E lines:")
         for i in range(nlines_arc):
             print(i, list_of_wvfeatures[i])
         pause_debugplot(debugplot)
-        fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                               poly_degree_wfit, weighted=False,
-                               geometry=geometry, debugplot=debugplot)
+        fit_list_of_wvfeatures(
+            list_of_wvfeatures,
+            naxis1_arc,
+            crpix1,
+            poly_degree_wfit,
+            weighted=False,
+            geometry=geometry,
+            debugplot=debugplot,
+        )
 
     # ---
     # Check that the solutions do not contain duplicated values. If
@@ -1250,7 +1260,7 @@ def arccalibration_direct(wv_master,
         for i1 in range(nlines_arc):
             if list_of_wvfeatures[i1].line_ok:
                 j1 = list_of_wvfeatures[i1].lineid
-                for i2 in range(i1+1, nlines_arc):
+                for i2 in range(i1 + 1, nlines_arc):
                     if list_of_wvfeatures[i2].line_ok:
                         j2 = list_of_wvfeatures[i2].lineid
                         if j1 == j2:
@@ -1260,31 +1270,37 @@ def arccalibration_direct(wv_master,
                             f2 = list_of_wvfeatures[i2].funcost
                             if f1 < f2:
                                 list_of_wvfeatures[i2].line_ok = False
-                                list_of_wvfeatures[i2].category = 'R'
+                                list_of_wvfeatures[i2].category = "R"
                                 # do not uncomment the next line:
                                 # list_of_wvfeatures[i2].reference = None
                             else:
                                 list_of_wvfeatures[i1].line_ok = False
-                                list_of_wvfeatures[i1].category = 'R'
+                                list_of_wvfeatures[i1].category = "R"
                                 # do not uncomment the next line:
                                 # list_of_wvfeatures[i1].reference = None
 
     if abs(debugplot) >= 10:
         if nduplicated > 0:
-            print('\n* Removing category R lines:')
+            print("\n* Removing category R lines:")
             for i in range(nlines_arc):
                 print(i, list_of_wvfeatures[i])
-            fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                   poly_degree_wfit, weighted=False,
-                                   geometry=geometry, debugplot=debugplot)
+            fit_list_of_wvfeatures(
+                list_of_wvfeatures,
+                naxis1_arc,
+                crpix1,
+                poly_degree_wfit,
+                weighted=False,
+                geometry=geometry,
+                debugplot=debugplot,
+            )
         else:
-            print('\n* No duplicated category R lines have been found')
+            print("\n* No duplicated category R lines have been found")
 
     # ---
     # Filter out points with a large deviation from a robust linear
     # fit. The filtered lines are labelled as category='T'.
     if abs(debugplot) >= 10:
-        print('\n>>> Theil-Sen filtering...')
+        print("\n>>> Theil-Sen filtering...")
     nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
     if nfit < 5:
         nremoved = 0
@@ -1296,45 +1312,50 @@ def arccalibration_direct(wv_master,
         if abs(debugplot) >= 10:
             cdelt1_approx = slope
             crval1_approx = intercept + slope * crpix1
-            print('>>> Theil-Sen CRVAL1: ', crval1_approx)
-            print('>>> Theil-Sen CDELT1: ', cdelt1_approx)
-        rfit = yfit - (intercept + slope*xfit)
+            print(">>> Theil-Sen CRVAL1: ", crval1_approx)
+            print(">>> Theil-Sen CDELT1: ", cdelt1_approx)
+        rfit = yfit - (intercept + slope * xfit)
         if abs(debugplot) >= 10:
-            print('rfit:\n', rfit)
+            print("rfit:\n", rfit)
         sigma_rfit = robust_std(rfit)
         if abs(debugplot) >= 10:
-            print('robust std:', sigma_rfit)
-            print('normal std:', np.std(rfit))
+            print("robust std:", sigma_rfit)
+            print("normal std:", np.std(rfit))
         nremoved = 0
         for i in range(nfit):
             if abs(rfit[i]) > times_sigma_theil_sen * sigma_rfit:
                 list_of_wvfeatures[ifit[i]].line_ok = False
-                list_of_wvfeatures[ifit[i]].category = 'T'
+                list_of_wvfeatures[ifit[i]].category = "T"
                 # do not uncomment the next line:
                 # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
 
     if abs(debugplot) >= 10:
         if nremoved > 0:
-            print('\n* Removing category T lines:')
+            print("\n* Removing category T lines:")
             for i in range(nlines_arc):
                 print(i, list_of_wvfeatures[i])
-            fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                   poly_degree_wfit, weighted=False,
-                                   geometry=geometry, debugplot=debugplot)
+            fit_list_of_wvfeatures(
+                list_of_wvfeatures,
+                naxis1_arc,
+                crpix1,
+                poly_degree_wfit,
+                weighted=False,
+                geometry=geometry,
+                debugplot=debugplot,
+            )
         else:
-            print('\nNo category T lines have been found and removed')
+            print("\nNo category T lines have been found and removed")
 
     # ---
     # Filter out points that deviates from a polynomial fit. The
     # filtered lines are labelled as category='P'.
     if times_sigma_polfilt > 0:
         if abs(debugplot) >= 10:
-            print('\n>>> Polynomial filtering...')
+            print("\n>>> Polynomial filtering...")
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
-            raise ValueError(
-                f"Insufficient number of points for fit, nfit={nfit}")
+            raise ValueError(f"Insufficient number of points for fit, nfit={nfit}")
         # Note: do not use weighted fit because the weights can be very
         # different and the fit is, in practice, forced to pass through
         # some points while ignoring other points. Sometimes this leads to
@@ -1343,40 +1364,46 @@ def arccalibration_direct(wv_master,
         poly = Polynomial.cast(poly)
         rfit = yfit - poly(xfit)
         if abs(debugplot) >= 10:
-            print('rfit:', rfit)
+            print("rfit:", rfit)
         sigma_rfit = robust_std(rfit)
         if abs(debugplot) >= 10:
-            print('robust std:', sigma_rfit)
-            print('normal std:', np.std(rfit))
+            print("robust std:", sigma_rfit)
+            print("normal std:", np.std(rfit))
         nremoved = 0
         for i in range(nfit):
             if abs(rfit[i]) > times_sigma_polfilt * sigma_rfit:
                 list_of_wvfeatures[ifit[i]].line_ok = False
-                list_of_wvfeatures[ifit[i]].category = 'P'
+                list_of_wvfeatures[ifit[i]].category = "P"
                 # do not uncomment the next line:
                 # list_of_wvfeatures[ifit[i]].reference = None
                 nremoved += 1
 
         if abs(debugplot) >= 10:
             if nremoved > 0:
-                print('\n* Removing category P lines:')
+                print("\n* Removing category P lines:")
                 for i in range(nlines_arc):
                     print(i, list_of_wvfeatures[i])
-                fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                       poly_degree_wfit, weighted=False,
-                                       geometry=geometry, debugplot=debugplot)
+                fit_list_of_wvfeatures(
+                    list_of_wvfeatures,
+                    naxis1_arc,
+                    crpix1,
+                    poly_degree_wfit,
+                    weighted=False,
+                    geometry=geometry,
+                    debugplot=debugplot,
+                )
             else:
-                print('\nNo category P lines have been found and removed')
+                print("\nNo category P lines have been found and removed")
     else:
         if abs(debugplot) >= 10:
-            print('\n=> Skipping polynomial filtering!')
+            print("\n=> Skipping polynomial filtering!")
 
     # ---
     # Remove outliers using the Cook distance. The filtered lines are
     # labelled as category='K'.
     if times_sigma_cook > 0:
         if abs(debugplot) >= 10:
-            print('\n>>> Removing outliers using Cook distance...')
+            print("\n>>> Removing outliers using Cook distance...")
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         # There must be enough points to compute reasonable Cook distances
         if nfit <= poly_degree_wfit + 3:
@@ -1386,32 +1413,41 @@ def arccalibration_direct(wv_master,
                 print("=> Skipping outliers detection using Cook distance!")
         else:
             poly, yres, reject = polfit_residuals_with_cook_rejection(
-                x=xfit, y=yfit, deg=poly_degree_wfit,
+                x=xfit,
+                y=yfit,
+                deg=poly_degree_wfit,
                 times_sigma_cook=times_sigma_cook,
                 geometry=geometry,
-                debugplot=debugplot)
+                debugplot=debugplot,
+            )
             nremoved = 0
             for i in range(nfit):
                 if abs(reject[i]):
                     list_of_wvfeatures[ifit[i]].line_ok = False
-                    list_of_wvfeatures[ifit[i]].category = 'K'
+                    list_of_wvfeatures[ifit[i]].category = "K"
                     # do not uncomment the next line:
                     # list_of_wvfeatures[ifit[i]].reference = None
                     nremoved += 1
 
         if abs(debugplot) >= 10:
             if nremoved > 0:
-                print('\n* Removing category K lines:')
+                print("\n* Removing category K lines:")
                 for i in range(nlines_arc):
                     print(i, list_of_wvfeatures[i])
-                fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                       poly_degree_wfit, weighted=False,
-                                       geometry=geometry, debugplot=debugplot)
+                fit_list_of_wvfeatures(
+                    list_of_wvfeatures,
+                    naxis1_arc,
+                    crpix1,
+                    poly_degree_wfit,
+                    weighted=False,
+                    geometry=geometry,
+                    debugplot=debugplot,
+                )
             else:
-                print('\nNo category K lines have been found and removed')
+                print("\nNo category K lines have been found and removed")
     else:
         if abs(debugplot) >= 10:
-            print('\n=> Skipping outlier detection using Cook distance!')
+            print("\n=> Skipping outlier detection using Cook distance!")
 
     # ---
     # If all the arc lines have been identified, compute the final
@@ -1428,7 +1464,7 @@ def arccalibration_direct(wv_master,
     new_lines_included = False
     while loop_include_new_lines:
         if abs(debugplot) >= 10:
-            print('\n>>> Polynomial prediction of unknown lines...')
+            print("\n>>> Polynomial prediction of unknown lines...")
         nfit, ifit, xfit, yfit, wfit = select_data_for_fit(list_of_wvfeatures)
         if nfit <= poly_degree_wfit:
             raise ValueError("Insufficient number of points for fit.")
@@ -1436,23 +1472,22 @@ def arccalibration_direct(wv_master,
         poly = Polynomial.cast(poly)
         rfit = yfit - poly(xfit)
         if abs(debugplot) >= 10:
-            print('rfit:\n', rfit)
+            print("rfit:\n", rfit)
         sigma_rfit = robust_std(rfit)
         if abs(debugplot) >= 10:
-            print('robust std:', sigma_rfit)
-            print('normal std:', np.std(rfit))
+            print("robust std:", sigma_rfit)
+            print("normal std:", np.std(rfit))
 
         intercept, slope = fit_theil_sen(xfit, yfit)
         if abs(debugplot) >= 10:
-            print('crval1, cdelt1 (linear fit):', intercept, slope)
+            print("crval1, cdelt1 (linear fit):", intercept, slope)
 
         list_id_already_found = []
         list_funcost_already_found = []
         for i in range(nlines_arc):
             if list_of_wvfeatures[i].line_ok:
                 list_id_already_found.append(list_of_wvfeatures[i].lineid)
-                list_funcost_already_found.append(
-                    list_of_wvfeatures[i].funcost)
+                list_funcost_already_found.append(list_of_wvfeatures[i].funcost)
 
         nnewlines = 0
         for i in range(nlines_arc):
@@ -1461,13 +1496,13 @@ def arccalibration_direct(wv_master,
                 isort = np.searchsorted(wv_master, zfit)
                 if isort == 0:
                     ifound = 0
-                    dlambda = wv_master[ifound]-zfit
+                    dlambda = wv_master[ifound] - zfit
                 elif isort == nlines_master:
                     ifound = isort - 1
                     dlambda = zfit - wv_master[ifound]
                 else:
-                    dlambda1 = zfit-wv_master[isort-1]
-                    dlambda2 = wv_master[isort]-zfit
+                    dlambda1 = zfit - wv_master[isort - 1]
+                    dlambda2 = wv_master[isort] - zfit
                     if dlambda1 < dlambda2:
                         ifound = isort - 1
                         dlambda = dlambda1
@@ -1478,34 +1513,37 @@ def arccalibration_direct(wv_master,
                     print(i, ifound, wv_master[ifound], zfit, dlambda)
                 if ifound not in list_id_already_found:  # unused line
                     condition1 = dlambda < times_sigma_inclusion * sigma_rfit
-                    condition2 = dlambda/slope < error_xpos_arc
+                    condition2 = dlambda / slope < error_xpos_arc
                     if condition1 or condition2:
                         list_id_already_found.append(ifound)
                         list_of_wvfeatures[i].line_ok = True
-                        list_of_wvfeatures[i].category = 'I'
+                        list_of_wvfeatures[i].category = "I"
                         list_of_wvfeatures[i].lineid = ifound
                         # assign the worse cost function value
-                        list_of_wvfeatures[i].funcost = max(
-                            list_funcost_already_found
-                        )
+                        list_of_wvfeatures[i].funcost = max(list_funcost_already_found)
                         list_of_wvfeatures[i].reference = wv_master[ifound]
                         nnewlines += 1
 
         if abs(debugplot) >= 10:
             if nnewlines > 0:
                 new_lines_included = True
-                print('\n* Including category I lines:')
+                print("\n* Including category I lines:")
                 for i in range(nlines_arc):
                     print(i, list_of_wvfeatures[i])
-                fit_list_of_wvfeatures(list_of_wvfeatures, naxis1_arc, crpix1,
-                                       poly_degree_wfit, weighted=False,
-                                       geometry=geometry, debugplot=debugplot)
+                fit_list_of_wvfeatures(
+                    list_of_wvfeatures,
+                    naxis1_arc,
+                    crpix1,
+                    poly_degree_wfit,
+                    weighted=False,
+                    geometry=geometry,
+                    debugplot=debugplot,
+                )
             else:
                 if new_lines_included:
-                    print("\nNo additional category I lines have been found " +
-                          "and added")
+                    print("\nNo additional category I lines have been found " + "and added")
                 else:
-                    print('\nNo category I lines have been found and added')
+                    print("\nNo category I lines have been found and added")
 
         if nnewlines == 0:
             loop_include_new_lines = False
@@ -1521,9 +1559,9 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
 
     Parameters
     ----------
-    wv_master : numpy array
+    wv_master : numpy.ndarray
         Array containing the master wavelengths.
-    wv_expected_all_peaks : numpy array
+    wv_expected_all_peaks : numpy.ndarray
         Array containing the expected wavelengths (computed, for
         example, from an approximate polynomial calibration applied to
         the location of the line peaks).
@@ -1533,7 +1571,7 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
 
     Returns
     -------
-    wv_verified_all_peaks : numpy array
+    wv_verified_all_peaks : numpy.ndarray
         Verified wavelengths from master list.
 
     """
@@ -1566,25 +1604,25 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
                         wv_verified_all_peaks[j] = wv_master[i]
                         minimum_delta_wv[j] = delta_wv
         elif j == len(wv_expected_all_peaks):
-            delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+            delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j - 1])
             if delta_wv < delta_wv_max:
-                if wv_unused[j-1]:
-                    wv_verified_all_peaks[j-1] = wv_master[i]
-                    wv_unused[j-1] = False
+                if wv_unused[j - 1]:
+                    wv_verified_all_peaks[j - 1] = wv_master[i]
+                    wv_unused[j - 1] = False
                 else:
-                    if delta_wv < minimum_delta_wv[j-1]:
-                        wv_verified_all_peaks[j-1] = wv_master[i]
+                    if delta_wv < minimum_delta_wv[j - 1]:
+                        wv_verified_all_peaks[j - 1] = wv_master[i]
         else:
-            delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+            delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j - 1])
             delta_wv2 = abs(wv_master[i] - wv_expected_all_peaks[j])
             if delta_wv1 < delta_wv2:
                 if delta_wv1 < delta_wv_max:
-                    if wv_unused[j-1]:
-                        wv_verified_all_peaks[j-1] = wv_master[i]
-                        wv_unused[j-1] = False
+                    if wv_unused[j - 1]:
+                        wv_verified_all_peaks[j - 1] = wv_master[i]
+                        wv_unused[j - 1] = False
                     else:
-                        if delta_wv1 < minimum_delta_wv[j-1]:
-                            wv_verified_all_peaks[j-1] = wv_master[i]
+                        if delta_wv1 < minimum_delta_wv[j - 1]:
+                            wv_verified_all_peaks[j - 1] = wv_master[i]
             else:
                 if delta_wv2 < delta_wv_max:
                     if wv_unused[j]:
@@ -1597,31 +1635,36 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     return wv_verified_all_peaks
 
 
-def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
-                          nrepeat=3,
-                          ntimes_match_wv=2,
-                          nwinwidth_initial=7,
-                          nwinwidth_refined=5,
-                          times_sigma_reject=5,
-                          interactive=False,
-                          threshold=0,
-                          plottitle=None,
-                          decimal_places=4,
-                          ylogscale=False,
-                          geometry=None,
-                          pdf=None,
-                          debugplot=0):
+def refine_arccalibration(
+    sp,
+    poly_initial,
+    wv_master,
+    poldeg,
+    nrepeat=3,
+    ntimes_match_wv=2,
+    nwinwidth_initial=7,
+    nwinwidth_refined=5,
+    times_sigma_reject=5,
+    interactive=False,
+    threshold=0,
+    plottitle=None,
+    decimal_places=4,
+    ylogscale=False,
+    geometry=None,
+    pdf=None,
+    debugplot=0,
+):
     """Refine wavelength calibration using an initial polynomial.
 
     Parameters
     ----------
-    sp : numpy array
+    sp : numpy.ndarray
         1D array of length NAXIS1 containing the input spectrum.
     poly_initial : Polynomial instance
         Initial wavelength calibration polynomial, providing the
         wavelength as a function of pixel number (running from 1 to
         NAXIS1).
-    wv_master : numpy array
+    wv_master : numpy.ndarray
         Array containing the master list of arc line wavelengths.
     poldeg : int
         Polynomial degree of refined wavelength calibration. Note
@@ -1678,8 +1721,9 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     # check that the requested polynomial degree is equal or larger than
     # the degree of the initial polynomial
     if poldeg < len(poly_initial.coef) - 1:
-        raise ValueError("Polynomial degree of refined polynomial must be "
-                         "equal or larger than that of the initial polynomial")
+        raise ValueError(
+            "Polynomial degree of refined polynomial must be " "equal or larger than that of the initial polynomial"
+        )
 
     # check that interactive use takes place when plotting
     if interactive:
@@ -1717,19 +1761,13 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
 
     # find initial line peaks
-    ixpeaks = find_peaks_spectrum(sp,
-                                  nwinwidth=nwinwidth_initial,
-                                  threshold=threshold)
+    ixpeaks = find_peaks_spectrum(sp, nwinwidth=nwinwidth_initial, threshold=threshold)
     npeaks = len(ixpeaks)
 
     if npeaks > 0:
 
         # refine line peak locations
-        fxpeaks, sxpeaks = refine_peaks_spectrum(
-            sp, ixpeaks,
-            nwinwidth=nwinwidth_refined,
-            method="gaussian"
-        )
+        fxpeaks, sxpeaks = refine_peaks_spectrum(sp, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian")
 
         # expected wavelength of all identified peaks
         wv_expected_all_peaks = poly_initial(fxpeaks + 1.0)
@@ -1738,11 +1776,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         # line peaks when the expected wavelength is within the maximum
         # allowed range (+/- ntimes_match_wv * CDELT1 around the peak)
         delta_wv_max = ntimes_match_wv * cdelt1_linear
-        wv_verified_all_peaks = match_wv_arrays(
-            wv_master,
-            wv_expected_all_peaks,
-            delta_wv_max=delta_wv_max
-        )
+        wv_verified_all_peaks = match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max=delta_wv_max)
 
     loop = True
 
@@ -1774,14 +1808,9 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         poldeg_effective = nlines_ok - 1
 
                     # fit polynomial
-                    poly_refined, yres, reject = \
-                        polfit_residuals_with_sigma_rejection(
-                            x=xdum,
-                            y=ydum,
-                            deg=poldeg_effective,
-                            times_sigma_reject=times_sigma_reject,
-                            debugplot=0
-                        )
+                    poly_refined, yres, reject = polfit_residuals_with_sigma_rejection(
+                        x=xdum, y=ydum, deg=poldeg_effective, times_sigma_reject=times_sigma_reject, debugplot=0
+                    )
 
                     # effective number of points
                     yres_summary = summary(yres[np.logical_not(reject)])
@@ -1793,9 +1822,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 if irepeat < nrepeat_eff - 1:
                     delta_wv_max = ntimes_match_wv * cdelt1_linear
                     wv_verified_all_peaks = match_wv_arrays(
-                        wv_master,
-                        poly_refined(fxpeaks + 1.0),
-                        delta_wv_max=delta_wv_max
+                        wv_master, poly_refined(fxpeaks + 1.0), delta_wv_max=delta_wv_max
                     )
 
         # update poldeg_effective
@@ -1809,20 +1836,17 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
         cdelt1_linear = (crmax1_linear - crmin1_linear) / (naxis1 - 1)
 
         if abs(local_debugplot) >= 10:
-            print(79 * '=')
-            print(">>> poldeg (requested, effective)..:",
-                  poldeg, poldeg_effective)
+            print(79 * "=")
+            print(">>> poldeg (requested, effective)..:", poldeg, poldeg_effective)
             print(">>> Fitted coefficients............:\n", poly_refined.coef)
             print(">>> NAXIS1.........................:", naxis1)
             print(">>> CRVAL1 linear scale............:", crval1_linear)
             print(">>> CDELT1 linear scale............:", cdelt1_linear)
-            print(79 * '.')
+            print(79 * ".")
             print(">>> Number of peaks................:", npeaks)
-            print(">>> nlines identified (total, used): ",
-                  nlines_ok, yres_summary['npoints'])
-            print(">>> robust_std.....................:",
-                  yres_summary['robust_std'])
-            print(79 * '-')
+            print(">>> nlines identified (total, used): ", nlines_ok, yres_summary["npoints"])
+            print(">>> robust_std.....................:", yres_summary["robust_std"])
+            print(79 * "-")
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
@@ -1839,12 +1863,11 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
             else:
                 fig = plt.figure()
-                fig.canvas.mpl_connect('close_event', handle_close)
+                fig.canvas.mpl_connect("close_event", handle_close)
             set_window_geometry(geometry)
 
             grid = plt.GridSpec(2, 1)
-            grid.update(left=0.10, right=0.98,
-                        bottom=0.10, top=0.90, hspace=0.01)
+            grid.update(left=0.10, right=0.98, bottom=0.10, top=0.90, hspace=0.01)
 
             # differences between linear fit and fitted polynomial
             # polynomial fit
@@ -1852,8 +1875,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ylinear = crval1_linear + (xpol - crpix1_linear) * cdelt1_linear
             ypol = poly_refined(xpol) - ylinear
             # identified lines
-            yp = ydum - (crval1_linear + (xdum - crpix1_linear) *
-                         cdelt1_linear)
+            yp = ydum - (crval1_linear + (xdum - crpix1_linear) * cdelt1_linear)
 
             # upper plot
             ax1 = fig.add_subplot(grid[0, 0])
@@ -1862,8 +1884,8 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 ymax = max(ypol)
                 dy = ymax - ymin
                 if dy > 0:
-                    ymin -= dy/50
-                    ymax += dy/50
+                    ymin -= dy / 50
+                    ymax += dy / 50
                 else:
                     ymin -= 0.5
                     ymax += 0.5
@@ -1873,43 +1895,56 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
             ax1.set_xlim(1 - 0.02 * naxis1, naxis1 * 1.02)
             ax1.set_ylim(ymin, ymax)
             if nlines_ok > 0:
-                ax1.plot(xdum, yp, 'mo', label='identified')
+                ax1.plot(xdum, yp, "mo", label="identified")
                 if sum(reject) > 0:
-                    ax1.plot(xdum[reject], yp[reject], 'o',
-                             color='tab:gray', label='ignored')
-                ax1.plot(xpol, ypol, 'c-', label='fit')
-            ax1.set_ylabel('polynomial - linear fit ' + r'($\AA$)')
-            ax1.text(0.01, 0.99, 'CRVAL1 (' + r'$\AA$' + '):' +
-                     str(round(crval1_linear, decimal_places)),
-                     horizontalalignment='left',
-                     verticalalignment='top',
-                     transform=ax1.transAxes)
-            ax1.text(0.01, 0.91, 'CDELT1 (' + r'$\AA$' + '/pixel):' +
-                     str(round(cdelt1_linear, decimal_places)),
-                     horizontalalignment='left',
-                     verticalalignment='top',
-                     transform=ax1.transAxes)
-            ax1.text(0.99, 0.99, 'robust std (' + r'$\AA$' + '):' +
-                     str(round(yres_summary['robust_std'], decimal_places)),
-                     horizontalalignment='right',
-                     verticalalignment='top',
-                     transform=ax1.transAxes)
-            ax1.text(0.5, 0.55, 'No. points (total / used): ' +
-                     str(nlines_ok) + ' / ' +
-                     str(yres_summary['npoints']),
-                     horizontalalignment='center',
-                     verticalalignment='top',
-                     transform=ax1.transAxes)
-            ax1.text(0.5, 0.4, 'Polynomial degree: ' + str(poldeg_effective),
-                     horizontalalignment='center',
-                     verticalalignment='bottom',
-                     transform=ax1.transAxes)
+                    ax1.plot(xdum[reject], yp[reject], "o", color="tab:gray", label="ignored")
+                ax1.plot(xpol, ypol, "c-", label="fit")
+            ax1.set_ylabel("polynomial - linear fit " + r"($\AA$)")
+            ax1.text(
+                0.01,
+                0.99,
+                "CRVAL1 (" + r"$\AA$" + "):" + str(round(crval1_linear, decimal_places)),
+                horizontalalignment="left",
+                verticalalignment="top",
+                transform=ax1.transAxes,
+            )
+            ax1.text(
+                0.01,
+                0.91,
+                "CDELT1 (" + r"$\AA$" + "/pixel):" + str(round(cdelt1_linear, decimal_places)),
+                horizontalalignment="left",
+                verticalalignment="top",
+                transform=ax1.transAxes,
+            )
+            ax1.text(
+                0.99,
+                0.99,
+                "robust std (" + r"$\AA$" + "):" + str(round(yres_summary["robust_std"], decimal_places)),
+                horizontalalignment="right",
+                verticalalignment="top",
+                transform=ax1.transAxes,
+            )
+            ax1.text(
+                0.5,
+                0.55,
+                "No. points (total / used): " + str(nlines_ok) + " / " + str(yres_summary["npoints"]),
+                horizontalalignment="center",
+                verticalalignment="top",
+                transform=ax1.transAxes,
+            )
+            ax1.text(
+                0.5,
+                0.4,
+                "Polynomial degree: " + str(poldeg_effective),
+                horizontalalignment="center",
+                verticalalignment="bottom",
+                transform=ax1.transAxes,
+            )
             if plottitle is None:
-                ax1.set_title('Refined wavelength calibration')
+                ax1.set_title("Refined wavelength calibration")
             else:
                 ax1.set_title(plottitle)
-            ax1.legend(numpoints=1, ncol=3, fancybox=True,
-                       loc='lower center')
+            ax1.legend(numpoints=1, ncol=3, fancybox=True, loc="lower center")
             #           bbox_to_anchor=(0.5, 1.00))
 
             # lower plot
@@ -1926,37 +1961,41 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 ymin = spectrum.min()
             ymax = spectrum.max()
             dy = ymax - ymin
-            ymin -= dy / 40.
-            ymax += dy / 40.
+            ymin -= dy / 40.0
+            ymax += dy / 40.0
             ax2.set_ylim(ymin, ymax)
             if xmin_previous is not None:
                 ax2.set_xlim(xmin_previous, xmax_previous)
                 ax2.set_ylim(ymin_previous, ymax_previous)
-            ax2.plot(xpol, spectrum, '-')
-            ax2.set_xlabel('pixel position (from 1 to NAXIS1)')
+            ax2.plot(xpol, spectrum, "-")
+            ax2.set_xlabel("pixel position (from 1 to NAXIS1)")
             if local_ylogscale:
-                ax2.set_ylabel('~ log10(number of counts)')
+                ax2.set_ylabel("~ log10(number of counts)")
             else:
-                ax2.set_ylabel('number of counts')
+                ax2.set_ylabel("number of counts")
             # mark peak location
             # ax2.plot(ixpeaks + 1, spectrum[ixpeaks], 'co',
             #          label="initial location")
             # ax2.plot(fxpeaks + 1, spectrum[ixpeaks], 'go',
             #          label="refined location")
-            ax2.plot((fxpeaks + 1)[lines_ok], spectrum[ixpeaks][lines_ok],
-                     'mo', label="identified lines")
+            ax2.plot((fxpeaks + 1)[lines_ok], spectrum[ixpeaks][lines_ok], "mo", label="identified lines")
             for i in range(len(ixpeaks)):
                 if wv_verified_all_peaks[i] > 0:
-                    ax2.text(fxpeaks[i] + 1.0, spectrum[ixpeaks[i]],
-                             str(wv_verified_all_peaks[i]) +
-                             '(' + str(i + 1) + ')',
-                             fontsize=8,
-                             horizontalalignment='center')
+                    ax2.text(
+                        fxpeaks[i] + 1.0,
+                        spectrum[ixpeaks[i]],
+                        str(wv_verified_all_peaks[i]) + "(" + str(i + 1) + ")",
+                        fontsize=8,
+                        horizontalalignment="center",
+                    )
                 else:
-                    ax2.text(fxpeaks[i] + 1.0, spectrum[ixpeaks[i]],
-                             '(' + str(i + 1) + ')',
-                             fontsize=8,
-                             horizontalalignment='center')
+                    ax2.text(
+                        fxpeaks[i] + 1.0,
+                        spectrum[ixpeaks[i]],
+                        "(" + str(i + 1) + ")",
+                        fontsize=8,
+                        horizontalalignment="center",
+                    )
             # display expected location of lines in master file
             for i in range(len(wv_master)):
                 tempol = poly_refined.copy()
@@ -1968,8 +2007,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 # choose values within valid channel range
                 tmproots = tmproots[(tmproots >= 1) * (tmproots <= naxis1)]
                 if len(tmproots) > 0:
-                    ax2.plot([tmproots[0], tmproots[0]], [ymin, ymax],
-                             color='grey', linestyle='dotted')
+                    ax2.plot([tmproots[0], tmproots[0]], [ymin, ymax], color="grey", linestyle="dotted")
             # legend
             ax2.legend(numpoints=1)
 
@@ -1979,51 +2017,40 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                 if local_debugplot in [-22, -12, 12, 22]:
                     pause_debugplot(
                         debugplot=local_debugplot,
-                        optional_prompt='Zoom/Unzoom or ' +
-                                        'press RETURN to continue...',
+                        optional_prompt="Zoom/Unzoom or " + "press RETURN to continue...",
                         tight_layout=False,
-                        pltshow=True
+                        pltshow=True,
                     )
                 else:
-                    pause_debugplot(debugplot=local_debugplot,
-                                    tight_layout=False, pltshow=True)
+                    pause_debugplot(debugplot=local_debugplot, tight_layout=False, pltshow=True)
 
             # request next action in interactive session
             if interactive:
                 nrepeat_eff = 1
-                print('Recalibration menu')
-                print('------------------')
-                print('[i] (i)nsert new peak and restart')
-                print('[d] (d)elete all the identified lines')
-                print('[r] (r)estart from begining')
-                print('[a] (a)utomatic line inclusion')
-                print('[l] toggle (l)ogarithmic scale on/off')
-                print('[e] (e)valuate current polynomial at a given pixel')
-                print('[w] replot (w)hole spectrum')
-                print('[x] e(x)it without additional changes')
-                print('[#] from 1 to ' + str(len(ixpeaks)) +
-                      ' --> modify line #')
-                ioption = readi('Option', default='x',
-                                minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adeilrwx')
-                if ioption == 'd':
+                print("Recalibration menu")
+                print("------------------")
+                print("[i] (i)nsert new peak and restart")
+                print("[d] (d)elete all the identified lines")
+                print("[r] (r)estart from begining")
+                print("[a] (a)utomatic line inclusion")
+                print("[l] toggle (l)ogarithmic scale on/off")
+                print("[e] (e)valuate current polynomial at a given pixel")
+                print("[w] replot (w)hole spectrum")
+                print("[x] e(x)it without additional changes")
+                print("[#] from 1 to " + str(len(ixpeaks)) + " --> modify line #")
+                ioption = readi("Option", default="x", minval=1, maxval=len(ixpeaks), allowed_single_chars="adeilrwx")
+                if ioption == "d":
                     wv_verified_all_peaks = np.zeros(npeaks)
-                elif ioption == 'r':
+                elif ioption == "r":
                     delta_wv_max = ntimes_match_wv * cdelt1_linear
                     wv_expected_all_peaks = poly_initial(fxpeaks + 1.0)
-                    wv_verified_all_peaks = match_wv_arrays(
-                        wv_master,
-                        wv_expected_all_peaks,
-                        delta_wv_max=delta_wv_max
-                    )
-                elif ioption == 'a':
+                    wv_verified_all_peaks = match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max=delta_wv_max)
+                elif ioption == "a":
                     delta_wv_max = ntimes_match_wv * cdelt1_linear
                     wv_verified_all_peaks = match_wv_arrays(
-                        wv_master,
-                        poly_refined(fxpeaks + 1.0),
-                        delta_wv_max=delta_wv_max
+                        wv_master, poly_refined(fxpeaks + 1.0), delta_wv_max=delta_wv_max
                     )
-                elif ioption == 'l':
+                elif ioption == "l":
                     xmin_previous = None
                     xmax_previous = None
                     ymin_previous = None
@@ -2032,59 +2059,51 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
                         local_ylogscale = False
                     else:
                         local_ylogscale = True
-                elif ioption == 'e':
+                elif ioption == "e":
                     pixel = 1
                     while pixel != 0:
-                        pixel = readf("Pixel coordinate (0=exit)",
-                                      default=0)
+                        pixel = readf("Pixel coordinate (0=exit)", default=0)
                         print("--> Wavelength:", poly_refined(pixel))
-                elif ioption == 'i':
+                elif ioption == "i":
                     ipixel = 1
                     # include new peaks
                     while ipixel != 0:
-                        ipixel = readi("Closest pixel coordinate (integer) "
-                                       "to insert peak (0=exit)",
-                                       default=0, minval=0, maxval=naxis1)
+                        ipixel = readi(
+                            "Closest pixel coordinate (integer) " "to insert peak (0=exit)",
+                            default=0,
+                            minval=0,
+                            maxval=naxis1,
+                        )
                         if ipixel > 0:
-                            ixpeaks = np.concatenate((ixpeaks,
-                                                      np.array([ipixel-1])))
+                            ixpeaks = np.concatenate((ixpeaks, np.array([ipixel - 1])))
                     # sort updated array
                     ixpeaks.sort()
                     npeaks = len(ixpeaks)
                     # refine line peak locations
                     fxpeaks, sxpeaks = refine_peaks_spectrum(
-                        sp, ixpeaks,
-                        nwinwidth=nwinwidth_refined,
-                        method="gaussian"
+                        sp, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian"
                     )
                     # expected wavelength of all identified peaks
                     delta_wv_max = ntimes_match_wv * cdelt1_linear
                     wv_verified_all_peaks = match_wv_arrays(
-                        wv_master,
-                        poly_refined(fxpeaks + 1.0),
-                        delta_wv_max=delta_wv_max
+                        wv_master, poly_refined(fxpeaks + 1.0), delta_wv_max=delta_wv_max
                     )
-                elif ioption == 'w':
+                elif ioption == "w":
                     xmin_previous = None
                     xmax_previous = None
                     ymin_previous = None
                     ymax_previous = None
-                elif ioption == 'x':
+                elif ioption == "x":
                     loop = False
                 else:
                     print(wv_master)
-                    expected_value = \
-                        poly_refined(fxpeaks[ioption - 1] + 1.0)
-                    print('>>> Current expected wavelength for line #' +
-                          str(ioption) + ": ", expected_value)
+                    expected_value = poly_refined(fxpeaks[ioption - 1] + 1.0)
+                    print(">>> Current expected wavelength for line #" + str(ioption) + ": ", expected_value)
                     delta_wv_max = ntimes_match_wv * cdelt1_linear
-                    close_value = match_wv_arrays(
-                        wv_master,
-                        np.array([expected_value]),
-                        delta_wv_max=delta_wv_max)
-                    newvalue = readf('New value for line #' + str(ioption) +
-                                     ' (0 to delete line)',
-                                     default=close_value[0])
+                    close_value = match_wv_arrays(wv_master, np.array([expected_value]), delta_wv_max=delta_wv_max)
+                    newvalue = readf(
+                        "New value for line #" + str(ioption) + " (0 to delete line)", default=close_value[0]
+                    )
                     wv_verified_all_peaks[ioption - 1] = newvalue
 
             else:
@@ -2096,8 +2115,7 @@ def refine_arccalibration(sp, poly_initial, wv_master, poldeg,
     # if effective degree of poly_refined < poldeg, add zeros
     if poldeg_effective < poldeg:
         numzeros = poldeg - poldeg_effective
-        final_coefficients = np.concatenate((poly_refined.coef,
-                                             np.zeros(numzeros)))
+        final_coefficients = np.concatenate((poly_refined.coef, np.zeros(numzeros)))
         poly_refined = np.polynomial.Polynomial(final_coefficients)
 
     if abs(local_debugplot) >= 10:

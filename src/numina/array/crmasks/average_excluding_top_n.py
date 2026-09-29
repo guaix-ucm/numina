@@ -23,7 +23,7 @@ def average_excluding_top_n(arr, n, axis=0):
 
     Parameters
     ----------
-    arr : ndarray
+    arr : numpy.ndarray
         Input array
     n : int
         Number of largest values to exclude
@@ -32,7 +32,7 @@ def average_excluding_top_n(arr, n, axis=0):
 
     Returns
     -------
-    ndarray
+    numpy.ndarray
         Array with reduced dimensionality along specified axis
     """
     if n >= arr.shape[axis]:

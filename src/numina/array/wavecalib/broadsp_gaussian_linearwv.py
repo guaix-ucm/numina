@@ -39,24 +39,24 @@ def broadsp_gaussian_velocity_linearwv(crval1, cdelt1, flux, fwhm_velocity, tsig
 
     Returns
     -------
-    broadened_flux : ndarray
+    broadened_flux : numpy.ndarray
         Broadened spectrum.
 
     """
 
     # initial checks
     if not isinstance(crval1, u.Quantity):
-        raise ValueError(f'{crval1=} is not a Quantity')
+        raise ValueError(f"{crval1=} is not a Quantity")
     if not crval1.unit.is_equivalent(u.m):
         raise ValueError(f"Unexpected units for 'crval1': {crval1.unit}")
 
     if not isinstance(cdelt1, u.Quantity):
-        raise ValueError(f'{cdelt1=} is not a Quantity')
+        raise ValueError(f"{cdelt1=} is not a Quantity")
     if not cdelt1.unit.is_equivalent(u.m / u.pix):
         raise ValueError(f"Unexpected units for 'cdelt1': {cdelt1.unit}")
 
     if not isinstance(fwhm_velocity, u.Quantity):
-        raise ValueError(f'{fwhm_velocity=} is not a Quantity')
+        raise ValueError(f"{fwhm_velocity=} is not a Quantity")
     if not fwhm_velocity.unit.is_equivalent(u.m / u.s):
         raise ValueError(f"Unexpected units for 'fwhm_velocity': {fwhm_velocity.unit}")
 
@@ -75,11 +75,7 @@ def broadsp_gaussian_velocity_linearwv(crval1, cdelt1, flux, fwhm_velocity, tsig
     sigma_pix = (sigma_wave / cdelt1).value
 
     # apply varying Gaussian broadening
-    broadened_flux = apply_gaussian_broadening_linearwv(
-        flux=flux,
-        sigma_pix=sigma_pix,
-        tsigma=tsigma
-    )
+    broadened_flux = apply_gaussian_broadening_linearwv(flux=flux, sigma_pix=sigma_pix, tsigma=tsigma)
 
     return broadened_flux
 
@@ -99,9 +95,9 @@ def apply_gaussian_broadening_linearwv(flux, sigma_pix, tsigma):
 
     Parameters
     ----------
-    flux : ndarray
+    flux : numpy.ndarray
         Data array corresponding to the spectrum to be broadened.
-    sigma_pix : ndarray
+    sigma_pix : numpy.ndarray
         Gaussian kernel width (in float pixel units).
     tsigma : float
         Times sigma to extend the computation of the Gaussian
@@ -109,14 +105,14 @@ def apply_gaussian_broadening_linearwv(flux, sigma_pix, tsigma):
 
     Returns
     -------
-    broadened_flux : ndarray
+    broadened_flux : numpy.ndarray
         Broadened data array.
 
     """
 
     naxis1 = len(flux)
     if len(sigma_pix) != naxis1:
-        raise ValueError(f'Incompatible array sizes: {len(flux)=}, {len(sigma_pix)=}')
+        raise ValueError(f"Incompatible array sizes: {len(flux)=}, {len(sigma_pix)=}")
 
     # broaden spectrum
     broadened_flux = np.zeros(naxis1)

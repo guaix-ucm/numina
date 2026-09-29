@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Convert strings to functions in data load """
+"""Convert strings to functions in data load"""
 
 try:
     from functools import singledispatch
@@ -43,7 +43,7 @@ def json_deserial_func_p(args):
 
     Returns
     -------
-    nppol.Polynomial
+    numpy.polynomial.polynomial.Polynomial
     """
     if args:
         value = nppol.Polynomial(args)
@@ -52,15 +52,12 @@ def json_deserial_func_p(args):
     return value
 
 
-_json_deserial_func_map = {
-    'spline1d': json_deserial_func_u,
-    'polynomial': json_deserial_func_p
-}
+_json_deserial_func_map = {"spline1d": json_deserial_func_u, "polynomial": json_deserial_func_p}
 
 
 def convert_function(node):
-    tipo = node['function']
-    args = node['params']
+    tipo = node["function"]
+    args = node["params"]
 
     json_deserial_func = _json_deserial_func_map[tipo]
     value = json_deserial_func(args)
@@ -77,8 +74,8 @@ def json_serial_function(_):
 def json_serial_u(val):
     serial = {}
     # This is generic and should be somewhere else
-    serial['function'] = 'spline1d'
-    serial['params'] = val._eval_args
+    serial["function"] = "spline1d"
+    serial["params"] = val._eval_args
     return serial
 
 
@@ -86,6 +83,6 @@ def json_serial_u(val):
 def json_serial_p(val):
     serial = {}
     # This is generic and should be somewhere else
-    serial['function'] = 'polynomial1d'
-    serial['params'] = val.coef
+    serial["function"] = "polynomial1d"
+    serial["params"] = val.coef
     return serial

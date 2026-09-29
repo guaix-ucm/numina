@@ -20,8 +20,8 @@ def robust_std(x, debug=False):
 
     Parameters
     ----------
-    x : 1d numpy array, float
-        Array of input values which standard deviation is requested.
+    x : numpy.ndarray
+        1D array of floats with the input values which standard deviation is requested.
     debug : bool
         If True prints computed values
 
@@ -39,9 +39,9 @@ def robust_std(x, debug=False):
     sigmag = 0.7413 * (q75 - q25)
 
     if debug:
-        print('debug|sigmag -> q25......................:', q25)
-        print('debug|sigmag -> q75......................:', q75)
-        print('debug|sigmag -> Robust standard deviation:', sigmag)
+        print("debug|sigmag -> q25......................:", q25)
+        print("debug|sigmag -> q75......................:", q75)
+        print("debug|sigmag -> Robust standard deviation:", sigmag)
 
     return sigmag
 
@@ -51,8 +51,8 @@ def summary(x, rm_nan=False, debug=False):
 
     Parameters
     ----------
-    x : 1d numpy array, float
-        Input array with values which statistical properties are
+    x : numpy.ndarray
+        1D input array of floats with values which statistical properties are
         requested.
     rm_nan : bool
         If True, filter out NaN values before computing statistics.
@@ -77,10 +77,10 @@ def summary(x, rm_nan=False, debug=False):
         if isinstance(x, list):
             xx = np.array(x)
         else:
-            raise ValueError('x=' + str(x) + ' must be a numpy.ndarray')
+            raise ValueError("x=" + str(x) + " must be a numpy.ndarray")
 
     if xx.ndim != 1:
-        raise ValueError('xx.dim=' + str(xx.ndim) + ' must be 1')
+        raise ValueError("xx.dim=" + str(xx.ndim) + " must be 1")
 
     # filter out NaN's
     if rm_nan:
@@ -90,35 +90,35 @@ def summary(x, rm_nan=False, debug=False):
     npoints = len(xx)
     ok = npoints > 0
     result = {
-        'npoints': npoints,
-        'minimum': np.min(xx) if ok else 0,
-        'percentile25': np.percentile(xx, 25) if ok else 0,
-        'median': np.percentile(xx, 50) if ok else 0,
-        'mean': np.mean(xx) if ok else 0,
-        'percentile75': np.percentile(xx, 75) if ok else 0,
-        'maximum': np.max(xx) if ok else 0,
-        'std': np.std(xx) if ok else 0,
-        'robust_std': robust_std(xx) if ok else 0,
-        'percentile15': np.percentile(xx, 15.86553) if ok else 0,
-        'percentile84': np.percentile(xx, 84.13447) if ok else 0
+        "npoints": npoints,
+        "minimum": np.min(xx) if ok else 0,
+        "percentile25": np.percentile(xx, 25) if ok else 0,
+        "median": np.percentile(xx, 50) if ok else 0,
+        "mean": np.mean(xx) if ok else 0,
+        "percentile75": np.percentile(xx, 75) if ok else 0,
+        "maximum": np.max(xx) if ok else 0,
+        "std": np.std(xx) if ok else 0,
+        "robust_std": robust_std(xx) if ok else 0,
+        "percentile15": np.percentile(xx, 15.86553) if ok else 0,
+        "percentile84": np.percentile(xx, 84.13447) if ok else 0,
     }
 
     if debug:
-        print('>>> ========================================')
-        print('>>> STATISTICAL SUMMARY:')
-        print('>>> ----------------------------------------')
-        print('>>> Number of points.........:', result['npoints'])
-        print('>>> Minimum..................:', result['minimum'])
-        print('>>> 1st Quartile.............:', result['percentile25'])
-        print('>>> Median...................:', result['median'])
-        print('>>> Mean.....................:', result['mean'])
-        print('>>> 3rd Quartile.............:', result['percentile75'])
-        print('>>> Maximum..................:', result['maximum'])
-        print('>>> ----------------------------------------')
-        print('>>> Standard deviation.......:', result['std'])
-        print('>>> Robust standard deviation:', result['robust_std'])
-        print('>>> 0.1586553 percentile.....:', result['percentile15'])
-        print('>>> 0.8413447 percentile.....:', result['percentile84'])
-        print('>>> ========================================')
+        print(">>> ========================================")
+        print(">>> STATISTICAL SUMMARY:")
+        print(">>> ----------------------------------------")
+        print(">>> Number of points.........:", result["npoints"])
+        print(">>> Minimum..................:", result["minimum"])
+        print(">>> 1st Quartile.............:", result["percentile25"])
+        print(">>> Median...................:", result["median"])
+        print(">>> Mean.....................:", result["mean"])
+        print(">>> 3rd Quartile.............:", result["percentile75"])
+        print(">>> Maximum..................:", result["maximum"])
+        print(">>> ----------------------------------------")
+        print(">>> Standard deviation.......:", result["std"])
+        print(">>> Robust standard deviation:", result["robust_std"])
+        print(">>> 0.1586553 percentile.....:", result["percentile15"])
+        print(">>> 0.8413447 percentile.....:", result["percentile84"])
+        print(">>> ========================================")
 
     return result
