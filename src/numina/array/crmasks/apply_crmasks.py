@@ -41,6 +41,7 @@ def apply_crmasks(
     hdul_masks : HDUList
         The HDUList containing the mask arrays for cosmic ray removal.
         The masks and auxiliary data should be in the following extensions:
+
         - 'MEDIANCR' mask for the median combination
         - 'MEANCRT' mask for the mean combination
         - 'CRMASK1', 'CRMASK2', etc. masks for the mean combination with
@@ -53,21 +54,22 @@ def apply_crmasks(
           are given following the FITS convention (starting at 1).
     combination : str
         The type of combination to apply. There are the following options:
+
         - 'mediancr', the median combination is applied, and masked pixels
-        (those equal to 1 in extension 'MEDIANCR' of `hdul_masks`) are
-        replaced by the minimum value of the corresponding pixel in the
-        input arrays.
+          (those equal to 1 in extension 'MEDIANCR' of `hdul_masks`) are
+          replaced by the minimum value of the corresponding pixel in the
+          input arrays.
         - 'meancrt', the mean combination is applied, and masked pixels
-        (those equal to 1 in extension 'MEANCRT' of `hdul_masks`) are
-        replaced by the mediancr value.
+          (those equal to 1 in extension 'MEANCRT' of `hdul_masks`) are
+          replaced by the mediancr value.
         - 'meancr', the mean combination is applied making use of
-        the individual mask of each image (extensions 'CRMASK1', 'CRMASK2',
-        etc. in `hdul_masks`). Those pixels that are masked in all the individual
-        images are replaced by the minimum value of the corresponding pixel
-        in the input arrays.
+          the individual mask of each image (extensions 'CRMASK1', 'CRMASK2',
+          etc. in `hdul_masks`). Those pixels that are masked in all the individual
+          images are replaced by the minimum value of the corresponding pixel
+          in the input arrays.
         - 'meancr2', similar to 'meancr', but replacing the pixels flagged
-        in the 'MEANCR' mask by the minimum value of the corresponding pixel
-        in the input arrays.
+          in the 'MEANCR' mask by the minimum value of the corresponding pixel
+          in the input arrays.
         - 'mean', the simple mean without any substitution of masked pixels.
         - 'median', the simple median without any substitution of masked pixels.
         - 'min', the simple minimum, without any substitution of masked pixels.
@@ -76,6 +78,7 @@ def apply_crmasks(
         the auxiliary-corrected median array is used instead of the minimum
         value at each pixel. This affects differently depending on the
         combination method:
+
         - 'mediancr': all the masked pixels in the mask MEDIANCR are replaced.
         - 'meancrt': only the pixels coincident in masks MEANCRT and MEDIANCR;
           the rest of the pixels flagged in the mask MEANCRT are replaced by
@@ -84,6 +87,7 @@ def apply_crmasks(
           (i.e., those flagged simulatenously in all the CRMASKi masks);
           the rest of the pixels flagged in any of the `CRMASK1`, `CRMASK2`, etc.
           masks are replaced by the corresponding masked mean.
+
         Default is False.
     apply_flux_factor : bool, optional
         If True, the flux factor is applied to the input arrays before
@@ -99,7 +103,7 @@ def apply_crmasks(
 
     Returns
     -------
-    combined2d: 2D array
+    combined2d : 2D array
         The combined bias-subtracted array with masked pixels replaced
         accordingly depending on the combination method.
     variance2d : 2D array

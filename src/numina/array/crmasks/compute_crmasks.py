@@ -80,6 +80,7 @@ def extract_mm_fixed_points_in_boundary(mm_fixed_points_in_boundary, mm_boundary
         of (x, y) or (x, y, weight). If None, no fixed points are used.
     mm_boundary_fit : str or None
         The method to use for the boundary fitting. Valid options are:
+
         - 'spline': use a spline fit to the boundary.
         - 'piecewise': use a piecewise linear fit to the boundary. If
           this option is selected, mm_fixed_points_in_boundary must be
@@ -212,6 +213,7 @@ def compute_crmasks(
 
     This function computes cosmic ray masks from a list of 2D numpy arrays.
     Two different methods are implemented:
+
     1. Cosmic ray detection using the Laplacian edge detection algorithm
        (van Dokkum 2001), as implemented in ccdproc.cosmicray_lacosmic.
     2. Cosmic ray detection using a numerically derived boundary in the
@@ -242,19 +244,20 @@ def compute_crmasks(
         If None, it is assumed to be 0.0.
     crmethod : str
         The method to use for cosmic ray detection. Valid options are:
+
         - 'lacosmic': use the cosmic-ray rejection by Laplacian edge
-           detection (van Dokkum 2001), as implemented in ccdproc.
+          detection (van Dokkum 2001), as implemented in ccdproc.
         - 'pycosmic': use the PyCosmic algorithm (Husemann et al. 2012).
         - 'deepcr': use the DeepCR algorithm (Zhang & Bloom 2021).
         - 'conn': use a convolutional neural network for cosmic ray detection
         - 'mm_lacosmic': use both methods: 'lacosmic' and the detection
-           boundary derived from numerical simulations.
+          boundary derived from numerical simulations.
         - 'mm_pycosmic': use both methods: 'pycosmic' and the detection
-           boundary derived from numerical simulations.
+          boundary derived from numerical simulations.
         - 'mm_deepcr': use both methods: 'deepcr' and the detection
-           boundary derived from numerical simulations.
+          boundary derived from numerical simulations.
         - 'mm_conn': use both methods: 'conn' and the detection
-           boundary derived from numerical simulations.
+          boundary derived from numerical simulations.
     use_auxmedian: bool, optional
         If True, use the corrected values from the auxiliary algorithm
         when replacing the cosmic-ray affected pixels in the median
@@ -277,6 +280,7 @@ def compute_crmasks(
     apply_flux_factor_to : str
         Specifies to which images the flux factor should be applied.
         Valid options are:
+
         - 'original': apply the flux factor to the original images.
         - 'simulated': apply the flux factor to the simulated images
           used to derive the boundary.
@@ -346,10 +350,12 @@ def compute_crmasks(
     la_psfmodel : str
         The model to use for the PSF if la_fsmode='convolve'.
         Valid options are:
+
         - circular kernels: 'gauss' or 'moffat'
         - Gaussian in the x and y directions: 'gaussx' and 'gaussy'
         - elliptical Gaussian: 'gaussxy' (this kernel is not available
           in ccdproc.cosmicray_lacosmic, so it is implemented here)
+
         Employed when crmethod='lacosmic' or 'mm_lacosmic'.
     la_psffwhm_x : float
         The full width at half maximum (FWHM, in pixels) of the PSF in
@@ -432,6 +438,7 @@ def compute_crmasks(
     mm_photon_distribution : str or None, optional
         The type of photon distribution to use for the numerical simulations.
         Valid options are:
+
         - 'poisson': use a Poisson distribution for the photon noise.
         - 'nbinom': use a negative binomial distribution for the photon noise.
           In this case, the shape parameter must be provided via the
@@ -442,6 +449,7 @@ def compute_crmasks(
     mm_synthetic : str or None
         The type of synthetic images to use for the numerical simulations.
         Valid options are:
+
         - 'median': use the pre-cleaned median combined image.
         - 'single': use the pre-cleaned single images.
     mm_hist2d_min_neighbors : int, optional
@@ -468,6 +476,7 @@ def compute_crmasks(
         This option is not compatible with 'mm_xy_offsets'.
     mm_boundary_fit : str, or None
         The method to use for the boundary fitting. Valid options are:
+
         - 'spline': use a spline fit to the boundary.
         - 'piecewise': use a piecewise linear fit to the boundary.
     mm_knots_splfit : int, optional
@@ -501,13 +510,14 @@ def compute_crmasks(
         removal using different methods. The primary HDU only contains
         information about the parameters used to determine the
         suspected pixels. The extensions are:
+
         - 'MEDIANCR': Mask for coincident cosmic-ray pixels detected using the
-        median combination.
+          median combination.
         - 'MEANCRT': Mask for cosmic-ray pixels detected when adding all the
-        individual arrays. That summed image contains all the cosmic-ray pixels.
-        of all the images.
+          individual arrays. That summed image contains all the cosmic-ray pixels
+          of all the images.
         - 'CRMASK1', 'CRMASK2', ...: Masks for cosmic-ray pixels detected
-        in each individual array.
+          in each individual array.
     """
 
     if _logger is None:
@@ -1900,7 +1910,7 @@ def compute_crmasks(
                     new_mm_photon_distribution = ""
                     mm_photon_distribution_ = mm_photon_distribution
                     while new_mm_photon_distribution not in ["poisson", "nbinom"]:
-                        prompt = f"New value for mm_photon_distribution (poisson | nbinom)"
+                        prompt = "New value for mm_photon_distribution (poisson | nbinom)"
                         new_mm_photon_distribution = input(f"{prompt} [{mm_photon_distribution}]: ").strip().lower()
                         if new_mm_photon_distribution == "":
                             new_mm_photon_distribution = mm_photon_distribution
@@ -2313,8 +2323,8 @@ def compute_crmasks(
                 png_filename = f"diagnostic_crmask{i}.png"
                 ylabel = f"array{i}" + r" $-$ min2d  [ADU]"
             elif i == num_images + 1:
-                _logger.info(f"generating diagnostic plot for MEANCR...")
-                png_filename = f"diagnostic_meancr.png"
+                _logger.info("generating diagnostic plot for MEANCR...")
+                png_filename = "diagnostic_meancr.png"
                 ylabel = r"MEANCR $-$ min2d  [ADU]"
             else:
                 raise RuntimeError("This should never happen.")

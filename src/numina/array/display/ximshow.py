@@ -145,7 +145,7 @@ def ximshow(
     first_pixel : tuple (2 integers)
         (x0,y0) coordinates of pixel at origin.
     aspect : str
-        Control de aspect ratio of the axes. Valid values are 'equal'
+        Control the aspect ratio of the axes. Valid values are 'equal'
         and 'auto'.
     crpix1 : float or None
         CRPIX1 parameter corresponding to wavelength calibration in
@@ -169,7 +169,7 @@ def ximshow(
         window geometry.
     factor_macosx : float
         Factor to control the size of the plot on macOS (default=1.5).
-         This factor is applied to the xwidth and ywidth values provided
+        This factor is applied to the xwidth and ywidth values provided
         in geometry when the backend is macOS. This is a workaround to
         control the size of the plot on macOS, which does not allow to set
         the window geometry.
@@ -538,9 +538,8 @@ def ximshow_file(
         String providing the bounding box tuple: nc1, nc2, ns1, ns2
     args_firstpix : string or None
         String providing the coordinates of lower left pixel.
-        args_aspect : str
     args_aspect : str
-        Control de aspect ratio of the axes. Valid values are 'equal'
+        Control the aspect ratio of the axes. Valid values are 'equal'
         and 'auto'.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
@@ -555,7 +554,7 @@ def ximshow_file(
         This information is ignored if args_pdffile is not None.
     args_factor_macosx : float
         Factor to control the size of the plot on macOS (default=1.5).
-         This factor is applied to the xwidth and ywidth values provided
+        This factor is applied to the xwidth and ywidth values provided
         in args_geometry when the backend is macOS. This is a workaround to
         control the size of the plot on macOS, which does not allow to set
         the window geometry.
@@ -802,7 +801,7 @@ def jimshow(
         (nc1,nc2,ns1,ns2), which correspond to the numpy array:
         image2d[(ns1-1):ns2,(nc1-1):nc2].
     aspect : str
-        Control de aspect ratio of the axes. Valid values are 'equal'
+        Control the aspect ratio of the axes. Valid values are 'equal'
         and 'auto'.
     xlabel : string
         X-axis label.
@@ -956,7 +955,7 @@ def jimshowfile(
         (nc1,nc2,ns1,ns2), which correspond to the numpy array:
         image2d[(ns1-1):ns2,(nc1-1):nc2].
     aspect : str
-        Control de aspect ratio of the axes. Valid values are 'equal'
+        Control the aspect ratio of the axes. Valid values are 'equal'
         and 'auto'.
     xlabel : string
         X-axis label.

@@ -280,6 +280,18 @@ Once the module is created and loaded, a sample session would be:
    :members:
 
 
+:mod:`numina.array.crmasks` --- Cosmic ray masks
+================================================
+
+.. automodule:: numina.array.crmasks.apply_crmasks
+   :members:
+
+.. automodule:: numina.array.crmasks.compute_crmasks
+   :members:
+
+.. automodule:: numina.array.crmasks.valid_parameters
+   :members:
+
 :mod:`numina.array.display` --- Display and plotting utilities
 ==============================================================
 
@@ -299,6 +311,9 @@ Once the module is created and loaded, a sample session would be:
    :members:
 
 .. automodule:: numina.array.display.ximplotxy
+   :members:
+
+.. automodule:: numina.array.display.ximshow
    :members:
 
 :mod:`numina.array.distortion` --- Image distortions
