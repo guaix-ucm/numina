@@ -33,6 +33,10 @@ extensions = [
     "sphinx_rtd_theme",
 ]
 
+# Convert the types in docstrings to cross-references,
+# also in the Returns sections
+napoleon_preprocess_types = True
+
 # The suffix of source filenames.
 source_suffix = ".rst"
 

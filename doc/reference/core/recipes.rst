@@ -30,3 +30,15 @@
 
 .. automodule:: numina.core.tagexpr
    :members:
+
+:mod:`numina.core.metarecipes` --- Metaclasses for Recipes
+==========================================================
+
+.. automodule:: numina.core.metarecipes
+   :members:
+
+:mod:`numina.core.validator` --- Validator decorators
+=====================================================
+
+.. automodule:: numina.core.validator
+   :members:

@@ -28,13 +28,13 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
 
     Parameters
     ----------
-    x_orig : numpy array
+    x_orig : numpy.ndarray
         X coordinate of the reference points in the distorted image
-    y_orig : numpy array
+    y_orig : numpy.ndarray
         Y coordinate of the reference points in the distorted image
-    x_rect : numpy array
+    x_rect : numpy.ndarray
         X coordinate of the reference points in the rectified image
-    y_rect : numpy array
+    y_rect : numpy.ndarray
         Y coordinate of the reference points in the rectified image
     order : int
         Order of the polynomial transformation
@@ -46,9 +46,9 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     Returns
     -------
 
-    aij : numpy array
+    aij : numpy.ndarray
         Coefficients a_ij of the 2D transformation.
-    bij : numpy array
+    bij : numpy.ndarray
         Coefficients b_ij of the 2D transformation.
 
     """
@@ -57,7 +57,7 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     npoints = len(x_orig)
     for xdum in [y_orig, x_rect, y_rect]:
         if len(xdum) != npoints:
-            raise ValueError('Unexpected different number of points')
+            raise ValueError("Unexpected different number of points")
     if order < 1 or order > NMAX_ORDER:
         raise ValueError("Invalid order=" + str(order))
 
@@ -72,144 +72,161 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
 
     # solve 2 systems of equations with half number of unknowns each
     if order == 1:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled]
-                             ).T
+        a_matrix = np.vstack([np.ones(npoints), x_inter_scaled, y_inter_scaled]).T
     elif order == 2:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled,
-                              x_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
-                              y_inter_scaled ** 2]
-                             ).T
+        a_matrix = np.vstack(
+            [
+                np.ones(npoints),
+                x_inter_scaled,
+                y_inter_scaled,
+                x_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**1,
+                y_inter_scaled**2,
+            ]
+        ).T
     elif order == 3:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled,
-                              x_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
-                              y_inter_scaled ** 2,
-                              x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
-                              y_inter_scaled ** 3]
-                             ).T
+        a_matrix = np.vstack(
+            [
+                np.ones(npoints),
+                x_inter_scaled,
+                y_inter_scaled,
+                x_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**1,
+                y_inter_scaled**2,
+                x_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**1,
+                x_inter_scaled**1 * y_inter_scaled**2,
+                y_inter_scaled**3,
+            ]
+        ).T
     elif order == 4:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled,
-                              x_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
-                              y_inter_scaled ** 2,
-                              x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
-                              y_inter_scaled ** 3,
-                              x_inter_scaled ** 4,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
-                              y_inter_scaled ** 4]
-                             ).T
+        a_matrix = np.vstack(
+            [
+                np.ones(npoints),
+                x_inter_scaled,
+                y_inter_scaled,
+                x_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**1,
+                y_inter_scaled**2,
+                x_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**1,
+                x_inter_scaled**1 * y_inter_scaled**2,
+                y_inter_scaled**3,
+                x_inter_scaled**4,
+                x_inter_scaled**3 * y_inter_scaled**1,
+                x_inter_scaled**2 * y_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**3,
+                y_inter_scaled**4,
+            ]
+        ).T
     elif order == 5:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled,
-                              x_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
-                              y_inter_scaled ** 2,
-                              x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
-                              y_inter_scaled ** 3,
-                              x_inter_scaled ** 4,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
-                              y_inter_scaled ** 4,
-                              x_inter_scaled ** 5,
-                              x_inter_scaled ** 4 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 3,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 4,
-                              y_inter_scaled ** 5],
-                             ).T
+        a_matrix = np.vstack(
+            [
+                np.ones(npoints),
+                x_inter_scaled,
+                y_inter_scaled,
+                x_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**1,
+                y_inter_scaled**2,
+                x_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**1,
+                x_inter_scaled**1 * y_inter_scaled**2,
+                y_inter_scaled**3,
+                x_inter_scaled**4,
+                x_inter_scaled**3 * y_inter_scaled**1,
+                x_inter_scaled**2 * y_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**3,
+                y_inter_scaled**4,
+                x_inter_scaled**5,
+                x_inter_scaled**4 * y_inter_scaled**1,
+                x_inter_scaled**3 * y_inter_scaled**2,
+                x_inter_scaled**2 * y_inter_scaled**3,
+                x_inter_scaled**1 * y_inter_scaled**4,
+                y_inter_scaled**5,
+            ],
+        ).T
     elif order == 6:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled,
-                              x_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
-                              y_inter_scaled ** 2,
-                              x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
-                              y_inter_scaled ** 3,
-                              x_inter_scaled ** 4,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
-                              y_inter_scaled ** 4,
-                              x_inter_scaled ** 5,
-                              x_inter_scaled ** 4 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 3,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 4,
-                              y_inter_scaled ** 5,
-                              x_inter_scaled ** 6,
-                              x_inter_scaled ** 5 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 4 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 4,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 5,
-                              y_inter_scaled ** 6],
-                             ).T
+        a_matrix = np.vstack(
+            [
+                np.ones(npoints),
+                x_inter_scaled,
+                y_inter_scaled,
+                x_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**1,
+                y_inter_scaled**2,
+                x_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**1,
+                x_inter_scaled**1 * y_inter_scaled**2,
+                y_inter_scaled**3,
+                x_inter_scaled**4,
+                x_inter_scaled**3 * y_inter_scaled**1,
+                x_inter_scaled**2 * y_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**3,
+                y_inter_scaled**4,
+                x_inter_scaled**5,
+                x_inter_scaled**4 * y_inter_scaled**1,
+                x_inter_scaled**3 * y_inter_scaled**2,
+                x_inter_scaled**2 * y_inter_scaled**3,
+                x_inter_scaled**1 * y_inter_scaled**4,
+                y_inter_scaled**5,
+                x_inter_scaled**6,
+                x_inter_scaled**5 * y_inter_scaled**1,
+                x_inter_scaled**4 * y_inter_scaled**2,
+                x_inter_scaled**3 * y_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**4,
+                x_inter_scaled**1 * y_inter_scaled**5,
+                y_inter_scaled**6,
+            ],
+        ).T
     elif order == 7:
-        a_matrix = np.vstack([np.ones(npoints),
-                              x_inter_scaled,
-                              y_inter_scaled,
-                              x_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 1,
-                              y_inter_scaled ** 2,
-                              x_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 2,
-                              y_inter_scaled ** 3,
-                              x_inter_scaled ** 4,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 3,
-                              y_inter_scaled ** 4,
-                              x_inter_scaled ** 5,
-                              x_inter_scaled ** 4 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 3,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 4,
-                              y_inter_scaled ** 5,
-                              x_inter_scaled ** 6,
-                              x_inter_scaled ** 5 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 4 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 3,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 4,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 5,
-                              y_inter_scaled ** 6,
-                              x_inter_scaled ** 7,
-                              x_inter_scaled ** 6 * y_inter_scaled ** 1,
-                              x_inter_scaled ** 5 * y_inter_scaled ** 2,
-                              x_inter_scaled ** 4 * y_inter_scaled ** 3,
-                              x_inter_scaled ** 3 * y_inter_scaled ** 4,
-                              x_inter_scaled ** 2 * y_inter_scaled ** 5,
-                              x_inter_scaled ** 1 * y_inter_scaled ** 6,
-                              y_inter_scaled ** 7],
-                             ).T
+        a_matrix = np.vstack(
+            [
+                np.ones(npoints),
+                x_inter_scaled,
+                y_inter_scaled,
+                x_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**1,
+                y_inter_scaled**2,
+                x_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**1,
+                x_inter_scaled**1 * y_inter_scaled**2,
+                y_inter_scaled**3,
+                x_inter_scaled**4,
+                x_inter_scaled**3 * y_inter_scaled**1,
+                x_inter_scaled**2 * y_inter_scaled**2,
+                x_inter_scaled**1 * y_inter_scaled**3,
+                y_inter_scaled**4,
+                x_inter_scaled**5,
+                x_inter_scaled**4 * y_inter_scaled**1,
+                x_inter_scaled**3 * y_inter_scaled**2,
+                x_inter_scaled**2 * y_inter_scaled**3,
+                x_inter_scaled**1 * y_inter_scaled**4,
+                y_inter_scaled**5,
+                x_inter_scaled**6,
+                x_inter_scaled**5 * y_inter_scaled**1,
+                x_inter_scaled**4 * y_inter_scaled**2,
+                x_inter_scaled**3 * y_inter_scaled**3,
+                x_inter_scaled**2 * y_inter_scaled**4,
+                x_inter_scaled**1 * y_inter_scaled**5,
+                y_inter_scaled**6,
+                x_inter_scaled**7,
+                x_inter_scaled**6 * y_inter_scaled**1,
+                x_inter_scaled**5 * y_inter_scaled**2,
+                x_inter_scaled**4 * y_inter_scaled**3,
+                x_inter_scaled**3 * y_inter_scaled**4,
+                x_inter_scaled**2 * y_inter_scaled**5,
+                x_inter_scaled**1 * y_inter_scaled**6,
+                y_inter_scaled**7,
+            ],
+        ).T
     else:
         raise ValueError("Invalid order=" + str(order))
     poltrans = transform.PolynomialTransform(
         np.vstack(
-            [np.linalg.lstsq(a_matrix, x_orig_scaled, rcond=None)[0],
-             np.linalg.lstsq(a_matrix, y_orig_scaled, rcond=None)[0]]
+            [
+                np.linalg.lstsq(a_matrix, x_orig_scaled, rcond=None)[0],
+                np.linalg.lstsq(a_matrix, y_orig_scaled, rcond=None)[0],
+            ]
         )
     )
 
@@ -219,7 +236,7 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
     k = 0
     for i in range(order + 1):
         for j in range(i + 1):
-            factor[k] = (x_scale ** (i - j)) * (y_scale ** j)
+            factor[k] = (x_scale ** (i - j)) * (y_scale**j)
             k += 1
     aij = poltrans.params[0] * factor / x_scale
     bij = poltrans.params[1] * factor / y_scale
@@ -230,22 +247,32 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
         print(">>> v=v(x,y) --> bij:\n", bij)
 
     if abs(debugplot) % 10 != 0:
-        ax = ximplotxy(x_orig_scaled, y_orig_scaled,
-                       show=False,
-                       **{'marker': 'o',
-                          'label': '(u,v) coordinates', 'linestyle': ''})
+        ax = ximplotxy(
+            x_orig_scaled, y_orig_scaled, show=False, **{"marker": "o", "label": "(u,v) coordinates", "linestyle": ""}
+        )
         dum = list(zip(x_orig_scaled, y_orig_scaled))
         for idum in range(len(dum)):
-            ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
-                    horizontalalignment='center',
-                    verticalalignment='bottom', color='black')
-        ax.plot(x_inter_scaled, y_inter_scaled, 'o',
-                label="(x,y) coordinates")
+            ax.text(
+                dum[idum][0],
+                dum[idum][1],
+                str(idum + 1),
+                fontsize=10,
+                horizontalalignment="center",
+                verticalalignment="bottom",
+                color="black",
+            )
+        ax.plot(x_inter_scaled, y_inter_scaled, "o", label="(x,y) coordinates")
         dum = list(zip(x_inter_scaled, y_inter_scaled))
         for idum in range(len(dum)):
-            ax.text(dum[idum][0], dum[idum][1], str(idum + 1), fontsize=10,
-                    horizontalalignment='center',
-                    verticalalignment='bottom', color='grey')
+            ax.text(
+                dum[idum][0],
+                dum[idum][1],
+                str(idum + 1),
+                fontsize=10,
+                horizontalalignment="center",
+                verticalalignment="bottom",
+                color="grey",
+            )
         xmin = np.concatenate((x_orig_scaled, x_inter_scaled)).min()
         xmax = np.concatenate((x_orig_scaled, x_inter_scaled)).max()
         ymin = np.concatenate((y_orig_scaled, y_inter_scaled)).min()
@@ -277,22 +304,22 @@ def fmap(order, aij, bij, x, y):
     ----------
     order : int
         Order of the polynomial transformation.
-    aij : numpy array
+    aij : numpy.ndarray
         Polynomial coefficents corresponding to a_ij.
-    bij : numpy array
+    bij : numpy.ndarray
         Polynomial coefficents corresponding to b_ij.
-    x : numpy array or float
+    x : numpy.ndarray or float
         X coordinate values where the transformation is computed. Note
         that these values correspond to array indices.
-    y : numpy array or float
+    y : numpy.ndarray or float
         Y coordinate values where the transformation is computed. Note
         that these values correspond to array indices.
 
     Returns
     -------
-    u : numpy array or float
+    u : numpy.ndarray or float
         U coordinate values.
-    v : numpy array or float
+    v : numpy.ndarray or float
         V coordinate values.
 
     """
@@ -303,8 +330,8 @@ def fmap(order, aij, bij, x, y):
     k = 0
     for i in range(order + 1):
         for j in range(i + 1):
-            u += aij[k] * (x ** (i - j)) * (y ** j)
-            v += bij[k] * (x ** (i - j)) * (y ** j)
+            u += aij[k] * (x ** (i - j)) * (y**j)
+            v += bij[k] * (x ** (i - j)) * (y**j)
             k += 1
 
     return u, v
@@ -317,19 +344,19 @@ def coef_fmap_fixed_x(order, aij, bij, x_value):
     ----------
     order : int
         Order of the 2D polynomial transformation.
-    aij : numpy array
+    aij : numpy.ndarray
         Polynomial coefficents corresponding to a_ij.
-    bij : numpy array
+    bij : numpy.ndarray
         Polynomial coefficents corresponding to b_ij.
     x_value : float
         Fixed x value.
 
     Returns
     -------
-    coeff_u : numpy array
+    coeff_u : numpy.ndarray
         Polynomial coefficients of the 1D polynomial corresponding
         to the U coordinate.
-    coeff_v : numpy array
+    coeff_v : numpy.ndarray
         Polynomial coefficients of the 1D polynomial corresponding
         to the U coordinate.
 
@@ -355,19 +382,19 @@ def coef_fmap_fixed_y(order, aij, bij, y_value):
     ----------
     order : int
         Order of the 2D polynomial transformation.
-    aij : numpy array
+    aij : numpy.ndarray
         Polynomial coefficents corresponding to a_ij.
-    bij : numpy array
+    bij : numpy.ndarray
         Polynomial coefficents corresponding to b_ij.
     y_value : float
         Fixed y value.
 
     Returns
     -------
-    coeff_u : numpy array
+    coeff_u : numpy.ndarray
         Polynomial coefficients of the 1D polynomial corresponding
         to the U coordinate.
-    coeff_v : numpy array
+    coeff_v : numpy.ndarray
         Polynomial coefficients of the 1D polynomial corresponding
         to the U coordinate.
 
@@ -379,8 +406,8 @@ def coef_fmap_fixed_y(order, aij, bij, y_value):
     k = 0
     for i in range(order + 1):
         for j in range(i + 1):
-            coeff_u[i - j] += aij[k] * y_value ** j
-            coeff_v[i - j] += bij[k] * y_value ** j
+            coeff_u[i - j] += aij[k] * y_value**j
+            coeff_v[i - j] += bij[k] * y_value**j
             k += 1
 
     return coeff_u, coeff_v
@@ -430,16 +457,12 @@ def order_fmap(ncoef):
         if loop:
             order += 1
             if order > NMAX_ORDER:
-                print('No. of coefficients: ', ncoef)
-                raise ValueError(
-                    "order > " + str(NMAX_ORDER) + " not implemented")
+                print("No. of coefficients: ", ncoef)
+                raise ValueError("order > " + str(NMAX_ORDER) + " not implemented")
     return order
 
 
-def rectify2d(image2d, aij, bij, resampling,
-              naxis1out=None, naxis2out=None,
-              ioffx=None, ioffy=None,
-              debugplot=0):
+def rectify2d(image2d, aij, bij, resampling, naxis1out=None, naxis2out=None, ioffx=None, ioffy=None, debugplot=0):
     """Rectify image applying the provided 2D transformation.
 
     The rectified image correspond to the transformation given by:
@@ -448,12 +471,12 @@ def rectify2d(image2d, aij, bij, resampling,
 
     Parameters
     ----------
-    image2d : 2d numpy array
-        Initial image.
-    aij : 1d numpy array
-        Coefficients a_ij of the transformation.
-    bij : 1d numpy array
-        Coefficients b_ij of the transformation.
+    image2d : numpy.ndarray
+        Initial 2D image.
+    aij : numpy.ndarray
+        1D array with the coefficients a_ij of the transformation.
+    bij : numpy.ndarray
+        1D array with the coefficients b_ij of the transformation.
     resampling : int
         1: nearest neighbour, 2: flux preserving interpolation.
     naxis1out : int or None
@@ -471,8 +494,8 @@ def rectify2d(image2d, aij, bij, resampling,
 
     Returns
     -------
-    image2d_rect : 2d numpy array
-        Rectified image.
+    image2d_rect : numpy.ndarray
+        Rectified 2D image.
 
     """
 
@@ -484,7 +507,7 @@ def rectify2d(image2d, aij, bij, resampling,
     # order of the polynomial transformation
     order = order_fmap(ncoef)
     if abs(debugplot) >= 10:
-        print('--> rectification order:', order)
+        print("--> rectification order:", order)
 
     # initial image dimension
     naxis2, naxis1 = image2d.shape
@@ -530,14 +553,8 @@ def rectify2d(image2d, aij, bij, resampling,
     elif resampling == 2:
         # coordinates (rectified image) of the four corners, sorted in
         # anticlockwise order, of every pixel
-        j = np.array(
-            [[k - 0.5 - ioffx, k + 0.5 - ioffx,
-              k + 0.5 - ioffx, k - 0.5 - ioffx] for k in range(naxis1out)]
-        )
-        i = np.array(
-            [[k - 0.5 - ioffy, k - 0.5 - ioffy,
-              k + 0.5 - ioffy, k + 0.5 - ioffy] for k in range(naxis2out)]
-        )
+        j = np.array([[k - 0.5 - ioffx, k + 0.5 - ioffx, k + 0.5 - ioffx, k - 0.5 - ioffx] for k in range(naxis1out)])
+        i = np.array([[k - 0.5 - ioffy, k - 0.5 - ioffy, k + 0.5 - ioffy, k + 0.5 - ioffy] for k in range(naxis2out)])
         xx = np.reshape(np.tile(j, naxis2out), naxis1out * naxis2out * 4)
         yy = np.concatenate([np.reshape(i, naxis2out * 4)] * naxis1out)
         # compute pixel coordinates in original (distorted) image
@@ -560,8 +577,8 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
 
     Parameters
     ----------
-    image2d : 2d numpy array
-        Initial image.
+    image2d : numpy.ndarray
+        Initial 2D image.
     xoffset : float
         Offset in the X direction.
     yoffset : float
@@ -571,8 +588,8 @@ def shift_image2d(image2d, xoffset=0.0, yoffset=0.0, resampling=2):
 
     Returns
     -------
-    image2d_shifted : 2d numpy array
-        Rectified image.
+    image2d_shifted : numpy.ndarray
+        Rectified 2D image.
 
     """
 
@@ -587,8 +604,8 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, fscale=1.0, resampling=
 
     Parameters
     ----------
-    image2d : 2d numpy array
-        Initial image.
+    image2d : numpy.ndarray
+        Initial 2D image.
     theta_deg : float
         Rotation angle (positive values correspond to counter-clockwise
         angles).
@@ -605,18 +622,18 @@ def rotate_image2d(image2d, theta_deg, xcenter, ycenter, fscale=1.0, resampling=
 
     Returns
     -------
-    image2d_shifted : 2d numpy array
-        Rectified image.
+    image2d_shifted : numpy.ndarray
+        Rectified 2D image.
 
     """
 
-    f = 1/fscale
-    theta_rad = theta_deg * np.pi/180
+    f = 1 / fscale
+    theta_rad = theta_deg * np.pi / 180
     costheta = np.cos(theta_rad)
     sintheta = np.sin(theta_rad)
     xc = xcenter - 1.0
     yc = ycenter - 1.0
-    aij = [-f*xc*costheta-f*yc*sintheta+xc, f*costheta, f*sintheta]
-    bij = [f*xc*sintheta-f*yc*costheta+yc, -f*sintheta, f*costheta]
+    aij = [-f * xc * costheta - f * yc * sintheta + xc, f * costheta, f * sintheta]
+    bij = [f * xc * sintheta - f * yc * costheta + yc, -f * sintheta, f * costheta]
     image2d_rotated = rectify2d(image2d, aij, bij, resampling=resampling)
     return image2d_rotated

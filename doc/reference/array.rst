@@ -31,6 +31,12 @@
 .. automodule:: numina.array.background
    :members:
 
+:mod:`numina.array.bbox` --- Bounding boxes
+===========================================
+
+.. automodule:: numina.array.bbox
+   :members:
+
 :mod:`numina.array.blocks` --- Generation of blocks
 ====================================================
 
@@ -43,6 +49,12 @@
 .. automodule:: numina.array.bpm
    :members:
 
+
+:mod:`numina.array.ccd_line` --- Lines in CCD images
+====================================================
+
+.. automodule:: numina.array.ccd_line
+   :members:
 
 :mod:`numina.array.combine` --- Array combination
 =================================================
@@ -268,6 +280,33 @@ Once the module is created and loaded, a sample session would be:
    :members:
 
 
+:mod:`numina.array.display` --- Display and plotting utilities
+==============================================================
+
+.. automodule:: numina.array.display.fileinfo
+   :members:
+
+.. automodule:: numina.array.display.logging_from_debugplot
+   :members:
+
+.. automodule:: numina.array.display.matplotlib_qt
+   :members:
+
+.. automodule:: numina.array.display.pause_debugplot
+   :members:
+
+.. automodule:: numina.array.display.polfit_residuals
+   :members:
+
+.. automodule:: numina.array.display.ximplotxy
+   :members:
+
+:mod:`numina.array.distortion` --- Image distortions
+====================================================
+
+.. automodule:: numina.array.distortion
+   :members:
+
 :mod:`numina.array.fwhm` --- FWHM
 ===================================================
 
@@ -302,6 +341,12 @@ Once the module is created and loaded, a sample session would be:
    :members:
 
 
+:mod:`numina.array.numsplines` --- Spline fits
+==============================================
+
+.. automodule:: numina.array.numsplines
+   :members:
+
 :mod:`numina.array.offrot` --- Offset and Rotation
 ======================================================
 
@@ -322,6 +367,12 @@ Once the module is created and loaded, a sample session would be:
 ======================================================
 
 .. automodule:: numina.array.recenter
+   :members:
+
+:mod:`numina.array.rescale_array_z1z2` --- Array rescaling
+==========================================================
+
+.. automodule:: numina.array.rescale_array_z1z2
    :members:
 
 :mod:`numina.array.robustfit` --- Robust fits
@@ -353,7 +404,19 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.wavecalib.arccalibration
    :members:
 
+.. automodule:: numina.array.wavecalib.check_wlcalib
+   :members:
+
+.. automodule:: numina.array.wavecalib.crosscorrelation
+   :members:
+
+.. automodule:: numina.array.wavecalib.fix_pix_borders
+   :members:
+
 .. automodule:: numina.array.wavecalib.peaks_spectrum
+   :members:
+
+.. automodule:: numina.array.wavecalib.resample
    :members:
 
 .. automodule:: numina.array.wavecalib.solutionarc

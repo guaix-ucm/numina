@@ -37,6 +37,10 @@
    :synopsis: TBD
    :members:
 
+.. automodule:: numina.types.product
+   :synopsis: Data products
+   :members:
+
 .. automodule:: numina.types.qc
    :synopsis: Quality Control for Numina
    :members:
