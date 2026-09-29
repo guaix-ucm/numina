@@ -8,6 +8,7 @@
 #
 
 from datetime import datetime
+import importlib.resources
 import itertools
 import json
 import pathlib
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
 
 import attrs
 from dateutil.parser import isoparse
-import importlib_resources
 import numina.util.objimport
 
 from .elements import SetupBlock, PropertiesBlock, ElementEnum
@@ -102,12 +102,12 @@ def load_paths_store(pkg_paths=None, file_paths=None) -> dict:
         pkg_paths = []
 
     paths1 = [pathlib.Path(fpath) for fpath in file_paths]
-    paths2 = [importlib_resources.files(ppath) for ppath in pkg_paths]
+    paths2 = [importlib.resources.files(ppath) for ppath in pkg_paths]
 
     for path in itertools.chain(paths1, paths2):
         for obj in path.iterdir():
             if obj.suffix == ".json":
-                with open(obj) as fd:
+                with obj.open() as fd:
                     cont = json.load(fd)
                     cont["origin"] = ElementOrigin.from_dict(cont)
                     comp_store[obj.name] = cont
@@ -115,9 +115,7 @@ def load_paths_store(pkg_paths=None, file_paths=None) -> dict:
     return comp_store
 
 
-def find_instrument(
-    comp_store, keyval: str, date: str | datetime, by_key="name"
-) -> dict[str, Any]:
+def find_instrument(comp_store, keyval: str, date: str | datetime, by_key="name") -> dict[str, Any]:
     """
     Find instrument in the component collection
 
@@ -126,14 +124,10 @@ def find_instrument(
     ValueError
         If there is no instrument
     """
-    return find_element(
-        comp_store, ElementEnum.ELEM_INSTRUMENT, keyval, date, by_key=by_key
-    )
+    return find_element(comp_store, ElementEnum.ELEM_INSTRUMENT, keyval, date, by_key=by_key)
 
 
-def find_element(
-    comp_store, etype: ElementEnum, keyval: str, date: str | datetime, by_key="name"
-) -> dict[str, Any]:
+def find_element(comp_store, etype: ElementEnum, keyval: str, date: str | datetime, by_key="name") -> dict[str, Any]:
     """
     Find component of the given type in the component collection
 
@@ -160,9 +154,7 @@ def find_element(
         raise ValueError(f"Not found {element_name} {by_key}={keyval} for date={date}")
 
 
-def assembly_instrument(
-    comp_store, keyval: str, date: str | datetime, by_key: str = "name"
-) -> CG:
+def assembly_instrument(comp_store, keyval: str, date: str | datetime, by_key: str = "name") -> CG:
     """
     Assembly an instrument configuration object.
 
@@ -181,14 +173,10 @@ def assembly_instrument(
     InstrumentGeneric
         an instrument configuration
     """
-    return assembly_element(
-        comp_store, ElementEnum.ELEM_INSTRUMENT, keyval, date, by_key=by_key
-    )
+    return assembly_element(comp_store, ElementEnum.ELEM_INSTRUMENT, keyval, date, by_key=by_key)
 
 
-def assembly_component(
-    comp_store, keyval: str, date: str | datetime, dest=None, by_key="name"
-) -> CG:
+def assembly_component(comp_store, keyval: str, date: str | datetime, dest=None, by_key="name") -> CG:
     """
     Assembly an instrument configuration object.
 
@@ -208,25 +196,15 @@ def assembly_component(
     ComponentGeneric
         an instrument configuration
     """
-    return assembly_element(
-        comp_store, ElementEnum.ELEM_COMPONENT, keyval, date, dest=dest, by_key=by_key
-    )
+    return assembly_element(comp_store, ElementEnum.ELEM_COMPONENT, keyval, date, dest=dest, by_key=by_key)
 
 
-def assembly_property(
-    comp_store, keyval: str, date: str | datetime, dest=None, by_key="name"
-) -> PropertiesBlock:
-    return assembly_element(
-        comp_store, ElementEnum.ELEM_PROPERTIES, keyval, date, dest=dest, by_key=by_key
-    )
+def assembly_property(comp_store, keyval: str, date: str | datetime, dest=None, by_key="name") -> PropertiesBlock:
+    return assembly_element(comp_store, ElementEnum.ELEM_PROPERTIES, keyval, date, dest=dest, by_key=by_key)
 
 
-def assembly_setup(
-    comp_store, keyval: str, date: str | datetime, dest: str = None, by_key="name"
-) -> SetupBlock:
-    return assembly_element(
-        comp_store, ElementEnum.ELEM_SETUP, keyval, date, dest=dest, by_key=by_key
-    )
+def assembly_setup(comp_store, keyval: str, date: str | datetime, dest: str = None, by_key="name") -> SetupBlock:
+    return assembly_element(comp_store, ElementEnum.ELEM_SETUP, keyval, date, dest=dest, by_key=by_key)
 
 
 def assembly_element(
@@ -329,9 +307,7 @@ def process_setup(
     return setup_obj
 
 
-def process_properties(
-    comp_store, prop_block, date: str | datetime
-) -> dict[str, PropertyBase]:
+def process_properties(comp_store, prop_block, date: str | datetime) -> dict[str, PropertyBase]:
     prop_objects: dict[str, PropertyBase] = {}
     for entry in prop_block:
         key = entry["id"]

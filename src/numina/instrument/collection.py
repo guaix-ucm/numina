@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
+import importlib.resources
 import itertools
 import json
 import os
@@ -18,8 +19,6 @@ if typing.TYPE_CHECKING:
 
 
 import attrs
-
-import importlib_resources
 
 from .configorigin import ElementOrigin
 
@@ -45,12 +44,12 @@ def load_paths_store(
         pkg_paths = []
 
     paths1 = [pathlib.Path(f_path) for f_path in file_paths]
-    paths2 = [importlib_resources.files(p_path) for p_path in pkg_paths]
+    paths2 = [importlib.resources.files(p_path) for p_path in pkg_paths]
 
     for path in itertools.chain(paths1, paths2):
         for obj in path.iterdir():
             if obj.suffix == ".json":
-                with open(obj) as fd:
+                with obj.open() as fd:
                     cont = json.load(fd)
                     cont["origin"] = ElementOrigin.from_dict(cont)
                     comp_store[obj.name] = cont

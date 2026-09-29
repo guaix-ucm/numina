@@ -14,13 +14,13 @@ import argparse
 import configparser
 from importlib import import_module
 from importlib.metadata import entry_points
+import importlib.resources
 import logging
 import logging.config
 import os
 import sys
 
 
-import importlib_resources
 import yaml
 
 
@@ -37,8 +37,9 @@ def main(args=None):
     # Configuration args from a text file
     config = configparser.ConfigParser()
     # Load base config here
-    basecfg = importlib_resources.files().joinpath("numina.cfg")
-    config.read_file(basecfg.open())
+    basecfg = importlib.resources.files("numina.user").joinpath("numina.cfg")
+    with basecfg.open() as fd:
+        config.read_file(fd)
 
     # Extend with custom values
     read_files = config.read([os.path.join(xdg_config_home, "numina/numina.cfg"), ".numina.cfg"])

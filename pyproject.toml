@@ -36,7 +36,6 @@ dependencies = [
     'astropy >= 6.1.7',
     'attrs',
     'ccdproc',
-    'importlib_resources',  # required with python < 3.9
     'lmfit',
     'matplotlib',
     'numpy >= 2',
