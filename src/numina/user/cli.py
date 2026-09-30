@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2023 Universidad Complutense de Madrid
+# Copyright 2008-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -30,15 +30,23 @@ from .logconf import LOGCONF
 _logger = logging.getLogger("numina")
 
 
+def base_config():
+    """Configuration with the default values in numina.cfg
+
+    The configuration files of the user are not read.
+    """
+    config = configparser.ConfigParser()
+    basecfg = importlib.resources.files("numina.user").joinpath("numina.cfg")
+    with basecfg.open() as fd:
+        config.read_file(fd)
+    return config
+
+
 def main(args=None):
     """Entry point for the Numina CLI."""
 
     # Configuration args from a text file
-    config = configparser.ConfigParser()
-    # Load base config here
-    basecfg = importlib.resources.files("numina.user").joinpath("numina.cfg")
-    with basecfg.open() as fd:
-        config.read_file(fd)
+    config = base_config()
 
     # Extend with custom values
     read_files = config.read([os.path.join(xdg_config_home, "numina/numina.cfg"), ".numina.cfg"])

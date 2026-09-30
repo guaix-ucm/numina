@@ -72,9 +72,20 @@ def drpmocker(monkeypatch):
     return DRPMocker(monkeypatch)
 
 
+@pytest.fixture
+def run_config(tmp_path):
+    """Configuration of 'numina.cfg', with the defaults and basedir in tmp_path"""
+    from numina.user.cli import base_config
+
+    config = base_config()
+    config["tool.run"]["basedir"] = str(tmp_path)
+    return config
+
+
 @pytest.fixture(scope="module")
 def datamanager_remote(tmp_path_factory, request):
     """Return a DataManager object create from a remote dataset"""
+    from numina.user.cli import base_config
     from numina.user.helpers import create_datamanager
 
     req_base_default = "https://guaix.fis.ucm.es/data/"
@@ -105,10 +116,10 @@ def datamanager_remote(tmp_path_factory, request):
         os.remove(downloaded.name)
 
     # Insert OBS in the control file....
-    config = {"tool.run": {}}
+    config = base_config()
     section = config["tool.run"]
-    section["basedir"] = basedir
-    section["datadir"] = datadir
+    section["basedir"] = str(basedir)
+    section["datadir"] = str(datadir)
     dm = create_datamanager(config, reqfile)
 
     # This is not really needed...
