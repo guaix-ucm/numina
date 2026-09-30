@@ -1,0 +1,8 @@
+# Commits ignored by git blame, with formatting changes only.
+# GitHub uses this file automatically. For local use, run:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Format code with black
+5813ecfb3e1238a1305b4295943e86e825a4232a
+# Remove trailing whitespace and fix end of files
+6fdcf2154460d04b099e4d89f88348331bdc48c1
