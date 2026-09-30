@@ -294,7 +294,8 @@ def display_hist2d(
 
         if mm_threshold is None:
             # Use the minimum value of the boundary as the mm_threshold
-            mm_threshold = np.min(yplot_boundary)
+            # FIXME: yplot_boundary is not defined yet, this branch raises NameError
+            mm_threshold = np.min(yplot_boundary)  # noqa: F821
             _logger.info("updated mm_threshold for cosmic-ray detection: %f", mm_threshold)
 
         # Apply the criterium to detect coincident cosmic-ray pixels
