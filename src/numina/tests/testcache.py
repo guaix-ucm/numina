@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -57,11 +57,11 @@ def download_cache(url, cache=True):
     cache_dir = user_cache_dir("numina")
 
     with cntx.environ(XDG_CACHE_HOME=cache_dir):
-        fs = open(data.download_file(url, cache=cache), "rb")
-        with tempfile.NamedTemporaryFile(delete=False) as fd:
-            block = fs.read()
-            while block:
-                fd.write(block)
+        with open(data.download_file(url, cache=cache), "rb") as fs:
+            with tempfile.NamedTemporaryFile(delete=False) as fd:
                 block = fs.read()
+                while block:
+                    fd.write(block)
+                    block = fs.read()
 
         return fd
