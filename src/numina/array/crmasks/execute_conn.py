@@ -16,7 +16,7 @@ try:
     import cosmic_conn
 
     CONN_AVAILABLE = True
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     CONN_AVAILABLE = False
 
 

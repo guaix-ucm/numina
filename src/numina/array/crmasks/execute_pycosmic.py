@@ -18,7 +18,7 @@ try:
     import PyCosmic
 
     PYCOSMIC_AVAILABLE = True
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     PYCOSMIC_AVAILABLE = False
 
 from teareduce.cleanest.mergemasks import merge_peak_tail_masks

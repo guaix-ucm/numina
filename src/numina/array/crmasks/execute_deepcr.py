@@ -16,7 +16,7 @@ try:
     import deepCR
 
     DEEPCR_AVAILABLE = True
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     DEEPCR_AVAILABLE = False
 
 

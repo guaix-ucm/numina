@@ -25,24 +25,24 @@ from scipy import ndimage
 from skimage.registration import phase_cross_correlation
 
 try:
-    import deepCR
+    import deepCR  # noqa: F401 (only to check if it is installed)
 
     DEEPCR_AVAILABLE = True
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     DEEPCR_AVAILABLE = False
 
 try:
-    import PyCosmic
+    import PyCosmic  # noqa: F401 (only to check if it is installed)
 
     PYCOSMIC_AVAILABLE = True
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     PYCOSMIC_AVAILABLE = False
 
 try:
-    import cosmic_conn
+    import cosmic_conn  # noqa: F401 (only to check if it is installed)
 
     CONN_AVAILABLE = True
-except ModuleNotFoundError as e:
+except ModuleNotFoundError:
     CONN_AVAILABLE = False
 
 from numina.array.distortion import shift_image2d
