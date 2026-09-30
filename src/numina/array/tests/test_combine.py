@@ -7,6 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 
+from packaging.version import Version
+
 import numpy
 import pytest
 
@@ -201,6 +203,7 @@ def test_combine_median2():
     assert numpy.allclose(out2, len(inputs))
 
 
+@pytest.mark.xfail(Version(numpy.__version__) < Version("2.3"), reason="numpy < 2.3 limits nditer to 64 operands")
 def test_combine_maxargs():
     """Testing numpy max args limit (with 1 iter impl)"""
     # Inputs
