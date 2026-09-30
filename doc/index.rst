@@ -2,7 +2,7 @@
 Numina Documentation
 ====================
 
-Welcome. This is the Documentation for Numina (version |version|, date |today|), 
+Welcome. This is the Documentation for Numina (version |version|, date |today|),
 
 Numina user guide: :ref:`user`
 

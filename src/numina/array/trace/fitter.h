@@ -28,13 +28,13 @@ LinearFit linear_fitter(Iterator x1, Iterator x2, Iterator y1, Iterator y2) {
    typedef typename std::iterator_traits<Iterator>::difference_type diff_t;
    diff_t xn = std::distance(x1, x2);
    diff_t yn = std::distance(y1, y2);
-   
+
    if (xn != yn)
      throw std::invalid_argument("XN must be == YN");
-   
+
    if (xn < 1)
      throw std::invalid_argument("XN must be > 2");
-   
+
    if (xn == 1) {
      LinearFit result;
      result.slope = 0.0;

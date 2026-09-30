@@ -1,4 +1,4 @@
-Numina, the data reduction package 
+Numina, the data reduction package
 ==================================
 
 Primary authors:
@@ -6,4 +6,3 @@ Primary authors:
  * Sergio Pascual <sergiopr@fis.ucm.es>
  * Nicolas Cardiel <cardiel@fis.ucm.es>
  * Pablo Picazo <papicazo@ucm.es>
-

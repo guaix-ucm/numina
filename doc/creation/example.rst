@@ -9,7 +9,7 @@ classes contained in the package, see the :ref:`reference`.
 
 .. warning::
 
-   This "Pipeline Creation Guide" is still a work in progress; some of 
+   This "Pipeline Creation Guide" is still a work in progress; some of
    the material
    is not organized, and several aspects of Numina are not yet covered
    sufficient detail.
@@ -23,7 +23,7 @@ are related to visualization, acquisition and focusing. The Recipes
 are integrated in the GTC environment. We call these recipes the
 **Data Factory Pipeline**, (:term:`DFP`).
 
-Other group of recipes are devoted to scientific observing modes: imaging, 
+Other group of recipes are devoted to scientific observing modes: imaging,
 spectroscopy and auxiliary calibrations. These Recipes constitute the
 **Data Reduction Pipeline**, (:term:`DRP`). The software is meant to be standalone,
 users shall download the software and run it in their own computers, with

@@ -5,4 +5,3 @@
 .. automodule:: numina.exceptions
    :synopsis: Numina exceptions
    :members:
-   

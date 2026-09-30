@@ -89,7 +89,7 @@ You can all install the package in "editable" mode, including the "-e" option::
 
     pip install -e .
 
-  
+
 .. _virtualenv: https://virtualenv.pypa.io/
 .. _sphinx: http://sphinx.pocoo.org
 .. _pytest: http://pytest.org/latest/

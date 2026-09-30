@@ -23,4 +23,3 @@ Numina modules
    user
    util
    xdgdirs
-   

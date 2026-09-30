@@ -18,9 +18,9 @@
 
 namespace Numina {
 
-  InternalTrace::InternalTrace() 
+  InternalTrace::InternalTrace()
   {}
-  
+
   void InternalTrace::push_back(double x, double y, double p) {
     xtrace.push_back(x);
     ytrace.push_back(y);

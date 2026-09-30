@@ -22,7 +22,7 @@ Numina Reference
 
    modules
 
-   
+
 Indices and tables
 ==================
 

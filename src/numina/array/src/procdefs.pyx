@@ -23,4 +23,3 @@ ctypedef char[:,:] mask_t
 
 MASK_GOOD = 0
 MASK_SATURATION = 3
-

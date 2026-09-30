@@ -31,7 +31,7 @@ Notice that the prompt changes once you have activated the environment. To
 deactivate it, just type `deactivate`::
 
   (numinaenv) $ deactivate
-  $ 
+  $
 
 .. note:: We are assuming that the user shell is bash. There are alternative *activate*
             scripts for tcsh and fish called `activate.csh` and `activate.fish`
@@ -44,7 +44,7 @@ This is the standard Python tool for package management. It will download the pa
 dependencies, unpack everything and compile when needed::
 
   (numinaenv) $ pip install numina
-  
+
 The requirements of numina will be downloaded and installed inside
 the virtual environment automatically.
 
@@ -72,4 +72,3 @@ We can test the installation by running the ``numina`` command:
 
 
 .. _virtualenv: https://virtualenv.pypa.io/
-

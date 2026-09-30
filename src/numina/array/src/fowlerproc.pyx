@@ -32,8 +32,8 @@ cdef extern from "nu_fowler.h" namespace "Numina":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _process_fowler_intl(datacube_t arr, double tint, double ts, double gain, double ron, mask_t badpix, double saturation, double blank,
-        result_t res, 
-        result_t var, 
+        result_t res,
+        result_t var,
         mask_t npix,
         mask_t mask
         ):
@@ -47,7 +47,7 @@ def _process_fowler_intl(datacube_t arr, double tint, double ts, double gain, do
         size_t np = zr // 2
         FowlerResult[double] fres
         double val1, val2
-        char bp 
+        char bp
         vector[double] buff
         axis_fowler_func_t axis_func = axis_fowler
 
@@ -82,4 +82,3 @@ def _process_fowler_intl(datacube_t arr, double tint, double ts, double gain, do
             buff.clear()
 
     return res, var, npix, mask
-

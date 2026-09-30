@@ -28,14 +28,14 @@ cdef extern from "nu_ramp.h" namespace "Numina":
 
     ctypedef vector[HWeights] HWeightsStore
     HWeightsStore create(size_t n)
-    RampResult[double] axis_ramp(vector[double] buff, double dt, 
+    RampResult[double] axis_ramp(vector[double] buff, double dt,
         double gain, double ron, HWeightsStore wgts_store, double blank)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _process_ramp_intl(datacube_t arr, double tint, double gain, double ron, mask_t badpix, double saturation, double blank,
-        result_t res, 
-        result_t var, 
+        result_t res,
+        result_t var,
         mask_t npix,
         mask_t mask
         ):
@@ -47,7 +47,7 @@ def _process_ramp_intl(datacube_t arr, double tint, double gain, double ron, mas
         RampResult[double] fres
         double val
         double dt
-        char bp 
+        char bp
         vector[double] buff
         # weights and internal values
         vector[HWeights] wgts
@@ -82,4 +82,3 @@ def _process_ramp_intl(datacube_t arr, double tint, double gain, double ron, mas
             buff.clear()
 
     return res, var, npix, mask
-

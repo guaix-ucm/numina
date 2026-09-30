@@ -192,7 +192,7 @@ Format of the requirement file (version 1)
       MEGARA:
         ca3558e3-e50d-4bbc-86bd-da50a0998a48:
         - {id: 2, type: 'ReferenceExtinctionTable', tags: {}, content: 'extinction_LP.txt'}
-    requirements:        
+    requirements:
       MEGARA:
         ca3558e3-e50d-4bbc-86bd-da50a0998a48:
           default:

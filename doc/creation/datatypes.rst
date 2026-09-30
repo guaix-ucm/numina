@@ -2,7 +2,7 @@
 DRP Data Types
 **************
 
-Custom data types can be used as Requirements and Products by Recipes. 
+Custom data types can be used as Requirements and Products by Recipes.
 New data types can be derived as follows.
 
 Create a new DataType
@@ -25,7 +25,7 @@ trace of a spectrum. The information will be stored in Python `dict`.
 
 .. code-block:: python
 
-    class TraceMap(DataProductType): 
+    class TraceMap(DataProductType):
         def __init__(self, default=None):
             super(TraceMap, self).__init__(dict, default)
 
@@ -33,7 +33,7 @@ trace of a spectrum. The information will be stored in Python `dict`.
 Construction of objects
 #######################
 
-The input of a recipe is created by inspecting the Recipe Requirements. 
+The input of a recipe is created by inspecting the Recipe Requirements.
 The Recipe Loader is in charge of finding an appropriated value for each
 requirement. The value is passed to `Requirement.convert`, that in turn
 calls `DataType.convert`. The default implementation just returns in
@@ -78,4 +78,3 @@ functions `numina.store.dump` and `numina.store.load`.
 
 In this example, `tag` is an argument of type `TraceMap` and `obj` is of
 type `dict`.
-

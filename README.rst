@@ -45,4 +45,3 @@ Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 .. |ascl| image:: https://img.shields.io/badge/ascl-2512.005-blue.svg?colorB=262255
     :target: https://ascl.net/2512.005
     :alt: Numina's ASCL entry
-

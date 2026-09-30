@@ -790,13 +790,13 @@ void NU_destructor(PyObject *cap) {
 
 static PyObject *
 py_method_mean(PyObject *obj, PyObject *args) {
-  
+
   return PyCapsule_New((void*)NU_mean_function, "numina.cmethod", NULL);
 }
 
 static PyObject *
 py_method_median(PyObject *obj, PyObject *args) {
-  
+
   return PyCapsule_New((void*)NU_median_function, "numina.cmethod", NULL);
 }
 

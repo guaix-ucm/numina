@@ -197,7 +197,3 @@ int NU_quantileclip_function(double *data, double *weights,
 
   return 1;
 }
-
-
-
-

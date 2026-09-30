@@ -8,7 +8,7 @@ authors:
 - affiliation: Universidad Complutense de Madrid
   family-names: Pascual
   given-names: Sergio
-  orcid: 'https://orcid.org/0000-0002-9351-6051' 
+  orcid: 'https://orcid.org/0000-0002-9351-6051'
 - affiliation: Universidad Complutense de Madrid
   family-names: Cardiel
   given-names: Nicolás
@@ -20,7 +20,7 @@ identifiers:
   value: 10.5281/zenodo.593638
 repository-code: 'https://github.com/guaix-ucm/numina'
 abstract: >-
-  This is Numina, the data reduction package used by the following 
+  This is Numina, the data reduction package used by the following
   Gran Telescopio Canarias instruments: EMIR, FRIDA, MEGARA.
 keywords:
 - MEGARA

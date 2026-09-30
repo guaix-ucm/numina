@@ -43,10 +43,10 @@ cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
     '''Find local maximum points.'''
 
     # TODO: this can be a pure C++ function
-    
+
     cdef vector[int] result
     cdef size_t i
-    
+
     if mm[0] >= background:
         if mm[0] > mm[1]:
             result.push_back(0)
@@ -55,11 +55,11 @@ cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
         if mm[i] >= background:
             if (mm[i] > mm[i+1]) and (mm[i] > mm[i-1]):
                 result.push_back(i)
-                
+
     if mm[n-1] >= background:
         if mm[n-1] > mm[n-2]:
             result.push_back(n-1)
-            
+
     return result
 
 
@@ -121,13 +121,13 @@ cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
         for j in range(J):
             accum += arr[i, j]
         out[i] = accum / J
-    
+
     return 0
 
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
-cdef InternalTrace _internal_tracing(FType[:, :] arr, 
+cdef InternalTrace _internal_tracing(FType[:, :] arr,
                              InternalTrace& trace, double x, double y,
                              size_t step=1, size_t hs=1, size_t tol=2,
                              double maxdis=2.0, double background=150.0,
@@ -135,27 +135,27 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
 
     cdef int col = wc_to_pix(x)
     cdef int row = wc_to_pix(y)
-    
+
     cdef size_t pred_pix
     cdef double prediction
-    
+
     cdef int axis = 1
     cdef size_t i
     cdef size_t tolcounter = tol
     cdef size_t axis_size = arr.shape[1]
-    
+
     # Buffer
     cdef size_t regw = 1 + <int>ceil(maxdis)
     cdef size_t buffsize = 2 * regw + 1
-    cdef size_t pred_off 
+    cdef size_t pred_off
     cdef vector[double] pbuff
     # Peaks
     cdef vector[int] peaks
     cdef double dis, ndis
     cdef size_t ipeak
-    cdef size_t nearp    
+    cdef size_t nearp
     cdef vector[double] result
-    
+
     # Init pbuff
     for _ in range(buffsize):
         pbuff.push_back(0.0)
@@ -206,7 +206,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
                 return trace
 
         # Reset counter
-        tolcounter = tol 
+        tolcounter = tol
 
         nearp = peaks[ipeak] + pred_off
 
@@ -228,7 +228,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
-def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1, 
+def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
                      size_t hs=1, size_t tol=2, double background=150.0,
                      double maxdis=2.0, bint gauss = 1):
     '''Trace peak in array starting in (x,y).
@@ -254,8 +254,8 @@ def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
     ndarray
         A nx3 array, with x,y,p of each point in the trace
     '''
-    
-    cdef InternalTrace trace 
+
+    cdef InternalTrace trace
     # Initial values
     trace.push_back(x, y, p)
 
@@ -272,6 +272,5 @@ def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1,
         result[i,0] = trace.xtrace[i]
         result[i,1] = trace.ytrace[i]
         result[i,2] = trace.ptrace[i]
-    
-    return result
 
+    return result

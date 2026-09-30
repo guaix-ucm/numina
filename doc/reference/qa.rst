@@ -1,5 +1,5 @@
 =======================================================
-:mod:`numina.core.qc` --- Quality Control for Numina 
+:mod:`numina.core.qc` --- Quality Control for Numina
 =======================================================
 
 .. automodule:: numina.core.qc

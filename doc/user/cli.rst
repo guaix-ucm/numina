@@ -40,19 +40,19 @@ It is called like this::
 .. option:: --pipeline 'name'
 
    Name of one of the predefined pipelines.
-   
+
 .. option::  -r, --requirements filename
 
    File with the description of the parameters of the recipe.
-      
+
 .. option:: --basedir path
 
    File path used to resolve relative paths in the following options.
-   
+
 .. option:: --datadir path
 
    File path to the folder containing the pristine data to be processed.
-   
+
 .. option:: --resultsdir path
 
    File path to the directory where results are stored.
@@ -61,7 +61,7 @@ It is called like this::
 
    File path to the a directory where the recipe can write. Files in datadir
    are copied here.
-   
+
 .. option:: --cleanup
 
    Remove intermediate and temporal files created by the recipe.
@@ -93,7 +93,7 @@ with available pipelines.
 
 It is called like this::
 
-     $ numina [global-options] show-instruments [options] 
+     $ numina [global-options] show-instruments [options]
 
 .. program:: numina show-instruments
 
@@ -105,7 +105,7 @@ It is called like this::
 .. option:: name
 
    Name of the instruments to show. If empty show all instruments.
-   
+
 Options for show-modes
 ======================
 The show-modes subcommand outputs information about the observing
@@ -113,7 +113,7 @@ modes of the available instruments.
 
 It is called like this::
 
-     $ numina [global-options] show-modes [options] 
+     $ numina [global-options] show-modes [options]
 
 .. program:: numina show-modes
 
@@ -124,7 +124,7 @@ It is called like this::
 .. option:: name
 
    Name of the observing mode to show. If empty show all observing modes.
-   
+
 Options for show-recipes
 ========================
 The show-recipes subcommand outputs information about the recipes
@@ -132,7 +132,7 @@ of the available instruments.
 
 It is called like this::
 
-     $ numina [global-options] show-recipes [options] 
+     $ numina [global-options] show-recipes [options]
 
 .. program:: numina show-recipes
 
@@ -147,4 +147,3 @@ It is called like this::
 .. option:: name
 
    Name of the recipe to show. If empty show all recipes.
-   

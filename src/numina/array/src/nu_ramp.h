@@ -52,7 +52,7 @@ slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
   double add = 0.0;
   for(Iterator i = begin; i != end; ++i)
     add += *i * ((i - begin) - nf);
-  
+
   result.value = delt * add / dt;
   double rg = ron / gain;
   variance1 = rg * rg * delt2;
@@ -64,7 +64,7 @@ slope(Iterator begin, Iterator end, double dt, double gain, double ron) {
 }
 
 template<typename T>
-inline RampResult<T> rround(const RampResult<double>& x) { 
+inline RampResult<T> rround(const RampResult<double>& x) {
   RampResult<T> res;
   res.value = static_cast<T>(round(x.value));
   res.variance = static_cast<T>(round(x.variance));
@@ -74,10 +74,10 @@ inline RampResult<T> rround(const RampResult<double>& x) {
   return res;
 }
 
-template<> inline RampResult<double> rround(const RampResult<double>& x) { 
+template<> inline RampResult<double> rround(const RampResult<double>& x) {
    return x;
 }
-template<> inline RampResult<float> rround(const RampResult<double>& x) { 
+template<> inline RampResult<float> rround(const RampResult<double>& x) {
   RampResult<float> res;
   res.value = static_cast<float>(x.value);
   res.variance = static_cast<float>(x.variance);
@@ -87,7 +87,7 @@ template<> inline RampResult<float> rround(const RampResult<double>& x) {
   return res;
 }
 
-template<> inline RampResult<long double> rround(const RampResult<double>& x) { 
+template<> inline RampResult<long double> rround(const RampResult<double>& x) {
   RampResult<long double> res;
   res.value = static_cast<long double>(x.value);
   res.variance = static_cast<long double>(x.variance);
@@ -166,7 +166,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
     double delt1;
     double delt2;
 
-    HWeights(size_t nn=2) : 
+    HWeights(size_t nn=2) :
         weights(nn),
         order(nn),
         delt1(nn * (nn + 1) * (nn - 1) / 12.0),
@@ -191,7 +191,7 @@ RampResult<Result>  ramp(Iterator begin, Iterator end, double dt, double gain, d
 
   std::vector<HWeights> create(size_t N) {
       std::vector<HWeights> w;
-      for(size_t i=0; i < N-1; ++i) 
+      for(size_t i=0; i < N-1; ++i)
           w.push_back(HWeights(i+2));
       return w;
   }
