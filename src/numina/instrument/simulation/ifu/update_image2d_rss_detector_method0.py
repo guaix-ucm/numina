@@ -88,7 +88,8 @@ def update_image2d_rss_detector_method0(
         nphotons_all = len(simulated_x_ifu_all)
         if nphotons_all != len(simulated_y_ifu_all) or nphotons_all != len(simulated_wave_all):
             raise ValueError(
-                "The input arrays simulated_x_ifu_all, simulated_y_ifu_all, and simulated_wave_all must have the same length."
+                "The input arrays simulated_x_ifu_all, simulated_y_ifu_all, and simulated_wave_all "
+                "must have the same length."
             )
 
     # determine photons that pass through the considered slice

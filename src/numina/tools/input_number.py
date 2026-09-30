@@ -270,7 +270,8 @@ def input_number(
         if not _valid(n):
             if min_val is not None and max_val is not None:
                 print(
-                    f"Out of range or invalid. Enter a value between {_format_number(min_val)} and {_format_number(max_val)}."
+                    f"Out of range or invalid. Enter a value between {_format_number(min_val)} "
+                    f"and {_format_number(max_val)}."
                 )
             elif min_val is not None:
                 print(f"Out of range or invalid. Enter a value ≥ {_format_number(min_val)}.")

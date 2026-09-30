@@ -314,7 +314,7 @@ def main(args=None):
     hdu_mask.header["EXTNAME"] = "MASK"
     hdu_mask.header.extend(wcs_to_header_using_cd_keywords(wcs_mosaic2d), update=True)
     hdul = fits.HDUList([hdu, hdu_mask])
-    logger.info(f"\nSaving combined 2D image: {Path(args.output_dir) /output_filename}")
+    logger.info(f"\nSaving combined 2D image: {Path(args.output_dir) / output_filename}")
     hdul.writeto(Path(args.output_dir) / output_filename, overwrite="yes")
 
     # save 3D stack if requested

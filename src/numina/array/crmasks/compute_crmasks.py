@@ -732,7 +732,8 @@ def compute_crmasks(
     # Check use_auxmedian
     if use_auxmedian and crmethod not in ["lacosmic", "mm_lacosmic", "pycosmic", "mm_pycosmic", "deepcr", "mm_deepcr"]:
         raise ValueError(
-            "use_auxmedian can only be True when crmethod is 'lacosmic', 'mm_lacosmic', 'pycosmic', 'mm_pycosmic', 'deepcr', or 'mm_deepcr'."
+            "use_auxmedian can only be True when crmethod is 'lacosmic', 'mm_lacosmic', "
+            "'pycosmic', 'mm_pycosmic', 'deepcr', or 'mm_deepcr'."
         )
     _logger.info("use_auxmedian: %s", str(use_auxmedian))
 
@@ -1920,8 +1921,11 @@ def compute_crmasks(
                     if record_terminal_output:
                         # escape first bracket for rich logging
                         _logger.info(f"{prompt} \\[{mm_photon_distribution_}]: {mm_photon_distribution}")
+
+                    def is_positive(x):
+                        return isinstance(x, (int, float)) and x > 0
+
                     # Prompt user for new mm_nbinom_shape if needed
-                    is_positive = lambda x: (isinstance(x, (int, float)) and x > 0)
                     if mm_photon_distribution == "nbinom":
                         prompt = "Enter new value for mm_nbinom_shape (float > 0)"
                         mm_nbinom_shape_ = mm_nbinom_shape

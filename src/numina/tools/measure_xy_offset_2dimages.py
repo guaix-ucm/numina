@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Determine (X,Y) offsets between 2 2D images using cross-correlation.
+r"""Determine (X,Y) offsets between 2 2D images using cross-correlation.
 
 The inputs are two 2D images (numpy arrays) with the same dimensions.
 
@@ -26,7 +26,8 @@ be saved to FITS files for further analysis.
 
 Usage examples:
     numina-measure_xy_offset_2dimages --test --subtract-background --rescale-to-01 --plots
-    numina-measure_xy_offset_2dimages --image1 image1.fits --image2 image2.fits --subtract-background --rescale-to-01 --plots
+    numina-measure_xy_offset_2dimages --image1 image1.fits --image2 image2.fits \
+        --subtract-background --rescale-to-01 --plots
 """
 
 import argparse

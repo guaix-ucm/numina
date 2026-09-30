@@ -1042,7 +1042,10 @@ def main(args=None):
     )
     parser.add_argument(
         "--extname",
-        help="Extension name in input file. Only works for a single file, not for a list of files (use --extnum instead)",
+        help=(
+            "Extension name in input file. Only works for a single file, "
+            "not for a list of files (use --extnum instead)"
+        ),
         type=str,
         default=None,
     )
