@@ -454,7 +454,6 @@ def diagnostic_plot(
 
     def sync_zoom_y(event_ax):
         nonlocal img_ax3, img_ax4
-        nonlocal display_ncr
         if updating["plot_limits"]:
             return
         try:
@@ -560,7 +559,6 @@ def diagnostic_plot(
 
         def on_key(event):
             nonlocal vmin, vmax
-            nonlocal img_ax3, img_ax4
             nonlocal display_ncr
             nonlocal aspect_imshow
             nonlocal i_comparison_image, comparison_image
@@ -731,7 +729,7 @@ def diagnostic_plot(
         fig.canvas.mpl_connect("key_press_event", on_key)
 
         def submit_vmin(text):
-            nonlocal vmin, vmax
+            nonlocal vmin
             text = text.strip()
             if text:
                 try:
@@ -745,7 +743,7 @@ def diagnostic_plot(
                     print(f"Invalid input: {text}")
 
         def submit_vmax(text):
-            nonlocal vmin, vmax
+            nonlocal vmax
             text = text.strip()
             if text:
                 try:

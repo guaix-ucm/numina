@@ -1123,8 +1123,6 @@ def main(args=None):
 
     png = None
     if args.pngfile is not None:
-        from numina.array.display.matplotlib_qt import plt  # noqa: F401
-
         png = args.pngfile
 
     for myfile, extnum in zip(list_fits_files, list_extnum):

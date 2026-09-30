@@ -129,7 +129,6 @@ def compute_flux_factor(
         i_comparison_image = 0  # 0 for median2d, 1, 2,... for image3d[comparison_image-1]
 
         def on_key(event):
-            nonlocal img_ax1, img_ax2
             nonlocal i_comparison_image
             nonlocal aspect_imshow
             update_vmin_vmax = False
