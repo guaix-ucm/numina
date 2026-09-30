@@ -43,7 +43,21 @@ def drp_load(package, resource, confclass=None):
 def drp_load_data(package, data, confclass=None):
     """Load the DRPS from data."""
     drpdict = yaml.safe_load(data)
-    ins = load_instrument(package, drpdict, confclass=confclass)
+
+    # Read here additional requirements in configs
+    pkg = f"{package}.recipes"
+    resource = "configs.yaml"
+    try:
+        configs_data = pkgutil.get_data(pkg, resource)
+        if configs_data is None:
+            reqsdict = None
+        else:
+            reqsdict = yaml.safe_load(configs_data)
+    except FileNotFoundError:
+        # if the file doesn't exist, we ignore it
+        reqsdict = None
+
+    ins = load_instrument(package, drpdict, confclass=confclass, default_requirements=reqsdict)
     if ins.version == "undefined":
         pkg = importlib.import_module(package)
         ins.version = getattr(pkg, "__version__", "undefined")
@@ -263,7 +277,7 @@ def load_prods(node, allmodes):
     return result
 
 
-def load_instrument(package, node, confclass=None):
+def load_instrument(package, node, confclass=None, default_requirements=None):
     # Verify keys...
     keys = ["name", "configurations", "modes", "pipelines"]
     check_section(node, "root", keys=keys)
@@ -285,6 +299,7 @@ def load_instrument(package, node, confclass=None):
     confs, custom_selector, modpath = load_confs(package, conf_node, confclass=confclass)
     # trans['configurations'] = confs
     trans["configurations"] = confs
+    trans["default_requirements"] = default_requirements
     ins = InstrumentDRP(**trans)
     # idiom to add a bound method
     if custom_selector:
@@ -296,7 +311,7 @@ def load_instrument(package, node, confclass=None):
     return ins
 
 
-class DefaultLoader(object):
+class DefaultLoader:
     def __init__(self, modpath):
         self.modpath = modpath
 

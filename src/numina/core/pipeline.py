@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2024 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -9,6 +9,7 @@
 
 """DRP related classes"""
 
+import copy
 import warnings
 import logging
 
@@ -198,7 +199,17 @@ class InstrumentDRP:
 
     """
 
-    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None, version="undefined"):
+    def __init__(
+        self,
+        name,
+        configurations,
+        modes,
+        pipelines,
+        products=None,
+        datamodel=None,
+        version="undefined",
+        default_requirements=None,
+    ):
         self.name = name
         self.configurations = configurations
         self.modes = modes
@@ -208,6 +219,7 @@ class InstrumentDRP:
         else:
             self.datamodel = numina.datamodel.DataModel()
         self.version = version
+        self._def_reqs = {} if default_requirements is None else default_requirements
 
     def query_provides(self, product, pipeline="default", search=False):
         """Return the mode that provides a given product"""
@@ -344,6 +356,11 @@ class InstrumentDRP:
         active_pipeline = self.pipelines[pipeline_name]
         recipe = active_pipeline.get_recipe_object(active_mode)
         return recipe
+
+    def default_requirements(self):
+        """Default values of requirements, by profile, pipeline and mode"""
+        # A copy, so that callers can modify it without changing the DRP
+        return copy.deepcopy(self._def_reqs)
 
 
 class ProductEntry:

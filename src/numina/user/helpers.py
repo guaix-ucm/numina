@@ -14,7 +14,6 @@ import errno
 import logging
 import os
 import pickle
-import pkgutil
 import shutil
 
 import yaml
@@ -425,6 +424,17 @@ def deep_merge(initial_schema, loaded_data):
     return initial_schema
 
 
+def add_missing_entries(entries, defaults):
+    """Append to entries the defaults with a name and tags not present in entries"""
+    for entry in defaults:
+        for current in entries:
+            if current["name"] == entry["name"] and current["tags"] == entry["tags"]:
+                break
+        else:
+            entries.append(entry)
+    return entries
+
+
 def process_format_version_1(
     sys_drps,
     components,
@@ -475,20 +485,14 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
     sys_drps = numina.drps.get_system_drps()
     initial_schema = {"version": 1, "requirements": {}}
     for ins, drp in sys_drps.query_all().items():
-        pkg = f"{drp.package}.recipes"
         instrument_name = drp.name
-        resource = "configs.yaml"
-        try:
-            data = pkgutil.get_data(pkg, resource)
-            values = yaml.safe_load(data)
-            # insert requirements
-            reqs = values.get("requirements", {})
-            reqs_ins = reqs.get(instrument_name, {})
-            if reqs_ins:
-                initial_schema["requirements"][instrument_name] = reqs_ins
-        except FileNotFoundError:
-            # if the file doesn't exist, we ignore it
-            pass
+        values = drp.default_requirements()
+        # insert requirements
+        reqs = values.get("requirements", {})
+        reqs_ins = reqs.get(instrument_name, {})
+        if reqs_ins:
+            initial_schema["requirements"][instrument_name] = reqs_ins
+
     section = config["tool.run"]
     basedir = section["basedir"]
     datadir = section["datadir"]
@@ -556,32 +560,27 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
     # This should go before we load CL file
     # load additional reduction defaults
     for ins, drp in datamanager.backend.drps.query_all().items():
-        pkg = f"{drp.package}.recipes"
-        resource = "configs.yaml"
-        try:
-            data = pkgutil.get_data(pkg, resource)
-            values = yaml.safe_load(data)
-            # insert requirements
-            reqs = values.get("requirements", {})
-            reqs_ins = reqs.get(ins, {})
-            for prof_name in reqs_ins:
-                node_pln = reqs_ins[prof_name]
-                for pln_name in node_pln:
-                    node_obs = node_pln[pln_name]
-                    for obs_name in node_obs:
-                        params = node_obs[obs_name]
-                        # Set instrument if not defined
-                        n1 = datamanager.backend.req_table.setdefault(ins, {})
-                        # Set instrumental profile if not defined
-                        n2 = n1.setdefault(prof_name, {})
-                        # Set pipeline if not defined
-                        n3 = n2.setdefault(pln_name, {})
-                        # Insert params
-                        n3[obs_name] = params
 
-        except FileNotFoundError:
-            # if the file doesn't exist, we ignore it
-            pass
+        values = drp.default_requirements()
+        # insert requirements
+        reqs = values.get("requirements", {})
+        reqs_ins = reqs.get(ins, {})
+        for prof_name in reqs_ins:
+            node_pln = reqs_ins[prof_name]
+            for pln_name in node_pln:
+                node_obs = node_pln[pln_name]
+                for obs_name in node_obs:
+                    params = node_obs[obs_name]
+                    # Set instrument if not defined
+                    n1 = datamanager.backend.req_table.setdefault(ins, {})
+                    # Set instrumental profile if not defined
+                    n2 = n1.setdefault(prof_name, {})
+                    # Set pipeline if not defined
+                    n3 = n2.setdefault(pln_name, {})
+                    # Insert params, without replacing the values
+                    # already loaded from the control file
+                    n4 = n3.setdefault(obs_name, [])
+                    add_missing_entries(n4, params)
 
     return datamanager
 
@@ -614,7 +613,7 @@ def load_observations(obfiles, is_session=False):
 
                     loaded_obs.append(doc)
 
-            sessions.append(sess)
+                sessions.append(sess)
     return sessions, loaded_obs
 
 
