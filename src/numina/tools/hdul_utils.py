@@ -105,7 +105,7 @@ def get_wcs_from_hdu(hdu, wcskey=None):
             logger.info(f"  CTYPE={list(w.wcs.ctype)}")
         if wcskey is None:
             logger.error(f"Multiple WCS found in extension '{hdu.name}'.")
-            logger.error(f"Please specify which one to use with 'wcskey'.")
+            logger.error("Please specify which one to use with 'wcskey'.")
             sys.exit(1)
         else:
             logger.info(f"Using WCS with key '{wcskey}'")

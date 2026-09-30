@@ -57,7 +57,7 @@ def simulate_delta_lines(
         raise_ValueError(f"Incompatible array length: 'line_wave' ({len(line_wave)}), 'line_flux' ({len(line_flux)})")
 
     if np.any(line_flux < 0):
-        raise_ValueError(f"Negative line fluxes cannot be handled")
+        raise_ValueError("Negative line fluxes cannot be handled")
 
     if not isinstance(line_wave, u.Quantity):
         raise_ValueError(f"Object 'line_wave': {line_wave} is not a Quantity instance")

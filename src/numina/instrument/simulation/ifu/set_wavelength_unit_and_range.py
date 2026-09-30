@@ -69,7 +69,7 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, logger=N
     if "wave_min" in scene_block["spectrum"]:
         wave_min = float(scene_block["spectrum"]["wave_min"])
     else:
-        logger.debug(f"[faint]Assuming wave_min: null[/faint]")
+        logger.debug("[faint]Assuming wave_min: null[/faint]")
         wave_min = None
     if wave_min is None:
         wave_min = wmin.to(wave_unit)
@@ -78,7 +78,7 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, logger=N
     if "wave_max" in scene_block["spectrum"]:
         wave_max = float(scene_block["spectrum"]["wave_max"])
     else:
-        logger.debug(f"[faint]Assuming wave_max: null[/faint]")
+        logger.debug("[faint]Assuming wave_max: null[/faint]")
         wave_max = None
     if wave_max is None:
         wave_max = wmax.to(wave_unit)

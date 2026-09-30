@@ -160,12 +160,12 @@ def generate_spectrum_for_scene_block(
         if "redshift" in scene_block["spectrum"]:
             redshift = float(scene_block["spectrum"]["redshift"])
         else:
-            logger.debug(f"[faint]Assuming redshift: 0[/faint]")
+            logger.debug("[faint]Assuming redshift: 0[/faint]")
             redshift = 0.0
         if "convolve_sigma_km_s" in scene_block["spectrum"]:
             convolve_sigma_km_s = float(scene_block["spectrum"]["convolve_sigma_km_s"])
         else:
-            logger.debug(f"[faint]Assuming convolve_sigma_km_s: 0[/faint]")
+            logger.debug("[faint]Assuming convolve_sigma_km_s: 0[/faint]")
             convolve_sigma_km_s = 0.0
         convolve_sigma_km_s *= u.km / u.s
         # read data

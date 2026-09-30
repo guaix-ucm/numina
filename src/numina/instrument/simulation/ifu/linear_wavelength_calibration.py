@@ -90,7 +90,7 @@ class LinearWaveCal(object):
         return output
 
     def __repr__(self):
-        output = f"LinearWaveCal(\n"
+        output = "LinearWaveCal(\n"
         output += f"    crpix1_wavecal={self.crpix1_wavecal.value} * {self.crpix1_wavecal.unit.__repr__()},\n"
         output += f"    crval1_wavecal={self.crval1_wavecal.value} * {self.crval1_wavecal.unit.__repr__()},\n"
         output += f"    cdelt1_wavecal={self.cdelt1_wavecal.value} * {self.cdelt1_wavecal.unit.__repr__()},\n"

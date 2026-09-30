@@ -82,7 +82,7 @@ def simulate_spectrum(
         raise_ValueError(f"Incompatible array length: 'wave' ({len(wave)}), 'flux' ({len(flux)})")
 
     if np.any(flux < 0):
-        raise_ValueError(f"Negative flux values cannot be handled")
+        raise_ValueError("Negative flux values cannot be handled")
 
     if flux_type.lower() not in ["flam", "photlam"]:
         raise_ValueError(f"Flux type: {flux_type} is not any of the valid values: 'flam', 'photlam'")

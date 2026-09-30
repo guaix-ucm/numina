@@ -313,7 +313,7 @@ def ifu_simulator(
         cpu_count = os.cpu_count()
         if cpu_count is None:
             if ncores > 1:
-                logger.warning(f"[cyan]WARNING: os.cpu_count() returned None, using ncores=1 instead[/cyan]")
+                logger.warning("[cyan]WARNING: os.cpu_count() returned None, using ncores=1 instead[/cyan]")
                 ncores = 1
         else:
             if ncores > cpu_count:
@@ -496,7 +496,7 @@ def ifu_simulator(
                     len({nphotons_all, len(simulated_wave_all), len(simulated_x_ifu_all), len(simulated_y_ifu_all)})
                     != 1
                 ):
-                    logger.info(f"[red]ERROR: check the following numbers:[/red]")
+                    logger.info("[red]ERROR: check the following numbers:[/red]")
                     logger.info(f"{nphotons_all=}")
                     logger.info(f"{len(simulated_wave_all)=}")
                     logger.info(f"{len(simulated_x_ifu_all)=}")
@@ -504,9 +504,9 @@ def ifu_simulator(
                     raise_ValueError("Unexpected differences found in the previous numbers")
             else:
                 if nphotons == 0:
-                    logger.warning(f"[cyan]WARNING -> nphotons: 0[/cyan]")
+                    logger.warning("[cyan]WARNING -> nphotons: 0[/cyan]")
                 else:
-                    logger.warning(f"[cyan]WARNING -> render: False[/cyan]")
+                    logger.warning("[cyan]WARNING -> render: False[/cyan]")
 
     # Filter simulated photons to keep only those that fall within
     # the IFU field of view and within the expected spectral range
@@ -537,7 +537,7 @@ def ifu_simulator(
     # ---------------------------------------------------------------
     # Compute image2d IFU, white image, with and without oversampling
     # ---------------------------------------------------------------
-    logger.debug(f"[green]* Computing image2d IFU (method 0) with and without oversampling[/green]")
+    logger.debug("[green]* Computing image2d IFU (method 0) with and without oversampling[/green]")
     for noversampling in {noversampling_whitelight, 1}:
         generate_image2d_method0_ifu(
             wcs3d=wcs3d,
@@ -557,7 +557,7 @@ def ifu_simulator(
     # ----------------------------
     # Compute image3d IFU, method0
     # ----------------------------
-    logger.debug(f"[green]* Computing image3d IFU (method 0)[/green]")
+    logger.debug("[green]* Computing image3d IFU (method 0)[/green]")
     bins_x_ifu = (0.5 + np.arange(naxis1_ifu.value + 1)) * u.pix
     bins_y_ifu = (0.5 + np.arange(naxis2_ifu.value + 1)) * u.pix
     bins_wave = (
@@ -585,7 +585,7 @@ def ifu_simulator(
     # --------------------------------------------
     # Compute image2d RSS and in detector, method0
     # --------------------------------------------
-    logger.debug(f"[green]* Computing image2d RSS and detector (method 0)[/green]")
+    logger.debug("[green]* Computing image2d RSS and detector (method 0)[/green]")
     bins_x_detector = np.linspace(start=0.5, stop=naxis1_detector.value + 0.5, num=naxis1_detector.value + 1)
     bins_y_detector = np.linspace(start=0.5, stop=naxis2_detector.value + 0.5, num=naxis2_detector.value + 1)
 

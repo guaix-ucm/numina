@@ -165,7 +165,7 @@ def compute_adr_wavelength(
     factor_arcsec_per_radian = 206264.80624709636
     refraction_reference = (n_air_reference - 1) * np.tan(zenith_distance)
     logger.info(
-        f"Refraction at reference wavelength (arcsec): " + f"{refraction_reference * factor_arcsec_per_radian:+.4f}"
+        "Refraction at reference wavelength (arcsec): " + f"{refraction_reference * factor_arcsec_per_radian:+.4f}"
     )
     refraction = (n_air - 1) * np.tan(zenith_distance)
     differential_refraction = (refraction - refraction_reference) * factor_arcsec_per_radian * u.arcsec

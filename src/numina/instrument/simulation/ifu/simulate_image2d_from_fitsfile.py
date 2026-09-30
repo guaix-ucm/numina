@@ -114,7 +114,7 @@ def simulate_image2d_from_fitsfile(
     if plots:
         fig, ax = plt.subplots()
         ax.plot(xpixel, normalized_cumulative_area, ".")
-        ax.set_xlabel(f"xpixel")
+        ax.set_xlabel("xpixel")
         ax.set_ylabel("Normalized cumulative area")
         ax.set_title(os.path.basename(infile))
         plt.tight_layout()

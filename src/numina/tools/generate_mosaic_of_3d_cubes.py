@@ -119,7 +119,7 @@ def generate_mosaic_of_3d_cubes(
             scales = proj_plane_pixel_scales(wcs2d_celestial)
             logger.info(f"Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec")
             list_of_inputs.append(((header3d_copy["NAXIS2"], header3d_copy["NAXIS1"]), wcs2d_celestial))
-        logger.info(f"\n--- WCS FOR 2D CELESTIAL MOSAIC ---\n")
+        logger.info("\n--- WCS FOR 2D CELESTIAL MOSAIC ---\n")
         logger.info("Celestial scales:")
         for i, (shape, wcs2d_celestial) in enumerate(list_of_inputs):
             scales = proj_plane_pixel_scales(wcs2d_celestial)
@@ -193,7 +193,7 @@ def generate_mosaic_of_3d_cubes(
     header_spectral_mosaic["CUNIT1"] = "m"
     header_spectral_mosaic["CTYPE1"] = "WAVE"
     wcs1d_spectral_mosaic = WCS(header_spectral_mosaic)
-    logger.info(f"\n--- WCS FOR 1D SPECTRAL MOSAIC ---\n")
+    logger.info("\n--- WCS FOR 1D SPECTRAL MOSAIC ---\n")
     logger.info(f"{crval3out=}\n{cdelt3out=}\n{naxis3out=}\n{wavemax=}\n")
     logger.info(f"{wcs1d_spectral_mosaic=}")
 
@@ -202,7 +202,7 @@ def generate_mosaic_of_3d_cubes(
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
     footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
-    logger.info(f"\n--- BUILDING THE 3D MOSAIC ---\n")
+    logger.info("\n--- BUILDING THE 3D MOSAIC ---\n")
     logger.info(f"NAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}")
     size_output = array_size_32bits(mosaic3d_cube_by_cube)
     if footprint:

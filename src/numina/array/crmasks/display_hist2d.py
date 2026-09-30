@@ -493,7 +493,7 @@ def display_hist2d(
                             valid_answers_ = "a/c/d/e/\\[n]"
                         submenu += "- 'n' none (continue without additional changes)"
                         _logger.info(submenu)
-                        prompt = f"Your choice"
+                        prompt = "Your choice"
                         action = input(f"{prompt} ({valid_answers}): ").strip().lower()
                         if record_terminal_output:
                             _logger.info(f"{prompt} ({valid_answers_}): {action}")
