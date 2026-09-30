@@ -32,7 +32,6 @@ from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
 from rich_argparse import RichHelpFormatter
-import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 

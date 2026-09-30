@@ -21,7 +21,6 @@ import numpy.ma as ma
 from pathlib import Path
 from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
-import sys
 
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console

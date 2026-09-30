@@ -18,7 +18,6 @@ from astropy.wcs import WCS
 import io
 import logging
 import numpy as np
-import sys
 
 from .compute_adr_wavelength import compute_adr_wavelength
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube

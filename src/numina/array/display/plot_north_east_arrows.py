@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 from astropy.coordinates import SkyCoord, Angle
-from astropy.units import Unit, Quantity
+from astropy.units import Unit
 from astropy.wcs import WCS
 from astropy.wcs.utils import proj_plane_pixel_scales
 import numpy as np

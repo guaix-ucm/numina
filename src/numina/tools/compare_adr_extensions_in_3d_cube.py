@@ -15,7 +15,6 @@ from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
-import sys
 
 from .initialize_script_with_args import initialize_script_with_args
 from .initialize_script_with_args import goodbye_message_and_save_console

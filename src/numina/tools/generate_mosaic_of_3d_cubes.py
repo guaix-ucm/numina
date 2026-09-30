@@ -21,7 +21,6 @@ from pathlib import Path
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
 from rich_argparse import RichHelpFormatter
-import sys
 
 from numina.array.array_size_32bits import array_size_8bits, array_size_32bits
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral

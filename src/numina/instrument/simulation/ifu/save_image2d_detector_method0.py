@@ -7,12 +7,10 @@
 # License-Filename: LICENSE.txt
 #
 import logging
-from venv import logger
 
 from astropy.io import fits
 import numpy as np
 
-from numina import logger
 from pathlib import Path
 
 

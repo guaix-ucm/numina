@@ -8,8 +8,6 @@
 #
 """Resample a 3D cube in the wavelength axis (NAXIS3)."""
 
-import sys
-
 import argparse
 from astropy.io import fits
 import astropy.units as u

@@ -38,7 +38,6 @@ import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
 from skimage.registration import phase_cross_correlation
-import sys
 import teareduce as tea
 
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2

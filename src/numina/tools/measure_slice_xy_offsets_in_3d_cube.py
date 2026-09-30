@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
 from skimage.registration import phase_cross_correlation
-import sys
 
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from numina.array.distortion import shift_image2d

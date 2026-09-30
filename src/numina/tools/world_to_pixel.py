@@ -11,7 +11,7 @@
 
 import argparse
 from argparse import RawTextHelpFormatter
-from astropy import units as u
+from astropy import units as u  # noqa: F401 (used by eval of --sky and --wave)
 from astropy.coordinates import SkyCoord
 from astropy.units import Unit
 from astropy.io import fits

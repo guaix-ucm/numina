@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rich import print
 from rich_argparse import RichHelpFormatter
-import sys
 
 from numina.user.console import print_table
 

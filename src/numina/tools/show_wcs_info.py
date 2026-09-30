@@ -15,7 +15,6 @@ import io
 import logging
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
-import sys
 
 from .file_is_valid_fits import file_is_valid_fits
 from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
