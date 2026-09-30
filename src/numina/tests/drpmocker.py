@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -33,10 +33,13 @@ class DRPMocker:
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
         self._eps = []
+        # Empty the cache of get_system_drps, so that
+        # the DRPs are loaded again, with the mocked entry points
+        self.monkeypatch.setattr(numina.drps, "_system_drps", None)
         basevalue = importlib.metadata.entry_points
         # Use the mocker only for 'numina.pipeline.1'
 
-        def mockreturn(group, name=None):
+        def mock_return(group, name=None):
             if group == "numina.pipeline.1":
                 return self._eps
             elif name is None:
@@ -44,7 +47,7 @@ class DRPMocker:
             else:
                 return basevalue(group=group, name=name)
 
-        self.monkeypatch.setattr(numina.drps.drpsystem, "entry_points", mockreturn)
+        self.monkeypatch.setattr(numina.drps.drpsystem, "entry_points", mock_return)
 
     def add_drp(self, name, loader):
 
@@ -52,11 +55,11 @@ class DRPMocker:
             ep = create_mock_entry_point(loader, name)
         else:
             # Assume loader is data instead
-            drpdata = loader
+            drp_data = loader
 
-            def drploader():
-                return pload.drp_load_data("numina", drpdata)
+            def drp_loader():
+                return pload.drp_load_data("numina", drp_data)
 
-            ep = create_mock_entry_point(drploader, name)
+            ep = create_mock_entry_point(drp_loader, name)
 
         self._eps.append(ep)
