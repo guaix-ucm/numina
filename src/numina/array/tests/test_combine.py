@@ -201,7 +201,6 @@ def test_combine_median2():
     assert numpy.allclose(out2, len(inputs))
 
 
-@pytest.mark.xfail
 def test_combine_maxargs():
     """Testing numpy max args limit (with 1 iter impl)"""
     # Inputs
